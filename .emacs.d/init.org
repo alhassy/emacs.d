@@ -1,0 +1,876 @@
+#+TITLE: My Emacs Initialisation File, Written in ~Org-mode~
+#+author: Musa Al-hassy
+#+email: alhassy@gmail.com
+#+DATE: 2018-07-25
+#+DESCRIPTION: Confiuration file for Emacs usage.
+#+STARTUP: indent
+#+CATEGORIES: Emacs
+#+OPTIONS: html-postamble:nil toc:nil
+#+IMAGE: ../assets/img/emacs_logo.png
+
+# It makes version control easier, especially if you split your init.el into different files in ~/.emacs.d. You can just commit init.el like every other file, and git clone /my/emacs/config.git ~/.emacs.d on a new system gives you all of your Emacs configuration, without having to link a file into $HOME.
+
+* Abstract                                                           :ignore:
+#+BEGIN_CENTER 
+*Abstract*
+
+Herein I document the configurations I utilise with Emacs.
+Of note are:
+ + This is a literate programming setup.
+ + I have a variety of cosmetics such as showing battery life and flashing upon errors.
+ + Production of org-mode ready-to-go skeletons.
+ + Utilities for working with org-mode files, namely ~#+KEYWORD: VALUE~ pairs.
+
+This is a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file.
+#+END_CENTER
+
+#+NAME: Some front matter for resulting elisp file.
+#+HTML: <!-- 
+#+BEGIN_SRC emacs-lisp :tangle AlBasmala.el
+;; 
+;; This header file is used to create the articles for: https://alhassy.github.io/blog/
+;; This file is generated from the literate file `AlBasmala.org` in the same repo.
+;; Musa Al-hassy, 2018
+;;
+#+END_SRC
+#+HTML: --> 
+
+* Introduction
+
+Why not keep Emac's configurations in the ~~/.emacs~ file?
+This is because the Emacs system may explicitly add, or alter, code
+in it.
+
+For example, execute the following
+ 0. ~M-x customize-variable RET line-number-mode RET~
+   # (customize-variable 'line-number-mode)
+ 0. Then press: ~toggle~, ~state~, then ~1~.
+ 0. Now take a look: ~(find-file "~/.emacs")~
+Notice how additions to the file have been created by `custom'.
+
+As such, I've chosen to write my Emacs' initialisation configurations
+in a file named ~~/.emacs.d/init.org~: I have a literate configuration which
+is then loaded using org-mode's tangling feature.
+
+* What's in, or at the top of, my ~~/.emacs~
+
+We evaluate every piece of emacs-lisp code available here when
+Emacs starts up by placing the following at the top of our ~.emacs~ file:
+#+BEGIN_SRC emacs-lisp :tangle "~/tmp/delme"
+(org-babel-load-file "~/.emacs.d/init.org")
+;;
+;; My Emacs settings: (find-file "~/.emacs.d/init.org")
+#+END_SRC
+( I do not generate my ~.emacs~ file from this source code in-fear of
+   overriding functionality inserted by ~custom~. )
+
+# Whenever this ~init.org~ is loaded by org-babel it creates a ~.emacs~ file which
+Our ~.emacs~ should be byte-compiled so that when we start Emacs it will
+automatically determine if the ~init.org~ file has changed and if so it
+would tangle it producing the ~init.el~ file which will then be loaded immediately.
+
+#+BEGIN_SRC emacs-lisp
+;; In-case I forget to byte-compile!
+(byte-compile-file "~/.emacs")
+
+;; Change this silly counter to visualy notice a change.
+;; (progn (message "Init.org contents loaded! Counter: 7") (sleep-for 3))
+#+END_SRC
+
+* Version Control
+
+Soft links are pointers to other filenames, whereas hardlinks
+are pointers to memory location of a given filename!
+
+Soft links are preferably since they defer to the orginal filename
+and can work across servers.
+
+We can declare them as follows,
+#+BEGIN_EXAMPLE
+ln -s source_file myfile
+#+END_EXAMPLE
+
+If ~repo~ refers to a directory under version control
+--or Dropbox-- we move our init file and emacs directory to it,
+then make soft links to these locations so that whenever ~~/.emacs~ 
+is accessed it will refer to ~repo/.emacs~ and likewise for ~.emacs.d~ :-)
+
+On a new machine, copy-paste any existing emacs configs we want
+to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
+links only.
+
+#+BEGIN_EXAMPLE
+repo=~/Dropbox     ## or my git repository: ~/dotfiles
+
+cd ~
+
+mv .emacs $repo/
+ln -s $repo/.emacs .emacs
+
+mv .emacs.elc $repo/
+ln -s $repo/.emacs.elc .emacs.elc
+          
+mv .emacs.d/ $repo/
+ln -s $repo/.emacs.d/ .emacs.d
+#+END_EXAMPLE
+Note the extra ~/~ after ~.emacs.d~!
+
+You may need to unlink softlinks if you already have them;
+e.g., ~unlink .emacs.d~.
+
+To make another softlink to a file, say in a blogging directory,
+we ~cd~ to the location of interest then execute, say:
+~ln -s $repo/.emacs.d/init.org init.org~
+
+* Managing Local Variables
+
+It is dangerous to load a file with local variables;
+instead we should load files without evaluating locals,
+read the locals to ensure they are safe --e.g., there's nothing
+malicious like ~eval: (delete-file your-important-file.txt)~--
+then revert the buffer to load the locals.
+
+However, when preprocessing my own files I sometimes wish
+to accept all locals without being queried and so have these two
+combinators.
+
+#+BEGIN_SRC emacs-lisp
+;; Accept all local variables versus query for possibly non-safe locals.
+(defun DANGER-all-locals () (setq enable-local-variables :all))
+(defun SAFE-query-locals () (setq enable-local-variables t))
+#+END_SRC
+
+* Loads
+
+** Programming Language Supports
+
+#+BEGIN_SRC emacs-lisp
+(load (shell-command-to-string "agda-mode locate"))
+;;
+;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
+; (makunbound 'agda2-include-dirs)
+
+;; Open .v files with Proof General's Coq mode
+(load "~/.emacs.d/lisp/PG/generic/proof-site")
+#+END_SRC
+*** COMMENT More Programming Language Support                        :TODO:
+
+**** Haskell
+#+BEGIN_SRC emacs-lisp
+;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
+ (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
+#+END_SRC
+
+**** Kotlin
+#+BEGIN_SRC emacs-lisp
+(load "~/.emacs.d/kotlin-mode.el")
+(setq kotlin-tab-width 2)
+#+END_SRC
+
+**** Lambda Prolog
+#+BEGIN_SRC emacs-lisp
+(load "/usr/local/packages/teyjus/emacs/teyjus.el")
+(setq tjcc "/usr/local/packages/teyjus/tjcc")
+#+END_SRC
+**** haskell setups
+  ;; (let ((my-cabal-path (expand-file-name "~/Library/Haskell/bin")))
+  ;;   (setenv "PATH" (concat my-cabal-path path-separator (getenv "PATH")))
+  ;;   (add-to-list 'exec-path my-cabal-path))
+  ;; (custom-set-variables '(haskell-tags-on-save t)) ;; M-. jump to definition (needs Cabal project)
+  ;; (add-hook 'haskell-mode-hook #'hindent-mode)  ;; M-q to reformat current declaration
+  ;; (eval-after-load 'haskell-mode
+  ;;   '(define-key haskell-mode-map [f9] 'haskell-navigate-imports)) ;; M-x eval-buffer then F8 moves to imports and C-c C-, formats
+
+  ;; ;; mmm-mode for literate haskell
+  ;; ;; (setq auto-mode-alist
+  ;; ;;       (remove
+  ;; ;;        (rassoc 'literate-haskell-mode auto-mode-alist) auto-mode-alist))
+  ;; (add-to-list 'auto-mode-alist '("\\.lhs$" . latex-mode))
+
+  ;; ;; removes literate-haskell mode activation for lhs files and addes mmm-mode
+  ;; (require 'mmm-auto)
+  ;; (add-hook 'literate-haskell-mode 'my-mmm-mode) ;; WTF THiS DOESN'T WORK!!!
+  ;; (defun my-mmm-mode ()
+  ;;   ;; go into mmm minor mode when class is given
+  ;;   (make-local-variable 'mmm-global-mode)
+  ;;   (setq mmm-global-mode 't)
+  ;;   (latex-mode)
+  ;;   (mmm-mode-on)
+  ;;   (setq mmm-submode-decoration-level 1)
+  ;;   (mmm-ify-by-class 'literate-haskell-latex))
+
+  ;; (mmm-add-classes
+  ;;  '((literate-haskell-latex
+  ;;     :submode haskell-mode
+  ;;     :front "^\\\\begin{code}\n"
+  ;;     :back "^\\\\end{code}"
+  ;;     )))
+  ;; (setq mmm-parse-when-idle 't) ;; re-fontify submode portions when idle
+  ;; (eval-after-load "latex"
+  ;;   '(progn
+  ;;      (add-to-list 'LaTeX-command-style '("lhs" "lhslatex"))
+  ;;      (add-to-list 'TeX-file-extensions "lhs")
+  ;;      (setq TeX-command-extra-options "-shell-escape")))
+
+  ;; ;; ghc-mod (Note: seperate mode from haskell-mode)
+  ;; (require 'company)
+  ;; (add-hook 'haskell-mode-hook 'company-mode)
+  ;; (autoload 'ghc-init "ghc" nil t)
+  ;; (autoload 'ghc-debug "ghc" nil t)
+  ;; (add-hook 'haskell-mode-hook (lambda ()
+  ;;                                (ghc-init)
+  ;;                                ;; haskell company-mode (works with ghc-mod)
+  ;;                                (add-to-list (make-local-variable 'company-backends) 'company-ghc)
+  ;;                                (custom-set-variables '(company-ghc-show-info t))))
+
+  ;; ;; company ghci
+  ;; (require 'company-ghci)
+  ;; (push 'company-ghci company-backends)
+  ;; (add-hook 'haskell-mode-hook 'company-mode)
+
+  ;; ;;; To get completions in the REPL
+  ;; (add-hook 'haskell-interactive-mode-hook 'company-mode)
+
+  ;; intero - TODO consider removing ghc-mod and company ghci
+  (require 'intero)
+  (add-hook 'haskell-mode-hook 'intero-mode)
+  (add-hook 'literate-haskell-mode-hook 'intero-mode)
+  ;; needed to fix bug when loading stack ghci for > 8.2
+  (setq haskell-process-args-ghci
+        '("-ferror-spans" "-fshow-loaded-modules"))
+
+  (setq haskell-process-args-cabal-repl
+        '("--ghc-options=-ferror-spans -fshow-loaded-modules"))
+
+  (setq haskell-process-args-stack-ghci
+        '("--ghci-options=-ferror-spans -fshow-loaded-modules"
+          "--no-build" "--no-load"))
+
+  (setq haskell-process-args-cabal-new-repl
+        '("--ghc-options=-ferror-spans -fshow-loaded-modules"))
+**** magit                                                          :TODO:
+
+  (setq-default git-magit-status-fullscreen t)
+  (global-git-commit-mode t) ;; edit git commit messages through emacs
+  )
+** COMMENT Unicode Input via Agda Input                              :broken:
+I almost always want the Agda-mode input method.
+Hence, I switch into Agda-mode then immediately revert to whatever the current buffer ought to be.
+
+#+BEGIN_SRC emacs-lisp
+  (DANGER-all-locals)
+    (agda2-mode)
+    (revert-buffer nil t nil)
+  (SAFE-query-locals)
+#+END_SRC
+
+** COMMENT Folding mode
+
+#+BEGIN_SRC emacs-lisp
+; (load "~/.emacs.d/folding-mode.el")
+; (folding-mode-add-find-file-hook)
+#+END_SRC
+*** COMMENT folding mode local variables
+
+I occasionally use a folding mode, due to work, so I append the following
+to the files that utilise it.
+
+ Local Variables:
+ eval: (folding-mode t)
+ folded-file: t
+ eval: (fold-set-marks ";;{{{ " ";;}}}")
+ eval: (fold-whole-buffer)
+ fold-internal-margins: 0
+ end:
+
+** COMMENT Agda notions to be entered by Custom
+ + agda-input-user-translations ::
+    ("fcmp" "⨾")
+     (";;" "⨾")
+     ("meet" "⊓")
+     ("join" "⊔")
+     ("|" "❙")
+     ("(|" "⦇")
+     ("|)" "⦈")
+ + agda2-program-args ::
+    "+RTS   -H4.5G   -M4.5G   -K256M   -S/tmp/AgdaRTS.log   -A1G   -RTS   -i   ."
+
+;; install STIX from Ubuntu store!!
+;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
+
+;; Forward composition ⨾
+;;  Ubuntu Store -> Install Stix Fonts -> Restart computer!
+;;  For convenience, bind this symbol to string: fcmp.
+;;
+;;Give a symbol new Agda TeX binding
+;;  For example, to setup under (residual) in Agda, goto
+;;  |M-x customize-variable agda-input-user-translations| then
+;;  |INS| then for key sequence type |under| then |INS| and
+;;  for string paste |╲|. Now \under yields ╲.
+
+
+; (load-file (let ((coding-system-for-read 'utf-8))
+;                (shell-command-to-string "agda-mode locate"))
+
+** ~package-initialize~: Melpa, gnu, and org
+
++ *M-x list-packages* to see all melpa packages that can install
+  - Not in alphabetical order, so maybe search with ~C-s~.
++ For example to download the haskell mode: ~M-x package-install RET haskell-mode RET~.
+  - Or maybe to install ~unicode-fonts~ ;-)
++ Read more at http://ergoemacs.org/emacs/emacs_package_system.html or 
+  at https://github.com/milkypostman/melpa
+
+#+BEGIN_SRC emacs-lisp
+(require 'package)
+(setq package-archives
+      '(("melpa" . "https://melpa.org/packages/")
+        ("gnu" . "https://elpa.gnu.org/packages/")
+        ("org" . "http://orgmode.org/elpa/")))
+(package-initialize)
+#+END_SRC
+* Cosmetics
+** COMMENT Column Marker                            :not_working_as_desired:
+
+Have a thin line to the right to ensure I don't write “off the page”.
+#+BEGIN_SRC emacs-lisp
+; (require 'fill-column-indicator)
+(define-globalized-minor-mode my-fci-global-mode fci-mode
+  (lambda () (set-fill-column 90) (fci-mode 't)
+))
+(my-fci-global-mode 1)
+#+END_SRC
+
+There are issues with making things global.
+In this case, exporting to html produces curious symbols
+thereby prompting ~my-org-html-export-to-html~ below to
+take care of this.
+
+*** COMMENT My global visual line mode                       :no_longer_used:
+*No longer used* Using fill-column-mode instead.
+
+#+BEGIN_SRC emacs-lisp
+(define-globalized-minor-mode my-visual-line-global-mode visual-line-mode
+  (lambda () 
+  
+    ;; Wrap words in all buffers
+    (visual-line-mode t)
+
+))
+(my-visual-line-global-mode 1)
+#+END_SRC
+# What I like about truncate-lines versus visual-line-mode is that the former doesn’t split
+# on word boundaries and adds symbols to the fringe.
+# (set-default 'truncate-lines t)
+
+** Flashing when something goes wrong
+Make top and bottom of screen flash when something unexpected happens thereby observing a warning message in the minibuffer. E.g., C-g, or calling an unbound key sequence, or misspelling a word.
+#+BEGIN_SRC emacs-lisp
+  (setq visible-bell 1)
+  ;; Enable flashing mode-line on errors
+#+END_SRC
+
+** My todo list: The initial buffer when Emacs opens up
+#+BEGIN_SRC emacs-lisp
+(setq initial-buffer-choice "~/Dropbox/todo.org")
+#+END_SRC
+
+** Showing date, time, and battery life
+#+BEGIN_SRC emacs-lisp
+(setq display-time-day-and-date t)
+(display-time)
+(display-battery-mode 1)
+#+END_SRC
+
+** Minibuffer should display line and column numbers
+#+BEGIN_SRC emacs-lisp
+(line-number-mode 1)
+(column-number-mode 1)
+#+END_SRC
+
+** Highlight parenthesis pair when cursor is near ;-)
+#+BEGIN_SRC emacs-lisp
+(load-library "paren")
+(show-paren-mode 1)
+(transient-mark-mode t)
+(require 'paren)
+#+END_SRC
+
+** Increase/decrease text size
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
+  ;; C-x C-0 restores the default font size
+#+END_SRC
+
+** Delete Selection mode
+Delete Selection mode lets you treat an Emacs region much like a typical text
+selection outside of Emacs: You can replace the active region.
+We can delete selected text just by hitting the backspace key.
+
+#+BEGIN_SRC emacs-lisp
+  (delete-selection-mode 1)
+#+END_SRC
+
+** Ido Mode
+Ido, “interactively do things”, mode is used for most commands that require you to select
+something from a list: It provides possible completions.
+  + An alternative is a third-party tool: =Helm= or ~ivy~.
+
+Extremely helpful for when switching between buffers, =C-x C-b=. Try and be grateful.
+#+BEGIN_SRC emacs-lisp
+(ido-mode t)
+#+END_SRC
+** COMMENT tooltip appears by mouse when compilation finishes :havent_used_in_some_time:
+from: https://emacswiki.org/emacs/CompileCommand
+
+#+BEGIN_SRC emacs-lisp
+(defun notify-compilation-result(buffer msg)
+  "Notify that the compilation is finished,
+close the *compilation* buffer if the compilation is successful,
+and set the focus back to Emacs frame"
+  (if (string-match "^finished" msg)
+    (progn
+     (delete-windows-on buffer)
+     (tooltip-show "\n Compilation Successful :-) \n "))
+    (tooltip-show "\n Compilation Failed :-( \n "))
+  (setq current-frame (car (car (cdr (current-frame-configuration)))))
+  (select-frame-set-input-focus current-frame)
+  )
+(add-to-list 'compilation-finish-functions
+	     'notify-compilation-result)
+#+END_SRC
+** COMMENT imenu add to menubar                                        :TODO:
+imenu-add-to-menubar! Nice: menu navigation in source file
+https://www.gnu.org/software/emacs/manual/html_node/emacs/Imenu.html
+https://github.com/bmag/imenu-list
+helm-imenu
+* Helpful Functions & Shortcuts
+
+Here is a collection of Emacs-lisp functions that I have come to use in other files.
+# The subsections below detail the definitions.
+
+** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
+#+BEGIN_SRC emacs-lisp
+(defvar my-keys-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-m") 'recompile)
+    map)
+  "my-keys-minor-mode keymap.")
+
+(define-minor-mode my-keys-minor-mode
+  "A minor mode so that my key settings override annoying major modes."
+  :init-value t
+  :lighter " my-keys")
+#+END_SRC
+** Reload buffer with ~f5~ 
+I do this so often it's not even funny.
+#+BEGIN_SRC emacs-lisp
+(global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
+#+END_SRC
+** Kill to start of line
+Dual to ~C-k~,
+#+BEGIN_SRC emacs-lisp
+;; M-k kills to the left
+(global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
+#+END_SRC
+** ~file-as-list~ and ~file-as-string~
+
+#+BEGIN_SRC emacs-lisp
+(defun file-as-list (filename)
+  "Return the contents of FILENAME as a list of lines"
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (split-string (buffer-string))))
+
+(defun file-as-string (filename)
+  "Return the contents of FILENAME as a list of lines"
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (buffer-string)))
+#+END_SRC
+
+** ~kill-other-buffers~
+#+BEGIN_SRC emacs-lisp
+(defun kill-other-buffers ()
+  "Kill all other buffers."
+  (interactive)
+  (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
+#+END_SRC
+
+** ~create-scratch-buffer~
+#+BEGIN_SRC emacs-lisp
+;; A very simple function to recreate the scratch buffer:
+;; ( http://emacswiki.org/emacs/RecreateScratchBuffer )
+(defun create-scratch-buffer nil
+   "create a scratch buffer"
+   (interactive)
+   (switch-to-buffer (get-buffer-create "*scratch*"))
+   (lisp-interaction-mode))   
+#+END_SRC
+** Switching from 2 horizontal windows to 2 vertical windows
+I often find myself switching from a horizontal view of two windows in Emacs to a
+vertical view. This requires a variation of ~C-x 1 RET C - x 3 RET C-x o X-x b RET~. 
+Instead I now only need to type ~C-|~ to make this switch.
+#+BEGIN_SRC emacs-lisp
+(defun ensure-two-vertical-windows () 
+  "hello"
+ (interactive)
+ (other-window 1)			;; C-x 0
+ (let ((otherBuffer (buffer-name))) 
+   (delete-window)			;; C-x 0
+   (split-window-right)			;; C-x 3
+   (other-window 1)			;; C-x 0
+   (switch-to-buffer otherBuffer)	;; C-x b RET
+ )
+ (other-window 1)
+)
+(global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
+#+END_SRC
+** Making then opening html's from org's
+#+BEGIN_SRC emacs-lisp 
+(defun my-org-html-export-to-html ()
+ "Make an html from an org file then open it in my browser."
+ (interactive)
+ (org-html-export-to-html)
+ (let ((it (concat (file-name-sans-extension buffer-file-name) ".html")))
+   (browse-url it)
+   (message (concat it " has been opened in Chromium."))
+   'success ;; otherwise we obtain a "compiler error".
+ ) 
+)
+#+END_SRC
+
+* Spelling
+I would like to check spelling by default.
+ + M-$ :: Check and correct spelling of the word at point
+ + M-x ispell-change-dictionary RET TAB :: To see what dictionaries are available.
+
+#+BEGIN_SRC emacs-lisp
+(define-globalized-minor-mode my-flyspell-global-mode flyspell-mode
+  (lambda () 
+
+    ;; spawns an ispell process
+    (flyspell-mode 1)
+
+))
+(my-flyspell-global-mode 1)
+
+(setq ispell-dictionary "british") ;; set the default dictionary
+#+END_SRC
+
+Colour incorrect works; default is an underline.
+#+BEGIN_SRC emacs-lisp
+(global-font-lock-mode t)
+(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
+#+END_SRC
+
+Set up a thesaurus to avoid unwarranted repetition.
+#+BEGIN_SRC emacs-lisp
+(load "~/.emacs.d/powerthesaurus.el")
+(global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
+#+END_SRC
+
+Use this game to help you learn to spell words that you're having trouble with;
+see ~~/Dropbox/spelling.txt~.
+#+BEGIN_SRC emacs-lisp
+(autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
+#+END_SRC
+
+* Org-mode related things
+
+** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
+Use the ~:ignore:~ tag on headlines you'd like to have ignored, 
+while not ignoring their content.
+  + See here: https://emacs.stackexchange.com/a/17677/10352
+#+BEGIN_SRC emacs-lisp
+(load "~/.emacs.d/ox-extra.el")
+(ox-extras-activate '(ignore-headlines))
+#+END_SRC
+
+** Executing code from ~src~ blocks
+
+For example, to execute a shell command in emacs,
+write a ~src~ with a shell command, then ~C-c c-c~ to see the results.
+Emacs will generally query you to ensure you're sure about executing the
+(possibly dangerous) code block; let's stop that:
+#+BEGIN_SRC emacs-lisp
+; Seamless use of babel: No confirmation upon execution.
+(setq org-confirm-babel-evaluate nil)
+#+END_SRC
+# To activate this feature, "may" need to set #+PROPERTY: header-args :eval never-export in the beginning or your document
+
+A worked out example can be obtained as follows: ~<g TAB~ then ~C-c C-C~ to make a nice
+simple graph --the code for this is in the next section.
+
+Some initial languages we want org-babel to support:
+#+BEGIN_SRC emacs-lisp
+ (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (emacs-lisp . t)
+     (shell	 . t)
+     (python	 . t)
+     (ruby	 . t)
+     (ocaml	 . t)
+     (dot	 . t)
+     (latex	 . t)
+     (org	 . t)
+     (makefile	 . t)
+     ))
+
+(setq org-src-preserve-indentation t)
+#+END_SRC
+
+** ~<X~ Completion
+
+In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
+or ~<q~ for quote blocks. 
+
+*** Demoing Dot Graphs
+We include one to demo the capabilities of the previous subsection.
+
+#+BEGIN_SRC emacs-lisp
+;; Graphviz: Press <g-TAB to obtain a minimal editable example.
+(add-to-list 'org-structure-template-alist
+        '("g" "#+begin_src dot :results output graphics :file \"/tmp/graph.pdf\" :exports both
+   digraph G {
+      node [color=black,fillcolor=white,shape=rectangle,style=filled,fontname=\"Helvetica\"];
+      A[label=\"A\"]
+      B[label=\"B\"]
+      A->B
+   }\n#+end_src" "<src lang=\"dot\">\n\n</src>"))
+#+END_SRC
+
+Here's another example graph,
+#+BEGIN_EXAMPLE org
+ #+BEGIN_SRC dot :file simple_markov.png :cmdline -Kdot -Tpng
+ graph {
+   rankdir="UD";
+    A -- D;
+    A -- B;
+    D -- C;
+    B -- C;
+  }
+ #+END_SRC  
+#+END_EXAMPLE
+
+*** ~<E~ for emacs-lisp source blocks
+
+~<E~ to begin an emacs-lisp source block -- ~<e~ is for an example block.
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'org-structure-template-alist
+        '("E" "#+BEGIN_SRC emacs-lisp\n\n#+END_SRC" "<src lang=\"emacs-lisp\">\n\n</src>"))
+#+END_SRC
+
+** org-mode header generation
+Generate an untitled org-mode skeleton file ~C-x t~ --similar to ~C-x C-f~ for finding files.
+
+First the template,
+# For some reason if I use "org" as source language my variable "thedate"
+# is not utilised, hence I'm using emacs-lisp as language.
+#
+#+NAME: org template 
+#+BEGIN_SRC latex :var thedate=(format-time-string "%a %Y-%m-%d") :tangle template.org :exports code
+,#+TITLE: ???
+,#+DATE: thedate
+,#+DESCRIPTION: A new radical entry of things I'm learning!
+,#+AUTHOR: Musa Al-hassy
+,#+EMAIL: alhassy@gmail.com
+,#+IMAGE: ../assets/img/rwh-200.jpg
+,#+CATEGORIES: ExampleTags Elisp Haskell Frama-C Specfications Krakatoa
+,#+OPTIONS: toc:nil html-postamble:nil 
+,# Other possible are num:nil todo:nil pri:nil tags:nil ^:nil
+,#+STARTUP: indent
+
+,* Abstract       :ignore:
+,#+BEGIN_CENTER 
+*Abstract*
+
+This article serves to accomplish *???*.
+Write your goal then attempt to realise it, otherwise there's no explicit direction!
+
+,#+END_CENTER
+
+,* Introduction
+
+Let's recall concepts ~X~ needed to discuss notions $Y$.
+
+,* Middle
+
+We're learnin'!
+
+,* Conclusion
+
+Yeah! That was some fun stuff!
+
+,* COMMENT footer
+
+# Local Variables:
+# eval: (setq NAME (file-name-sans-extension (buffer-name)))
+# eval: (load-file "AlBasmala.el")
+# End:
+#+END_SRC
+
+Then the functionality,
+#+BEGIN_SRC emacs-lisp
+(defun new-untitled-org-template ()
+  "Produce an org-mode file template."
+  (interactive)
+  (switch-to-buffer (generate-new-buffer "*Untitled*"))
+  (insert (file-as-string "~/.emacs.d/template.org"))
+  (org-mode)
+)
+
+(global-set-key (kbd "C-x t") 'new-untitled-org-template)
+#+END_SRC
+
+** Org-mode cosmetics
+#+BEGIN_SRC emacs-lisp
+;; org-mode math is now highlighted ;-)
+(setq org-highlight-latex-and-related '(latex))
+
+;; Hide the *,=,/ markers
+(setq org-hide-emphasis-markers t)
+
+;; (setq org-pretty-entities t) 
+;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+#+END_SRC
+
+** COMMENT floating toc material :no_longer_using_this:
+
+Add the following to a web-page if you'd like it to have a floating table of contents.
++ Perhaps consider making this a default for all org-files?
+ + The ~floatingTocStyle.css~ lives in my Dropbox; bring it here to be self-contained.
+
+#+BEGIN_SRC org
+#+HTML: <small><center>
+( Please remember that you can always access a section using the floating table of contents at the upper-right corner of your screen. )
+#+HTML: </center></small>
+#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"floatingTocStyle.css\" />
+#+HTML: <div id=\"toc\"> &nbsp;Table of Contents&nbsp; <small> <div id=\"full\">
+#+TOC: headlines 2
+#+HTML: </div> </small> </div>
+#+END_SRC
+
+** COMMENT more org mode configs
+
+
+  (with-eval-after-load 'org
+    ;; inline images in org-mode
+    (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
+    (add-hook 'org-mode-hook 'org-display-inline-images)
+    ;; make org-formula inline rendering bigger
+    (setq org-latex-create-formula-image-program 'imagemagick)
+    (setq org-format-latex-options
+          (quote
+           (:foreground "#90ee90" :background default :scale 2.0 :html-foreground default :html-background "Transparent" :html-scale 1 :matchers
+                        ("begin" "$1" "$" "$$" "\\(" "\\["))))
+    ;; forgo org-mode code eval confirmation
+    (setq org-confirm-babel-evaluate nil)
+    )
+
+** COMMENT org-html-postamble-format
+ Look at the super short doc to know how to manipulate this variable.
+ (describe-symbol 'org-html-postamble-format)
+
+ #+BEGIN_SRC emacs-lisp
+(defun make-html-link (url identifier)
+  (concat "<a href=\"" url "\">" identifier "</a>"))
+
+(setq org-html-postamble-format 
+  (let* ((nomorg (buffer-name))
+         (nom    (file-name-sans-extension nomorg))
+         (src    (make-html-link nomorg "Org Source"))
+         (nompdf (concat nom ".pdf"))
+         (pdf    (make-html-link nompdf "View me as a PDF"))
+        )
+`(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
+)
+ #+END_SRC
+* Other fun things
+
++ ~(nyan-mode)~ Use a cat on a rainbow to indicate the percentage of the buffer position.
+   [ Disabled ] 
+
++ Coloured code delimiters.                 
+  #+BEGIN_SRC emacs-lisp
+(define-globalized-minor-mode my-rainbow-global-mode rainbow-delimiters-mode
+  (lambda () (rainbow-delimiters-mode)
+))
+(my-rainbow-global-mode 1)
+#+END_SRC
+
++ Googling words at point: ~M-x google-this-word~
+#+BEGIN_SRC emacs-lisp
+(require 'google-this)
+#+END_SRC
+
+** COMMENT Multiple Cursors                                           :TODO:
+  ;; see http://emacsrocks.com/e13.html
+  (require 'multiple-cursors)
+  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+** COMMENT Neotree: Directory Tree Listing                    :neat_may_use: 
+  ;; neotree (sidebar for project file navigation)
+  (require 'neotree)
+  (global-set-key [f8] 'neotree-toggle)
+  ;; Enable custom neotree theme
+  (doom-themes-neotree-config)  ; all-the-icons fonts must be installed!
+* Summary of Utilities Provided
+
+| _Command_                        | _Action_                                            |
+| ~C-c C-m~                        | recompile file                                    |
+| ~<f5>~                           | revert buffer                                     |
+| ~M-x k~                          | kill to start of line                             |
+| ~C-∣~                            | toggle 2 windows from horizontal to vertical view |
+| ~(file-as-list   pathHere)~      | construe a file as a list of lines                |
+| ~(file-as-string pathHere)~      | construe a file as a string                       |
+| ~M-x create-scratch-buffer~      | --self evident--                                  |
+| ~M-x kill-other-buffers~         | --self evident--                                  |
+| ~M-$~                            | check spelling of word at point                   |
+| ~M-#~                            | thesaurus look-up word at point                   |
+| ~(DANGER-all-locals)~            | accept, evaluate, all local variables             |
+| ~(SAFE-query-locals)~            | query whether local variables should be evaluated |
+| ~C-+/-~                          | increase/decrease text size                       |
+| ~M-x my-org-html-export-to-html~ | make then open html from an org file              |
+| ~C-c C-c~                        | execute code in an org ~src~ block                  |
+| ~<E~                             | produce an emacs-lisp ~src~ block                   |
+| ~<g~                             | produce a graph template ~src~ block                |
+| ~C-x t~                          | open a new untitled org template file             |
+
+Some possibly interesting reads:
+  + Arnaud Legrand's article [[http://mescal.imag.fr/membres/arnaud.legrand/misc/init.php][Emacs init file written in org-mode]]
+  + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]  
+  + [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][A tutorial on evaluating code within ~src~ blocks]]
+
+* COMMENT abbrev-mode                                        :no_longer_used:
+#+BEGIN_SRC emacs-lisp
+;;;; See http://ergoemacs.org/emacs/emacs_n_unicode.html
+;;(define-abbrev-table 'global-abbrev-table '(
+;;    ("alpha" "α")
+;;    ("beta" "β")
+;;    ("gamma" "γ")
+;;    ("theta" "θ")
+;;    ("inf" "∞")
+;;    ("fcmp" "⨾")
+;;    ("then" "⨾")
+;;    ("syq"  "╳")
+;;
+;;    ("ar1" "→")
+;;    ("ar2" "⇒")
+;;    ))
+;;
+;;(abbrev-mode 1) ; turn on abbrev mode
+#+END_SRC
+
+* COMMENT footer
+(org-babel-load-file "~/.emacs.d/init.org")
+
+# Local Variables:
+# eval: (visual-line-mode t)
+# eval: (load-file "~/alhassy.github.io/content/AlBasmala.el")
+# compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs") (my-org-html-export-to-html))
+# End:
