@@ -114,6 +114,29 @@
  ) 
 )
 
+(defun re-replace-in-file (file regex whatDo) "Find and replace a regular expression in-place in a file."
+
+    (find-file file)
+    (goto-char 0)
+    (let ((altered (replace-regexp-in-string regex whatDo (buffer-string))))
+      (erase-buffer)
+      (insert altered)
+      (save-buffer)
+      (kill-buffer)
+   )
+)
+
+;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
+(defun org-keywords ()
+  "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
+  (org-element-map (org-element-parse-buffer 'element) 'keyword
+                   (lambda (keyword) (cons (org-element-property :key keyword)
+                                           (org-element-property :value keyword)))))
+
+(defun org-keyword (KEYWORD)
+  "Get the value of a KEYWORD in the form of #+KEYWORD: value"
+  (cdr (assoc KEYWORD (org-keywords))))
+
 (define-globalized-minor-mode my-flyspell-global-mode flyspell-mode
   (lambda () 
 

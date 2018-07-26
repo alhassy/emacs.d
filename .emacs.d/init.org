@@ -7,6 +7,7 @@
 #+CATEGORIES: Emacs
 #+OPTIONS: html-postamble:nil toc:nil
 #+IMAGE: ../assets/img/emacs_logo.png
+#+SOURCE: https://raw.githubusercontent.com/alhassy/dotfiles/master/.emacs.d/init.org
 
 # It makes version control easier, especially if you split your init.el into different files in ~/.emacs.d. You can just commit init.el like every other file, and git clone /my/emacs/config.git ~/.emacs.d on a new system gives you all of your Emacs configuration, without having to link a file into $HOME.
 
@@ -16,10 +17,14 @@
 
 Herein I document the configurations I utilise with Emacs.
 Of note are:
- + This is a literate programming setup.
- + I have a variety of cosmetics such as showing battery life and flashing upon errors.
- + Production of org-mode ready-to-go skeletons.
- + Utilities for working with org-mode files, namely ~#+KEYWORD: VALUE~ pairs.
+
+ ◈ This is a literate programming setup. ◈
+
+ ◈ I have a variety of cosmetics such as showing battery life and flashing upon errors. ◈
+
+ ◈ Production of org-mode ready-to-go skeletons. ◈
+
+ ◈ Utilities for working with org-mode files, namely ~#+KEYWORD: VALUE~ pairs. ◈
 
 This is a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file.
 #+END_CENTER
@@ -541,6 +546,54 @@ Instead I now only need to type ~C-|~ to make this switch.
 )
 #+END_SRC
 
+** ~re-replace-in-file~
+
+#+BEGIN_SRC emacs-lisp
+(defun re-replace-in-file (file regex whatDo) "Find and replace a regular expression in-place in a file."
+
+    (find-file file)
+    (goto-char 0)
+    (let ((altered (replace-regexp-in-string regex whatDo (buffer-string))))
+      (erase-buffer)
+      (insert altered)
+      (save-buffer)
+      (kill-buffer)
+   )
+)
+#+END_SRC
+
+Example usage:
+#+BEGIN_EXAMPLE emacs-lisp
+;; Within mysite.html we rewrite: <h1.*h1>   ↦   <h1.*h1>\n NICE
+;; I.e., we add a line break after the first heading and a new word, “NICE”.
+(re-replace-in-file "mysite.html"
+                    "<h1.*h1>"
+                    (lambda (x) (concat x "\n NICE")))
+#+END_EXAMPLE
+
+** Obtaining Values of ~#+KEYWORD~ Annotations
+
+Org-mode settings are, for the most part, in the form ~#+KEYWORD: VALUE~. Of notable interest
+are the ~TITLE~ and ~NAME~ keywords. We use the following ~org-keywords~ function to obtain
+the values of arbitrary ~#+THIS : THAT~ pairs, which may not necessarily be supported by native
+Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ tags associated with an article.
+
+# Parse org buffer as an elisp structure: https://emacs.stackexchange.com/questions/2869/turn-a-list-or-data-structure-into-an-org-document#
+#+BEGIN_SRC emacs-lisp
+;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
+(defun org-keywords ()
+  "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
+  (org-element-map (org-element-parse-buffer 'element) 'keyword
+                   (lambda (keyword) (cons (org-element-property :key keyword)
+                                           (org-element-property :value keyword)))))
+
+(defun org-keyword (KEYWORD)
+  "Get the value of a KEYWORD in the form of #+KEYWORD: value"
+  (cdr (assoc KEYWORD (org-keywords))))
+#+END_SRC
+
+Note that capitalisation in a ”#+KeyWord” is irrelevant.
+
 * Spelling
 I would like to check spelling by default.
  + M-$ :: Check and correct spelling of the word at point
@@ -821,25 +874,28 @@ Add the following to a web-page if you'd like it to have a floating table of con
   (doom-themes-neotree-config)  ; all-the-icons fonts must be installed!
 * Summary of Utilities Provided
 
-| _Command_                        | _Action_                                            |
-| ~C-c C-m~                        | recompile file                                    |
-| ~<f5>~                           | revert buffer                                     |
-| ~M-x k~                          | kill to start of line                             |
-| ~C-∣~                            | toggle 2 windows from horizontal to vertical view |
-| ~(file-as-list   pathHere)~      | construe a file as a list of lines                |
-| ~(file-as-string pathHere)~      | construe a file as a string                       |
-| ~M-x create-scratch-buffer~      | --self evident--                                  |
-| ~M-x kill-other-buffers~         | --self evident--                                  |
-| ~M-$~                            | check spelling of word at point                   |
-| ~M-#~                            | thesaurus look-up word at point                   |
-| ~(DANGER-all-locals)~            | accept, evaluate, all local variables             |
-| ~(SAFE-query-locals)~            | query whether local variables should be evaluated |
-| ~C-+/-~                          | increase/decrease text size                       |
-| ~M-x my-org-html-export-to-html~ | make then open html from an org file              |
-| ~C-c C-c~                        | execute code in an org ~src~ block                  |
-| ~<E~                             | produce an emacs-lisp ~src~ block                   |
-| ~<g~                             | produce a graph template ~src~ block                |
-| ~C-x t~                          | open a new untitled org template file             |
+| _Command_                                | _Action_                                            |
+| ~C-c C-m~                                | recompile file                                    |
+| ~<f5>~                                   | revert buffer                                     |
+| ~M-x k~                                  | kill to start of line                             |
+| ~C-∣~                                    | toggle 2 windows from horizontal to vertical view |
+| ~(file-as-list   pathHere)~              | construe a file as a list of lines                |
+| ~(file-as-string pathHere)~              | construe a file as a string                       |
+| (~re-replace-in-file file regex whatDo)~ | perform an in-file regular expression rewrite     |
+| ~M-x create-scratch-buffer~              | --self evident--                                  |
+| ~M-x kill-other-buffers~                 | --self evident--                                  |
+| ~M-$~                                    | check spelling of word at point                   |
+| ~M-#~                                    | thesaurus look-up word at point                   |
+| ~(DANGER-all-locals)~                    | accept, evaluate, all local variables             |
+| ~(SAFE-query-locals)~                    | query whether local variables should be evaluated |
+| ~C-+/-~                                  | increase/decrease text size                       |
+| ~M-x my-org-html-export-to-html~         | make then open html from an org file              |
+| ~C-c C-c~                                | execute code in an org ~src~ block                  |
+| ~<E~                                     | produce an emacs-lisp ~src~ block                   |
+| ~<g~                                     | produce a graph template ~src~ block                |
+| ~C-x t~                                  | open a new untitled org template file             |
+| ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file      |
+| ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~           |
 
 Some possibly interesting reads:
   + Arnaud Legrand's article [[http://mescal.imag.fr/membres/arnaud.legrand/misc/init.php][Emacs init file written in org-mode]]
