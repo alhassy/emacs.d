@@ -31,17 +31,6 @@ for peers, and, most importantly, better maintainability for myself!
 ⟪ Dear reader when encoutnering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~ ⟫
 #+END_CENTER
 
-#+NAME: Some front matter for resulting elisp file.
-#+HTML: <!-- 
-#+BEGIN_SRC emacs-lisp :tangle AlBasmala.el
-;; 
-;; This header file is used to create the articles for: https://alhassy.github.io/blog/
-;; This file is generated from the literate file `AlBasmala.org` in the same repo.
-;; Musa Al-hassy, 2018
-;;
-#+END_SRC
-#+HTML: --> 
-
 * Introduction
 
 Why not keep Emac's configurations in the ~~/.emacs~ file?
@@ -63,7 +52,7 @@ is then loaded using org-mode's tangling feature.
 
 We evaluate every piece of emacs-lisp code available here when
 Emacs starts up by placing the following at the top of our ~.emacs~ file:
-#+BEGIN_SRC emacs-lisp :tangle "~/tmp/delme"
+#+BEGIN_SRC emacs-lisp :tangle no
 (org-babel-load-file "~/.emacs.d/init.org")
 ;;
 ;; My Emacs settings: (find-file "~/.emacs.d/init.org")
@@ -160,7 +149,7 @@ combinators.
 ** Programming Language Supports
 
 #+BEGIN_SRC emacs-lisp
-(load (shell-command-to-string "agda-mode locate"))
+; (load (shell-command-to-string "agda-mode locate"))
 ;;
 ;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
 ; (makunbound 'agda2-include-dirs)
@@ -1019,7 +1008,7 @@ Read: https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#h
 
 # Local Variables:
 # eval: (visual-line-mode t)
-# eval: (load-file "~/alhassy.github.io/content/AlBasmala.el")
+# eval: (when nil (load-file "~/alhassy.github.io/content/AlBasmala.el"))
 # eval: (remove (concat "../content/" NAMEorg) commitables)
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs") (my-org-html-export-to-html))
 # End:
