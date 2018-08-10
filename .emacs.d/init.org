@@ -9,11 +9,9 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+SOURCE: https://raw.githubusercontent.com/alhassy/dotfiles/master/.emacs.d/init.org
 
-# It makes version control easier, especially if you split your init.el into different files in ~/.emacs.d. You can just commit init.el like every other file, and git clone /my/emacs/config.git ~/.emacs.d on a new system gives you all of your Emacs configuration, without having to link a file into $HOME.
-
 * Abstract                                                           :ignore:
 #+BEGIN_CENTER 
-*Abstract*
+ *Abstract*
 
 Herein I document the configurations I utilise with Emacs.
 Of note are:
@@ -26,7 +24,11 @@ Of note are:
 
  ◈ Utilities for working with org-mode files, namely ~#+KEYWORD: VALUE~ pairs. ◈
 
-This is a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file.
+As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
+through my ever growing configuration files, ease of usability and reference
+for peers, and, most importantly, better maintainability for myself!
+
+⟪ Dear reader when encoutnering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~ ⟫
 #+END_CENTER
 
 #+NAME: Some front matter for resulting elisp file.
@@ -84,14 +86,13 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 
 * Version Control
 
-Soft links are pointers to other filenames, whereas hardlinks
+[[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
 are pointers to memory location of a given filename!
-
-Soft links are preferably since they defer to the orginal filename
+Soft links are preferable since they defer to the orginal filename
 and can work across servers.
 
 We can declare them as follows,
-#+BEGIN_EXAMPLE
+#+BEGIN_EXAMPLE shell
 ln -s source_file myfile
 #+END_EXAMPLE
 
@@ -104,7 +105,7 @@ On a new machine, copy-paste any existing emacs configs we want
 to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
 links only.
 
-#+BEGIN_EXAMPLE
+#+BEGIN_EXAMPLE shell
 repo=~/Dropbox     ## or my git repository: ~/dotfiles
 
 cd ~
@@ -120,12 +121,21 @@ ln -s $repo/.emacs.d/ .emacs.d
 #+END_EXAMPLE
 Note the extra ~/~ after ~.emacs.d~!
 
-You may need to unlink softlinks if you already have them;
+You may need to unlink soft links if you already have them;
 e.g., ~unlink .emacs.d~.
 
 To make another softlink to a file, say in a blogging directory,
 we ~cd~ to the location of interest then execute, say:
 ~ln -s $repo/.emacs.d/init.org init.org~
+
+While we're at it, let's make this super-duper file (and another) easily
+accessible --since we'll be altering it often--:
+#+BEGIN_EXAMPLE shell
+cd ~
+
+ln -s dotfiles/.emacs.d/init.org init.org
+ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
+#+END_EXAMPLE
 
 * Managing Local Variables
 
@@ -159,6 +169,20 @@ combinators.
 (load "~/.emacs.d/lisp/PG/generic/proof-site")
 #+END_SRC
 *** COMMENT More Programming Language Support                        :TODO:
+
+
+instead of mmm-mode, we could use polymode alsong with org;
+https://www.reddit.com/r/emacs/comments/50p34n/polymode_is_awesome/
+
+M-x package-install RET polymode
+(require 'poly-org)
+(poly-org-mode t)
+(add-hook 'org-mode-hook 'poly-org-mode)
+
+now a source block automatically turns on the minor mode it needs!
+
++ other multiple modes: https://www.emacswiki.org/emacs/MultipleModes
++ (!!) https://wiki.haskell.org/Literate_programming#Multi-mode_support_in_Emacs
 
 **** Haskell
 #+BEGIN_SRC emacs-lisp
@@ -194,7 +218,7 @@ combinators.
 
   ;; ;; removes literate-haskell mode activation for lhs files and addes mmm-mode
   ;; (require 'mmm-auto)
-  ;; (add-hook 'literate-haskell-mode 'my-mmm-mode) ;; WTF THiS DOESN'T WORK!!!
+  ;; (add-hook 'literate-haskell-mode 'my-mmm-mode) ;; this doesn't work
   ;; (defun my-mmm-mode ()
   ;;   ;; go into mmm minor mode when class is given
   ;;   (make-local-variable 'mmm-global-mode)
@@ -571,6 +595,22 @@ Example usage:
                     (lambda (x) (concat x "\n NICE")))
 #+END_EXAMPLE
 
+*** ~mapsto~: Simple rewriting for current buffer
+#+BEGIN_SRC emacs-lisp
+(defun mapsto (this that)
+  "In the current buffer make the regular expression rewrite: this ↦ that."
+  (let* ((current-location (point))
+       ;; Do not alter the case of the <replacement text>.
+       (altered (replace-regexp-in-string this (lambda (x) that) (buffer-string) 'no-fixed-case))
+       )
+      (erase-buffer)
+      (insert altered)
+      (save-buffer)
+      (goto-char current-location)
+  )
+)
+#+END_SRC
+
 ** Obtaining Values of ~#+KEYWORD~ Annotations
 
 Org-mode settings are, for the most part, in the form ~#+KEYWORD: VALUE~. Of notable interest
@@ -663,7 +703,8 @@ Some initial languages we want org-babel to support:
    '(
      (emacs-lisp . t)
      (shell	 . t)
-     (python	 . t)
+     (python . t)
+     (haskell . t)
      (ruby	 . t)
      (ocaml	 . t)
      (dot	 . t)
@@ -859,6 +900,8 @@ Add the following to a web-page if you'd like it to have a floating table of con
 (require 'google-this)
 #+END_SRC
 
++ *ToDo* Manage, & automate, email from within Emacs using [[https://notmuchmail.org/][Notmuch -- Just an email system]].
+
 ** COMMENT Multiple Cursors                                           :TODO:
   ;; see http://emacsrocks.com/e13.html
   (require 'multiple-cursors)
@@ -872,6 +915,29 @@ Add the following to a web-page if you'd like it to have a floating table of con
   (global-set-key [f8] 'neotree-toggle)
   ;; Enable custom neotree theme
   (doom-themes-neotree-config)  ; all-the-icons fonts must be installed!
+* COMMENT Other cool stuff to look at                                 :NEATO:
+#+BEGIN_SRC emacs-lisp
+;; From Holger Schurig's Emacs configuration
+
+;; Byte-compile local elisp files on save
+;;
+(defun my-byte-compile-on-save ()
+  "Byte-compile an .el file at save time, if it's is in the `user-emacs-directory'."
+  (when (and (string= (file-name-directory (buffer-file-name)) (expand-file-name user-emacs-directory))
+             (string= (file-name-extension (buffer-file-name)) "el"))
+    (byte-compile-file (buffer-file-name) nil)))
+
+(add-hook 'after-save-hook #'my-byte-compile-on-save)
+
+;; Don't load old .elc files when the .el file is newer
+(setq load-prefer-newer t)
+;(describe-symbol 'load-prefer-newer)
+
+;; (eval-when-compile
+;;   ???
+;; )
+;; 
+#+END_SRC
 * Summary of Utilities Provided
 
 | _Command_                                | _Action_                                            |
@@ -882,6 +948,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 | ~(file-as-list   pathHere)~              | construe a file as a list of lines                |
 | ~(file-as-string pathHere)~              | construe a file as a string                       |
 | (~re-replace-in-file file regex whatDo)~ | perform an in-file regular expression rewrite     |
+| ~(mapsto this that)~                     | regex rewrite in current buffer: this ↦ that      |
 | ~M-x create-scratch-buffer~              | --self evident--                                  |
 | ~M-x kill-other-buffers~                 | --self evident--                                  |
 | ~M-$~                                    | check spelling of word at point                   |
@@ -898,10 +965,30 @@ Add the following to a web-page if you'd like it to have a floating table of con
 | ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~           |
 
 Some possibly interesting reads:
+  + Karl Voit's article [[https://karl-voit.at/2017/06/03/emacs-org/][My Emacs Configuration In Org-mode]]; his init file can be found [[https://github.com/novoid/dot-emacs][here]].
+  + Holger Schuri's article [[http://www.holgerschurig.de/en/emacs-init-tangle/][Efficient Emacs .org ➞ .el tangling]] 
+    ; his init file can be found [[https://bitbucket.org/holgerschurig/emacsconf/src/b06a0f394b9f20cd4e00cfc5a24f7f59db4ba376/config.org?at=master&fileviewer=file-view-default][here]].
   + Arnaud Legrand's article [[http://mescal.imag.fr/membres/arnaud.legrand/misc/init.php][Emacs init file written in org-mode]]
   + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]  
   + [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][A tutorial on evaluating code within ~src~ blocks]]
 
+* COMMENT hooks and things
+#+BEGIN_SRC emacs-lisp  :tangle no
+;; not needed
+(defun lagda-extension-whatdo ()
+       "What to do when encountering a .lagda file.
+       To be added to auto-mode-list."
+       (agda2-mode)
+       (org-babel-load-file "~/Dropbox/lagda-with-org.org")
+       (message "Musa's special Agda settings enabled."))
+
+(add-to-list 'auto-mode-alist '("\\.lagda\\'" . (lambda () (lagda-extension-whatdo))))
+; (add-to-list 'auto-mode-alist '("\\.lagda\\'" . 'lagda-extension-whatdo))
+
+(defun my-add-to-multiple-hooks (function hooks) (mapc (lambda (hook) (add-hook hook function)) hooks))
+(defun my-common-hook () (fci-mode) (orgstruct-mode) )
+(my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
+#+END_SRC
 * COMMENT abbrev-mode                                        :no_longer_used:
 #+BEGIN_SRC emacs-lisp
 ;;;; See http://ergoemacs.org/emacs/emacs_n_unicode.html
@@ -921,12 +1008,18 @@ Some possibly interesting reads:
 ;;
 ;;(abbrev-mode 1) ; turn on abbrev mode
 #+END_SRC
-
 * COMMENT footer
+
+;; Kill process buffer without confirmation.
+(setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
+
 (org-babel-load-file "~/.emacs.d/init.org")
+
+Read: https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#haskell-preliminaries
 
 # Local Variables:
 # eval: (visual-line-mode t)
 # eval: (load-file "~/alhassy.github.io/content/AlBasmala.el")
+# eval: (remove (concat "../content/" NAMEorg) commitables)
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs") (my-org-html-export-to-html))
 # End:

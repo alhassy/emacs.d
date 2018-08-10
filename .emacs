@@ -6,28 +6,28 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (dash-functional writegood-mode use-package unicode-fonts solarized-theme rainbow-delimiters powerthesaurus org nyan-mode neotree multiple-cursors imenu-list htmlize helm-projectile helm-ag google-this fill-column-indicator doom-themes company-coq auto-compile alert)))
  '(safe-local-variable-values
    (quote
-    ((eval setq org-latex-default-packages-alist
-	   (cons
-	    (quote
-	     ("mathletters" "ucs" nil))
-	    org-latex-default-packages-alist))
-     (org-latex-inputenc-alist
-      ("utf8" . "utf8x"))
-     (eval ox-extras-activate
-	   (quote
-	    (ignore-headlines)))
-     (eval require
-	   (quote ox-extra))
-     (eval load-file "AlBasmala.el")
+    ((eval load-file "CheatSheet.el")
      (eval org-babel-tangle)
+     (eval setq org-todo-keyword-faces
+	   (quote
+	    (("TODO" . org-warning)
+	     ("STARTED" . "yellow"))))
+     (eval setq org-todo-keyword-faces
+	   (quote
+	    (("TODO" . org-warning)
+	     ("STARTED" . "yellow")
+	     ("CANCELED" :foreground "green" :weight bold))))
+     (eval org-babel-load-file "~/AlBasmala.org")
+     (eval org-shifttab)
+     (eval load-file "AlBasmala.el")
      (eval setq NAME
 	   (file-name-sans-extension
 	    (buffer-name)))
+     (eval remove
+	   (concat "../content/" NAMEorg)
+	   commitables)
      (eval load-file "~/alhassy.github.io/content/AlBasmala.el")
      (eval visual-line-mode t)))))
 (custom-set-faces
@@ -36,3 +36,4 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(flyspell-incorrect ((t (:inverse-video t)))))
+(put 'downcase-region 'disabled nil)

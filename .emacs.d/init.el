@@ -1,5 +1,5 @@
 ;; In-case I forget to byte-compile!
-(byte-compile-file "~/.emacs")
+;(byte-compile-file "~/.emacs")
 
 ;; Change this silly counter to visualy notice a change.
 ;; (progn (message "Init.org contents loaded! Counter: 7") (sleep-for 3))
@@ -8,7 +8,7 @@
 (defun DANGER-all-locals () (setq enable-local-variables :all))
 (defun SAFE-query-locals () (setq enable-local-variables t))
 
-(load (shell-command-to-string "agda-mode locate"))
+;(load (shell-command-to-string "agda-mode locate"))
 ;;
 ;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
 ; (makunbound 'agda2-include-dirs)
@@ -23,8 +23,8 @@
         ("org" . "http://orgmode.org/elpa/")))
 (package-initialize)
 
-  (setq visible-bell 1)
-  ;; Enable flashing mode-line on errors
+(setq visible-bell 1)
+;; Enable flashing mode-line on errors
 
 (setq initial-buffer-choice "~/Dropbox/todo.org")
 
@@ -44,7 +44,7 @@
 (global-set-key (kbd "C--") 'text-scale-decrease)
   ;; C-x C-0 restores the default font size
 
-  (delete-selection-mode 1)
+(delete-selection-mode 1)
 
 (ido-mode t)
 
@@ -126,6 +126,19 @@
    )
 )
 
+(defun mapsto (this that)
+  "In the current buffer make the regular expression rewrite: this ↦ that."
+  (let* ((current-location (point))
+       ;; Do not alter the case of the <replacement text>.
+       (altered (replace-regexp-in-string this (lambda (x) that) (buffer-string) 'no-fixed-case))
+       )
+      (erase-buffer)
+      (insert altered)
+      (save-buffer)
+      (goto-char current-location)
+  )
+)
+
 ;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
 (defun org-keywords ()
   "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
@@ -162,12 +175,13 @@
 ; Seamless use of babel: No confirmation upon execution.
 (setq org-confirm-babel-evaluate nil)
 
- (org-babel-do-load-languages
+(org-babel-do-load-languages
    'org-babel-load-languages
    '(
      (emacs-lisp . t)
      (shell	 . t)
-     (python	 . t)
+     (python . t)
+     (haskell . t)
      (ruby	 . t)
      (ocaml	 . t)
      (dot	 . t)

@@ -86,12 +86,11 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 
 Soft links are pointers to other filenames, whereas hardlinks
 are pointers to memory location of a given filename!
-
-Soft links are preferably since they defer to the orginal filename
+Soft links are preferable since they defer to the orginal filename
 and can work across servers.
 
 We can declare them as follows,
-#+BEGIN_EXAMPLE
+#+BEGIN_EXAMPLE shell
 ln -s source_file myfile
 #+END_EXAMPLE
 
@@ -104,7 +103,7 @@ On a new machine, copy-paste any existing emacs configs we want
 to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
 links only.
 
-#+BEGIN_EXAMPLE
+#+BEGIN_EXAMPLE shell
 repo=~/Dropbox     ## or my git repository: ~/dotfiles
 
 cd ~
@@ -120,7 +119,7 @@ ln -s $repo/.emacs.d/ .emacs.d
 #+END_EXAMPLE
 Note the extra ~/~ after ~.emacs.d~!
 
-You may need to unlink softlinks if you already have them;
+You may need to unlink soft links if you already have them;
 e.g., ~unlink .emacs.d~.
 
 To make another softlink to a file, say in a blogging directory,
@@ -548,7 +547,7 @@ Instead I now only need to type ~C-|~ to make this switch.
 
 ** ~re-replace-in-file~
 
-#+BEGIN_SRC emacs-lisp  :tangle AlBasmala.el
+#+BEGIN_SRC emacs-lisp
 (defun re-replace-in-file (file regex whatDo) "Find and replace a regular expression in-place in a file."
 
     (find-file file)
@@ -579,7 +578,7 @@ the values of arbitrary ~#+THIS : THAT~ pairs, which may not necessarily be supp
 Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ tags associated with an article.
 
 # Parse org buffer as an elisp structure: https://emacs.stackexchange.com/questions/2869/turn-a-list-or-data-structure-into-an-org-document#
-#+BEGIN_SRC emacs-lisp :tangle AlBasmala.el
+#+BEGIN_SRC emacs-lisp
 ;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
 (defun org-keywords ()
   "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
@@ -925,15 +924,9 @@ Some possibly interesting reads:
 * COMMENT footer
 (org-babel-load-file "~/.emacs.d/init.org")
 
-(progn (delete-file "~/alhassy.github.io/content/AlBasmala.el") 
-       (delete-file "~/alhassy.github.io/content/headers.ltx") 
-       (org-babel-tangle-file "~/alhassy.github.io/content/AlBasmala.org")
-       ; (load-file "~/alhassy.github.io/content/AlBasmala.el")
-       (find-file "~/alhassy.github.io/content/headers.ltx") 
-)
-
 # Local Variables:
 # eval: (visual-line-mode t)
 # eval: (load-file "~/alhassy.github.io/content/AlBasmala.el")
+# eval: (remove (concat "../content/" NAMEorg) commitables)
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs") (my-org-html-export-to-html))
 # End:
