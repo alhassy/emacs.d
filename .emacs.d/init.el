@@ -23,8 +23,8 @@
         ("org" . "http://orgmode.org/elpa/")))
 (package-initialize)
 
-  (setq visible-bell 1)
-  ;; Enable flashing mode-line on errors
+(setq visible-bell 1)
+;; Enable flashing mode-line on errors
 
 (setq initial-buffer-choice "~/Dropbox/todo.org")
 
@@ -44,7 +44,7 @@
 (global-set-key (kbd "C--") 'text-scale-decrease)
   ;; C-x C-0 restores the default font size
 
-  (delete-selection-mode 1)
+(delete-selection-mode 1)
 
 (ido-mode t)
 
@@ -175,7 +175,7 @@
 ; Seamless use of babel: No confirmation upon execution.
 (setq org-confirm-babel-evaluate nil)
 
- (org-babel-do-load-languages
+(org-babel-do-load-languages
    'org-babel-load-languages
    '(
      (emacs-lisp . t)
@@ -223,6 +223,35 @@
 
 ;; (setq org-pretty-entities t) 
 ;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+
+(defun org-goto-line (line)
+  "Go to the indicated line, unfolding the parent Org header.
+
+   Implementation: Go to the line, then look at the 1st previous
+   org header, now we can unfold it whence we do so, then we go
+   back to the line we want to be at.
+  "
+  (interactive)
+  (goto-line line)
+  (org-previous-visible-heading 1)
+  (org-cycle)
+  (goto-line line)
+)
+
+; https://orgmode.org/manual/Structure-editing.html
+; (describe-symbol 'save-excursion)
+;
+(defun org-fold-current-subtree-anywhere-in-it ()
+  "Hide the current heading, while being anywhere inside it."
+  (interactive)
+  (save-excursion
+    (org-narrow-to-subtree)
+    (org-shifttab)
+    (widen))
+)
+
+;; FIXME: Make this buffer specfic!
+(global-set-key (kbd "C-c C-h") 'org-fold-current-subtree-anywhere-in-it)
 
 (define-globalized-minor-mode my-rainbow-global-mode rainbow-delimiters-mode
   (lambda () (rainbow-delimiters-mode)

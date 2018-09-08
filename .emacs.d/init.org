@@ -9,6 +9,64 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+SOURCE: https://raw.githubusercontent.com/alhassy/dotfiles/master/.emacs.d/init.org
 
+* TODO NICE Agda input` symbol alterations!
+
+(describe-symbol 'agda-input-translations)
+(describe-symbol 'add-to-list)
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉") )
+#+END_SRC
+
+If you change this setting manually, without using the
+customization buffer, you need to call (agda-input-setup) in
+order for the change to take effect.
+
+~\set → 𝒮ℯ𝓉~
+
+Others:
+
+#+BEGIN_SRC emacs-lisp
+;; category theory
+(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
+(add-to-list 'agda-input-user-translations '("alg" "𝒜𝓁ℊ"))
+(add-to-list 'agda-input-user-translations '("split" "▵"))
+(add-to-list 'agda-input-user-translations '("join" "▿"))
+(add-to-list 'agda-input-user-translations '("adj" "⊣"))
+(add-to-list 'agda-input-user-translations '(";;" "﹔"))
+(add-to-list 'agda-input-user-translations '(";;" "⨾"))
+(add-to-list 'agda-input-user-translations '(";;" "∘"))
+
+;; residuals
+(add-to-list 'agda-input-user-translations '("over" "╱"))
+(add-to-list 'agda-input-user-translations '("under" "╲"))
+
+;; adjunction isomorphism pair
+(add-to-list 'agda-input-user-translations '("floor"  "⌊⌋"))
+(add-to-list 'agda-input-user-translations '("lower"  "⌊⌋"))
+(add-to-list 'agda-input-user-translations '("lad"    "⌊⌋"))
+(add-to-list 'agda-input-user-translations '("ceil"   "⌈⌉"))
+(add-to-list 'agda-input-user-translations '("raise"  "⌈⌉"))
+(add-to-list 'agda-input-user-translations '("rad"    "⌈⌉"))
+
+;; silly stuff
+;;
+;; angry, cry, why-you-no
+(add-to-list 'agda-input-user-translations '("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")) 
+;; confused, disapprove, dead, shrug
+(add-to-list 'agda-input-user-translations '("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"))
+;; dance, csi
+(add-to-list 'agda-input-user-translations '("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓" "•_•)
+( •_•)>⌐■-■
+(⌐■_■)
+"))
+;; love, pleased, success, yesss
+(add-to-list 'agda-input-user-translations '("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
+
+;; activate translations
+(agda-input-setup)
+#+END_SRC
+
 * Abstract                                                           :ignore:
 #+BEGIN_CENTER 
  *Abstract*
@@ -157,6 +215,11 @@ combinators.
 ;; Open .v files with Proof General's Coq mode
 (load "~/.emacs.d/lisp/PG/generic/proof-site")
 #+END_SRC
+
+# "agda-mode setup" yields:
+# (load-file (let ((coding-system-for-read 'utf-8))
+#                (shell-command-to-string "agda-mode locate")))
+
 *** COMMENT More Programming Language Support                        :TODO:
 
 
@@ -323,9 +386,9 @@ to the files that utilise it.
 ;;Give a symbol new Agda TeX binding
 ;;  For example, to setup under (residual) in Agda, goto
 ;;  |M-x customize-variable agda-input-user-translations| then
-;;  |INS| then for key sequence type |under| then |INS| and
+;;  |INS| then for key sequence type |under|, or |\\|, then |INS| and
 ;;  for string paste |╲|. Now \under yields ╲.
-
+;; also: ╱
 
 ; (load-file (let ((coding-system-for-read 'utf-8))
 ;                (shell-command-to-string "agda-mode locate"))
@@ -347,6 +410,13 @@ to the files that utilise it.
         ("org" . "http://orgmode.org/elpa/")))
 (package-initialize)
 #+END_SRC
+
+# If there are issues with loading the archives,
+# say, "Failed to download ‘gnu’ archive."
+# then ensure you can both read and write, recursively, to your .emacs.d/
+# E.g., within emacs try to execute (package-refresh-contents)
+# and you'll observe a permissions error.
+
 * Cosmetics
 ** COMMENT Column Marker                            :not_working_as_desired:
 
@@ -820,6 +890,43 @@ Then the functionality,
 ;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
 #+END_SRC
 
+** Jumping without hassle
+
+#+BEGIN_SRC emacs-lisp
+(defun org-goto-line (line)
+  "Go to the indicated line, unfolding the parent Org header.
+
+   Implementation: Go to the line, then look at the 1st previous
+   org header, now we can unfold it whence we do so, then we go
+   back to the line we want to be at.
+  "
+  (interactive)
+  (goto-line line)
+  (org-previous-visible-heading 1)
+  (org-cycle)
+  (goto-line line)
+)
+#+END_SRC
+
+** Folding within a subtree
+
+#+BEGIN_SRC emacs-lisp
+; https://orgmode.org/manual/Structure-editing.html
+; (describe-symbol 'save-excursion)
+;
+(defun org-fold-current-subtree-anywhere-in-it ()
+  "Hide the current heading, while being anywhere inside it."
+  (interactive)
+  (save-excursion
+    (org-narrow-to-subtree)
+    (org-shifttab)
+    (widen))
+)
+
+;; FIXME: Make this buffer specfic!
+(global-set-key (kbd "C-c C-h") 'org-fold-current-subtree-anywhere-in-it)
+#+END_SRC
+
 ** COMMENT floating toc material :no_longer_using_this:
 
 Add the following to a web-page if you'd like it to have a floating table of contents.
@@ -927,6 +1034,18 @@ Add the following to a web-page if you'd like it to have a floating table of con
 ;; )
 ;; 
 #+END_SRC
+* COMMENT FIXME keyword
+
+FIXME:
+
+;; "FIXME:" is now a keyword, and so will be highlighted
+(font-lock-add-keywords nil
+'(("\\<\\(FIXME\\):" 1
+font-lock-warning-face t)))
+;;
+;; Src: https://www.gnu.org/software/emacs/manual/html_node/emacs/Font-Lock.html#Font-Lock
+;; Also: https://stackoverflow.com/a/756856/3550444
+
 * Summary of Utilities Provided
 
 | _Command_                                | _Action_                                            |

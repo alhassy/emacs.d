@@ -5,7 +5,7 @@
 ;; Author: Roland Walker <walker@pobox.com>
 ;; Homepage: http://github.com/rolandwalker/unicode-fonts
 ;; URL: http://raw.githubusercontent.com/rolandwalker/unicode-fonts/master/unicode-fonts.el
-;; Package-Version: 20150826.1532
+;; Package-Version: 20150826.2232
 ;; Version: 0.4.8
 ;; Last-Updated: 26 Aug 2015
 ;; EmacsWiki: UnicodeFonts

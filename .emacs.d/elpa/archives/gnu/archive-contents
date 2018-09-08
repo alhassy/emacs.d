@@ -120,6 +120,11 @@
 	  "Highlight the cursor whenever the window scrolls" single
 	  ((:url . "https://github.com/Malabarba/beacon")
 	   (:keywords "convenience"))])
+ (brief .
+	[(5 84)
+	 nil "Brief Editor Emulator" single
+	 ((:url . "http://elpa.gnu.org/packages/brief.html")
+	  (:keywords "brief" "emulations" "crisp"))])
  (bug-hunter .
 	     [(1 3 1)
 	      ((seq
@@ -341,7 +346,7 @@
 	     ((:keywords "killing" "convenience")
 	      (:url . "https://github.com/leoliu/easy-kill"))])
  (ebdb .
-       [(0 5 4)
+       [(0 6)
 	((emacs
 	  (25 1))
 	 (cl-lib
@@ -384,7 +389,7 @@
 	 ((:keywords "convenience" "languages")
 	  (:url . "https://github.com/joaotavora/eglot"))])
  (el-search .
-	    [(1 7 3)
+	    [(1 7 6)
 	     ((emacs
 	       (25))
 	      (stream
@@ -417,11 +422,13 @@
 	      ((:url . "http://elpa.gnu.org/packages/epoch-view.html")
 	       (:keywords "data" "timestamp" "epoch" "unix"))])
  (ergoemacs-mode .
-		 [(5 14 7 3)
+		 [(5 16 10 12)
 		  ((emacs
 		    (24 1))
 		   (undo-tree
-		    (0 6 5)))
+		    (0 6 5))
+		   (cl-lib
+		    (0 5)))
 		  "Emacs mode based on common modern interface and ergonomics." tar
 		  ((:keywords "convenience")
 		   (:url . "https://github.com/ergoemacs/ergoemacs-mode"))])
@@ -621,7 +628,7 @@
 	     ((:url . "http://elpa.gnu.org/packages/json-mode.html")
 	      (:keywords "data"))])
  (jsonrpc .
-	  [(1 0 0)
+	  [(1 0 6)
 	   ((emacs
 	     (25 2)))
 	   "JSON-RPC library" single
@@ -852,7 +859,7 @@
        ((:url . "http://elpa.gnu.org/packages/osc.html")
 	(:keywords "comm" "processes" "multimedia"))])
  (other-frame-window .
-		     [(1 0 4)
+		     [(1 0 5)
 		      ((emacs
 			(24 4)))
 		      "Minor mode to enable global prefix keys for other frame/window buffer placement" single
@@ -933,8 +940,10 @@
 	((:url . "http://elpa.gnu.org/packages/rbit.html")
 	 (:keywords "data structures" "binary tree" "intervals"))])
  (rcirc-color .
-	      [(0 3)
-	       nil "color nicks" single
+	      [(0 4 1)
+	       ((emacs
+		 (24 4)))
+	       "color nicks" single
 	       ((:url . "http://elpa.gnu.org/packages/rcirc-color.html")
 		(:keywords "comm"))])
  (rcirc-menu .
@@ -1244,7 +1253,7 @@
 	    (:keywords))])
  (xclip .
 	[(1 4)
-	 nil "use xclip to copy&paste" single
+	 nil "Copy&paste GUI clipboard from text terminal" single
 	 ((:url . "http://elpa.gnu.org/packages/xclip.html")
 	  (:keywords "convenience" "tools"))])
  (xelb .
