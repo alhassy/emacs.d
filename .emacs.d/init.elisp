@@ -1,0 +1,4 @@
+
+;; Accept all local variables versus query for possibly non-safe locals.
+(defun DANGER-all-locals () (setq enable-local-variables :all))
+(defun SAFE-query-locals () (setq enable-local-variables t))

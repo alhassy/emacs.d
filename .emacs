@@ -1,39 +1,19 @@
-(org-babel-load-file "~/.emacs.d/init.org")
+;; ____________________________________________________________________________
+;; Aquamacs custom-file warning:
+;; Warning: After loading this .emacs file, Aquamacs will also load
+;; customizations from `custom-file' (customizations.el). Any settings there
+;; will override those made here.
+;; Consider moving your startup settings to the Preferences.el file, which
+;; is loaded after `custom-file':
+;; ~/Library/Preferences/Aquamacs Emacs/Preferences
+;; _____________________________________________________________________________
+
+;; Added by Package.el.  This must come before configurations of
+;; installed packages.  Don't delete this line.  If you don't want it,
+;; just comment it out by adding a semicolon to the start of the line.
+;; You may delete these explanatory comments.
+(package-initialize)
+
+(org-babel-load-file "~/dotfiles/.emacs.d/init.org")
 ;;
 ;; My Emacs settings: (find-file "~/.emacs.d/init.org")
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(safe-local-variable-values
-   (quote
-    ((eval load-file "CheatSheet.el")
-     (eval org-babel-tangle)
-     (eval setq org-todo-keyword-faces
-	   (quote
-	    (("TODO" . org-warning)
-	     ("STARTED" . "yellow"))))
-     (eval setq org-todo-keyword-faces
-	   (quote
-	    (("TODO" . org-warning)
-	     ("STARTED" . "yellow")
-	     ("CANCELED" :foreground "green" :weight bold))))
-     (eval org-babel-load-file "~/AlBasmala.org")
-     (eval org-shifttab)
-     (eval load-file "AlBasmala.el")
-     (eval setq NAME
-	   (file-name-sans-extension
-	    (buffer-name)))
-     (eval remove
-	   (concat "../content/" NAMEorg)
-	   commitables)
-     (eval load-file "~/alhassy.github.io/content/AlBasmala.el")
-     (eval visual-line-mode t)))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(flyspell-incorrect ((t (:inverse-video t)))))
-(put 'downcase-region 'disabled nil)

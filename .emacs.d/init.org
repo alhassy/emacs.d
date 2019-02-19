@@ -9,12 +9,14 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+SOURCE: https://raw.githubusercontent.com/alhassy/dotfiles/master/.emacs.d/init.org
 
-* TODO NICE Agda input` symbol alterations!
+#+PROPERTY: header-args :tangle yes
+
+* COMMENT TODO NICE Agda input` symbol alterations!
 
 (describe-symbol 'agda-input-translations)
 (describe-symbol 'add-to-list)
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉") )
 #+END_SRC
 
@@ -26,7 +28,7 @@ order for the change to take effect.
 
 Others:
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; category theory
 (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
 (add-to-list 'agda-input-user-translations '("alg" "𝒜𝓁ℊ"))
@@ -196,6 +198,7 @@ However, when preprocessing my own files I sometimes wish
 to accept all locals without being queried and so have these two
 combinators.
 
+
 #+BEGIN_SRC emacs-lisp
 ;; Accept all local variables versus query for possibly non-safe locals.
 (defun DANGER-all-locals () (setq enable-local-variables :all))
@@ -213,7 +216,7 @@ combinators.
 ; (makunbound 'agda2-include-dirs)
 
 ;; Open .v files with Proof General's Coq mode
-(load "~/.emacs.d/lisp/PG/generic/proof-site")
+;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
 #+END_SRC
 
 # "agda-mode setup" yields:
@@ -236,20 +239,20 @@ now a source block automatically turns on the minor mode it needs!
 + other multiple modes: https://www.emacswiki.org/emacs/MultipleModes
 + (!!) https://wiki.haskell.org/Literate_programming#Multi-mode_support_in_Emacs
 
-**** Haskell
+**** Haskell :tangle no
 #+BEGIN_SRC emacs-lisp
 ;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
  (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
 #+END_SRC
 
 **** Kotlin
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp  :tangle no
 (load "~/.emacs.d/kotlin-mode.el")
 (setq kotlin-tab-width 2)
 #+END_SRC
 
-**** Lambda Prolog
-#+BEGIN_SRC emacs-lisp
+**** Lambda Prolog 
+#+BEGIN_SRC emacs-lisp  :tangle no
 (load "/usr/local/packages/teyjus/emacs/teyjus.el")
 (setq tjcc "/usr/local/packages/teyjus/tjcc")
 #+END_SRC
@@ -338,7 +341,7 @@ now a source block automatically turns on the minor mode it needs!
 I almost always want the Agda-mode input method.
 Hence, I switch into Agda-mode then immediately revert to whatever the current buffer ought to be.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp  :tangle no
   (DANGER-all-locals)
     (agda2-mode)
     (revert-buffer nil t nil)
@@ -347,7 +350,7 @@ Hence, I switch into Agda-mode then immediately revert to whatever the current b
 
 ** COMMENT Folding mode
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp  :tangle no
 ; (load "~/.emacs.d/folding-mode.el")
 ; (folding-mode-add-find-file-hook)
 #+END_SRC
@@ -417,11 +420,24 @@ to the files that utilise it.
 # E.g., within emacs try to execute (package-refresh-contents)
 # and you'll observe a permissions error.
 
-* Cosmetics
+* TODO Cosmetics
+*TODO*
+try background colour for html:  ---nice soft yellow, pleasing--- 
+😃
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
+#+END_SRC
+
+:Experimenting: 
+(set-background-color "white")
+(set-background-color "#eae3cb")   -- a bit dark
+(set-background-color "#fcf4dc")   -- nice!
+:End:
+
 ** COMMENT Column Marker                            :not_working_as_desired:
 
 Have a thin line to the right to ensure I don't write “off the page”.
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 ; (require 'fill-column-indicator)
 (define-globalized-minor-mode my-fci-global-mode fci-mode
   (lambda () (set-fill-column 90) (fci-mode 't)
@@ -437,7 +453,7 @@ take care of this.
 *** COMMENT My global visual line mode                       :no_longer_used:
 *No longer used* Using fill-column-mode instead.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (define-globalized-minor-mode my-visual-line-global-mode visual-line-mode
   (lambda () 
   
@@ -512,7 +528,7 @@ Extremely helpful for when switching between buffers, =C-x C-b=. Try and be grat
 ** COMMENT tooltip appears by mouse when compilation finishes :havent_used_in_some_time:
 from: https://emacswiki.org/emacs/CompileCommand
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (defun notify-compilation-result(buffer msg)
   "Notify that the compilation is finished,
 close the *compilation* buffer if the compilation is successful,
@@ -693,12 +709,12 @@ Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ t
 
 Note that capitalisation in a ”#+KeyWord” is irrelevant.
 
-* Spelling
+* TODO Spelling
 I would like to check spelling by default.
  + M-$ :: Check and correct spelling of the word at point
  + M-x ispell-change-dictionary RET TAB :: To see what dictionaries are available.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp 
 (define-globalized-minor-mode my-flyspell-global-mode flyspell-mode
   (lambda () 
 
@@ -717,10 +733,11 @@ Colour incorrect works; default is an underline.
 (custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
 #+END_SRC
 
+*TODO*
 Set up a thesaurus to avoid unwarranted repetition.
 #+BEGIN_SRC emacs-lisp
-(load "~/.emacs.d/powerthesaurus.el")
-(global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
+;; (load "~/.emacs.d/powerthesaurus.el")
+;; (global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
 #+END_SRC
 
 Use this game to help you learn to spell words that you're having trouble with;
@@ -729,13 +746,13 @@ see ~~/Dropbox/spelling.txt~.
 (autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
 #+END_SRC
 
-* Org-mode related things
+* TODO Org-mode related things
 
-** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
+** COMMENT TODO ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
 Use the ~:ignore:~ tag on headlines you'd like to have ignored, 
 while not ignoring their content.
   + See here: https://emacs.stackexchange.com/a/17677/10352
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (load "~/.emacs.d/ox-extra.el")
 (ox-extras-activate '(ignore-headlines))
 #+END_SRC
@@ -761,7 +778,7 @@ Some initial languages we want org-babel to support:
    'org-babel-load-languages
    '(
      (emacs-lisp . t)
-     (shell	 . t)
+     ;; (shell	 . t)
      (python . t)
      (haskell . t)
      (ruby	 . t)
@@ -933,7 +950,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 + Perhaps consider making this a default for all org-files?
  + The ~floatingTocStyle.css~ lives in my Dropbox; bring it here to be self-contained.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC org :tangle no
 #+HTML: <small><center>
 ( Please remember that you can always access a section using the floating table of contents at the upper-right corner of your screen. )
 #+HTML: </center></small>
@@ -964,7 +981,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
  Look at the super short doc to know how to manipulate this variable.
  (describe-symbol 'org-html-postamble-format)
 
- #+BEGIN_SRC emacs-lisp
+ #+BEGIN_SRC emacs-lisp :tangle no
 (defun make-html-link (url identifier)
   (concat "<a href=\"" url "\">" identifier "</a>"))
 
@@ -978,13 +995,13 @@ Add the following to a web-page if you'd like it to have a floating table of con
 `(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
 )
  #+END_SRC
-* Other fun things
+* COMMENT Other fun things
 
 + ~(nyan-mode)~ Use a cat on a rainbow to indicate the percentage of the buffer position.
    [ Disabled ] 
 
 + Coloured code delimiters.                 
-  #+BEGIN_SRC emacs-lisp
+  #+BEGIN_SRC emacs-lisp :tangle no
 (define-globalized-minor-mode my-rainbow-global-mode rainbow-delimiters-mode
   (lambda () (rainbow-delimiters-mode)
 ))
@@ -992,7 +1009,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 #+END_SRC
 
 + Googling words at point: ~M-x google-this-word~
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (require 'google-this)
 #+END_SRC
 
@@ -1012,7 +1029,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
   ;; Enable custom neotree theme
   (doom-themes-neotree-config)  ; all-the-icons fonts must be installed!
 * COMMENT Other cool stuff to look at                                 :NEATO:
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; From Holger Schurig's Emacs configuration
 
 ;; Byte-compile local elisp files on save
@@ -1128,6 +1145,6 @@ Read: https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#h
 # Local Variables:
 # eval: (visual-line-mode t)
 # eval: (when nil (load-file "~/alhassy.github.io/content/AlBasmala.el"))
-# eval: (remove (concat "../content/" NAMEorg) commitables)
+# eval: (when nil (remove (concat "../content/" NAMEorg) commitables))
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs") (my-org-html-export-to-html))
 # End:

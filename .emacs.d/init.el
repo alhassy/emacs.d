@@ -1,3 +1,4 @@
+
 ;; In-case I forget to byte-compile!
 (byte-compile-file "~/.emacs")
 
@@ -14,7 +15,10 @@
 ; (makunbound 'agda2-include-dirs)
 
 ;; Open .v files with Proof General's Coq mode
-(load "~/.emacs.d/lisp/PG/generic/proof-site")
+;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
+
+;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
+ (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
 
 (require 'package)
 (setq package-archives
@@ -23,8 +27,10 @@
         ("org" . "http://orgmode.org/elpa/")))
 (package-initialize)
 
-(setq visible-bell 1)
-;; Enable flashing mode-line on errors
+(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
+
+  (setq visible-bell 1)
+  ;; Enable flashing mode-line on errors
 
 (setq initial-buffer-choice "~/Dropbox/todo.org")
 
@@ -44,7 +50,7 @@
 (global-set-key (kbd "C--") 'text-scale-decrease)
   ;; C-x C-0 restores the default font size
 
-(delete-selection-mode 1)
+  (delete-selection-mode 1)
 
 (ido-mode t)
 
@@ -87,7 +93,7 @@
    "create a scratch buffer"
    (interactive)
    (switch-to-buffer (get-buffer-create "*scratch*"))
-   (lisp-interaction-mode))
+   (lisp-interaction-mode))   
 
 (defun ensure-two-vertical-windows () 
   "hello"
@@ -164,22 +170,19 @@
 (global-font-lock-mode t)
 (custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
 
-(load "~/.emacs.d/powerthesaurus.el")
-(global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
+;; (load "~/.emacs.d/powerthesaurus.el")
+;; (global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
 
 (autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
-
-(load "~/.emacs.d/ox-extra.el")
-(ox-extras-activate '(ignore-headlines))
 
 ; Seamless use of babel: No confirmation upon execution.
 (setq org-confirm-babel-evaluate nil)
 
-(org-babel-do-load-languages
+ (org-babel-do-load-languages
    'org-babel-load-languages
    '(
      (emacs-lisp . t)
-     (shell	 . t)
+     ;; (shell	 . t)
      (python . t)
      (haskell . t)
      (ruby	 . t)
@@ -253,9 +256,19 @@
 ;; FIXME: Make this buffer specfic!
 (global-set-key (kbd "C-c C-h") 'org-fold-current-subtree-anywhere-in-it)
 
-(define-globalized-minor-mode my-rainbow-global-mode rainbow-delimiters-mode
-  (lambda () (rainbow-delimiters-mode)
-))
-(my-rainbow-global-mode 1)
-
-(require 'google-this)
+;;;; See http://ergoemacs.org/emacs/emacs_n_unicode.html
+;;(define-abbrev-table 'global-abbrev-table '(
+;;    ("alpha" "α")
+;;    ("beta" "β")
+;;    ("gamma" "γ")
+;;    ("theta" "θ")
+;;    ("inf" "∞")
+;;    ("fcmp" "⨾")
+;;    ("then" "⨾")
+;;    ("syq"  "╳")
+;;
+;;    ("ar1" "→")
+;;    ("ar2" "⇒")
+;;    ))
+;;
+;;(abbrev-mode 1) ; turn on abbrev mode
