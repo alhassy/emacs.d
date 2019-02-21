@@ -69,7 +69,7 @@ Others:
 (agda-input-setup)
 #+END_SRC
 
-* Abstract                                                           :ignore:
+* Abstract :ignore:
 #+BEGIN_CENTER 
  *Abstract*
 
@@ -127,7 +127,9 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 
 #+BEGIN_SRC emacs-lisp
 ;; In-case I forget to byte-compile!
-(byte-compile-file "~/.emacs")
+;; (byte-compile-file "~/.emacs")
+;;
+;; spacemacs now...!
 
 ;; Change this silly counter to visualy notice a change.
 ;; (progn (message "Init.org contents loaded! Counter: 7") (sleep-for 3))
@@ -424,8 +426,11 @@ to the files that utilise it.
 *TODO*
 try background colour for html:  ---nice soft yellow, pleasing--- 
 😃
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
+;; maybe not idea for spacemacs
+
+(visual-line-mode t)
 #+END_SRC
 
 :Experimenting: 
@@ -434,9 +439,14 @@ try background colour for html:  ---nice soft yellow, pleasing---
 (set-background-color "#fcf4dc")   -- nice!
 :End:
 
-** COMMENT Column Marker                            :not_working_as_desired:
+** TODO Column Marker                               :not_working_as_desired:
+
+#+BEGIN_SRC emacs-lisp
+(progn (fci-mode) (setq fci-rule-column 90))
+#+END_SRC
 
 Have a thin line to the right to ensure I don't write “off the page”.
+
 #+BEGIN_SRC emacs-lisp :tangle no
 ; (require 'fill-column-indicator)
 (define-globalized-minor-mode my-fci-global-mode fci-mode
@@ -748,12 +758,12 @@ see ~~/Dropbox/spelling.txt~.
 
 * TODO Org-mode related things
 
-** COMMENT TODO ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
+** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
 Use the ~:ignore:~ tag on headlines you'd like to have ignored, 
 while not ignoring their content.
   + See here: https://emacs.stackexchange.com/a/17677/10352
-#+BEGIN_SRC emacs-lisp :tangle no
-(load "~/.emacs.d/ox-extra.el")
+#+BEGIN_SRC emacs-lisp
+(load "~/dotfiles/.emacs.d/ox-extra.el")
 (ox-extras-activate '(ignore-headlines))
 #+END_SRC
 
@@ -792,7 +802,7 @@ Some initial languages we want org-babel to support:
 (setq org-src-preserve-indentation t)
 #+END_SRC
 
-** ~<X~ Completion
+** TODO ~<X~ Completion
 
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
 or ~<q~ for quote blocks. 
@@ -831,6 +841,13 @@ Here's another example graph,
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'org-structure-template-alist
         '("E" "#+BEGIN_SRC emacs-lisp\n\n#+END_SRC" "<src lang=\"emacs-lisp\">\n\n</src>"))
+#+END_SRC
+
+*** TODO Parallel
+
+#+BEGIN_SRC emacs-lisp
+(setq PARALLEL (concat "# \n#+begin_parallel latex \n?\n#+end_parallel"))
+(add-to-list 'org-structure-template-alist `("p" ,PARALLEL))
 #+END_SRC
 
 ** org-mode header generation
@@ -995,7 +1012,25 @@ Add the following to a web-page if you'd like it to have a floating table of con
 `(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
 )
  #+END_SRC
-* COMMENT Other fun things
+** TODO Minted
+Execute the following for bib ref as well as minted:
+#+BEGIN_SRC emacs-lisp
+;; Org-mode uses Minted package for source code highlighting in PDF/LaTeX
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "biber %b"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f")
+)
+#+END_SRC
+
+;; for faster pdf generation
+(setq org-latex-pdf-process
+      '("pdflatex -interaction nonstopmode -output-directory %o %f"))
+
+* COMMENT no Other fun things
 
 + ~(nyan-mode)~ Use a cat on a rainbow to indicate the percentage of the buffer position.
    [ Disabled ] 
@@ -1028,7 +1063,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
   (global-set-key [f8] 'neotree-toggle)
   ;; Enable custom neotree theme
   (doom-themes-neotree-config)  ; all-the-icons fonts must be installed!
-* COMMENT Other cool stuff to look at                                 :NEATO:
+* COMMENT no Other cool stuff to look at                              :NEATO:
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; From Holger Schurig's Emacs configuration
 
@@ -1051,7 +1086,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 ;; )
 ;; 
 #+END_SRC
-* COMMENT FIXME keyword
+* COMMENT no FIXME keyword
 
 FIXME:
 
@@ -1097,7 +1132,7 @@ Some possibly interesting reads:
   + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]  
   + [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][A tutorial on evaluating code within ~src~ blocks]]
 
-* COMMENT hooks and things
+* COMMENT no hooks and things
 #+BEGIN_SRC emacs-lisp  :tangle no
 ;; not needed
 (defun lagda-extension-whatdo ()
@@ -1114,7 +1149,7 @@ Some possibly interesting reads:
 (defun my-common-hook () (fci-mode) (orgstruct-mode) )
 (my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
 #+END_SRC
-* COMMENT abbrev-mode                                        :no_longer_used:
+* COMMENT no  abbrev-mode                                    :no_longer_used:
 #+BEGIN_SRC emacs-lisp
 ;;;; See http://ergoemacs.org/emacs/emacs_n_unicode.html
 ;;(define-abbrev-table 'global-abbrev-table '(
@@ -1132,6 +1167,10 @@ Some possibly interesting reads:
 ;;    ))
 ;;
 ;;(abbrev-mode 1) ; turn on abbrev mode
+#+END_SRC
+* COMMENT hello
+#+BEGIN_SRC emacs-lisp
+   (message-box "hello, my init has loaded")
 #+END_SRC
 * COMMENT footer
 
