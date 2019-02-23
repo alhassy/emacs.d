@@ -738,8 +738,22 @@ I would like to check spelling by default.
 ))
 (my-flyspell-global-mode 1)
 
-(setq ispell-dictionary "british") ;; set the default dictionary
+(setq ispell-dictionary "en_GB") ;; set the default dictionary
 #+END_SRC
+
+:Hook_TODO:
+Hook for after init?
+(dolist (hook '(text-mode-hook))
+  (add-hook hook (lambda () (flyspell-mode 1))))
+:End:
+
+Let us select a correct spelling merely by clicking on a word.
+#+begin_src emacs-lisp
+(eval-after-load "flyspell"
+  ' (progn
+     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+     (define-key flyspell-mouse-map [mouse-3] #'undefined)) )
+#+end_src
 
 Colour incorrect works; default is an underline.
 #+BEGIN_SRC emacs-lisp
@@ -747,12 +761,15 @@ Colour incorrect works; default is an underline.
 (custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
 #+END_SRC
 
-*TODO*
+:CurrentlyNotWorking:
 Set up a thesaurus to avoid unwarranted repetition.
-#+BEGIN_SRC emacs-lisp
-;; (load "~/.emacs.d/powerthesaurus.el")
-;; (global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
+#+BEGIN_SRC emacs-lisp :tangle no
+(load "~/dotfiles/.emacs.d/powerthesaurus.el")
+(global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
+
+;; Website currently down ... https://github.com/SavchenkoValeriy/emacs-powerthesaurus/issues/6
 #+END_SRC
+:End:
 
 Use this game to help you learn to spell words that you're having trouble with;
 see ~~/Dropbox/spelling.txt~.
