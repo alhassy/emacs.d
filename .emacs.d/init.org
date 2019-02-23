@@ -579,10 +579,6 @@ to the files that utilise it.
 
 (  Maybe a hook would be better? Much better...? )
 
-#+BEGIN_SRC emacs-lisp
-(progn (fci-mode) (setq fci-rule-column 90))
-#+END_SRC
-
 Have a thin line to the right to ensure I don't write “off the page”.
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package fill-column-indicator :ensure)
@@ -621,30 +617,16 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
   ;; Enable flashing mode-line on errors
 #+END_SRC
 
-** My todo list: The initial buffer when Emacs opens up
+** My TODO list: The initial buffer when Emacs opens up
 #+BEGIN_SRC emacs-lisp
-(setq initial-buffer-choice "~/Dropbox/todo.org")
+;; (setq initial-buffer-choice "~/Dropbox/todo.org")
+(find-file "~/Dropbox/todo.org")
 #+END_SRC
-
 ** Showing date, time, and battery life
 #+BEGIN_SRC emacs-lisp
 (setq display-time-day-and-date t)
 (display-time)
 (display-battery-mode 1)
-#+END_SRC
-
-** Minibuffer should display line and column numbers
-#+BEGIN_SRC emacs-lisp
-(line-number-mode 1)
-(column-number-mode 1)
-#+END_SRC
-
-** Highlight parenthesis pair when cursor is near ;-)
-#+BEGIN_SRC emacs-lisp
-(load-library "paren")
-(show-paren-mode 1)
-(transient-mark-mode t)
-(require 'paren)
 #+END_SRC
 
 ** Increase/decrease text size
@@ -663,39 +645,6 @@ We can delete selected text just by hitting the backspace key.
   (delete-selection-mode 1)
 #+END_SRC
 
-** COMMENT Ido Mode -- in spacemacs, this is no longer needed
-Ido, “interactively do things”, mode is used for most commands that require you to select
-something from a list: It provides possible completions.
-  + An alternative is a third-party tool: =Helm= or ~ivy~.
-
-Extremely helpful for when switching between buffers, =C-x C-b=. Try and be grateful.
-#+BEGIN_SRC emacs-lisp
-(ido-mode t)
-#+END_SRC
-** COMMENT tooltip appears by mouse when compilation finishes :havent_used_in_some_time:
-from: https://emacswiki.org/emacs/CompileCommand
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(defun notify-compilation-result(buffer msg)
-  "Notify that the compilation is finished,
-close the *compilation* buffer if the compilation is successful,
-and set the focus back to Emacs frame"
-  (if (string-match "^finished" msg)
-    (progn
-     (delete-windows-on buffer)
-     (tooltip-show "\n Compilation Successful :-) \n "))
-    (tooltip-show "\n Compilation Failed :-( \n "))
-  (setq current-frame (car (car (cdr (current-frame-configuration)))))
-  (select-frame-set-input-focus current-frame)
-  )
-(add-to-list 'compilation-finish-functions
-	     'notify-compilation-result)
-#+END_SRC
-** COMMENT imenu add to menubar                                        :TODO:
-imenu-add-to-menubar! Nice: menu navigation in source file
-https://www.gnu.org/software/emacs/manual/html_node/emacs/Imenu.html
-https://github.com/bmag/imenu-list
-helm-imenu
 * Helpful Functions & Shortcuts
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
@@ -921,13 +870,84 @@ see ~~/Dropbox/spelling.txt~.
 (autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
 #+END_SRC
 
-* TODO Org-mode related things
-
+* Org-mode related things
+** Template expansion (<s Tab, etc.)
+In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
+or ~<q~ for quote blocks. 
 It seems recent [[https://orgmode.org/Changes.html][changes]] to the org-mode structure template expansion
-we know need to explicit load ~org-tempo~.
+necessitate explicitly loading ~org-tempo~.
 #+begin_src emacs-lisp :tangle yes
 (require 'org-tempo)
 #+end_src
+
+*** ~<el~ Emacs-lisp source blocks
+
+~<el~ to begin an emacs-lisp source block -- ~<e~ is for an example block.
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'org-structure-template-alist
+     '("el" . "src emacs-lisp"))
+#+END_SRC
+
+*** ~<ag~ (Org) Agda source template
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'org-structure-template-alist
+     '("ag" . "src org-agda"))
+#+END_SRC
+*** ~<ic~ Interactive Way to C source template
+
+#+BEGIN_SRC emacs-lisp
+ (add-to-list 'org-structure-template-alist
+      '("ic" . "src c :tangle (currently-working-with \"name\")"))
+#+END_SRC
+
+*** ~<ich~ Interactive Way to C header template
+
+#+BEGIN_SRC emacs-lisp
+ (add-to-list 'org-structure-template-alist
+      '("ich" . "src c :tangle (currently-working-with-header \"name\")"))
+#+END_SRC
+
+*** ~<ver~ Verbatim template
+
+ #+BEGIN_SRC emacs-lisp
+ (add-to-list 'org-structure-template-alist
+      '("ver" . "verbatim"))
+ #+END_SRC
+
+*** Demoing Dot Graphs
+We include one to demo the capabilities of the previous subsection.
+
+#+BEGIN_SRC emacs-lisp
+;; Graphviz: Press <g-TAB to obtain a minimal editable example.
+(add-to-list 'org-structure-template-alist
+        '("g" "#+begin_src dot :results output graphics :file \"/tmp/graph.pdf\" :exports both
+   digraph G {
+      node [color=black,fillcolor=white,shape=rectangle,style=filled,fontname=\"Helvetica\"];
+      A[label=\"A\"]
+      B[label=\"B\"]
+      A->B
+   }\n#+end_src" "<src lang=\"dot\">\n\n</src>"))
+#+END_SRC
+
+Here's another example graph,
+#+BEGIN_EXAMPLE org
+ #+BEGIN_SRC dot :file simple_markov.png :cmdline -Kdot -Tpng
+ graph {
+   rankdir="UD";
+    A -- D;
+    A -- B;
+    D -- C;
+    B -- C;
+  }
+ #+END_SRC  
+#+END_EXAMPLE
+
+*** COMMENT Parallel
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
+#+END_SRC
 
 ** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
 Use the ~:ignore:~ tag on headlines you'd like to have ignored, 
@@ -970,59 +990,6 @@ Some initial languages we want org-babel to support:
      ))
 
 (setq org-src-preserve-indentation t)
-#+END_SRC
-
-** COMMENT TODO ~<X~ Completion
-
-In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
-or ~<q~ for quote blocks. 
-
-*** Demoing Dot Graphs
-We include one to demo the capabilities of the previous subsection.
-
-#+BEGIN_SRC emacs-lisp
-;; Graphviz: Press <g-TAB to obtain a minimal editable example.
-(add-to-list 'org-structure-template-alist
-        '("g" "#+begin_src dot :results output graphics :file \"/tmp/graph.pdf\" :exports both
-   digraph G {
-      node [color=black,fillcolor=white,shape=rectangle,style=filled,fontname=\"Helvetica\"];
-      A[label=\"A\"]
-      B[label=\"B\"]
-      A->B
-   }\n#+end_src" "<src lang=\"dot\">\n\n</src>"))
-#+END_SRC
-
-Here's another example graph,
-#+BEGIN_EXAMPLE org
- #+BEGIN_SRC dot :file simple_markov.png :cmdline -Kdot -Tpng
- graph {
-   rankdir="UD";
-    A -- D;
-    A -- B;
-    D -- C;
-    B -- C;
-  }
- #+END_SRC  
-#+END_EXAMPLE
-
-*** ~<E~ for emacs-lisp source blocks
-
-(describe-symbol '  
-(setq org-structure-template-alist nil)
-
-~<E~ to begin an emacs-lisp source block -- ~<e~ is for an example block.
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'org-structure-template-alist
-        '("E" "#+BEGIN_SRC emacs-lisp\n\n#+END_SRC" "<src lang=\"emacs-lisp\">\n\n</src>"))
-#+END_SRC
-
-
-
-*** TODO Parallel
-
-#+BEGIN_SRC emacs-lisp
-(setq PARALLEL (concat "# \n#+begin_parallel latex \n?\n#+end_parallel"))
-(add-to-list 'org-structure-template-alist `("p" ,PARALLEL))
 #+END_SRC
 
 ** org-mode header generation
@@ -1136,78 +1103,6 @@ Then the functionality,
 (global-set-key (kbd "C-c C-h") 'org-fold-current-subtree-anywhere-in-it)
 #+END_SRC
 
-** COMMENT floating toc material :no_longer_using_this:
-
-Add the following to a web-page if you'd like it to have a floating table of contents.
-+ Perhaps consider making this a default for all org-files?
- + The ~floatingTocStyle.css~ lives in my Dropbox; bring it here to be self-contained.
-
-#+BEGIN_SRC org :tangle no
-#+HTML: <small><center>
-( Please remember that you can always access a section using the floating table of contents at the upper-right corner of your screen. )
-#+HTML: </center></small>
-#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"floatingTocStyle.css\" />
-#+HTML: <div id=\"toc\"> &nbsp;Table of Contents&nbsp; <small> <div id=\"full\">
-#+TOC: headlines 2
-#+HTML: </div> </small> </div>
-#+END_SRC
-
-** COMMENT more org mode configs
-
-
-  (with-eval-after-load 'org
-    ;; inline images in org-mode
-    (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
-    (add-hook 'org-mode-hook 'org-display-inline-images)
-    ;; make org-formula inline rendering bigger
-    (setq org-latex-create-formula-image-program 'imagemagick)
-    (setq org-format-latex-options
-          (quote
-           (:foreground "#90ee90" :background default :scale 2.0 :html-foreground default :html-background "Transparent" :html-scale 1 :matchers
-                        ("begin" "$1" "$" "$$" "\\(" "\\["))))
-    ;; forgo org-mode code eval confirmation
-    (setq org-confirm-babel-evaluate nil)
-    )
-
-** COMMENT org-html-postamble-format
- Look at the super short doc to know how to manipulate this variable.
- (describe-symbol 'org-html-postamble-format)
-
- #+BEGIN_SRC emacs-lisp :tangle no
-(defun make-html-link (url identifier)
-  (concat "<a href=\"" url "\">" identifier "</a>"))
-
-(setq org-html-postamble-format 
-  (let* ((nomorg (buffer-name))
-         (nom    (file-name-sans-extension nomorg))
-         (src    (make-html-link nomorg "Org Source"))
-         (nompdf (concat nom ".pdf"))
-         (pdf    (make-html-link nompdf "View me as a PDF"))
-        )
-`(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
-)
- #+END_SRC
-** Minted
-Execute the following for bib ref as well as minted
-Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
---which in turn requires the pygmentize system tool.
-#+BEGIN_SRC emacs-lisp
-(setq org-latex-listings 'minted
-      org-latex-packages-alist '(("" "minted"))
-      org-latex-pdf-process
-      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-        "biber %b"
-        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f")
-)
-#+END_SRC
-
-For faster pdf generation, may consider invoking:
-#+begin_example emacs-lisp 
-(setq org-latex-pdf-process
-      '("pdflatex -interaction nonstopmode -output-directory %o %f"))
-#+end_example
-
 * COMMENT Stuff I don't really use, but may want to look at later
 ** Other fun things
 
@@ -1292,6 +1187,125 @@ font-lock-warning-face t)))
 (defun my-common-hook () (fci-mode) (orgstruct-mode) )
 (my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
 #+END_SRC
+** Spacemacs gives this -- Highlight parenthesis pair when cursor is near ;-)
+#+BEGIN_SRC emacs-lisp
+(load-library "paren")
+(show-paren-mode 1)
+(transient-mark-mode t)
+(require 'paren)
+#+END_SRC
+
+** Spacemacs gives this -- Minibuffer should display line and column numbers
+#+BEGIN_SRC emacs-lisp
+(line-number-mode 1)
+(column-number-mode 1)
+#+END_SRC
+
+** COMMENT Ido Mode -- in spacemacs, this is no longer needed
+Ido, “interactively do things”, mode is used for most commands that require you to select
+something from a list: It provides possible completions.
+  + An alternative is a third-party tool: =Helm= or ~ivy~.
+
+Extremely helpful for when switching between buffers, =C-x C-b=. Try and be grateful.
+#+BEGIN_SRC emacs-lisp
+(ido-mode t)
+#+END_SRC
+** COMMENT tooltip appears by mouse when compilation finishes :havent_used_in_some_time:
+from: https://emacswiki.org/emacs/CompileCommand
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(defun notify-compilation-result(buffer msg)
+  "Notify that the compilation is finished,
+close the *compilation* buffer if the compilation is successful,
+and set the focus back to Emacs frame"
+  (if (string-match "^finished" msg)
+    (progn
+     (delete-windows-on buffer)
+     (tooltip-show "\n Compilation Successful :-) \n "))
+    (tooltip-show "\n Compilation Failed :-( \n "))
+  (setq current-frame (car (car (cdr (current-frame-configuration)))))
+  (select-frame-set-input-focus current-frame)
+  )
+(add-to-list 'compilation-finish-functions
+	     'notify-compilation-result)
+#+END_SRC
+** COMMENT imenu add to menubar                                       :TODO:
+imenu-add-to-menubar! Nice: menu navigation in source file
+https://www.gnu.org/software/emacs/manual/html_node/emacs/Imenu.html
+https://github.com/bmag/imenu-list
+helm-imenu
+** COMMENT floating toc material                      :no_longer_using_this:
+
+Add the following to a web-page if you'd like it to have a floating table of contents.
++ Perhaps consider making this a default for all org-files?
+ + The ~floatingTocStyle.css~ lives in my Dropbox; bring it here to be self-contained.
+
+#+BEGIN_SRC org :tangle no
+#+HTML: <small><center>
+( Please remember that you can always access a section using the floating table of contents at the upper-right corner of your screen. )
+#+HTML: </center></small>
+#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"floatingTocStyle.css\" />
+#+HTML: <div id=\"toc\"> &nbsp;Table of Contents&nbsp; <small> <div id=\"full\">
+#+TOC: headlines 2
+#+HTML: </div> </small> </div>
+#+END_SRC
+
+** COMMENT org-html-postamble-format
+ Look at the super short doc to know how to manipulate this variable.
+ (describe-symbol 'org-html-postamble-format)
+
+ #+BEGIN_SRC emacs-lisp :tangle no
+(defun make-html-link (url identifier)
+  (concat "<a href=\"" url "\">" identifier "</a>"))
+
+(setq org-html-postamble-format 
+  (let* ((nomorg (buffer-name))
+         (nom    (file-name-sans-extension nomorg))
+         (src    (make-html-link nomorg "Org Source"))
+         (nompdf (concat nom ".pdf"))
+         (pdf    (make-html-link nompdf "View me as a PDF"))
+        )
+`(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
+)
+ #+END_SRC
+** COMMENT more org mode configs
+
+
+  (with-eval-after-load 'org
+    ;; inline images in org-mode
+    (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
+    (add-hook 'org-mode-hook 'org-display-inline-images)
+    ;; make org-formula inline rendering bigger
+    (setq org-latex-create-formula-image-program 'imagemagick)
+    (setq org-format-latex-options
+          (quote
+           (:foreground "#90ee90" :background default :scale 2.0 :html-foreground default :html-background "Transparent" :html-scale 1 :matchers
+                        ("begin" "$1" "$" "$$" "\\(" "\\["))))
+    ;; forgo org-mode code eval confirmation
+    (setq org-confirm-babel-evaluate nil)
+    )
+
+*** Minted
+Execute the following for bib ref as well as minted
+Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
+--which in turn requires the pygmentize system tool.
+#+BEGIN_SRC emacs-lisp
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "biber %b"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f")
+)
+#+END_SRC
+
+For faster pdf generation, may consider invoking:
+#+begin_example emacs-lisp 
+(setq org-latex-pdf-process
+      '("pdflatex -interaction nonstopmode -output-directory %o %f"))
+#+end_example
+
 * Summary of Utilities Provided
 
 | _Command_                                | _Action_                                            |
