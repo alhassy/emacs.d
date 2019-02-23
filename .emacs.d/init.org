@@ -2,98 +2,35 @@
 #+author: Musa Al-hassy
 #+email: alhassy@gmail.com
 #+DATE: 2018-07-25
-#+DESCRIPTION: Confiuration file for Emacs usage.
+#+DESCRIPTION: Configuration file for Emacs usage.
 #+STARTUP: indent
 #+CATEGORIES: Emacs
-#+OPTIONS: html-postamble:nil toc:nil
+#+OPTIONS: html-postamble:nil toc:nil d:nil
 #+IMAGE: ../assets/img/emacs_logo.png
 #+SOURCE: https://raw.githubusercontent.com/alhassy/dotfiles/master/.emacs.d/init.org
-
 #+PROPERTY: header-args :tangle yes
 
-* COMMENT TODO NICE Agda input` symbol alterations!
-
-(describe-symbol 'agda-input-translations)
-(describe-symbol 'add-to-list)
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉") )
-#+END_SRC
-
-If you change this setting manually, without using the
-customization buffer, you need to call (agda-input-setup) in
-order for the change to take effect.
-
-~\set → 𝒮ℯ𝓉~
-
-Others:
-
-#+BEGIN_SRC emacs-lisp :tangle no
-;; category theory
-(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
-(add-to-list 'agda-input-user-translations '("alg" "𝒜𝓁ℊ"))
-(add-to-list 'agda-input-user-translations '("split" "▵"))
-(add-to-list 'agda-input-user-translations '("join" "▿"))
-(add-to-list 'agda-input-user-translations '("adj" "⊣"))
-(add-to-list 'agda-input-user-translations '(";;" "﹔"))
-(add-to-list 'agda-input-user-translations '(";;" "⨾"))
-(add-to-list 'agda-input-user-translations '(";;" "∘"))
-
-;; residuals
-(add-to-list 'agda-input-user-translations '("over" "╱"))
-(add-to-list 'agda-input-user-translations '("under" "╲"))
-
-;; adjunction isomorphism pair
-(add-to-list 'agda-input-user-translations '("floor"  "⌊⌋"))
-(add-to-list 'agda-input-user-translations '("lower"  "⌊⌋"))
-(add-to-list 'agda-input-user-translations '("lad"    "⌊⌋"))
-(add-to-list 'agda-input-user-translations '("ceil"   "⌈⌉"))
-(add-to-list 'agda-input-user-translations '("raise"  "⌈⌉"))
-(add-to-list 'agda-input-user-translations '("rad"    "⌈⌉"))
-
-;; silly stuff
-;;
-;; angry, cry, why-you-no
-(add-to-list 'agda-input-user-translations '("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")) 
-;; confused, disapprove, dead, shrug
-(add-to-list 'agda-input-user-translations '("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"))
-;; dance, csi
-(add-to-list 'agda-input-user-translations '("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓" "•_•)
-( •_•)>⌐■-■
-(⌐■_■)
-"))
-;; love, pleased, success, yesss
-(add-to-list 'agda-input-user-translations '("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
-
-;; activate translations
-(agda-input-setup)
-#+END_SRC
-
-
-
-more here, bro
-
 * Abstract :ignore:
-#+BEGIN_CENTER 
- *Abstract*
+#+begin_center
+*Abstract*
+#+end_center
 
 Herein I document the configurations I utilise with Emacs.
 Of note are:
 
- ◈ This is a literate programming setup. ◈
+ ◈ This is a literate programming setup.
 
- ◈ I have a variety of cosmetics such as showing battery life and flashing upon errors. ◈
+ ◈ I have a variety of cosmetics such as showing battery life and flashing upon errors.
 
- ◈ Production of org-mode ready-to-go skeletons. ◈
+ ◈ Production of org-mode ready-to-go skeletons.
 
- ◈ Utilities for working with org-mode files, namely ~#+KEYWORD: VALUE~ pairs. ◈
+ ◈ Utilities for working with org-mode files, namely ~#+KEYWORD: VALUE~ pairs.
 
 As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
 through my ever growing configuration files, ease of usability and reference
 for peers, and, most importantly, better maintainability for myself!
 
 ⟪ Dear reader when encoutnering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~ ⟫
-#+END_CENTER
 
 * Introduction
 
@@ -129,15 +66,29 @@ Our ~.emacs~ should be byte-compiled so that when we start Emacs it will
 automatically determine if the ~init.org~ file has changed and if so it
 would tangle it producing the ~init.el~ file which will then be loaded immediately.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; In-case I forget to byte-compile!
-;; (byte-compile-file "~/.emacs")
-;;
-;; spacemacs now...!
+(byte-compile-file "~/.emacs")
 
-;; Change this silly counter to visualy notice a change.
+;; Change this silly counter to visualy notice a change. When making many changes.
 ;; (progn (message "Init.org contents loaded! Counter: 7") (sleep-for 3))
 #+END_SRC
+
+Recently I've switched to spacemacs, and to avoid too much migration
+I've simply called this literate configuration from within ~~.spacemacs~
+via the ~dotspacemacs/user-config~ method.
+#+begin_src emacs-lisp :tangle no
+(defun dotspacemacs/user-config ()
+  "Configuration function for user code.
+   This function is called at the very end of Spacemacs initialization after
+   layers configuration.
+   This is the place where most of your configurations should be done. Unless it is
+   explicitly specified that a variable should be set before a package is loaded,
+   you should place your code here."
+
+   (org-babel-load-file "~/dotfiles/.emacs.d/init.org")
+)
+#+end_src
 
 * Version Control
 
@@ -336,21 +287,53 @@ combinators.
 
 * Loads
 
+** ~package-initialize~: Melpa, gnu, and org
+
++ *M-x list-packages* to see all melpa packages that can install
+  - Not in alphabetical order, so maybe search with ~C-s~.
++ For example to download the haskell mode: ~M-x package-install RET haskell-mode RET~.
+  - Or maybe to install ~unicode-fonts~ ;-)
++ Read more at http://ergoemacs.org/emacs/emacs_package_system.html or 
+  at https://github.com/milkypostman/melpa
+
+#+BEGIN_SRC emacs-lisp
+(require 'package)
+(setq package-archives
+      '(("melpa" . "https://melpa.org/packages/")
+        ("gnu" . "https://elpa.gnu.org/packages/")
+        ("org" . "http://orgmode.org/elpa/")))
+(package-initialize)
+#+END_SRC
+
+# If there are issues with loading the archives,
+# say, "Failed to download ‘gnu’ archive."
+# then ensure you can both read and write, recursively, to your .emacs.d/
+# E.g., within emacs try to execute (package-refresh-contents)
+# and you'll observe a permissions error.
+
 ** Programming Language Supports
 
+:agda2-include-dirs-Issue:
 #+BEGIN_SRC emacs-lisp
 ; (load (shell-command-to-string "agda-mode locate"))
 ;;
 ;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
 ; (makunbound 'agda2-include-dirs)
+#+END_SRC
+:End:
 
+Executing ~agda-mode setup~ appends the following text to the ~.emacs~ file.
+Let's put it here ourselves.
+#+begin_src emacs-lisp
+(load-file (let ((coding-system-for-read 'utf-8))
+                (shell-command-to-string "agda-mode locate")))
+#+end_src
+
+Sometimes I use Coq,
+#+begin_src emacs-lisp
 ;; Open .v files with Proof General's Coq mode
 ;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
-#+END_SRC
-
-# "agda-mode setup" yields:
-# (load-file (let ((coding-system-for-read 'utf-8))
-#                (shell-command-to-string "agda-mode locate")))
+#+end_src
 
 *** COMMENT More Programming Language Support                        :TODO:
 
@@ -466,18 +449,92 @@ now a source block automatically turns on the minor mode it needs!
   (setq-default git-magit-status-fullscreen t)
   (global-git-commit-mode t) ;; edit git commit messages through emacs
   )
-** COMMENT Unicode Input via Agda Input                              :broken:
-I almost always want the Agda-mode input method.
-Hence, I switch into Agda-mode then immediately revert to whatever the current buffer ought to be.
+** Unicode Input via Agda Input        
+I almost always want the ~agda-mode~ input method.
 
-#+BEGIN_SRC emacs-lisp  :tangle no
-  (DANGER-all-locals)
-    (agda2-mode)
-    (revert-buffer nil t nil)
-  (SAFE-query-locals)
+#+BEGIN_SRC emacs-lisp :tangle yes
+(require 'agda-input)
+(set-input-method "Agda")
 #+END_SRC
 
-** COMMENT Folding mode
+:agda2_program_args:
+    "+RTS   -H4.5G   -M4.5G   -K256M   -S/tmp/AgdaRTS.log   -A1G   -RTS   -i   ."
+:end:
+
+Below are my personal Agda input symbol translations;
+e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX binding
+interactively: ~M-x customize-variable agda-input-user-translations~ then
+~INS~ then for key sequence type ~set~ then ~INS~ and for string paste ~𝒮ℯ𝓉~.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; category theory
+(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
+(add-to-list 'agda-input-user-translations '("alg" "𝒜𝓁ℊ"))
+(add-to-list 'agda-input-user-translations '("split" "▵"))
+(add-to-list 'agda-input-user-translations '("join" "▿"))
+(add-to-list 'agda-input-user-translations '("adj" "⊣"))
+(add-to-list 'agda-input-user-translations '(";;" "﹔"))
+(add-to-list 'agda-input-user-translations '(";;" "⨾"))
+(add-to-list 'agda-input-user-translations '(";;" "∘"))
+
+;; lattices
+(add-to-list 'agda-input-user-translations '("meet" "⊓"))
+(add-to-list 'agda-input-user-translations '("join" "⊔"))
+
+;; residuals
+(add-to-list 'agda-input-user-translations '("syq"  "╳"))
+(add-to-list 'agda-input-user-translations '("over" "╱"))
+(add-to-list 'agda-input-user-translations '("under" "╲"))
+        ;; Maybe “\\” shortcut?
+
+;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
+(add-to-list 'agda-input-user-translations '("|" "❙"))
+
+;; adjunction isomorphism pair
+(add-to-list 'agda-input-user-translations '("floor"  "⌊⌋"))
+(add-to-list 'agda-input-user-translations '("lower"  "⌊⌋"))
+(add-to-list 'agda-input-user-translations '("lad"    "⌊⌋"))
+(add-to-list 'agda-input-user-translations '("ceil"   "⌈⌉"))
+(add-to-list 'agda-input-user-translations '("raise"  "⌈⌉"))
+(add-to-list 'agda-input-user-translations '("rad"    "⌈⌉"))
+
+;; silly stuff
+;;
+;; angry, cry, why-you-no
+(add-to-list 'agda-input-user-translations 
+   '("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")) 
+;; confused, disapprove, dead, shrug
+(add-to-list 'agda-input-user-translations 
+   '("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"))
+;; dance, csi
+(add-to-list 'agda-input-user-translations 
+   '("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓" "•_•)
+( •_•)>⌐■-■
+(⌐■_■)
+"))
+;; love, pleased, success, yesss
+(add-to-list 'agda-input-user-translations 
+   '("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
+#+END_SRC
+
+# If you change this setting manually, without using the
+# customization buffer, you need to call (agda-input-setup) in
+# order for the change to take effect.
+Finally let's effect such translations.
+#+begin_src emacs-lisp :tangle yes
+;; activate translations
+(agda-input-setup)
+#+end_src
+
+Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs unicode input]] could be approximated using
+~abbrev-mode~.
+
+:May_need_to_install_stix_font:
+;; install STIX font from Ubuntu store!!
+;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
+:End:
+
+** COMMENT Folding mode :rarely_use_this:
 
 #+BEGIN_SRC emacs-lisp  :tangle no
 ; (load "~/.emacs.d/folding-mode.el")
@@ -495,59 +552,6 @@ to the files that utilise it.
  eval: (fold-whole-buffer)
  fold-internal-margins: 0
  end:
-
-** COMMENT Agda notions to be entered by Custom
- + agda-input-user-translations ::
-    ("fcmp" "⨾")
-     (";;" "⨾")
-     ("meet" "⊓")
-     ("join" "⊔")
-     ("|" "❙")
-     ("(|" "⦇")
-     ("|)" "⦈")
- + agda2-program-args ::
-    "+RTS   -H4.5G   -M4.5G   -K256M   -S/tmp/AgdaRTS.log   -A1G   -RTS   -i   ."
-
-;; install STIX from Ubuntu store!!
-;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
-
-;; Forward composition ⨾
-;;  Ubuntu Store -> Install Stix Fonts -> Restart computer!
-;;  For convenience, bind this symbol to string: fcmp.
-;;
-;;Give a symbol new Agda TeX binding
-;;  For example, to setup under (residual) in Agda, goto
-;;  |M-x customize-variable agda-input-user-translations| then
-;;  |INS| then for key sequence type |under|, or |\\|, then |INS| and
-;;  for string paste |╲|. Now \under yields ╲.
-;; also: ╱
-
-; (load-file (let ((coding-system-for-read 'utf-8))
-;                (shell-command-to-string "agda-mode locate"))
-
-** ~package-initialize~: Melpa, gnu, and org
-
-+ *M-x list-packages* to see all melpa packages that can install
-  - Not in alphabetical order, so maybe search with ~C-s~.
-+ For example to download the haskell mode: ~M-x package-install RET haskell-mode RET~.
-  - Or maybe to install ~unicode-fonts~ ;-)
-+ Read more at http://ergoemacs.org/emacs/emacs_package_system.html or 
-  at https://github.com/milkypostman/melpa
-
-#+BEGIN_SRC emacs-lisp
-(require 'package)
-(setq package-archives
-      '(("melpa" . "https://melpa.org/packages/")
-        ("gnu" . "https://elpa.gnu.org/packages/")
-        ("org" . "http://orgmode.org/elpa/")))
-(package-initialize)
-#+END_SRC
-
-# If there are issues with loading the archives,
-# say, "Failed to download ‘gnu’ archive."
-# then ensure you can both read and write, recursively, to your .emacs.d/
-# E.g., within emacs try to execute (package-refresh-contents)
-# and you'll observe a permissions error.
 
 * Cosmetics
 😃
@@ -593,7 +597,7 @@ In this case, exporting to html produces curious symbols
 thereby prompting ~my-org-html-export-to-html~ below to
 take care of this.
 
-*** COMMENT My global visual line mode                       :no_longer_used:
+** COMMENT My global visual line mode                       :no_longer_used:
 *No longer used* Using fill-column-mode instead.
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -659,7 +663,7 @@ We can delete selected text just by hitting the backspace key.
   (delete-selection-mode 1)
 #+END_SRC
 
-** Ido Mode
+** COMMENT Ido Mode -- in spacemacs, this is no longer needed
 Ido, “interactively do things”, mode is used for most commands that require you to select
 something from a list: It provides possible completions.
   + An alternative is a third-party tool: =Helm= or ~ivy~.
@@ -852,12 +856,23 @@ Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ t
 
 Note that capitalisation in a ”#+KeyWord” is irrelevant.
 
-* TODO Spelling
+* Spelling
 I would like to check spelling by default.
- + M-$ :: Check and correct spelling of the word at point
- + M-x ispell-change-dictionary RET TAB :: To see what dictionaries are available.
+ + ~M-$~ :: Check and correct spelling of the word at point
+ + ~M-x ispell-change-dictionary RET TAB~ :: To see what dictionaries are available.
+
+# Emacs includes Flyspell. You must not explicitly install it. If you do so, undo this,
+# that is, delete flyspell.el from /Applications/Emacs.app/Contents/Resources/site-lisp. 
+
+Flyspell needs a spell checking tool, which is not included in Emacs. 
+We install ~aspell~ spell checker using, say, homebrew via ~brew install aspell~.
+Note that Emacs' ~ispell~ is the interface to such a command line spelling utility.
+# See available dictionary via ~aspell dicts~.
 
 #+BEGIN_SRC emacs-lisp 
+(setq ispell-program-name "aspell")
+
+;; Maybe a hook is better? Much better ...?
 (define-globalized-minor-mode my-flyspell-global-mode flyspell-mode
   (lambda () 
 
@@ -908,10 +923,15 @@ see ~~/Dropbox/spelling.txt~.
 
 * TODO Org-mode related things
 
+It seems recent [[https://orgmode.org/Changes.html][changes]] to the org-mode structure template expansion
+we know need to explicit load ~org-tempo~.
+#+begin_src emacs-lisp :tangle yes
+(require 'org-tempo)
+#+end_src
+
 ** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
 Use the ~:ignore:~ tag on headlines you'd like to have ignored, 
-while not ignoring their content.
-  + See here: https://emacs.stackexchange.com/a/17677/10352
+while not ignoring their content --see [[https://emacs.stackexchange.com/a/17677/10352][here]].
 #+BEGIN_SRC emacs-lisp
 (load "~/dotfiles/.emacs.d/ox-extra.el")
 (ox-extras-activate '(ignore-headlines))
@@ -952,7 +972,7 @@ Some initial languages we want org-babel to support:
 (setq org-src-preserve-indentation t)
 #+END_SRC
 
-** TODO ~<X~ Completion
+** COMMENT TODO ~<X~ Completion
 
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
 or ~<q~ for quote blocks. 
@@ -987,11 +1007,16 @@ Here's another example graph,
 
 *** ~<E~ for emacs-lisp source blocks
 
+(describe-symbol '  
+(setq org-structure-template-alist nil)
+
 ~<E~ to begin an emacs-lisp source block -- ~<e~ is for an example block.
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'org-structure-template-alist
         '("E" "#+BEGIN_SRC emacs-lisp\n\n#+END_SRC" "<src lang=\"emacs-lisp\">\n\n</src>"))
 #+END_SRC
+
+
 
 *** TODO Parallel
 
@@ -1183,7 +1208,8 @@ For faster pdf generation, may consider invoking:
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 #+end_example
 
-* COMMENT no Other fun things
+* COMMENT Stuff I don't really use, but may want to look at later
+** Other fun things
 
 + ~(nyan-mode)~ Use a cat on a rainbow to indicate the percentage of the buffer position.
    [ Disabled ] 
@@ -1203,20 +1229,20 @@ For faster pdf generation, may consider invoking:
 
 + *ToDo* Manage, & automate, email from within Emacs using [[https://notmuchmail.org/][Notmuch -- Just an email system]].
 
-** COMMENT Multiple Cursors                                           :TODO:
+*** COMMENT Multiple Cursors                                         :TODO:
   ;; see http://emacsrocks.com/e13.html
   (require 'multiple-cursors)
   (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
   (global-set-key (kbd "C->") 'mc/mark-next-like-this)
   (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-** COMMENT Neotree: Directory Tree Listing                    :neat_may_use: 
+*** COMMENT Neotree: Directory Tree Listing                  :neat_may_use: 
   ;; neotree (sidebar for project file navigation)
   (require 'neotree)
   (global-set-key [f8] 'neotree-toggle)
   ;; Enable custom neotree theme
   (doom-themes-neotree-config)  ; all-the-icons fonts must be installed!
-* COMMENT no Other cool stuff to look at                              :NEATO:
+** Other cool stuff to look at
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; From Holger Schurig's Emacs configuration
 
@@ -1239,9 +1265,7 @@ For faster pdf generation, may consider invoking:
 ;; )
 ;; 
 #+END_SRC
-* COMMENT no FIXME keyword
-
-FIXME:
+** FIXME keyword
 
 ;; "FIXME:" is now a keyword, and so will be highlighted
 (font-lock-add-keywords nil
@@ -1251,6 +1275,23 @@ font-lock-warning-face t)))
 ;; Src: https://www.gnu.org/software/emacs/manual/html_node/emacs/Font-Lock.html#Font-Lock
 ;; Also: https://stackoverflow.com/a/756856/3550444
 
+** hooks and things
+#+BEGIN_SRC emacs-lisp  :tangle no
+;; not needed
+(defun lagda-extension-whatdo ()
+       "What to do when encountering a .lagda file.
+       To be added to auto-mode-list."
+       (agda2-mode)
+       (org-babel-load-file "~/Dropbox/lagda-with-org.org")
+       (message "Musa's special Agda settings enabled."))
+
+(add-to-list 'auto-mode-alist '("\\.lagda\\'" . (lambda () (lagda-extension-whatdo))))
+; (add-to-list 'auto-mode-alist '("\\.lagda\\'" . 'lagda-extension-whatdo))
+
+(defun my-add-to-multiple-hooks (function hooks) (mapc (lambda (hook) (add-hook hook function)) hooks))
+(defun my-common-hook () (fci-mode) (orgstruct-mode) )
+(my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
+#+END_SRC
 * Summary of Utilities Provided
 
 | _Command_                                | _Action_                                            |
@@ -1285,52 +1326,13 @@ Some possibly interesting reads:
   + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]  
   + [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][A tutorial on evaluating code within ~src~ blocks]]
 
-* COMMENT no hooks and things
-#+BEGIN_SRC emacs-lisp  :tangle no
-;; not needed
-(defun lagda-extension-whatdo ()
-       "What to do when encountering a .lagda file.
-       To be added to auto-mode-list."
-       (agda2-mode)
-       (org-babel-load-file "~/Dropbox/lagda-with-org.org")
-       (message "Musa's special Agda settings enabled."))
-
-(add-to-list 'auto-mode-alist '("\\.lagda\\'" . (lambda () (lagda-extension-whatdo))))
-; (add-to-list 'auto-mode-alist '("\\.lagda\\'" . 'lagda-extension-whatdo))
-
-(defun my-add-to-multiple-hooks (function hooks) (mapc (lambda (hook) (add-hook hook function)) hooks))
-(defun my-common-hook () (fci-mode) (orgstruct-mode) )
-(my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
-#+END_SRC
-* COMMENT no  abbrev-mode                                    :no_longer_used:
-#+BEGIN_SRC emacs-lisp
-;;;; See http://ergoemacs.org/emacs/emacs_n_unicode.html
-;;(define-abbrev-table 'global-abbrev-table '(
-;;    ("alpha" "α")
-;;    ("beta" "β")
-;;    ("gamma" "γ")
-;;    ("theta" "θ")
-;;    ("inf" "∞")
-;;    ("fcmp" "⨾")
-;;    ("then" "⨾")
-;;    ("syq"  "╳")
-;;
-;;    ("ar1" "→")
-;;    ("ar2" "⇒")
-;;    ))
-;;
-;;(abbrev-mode 1) ; turn on abbrev mode
-#+END_SRC
-* COMMENT hello
-#+BEGIN_SRC emacs-lisp
-   (message-box "hello, my init has loaded")
-#+END_SRC
 * COMMENT footer
 
 ;; Kill process buffer without confirmation.
 (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
 (org-babel-load-file "~/.emacs.d/init.org")
+(org-babel-load-file "~/dotfiles/.emacs.d/init.org")
 
 Read: https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#haskell-preliminaries
 
