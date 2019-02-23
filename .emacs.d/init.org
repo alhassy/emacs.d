@@ -159,6 +159,8 @@ all of my pacakges through ~use-package~ when it detects they're missing.
 The ~:ensure~ installs the files using ~package.el~ if need be.
 
 #+BEGIN_SRC emacs-lisp :tangle yes
+(package-refresh-contents)        ;; Always stay up to date.
+
 (use-package htmlize :ensure)     ;; Org produced htmls are coloured.
 (use-package biblio  :ensure)     ;; Quick BibTeX references, sometimes.
 
@@ -210,6 +212,8 @@ A quick magit tutorial can be found on [[http://jr0cket.co.uk/2012/12/driving-gi
            This is super neat, you make a series of local such commits rather
            than one nebulous global commit for the file. The ~magit~ interface
            makes this far more accessible than a standard terminal approach!
+         * You can look at the unstaged changes, select a /region/, using ~C-SPC~ as usual, 
+           and commit only that if you want!
          * When looking over a commit, ~M-p/n~ to efficiently go to previous or next altered sections.
          * Amend a commit by pressing ~a~ on ~HEAD~.  
      - ~v~ :: Revert a commit.         
@@ -253,17 +257,62 @@ Below are the git repos I'd like to clone
 (maybe-clone "https://github.com/alhassy/CheatSheet" "~/CheatSheet")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet" "~/ElispCheatSheet")
 (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols" "~/MyUnicodeSymbols")
+#+end_src
 
-(add-to-list 'magit-repository-directories '("~/dotfiles" . 0))
+Let's always notify ourselves of a file that has [[https://emacs.stackexchange.com/questions/37865/make-magit-check-uncommited-changes-when-opening-a-file][uncommited changes]] 
+--we might have had to step away from the computer and forgotten to commit.
+#+begin_src emacs-lisp :tangle yes
+(require 'magit-git)
+
+(defun my/magit-check-file-and-popup ()
+  "If the file is version controlled with git 
+  and has uncommitted changes, open the magit status popup."
+  (let ((file (buffer-file-name)))
+    (when (and file (magit-anything-modified-p t file))
+      (message-box "This file has uncommited changes!")
+      (magit-status))))
+
+(add-hook 'find-file-hook 'my/magit-check-file-and-popup)
+
+;; Let's try this out.
+;; (progn (eshell-command "echo change-here >> ~/dotfiles/.emacs")
+;;        (find-file "~/dotfiles/.emacs")
+;; )
+#+end_src
+
+** COMMENT to-consider-for-magit-list-repositories
+
+#+begin_src emacs-lisp :tangle no
+(add-to-list 'magit-repository-directories '("~/dotfiles"          . 0))
 (add-to-list 'magit-repository-directories '("~/alhassy.github.io" . 0))
-(add-to-list 'magit-repository-directories '("~/MyUnicodeSymbols" . 0))
-(add-to-list 'magit-repository-directories '("~/CheatSheet" . 0))
-(add-to-list 'magit-repository-directories '("~/ElispCheatSheet" . 0))
+(add-to-list 'magit-repository-directories '("~/MyUnicodeSymbols"  . 0))
+(add-to-list 'magit-repository-directories '("~/CheatSheet"        . 0))
+(add-to-list 'magit-repository-directories '("~/ElispCheatSheet"   . 0))
 
 ;; Likely want to put a hook when closing emacs, or at some given time,
 ;; to show me this buffer so that I can ‘push’ if I haven't already!
 ;
 ; (magit-list-repositories)
+
+(describe-symbol 'magit-list-repositories)
+
+(magit-repo-list-mode
+
+(dolist (repo magit-repository-directories nil)
+  (let ((dir (car repo)))
+   (message-box (format "%s" dir))
+))
+
+(defun tangle-commit-load ()
+  (interactive)
+  (save-excursion
+    (widen)
+    (save-buffer)
+    (org-babel-tangle)
+    (magit-stage-modified)
+    (magit-commit-create)
+    (load-file user-init-file)
+    (delete-other-windows)))
 #+end_src
 
 * Managing Local Variables
