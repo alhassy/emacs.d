@@ -454,7 +454,8 @@ I almost always want the ~agda-mode~ input method.
 
 #+BEGIN_SRC emacs-lisp :tangle yes
 (require 'agda-input)
-(set-input-method "Agda")
+(add-hook 'text-mode-hook (lambda () (set-input-method "Agda")))
+(add-hook 'org-mode-hook (lambda () (set-input-method "Agda")))
 #+END_SRC
 
 :agda2_program_args:
@@ -620,7 +621,10 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 ** My TODO list: The initial buffer when Emacs opens up
 #+BEGIN_SRC emacs-lisp
 ;; (setq initial-buffer-choice "~/Dropbox/todo.org")
-(find-file "~/Dropbox/todo.org")
+
+(progn (split-window-right)			;; C-x 3
+(other-window 1)			          ;; C-x 0
+(find-file "~/Dropbox/todo.org"))
 #+END_SRC
 ** Showing date, time, and battery life
 #+BEGIN_SRC emacs-lisp
@@ -915,7 +919,7 @@ necessitate explicitly loading ~org-tempo~.
       '("ver" . "verbatim"))
  #+END_SRC
 
-*** Demoing Dot Graphs
+*** COMMENT TODO Demoing Dot Graphs
 We include one to demo the capabilities of the previous subsection.
 
 #+BEGIN_SRC emacs-lisp
