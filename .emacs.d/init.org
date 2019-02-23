@@ -426,33 +426,39 @@ to the files that utilise it.
 # E.g., within emacs try to execute (package-refresh-contents)
 # and you'll observe a permissions error.
 
-* TODO Cosmetics
-*TODO*
-try background colour for html:  ---nice soft yellow, pleasing--- 
+* Cosmetics
 😃
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp
+;; (load-theme 'spacemacs-dark)
+(load-theme 'spacemacs-light)
+#+end_src
+
+:ExperimentingWithBackgroundColours: 
+#+begin_src emacs-lisp
+;; try background colour for html:  ---nice soft yellow, pleasing--- 
+;;
 (add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
 ;; maybe not idea for spacemacs
 
 (visual-line-mode t)
-#+END_SRC
+#+end_src
 
-:Experimenting: 
 (set-background-color "white")
 (set-background-color "#eae3cb")   -- a bit dark
 (set-background-color "#fcf4dc")   -- nice!
 :End:
 
-** TODO Column Marker                               :not_working_as_desired:
+** Column Marker
+
+(  Maybe a hook would be better? Much better...? )
 
 #+BEGIN_SRC emacs-lisp
 (progn (fci-mode) (setq fci-rule-column 90))
 #+END_SRC
 
 Have a thin line to the right to ensure I don't write “off the page”.
-
 #+BEGIN_SRC emacs-lisp :tangle no
-; (require 'fill-column-indicator)
+(use-package fill-column-indicator :ensure)
 (define-globalized-minor-mode my-fci-global-mode fci-mode
   (lambda () (set-fill-column 90) (fci-mode 't)
 ))
