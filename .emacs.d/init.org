@@ -192,6 +192,129 @@ ln -s dotfiles/.emacs.d/init.org init.org
 ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
 #+END_EXAMPLE
 
+* Magit & Switching to a new OS
+
+** ~use-package~
+Recently I switched to mac --first time trying the OS.
+I had to do a few ~package-install~'s and it was annoying.
+I'm looking for the best way to package my Emacs installation 
+--inlcuding my installed pacakages and configuration--
+so that I can quickly install it anywhere, say if I go to another machine.
+It seems ~use-package~  allows me to configure and auto install packages. 
+On a new machine, when I clone my ~.emacs.d~ and start emacs,
+on the first start it should automatically install and compile 
+all of my pacakges through ~use-package~ when it detects they're missing.
+
+The ~:ensure~ installs the files using ~package.el~ if need be.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package htmlize :ensure)     ;; Org produced htmls are coloured.
+(use-package biblio  :ensure)     ;; Quick BibTeX references, sometimes.
+
+(use-package magit   :ensure)     ;; Efficient version control.
+(global-set-key (kbd "C-x g") 'magit-status)
+
+;; (use-package flycheck          ;; Dynamic syntax checking.
+;;  :init (global-flycheck-mode) :ensure)
+
+(use-package dash :ensure)    ;; “A modern list library for Emacs”
+(use-package s    :ensure)    ;; “The long lost Emacs string manipulation library”.
+#+END_SRC
+
+Note:
++ [[https://github.com/magnars/dash.el][dash]]: “A modern list library for Emacs”
+  - E.g., ~(--filter (> it 10) (list 8 9 10 11 12))~
++ [[https://github.com/magnars/s.el][s]]: “The long lost Emacs string manipulation library”.
+  - E.g., ~s-trim, s-replace, s-join~.
+
+** Magit
+
+Why use ~magit~ as the interface to the git version control system?
+In a magit buffer nearly everything can be acted upon:
+Press ~return,~ or ~space~, to see details and ~tab~ to see children items, usually.
+
+# Execute ~M-x dired~ to see the contents of a particular directory.
+#
+Below is my personal quick guide to working with magit.
+A quick magit tutorial can be found on [[http://jr0cket.co.uk/2012/12/driving-git-with-emacs-pure-magic-with.html.html][jr0cket's blog]].
+
++ ~magit-init~ :: Put a project under version control. 
+  The mini-buffer will prompt you for the top level folder version.
+  A ~.git~ folder will be created there.
+
++ ~magit-status~ , ~C-x g~ :: See status in another buffer. Press ~?~ to see options,
+     including:
+     - ~q~ :: Quit magit, or go to previous magit screen.
+     - ~s~ :: Stage, i.e., add, a file to version control.
+            Add all untracked files by selecting the /Untracked files/ title.  
+     - ~k~ :: Kill, i.e., delete a file locally.
+     - ~i~ :: Add a file to the project ~.gitignore~ file. Nice stuff =)
+     - ~u~ :: Unstage a specfif staged change highlighed by cursor.
+              ~C-u s~ stages everything --tracked or not.
+     - ~c~ :: Commit a change.
+         * A new buffer for the commit message appears, you write it then
+           commit with ~C-c C-c~ or otherwise cancel with ~C-c C-k~.
+           These commands are mentioned to you in the minibuffer when you go to commit.
+         * You can provide a commit to /each/ altered chunk of text! 
+           This is super neat, you make a series of local such commits rather
+           than one nebulous global commit for the file. The ~magit~ interface
+           makes this far more accessible than a standard terminal approach!
+         * When looking over a commit, ~M-p/n~ to efficiently go to previous or next altered sections.
+         * Amend a commit by pressing ~a~ on ~HEAD~.  
+     - ~v~ :: Revert a commit.         
+     - ~l~ :: Show the log, another ~l~ for current branch; other options will be displayed.
+         - Here ~space~ shows details in another buffer while cursour remains in current
+           buffer and, moreover, continuing to press ~space~ scrolls through the other buffer!
+           Neato.
+     - ~d~ :: Show differences, another ~d~ or another option.
+            - This is magit! Each hunk can be acted upon; e.g., ~s~ or ~c~ or ~k~ ;-)
+            - [[https://softwareengineering.stackexchange.com/a/119807/185815][The staging area is akin to a pet store; commiting is taking the pet home.]]  
+     - ~P~ :: Push.
+     - ~F~ :: Pull.
+     - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
+
+   The status buffer may be refereshed using ~g~, and all magit buffer by ~G~.
+   # E.g., when you make git changes outside of emacs.
+   Press ~tab~ to see collaposed items, such as what text has been changed.
+
+Notice that every time you press one of these commands, a ‘pop-up’ of realted git options
+appears! Thus not only is there no need to memorize many of them, but this approach makes
+discovering other commands easier.
+
+Use ~M-x (magit-list-repositories) RET~ to list local repositories:
+
+Below are the git repos I'd like to clone
+(setq magit-clone-set-remote.pushDefault t) ;; Do not ask about this variable when cloning.
+
+#+begin_src emacs-lisp
+(defun maybe-clone (remote local)
+  "Clone a `remote` repository if the `local` directory does not exist.
+    Yields `nil` when no cloning transpires, otherwise yields `cloned-repo`.
+  "
+  (unless (file-directory-p local) (magit-clone remote local) 'cloned-repo)
+)
+
+;; Set variable without asking.
+(setq magit-clone-set-remote.pushDefault 't)
+
+(maybe-clone "https://github.com/alhassy/dotfiles" "~/dotfiles")
+(maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/alhassy.github.io")
+(maybe-clone "https://github.com/alhassy/CheatSheet" "~/CheatSheet")
+(maybe-clone "https://github.com/alhassy/ElispCheatSheet" "~/ElispCheatSheet")
+(maybe-clone "https://github.com/alhassy/MyUnicodeSymbols" "~/MyUnicodeSymbols")
+
+(add-to-list 'magit-repository-directories '("~/dotfiles" . 0))
+(add-to-list 'magit-repository-directories '("~/alhassy.github.io" . 0))
+(add-to-list 'magit-repository-directories '("~/MyUnicodeSymbols" . 0))
+(add-to-list 'magit-repository-directories '("~/CheatSheet" . 0))
+(add-to-list 'magit-repository-directories '("~/ElispCheatSheet" . 0))
+
+;; Likely want to put a hook when closing emacs, or at some given time,
+;; to show me this buffer so that I can ‘push’ if I haven't already!
+;
+; (magit-list-repositories)
+#+end_src
+
 * Managing Local Variables
 
 It is dangerous to load a file with local variables;
