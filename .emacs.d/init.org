@@ -259,7 +259,7 @@ Below are the git repos I'd like to clone
 (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols" "~/MyUnicodeSymbols")
 #+end_src
 
-Let's always notify ourselves of a file that has [[https://emacs.stackexchange.com/questions/37865/make-magit-check-uncommited-changes-when-opening-a-file][uncommited changes]] 
+Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/check-uncommitted/][uncommited changes]]
 --we might have had to step away from the computer and forgotten to commit.
 #+begin_src emacs-lisp :tangle yes
 (require 'magit-git)
@@ -280,40 +280,11 @@ Let's always notify ourselves of a file that has [[https://emacs.stackexchange.c
 ;; )
 #+end_src
 
-** COMMENT to-consider-for-magit-list-repositories
-
-#+begin_src emacs-lisp :tangle no
-(add-to-list 'magit-repository-directories '("~/dotfiles"          . 0))
-(add-to-list 'magit-repository-directories '("~/alhassy.github.io" . 0))
-(add-to-list 'magit-repository-directories '("~/MyUnicodeSymbols"  . 0))
-(add-to-list 'magit-repository-directories '("~/CheatSheet"        . 0))
-(add-to-list 'magit-repository-directories '("~/ElispCheatSheet"   . 0))
-
-;; Likely want to put a hook when closing emacs, or at some given time,
-;; to show me this buffer so that I can ‘push’ if I haven't already!
-;
-; (magit-list-repositories)
-
-(describe-symbol 'magit-list-repositories)
-
-(magit-repo-list-mode
-
-(dolist (repo magit-repository-directories nil)
-  (let ((dir (car repo)))
-   (message-box (format "%s" dir))
-))
-
-(defun tangle-commit-load ()
-  (interactive)
-  (save-excursion
-    (widen)
-    (save-buffer)
-    (org-babel-tangle)
-    (magit-stage-modified)
-    (magit-commit-create)
-    (load-file user-init-file)
-    (delete-other-windows)))
-#+end_src
+:TryItOut:
+(progn (eshell-command "echo change-here >> ~/dotfiles/.emacs")
+       (find-file "~/dotfiles/.emacs")
+)
+:End:
 
 * Managing Local Variables
 
@@ -721,6 +692,10 @@ I do this so often it's not even funny.
 #+BEGIN_SRC emacs-lisp
 (global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
 #+END_SRC
+
+In Mac OS, one uses ~Cmd-r~ to reload a page and spacemacs binds buffer reversion to ~Cmd-u~
+--in Emacs, Mac's ~Cmd~ is referred to as the ‘super key’ and denoted ~s~.
+
 ** Kill to start of line
 Dual to ~C-k~,
 #+BEGIN_SRC emacs-lisp
@@ -1358,6 +1333,54 @@ For faster pdf generation, may consider invoking:
 (setq org-latex-pdf-process
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 #+end_example
+
+** to-consider-for-magit-list-repositories
+
+The above mechanism suffices, the following needn't be followed with ... unless desired
+
+#+begin_src emacs-lisp :tangle no
+(add-to-list 'magit-repository-directories '("~/dotfiles"          . 0))
+(add-to-list 'magit-repository-directories '("~/alhassy.github.io" . 0))
+(add-to-list 'magit-repository-directories '("~/MyUnicodeSymbols"  . 0))
+(add-to-list 'magit-repository-directories '("~/CheatSheet"        . 0))
+(add-to-list 'magit-repository-directories '("~/ElispCheatSheet"   . 0))
+
+;; Likely want to put a hook when closing emacs, or at some given time,
+;; to show me this buffer so that I can ‘push’ if I haven't already!
+;
+; (magit-list-repositories)
+
+(progn (eshell-command "echo change-here >> ~/ElispCheatSheet/CheatSheet.org")
+       (magit-anything-modified-p t "~/ElispCheatSheet")
+       (magit-status "~/ElispCheatSheet/CheatSheet.org")
+)
+
+(dolist (file (directory-files "~/ElispCheatSheet") nil)
+     (magit-refresh)
+     (when (magit-anything-modified-p t file)
+       (message-box (format "%s" file)) )
+)
+
+(describe-symbol 'magit-list-repositories)
+
+(magit-repo-list-mode
+
+(catch 'break
+  (dolist (repo magit-repository-directories nil)
+
+  )))
+
+(defun tangle-commit-load ()
+  (interactive)
+  (save-excursion
+    (widen)
+    (save-buffer)
+    (org-babel-tangle)
+    (magit-stage-modified)
+    (magit-commit-create)
+    (load-file user-init-file)
+    (delete-other-windows)))
+#+end_src
 
 * Summary of Utilities Provided
 
