@@ -1016,10 +1016,11 @@ Add the following to a web-page if you'd like it to have a floating table of con
 `(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
 )
  #+END_SRC
-** TODO Minted
-Execute the following for bib ref as well as minted:
+** Minted
+Execute the following for bib ref as well as minted
+Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
+--which in turn requires the pygmentize system tool.
 #+BEGIN_SRC emacs-lisp
-;; Org-mode uses Minted package for source code highlighting in PDF/LaTeX
 (setq org-latex-listings 'minted
       org-latex-packages-alist '(("" "minted"))
       org-latex-pdf-process
@@ -1030,9 +1031,11 @@ Execute the following for bib ref as well as minted:
 )
 #+END_SRC
 
-;; for faster pdf generation
+For faster pdf generation, may consider invoking:
+#+begin_example emacs-lisp 
 (setq org-latex-pdf-process
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
+#+end_example
 
 * COMMENT no Other fun things
 
