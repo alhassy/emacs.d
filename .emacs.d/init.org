@@ -305,18 +305,13 @@ Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/
       (magit-status))))
 
 (add-hook 'find-file-hook 'my/magit-check-file-and-popup)
-
-;; Let's try this out.
-;; (progn (eshell-command "echo change-here >> ~/dotfiles/.emacs")
-;;        (find-file "~/dotfiles/.emacs")
-;; )
 #+end_src
-
-:TryItOut:
+Let's try this out.
+#+BEGIN_EXAMPLE emacs-lisp
 (progn (eshell-command "echo change-here >> ~/dotfiles/.emacs")
        (find-file "~/dotfiles/.emacs")
 )
-:End:
+#+END_EXAMPLE
 
 * Loads
 
