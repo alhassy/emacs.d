@@ -49,6 +49,10 @@ As such, I've chosen to write my Emacs' initialisation configurations
 in a file named ~~/.emacs.d/init.org~: I have a literate configuration which
 is then loaded using org-mode's tangling feature.
 
+Off topic, I love tiling window managers and had been using [[https://xmonad.org][xmonad]]
+until recently when I obtained a mac machine and now use 
+[[https://ianyh.com/amethyst/][Amethyst]] -- “Tiling window manager for macOS along the lines of xmonad.”
+
 * What's in, or at the top of, my ~~/.emacs~
 
 We evaluate every piece of emacs-lisp code available here when
@@ -167,6 +171,7 @@ The ~:ensure~ installs the files using ~package.el~ if need be.
 (use-package magit   :ensure)     ;; Efficient version control.
 (global-set-key (kbd "C-x g") 'magit-status)
 
+(use-package haskell-mode :ensure)
 ;; (use-package flycheck          ;; Dynamic syntax checking.
 ;;  :init (global-flycheck-mode) :ensure)
 
@@ -189,7 +194,7 @@ Press ~return,~ or ~space~, to see details and ~tab~ to see children items, usua
 # Execute ~M-x dired~ to see the contents of a particular directory.
 #
 Below is my personal quick guide to working with magit.
-A quick magit tutorial can be found on [[http://jr0cket.co.uk/2012/12/driving-git-with-emacs-pure-magic-with.html.html][jr0cket's blog]].
+A quick magit tutorial can be found on [[http://jr0cket.co.uk/2012/12/driving-git-with-emacs-pure-magic-with.html.html][jr0cket's blog]]
 
 + ~magit-init~ :: Put a project under version control. 
   The mini-buffer will prompt you for the top level folder version.
@@ -197,40 +202,43 @@ A quick magit tutorial can be found on [[http://jr0cket.co.uk/2012/12/driving-gi
 
 + ~magit-status~ , ~C-x g~ :: See status in another buffer. Press ~?~ to see options,
      including:
-     - ~q~ :: Quit magit, or go to previous magit screen.
-     - ~s~ :: Stage, i.e., add, a file to version control.
-            Add all untracked files by selecting the /Untracked files/ title.  
-     - ~k~ :: Kill, i.e., delete a file locally.
-     - ~i~ :: Add a file to the project ~.gitignore~ file. Nice stuff =)
-     - ~u~ :: Unstage a specfif staged change highlighed by cursor.
-              ~C-u s~ stages everything --tracked or not.
-     - ~c~ :: Commit a change.
-         * A new buffer for the commit message appears, you write it then
-           commit with ~C-c C-c~ or otherwise cancel with ~C-c C-k~.
-           These commands are mentioned to you in the minibuffer when you go to commit.
-         * You can provide a commit to /each/ altered chunk of text! 
-           This is super neat, you make a series of local such commits rather
-           than one nebulous global commit for the file. The ~magit~ interface
-           makes this far more accessible than a standard terminal approach!
-         * You can look at the unstaged changes, select a /region/, using ~C-SPC~ as usual, 
-           and commit only that if you want!
-         * When looking over a commit, ~M-p/n~ to efficiently go to previous or next altered sections.
-         * Amend a commit by pressing ~a~ on ~HEAD~.  
-     - ~v~ :: Revert a commit.         
-     - ~l~ :: Show the log, another ~l~ for current branch; other options will be displayed.
-         - Here ~space~ shows details in another buffer while cursour remains in current
-           buffer and, moreover, continuing to press ~space~ scrolls through the other buffer!
-           Neato.
-     - ~d~ :: Show differences, another ~d~ or another option.
-            - This is magit! Each hunk can be acted upon; e.g., ~s~ or ~c~ or ~k~ ;-)
-            - [[https://softwareengineering.stackexchange.com/a/119807/185815][The staging area is akin to a pet store; commiting is taking the pet home.]]  
-     - ~P~ :: Push.
-     - ~F~ :: Pull.
-     - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
+  - ~q~ :: Quit magit, or go to previous magit screen.
+  - ~s~ :: Stage, i.e., add, a file to version control.
+         Add all untracked files by selecting the /Untracked files/ title.  
+  - ~k~ :: Kill, i.e., delete a file locally.
+  - ~i~ :: Add a file to the project ~.gitignore~ file. Nice stuff =)
+  - ~u~ :: Unstage a specfif staged change highlighed by cursor.
+           ~C-u s~ stages everything --tracked or not.
+  - ~c~ :: Commit a change.
+    * A new buffer for the commit message appears, you write it then
+      commit with ~C-c C-c~ or otherwise cancel with ~C-c C-k~.
+      These commands are mentioned to you in the minibuffer when you go to commit.
+    * You can provide a commit to /each/ altered chunk of text! 
+      This is super neat, you make a series of local such commits rather
+      than one nebulous global commit for the file. The ~magit~ interface
+      makes this far more accessible than a standard terminal approach!
+    * You can look at the unstaged changes, select a /region/, using ~C-SPC~ as usual, 
+      and commit only that if you want!
+    * When looking over a commit, ~M-p/n~ to efficiently go to previous or next altered sections.
+    * Amend a commit by pressing ~a~ on ~HEAD~.  
 
-   The status buffer may be refereshed using ~g~, and all magit buffer by ~G~.
-   # E.g., when you make git changes outside of emacs.
-   Press ~tab~ to see collaposed items, such as what text has been changed.
+  - ~d~ :: Show differences, another ~d~ or another option.
+    - This is magit! Each hunk can be acted upon; e.g., ~s~ or ~c~ or ~k~ ;-)
+    - [[https://softwareengineering.stackexchange.com/a/119807/185815][The staging area is akin to a pet store; commiting is taking the pet home.]]  
+  - ~v~ :: Revert a commit.         
+  - ~x~ :: Undo last commit. Tantamount to ~git reset HEAD~~ when cursor is on most recent
+           commit; otherwise resets to whatever commit is under the cursor.
+  - ~l~ :: Show the log, another ~l~ for current branch; other options will be displayed.
+    - Here ~space~ shows details in another buffer while cursour remains in current
+      buffer and, moreover, continuing to press ~space~ scrolls through the other buffer!
+      Neato.
+  - ~P~ :: Push.
+  - ~F~ :: Pull.
+  - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
+
+  The status buffer may be refereshed using ~g~, and all magit buffer by ~G~.
+  # E.g., when you make git changes outside of emacs.
+  Press ~tab~ to see collapsed items, such as what text has been changed.
 
 Notice that every time you press one of these commands, a ‘pop-up’ of realted git options
 appears! Thus not only is there no need to memorize many of them, but this approach makes
@@ -246,17 +254,41 @@ Below are the git repos I'd like to clone
   "Clone a `remote` repository if the `local` directory does not exist.
     Yields `nil` when no cloning transpires, otherwise yields `cloned-repo`.
   "
-  (unless (file-directory-p local) (magit-clone remote local) 'cloned-repo)
+  (unless (file-directory-p local) 
+     (magit-clone remote local) 
+     (add-to-list 'magit-repository-directories `(,local   . 0))
+     'cloned-repo)
 )
 
 ;; Set variable without asking.
 (setq magit-clone-set-remote.pushDefault 't)
 
+;; Public repos
 (maybe-clone "https://github.com/alhassy/dotfiles" "~/dotfiles")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/alhassy.github.io")
 (maybe-clone "https://github.com/alhassy/CheatSheet" "~/CheatSheet")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet" "~/ElispCheatSheet")
 (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols" "~/MyUnicodeSymbols")
+
+;; Private repos
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/carette/cs3fp3.git" "~/3fp3") ;; cat adventures
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/RATH/RATH-Agda"     "~/RATH-Agda")
+
+;; (maybe-clone 
+
+(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-distribution.git" "~/3ea3/assignment-distribution")
+(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/notes.git" "~/3ea3/notes")
+(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-development.git" "~/3ea3/assignment-development")
+(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/kandeeps.git" "~/3ea3/sujan")
+(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/horsmane.git" "~/3ea3/emily")
+(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/anderj12.git" "~/3ea3/jacob")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/3EA3.git" "~/3ea3/_2018")  
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/2DM3/LectureNotes.git" "~/2dm3")
+
+;; Likely want to put a hook when closing emacs, or at some given time,
+;; to show me this buffer so that I can ‘push’ if I haven't already!
+;
+; (magit-list-repositories)
 #+end_src
 
 Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/check-uncommitted/][uncommited changes]]
@@ -285,25 +317,6 @@ Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/
        (find-file "~/dotfiles/.emacs")
 )
 :End:
-
-* Managing Local Variables
-
-It is dangerous to load a file with local variables;
-instead we should load files without evaluating locals,
-read the locals to ensure they are safe --e.g., there's nothing
-malicious like ~eval: (delete-file your-important-file.txt)~--
-then revert the buffer to load the locals.
-
-However, when preprocessing my own files I sometimes wish
-to accept all locals without being queried and so have these two
-combinators.
-
-
-#+BEGIN_SRC emacs-lisp
-;; Accept all local variables versus query for possibly non-safe locals.
-(defun DANGER-all-locals () (setq enable-local-variables :all))
-(defun SAFE-query-locals () (setq enable-local-variables t))
-#+END_SRC
 
 * Loads
 
@@ -757,8 +770,10 @@ Instead I now only need to type ~C-|~ to make this switch.
 #+END_SRC
 ** Making then opening html's from org's
 #+BEGIN_SRC emacs-lisp 
-(defun my-org-html-export-to-html ()
- "Make an html from an org file then open it in my browser."
+(cl-defun my/org-html-export-to-html (&optional (filename (buffer-name)))
+  "Produce an HTML from the given ‘filename’, or otherwise current buffer,
+   then open it in my default brower.
+  "
  (interactive)
  (org-html-export-to-html)
  (let ((it (concat (file-name-sans-extension buffer-file-name) ".html")))
@@ -767,6 +782,99 @@ Instead I now only need to type ~C-|~ to make this switch.
    'success ;; otherwise we obtain a "compiler error".
  ) 
 )
+#+END_SRC
+
+** Making then opening pdf's from org's
+#+BEGIN_SRC emacs-lisp 
+(cl-defun my/org-latex-export-to-pdf (&optional (filename (buffer-name)))
+  "Produce a PDF from the given ‘filename’, or otherwise current buffer,
+   then open it in my default viewer.
+  "
+ (interactive)
+ (org-latex-export-to-pdf)
+ (let ((it (concat (file-name-sans-extension filename) ".pdf")))
+   (eshell-command (concat "open " it  " & ")))
+   (message (concat it " has been opened in your PDF viewer."))
+   'success ;; otherwise we obtain a "compiler error".
+)
+#+END_SRC
+
+** Locally ~toggle~ a variable
+
+It is dangerous to load a file with local variables;
+instead we should load files without evaluating locals,
+read the locals to ensure they are safe --e.g., there's nothing
+malicious like ~eval: (delete-file your-important-file.txt)~--
+then revert the buffer to load the locals.
+
+However, when preprocessing my own files I sometimes wish
+to accept all locals without being queried and so have the following
+combinator.
+
+#+begin_src emacs-lisp
+(defmacro toggle (variable value code)
+  "Perform the substitution ‘code[variable ≔ value]’.
+   In particular, the value of ‘variable’, if any, *is* unaffected.
+
+   Example uses include terse replacements for one-off let-statements,
+   or, more likely, of temporarily toggeling important values, such as 
+   ‘kill-buffer-query-functions’ for killing a process buffer without confirmation.
+
+   Another example: ‘(toggle enable-local-variables :all ⋯)’ to preprocess files
+   without being queried about possibly dangerous local variables.
+  "
+  `(let ((_initial_value_ ,variable))
+        (setq ,variable ,value)
+        ,code
+        (setq ,variable _initial_value_)
+  )
+)
+#+end_src
+
+:Discussion:
+#+begin_example emacs-lisp
+;; example usage
+(macroexpand '(toggle x "x" (message x)))
+
+(toggle x "x" (message x))
+
+(message x) ;; crashes since x is unassigned
+
+;; Notice that let's overshadow names. Put this into ElispCheatSheet
+;; 
+(progn
+(setq NOPE "NOPE")
+(let ((NOPE "YUP")) )
+(message NOPE)
+)
+
+(toggle NOPE "x" (message x))
+
+NOPE ;; ⇒ "NOPE"
+#+end_example
+:End:
+
+** Interpret the Haskell source blocks in a file
+#+BEGIN_SRC emacs-lisp 
+(cl-defun my/org-run-haskell (&optional (filename (buffer-name)))
+  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
+   and load the result into a ghci buffer.
+
+   Note that this only loads the blocks tangled to ‘filename’.
+  "
+   (let* ((it  (concat (file-name-sans-extension filename) ".hs"))
+         (buf (concat "*GHCI* " it)))
+
+     (toggle kill-buffer-query-functions nil (ignore-errors (kill-buffer buf)))
+     (org-babel-tangle it "haskell")
+     (async-shell-command (concat "ghci " it) buf) 
+     (switch-to-buffer-other-window buf)
+     (end-of-buffer)
+   )
+)
+
+;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
+;; Possibly with a (svae-buffer) before hand.
 #+END_SRC
 
 ** ~re-replace-in-file~
@@ -873,7 +981,7 @@ Let us select a correct spelling merely by clicking on a word.
 (eval-after-load "flyspell"
   ' (progn
      (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-     (define-key flyspell-mouse-map [mouse-3] #'undefined)) )
+     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
 #+end_src
 
 Colour incorrect works; default is an underline.
@@ -921,6 +1029,12 @@ necessitate explicitly loading ~org-tempo~.
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'org-structure-template-alist
      '("ag" . "src org-agda"))
+#+END_SRC
+*** ~<hs~ Haskell source template
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'org-structure-template-alist
+     '("hs" . "src haskell"))
 #+END_SRC
 *** ~<ic~ Interactive Way to C source template
 
@@ -1384,31 +1498,34 @@ The above mechanism suffices, the following needn't be followed with ... unless 
 
 * Summary of Utilities Provided
 
-| _Command_                                | _Action_                                            |
-| ~C-c C-m~                                | recompile file                                    |
-| ~<f5>~                                   | revert buffer                                     |
-| ~M-x k~                                  | kill to start of line                             |
-| ~C-∣~                                    | toggle 2 windows from horizontal to vertical view |
-| ~(file-as-list   pathHere)~              | construe a file as a list of lines                |
-| ~(file-as-string pathHere)~              | construe a file as a string                       |
-| (~re-replace-in-file file regex whatDo)~ | perform an in-file regular expression rewrite     |
-| ~(mapsto this that)~                     | regex rewrite in current buffer: this ↦ that      |
-| ~M-x create-scratch-buffer~              | --self evident--                                  |
-| ~M-x kill-other-buffers~                 | --self evident--                                  |
-| ~M-$~                                    | check spelling of word at point                   |
-| ~M-#~                                    | thesaurus look-up word at point                   |
-| ~(DANGER-all-locals)~                    | accept, evaluate, all local variables             |
-| ~(SAFE-query-locals)~                    | query whether local variables should be evaluated |
-| ~C-+/-~                                  | increase/decrease text size                       |
-| ~M-x my-org-html-export-to-html~         | make then open html from an org file              |
-| ~C-c C-c~                                | execute code in an org ~src~ block                  |
-| ~<E~                                     | produce an emacs-lisp ~src~ block                   |
-| ~<g~                                     | produce a graph template ~src~ block                |
-| ~C-x t~                                  | open a new untitled org template file             |
-| ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file      |
-| ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~           |
+| _Command_                                | _Action_                                                |
+| ~C-c C-m~                                | recompile file                                          |
+| ~<f5>~                                   | revert buffer                                           |
+| ~M-x k~                                  | kill to start of line                                   |
+| ~C-∣~                                    | toggle 2 windows from horizontal to vertical view       |
+| ~(file-as-list   pathHere)~              | construe a file as a list of lines                      |
+| ~(file-as-string pathHere)~              | construe a file as a string                             |
+| (~re-replace-in-file file regex whatDo)~ | perform an in-file regular expression rewrite           |
+| ~(mapsto this that)~                     | regex rewrite in current buffer: this ↦ that            |
+| ~M-x create-scratch-buffer~              | --self evident--                                        |
+| ~M-x kill-other-buffers~                 | --self evident--                                        |
+| ~M-$~                                    | check spelling of word at point                         |
+| ~M-#~                                    | thesaurus look-up word at point                         |
+| ~(toggle name val ⋯)~                    | /Effectfully/ set ~name~ to ~val~ only for scope ~⋯~.   |
+| ~(my/org-run-haskell &optional file)~    | Interpret the Haskell org-blocks from a file into ghci. |
+| ~C-+/-~                                  | increase/decrease text size                             |
+| ~M-x my-org-html-export-to-html~         | make then open html from an org file                    |
+| ~C-c C-c~                                | execute code in an org ~src~ block                      |
+| ~<E~                                     | produce an emacs-lisp ~src~ block                       |
+| ~<g~                                     | produce a graph template ~src~ block                    |
+| ~C-x t~                                  | open a new untitled org template file                   |
+| ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file          |
+| ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~             |
 
 Some possibly interesting reads:
+  + [[https://to1ne.gitlab.io/literate-dotfiles/][Toon's Literate Dotfiles]]
+  + [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
+  + [[https://github.com/caisah/emacs.dz][A list of people's nice emacs config files]]
   + Karl Voit's article [[https://karl-voit.at/2017/06/03/emacs-org/][My Emacs Configuration In Org-mode]]; his init file can be found [[https://github.com/novoid/dot-emacs][here]].
   + Holger Schuri's article [[http://www.holgerschurig.de/en/emacs-init-tangle/][Efficient Emacs .org ➞ .el tangling]] 
     ; his init file can be found [[https://bitbucket.org/holgerschurig/emacsconf/src/b06a0f394b9f20cd4e00cfc5a24f7f59db4ba376/config.org?at=master&fileviewer=file-view-default][here]].
