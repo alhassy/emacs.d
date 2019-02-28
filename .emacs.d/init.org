@@ -10,7 +10,7 @@
 #+SOURCE: https://raw.githubusercontent.com/alhassy/dotfiles/master/.emacs.d/init.org
 #+PROPERTY: header-args :tangle yes
 
-* Abstract :ignore:
+* Abstract                                                           :ignore:
 #+begin_center
 *Abstract*
 #+end_center
@@ -30,7 +30,12 @@ As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-w
 through my ever growing configuration files, ease of usability and reference
 for peers, and, most importantly, better maintainability for myself!
 
-⟪ Dear reader when encoutnering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~ ⟫
+⟪ Dear reader when encountering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~ 
+; an elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispCheatSheet][here.]] ⟫
+
+Edit: Recently I switched to spacemacs. I know nothing about spacemacs, I'm just trying it out now
+and so something below are likely to be super wrong
+--but they work for me, for now.
 
 * Introduction
 
@@ -48,6 +53,7 @@ Notice how additions to the file have been created by `custom'.
 As such, I've chosen to write my Emacs' initialisation configurations
 in a file named ~~/.emacs.d/init.org~: I have a literate configuration which
 is then loaded using org-mode's tangling feature.
+Read more about Emacs' initialisation configurations [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html#Init-File][here.]]
 
 Off topic, I love tiling window managers and had been using [[https://xmonad.org][xmonad]]
 until recently when I obtained a mac machine and now use 
@@ -92,6 +98,14 @@ via the ~dotspacemacs/user-config~ method.
 
    (org-babel-load-file "~/dotfiles/.emacs.d/init.org")
 )
+#+end_src
+
+Moreover, in the ~dotspacemacs/layers~ method in ~.spacemacs~,
+I have the following so that spacemacs does not delete
+layer-orphan packages in an attempt to ‘clean up’ my unsued
+packages.
+#+begin_src emacs-lisp :tangle no
+dotspacemacs-additional-packages '(htmlize biblio magit haskell-mode dash s)
 #+end_src
 
 * Version Control
@@ -149,7 +163,7 @@ ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
 
 * Magit & Switching to a new OS
 
-** ~use-package~
+**  ~use-package~
 Recently I switched to mac --first time trying the OS.
 I had to do a few ~package-install~'s and it was annoying.
 I'm looking for the best way to package my Emacs installation 
@@ -162,7 +176,12 @@ all of my pacakges through ~use-package~ when it detects they're missing.
 
 The ~:ensure~ installs the files using ~package.el~ if need be.
 
+List of additional packages that will be installed wihout being
+wrapped in a layer.
+(describe-symbol 'dotspacemacs-additional-packages)
 #+BEGIN_SRC emacs-lisp :tangle yes
+(setq dotspacemacs-additional-packages '(htmlize biblio magit haskell-mode dash s))
+
 (package-refresh-contents)        ;; Always stay up to date.
 
 (use-package htmlize :ensure)     ;; Org produced htmls are coloured.
@@ -178,6 +197,7 @@ The ~:ensure~ installs the files using ~package.el~ if need be.
 (use-package dash :ensure)    ;; “A modern list library for Emacs”
 (use-package s    :ensure)    ;; “The long lost Emacs string manipulation library”.
 #+END_SRC
+
 
 Note:
 + [[https://github.com/magnars/dash.el][dash]]: “A modern list library for Emacs”
@@ -1003,8 +1023,7 @@ see ~~/Dropbox/spelling.txt~.
 
 * Org-mode related things
 
-# Org-Mode Table Editing Cheatsheet
-# http://notesyoujustmightwanttosave.blogspot.com/
+[[http://notesyoujustmightwanttosave.blogspot.com/][Here is useful Org-Mode Table Editing Cheatsheet.]]
 
 ** Org Speed Keys
 Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
@@ -1222,6 +1241,8 @@ Then the functionality,
 
 ** Org-mode cosmetics
 #+BEGIN_SRC emacs-lisp
+(with-eval-after-load 'org     ;; Need this here so it loads after the spacemacs ‘layer’
+
 ;; org-mode math is now highlighted ;-)
 (setq org-highlight-latex-and-related '(latex))
 
@@ -1230,7 +1251,15 @@ Then the functionality,
 
 ;; (setq org-pretty-entities t) 
 ;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+
+)
 #+END_SRC
+
+:yay_it_worked:
+
+ ~awkward~ or $not$
+
+:end:
 
 ** Jumping without hassle
 
