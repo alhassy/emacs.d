@@ -1002,6 +1002,35 @@ see ~~/Dropbox/spelling.txt~.
 #+END_SRC
 
 * Org-mode related things
+
+# Org-Mode Table Editing Cheatsheet
+# http://notesyoujustmightwanttosave.blogspot.com/
+
+** Org Speed Keys
+Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
+a headline, we can perform fast manipulation & navigation using the standard Emacs movement
+controls, such as 
++ ~I/O~ clock In/Out to the task defined by the current heading. 
+   - Keep track of your work times!
+   - ~v~ view agenda.
++ ~u~ for jumping upwards to the parent heading.
++ ~c~ for cycling structure below current heading, or ~C~ for cycling global structure.
++ ~i~ insert a new same-level heading below current heading.
++ ~w~ refile current heading; options list pops-up to select which heading to move it to. Neato!
++ ~t~ cycle through the available TODO states.
++ ~^~ sort children of current subtree; brings up a list of sorting options.
++ ~n/p~ for next/previous /visible/ heading.
++ ~f/b~ for jumping forward/backward to the next/previous /same-level/ heading.
++ ~D/U~ move a heading down/up.
++ ~L/R~ recursively promote (move leftwards) or demote (more rightwards) a heading.
+
+Finally, ~?~ to see a complete list of keys available.
+#+BEGIN_SRC emacs-lisp
+(setq org-use-speed-commands t)
+
+;; Add more speed commands by adding to this association list.
+;; (describe-symbol 'org-speed-commands-user)
+#+END_SRC  
 ** Template expansion (<s Tab, etc.)
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
 or ~<q~ for quote blocks. 
