@@ -10,6 +10,14 @@
 #+SOURCE: https://raw.githubusercontent.com/alhassy/dotfiles/master/.emacs.d/init.org
 #+PROPERTY: header-args :tangle yes
 
+# Begin blog server: (shell-command "cd ~/alhassy.github.io/ ; bundle exec jekyll serve &")
+# (load-file "~/alhassy.github.io/content/AlBasmala.el")
+# (toggle enable-local-variables :all (preview-article))
+#
+# (defun my/magit-check-file-and-popup () )
+
+(find-file "~/alhassy.github.io/content/AlBasmala.el")
+
 * Abstract                                                           :ignore:
 #+begin_center
 *Abstract*
@@ -163,7 +171,7 @@ ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
 
 * Magit & Switching to a new OS
 
-**  ~use-package~
+** ~use-package~
 Recently I switched to mac --first time trying the OS.
 I had to do a few ~package-install~'s and it was annoying.
 I'm looking for the best way to package my Emacs installation 
@@ -289,6 +297,7 @@ Below are the git repos I'd like to clone
 (maybe-clone "https://github.com/alhassy/CheatSheet" "~/CheatSheet")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet" "~/ElispCheatSheet")
 (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols" "~/MyUnicodeSymbols")
+(maybe-clone "https://github.com/alhassy/interactive-way-to-c" "~/interactive-way-to-c")
 
 ;; Private repos
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/carette/cs3fp3.git" "~/3fp3") ;; cat adventures
@@ -783,37 +792,6 @@ Instead I now only need to type ~C-|~ to make this switch.
 )
 (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 #+END_SRC
-** Making then opening html's from org's
-#+BEGIN_SRC emacs-lisp 
-(cl-defun my/org-html-export-to-html (&optional (filename (buffer-name)))
-  "Produce an HTML from the given ‘filename’, or otherwise current buffer,
-   then open it in my default brower.
-  "
- (interactive)
- (org-html-export-to-html)
- (let ((it (concat (file-name-sans-extension buffer-file-name) ".html")))
-   (browse-url it)
-   (message (concat it " has been opened in Chromium."))
-   'success ;; otherwise we obtain a "compiler error".
- ) 
-)
-#+END_SRC
-
-** Making then opening pdf's from org's
-#+BEGIN_SRC emacs-lisp 
-(cl-defun my/org-latex-export-to-pdf (&optional (filename (buffer-name)))
-  "Produce a PDF from the given ‘filename’, or otherwise current buffer,
-   then open it in my default viewer.
-  "
- (interactive)
- (org-latex-export-to-pdf)
- (let ((it (concat (file-name-sans-extension filename) ".pdf")))
-   (eshell-command (concat "open " it  " & ")))
-   (message (concat it " has been opened in your PDF viewer."))
-   'success ;; otherwise we obtain a "compiler error".
-)
-#+END_SRC
-
 ** Locally ~toggle~ a variable
 
 It is dangerous to load a file with local variables;
@@ -828,8 +806,9 @@ combinator.
 
 #+begin_src emacs-lisp
 (defmacro toggle (variable value code)
-  "Perform the substitution ‘code[variable ≔ value]’.
-   In particular, the value of ‘variable’, if any, *is* unaffected.
+  "Locally set the value of ‘variable’ to be ‘value’ in the scope of ‘code’.
+   In particular, the value of ‘variable’, if any, *is* affected
+   to produce useful sideffects. It retains its orginal value outside this call.
 
    Example uses include terse replacements for one-off let-statements,
    or, more likely, of temporarily toggeling important values, such as 
@@ -868,29 +847,6 @@ combinator.
 NOPE ;; ⇒ "NOPE"
 #+end_example
 :End:
-
-** Interpret the Haskell source blocks in a file
-#+BEGIN_SRC emacs-lisp 
-(cl-defun my/org-run-haskell (&optional (filename (buffer-name)))
-  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
-   and load the result into a ghci buffer.
-
-   Note that this only loads the blocks tangled to ‘filename’.
-  "
-   (let* ((it  (concat (file-name-sans-extension filename) ".hs"))
-         (buf (concat "*GHCI* " it)))
-
-     (toggle kill-buffer-query-functions nil (ignore-errors (kill-buffer buf)))
-     (org-babel-tangle it "haskell")
-     (async-shell-command (concat "ghci " it) buf) 
-     (switch-to-buffer-other-window buf)
-     (end-of-buffer)
-   )
-)
-
-;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
-;; Possibly with a (svae-buffer) before hand.
-#+END_SRC
 
 ** ~re-replace-in-file~
 
@@ -1298,6 +1254,82 @@ Then the functionality,
 (global-set-key (kbd "C-c C-h") 'org-fold-current-subtree-anywhere-in-it)
 #+END_SRC
 
+** Making then opening html's from org's
+#+BEGIN_SRC emacs-lisp 
+(cl-defun my/org-html-export-to-html (&optional (filename (buffer-name)))
+  "Produce an HTML from the given ‘filename’, or otherwise current buffer,
+   then open it in my default brower.
+  "
+ (interactive)
+ (org-html-export-to-html)
+ (let ((it (concat (file-name-sans-extension buffer-file-name) ".html")))
+   (browse-url it)
+   (message (concat it " has been opened in Chromium."))
+   'success ;; otherwise we obtain a "compiler error".
+ ) 
+)
+#+END_SRC
+
+** Making then opening pdf's from org's
+#+BEGIN_SRC emacs-lisp 
+(cl-defun my/org-latex-export-to-pdf (&optional (filename (buffer-name)))
+  "Produce a PDF from the given ‘filename’, or otherwise current buffer,
+   then open it in my default viewer.
+  "
+ (interactive)
+ (org-latex-export-to-pdf)
+ (let ((it (concat (file-name-sans-extension filename) ".pdf")))
+   (eshell-command (concat "open " it  " & ")))
+   (message (concat it " has been opened in your PDF viewer."))
+   'success ;; otherwise we obtain a "compiler error".
+)
+#+END_SRC
+
+*
+** Interpret the Haskell source blocks in a file
+#+BEGIN_SRC emacs-lisp 
+(cl-defun my/org-run-haskell (&optional (filename (buffer-name)))
+  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
+   and load the result into a ghci buffer.
+
+   Note that this only loads the blocks tangled to ‘filename’.
+  "
+   (let* ((it  (concat (file-name-sans-extension filename) ".hs"))
+         (buf (concat "*GHCI* " it)))
+
+     (toggle kill-buffer-query-functions nil (ignore-errors (kill-buffer buf)))
+     (org-babel-tangle it "haskell")
+     (async-shell-command (concat "ghci " it) buf) 
+     (switch-to-buffer-other-window buf)
+     (end-of-buffer)
+   )
+)
+
+;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
+;; Possibly with a (svae-buffer) before hand.
+#+END_SRC
+
+** Minted
+Execute the following for bib ref as well as minted
+Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
+--which in turn requires the pygmentize system tool.
+#+BEGIN_SRC emacs-lisp
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "biber %b"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f")
+)
+#+END_SRC
+
+For faster pdf generation, may consider invoking:
+#+begin_example emacs-lisp 
+(setq org-latex-pdf-process
+      '("pdflatex -interaction nonstopmode -output-directory %o %f"))
+#+end_example
+
 * COMMENT Stuff I don't really use, but may want to look at later
 ** Other fun things
 
@@ -1480,27 +1512,6 @@ Add the following to a web-page if you'd like it to have a floating table of con
     (setq org-confirm-babel-evaluate nil)
     )
 
-*** Minted
-Execute the following for bib ref as well as minted
-Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
---which in turn requires the pygmentize system tool.
-#+BEGIN_SRC emacs-lisp
-(setq org-latex-listings 'minted
-      org-latex-packages-alist '(("" "minted"))
-      org-latex-pdf-process
-      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-        "biber %b"
-        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f")
-)
-#+END_SRC
-
-For faster pdf generation, may consider invoking:
-#+begin_example emacs-lisp 
-(setq org-latex-pdf-process
-      '("pdflatex -interaction nonstopmode -output-directory %o %f"))
-#+end_example
-
 ** to-consider-for-magit-list-repositories
 
 The above mechanism suffices, the following needn't be followed with ... unless desired
@@ -1594,7 +1605,7 @@ Some possibly interesting reads:
 (org-babel-load-file "~/.emacs.d/init.org")
 (org-babel-load-file "~/dotfiles/.emacs.d/init.org")
 
-Read: https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#haskell-preliminaries
+Read:  https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#haskell-preliminaries
 
 # Local Variables:
 # eval: (visual-line-mode t)
