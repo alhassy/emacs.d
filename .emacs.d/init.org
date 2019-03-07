@@ -173,6 +173,11 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 #+END_SRC
 
 :Old_spacemacs_ideas:
+Get onto rolling version of spacemacs:
+
+git checkout develop
+git pull --rebase
+
 Recently I've switched to spacemacs, and to avoid too much migration
 I've simply called this literate configuration from within ~~.spacemacs~
 via the ~dotspacemacs/user-config~ method.
@@ -428,6 +433,18 @@ Let's try this out.
 
 * TODO FIXME Loads
 
+#+BEGIN_SRC emacs-lisp
+;; For example, I have my "show recent files pop-up" set to C-x C-r;
+;; but what if I forget? This mode shows me all key completions when I type C-x, for example.
+;; Moreover, I will be shown other commands I did not know about! Neato :-)
+(use-package which-key 
+ :ensure t
+ :init (which-key-mode)
+ :config (which-key-setup-side-window-bottom)
+         (setq which-key-idle-delay 0.05)
+)
+#+END_SRC
+
 ** ~package-initialize~: Melpa, gnu, and org
 
 + *M-x list-packages* to see all melpa packages that can install
@@ -645,18 +662,12 @@ to the files that utilise it.
 * Cosmetics
 
 #+BEGIN_SRC emacs-lisp
-(load-theme 'spacemacs-light t)
-;; (load-theme 'spacemacs-dark t)
-#+END_SRC
-
-:nope:
-#+BEGIN_SRC emacs-lisp :tangle no
 (use-package spacemacs-theme
   :ensure t
-  :init
-  (load-theme 'spacemacs-light t))
+  :init (load-theme 'spacemacs-light t)
+        ; (load-theme 'spacemacs-dark t)
+)
 #+END_SRC
-:end:
 
 :ExperimentingWithBackgroundColours: 
 #+begin_src emacs-lisp :tangle no
@@ -728,6 +739,7 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 ;; (setq enable-local-variables :all)  ;; FIXME:
 
 ;; List recently accessed files upon startup
+
 (recentf-mode 1)
 (setq recentf-max-menu-items 25)
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
@@ -735,7 +747,6 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 (split-window-below)			  ;; C-x 3
 (other-window 1)			          ;; C-x 0
 (recentf-open-files)
-;; (add-hook 'after-init-hook 'recentf-open-files)
 #+END_SRC
 ** Showing date, time, and battery life
 #+BEGIN_SRC emacs-lisp
