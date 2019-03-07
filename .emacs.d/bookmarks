@@ -1,0 +1,10 @@
+;;;; Emacs Bookmark Format Version 1 ;;;; -*- coding: utf-8-emacs -*- 
+;;; This format is meant to be slightly human-readable;
+;;; nevertheless, you probably don't want to edit it.
+;;; -*- End Of Bookmark File Format Version Stamp -*-
+(("org-refile-last-stored"
+ (filename . "~/dotfiles/.emacs.d/init.org")
+ (front-context-string . "** “FIXME:” Keyw")
+ (rear-context-string . "iles)\n#+END_SRC\n")
+ (position . 30119))
+)

@@ -1,6 +1,5 @@
-
 #+TITLE: ???
-#+DATE: thedate
+#+DATE: Wed 2019-03-06
 #+DESCRIPTION: A new radical entry of things I'm learning!
 #+AUTHOR: Musa Al-hassy
 #+EMAIL: alhassy@gmail.com

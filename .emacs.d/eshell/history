@@ -1,0 +1,6 @@
+ls
+cd elpa/
+ls
+cd helm-20180719.1206/
+ls
+./emacs-helm.sh 

@@ -1,0 +1,4 @@
+;; This file is created automatically by autobookmarks.el
+
+(setq abm-visited-buffers '(("~/dotfiles/.emacs.d/init.org" (filename . "~/dotfiles/.emacs.d/init.org") (position . 28213) (defaults "init.org") (time 23680 30331 216627 0) (visits . 0))))
+(setq abm-recent-buffers '(("~/.emacs.d/recentf" (filename . "~/.emacs.d/recentf") (position . 747) (defaults "recentf") (time 23680 30691 312051 0) (visits . 0)) ("~/dotfiles/.emacs.d/dom.el" (filename . "~/dotfiles/.emacs.d/dom.el") (position . 1) (defaults "dom.el") (time 23680 30563 361668 0) (visits . 0)) ("~/Dropbox/todo.org" (filename . "~/Dropbox/todo.org") (position . 1) (defaults "todo.org") (time 23680 30419 251264 0) (visits . 0))))

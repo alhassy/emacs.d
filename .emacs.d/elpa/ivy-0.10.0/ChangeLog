@@ -1,0 +1,45 @@
+2017-11-30  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Merge commit '4a2cee03519f98cf95b29905dec2566a39ff717e' from swiper
+
+2017-04-10  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	ivy/targets/obsolete-config.el: Satisfy check_copyright
+
+2017-04-10  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Add 'packages/ivy/' from commit
+	'f4b433436668ac09f3d1815fbfb4b71f3e0690fa'
+
+	git-subtree-dir: packages/ivy git-subtree-mainline:
+	6f4e442a66d625f647faa51e88e052c3d93e9657 git-subtree-split:
+	f4b433436668ac09f3d1815fbfb4b71f3e0690fa
+
+2017-04-10  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Remove ivy 0.9.0 to add it again with subtree
+
+2017-04-09  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Merge commit 'af746cad0e9c5d010ea530381111372f7daae55b' from swiper
+
+2017-04-08  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Merge commit 'ace01d5603ddf49b025eb811b612af72ec38dcfb' from swiper
+
+2016-07-11  Paul Eggert	 <eggert@cs.ucla.edu>
+
+	Fix some quoting problems in doc strings
+
+	Most of these are minor issues involving, e.g., quoting `like this' 
+	instead of 'like this'.	 A few involve escaping ` and ' with a preceding
+	\= when the characters should not be turned into curved single quotes.
+
+2016-04-25  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Merge commit 'db005182ad0fd05c07e8e5c085abe6c750e6c578' from ivy
+
+2016-04-25  Oleh Krehel	 <ohwoeowho@gmail.com>
+
+	Rename swiper -> ivy
+
