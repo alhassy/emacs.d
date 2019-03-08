@@ -301,12 +301,18 @@ Here are other packages that I want to be installed onto my machine.
 ;; (package-refresh-contents)     ;; Always stay up to date.
 
 ;; Nice looking theme ^_^
+(when nil ;; this gives me an error for some reason
 (use-package spacemacs-theme
   :ensure t
   :init (load-theme 'spacemacs-light t)
         ; (load-theme 'spacemacs-dark t)
-)
+))
+#+END_SRC
 
+The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
+A showcase of many themes can be found [[https://emacsthemes.com/][here]].
+
+#+BEGIN_SRC emacs-lisp
 ;; Efficient version control.
 (use-package magit
   :ensure t
@@ -680,7 +686,7 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 ;; On MacOS, this shows a caution symbol ^_^
 #+END_SRC
 
-** My TODO list: The initial buffer when Emacs opens up
+** My to-do list: The initial buffer when Emacs opens up
 #+BEGIN_SRC emacs-lisp
 (find-file "~/Dropbox/todo.org")
 ;; (setq initial-buffer-choice "~/Dropbox/todo.org")
@@ -693,13 +699,15 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 
 ;; List recently accessed files upon startup
 
-(recentf-mode 1)
+(recentf-mode 1)                   ;; Part of Emacs
 (setq recentf-max-menu-items 25)
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
 
-(split-window-below)			  ;; C-x 3
-(other-window 1)			          ;; C-x 0
-(recentf-open-files)
+(when nil ;; nil since I don't use this feature often enough.
+  (split-window-below)			  ;; C-x 3
+  (other-window 1)			          ;; C-x 0
+  (recentf-open-files)
+)
 #+END_SRC
 ** Showing date, time, and battery life
 #+BEGIN_SRC emacs-lisp
@@ -775,6 +783,23 @@ font-lock-warning-face t)))
 ;; Src: https://www.gnu.org/software/emacs/manual/html_node/emacs/Font-Lock.html#Font-Lock
 ;; Also: https://stackoverflow.com/a/756856/3550444
 #+END_SRC
+** Neotree: Directory Tree Listing
+We open a nifty file manager upon startup.
+#+BEGIN_SRC emacs-lisp
+  ;; neotree --sidebar for project file navigation
+  (use-package neotree :ensure t
+   :config (global-set-key "\C-x\ d" 'neotree-toggle))
+
+  ;; Open it up upon startup.
+  (neotree-toggle)
+#+END_SRC
+By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file management.
+
+Useful navigational commands include
++ ~U~ to go up a directory.
++ ~C-c C-c~ to change directory focus; ~C-C c~ to type the directory out.
++ ~?~ or ~h~ to get help and ~q~ to quit.
+
 * Helpful Functions & Shortcuts
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
@@ -1355,15 +1380,6 @@ For faster pdf generation, may consider invoking:
 (setq org-latex-pdf-process
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 #+end_example
-
-** COMMENT Neotree: Directory Tree Listing
-We open a nifty file manager upon startup.
-#+BEGIN_SRC emacs-lisp
-  ;; neotree (sidebar for project file navigation)
-  (require 'neotree)
-  (neotree-toggle)
-  ; (doom-themes-neotree-config)
-#+END_SRC
 
 * COMMENT TODO org babel matters
 From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
