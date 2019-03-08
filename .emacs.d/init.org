@@ -301,12 +301,20 @@ Here are other packages that I want to be installed onto my machine.
 ;; (package-refresh-contents)     ;; Always stay up to date.
 
 ;; Nice looking theme ^_^
-(when nil ;; this gives me an error for some reason
-(use-package spacemacs-theme
-  :ensure t
-  :init (load-theme 'spacemacs-light t)
-        ; (load-theme 'spacemacs-dark t)
-))
+
+;; this gives me an error for some reason
+;; (use-package spacemacs-theme :ensure t)
+
+;; “C-x” t to toggle between light and dark themes.
+(setq my/theme 'spacemacs-light)
+(load-theme my/theme t)
+(defun my/toggle-theme () "Toggle between dark and light themes."
+  (interactive)
+  (setq my/theme (if (equal my/theme 'spacemacs-light) 'spacemacs-dark 'spacemacs-light))
+  (load-theme my/theme t)
+)
+(global-set-key "\C-x\ t" 'my/toggle-theme)
+
 #+END_SRC
 
 The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
@@ -786,12 +794,19 @@ font-lock-warning-face t)))
 ** Neotree: Directory Tree Listing
 We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp
-  ;; neotree --sidebar for project file navigation
-  (use-package neotree :ensure t
-   :config (global-set-key "\C-x\ d" 'neotree-toggle))
+;; neotree --sidebar for project file navigation
+(use-package neotree :ensure t
+  :config (global-set-key "\C-x\ d" 'neotree-toggle))
 
-  ;; Open it up upon startup.
-  (neotree-toggle)
+(use-package all-the-icons :ensure t)
+;; Only do this once: (all-the-icons-install-fonts)
+
+
+(setq neo-theme 'icons)
+(neotree-refresh)
+
+;; Open it up upon startup.
+(neotree-toggle)
 #+END_SRC
 By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file management.
 
@@ -799,6 +814,9 @@ Useful navigational commands include
 + ~U~ to go up a directory.
 + ~C-c C-c~ to change directory focus; ~C-C c~ to type the directory out.
 + ~?~ or ~h~ to get help and ~q~ to quit.
+
+As always, to go to the neotree pane when it's the only other window,
+execute ~C-x o~.
 
 * Helpful Functions & Shortcuts
 
@@ -1747,3 +1765,6 @@ Read:  https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#
 # eval: (when nil (remove (concat "../content/" NAMEorg) commitables))
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs"))
 # End:
+
+
+
