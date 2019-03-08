@@ -23,74 +23,6 @@
 # (emacs-version) ;; 26.1
 # (byte-compile-file "~/.emacs")
 
-* Top matter ─ FIXME need to integrate with my “loads” from below here
-#+begin_src emacs-lisp
-;; In ~/.emacs
-;;
-;; (require 'package)
-;; (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
-;; (package-initialize)
-;; (require 'org-tempo)
-;; 
-(setq inhibit-startup-message t)
-
-;; Useful since I symlink my .emacs ;-)
-;;
-(setq vc-follow-symlinks t)				       ; don't ask for confirmation when opening symlinked file
-
-(defun display-startup-echo-area-message ()
-  (message
-      (concat "Welcome! Emacs "  emacs-version
-              "; Org-mode "      org-version
-      )
-  )     
-)
-
-;; (setq enable-local-variables nil)
-(setq enable-local-variables t)
-
-; (message-box "it worked!")
-#+end_src
-** Use-pacakge stuffs
-Let's get ~use-package~ --a meta-package that manages other packages and the way they interact.
-
-# The following block should be the top-most loaded items.
-#+BEGIN_SRC emacs-lisp
-;; Make all commands of the ``package'' module present.
-(require 'package)
-
-; (setq package-enable-at-startup nil) ; tells emacs not to load any packages before starting up
-; Look at the *Messages* buffer before setting this to nil, then after.
-
-;; the following lines tell emacs where on the internet to look up
-;; for new packages.
-(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
-                         ("gnu"       . "http://elpa.gnu.org/packages/")
-                         ("melpa"     . "https://melpa.org/packages/")
-                         ("marmalade" . "http://marmalade-repo.org/packages/")))
-(package-initialize) 
-
-;; (require 'package)
-;; (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
-;; (package-initialize)
-;; (require 'org-tempo)
-
-;; Bootstrap `use-package'
-(unless (package-installed-p 'use-package) ; unless it is already installed
-  (package-refresh-contents) ; updage packages archive
-  (package-install 'use-package)) ; and install the most recent version of use-package
-
-(require 'use-package) ; guess what this one does too ?
-
-;; Get org-headers to look pretty! https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets :ensure t)
-(add-hook 'org-mode-hook 'org-bullets-mode)
-#+END_SRC
-We now invoke ~(use-package XYZ :ensure t)~
-which should check for the XYZ package and make sure it is accessible. 
-If not, the ~:ensure t~ part tells use-package to download it and place 
-it somewhere accessible, in ~~/.emacs.d/elpa/~ by default.
-
 * Abstract                                                   :ignore:
  
 #+begin_center
@@ -103,10 +35,12 @@ Of note are:
  ◈ This is a literate programming setup.
 
  ◈ I have a variety of cosmetics such as showing battery life and flashing upon errors.
+   + Greating message “Welcome to Emacs 26.1 with Org-mode 9.2.2”.
 
- ◈ Production of org-mode ready-to-go skeletons.
+ ◆ Discoverability capabilities.
+    + Spacemacs look and feel with completion frameworks ~Helm~ and ~which-key~.
 
- ◈ Utilities for working with org-mode files, namely ~#+KEYWORD: VALUE~ pairs.
+ ◈ Utilities for working with org-mode files, namely extracting ~#+KEYWORD: VALUE~ pairs.
 
 As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
 through my ever growing configuration files, ease of usability and reference
@@ -115,11 +49,9 @@ for peers, and, most importantly, better maintainability for myself!
 ⟪ Dear reader when encountering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~ 
 ; an elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispCheatSheet][here.]] ⟫
 
-Edit: Recently I switched to spacemacs. I know nothing about spacemacs, I'm just trying it out now
-and so something below are likely to be super wrong
---but they work for me, for now.
-
-* Introduction
+* TODO Why Emacs                                                      :Empty:
+* Booting Up
+** ~~/.emacs~ vs. ~init.org~
 
 Why not keep Emac's configurations in the ~~/.emacs~ file?
 This is because the Emacs system may explicitly add, or alter, code
@@ -141,69 +73,12 @@ Off topic, I love tiling window managers and had been using [[https://xmonad.org
 until recently when I obtained a mac machine and now use 
 [[https://ianyh.com/amethyst/][Amethyst]] -- “Tiling window manager for macOS along the lines of xmonad.”
 
-* What's in, or at the top of, my ~~/.emacs~
-
-We evaluate every piece of emacs-lisp code available here when
-Emacs starts up by placing the following at the top of our ~.emacs~ file:
-#+BEGIN_SRC emacs-lisp :tangle no
-;; For some reason, I need these here or my org-mode defaults to an older version.
-(require 'package)
-(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
-(package-initialize)
-(require 'org-tempo)
-
-(org-babel-load-file "~/.emacs.d/init.org")
-;;
-;; My Emacs settings: (find-file "~/.emacs.d/init.org")
-#+END_SRC
-( I do not generate my ~.emacs~ file from this source code in-fear of
-   overriding functionality inserted by ~custom~. )
-
-# Whenever this ~init.org~ is loaded by org-babel it creates a ~.emacs~ file which
-Our ~.emacs~ should be byte-compiled so that when we start Emacs it will
-automatically determine if the ~init.org~ file has changed and if so it
-would tangle it producing the ~init.el~ file which will then be loaded immediately.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-;; In-case I forget to byte-compile!
-(byte-compile-file "~/.emacs")
-
-;; Change this silly counter to visualy notice a change. When making many changes.
-;; (progn (message "Init.org contents loaded! Counter: 7") (sleep-for 3))
-#+END_SRC
-
-:Old_spacemacs_ideas:
-Get onto rolling version of spacemacs:
-
-git checkout develop
-git pull --rebase
-
-Recently I've switched to spacemacs, and to avoid too much migration
-I've simply called this literate configuration from within ~~.spacemacs~
-via the ~dotspacemacs/user-config~ method.
-#+begin_src emacs-lisp :tangle no
-(defun dotspacemacs/user-config ()
-  "Configuration function for user code.
-   This function is called at the very end of Spacemacs initialization after
-   layers configuration.
-   This is the place where most of your configurations should be done. Unless it is
-   explicitly specified that a variable should be set before a package is loaded,
-   you should place your code here."
-
-   (org-babel-load-file "~/dotfiles/.emacs.d/init.org")
-)
-#+end_src
-
-Moreover, in the ~dotspacemacs/layers~ method in ~.spacemacs~,
-I have the following so that spacemacs does not delete
-layer-orphan packages in an attempt to ‘clean up’ my unsued
-packages.
-#+begin_src emacs-lisp :tangle no
-dotspacemacs-additional-packages '(htmlize biblio magit haskell-mode dash s)
-#+end_src
+** Elementary Version Control
+:Properties:
+:TODO: Make some of these eshell commands that are executed?
+       Usage would be to simply C-x C-e the fragment to have
+       all of these transpire for you ^_^
 :End:
-
-* Version Control
 
 [[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
 are pointers to memory location of a given filename!
@@ -256,36 +131,198 @@ ln -s dotfiles/.emacs.d/init.org init.org
 ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
 #+END_EXAMPLE
 
-* Magit & Switching to a new OS
+Below I'll equip us with an Emacs ‘porcelain’ interface to git
+--it makes working with version control tremendously convenient.
+Moreover, I add a little pop-up so that I don't forget to commit often!
 
-** ~use-package~
+** What's in, or at the top of, my ~~/.emacs~
+
+We evaluate every piece of emacs-lisp code available here when
+Emacs starts up by placing the following at the top of our ~.emacs~ file:
+#+BEGIN_SRC emacs-lisp :tangle no
+;; ⟪March 7, 2019⟫ For some reason, I need these here or my org-mode defaults to an older version.
+(require 'package)
+(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
+(package-initialize)
+(require 'org-tempo)
+
+(org-babel-load-file "~/.emacs.d/init.org")
+;;
+;; My Emacs settings: (find-file "~/.emacs.d/init.org")
+#+END_SRC
+( I do not generate my ~.emacs~ file from this source code in-fear of
+   overriding functionality inserted by ~custom~. )
+
+# Whenever this ~init.org~ is loaded by org-babel it creates a ~.emacs~ file which
+Our ~.emacs~ should be byte-compiled so that when we start Emacs it will
+automatically determine if the ~init.org~ file has changed and if so it
+would tangle it producing the ~init.el~ file which will then be loaded immediately.
+
+:Maybe_bad_idea:
+#+BEGIN_SRC emacs-lisp :tangle no
+;; In-case I forget to byte-compile!
+(byte-compile-file "~/.emacs")
+
+;; Change this silly counter to visualy notice a change. When making many changes.
+;; (progn (message "Init.org contents loaded! Counter: 7") (sleep-for 3))
+#+END_SRC
+:End:
+
+:Old_spacemacs_ideas:
+Get onto rolling version of spacemacs:
+
+git checkout develop
+git pull --rebase
+
+Recently I've switched to spacemacs, and to avoid too much migration
+I've simply called this literate configuration from within ~~.spacemacs~
+via the ~dotspacemacs/user-config~ method.
+#+begin_src emacs-lisp :tangle no
+(defun dotspacemacs/user-config ()
+  "Configuration function for user code.
+   This function is called at the very end of Spacemacs initialization after
+   layers configuration.
+   This is the place where most of your configurations should be done. Unless it is
+   explicitly specified that a variable should be set before a package is loaded,
+   you should place your code here."
+
+   (org-babel-load-file "~/dotfiles/.emacs.d/init.org")
+)
+#+end_src
+
+Moreover, in the ~dotspacemacs/layers~ method in ~.spacemacs~,
+I have the following so that spacemacs does not delete
+layer-orphan packages in an attempt to ‘clean up’ my unsued
+packages.
+#+begin_src emacs-lisp :tangle no
+dotspacemacs-additional-packages '(htmlize biblio magit haskell-mode dash s)
+#+end_src
+:End:
+
+** ~use-package~ --The start ~init.el~
+
+:Stuff_in_dot_emacs:
+#+begin_src emacs-lisp
+;; In ~/.emacs
+;;
+;; (require 'package)
+;; (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
+;; (package-initialize)
+;; (require 'org-tempo)
+;; 
+#+end_src
+:End:
+
+Let's get ~use-package~ --a meta-package that manages other packages and the way they interact.
+
+Background:
 Recently I switched to mac --first time trying the OS.
 I had to do a few ~package-install~'s and it was annoying.
 I'm looking for the best way to package my Emacs installation 
 --inlcuding my installed pacakages and configuration--
 so that I can quickly install it anywhere, say if I go to another machine.
-It seems ~use-package~  allows me to configure and auto install packages. 
+It seems ~use-package~ allows me to configure and auto install packages. 
 On a new machine, when I clone my ~.emacs.d~ and start emacs,
 on the first start it should automatically install and compile 
-all of my pacakges through ~use-package~ when it detects they're missing.
+all of my packages through ~use-package~ when it detects they're missing.
 
-The ~:ensure~ installs the files using ~package.el~ if need be.
+# The following block should be the top-most loaded items.
 
-List of additional packages that will be installed wihout being
-wrapped in a layer.
-(describe-symbol 'dotspacemacs-additional-packages)
+First we need the basic ~package~ module which not only allows us to obtain ~use-package~ but
+acts as its kernel.
 #+BEGIN_SRC emacs-lisp
-;; (package-refresh-contents)        ;; Always stay up to date.
+;; Make all commands of the “package” module present.
+(require 'package)
+
+;; Speef up start up by not loading any packages at startup.
+;; (setq package-enable-at-startup nil)
+;; Look at the *Messages* buffer before setting this to nil, then after.
+
+;; Internet repositories for new packages.
+(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
+                         ("gnu"       . "http://elpa.gnu.org/packages/")
+                         ("melpa"     . "https://melpa.org/packages/")
+                         ("marmalade" . "http://marmalade-repo.org/packages/")))
+
+;; Actually get “package” to work.
+(package-initialize) 
+#+END_SRC
+
+We can now:
++ ~M-x list-packages~ to see all melpa packages that can install
+  - Not in alphabetical order, so maybe search with ~C-s~.
++ For example to download the haskell mode: ~M-x package-install RET haskell-mode RET~.
+  - Or maybe to install ~unicode-fonts~ ;-)
++ Read more at http://ergoemacs.org/emacs/emacs_package_system.html or 
+  at https://github.com/milkypostman/melpa
+
+:Faq:
+If there are issues with loading the archives,
+say, "Failed to download ‘gnu’ archive."
+then ensure you can both read and write, recursively, to your .emacs.d/
+E.g., within emacs try to execute (package-refresh-contents)
+and you'll observe a permissions error.
+:End:
+
+We now bootstrap ~use-package~,
+#+BEGIN_SRC emacs-lisp
+;; Unless it's already installed, update the packages archives,
+;; then install the most recent version of “use-package”.
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(require 'use-package)
+#+END_SRC
+
+We can now invoke ~(use-package XYZ :ensure t)~
+which should check for the ~XYZ~ package and make sure it is accessible. 
+If not, the ~:ensure t~ part tells ~use-package~ to download it 
+--using ~package.el~--
+and place it somewhere accessible, in ~~/.emacs.d/elpa/~ by default.
+The ~:ensure~ installs the files 
+
+Here's an example use of ~use-package~.
+Below I have my /show recent files pop-up/ set to ~C-x C-r~;
+but what if I forget? This mode shows me all key completions when I type ~C-x~, for example.
+Moreover, I will be shown other commands I did not know about! Neato :-)
+#+BEGIN_SRC emacs-lisp
+;; Making it easier to discover Emacs key presses.
+(use-package which-key 
+ :ensure t
+ :init (which-key-mode)
+ :config (which-key-setup-side-window-bottom)
+         (setq which-key-idle-delay 0.05)
+)
+#+END_SRC
+
+Here are other packages that I want to be installed onto my machine.
+#+BEGIN_SRC emacs-lisp
+;; (package-refresh-contents)     ;; Always stay up to date.
+
+;; Nice looking theme ^_^
+(use-package spacemacs-theme
+  :ensure t
+  :init (load-theme 'spacemacs-light t)
+        ; (load-theme 'spacemacs-dark t)
+)
+
+;; Efficient version control.
+(use-package magit
+  :ensure t
+  :config (global-set-key (kbd "C-x g") 'magit-status)
+)
 
 (use-package htmlize :ensure)     ;; Org produced htmls are coloured.
 (use-package biblio  :ensure)     ;; Quick BibTeX references, sometimes.
 
-;; (package-install 'magit)
-(use-package magit   :ensure t)     ;; Efficient version control.
-(global-set-key (kbd "C-x g") 'magit-status)
-
+;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
+;; https://github.com/emacsorphanage/org-bullets
+(use-package org-bullets :ensure t)
+(add-hook 'org-mode-hook 'org-bullets-mode)
 
 (use-package haskell-mode :ensure)
+
 ;; (use-package flycheck          ;; Dynamic syntax checking.
 ;;  :init (global-flycheck-mode) :ensure)
 
@@ -293,16 +330,19 @@ wrapped in a layer.
 (use-package s    :ensure)    ;; “The long lost Emacs string manipulation library”.
 #+END_SRC
 
-
 Note:
 + [[https://github.com/magnars/dash.el][dash]]: “A modern list library for Emacs”
   - E.g., ~(--filter (> it 10) (list 8 9 10 11 12))~
 + [[https://github.com/magnars/s.el][s]]: “The long lost Emacs string manipulation library”.
   - E.g., ~s-trim, s-replace, s-join~.
 
-** Magit
+Finally, since I've symlinked my ~.emacs~:
+#+begin_src emacs-lisp
+;; Don't ask for confirmation when opening symlinked file.
+(setq vc-follow-symlinks t)
+#+end_src
 
-# K (magit-file-untrack) does git rm --cached
+** ~magit~ --Emacs' porcelain interface to git
 
 Why use ~magit~ as the interface to the git version control system?
 In a magit buffer nearly everything can be acted upon:
@@ -323,6 +363,7 @@ A quick magit tutorial can be found on [[http://jr0cket.co.uk/2012/12/driving-gi
   - ~s~ :: Stage, i.e., add, a file to version control.
          Add all untracked files by selecting the /Untracked files/ title.  
   - ~k~ :: Kill, i.e., delete a file locally.
+  - ~K~ :: This' ~(magit-file-untrack)~ which does ~git rm --cached~.
   - ~i~ :: Add a file to the project ~.gitignore~ file. Nice stuff =)
   - ~u~ :: Unstage a specfif staged change highlighed by cursor.
            ~C-u s~ stages everything --tracked or not.
@@ -422,7 +463,7 @@ Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/
       (message-box "This file has uncommited changes!")
       (magit-status))))
 
-(add-hook 'find-file-hook 'my/magit-check-file-and-popup)
+;; (add-hook 'find-file-hook 'my/magit-check-file-and-popup)
 #+end_src
 Let's try this out.
 #+BEGIN_EXAMPLE emacs-lisp
@@ -431,57 +472,73 @@ Let's try this out.
 )
 #+END_EXAMPLE
 
-* TODO FIXME Loads
+** Spelling
+I would like to check spelling by default.
+ + ~M-$~ :: Check and correct spelling of the word at point
+ + ~M-x ispell-change-dictionary RET TAB~ :: To see what dictionaries are available.
 
-#+BEGIN_SRC emacs-lisp
-;; For example, I have my "show recent files pop-up" set to C-x C-r;
-;; but what if I forget? This mode shows me all key completions when I type C-x, for example.
-;; Moreover, I will be shown other commands I did not know about! Neato :-)
-(use-package which-key 
- :ensure t
- :init (which-key-mode)
- :config (which-key-setup-side-window-bottom)
-         (setq which-key-idle-delay 0.05)
-)
+# Emacs includes Flyspell. You must not explicitly install it. If you do so, undo this,
+# that is, delete flyspell.el from /Applications/Emacs.app/Contents/Resources/site-lisp. 
+
+Flyspell needs a spell checking tool, which is not included in Emacs. 
+We install ~aspell~ spell checker using, say, homebrew via ~brew install aspell~.
+Note that Emacs' ~ispell~ is the interface to such a command line spelling utility.
+# See available dictionary via ~aspell dicts~.
+
+#+BEGIN_SRC emacs-lisp 
+(setq ispell-program-name "/usr/local/bin/aspell")
+
+;; Maybe a hook is better? Much better ...?
+(define-globalized-minor-mode my-flyspell-global-mode flyspell-mode
+  (lambda () 
+
+    ;; spawns an ispell process
+    (flyspell-mode 1)
+
+))
+(my-flyspell-global-mode 1)
+
+(setq ispell-dictionary "en_GB") ;; set the default dictionary
 #+END_SRC
 
-** ~package-initialize~: Melpa, gnu, and org
+:Hook_TODO:
+Hook for after init?
+(dolist (hook '(text-mode-hook))
+  (add-hook hook (lambda () (flyspell-mode 1))))
+:End:
 
-+ *M-x list-packages* to see all melpa packages that can install
-  - Not in alphabetical order, so maybe search with ~C-s~.
-+ For example to download the haskell mode: ~M-x package-install RET haskell-mode RET~.
-  - Or maybe to install ~unicode-fonts~ ;-)
-+ Read more at http://ergoemacs.org/emacs/emacs_package_system.html or 
-  at https://github.com/milkypostman/melpa
+Let us select a correct spelling merely by clicking on a word.
+#+begin_src emacs-lisp
+(eval-after-load "flyspell"
+  ' (progn
+     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
+#+end_src
 
+Colour incorrect works; default is an underline.
 #+BEGIN_SRC emacs-lisp
-(setq inhibit-startup-message t) ;; duplicated?
-
-(require 'package)
-
-(setq package-archives
-      '(("melpa" . "https://melpa.org/packages/")
-        ("gnu" . "https://elpa.gnu.org/packages/")
-        ("org" . "http://orgmode.org/elpa/")))
-
-(package-initialize)
-
-
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
-(require 'use-package)
+(global-font-lock-mode t)
+(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
 #+END_SRC
 
-# If there are issues with loading the archives,
-# say, "Failed to download ‘gnu’ archive."
-# then ensure you can both read and write, recursively, to your .emacs.d/
-# E.g., within emacs try to execute (package-refresh-contents)
-# and you'll observe a permissions error.
+:CurrentlyNotWorking:
+Set up a thesaurus to avoid unwarranted repetition.
+#+BEGIN_SRC emacs-lisp :tangle no
+(load "~/dotfiles/.emacs.d/powerthesaurus.el")
+(global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
 
-** Programming Language Supports
+;; Website currently down ... https://github.com/SavchenkoValeriy/emacs-powerthesaurus/issues/6
+#+END_SRC
+:End:
 
+Use this game to help you learn to spell words that you're having trouble with;
+see ~~/Dropbox/spelling.txt~.
+#+BEGIN_SRC emacs-lisp
+(autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
+#+END_SRC
+
+** Unicode Input via Agda Input
+ 
 :agda2-include-dirs-Issue:
 #+BEGIN_SRC emacs-lisp
 ; (load (shell-command-to-string "agda-mode locate"))
@@ -491,70 +548,16 @@ Let's try this out.
 #+END_SRC
 :End:
 
+[[https://mazzo.li/posts/AgdaSort.html][Agda]] is one of my favourite languages, it's like Haskell on steroids.
+Let's set it up.
+
 Executing ~agda-mode setup~ appends the following text to the ~.emacs~ file.
 Let's put it here ourselves.
-
 #+begin_src emacs-lisp
 (load-file (let ((coding-system-for-read 'utf-8))
                 (shell-command-to-string "/usr/local/bin/agda-mode locate")))
 #+end_src
 
-Sometimes I use Coq,
-#+begin_src emacs-lisp
-;; Open .v files with Proof General's Coq mode
-;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
-#+end_src
-
-*** COMMENT More Programming Language Support                        :TODO:
-
-
-instead of mmm-mode, we could use polymode alsong with org;
-https://www.reddit.com/r/emacs/comments/50p34n/polymode_is_awesome/
-
-M-x package-install RET polymode
-(require 'poly-org)
-(poly-org-mode t)
-(add-hook 'org-mode-hook 'poly-org-mode)
-
-now a source block automatically turns on the minor mode it needs!
-
-+ other multiple modes: https://www.emacswiki.org/emacs/MultipleModes
-+ (!!) https://wiki.haskell.org/Literate_programming#Multi-mode_support_in_Emacs
-
-**** Haskell :tangle no
-#+BEGIN_SRC emacs-lisp
-;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
- (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-#+END_SRC
-
-**** Kotlin
-#+BEGIN_SRC emacs-lisp  :tangle no
-(load "~/.emacs.d/kotlin-mode.el")
-(setq kotlin-tab-width 2)
-#+END_SRC
-
-**** Lambda Prolog 
-#+BEGIN_SRC emacs-lisp  :tangle no
-(load "/usr/local/packages/teyjus/emacs/teyjus.el")
-(setq tjcc "/usr/local/packages/teyjus/tjcc")
-#+END_SRC
-**** intero and haskell
-
-  ;; ;;; To get completions in the REPL
-  ;; (add-hook 'haskell-interactive-mode-hook 'company-mode)
-
-  (require 'intero)
-  (add-hook 'haskell-mode-hook 'intero-mode)
-  (add-hook 'literate-haskell-mode-hook 'intero-mode)
-  ;; needed to fix bug when loading stack ghci for > 8.2
-  (setq haskell-process-args-ghci
-        '("-ferror-spans" "-fshow-loaded-modules"))
-
-  (setq haskell-process-args-cabal-repl
-        '("--ghc-options=-ferror-spans -fshow-loaded-modules"))
-
-
-** Unicode Input via Agda Input        
 I almost always want the ~agda-mode~ input method.
 
 #+BEGIN_SRC emacs-lisp
@@ -640,43 +643,15 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 ;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
 :End:
 
-** COMMENT Folding mode :rarely_use_this:
-
-#+BEGIN_SRC emacs-lisp  :tangle no
-; (load "~/.emacs.d/folding-mode.el")
-; (folding-mode-add-find-file-hook)
-#+END_SRC
-*** COMMENT folding mode local variables
-
-I occasionally use a folding mode, due to work, so I append the following
-to the files that utilise it.
-
- Local Variables:
- eval: (folding-mode t)
- folded-file: t
- eval: (fold-set-marks ";;{{{ " ";;}}}")
- eval: (fold-whole-buffer)
- fold-internal-margins: 0
- end:
-
 * Cosmetics
 
-#+BEGIN_SRC emacs-lisp
-(use-package spacemacs-theme
-  :ensure t
-  :init (load-theme 'spacemacs-light t)
-        ; (load-theme 'spacemacs-dark t)
-)
-#+END_SRC
-
 :ExperimentingWithBackgroundColours: 
+Note: Using spacemacs theme above.
+
 #+begin_src emacs-lisp :tangle no
 ;; try background colour for html:  ---nice soft yellow, pleasing--- 
 ;;
 (add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
-;; maybe not idea for spacemacs
-
-(visual-line-mode t)
 #+end_src
 
 (set-background-color "white")
@@ -684,41 +659,19 @@ to the files that utilise it.
 (set-background-color "#fcf4dc")   -- nice!
 :End:
 
-** COMMENT Column Marker
+** Startup message: Emacs & Org versions
+#+begin_src emacs-lisp
+;; Silence the usual message: Get more info using using the about page via C-h C-a.
+(setq inhibit-startup-message t)
 
-(  Maybe a hook would be better? Much better...? )
-
-Have a thin line to the right to ensure I don't write “off the page”.
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package fill-column-indicator :ensure)
-(define-globalized-minor-mode my-fci-global-mode fci-mode
-  (lambda () (set-fill-column 90) (fci-mode 't)
-))
-(my-fci-global-mode 1)
-#+END_SRC
-
-There are issues with making things global.
-In this case, exporting to html produces curious symbols
-thereby prompting ~my-org-html-export-to-html~ below to
-take care of this.
-
-** COMMENT My global visual line mode                       :no_longer_used:
-*No longer used* Using fill-column-mode instead.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(define-globalized-minor-mode my-visual-line-global-mode visual-line-mode
-  (lambda () 
-  
-    ;; Wrap words in all buffers
-    (visual-line-mode t)
-
-))
-(my-visual-line-global-mode 1)
-#+END_SRC
-# What I like about truncate-lines versus visual-line-mode is that the former doesn’t split
-# on word boundaries and adds symbols to the fringe.
-# (set-default 'truncate-lines t)
-
+(defun display-startup-echo-area-message ()
+  (message
+      (concat "Welcome! Emacs "  emacs-version
+              "; Org-mode "      org-version
+      )
+  )     
+)
+#+end_src
 ** Flashing when something goes wrong
 Make top and bottom of screen flash when something unexpected happens thereby observing a warning message in the minibuffer. E.g., C-g, or calling an unbound key sequence, or misspelling a word.
 #+BEGIN_SRC emacs-lisp
@@ -822,7 +775,7 @@ font-lock-warning-face t)))
 ;; Src: https://www.gnu.org/software/emacs/manual/html_node/emacs/Font-Lock.html#Font-Lock
 ;; Also: https://stackoverflow.com/a/756856/3550444
 #+END_SRC
-* TODO Helpful Functions & Shortcuts
+* Helpful Functions & Shortcuts
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
 # The subsections below detail the definitions.
@@ -842,7 +795,7 @@ Here is a collection of Emacs-lisp functions that I have come to use in other fi
 
 (my-keys-minor-mode)
 #+END_SRC
-** COMMENT Reload buffer with ~f5~ 
+** Reload buffer with ~f5~ 
 I do this so often it's not even funny.
 #+BEGIN_SRC emacs-lisp
 (global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
@@ -851,13 +804,13 @@ I do this so often it's not even funny.
 In Mac OS, one uses ~Cmd-r~ to reload a page and spacemacs binds buffer reversion to ~Cmd-u~
 --in Emacs, Mac's ~Cmd~ is referred to as the ‘super key’ and denoted ~s~.
 
-** COMMENT Kill to start of line
+** Kill to start of line
 Dual to ~C-k~,
 #+BEGIN_SRC emacs-lisp
 ;; M-k kills to the left
 (global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
 #+END_SRC
-** COMMENT ~file-as-list~ and ~file-as-string~
+** ~file-as-list~ and ~file-as-string~
 
 #+BEGIN_SRC emacs-lisp
 (defun file-as-list (filename)
@@ -873,7 +826,7 @@ Dual to ~C-k~,
     (buffer-string)))
 #+END_SRC
 
-** COMMENT ~kill-other-buffers~
+** ~kill-other-buffers~
 #+BEGIN_SRC emacs-lisp
 (defun kill-other-buffers ()
   "Kill all other buffers."
@@ -881,7 +834,7 @@ Dual to ~C-k~,
   (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
 #+END_SRC
 
-** COMMENT ~create-scratch-buffer~
+** ~create-scratch-buffer~
 #+BEGIN_SRC emacs-lisp
 ;; A very simple function to recreate the scratch buffer:
 ;; ( http://emacswiki.org/emacs/RecreateScratchBuffer )
@@ -891,7 +844,7 @@ Dual to ~C-k~,
    (switch-to-buffer (get-buffer-create "*scratch*"))
    (lisp-interaction-mode))   
 #+END_SRC
-** COMMENT Switching from 2 horizontal windows to 2 vertical windows
+** Switching from 2 horizontal windows to 2 vertical windows
 I often find myself switching from a horizontal view of two windows in Emacs to a
 vertical view. This requires a variation of ~C-x 1 RET C - x 3 RET C-x o X-x b RET~. 
 Instead I now only need to type ~C-|~ to make this switch.
@@ -910,7 +863,7 @@ Instead I now only need to type ~C-|~ to make this switch.
 )
 (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 #+END_SRC
-** COMMENT Locally ~toggle~ a variable
+** Locally ~toggle~ a variable
 
 It is dangerous to load a file with local variables;
 instead we should load files without evaluating locals,
@@ -966,7 +919,7 @@ NOPE ;; ⇒ "NOPE"
 #+end_example
 :End:
 
-** COMMENT ~re-replace-in-file~
+** ~re-replace-in-file~
 
 #+BEGIN_SRC emacs-lisp
 (defun re-replace-in-file (file regex whatDo) "Find and replace a regular expression in-place in a file."
@@ -1007,7 +960,7 @@ Example usage:
 )
 #+END_SRC
 
-** COMMENT Obtaining Values of ~#+KEYWORD~ Annotations
+** Obtaining Values of ~#+KEYWORD~ Annotations
 
 Org-mode settings are, for the most part, in the form ~#+KEYWORD: VALUE~. Of notable interest
 are the ~TITLE~ and ~NAME~ keywords. We use the following ~org-keywords~ function to obtain
@@ -1029,71 +982,6 @@ Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ t
 #+END_SRC
 
 Note that capitalisation in a ”#+KeyWord” is irrelevant.
-
-* COMMENT Spelling
-I would like to check spelling by default.
- + ~M-$~ :: Check and correct spelling of the word at point
- + ~M-x ispell-change-dictionary RET TAB~ :: To see what dictionaries are available.
-
-# Emacs includes Flyspell. You must not explicitly install it. If you do so, undo this,
-# that is, delete flyspell.el from /Applications/Emacs.app/Contents/Resources/site-lisp. 
-
-Flyspell needs a spell checking tool, which is not included in Emacs. 
-We install ~aspell~ spell checker using, say, homebrew via ~brew install aspell~.
-Note that Emacs' ~ispell~ is the interface to such a command line spelling utility.
-# See available dictionary via ~aspell dicts~.
-
-#+BEGIN_SRC emacs-lisp 
-(setq ispell-program-name "aspell")
-
-;; Maybe a hook is better? Much better ...?
-(define-globalized-minor-mode my-flyspell-global-mode flyspell-mode
-  (lambda () 
-
-    ;; spawns an ispell process
-    (flyspell-mode 1)
-
-))
-(my-flyspell-global-mode 1)
-
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
-#+END_SRC
-
-:Hook_TODO:
-Hook for after init?
-(dolist (hook '(text-mode-hook))
-  (add-hook hook (lambda () (flyspell-mode 1))))
-:End:
-
-Let us select a correct spelling merely by clicking on a word.
-#+begin_src emacs-lisp
-(eval-after-load "flyspell"
-  ' (progn
-     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
-#+end_src
-
-Colour incorrect works; default is an underline.
-#+BEGIN_SRC emacs-lisp
-(global-font-lock-mode t)
-(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
-#+END_SRC
-
-:CurrentlyNotWorking:
-Set up a thesaurus to avoid unwarranted repetition.
-#+BEGIN_SRC emacs-lisp :tangle no
-(load "~/dotfiles/.emacs.d/powerthesaurus.el")
-(global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
-
-;; Website currently down ... https://github.com/SavchenkoValeriy/emacs-powerthesaurus/issues/6
-#+END_SRC
-:End:
-
-Use this game to help you learn to spell words that you're having trouble with;
-see ~~/Dropbox/spelling.txt~.
-#+BEGIN_SRC emacs-lisp
-(autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
-#+END_SRC
 
 * Org-mode related things
 
@@ -1681,6 +1569,114 @@ The above mechanism suffices, the following needn't be followed with ... unless 
     (load-file user-init-file)
     (delete-other-windows)))
 #+end_src
+
+** COMMENT Folding mode                                    :rarely_use_this:
+
+#+BEGIN_SRC emacs-lisp  :tangle no
+; (load "~/.emacs.d/folding-mode.el")
+; (folding-mode-add-find-file-hook)
+#+END_SRC
+*** COMMENT folding mode local variables
+
+I occasionally use a folding mode, due to work, so I append the following
+to the files that utilise it.
+
+ Local Variables:
+ eval: (folding-mode t)
+ folded-file: t
+ eval: (fold-set-marks ";;{{{ " ";;}}}")
+ eval: (fold-whole-buffer)
+ fold-internal-margins: 0
+ end:
+
+** COMMENT Programming Language Support                               :TODO:
+
+
+instead of mmm-mode, we could use polymode alsong with org;
+https://www.reddit.com/r/emacs/comments/50p34n/polymode_is_awesome/
+
+M-x package-install RET polymode
+(require 'poly-org)
+(poly-org-mode t)
+(add-hook 'org-mode-hook 'poly-org-mode)
+
+now a source block automatically turns on the minor mode it needs!
+
++ other multiple modes: https://www.emacswiki.org/emacs/MultipleModes
++  https://wiki.haskell.org/Literate_programming#Multi-mode_support_in_Emacs
+
+**** Haskell :tangle no
+#+BEGIN_SRC emacs-lisp
+;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
+ (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
+#+END_SRC
+
+**** Kotlin
+#+BEGIN_SRC emacs-lisp  :tangle no
+(load "~/.emacs.d/kotlin-mode.el")
+(setq kotlin-tab-width 2)
+#+END_SRC
+
+**** Lambda Prolog 
+#+BEGIN_SRC emacs-lisp  :tangle no
+(load "/usr/local/packages/teyjus/emacs/teyjus.el")
+(setq tjcc "/usr/local/packages/teyjus/tjcc")
+#+END_SRC
+**** intero and haskell
+
+  ;; ;;; To get completions in the REPL
+  ;; (add-hook 'haskell-interactive-mode-hook 'company-mode)
+
+  (require 'intero)
+  (add-hook 'haskell-mode-hook 'intero-mode)
+  (add-hook 'literate-haskell-mode-hook 'intero-mode)
+  ;; needed to fix bug when loading stack ghci for > 8.2
+  (setq haskell-process-args-ghci
+        '("-ferror-spans" "-fshow-loaded-modules"))
+
+  (setq haskell-process-args-cabal-repl
+        '("--ghc-options=-ferror-spans -fshow-loaded-modules"))
+
+** Coq Support
+Sometimes I use Coq,
+#+begin_src emacs-lisp
+;; Open .v files with Proof General's Coq mode
+;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
+#+end_src
+
+** COMMENT Column Marker
+
+(  Maybe a hook would be better? Much better...? )
+
+Have a thin line to the right to ensure I don't write “off the page”.
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package fill-column-indicator :ensure t)
+(define-globalized-minor-mode my-fci-global-mode fci-mode
+  (lambda () (set-fill-column 90) (fci-mode 't)
+))
+(my-fci-global-mode 1)
+#+END_SRC
+
+There are issues with making things global.
+In this case, exporting to html produces curious symbols
+thereby prompting ~my-org-html-export-to-html~ below to
+take care of this.
+
+** COMMENT My global visual line mode                       :no_longer_used:
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(define-globalized-minor-mode my-visual-line-global-mode visual-line-mode
+  (lambda () 
+  
+    ;; Wrap words in all buffers
+    (visual-line-mode t)
+
+))
+(my-visual-line-global-mode 1)
+#+END_SRC
+# What I like about truncate-lines versus visual-line-mode is that the former doesn’t split
+# on word boundaries and adds symbols to the fringe.
+# (set-default 'truncate-lines t)
 
 * COMMENT Summary of Utilities Provided
 
