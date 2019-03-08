@@ -23,6 +23,22 @@
 # (emacs-version) ;; 26.1
 # (byte-compile-file "~/.emacs")
 
+#+BEGIN_SRC emacs-lisp
+;; https://emacs.stackexchange.com/questions/4090/org-mode-cannot-find-pdflatex-using-mac-os
+
+(defun set-exec-path-from-shell-PATH ()
+  "Sets the exec-path to the same value used by the user shell"
+  (let ((path-from-shell
+         (replace-regexp-in-string
+          "[[:space:]\n]*$" ""
+          (shell-command-to-string "$SHELL -l -c 'echo $PATH'"))))
+    (setenv "PATH" path-from-shell)
+    (setq exec-path (split-string path-from-shell path-separator))))
+
+;; call function now
+(set-exec-path-from-shell-PATH)
+#+END_SRC
+
 * Abstract                                                   :ignore:
  
 #+begin_center
@@ -701,9 +717,8 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 
 (split-window-right)			  ;; C-x 3
 (other-window 1)			          ;; C-x 0
-(setq enable-local-variables nil)
-(find-file "~/.emacs.d/init.org")
-;; (setq enable-local-variables :all)  ;; FIXME:
+(toggle enable-local-variables nil
+  (find-file "~/.emacs.d/init.org"))
 
 ;; List recently accessed files upon startup
 
@@ -1029,6 +1044,35 @@ Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ t
 #+END_SRC
 
 Note that capitalisation in a ”#+KeyWord” is irrelevant.
+
+** Quickly pop-up a terminal, run a command, close it
+#+begin_src emacs-lisp
+(defvar *toggle-terminal* t 
+   "
+   The variable to decide whether a terminal has been pushed
+   and now needs to be popped, or vice-versa.
+   By default, open a terminal.
+   " )
+
+(defun toggle-terminal ()
+   "Pop up a terminal, do some work, then close it using the same command.
+   "
+   (interactive)
+   (if *toggle-terminal* 
+
+        (progn 
+               (split-window-right)
+               (other-window 1)
+               (eshell))
+
+        (toggle kill-buffer-query-functions nil (kill-buffer eshell-buffer-name))
+        (delete-window)
+    )        
+   (setq *toggle-terminal* (not *toggle-terminal*))
+)
+
+(global-set-key "\C-t" 'toggle-terminal)
+#+end_src
 
 * Org-mode related things
 
@@ -1361,13 +1405,50 @@ Then the functionality,
 
 ** Interpret the Haskell source blocks in a file
 #+BEGIN_SRC emacs-lisp 
-(cl-defun my/org-run-haskell (&optional (filename (buffer-name)))
-  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
-   and load the result into a ghci buffer.
+(defvar *current-module* "NoModuleNameSpecified" 
+  "The name of the module, file, that source blocks are 
+   currently being tangled to.
 
-   Note that this only loads the blocks tangled to ‘filename’.
+   This technique is insipired by “Interactive Way to C”;
+   see https://alhassy.github.io/InteractiveWayToC/.
+  ")
+
+(defun current-module "Returns the current module under focus." *current-module*)
+
+(defun set-module name
+   "Set the name of the module currently under focus.
+   
+    Usage: When a module is declared, i.e., a new file has begun,
+    then that source blocks header should be “:tangle (set-module ”name-here”)”.
+    succeeding source blocks now inherit this name and so are tangled
+    to the same module file. How? By placing the following line at the top
+    of your Org file: “‘#+PROPERTY: header-args :tangle (current-module))’.
+
+    This technique structures “Interactive Way to C”.
+   "
+   (setq *current-module* name)
+)
+(cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
+  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
+   and load the resulting ‘target’ file into a ghci buffer.
+
+   If no name is provided for the ‘target’ file that is generated from the
+   tangeling process, it is assumed to be the buffer's name with a ‘hs’ extension.
+
+   Note that this only loads the blocks tangled to ‘target’.
+
+   For example, file ‘X.org’ may have haskell blocks that tangle to files
+   ‘X.hs’, ‘Y.hs’ and ‘Z.hs’. If no target name is supplied, we tangle all blocks
+   but only load ‘X.hs’ into the ghci buffer. A helpful technique to load the
+   last, bottom most, defined haskell module, is to have the module declaration's
+   source block be ‘:tangle (setq CODE “Y.hs”)’, for example; then the following
+   code blocks will inherit this location provided our Org file has at the top
+   ‘#+PROPERTY: header-args :tangle (current-module))’.
+   Finally, our ‘compile-command’ suffices to be ‘(my/org-run-haskell CODE)’.
+   ─
+   This technique structures “Interactive Way to C”.
   "
-   (let* ((it  (concat (file-name-sans-extension filename) ".hs"))
+   (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
          (buf (concat "*GHCI* " it)))
 
      (toggle kill-buffer-query-functions nil (ignore-errors (kill-buffer buf)))
@@ -1379,7 +1460,6 @@ Then the functionality,
 )
 
 ;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
-;; Possibly with a (svae-buffer) before hand.
 #+END_SRC
 
 ** Minted
@@ -1769,6 +1849,9 @@ Read:  https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#
 # eval: (when nil (remove (concat "../content/" NAMEorg) commitables))
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs"))
 # End:
+
+
+
 
 
 
