@@ -514,7 +514,7 @@ Note that Emacs' ~ispell~ is the interface to such a command line spelling utili
 (add-hook 'text-mode-hook 'flyspell-mode)
 #+END_SRC
 
-Enabling fly-spell for text-mode enables it for org and latex modes since they
+Ecnabling fly-spell for text-mode enables it for org and latex modes since they
 derive from text-mode.
 
 :Hook_TODO:
@@ -672,6 +672,65 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 :May_need_to_install_stix_font:
 ;; install STIX font from Ubuntu store!!
 ;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
+:End:
+
+** Locally ~toggle~ a variable
+
+It is dangerous to load a file with local variables;
+instead we should load files without evaluating locals,
+read the locals to ensure they are safe --e.g., there's nothing
+malicious like ~eval: (delete-file your-important-file.txt)~--
+then revert the buffer to load the locals.
+
+However, when preprocessing my own files I sometimes wish
+to accept all locals without being queried and so have the following
+combinator.
+
+#+begin_src emacs-lisp
+(defmacro toggle (variable value code)
+  "Locally set the value of ‘variable’ to be ‘value’ in the scope of ‘code’.
+   In particular, the value of ‘variable’, if any, *is* affected
+   to produce useful sideffects. It retains its orginal value outside this call.
+
+   Example uses include terse replacements for one-off let-statements,
+   or, more likely, of temporarily toggeling important values, such as 
+   ‘kill-buffer-query-functions’ for killing a process buffer without confirmation.
+
+   Another example: ‘(toggle enable-local-variables :all ⋯)’ to preprocess files
+   without being queried about possibly dangerous local variables.
+  "
+  `(let ((_initial_value_ ,variable))
+        (setq ,variable ,value)
+        ,code
+        (setq ,variable _initial_value_)
+  )
+)
+#+end_src
+
+Since emacs-lisp interprets definitions sequentially, I define ~toggle~ here
+since I employ it in the next section.
+
+:Discussion:
+#+begin_example emacs-lisp
+;; example usage
+(macroexpand '(toggle x "x" (message x)))
+
+(toggle x "x" (message x))
+
+(message x) ;; crashes since x is unassigned
+
+;; Notice that let's overshadow names. Put this into ElispCheatSheet
+;; 
+(progn
+(setq NOPE "NOPE")
+(let ((NOPE "YUP")) )
+(message NOPE)
+)
+
+(toggle NOPE "x" (message x))
+
+NOPE ;; ⇒ "NOPE"
+#+end_example
 :End:
 
 * Cosmetics
@@ -967,62 +1026,6 @@ Instead I now only need to type ~C-|~ to make this switch.
 )
 (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 #+END_SRC
-** Locally ~toggle~ a variable
-
-It is dangerous to load a file with local variables;
-instead we should load files without evaluating locals,
-read the locals to ensure they are safe --e.g., there's nothing
-malicious like ~eval: (delete-file your-important-file.txt)~--
-then revert the buffer to load the locals.
-
-However, when preprocessing my own files I sometimes wish
-to accept all locals without being queried and so have the following
-combinator.
-
-#+begin_src emacs-lisp
-(defmacro toggle (variable value code)
-  "Locally set the value of ‘variable’ to be ‘value’ in the scope of ‘code’.
-   In particular, the value of ‘variable’, if any, *is* affected
-   to produce useful sideffects. It retains its orginal value outside this call.
-
-   Example uses include terse replacements for one-off let-statements,
-   or, more likely, of temporarily toggeling important values, such as 
-   ‘kill-buffer-query-functions’ for killing a process buffer without confirmation.
-
-   Another example: ‘(toggle enable-local-variables :all ⋯)’ to preprocess files
-   without being queried about possibly dangerous local variables.
-  "
-  `(let ((_initial_value_ ,variable))
-        (setq ,variable ,value)
-        ,code
-        (setq ,variable _initial_value_)
-  )
-)
-#+end_src
-
-:Discussion:
-#+begin_example emacs-lisp
-;; example usage
-(macroexpand '(toggle x "x" (message x)))
-
-(toggle x "x" (message x))
-
-(message x) ;; crashes since x is unassigned
-
-;; Notice that let's overshadow names. Put this into ElispCheatSheet
-;; 
-(progn
-(setq NOPE "NOPE")
-(let ((NOPE "YUP")) )
-(message NOPE)
-)
-
-(toggle NOPE "x" (message x))
-
-NOPE ;; ⇒ "NOPE"
-#+end_example
-:End:
-
 ** ~re-replace-in-file~
 
 #+BEGIN_SRC emacs-lisp
