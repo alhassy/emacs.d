@@ -851,6 +851,17 @@ are still readable.
   :init (golden-ratio-mode 1))
 #+end_src
 
+** Jump between windows using Cmd+Arrow
+#+BEGIN_SRC emacs-lisp
+(use-package windmove
+  :ensure t
+  :config
+  ;; use command key on Mac
+  (windmove-default-keybindings 'super)
+  ;; wrap around at edges
+  (setq windmove-wrap-around t))
+#+END_SRC
+
 * Helpful Functions & Shortcuts
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
@@ -1097,6 +1108,19 @@ Note that capitalisation in a ”#+KeyWord” is irrelevant.
 )
 
 (global-set-key "\C-t" 'toggle-terminal)
+#+end_src
+
+** ~C-x k~ kills current buffer
+
+By default ~C-x k~ prompts to select which buffer
+should be selected. I almost always want to kill
+the current buffer, so let's not waste time making
+such a tedious decision.
+#+begin_src emacs-lisp
+;; Kill current buffer; prompt only if
+;; there are unsaved changes.
+(global-set-key (kbd "C-x k")
+  '(lambda () (kill-buffer (current-buffer))))
 #+end_src
 
 * Org-mode related things
@@ -1877,9 +1901,5 @@ Read:  https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#
 # eval: (when nil (remove (concat "../content/" NAMEorg) commitables))
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs"))
 # End:
-
-
-
-
 
 
