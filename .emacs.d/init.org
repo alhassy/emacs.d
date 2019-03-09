@@ -493,7 +493,7 @@ Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/
       (message-box "This file has uncommited changes!")
       (magit-status))))
 
-;; (add-hook 'find-file-hook 'my/magit-check-file-and-popup)
+(add-hook 'find-file-hook 'my/magit-check-file-and-popup)
 #+end_src
 Let's try this out.
 #+BEGIN_EXAMPLE emacs-lisp
@@ -837,6 +837,20 @@ Useful navigational commands include
 As always, to go to the neotree pane when it's the only other window,
 execute ~C-x o~.
 
+** Window resizing using the golden ratio
+
+Let's load the following package, which automatically resizes windows so that
+the window containing the cursor is the largest, according to the golden ratio.
+Consequently, the window we're working with is nice and large yet the other windows
+are still readable.
+
+#+begin_src emacs-lisp
+(use-package golden-ratio
+  :ensure t
+  :diminish golden-ratio-mode
+  :init (golden-ratio-mode 1))
+#+end_src
+
 * Helpful Functions & Shortcuts
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
@@ -865,6 +879,17 @@ I do this so often it's not even funny.
 
 In Mac OS, one uses ~Cmd-r~ to reload a page and spacemacs binds buffer reversion to ~Cmd-u~
 --in Emacs, Mac's ~Cmd~ is referred to as the ‘super key’ and denoted ~s~.
+
+Moreover, since I use Org-mode to generate code blocks and occasionally
+inspect them, it would be nice if they automatically reverted when they
+were regenerated --Emacs should also prompt me if I make any changes!
+
+#+begin_src emacs-lisp
+;; Auto update buffers that change on disk.
+;; Will be prompted if there are changes that could be lost.
+(global-auto-revert-mode 1)
+#+end_src
+
 
 ** Kill to start of line
 Dual to ~C-k~,
@@ -1413,9 +1438,11 @@ Then the functionality,
    see https://alhassy.github.io/InteractiveWayToC/.
   ")
 
-(defun current-module "Returns the current module under focus." *current-module*)
+(defun current-module () 
+  "Returns the current module under focus." 
+  *current-module*)
 
-(defun set-module name
+(defun set-module (name)
    "Set the name of the module currently under focus.
    
     Usage: When a module is declared, i.e., a new file has begun,
@@ -1428,6 +1455,7 @@ Then the functionality,
    "
    (setq *current-module* name)
 )
+
 (cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
   "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
    and load the resulting ‘target’ file into a ghci buffer.
