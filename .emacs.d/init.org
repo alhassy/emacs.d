@@ -18,26 +18,15 @@
 # (find-file "~/alhassy.github.io/content/AlBasmala.el")
 
 # Toggle comments with: C-c ;
+# C-l recenters window to top/center/bottom while keeping the point on the same line;
+# M-r moves the point to top/center/bottom without recentering the window.
+#
+# Start a numbered list from any number using the syntax “N. [@N] ⋯”, a nice way to
+# have 0-numbered lists or lists with text in between that does not reset the numbering.
 
 # (org-version)   ;; 9.2.2
 # (emacs-version) ;; 26.1
 # (byte-compile-file "~/.emacs")
-
-#+BEGIN_SRC emacs-lisp
-;; https://emacs.stackexchange.com/questions/4090/org-mode-cannot-find-pdflatex-using-mac-os
-
-(defun set-exec-path-from-shell-PATH ()
-  "Sets the exec-path to the same value used by the user shell"
-  (let ((path-from-shell
-         (replace-regexp-in-string
-          "[[:space:]\n]*$" ""
-          (shell-command-to-string "$SHELL -l -c 'echo $PATH'"))))
-    (setenv "PATH" path-from-shell)
-    (setq exec-path (split-string path-from-shell path-separator))))
-
-;; call function now
-(set-exec-path-from-shell-PATH)
-#+END_SRC
 
 * Abstract                                                   :ignore:
  
@@ -504,6 +493,7 @@ Let's try this out.
 
 ** Spelling
 I would like to check spelling by default.
+ + ~C-;~ :: Cycle through corrections for word at point.
  + ~M-$~ :: Check and correct spelling of the word at point
  + ~M-x ispell-change-dictionary RET TAB~ :: To see what dictionaries are available.
 
@@ -518,6 +508,24 @@ Note that Emacs' ~ispell~ is the interface to such a command line spelling utili
 #+BEGIN_SRC emacs-lisp 
 (setq ispell-program-name "/usr/local/bin/aspell")
 
+
+(setq ispell-dictionary "en_GB") ;; set the default dictionary
+
+(add-hook 'text-mode-hook 'flyspell-mode)
+#+END_SRC
+
+Enabling fly-spell for text-mode enables it for org and latex modes since they
+derive from text-mode.
+
+:Hook_TODO:
+Hook for after init?
+(dolist (hook '(text-mode-hook))
+  (add-hook hook (lambda () (flyspell-mode 1))))
+:End:
+
+:Old_global_flyspell:
+Not a good idea...
+
 ;; Maybe a hook is better? Much better ...?
 (define-globalized-minor-mode my-flyspell-global-mode flyspell-mode
   (lambda () 
@@ -528,13 +536,6 @@ Note that Emacs' ~ispell~ is the interface to such a command line spelling utili
 ))
 (my-flyspell-global-mode 1)
 
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
-#+END_SRC
-
-:Hook_TODO:
-Hook for after init?
-(dolist (hook '(text-mode-hook))
-  (add-hook hook (lambda () (flyspell-mode 1))))
 :End:
 
 Let us select a correct spelling merely by clicking on a word.
@@ -867,6 +868,12 @@ are still readable.
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
 # The subsections below detail the definitions.
 
+Let's save a few precious seconds,
+#+begin_src emacs-lisp
+;; change all prompts to y or n
+(fset 'yes-or-no-p 'y-or-n-p)
+#+end_src
+
 ** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
 #+BEGIN_SRC emacs-lisp
 (defvar my-keys-minor-mode-map
@@ -900,7 +907,6 @@ were regenerated --Emacs should also prompt me if I make any changes!
 ;; Will be prompted if there are changes that could be lost.
 (global-auto-revert-mode 1)
 #+end_src
-
 
 ** Kill to start of line
 Dual to ~C-k~,
@@ -1120,7 +1126,7 @@ such a tedious decision.
 ;; Kill current buffer; prompt only if
 ;; there are unsaved changes.
 (global-set-key (kbd "C-x k")
-  '(lambda () (kill-buffer (current-buffer))))
+  '(lambda () (interactive) (kill-buffer (current-buffer))))
 #+end_src
 
 * Org-mode related things
@@ -1847,6 +1853,23 @@ take care of this.
 # What I like about truncate-lines versus visual-line-mode is that the former doesn’t split
 # on word boundaries and adds symbols to the fringe.
 # (set-default 'truncate-lines t)
+
+** Altering PATH
+#+BEGIN_SRC emacs-lisp
+;; https://emacs.stackexchange.com/questions/4090/org-mode-cannot-find-pdflatex-using-mac-os
+
+(defun set-exec-path-from-shell-PATH ()
+  "Sets the exec-path to the same value used by the user shell"
+  (let ((path-from-shell
+         (replace-regexp-in-string
+          "[[:space:]\n]*$" ""
+          (shell-command-to-string "$SHELL -l -c 'echo $PATH'"))))
+    (setenv "PATH" path-from-shell)
+    (setq exec-path (split-string path-from-shell path-separator))))
+
+;; call function now
+(set-exec-path-from-shell-PATH)
+#+END_SRC
 
 * COMMENT Summary of Utilities Provided
 
