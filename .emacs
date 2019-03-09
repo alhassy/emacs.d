@@ -19,7 +19,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (golden-ratio shell-pop all-the-icons org-bullets writegood-mode which-key use-package unicode-input unicode-fonts unicode-emoticons spacemacs-theme solarized-theme rainbow-delimiters powerthesaurus org-plus-contrib nyan-mode neotree multiple-cursors magit ivy imenu-list htmlize helm-projectile helm-ag haskell-mode google-this fill-column-indicator doom-themes dash-functional company-coq biblio auto-compile alert)))
+    (smex golden-ratio shell-pop all-the-icons org-bullets writegood-mode which-key use-package unicode-input unicode-fonts unicode-emoticons spacemacs-theme solarized-theme rainbow-delimiters powerthesaurus org-plus-contrib nyan-mode neotree multiple-cursors magit ivy imenu-list htmlize helm-projectile helm-ag haskell-mode google-this fill-column-indicator doom-themes dash-functional company-coq biblio auto-compile alert)))
  '(safe-local-variable-values
    (quote
     ((eval when nil

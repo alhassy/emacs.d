@@ -21,6 +21,13 @@
 # C-l recenters window to top/center/bottom while keeping the point on the same line;
 # M-r moves the point to top/center/bottom without recentering the window.
 #
+# Read the tutorial! C-h t
+#
+# M-<DEL> and M-d delete a word backwards and forwards, respectively.
+# M-{ and M-} to move forward/backward by a paragraph.
+# M-/ complete partially typed words; this cycles through possible completions. 
+#
+#
 # Start a numbered list from any number using the syntax “N. [@N] ⋯”, a nice way to
 # have 0-numbered lists or lists with text in between that does not reset the numbering.
 
@@ -218,7 +225,13 @@ dotspacemacs-additional-packages '(htmlize biblio magit haskell-mode dash s)
 #+end_src
 :End:
 
-Let's get ~use-package~ --a meta-package that manages other packages and the way they interact.
+There are a few ways to install packages.
+The easiest, for a beginner, is to use the command ~package-list-packages~
+then find the desired package, press ~i~ to mark it for installation, then
+install all marked packages by pressing ~x~.
+
+Alternatively, one uses the declarative configuration tool [[https://github.com/jwiegley/use-package/][use-package]] 
+--a meta-package that manages other packages and the way they interact.
 
 Background:
 Recently I switched to mac --first time trying the OS.
@@ -491,7 +504,7 @@ Let's try this out.
 )
 #+END_EXAMPLE
 
-** Spelling
+** Fix spelling as you type
 I would like to check spelling by default.
  + ~C-;~ :: Cycle through corrections for word at point.
  + ~M-$~ :: Check and correct spelling of the word at point
