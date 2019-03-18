@@ -4,3 +4,15 @@ ls
 cd helm-20180719.1206/
 ls
 ./emacs-helm.sh 
+mv .emacs.d/init.pdf ~/alhassy.github.io/assets/pdfs/
+cd ../_posts/
+ls
+rm 2019-03-10-AlBasmala.markdown 
+rm 2018-06-1-AlBasmala.markdown 
+pwd
+git checkout 5e6d9531eb3cf68fef7232ef24923e50d690ee85 -- content/AlBasmala.el
+ghci
+ghci
+open terse-proposal.pdf &
+echo $EDITOR
+ghci TheoremProver_SOL.hs 

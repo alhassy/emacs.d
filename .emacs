@@ -19,10 +19,16 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (smex golden-ratio shell-pop all-the-icons org-bullets writegood-mode which-key use-package unicode-input unicode-fonts unicode-emoticons spacemacs-theme solarized-theme rainbow-delimiters powerthesaurus org-plus-contrib nyan-mode neotree multiple-cursors magit ivy imenu-list htmlize helm-projectile helm-ag haskell-mode google-this fill-column-indicator doom-themes dash-functional company-coq biblio auto-compile alert)))
+    (sunrise-commander dired-sidebar synosaurus undo-tree keyfreq flycheck golden-ratio shell-pop all-the-icons org-bullets writegood-mode which-key use-package unicode-input unicode-fonts unicode-emoticons spacemacs-theme solarized-theme rainbow-delimiters powerthesaurus org-plus-contrib nyan-mode neotree multiple-cursors magit ivy imenu-list htmlize helm-projectile helm-ag haskell-mode google-this fill-column-indicator doom-themes dash-functional company-coq biblio auto-compile alert)))
  '(safe-local-variable-values
    (quote
-    ((eval when nil
+    ((eval add-to-list
+	   (quote org-structure-template-alist)
+	   (quote
+	    ("hsn" . "src haskell :tangle no")))
+     (eval defun code nil CODE)
+     (eval setq CODE "March8.hs")
+     (eval when nil
 	   (remove
 	    (concat "../content/" NAMEorg)
 	    commitables))

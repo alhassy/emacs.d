@@ -1,0 +1,16 @@
+;; Emacs-W3 HTTP cookies file
+;; Automatically generated file!!! DO NOT EDIT!!!
+
+(setq url-cookie-storage
+ '(("ieeexploreapi.ieee.org"
+  [url-cookie "WLSESSION" "186802828.20480.0000" "Tue, 19-Mar-2019 14:19:03 GMT" "/" "ieeexploreapi.ieee.org" nil])
+ ("dblp.org"
+  [url-cookie "dblp-bibtex" "2" "Sat, 06 Apr 2019 00:53:11 +0200" "/" "dblp.org" nil]))
+)
+(setq url-cookie-secure-storage
+ 'nil)
+
+;; Local Variables:
+;; version-control: never
+;; no-byte-compile: t
+;; End:

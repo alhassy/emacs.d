@@ -23,7 +23,7 @@
 	    ((:keywords "languages" "ada")
 	     (:url . "http://www.nongnu.org/ada-mode/"))])
  (ada-ref-man .
-	      [(2012 4)
+	      [(2012 5)
 	       nil "Ada Reference Manual 2012" tar
 	       ((:keywords "languages" "ada")
 		(:url . "http://stephe-leake.org/ada/arm.html"))])
@@ -374,7 +374,7 @@
 	     ((:keywords "killing" "convenience")
 	      (:url . "https://github.com/leoliu/easy-kill"))])
  (ebdb .
-       [(0 6 5)
+       [(0 6 6)
 	((emacs
 	  (25 1))
 	 (cl-lib
@@ -419,7 +419,7 @@
 	 ((:keywords "convenience" "languages")
 	  (:url . "https://github.com/joaotavora/eglot"))])
  (el-search .
-	    [(1 11 3)
+	    [(1 11 4)
 	     ((emacs
 	       (25))
 	      (stream
@@ -666,7 +666,7 @@
        ((:keywords "matching")
 	(:url . "https://github.com/abo-abo/swiper"))])
  (ivy-explorer .
-	       [(0 2 0)
+	       [(0 3 1)
 		((emacs
 		  (25))
 		 (ivy
@@ -986,6 +986,12 @@
 	  "Parser combinator library" tar
 	  ((:keywords "extensions")
 	   (:url . "https://github.com/cute-jumper/parsec.el"))])
+ (peg .
+      [(0 9 1)
+       ((emacs
+	 (25)))
+       "Parsing Expression Grammars in Emacs Lisp" tar
+       ((:url . "http://elpa.gnu.org/packages/peg.html"))])
  (pinentry .
 	   [(0 1)
 	    nil "GnuPG Pinentry server implementation" single
@@ -997,7 +1003,7 @@
 	 ((:url . "http://elpa.gnu.org/packages/poker.html")
 	  (:keywords "games"))])
  (posframe .
-	   [(0 4 2)
+	   [(0 4 3)
 	    ((emacs
 	      (26)))
 	    "Pop a posframe (just a frame) at point" single
@@ -1310,6 +1316,13 @@
 	    "Run a vigenere cipher on a block of text ;" single
 	    ((:url . "https://elpa.gnu.org/packages/vigenere.html")
 	     (:keywords "data" "vigenere" "cipher"))])
+ (visual-filename-abbrev .
+			 [(1 0)
+			  ((emacs
+			    (26 1)))
+			  "Visually abbreviate filenames" single
+			  ((:url . "http://elpa.gnu.org/packages/visual-filename-abbrev.html")
+			   (:keywords "tools"))])
  (visual-fill .
 	      [(0 1)
 	       nil "Auto-refill paragraphs without modifying the buffer" single
@@ -1379,7 +1392,7 @@
 	   ((:url . "http://elpa.gnu.org/packages/wpuzzle.html")
 	    (:keywords))])
  (xclip .
-	[(1 7)
+	[(1 8)
 	 nil "Copy&paste GUI clipboard from text terminal" single
 	 ((:url . "http://elpa.gnu.org/packages/xclip.html")
 	  (:keywords "convenience" "tools"))])

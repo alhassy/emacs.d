@@ -8,9 +8,9 @@
  (magit-fetch nil)
  (magit-gitignore nil)
  (magit-log
+  ("-n256" "--graph" "--decorate")
   ("--decorate")
-  ("-n256" "--decorate")
-  ("-n256" "--graph" "--decorate"))
+  ("-n256" "--decorate"))
  (magit-pull nil)
  (magit-push nil)
  (magit-rebase nil)

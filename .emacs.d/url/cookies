@@ -3,7 +3,9 @@
 
 (setq url-cookie-storage
  '(("dblp.org"
-  [url-cookie "dblp-bibtex" "2" "Sat, 06 Apr 2019 00:53:11 +0200" "/" "dblp.org" nil]))
+  [url-cookie "dblp-bibtex" "2" "Wed, 17 Apr 2019 18:05:45 +0200" "/" "dblp.org" nil])
+ ("ieeexploreapi.ieee.org"
+  [url-cookie "WLSESSION" "186802828.20480.0000" "Tue, 19-Mar-2019 14:19:03 GMT" "/" "ieeexploreapi.ieee.org" nil]))
 )
 (setq url-cookie-secure-storage
  'nil)
