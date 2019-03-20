@@ -61,7 +61,7 @@ for peers, and, most importantly, better maintainability for myself!
 ⟪ Dear reader when encountering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~ 
 ; an elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispCheatSheet][here.]] ⟫
 
-* Why Emacs
+* Why Emacs?
 
 /Emacs is a flexible platform for developing end-user applications/ --unfortunately it is generally perceived as
 merely a text editor. Some people use it specifically for one or two applications!
@@ -75,11 +75,12 @@ for example, it comes with a powerful notion of ‘undo’: Basic text editors h
 yet in Emacs, we have a tree --when we undo and make new edits, we branch off in our editing stream
 as if our text was being version controlled as we type! --We can even switch between such branches!
 
-#+begin_src emacs-lisp :tangle
+#+begin_src emacs-lisp
 ;; Allow tree-semantics for undo operations.
 (package-install 'undo-tree)
+(undo-tree-mode)
 
-;; Execute (undo-tree-visualise) then navigate along the tree to witness
+;; Execute (undo-tree-visualize) then navigate along the tree to witness
 ;; changes being made to your file live!
 #+end_src
 
@@ -257,7 +258,7 @@ dotspacemacs-additional-packages '(htmlize biblio magit haskell-mode dash s)
 #+end_src
 :End:
 
-** ~use-package~ --The start ~init.el~
+** ~use-package~ --The start of ~init.el~
 
 :Stuff_in_dot_emacs:
 #+begin_src emacs-lisp
@@ -303,10 +304,13 @@ acts as its kernel.
 ;; Look at the *Messages* buffer before setting this to nil, then after.
 
 ;; Internet repositories for new packages.
-(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
-                         ("gnu"       . "http://elpa.gnu.org/packages/")
+(setq package-archives '(("org"       . "https://orgmode.org/elpa/")
+                         ("gnu"       . "https://elpa.gnu.org/packages/")
                          ("melpa"     . "https://melpa.org/packages/")
-                         ("marmalade" . "http://marmalade-repo.org/packages/")))
+                         ("melpa-stable" . "https://stable.melpa.org/packages/")     
+                         ;; Maintainer is AWOL.
+                         ;; ("marmalade" . "https://marmalade-repo.org/packages/")
+                         ))
 
 ;; Actually get “package” to work.
 (package-initialize) 
@@ -353,6 +357,7 @@ Moreover, I will be shown other commands I did not know about! Neato :-)
 ;; Making it easier to discover Emacs key presses.
 (use-package which-key 
  :ensure t
+ :diminish which-key-mode
  :init (which-key-mode)
  :config (which-key-setup-side-window-bottom)
          (setq which-key-idle-delay 0.05)
@@ -418,7 +423,7 @@ Note:
 
 Finally, since I've symlinked my ~.emacs~:
 #+begin_src emacs-lisp
-;; Don't ask for confirmation when opening symlinked file.
+;; Don't ask for confirmation when opening symlinked files.
 (setq vc-follow-symlinks t)
 #+end_src
 
@@ -539,12 +544,18 @@ Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/
   and has uncommitted changes, open the magit status popup."
   (let ((file (buffer-file-name)))
     (when (and file (magit-anything-modified-p t file))
-      (message-box "This file has uncommited changes!")
+      (message "This file has uncommited changes!")
+      (when nil ;; Became annyoying after some time.
       (split-window-below)
       (other-window 1)
-      (magit-status))))
+      (magit-status)))))
 
-(add-hook 'find-file-hook 'my/magit-check-file-and-popup)
+;; I usually have local variables, so I want the message to show
+;; after the locals have been loaded.
+(add-hook 'find-file-hook 
+  '(lambda () 
+      (add-hook 'hack-local-variables-hook 'my/magit-check-file-and-popup)
+   ))
 #+end_src
 Let's try this out:
 #+BEGIN_EXAMPLE emacs-lisp
@@ -553,7 +564,7 @@ Let's try this out:
 )
 #+END_EXAMPLE
 
-** Fix spelling as you type
+** Fix spelling as you type --and a thesaurus too!
 I would like to check spelling by default.
  + ~C-;~ :: Cycle through corrections for word at point.
  + ~M-$~ :: Check and correct spelling of the word at point
@@ -614,8 +625,23 @@ Colour incorrect works; default is an underline.
 (custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
 #+END_SRC
 
+Use the thesaurus Emacs frontend [[https://github.com/hpdeifel/synosaurus][Synosaurus]] to avoid unwarranted repetition.
+#+begin_src emacs-lisp
+(use-package synosaurus 
+  :ensure t
+  :diminish synosaurus-mode
+  :init    (synosaurus-mode)
+  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
+           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace)
+)
+#+end_src
+The thesaurus is powered by the Wordnet ~wn~ tool, which can be invoked without an internet connection!
+#+begin_src emacs-lisp
+;; (shell-command "brew cask install xquartz &") ;; Dependency
+;; (shell-command "brew install wordnet &")
+#+end_src
+
 :CurrentlyNotWorking:
-Set up a thesaurus to avoid unwarranted repetition.
 #+BEGIN_SRC emacs-lisp :tangle no
 (load "~/dotfiles/.emacs.d/powerthesaurus.el")
 (global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
@@ -840,6 +866,8 @@ Note: Using spacemacs theme above.
       )
   )     
 )
+
+;; (setq initial-scratch-message "Welcome! This’ the scratch buffer" )
 #+end_src
 ** Flashing when something goes wrong
 Make top and bottom of screen flash when something unexpected happens thereby observing a warning message in the minibuffer. E.g., C-g, or calling an unbound key sequence, or misspelling a word.
@@ -856,9 +884,14 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 
 (split-window-right)			  ;; C-x 3
 (other-window 1)			          ;; C-x 0
-(toggle enable-local-variables nil
+(toggle enable-local-variables 'all           ;; Load *all* locals.
   (find-file "~/.emacs.d/init.org"))
+#+END_SRC
 
+(describe-symbol 'enable-local-variables)
+
+:primitive_approach_to_recent_files:
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; List recently accessed files upon startup
 
 (recentf-mode 1)                   ;; Part of Emacs
@@ -871,6 +904,7 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
   (recentf-open-files)
 )
 #+END_SRC
+:end:
 ** Showing date, time, and battery life
 #+BEGIN_SRC emacs-lisp
 (setq display-time-day-and-date t)
@@ -911,32 +945,149 @@ We can delete selected text just by hitting the backspace key.
 
 ** Minibuffer should display line and column numbers
 #+BEGIN_SRC emacs-lisp
-(line-number-mode 1)
-(column-number-mode 1)
+(global-display-line-numbers-mode t)
+; (line-number-mode t)
+(column-number-mode t)
 #+END_SRC
 
-** Helm Mode
+** Completion Frameworks
 [[https://github.com/emacs-helm/helm/wiki#install][Helm]] provides possible completions and also shows recently executed commands when pressing ~M-x~.
 
 Extremely helpful for when switching between buffers, =C-x b=,
 and discovering & learning about other commands!
+E.g., press ~M-x~ to see recently executed commands and other possible commands!
 
 Try and be grateful.
 #+BEGIN_SRC emacs-lisp
-(use-package helm :ensure t)
-(helm-mode t)
+(use-package helm 
+ :ensure t
+ :init (helm-mode t)
+ :bind
+  ("C-x C-r" . helm-recentf)      ; search for recently edited  
+  ("M-x" . 'helm-M-x)
+  ("C-x r b" .'helm-filtered-bookmarks)
+  ("C-x C-f" . 'helm-find-files)
+)
+
+;; helm-google-suggest   vs   google-this
 
 ;; Helm provides generic functions for completions to replace 
 ;; tab-completion in Emacs with no loss of functionality. 
-(global-set-key (kbd "M-x") 'helm-M-x)
+;; (global-set-key (kbd "M-x") 'helm-M-x)
+
 ;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
-(global-set-key (kbd "C-x r b") #'helm-filtered-bookmarks)
-(global-set-key (kbd "C-x C-f") #'helm-find-files)
+
+;; (global-set-key (kbd "C-x r b") #'helm-filtered-bookmarks)
+;; (global-set-key (kbd "C-x C-f") #'helm-find-files)
 
 ;; Yet, let's keep tab-completetion anyhow.
 (define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
 (define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
 #+END_SRC
+
+Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].
+It allows us to not only search the current buffer but also
+the other buffers and to make live edits by pressing ~C-c C-e~
+when a search buffer exists. Incidentally, executing ~C-s~ on a word, region,
+will search for that particular word, region; then apply changes by ~C-x C-s~.
+
+#+BEGIN_SRC emacs-lisp
+(use-package helm-swoop
+  :ensure t
+  :bind
+  (
+   ("C-s"     . 'helm-swoop)           ;; search current buffer
+   ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
+   ;; Go back to last position where ‘helm-swoop’ was called
+   ("C-S-s" . 'helm-swoop-back-to-last-point)
+  )
+ :config
+   ;; Give up colour for speed.
+  (setq helm-swoop-speed-or-color nil)
+)
+#+END_SRC
+Press ~M-i~ after a search has executed to enable it for all buffers.
+
+We can also limit our search to org files, or buffers of the same mode,
+or buffers belonging to the same project!
+
+:Old_ivy_counsel_swiper_shenanigans:
++ There is a super duper neato search capability we can utilise -- ~swiper~.
++ We also use the ~counsel~, a collection of completion, ~ivy~, enhanced versions of
+  common Emacs commands.
+#+begin_src emacs-lisp :tangle no
+(use-package ivy ;; More powerful but ugly looking completetion framework. 
+                 ;; Helm is prettier.
+                 ;; Needed for Counsel, below.
+ :config 
+
+  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
+  (setq ivy-use-virtual-buffers t)
+  ;; number of result lines to display
+  (setq ivy-height 10)
+  ;; does not count candidates
+  (setq ivy-count-format "")
+  ;; no regexp by default
+  (setq ivy-initial-inputs-alist nil)
+)
+
+(use-package counsel
+  :ensure t
+  :bind*                              ; load when pressed
+  (
+   ("C-s"     . swiper)
+   ;; ("C-x C-r" . counsel-recentf)      ; search for recently edited
+   ("<f1> l"  . counsel-find-library) ; find an Emacs Lisp library 
+   ("<f2> u"  . counsel-unicode-char) ; insert a unicode symbol using a pop-up
+  ))
+#+end_src
+
+~swiper~ is an alternative to Emacs' default incremental search.
+It shows an overview of all matches --navigate using arrow keys.
+There is also a helm based version of swiper.
+:end:
+
+Finally, let's enable “complete anything” mode.
+#+begin_src emacs-lisp
+(use-package company
+  :config
+  (add-hook 'after-init-hook 'global-company-mode))
+
+(global-set-key (kbd "C-c h") 'company-complete)
+#+end_src
+Note that ~Meta-/~ goes through a sequence of completions.
+
+** On the fly syntax checking
+#+begin_src emacs-lisp
+(use-package flycheck
+  :defer 2
+  :init (global-flycheck-mode)
+  :custom
+  (flycheck-display-errors-delay .3))
+#+end_src
+
+:Ignore:
+https://emacs.stackexchange.com/questions/7844/org-mode-have-flycheck-resolve-relative-config-while-editing-code-blocks
+#+begin_src emacs-lisp :tangle no
+(defadvice org-edit-src-code (around set-buffer-file-name activate compile)
+  (let ((file-name (buffer-file-name)))
+    ad-do-it                          
+    (setq buffer-file-name file-name)))
+#+end_src
+
+In an org-src block, we press ~C-c '~ to get into the language's
+mode where flycheck will provide many warnings.
+#+begin_src haskell :tangle no
+module Main where
+
+main :: IO ()
+main = putStrLn $ "nice" ++ f 0
+
+f :: Int -> String
+f x = x -- show x 
+-- type error
+#+end_src
+:End:
 ** “FIXME:” Keyword
 
 In the *middle* of a senctence, I need a FIXME: Woah!
@@ -1231,6 +1382,7 @@ https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-vers
 Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
 a headline, we can perform fast manipulation & navigation using the standard Emacs movement
 controls, such as 
++ ~#~ toggle ~COMMENT~-ing for an org-header.
 + ~I/O~ clock In/Out to the task defined by the current heading. 
    - Keep track of your work times!
    - ~v~ view agenda.
@@ -1984,6 +2136,8 @@ Some possibly interesting reads:
 
 (org-babel-load-file "~/.emacs.d/init.org")
 (org-babel-load-file "~/dotfiles/.emacs.d/init.org")
+
+(shell-command "rm ~/.emacs.elc")
 
 Read:  https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#haskell-preliminaries
 

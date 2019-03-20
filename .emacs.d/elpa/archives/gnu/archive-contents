@@ -7,7 +7,7 @@
 	      ((:url . "https://github.com/abo-abo/ace-window")
 	       (:keywords "window" "location"))])
  (ack .
-      [(1 5)
+      [(1 8)
        nil "interface to ack-like tools" tar
        ((:keywords "tools" "processes" "convenience")
 	(:url . "https://github.com/leoliu/ack-el"))])
@@ -263,7 +263,7 @@
 		((:keywords "convenience")
 		 (:url . "http://elpa.gnu.org/packages/cycle-quotes.html"))])
  (darkroom .
-	   [(0 1)
+	   [(0 2)
 	    ((cl-lib
 	      (0 5)))
 	    "Remove visual distractions and focus on writing" single
@@ -666,7 +666,7 @@
        ((:keywords "matching")
 	(:url . "https://github.com/abo-abo/swiper"))])
  (ivy-explorer .
-	       [(0 3 1)
+	       [(0 3 2)
 		((emacs
 		  (25))
 		 (ivy
@@ -908,7 +908,7 @@
 	  ((:url . "http://elpa.gnu.org/packages/oauth2.html")
 	   (:keywords "comm"))])
  (objed .
-	[(0 7 1)
+	[(0 7 4)
 	 ((emacs
 	   (25))
 	  (cl-lib
@@ -987,7 +987,7 @@
 	  ((:keywords "extensions")
 	   (:url . "https://github.com/cute-jumper/parsec.el"))])
  (peg .
-      [(0 9 1)
+      [(1 0)
        ((emacs
 	 (25)))
        "Parsing Expression Grammars in Emacs Lisp" tar
@@ -1411,7 +1411,7 @@
        ((:keywords "multimedia" "xpm")
 	(:url . "http://www.gnuvola.org/software/xpm/"))])
  (xr .
-     [(1 5)
+     [(1 7)
       nil "Convert string regexp to rx notation" tar
       ((:keywords "lisp" "maint" "regexps")
        (:url . "http://elpa.gnu.org/packages/xr.html"))])

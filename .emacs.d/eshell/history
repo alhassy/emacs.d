@@ -15,4 +15,7 @@ ghci
 ghci
 open terse-proposal.pdf &
 echo $EDITOR
-ghci TheoremProver_SOL.hs 
+hello
+echo "hi"
+type wn
+ghci ~/3fp3/W2019/assign/TheoremProver_SOL.hs 
