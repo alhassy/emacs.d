@@ -1,3 +1,4 @@
+# Arabic (العربيّة)	السّلام عليكم
 #+TITLE: My Emacs Initialisation File, Written in ~Org-mode~
 #+author: Musa Al-hassy
 #+email: alhassy@gmail.com
@@ -272,7 +273,8 @@ dotspacemacs-additional-packages '(htmlize biblio magit haskell-mode dash s)
 #+end_src
 :End:
 
-There are a few ways to install packages.
+There are a few ways to install packages
+--run ~C-h C-e~ for a short overview.
 The easiest, for a beginner, is to use the command ~package-list-packages~
 then find the desired package, press ~i~ to mark it for installation, then
 install all marked packages by pressing ~x~.
@@ -564,6 +566,8 @@ Let's try this out:
 )
 #+END_EXAMPLE
 
+In doubt, execute ~C-h e~ to jump to the ~*Messages*~ buffer.
+
 ** Fix spelling as you type --and a thesaurus too!
 I would like to check spelling by default.
  + ~C-;~ :: Cycle through corrections for word at point.
@@ -655,6 +659,15 @@ see ~~/Dropbox/spelling.txt~.
 #+BEGIN_SRC emacs-lisp
 (autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
 #+END_SRC
+
+Practice touch typing using [[https://github.com/hagleitn/speed-type][speed-type]].
+#+begin_src emacs-lisp
+(use-package speed-type :ensure t)
+#+end_src
+Running ~M-x speed-type-region~ on a region of text, or ~M-x speed-type-buffer~ on a 
+whole buffer, or just ~M-x speed-type-text~ will produce the selected region, buffer,
+or random text for practice. The timer begins when the first key is pressed
+and stats are shown when the last letter is entered.
 
 ** Unicode Input via Agda Input
  
@@ -951,7 +964,7 @@ We can delete selected text just by hitting the backspace key.
 #+END_SRC
 
 ** Completion Frameworks
-[[https://github.com/emacs-helm/helm/wiki#install][Helm]] provides possible completions and also shows recently executed commands when pressing ~M-x~.
+[[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible completions and also shows recently executed commands when pressing ~M-x~.
 
 Extremely helpful for when switching between buffers, =C-x b=,
 and discovering & learning about other commands!
@@ -964,26 +977,39 @@ Try and be grateful.
  :init (helm-mode t)
  :bind
   ("C-x C-r" . helm-recentf)      ; search for recently edited  
+
+  ;; Helm provides generic functions for completions to replace 
+  ;; tab-completion in Emacs with no loss of functionality. 
   ("M-x" . 'helm-M-x)
   ("C-x r b" .'helm-filtered-bookmarks)
   ("C-x C-f" . 'helm-find-files)
 )
-
-;; helm-google-suggest   vs   google-this
-
-;; Helm provides generic functions for completions to replace 
-;; tab-completion in Emacs with no loss of functionality. 
-;; (global-set-key (kbd "M-x") 'helm-M-x)
-
 ;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
-
-;; (global-set-key (kbd "C-x r b") #'helm-filtered-bookmarks)
-;; (global-set-key (kbd "C-x C-f") #'helm-find-files)
 
 ;; Yet, let's keep tab-completetion anyhow.
 (define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
 (define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
+;; We can list ‘actions’ on the currently selected item by C-z.
+(define-key helm-map (kbd "C-z")  'helm-select-action)
 #+END_SRC
+
+When ~helm-mode~ is enabled, even help commands make use of it.
+E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
+and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
+Both show a pop-up of other possible commands.
+
+Incidentally, helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the top program via
+~helm-top~. It also serves as an interface to popular search engines
+and over 100 websites such as ~google, stackoverflow~, and ~arxive~.
+#+begin_src emacs-lisp
+;; (shell-command "brew install surfraw &")
+;; 
+;; Invoke helm-surfraw
+#+end_src
+If we want to perform a google search, with interactive suggestions,
+then invoke ~helm-google-suggest~ --which can be acted for other serves,
+such as Wikipedia or Youtube by ~C-z~. For more google specific options,
+there is the ~google-this~ package.
 
 Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].
 It allows us to not only search the current buffer but also
