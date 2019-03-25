@@ -43,6 +43,8 @@
 #+end_center
 
 Herein I document the configurations I utilise with Emacs.
+
+:Old_silliness:
 Of note are:
 
  ◈ This is a literate programming setup.
@@ -54,13 +56,14 @@ Of note are:
     + Spacemacs look and feel with completion frameworks ~Helm~ and ~which-key~.
 
  ◈ Utilities for working with org-mode files, namely extracting ~#+KEYWORD: VALUE~ pairs.
+:End:
 
 As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
 through my ever growing configuration files, ease of usability and reference
 for peers, and, most importantly, better maintainability for myself!
 
-⟪ Dear reader when encountering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~ 
-; an elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispCheatSheet][here.]] ⟫
+Dear reader, when encountering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~.
+An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispCheatSheet][here.]]
 
 * Why Emacs?
 
