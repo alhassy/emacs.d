@@ -12,7 +12,7 @@
 #+PROPERTY: header-args :tangle init.el
 # Begin blog server: (shell-command "cd ~/alhassy.github.io/ ; bundle exec jekyll serve &")
 # (load-file "~/alhassy.github.io/content/AlBasmala.el")
-# (toggle enable-local-variables :all (preview-article))
+# (toggle enable-local-variables :all (progn (setq org.nopdf t) (preview-article)))
 #
 # (defun my/magit-check-file-and-popup () )
 #
@@ -1834,8 +1834,11 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 ;; (require 'ob-plantuml)
 #+end_src
 
-Let's use this! The source block is replaced with the generated image in-place, by default.
-#+begin_src plantuml :file normal_task_states.png :cache yes
+# (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/")
+
+Let's use this! 
+# The source block is replaced with the generated image in-place, by default.
+#+begin_src plantuml :file workflow.png :exports code :cache (progn (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/") "yes")
 skinparam defaultTextAlignment center  /' Text alignment '/
 
 skinparam titleBorderRoundCorner 15
@@ -1854,10 +1857,10 @@ Started -down->  Waiting
 Waiting -up->    Started
 Started -right-> Done
 
-/'Along the way, I may put pause the task for some reason then  return to it.
-  This may be since I'm “Blocked” since I need something, or
-  the task has been put on “hold” since it may not be important right now,
-  and it may be “cancelled” eventually.  
+/'Along the way, I may put pause the task for some reason then
+  return to it. This may be since I'm “Blocked” since I need 
+  something, or the task has been put on “hold” since it may not
+  be important right now, and it may be “cancelled” eventually.  
 '/
 
 Todo    -down-> Waiting
@@ -1885,14 +1888,16 @@ note right of Cancelled: Note reason\nfor cancellation.
 note bottom of On_Hold: Note reason\nfor reduced priority.
 
 center footer  ♥‿♥ Org-mode is so cool (•̀ᴗ•́)و
-/' Note that we could omit the “center, left, right” if we wished, or used a “header” instead.'/
+/' Note that we could omit the “center, left, right” if we wished, 
+   or used a “header” instead.'/
 #+end_src
 
 #+RESULTS[b18d24821fb7ae373e8a7efe4b0c3a27d0469837]:
 [[file:normal_task_states.png]]
 
 # (org-display-inline-images t t)
-# (shell-command "rm normal_task_states.png")
+# (shell-command "rm workflow.png")
+#+HTML: <img src="../assets/img/workflow.png" alt="My Personal Task States">
 
 Of note:
 + Multiline comments are with ~/' comment here '/~, single quote starts a one-line comment.
