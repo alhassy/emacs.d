@@ -67,8 +67,9 @@ for peers, and, most importantly, better maintainability for myself!
 /Emacs is a flexible platform for developing end-user applications/ --unfortunately it is generally perceived as
 merely a text editor. Some people use it specifically for one or two applications!
 For example, [[https://www.youtube.com/watch?v=FtieBc3KptU][writers]] use it as an interface for Org-mode and others use it as an interface for version
-control with Magit. Org is an organisation tool that can be used for typesetting which subsumes LaTeX, generating many different
-formats --html, latex, pdf, etc-- from a single source, keeping track of schedules, blogging, and much more.
+control with Magit. [[https://orgmode.org/index.html#sec-4][Org]] is an organisation tool that can be used for typesetting which subsumes LaTeX, generating many different
+formats --html, latex, pdf, etc-- from a single source, keeping track of [[https://orgmode.org/worg/org-tutorials/index.html#orgff7b885][schedules]], blogging, habit tracking, personal information management tool, and [[http://orgmode.org/worg/org-contrib/][much more]].
+Moreover, its syntax is so [[https://karl-voit.at/2017/09/23/orgmode-as-markup-only/][natural]] that most people use it without even knowing!
 For me, Org allows me to do literate programming: I can program and document at the same time,
 with no need to seperate the two tasks and with the ability to generate multiple formats and files from a single file.
 Of course it comes with the basic features of a text editor, but it is much more;
@@ -104,11 +105,23 @@ If you are a professional writer…Emacs outshines all other editing software in
 #+end_quote
 
 I have used Emacs as an interface for developing cheat sheets, for making my blog, and as an application 
-for ‘interactively learning C’. If anything Emacs is more like an OS than just a text editor.
+for ‘interactively learning C’. If anything Emacs is more like an OS than just a text editor
+--“living within Emacs” provides an abstraction over whatever operating system my machine has:
+[[https://www.fugue.co/blog/2015-11-11-guide-to-emacs.html][It's so easy to take everything with me.]] Moreover, the desire to mould Emacs to my needs has made me
+a better programmer: I am now a more literate programmer and, due to Elisp's documentation-oriented nature, I actually take the time
+and effort to make meaningful documentation --even though the project it private and will likely only be seen by me.
+
+#+begin_quote
+/Seeing Emacs as an editor is like seeing a car as a seating-accommodation./ -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
+#+end_quote
+# Comparing Emacs to an editor is like comparing GNU/Linux to a word processor. -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
 
 Consider reading ⋯ 
++ [[https://www.fugue.co/blog/2015-11-11-guide-to-emacs.html][A CEO's Guide to Emacs]] --A non-programmer introduction to Emacs (•̀ᴗ•́)و
++ [[https://www.reddit.com/r/emacs/comments/6fytr5/when_did_you_start_using_emacs/][“When did you start using Emacs” discussion on Reddit]]
 + The [[http://tuhdo.github.io/emacs-tutor.html#orgheadline63][Emacs Mini Manual]], or
 + [[https://david.rothlis.net/emacs/howtolearn.html][“How to Learn Emacs”]]
++ [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
 
 * TODO Booting Up
 ** ~~/.emacs~ vs. ~init.org~
@@ -629,6 +642,18 @@ Colour incorrect works; default is an underline.
 (custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
 #+END_SRC
 
+Finally, save to user dictionary without asking:
+#+BEGIN_SRC emacs-lisp
+(setq ispell-silently-savep t)
+#+END_SRC
+
+Nowadays, I very rarely write non-literate programs, but if I do
+I'd like to check spelling only in comments/strings. E.g.,
+#+BEGIN_SRC emacs-lisp
+(add-hook          'c-mode-hook 'flyspell-prog-mode)
+(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
+#+END_SRC
+
 Use the thesaurus Emacs frontend [[https://github.com/hpdeifel/synosaurus][Synosaurus]] to avoid unwarranted repetition.
 #+begin_src emacs-lisp
 (use-package synosaurus 
@@ -853,6 +878,9 @@ NOPE ;; ⇒ "NOPE"
 
 * Cosmetics
 
+# Font
+# (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12"))
+
 :ExperimentingWithBackgroundColours: 
 Note: Using spacemacs theme above.
 
@@ -876,6 +904,7 @@ Note: Using spacemacs theme above.
   (message
       (concat "Welcome! Emacs "  emacs-version
               "; Org-mode "      org-version
+              "; on system "     (system-name)
       )
   )     
 )
@@ -932,11 +961,15 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 (menu-bar-mode -1)
 #+END_SRC
 
-** Increase/decrease text size
+** Increase/decrease text size and word wrapping
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-+") 'text-scale-increase)
 (global-set-key (kbd "C--") 'text-scale-decrease)
   ;; C-x C-0 restores the default font size
+
+;; Truncate lines in all buffers
+(setq-default truncate-lines t)
+(setq-default global-visual-line-mode t)
 #+END_SRC
 
 ** Delete Selection mode
@@ -948,12 +981,34 @@ We can delete selected text just by hitting the backspace key.
   (delete-selection-mode 1)
 #+END_SRC
 
-** Highlight parenthesis pair when cursor is near ;-)
+** Highlight & complete parenthesis pair when cursor is near ;-)
 #+BEGIN_SRC emacs-lisp
-(load-library "paren")
-(show-paren-mode 1)
-(transient-mark-mode t)
-(require 'paren)
+(use-package smartparens
+  :ensure t
+  :init
+  (smartparens-global-mode 1)
+  (show-smartparens-global-mode +1)
+
+  :bind (;; ("M-n" . sp-next-sexp)
+         ;; ("M-p" . sp-previous-sexp)
+         ("M-f" . sp-forward-sexp)
+         ("M-b" . sp-backward-sexp)
+         )
+
+  :config
+  ;; Enable smartparens everywhere
+  (use-package smartparens-config)
+
+  (setq
+   ;; smartparens-strict-mode t
+   ;; sp-autoinsert-if-followed-by-word t
+   ;; sp-autoskip-closing-pair 'always
+   ;;sp-base-key-bindings 'paredit
+   sp-hybrid-kill-entire-symbol nil)
+
+  ;; In Elisp mode, do not ‘close’ a back-tick!
+  (sp-local-pair 'emacs-lisp-mode "`" nil :when '(sp-in-string-p))
+  )
 #+END_SRC
 
 ** Minibuffer should display line and column numbers
@@ -1349,6 +1404,9 @@ Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ t
 
 Note that capitalisation in a ”#+KeyWord” is irrelevant.
 
+See [[https://orgmode.org/manual/Org-syntax.html][here]] on how to see the abstract syntax tree of an org file
+and how to manipulate it.
+
 ** Quickly pop-up a terminal, run a command, close it
 #+begin_src emacs-lisp
 (defvar *toggle-terminal* t 
@@ -1403,6 +1461,54 @@ https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-vers
 :End:
 
 [[http://notesyoujustmightwanttosave.blogspot.com/][Here is useful Org-Mode Table Editing Cheatsheet.]]
+
+#+begin_src emacs-lisp
+(setq org-ellipsis " ⤵")
+#+end_src
+
+** Capture
+
+[[https://orgmode.org/org.html#Setting-up-capture][Capture]] lets me quickly make notes & capture ideas, with associated reference material,
+without any interruption to the current work flow.
+
+E.g., I have a task, or something I wish to note down, rather than opening
+some file, then making a heading, then writing it; instead, I press
+~C-c c t~ and a pop-up appears, I make my note, and it disappears with my
+notes file(s) now being altered! Moreover, by default it provide a timestamp
+and a link to the file location where I made the note --helpful for tasks, tickets,
+to be tackled later on.
+
+#+begin_src emacs-lisp
+(setq org-default-notes-file "~/Dropbox/todo.org")
+(define-key global-map "\C-cc" 'org-capture)
+#+end_src
+
+By default we only get a ‘tasks’ form of capture, let's add some more.
+#+begin_src emacs-lisp
+(setq my/capture-template-node "* %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n")
+
+(setq org-capture-templates
+  `(
+     ("f" "Todos needing less than 5 minutes" 
+       entry (file+headline org-default-notes-file "Five-Minutes Tasks")
+       ,my/capture-template-node :empty-lines 1)
+
+     ("t" "Important tasks that need to be tackled; e.g., research."
+       entry (file+headline org-default-notes-file "TODO Important Tasks")
+       ,my/capture-template-node :empty-lines 1)
+
+     ("e" "Notes related to Emacs (•̀ᴗ•́)و" 
+       entry (file+headline org-default-notes-file "Emacs")
+       ,my/capture-template-node :empty-lines 1)
+
+     ;; Such a clutter is a terrible idea, hopefully I will have more tags in time.
+     ("r" "Arbitrary ideas and notes (─‿‿─)"
+       entry (file+headline org-default-notes-file "Random Org-Capture Notes")
+       ,my/capture-template-node :empty-lines 1)
+))
+#+end_src
+
+In my ~todo.org~ file I have ~Five-Minutes~ as an Org keyword.
 
 ** Org Speed Keys
 Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
@@ -2143,6 +2249,9 @@ take care of this.
 | ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file          |
 | ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~             |
 
+Since I'm using ~use-package~, I can invoke ~M-x describe-personal-keybindings~ to see what key bindings I've defined.
+Since not all my bindings are via ~use-package~, it does not yet cover all of my bindings.
+
 Some possibly interesting reads:
   + [[https://to1ne.gitlab.io/literate-dotfiles/][Toon's Literate Dotfiles]]
   + [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
@@ -2168,7 +2277,6 @@ Some possibly interesting reads:
 Read:  https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#haskell-preliminaries
 
 # Local Variables:
-# eval: (visual-line-mode t)
 # eval: (when nil (load-file "~/alhassy.github.io/content/AlBasmala.el"))
 # eval: (when nil (remove (concat "../content/" NAMEorg) commitables))
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs"))
