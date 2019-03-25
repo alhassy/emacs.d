@@ -100,7 +100,9 @@ to run the code that removes the scroll-bar.
 /I use Emacs every day. I rarely notice it. But when I do, it usually brings me joy./
 ─[[https://so.nwalsh.com/2019/03/01/emacs][Norman Walsh]]
 
-If you are a professional writer…Emacs outshines all other editing software in approximately the same way that the noonday sun does the stars. It is not just bigger and brighter; it simply makes everything else vanish.
+If you are a professional writer…Emacs outshines all other editing software 
+in approximately the same way that the noonday sun does the stars. 
+It is not just bigger and brighter; it simply makes everything else vanish.
 —[[https://so.nwalsh.com/2019/03/01/emacs][Neal Stephenson]]
 #+end_quote
 
@@ -1501,6 +1503,10 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
        entry (file+headline org-default-notes-file "Emacs")
        ,my/capture-template-node :empty-lines 1)
 
+     ("b" "Notes related to my personal blog"
+       entry (file+headline org-default-notes-file "Blog")
+       ,my/capture-template-node :empty-lines 1)
+
      ;; Such a clutter is a terrible idea, hopefully I will have more tags in time.
      ("r" "Arbitrary ideas and notes (─‿‿─)"
        entry (file+headline org-default-notes-file "Random Org-Capture Notes")
@@ -1509,6 +1515,9 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 #+end_src
 
 In my ~todo.org~ file I have ~Five-Minutes~ as an Org keyword.
+
+For now I capture everything into a single file.
+One would ideally keep separate client, project, information in its own org file.
 
 ** Org Speed Keys
 Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
@@ -1679,6 +1688,8 @@ Some initial languages we want org-babel to support:
 (setq org-src-preserve-indentation t)
 #+END_SRC
 
+More languages can be added using ~add-to-list~.
+
 ** COMMENT TODO org-mode header generation
 Generate an untitled org-mode skeleton file ~C-x t~ --similar to ~C-x C-f~ for finding files.
 
@@ -1741,7 +1752,7 @@ Then the functionality,
 (global-set-key (kbd "C-x t") 'new-untitled-org-template)
 #+END_SRC
 
-** Org-mode cosmetics
+** Hiding Emphasise Markers & Inlining Images
 #+BEGIN_SRC emacs-lisp
 ;; org-mode math is now highlighted ;-)
 (setq org-highlight-latex-and-related '(latex))
@@ -1751,6 +1762,11 @@ Then the functionality,
 
 ;; (setq org-pretty-entities t) 
 ;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+
+;; Let's set inline images.
+(setq org-display-inline-images t)
+(setq org-redisplay-inline-images t)
+(setq org-startup-with-inline-images "inlineimages")
 #+END_SRC
 
 :yay_it_worked:
@@ -1758,6 +1774,144 @@ Then the functionality,
  ~awkward~ or $not$
 
 :end:
+
+** Workflow States
+:PROPERTIES:
+:CUSTOM_ID: WorkflowStates
+:END:
+
+Here are some of my common workflow states, --the ‘!’ indicates a timestamp should be generated--
+#+begin_src emacs-lisp
+(setq org-todo-keywords
+      (quote ((sequence "Todo(t)" "Started(s)" "|" "Done(d/!)")
+              (sequence "Waiting(w@/!)" "on_hold(h@/!)" "|" "Cancelled(c@/!)")
+              (sequence "|" "Five-Minutes(f)") ;; For tasks that take ≤5 minutes to complete.
+             )
+      )
+)
+#+end_src
+
+The ~@~ brings up a pop-up to make a local note about why the state changed. *Super cool stuff!*
+
+Here's how they are coloured,
+#+begin_src emacs-lisp
+(setq org-todo-keyword-faces
+      (quote (("Todo" :foreground "red" :weight bold)
+              ("Started" :foreground "blue" :weight bold)
+              ("Done" :foreground "forest green" :weight bold)
+              ("Waiting" :foreground "orange" :weight bold)
+              ("On_hold" :foreground "magenta" :weight bold)
+              ("Cancelled" :foreground "forest green" :weight bold))))
+#+end_src
+
+Now we press ~C-c C-t~ then the letter shortcut to actually make the state of an org heading.
+#+begin_src emacs-lisp
+(setq org-use-fast-todo-selection t)
+#+end_src
+
+We can also change through states using Shift- left, or right.
+# (setq org-treat-S-cursor-todo-selection-as-state-change nil)
+
+Let's draw a state diagram to show what such a workflow looks like.
+
+[[http://plantuml.com/index][PlantUML]] supports drawing diagrams in a tremendously simple format
+--it even supports Graphviz/DOT directly and many other formats.
+Super simple setup instructions can be found [[http://eschulte.github.io/babel-dev/DONE-integrate-plantuml-support.html][here]]; below are a bit more
+involved instructions. Read the manual [[http://plantuml.com/guide][here]].
+
+#+begin_src emacs-lisp
+;; Install the tool
+; (async-shell-command "brew cask install java") ;; Dependency
+; (async-shell-command "brew install plantuml")
+
+;; Tell emacs where it is.
+;; E.g., (async-shell-command "find / -name plantuml.jar")
+(setq org-plantuml-jar-path
+      (expand-file-name "/usr/local/./Cellar/plantuml/1.2019.3/libexec/plantuml.jar"))
+
+;; Enable C-c C-c to generate diagrams from plantuml src blocks.
+(add-to-list 'org-babel-load-languages '(plantuml . t) )
+;; (require 'ob-plantuml)
+#+end_src
+
+Let's use this! The source block is replaced with the generated image in-place, by default.
+#+begin_src plantuml :file normal_task_states.png :cache yes
+skinparam defaultTextAlignment center  /' Text alignment '/
+
+skinparam titleBorderRoundCorner 15
+skinparam titleBorderThickness 2
+skinparam titleBorderColor red
+skinparam titleBackgroundColor Aqua-CadetBlue
+title My Personal Task States
+
+[*] -> Todo  /' This is my starting state '/
+Done -right-> [*]  /' This is an end state '/
+Cancelled -up-> [*]  /' This is an end state '/
+
+/'A task is “Todo”, then it's “started”, then finally it's “done”. '/
+Todo    -right-> Started
+Started -down->  Waiting
+Waiting -up->    Started
+Started -right-> Done
+
+/'Along the way, I may put pause the task for some reason then  return to it.
+  This may be since I'm “Blocked” since I need something, or
+  the task has been put on “hold” since it may not be important right now,
+  and it may be “cancelled” eventually.  
+'/
+
+Todo    -down-> Waiting
+Waiting -up-> Todo
+Waiting -up-> Done
+
+Todo -down-> On_Hold
+On_Hold -> Todo
+
+On_Hold -down-> Cancelled
+Waiting -down-> Cancelled
+Todo    -down-> Cancelled
+
+/' The Org-mode shortcuts for these states are as follows. '/
+Todo      : t
+On_Hold   : h
+Started   : s
+Waiting   : w
+Cancelled : c
+Done      : d
+
+/' If a task is paused, we should document why this is the case. '/
+note right of Waiting: Note what is\nblocking us.
+note right of Cancelled: Note reason\nfor cancellation.
+note bottom of On_Hold: Note reason\nfor reduced priority.
+
+center footer  ♥‿♥ Org-mode is so cool (•̀ᴗ•́)و
+/' Note that we could omit the “center, left, right” if we wished, or used a “header” instead.'/
+#+end_src
+
+#+RESULTS[b18d24821fb7ae373e8a7efe4b0c3a27d0469837]:
+[[file:normal_task_states.png]]
+
+# (org-display-inline-images t t)
+# (shell-command "rm normal_task_states.png")
+
+Of note:
++ Multiline comments are with ~/' comment here '/~, single quote starts a one-line comment.
++ Nodes don't need to be declared, whose names may contain spaces if they are enclosed in double-quotes.
++ One forms an arrow between two nodes by writing a line with ~x ->[label here] y~
+  or ~y <- x~; or using ~-->~ and ~<--~ for dashed lines. The label is optional.
+
+  To enforce a particular layout, use ~-X->~ where ~X ∈ {up, down, right, left}~.
+
++ To declare that a node ~x~ has fields ~d, f~ we make two new lines having
+  ~x : f~ and ~x : d~.
++ One adds a note by a node ~x~ as follows: ~note right of x: words then newline\nthen more words~.
+  Likewise for notes on the ~left, top, bottom~.
+  # - A note can be on several lines. It's terminated by ~end note~.
+ + Interesting sprites and many other things can be done with PlantUML. Read the docs.
+
+This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Bernt Hansen]]
+--while quickly searching through the PlantUML [[http://plantuml.com/guide][manual]]:
+The above is known as an “activity diagram” and it's covered in §4.
 
 ** Jumping without hassle
 
