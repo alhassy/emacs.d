@@ -36,6 +36,8 @@
 # (emacs-version) ;; 26.1
 # (byte-compile-file "~/.emacs")
 
+#+STARTUP: lognoteclock-out
+
 * Abstract                                                   :ignore:
  
 #+begin_center
@@ -68,14 +70,23 @@ An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispC
 * Why Emacs?
 
 /Emacs is a flexible platform for developing end-user applications/ --unfortunately it is generally perceived as
-merely a text editor. Some people use it specifically for one or two applications!
+merely a text editor. Some people use it specifically for one or two applications.
+
 For example, [[https://www.youtube.com/watch?v=FtieBc3KptU][writers]] use it as an interface for Org-mode and others use it as an interface for version
 control with Magit. [[https://orgmode.org/index.html#sec-4][Org]] is an organisation tool that can be used for typesetting which subsumes LaTeX, generating many different
 formats --html, latex, pdf, etc-- from a single source, keeping track of [[https://orgmode.org/worg/org-tutorials/index.html#orgff7b885][schedules]], blogging, habit tracking, personal information management tool, and [[http://orgmode.org/worg/org-contrib/][much more]].
 Moreover, its syntax is so [[https://karl-voit.at/2017/09/23/orgmode-as-markup-only/][natural]] that most people use it without even knowing!
 For me, Org allows me to do literate programming: I can program and document at the same time,
 with no need to seperate the two tasks and with the ability to generate multiple formats and files from a single file.
-Of course it comes with the basic features of a text editor, but it is much more;
+
+#+begin_quote
+If you are a professional writer…Emacs outshines all other editing software 
+in approximately the same way that the noonday sun does the stars. 
+It is not just bigger and brighter; it simply makes everything else vanish.
+—[[https://so.nwalsh.com/2019/03/01/emacs][Neal Stephenson]]
+#+end_quote
+
+Of course Emacs comes with the basic features of a text editor, but it is much more;
 for example, it comes with a powerful notion of ‘undo’: Basic text editors have a single stream of undo,
 yet in Emacs, we have a tree --when we undo and make new edits, we branch off in our editing stream
 as if our text was being version controlled as we type! --We can even switch between such branches!
@@ -102,11 +113,6 @@ to run the code that removes the scroll-bar.
 #+begin_quote
 /I use Emacs every day. I rarely notice it. But when I do, it usually brings me joy./
 ─[[https://so.nwalsh.com/2019/03/01/emacs][Norman Walsh]]
-
-If you are a professional writer…Emacs outshines all other editing software 
-in approximately the same way that the noonday sun does the stars. 
-It is not just bigger and brighter; it simply makes everything else vanish.
-—[[https://so.nwalsh.com/2019/03/01/emacs][Neal Stephenson]]
 #+end_quote
 
 I have used Emacs as an interface for developing cheat sheets, for making my blog, and as an application 
@@ -114,7 +120,7 @@ for ‘interactively learning C’. If anything Emacs is more like an OS than ju
 --“living within Emacs” provides an abstraction over whatever operating system my machine has:
 [[https://www.fugue.co/blog/2015-11-11-guide-to-emacs.html][It's so easy to take everything with me.]] Moreover, the desire to mould Emacs to my needs has made me
 a better programmer: I am now a more literate programmer and, due to Elisp's documentation-oriented nature, I actually take the time
-and effort to make meaningful documentation --even though the project it private and will likely only be seen by me.
+and effort to make meaningful documentation --even when the project is private and will likely only be seen by me.
 
 #+begin_quote
 /Seeing Emacs as an editor is like seeing a car as a seating-accommodation./ -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
@@ -128,7 +134,7 @@ Consider reading ⋯
 + [[https://david.rothlis.net/emacs/howtolearn.html][“How to Learn Emacs”]]
 + [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
 
-* TODO Booting Up
+* Todo Booting Up
 ** ~~/.emacs~ vs. ~init.org~
 
 Why not keep Emac's configurations in the ~~/.emacs~ file?
@@ -805,7 +811,9 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 ;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
 :End:
 
-** Locally ~toggle~ a variable
+** Todo Locally ~toggle~ a variable
+
+*todo* body of toggle should be a progn?
 
 It is dangerous to load a file with local variables;
 instead we should load files without evaluating locals,
@@ -864,7 +872,7 @@ NOPE ;; ⇒ "NOPE"
 #+end_example
 :End:
 
-** TODO Altering PATH
+** Todo Altering PATH
 #+BEGIN_SRC emacs-lisp
 ;; https://emacs.stackexchange.com/questions/4090/org-mode-cannot-find-pdflatex-using-mac-os
 
@@ -1174,7 +1182,7 @@ f x = x -- show x
 -- type error
 #+end_src
 :End:
-** “FIXME:” Keyword
+** COMMENT “FIXME:” Keyword
 
 In the *middle* of a senctence, I need a FIXME: Woah!
 
@@ -1467,14 +1475,20 @@ https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-vers
 
 [[http://notesyoujustmightwanttosave.blogspot.com/][Here is useful Org-Mode Table Editing Cheatsheet.]]
 
+First off, let's replace the content marker, “⋯”, with a nice
+unicode arrow.
 #+begin_src emacs-lisp
 (setq org-ellipsis " ⤵")
+
+;; Also, fold all source blocks on startup.
+(setq org-hide-block-startup t)
 #+end_src
 
-** Capture
+** Capture Ideas and Tasks
 
 [[https://orgmode.org/org.html#Setting-up-capture][Capture]] lets me quickly make notes & capture ideas, with associated reference material,
-without any interruption to the current work flow.
+without any interruption to the current work flow. Without losing focus on what you're doing,
+quickly jot down a note of something important that just came up.
 
 E.g., I have a task, or something I wish to note down, rather than opening
 some file, then making a heading, then writing it; instead, I press
@@ -1492,35 +1506,102 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 #+begin_src emacs-lisp
 (setq my/capture-template-node "* %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n")
 
+(defun my/make/org-capture-template (shortcut description heading)
+  "Quickly produce an org-capture-template."
+  `(,shortcut ,description entry
+      (file+headline org-default-notes-file ,heading)
+      ,my/capture-template-node :empty-lines 1)
+)
+
 (setq org-capture-templates
   `(
-     ("f" "Todos needing less than 5 minutes" 
-       entry (file+headline org-default-notes-file "Five-Minutes Tasks")
-       ,my/capture-template-node :empty-lines 1)
-
-     ("t" "Important tasks that need to be tackled; e.g., research."
-       entry (file+headline org-default-notes-file "TODO Important Tasks")
-       ,my/capture-template-node :empty-lines 1)
-
-     ("e" "Notes related to Emacs (•̀ᴗ•́)و" 
-       entry (file+headline org-default-notes-file "Emacs")
-       ,my/capture-template-node :empty-lines 1)
-
-     ("b" "Notes related to my personal blog"
-       entry (file+headline org-default-notes-file "Blog")
-       ,my/capture-template-node :empty-lines 1)
+     ,(my/make/org-capture-template "f" "Todos needing less than 5 minutes" "Five-Minutes Tasks \n #+CATEGORY: Getting Things Done")
+     ,(my/make/org-capture-template "t" "Important tasks that need to be tackled; e.g., research." "Todo Important Tasks \n #+CATEGORY: Research")
+     ,(my/make/org-capture-template "r" "Respond to an email" "Todo Email \n #+CATEGORY: Email")
+     ,(my/make/org-capture-template "e" "Notes related to Emacs (•̀ᴗ•́)و" "Emacs \n #+CATEGORY: Fun")
+     ,(my/make/org-capture-template "b" "Notes related to my personal blog" "Blog \n #+CATEGORY: Fun")
+     ,(my/make/org-capture-template "l" "Stuff to eventually read and learn" "Reading and Learning \n #+CATEGORY: Fun")
 
      ;; Such a clutter is a terrible idea, hopefully I will have more tags in time.
-     ("r" "Arbitrary ideas and notes (─‿‿─)"
-       entry (file+headline org-default-notes-file "Random Org-Capture Notes")
-       ,my/capture-template-node :empty-lines 1)
+     ,(my/make/org-capture-template "a" "Arbitrary ideas and notes (─‿‿─)" "Random Org-Capture Notes \n #+CATEGORY: Need to Refile")
 ))
 #+end_src
 
-In my ~todo.org~ file I have ~Five-Minutes~ as an Org keyword.
-
 For now I capture everything into a single file.
 One would ideally keep separate client, project, information in its own org file.
+The ~#+CATEGORY~ appears alongside each task in the agenda view --keep reading.
+
+Isn't it great that we can squirrel away info into some default location
+then immediately return to what we were doing before --with speed & minimal distraction! ♥‿♥
+Indeed, if our system for task management were slow then we may not produce tasks and so forget them altogether! щ(゜ロ゜щ)
+
+At a later time, a time of reflection, we go to our tasks list and actually schedule time to get them done
+by ~C-c C-s~ then pick a date by entering a number in the form ~+n~ to mean that task is due ~n~ days from now.
++ Tasks with no due date are ones that “could happen anytime”, most likely no time at all.
++ At least schedule tasks reasonably far off in the future, then reassess when the time comes.
++ An uncompleted task is by default rescheduled to the current day, each day, along with how overdue it is.
+  - Aim to consciously reschedule such tasks!
+
+The next day we begin our work, we 
+press ~C-c a a~ to see the scheduled tasks for this week --~C-c C-s~ to re-schedule the task under the cursor and ~r~ to refresh the agenda.
+#+begin_src emacs-lisp
+(define-key global-map "\C-ca" 'org-agenda)
+#+end_src
+
+When a task is completed, ‘archive’ it with ~C-c C-x C-s~: This marks it as done, adds a time stamp,
+and moves it to a local ~*.org_archive~ file. This was our ‘to do’ list becomes a ‘ta da’ list showcasing
+all we have done (•̀ᴗ•́)و
+
+** Clocking Work Time
+
+Let's keep track of the time we spend working on tasks that we may have captured for ourselves the previous day.
+Such statistics provides a good idea of how long it actually takes me to accomplish a certain task in the future
+and it lets me know where my time has gone.
+
++ Clock in :: on a heading with ~C-c C-x C-i~.
++ Clock out :: of a heading with ~C-c C-x C-o~.
+
+After clocking out, the start and end times, as well as the elapsed time, are added to a drawer
+to the heading. We can punch in and out of tasks as many times as desired, say we took a break or
+switched to another task, and they will all be recorded into the drawer.
+
+#+begin_src emacs-lisp
+;; Record a note on what was acciomplished when clocking out of an item.
+(setq org-log-note-clock-out t)
+#+end_src
+
+To get started, we could estimate how long a task will take and clock-in;
+then clock-out and see how long it actually took.
+
+# To review the day’s accomplishments, type ‘l’
+# (org-agenda-log-mode) from the agenda view.
+
+Moreover, we can overlay due dates and priorities to tasks in a non-intrusive way that is
+easy to edit by hand.
+
+#+begin_src emacs-lisp
+;; List of all the files where todo items can be found. Only one for now.
+(setq org-agenda-files '("~/Dropbox/todo.org"))
+
+;; How many days ahead the default agenda view should look
+(setq org-agenda-ndays 7)
+
+;; How many days early a deadline item will begin showing up in your agenda list.
+(setq org-deadline-warning-days 14)
+
+;; In the agenda view, days that have no associated tasks will still have a line showing the date. 
+(setq org-agenda-show-all-dates t)
+
+(setq org-agenda-skip-deadline-if-done t)
+
+;; Scheduled items marked as complete will not show up in your agenda view.
+(setq org-agenda-skip-scheduled-if-done t)
+
+;; The agenda view – even in the 7-days-at-a-time view – will always begin on the current day. 
+;; This is important, since while using org-mode as a day planner, you never want to think of 
+;; days gone past. That’s something you do in other ways, such as when reviewing completed tasks.
+(setq org-agenda-start-on-weekday nil)
+#+end_src
 
 ** Org Speed Keys
 Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
@@ -1548,6 +1629,150 @@ Finally, ~?~ to see a complete list of keys available.
 ;; Add more speed commands by adding to this association list.
 ;; (describe-symbol 'org-speed-commands-user)
 #+END_SRC  
+** Workflow States
+:PROPERTIES:
+:CUSTOM_ID: WorkflowStates
+:END:
+
+Here are some of my common workflow states, --the ‘!’ indicates a timestamp should be generated--
+#+begin_src emacs-lisp
+(setq org-todo-keywords
+      (quote ((sequence "Todo(t)" "Started(s)" "|" "Done(d/!)")
+              (sequence "Waiting(w@/!)" "on_hold(h@/!)" "|" "Cancelled(c@/!)")
+              (sequence "|" "Five-Minutes(f)") ;; For tasks that take ≤5 minutes to complete.
+             )
+      )
+)
+#+end_src
+
+The ~@~ brings up a pop-up to make a local note about why the state changed. *Super cool stuff!*
+
+Here's how they are coloured,
+#+begin_src emacs-lisp
+(setq org-todo-keyword-faces
+      (quote (("Todo" :foreground "red" :weight bold)
+              ("Started" :foreground "blue" :weight bold)
+              ("Done" :foreground "forest green" :weight bold)
+              ("Waiting" :foreground "orange" :weight bold)
+              ("On_hold" :foreground "magenta" :weight bold)
+              ("Cancelled" :foreground "forest green" :weight bold))))
+#+end_src
+
+Now we press ~C-c C-t~ then the letter shortcut to actually make the state of an org heading.
+#+begin_src emacs-lisp
+(setq org-use-fast-todo-selection t)
+#+end_src
+
+We can also change through states using Shift- left, or right.
+# (setq org-treat-S-cursor-todo-selection-as-state-change nil)
+
+Let's draw a state diagram to show what such a workflow looks like.
+
+[[http://plantuml.com/index][PlantUML]] supports drawing diagrams in a tremendously simple format
+--it even supports Graphviz/DOT directly and many other formats.
+Super simple setup instructions can be found [[http://eschulte.github.io/babel-dev/DONE-integrate-plantuml-support.html][here]]; below are a bit more
+involved instructions. Read the manual [[http://plantuml.com/guide][here]].
+
+#+begin_src emacs-lisp
+;; Install the tool
+; (async-shell-command "brew cask install java") ;; Dependency
+; (async-shell-command "brew install plantuml")
+
+;; Tell emacs where it is.
+;; E.g., (async-shell-command "find / -name plantuml.jar")
+(setq org-plantuml-jar-path
+      (expand-file-name "/usr/local/./Cellar/plantuml/1.2019.3/libexec/plantuml.jar"))
+
+;; Enable C-c C-c to generate diagrams from plantuml src blocks.
+(add-to-list 'org-babel-load-languages '(plantuml . t) )
+;; (require 'ob-plantuml)
+#+end_src
+
+# (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/")
+
+
+Let's use this! 
+# The source block is replaced with the generated image in-place, by default.
+#+begin_src plantuml :file workflow.png :exports code :cache (progn (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/") "yes")
+skinparam defaultTextAlignment center  /' Text alignment '/
+
+skinparam titleBorderRoundCorner 15
+skinparam titleBorderThickness 2
+skinparam titleBorderColor red
+skinparam titleBackgroundColor Aqua-CadetBlue
+title My Personal Task States
+
+[*] -> Todo  /' This is my starting state '/
+Done -right-> [*]  /' This is an end state '/
+Cancelled -up-> [*]  /' This is an end state '/
+
+/'A task is “Todo”, then it's “started”, then finally it's “done”. '/
+Todo    -right-> Started
+Started -down->  Waiting
+Waiting -up->    Started
+Started -right-> Done
+
+/'Along the way, I may put pause the task for some reason then
+  return to it. This may be since I'm “Blocked” since I need 
+  something, or the task has been put on “hold” since it may not
+  be important right now, and it may be “cancelled” eventually.  
+'/
+
+Todo    -down-> Waiting
+Waiting -up-> Todo
+Waiting -up-> Done
+
+Todo -down-> On_Hold
+On_Hold -> Todo
+
+On_Hold -down-> Cancelled
+Waiting -down-> Cancelled
+Todo    -down-> Cancelled
+
+/' The Org-mode shortcuts for these states are as follows. '/
+Todo      : t
+On_Hold   : h
+Started   : s
+Waiting   : w
+Cancelled : c
+Done      : d
+
+/' If a task is paused, we should document why this is the case. '/
+note right of Waiting: Note what is\nblocking us.
+note right of Cancelled: Note reason\nfor cancellation.
+note bottom of On_Hold: Note reason\nfor reduced priority.
+
+center footer  ♥‿♥ Org-mode is so cool (•̀ᴗ•́)و
+/' Note that we could omit the “center, left, right” if we wished, 
+   or used a “header” instead.'/
+#+end_src
+
+#+RESULTS[b18d24821fb7ae373e8a7efe4b0c3a27d0469837]:
+[[file:normal_task_states.png]]
+
+# (org-display-inline-images t t)
+# (shell-command "rm workflow.png")
+#+HTML: <img src="../assets/img/workflow.png" alt="My Personal Task States">
+
+Of note:
++ Multiline comments are with ~/' comment here '/~, single quote starts a one-line comment.
++ Nodes don't need to be declared, whose names may contain spaces if they are enclosed in double-quotes.
++ One forms an arrow between two nodes by writing a line with ~x ->[label here] y~
+  or ~y <- x~; or using ~-->~ and ~<--~ for dashed lines. The label is optional.
+
+  To enforce a particular layout, use ~-X->~ where ~X ∈ {up, down, right, left}~.
+
++ To declare that a node ~x~ has fields ~d, f~ we make two new lines having
+  ~x : f~ and ~x : d~.
++ One adds a note by a node ~x~ as follows: ~note right of x: words then newline\nthen more words~.
+  Likewise for notes on the ~left, top, bottom~.
+  # - A note can be on several lines. It's terminated by ~end note~.
+ + Interesting sprites and many other things can be done with PlantUML. Read the docs.
+
+This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Bernt Hansen]]
+--while quickly searching through the PlantUML [[http://plantuml.com/guide][manual]]:
+The above is known as an “activity diagram” and it's covered in §4.
+
 ** Template expansion (<s Tab, etc.)
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
 or ~<q~ for quote blocks. 
@@ -1770,156 +1995,18 @@ Then the functionality,
 (setq org-display-inline-images t)
 (setq org-redisplay-inline-images t)
 (setq org-startup-with-inline-images "inlineimages")
+
+;; Automatically convert LaTeX fragments to inline images.
+(setq org-startup-with-latex-preview t)
 #+END_SRC
 
 :yay_it_worked:
 
- ~awkward~ or $not$
+$e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
+
+~awkward~ or $not$
 
 :end:
-
-** Workflow States
-:PROPERTIES:
-:CUSTOM_ID: WorkflowStates
-:END:
-
-Here are some of my common workflow states, --the ‘!’ indicates a timestamp should be generated--
-#+begin_src emacs-lisp
-(setq org-todo-keywords
-      (quote ((sequence "Todo(t)" "Started(s)" "|" "Done(d/!)")
-              (sequence "Waiting(w@/!)" "on_hold(h@/!)" "|" "Cancelled(c@/!)")
-              (sequence "|" "Five-Minutes(f)") ;; For tasks that take ≤5 minutes to complete.
-             )
-      )
-)
-#+end_src
-
-The ~@~ brings up a pop-up to make a local note about why the state changed. *Super cool stuff!*
-
-Here's how they are coloured,
-#+begin_src emacs-lisp
-(setq org-todo-keyword-faces
-      (quote (("Todo" :foreground "red" :weight bold)
-              ("Started" :foreground "blue" :weight bold)
-              ("Done" :foreground "forest green" :weight bold)
-              ("Waiting" :foreground "orange" :weight bold)
-              ("On_hold" :foreground "magenta" :weight bold)
-              ("Cancelled" :foreground "forest green" :weight bold))))
-#+end_src
-
-Now we press ~C-c C-t~ then the letter shortcut to actually make the state of an org heading.
-#+begin_src emacs-lisp
-(setq org-use-fast-todo-selection t)
-#+end_src
-
-We can also change through states using Shift- left, or right.
-# (setq org-treat-S-cursor-todo-selection-as-state-change nil)
-
-Let's draw a state diagram to show what such a workflow looks like.
-
-[[http://plantuml.com/index][PlantUML]] supports drawing diagrams in a tremendously simple format
---it even supports Graphviz/DOT directly and many other formats.
-Super simple setup instructions can be found [[http://eschulte.github.io/babel-dev/DONE-integrate-plantuml-support.html][here]]; below are a bit more
-involved instructions. Read the manual [[http://plantuml.com/guide][here]].
-
-#+begin_src emacs-lisp
-;; Install the tool
-; (async-shell-command "brew cask install java") ;; Dependency
-; (async-shell-command "brew install plantuml")
-
-;; Tell emacs where it is.
-;; E.g., (async-shell-command "find / -name plantuml.jar")
-(setq org-plantuml-jar-path
-      (expand-file-name "/usr/local/./Cellar/plantuml/1.2019.3/libexec/plantuml.jar"))
-
-;; Enable C-c C-c to generate diagrams from plantuml src blocks.
-(add-to-list 'org-babel-load-languages '(plantuml . t) )
-;; (require 'ob-plantuml)
-#+end_src
-
-# (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/")
-
-Let's use this! 
-# The source block is replaced with the generated image in-place, by default.
-#+begin_src plantuml :file workflow.png :exports code :cache (progn (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/") "yes")
-skinparam defaultTextAlignment center  /' Text alignment '/
-
-skinparam titleBorderRoundCorner 15
-skinparam titleBorderThickness 2
-skinparam titleBorderColor red
-skinparam titleBackgroundColor Aqua-CadetBlue
-title My Personal Task States
-
-[*] -> Todo  /' This is my starting state '/
-Done -right-> [*]  /' This is an end state '/
-Cancelled -up-> [*]  /' This is an end state '/
-
-/'A task is “Todo”, then it's “started”, then finally it's “done”. '/
-Todo    -right-> Started
-Started -down->  Waiting
-Waiting -up->    Started
-Started -right-> Done
-
-/'Along the way, I may put pause the task for some reason then
-  return to it. This may be since I'm “Blocked” since I need 
-  something, or the task has been put on “hold” since it may not
-  be important right now, and it may be “cancelled” eventually.  
-'/
-
-Todo    -down-> Waiting
-Waiting -up-> Todo
-Waiting -up-> Done
-
-Todo -down-> On_Hold
-On_Hold -> Todo
-
-On_Hold -down-> Cancelled
-Waiting -down-> Cancelled
-Todo    -down-> Cancelled
-
-/' The Org-mode shortcuts for these states are as follows. '/
-Todo      : t
-On_Hold   : h
-Started   : s
-Waiting   : w
-Cancelled : c
-Done      : d
-
-/' If a task is paused, we should document why this is the case. '/
-note right of Waiting: Note what is\nblocking us.
-note right of Cancelled: Note reason\nfor cancellation.
-note bottom of On_Hold: Note reason\nfor reduced priority.
-
-center footer  ♥‿♥ Org-mode is so cool (•̀ᴗ•́)و
-/' Note that we could omit the “center, left, right” if we wished, 
-   or used a “header” instead.'/
-#+end_src
-
-#+RESULTS[b18d24821fb7ae373e8a7efe4b0c3a27d0469837]:
-[[file:normal_task_states.png]]
-
-# (org-display-inline-images t t)
-# (shell-command "rm workflow.png")
-#+HTML: <img src="../assets/img/workflow.png" alt="My Personal Task States">
-
-Of note:
-+ Multiline comments are with ~/' comment here '/~, single quote starts a one-line comment.
-+ Nodes don't need to be declared, whose names may contain spaces if they are enclosed in double-quotes.
-+ One forms an arrow between two nodes by writing a line with ~x ->[label here] y~
-  or ~y <- x~; or using ~-->~ and ~<--~ for dashed lines. The label is optional.
-
-  To enforce a particular layout, use ~-X->~ where ~X ∈ {up, down, right, left}~.
-
-+ To declare that a node ~x~ has fields ~d, f~ we make two new lines having
-  ~x : f~ and ~x : d~.
-+ One adds a note by a node ~x~ as follows: ~note right of x: words then newline\nthen more words~.
-  Likewise for notes on the ~left, top, bottom~.
-  # - A note can be on several lines. It's terminated by ~end note~.
- + Interesting sprites and many other things can be done with PlantUML. Read the docs.
-
-This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Bernt Hansen]]
---while quickly searching through the PlantUML [[http://plantuml.com/guide][manual]]:
-The above is known as an “activity diagram” and it's covered in §4.
 
 ** Jumping without hassle
 
@@ -2072,7 +2159,7 @@ For faster pdf generation, may consider invoking:
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 #+end_example
 
-* COMMENT TODO org babel matters
+* Todo COMMENT org babel matters
 From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
 
 #+begin_src emacs-lisp :tangle no
