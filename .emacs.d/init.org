@@ -74,7 +74,7 @@ merely a text editor. Some people use it specifically for one or two application
 
 For example, [[https://www.youtube.com/watch?v=FtieBc3KptU][writers]] use it as an interface for Org-mode and others use it as an interface for version
 control with Magit. [[https://orgmode.org/index.html#sec-4][Org]] is an organisation tool that can be used for typesetting which subsumes LaTeX, generating many different
-formats --html, latex, pdf, etc-- from a single source, keeping track of [[https://orgmode.org/worg/org-tutorials/index.html#orgff7b885][schedules]], blogging, habit tracking, personal information management tool, and [[http://orgmode.org/worg/org-contrib/][much more]].
+formats --html, latex, pdf, etc-- from a single source, keeping track of [[https://orgmode.org/worg/org-tutorials/index.html#orgff7b885][schedules]] & task management, blogging, habit tracking, personal information management tool, and [[http://orgmode.org/worg/org-contrib/][much more]].
 Moreover, its syntax is so [[https://karl-voit.at/2017/09/23/orgmode-as-markup-only/][natural]] that most people use it without even knowing!
 For me, Org allows me to do literate programming: I can program and document at the same time,
 with no need to seperate the two tasks and with the ability to generate multiple formats and files from a single file.
@@ -134,7 +134,7 @@ Consider reading ⋯
 + [[https://david.rothlis.net/emacs/howtolearn.html][“How to Learn Emacs”]]
 + [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
 
-* Todo Booting Up
+* TODO Booting Up
 ** ~~/.emacs~ vs. ~init.org~
 
 Why not keep Emac's configurations in the ~~/.emacs~ file?
@@ -1002,10 +1002,39 @@ We can delete selected text just by hitting the backspace key.
   (smartparens-global-mode 1)
   (show-smartparens-global-mode +1)
 
-  :bind (;; ("M-n" . sp-next-sexp)
-         ;; ("M-p" . sp-previous-sexp)
-         ("M-f" . sp-forward-sexp)
-         ("M-b" . sp-backward-sexp)
+  :bind (
+         
+         ("M-f" . sp-forward-sexp)  ;; Move forward one  expression.
+         ("M-b" . sp-backward-sexp) ;; Move backward one expression.
+         
+         ;; Going to the start & end of current expr in pair-able character.
+         ("M-a" . sp-beginning-of-sexp)
+         ("M-e" . sp-end-of-sexp)
+         
+         ;; Going forwards deep down & up current expr; treating it as a tree.
+         ("M-d" . sp-down-sexp)
+         ("M-u" . sp-up-sexp)
+         ;; Acending & descending backwards; i.e., leftwards.
+         ("M-n" . sp-backward-down-sexp)
+         ("M-p" . sp-backward-up-sexp)
+
+         ;; Unwrapping: Removing pair-able characters.
+         ("M-w" . sp-unwrap-sexp)
+         ("M-m" . sp-backward-unwrap-sexp)
+
+         ;; “Slurping”: Move closing character forward/backward to include next sexp.         
+         ;; “Barfing”: Contract a sexp, or string, by pushing a its last/first item out.
+         ;; See below for examples.
+         ("M-)" . sp-forward-slurp-sexp)
+         ("M-(" . sp-backward-slurp-sexp)
+         ("M-]" . sp-forward-barf-sexp)
+         ("M-[" . sp-backward-barf-sexp)
+
+         ;; Transpose two bracketed terms; e.g., a b c ⟪Here⟫ ⟶ a c b ⟪Here⟫ 
+         ;; Transpose backwards by being on the token;
+         ;; transpose forwards by being after the token.
+         ("M-t" . sp-transpose-sexp)
+
          )
 
   :config
@@ -1015,14 +1044,29 @@ We can delete selected text just by hitting the backspace key.
   (setq
    ;; smartparens-strict-mode t
    ;; sp-autoinsert-if-followed-by-word t
-   ;; sp-autoskip-closing-pair 'always
-   ;;sp-base-key-bindings 'paredit
+   ;; sp-autoskip-closing-pair 'always   
    sp-hybrid-kill-entire-symbol nil)
-
-  ;; In Elisp mode, do not ‘close’ a back-tick!
+   
+  ;; In Elisp & org modes, do not ‘close’ a back-tick or single quote!
   (sp-local-pair 'emacs-lisp-mode "`" nil :when '(sp-in-string-p))
+  (sp-local-pair 'emacs-lisp-mode "'" nil :when '(sp-in-string-p))
+  (sp-local-pair 'org-mode "`" nil :when '(sp-in-string-p))
+  (sp-local-pair 'org-mode "'" nil :when '(sp-in-string-p))
   )
 #+END_SRC
+
+*Wrapping*
+To enclose a token with a pair-able character, at the start of the expression
+press ~C-ESCAPE-SPACE~, select the region, followed by a pair-able character such as ~[, {, ", ', *,~ etc.
+To wrap a single token forwards, use ~C-M-SPACE~.
+
+Examples of slurping & barfing --i.e., sexp inclusion and contraction.
+#+begin_example
+a [x y z] b  ⟶“M-) inside [⋯]”⟶  a [x y z b]
+a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
+[a x y z b]  ⟶“M-] inside [⋯]”⟶  a [x y z b]
+[a x y z b]  ⟶“M-] inside [⋯]”⟶  [a x y z] b
+#+end_example
 
 ** Minibuffer should display line and column numbers
 #+BEGIN_SRC emacs-lisp
@@ -1049,6 +1093,7 @@ Try and be grateful.
   ;; Helm provides generic functions for completions to replace 
   ;; tab-completion in Emacs with no loss of functionality. 
   ("M-x" . 'helm-M-x)
+  ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
   ("C-x r b" .'helm-filtered-bookmarks)
   ("C-x C-f" . 'helm-find-files)
 )
@@ -1462,7 +1507,7 @@ such a tedious decision.
   '(lambda () (interactive) (kill-buffer (current-buffer))))
 #+end_src
 
-* Org-mode related things
+* Life within Org-mode
 
 :Updating_FAQ:
 https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-new-org-mode-version-but-loads-the-old-versio
@@ -1483,6 +1528,43 @@ unicode arrow.
 ;; Also, fold all source blocks on startup.
 (setq org-hide-block-startup t)
 #+end_src
+
+** Org Speed Keys
+Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
+a headline, we can perform fast manipulation & navigation using the standard Emacs movement
+controls, such as 
++ ~#~ toggle ~COMMENT~-ing for an org-header.
++ ~s~ toggles “narrowing” to a subtree; i.e., hide the rest of the document.
+
+  If you narrow to a subtree then any export, ~C-c C-e~, will only consider
+  the narrowed detail.
+
++ ~I/O~ clock In/Out to the task defined by the current heading. 
+   - Keep track of your work times!
+   - ~v~ view agenda.
++ ~u~ for jumping upwards to the parent heading.
++ ~c~ for cycling structure below current heading, or ~C~ for cycling global structure.
++ ~i~ insert a new same-level heading below current heading.
++ ~w~ refile current heading; options list pops-up to select which heading to move it to. Neato!
++ ~t~ cycle through the available TODO states.
++ ~^~ sort children of current subtree; brings up a list of sorting options.
++ ~n/p~ for next/previous /visible/ heading.
++ ~f/b~ for jumping forward/backward to the next/previous /same-level/ heading.
++ ~D/U~ move a heading down/up.
++ ~L/R~ recursively promote (move leftwards) or demote (more rightwards) a heading.
++ ~1,2,3~ to mark a heading with priority, highest to lowest.
+
+We can add our own speed keys by altering the ~org-speed-commands-user~ variable.
+
+Finally, ~?~ to see a complete list of keys available.
+#+BEGIN_SRC emacs-lisp
+(setq org-use-speed-commands t)
+
+;; Add more speed commands by adding to this association list.
+;; (describe-symbol 'org-speed-commands-user)
+#+END_SRC  
+
+PS. ~C-RET, C-S-RET~ make a new heading where the latter marks it as a ~TODO~.
 
 ** Using org-mode as a Day Planner
 
@@ -1517,29 +1599,38 @@ to be tackled later on.
 By default we only get a ‘tasks’ form of capture, let's add some more.
 #+begin_src emacs-lisp
 (cl-defun my/make/org-capture-template 
-   (shortcut description heading category &optional (todo ""))
-  "Quickly produce an org-capture-template."
+   (shortcut heading &optional (no-todo nil) (description heading) (category heading))
+  "Quickly produce an org-capture-template.
+
+  After adding the result of this function to ‘org-capture-templates’,
+  we will be able perform a capture with “C-c c ‘shortcut’”
+  which will have description ‘description’.
+  It will be added to the tasks file under heading ‘heading’
+  and be marked with category  ‘category’.
+
+  ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
+  when it's merely an interesting note that needn't be acted upon.
+  ─Probably a bad idea─
+
+  Defaults for ‘description’ and ‘category’ are set to the same as
+  the ‘heading’. Default for ‘no-todo’ is ‘nil’.
+  "
   `(,shortcut ,description entry
       (file+headline org-default-notes-file 
          ,(concat heading "\n#+CATEGORY: " category))
-      ,(concat "* " todo " %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n")
+      , (concat "*" (unless no-todo " TODO") " %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n")
       :empty-lines 1)
 )
 
 (setq org-capture-templates
   `(
-     ,(my/make/org-capture-template "i" 
-         "Important tasks that need to be tackled; e.g., research." 
-         "Todo Important Tasks" 
-         "Research")
-
-     ,(my/make/org-capture-template "r" "Respond to an email" "Todo Email" "Email")
-     ,(my/make/org-capture-template "e" "Notes related to Emacs (•̀ᴗ•́)و" "Emacs" "Fun")
-     ,(my/make/org-capture-template "b" "Notes related to my personal blog" "Blog" "Fun")
-     ,(my/make/org-capture-template "l" "Stuff to eventually read and learn" "Reading and Learning" "Fun")
-
-     ,(my/make/org-capture-template "t" "Arbitrary tasks"
-       "Tasks, Getting Things Done" "GTD, Refile" "TODO")
+     ,(my/make/org-capture-template "t" "Tasks, Getting Things Done")
+     ,(my/make/org-capture-template "r" "Research")
+     ,(my/make/org-capture-template "m" "Email")
+     ,(my/make/org-capture-template "e" "Emacs (•̀ᴗ•́)و")
+     ,(my/make/org-capture-template "b" "Blog")
+     ,(my/make/org-capture-template "a" "Arbitrary Reading and Learning")
+     ,(my/make/org-capture-template "p" "Personal Matters")
 ))
 #+end_src
 
@@ -1547,7 +1638,24 @@ For now I capture everything into a single file.
 One would ideally keep separate client, project, information in its own org file.
 The ~#+CATEGORY~ appears alongside each task in the agenda view --keep reading.
 
-*Step 1: When new tasks come up*
+*Where am I currently capturing?*
++ During meetings, when a nifty idea pops into my mind, I quickly capture it.
+  - I've found taking my laptop to meetings makes me an active listener
+    and I get much more out of my meetings since I'm taking notes.
++ Through out the day, as I browse the web, read, and work; random ideas pop-up, and I capture them indiscriminately.
++ I envision that for a phone call, I would open up a capture to make note of what the call entailed so I can review it later.
++ Anywhere you simply want to make a note, for the current heading, just press
+  ~C-c C-z~. The notes are just your remarks along with a timestamp; they are
+  collected at the top of the tree, under the heading.
+
+  #+begin_src emacs-lisp
+  ;; Ensure notes are stored at the top of a tree.
+  (setq org-reverse-note-order nil)
+  #+end_src
+
+Anyhow…
+
+Step 1: When new tasks come up
 Isn't it great that we can squirrel away info into some default location
 then immediately return to what we were doing before --with speed & minimal distraction! ♥‿♥
 Indeed, if our system for task management were slow then we may not produce tasks and so forget them altogether! щ(゜ロ゜щ)
@@ -1629,19 +1737,61 @@ My workflow states are described in the section
   with ~CANCELLED~. Along with ~DONE~, these three mark a task as completed
   and so it needn't appear in any agenda view.
 
+I personally clock-in and clock-out of tasks --keep reading--,
+where upon clocking-out I'm prompted for a note about what I've accomplished
+so far.
+Entering a comment about what I've done, even if it's very little,
+feels like I'm getting something done. It's an explicit marker of progress.
+
+In the past, I would make a “captain's log” at the end of the day, but that's
+like commenting code after it's written, I didn't always feel like doing it and
+it wasn't that important after the fact. The continuous approach of noting after
+every clock-out is much more practical, for me at least.
+
 *Step 7: Archiving Tasks*
 During the review state,
 when a task is completed, ‘archive’ it with ~C-c C-x C-s~: This marks it as done, adds a time stamp,
 and moves it to a local ~*.org_archive~ file. This was our ‘to do’ list becomes a ‘ta da’ list showcasing
 all we have done (•̀ᴗ•́)و
 
+Archiving keeps task lists clutter free, but unlike deletion it allows
+us, possibly rarely, to look up details of a task or what tasks were completed
+in a certain time frame --which may be a motivational act, to see that you have
+actually completed more than you thought, provided you make and archive tasks
+regularly. We can use ~(org-search-view)~ to search an org file /and/ the
+archive file too, if we enable it so.
+#+BEGIN_SRC emacs-lisp
+;; Include agenda archive files when searching for things
+(setq org-agenda-text-search-extra-files (quote (agenda-archives)))
+#+END_SRC
+
 #+begin_src emacs-lisp
+;; Invoing the agenda command shows the agenda and enables
+;; the org-agenda variables.
+(org-agenda "a" "a")
+#+end_src
+
+Let's install some helpful views for our agenda.
++ ~C-c a c~: See completed tasks at the end of the day and archive them.
+  #+begin_src emacs-lisp
 ;; Pressing ‘c’ in the org-agenda view shows all completed tasks,
 ;; which should be archived.
 (add-to-list 'org-agenda-custom-commands 
   '("c" todo "DONE|ON_HOLD|CANCELLED" nil))
 #+end_src
++ ~C-c a u~: See unscheduled, undeadlined, and undated tasks in my todo files.
+  Which should then be scheduled or archived.
+  #+begin_src emacs-lisp
+(add-to-list 'org-agenda-custom-commands 
+  '("u" alltodo "" 
+     ((org-agenda-skip-function
+        (lambda ()
+	      (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
+	      (org-agenda-overriding-header "Unscheduled TODO entries: "))))
+#+end_src
 
+
+# Org-protocol is a great way to create capture notes in org-mode from other applications. 
 ** Workflow States
 :PROPERTIES:
 :CUSTOM_ID: WorkflowStates
@@ -1709,10 +1859,12 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 ;; Enable C-c C-c to generate diagrams from plantuml src blocks.
 (add-to-list 'org-babel-load-languages '(plantuml . t) )
 ;; (require 'ob-plantuml)
+
+; Use fundamental mode when editing plantuml blocks with C-c '
+(add-to-list 'org-src-lang-modes (quote ("plantuml" . fundamental)))
 #+end_src
 
 # (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/")
-
 
 Let's use this! 
 # The source block is replaced with the generated image in-place, by default.
@@ -1802,8 +1954,9 @@ Let's keep track of the time we spend working on tasks that we may have captured
 Such statistics provides a good idea of how long it actually takes me to accomplish a certain task in the future
 and it lets me know where my time has gone.
 
-+ Clock in :: on a heading with ~C-c C-x C-i~.
-+ Clock out :: of a heading with ~C-c C-x C-o~.
++ Clock in :: on a heading with ~I~, or in the subtree with ~C-c C-x C-i~.              
++ Clock out :: of a heading with ~O~, or in the subtree with ~C-c C-x C-o~.
++ Clock report :: See clocked times with ~C-c C-x C-r~.
 
 After clocking out, the start and end times, as well as the elapsed time, are added to a drawer
 to the heading. We can punch in and out of tasks as many times as desired, say we took a break or
@@ -1847,32 +2000,74 @@ easy to edit by hand.
 (setq org-agenda-start-on-weekday nil)
 #+end_src
 
-** Org Speed Keys
-Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
-a headline, we can perform fast manipulation & navigation using the standard Emacs movement
-controls, such as 
-+ ~#~ toggle ~COMMENT~-ing for an org-header.
-+ ~I/O~ clock In/Out to the task defined by the current heading. 
-   - Keep track of your work times!
-   - ~v~ view agenda.
-+ ~u~ for jumping upwards to the parent heading.
-+ ~c~ for cycling structure below current heading, or ~C~ for cycling global structure.
-+ ~i~ insert a new same-level heading below current heading.
-+ ~w~ refile current heading; options list pops-up to select which heading to move it to. Neato!
-+ ~t~ cycle through the available TODO states.
-+ ~^~ sort children of current subtree; brings up a list of sorting options.
-+ ~n/p~ for next/previous /visible/ heading.
-+ ~f/b~ for jumping forward/backward to the next/previous /same-level/ heading.
-+ ~D/U~ move a heading down/up.
-+ ~L/R~ recursively promote (move leftwards) or demote (more rightwards) a heading.
+Sometimes, at the beginning at least, I would accidentally invoke the transposed
+command ~C-x C-c~, which saves all buffers and quits Emacs. So here's a helpful
+way to ensure I don't quit Emacs accidentally.
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-x C-c") '(lambda () (interactive) 
+  (when (yes-or-no-p "Do you really want to quit Emacs? ") 
+        (save-buffers-kill-terminal))
+  )
+)
+#+end_src
 
-Finally, ~?~ to see a complete list of keys available.
-#+BEGIN_SRC emacs-lisp
-(setq org-use-speed-commands t)
+#+begin_src emacs-lisp
+;; Resume clocking task when emacs is restarted
+(org-clock-persistence-insinuate)
 
-;; Add more speed commands by adding to this association list.
-;; (describe-symbol 'org-speed-commands-user)
-#+END_SRC  
+;; Show lot of clocking history
+(setq org-clock-history-length 23)
+
+;; Resume clocking task on clock-in if the clock is open
+(setq org-clock-in-resume t)
+
+;; Sometimes I change tasks I'm clocking quickly - this removes clocked tasks with 0:00 duration
+(setq org-clock-out-remove-zero-time-clocks t)
+
+;; Clock out when moving task to a done state
+(setq org-clock-out-when-done t)
+
+;; Save the running clock and all clock history when exiting Emacs, load it on startup
+(setq org-clock-persist t)
+
+;; Do not prompt to resume an active clock
+;; (setq org-clock-persist-query-resume nil)
+
+;; Include current clocking task in clock reports
+(setq org-clock-report-include-clocking-task t)
+#+end_src
+
+*Finding tasks to clock in*
+Use one of the following options, with the top-most being the first to be tried.
++ From anywhere, ~C-u C-c C-x C-i~ yields a pop-up for recently clocked in tasks.
++ Pick something off today's agenda scheduled items.
++ Pick a ~Started~ task from the agenda view, work on this unfinished task.
++ Pick something from the ~TODO~ tasks list in the agenda view.
+
+# Reporting activities
+# C-c C-x i
+
++ ~C-c C-x C-d~ also provides a quick summary of clocked time for the current org file.
+
+*Estimates versus actual time*
+Before clocking into a task, add to the properties drawer ~:Effort: 1:25~ or ~C-c C-x C-e~, for a task
+that you estimate will take an hour an twenty-five minutes, for example. Now the modeline
+will have will mention the time elapsed alongside the task name.
++ This is also useful when you simply want to put a time limit on a task that wont be
+  completed anytime soon, say writing a thesis or a long article, but you still want
+  to work on it for an hour a day and be warned when you exceed such a time constraint.
+
+  :Not_working_for_me:
+  Even if you switch tasks then clock into this task again, the alarm will ring
+  again, nagging you to actual listen to yourself and work on other matters.
+
+  #+begin_src emacs-lisp
+(setq org-clock-sound "~/.emacs.d/school-bell.wav")
+#+end_src
+   :end:
+
+  When you've gone above your estimate time, the modeline shows it to be red.
+
 ** Template expansion (<s Tab, etc.)
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
 or ~<q~ for quote blocks. 
@@ -1973,7 +2168,7 @@ Here's another example graph,
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
 
-** Minted
+** Coloured LaTeX using Minted
 Execute the following for bib ref as well as minted
 Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
 --which in turn requires the pygmentize system tool.
@@ -1994,6 +2189,28 @@ For faster pdf generation, may consider invoking:
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 #+end_example
 
+** Editing & Special Key Handling
+#+begin_src emacs-lisp
+;; On an org-heading, C-a goes to after the star, heading markers.
+;; To use speed keys, run C-a C-a to get to the star markers.
+;;
+;; C-e goes to the end of the heading, not including the tags.
+;;
+(setq org-special-ctrl-a/e t)
+
+;; C-k no longer removes tags, if activated in the middle of a heading's name.
+(setq org-special-ctrl-k t)
+
+;; When you yank a subtree and paste it alongside a subtree of depth ‘d’,
+;; then the yanked tree's depth is adjusted to become depth ‘d’ as well.
+;; If you don't want this, then refile instead of copy pasting.
+(setq org-yank-adjusted-subtrees t)
+
+;; adds alphabetical lists like
+;;  a. item one
+;;  b. item two
+(setq org-alphabetical-lists t)
+#+end_src
 ** Executing code from ~src~ blocks
 
 For example, to execute a shell command in emacs,
@@ -2259,7 +2476,16 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
 ;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
 #+END_SRC
 
-* Todo COMMENT org babel matters
+** COMMENT Exporting Tables to CSV
+
+Org-mode can export tables as TAB or comma delimited formats. I set the default format to CSV with:
+
+(setq org-table-export-default-format "orgtbl-to-csv")
+Exporting to CSV format is the only one I use and this provides the default so I can just hit RETURN when prompted for the format.
+
+To export the following table I put the cursor inside the table and hit M-x org-table-export which prompts for a filename and the format which defaults to orgtbl-to-csv from the setting above.
+
+* TODO COMMENT org babel matters
 From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
 
 #+begin_src emacs-lisp :tangle no
