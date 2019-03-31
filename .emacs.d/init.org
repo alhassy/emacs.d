@@ -1070,7 +1070,30 @@ We can delete selected text just by hitting the backspace key.
   (delete-selection-mode 1)
 #+END_SRC
 
-** Highlight & complete parenthesis pair when cursor is near ;-) :Nope:
+** Highlight & complete parenthesis pair when cursor is near ;-
+
+#+begin_src emacs-lisp
+;; Highlight matching parens when near one of them.
+(show-paren-mode 1)
+
+;; Colour parens, and other delimiters, depending on their depth.
+;; Very useful for parens heavy languages like Lisp.
+(use-package rainbow-delimiters
+  :ensure t
+)
+
+(add-hook 'org-mode-hook
+  '(lambda () (rainbow-delimiters-mode 1)))
+(add-hook 'prog-mode-hook
+  '(lambda () (rainbow-delimiters-mode 1)))
+#+end_src
+
+For example,
+#+begin_src emacs-lisp :tangle no
+(blue (purple (forest (green (yellow (blue))))))
+#+end_src
+
+*** COMMENT Smartparens                                                        :Nope:
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package smartparens
   :ensure t
@@ -2652,14 +2675,6 @@ If the :tangle header arg is a list of files. Handle all files"
 
 + ~(nyan-mode)~ Use a cat on a rainbow to indicate the percentage of the buffer position.
     [ Disabled ] 
-
-+ Coloured code delimiters.                 
-  #+BEGIN_SRC emacs-lisp :tangle no
-(define-globalized-minor-mode my-rainbow-global-mode rainbow-delimiters-mode
-  (lambda () (rainbow-delimiters-mode)
-))
-(my-rainbow-global-mode 1)
-#+END_SRC
 
 + Googling words at point: ~M-x google-this-word~
 #+BEGIN_SRC emacs-lisp :tangle no
