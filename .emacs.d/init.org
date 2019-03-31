@@ -1024,8 +1024,24 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 #+BEGIN_SRC emacs-lisp
 (setq display-time-day-and-date t)
 (display-time)
-(display-battery-mode 1)
+
+;; (display-battery-mode 1)
+;; Nope; let's use a fancy indicator … 
+
+(use-package fancy-battery
+  :diminish
+  :ensure t
+  :config
+    (setq fancy-battery-show-percentage t)
+    (setq battery-update-interval 15)
+    (fancy-battery-mode)
+    (display-battery-mode)
+)
 #+END_SRC
+
+This will show remaining battery life, coloured green if charging
+and coloured yellow otherwise. It is important to note that
+this package is no longer maintained. It works on my machine.
 
 ** Hiding Scrollbar, tool bar, and menu
 #+BEGIN_SRC emacs-lisp
