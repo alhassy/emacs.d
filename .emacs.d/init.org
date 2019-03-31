@@ -950,6 +950,11 @@ Now my startup message is,
 ;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.2; System alhassy-air.local
 #+end_src
 
+For some fun, run this cute method.
+#+BEGIN_SRC emacs-lisp :tangle no
+(animate-birthday-present user-full-name)
+#+END_SRC
+
 ** Spaceline: A sleek mode line
 
 I may not use spacemacs, since I do not like evil-mode and find spacemacs 
@@ -1942,7 +1947,8 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 
 Let's use this! 
 # The source block is replaced with the generated image in-place, by default.
-#+begin_src plantuml :file workflow.png :exports code :cache (progn (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/") "yes")
+# #+begin_src plantuml :file workflow.png :exports code :cache (progn (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/") "yes")
+#+begin_src plantuml :file workflow.png :exports code :cache "yes" :tangle no
 skinparam defaultTextAlignment center  /' Text alignment '/
 
 skinparam titleBorderRoundCorner 15
