@@ -1317,6 +1317,50 @@ Note that ~Meta-/~ goes through a sequence of completions.
 Note that besides the arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to
 navigate the options.
 
+Besides boring word completition, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
+#+begin_src emacs-lisp
+(use-package company-emoji :ensure t)
+(add-to-list 'company-backends 'company-emoji)
+#+end_src
+
+For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
+
+➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
+All emoji names are lowercase. ◀
+# :end: does not html export nicely.
+
+The libraries ~emojify, emojify-logos~ provides cool items like :haskell: :emacs: :org: :ruby: :python:.
+Unfortunately they do not easily export to html with org-mode, so I'm not using
+them.
+
+:Alternatives:
+#+BEGIN_SRC emacs-lisp
+(use-package emojify
+ :ensure t
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1) ;; Will install missing images, if need be.
+)
+#+END_SRC
+
+(use-package emojify-logos
+:ensure t
+:after emojify)
+
+For example,
+#+begin_src emacs-lisp :tangle no
+ :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:
+#+end_src
+Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emojify-insert-emoji)~ to see more.
+
+Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
+for completion of emoji names.
+
+(use-package ac-emoji
+  :ensure t
+  :init (ac-emoji-setup)
+) 
+:End:
+
 ** On the fly syntax checking
 #+begin_src emacs-lisp
 (use-package flycheck
