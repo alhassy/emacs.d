@@ -32,8 +32,10 @@
 # Start a numbered list from any number using the syntax “N. [@N] ⋯”, a nice way to
 # have 0-numbered lists or lists with text in between that does not reset the numbering.
 
-# (org-version)   ;; 9.2.2
-# (emacs-version) ;; 26.1
+# Defined below,
+# (display-startup-echo-area-message)
+# ⇒ Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.2; System alhassy-air.local
+#
 # (byte-compile-file "~/.emacs")
 
 #+STARTUP: lognoteclock-out
@@ -925,15 +927,21 @@ Note: Using spacemacs theme above.
 
 (defun display-startup-echo-area-message ()
   (message
-      (concat "Welcome! Emacs "  emacs-version
-              "; Org-mode "      org-version
-              "; on system "     (system-name)
+      (concat "Welcome "      user-full-name
+              "! Emacs "      emacs-version
+              "; Org-mode "   org-version
+              "; System "    (system-name)
       )
   )     
 )
 
 ;; (setq initial-scratch-message "Welcome! This’ the scratch buffer" )
 #+end_src
+Now my startup message is,
+#+begin_src emacs-lisp
+;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.2; System alhassy-air.local
+#+end_src
+
 ** Flashing when something goes wrong
 Make top and bottom of screen flash when something unexpected happens thereby observing a warning message in the minibuffer. E.g., C-g, or calling an unbound key sequence, or misspelling a word.
 #+BEGIN_SRC emacs-lisp
