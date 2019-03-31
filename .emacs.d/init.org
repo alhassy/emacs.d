@@ -417,14 +417,15 @@ Here are other packages that I want to be installed onto my machine.
   (interactive)
   (setq my/theme (if (equal my/theme 'spacemacs-light) 'spacemacs-dark 'spacemacs-light))
   (load-theme my/theme t)
+  ;; The dark theme's modeline separator is ugly.
+  ;; Keep reading below regarding “powerline”.
+  (setq powerline-default-separator 'arrow)
 )
 (global-set-key "\C-x\ t" 'my/toggle-theme)
-
 #+END_SRC
 
 The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
 A showcase of many themes can be found [[https://emacsthemes.com/][here]].
-
 
 #+BEGIN_SRC emacs-lisp
 ;; Efficient version control.
@@ -948,6 +949,35 @@ Now my startup message is,
 #+begin_src emacs-lisp
 ;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.2; System alhassy-air.local
 #+end_src
+
+** Spaceline: A sleek mode line
+
+I may not use spacemacs, since I do not like evil-mode and find spacemacs 
+to “hide things” from me --whereas Emacs “”encourages” me to learn more--,
+however it is a configuration and I enjoy reading Emacs configs in order to 
+improve my own setup. From Spacemacs I've adopted Helm for list completion,
+its sleek light & dark themes, and its modified powerline setup.
+
+The ‘modeline’ is a part near the bottom of Emacs that gives information
+about the current mode, as well as other matters --such as time & date, for example.
+
+#+BEGIN_SRC emacs-lisp
+(use-package spaceline
+  :ensure t
+  :config
+  (require 'spaceline-config)
+  (setq spaceline-buffer-encoding-abbrev-p nil)
+  (setq spaceline-line-column-p nil)
+  (setq spaceline-line-p nil)
+  (setq powerline-default-separator 'arrow)
+)
+
+(spaceline-spacemacs-theme)
+(setq powerline-default-separator 'arrow)
+#+END_SRC
+Other separators I've considered include ~'brace~ instead of an arrow,
+and ~'contour, 'chamfer, 'wave, 'zigzag~ which look like browser tabs
+that are curved, boxed, wavy, or in the style of driftwood.
 
 ** Flashing when something goes wrong
 Make top and bottom of screen flash when something unexpected happens thereby observing a warning message in the minibuffer. E.g., C-g, or calling an unbound key sequence, or misspelling a word.
