@@ -1093,6 +1093,16 @@ For example,
 (blue (purple (forest (green (yellow (blue))))))
 #+end_src
 
+There is a powerful package called ‘smartparens’ for working with pair-able
+characters, but I've found it to be too much for my uses. Instead I'll utilise
+the lightweight package ~electric~, which provided by Emacs out of the box.
+
+#+BEGIN_SRC emacs-lisp
+(electric-pair-mode 1)
+#+END_SRC
+
+It supports, by default, ACSI pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
+
 *** COMMENT Smartparens                                                        :Nope:
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package smartparens
@@ -2367,7 +2377,7 @@ Some initial languages we want org-babel to support:
 
 More languages can be added using ~add-to-list~.
 
-** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
+** COMMENT ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
 Use the ~:ignore:~ tag on headlines you'd like to have ignored, 
 while not ignoring their content --see [[https://emacs.stackexchange.com/a/17677/10352][here]].
 #+BEGIN_SRC emacs-lisp
