@@ -425,6 +425,7 @@ Here are other packages that I want to be installed onto my machine.
 The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
 A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 
+
 #+BEGIN_SRC emacs-lisp
 ;; Efficient version control.
 (use-package magit
@@ -612,6 +613,15 @@ I would like to check spelling by default.
 # Emacs includes Flyspell. You must not explicitly install it. If you do so, undo this,
 # that is, delete flyspell.el from /Applications/Emacs.app/Contents/Resources/site-lisp. 
 
+#+BEGIN_SRC emacs-lisp
+(use-package flyspell
+  :hook (
+	   (prog-mode . flyspell-prog-mode)
+	   (text-mode . flyspell-mode))
+)
+#+END_SRC
+# (add-hook 'text-mode-hook 'flyspell-mode)
+
 Flyspell needs a spell checking tool, which is not included in Emacs. 
 We install ~aspell~ spell checker using, say, homebrew via ~brew install aspell~.
 Note that Emacs' ~ispell~ is the interface to such a command line spelling utility.
@@ -619,11 +629,8 @@ Note that Emacs' ~ispell~ is the interface to such a command line spelling utili
 
 #+BEGIN_SRC emacs-lisp 
 (setq ispell-program-name "/usr/local/bin/aspell")
-
-
 (setq ispell-dictionary "en_GB") ;; set the default dictionary
 
-(add-hook 'text-mode-hook 'flyspell-mode)
 (diminish 'flyspell-mode) ;; Don't show it in the modeline.
 #+END_SRC
 
@@ -1205,16 +1212,26 @@ It shows an overview of all matches --navigate using arrow keys.
 There is also a helm based version of swiper.
 :end:
 
-Finally, let's enable “complete anything” mode.
+Finally, let's enable “complete anything” mode
+--it ought to start in half a second and only need two characters to get going,
+which means word suggestions are provided and so I need only type partial words
+then tab to get the full word!
 #+begin_src emacs-lisp
 (use-package company
+  :ensure
   :diminish
   :config
-  (add-hook 'after-init-hook 'global-company-mode))
+    (setq company-idle-delay 0)
+    (setq company-minimum-prefix-length 2)
+    (add-hook 'after-init-hook 'global-company-mode))
 
-(global-set-key (kbd "C-c h") 'company-complete)
+;; So fast that we don't need this.
+;; (global-set-key (kbd "C-c h") 'company-complete)
 #+end_src
 Note that ~Meta-/~ goes through a sequence of completions.
+
+Note that besides the arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to
+navigate the options.
 
 ** On the fly syntax checking
 #+begin_src emacs-lisp
