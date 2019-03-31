@@ -1056,9 +1056,9 @@ this package is no longer maintained. It works on my machine.
 (global-set-key (kbd "C--") 'text-scale-decrease)
   ;; C-x C-0 restores the default font size
 
-;; Truncate lines in all buffers
-(setq-default truncate-lines t)
-(setq-default global-visual-line-mode t)
+(add-hook 'text-mode-hook
+	    '(lambda ()
+	       (visual-line-mode 1)))
 #+END_SRC
 
 ** Delete Selection mode
