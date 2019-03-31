@@ -390,6 +390,15 @@ Moreover, I will be shown other commands I did not know about! Neato :-)
 )
 #+END_SRC
 
+The ~:diminish~ keyword indicates that we do not want the mode's name to be
+shown to us in the modeline --the area near the bottom of Emacs.
+It does so by using the ~diminish~ package, so let's install that.
+#+begin_src emacs-lisp
+(use-package diminish
+  :ensure t
+)
+#+end_src
+
 Here are other packages that I want to be installed onto my machine.
 #+BEGIN_SRC emacs-lisp
 ;; (package-refresh-contents)     ;; Always stay up to date.
@@ -613,6 +622,7 @@ Note that Emacs' ~ispell~ is the interface to such a command line spelling utili
 (setq ispell-dictionary "en_GB") ;; set the default dictionary
 
 (add-hook 'text-mode-hook 'flyspell-mode)
+(diminish 'flyspell-mode) ;; Don't show it in the modeline.
 #+END_SRC
 
 Ecnabling fly-spell for text-mode enables it for org and latex modes since they
@@ -811,7 +821,7 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 ;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
 :End:
 
-** Todo Locally ~toggle~ a variable
+** TODO Locally ~toggle~ a variable
 
 *todo* body of toggle should be a progn?
 
@@ -872,7 +882,7 @@ NOPE ;; ⇒ "NOPE"
 #+end_example
 :End:
 
-** Todo Altering PATH
+** TODO Altering PATH
 #+BEGIN_SRC emacs-lisp
 ;; https://emacs.stackexchange.com/questions/4090/org-mode-cannot-find-pdflatex-using-mac-os
 
@@ -994,8 +1004,8 @@ We can delete selected text just by hitting the backspace key.
   (delete-selection-mode 1)
 #+END_SRC
 
-** Highlight & complete parenthesis pair when cursor is near ;-)
-#+BEGIN_SRC emacs-lisp
+** Highlight & complete parenthesis pair when cursor is near ;-) :Nope:
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package smartparens
   :ensure t
   :init
@@ -1086,6 +1096,7 @@ Try and be grateful.
 #+BEGIN_SRC emacs-lisp
 (use-package helm 
  :ensure t
+ :diminish
  :init (helm-mode t)
  :bind
   ("C-x C-r" . helm-recentf)      ; search for recently edited  
@@ -1189,6 +1200,7 @@ There is also a helm based version of swiper.
 Finally, let's enable “complete anything” mode.
 #+begin_src emacs-lisp
 (use-package company
+  :diminish
   :config
   (add-hook 'after-init-hook 'global-company-mode))
 
@@ -1199,6 +1211,7 @@ Note that ~Meta-/~ goes through a sequence of completions.
 ** On the fly syntax checking
 #+begin_src emacs-lisp
 (use-package flycheck
+  :diminish
   :defer 2
   :init (global-flycheck-mode)
   :custom
@@ -1319,6 +1332,8 @@ Let's save a few precious seconds,
   :lighter " my-keys")
 
 (my-keys-minor-mode)
+
+(diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
 #+END_SRC
 ** Reload buffer with ~f5~ 
 I do this so often it's not even funny.
@@ -1401,7 +1416,11 @@ Instead I now only need to type ~C-|~ to make this switch.
 ** ~re-replace-in-file~
 
 #+BEGIN_SRC emacs-lisp
-(defun re-replace-in-file (file regex whatDo) "Find and replace a regular expression in-place in a file."
+(defun re-replace-in-file (file regex whatDo) 
+   "Find and replace a regular expression in-place in a file.
+
+   Terrible function … before I took the time to learn any Elisp!
+   "
 
     (find-file file)
     (goto-char 0)
