@@ -261,37 +261,6 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 #+END_SRC
 :End:
 
-:Old_spacemacs_ideas:
-Get onto rolling version of spacemacs:
-
-git checkout develop
-git pull --rebase
-
-Recently I've switched to spacemacs, and to avoid too much migration
-I've simply called this literate configuration from within ~~.spacemacs~
-via the ~dotspacemacs/user-config~ method.
-#+begin_src emacs-lisp :tangle no
-(defun dotspacemacs/user-config ()
-  "Configuration function for user code.
-   This function is called at the very end of Spacemacs initialization after
-   layers configuration.
-   This is the place where most of your configurations should be done. Unless it is
-   explicitly specified that a variable should be set before a package is loaded,
-   you should place your code here."
-
-   (org-babel-load-file "~/dotfiles/.emacs.d/init.org")
-)
-#+end_src
-
-Moreover, in the ~dotspacemacs/layers~ method in ~.spacemacs~,
-I have the following so that spacemacs does not delete
-layer-orphan packages in an attempt to ‘clean up’ my unsued
-packages.
-#+begin_src emacs-lisp :tangle no
-dotspacemacs-additional-packages '(htmlize biblio magit haskell-mode dash s)
-#+end_src
-:End:
-
 ** ~use-package~ --The start of ~init.el~
 
 :Stuff_in_dot_emacs:
