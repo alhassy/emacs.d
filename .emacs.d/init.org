@@ -412,15 +412,20 @@ Here are other packages that I want to be installed onto my machine.
 ;; (use-package spacemacs-theme :ensure t)
 
 ;; “C-x” t to toggle between light and dark themes.
-(setq my/theme 'spacemacs-light)
-(load-theme my/theme t)
+
 (defun my/toggle-theme () "Toggle between dark and light themes."
   (interactive)
-  (setq my/theme (if (equal my/theme 'spacemacs-light) 'spacemacs-dark 'spacemacs-light))
-  (load-theme my/theme t)
+  ;; Load dark if light is top-most enabled theme, else load light.
+  (load-theme 
+  (if (equal (car custom-enabled-themes) 'spacemacs-light) 
+      'spacemacs-dark
+      'spacemacs-light
+  ) t )
+  
   ;; The dark theme's modeline separator is ugly.
   ;; Keep reading below regarding “powerline”.
-  (setq powerline-default-separator 'arrow)
+  ;; (setq powerline-default-separator 'arrow)
+  ;; (spaceline-spacemacs-theme)
 )
 (global-set-key "\C-x\ t" 'my/toggle-theme)
 #+END_SRC
@@ -447,9 +452,6 @@ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 (add-hook 'org-mode-hook 'org-bullets-mode)
 
 (use-package haskell-mode :ensure)
-
-;; (use-package flycheck          ;; Dynamic syntax checking.
-;;  :init (global-flycheck-mode) :ensure)
 
 (use-package dash :ensure)    ;; “A modern list library for Emacs”
 (use-package s    :ensure)    ;; “The long lost Emacs string manipulation library”.
@@ -986,10 +988,10 @@ about the current mode, as well as other matters --such as time & date, for exam
   (setq spaceline-line-column-p nil)
   (setq spaceline-line-p nil)
   (setq powerline-default-separator 'arrow)
+  :init
+ (spaceline-helm-mode) ;; When using helm, mode line looks prettier.
+ (spaceline-spacemacs-theme)
 )
-
-(spaceline-spacemacs-theme)
-(setq powerline-default-separator 'arrow)
 #+END_SRC
 Other separators I've considered include ~'brace~ instead of an arrow,
 and ~'contour, 'chamfer, 'wave, 'zigzag~ which look like browser tabs
@@ -1415,7 +1417,7 @@ for completion of emoji names.
 ) 
 :End:
 
-** On the fly syntax checking
+** COMMENT On the fly syntax checking :Disabled:_want_it_within_org_src:
 #+begin_src emacs-lisp
 (use-package flycheck
   :diminish
@@ -1467,9 +1469,8 @@ We open a nifty file manager upon startup.
 (use-package neotree :ensure t
   :config (global-set-key "\C-x\ d" 'neotree-toggle))
 
-(use-package all-the-icons :ensure t)
+; (use-package all-the-icons :ensure t)
 ;; Only do this once: (all-the-icons-install-fonts)
-
 
 (setq neo-theme 'icons)
 (neotree-refresh)
@@ -1486,6 +1487,9 @@ Useful navigational commands include
 
 As always, to go to the neotree pane when it's the only other window,
 execute ~C-x o~.
+
+I /rarely/ make use of this feature; company mode & Helm together quickly provide
+an automatic replacement for nearly all of my uses.
 
 ** Window resizing using the golden ratio :Disabled:
 
@@ -1733,17 +1737,6 @@ and how to manipulate it.
 
 ** Quickly pop-up a terminal, run a command, close it
 #+begin_src emacs-lisp
-(defvar *toggle-terminal* t 
-   "
-   The variable to decide whether a terminal has been pushed
-   and now needs to be popped, or vice-versa.
-   By default, open a terminal.
-
-   When non-nil, it refers to the name of the terminal buffer we created.
-   In this way, if the user manual deletes the buffer, it's treated as a
-   toggle.
-   " )
-
 (cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
    "Pop up a terminal, do some work, then close it using the same command.
 
@@ -2341,7 +2334,7 @@ will have will mention the time elapsed alongside the task name.
 
   When you've gone above your estimate time, the modeline shows it to be red.
 
-** Template expansion (<s Tab, etc.)
+** COMMENT <replace with yankpand> Template expansion (<s Tab, etc.)
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
 or ~<q~ for quote blocks. 
 It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode structure template expansion
@@ -3105,6 +3098,8 @@ Some possibly interesting reads:
   + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]  
   + [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][A tutorial on evaluating code within ~src~ blocks]]
 
+
+# List of installed packages: (mapcar 'car package-alist)
 * COMMENT footer
 
 ;; Kill process buffer without confirmation.
