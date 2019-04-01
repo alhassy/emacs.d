@@ -928,6 +928,11 @@ Note: Using spacemacs theme above.
 (set-background-color "#fcf4dc")   -- nice!
 :End:
 
+#+begin_src emacs-lisp
+;; Make it very easy to see the line with the cursor.
+(global-hl-line-mode t)
+#+end_src
+
 ** Startup message: Emacs & Org versions
 #+begin_src emacs-lisp
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
@@ -983,6 +988,42 @@ about the current mode, as well as other matters --such as time & date, for exam
 Other separators I've considered include ~'brace~ instead of an arrow,
 and ~'contour, 'chamfer, 'wave, 'zigzag~ which look like browser tabs
 that are curved, boxed, wavy, or in the style of driftwood.
+
+** Mouse Editing Support
+#+begin_src emacs-lisp
+;; Text selected with the mouse is automatically copied to clipboard.
+(setq mouse-drag-copy-region t)
+#+end_src
+
+** Having a workspace manager in Emacs
+
+I've loved using XMonad as a window tiling manager.
+I've enjoyed the ability to segregate my tasks
+according to what ‘project’ I'm working on;
+such as research, marking, Emacs play, etc.
+With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
+
+That is, I can have a million buffers, but only those
+that belong to a workspace will be visible when I'm switching between buffers, for example.
+
+#+BEGIN_SRC emacs-lisp
+(use-package perspective :ensure t)
+
+;; Activate it.
+(persp-mode)
+
+;; In the modeline, tell me which workspace I'm in.
+(persp-turn-on-modestring)
+#+END_SRC
+
+All commands are prefixed by ~C-x x~; main commands:
++ ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext one, or go to ‘p’revious one.
++ ~c~ :: Query a perspective to kill.
++ ~r~ :: Rename a perspective.
++ ~A~ :: Add buffer to current perspective & remove it from all others.
+
+As always, since we've installed ~which-key~, it suffices to press
+~C-x x~ then look at the resulting menu 😃
 
 ** Flashing when something goes wrong
 Make top and bottom of screen flash when something unexpected happens thereby observing a warning message in the minibuffer. E.g., C-g, or calling an unbound key sequence, or misspelling a word.
@@ -1073,8 +1114,11 @@ We can delete selected text just by hitting the backspace key.
 ** Highlight & complete parenthesis pair when cursor is near ;-
 
 #+begin_src emacs-lisp
-;; Highlight matching parens when near one of them.
-(show-paren-mode 1)
+;; Highlight expression within matching parens when near one of them.
+(setq show-paren-delay 0)
+(setq blink-matching-paren nil)
+(setq show-paren-style 'expression)
+(show-paren-mode)
 
 ;; Colour parens, and other delimiters, depending on their depth.
 ;; Very useful for parens heavy languages like Lisp.
