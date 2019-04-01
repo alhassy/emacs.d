@@ -3147,7 +3147,9 @@ C-c C-c: Evaluate src block.
       #+INCLUDE: init.org
     ")
     (org-mode)
-    (org-md-export-to-markdown)
+    (org-html-export-to-html)
+    ;; (org-md-export-to-markdown)
+    ;; Not needed, github renders README.html (shell-command "mv README.html README.md")
 )
 #+END_SRC
 
