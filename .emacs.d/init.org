@@ -101,6 +101,12 @@ as if our text was being version controlled as we type! --We can even switch bet
 
 ;; Execute (undo-tree-visualize) then navigate along the tree to witness
 ;; changes being made to your file live!
+
+;; Each node in the undo tree should have a timestamp.
+(setq undo-tree-visualizer-timestamps t)
+
+;; Show a diff window displaying changes between undo nodes.
+(setq undo-tree-visualizer-diff t)
 #+end_src
 
 /Emacs is an extensible editor: You can make it into the editor of your dreams!/
@@ -968,6 +974,11 @@ For some fun, run this cute method.
 (animate-birthday-present user-full-name)
 #+END_SRC
 
+Moreover, since I end up using org-mode most of the time, let's make that the default mode.
+#+BEGIN_SRC emacs-lisp
+(setq initial-major-mode 'org-mode)
+#+END_SRC
+
 ** Spaceline: A sleek mode line
 
 I may not use spacemacs, since I do not like evil-mode and find spacemacs 
@@ -1258,6 +1269,13 @@ Try and be grateful.
   ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
   ("C-x r b" .'helm-filtered-bookmarks)
   ("C-x C-f" . 'helm-find-files)
+
+   ;; Show all meaningful Lisp symbols whose names match a given pattern.
+   ;; Helpful for looking up commands.
+   ("C-h a" . helm-apropos)
+
+   ;; Look at what was cut recently & paste it in.
+   ("M-y" . helm-show-kill-ring)
 )
 ;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
 
@@ -1301,10 +1319,6 @@ will search for that particular word, region; then apply changes by ~C-x C-s~.
    ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
    ;; Go back to last position where ‘helm-swoop’ was called
    ("C-S-s" . 'helm-swoop-back-to-last-point)
-
-   ;; Show all meaningful Lisp symbols whose names match a given pattern.
-   ;; Helpful for looking up commands.
-   ("C-h a" . helm-apropos)
   )
  :config
    ;; Give up colour for speed.
@@ -3086,6 +3100,14 @@ take care of this.
 Since I'm using ~use-package~, I can invoke ~M-x describe-personal-keybindings~ to see what key bindings I've defined.
 Since not all my bindings are via ~use-package~, it does not yet cover all of my bindings.
 
+We could run ~C-h b~ to see our bindings:
+#+BEGIN_SRC emacs-lisp
+(use-package helm-descbinds
+  :ensure t
+  :defer t
+  :bind (("C-h b" . helm-descbinds)))
+#+END_SRC
+
 Some possibly interesting reads:
   + [[https://to1ne.gitlab.io/literate-dotfiles/][Toon's Literate Dotfiles]]
   + [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
@@ -3100,6 +3122,35 @@ Some possibly interesting reads:
 
 
 # List of installed packages: (mapcar 'car package-alist)
+* COMMENT Making README.md
+
+C-c C-c: Evaluate src block.
+
+#+NAME: make-readme
+#+BEGIN_SRC emacs-lisp :results none
+(with-temp-buffer
+    (insert 
+    "#+EXPORT_FILE_NAME: README.md
+     #+HTML: <h1> A Life Configuring Emacs </h1>
+     #+HTML: <h3> My Literate Setup </h3>
+     #+OPTIONS: toc:nil d:nil
+     # Toc is displayed below at a strategic position.
+
+     I enjoy reading others' /literate/ configuration files and incorporating what I learn
+     into my own. The result is a sufficiently well-documented and accessible read that yields
+     a stylish and functional system (•̀ᴗ•́)و
+
+     The contents below could also be read in blog format
+     [[https://alhassy.github.io/init/][here]]. Enjoy :smile:
+ 
+      #+TOC: headlines 2
+      #+INCLUDE: init.org
+    ")
+    (org-mode)
+    (org-md-export-to-markdown)
+)
+#+END_SRC
+
 * COMMENT footer
 
 ;; Kill process buffer without confirmation.
@@ -3115,6 +3166,7 @@ Read:  https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#
 # Local Variables:
 # eval: (when nil (load-file "~/alhassy.github.io/content/AlBasmala.el"))
 # eval: (when nil (remove (concat "../content/" NAMEorg) commitables))
+# eval: (progn (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs") (load-file "~/.emacs"))
 # End:
 
