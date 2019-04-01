@@ -2,7 +2,7 @@
 (require 'package)
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
 (package-initialize)
-(require 'org-tempo)
+;; (require 'org-tempo)
 
 ;; Avoid out-dated byte-compiled Elisp files.
 (setq load-prefer-newer t)

@@ -96,7 +96,8 @@ as if our text was being version controlled as we type! --We can even switch bet
 #+begin_src emacs-lisp
 ;; Allow tree-semantics for undo operations.
 (package-install 'undo-tree)
-(undo-tree-mode)
+(global-undo-tree-mode)
+(diminish 'undo-tree-mode)
 
 ;; Execute (undo-tree-visualize) then navigate along the tree to witness
 ;; changes being made to your file live!
@@ -909,6 +910,11 @@ NOPE ;; ⇒ "NOPE"
 (set-exec-path-from-shell-PATH)
 #+END_SRC
 
+** Who am I?
+#+begin_src emacs-lisp
+(setq user-full-name    "Musa Al-hassy"
+      user-mail-address "alhassy@gmail.com")
+#+end_src
 * Cosmetics
 
 # Font
@@ -1293,6 +1299,10 @@ will search for that particular word, region; then apply changes by ~C-x C-s~.
    ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
    ;; Go back to last position where ‘helm-swoop’ was called
    ("C-S-s" . 'helm-swoop-back-to-last-point)
+
+   ;; Show all meaningful Lisp symbols whose names match a given pattern.
+   ;; Helpful for looking up commands.
+   ("C-h a" . helm-apropos)
   )
  :config
    ;; Give up colour for speed.
@@ -1504,6 +1514,45 @@ After some time this got a bit annoying and I'm no longer  using this.
   (setq windmove-wrap-around t))
 #+END_SRC
 
+* General Config, “Interior”                                       :Bad_name:
+
+Configurations that affect Emacs, but not the look.
+
+** Backups
+By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
+let's keep old versions since there's disk space to go around
+--what am I going to do with 500gigs when nearly all my ‘software’ is
+textfiles interpreted within Emacs 😼
+
+#+BEGIN_SRC emacs-lisp
+;; New location for backups.
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+
+;; Never silently delete old backups.
+(setq delete-old-versions -1)
+
+;; Use version numbers for backup files.
+(setq version-control t)
+
+;; Even version controlled files get to be backed up.
+(setq vc-make-backup-files t)
+#+END_SRC
+
+Why backups? Sometimes I may forget to submit a file, or edit, to my
+version control system, and it'd be nice to be able to see a local
+automatic backup. Whenever ‘I need space,’ then I simply empty
+the backup directory, if ever.
+
+Like package installations, my backups are not kept in any version control
+system, like git; only locally.
+
+** COMMENT Keep buffers open across sessions :maybe_not_desirable:
+#+begin_src emacs-lisp
+;; Keep open files open across sessions.
+(desktop-save-mode 1)
+(setq desktop-restore-eager 10)
+#+end_src
+
 * Helpful Functions & Shortcuts
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
@@ -1589,6 +1638,7 @@ Dual to ~C-k~,
    "create a scratch buffer"
    (interactive)
    (switch-to-buffer (get-buffer-create "*scratch*"))
+   (insert initial-scratch-message)
    (lisp-interaction-mode))   
 #+END_SRC
 ** Switching from 2 horizontal windows to 2 vertical windows
@@ -1688,23 +1738,29 @@ and how to manipulate it.
    The variable to decide whether a terminal has been pushed
    and now needs to be popped, or vice-versa.
    By default, open a terminal.
+
+   When non-nil, it refers to the name of the terminal buffer we created.
+   In this way, if the user manual deletes the buffer, it's treated as a
+   toggle.
    " )
 
-(defun toggle-terminal ()
+(cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
    "Pop up a terminal, do some work, then close it using the same command.
+
+   The toggle behaviour is tied into the existence of the pop-up buffer.
+   If the buffer exists, kill it; else create it.
    "
    (interactive)
-   (if *toggle-terminal* 
-
-        (progn 
-               (split-window-right)
-               (other-window 1)
-               (eshell))
-
-        (toggle kill-buffer-query-functions nil (kill-buffer eshell-buffer-name))
-        (delete-window)
-    )        
-   (setq *toggle-terminal* (not *toggle-terminal*))
+   (cond 
+     ;; when the terminal buffer is alive, kill it.
+     ((get-buffer name)  (kill-buffer name) 
+                         (ignore-errors (delete-window)))
+     ;; otherwise, set value to refer to a new eshell buffer.
+     (t                  (split-window-right)
+                         (other-window 1)
+                         (eshell)
+                         (rename-buffer name))
+   )
 )
 
 (global-set-key "\C-t" 'toggle-terminal)
@@ -2291,7 +2347,8 @@ or ~<q~ for quote blocks.
 It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode structure template expansion
 necessitate explicitly loading ~org-tempo~.
 #+begin_src emacs-lisp
-(require 'org-tempo)
+;; (require 'org-tempo)
+;; (use-package org-contrib :ensure t)
 #+end_src
 
 To insert source blocks with the assistance of a pop-up: ~C-c C-v d~ ;-)
