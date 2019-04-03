@@ -40,6 +40,75 @@
 
 #+STARTUP: lognoteclock-out
 
+* TODO Snippets
+
+#+BEGIN_SRC emacs-lisp
+(use-package yankpad
+  :ensure t
+  :defer 10
+  :init
+  (setq yankpad-file "~/.emacs.d/yankpad.org")
+  :config
+  (bind-key "<f7>" 'yankpad-map)
+  (bind-key "<f12>" 'yankpad-expand)
+  ;; If you want to complete snippets using company-mode
+  (add-to-list 'company-backends #'company-yankpad)
+  ;; If you want to expand snippets with hippie-expand
+  (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand))
+
+(use-package yasnippet
+  :ensure t)
+#+END_SRC
+
+With these settings, along with the ~company~ backend, I may type a keyword
+then “tab” it into expansion.
+
+(yankpad-reload)
+
+(-non-nil "")
+
+(defun s-non-empty (str) "Check whether the string is non-empty."
+   (not (equal str "")))
+
+
+
+# C-d, “yas-skip-and-clear-or-delete-char”, to ignore filling out an *unchanged* field.
+# 
+#+BEGIN_SRC emacs-lisp
+(defun yas-string  (n) 
+   (format "%s" (yas-field-value n)))
+
+(defun vary (d namesite callsite)
+  "namesite & callsite are yassnipet numbers"
+   (s-replace (concat (yas-string namesite) " v") (concat (yas-string namesite) d)
+     (yas-string callsite)))
+
+(cl-defun my/yas-replace (callsite namesite default &optional newsite)
+  " In ‘callsite’, replace all occurance of ‘namesite’ with ‘default’
+    unless ‘newsite’ is non-empty in which case it should be used instead.
+  "
+  (s-replace  (concat (yas-string namesite) " v") 
+              ;; (if (s-non-empty (yas-string newsite)) (yas-string newsite) default)   
+              (if newsite (if (s-non-empty (yas-string newsite)) (yas-string newsite) default) default)   
+              (yas-string callsite))
+)
+
+(defun when-non-empty (callsite str)
+   (unless (equal "" (yas-field-value callsite)) str))
+
+;; use given when empty, if non-empty then just use it.
+(defun when-empty (callsite str)
+   (if (s-non-empty (yas-field-value callsite)) (yas-field-value callsite) str))
+#+END_SRC
+
+
+(setq yas-indent-line 'fixed) ;; respect the spacing in my snippet declarations
+(yankpad-reload)
+(yas-global-mode)
+
+
+
+
 * Abstract                                                   :ignore:
  
 #+begin_center
@@ -85,7 +154,7 @@ with no need to seperate the two tasks and with the ability to generate multiple
 If you are a professional writer…Emacs outshines all other editing software 
 in approximately the same way that the noonday sun does the stars. 
 It is not just bigger and brighter; it simply makes everything else vanish.
-—[[https://so.nwalsh.com/2019/03/01/emacs][Neal Stephenson]]
+—[[http://project.cyberpunk.ru/lib/in_the_beginning_was_the_command_line/][Neal Stephenson]], “”
 #+end_quote
 
 Of course Emacs comes with the basic features of a text editor, but it is much more;
@@ -732,8 +801,27 @@ I almost always want the ~agda-mode~ input method.
 (add-hook 'org-mode-hook (lambda () (set-input-method "Agda")))
 #+END_SRC
 
-:agda2_program_args:
+:agda_Command_line_arguments:
     "+RTS   -H4.5G   -M4.5G   -K256M   -S/tmp/AgdaRTS.log   -A1G   -RTS   -i   ."
+
+Wolfram Kahl has recommended the following settings.
+
+#+begin_src emacs-lisp
+;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
+#+end_src
+
+These arguments specify
+| ~+RTS~, ~-RTS~ | Flags between these are arguments to the ~ghc~ runtime |
+| ~-M[size]~   | Maximum heap size                                    |
+| ~-H[size]~   | Suggested heap size                                  |
+| ~-A[size]~   | Allocation area size used by the garbage collector   |
+
+Full documentation for the ~ghc~ runtime argumentscan be found [[https://downloads.haskell.org/~ghc/7.8.4/docs/html/users_guide/runtime-control.html][here]].
+
+Additional arguments that may be useful include
+| ~-S[file]~ | Produces information about “each and every garbage collection” |
+|          | - Outputs to ~stderr~ by default                               |
+
 :end:
 
 Below are my personal Agda input symbol translations;
@@ -950,7 +1038,7 @@ Moreover, since I end up using org-mode most of the time, let's make that the de
 
 ** Spaceline: A sleek mode line
 
-I may not use spacemacs, since I do not like evil-mode and find spacemacs 
+I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I do not like evil-mode and find spacemacs 
 to “hide things” from me --whereas Emacs “”encourages” me to learn more--,
 however it is a configuration and I enjoy reading Emacs configs in order to 
 improve my own setup. From Spacemacs I've adopted Helm for list completion,
@@ -1088,6 +1176,13 @@ this package is no longer maintained. It works on my machine.
 (add-hook 'text-mode-hook
 	    '(lambda ()
 	       (visual-line-mode 1)))
+#+END_SRC
+
+Show ruler at 80 characters, for text and prog mode.
+#+BEGIN_SRC emacs-lisp
+(use-package fill-column-indicator :ensure t)
+(add-hook 'text-mode-hook 'fci-mode)
+(add-hook 'prog-mode-hook 'fci-mode)
 #+END_SRC
 
 ** Delete Selection mode
@@ -1574,7 +1669,7 @@ I do this so often it's not even funny.
 (global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
 #+END_SRC
 
-In Mac OS, one uses ~Cmd-r~ to reload a page and spacemacs binds buffer reversion to ~Cmd-u~
+In Mac OS, one uses ~Cmd-r~ to reload a page and Emacs binds buffer reversion to ~Cmd-u~
 --in Emacs, Mac's ~Cmd~ is referred to as the ‘super key’ and denoted ~s~.
 
 Moreover, since I use Org-mode to generate code blocks and occasionally
@@ -1810,6 +1905,9 @@ Finally, ~?~ to see a complete list of keys available.
 
 ;; Add more speed commands by adding to this association list.
 ;; (describe-symbol 'org-speed-commands-user)
+
+;; To see the commands available, execute
+; (org-speed-command-help)
 #+END_SRC  
 
 PS. ~C-RET, C-S-RET~ make a new heading where the latter marks it as a ~TODO~.
@@ -2253,11 +2351,7 @@ Sometimes, at the beginning at least, I would accidentally invoke the transposed
 command ~C-x C-c~, which saves all buffers and quits Emacs. So here's a helpful
 way to ensure I don't quit Emacs accidentally.
 #+begin_src emacs-lisp
-(global-set-key (kbd "C-x C-c") '(lambda () (interactive) 
-  (when (yes-or-no-p "Do you really want to quit Emacs? ") 
-        (save-buffers-kill-terminal))
-  )
-)
+(setq confirm-kill-emacs 'yes-or-no-p)
 #+end_src
 
 #+begin_src emacs-lisp
@@ -2493,7 +2587,11 @@ Some initial languages we want org-babel to support:
      (makefile	 . t)
      ))
 
+;; Preserve my indentation for source code during export.
 (setq org-src-preserve-indentation t)
+
+;; The export process hangs Emacs, let's avoid this.
+(setq org-export-in-background t)
 #+END_SRC
 
 More languages can be added using ~add-to-list~.
@@ -2505,6 +2603,8 @@ while not ignoring their content --see [[https://emacs.stackexchange.com/a/17677
 (load "~/dotfiles/.emacs.d/ox-extra.el")
 (ox-extras-activate '(ignore-headlines))
 #+END_SRC
+
+Use the ~:noexport:~ tag to omit a headline /and/ its contents.
 
 ** COMMENT TODO org-mode header generation
 Generate an untitled org-mode skeleton file ~C-x t~ --similar to ~C-x C-f~ for finding files.
@@ -3076,6 +3176,11 @@ We could run ~C-h b~ to see our bindings:
   :defer t
   :bind (("C-h b" . helm-descbinds)))
 #+END_SRC
+
+Finally, we can observe which features are active in our current Emacs with,
+#+begin_src emacs-lisp :tangle no
+(message "Features: %s" features)
+#+end_src
 
 Some possibly interesting reads:
   + [[https://to1ne.gitlab.io/literate-dotfiles/][Toon's Literate Dotfiles]]
