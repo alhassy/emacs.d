@@ -1,0 +1,78 @@
+#+Description: This is file is generated from my init.org; do not edit. 
+
+* Default                                           :global:
+
+** my-org-insert-link: cleverly insert a link copied to clipboard
+ [[${1:`(clipboard-yank)`}][$2]] $0
+
+** begin: produce an org-mode block
+#+begin_${1:environment$(let* 
+    ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
+     (langs '("c" "emacs-lisp" "lisp" "latex" "python" "sh" "haskell" "plantuml" "prolog"))
+     (type (yas-choose-value block)))
+     (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
+ $0
+#+END_${1:$(car (split-string yas-text))}
+
+** el: Elisp org-block
+#+begin_src emacs-lisp
+$0
+#+end_src
+
+** loop:  Elisp's for each loop
+(dolist (${1:var} ${2:list-form})
+        ${3:body})
+
+** defun: Lisp functions
+(cl-defun ${1:fun-name} (${2:arguments})
+  "${3:documentation}"
+  $0
+)
+
+** cond: Elisp conditionals
+(cond (${1:scenario₁} ${2:response₁})
+      (${3:scenario₂} ${4:response₂})
+)
+
+** fun: Function declaration with type signature 
+
+${1:fun-name} : ${2:arguments}
+$1 ${3:args} = ?$0
+
+** eqn-begin: Start a ≡-Reasoning block in Agda
+
+begin
+  ${1:left-hand-side}
+≡⟨ $0 ⟩
+  ${2:right-hand-side}
+∎
+
+** eqn-step: Insert a step in a ≡-Reasoning block in Agda
+
+≡⟨ ${1:hint} ⟩
+  $0
+** s-el: emacs-lisp
+#+begin_src emacs-lisp
+$0
+#+end_src
+
+** s-hs: haskell
+#+begin_src haskell
+$0
+#+end_src
+
+** s-ag: agda2
+#+begin_src agda2
+$0
+#+end_src
+
+** s-c: c
+#+begin_src c
+$0
+#+end_src
+
+** s-lx: latex
+#+begin_src latex
+$0
+#+end_src
+

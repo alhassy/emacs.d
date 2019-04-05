@@ -40,75 +40,6 @@
 
 #+STARTUP: lognoteclock-out
 
-* TODO Snippets
-
-#+BEGIN_SRC emacs-lisp
-(use-package yankpad
-  :ensure t
-  :defer 10
-  :init
-  (setq yankpad-file "~/.emacs.d/yankpad.org")
-  :config
-  (bind-key "<f7>" 'yankpad-map)
-  (bind-key "<f12>" 'yankpad-expand)
-  ;; If you want to complete snippets using company-mode
-  (add-to-list 'company-backends #'company-yankpad)
-  ;; If you want to expand snippets with hippie-expand
-  (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand))
-
-(use-package yasnippet
-  :ensure t)
-#+END_SRC
-
-With these settings, along with the ~company~ backend, I may type a keyword
-then “tab” it into expansion.
-
-(yankpad-reload)
-
-(-non-nil "")
-
-(defun s-non-empty (str) "Check whether the string is non-empty."
-   (not (equal str "")))
-
-
-
-# C-d, “yas-skip-and-clear-or-delete-char”, to ignore filling out an *unchanged* field.
-# 
-#+BEGIN_SRC emacs-lisp
-(defun yas-string  (n) 
-   (format "%s" (yas-field-value n)))
-
-(defun vary (d namesite callsite)
-  "namesite & callsite are yassnipet numbers"
-   (s-replace (concat (yas-string namesite) " v") (concat (yas-string namesite) d)
-     (yas-string callsite)))
-
-(cl-defun my/yas-replace (callsite namesite default &optional newsite)
-  " In ‘callsite’, replace all occurance of ‘namesite’ with ‘default’
-    unless ‘newsite’ is non-empty in which case it should be used instead.
-  "
-  (s-replace  (concat (yas-string namesite) " v") 
-              ;; (if (s-non-empty (yas-string newsite)) (yas-string newsite) default)   
-              (if newsite (if (s-non-empty (yas-string newsite)) (yas-string newsite) default) default)   
-              (yas-string callsite))
-)
-
-(defun when-non-empty (callsite str)
-   (unless (equal "" (yas-field-value callsite)) str))
-
-;; use given when empty, if non-empty then just use it.
-(defun when-empty (callsite str)
-   (if (s-non-empty (yas-field-value callsite)) (yas-field-value callsite) str))
-#+END_SRC
-
-
-(setq yas-indent-line 'fixed) ;; respect the spacing in my snippet declarations
-(yankpad-reload)
-(yas-global-mode)
-
-
-
-
 * Abstract                                                   :ignore:
  
 #+begin_center
@@ -1595,8 +1526,7 @@ After some time this got a bit annoying and I'm no longer  using this.
   ;; wrap around at edges
   (setq windmove-wrap-around t))
 #+END_SRC
-
-* General Config, “Interior”                                       :Bad_name:
+* TODO General Config, “Interior”                                  :Bad_name:
 
 Configurations that affect Emacs, but not the look.
 
@@ -1634,6 +1564,255 @@ system, like git; only locally.
 (desktop-save-mode 1)
 (setq desktop-restore-eager 10)
 #+end_src
+* TODO :relocate: Snippets -- Template Expansion
+
+It is common that there is a sequence of text that we tend to repeat
+often, possibly with a name or some other parameter altered.
+Such a snippet could be written once then provided by a simple
+Lisp insert command with the parameters being queried. Luckily, others
+have written such pleasant utilities.
+
+[[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet]] is a pleasant utility for template expansion with the alluring
+feature to allow arbitrary Lisp code to be executed during expansion.
+The declaration of templates is verbose, requiring a particular file
+hierarchy, as such I utilise [[https://github.com/Kungsgeten/yankpad][Yankpad]] which allows me to employ
+an Org-mode approach: Each template corresponds to an org heading of
+the form ~Key:Words:For:Expansion:Here: name of snippet here~ and the
+template body is then the body of the org heading.
+Any of ~Key, Words, For, Expansion, Here~ will rewrite into the body
+of the org tree. This is much more terse, and I even don't bother
+with that; instead preferring to tangle my templates using yankpad
+as a mere interface.
+
+#+BEGIN_SRC emacs-lisp
+;; Yet another snippet extension program
+(use-package yasnippet :ensure t)
+
+;; Nice “interface” to said program
+(use-package yankpad
+  :ensure t
+  :defer 10
+  :init
+  (setq yankpad-file "~/.emacs.d/yankpad.org")
+  :config
+  (bind-key "<f7>" 'yankpad-map)
+  (bind-key "<f12>" 'yankpad-expand)
+  ;; If you want to complete snippets using company-mode
+  (add-to-list 'company-backends #'company-yankpad)
+  ;; If you want to expand snippets with hippie-expand
+  (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand))
+#+END_SRC
+
+With these settings, along with the ~company~ backend, I may type a keyword
+then “tab” it into expansion.
+
+Yankpad requires we have an org file that contains our templates,
+so we tangle such a file ~~/.emacs.d/yankpad.org~, and have all of our
+templates be globally accessible.
+#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org"
+,#+Description: This is file is generated from my init.org; do not edit. 
+
+,* Default                                           :global:
+#+end_src
+
+Here's an example of a common template I perform by hand --no more!
+I have the expected habit of copying a URL from someplace then forming
+a link to it by writing ~[[URL] [description]]~, since the URL & syntax are already
+known, let's expand those and place the cursour at the only unknown --the description.
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+,** my-org-insert-link: cleverly insert a link copied to clipboard
+ [[${1:`(clipboard-yank)`}][$2]] $0
+#+end_src
+
+What's going on here?
+0. This template is expanded with the keyword ~my-org-insert-link~, then “tab”.
+1. The cursour lands at position ~$1~, which has default text being the result
+  of evaluating ~(clipboard-yank)~. 
+  # I've documented this default as being the url.
+
+  # If I leave out the ~$(clipboard-yank)~ part, the default would simply be ~url~.
+
+  We may evaluate Lisp code anywhere by enclosing it in backticks.
+
+2. If we're satisfied with the current field, we simply tab to the next field.
+   Otherwise, we simply write text --which overwrites the default text.
+
+3. After enough tabbing we complete the template and the cursour lands
+   at position ~$0~.
+
+⟪ Having default or mirrored text for ~$2~ would not allow me to see the URL
+field, lest I wish to change it or at least confirm it's what I want.
+Hence, the ~$2~ field has no default. ⟫
+
+Let's overwrite the usual way to insert such links, via ~C-c C-l~.
+#+BEGIN_SRC emacs-lisp 
+(cl-defun org-insert-link ()
+  "Makes an org link by inserting the URL copied to clipboard
+  and prompting for the link description only.
+
+  Type over the shown link to change it, or tab to move to the description
+  field.
+
+  This overrides Org-mode's built-in ‘org-insert-link’ utility.
+  "
+  (interactive)
+  (insert "my-org-insert-link")
+  (yankpad-expand)
+)
+#+END_SRC
+
+The [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippe manual]] is an accessible read, as is the 
+ [[https://github.com/Kungsgeten/yankpad][Yankpad manual]], and showcases many other utilities; such as
+having certain snippets being activated enabled only in particular
+modes or on demand. Of note is that field ~$n~ can be accessed in 
+code with the invocation ~(yas-field-value n)~.
+
+The rest of this section is other templates, not much for now,
+concluding with actually loading this snippet mechanism globally.
+
+*** Org-mode Templates --A reason I “generate” templates ;)
+
+This produces a pop-up list of org-mode block types, if ~src~ is
+selected, then a list of my commonly used languages pops-up.
+Alternatively, ignore the pop-up menu and write any block or language name.
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+,** begin: produce an org-mode block
+,#+begin_${1:environment$(let* 
+    ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
+     (langs '("c" "emacs-lisp" "lisp" "latex" "python" "sh" "haskell" "plantuml" "prolog"))
+     (type (yas-choose-value block)))
+     (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
+ $0
+,#+END_${1:$(car (split-string yas-text))}
+#+END_SRC
+In this case, ~yas-text~ is equivalent to (~yas-field-value 1)~;
+it generally refers to the value of the field being mirrored with ~${n: ⋯yas-text⋯}~.
+
+However, going through pop-ups takes precious time.
+Let's introduce a template for my most utilised kind of language blocks.
+#+begin_src org :tangle no
+,** s-el: Elisp org-block
+,#+begin_src emacs-lisp
+$0
+,#+end_src
+#+end_src
+
+However, doing this for each language I want is a waste of time
+and textual space. Why? The purpose of templates is to reduce repetition,
+yet the above block would be repeated with only 3 parts ‘unknown’: 
+The expansion keyword, the description, and the org-mode source block name.
+Whence,
+#+BEGIN_SRC emacs-lisp
+(cl-defun make-lang-template (key lang)
+  "We make an org-mode source block snippet template.
+  
+  ‘key’ is the expansion word key for the language ‘lang’;
+  the description for the snippet is also ‘lang’.
+  "
+  (s-join "\n" `(
+    ,(concat "** " key ": " lang)
+    ,(concat "#+begin_src " lang)
+    "$0"
+    "#+end_src"
+    "\n"
+  ))
+)
+#+END_SRC
+
+Now we invoke the following incantation once so that
+~s-~, due to company mode, brings up a list of languages
+that I can then simply scroll down through, then “enter” upon to
+expand. Moreover, the prefix ~s-~ means that the key is mostly irrelevant,
+since I needn't remember it because company-mode immediately lists possible completions.
+Super neat stuff :-)
+#+BEGIN_SRC emacs-lisp :tangle no
+(with-temp-buffer 
+
+   (find-file "~/.emacs.d/yankpad.org")
+   (end-of-buffer)
+
+   (dolist (x '( ("s-el" . "emacs-lisp")
+                 ("s-hs" . "haskell")
+                 ("s-ag" . "agda2")
+                 ("s-c" . "c")
+                 ("s-lx" . "latex")
+               ))
+      (insert (make-lang-template (car x) (cdr x))))
+ 
+   (save-buffer)
+   (kill-buffer)
+   (yankpad-reload)
+)
+#+END_SRC
+
+Ain't this reminiscent of meta-programming ;-)
+
+:Fun_albeit_useless_exercise:
+
+Let's push this frontier a bit more … 
+
+In expressive languages like Agda, one can not only be type polymorphic
+but also ‘level polymorphic’ --since types constitute a hierarchy
+where a ‘type’ is uninterestingly an ‘element’ of a higher ‘type’, ad infinitum.
+For example, the type of a level polymorphic ′choice’ function would
+~{a : Level} (A : Set a) → A~ --note that such a choice function cannot
+exist since for any type ~A~ it returns an element of ~A~, then what of the empty 
+type. Anyhow, the template ~{${1:a} : Level} → (${2:A} : Set $1) → $0~
+would suffice to make this happen. Yet, what if we wanted
+/n/-many sets?
+
+Make a function that takes /n ≤ 26/ as input, produces a list of
+levels, then uses each level to produce a list of type names ;-)
+Exercise to the interested (source code) reader 
+-- ping me, if you have questions.
+:End:
+
+*** Elisp Templates
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+,** loop:  Elisp's for each loop
+(dolist (${1:var} ${2:list-form})
+        ${3:body})
+
+,** defun: Lisp functions
+(cl-defun ${1:fun-name} (${2:arguments})
+  "${3:documentation}"
+  $0
+)
+
+,** cond: Elisp conditionals
+(cond (${1:scenario₁} ${2:response₁})
+      (${3:scenario₂} ${4:response₂})
+)
+#+end_src
+
+*** Agda Templates
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+,** fun: Function declaration with type signature 
+
+${1:fun-name} : ${2:arguments}
+$1 ${3:args} = ?$0
+
+,** eqn-begin: Start a ≡-Reasoning block in Agda
+
+begin
+  ${1:left-hand-side}
+≡⟨ $0 ⟩
+  ${2:right-hand-side}
+∎
+
+,** eqn-step: Insert a step in a ≡-Reasoning block in Agda
+
+≡⟨ ${1:hint} ⟩
+  $0
+#+end_src
+
+*** Enabling Templates
+After our yankpad templates are generated, we need to load it.
+#+BEGIN_SRC emacs-lisp
+(setq yas-indent-line 'fixed) ;; respect the spacing in my snippet declarations
+(yas-global-mode)
+(yankpad-reload)
+#+END_SRC
 
 * Helpful Functions & Shortcuts
 
