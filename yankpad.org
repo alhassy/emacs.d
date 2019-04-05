@@ -14,8 +14,38 @@
  $0
 #+END_${1:$(car (split-string yas-text))}
 
-** el: Elisp org-block
+** s-el: emacs-lisp
 #+begin_src emacs-lisp
+$0
+#+end_src
+
+
+** s-org: org
+#+begin_src org
+$0
+#+end_src
+
+
+** s-hs: haskell
+#+begin_src haskell
+$0
+#+end_src
+
+
+** s-ag: agda2
+#+begin_src agda2
+$0
+#+end_src
+
+
+** s-c: c
+#+begin_src c
+$0
+#+end_src
+
+
+** s-lx: latex
+#+begin_src latex
 $0
 #+end_src
 
@@ -51,30 +81,3 @@ begin
 
 ≡⟨ ${1:hint} ⟩
   $0
-** s-el: emacs-lisp
-#+begin_src emacs-lisp
-$0
-#+end_src
-
-** s-hs: haskell
-#+begin_src haskell
-$0
-#+end_src
-
-** s-ag: agda2
-#+begin_src agda2
-$0
-#+end_src
-
-** s-c: c
-#+begin_src c
-$0
-#+end_src
-
-** s-lx: latex
-#+begin_src latex
-$0
-#+end_src
-
-
-
