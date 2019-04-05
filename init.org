@@ -40,6 +40,12 @@
 
 #+STARTUP: lognoteclock-out
 
+# Keep OS up to date; 
+# brew update && brew upgrade
+# takes no time, if we're up to date.
+#
+# Do same for Emacs' pacakges?
+
 * Abstract                                                   :ignore:
  
 #+begin_center
@@ -1321,7 +1327,7 @@ unicode arrow.
 (setq org-hide-block-startup t)
 #+end_src
 
-** Org Speed Keys
+** High Speed Literate Programming
 Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
 a headline, we can perform fast manipulation & navigation using the standard Emacs movement
 controls, such as 
@@ -1348,18 +1354,29 @@ controls, such as
 
 We can add our own speed keys by altering the ~org-speed-commands-user~ variable.
 
-Finally, ~?~ to see a complete list of keys available.
+Moreover, ~?~ to see a complete list of keys available.
 #+BEGIN_SRC emacs-lisp
 (setq org-use-speed-commands t)
-
-;; Add more speed commands by adding to this association list.
-;; (describe-symbol 'org-speed-commands-user)
-
-;; To see the commands available, execute
-; (org-speed-command-help)
 #+END_SRC  
-
+#  Add more speed commands by adding to this association list.
+#  (describe-symbol 'org-speed-commands-user)
+# 
+#  To see the commands available, execute
+# (org-speed-command-help)
 PS. ~C-RET, C-S-RET~ make a new heading where the latter marks it as a ~TODO~.
+
+Finally, let's use the “super key” --aka the command or windows key--
+to jump to the previous, next, or toggle editing org-mode source blocks.
+#+begin_src emacs-lisp
+;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
+;;
+(define-key org-mode-map (kbd "s-p") #'org-babel-previous-src-block)
+(define-key org-mode-map (kbd "s-n") #'org-babel-next-src-block)
+(define-key org-mode-map (kbd "s-e") #'org-edit-src-code)
+(define-key org-src-mode-map (kbd "s-e") #'org-edit-src-exit)
+#+end_src
+
+Interestingly, ~s-l~ is “goto line”.
 
 ** Using org-mode as a Day Planner
 
@@ -2580,6 +2597,9 @@ an approach is brittle: I have to manually execute said script.
 In contrast, using noweb invocations to tangle the results is
 more flexible: Any time the tangling is performed, the yankpad
 is kept up to date --no personal intervention from myself.
+
+Observe that noweb could be utilised in a similar fashion to 
+[[https://www.wisdomandwonder.com/article/10603/two-ways-to-share-static-key-pair-values-across-different-tangled-source-files-with-org-mode-literate-programming][share key-value pairs across different source files]].
 ⟫
 
 :Old_approach:
