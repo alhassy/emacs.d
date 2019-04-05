@@ -143,7 +143,7 @@ Consider reading ⋯
 + [[https://david.rothlis.net/emacs/howtolearn.html][“How to Learn Emacs”]]
 + [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
 
-* TODO Booting Up
+* Booting Up
 ** ~~/.emacs~ vs. ~init.org~
 
 Why not keep Emac's configurations in the ~~/.emacs~ file?
@@ -703,6 +703,16 @@ whole buffer, or just ~M-x speed-type-text~ will produce the selected region, bu
 or random text for practice. The timer begins when the first key is pressed
 and stats are shown when the last letter is entered.
 
+Other typing resources include:
++ [[https://www.emacswiki.org/emacs/TypingOfEmacs][Typing of Emacs]] --an Emacs alternative to speed type, possibly more engaging.
++ [[https://alternativeto.net/software/klavaro/][Klavaro]] --a GUI based yet language-independent typing tutor.
+  - I'm enjoying this tool in getting started with Arabic typing.
+  - The plan is to move to using the online [[https://makinghijrah.com/arabic-typing/][Making Hijrah]] tutor which
+    concludes the basic lesson plan with a few short narrations.
++ [[https://typing.io/][Typing.io]] is a tutor for coders: Lessons are based on open source code, such
+  some XMonad written in Haskell or Linux written in  C.
++ [[https://www.gnu.org/software/gtypist/index.html#downloading][GNU Typist]] --which is interactive in the terminal, so not ideal in Emacs--,
+
 ** Unicode Input via Agda Input
  
 :agda2-include-dirs-Issue:
@@ -828,7 +838,10 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 ;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
 :End:
 
-** TODO Locally ~toggle~ a variable
+** Locally ~toggle~ a variable
+:PROPERTIES:
+:FIXME: This utility should accept a sequence of forms, possibly utilise a progn?
+:END:
 
 *todo* body of toggle should be a progn?
 
@@ -889,8 +902,26 @@ NOPE ;; ⇒ "NOPE"
 #+end_example
 :End:
 
-** TODO Altering PATH
-#+BEGIN_SRC emacs-lisp
+** Syncing to the System's ~$PATH~
+
+For one reason or another, on OS X it seems that an Emacs instance
+begun from the terminal may not inherit the terminal's environment
+variables, thus making it difficult to use utilities like ~pdflatex~
+when Org-mode attempts to produce a PDF.
+
+#+begin_src emacs-lisp
+(use-package exec-path-from-shell
+  :ensure t
+  :init
+    (when (memq window-system '(mac ns x))
+     (exec-path-from-shell-initialize))
+)
+#+end_src
+
+See these [[https://github.com/purcell/exec-path-from-shell][docs]] for setting other environment variables.
+
+:Explicit_solution:
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; https://emacs.stackexchange.com/questions/4090/org-mode-cannot-find-pdflatex-using-mac-os
 
 (defun set-exec-path-from-shell-PATH ()
@@ -905,6 +936,10 @@ NOPE ;; ⇒ "NOPE"
 ;; call function now
 (set-exec-path-from-shell-PATH)
 #+END_SRC
+
+#+RESULTS:
+| /Users/musa/Library/Haskell/bin | /usr/local/bin | /usr/bin | /bin | /usr/sbin | /sbin | /Library/TeX/texbin | /usr/local/share/dotnet | /opt/X11/bin | /Library/Frameworks/Mono.framework/Versions/Current/Commands | /Users/musa/Library/Haskell/bin |
+:End:
 
 ** Who am I?
 #+begin_src emacs-lisp
@@ -995,42 +1030,6 @@ about the current mode, as well as other matters --such as time & date, for exam
 Other separators I've considered include ~'brace~ instead of an arrow,
 and ~'contour, 'chamfer, 'wave, 'zigzag~ which look like browser tabs
 that are curved, boxed, wavy, or in the style of driftwood.
-
-** Mouse Editing Support
-#+begin_src emacs-lisp
-;; Text selected with the mouse is automatically copied to clipboard.
-(setq mouse-drag-copy-region t)
-#+end_src
-
-** Having a workspace manager in Emacs
-
-I've loved using XMonad as a window tiling manager.
-I've enjoyed the ability to segregate my tasks
-according to what ‘project’ I'm working on;
-such as research, marking, Emacs play, etc.
-With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
-
-That is, I can have a million buffers, but only those
-that belong to a workspace will be visible when I'm switching between buffers, for example.
-
-#+BEGIN_SRC emacs-lisp
-(use-package perspective :ensure t)
-
-;; Activate it.
-(persp-mode)
-
-;; In the modeline, tell me which workspace I'm in.
-(persp-turn-on-modestring)
-#+END_SRC
-
-All commands are prefixed by ~C-x x~; main commands:
-+ ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext one, or go to ‘p’revious one.
-+ ~c~ :: Query a perspective to kill.
-+ ~r~ :: Rename a perspective.
-+ ~A~ :: Add buffer to current perspective & remove it from all others.
-
-As always, since we've installed ~which-key~, it suffices to press
-~C-x x~ then look at the resulting menu 😃
 
 ** Flashing when something goes wrong
 Make top and bottom of screen flash when something unexpected happens thereby observing a warning message in the minibuffer. E.g., C-g, or calling an unbound key sequence, or misspelling a word.
@@ -1242,222 +1241,6 @@ a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
 (column-number-mode t)
 #+END_SRC
 
-** Completion Frameworks
-[[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible completions and also shows recently executed commands when pressing ~M-x~.
-
-Extremely helpful for when switching between buffers, =C-x b=,
-and discovering & learning about other commands!
-E.g., press ~M-x~ to see recently executed commands and other possible commands!
-
-Try and be grateful.
-#+BEGIN_SRC emacs-lisp
-(use-package helm 
- :ensure t
- :diminish
- :init (helm-mode t)
- :bind
-  ("C-x C-r" . helm-recentf)      ; search for recently edited  
-
-  ;; Helm provides generic functions for completions to replace 
-  ;; tab-completion in Emacs with no loss of functionality. 
-  ("M-x" . 'helm-M-x)
-  ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
-  ("C-x r b" .'helm-filtered-bookmarks)
-  ("C-x C-f" . 'helm-find-files)
-
-   ;; Show all meaningful Lisp symbols whose names match a given pattern.
-   ;; Helpful for looking up commands.
-   ("C-h a" . helm-apropos)
-
-   ;; Look at what was cut recently & paste it in.
-   ("M-y" . helm-show-kill-ring)
-)
-;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
-
-;; Yet, let's keep tab-completetion anyhow.
-(define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
-(define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
-;; We can list ‘actions’ on the currently selected item by C-z.
-(define-key helm-map (kbd "C-z")  'helm-select-action)
-#+END_SRC
-
-When ~helm-mode~ is enabled, even help commands make use of it.
-E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
-and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
-Both show a pop-up of other possible commands.
-
-Incidentally, helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the top program via
-~helm-top~. It also serves as an interface to popular search engines
-and over 100 websites such as ~google, stackoverflow~, and ~arxive~.
-#+begin_src emacs-lisp
-;; (shell-command "brew install surfraw &")
-;; 
-;; Invoke helm-surfraw
-#+end_src
-If we want to perform a google search, with interactive suggestions,
-then invoke ~helm-google-suggest~ --which can be acted for other serves,
-such as Wikipedia or Youtube by ~C-z~. For more google specific options,
-there is the ~google-this~ package.
-
-Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].
-It allows us to not only search the current buffer but also
-the other buffers and to make live edits by pressing ~C-c C-e~
-when a search buffer exists. Incidentally, executing ~C-s~ on a word, region,
-will search for that particular word, region; then apply changes by ~C-x C-s~.
-
-#+BEGIN_SRC emacs-lisp
-(use-package helm-swoop
-  :ensure t
-  :bind
-  (
-   ("C-s"     . 'helm-swoop)           ;; search current buffer
-   ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
-   ;; Go back to last position where ‘helm-swoop’ was called
-   ("C-S-s" . 'helm-swoop-back-to-last-point)
-  )
- :config
-   ;; Give up colour for speed.
-  (setq helm-swoop-speed-or-color nil)
-)
-#+END_SRC
-Press ~M-i~ after a search has executed to enable it for all buffers.
-
-We can also limit our search to org files, or buffers of the same mode,
-or buffers belonging to the same project!
-
-:Old_ivy_counsel_swiper_shenanigans:
-+ There is a super duper neato search capability we can utilise -- ~swiper~.
-+ We also use the ~counsel~, a collection of completion, ~ivy~, enhanced versions of
-  common Emacs commands.
-#+begin_src emacs-lisp :tangle no
-(use-package ivy ;; More powerful but ugly looking completetion framework. 
-                 ;; Helm is prettier.
-                 ;; Needed for Counsel, below.
- :config 
-
-  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
-  (setq ivy-use-virtual-buffers t)
-  ;; number of result lines to display
-  (setq ivy-height 10)
-  ;; does not count candidates
-  (setq ivy-count-format "")
-  ;; no regexp by default
-  (setq ivy-initial-inputs-alist nil)
-)
-
-(use-package counsel
-  :ensure t
-  :bind*                              ; load when pressed
-  (
-   ("C-s"     . swiper)
-   ;; ("C-x C-r" . counsel-recentf)      ; search for recently edited
-   ("<f1> l"  . counsel-find-library) ; find an Emacs Lisp library 
-   ("<f2> u"  . counsel-unicode-char) ; insert a unicode symbol using a pop-up
-  ))
-#+end_src
-
-~swiper~ is an alternative to Emacs' default incremental search.
-It shows an overview of all matches --navigate using arrow keys.
-There is also a helm based version of swiper.
-:end:
-
-Finally, let's enable “complete anything” mode
---it ought to start in half a second and only need two characters to get going,
-which means word suggestions are provided and so I need only type partial words
-then tab to get the full word!
-#+begin_src emacs-lisp
-(use-package company
-  :ensure
-  :diminish
-  :config
-    (setq company-idle-delay 0)
-    (setq company-minimum-prefix-length 2)
-    (add-hook 'after-init-hook 'global-company-mode))
-
-;; So fast that we don't need this.
-;; (global-set-key (kbd "C-c h") 'company-complete)
-#+end_src
-Note that ~Meta-/~ goes through a sequence of completions.
-
-Note that besides the arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to
-navigate the options.
-
-Besides boring word completition, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
-#+begin_src emacs-lisp
-(use-package company-emoji :ensure t)
-(add-to-list 'company-backends 'company-emoji)
-#+end_src
-
-For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
-
-➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
-All emoji names are lowercase. ◀
-# :end: does not html export nicely.
-
-The libraries ~emojify, emojify-logos~ provides cool items like :haskell: :emacs: :org: :ruby: :python:.
-Unfortunately they do not easily export to html with org-mode, so I'm not using
-them.
-
-:Alternatives:
-#+BEGIN_SRC emacs-lisp
-(use-package emojify
- :ensure t
- :config (setq emojify-display-style 'image)
- :init (global-emojify-mode 1) ;; Will install missing images, if need be.
-)
-#+END_SRC
-
-(use-package emojify-logos
-:ensure t
-:after emojify)
-
-For example,
-#+begin_src emacs-lisp :tangle no
- :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:
-#+end_src
-Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emojify-insert-emoji)~ to see more.
-
-Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
-for completion of emoji names.
-
-(use-package ac-emoji
-  :ensure t
-  :init (ac-emoji-setup)
-) 
-:End:
-
-** COMMENT On the fly syntax checking :Disabled:_want_it_within_org_src:
-#+begin_src emacs-lisp
-(use-package flycheck
-  :diminish
-  :defer 2
-  :init (global-flycheck-mode)
-  :custom
-  (flycheck-display-errors-delay .3))
-#+end_src
-
-:Ignore:
-https://emacs.stackexchange.com/questions/7844/org-mode-have-flycheck-resolve-relative-config-while-editing-code-blocks
-#+begin_src emacs-lisp :tangle no
-(defadvice org-edit-src-code (around set-buffer-file-name activate compile)
-  (let ((file-name (buffer-file-name)))
-    ad-do-it                          
-    (setq buffer-file-name file-name)))
-#+end_src
-
-In an org-src block, we press ~C-c '~ to get into the language's
-mode where flycheck will provide many warnings.
-#+begin_src haskell :tangle no
-module Main where
-
-main :: IO ()
-main = putStrLn $ "nice" ++ f 0
-
-f :: Int -> String
-f x = x -- show x 
--- type error
-#+end_src
-:End:
 ** COMMENT “FIXME:” Keyword
 
 In the *middle* of a senctence, I need a FIXME: Woah!
@@ -1515,519 +1298,6 @@ are still readable.
 #+end_src
 
 After some time this got a bit annoying and I'm no longer  using this.
-
-** Jump between windows using Cmd+Arrow
-#+BEGIN_SRC emacs-lisp
-(use-package windmove
-  :ensure t
-  :config
-  ;; use command key on Mac
-  (windmove-default-keybindings 'super)
-  ;; wrap around at edges
-  (setq windmove-wrap-around t))
-#+END_SRC
-* TODO General Config, “Interior”                                  :Bad_name:
-
-Configurations that affect Emacs, but not the look.
-
-** Backups
-By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
-let's keep old versions since there's disk space to go around
---what am I going to do with 500gigs when nearly all my ‘software’ is
-textfiles interpreted within Emacs 😼
-
-#+BEGIN_SRC emacs-lisp
-;; New location for backups.
-(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-
-;; Never silently delete old backups.
-(setq delete-old-versions -1)
-
-;; Use version numbers for backup files.
-(setq version-control t)
-
-;; Even version controlled files get to be backed up.
-(setq vc-make-backup-files t)
-#+END_SRC
-
-Why backups? Sometimes I may forget to submit a file, or edit, to my
-version control system, and it'd be nice to be able to see a local
-automatic backup. Whenever ‘I need space,’ then I simply empty
-the backup directory, if ever.
-
-Like package installations, my backups are not kept in any version control
-system, like git; only locally.
-
-** COMMENT Keep buffers open across sessions :maybe_not_desirable:
-#+begin_src emacs-lisp
-;; Keep open files open across sessions.
-(desktop-save-mode 1)
-(setq desktop-restore-eager 10)
-#+end_src
-* TODO :relocate: Snippets -- Template Expansion
-
-It is common that there is a sequence of text that we tend to repeat
-often, possibly with a name or some other parameter altered.
-Such a snippet could be written once then provided by a simple
-Lisp insert command with the parameters being queried. Luckily, others
-have written such pleasant utilities.
-
-[[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet]] is a pleasant utility for template expansion with the alluring
-feature to allow arbitrary Lisp code to be executed during expansion.
-The declaration of templates is verbose, requiring a particular file
-hierarchy, as such I utilise [[https://github.com/Kungsgeten/yankpad][Yankpad]] which allows me to employ
-an Org-mode approach: Each template corresponds to an org heading of
-the form ~Key:Words:For:Expansion:Here: name of snippet here~ and the
-template body is then the body of the org heading.
-Any of ~Key, Words, For, Expansion, Here~ will rewrite into the body
-of the org tree. This is much more terse, and I even don't bother
-with that; instead preferring to tangle my templates using yankpad
-as a mere interface.
-
-#+BEGIN_SRC emacs-lisp
-;; Yet another snippet extension program
-(use-package yasnippet :ensure t)
-
-;; Nice “interface” to said program
-(use-package yankpad
-  :ensure t
-  :defer 10
-  :init
-  (setq yankpad-file "~/.emacs.d/yankpad.org")
-  :config
-  (bind-key "<f7>" 'yankpad-map)
-  (bind-key "<f12>" 'yankpad-expand)
-  ;; If you want to complete snippets using company-mode
-  (add-to-list 'company-backends #'company-yankpad)
-  ;; If you want to expand snippets with hippie-expand
-  (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand))
-#+END_SRC
-
-With these settings, along with the ~company~ backend, I may type a keyword
-then “tab” it into expansion.
-
-Yankpad requires we have an org file that contains our templates,
-so we tangle such a file ~~/.emacs.d/yankpad.org~, and have all of our
-templates be globally accessible.
-#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org"
-,#+Description: This is file is generated from my init.org; do not edit. 
-
-,* Default                                           :global:
-#+end_src
-
-Here's an example of a common template I perform by hand --no more!
-I have the expected habit of copying a URL from someplace then forming
-a link to it by writing ~[[URL] [description]]~, since the URL & syntax are already
-known, let's expand those and place the cursour at the only unknown --the description.
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"
-,** my-org-insert-link: cleverly insert a link copied to clipboard
- [[${1:`(clipboard-yank)`}][$2]] $0
-#+end_src
-
-What's going on here?
-0. This template is expanded with the keyword ~my-org-insert-link~, then “tab”.
-1. The cursour lands at position ~$1~, which has default text being the result
-  of evaluating ~(clipboard-yank)~. 
-  # I've documented this default as being the url.
-
-  # If I leave out the ~$(clipboard-yank)~ part, the default would simply be ~url~.
-
-  We may evaluate Lisp code anywhere by enclosing it in backticks.
-
-2. If we're satisfied with the current field, we simply tab to the next field.
-   Otherwise, we simply write text --which overwrites the default text.
-
-3. After enough tabbing we complete the template and the cursour lands
-   at position ~$0~.
-
-⟪ Having default or mirrored text for ~$2~ would not allow me to see the URL
-field, lest I wish to change it or at least confirm it's what I want.
-Hence, the ~$2~ field has no default. ⟫
-
-Let's overwrite the usual way to insert such links, via ~C-c C-l~.
-#+BEGIN_SRC emacs-lisp 
-(cl-defun org-insert-link ()
-  "Makes an org link by inserting the URL copied to clipboard
-  and prompting for the link description only.
-
-  Type over the shown link to change it, or tab to move to the description
-  field.
-
-  This overrides Org-mode's built-in ‘org-insert-link’ utility.
-  "
-  (interactive)
-  (insert "my-org-insert-link")
-  (yankpad-expand)
-)
-#+END_SRC
-
-The [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippe manual]] is an accessible read, as is the 
- [[https://github.com/Kungsgeten/yankpad][Yankpad manual]], and showcases many other utilities; such as
-having certain snippets being activated enabled only in particular
-modes or on demand. Of note is that field ~$n~ can be accessed in 
-code with the invocation ~(yas-field-value n)~.
-
-The rest of this section is other templates, not much for now,
-concluding with actually loading this snippet mechanism globally.
-
-*** Org-mode Templates --A reason I “generate” templates ;)
-
-This produces a pop-up list of org-mode block types, if ~src~ is
-selected, then a list of my commonly used languages pops-up.
-Alternatively, ignore the pop-up menu and write any block or language name.
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"
-,** begin: produce an org-mode block
-,#+begin_${1:environment$(let* 
-    ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
-     (langs '("c" "emacs-lisp" "lisp" "latex" "python" "sh" "haskell" "plantuml" "prolog"))
-     (type (yas-choose-value block)))
-     (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
- $0
-,#+END_${1:$(car (split-string yas-text))}
-#+END_SRC
-In this case, ~yas-text~ is equivalent to (~yas-field-value 1)~;
-it generally refers to the value of the field being mirrored with ~${n: ⋯yas-text⋯}~.
-
-However, going through pop-ups takes precious time.
-Let's introduce a template for my most utilised kind of language blocks.
-#+begin_src org :tangle no
-,** s-el: Elisp org-block
-,#+begin_src emacs-lisp
-$0
-,#+end_src
-#+end_src
-
-However, doing this for each language I want is a waste of time
-and textual space. Why? The purpose of templates is to reduce repetition,
-yet the above block would be repeated with only 3 parts ‘unknown’: 
-The expansion keyword, the description, and the org-mode source block name.
-Whence,
-#+BEGIN_SRC emacs-lisp
-(cl-defun make-lang-template (key lang)
-  "We make an org-mode source block snippet template.
-  
-  ‘key’ is the expansion word key for the language ‘lang’;
-  the description for the snippet is also ‘lang’.
-  "
-  (s-join "\n" `(
-    ,(concat "** " key ": " lang)
-    ,(concat "#+begin_src " lang)
-    "$0"
-    "#+end_src"
-    "\n"
-  ))
-)
-#+END_SRC
-
-Now we invoke the following incantation once so that
-~s-~, due to company mode, brings up a list of languages
-that I can then simply scroll down through, then “enter” upon to
-expand. Moreover, the prefix ~s-~ means that the key is mostly irrelevant,
-since I needn't remember it because company-mode immediately lists possible completions.
-Super neat stuff :-)
-#+BEGIN_SRC emacs-lisp :tangle no
-(with-temp-buffer 
-
-   (find-file "~/.emacs.d/yankpad.org")
-   (end-of-buffer)
-
-   (dolist (x '( ("s-el" . "emacs-lisp")
-                 ("s-hs" . "haskell")
-                 ("s-ag" . "agda2")
-                 ("s-c" . "c")
-                 ("s-lx" . "latex")
-               ))
-      (insert (make-lang-template (car x) (cdr x))))
- 
-   (save-buffer)
-   (kill-buffer)
-   (yankpad-reload)
-)
-#+END_SRC
-
-Ain't this reminiscent of meta-programming ;-)
-
-:Fun_albeit_useless_exercise:
-
-Let's push this frontier a bit more … 
-
-In expressive languages like Agda, one can not only be type polymorphic
-but also ‘level polymorphic’ --since types constitute a hierarchy
-where a ‘type’ is uninterestingly an ‘element’ of a higher ‘type’, ad infinitum.
-For example, the type of a level polymorphic ′choice’ function would
-~{a : Level} (A : Set a) → A~ --note that such a choice function cannot
-exist since for any type ~A~ it returns an element of ~A~, then what of the empty 
-type. Anyhow, the template ~{${1:a} : Level} → (${2:A} : Set $1) → $0~
-would suffice to make this happen. Yet, what if we wanted
-/n/-many sets?
-
-Make a function that takes /n ≤ 26/ as input, produces a list of
-levels, then uses each level to produce a list of type names ;-)
-Exercise to the interested (source code) reader 
--- ping me, if you have questions.
-:End:
-
-*** Elisp Templates
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"
-,** loop:  Elisp's for each loop
-(dolist (${1:var} ${2:list-form})
-        ${3:body})
-
-,** defun: Lisp functions
-(cl-defun ${1:fun-name} (${2:arguments})
-  "${3:documentation}"
-  $0
-)
-
-,** cond: Elisp conditionals
-(cond (${1:scenario₁} ${2:response₁})
-      (${3:scenario₂} ${4:response₂})
-)
-#+end_src
-
-*** Agda Templates
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"
-,** fun: Function declaration with type signature 
-
-${1:fun-name} : ${2:arguments}
-$1 ${3:args} = ?$0
-
-,** eqn-begin: Start a ≡-Reasoning block in Agda
-
-begin
-  ${1:left-hand-side}
-≡⟨ $0 ⟩
-  ${2:right-hand-side}
-∎
-
-,** eqn-step: Insert a step in a ≡-Reasoning block in Agda
-
-≡⟨ ${1:hint} ⟩
-  $0
-#+end_src
-
-*** Enabling Templates
-After our yankpad templates are generated, we need to load it.
-#+BEGIN_SRC emacs-lisp
-(setq yas-indent-line 'fixed) ;; respect the spacing in my snippet declarations
-(yas-global-mode)
-(yankpad-reload)
-#+END_SRC
-
-* Helpful Functions & Shortcuts
-
-Here is a collection of Emacs-lisp functions that I have come to use in other files.
-# The subsections below detail the definitions.
-
-Let's save a few precious seconds,
-#+begin_src emacs-lisp
-;; change all prompts to y or n
-(fset 'yes-or-no-p 'y-or-n-p)
-#+end_src
-
-** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
-#+BEGIN_SRC emacs-lisp
-(defvar my-keys-minor-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-m") 'recompile)
-    map)
-  "my-keys-minor-mode keymap.")
-
-(define-minor-mode my-keys-minor-mode
-  "A minor mode so that my key settings override annoying major modes."
-  :init-value t
-  :lighter " my-keys")
-
-(my-keys-minor-mode)
-
-(diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
-#+END_SRC
-** Reload buffer with ~f5~ 
-I do this so often it's not even funny.
-#+BEGIN_SRC emacs-lisp
-(global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
-#+END_SRC
-
-In Mac OS, one uses ~Cmd-r~ to reload a page and Emacs binds buffer reversion to ~Cmd-u~
---in Emacs, Mac's ~Cmd~ is referred to as the ‘super key’ and denoted ~s~.
-
-Moreover, since I use Org-mode to generate code blocks and occasionally
-inspect them, it would be nice if they automatically reverted when they
-were regenerated --Emacs should also prompt me if I make any changes!
-
-#+begin_src emacs-lisp
-;; Auto update buffers that change on disk.
-;; Will be prompted if there are changes that could be lost.
-(global-auto-revert-mode 1)
-#+end_src
-
-** Kill to start of line
-Dual to ~C-k~,
-#+BEGIN_SRC emacs-lisp
-;; M-k kills to the left
-(global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
-#+END_SRC
-** ~file-as-list~ and ~file-as-string~
-
-#+BEGIN_SRC emacs-lisp
-(defun file-as-list (filename)
-  "Return the contents of FILENAME as a list of lines"
-  (with-temp-buffer
-    (insert-file-contents filename)
-    (split-string (buffer-string))))
-
-(defun file-as-string (filename)
-  "Return the contents of FILENAME as a list of lines"
-  (with-temp-buffer
-    (insert-file-contents filename)
-    (buffer-string)))
-#+END_SRC
-
-** ~kill-other-buffers~
-#+BEGIN_SRC emacs-lisp
-(defun kill-other-buffers ()
-  "Kill all other buffers."
-  (interactive)
-  (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
-#+END_SRC
-
-** ~create-scratch-buffer~
-#+BEGIN_SRC emacs-lisp
-;; A very simple function to recreate the scratch buffer:
-;; ( http://emacswiki.org/emacs/RecreateScratchBuffer )
-(defun create-scratch-buffer nil
-   "create a scratch buffer"
-   (interactive)
-   (switch-to-buffer (get-buffer-create "*scratch*"))
-   (insert initial-scratch-message)
-   (lisp-interaction-mode))   
-#+END_SRC
-** Switching from 2 horizontal windows to 2 vertical windows
-I often find myself switching from a horizontal view of two windows in Emacs to a
-vertical view. This requires a variation of ~C-x 1 RET C - x 3 RET C-x o X-x b RET~. 
-Instead I now only need to type ~C-|~ to make this switch.
-#+BEGIN_SRC emacs-lisp
-(defun ensure-two-vertical-windows () 
-  "hello"
- (interactive)
- (other-window 1)			;; C-x 0
- (let ((otherBuffer (buffer-name))) 
-   (delete-window)			;; C-x 0
-   (split-window-right)			;; C-x 3
-   (other-window 1)			;; C-x 0
-   (switch-to-buffer otherBuffer)	;; C-x b RET
- )
- (other-window 1)
-)
-(global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
-#+END_SRC
-** ~re-replace-in-file~
-
-#+BEGIN_SRC emacs-lisp
-(defun re-replace-in-file (file regex whatDo) 
-   "Find and replace a regular expression in-place in a file.
-
-   Terrible function … before I took the time to learn any Elisp!
-   "
-
-    (find-file file)
-    (goto-char 0)
-    (let ((altered (replace-regexp-in-string regex whatDo (buffer-string))))
-      (erase-buffer)
-      (insert altered)
-      (save-buffer)
-      (kill-buffer)
-   )
-)
-#+END_SRC
-
-Example usage:
-#+BEGIN_EXAMPLE emacs-lisp
-;; Within mysite.html we rewrite: <h1.*h1>   ↦   <h1.*h1>\n NICE
-;; I.e., we add a line break after the first heading and a new word, “NICE”.
-(re-replace-in-file "mysite.html"
-                    "<h1.*h1>"
-                    (lambda (x) (concat x "\n NICE")))
-#+END_EXAMPLE
-
-*** ~mapsto~: Simple rewriting for current buffer
-#+BEGIN_SRC emacs-lisp
-(defun mapsto (this that)
-  "In the current buffer make the regular expression rewrite: this ↦ that."
-  (let* ((current-location (point))
-       ;; Do not alter the case of the <replacement text>.
-       (altered (replace-regexp-in-string this (lambda (x) that) (buffer-string) 'no-fixed-case))
-       )
-      (erase-buffer)
-      (insert altered)
-      (save-buffer)
-      (goto-char current-location)
-  )
-)
-#+END_SRC
-
-** Obtaining Values of ~#+KEYWORD~ Annotations
-
-Org-mode settings are, for the most part, in the form ~#+KEYWORD: VALUE~. Of notable interest
-are the ~TITLE~ and ~NAME~ keywords. We use the following ~org-keywords~ function to obtain
-the values of arbitrary ~#+THIS : THAT~ pairs, which may not necessarily be supported by native
-Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ tags associated with an article.
-
-# Parse org buffer as an elisp structure: https://emacs.stackexchange.com/questions/2869/turn-a-list-or-data-structure-into-an-org-document#
-#+BEGIN_SRC emacs-lisp
-;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
-(defun org-keywords ()
-  "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
-  (org-element-map (org-element-parse-buffer 'element) 'keyword
-                   (lambda (keyword) (cons (org-element-property :key keyword)
-                                           (org-element-property :value keyword)))))
-
-(defun org-keyword (KEYWORD)
-  "Get the value of a KEYWORD in the form of #+KEYWORD: value"
-  (cdr (assoc KEYWORD (org-keywords))))
-#+END_SRC
-
-Note that capitalisation in a ”#+KeyWord” is irrelevant.
-
-See [[https://orgmode.org/manual/Org-syntax.html][here]] on how to see the abstract syntax tree of an org file
-and how to manipulate it.
-
-** Quickly pop-up a terminal, run a command, close it
-#+begin_src emacs-lisp
-(cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
-   "Pop up a terminal, do some work, then close it using the same command.
-
-   The toggle behaviour is tied into the existence of the pop-up buffer.
-   If the buffer exists, kill it; else create it.
-   "
-   (interactive)
-   (cond 
-     ;; when the terminal buffer is alive, kill it.
-     ((get-buffer name)  (kill-buffer name) 
-                         (ignore-errors (delete-window)))
-     ;; otherwise, set value to refer to a new eshell buffer.
-     (t                  (split-window-right)
-                         (other-window 1)
-                         (eshell)
-                         (rename-buffer name))
-   )
-)
-
-(global-set-key "\C-t" 'toggle-terminal)
-#+end_src
-
-** ~C-x k~ kills current buffer
-
-By default ~C-x k~ prompts to select which buffer
-should be selected. I almost always want to kill
-the current buffer, so let's not waste time making
-such a tedious decision.
-#+begin_src emacs-lisp
-;; Kill current buffer; prompt only if
-;; there are unsaved changes.
-(global-set-key (kbd "C-x k")
-  '(lambda () (interactive) (kill-buffer (current-buffer))))
-#+end_src
 
 * Life within Org-mode
 
@@ -3013,8 +2283,7 @@ Org-mode can export tables as TAB or comma delimited formats. I set the default 
 Exporting to CSV format is the only one I use and this provides the default so I can just hit RETURN when prompted for the format.
 
 To export the following table I put the cursor inside the table and hit M-x org-table-export which prompts for a filename and the format which defaults to orgtbl-to-csv from the setting above.
-
-* TODO COMMENT org babel matters
+** COMMENT tangeling to multiple files, org-mode
 From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
 
 #+begin_src emacs-lisp :tangle no
@@ -3079,6 +2348,769 @@ If the :tangle header arg is a list of files. Handle all files"
 
 (advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
 (advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
+#+end_src
+* Expected IDE Support
+
+** Backups
+By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
+let's keep old versions since there's disk space to go around
+--what am I going to do with 500gigs when nearly all my ‘software’ is
+textfiles interpreted within Emacs 😼
+
+#+BEGIN_SRC emacs-lisp
+;; New location for backups.
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+
+;; Never silently delete old backups.
+(setq delete-old-versions -1)
+
+;; Use version numbers for backup files.
+(setq version-control t)
+
+;; Even version controlled files get to be backed up.
+(setq vc-make-backup-files t)
+#+END_SRC
+
+Why backups? Sometimes I may forget to submit a file, or edit, to my
+version control system, and it'd be nice to be able to see a local
+automatic backup. Whenever ‘I need space,’ then I simply empty
+the backup directory, if ever.
+
+Like package installations, my backups are not kept in any version control
+system, like git; only locally.
+
+** COMMENT Keep buffers open across sessions :maybe_not_desirable:
+#+begin_src emacs-lisp
+;; Keep open files open across sessions.
+(desktop-save-mode 1)
+(setq desktop-restore-eager 10)
+#+end_src
+** Snippets -- Template Expansion
+
+It is common that there is a sequence of text that we tend to repeat
+often, possibly with a name or some other parameter altered.
+Such a snippet could be written once then provided by a simple
+Lisp insert command with the parameters being queried. Luckily, others
+have written such pleasant utilities.
+
+[[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet]] is a pleasant utility for template expansion with the alluring
+feature to allow arbitrary Lisp code to be executed during expansion.
+The declaration of templates is verbose, requiring a particular file
+hierarchy, as such I utilise [[https://github.com/Kungsgeten/yankpad][Yankpad]] which allows me to employ
+an Org-mode approach: Each template corresponds to an org heading of
+the form ~Key:Words:For:Expansion:Here: name of snippet here~ and the
+template body is then the body of the org heading.
+Any of ~Key, Words, For, Expansion, Here~ will rewrite into the body
+of the org tree. This is much more terse, and I even don't bother
+with that; instead preferring to tangle my templates using yankpad
+as a mere interface.
+
+#+BEGIN_SRC emacs-lisp
+;; Yet another snippet extension program
+(use-package yasnippet :ensure t)
+
+;; Nice “interface” to said program
+(use-package yankpad
+  :ensure t
+  :defer 10
+  :init
+  (setq yankpad-file "~/.emacs.d/yankpad.org")
+  :config
+  (bind-key "<f7>" 'yankpad-map)
+  (bind-key "<f12>" 'yankpad-expand)
+  ;; If you want to complete snippets using company-mode
+  (add-to-list 'company-backends #'company-yankpad)
+  ;; If you want to expand snippets with hippie-expand
+  (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand))
+#+END_SRC
+
+With these settings, along with the ~company~ backend, I may type a keyword
+then “tab” it into expansion.
+
+Yankpad requires we have an org file that contains our templates,
+so we tangle such a file ~~/.emacs.d/yankpad.org~, and have all of our
+templates be globally accessible.
+#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org"
+,#+Description: This is file is generated from my init.org; do not edit. 
+
+,* Default                                           :global:
+#+end_src
+
+Here's an example of a common template I perform by hand --no more!
+I have the expected habit of copying a URL from someplace then forming
+a link to it by writing ~[[URL] [description]]~, since the URL & syntax are already
+known, let's expand those and place the cursour at the only unknown --the description.
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+,** my-org-insert-link: cleverly insert a link copied to clipboard
+ [[${1:`(clipboard-yank)`}][$2]] $0
+#+end_src
+
+What's going on here?
+0. This template is expanded with the keyword ~my-org-insert-link~, then “tab”.
+1. The cursour lands at position ~$1~, which has default text being the result
+  of evaluating ~(clipboard-yank)~. 
+  # I've documented this default as being the url.
+
+  # If I leave out the ~$(clipboard-yank)~ part, the default would simply be ~url~.
+
+  We may evaluate Lisp code anywhere by enclosing it in backticks.
+
+  # `(file-name-nondirectory (file-name-sans-extension (buffer-file-name)))`
+
+2. If we're satisfied with the current field, we simply tab to the next field.
+   Otherwise, we simply write text --which overwrites the default text.
+
+3. After enough tabbing we complete the template and the cursour lands
+   at position ~$0~.
+
+⟪ Having default or mirrored text for ~$2~ would not allow me to see the URL
+field, lest I wish to change it or at least confirm it's what I want.
+Hence, the ~$2~ field has no default. ⟫
+
+Let's overwrite the usual way to insert such links, via ~C-c C-l~.
+#+BEGIN_SRC emacs-lisp 
+(cl-defun org-insert-link ()
+  "Makes an org link by inserting the URL copied to clipboard
+  and prompting for the link description only.
+
+  Type over the shown link to change it, or tab to move to the description
+  field.
+
+  This overrides Org-mode's built-in ‘org-insert-link’ utility.
+  "
+  (interactive)
+  (insert "my-org-insert-link")
+  (yankpad-expand)
+)
+#+END_SRC
+
+The [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippe manual]] is an accessible read, as is the 
+ [[https://github.com/Kungsgeten/yankpad][Yankpad manual]], and showcases many other utilities; such as
+having certain snippets being activated enabled only in particular
+modes or on demand. Of note is that field ~$n~ can be accessed in 
+code with the invocation ~(yas-field-value n)~.
+
+The rest of this section is other templates, not much for now,
+concluding with actually loading this snippet mechanism globally.
+
+**** Org-mode Templates --A reason I “generate” templates ;)
+
+This produces a pop-up list of org-mode block types, if ~src~ is
+selected, then a list of my commonly used languages pops-up.
+Alternatively, ignore the pop-up menu and write any block or language name.
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+,** begin: produce an org-mode block
+,#+begin_${1:environment$(let* 
+    ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
+     (langs '("c" "emacs-lisp" "lisp" "latex" "python" "sh" "haskell" "plantuml" "prolog"))
+     (type (yas-choose-value block)))
+     (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
+ $0
+,#+END_${1:$(car (split-string yas-text))}
+#+END_SRC
+In this case, ~yas-text~ is equivalent to (~yas-field-value 1)~;
+it generally refers to the value of the field being mirrored with ~${n: ⋯yas-text⋯}~.
+
+However, going through pop-ups takes precious time.
+Let's introduce a template for my most utilised kind of language blocks.
+#+begin_src org :tangle no
+,** s-el: Elisp org-block
+,#+begin_src emacs-lisp
+$0
+,#+end_src
+#+end_src
+
+However, doing this for each language I want is a waste of time
+and textual space. Why? The purpose of templates is to reduce repetition,
+yet the above block would be repeated with only 3 parts ‘unknown’: 
+The expansion keyword, the description, and the org-mode source block name.
+Whence,
+#+BEGIN_SRC emacs-lisp
+(cl-defun make-lang-template (key lang)
+  "We make an org-mode source block snippet template.
+  
+  ‘key’ is the expansion word key for the language ‘lang’;
+  the description for the snippet is also ‘lang’.
+  "
+  (s-join "\n" `(
+    ,(concat "** " key ": " lang)
+    ,(concat "#+begin_src " lang)
+    "$0"
+    "#+end_src"
+    "\n"
+  ))
+)
+#+END_SRC
+
+Now we invoke the following incantation once so that
+~s-~, due to company mode, brings up a list of languages
+that I can then simply scroll down through, then “enter” upon to
+expand. Moreover, the prefix ~s-~ means that the key is mostly irrelevant,
+since I needn't remember it because company-mode immediately lists possible completions.
+Super neat stuff :-)
+#+BEGIN_SRC emacs-lisp :tangle no
+(with-temp-buffer 
+
+   (find-file "~/.emacs.d/yankpad.org")
+   (end-of-buffer)
+
+   (dolist (x '( ("s-el" . "emacs-lisp")
+                 ("s-hs" . "haskell")
+                 ("s-ag" . "agda2")
+                 ("s-c" . "c")
+                 ("s-lx" . "latex")
+               ))
+      (insert (make-lang-template (car x) (cdr x))))
+ 
+   (save-buffer)
+   (kill-buffer)
+   (yankpad-reload)
+)
+#+END_SRC
+
+Ain't this reminiscent of meta-programming ;-)
+
+:Fun_albeit_useless_exercise:
+
+Let's push this frontier a bit more … 
+
+In expressive languages like Agda, one can not only be type polymorphic
+but also ‘level polymorphic’ --since types constitute a hierarchy
+where a ‘type’ is uninterestingly an ‘element’ of a higher ‘type’, ad infinitum.
+For example, the type of a level polymorphic ′choice’ function would
+~{a : Level} (A : Set a) → A~ --note that such a choice function cannot
+exist since for any type ~A~ it returns an element of ~A~, then what of the empty 
+type. Anyhow, the template ~{${1:a} : Level} → (${2:A} : Set $1) → $0~
+would suffice to make this happen. Yet, what if we wanted
+/n/-many sets?
+
+Make a function that takes /n ≤ 26/ as input, produces a list of
+levels, then uses each level to produce a list of type names ;-)
+Exercise to the interested (source code) reader 
+-- ping me, if you have questions.
+:End:
+
+**** Elisp Templates
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+,** loop:  Elisp's for each loop
+(dolist (${1:var} ${2:list-form})
+        ${3:body})
+
+,** defun: Lisp functions
+(cl-defun ${1:fun-name} (${2:arguments})
+  "${3:documentation}"
+  $0
+)
+
+,** cond: Elisp conditionals
+(cond (${1:scenario₁} ${2:response₁})
+      (${3:scenario₂} ${4:response₂})
+)
+#+end_src
+
+**** Agda Templates
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+,** fun: Function declaration with type signature 
+
+${1:fun-name} : ${2:arguments}
+$1 ${3:args} = ?$0
+
+,** eqn-begin: Start a ≡-Reasoning block in Agda
+
+begin
+  ${1:left-hand-side}
+≡⟨ $0 ⟩
+  ${2:right-hand-side}
+∎
+
+,** eqn-step: Insert a step in a ≡-Reasoning block in Agda
+
+≡⟨ ${1:hint} ⟩
+  $0
+#+end_src
+
+**** Enabling Templates
+After our yankpad templates are generated, we need to load it.
+#+BEGIN_SRC emacs-lisp
+(setq yas-indent-line 'fixed) ;; respect the spacing in my snippet declarations
+(yas-global-mode)
+(yankpad-reload)
+#+END_SRC
+** Mouse Editing Support
+#+begin_src emacs-lisp
+;; Text selected with the mouse is automatically copied to clipboard.
+(setq mouse-drag-copy-region t)
+#+end_src
+
+** Having a workspace manager in Emacs
+
+I've loved using XMonad as a window tiling manager.
+I've enjoyed the ability to segregate my tasks
+according to what ‘project’ I'm working on;
+such as research, marking, Emacs play, etc.
+With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
+
+That is, I can have a million buffers, but only those
+that belong to a workspace will be visible when I'm switching between buffers, for example.
+
+#+BEGIN_SRC emacs-lisp
+(use-package perspective :ensure t)
+
+;; Activate it.
+(persp-mode)
+
+;; In the modeline, tell me which workspace I'm in.
+(persp-turn-on-modestring)
+#+END_SRC
+
+All commands are prefixed by ~C-x x~; main commands:
++ ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext one, or go to ‘p’revious one.
++ ~c~ :: Query a perspective to kill.
++ ~r~ :: Rename a perspective.
++ ~A~ :: Add buffer to current perspective & remove it from all others.
+
+As always, since we've installed ~which-key~, it suffices to press
+~C-x x~ then look at the resulting menu 😃
+
+** Completion Frameworks
+[[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible completions and also shows recently executed commands when pressing ~M-x~.
+
+Extremely helpful for when switching between buffers, =C-x b=,
+and discovering & learning about other commands!
+E.g., press ~M-x~ to see recently executed commands and other possible commands!
+
+Try and be grateful.
+#+BEGIN_SRC emacs-lisp
+(use-package helm 
+ :ensure t
+ :diminish
+ :init (helm-mode t)
+ :bind
+  ("C-x C-r" . helm-recentf)      ; search for recently edited  
+
+  ;; Helm provides generic functions for completions to replace 
+  ;; tab-completion in Emacs with no loss of functionality. 
+  ("M-x" . 'helm-M-x)
+  ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
+  ("C-x r b" .'helm-filtered-bookmarks)
+  ("C-x C-f" . 'helm-find-files)
+
+   ;; Show all meaningful Lisp symbols whose names match a given pattern.
+   ;; Helpful for looking up commands.
+   ("C-h a" . helm-apropos)
+
+   ;; Look at what was cut recently & paste it in.
+   ("M-y" . helm-show-kill-ring)
+)
+;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
+
+;; Yet, let's keep tab-completetion anyhow.
+(define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
+(define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
+;; We can list ‘actions’ on the currently selected item by C-z.
+(define-key helm-map (kbd "C-z")  'helm-select-action)
+#+END_SRC
+
+When ~helm-mode~ is enabled, even help commands make use of it.
+E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
+and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
+Both show a pop-up of other possible commands.
+
+Incidentally, helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the top program via
+~helm-top~. It also serves as an interface to popular search engines
+and over 100 websites such as ~google, stackoverflow~, and ~arxive~.
+#+begin_src emacs-lisp
+;; (shell-command "brew install surfraw &")
+;; 
+;; Invoke helm-surfraw
+#+end_src
+If we want to perform a google search, with interactive suggestions,
+then invoke ~helm-google-suggest~ --which can be acted for other serves,
+such as Wikipedia or Youtube by ~C-z~. For more google specific options,
+there is the ~google-this~ package.
+
+Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].
+It allows us to not only search the current buffer but also
+the other buffers and to make live edits by pressing ~C-c C-e~
+when a search buffer exists. Incidentally, executing ~C-s~ on a word, region,
+will search for that particular word, region; then apply changes by ~C-x C-s~.
+
+#+BEGIN_SRC emacs-lisp
+(use-package helm-swoop
+  :ensure t
+  :bind
+  (
+   ("C-s"     . 'helm-swoop)           ;; search current buffer
+   ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
+   ;; Go back to last position where ‘helm-swoop’ was called
+   ("C-S-s" . 'helm-swoop-back-to-last-point)
+  )
+ :config
+   ;; Give up colour for speed.
+  (setq helm-swoop-speed-or-color nil)
+)
+#+END_SRC
+Press ~M-i~ after a search has executed to enable it for all buffers.
+
+We can also limit our search to org files, or buffers of the same mode,
+or buffers belonging to the same project!
+
+:Old_ivy_counsel_swiper_shenanigans:
++ There is a super duper neato search capability we can utilise -- ~swiper~.
++ We also use the ~counsel~, a collection of completion, ~ivy~, enhanced versions of
+  common Emacs commands.
+#+begin_src emacs-lisp :tangle no
+(use-package ivy ;; More powerful but ugly looking completetion framework. 
+                 ;; Helm is prettier.
+                 ;; Needed for Counsel, below.
+ :config 
+
+  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
+  (setq ivy-use-virtual-buffers t)
+  ;; number of result lines to display
+  (setq ivy-height 10)
+  ;; does not count candidates
+  (setq ivy-count-format "")
+  ;; no regexp by default
+  (setq ivy-initial-inputs-alist nil)
+)
+
+(use-package counsel
+  :ensure t
+  :bind*                              ; load when pressed
+  (
+   ("C-s"     . swiper)
+   ;; ("C-x C-r" . counsel-recentf)      ; search for recently edited
+   ("<f1> l"  . counsel-find-library) ; find an Emacs Lisp library 
+   ("<f2> u"  . counsel-unicode-char) ; insert a unicode symbol using a pop-up
+  ))
+#+end_src
+
+~swiper~ is an alternative to Emacs' default incremental search.
+It shows an overview of all matches --navigate using arrow keys.
+There is also a helm based version of swiper.
+:end:
+
+Finally, let's enable “complete anything” mode
+--it ought to start in half a second and only need two characters to get going,
+which means word suggestions are provided and so I need only type partial words
+then tab to get the full word!
+#+begin_src emacs-lisp
+(use-package company
+  :ensure
+  :diminish
+  :config
+    (setq company-idle-delay 0)
+    (setq company-minimum-prefix-length 2)
+    (add-hook 'after-init-hook 'global-company-mode))
+
+;; So fast that we don't need this.
+;; (global-set-key (kbd "C-c h") 'company-complete)
+#+end_src
+Note that ~Meta-/~ goes through a sequence of completions.
+
+Note that besides the arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to
+navigate the options.
+
+Besides boring word completition, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
+#+begin_src emacs-lisp
+(use-package company-emoji :ensure t)
+(add-to-list 'company-backends 'company-emoji)
+#+end_src
+
+For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
+
+➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
+All emoji names are lowercase. ◀
+# :end: does not html export nicely.
+
+The libraries ~emojify, emojify-logos~ provides cool items like :haskell: :emacs: :org: :ruby: :python:.
+Unfortunately they do not easily export to html with org-mode, so I'm not using
+them.
+
+:Alternatives:
+#+BEGIN_SRC emacs-lisp
+(use-package emojify
+ :ensure t
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1) ;; Will install missing images, if need be.
+)
+#+END_SRC
+
+(use-package emojify-logos
+:ensure t
+:after emojify)
+
+For example,
+#+begin_src emacs-lisp :tangle no
+ :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:
+#+end_src
+Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emojify-insert-emoji)~ to see more.
+
+Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
+for completion of emoji names.
+
+(use-package ac-emoji
+  :ensure t
+  :init (ac-emoji-setup)
+) 
+:End:
+
+** COMMENT On the fly syntax checking     :Disabled:_want_it_within_org_src:
+#+begin_src emacs-lisp
+(use-package flycheck
+  :diminish
+  :defer 2
+  :init (global-flycheck-mode)
+  :custom
+  (flycheck-display-errors-delay .3))
+#+end_src
+
+:Ignore:
+https://emacs.stackexchange.com/questions/7844/org-mode-have-flycheck-resolve-relative-config-while-editing-code-blocks
+#+begin_src emacs-lisp :tangle no
+(defadvice org-edit-src-code (around set-buffer-file-name activate compile)
+  (let ((file-name (buffer-file-name)))
+    ad-do-it                          
+    (setq buffer-file-name file-name)))
+#+end_src
+
+In an org-src block, we press ~C-c '~ to get into the language's
+mode where flycheck will provide many warnings.
+#+begin_src haskell :tangle no
+module Main where
+
+main :: IO ()
+main = putStrLn $ "nice" ++ f 0
+
+f :: Int -> String
+f x = x -- show x 
+-- type error
+#+end_src
+:End:
+** Jump between windows using Cmd+Arrow
+#+BEGIN_SRC emacs-lisp
+(use-package windmove
+  :ensure t
+  :config
+  ;; use command key on Mac
+  (windmove-default-keybindings 'super)
+  ;; wrap around at edges
+  (setq windmove-wrap-around t))
+#+END_SRC
+* Helpful Functions & Shortcuts
+
+Here is a collection of Emacs-lisp functions that I have come to use in other files.
+# The subsections below detail the definitions.
+
+Let's save a few precious seconds,
+#+begin_src emacs-lisp
+;; change all prompts to y or n
+(fset 'yes-or-no-p 'y-or-n-p)
+#+end_src
+
+** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
+#+BEGIN_SRC emacs-lisp
+(defvar my-keys-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-m") 'recompile)
+    map)
+  "my-keys-minor-mode keymap.")
+
+(define-minor-mode my-keys-minor-mode
+  "A minor mode so that my key settings override annoying major modes."
+  :init-value t
+  :lighter " my-keys")
+
+(my-keys-minor-mode)
+
+(diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
+#+END_SRC
+** Reload buffer with ~f5~ 
+I do this so often it's not even funny.
+#+BEGIN_SRC emacs-lisp
+(global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
+#+END_SRC
+
+In Mac OS, one uses ~Cmd-r~ to reload a page and Emacs binds buffer reversion to ~Cmd-u~
+--in Emacs, Mac's ~Cmd~ is referred to as the ‘super key’ and denoted ~s~.
+
+Moreover, since I use Org-mode to generate code blocks and occasionally
+inspect them, it would be nice if they automatically reverted when they
+were regenerated --Emacs should also prompt me if I make any changes!
+
+#+begin_src emacs-lisp
+;; Auto update buffers that change on disk.
+;; Will be prompted if there are changes that could be lost.
+(global-auto-revert-mode 1)
+#+end_src
+
+** Kill to start of line
+Dual to ~C-k~,
+#+BEGIN_SRC emacs-lisp
+;; M-k kills to the left
+(global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
+#+END_SRC
+** ~file-as-list~ and ~file-as-string~
+
+#+BEGIN_SRC emacs-lisp
+(defun file-as-list (filename)
+  "Return the contents of FILENAME as a list of lines"
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (split-string (buffer-string))))
+
+(defun file-as-string (filename)
+  "Return the contents of FILENAME as a list of lines"
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (buffer-string)))
+#+END_SRC
+
+** ~kill-other-buffers~
+#+BEGIN_SRC emacs-lisp
+(defun kill-other-buffers ()
+  "Kill all other buffers."
+  (interactive)
+  (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
+#+END_SRC
+
+** ~create-scratch-buffer~
+#+BEGIN_SRC emacs-lisp
+;; A very simple function to recreate the scratch buffer:
+;; ( http://emacswiki.org/emacs/RecreateScratchBuffer )
+(defun create-scratch-buffer nil
+   "create a scratch buffer"
+   (interactive)
+   (switch-to-buffer (get-buffer-create "*scratch*"))
+   (insert initial-scratch-message)
+   (lisp-interaction-mode))   
+#+END_SRC
+** Switching from 2 horizontal windows to 2 vertical windows
+I often find myself switching from a horizontal view of two windows in Emacs to a
+vertical view. This requires a variation of ~C-x 1 RET C - x 3 RET C-x o X-x b RET~. 
+Instead I now only need to type ~C-|~ to make this switch.
+#+BEGIN_SRC emacs-lisp
+(defun ensure-two-vertical-windows () 
+  "hello"
+ (interactive)
+ (other-window 1)			;; C-x 0
+ (let ((otherBuffer (buffer-name))) 
+   (delete-window)			;; C-x 0
+   (split-window-right)			;; C-x 3
+   (other-window 1)			;; C-x 0
+   (switch-to-buffer otherBuffer)	;; C-x b RET
+ )
+ (other-window 1)
+)
+(global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
+#+END_SRC
+** ~re-replace-in-file~
+
+#+BEGIN_SRC emacs-lisp
+(defun re-replace-in-file (file regex whatDo) 
+   "Find and replace a regular expression in-place in a file.
+
+   Terrible function … before I took the time to learn any Elisp!
+   "
+
+    (find-file file)
+    (goto-char 0)
+    (let ((altered (replace-regexp-in-string regex whatDo (buffer-string))))
+      (erase-buffer)
+      (insert altered)
+      (save-buffer)
+      (kill-buffer)
+   )
+)
+#+END_SRC
+
+Example usage:
+#+BEGIN_EXAMPLE emacs-lisp
+;; Within mysite.html we rewrite: <h1.*h1>   ↦   <h1.*h1>\n NICE
+;; I.e., we add a line break after the first heading and a new word, “NICE”.
+(re-replace-in-file "mysite.html"
+                    "<h1.*h1>"
+                    (lambda (x) (concat x "\n NICE")))
+#+END_EXAMPLE
+
+*** ~mapsto~: Simple rewriting for current buffer
+#+BEGIN_SRC emacs-lisp
+(defun mapsto (this that)
+  "In the current buffer make the regular expression rewrite: this ↦ that."
+  (let* ((current-location (point))
+       ;; Do not alter the case of the <replacement text>.
+       (altered (replace-regexp-in-string this (lambda (x) that) (buffer-string) 'no-fixed-case))
+       )
+      (erase-buffer)
+      (insert altered)
+      (save-buffer)
+      (goto-char current-location)
+  )
+)
+#+END_SRC
+
+** Obtaining Values of ~#+KEYWORD~ Annotations
+
+Org-mode settings are, for the most part, in the form ~#+KEYWORD: VALUE~. Of notable interest
+are the ~TITLE~ and ~NAME~ keywords. We use the following ~org-keywords~ function to obtain
+the values of arbitrary ~#+THIS : THAT~ pairs, which may not necessarily be supported by native
+Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ tags associated with an article.
+
+# Parse org buffer as an elisp structure: https://emacs.stackexchange.com/questions/2869/turn-a-list-or-data-structure-into-an-org-document#
+#+BEGIN_SRC emacs-lisp
+;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
+(defun org-keywords ()
+  "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
+  (org-element-map (org-element-parse-buffer 'element) 'keyword
+                   (lambda (keyword) (cons (org-element-property :key keyword)
+                                           (org-element-property :value keyword)))))
+
+(defun org-keyword (KEYWORD)
+  "Get the value of a KEYWORD in the form of #+KEYWORD: value"
+  (cdr (assoc KEYWORD (org-keywords))))
+#+END_SRC
+
+Note that capitalisation in a ”#+KeyWord” is irrelevant.
+
+See [[https://orgmode.org/manual/Org-syntax.html][here]] on how to see the abstract syntax tree of an org file
+and how to manipulate it.
+
+** Quickly pop-up a terminal, run a command, close it
+#+begin_src emacs-lisp
+(cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
+   "Pop up a terminal, do some work, then close it using the same command.
+
+   The toggle behaviour is tied into the existence of the pop-up buffer.
+   If the buffer exists, kill it; else create it.
+   "
+   (interactive)
+   (cond 
+     ;; when the terminal buffer is alive, kill it.
+     ((get-buffer name)  (kill-buffer name) 
+                         (ignore-errors (delete-window)))
+     ;; otherwise, set value to refer to a new eshell buffer.
+     (t                  (split-window-right)
+                         (other-window 1)
+                         (eshell)
+                         (rename-buffer name))
+   )
+)
+
+(global-set-key "\C-t" 'toggle-terminal)
+#+end_src
+
+** ~C-x k~ kills current buffer
+
+By default ~C-x k~ prompts to select which buffer
+should be selected. I almost always want to kill
+the current buffer, so let's not waste time making
+such a tedious decision.
+#+begin_src emacs-lisp
+;; Kill current buffer; prompt only if
+;; there are unsaved changes.
+(global-set-key (kbd "C-x k")
+  '(lambda () (interactive) (kill-buffer (current-buffer))))
 #+end_src
 * COMMENT Stuff I don't really use, but may want to look at later
 ** Other fun things

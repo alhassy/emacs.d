@@ -5,3 +5,8 @@ emacs.d/recentf
 emojis/
 /init.elc
 speed-type/
+_minted-init/
+/bookmarks
+eshell/
+ltximg/
+transient/
