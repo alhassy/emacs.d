@@ -1,61 +1,3 @@
-
-# Table of Contents
-
-1.  [Abstract](#orgf49bb98):ignore:
-2.  [Why Emacs?](#org4ecfdd0)
-3.  [Booting Up](#orgfde0470)
-    1.  [`~/.emacs` vs. `init.org`](#orga0f189f)
-    2.  [Elementary Version Control](#org36504d0)
-    3.  [What's in, or at the top of, my `~/.emacs`](#org6087b3e)
-    4.  [`use-package` &#x2013;The start of `init.el`](#orgb910a03)
-    5.  [`magit` &#x2013;Emacs' porcelain interface to git](#orgab4357d)
-    6.  [Fix spelling as you type &#x2013;and a thesaurus too!](#org665fd1b)
-    7.  [Unicode Input via Agda Input](#orgd6168a7)
-    8.  [Locally `toggle` a variable](#org8d0327a)
-    9.  [Syncing to the System's `$PATH`](#orga8e9062)
-    10. [Who am I?](#org0486ba6)
-4.  [Cosmetics](#org28cf284)
-    1.  [Startup message: Emacs & Org versions](#orgdb94335)
-    2.  [Spaceline: A sleek mode line](#org5dcf6b7)
-    3.  [Flashing when something goes wrong](#org6e22b2b)
-    4.  [My to-do list: The initial buffer when Emacs opens up](#orgd3310a5)
-    5.  [Showing date, time, and battery life](#org0a51256)
-    6.  [Hiding Scrollbar, tool bar, and menu](#orgaa73f0c)
-    7.  [Increase/decrease text size and word wrapping](#orgffd9178)
-    8.  [Delete Selection mode](#org45bc16b)
-    9.  [Highlight & complete parenthesis pair when cursor is near ;-](#orgf7ef752)
-    10. [Minibuffer should display line and column numbers](#orgec1bfe9)
-    11. [Neotree: Directory Tree Listing](#org66b8113)
-    12. [Window resizing using the golden ratio](#org4a81753):Disabled:
-5.  [Life within Org-mode](#orgcc011e6)
-    1.  [High Speed Literate Programming](#org740db74)
-    2.  [Using org-mode as a Day Planner](#orgbe2eedb)
-    3.  [Workflow States](#WorkflowStates)
-    4.  [Clocking Work Time](#org41afafd)
-    5.  [Coloured LaTeX using Minted](#org5ea149f)
-    6.  [Editing & Special Key Handling](#orgeef80de)
-    7.  [Executing code from `src` blocks](#orgf4e0b16)
-    8.  [Hiding Emphasise Markers & Inlining Images](#org7f04a72)
-    9.  [Jumping without hassle](#org247cf0b)
-    10. [Folding within a subtree](#orga7d22c6)
-    11. [Making then opening html's from org's](#org49a0f59)
-    12. [Making then opening pdf's from org's](#orge8a6d97)
-    13. [Interpret the Haskell source blocks in a file](#org4055ac3)
-6.  [Helpful Functions & Shortcuts](#org906c04c)
-    1.  [Bind `recompile` to `C-c C-m` &#x2013; “m” for “m”ake](#orgc6c7ecb)
-    2.  [Reload buffer with `f5`](#org804df1c)
-    3.  [Kill to start of line](#org9c0a747)
-    4.  [`file-as-list` and `file-as-string`](#org59ce0a7)
-    5.  [`kill-other-buffers`](#org303e517)
-    6.  [`create-scratch-buffer`](#org31ea537)
-    7.  [Switching from 2 horizontal windows to 2 vertical windows](#orgf37e169)
-    8.  [`re-replace-in-file`](#orge9f3f03)
-        1.  [`mapsto`: Simple rewriting for current buffer](#orge9013b0)
-    9.  [Obtaining Values of `#+KEYWORD` Annotations](#orgbf9f35e)
-    10. [Quickly pop-up a terminal, run a command, close it](#orgb0c1d20)
-    11. [`C-x k` kills current buffer](#orgbf3e993)
-7.  [Summary of Utilities Provided](#orgecff6bf)
-
 <h1> A Life Configuring Emacs </h1>
 
 <h3> My Literate Setup </h3>
@@ -64,68 +6,78 @@ I enjoy reading others' *literate* configuration files and incorporating what I 
 into my own. The result is a sufficiently well-documented and accessible read that yields
 a stylish and functional system (•̀ᴗ•́)و
 
-The contents below could also be read in blog format, with *colour*,
+This `README.md` has been automatically generated from my configuration
+and its contents below could also be read in blog format, with *colour*,
 [here](https://alhassy.github.io/init/). Enjoy :smile:
 
 
 # Table of Contents
 
-1.  [Abstract](#orgf49bb98):ignore:
-2.  [Why Emacs?](#org4ecfdd0)
-3.  [Booting Up](#orgfde0470)
-    1.  [`~/.emacs` vs. `init.org`](#orga0f189f)
-    2.  [Elementary Version Control](#org36504d0)
-    3.  [What's in, or at the top of, my `~/.emacs`](#org6087b3e)
-    4.  [`use-package` &#x2013;The start of `init.el`](#orgb910a03)
-    5.  [`magit` &#x2013;Emacs' porcelain interface to git](#orgab4357d)
-    6.  [Fix spelling as you type &#x2013;and a thesaurus too!](#org665fd1b)
-    7.  [Unicode Input via Agda Input](#orgd6168a7)
-    8.  [Locally `toggle` a variable](#org8d0327a)
-    9.  [Syncing to the System's `$PATH`](#orga8e9062)
-    10. [Who am I?](#org0486ba6)
-4.  [Cosmetics](#org28cf284)
-    1.  [Startup message: Emacs & Org versions](#orgdb94335)
-    2.  [Spaceline: A sleek mode line](#org5dcf6b7)
-    3.  [Flashing when something goes wrong](#org6e22b2b)
-    4.  [My to-do list: The initial buffer when Emacs opens up](#orgd3310a5)
-    5.  [Showing date, time, and battery life](#org0a51256)
-    6.  [Hiding Scrollbar, tool bar, and menu](#orgaa73f0c)
-    7.  [Increase/decrease text size and word wrapping](#orgffd9178)
-    8.  [Delete Selection mode](#org45bc16b)
-    9.  [Highlight & complete parenthesis pair when cursor is near ;-](#orgf7ef752)
-    10. [Minibuffer should display line and column numbers](#orgec1bfe9)
-    11. [Neotree: Directory Tree Listing](#org66b8113)
-    12. [Window resizing using the golden ratio](#org4a81753):Disabled:
-5.  [Life within Org-mode](#orgcc011e6)
-    1.  [High Speed Literate Programming](#org740db74)
-    2.  [Using org-mode as a Day Planner](#orgbe2eedb)
+1.  [Abstract](#orgd718262):ignore:
+2.  [Why Emacs?](#org9099539)
+3.  [Booting Up](#orgc882996)
+    1.  [`~/.emacs` vs. `init.org`](#org2cefeec)
+    2.  [Elementary Version Control](#org7bc466d)
+    3.  [What's in, or at the top of, my `~/.emacs`](#org0eaef25)
+    4.  [`use-package` &#x2013;The start of `init.el`](#orgefb0f21)
+    5.  [`magit` &#x2013;Emacs' porcelain interface to git](#org1fefe47)
+    6.  [Fix spelling as you type &#x2013;and a thesaurus too!](#org20aac9a)
+    7.  [Unicode Input via Agda Input](#org383a7c3)
+    8.  [Locally `toggle` a variable](#org2d2dece)
+    9.  [Syncing to the System's `$PATH`](#org1bea7b7)
+    10. [Who am I?](#orgf713c1b)
+4.  [Cosmetics](#orgcabf19c)
+    1.  [Startup message: Emacs & Org versions](#orgd895baf)
+    2.  [Spaceline: A sleek mode line](#orga383f40)
+    3.  [Flashing when something goes wrong](#org19b9844)
+    4.  [My to-do list: The initial buffer when Emacs opens up](#orgd213072)
+    5.  [Showing date, time, and battery life](#org9097573)
+    6.  [Hiding Scrollbar, tool bar, and menu](#org4e902e5)
+    7.  [Increase/decrease text size and word wrapping](#org9b8c629)
+    8.  [Delete Selection mode](#org32e6779)
+    9.  [Highlight & complete parenthesis pair when cursor is near ;-](#org7bcd8c2)
+    10. [Minibuffer should display line and column numbers](#org55f1207)
+    11. [Neotree: Directory Tree Listing](#orgf4c8d94)
+    12. [Window resizing using the golden ratio](#org52242f4):Disabled:
+5.  [Life within Org-mode](#orgb059134)
+    1.  [High Speed Literate Programming](#org9558dea)
+    2.  [Using org-mode as a Day Planner](#orgea436fd)
     3.  [Workflow States](#WorkflowStates)
-    4.  [Clocking Work Time](#org41afafd)
-    5.  [Coloured LaTeX using Minted](#org5ea149f)
-    6.  [Editing & Special Key Handling](#orgeef80de)
-    7.  [Executing code from `src` blocks](#orgf4e0b16)
-    8.  [Hiding Emphasise Markers & Inlining Images](#org7f04a72)
-    9.  [Jumping without hassle](#org247cf0b)
-    10. [Folding within a subtree](#orga7d22c6)
-    11. [Making then opening html's from org's](#org49a0f59)
-    12. [Making then opening pdf's from org's](#orge8a6d97)
-    13. [Interpret the Haskell source blocks in a file](#org4055ac3)
-6.  [Helpful Functions & Shortcuts](#org906c04c)
-    1.  [Bind `recompile` to `C-c C-m` &#x2013; “m” for “m”ake](#orgc6c7ecb)
-    2.  [Reload buffer with `f5`](#org804df1c)
-    3.  [Kill to start of line](#org9c0a747)
-    4.  [`file-as-list` and `file-as-string`](#org59ce0a7)
-    5.  [`kill-other-buffers`](#org303e517)
-    6.  [`create-scratch-buffer`](#org31ea537)
-    7.  [Switching from 2 horizontal windows to 2 vertical windows](#orgf37e169)
-    8.  [`re-replace-in-file`](#orge9f3f03)
-    9.  [Obtaining Values of `#+KEYWORD` Annotations](#orgbf9f35e)
-    10. [Quickly pop-up a terminal, run a command, close it](#orgb0c1d20)
-    11. [`C-x k` kills current buffer](#orgbf3e993)
-7.  [Summary of Utilities Provided](#orgecff6bf)
+    4.  [Clocking Work Time](#orge6564fd)
+    5.  [Coloured LaTeX using Minted](#org5755d2c)
+    6.  [Executing code from `src` blocks](#orgca174d5)
+    7.  [Hiding Emphasise Markers & Inlining Images](#org3edcc3f)
+    8.  [Jumping without hassle](#orgae4842a)
+    9.  [Folding within a subtree](#org477ea92)
+    10. [Making then opening html's from org's](#org220bc14)
+    11. [Making then opening pdf's from org's](#org1c82531)
+    12. [Interpret the Haskell source blocks in a file](#org2ed68a2)
+6.  [Expected IDE Support](#org06b4ca0)
+    1.  [Backups](#org4692367)
+    2.  [Mouse Editing Support](#org65a1a27)
+    3.  [Having a workspace manager in Emacs](#org4bc267b)
+    4.  [Jump between windows using Cmd+Arrow](#org8730126)
+    5.  [Completion Frameworks](#orgf80ec34)
+    6.  [Snippets &#x2013; Template Expansion](#org6bde7b5)
+7.  [Helpful Functions & Shortcuts](#org9c4ef9e)
+    1.  [Bind `recompile` to `C-c C-m` &#x2013; “m” for “m”ake](#org092be7a)
+    2.  [Reload buffer with `f5`](#org7cb7432)
+    3.  [Kill to start of line](#org46ca1f1)
+    4.  [`file-as-list` and `file-as-string`](#orga54e967)
+    5.  [`kill-other-buffers`](#org4e4d623)
+    6.  [`create-scratch-buffer`](#orgb6250a6)
+    7.  [Switching from 2 horizontal windows to 2 vertical windows](#orgba486c5)
+    8.  [`re-replace-in-file`](#org4a06c01)
+    9.  [Obtaining Values of `#+KEYWORD` Annotations](#org7c79161)
+    10. [Quickly pop-up a terminal, run a command, close it](#orgdc4ffb3)
+    11. [`C-x k` kills current buffer](#org634e49b)
+8.  [Summary of Utilities Provided](#orgdb635fb)
+
+this is a word
+thi
 
 
-<a id="orgf49bb98"></a>
+<a id="orgd718262"></a>
 
 # Abstract     :ignore:
 
@@ -143,7 +95,7 @@ Dear reader, when encountering a foregin command `X` I encourage you to execute 
 An elementary Elisp Cheat Sheet can be found [here.](https://github.com/alhassy/ElispCheatSheet)
 
 
-<a id="org4ecfdd0"></a>
+<a id="org9099539"></a>
 
 # Why Emacs?
 
@@ -218,12 +170,12 @@ is at its core an Emacs Lisp program that yields the editor of my dreams
 moreover, it reflects my personality such as what I value and what I neglect in my workflow.
 
 
-<a id="orgfde0470"></a>
+<a id="orgc882996"></a>
 
 # Booting Up
 
 
-<a id="orga0f189f"></a>
+<a id="org2cefeec"></a>
 
 ## `~/.emacs` vs. `init.org`
 
@@ -249,7 +201,7 @@ until recently when I obtained a mac machine and now use
 [Amethyst](https://ianyh.com/amethyst/) &#x2013; “Tiling window manager for macOS along the lines of xmonad.”
 
 
-<a id="org36504d0"></a>
+<a id="org7bc466d"></a>
 
 ## Elementary Version Control
 
@@ -306,7 +258,7 @@ Below I'll equip us with an Emacs ‘porcelain’ interface to git
 Moreover, I add a little pop-up so that I don't forget to commit often!
 
 
-<a id="org6087b3e"></a>
+<a id="org0eaef25"></a>
 
 ## What's in, or at the top of, my `~/.emacs`
 
@@ -331,7 +283,7 @@ automatically determine if the `init.org` file has changed and if so it
 would tangle it producing the `init.el` file which will then be loaded immediately.
 
 
-<a id="orgb910a03"></a>
+<a id="orgefb0f21"></a>
 
 ## `use-package` &#x2013;The start of `init.el`
 
@@ -367,12 +319,12 @@ acts as its kernel.
     
     ;; Internet repositories for new packages.
     (setq package-archives '(("org"       . "https://orgmode.org/elpa/")
-    			 ("gnu"       . "https://elpa.gnu.org/packages/")
-    			 ("melpa"     . "https://melpa.org/packages/")
-    			 ("melpa-stable" . "https://stable.melpa.org/packages/")     
-    			 ;; Maintainer is AWOL.
-    			 ;; ("marmalade" . "https://marmalade-repo.org/packages/")
-    			 ))
+                             ("gnu"       . "https://elpa.gnu.org/packages/")
+                             ("melpa"     . "https://melpa.org/packages/")
+                             ("melpa-stable" . "https://stable.melpa.org/packages/")     
+                             ;; Maintainer is AWOL.
+                             ;; ("marmalade" . "https://marmalade-repo.org/packages/")
+                             ))
     
     ;; Actually get “package” to work.
     (package-initialize) 
@@ -413,7 +365,7 @@ Moreover, I will be shown other commands I did not know about! Neato :-)
      :diminish which-key-mode
      :init (which-key-mode)
      :config (which-key-setup-side-window-bottom)
-    	 (setq which-key-idle-delay 0.05)
+             (setq which-key-idle-delay 0.05)
     )
 
 The `:diminish` keyword indicates that we do not want the mode's name to be
@@ -443,7 +395,7 @@ Here are other packages that I want to be installed onto my machine.
           'spacemacs-dark
           'spacemacs-light
       ) t )
-    
+      
       ;; The dark theme's modeline separator is ugly.
       ;; Keep reading below regarding “powerline”.
       ;; (setq powerline-default-separator 'arrow)
@@ -493,7 +445,7 @@ Finally, since I've symlinked my `.emacs`:
     (setq vc-follow-symlinks t)
 
 
-<a id="orgab4357d"></a>
+<a id="org1fefe47"></a>
 
 ## `magit` &#x2013;Emacs' porcelain interface to git
 
@@ -631,7 +583,7 @@ Let's try this out:
 In doubt, execute `C-h e` to jump to the `*Messages*` buffer.
 
 
-<a id="org665fd1b"></a>
+<a id="org20aac9a"></a>
 
 ## Fix spelling as you type &#x2013;and a thesaurus too!
 
@@ -688,7 +640,7 @@ Use the thesaurus Emacs frontend [Synosaurus](https://github.com/hpdeifel/synosa
       :diminish synosaurus-mode
       :init    (synosaurus-mode)
       :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-    	   (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace)
+               (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace)
     )
 
 The thesaurus is powered by the Wordnet `wn` tool, which can be invoked without an internet connection!
@@ -722,7 +674,7 @@ Other typing resources include:
 -   [GNU Typist](https://www.gnu.org/software/gtypist/index.html#downloading) &#x2013;which is interactive in the terminal, so not ideal in Emacs&#x2013;,
 
 
-<a id="orgd6168a7"></a>
+<a id="org383a7c3"></a>
 
 ## Unicode Input via Agda Input
 
@@ -733,7 +685,7 @@ Executing `agda-mode setup` appends the following text to the `.emacs` file.
 Let's put it here ourselves.
 
     (load-file (let ((coding-system-for-read 'utf-8))
-    		(shell-command-to-string "/usr/local/bin/agda-mode locate")))
+                    (shell-command-to-string "/usr/local/bin/agda-mode locate")))
 
 I almost always want the `agda-mode` input method.
 
@@ -764,7 +716,7 @@ interactively: `M-x customize-variable agda-input-user-translations` then
     (add-to-list 'agda-input-user-translations '("syq"  "╳"))
     (add-to-list 'agda-input-user-translations '("over" "╱"))
     (add-to-list 'agda-input-user-translations '("under" "╲"))
-    	;; Maybe “\\” shortcut?
+            ;; Maybe “\\” shortcut?
     
     ;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
     (add-to-list 'agda-input-user-translations '("|" "❙"))
@@ -804,7 +756,7 @@ Note that the effect of [Emacs unicode input](http://ergoemacs.org/emacs/emacs_n
 `abbrev-mode`.
 
 
-<a id="org8d0327a"></a>
+<a id="org2d2dece"></a>
 
 ## Locally `toggle` a variable
 
@@ -833,9 +785,9 @@ combinator.
        without being queried about possibly dangerous local variables.
       "
       `(let ((_initial_value_ ,variable))
-    	(setq ,variable ,value)
-    	,code
-    	(setq ,variable _initial_value_)
+            (setq ,variable ,value)
+            ,code
+            (setq ,variable _initial_value_)
       )
     )
 
@@ -843,7 +795,7 @@ Since emacs-lisp interprets definitions sequentially, I define `toggle` here
 since I employ it in the next section.
 
 
-<a id="orga8e9062"></a>
+<a id="org1bea7b7"></a>
 
 ## Syncing to the System's `$PATH`
 
@@ -862,7 +814,7 @@ when Org-mode attempts to produce a PDF.
 See these [docs](https://github.com/purcell/exec-path-from-shell) for setting other environment variables.
 
 
-<a id="org0486ba6"></a>
+<a id="orgf713c1b"></a>
 
 ## Who am I?
 
@@ -870,7 +822,7 @@ See these [docs](https://github.com/purcell/exec-path-from-shell) for setting ot
           user-mail-address "alhassy@gmail.com")
 
 
-<a id="org28cf284"></a>
+<a id="orgcabf19c"></a>
 
 # Cosmetics
 
@@ -881,7 +833,7 @@ See these [docs](https://github.com/purcell/exec-path-from-shell) for setting ot
     (setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 
 
-<a id="orgdb94335"></a>
+<a id="orgd895baf"></a>
 
 ## Startup message: Emacs & Org versions
 
@@ -891,9 +843,9 @@ See these [docs](https://github.com/purcell/exec-path-from-shell) for setting ot
     (defun display-startup-echo-area-message ()
       (message
           (concat "Welcome "      user-full-name
-    	      "! Emacs "      emacs-version
-    	      "; Org-mode "   org-version
-    	      "; System "    (system-name)
+                  "! Emacs "      emacs-version
+                  "; Org-mode "   org-version
+                  "; System "    (system-name)
           )
       )     
     )
@@ -913,7 +865,7 @@ Moreover, since I end up using org-mode most of the time, let's make that the de
     (setq initial-major-mode 'org-mode)
 
 
-<a id="org5dcf6b7"></a>
+<a id="orga383f40"></a>
 
 ## Spaceline: A sleek mode line
 
@@ -944,7 +896,7 @@ and `'contour, 'chamfer, 'wave, 'zigzag` which look like browser tabs
 that are curved, boxed, wavy, or in the style of driftwood.
 
 
-<a id="org6e22b2b"></a>
+<a id="org19b9844"></a>
 
 ## Flashing when something goes wrong
 
@@ -955,7 +907,7 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
     ;; On MacOS, this shows a caution symbol ^_^
 
 
-<a id="orgd3310a5"></a>
+<a id="orgd213072"></a>
 
 ## My to-do list: The initial buffer when Emacs opens up
 
@@ -970,7 +922,7 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 (describe-symbol 'enable-local-variables)
 
 
-<a id="org0a51256"></a>
+<a id="org9097573"></a>
 
 ## Showing date, time, and battery life
 
@@ -995,7 +947,7 @@ and coloured yellow otherwise. It is important to note that
 this package is no longer maintained. It works on my machine.
 
 
-<a id="orgaa73f0c"></a>
+<a id="org4e902e5"></a>
 
 ## Hiding Scrollbar, tool bar, and menu
 
@@ -1004,7 +956,7 @@ this package is no longer maintained. It works on my machine.
     (menu-bar-mode -1)
 
 
-<a id="orgffd9178"></a>
+<a id="org9b8c629"></a>
 
 ## Increase/decrease text size and word wrapping
 
@@ -1023,7 +975,7 @@ Show ruler at 80 characters, for text and prog mode.
     (add-hook 'prog-mode-hook 'fci-mode)
 
 
-<a id="org45bc16b"></a>
+<a id="org32e6779"></a>
 
 ## Delete Selection mode
 
@@ -1034,7 +986,7 @@ We can delete selected text just by hitting the backspace key.
     (delete-selection-mode 1)
 
 
-<a id="orgf7ef752"></a>
+<a id="org7bcd8c2"></a>
 
 ## Highlight & complete parenthesis pair when cursor is near ;-
 
@@ -1068,7 +1020,7 @@ the lightweight package `electric`, which provided by Emacs out of the box.
 It supports, by default, ACSI pairs `{}, [], ()` and Unicode `‘’, “”, ⟪⟫, ⟨⟩`.
 
 
-<a id="orgec1bfe9"></a>
+<a id="org55f1207"></a>
 
 ## Minibuffer should display line and column numbers
 
@@ -1077,7 +1029,7 @@ It supports, by default, ACSI pairs `{}, [], ()` and Unicode `‘’, “”, �
     (column-number-mode t)
 
 
-<a id="org66b8113"></a>
+<a id="orgf4c8d94"></a>
 
 ## Neotree: Directory Tree Listing
 
@@ -1087,12 +1039,10 @@ We open a nifty file manager upon startup.
     (use-package neotree :ensure t
       :config (global-set-key "\C-x\ d" 'neotree-toggle))
     
-    (defvar *my/setting-up-icons nil "Variable to ensure a one-time setup.")
     ;; Only do this once: 
-    (unless *my/setting-up-icons nil
+    (when nil
       (use-package all-the-icons :ensure t)
-      (all-the-icons-install-fonts)
-      (setq *my/setting-up-icons t))
+      (all-the-icons-install-fonts 'install-without-asking))
     
     (setq neo-theme 'icons)
     (neotree-refresh)
@@ -1115,7 +1065,7 @@ I *rarely* make use of this feature; company mode & Helm together quickly provid
 an automatic replacement for nearly all of my uses.
 
 
-<a id="org4a81753"></a>
+<a id="org52242f4"></a>
 
 ## Window resizing using the golden ratio     :Disabled:
 
@@ -1132,7 +1082,7 @@ are still readable.
 After some time this got a bit annoying and I'm no longer  using this.
 
 
-<a id="orgcc011e6"></a>
+<a id="orgb059134"></a>
 
 # Life within Org-mode
 
@@ -1147,9 +1097,12 @@ unicode arrow.
     (setq org-hide-block-startup t)
 
 
-<a id="org740db74"></a>
+<a id="org9558dea"></a>
 
 ## High Speed Literate Programming
+
+
+### Manipulating Sections
 
 Let's enable the [Org Speed Keys](http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html) so that when the cursor is at the beginning of 
 a headline, we can perform fast manipulation & navigation using the standard Emacs movement
@@ -1182,7 +1135,8 @@ Moreover, `?` to see a complete list of keys available.
 
     (setq org-use-speed-commands t)
 
-PS. `C-RET, C-S-RET` make a new heading where the latter marks it as a `TODO`.
+
+### Seamless Navigation Between Source Blocks
 
 Finally, let's use the “super key” &#x2013;aka the command or windows key&#x2013;
 to jump to the previous, next, or toggle editing org-mode source blocks.
@@ -1197,7 +1151,98 @@ to jump to the previous, next, or toggle editing org-mode source blocks.
 Interestingly, `s-l` is “goto line”.
 
 
-<a id="orgbe2eedb"></a>
+### Modifying `<return>`
+
+-   `C-RET, C-S-RET` make a new heading where the latter marks it as a `TODO`.
+-   By default `M-RET` makes it easy to work with existing list items, headings, tables, etc
+    by creating a new item, heading, etc.
+-   Usually we want a newline then we indent, let's make that the default.
+    
+        (add-hook 'org-mode-hook '(lambda () 
+          (local-set-key (kbd "<return>") 'org-return-indent))
+          (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline))
+    
+    Notice that I've also added another kind of return, for when I want to
+    break-out of the indentation approach and start working at the beginning of
+    the line.
+
+In summary,
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">key</th>
+<th scope="col" class="org-left">method</th>
+<th scope="col" class="org-left">behaviour</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="org-left">`<return>`</td>
+<td class="org-left">`org-return-indent`</td>
+<td class="org-left">Newline with indentation</td>
+</tr>
+
+
+<tr>
+<td class="org-left">`M-<return>`</td>
+<td class="org-left">`org-meta-return`</td>
+<td class="org-left">Newline with new org item</td>
+</tr>
+
+
+<tr>
+<td class="org-left">`C-M-<return>`</td>
+<td class="org-left">`electric-indent-just-newline`</td>
+<td class="org-left">Newline, cursor at start</td>
+</tr>
+
+
+<tr>
+<td class="org-left">`C-<return>`</td>
+<td class="org-left">`org-insert-heading-respect-content`</td>
+<td class="org-left">New heading *after* current content</td>
+</tr>
+
+
+<tr>
+<td class="org-left">`C-S-<return>`</td>
+<td class="org-left">`org-insert-todo-heading-respect-content`</td>
+<td class="org-left">Ditto, but with a `TODO` marker</td>
+</tr>
+</tbody>
+</table>
+
+
+### `C-a,e,k` and Yanking of sections
+
+    ;; On an org-heading, C-a goes to after the star, heading markers.
+    ;; To use speed keys, run C-a C-a to get to the star markers.
+    ;;
+    ;; C-e goes to the end of the heading, not including the tags.
+    ;;
+    (setq org-special-ctrl-a/e t)
+    
+    ;; C-k no longer removes tags, if activated in the middle of a heading's name.
+    (setq org-special-ctrl-k t)
+    
+    ;; When you yank a subtree and paste it alongside a subtree of depth ‘d’,
+    ;; then the yanked tree's depth is adjusted to become depth ‘d’ as well.
+    ;; If you don't want this, then refile instead of copy pasting.
+    (setq org-yank-adjusted-subtrees t)
+
+
+<a id="orgea436fd"></a>
 
 ## Using org-mode as a Day Planner
 
@@ -1249,7 +1294,7 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
       "
       `(,shortcut ,description entry
           (file+headline org-default-notes-file 
-    	 ,(concat heading "\n#+CATEGORY: " category))
+             ,(concat heading "\n#+CATEGORY: " category))
           , (concat "*" (unless no-todo " TODO") " %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n")
           :empty-lines 1)
     )
@@ -1414,7 +1459,7 @@ Let's install some helpful views for our agenda.
         (add-to-list 'org-agenda-custom-commands 
           '("u" alltodo "" 
              ((org-agenda-skip-function
-        	(lambda ()
+                (lambda ()
         	      (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
         	      (org-agenda-overriding-header "Unscheduled TODO entries: "))))
 
@@ -1427,8 +1472,8 @@ Here are some of my common workflow states, &#x2013;the ‘!’ indicates a time
 
     (setq org-todo-keywords
           (quote ((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
-    	      (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)")
-    	     )
+                  (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)")
+                 )
           )
     )
 
@@ -1449,11 +1494,11 @@ Here's how they are coloured,
 
     (setq org-todo-keyword-faces
           (quote (("TODO" :foreground "red" :weight bold)
-    	      ("STARTED" :foreground "blue" :weight bold)
-    	      ("DONE" :foreground "forest green" :weight bold)
-    	      ("WAITING" :foreground "orange" :weight bold)
-    	      ("ON_HOLD" :foreground "magenta" :weight bold)
-    	      ("CANCELLED" :foreground "forest green" :weight bold))))
+                  ("STARTED" :foreground "blue" :weight bold)
+                  ("DONE" :foreground "forest green" :weight bold)
+                  ("WAITING" :foreground "orange" :weight bold)
+                  ("ON_HOLD" :foreground "magenta" :weight bold)
+                  ("CANCELLED" :foreground "forest green" :weight bold))))
 
 Now we press `C-c C-t` then the letter shortcut to actually make the state of an org heading.
 
@@ -1560,7 +1605,7 @@ This particular workflow is inspired by [Bernt Hansen](http://doc.norang.ca/org-
 The above is known as an “activity diagram” and it's covered in §4.
 
 
-<a id="org41afafd"></a>
+<a id="orge6564fd"></a>
 
 ## Clocking Work Time
 
@@ -1659,7 +1704,7 @@ will have will mention the time elapsed alongside the task name.
     When you've gone above your estimate time, the modeline shows it to be red.
 
 
-<a id="org5ea149f"></a>
+<a id="org5755d2c"></a>
 
 ## Coloured LaTeX using Minted
 
@@ -1671,9 +1716,9 @@ Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
           org-latex-packages-alist '(("" "minted"))
           org-latex-pdf-process
           '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-    	"biber %b"
-    	"pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-    	"pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f")
+            "biber %b"
+            "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+            "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f")
     )
 
 For faster pdf generation, may consider invoking:
@@ -1682,32 +1727,7 @@ For faster pdf generation, may consider invoking:
           '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 
 
-<a id="orgeef80de"></a>
-
-## Editing & Special Key Handling
-
-    ;; On an org-heading, C-a goes to after the star, heading markers.
-    ;; To use speed keys, run C-a C-a to get to the star markers.
-    ;;
-    ;; C-e goes to the end of the heading, not including the tags.
-    ;;
-    (setq org-special-ctrl-a/e t)
-    
-    ;; C-k no longer removes tags, if activated in the middle of a heading's name.
-    (setq org-special-ctrl-k t)
-    
-    ;; When you yank a subtree and paste it alongside a subtree of depth ‘d’,
-    ;; then the yanked tree's depth is adjusted to become depth ‘d’ as well.
-    ;; If you don't want this, then refile instead of copy pasting.
-    (setq org-yank-adjusted-subtrees t)
-    
-    ;; adds alphabetical lists like
-    ;;  a. item one
-    ;;  b. item two
-    (setq org-alphabetical-lists t)
-
-
-<a id="orgf4e0b16"></a>
+<a id="orgca174d5"></a>
 
 ## Executing code from `src` blocks
 
@@ -1750,7 +1770,7 @@ Some initial languages we want org-babel to support:
 More languages can be added using `add-to-list`.
 
 
-<a id="org7f04a72"></a>
+<a id="org3edcc3f"></a>
 
 ## Hiding Emphasise Markers & Inlining Images
 
@@ -1772,11 +1792,11 @@ More languages can be added using `add-to-list`.
     (setq org-startup-with-latex-preview t)
 
 
-<a id="org247cf0b"></a>
+<a id="orgae4842a"></a>
 
 ## Jumping without hassle
 
-    (defun org-goto-line (line)
+    (defun my/org-goto-line (line)
       "Go to the indicated line, unfolding the parent Org header.
     
        Implementation: Go to the line, then look at the 1st previous
@@ -1791,14 +1811,11 @@ More languages can be added using `add-to-list`.
     )
 
 
-<a id="orga7d22c6"></a>
+<a id="org477ea92"></a>
 
 ## Folding within a subtree
 
-    ; https://orgmode.org/manual/Structure-editing.html
-    ; (describe-symbol 'save-excursion)
-    ;
-    (defun org-fold-current-subtree-anywhere-in-it ()
+    (defun my/org-fold-current-subtree-anywhere-in-it ()
       "Hide the current heading, while being anywhere inside it."
       (interactive)
       (save-excursion
@@ -1807,11 +1824,11 @@ More languages can be added using `add-to-list`.
         (widen))
     )
     
-    ;; FIXME: Make this buffer specfic!
-    (global-set-key (kbd "C-c C-h") 'org-fold-current-subtree-anywhere-in-it)
+    (add-hook 'org-mode-hook '(lambda () 
+      (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 
 
-<a id="org49a0f59"></a>
+<a id="org220bc14"></a>
 
 ## Making then opening html's from org's
 
@@ -1829,7 +1846,7 @@ More languages can be added using `add-to-list`.
     )
 
 
-<a id="orge8a6d97"></a>
+<a id="org1c82531"></a>
 
 ## Making then opening pdf's from org's
 
@@ -1846,7 +1863,7 @@ More languages can be added using `add-to-list`.
     )
 
 
-<a id="org4055ac3"></a>
+<a id="org2ed68a2"></a>
 
 ## Interpret the Haskell source blocks in a file
 
@@ -1864,7 +1881,7 @@ More languages can be added using `add-to-list`.
     
     (defun set-module (name)
        "Set the name of the module currently under focus.
-    
+       
         Usage: When a module is declared, i.e., a new file has begun,
         then that source blocks header should be “:tangle (set-module ”name-here”)”.
         succeeding source blocks now inherit this name and so are tangled
@@ -1897,7 +1914,7 @@ More languages can be added using `add-to-list`.
        This technique structures “Interactive Way to C”.
       "
        (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
-    	 (buf (concat "*GHCI* " it)))
+             (buf (concat "*GHCI* " it)))
     
          (toggle kill-buffer-query-functions nil (ignore-errors (kill-buffer buf)))
          (org-babel-tangle it "haskell")
@@ -1910,7 +1927,482 @@ More languages can be added using `add-to-list`.
     ;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
 
 
-<a id="org906c04c"></a>
+<a id="org06b4ca0"></a>
+
+# Expected IDE Support
+
+
+<a id="org4692367"></a>
+
+## Backups
+
+By default, Emacs saves backup files &#x2013; those ending in ~ &#x2013; in the current directory, thereby cluttering it up. Let's place them in `~/.emacs.d/backups`, in case we need to look for a backup; moreover,
+let's keep old versions since there's disk space to go around
+&#x2013;what am I going to do with 500gigs when nearly all my ‘software’ is
+textfiles interpreted within Emacs 😼
+
+    ;; New location for backups.
+    (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+    
+    ;; Never silently delete old backups.
+    (setq delete-old-versions -1)
+    
+    ;; Use version numbers for backup files.
+    (setq version-control t)
+    
+    ;; Even version controlled files get to be backed up.
+    (setq vc-make-backup-files t)
+
+Why backups? Sometimes I may forget to submit a file, or edit, to my
+version control system, and it'd be nice to be able to see a local
+automatic backup. Whenever ‘I need space,’ then I simply empty
+the backup directory, if ever.
+
+Like package installations, my backups are not kept in any version control
+system, like git; only locally.
+
+
+<a id="org65a1a27"></a>
+
+## Mouse Editing Support
+
+    ;; Text selected with the mouse is automatically copied to clipboard.
+    (setq mouse-drag-copy-region t)
+
+
+<a id="org4bc267b"></a>
+
+## Having a workspace manager in Emacs
+
+I've loved using XMonad as a window tiling manager.
+I've enjoyed the ability to segregate my tasks
+according to what ‘project’ I'm working on;
+such as research, marking, Emacs play, etc.
+With [perspective](https://github.com/nex3/perspective-el), I can do the same thing :-)
+
+That is, I can have a million buffers, but only those
+that belong to a workspace will be visible when I'm switching between buffers, for example.
+
+    (use-package perspective :ensure t)
+    
+    ;; Activate it.
+    (persp-mode)
+    
+    ;; In the modeline, tell me which workspace I'm in.
+    (persp-turn-on-modestring)
+
+All commands are prefixed by `C-x x`; main commands:
+
+-   **`s, n/→, p/←`:** ‘S’elect a workspace to go to or create it, or go to ‘n’ext one, or go to ‘p’revious one.
+-   **`c`:** Query a perspective to kill.
+-   **`r`:** Rename a perspective.
+-   **`A`:** Add buffer to current perspective & remove it from all others.
+
+As always, since we've installed `which-key`, it suffices to press
+`C-x x` then look at the resulting menu 😃
+
+
+<a id="org8730126"></a>
+
+## Jump between windows using Cmd+Arrow
+
+    (use-package windmove
+      :ensure t
+      :config
+      ;; use command key on Mac
+      (windmove-default-keybindings 'super)
+      ;; wrap around at edges
+      (setq windmove-wrap-around t))
+
+
+<a id="orgf80ec34"></a>
+
+## Completion Frameworks
+
+[Helm](http://tuhdo.github.io/helm-intro.html) provides possible completions and also shows recently executed commands when pressing `M-x`.
+
+Extremely helpful for when switching between buffers, `C-x b`,
+and discovering & learning about other commands!
+E.g., press `M-x` to see recently executed commands and other possible commands!
+
+Try and be grateful.
+
+    (use-package helm 
+     :ensure t
+     :diminish
+     :init (helm-mode t)
+     :bind
+      ("C-x C-r" . helm-recentf)      ; search for recently edited  
+    
+      ;; Helm provides generic functions for completions to replace 
+      ;; tab-completion in Emacs with no loss of functionality. 
+      ("M-x" . 'helm-M-x)
+      ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
+      ("C-x r b" .'helm-filtered-bookmarks)
+      ("C-x C-f" . 'helm-find-files)
+    
+       ;; Show all meaningful Lisp symbols whose names match a given pattern.
+       ;; Helpful for looking up commands.
+       ("C-h a" . helm-apropos)
+    
+       ;; Look at what was cut recently & paste it in.
+       ("M-y" . helm-show-kill-ring)
+    )
+    ;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
+    
+    ;; Yet, let's keep tab-completetion anyhow.
+    (define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
+    (define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
+    ;; We can list ‘actions’ on the currently selected item by C-z.
+    (define-key helm-map (kbd "C-z")  'helm-select-action)
+
+When `helm-mode` is enabled, even help commands make use of it.
+E.g., `C-h o` runs `describe-symbol` for the symbol at point,
+and `C-h w` runs `where-is` to find the key binding of the symbol at point.
+Both show a pop-up of other possible commands.
+
+Incidentally, helm even provides an [interface](http://tuhdo.github.io/helm-intro.html#orgheadline24) for the top program via
+`helm-top`. It also serves as an interface to popular search engines
+and over 100 websites such as `google, stackoverflow`, and `arxive`.
+
+    ;; (shell-command "brew install surfraw &")
+    ;; 
+    ;; Invoke helm-surfraw
+
+If we want to perform a google search, with interactive suggestions,
+then invoke `helm-google-suggest` &#x2013;which can be acted for other serves,
+such as Wikipedia or Youtube by `C-z`. For more google specific options,
+there is the `google-this` package.
+
+Let's switch to a powerful searching mechanism &#x2013; [helm-swoop](https://github.com/ShingoFukuyama/helm-swoop).
+It allows us to not only search the current buffer but also
+the other buffers and to make live edits by pressing `C-c C-e`
+when a search buffer exists. Incidentally, executing `C-s` on a word, region,
+will search for that particular word, region; then apply changes by `C-x C-s`.
+
+    (use-package helm-swoop
+      :ensure t
+      :bind
+      (
+       ("C-s"     . 'helm-swoop)           ;; search current buffer
+       ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
+       ;; Go back to last position where ‘helm-swoop’ was called
+       ("C-S-s" . 'helm-swoop-back-to-last-point)
+      )
+     :config
+       ;; Give up colour for speed.
+      (setq helm-swoop-speed-or-color nil)
+    )
+
+Press `M-i` after a search has executed to enable it for all buffers.
+
+We can also limit our search to org files, or buffers of the same mode,
+or buffers belonging to the same project!
+
+Finally, let's enable “complete anything” mode
+&#x2013;it ought to start in half a second and only need two characters to get going,
+which means word suggestions are provided and so I need only type partial words
+then tab to get the full word!
+
+    (use-package company
+      :ensure t
+      :diminish
+      :config
+        (setq company-idle-delay 0)
+        (setq company-minimum-prefix-length 2)
+        (add-hook 'after-init-hook 'global-company-mode))
+    
+    ;; So fast that we don't need this.
+    ;; (global-set-key (kbd "C-c h") 'company-complete)
+
+Note that `Meta-/` goes through a sequence of completions.
+
+Note that besides the arrow keys, we can also use `C-` or `M-` with `n, p` to
+navigate the options.
+
+Besides boring word completition, let's add support for [emojis](https://github.com/dunn/company-emoji).
+
+    (use-package company-emoji :ensure t)
+    (add-to-list 'company-backends 'company-emoji)
+
+For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
+
+➡️On a new line, write `:` then any letter to have a tool-tip appear.
+All emoji names are lowercase. ◀
+
+The libraries `emojify, emojify-logos` provides cool items like :haskell: :emacs: :org: :ruby: :python:.
+Unfortunately they do not easily export to html with org-mode, so I'm not using
+them.
+
+
+<a id="org6bde7b5"></a>
+
+## Snippets &#x2013; Template Expansion
+
+It is common that there is a sequence of text that we tend to repeat
+often, possibly with a name or some other parameter altered.
+Such a snippet could be written once then provided by a simple
+Lisp insert command with the parameters being queried. Luckily, others
+have written such pleasant utilities.
+
+[Yasnippet](http://joaotavora.github.io/yasnippet/snippet-development.html) is a pleasant utility for template expansion with the alluring
+feature to allow arbitrary Lisp code to be executed during expansion.
+The declaration of templates is verbose, requiring a particular file
+hierarchy, as such I utilise [Yankpad](https://github.com/Kungsgeten/yankpad) which allows me to employ
+an Org-mode approach: Each template corresponds to an org heading of
+the form `Key:Words:For:Expansion:Here: name of snippet here` and the
+template body is then the body of the org heading.
+Any of `Key, Words, For, Expansion, Here` will rewrite into the body
+of the org tree. This is much more terse, and I even don't bother
+with that; instead preferring to tangle my templates using yankpad
+as a mere interface.
+
+    ;; Yet another snippet extension program
+    (use-package yasnippet
+      :ensure t
+      :config
+        ;; respect the spacing in my snippet declarations
+        (setq yas-indent-line 'fixed)
+        (add-hook 'after-init-hook 'yas-global-mode)
+    )
+    
+    ;; Nice “interface” to said program
+    (use-package yankpad
+      :ensure t
+      :config
+        ;; If you want to complete snippets using company-mode
+        (add-to-list 'company-backends #'company-yankpad)
+        ;; If you want to expand snippets with hippie-expand
+        (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand)
+        ;; Location of templates
+        (setq yankpad-file "~/.emacs.d/yankpad.org")
+        (setq yankpad-category "Category: Default")
+        ;; Load the snippet templates    
+        (add-hook 'after-init-hook 'yankpad-reload)
+    )
+
+With these settings, along with the `company` backend, I may type a keyword
+then “tab” it into expansion.
+
+Yankpad requires we have an org file that contains our templates,
+so we tangle such a file `~/.emacs.d/yankpad.org`, and have all of our
+templates be globally accessible.
+
+    #+Description: This is file is generated from my init.org; do not edit. 
+    
+    * Default                                           :global:
+
+Here's an example of a common template I perform by hand &#x2013;no more!
+I have the expected habit of copying a URL from someplace then forming
+a link to it by writing `[[URL] [description]]`, since the URL & syntax are already
+known, let's expand those and place the cursour at the only unknown &#x2013;the description.
+
+    ** my-org-insert-link: cleverly insert a link copied to clipboard
+     [[${1:`(clipboard-yank)`}][$2]] $0
+
+What's going on here?
+
+1.  This template is expanded with the keyword `my-org-insert-link`, then “tab”.
+2.  The cursour lands at position `$1`, which has default text being the result
+    of evaluating `(clipboard-yank)`. 
+    
+    We may evaluate Lisp code anywhere by enclosing it in backticks.
+
+3.  If we're satisfied with the current field, we simply tab to the next field.
+    Otherwise, we simply write text &#x2013;which overwrites the default text.
+
+4.  After enough tabbing we complete the template and the cursour lands
+    at position `$0`.
+
+⟪ Having default or mirrored text for `$2` would not allow me to see the URL
+field, lest I wish to change it or at least confirm it's what I want.
+Hence, the `$2` field has no default. ⟫
+
+Let's overwrite the usual way to insert such links, via `C-c C-l`.
+
+    (cl-defun org-insert-link ()
+      "Makes an org link by inserting the URL copied to clipboard
+      and prompting for the link description only.
+    
+      Type over the shown link to change it, or tab to move to the description
+      field.
+    
+      This overrides Org-mode's built-in ‘org-insert-link’ utility.
+      "
+      (interactive)
+      (insert "my-org-insert-link")
+      (yankpad-expand)
+    )
+
+The [Yasnippe manual](http://joaotavora.github.io/yasnippet/snippet-development.html) is an accessible read, as is the 
+ [Yankpad manual](https://github.com/Kungsgeten/yankpad), and showcases many other utilities; such as
+having certain snippets being activated enabled only in particular
+modes or on demand. Of note is that field `$n` can be accessed in 
+code with the invocation `(yas-field-value n)`.
+
+The rest of this section is other templates, not much for now,
+concluding with actually loading this snippet mechanism globally.
+
+1.  Org-mode Templates &#x2013;A reason I “generate” templates ;)
+
+    This produces a pop-up list of org-mode block types, if `src` is
+    selected, then a list of my commonly used languages pops-up.
+    Alternatively, ignore the pop-up menu and write any block or language name.
+    
+        ** begin: produce an org-mode block
+        #+begin_${1:environment$(let* 
+            ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
+             (langs '("c" "emacs-lisp" "lisp" "latex" "python" "sh" "haskell" "plantuml" "prolog"))
+             (type (yas-choose-value block)))
+             (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
+         $0
+        #+END_${1:$(car (split-string yas-text))}
+    
+    In this case, `yas-text` is equivalent to (`yas-field-value 1)`;
+    it generally refers to the value of the field being mirrored with `${n: ⋯yas-text⋯}`.
+    
+    However, going through pop-ups takes precious time.
+    Let's introduce a template for my most utilised kind of language blocks.
+    
+        ** s-el: Elisp org-block
+        #+begin_src emacs-lisp
+        $0
+        #+end_src
+    
+    However, doing this for each language I want is a waste of time
+    and textual space. Why? The purpose of templates is to reduce repetition,
+    yet the above block would be repeated with only 3 parts ‘unknown’: 
+    The expansion keyword, the description, and the org-mode source block name.
+    Whence,
+    
+        (cl-defun make-lang-template (key lang)
+          "We make an org-mode source block snippet template.
+          
+          ‘key’ is the expansion word key for the language ‘lang’;
+          the description for the snippet is also ‘lang’.
+          "
+          (s-join "\n" `(
+            ,(concat "** " key ": " lang)
+            ,(concat "#+begin_src " lang)
+            "$0"
+            "#+end_src"
+            "\n"
+          ))
+        )
+    
+    The template *text* is then generated by the following simple loop
+    &#x2013;whose source block is named `my-org-lang-templates`.
+    
+        (let (result) ;; ensure result is initially empty
+           (dolist (x '( ("s-el" . "emacs-lisp")
+                         ("s-org" . "org")
+                         ("s-hs" . "haskell")
+                         ("s-ag" . "agda2")
+                         ("s-c" . "c")
+                         ("s-lx" . "latex")
+                       ) result)
+              (setq result (concat result "\n" (make-lang-template (car x) (cdr x))))
+           )   
+        )
+    
+    The *resulting text* of this block is tangled to our yankpad
+    by utilising a [noweb](https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-reference-syntax.html) source block invocation.
+    
+        
+        ** s-el: emacs-lisp
+        #+begin_src emacs-lisp
+        $0
+        #+end_src
+        
+        
+        ** s-org: org
+        #+begin_src org
+        $0
+        #+end_src
+        
+        
+        ** s-hs: haskell
+        #+begin_src haskell
+        $0
+        #+end_src
+        
+        
+        ** s-ag: agda2
+        #+begin_src agda2
+        $0
+        #+end_src
+        
+        
+        ** s-c: c
+        #+begin_src c
+        $0
+        #+end_src
+        
+        
+        ** s-lx: latex
+        #+begin_src latex
+        $0
+        #+end_src
+    
+    Now `s-`, due to company mode, brings up a list of languages
+    that I can then simply scroll down through, then “enter” upon to
+    expand. Moreover, the prefix `s-` means that the key is mostly irrelevant,
+    since I needn't remember it because company-mode immediately lists possible completions.
+    Super neat stuff :-)
+    
+    Ain't this reminiscent of meta-programming ;-)
+    
+    ⟪ Incidentally, I originally wrote an Elisp script to temporarily
+    open the yankpad, then append the desired text. However, such
+    an approach is brittle: I have to manually execute said script.
+    
+    In contrast, using noweb invocations to tangle the results is
+    more flexible: Any time the tangling is performed, the yankpad
+    is kept up to date &#x2013;no personal intervention from myself.
+    
+    Observe that noweb could be utilised in a similar fashion to 
+    [share key-value pairs across different source files](https://www.wisdomandwonder.com/article/10603/two-ways-to-share-static-key-pair-values-across-different-tangled-source-files-with-org-mode-literate-programming).
+    ⟫
+
+2.  Elisp Templates
+
+        ** loop:  Elisp's for each loop
+        (dolist (${1:var} ${2:list-form})
+                ${3:body})
+        
+        ** defun: Lisp functions
+        (cl-defun ${1:fun-name} (${2:arguments})
+          "${3:documentation}"
+          $0
+        )
+        
+        ** cond: Elisp conditionals
+        (cond (${1:scenario₁} ${2:response₁})
+              (${3:scenario₂} ${4:response₂})
+        )
+
+3.  Agda Templates
+
+        ** fun: Function declaration with type signature 
+        
+        ${1:fun-name} : ${2:arguments}
+        $1 ${3:args} = ?$0
+        
+        ** eqn-begin: Start a ≡-Reasoning block in Agda
+        
+        begin
+          ${1:left-hand-side}
+        ≡⟨ $0 ⟩
+          ${2:right-hand-side}
+        ∎
+        
+        ** eqn-step: Insert a step in a ≡-Reasoning block in Agda
+        
+        ≡⟨ ${1:hint} ⟩
+          $0
+
+
+<a id="org9c4ef9e"></a>
 
 # Helpful Functions & Shortcuts
 
@@ -1922,7 +2414,7 @@ Let's save a few precious seconds,
     (fset 'yes-or-no-p 'y-or-n-p)
 
 
-<a id="orgc6c7ecb"></a>
+<a id="org092be7a"></a>
 
 ## Bind `recompile` to `C-c C-m` &#x2013; “m” for “m”ake
 
@@ -1942,7 +2434,7 @@ Let's save a few precious seconds,
     (diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
 
 
-<a id="org804df1c"></a>
+<a id="org7cb7432"></a>
 
 ## Reload buffer with `f5`
 
@@ -1962,7 +2454,7 @@ were regenerated &#x2013;Emacs should also prompt me if I make any changes!
     (global-auto-revert-mode 1)
 
 
-<a id="org9c0a747"></a>
+<a id="org46ca1f1"></a>
 
 ## Kill to start of line
 
@@ -1972,7 +2464,7 @@ Dual to `C-k`,
     (global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
 
 
-<a id="org59ce0a7"></a>
+<a id="orga54e967"></a>
 
 ## `file-as-list` and `file-as-string`
 
@@ -1989,7 +2481,7 @@ Dual to `C-k`,
         (buffer-string)))
 
 
-<a id="org303e517"></a>
+<a id="org4e4d623"></a>
 
 ## `kill-other-buffers`
 
@@ -1999,7 +2491,7 @@ Dual to `C-k`,
       (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
 
 
-<a id="org31ea537"></a>
+<a id="orgb6250a6"></a>
 
 ## `create-scratch-buffer`
 
@@ -2013,7 +2505,7 @@ Dual to `C-k`,
        (lisp-interaction-mode))   
 
 
-<a id="orgf37e169"></a>
+<a id="orgba486c5"></a>
 
 ## Switching from 2 horizontal windows to 2 vertical windows
 
@@ -2036,7 +2528,7 @@ Instead I now only need to type `C-|` to make this switch.
     (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 
 
-<a id="orge9f3f03"></a>
+<a id="org4a06c01"></a>
 
 ## `re-replace-in-file`
 
@@ -2065,8 +2557,6 @@ Example usage:
                         (lambda (x) (concat x "\n NICE")))
 
 
-<a id="orge9013b0"></a>
-
 ### `mapsto`: Simple rewriting for current buffer
 
     (defun mapsto (this that)
@@ -2083,7 +2573,7 @@ Example usage:
     )
 
 
-<a id="orgbf9f35e"></a>
+<a id="org7c79161"></a>
 
 ## Obtaining Values of `#+KEYWORD` Annotations
 
@@ -2096,8 +2586,8 @@ Org-mode &#x2013;we do so for the case, for example, of the `CATEGORIES` and `IM
     (defun org-keywords ()
       "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
       (org-element-map (org-element-parse-buffer 'element) 'keyword
-    		   (lambda (keyword) (cons (org-element-property :key keyword)
-    					   (org-element-property :value keyword)))))
+                       (lambda (keyword) (cons (org-element-property :key keyword)
+                                               (org-element-property :value keyword)))))
     
     (defun org-keyword (KEYWORD)
       "Get the value of a KEYWORD in the form of #+KEYWORD: value"
@@ -2109,7 +2599,7 @@ See [here](https://orgmode.org/manual/Org-syntax.html) on how to see the abstrac
 and how to manipulate it.
 
 
-<a id="orgb0c1d20"></a>
+<a id="orgdc4ffb3"></a>
 
 ## Quickly pop-up a terminal, run a command, close it
 
@@ -2123,19 +2613,19 @@ and how to manipulate it.
        (cond 
          ;; when the terminal buffer is alive, kill it.
          ((get-buffer name)  (kill-buffer name) 
-    			 (ignore-errors (delete-window)))
+                             (ignore-errors (delete-window)))
          ;; otherwise, set value to refer to a new eshell buffer.
          (t                  (split-window-right)
-    			 (other-window 1)
-    			 (eshell)
-    			 (rename-buffer name))
+                             (other-window 1)
+                             (eshell)
+                             (rename-buffer name))
        )
     )
     
     (global-set-key "\C-t" 'toggle-terminal)
 
 
-<a id="orgbf3e993"></a>
+<a id="org634e49b"></a>
 
 ## `C-x k` kills current buffer
 
@@ -2150,7 +2640,7 @@ such a tedious decision.
       '(lambda () (interactive) (kill-buffer (current-buffer))))
 
 
-<a id="orgecff6bf"></a>
+<a id="orgdb635fb"></a>
 
 # Summary of Utilities Provided
 

@@ -41,7 +41,10 @@
 #+STARTUP: lognoteclock-out
 
 # [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]]
-#+INFOJS_OPT: view:info toc:t buttons:t
+# INFOJS_OPT: view:info toc:t buttons:t
+#
+# Looks nice for standalone pages; doesn't incorporate
+# nicely with github README.md .
 
 # Keep OS up to date; 
 # brew update && brew upgrade
@@ -1283,12 +1286,10 @@ We open a nifty file manager upon startup.
 (use-package neotree :ensure t
   :config (global-set-key "\C-x\ d" 'neotree-toggle))
 
-(defvar *my/setting-up-icons nil "Variable to ensure a one-time setup.")
 ;; Only do this once: 
-(unless *my/setting-up-icons nil
+(when nil
   (use-package all-the-icons :ensure t)
-  (all-the-icons-install-fonts)
-  (setq *my/setting-up-icons t))
+  (all-the-icons-install-fonts 'install-without-asking))
 
 (setq neo-theme 'icons)
 (neotree-refresh)
@@ -1328,10 +1329,16 @@ After some time this got a bit annoying and I'm no longer  using this.
 * Life within Org-mode
 
 :Updating_FAQ:
-https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-new-org-mode-version-but-loads-the-old-versio
+
+#+BEGIN_SRC emacs-lisp
+(shell-command "rm ~/.emacs.d/elpa/org-9.2.3/*.elc")
+(byte-recompile-directory "~/.emacs.d/elpa/org-9.2.3/")
+#+END_SRC
 
 Easiest way get latest version of org-mode:
 ~M-x package-list-packages~, then select ~org~, then ~install~.
+
+https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-new-org-mode-version-but-loads-the-old-versio
 
 https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-version-using-package-repos-git-clone-in-ubuntu
 :End:
@@ -1348,6 +1355,9 @@ unicode arrow.
 #+end_src
 
 ** High Speed Literate Programming
+
+*** Manipulating Sections
+
 Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of 
 a headline, we can perform fast manipulation & navigation using the standard Emacs movement
 controls, such as 
@@ -1383,7 +1393,8 @@ Moreover, ~?~ to see a complete list of keys available.
 # 
 #  To see the commands available, execute
 # (org-speed-command-help)
-PS. ~C-RET, C-S-RET~ make a new heading where the latter marks it as a ~TODO~.
+
+*** Seamless Navigation Between Source Blocks
 
 Finally, let's use the “super key” --aka the command or windows key--
 to jump to the previous, next, or toggle editing org-mode source blocks.
@@ -1397,6 +1408,57 @@ to jump to the previous, next, or toggle editing org-mode source blocks.
 #+end_src
 
 Interestingly, ~s-l~ is “goto line”.
+
+*** Modifying ~<return>~
+
++ ~C-RET, C-S-RET~ make a new heading where the latter marks it as a ~TODO~.
++ By default ~M-RET~ makes it easy to work with existing list items, headings, tables, etc
+  by creating a new item, heading, etc.
++ Usually we want a newline then we indent, let's make that the default.
+   #+BEGIN_SRC emacs-lisp
+(add-hook 'org-mode-hook '(lambda () 
+  (local-set-key (kbd "<return>") 'org-return-indent))
+  (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline))
+#+END_SRC
+
+   Notice that I've also added another kind of return, for when I want to
+   break-out of the indentation approach and start working at the beginning of
+   the line.
+
+In summary,
+| key          | method                                  | behaviour                         |
+|--------------+-----------------------------------------+-----------------------------------|
+| ~<return>~     | ~org-return-indent~                       | Newline with indentation          |
+| ~M-<return>~   | ~org-meta-return~                         | Newline with new org item         |
+| ~C-M-<return>~ | ~electric-indent-just-newline~            | Newline, cursor at start          |
+| ~C-<return>~   | ~org-insert-heading-respect-content~      | New heading /after/ current content |
+| ~C-S-<return>~ | ~org-insert-todo-heading-respect-content~ | Ditto, but with a ~TODO~ marker     |
+
+*** ~C-a,e,k~ and Yanking of sections
+# Editing & Special Key Handling
+#+begin_src emacs-lisp
+;; On an org-heading, C-a goes to after the star, heading markers.
+;; To use speed keys, run C-a C-a to get to the star markers.
+;;
+;; C-e goes to the end of the heading, not including the tags.
+;;
+(setq org-special-ctrl-a/e t)
+
+;; C-k no longer removes tags, if activated in the middle of a heading's name.
+(setq org-special-ctrl-k t)
+
+;; When you yank a subtree and paste it alongside a subtree of depth ‘d’,
+;; then the yanked tree's depth is adjusted to become depth ‘d’ as well.
+;; If you don't want this, then refile instead of copy pasting.
+(setq org-yank-adjusted-subtrees t)
+#+end_src
+
+:Does_not_work_for_me:
+;; adds alphabetical lists like
+;;  a. item one
+;;  b. item two
+(setq org-alphabetical-lists t)
+:End:
 
 ** Using org-mode as a Day Planner
 
@@ -1964,7 +2026,6 @@ Here's another example graph,
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
 
-
 ** Coloured LaTeX using Minted
 Execute the following for bib ref as well as minted
 Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
@@ -1986,28 +2047,6 @@ For faster pdf generation, may consider invoking:
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 #+end_example
 
-** Editing & Special Key Handling
-#+begin_src emacs-lisp
-;; On an org-heading, C-a goes to after the star, heading markers.
-;; To use speed keys, run C-a C-a to get to the star markers.
-;;
-;; C-e goes to the end of the heading, not including the tags.
-;;
-(setq org-special-ctrl-a/e t)
-
-;; C-k no longer removes tags, if activated in the middle of a heading's name.
-(setq org-special-ctrl-k t)
-
-;; When you yank a subtree and paste it alongside a subtree of depth ‘d’,
-;; then the yanked tree's depth is adjusted to become depth ‘d’ as well.
-;; If you don't want this, then refile instead of copy pasting.
-(setq org-yank-adjusted-subtrees t)
-
-;; adds alphabetical lists like
-;;  a. item one
-;;  b. item two
-(setq org-alphabetical-lists t)
-#+end_src
 ** Executing code from ~src~ blocks
 
 For example, to execute a shell command in emacs,
@@ -2122,7 +2161,6 @@ Then the functionality,
 (global-set-key (kbd "C-x t") 'new-untitled-org-template)
 #+END_SRC
 
-
 ** Hiding Emphasise Markers & Inlining Images
 #+BEGIN_SRC emacs-lisp
 ;; org-mode math is now highlighted ;-)
@@ -2154,7 +2192,7 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
 ** Jumping without hassle
 
 #+BEGIN_SRC emacs-lisp
-(defun org-goto-line (line)
+(defun my/org-goto-line (line)
   "Go to the indicated line, unfolding the parent Org header.
 
    Implementation: Go to the line, then look at the 1st previous
@@ -2172,10 +2210,7 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
 ** Folding within a subtree
 
 #+BEGIN_SRC emacs-lisp
-; https://orgmode.org/manual/Structure-editing.html
-; (describe-symbol 'save-excursion)
-;
-(defun org-fold-current-subtree-anywhere-in-it ()
+(defun my/org-fold-current-subtree-anywhere-in-it ()
   "Hide the current heading, while being anywhere inside it."
   (interactive)
   (save-excursion
@@ -2184,8 +2219,8 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
     (widen))
 )
 
-;; FIXME: Make this buffer specfic!
-(global-set-key (kbd "C-c C-h") 'org-fold-current-subtree-anywhere-in-it)
+(add-hook 'org-mode-hook '(lambda () 
+  (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
 
 ** Making then opening html's from org's
@@ -2355,7 +2390,7 @@ If the :tangle header arg is a list of files. Handle all files"
 (advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
 (advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
 #+end_src
-* COMMENT Expected IDE Support
+* Expected IDE Support
 
 ** Backups
 By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
@@ -2562,7 +2597,7 @@ which means word suggestions are provided and so I need only type partial words
 then tab to get the full word!
 #+begin_src emacs-lisp
 (use-package company
-  :ensure
+  :ensure t
   :diminish
   :config
     (setq company-idle-delay 0)
@@ -2643,20 +2678,28 @@ as a mere interface.
 
 #+BEGIN_SRC emacs-lisp
 ;; Yet another snippet extension program
-(use-package yasnippet :ensure t)
+(use-package yasnippet
+  :ensure t
+  :config
+    ;; respect the spacing in my snippet declarations
+    (setq yas-indent-line 'fixed)
+    (add-hook 'after-init-hook 'yas-global-mode)
+)
 
 ;; Nice “interface” to said program
 (use-package yankpad
   :ensure t
-  :defer 10
-  :init
-  (setq yankpad-file "~/.emacs.d/yankpad.org")
-  (yankpad-reload)
   :config
-  ;; If you want to complete snippets using company-mode
-  (add-to-list 'company-backends #'company-yankpad)
-  ;; If you want to expand snippets with hippie-expand
-  (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand))
+    ;; If you want to complete snippets using company-mode
+    (add-to-list 'company-backends #'company-yankpad)
+    ;; If you want to expand snippets with hippie-expand
+    (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand)
+    ;; Location of templates
+    (setq yankpad-file "~/.emacs.d/yankpad.org")
+    (setq yankpad-category "Category: Default")
+    ;; Load the snippet templates    
+    (add-hook 'after-init-hook 'yankpad-reload)
+)
 #+END_SRC
 
 With these settings, along with the ~company~ backend, I may type a keyword
@@ -2865,7 +2908,6 @@ levels, then uses each level to produce a list of type names ;-)
 Exercise to the interested (source code) reader 
 -- ping me, if you have questions.
 :End:
-
 **** Elisp Templates
 #+begin_src org :tangle "~/.emacs.d/yankpad.org"
 ,** loop:  Elisp's for each loop
@@ -2905,14 +2947,11 @@ begin
   $0
 #+end_src
 
-**** Enabling Templates
+**** COMMENT Re-Enabling Templates
 After our yankpad templates are generated, we need to load it.
-#+BEGIN_SRC emacs-lisp
-(setq yas-indent-line 'fixed) ;; respect the spacing in my snippet declarations
-(yas-global-mode)
-
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; After init hook; see above near use-package install.
-;; (yankpad-reload)
+(yankpad-reload)
 #+END_SRC
 ** COMMENT On the fly syntax checking     :Disabled:_want_it_within_org_src:
 #+begin_src emacs-lisp
@@ -3473,7 +3512,8 @@ C-c C-c: Evaluate src block.
      into my own. The result is a sufficiently well-documented and accessible read that yields
      a stylish and functional system (•̀ᴗ•́)و
 
-     The contents below could also be read in blog format, with /colour/,
+     This ~README.md~ has been automatically generated from my configuration
+     and its contents below could also be read in blog format, with /colour/,
      [[https://alhassy.github.io/init/][here]]. Enjoy :smile:
  
       #+TOC: headlines 2

@@ -10,3 +10,9 @@ _minted-init/
 eshell/
 ltximg/
 transient/
+/init.bbl
+/init.html
+/init.html~
+/init.tex
+/org-clock-save.el
+/recentf
