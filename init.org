@@ -44,7 +44,7 @@
 # brew update && brew upgrade
 # takes no time, if we're up to date.
 #
-# Do same for Emacs' pacakges?
+# Do same for Emacs' packages?
 
 * Abstract                                                   :ignore:
  
@@ -148,6 +148,12 @@ Consider reading ⋯
 + The [[http://tuhdo.github.io/emacs-tutor.html#orgheadline63][Emacs Mini Manual]], or
 + [[https://david.rothlis.net/emacs/howtolearn.html][“How to Learn Emacs”]]
 + [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
++ [[http://emacsrocks.com/][Video Series on Why Emacs Rocks]] 
+
+Remember: Emacs is a flexible platform for developing end-user applications; e.g., this configuration file
+is at its core an Emacs Lisp program that yields the editor of my dreams 
+--it encourages me to grow and to be creative, and I hope the same for all who use it;
+moreover, it reflects my personality such as what I value and what I neglect in my workflow.
 
 * Booting Up
 ** ~~/.emacs~ vs. ~init.org~
@@ -974,6 +980,9 @@ Note: Using spacemacs theme above.
 #+begin_src emacs-lisp
 ;; Make it very easy to see the line with the cursor.
 (global-hl-line-mode t)
+
+;; Keep self motivated!
+(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 #+end_src
 
 ** Startup message: Emacs & Org versions
@@ -1877,7 +1886,7 @@ will have will mention the time elapsed alongside the task name.
 
   When you've gone above your estimate time, the modeline shows it to be red.
 
-** COMMENT <replace with yankpand> Template expansion (<s Tab, etc.)
+** COMMENT ⟨replaced with yankpand, below⟩ Template expansion (<s Tab, etc.)
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
 or ~<q~ for quote blocks. 
 It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode structure template expansion
@@ -1909,40 +1918,6 @@ into a new code block! Wow!
 ;; (defun org--check-org-structure-template-alist (x) "n" t)
 #+END_SRC
 
-
-
-*** ~<ag~ (Org) Agda source template
-
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'org-structure-template-alist
-     '("ag" . "src org-agda"))
-#+END_SRC
-*** ~<hs~ Haskell source template
-
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'org-structure-template-alist
-     '("hs" . "src haskell"))
-#+END_SRC
-*** ~<ic~ Interactive Way to C source template
-
-#+BEGIN_SRC emacs-lisp
- (add-to-list 'org-structure-template-alist
-      '("ic" . "src c :tangle (currently-working-with \"name\")"))
-#+END_SRC
-
-*** ~<ich~ Interactive Way to C header template
-
-#+BEGIN_SRC emacs-lisp
- (add-to-list 'org-structure-template-alist
-      '("ich" . "src c :tangle (currently-working-with-header \"name\")"))
-#+END_SRC
-
-*** ~<ver~ Verbatim template
-
- #+BEGIN_SRC emacs-lisp
- (add-to-list 'org-structure-template-alist
-      '("ver" . "verbatim"))
- #+END_SRC
 
 *** COMMENT TODO Demoing Dot Graphs
 We include one to demo the capabilities of the previous subsection.
