@@ -34,11 +34,14 @@
 
 # Defined below,
 # (display-startup-echo-area-message)
-# ⇒ Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.2; System alhassy-air.local
+# ⇒ Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.3; System alhassy-air.local
 #
 # (byte-compile-file "~/.emacs")
 
 #+STARTUP: lognoteclock-out
+
+# [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]]
+#+INFOJS_OPT: view:info toc:t buttons:t
 
 # Keep OS up to date; 
 # brew update && brew upgrade
@@ -414,7 +417,11 @@ Here are other packages that I want to be installed onto my machine.
   ;; (setq powerline-default-separator 'arrow)
   ;; (spaceline-spacemacs-theme)
 )
+
 (global-set-key "\C-x\ t" 'my/toggle-theme)
+
+;; Initially begin with the light theme.
+(load-theme 'spacemacs-light t)
 #+END_SRC
 
 The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
@@ -1276,8 +1283,12 @@ We open a nifty file manager upon startup.
 (use-package neotree :ensure t
   :config (global-set-key "\C-x\ d" 'neotree-toggle))
 
-; (use-package all-the-icons :ensure t)
-;; Only do this once: (all-the-icons-install-fonts)
+(defvar *my/setting-up-icons nil "Variable to ensure a one-time setup.")
+;; Only do this once: 
+(unless *my/setting-up-icons nil
+  (use-package all-the-icons :ensure t)
+  (all-the-icons-install-fonts)
+  (setq *my/setting-up-icons t))
 
 (setq neo-theme 'icons)
 (neotree-refresh)
@@ -1953,6 +1964,7 @@ Here's another example graph,
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
 
+
 ** Coloured LaTeX using Minted
 Execute the following for bib ref as well as minted
 Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
@@ -2004,9 +2016,9 @@ Emacs will generally query you to ensure you're sure about executing the
 (possibly dangerous) code block; let's stop that:
 #+BEGIN_SRC emacs-lisp
 ; Seamless use of babel: No confirmation upon execution.
+;; Downside: Could accidentally evaluate harmful code.
 (setq org-confirm-babel-evaluate nil)
 #+END_SRC
-# To activate this feature, "may" need to set #+PROPERTY: header-args :eval never-export in the beginning or your document
 
 A worked out example can be obtained as follows: ~<g TAB~ then ~C-c C-C~ to make a nice
 simple graph --the code for this is in the next section.
@@ -2032,7 +2044,8 @@ Some initial languages we want org-babel to support:
 (setq org-src-preserve-indentation t)
 
 ;; The export process hangs Emacs, let's avoid this.
-(setq org-export-in-background t)
+;; MA: For one reason or another, this crashes more than I'd like.
+;; (setq org-export-in-background t)
 #+END_SRC
 
 More languages can be added using ~add-to-list~.
@@ -2108,6 +2121,7 @@ Then the functionality,
 
 (global-set-key (kbd "C-x t") 'new-untitled-org-template)
 #+END_SRC
+
 
 ** Hiding Emphasise Markers & Inlining Images
 #+BEGIN_SRC emacs-lisp
@@ -2341,7 +2355,7 @@ If the :tangle header arg is a list of files. Handle all files"
 (advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
 (advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
 #+end_src
-* Expected IDE Support
+* COMMENT Expected IDE Support
 
 ** Backups
 By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
@@ -2377,6 +2391,236 @@ system, like git; only locally.
 (desktop-save-mode 1)
 (setq desktop-restore-eager 10)
 #+end_src
+** Mouse Editing Support
+#+begin_src emacs-lisp
+;; Text selected with the mouse is automatically copied to clipboard.
+(setq mouse-drag-copy-region t)
+#+end_src
+
+** Having a workspace manager in Emacs
+
+I've loved using XMonad as a window tiling manager.
+I've enjoyed the ability to segregate my tasks
+according to what ‘project’ I'm working on;
+such as research, marking, Emacs play, etc.
+With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
+
+That is, I can have a million buffers, but only those
+that belong to a workspace will be visible when I'm switching between buffers, for example.
+
+#+BEGIN_SRC emacs-lisp
+(use-package perspective :ensure t)
+
+;; Activate it.
+(persp-mode)
+
+;; In the modeline, tell me which workspace I'm in.
+(persp-turn-on-modestring)
+#+END_SRC
+
+All commands are prefixed by ~C-x x~; main commands:
++ ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext one, or go to ‘p’revious one.
++ ~c~ :: Query a perspective to kill.
++ ~r~ :: Rename a perspective.
++ ~A~ :: Add buffer to current perspective & remove it from all others.
+
+As always, since we've installed ~which-key~, it suffices to press
+~C-x x~ then look at the resulting menu 😃
+
+** Jump between windows using Cmd+Arrow
+#+BEGIN_SRC emacs-lisp
+(use-package windmove
+  :ensure t
+  :config
+  ;; use command key on Mac
+  (windmove-default-keybindings 'super)
+  ;; wrap around at edges
+  (setq windmove-wrap-around t))
+#+END_SRC
+** Completion Frameworks
+[[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible completions and also shows recently executed commands when pressing ~M-x~.
+
+Extremely helpful for when switching between buffers, =C-x b=,
+and discovering & learning about other commands!
+E.g., press ~M-x~ to see recently executed commands and other possible commands!
+
+Try and be grateful.
+#+BEGIN_SRC emacs-lisp
+(use-package helm 
+ :ensure t
+ :diminish
+ :init (helm-mode t)
+ :bind
+  ("C-x C-r" . helm-recentf)      ; search for recently edited  
+
+  ;; Helm provides generic functions for completions to replace 
+  ;; tab-completion in Emacs with no loss of functionality. 
+  ("M-x" . 'helm-M-x)
+  ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
+  ("C-x r b" .'helm-filtered-bookmarks)
+  ("C-x C-f" . 'helm-find-files)
+
+   ;; Show all meaningful Lisp symbols whose names match a given pattern.
+   ;; Helpful for looking up commands.
+   ("C-h a" . helm-apropos)
+
+   ;; Look at what was cut recently & paste it in.
+   ("M-y" . helm-show-kill-ring)
+)
+;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
+
+;; Yet, let's keep tab-completetion anyhow.
+(define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
+(define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
+;; We can list ‘actions’ on the currently selected item by C-z.
+(define-key helm-map (kbd "C-z")  'helm-select-action)
+#+END_SRC
+
+When ~helm-mode~ is enabled, even help commands make use of it.
+E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
+and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
+Both show a pop-up of other possible commands.
+
+Incidentally, helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the top program via
+~helm-top~. It also serves as an interface to popular search engines
+and over 100 websites such as ~google, stackoverflow~, and ~arxive~.
+#+begin_src emacs-lisp
+;; (shell-command "brew install surfraw &")
+;; 
+;; Invoke helm-surfraw
+#+end_src
+If we want to perform a google search, with interactive suggestions,
+then invoke ~helm-google-suggest~ --which can be acted for other serves,
+such as Wikipedia or Youtube by ~C-z~. For more google specific options,
+there is the ~google-this~ package.
+
+Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].
+It allows us to not only search the current buffer but also
+the other buffers and to make live edits by pressing ~C-c C-e~
+when a search buffer exists. Incidentally, executing ~C-s~ on a word, region,
+will search for that particular word, region; then apply changes by ~C-x C-s~.
+
+#+BEGIN_SRC emacs-lisp
+(use-package helm-swoop
+  :ensure t
+  :bind
+  (
+   ("C-s"     . 'helm-swoop)           ;; search current buffer
+   ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
+   ;; Go back to last position where ‘helm-swoop’ was called
+   ("C-S-s" . 'helm-swoop-back-to-last-point)
+  )
+ :config
+   ;; Give up colour for speed.
+  (setq helm-swoop-speed-or-color nil)
+)
+#+END_SRC
+Press ~M-i~ after a search has executed to enable it for all buffers.
+
+We can also limit our search to org files, or buffers of the same mode,
+or buffers belonging to the same project!
+
+:Old_ivy_counsel_swiper_shenanigans:
++ There is a super duper neato search capability we can utilise -- ~swiper~.
++ We also use the ~counsel~, a collection of completion, ~ivy~, enhanced versions of
+  common Emacs commands.
+#+begin_src emacs-lisp :tangle no
+(use-package ivy ;; More powerful but ugly looking completetion framework. 
+                 ;; Helm is prettier.
+                 ;; Needed for Counsel, below.
+ :config 
+
+  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
+  (setq ivy-use-virtual-buffers t)
+  ;; number of result lines to display
+  (setq ivy-height 10)
+  ;; does not count candidates
+  (setq ivy-count-format "")
+  ;; no regexp by default
+  (setq ivy-initial-inputs-alist nil)
+)
+
+(use-package counsel
+  :ensure t
+  :bind*                              ; load when pressed
+  (
+   ("C-s"     . swiper)
+   ;; ("C-x C-r" . counsel-recentf)      ; search for recently edited
+   ("<f1> l"  . counsel-find-library) ; find an Emacs Lisp library 
+   ("<f2> u"  . counsel-unicode-char) ; insert a unicode symbol using a pop-up
+  ))
+#+end_src
+
+~swiper~ is an alternative to Emacs' default incremental search.
+It shows an overview of all matches --navigate using arrow keys.
+There is also a helm based version of swiper.
+:end:
+
+Finally, let's enable “complete anything” mode
+--it ought to start in half a second and only need two characters to get going,
+which means word suggestions are provided and so I need only type partial words
+then tab to get the full word!
+#+begin_src emacs-lisp
+(use-package company
+  :ensure
+  :diminish
+  :config
+    (setq company-idle-delay 0)
+    (setq company-minimum-prefix-length 2)
+    (add-hook 'after-init-hook 'global-company-mode))
+
+;; So fast that we don't need this.
+;; (global-set-key (kbd "C-c h") 'company-complete)
+#+end_src
+Note that ~Meta-/~ goes through a sequence of completions.
+
+Note that besides the arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to
+navigate the options.
+
+Besides boring word completition, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
+#+begin_src emacs-lisp
+(use-package company-emoji :ensure t)
+(add-to-list 'company-backends 'company-emoji)
+#+end_src
+
+For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
+
+➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
+All emoji names are lowercase. ◀
+# :end: does not html export nicely.
+
+The libraries ~emojify, emojify-logos~ provides cool items like :haskell: :emacs: :org: :ruby: :python:.
+Unfortunately they do not easily export to html with org-mode, so I'm not using
+them.
+
+:Alternatives:
+#+BEGIN_SRC emacs-lisp
+(use-package emojify
+ :ensure t
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1) ;; Will install missing images, if need be.
+)
+#+END_SRC
+
+(use-package emojify-logos
+:ensure t
+:after emojify)
+
+For example,
+#+begin_src emacs-lisp :tangle no
+ :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:
+#+end_src
+Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emojify-insert-emoji)~ to see more.
+
+Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
+for completion of emoji names.
+
+(use-package ac-emoji
+  :ensure t
+  :init (ac-emoji-setup)
+) 
+:End:
+
 ** Snippets -- Template Expansion
 
 It is common that there is a sequence of text that we tend to repeat
@@ -2407,9 +2651,8 @@ as a mere interface.
   :defer 10
   :init
   (setq yankpad-file "~/.emacs.d/yankpad.org")
+  (yankpad-reload)
   :config
-  (bind-key "<f7>" 'yankpad-map)
-  (bind-key "<f12>" 'yankpad-expand)
   ;; If you want to complete snippets using company-mode
   (add-to-list 'company-backends #'company-yankpad)
   ;; If you want to expand snippets with hippie-expand
@@ -2667,228 +2910,10 @@ After our yankpad templates are generated, we need to load it.
 #+BEGIN_SRC emacs-lisp
 (setq yas-indent-line 'fixed) ;; respect the spacing in my snippet declarations
 (yas-global-mode)
-(yankpad-reload)
+
+;; After init hook; see above near use-package install.
+;; (yankpad-reload)
 #+END_SRC
-** Mouse Editing Support
-#+begin_src emacs-lisp
-;; Text selected with the mouse is automatically copied to clipboard.
-(setq mouse-drag-copy-region t)
-#+end_src
-
-** Having a workspace manager in Emacs
-
-I've loved using XMonad as a window tiling manager.
-I've enjoyed the ability to segregate my tasks
-according to what ‘project’ I'm working on;
-such as research, marking, Emacs play, etc.
-With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
-
-That is, I can have a million buffers, but only those
-that belong to a workspace will be visible when I'm switching between buffers, for example.
-
-#+BEGIN_SRC emacs-lisp
-(use-package perspective :ensure t)
-
-;; Activate it.
-(persp-mode)
-
-;; In the modeline, tell me which workspace I'm in.
-(persp-turn-on-modestring)
-#+END_SRC
-
-All commands are prefixed by ~C-x x~; main commands:
-+ ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext one, or go to ‘p’revious one.
-+ ~c~ :: Query a perspective to kill.
-+ ~r~ :: Rename a perspective.
-+ ~A~ :: Add buffer to current perspective & remove it from all others.
-
-As always, since we've installed ~which-key~, it suffices to press
-~C-x x~ then look at the resulting menu 😃
-
-** Completion Frameworks
-[[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible completions and also shows recently executed commands when pressing ~M-x~.
-
-Extremely helpful for when switching between buffers, =C-x b=,
-and discovering & learning about other commands!
-E.g., press ~M-x~ to see recently executed commands and other possible commands!
-
-Try and be grateful.
-#+BEGIN_SRC emacs-lisp
-(use-package helm 
- :ensure t
- :diminish
- :init (helm-mode t)
- :bind
-  ("C-x C-r" . helm-recentf)      ; search for recently edited  
-
-  ;; Helm provides generic functions for completions to replace 
-  ;; tab-completion in Emacs with no loss of functionality. 
-  ("M-x" . 'helm-M-x)
-  ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
-  ("C-x r b" .'helm-filtered-bookmarks)
-  ("C-x C-f" . 'helm-find-files)
-
-   ;; Show all meaningful Lisp symbols whose names match a given pattern.
-   ;; Helpful for looking up commands.
-   ("C-h a" . helm-apropos)
-
-   ;; Look at what was cut recently & paste it in.
-   ("M-y" . helm-show-kill-ring)
-)
-;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
-
-;; Yet, let's keep tab-completetion anyhow.
-(define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
-(define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
-;; We can list ‘actions’ on the currently selected item by C-z.
-(define-key helm-map (kbd "C-z")  'helm-select-action)
-#+END_SRC
-
-When ~helm-mode~ is enabled, even help commands make use of it.
-E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
-and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
-Both show a pop-up of other possible commands.
-
-Incidentally, helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the top program via
-~helm-top~. It also serves as an interface to popular search engines
-and over 100 websites such as ~google, stackoverflow~, and ~arxive~.
-#+begin_src emacs-lisp
-;; (shell-command "brew install surfraw &")
-;; 
-;; Invoke helm-surfraw
-#+end_src
-If we want to perform a google search, with interactive suggestions,
-then invoke ~helm-google-suggest~ --which can be acted for other serves,
-such as Wikipedia or Youtube by ~C-z~. For more google specific options,
-there is the ~google-this~ package.
-
-Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].
-It allows us to not only search the current buffer but also
-the other buffers and to make live edits by pressing ~C-c C-e~
-when a search buffer exists. Incidentally, executing ~C-s~ on a word, region,
-will search for that particular word, region; then apply changes by ~C-x C-s~.
-
-#+BEGIN_SRC emacs-lisp
-(use-package helm-swoop
-  :ensure t
-  :bind
-  (
-   ("C-s"     . 'helm-swoop)           ;; search current buffer
-   ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
-   ;; Go back to last position where ‘helm-swoop’ was called
-   ("C-S-s" . 'helm-swoop-back-to-last-point)
-  )
- :config
-   ;; Give up colour for speed.
-  (setq helm-swoop-speed-or-color nil)
-)
-#+END_SRC
-Press ~M-i~ after a search has executed to enable it for all buffers.
-
-We can also limit our search to org files, or buffers of the same mode,
-or buffers belonging to the same project!
-
-:Old_ivy_counsel_swiper_shenanigans:
-+ There is a super duper neato search capability we can utilise -- ~swiper~.
-+ We also use the ~counsel~, a collection of completion, ~ivy~, enhanced versions of
-  common Emacs commands.
-#+begin_src emacs-lisp :tangle no
-(use-package ivy ;; More powerful but ugly looking completetion framework. 
-                 ;; Helm is prettier.
-                 ;; Needed for Counsel, below.
- :config 
-
-  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
-  (setq ivy-use-virtual-buffers t)
-  ;; number of result lines to display
-  (setq ivy-height 10)
-  ;; does not count candidates
-  (setq ivy-count-format "")
-  ;; no regexp by default
-  (setq ivy-initial-inputs-alist nil)
-)
-
-(use-package counsel
-  :ensure t
-  :bind*                              ; load when pressed
-  (
-   ("C-s"     . swiper)
-   ;; ("C-x C-r" . counsel-recentf)      ; search for recently edited
-   ("<f1> l"  . counsel-find-library) ; find an Emacs Lisp library 
-   ("<f2> u"  . counsel-unicode-char) ; insert a unicode symbol using a pop-up
-  ))
-#+end_src
-
-~swiper~ is an alternative to Emacs' default incremental search.
-It shows an overview of all matches --navigate using arrow keys.
-There is also a helm based version of swiper.
-:end:
-
-Finally, let's enable “complete anything” mode
---it ought to start in half a second and only need two characters to get going,
-which means word suggestions are provided and so I need only type partial words
-then tab to get the full word!
-#+begin_src emacs-lisp
-(use-package company
-  :ensure
-  :diminish
-  :config
-    (setq company-idle-delay 0)
-    (setq company-minimum-prefix-length 2)
-    (add-hook 'after-init-hook 'global-company-mode))
-
-;; So fast that we don't need this.
-;; (global-set-key (kbd "C-c h") 'company-complete)
-#+end_src
-Note that ~Meta-/~ goes through a sequence of completions.
-
-Note that besides the arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to
-navigate the options.
-
-Besides boring word completition, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
-#+begin_src emacs-lisp
-(use-package company-emoji :ensure t)
-(add-to-list 'company-backends 'company-emoji)
-#+end_src
-
-For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
-
-➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
-All emoji names are lowercase. ◀
-# :end: does not html export nicely.
-
-The libraries ~emojify, emojify-logos~ provides cool items like :haskell: :emacs: :org: :ruby: :python:.
-Unfortunately they do not easily export to html with org-mode, so I'm not using
-them.
-
-:Alternatives:
-#+BEGIN_SRC emacs-lisp
-(use-package emojify
- :ensure t
- :config (setq emojify-display-style 'image)
- :init (global-emojify-mode 1) ;; Will install missing images, if need be.
-)
-#+END_SRC
-
-(use-package emojify-logos
-:ensure t
-:after emojify)
-
-For example,
-#+begin_src emacs-lisp :tangle no
- :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:
-#+end_src
-Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emojify-insert-emoji)~ to see more.
-
-Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
-for completion of emoji names.
-
-(use-package ac-emoji
-  :ensure t
-  :init (ac-emoji-setup)
-) 
-:End:
-
 ** COMMENT On the fly syntax checking     :Disabled:_want_it_within_org_src:
 #+begin_src emacs-lisp
 (use-package flycheck
@@ -2921,16 +2946,6 @@ f x = x -- show x
 -- type error
 #+end_src
 :End:
-** Jump between windows using Cmd+Arrow
-#+BEGIN_SRC emacs-lisp
-(use-package windmove
-  :ensure t
-  :config
-  ;; use command key on Mac
-  (windmove-default-keybindings 'super)
-  ;; wrap around at edges
-  (setq windmove-wrap-around t))
-#+END_SRC
 * Helpful Functions & Shortcuts
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
