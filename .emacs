@@ -1,13 +1,11 @@
-;; For some reason, I need these here or my org-mode defaults to an older version.
-(require 'package)
-(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
-(package-initialize)
-;; (require 'org-tempo)
-
 ;; Avoid out-dated byte-compiled Elisp files.
 (setq load-prefer-newer t)
 
-(org-babel-load-file "~/.emacs.d/init.org")
+(setq org-confirm-babel-evaluate nil)
+(setq enable-local-variables :all)
+  (org-babel-load-file "~/.emacs.d/init.org")
+(setq enable-local-variables t)
+
 ;; (find-file "~/.emacs.d/init.org")
 ;; (find-file "~/.emacs.d/init.el")
 (custom-set-variables

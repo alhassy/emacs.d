@@ -251,12 +251,6 @@ Moreover, I add a little pop-up so that I don't forget to commit often!
 We evaluate every piece of emacs-lisp code available here when
 Emacs starts up by placing the following at the top of our ~.emacs~ file:
 #+BEGIN_SRC emacs-lisp :tangle no
-;; ⟪March 7, 2019⟫ For some reason, I need these here or my org-mode defaults to an older version.
-(require 'package)
-(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
-(package-initialize)
-(require 'org-tempo)
-
 (org-babel-load-file "~/.emacs.d/init.org")
 ;;
 ;; My Emacs settings: (find-file "~/.emacs.d/init.org")
@@ -1072,7 +1066,8 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 (split-window-right)			  ;; C-x 3
 (other-window 1)			          ;; C-x 0
 (toggle enable-local-variables :all           ;; Load *all* locals.
-  (find-file "~/.emacs.d/init.org"))
+    (toggle org-confirm-babel-evaluate nil    ;; Eval *all* blocks.
+      (find-file "~/.emacs.d/init.org")))
 #+END_SRC
 
 :primitive_approach_to_recent_files:
