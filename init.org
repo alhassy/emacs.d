@@ -1071,11 +1071,9 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 
 (split-window-right)			  ;; C-x 3
 (other-window 1)			          ;; C-x 0
-(toggle enable-local-variables 'all           ;; Load *all* locals.
+(toggle enable-local-variables :all           ;; Load *all* locals.
   (find-file "~/.emacs.d/init.org"))
 #+END_SRC
-
-(describe-symbol 'enable-local-variables)
 
 :primitive_approach_to_recent_files:
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -2171,7 +2169,10 @@ Then the functionality,
 
 ;; (setq org-pretty-entities t) 
 ;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+#+END_SRC
 
+The following is now disabled --it makes my system slower than I'd like.
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; Let's set inline images.
 (setq org-display-inline-images t)
 (setq org-redisplay-inline-images t)
@@ -2591,7 +2592,7 @@ It shows an overview of all matches --navigate using arrow keys.
 There is also a helm based version of swiper.
 :end:
 
-Finally, let's enable “complete anything” mode
+Finally, let's enable [[https://company-mode.github.io/][“complete anything” mode]]
 --it ought to start in half a second and only need two characters to get going,
 which means word suggestions are provided and so I need only type partial words
 then tab to get the full word!
@@ -2600,17 +2601,38 @@ then tab to get the full word!
   :ensure t
   :diminish
   :config
-    (setq company-idle-delay 0)
-    (setq company-minimum-prefix-length 2)
-    (add-hook 'after-init-hook 'global-company-mode))
+    (setq company-dabbrev-other-buffers t
+          company-dabbrev-code-other-buffers t
+        
+          ;; Allow (lengthy) numbers to be eligible for completion.
+          company-complete-number t
+          
+          ;; M-⟪num⟫ to select an option according to its number.
+          company-show-numbers t
 
+          ;; Only 2 letters required for completion to activate.
+          company-minimum-prefix-length 2
+        
+          ;; Do not downcase completions by default.
+          company-dabbrev-downcase nil
+        
+          ;; Even if I write something with the ‘wrong’ case,
+          ;; provide the ‘correct’ casing.
+          company-dabbrev-ignore-case t
+
+          ;; Immediately activate completion.
+          company-idle-delay 0
+          )
+
+    (global-company-mode 1)
+)
 ;; So fast that we don't need this.
 ;; (global-set-key (kbd "C-c h") 'company-complete)
 #+end_src
-Note that ~Meta-/~ goes through a sequence of completions.
-
+Note that ~M-/~ goes through a sequence of completions.
 Note that besides the arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to
-navigate the options.
+navigate the options. Note that [[https://github.com/company-mode/company-mode/issues/360][by default]] company mode does not support completion for
+phrases containing hyphens --this can be altered, if desired.
 
 Besides boring word completition, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
 #+begin_src emacs-lisp
@@ -2655,7 +2677,6 @@ for completion of emoji names.
   :init (ac-emoji-setup)
 ) 
 :End:
-
 ** Snippets -- Template Expansion
 
 It is common that there is a sequence of text that we tend to repeat
@@ -2676,31 +2697,54 @@ of the org tree. This is much more terse, and I even don't bother
 with that; instead preferring to tangle my templates using yankpad
 as a mere interface.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :results none
 ;; Yet another snippet extension program
 (use-package yasnippet
   :ensure t
+  :diminish yas-minor-mode
   :config
+    (yas-global-mode 1)
     ;; respect the spacing in my snippet declarations
     (setq yas-indent-line 'fixed)
-    (add-hook 'after-init-hook 'yas-global-mode)
 )
 
 ;; Nice “interface” to said program
 (use-package yankpad
   :ensure t
-  :config
-    ;; If you want to complete snippets using company-mode
-    (add-to-list 'company-backends #'company-yankpad)
-    ;; If you want to expand snippets with hippie-expand
-    (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand)
+  ;; :if company-mode ;; load & initialise only if company-mode is defined
+  :init
     ;; Location of templates
     (setq yankpad-file "~/.emacs.d/yankpad.org")
     (setq yankpad-category "Category: Default")
-    ;; Load the snippet templates    
-    (add-hook 'after-init-hook 'yankpad-reload)
+  :config
+    ;; If you want to complete snippets using company-mode
+    ;; (add-to-list 'company-backends #'company-yankpad)
+    ;; If you want to expand snippets with hippie-expand
+    (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand)
+    ;; Load the snippet templates -- useful after yankpad is altered 
+    ;; (add-hook 'after-init-hook 'yankpad-reload)
 )
-#+END_SRC
+
+;; Elementary textual completion backend.
+;; (setq company-backends
+;;   (add-to-list 'company-backends 'company-dabbrev))
+;; 
+;; Add yasnippet support for all company backends
+;; https://emacs.stackexchange.com/a/10520/10352
+;;
+(defvar company-mode/enable-yas t
+  "There can only be one main completition backend, so let's
+   enable yasnippet/yankpad as a secondary for all completion backends.")
+
+(defun company-mode/backend-with-yas (backend)
+  (if (or (not company-mode/enable-yas)
+          (and (listp backend) (member 'company-yankpad backend)))
+      backend
+    (append (if (consp backend) backend (list backend))
+            '(:with company-yankpad))))
+
+(setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+#+end_src
 
 With these settings, along with the ~company~ backend, I may type a keyword
 then “tab” it into expansion.
@@ -2803,8 +2847,8 @@ and textual space. Why? The purpose of templates is to reduce repetition,
 yet the above block would be repeated with only 3 parts ‘unknown’: 
 The expansion keyword, the description, and the org-mode source block name.
 Whence,
-#+BEGIN_SRC emacs-lisp
-(cl-defun make-lang-template (key lang)
+#+begin_src emacs-lisp :session trying-to-be-meta
+(defun make-lang-template (key lang)
   "We make an org-mode source block snippet template.
   
   ‘key’ is the expansion word key for the language ‘lang’;
@@ -2818,19 +2862,19 @@ Whence,
     "\n"
   ))
 )
-#+END_SRC
+#+end_src
 
 The template /text/ is then generated by the following simple loop
 --whose source block is named ~my-org-lang-templates~.
 #+NAME: my-org-lang-templates
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :session trying-to-be-meta
 (let (result) ;; ensure result is initially empty
-   (dolist (x '( ("s-el" . "emacs-lisp")
-                 ("s-org" . "org")
-                 ("s-hs" . "haskell")
-                 ("s-ag" . "agda2")
-                 ("s-c" . "c")
-                 ("s-lx" . "latex")
+   (dolist (x '( ("s_el" . "emacs-lisp")
+                 ("s_org" . "org")
+                 ("s_hs" . "haskell")
+                 ("s_ag" . "agda2")
+                 ("s_c" . "c")
+                 ("s_lx" . "latex")
                ) result)
       (setq result (concat result "\n" (make-lang-template (car x) (cdr x))))
    )   
@@ -2933,7 +2977,7 @@ Exercise to the interested (source code) reader
 ${1:fun-name} : ${2:arguments}
 $1 ${3:args} = ?$0
 
-,** eqn-begin: Start a ≡-Reasoning block in Agda
+,** eqn_begin: Start a ≡-Reasoning block in Agda
 
 begin
   ${1:left-hand-side}
@@ -2941,7 +2985,7 @@ begin
   ${2:right-hand-side}
 ∎
 
-,** eqn-step: Insert a step in a ≡-Reasoning block in Agda
+,** eqn_step: Insert a step in a ≡-Reasoning block in Agda
 
 ≡⟨ ${1:hint} ⟩
   $0
