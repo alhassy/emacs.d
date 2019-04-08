@@ -368,6 +368,12 @@ If not, the ~:ensure t~ part tells ~use-package~ to download it
 --using ~package.el~--
 and place it somewhere accessible, in ~~/.emacs.d/elpa/~ by default.
 
+By default we would like to download packages, since I do not plan on installing them manually
+by download ~.el~ files and placing them in the correct places on my system.
+#+begin_src emacs-lisp
+(setq use-package-always-ensure t)
+#+end_src
+
 Here's an example use of ~use-package~.
 Below I have my “show recent files pop-up” command set to ~C-x C-r~;
 but what if I forget? This mode shows me all key completions when I type ~C-x~, for example.
@@ -375,7 +381,6 @@ Moreover, I will be shown other commands I did not know about! Neato :-)
 #+BEGIN_SRC emacs-lisp
 ;; Making it easier to discover Emacs key presses.
 (use-package which-key 
- :ensure t
  :diminish which-key-mode
  :init (which-key-mode)
  :config (which-key-setup-side-window-bottom)
@@ -387,9 +392,7 @@ The ~:diminish~ keyword indicates that we do not want the mode's name to be
 shown to us in the modeline --the area near the bottom of Emacs.
 It does so by using the ~diminish~ package, so let's install that.
 #+begin_src emacs-lisp
-(use-package diminish
-  :ensure t
-)
+(use-package diminish)
 #+end_src
 
 Here are other packages that I want to be installed onto my machine.
@@ -399,7 +402,7 @@ Here are other packages that I want to be installed onto my machine.
 ;; Nice looking theme ^_^
 
 ;; this gives me an error for some reason
-;; (use-package spacemacs-theme :ensure t)
+;; (use-package spacemacs-theme)
 
 ;; “C-x” t to toggle between light and dark themes.
 
@@ -430,25 +433,24 @@ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 #+BEGIN_SRC emacs-lisp
 ;; Efficient version control.
 (use-package magit
-  :ensure t
   :config (global-set-key (kbd "C-x g") 'magit-status)
 )
 
-(use-package htmlize :ensure)
+(use-package htmlize)
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 
-(use-package biblio  :ensure)     ;; Quick BibTeX references, sometimes.
+(use-package biblio)     ;; Quick BibTeX references, sometimes.
 
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets :ensure t)
+(use-package org-bullets)
 (add-hook 'org-mode-hook 'org-bullets-mode)
 
-(use-package haskell-mode :ensure)
+(use-package haskell-mode)
 
-(use-package dash :ensure)    ;; “A modern list library for Emacs”
-(use-package s    :ensure)    ;; “The long lost Emacs string manipulation library”.
+(use-package dash)    ;; “A modern list library for Emacs”
+(use-package s   )    ;; “The long lost Emacs string manipulation library”.
 #+END_SRC
 
 Note:
@@ -685,7 +687,6 @@ I'd like to check spelling only in comments/strings. E.g.,
 Use the thesaurus Emacs frontend [[https://github.com/hpdeifel/synosaurus][Synosaurus]] to avoid unwarranted repetition.
 #+begin_src emacs-lisp
 (use-package synosaurus 
-  :ensure t
   :diminish synosaurus-mode
   :init    (synosaurus-mode)
   :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
@@ -715,7 +716,7 @@ see ~~/Dropbox/spelling.txt~.
 
 Practice touch typing using [[https://github.com/hagleitn/speed-type][speed-type]].
 #+begin_src emacs-lisp
-(use-package speed-type :ensure t)
+(use-package speed-type)
 #+end_src
 Running ~M-x speed-type-region~ on a region of text, or ~M-x speed-type-buffer~ on a 
 whole buffer, or just ~M-x speed-type-text~ will produce the selected region, buffer,
@@ -930,7 +931,6 @@ when Org-mode attempts to produce a PDF.
 
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell
-  :ensure t
   :init
     (when (memq window-system '(mac ns x))
      (exec-path-from-shell-initialize))
@@ -1037,7 +1037,6 @@ about the current mode, as well as other matters --such as time & date, for exam
 
 #+BEGIN_SRC emacs-lisp
 (use-package spaceline
-  :ensure t
   :config
   (require 'spaceline-config)
   (setq spaceline-buffer-encoding-abbrev-p nil)
@@ -1098,7 +1097,6 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 
 (use-package fancy-battery
   :diminish
-  :ensure t
   :config
     (setq fancy-battery-show-percentage t)
     (setq battery-update-interval 15)
@@ -1118,11 +1116,8 @@ this package is no longer maintained. It works on my machine.
 (menu-bar-mode -1)
 #+END_SRC
 
-** TODO COMMENT ⟪SLOW?⟫ Increase/decrease text size and word wrapping
-:Properties:
-:Reason: It seems on a file of ~10,000 lines, having this enabled
-         results in notable lag for Helm! To investigate at a later date.
-:End:
+** Increase/decrease text size
+# and word wrapping
 
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-+") 'text-scale-increase)
@@ -1134,12 +1129,22 @@ this package is no longer maintained. It works on my machine.
 	       (visual-line-mode 1)))
 #+END_SRC
 
+:Ignore:
+
+Reason: It seems on a file of ~10,000 lines, having this enabled
+         results in notable lag for Helm! To investigate at a later date.
+
+         The culprit may be fci-mode, as it is reported in the profiler.
+
+
 Show ruler at 80 characters, for text and prog mode.
-#+BEGIN_SRC emacs-lisp
-(use-package fill-column-indicator :ensure t)
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package fill-column-indicator)
 (add-hook 'text-mode-hook 'fci-mode)
 (add-hook 'prog-mode-hook 'fci-mode)
 #+END_SRC
+
+:End:
 
 ** Delete Selection mode
 Delete Selection mode lets you treat an Emacs region much like a typical text
@@ -1161,9 +1166,7 @@ We can delete selected text just by hitting the backspace key.
 
 ;; Colour parens, and other delimiters, depending on their depth.
 ;; Very useful for parens heavy languages like Lisp.
-(use-package rainbow-delimiters
-  :ensure t
-)
+(use-package rainbow-delimiters)
 
 (add-hook 'org-mode-hook
   '(lambda () (rainbow-delimiters-mode 1)))
@@ -1189,7 +1192,6 @@ It supports, by default, ACSI pairs ~{}, [], ()~ and Unicode ~‘’, “”, �
 *** COMMENT Smartparens                                                        :Nope:
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package smartparens
-  :ensure t
   :init
   (smartparens-global-mode 1)
   (show-smartparens-global-mode +1)
@@ -1284,12 +1286,12 @@ font-lock-warning-face t)))
 We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp
 ;; neotree --sidebar for project file navigation
-(use-package neotree :ensure t
+(use-package neotree
   :config (global-set-key "\C-x\ d" 'neotree-toggle))
 
 ;; Only do this once: 
 (when nil
-  (use-package all-the-icons :ensure t)
+  (use-package all-the-icons)
   (all-the-icons-install-fonts 'install-without-asking))
 
 (setq neo-theme 'icons)
@@ -1320,7 +1322,6 @@ are still readable.
 
 #+begin_src emacs-lisp :tangle no
 (use-package golden-ratio
-  :ensure t
   :diminish golden-ratio-mode
   :init (golden-ratio-mode 1))
 #+end_src
@@ -1349,7 +1350,7 @@ https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-vers
 First off, let's replace the content marker, “⋯”, with a nice
 unicode arrow.
 #+begin_src emacs-lisp
-(use-package org :ensure t)
+(use-package org)
 
 (setq org-ellipsis " ⤵")
 
@@ -1737,7 +1738,6 @@ such I will utilise the tag ~:work:~ for non-personal matters.
 Anyhow, the setup:
 #+begin_src emacs-lisp
 (use-package org-journal
-  :ensure t
   :bind (("C-c j" . org-journal-new-entry))
   :config
   (setq org-journal-dir "~/Dropbox/journal/")
@@ -2053,7 +2053,7 @@ It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the 
 necessitate explicitly loading ~org-tempo~.
 #+begin_src emacs-lisp
 ;; (require 'org-tempo)
-;; (use-package org-contrib :ensure t)
+;; (use-package org-contrib)
 #+end_src
 
 To insert source blocks with the assistance of a pop-up: ~C-c C-v d~ ;-)
@@ -2534,7 +2534,7 @@ That is, I can have a million buffers, but only those
 that belong to a workspace will be visible when I'm switching between buffers, for example.
 
 #+BEGIN_SRC emacs-lisp
-(use-package perspective :ensure t)
+(use-package perspective)
 
 ;; Activate it.
 (persp-mode)
@@ -2555,7 +2555,6 @@ As always, since we've installed ~which-key~, it suffices to press
 ** Jump between windows using Cmd+Arrow
 #+BEGIN_SRC emacs-lisp
 (use-package windmove
-  :ensure t
   :config
   ;; use command key on Mac
   (windmove-default-keybindings 'super)
@@ -2572,7 +2571,6 @@ E.g., press ~M-x~ to see recently executed commands and other possible commands!
 Try and be grateful.
 #+BEGIN_SRC emacs-lisp
 (use-package helm 
- :ensure t
  :diminish
  :init (helm-mode t)
  :bind
@@ -2627,7 +2625,6 @@ will search for that particular word, region; then apply changes by ~C-x C-s~.
 
 #+BEGIN_SRC emacs-lisp
 (use-package helm-swoop
-  :ensure t
   :bind
   (
    ("C-s"     . 'helm-swoop)           ;; search current buffer
@@ -2666,7 +2663,6 @@ or buffers belonging to the same project!
 )
 
 (use-package counsel
-  :ensure t
   :bind*                              ; load when pressed
   (
    ("C-s"     . swiper)
@@ -2687,7 +2683,6 @@ which means word suggestions are provided and so I need only type partial words
 then tab to get the full word!
 #+begin_src emacs-lisp
 (use-package company
-  :ensure t
   :diminish
   :config
     (setq company-dabbrev-other-buffers t
@@ -2725,7 +2720,7 @@ phrases containing hyphens --this can be altered, if desired.
 
 Besides boring word completition, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
 #+begin_src emacs-lisp
-(use-package company-emoji :ensure t)
+(use-package company-emoji)
 (add-to-list 'company-backends 'company-emoji)
 #+end_src
 
@@ -2742,14 +2737,12 @@ them.
 :Alternatives:
 #+BEGIN_SRC emacs-lisp
 (use-package emojify
- :ensure t
  :config (setq emojify-display-style 'image)
  :init (global-emojify-mode 1) ;; Will install missing images, if need be.
 )
 #+END_SRC
 
 (use-package emojify-logos
-:ensure t
 :after emojify)
 
 For example,
@@ -2761,8 +2754,7 @@ Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emo
 Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
 for completion of emoji names.
 
-(use-package ac-emoji
-  :ensure t
+(use-package ac-emoji  
   :init (ac-emoji-setup)
 ) 
 :End:
@@ -2789,7 +2781,6 @@ as a mere interface.
 #+begin_src emacs-lisp
 ;; Yet another snippet extension program
 (use-package yasnippet
-  :ensure t
   :diminish yas-minor-mode
   :config
     (yas-global-mode 1)
@@ -2799,7 +2790,6 @@ as a mere interface.
 
 ;; Nice “interface” to said program
 (use-package yankpad
-  :ensure t
   ;; :if company-mode ;; load & initialise only if company-mode is defined
   :init
     ;; Location of templates
@@ -3553,7 +3543,7 @@ Sometimes I use Coq,
 
 Have a thin line to the right to ensure I don't write “off the page”.
 #+BEGIN_SRC emacs-lisp :tangle no
-(use-package fill-column-indicator :ensure t)
+(use-package fill-column-indicator)
 (define-globalized-minor-mode my-fci-global-mode fci-mode
   (lambda () (set-fill-column 90) (fci-mode 't)
 ))
@@ -3613,7 +3603,6 @@ Since not all my bindings are via ~use-package~, it does not yet cover all of my
 We could run ~C-h b~ to see our bindings:
 #+BEGIN_SRC emacs-lisp
 (use-package helm-descbinds
-  :ensure t
   :defer t
   :bind (("C-h b" . helm-descbinds)))
 #+END_SRC
