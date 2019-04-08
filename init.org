@@ -187,6 +187,18 @@ Off topic, I love tiling window managers and had been using [[https://xmonad.org
 until recently when I obtained a mac machine and now use 
 [[https://ianyh.com/amethyst/][Amethyst]] -- “Tiling window manager for macOS along the lines of xmonad.”
 
+Let the Emacs' gui insert default configurations and customisation
+into its own file, not touching or altering my initialisation file.
+For example, I tend to have local variables to produce ~README.md~'s
+and other matters, so Emacs' Custom utility will remember to not prompt
+me each time for the safety of such local variables.
+#+begin_src emacs-lisp
+;; (eshell-command "touch ~/.emacs.d/custom.el")
+
+(setq custom-file "~/.emacs.d/custom.el")
+(load custom-file)
+#+end_src
+
 ** Elementary Version Control
 :Properties:
 :TODO: Make some of these eshell commands that are executed?
@@ -2552,7 +2564,7 @@ All commands are prefixed by ~C-x x~; main commands:
 As always, since we've installed ~which-key~, it suffices to press
 ~C-x x~ then look at the resulting menu 😃
 
-** Jump between windows using Cmd+Arrow
+** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 #+BEGIN_SRC emacs-lisp
 (use-package windmove
   :config
@@ -2560,7 +2572,24 @@ As always, since we've installed ~which-key~, it suffices to press
   (windmove-default-keybindings 'super)
   ;; wrap around at edges
   (setq windmove-wrap-around t))
+  #+END_SRC
+
+The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have usage examples.
+#+BEGIN_SRC emacs-lisp
+(use-package buffer-flip
+  :bind
+   (:map buffer-flip-map
+    ("M-<tab>" . buffer-flip-forward)
+    ("M-S-<tab>" . buffer-flip-backward)
+    ("C-g" . buffer-flip-abort))
+  :config
+    (setq buffer-flip-skip-patterns
+        '("^\\*helm\\b"))
+)
+;; key to begin cycling buffers.
+(global-set-key (kbd "M-<tab>") 'buffer-flip)
 #+END_SRC
+
 ** Completion Frameworks
 [[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible completions and also shows recently executed commands when pressing ~M-x~.
 
@@ -2579,7 +2608,8 @@ Try and be grateful.
   ;; Helm provides generic functions for completions to replace 
   ;; tab-completion in Emacs with no loss of functionality. 
   ("M-x" . 'helm-M-x)
-  ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
+  ;; ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
+  ("C-x b". 'helm-mini) ;; see buffers & recent files; more useful.
   ("C-x r b" .'helm-filtered-bookmarks)
   ("C-x C-f" . 'helm-find-files)
 
