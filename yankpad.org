@@ -81,3 +81,7 @@ begin
 
 ≡⟨ ${1:hint} ⟩
   $0
+
+** remark: top-level literate comment
+
+{{{remark(${1:thoughts})}}} $0
