@@ -18,7 +18,7 @@
  '(flycheck-display-errors-delay 0.3)
  '(package-selected-packages
    (quote
-    (yankpad perspective eyebrowse company-emoji ac-emoji emojify-logos emojify company helm fancy-battery synosaurus s beacon spaceline org-bullets diminish speed-type counsel helm-swoop helm-swiper inf-haskell ob-haskell undo-tree golden-ratio shell-pop all-the-icons writegood-mode which-key use-package unicode-input unicode-fonts unicode-emoticons spacemacs-theme solarized-theme rainbow-delimiters powerthesaurus org-plus-contrib nyan-mode neotree multiple-cursors magit imenu-list htmlize helm-projectile helm-ag haskell-mode google-this fill-column-indicator doom-themes dash-functional company-coq biblio auto-compile alert)))
+    (org-journal yankpad perspective eyebrowse company-emoji ac-emoji emojify-logos emojify company helm fancy-battery synosaurus s beacon spaceline org-bullets diminish speed-type counsel helm-swoop helm-swiper inf-haskell ob-haskell undo-tree golden-ratio shell-pop all-the-icons writegood-mode which-key use-package unicode-input unicode-fonts unicode-emoticons spacemacs-theme solarized-theme rainbow-delimiters powerthesaurus org-plus-contrib nyan-mode neotree multiple-cursors magit imenu-list htmlize helm-projectile helm-ag haskell-mode google-this fill-column-indicator doom-themes dash-functional company-coq biblio auto-compile alert)))
  '(safe-local-variable-values
    (quote
     ((eval progn

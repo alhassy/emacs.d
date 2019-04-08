@@ -1679,6 +1679,90 @@ Let's install some helpful views for our agenda.
 
 
 # Org-protocol is a great way to create capture notes in org-mode from other applications. 
+** Journaling
+
+Thus far I've made it easy to quickly capture ideas and tasks,
+not so much on the analysis phase:
+
+- What was accomplished today?
+- What are some notably bad habits? Good habits?
+- What are some future steps?  
+
+Rather than overloading the capture mechanism for such thoughts,
+let's employ ~org-journal~ --journal entries are stored in files such as 
+~journal/20190407~, where the file name is simply the date, or only one
+file per year as I've set it up below.
+Each entry is the week day, along with the date,
+then each child tree is an actual entry with a personal
+title preceded by the time the entry was made.
+Unlike capture and its agenda support, journal ensures entries are maintained in
+chronological order with calendar support. 
+
+Since org files are plain text files, an entry can
+be written anywhere and later ported to the journal.
+
+The separation of concerns is to emphasise the capture stage
+as being quick and relatively mindless, whereas the Journaling
+stage as being mindful.
+Even though we may utilise capture to provide quick support for including
+journal entries, I have set my journal to be on a yearly basis --one file per year--
+since I want to be able to look at previous entries when making the current entry;
+after all, it's hard to compare and contrast easily unless there's multiple entries
+opened already.
+
+As such, ideally at the end of the day, I can review what
+has happened, and what has not, and why this is the case,
+and what I intend to do about it, and what problems were encountered
+and how they were solved --in case the problem is encountered again in the future.
+*Consequently, if I encounter previously confronted situations, problems,*
+*all I have to do is reread my journal to get an idea of how to progress.*
+Read more about [[https://www.google.com/search?q=on+the+importance+of+reviwing+your+day+daily&oq=on+the+importance+of+reviwing+your+day+daily&aqs=chrome..69i57.367j0j7&sourceid=chrome&ie=UTF-8][the importance of reviewing your day on a daily basis]].
+
+Moreover, by journaling with Org on a daily basis, it can be
+relatively easy to produce a report on what has been happening
+recently, at work for example. For now, there is no need to
+have multiple journals, for work and for personal life, as
+such I will utilise the tag ~:work:~ for non-personal matters.
+
+Anyhow, the setup:
+#+begin_src emacs-lisp
+(use-package org-journal
+  :ensure t
+  :bind (("C-c j" . org-journal-new-entry))
+  :custom
+  (setq org-journal-dir "~/Dropbox/journal/")
+  (setq org-journal-file-type 'yearly)
+)
+#+end_src
+
+Bindings available in ~org-journal-mode~, when journaling:
++ ~C-c C-j~: Insert a new entry into the current journal file.
+   - Note keys for ~org-journal-new-entry~ overwrite those for ~org-goto~.
++ ~C-c C-s~: Search the journal for a string.
+  - Note keys for ~org-journal-search~ overwrite those for ~org-schedule~.
+    
+# C-c C-f - go to the next journal file.
+# C-c C-b - go to the previous journal file.
+
+All journal entries are registered in the Emacs Calendar.
+To see available journal entries do ~M-x calendar~.
+Bindings available in the calendar-mode:
+
++ ~j~: View an entry in a new buffer.
+     # C-j - view an entry but do not switch to it.
++ ~i j~: add a new entry into the day’s file
++ ~f w/m/y/f/F~: Search in all entries of the current week, month, year, all of time,
+  of in all entries in the future.
+#  
+# [ - go to previous day with journal entries.
+# ] - go to next day with journal entries.
+
+# Some key-bindings in org-journal overwrite org-mode key bindings
+# Major modes are supposed to only use key bindings of the form C-c C-?, where ? can be any letter. With org-mode already using most interesting keys, collisions are inevitable. Currently, org-journal overwrites
+#
+# C-c C-f (org-forward-heading-same-level) with org-journal-open-next-entry
+# C-c C-b (org-backward-heading-same-level) with org-journal-open-previous-entry
+
 ** Workflow States
 :PROPERTIES:
 :CUSTOM_ID: WorkflowStates
