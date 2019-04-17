@@ -1,22 +1,19 @@
-# Arabic (العربيّة)	السّلام عليكم
-#+TITLE: My Emacs Initialisation File, Written in ~Org-mode~
-#+author: Musa Al-hassy
-#+email: alhassy@gmail.com
+# السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة) 
+#+TITLE: A Life Configuring Emacs
+#+AUTHOR: Musa Al-hassy
+#+EMAIL: alhassy@gmail.com
 #+DATE: 2018-07-25
-#+DESCRIPTION: Configuration file for Emacs usage.
-#+STARTUP: indent
-#+CATEGORIES: Emacs
+#+DESCRIPTION: My Emacs Initialisation File, Written in Org-mode.
+#+STARTUP: indent lognoteclock-out
 #+OPTIONS: html-postamble:nil toc:nil d:nil
-#+IMAGE: ../assets/img/emacs_logo.png
-#+SOURCE: https://raw.githubusercontent.com/alhassy/dotfiles/master/.emacs.d/init.org
 #+PROPERTY: header-args :tangle init.el
-# Begin blog server: (shell-command "cd ~/alhassy.github.io/ ; bundle exec jekyll serve &")
+
 # (load-file "~/alhassy.github.io/content/AlBasmala.el")
-# (toggle enable-local-variables :all (progn (setq org.nopdf t) (preview-article)))
-#
-# (defun my/magit-check-file-and-popup () )
-#
-# (find-file "~/alhassy.github.io/content/AlBasmala.el")
+# (preview-article :browser t)
+# DRAFT: yes
+#+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
+#+IMAGE: ../assets/img/emacs_logo.png
+#+CATEGORIES: Emacs
 
 # Toggle comments with: C-c ;
 # C-l recenters window to top/center/bottom while keeping the point on the same line;
@@ -31,14 +28,6 @@
 #
 # Start a numbered list from any number using the syntax “N. [@N] ⋯”, a nice way to
 # have 0-numbered lists or lists with text in between that does not reset the numbering.
-
-# Defined below,
-# (display-startup-echo-area-message)
-# ⇒ Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.3; System alhassy-air.local
-#
-# (byte-compile-file "~/.emacs")
-
-#+STARTUP: lognoteclock-out
 
 # [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]]
 # INFOJS_OPT: view:info toc:t buttons:t
@@ -58,27 +47,15 @@
 *Abstract*
 #+end_center
 
-Herein I document the configurations I utilise with Emacs.
-
-:Old_silliness:
-Of note are:
-
- ◈ This is a literate programming setup.
-
- ◈ I have a variety of cosmetics such as showing battery life and flashing upon errors.
-   + Greating message “Welcome to Emacs 26.1 with Org-mode 9.2.2”.
-
- ◈ Discoverability capabilities.
-    + Spacemacs look and feel with completion frameworks ~Helm~ and ~which-key~.
-
- ◈ Utilities for working with org-mode files, namely extracting ~#+KEYWORD: VALUE~ pairs.
-:End:
+Herein I document the configurations I utilise with [[https://gnu.org/s/emacs][Emacs]].
+# After cloning the file, many packages are automatically installed; usually with
+# little or no trouble.
 
 As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
 through my ever growing configuration files, ease of usability and reference
 for peers, and, most importantly, better maintainability for myself!
 
-Dear reader, when encountering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~.
+Dear reader, when encountering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~, or press ~C-h o~ with the cursor on ~X~.
 An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispCheatSheet][here.]]
 
 * Why Emacs?
@@ -97,7 +74,7 @@ with no need to seperate the two tasks and with the ability to generate multiple
 If you are a professional writer…Emacs outshines all other editing software 
 in approximately the same way that the noonday sun does the stars. 
 It is not just bigger and brighter; it simply makes everything else vanish.
-—[[http://project.cyberpunk.ru/lib/in_the_beginning_was_the_command_line/][Neal Stephenson]], “”
+—[[http://project.cyberpunk.ru/lib/in_the_beginning_was_the_command_line/][Neal Stephenson]], /In the beginning was the command line/
 #+end_quote
 
 Of course Emacs comes with the basic features of a text editor, but it is much more;
@@ -1023,7 +1000,7 @@ Note: Using spacemacs theme above.
 #+end_src
 Now my startup message is,
 #+begin_src emacs-lisp
-;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.2; System alhassy-air.local
+;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.3; System alhassy-air.local
 #+end_src
 
 For some fun, run this cute method.
@@ -1359,11 +1336,20 @@ https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-vers
 
 [[http://notesyoujustmightwanttosave.blogspot.com/][Here is useful Org-Mode Table Editing Cheatsheet.]]
 
-First off, let's replace the content marker, “⋯”, with a nice
+Let's obtain Org-mode along with the extras that allow us to ignore
+heading names, but still utilise their contents --e.g., such as a heading
+named ‘preamble’ that contains org-mode setup for a file.
+#+begin_src emacs-lisp
+(use-package org
+  :ensure org-plus-contrib
+  :config
+  (require 'ox-extra)
+  (ox-extras-activate '(ignore-headlines)))
+#+end_src
+
+Now, let's replace the content marker, “⋯”, with a nice
 unicode arrow.
 #+begin_src emacs-lisp
-(use-package org)
-
 (setq org-ellipsis " ⤵")
 
 ;; Also, fold all source blocks on startup.
@@ -1851,7 +1837,7 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 
 ;; Enable C-c C-c to generate diagrams from plantuml src blocks.
 (add-to-list 'org-babel-load-languages '(plantuml . t) )
-;; (require 'ob-plantuml)
+(require 'ob-plantuml)
 
 ; Use fundamental mode when editing plantuml blocks with C-c '
 (add-to-list 'org-src-lang-modes (quote ("plantuml" . fundamental)))
@@ -1925,7 +1911,7 @@ center footer  ♥‿♥ Org-mode is so cool (•̀ᴗ•́)و
 
 Of note:
 + Multiline comments are with ~/' comment here '/~, single quote starts a one-line comment.
-+ Nodes don't need to be declared, whose names may contain spaces if they are enclosed in double-quotes.
++ Nodes don't need to be declared, and their names may contain spaces if they are enclosed in double-quotes.
 + One forms an arrow between two nodes by writing a line with ~x ->[label here] y~
   or ~y <- x~; or using ~-->~ and ~<--~ for dashed lines. The label is optional.
 
@@ -3643,17 +3629,15 @@ Finally, we can observe which features are active in our current Emacs with,
 #+end_src
 
 Some possibly interesting reads:
-  + [[https://to1ne.gitlab.io/literate-dotfiles/][Toon's Literate Dotfiles]]
-  + [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
+  + [[https://sachachua.com/blog/wp-content/uploads/2013/05/How-to-Learn-Emacs-v2-Large.png][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
+  + [[https://tuhdo.github.io/emacs-tutor.html][Emacs Mini-Manual, Part I of III]] 
   + [[https://github.com/caisah/emacs.dz][A list of people's nice emacs config files]]
-  + [[https://zzamboni.org/post/my-emacs-configuration-with-commentary/][zzamboni's configuration file with commentary]]
-  + Karl Voit's article [[https://karl-voit.at/2017/06/03/emacs-org/][My Emacs Configuration In Org-mode]]; his init file can be found [[https://github.com/novoid/dot-emacs][here]].
-  + Holger Schuri's article [[http://www.holgerschurig.de/en/emacs-init-tangle/][Efficient Emacs .org ➞ .el tangling]] 
-    ; his init file can be found [[https://bitbucket.org/holgerschurig/emacsconf/src/b06a0f394b9f20cd4e00cfc5a24f7f59db4ba376/config.org?at=master&fileviewer=file-view-default][here]].
-  + Arnaud Legrand's article [[http://mescal.imag.fr/membres/arnaud.legrand/misc/init.php][Emacs init file written in org-mode]]
-  + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]  
-  + [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][A tutorial on evaluating code within ~src~ blocks]]
-
+  + [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
+  + [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][Org and R Programming]] ;;  a tutorial on literate programming, e.g., evaluating code within ~src~ bloc.
+  + [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][The GNU Emacs Reference Card]]
+  + [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][The Org-mode Reference Card]]
+  + [[https://github.com/alhassy/ElispCheatSheet/blob/master/CheatSheet.pdf][An Elisp Reference Card]]
+#  + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]  
 
 # List of installed packages: (mapcar 'car package-alist)
 * COMMENT Making README.md
