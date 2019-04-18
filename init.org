@@ -3139,6 +3139,8 @@ f x = x -- show x
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
 # The subsections below detail the definitions.
 
+Disclaimer: I wrote much of the following /before/ I learned any lisp; everything below is probably terrible.
+
 Let's save a few precious seconds,
 #+begin_src emacs-lisp
 ;; change all prompts to y or n
@@ -3189,6 +3191,7 @@ Dual to ~C-k~,
 #+END_SRC
 ** ~file-as-list~ and ~file-as-string~
 
+Disclaimer: I wrote the following /before/ I learned any lisp; everything below is probably terrible.
 #+BEGIN_SRC emacs-lisp
 (defun file-as-list (filename)
   "Return the contents of FILENAME as a list of lines"
@@ -3228,7 +3231,7 @@ vertical view. This requires a variation of ~C-x 1 RET C - x 3 RET C-x o X-x b R
 Instead I now only need to type ~C-|~ to make this switch.
 #+BEGIN_SRC emacs-lisp
 (defun ensure-two-vertical-windows () 
-  "hello"
+  "I used this method often when programming in Coq."
  (interactive)
  (other-window 1)			;; C-x 0
  (let ((otherBuffer (buffer-name))) 
@@ -3243,6 +3246,7 @@ Instead I now only need to type ~C-|~ to make this switch.
 #+END_SRC
 ** ~re-replace-in-file~
 
+Disclaimer: I wrote the following /before/ I learned any lisp; everything below is probably terrible.
 #+BEGIN_SRC emacs-lisp
 (defun re-replace-in-file (file regex whatDo) 
    "Find and replace a regular expression in-place in a file.

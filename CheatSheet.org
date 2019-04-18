@@ -1,0 +1,166 @@
+:ImportantShortcuts: 
+f7 preview changes
+f8 commit each change
+f9 push changes
+:End:
+* Header                                                      :do:not:ignore:
+#+TITLE: Reference Sheet for Emacs
+# SUBTITLE: Cheat Sheet Template
+# DATE: << Winter 2019 >>
+# When we don't provide a date, one is provided for us.
+#+MACRO: URL https://github.com/alhassy/emacs.d
+#+MACRO: ShowURL @@latex:{\tiny\hspace{6em}\url{ {{{URL}}} } }@@
+#+AUTHOR: [[http://www.cas.mcmaster.ca/~alhassm/][Musa Al-hassy]] {{{ShowURL}}}
+#+EMAIL: alhassy@gmail.com
+#+DESCRIPTION: This document is written by Musa Al-hassy for his learning in the Winter of 2019.
+#+STARTUP: hideblocks
+#+STARTUP: overview
+#+OPTIONS: d:nil
+
+#+INCLUDE: CheatSheet/CheatSheetSetup.org
+
+* Why?
+
+There are already cheatsheets for [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][Emacs]], [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][Org]], and even [[https://github.com/alhassy/ElispCheatSheet/blob/master/CheatSheet.pdf][Elisp]];
+so why bother with another one? The general ones are great but contain
+stuff I rarely use, such as information on registers, but are missing
+stuff I'd like to know, such as Helm keybindings which are not shipped with Emacs.
+
+Below are the bindings that are shipped with Emacs or the packages one installs.
+To be somewhat useful to others, my personal bindings will be “enclosed” in quotes.
+I will write ~X,Y-x,y~ to denote one of ~X~ or ~Y~ followed by one of ~x~ or ~y~; e.g.,
+~C,M-d~ denotes ~C-d~ and ~M-d~ --for character and word deletion, respectively.
+Hopefully this makes it easier to group related commands.
+
+* TODO Provide support for /three/ columns, not two.
+* TODO Shortcuts of each package; e.g., swoop, helm, etc.
+
+https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf
+  
+* Textual Navigation
+  | ~C-b, f~ | ←, → character       |
+  | ~M-b, f~ | ←, → word            |
+  |--------+----------------------|
+  | ~C-p, n~ | ↑,↓ line             |
+  | ~M-g g~  | go to a line         |
+  |--------+----------------------|
+  | ~C-a, e~ | start, end line      |
+  | ~M-a, e~ | start, end sentence  |
+  | ~M-{, }~ | start, end paragraph |
+  | ~M-<, >~ | start, end buffer    |
+  |--------+----------------------|
+  | ~C-v~    | down page            |
+  | ~M-v~    | up page              |
+  | ~C-l~    | centre page          |
+
+  _Org-mode_: All commands are prefixed by ~C-c~.
+
+  | ~n,p~ | next, previous heading     |
+  | ~f,b~ | n,p same level heading     |
+  | ~C-u~ | backward to higher heading |
+  | ~C-j~ | ↑↓ jump to another heading |
+  
+* Marking & Regions
+  | ~C-SPC~   | Set mark              |
+  | ~C-x C-x~ | Exchange point & mark |
+  | ~M-h~     | Mark paragraph        |
+  | ~C-x h~   | Mark buffer           |
+
+* Killing & Yanking
+
+  | ~C,M-d~       | forward kill character, word |
+  | ~C,M-del~     | backward kill word prefix    |
+  | ~C-k~ , “M-k” | forward, backward kill line  |
+  | ~C-x del~     | backward kill sentence       |
+  |-------------+------------------------------|
+  | ~C,M-w~       | Kill, copy region            |
+  | ~C-x r k~     | Kill region                  |
+
+  By default ~M-k~ is forward kill sentence.
+
+* Narrowing 
+
+This allows us to “zoom in” or “focus” on a particular region;
+the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
+   
+| ~n~ | Narrow to region                   |
+| ~w~ | Widen to full view                 |
+| ~e~ | Narrow to org element              |
+| ~s~ | Narrow anywhere inside org subtree |
+
+* Org Visibility
+
+| ~tab~         | Cycle visibility                |
+| ~S-tab~       | Cycle /global/ visibility         |
+| ~C-c C-x C-v~ | Toggle inline image display     |
+| ~C-c C-x C-l~ | Toggle, preview, LaTeX for tree |
+
+* Structure Editing 
+
+ | ~C-[S]-Ret~   | new [Todo] heading after current tree                    |
+ | ~M-[S]-Ret~   | new [Todo] heading / [checkbox] item at current position |
+ | ~C-c -,*~     | Demote, promote headings to items                        |
+ |-------------+----------------------------------------------------------|
+ | ~M-←,→~       | Promote, demote heading                                  |
+ | ~C-c C-t~     | Set state of tree                                        |
+ | ~C-c , A,B,C~ | Set priority ~A, B,~ or ~C~ for tree                         |
+ | ~C-c , Spc~   | Remove priority from tree                                |
+ |-------------+----------------------------------------------------------|
+ | ~M-↑,↓~       | Move /any/ org element up or down                          |
+ | ~M-S-↑,↓~     | Move a line up or down                                   |
+ |-------------+----------------------------------------------------------|
+ | ~C-c c~       | Capture new item                                         |
+ | ~C-c C-x C-a~ | Archive tree                                             |
+
+* Babel
+
+
+| ~C-c C-c~     | Execute code block                 |
+| ~C-c C-v j~   | Insert header argument             |
+| ~C-c C-v I~   | View, possibly global, header info |
+| ~C-c C-v g~   | Go to named block                  |
+| ~C-c C-v n,p~ | Go to next, previous block         |
+| ~C-c C-v d~   | Demarcate, split up, code block    |
+| ~C-c C-v t~   | Tangle all blocks in buffer        |
+
+* Misc 
+| ~C-c C-x p,e~ | Set property, effort of tree         |
+| ~C-c C-x i~   | Capture column view in dynamic block |
+
+* Timestamps
+
+  | ~C-c .~       | Prompt for date & insert timestamp   |
+  | ~C-c C-d~     | Insert deadline for tree             |
+  | ~C-c C-s~     | Schedule a tree                      |
+  | ~S-↑,↓,→,←~   | Alter timestamp by a day →←, year ↓↑ |
+  | ~C-c C-x C-t~ | Globally toggle date display         |
+
+  | ~C-c C-o~ | Open link at point  |
+  
+* Clocking Time 
+
+| ~C-c C-x C-i,o~ | Start, stop clock on tree    |
+| ~C-c C-x C-r~   | Insert, update, clock report |
+
+* Agenda
+
+  | ~C-c a a~   | See agenda for the week                         |
+  | ~C-c a t~   | Compile global todo list                        |
+  | ~C-c C-x b~ | Open agenda task in dedicated indirect buffer   |
+  | ~F~         | Toggle follow mode: See details as you navigate |
+  | ~v~         | Change agenda view, e.g., to day or month       |
+  | ~f / b~     | Forward, backward a view, e.g., day or month    |
+  | ~R~         | See report of total clocked time                |
+  | ~. / j~     | Go to today, or prompt for a date               |
+  | ~e, t, a~   | Remotely set effort, state, or archive          |
+  | ~I, O, X~   | Start, stop, cancel clock on current item       |
+
+* newpage :ignore:
+  \newpage
+
+* COMMENT footer
+
+# Local Variables:
+# eval: (load-file "CheatSheet.el")
+# compile-command: (my-org-latex-export-to-pdf)
+# End:
