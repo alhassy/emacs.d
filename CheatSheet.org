@@ -3,7 +3,7 @@ f7 preview changes
 f8 commit each change
 f9 push changes
 :End:
-* Header                                                      :do:not:ignore:
+* Header :ignore:
 #+TITLE: Reference Sheet for Emacs
 # SUBTITLE: Cheat Sheet Template
 # DATE: << Winter 2019 >>
@@ -17,10 +17,19 @@ f9 push changes
 #+STARTUP: overview
 #+OPTIONS: d:nil
 
+# MACRO: no-vertical-padding  @@latex:{\color{white}.}\vspace{-$1em}@@
+#+MACRO: no-vertical-padding  
+
 #+INCLUDE: CheatSheet/CheatSheetSetup.org
+* begin multicols :ignore:
+#+latex: \begin{multicols}{3}
 
 * Why?
 
+I have so many things installed, I'm forgetting some of the stuff
+that I installed to be more productive! Whence this personal cheat sheet.
+
+:More:
 There are already cheatsheets for [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][Emacs]], [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][Org]], and even [[https://github.com/alhassy/ElispCheatSheet/blob/master/CheatSheet.pdf][Elisp]];
 so why bother with another one? The general ones are great but contain
 stuff I rarely use, such as information on registers, but are missing
@@ -32,12 +41,138 @@ I will write ~X,Y-x,y~ to denote one of ~X~ or ~Y~ followed by one of ~x~ or ~y~
 ~C,M-d~ denotes ~C-d~ and ~M-d~ --for character and word deletion, respectively.
 Hopefully this makes it easier to group related commands.
 
-* TODO Provide support for /three/ columns, not two.
-* TODO Shortcuts of each package; e.g., swoop, helm, etc.
+As always, since I've installed ~which-key~, it suffices to press a prefix
+then look at the resulting menu 😃
+:End:
 
-https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf
++ ~?~ :: Obtain help; see listing of possible commands.
++ ~q~ :: Quit current application, closing buffer.
+	 
+* TODO COMMENT Provide support for /three/ columns, not two.
+* Getting Help
+  {{{no-vertical-padding(2.5)}}}  
+  | ~C-h o~     | Describe symbol at point; best one.        |
+  | ~C-h k,f,m~ | Describe key press, function name, or mode |
+  | ~C-h a~     | Apropos: Show commands matching a string   |
+  | ~C-h e~     | Open ~*Messages*~ buffer in another window   |
+  | ~C-h i~     | Enter ~Info~ documentation reader            |
   
+  :More_Info:
+  In ~Info~:
+  
+  | ~h~        | Run ~Info~'s tutorial           |  
+  | ~i~        | Lookup item using index       |
+  | ~m~        | Select menu item by name      |
+  | ~g~        | Go to any node, by name       |
+  | ~spc, del~ | Scroll down, up               |
+  | ~n, p~     | Next, previous topic node     |
+  | ~b~        | Beginning of node             |
+  | ~d~        | Return to main directory node |
+:End:
+  
+* Windows
+  {{{no-vertical-padding(2)}}}
+  
+| ~C-x 0,1~ | Delete this, other windows      |
+| ~C-x 2,3~ | Split window above, to the side |
+| ~C-x o~   | Switch cursour to other window  |
+| ~C-x ^~   | Increase window height          |
+| ~C-x {,}~ | Shrink, widen window            |
+
+# @@latex:\vspace{-1em}@@
+Using ~C-x 5 ...~ in place of ~C-x ...~ operates on the
+‘frame’ level --i.e., other Emacs GUI instances.
+~C-x 4 ?~ is for acting on the other window, where
+~? = f, d, b~
+for finding file, directory, buffer.
+
+# @@latex:\vspace{-1em}@@
+# windowmove package ; # buffer-flip 
+| ~“s-<arrow>”~ | Jump to window via arrow key |
+| ~“M-<tab>”~   | Flip to next buffer     |
+| ~“M-S-<tab>”~ | Flip to previous buffer |
+
+* [[https://github.com/nex3/perspective-el][Workspace Manager]]
+#  {{{no-vertical-padding(2)}}}
+
+  All commands are prefixed by ~C-x x~; main commands:
+  
+| ~s~        | Select a space to go to or create it.                          |
+| ~n,→, p,←~ | Next, previous space                                           |
+| ~c~        | Query a perspective to kill.                                   |
+| ~r~        | Rename a perspective.                                          |
+| ~A~        | Add buffer to current perspective & remove it from all others. |
+  
+* columnbreak :ignore:
+  \columnbreak
+* [[https://github.com/apchamberlain/undo-tree.el][Undo tree]]
+  {{{no-vertical-padding(1.5)}}}
+  
++ ~C-x u~ Visualise undo tree.
+  - ~t, d~ toggle timestamps and diff display.
+  - ~M-{,}~ Go to previous, next branching point.
+  - ~q~ Exit at currently selected state.            
++ ~C-x r u~ Save current buffer state.
++ ~C-x r U~ Restore saved buffer state.    
+
+Save & restore is useful for experimenting with
+a function definition, for example.
+
+:Rmrk:
+Undo Tree also has functions which save an undo state to a register and which restore a save state from a register. These are bound to C-x r u and C-x r U by default. These are great for things like experimenting with a function definition.
+:End:
+
+* Killing
+  {{{no-vertical-padding(2)}}}
+  
+  | ~C,M-d~       | forward kill character, word |
+  | ~C,M-del~     | backward kill word prefix    |
+  | ~C-k~ , ~“M-k”~ | forward, backward kill line  |
+  | ~C-x del~     | backward kill sentence       |
+  |-------------+------------------------------|
+  | ~C,M-w~       | Kill, copy region            |
+  | ~C-x r k~     | Kill region                  |
+  |-------------+------------------------------|
+  | ~M-y~         | Show kill ring, with “helm”  |
+
+#  By default ~M-k~ is forward kill sentence. 
+* Marking
+  {{{no-vertical-padding(2)}}}
+  
+  | ~C-SPC~     | Set mark              |
+  | ~C-x C-x~   | Exchange point & mark |
+  | ~M-h~       | Mark paragraph        |
+  | ~C-x h~     | Mark buffer           |
+  | ~C-u 𝓃 M-@~ | Mark 𝓃 words away     |
+
+* Formatting
+  {{{no-vertical-padding(2)}}}
+
+By default ~C-t~ is transpose characters; I'm using it quickly open a terminal.
+| ~C-M-\~     | Indent region, mode dependent      |
+| ~C-x tab~   | Indent region /arg/ columns or ←,→   |
+| ~M-;~       | Toggle comment region              |
+| ~C-M-o~     | Move rest of line vertically down  |
+| ~M-u,l~     | Upcase, downcase rest of word      |
+| ~C-x C-u,l~ | Upcase, downcase region            |
+| ~M-t~       | Transpose current word with next   |
+| ~C-x C-t~   | Transpose current line with above  |
+
+
+#+latex: {\color{white} . }
+
+* columnbreak :ignore:
+  \columnbreak
+* Spellchecking et. al.
+   {{{no-vertical-padding(1.5)}}}
+   
+| ~M-$~   | Spellcheck word  |
+| “M-#” | Synonym for word |
+| TODO  | Define word      |
+
 * Textual Navigation
+  {{{no-vertical-padding(1)}}}
+  
   | ~C-b, f~ | ←, → character       |
   | ~M-b, f~ | ←, → word            |
   |--------+----------------------|
@@ -55,66 +190,84 @@ https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf
 
   _Org-mode_: All commands are prefixed by ~C-c~.
 
-  | ~n,p~ | next, previous heading     |
-  | ~f,b~ | n,p same level heading     |
-  | ~C-u~ | backward to higher heading |
-  | ~C-j~ | ↑↓ jump to another heading |
+  | ~n,p~       | next, previous heading     |
+  | ~f,b~       | n,p same level heading     |
+  | ~C-u~       | backward to higher heading |
+  | ~C-j~       | ↑↓ jump to another heading |
+  | ~“C-h”~     | Fold current tree          |
   
-* Marking & Regions
-  | ~C-SPC~   | Set mark              |
-  | ~C-x C-x~ | Exchange point & mark |
-  | ~M-h~     | Mark paragraph        |
-  | ~C-x h~   | Mark buffer           |
+  Using the “super key” to navigate between org blocks.
+  | ~“s-p,n”~ | Previous, next src block  |
+  | ~“s-e”~   | Toggled editing src block |
 
-* Killing & Yanking
+* Completion
+  {{{no-vertical-padding(2)}}}
 
-  | ~C,M-d~       | forward kill character, word |
-  | ~C,M-del~     | backward kill word prefix    |
-  | ~C-k~ , “M-k” | forward, backward kill line  |
-  | ~C-x del~     | backward kill sentence       |
-  |-------------+------------------------------|
-  | ~C,M-w~       | Kill, copy region            |
-  | ~C-x r k~     | Kill region                  |
-
-  By default ~M-k~ is forward kill sentence.
-
+  # [[https://company-mode.github.io/][Company-mode]] 
+  
+  | ~M-/~       | Expand previous word dynamically |
+  | ~M-<digit>~ | Select one of the 10 suggestions |
+  |           |                                  |
+  
 * Narrowing 
-
+  {{{no-vertical-padding(1)}}}
+  
 This allows us to “zoom in” or “focus” on a particular region;
 the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
    
-| ~n~ | Narrow to region                   |
-| ~w~ | Widen to full view                 |
-| ~e~ | Narrow to org element              |
-| ~s~ | Narrow anywhere inside org subtree |
+| ~n~ | Narrow to region        |
+| ~w~ | Widen to full view      |
+| ~e~ | Narrow to org element   |
+| ~s~ | Org narrow current tree |
 
+* Searching
+  {{{no-vertical-padding(2)}}}
+
+  #  [[https://github.com/ShingoFukuyama/helm-swoop][Helm-swoop]]
+
+ | ~C-s~     | Search current buffer      |
+ | ~“C-M-s”~ | Search /all/ buffers         |
+ | ~“C-S-s”~ | Back to where search began |
+
+ ~C-c C-e~ during a search to make live edits.
+ # Apply changes to orginal buffer with C-x C-s.
+ 
 * Org Visibility
-
+  {{{no-vertical-padding(2)}}}
+  
 | ~tab~         | Cycle visibility                |
 | ~S-tab~       | Cycle /global/ visibility         |
 | ~C-c C-x C-v~ | Toggle inline image display     |
 | ~C-c C-x C-l~ | Toggle, preview, LaTeX for tree |
 
 * Structure Editing 
-
- | ~C-[S]-Ret~   | new [Todo] heading after current tree                    |
- | ~M-[S]-Ret~   | new [Todo] heading / [checkbox] item at current position |
- | ~C-c -,*~     | Demote, promote headings to items                        |
- |-------------+----------------------------------------------------------|
- | ~M-←,→~       | Promote, demote heading                                  |
- | ~C-c C-t~     | Set state of tree                                        |
- | ~C-c , A,B,C~ | Set priority ~A, B,~ or ~C~ for tree                         |
- | ~C-c , Spc~   | Remove priority from tree                                |
- |-------------+----------------------------------------------------------|
- | ~M-↑,↓~       | Move /any/ org element up or down                          |
- | ~M-S-↑,↓~     | Move a line up or down                                   |
- |-------------+----------------------------------------------------------|
- | ~C-c c~       | Capture new item                                         |
- | ~C-c C-x C-a~ | Archive tree                                             |
+  {{{no-vertical-padding(3)}}}
+  
+# | ~C-[S]-Ret~   | new [Todo] heading after current tree        |
+# | ~M-[S]-Ret~   | new [Todo] heading, item at current position |
+# Modifying ~<return>~
+ | ~<return>~     | Newline with indentation          |
+ | ~M-<return>~   | Newline with new org item         |
+ | ~M-S-<return>~ | Ditto, but with a ~TODO~ marker     |
+ | ~C-M-<return>~ | Newline, cursor at start          |
+ | ~C-<return>~   | New heading /after/ current content |
+ | ~C-S-<return>~ | Ditto, but with a ~TODO~ marker     |
+ | ~C-c -,*~      | Demote, promote headings to items |
+ |--------------+-----------------------------------|
+ | ~M-←,→~        | Promote, demote heading           |
+ | ~C-c C-t~      | Set state of tree                 |
+ | ~C-c , A,B,C~  | Set priority ~A, B,~ or ~C~ for tree  |
+ | ~C-c , Spc~    | Remove priority from tree         |
+ |--------------+-----------------------------------|
+ | ~M-↑,↓~        | Move /any/ org element up or down   |
+ | ~M-S-↑,↓~      | Move a line up or down            |
+ |--------------+-----------------------------------|
+ | ~C-c c~        | Capture new item                  |
+ | ~C-c C-x C-a~  | Archive tree                      |
 
 * Babel
-
-
+  {{{no-vertical-padding(2)}}}
+  
 | ~C-c C-c~     | Execute code block                 |
 | ~C-c C-v j~   | Insert header argument             |
 | ~C-c C-v I~   | View, possibly global, header info |
@@ -123,41 +276,118 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
 | ~C-c C-v d~   | Demarcate, split up, code block    |
 | ~C-c C-v t~   | Tangle all blocks in buffer        |
 
+* columnbreak :ignore:
+  \columnbreak
 * Misc 
-| ~C-c C-x p,e~ | Set property, effort of tree         |
-| ~C-c C-x i~   | Capture column view in dynamic block |
+#  {{{no-vertical-padding(1)}}}
+  
+~M-x list-input-methods~ show all input methods  
+
+# C-x d :: orginally for dired
+| ~C-c C-x p,e~ | Set property, effort of tree              |
+| ~C-c C-x i~   | Capture column view in dynamic block      |
+| ~C-+~         | Increase text size                        |
+| ~C--~         | Decrease text size                        |
+| ~“C-x d”~     | Toggle Neotree file browser               |
+| ~“C-c C-m”~   | Re-compile; execute local ~compile~ command |
+| ~“<f5>”, s-r~ | Reload buffer from disk                   |
+| ~“C-∣”~       | Swap 2 horizontal windows to vertical     |
+| ~“C-t”~       | Quickly pop-up a terminal                 |
+| ~C-c C-o~     | Open link at point                        |
+
+* Org Speed Keys
+  {{{no-vertical-padding(1)}}}
+  
+With cursor at the beginning of an org headline:
+
+| ~#~     | Toggle ~COMMENT~-ing     |
+| ~t~     | Select state           |
+| ~s~     | Toggle narrowing       |
+| ~I,O~   | Clock in or out        |
+| ~p,n~   | Previous, next heading |
+| ~f,b~   | p,n for same-level     |
+| ~u~     | Upward to parent       |
+| ~c~     | Cycle visibility       |
+| ~w~     | Refile, relocate       |
+| ~^~     | Sort children trees    |
+| ~D,U~   | Move heading down, up  |
+| ~L,R~   | Promote, demote        |
+| ~1,2,3~ | Select priority        |
+| ~?~     | See possible keys      |
 
 * Timestamps
-
+  {{{no-vertical-padding(2)}}}
+  
   | ~C-c .~       | Prompt for date & insert timestamp   |
   | ~C-c C-d~     | Insert deadline for tree             |
   | ~C-c C-s~     | Schedule a tree                      |
   | ~S-↑,↓,→,←~   | Alter timestamp by a day →←, year ↓↑ |
   | ~C-c C-x C-t~ | Globally toggle date display         |
-
-  | ~C-c C-o~ | Open link at point  |
   
+* columnbreak                                                        :ignore:
+  \columnbreak
 * Clocking Time 
-
+  {{{no-vertical-padding(2)}}}
+  
 | ~C-c C-x C-i,o~ | Start, stop clock on tree    |
 | ~C-c C-x C-r~   | Insert, update, clock report |
 
 * Agenda
+  {{{no-vertical-padding(2.5)}}}
+  
+  | ~C-c c~   | Capture an idea quickly     |
+  | ~C-c a~   | Open agenda to see tasks    |
+  | ~C-c j~   | Discuss what's accomplished |
+  | ~C-c C-z~ | Add note to current tree    |
+  | ~C-c C-s~ | Schedule a task             |
+  | ~C-c C-a~ | Archive  a task             |
 
-  | ~C-c a a~   | See agenda for the week                         |
-  | ~C-c a t~   | Compile global todo list                        |
-  | ~C-c C-x b~ | Open agenda task in dedicated indirect buffer   |
-  | ~F~         | Toggle follow mode: See details as you navigate |
-  | ~v~         | Change agenda view, e.g., to day or month       |
-  | ~f / b~     | Forward, backward a view, e.g., day or month    |
-  | ~R~         | See report of total clocked time                |
-  | ~. / j~     | Go to today, or prompt for a date               |
-  | ~e, t, a~   | Remotely set effort, state, or archive          |
-  | ~I, O, X~   | Start, stop, cancel clock on current item       |
 
-* newpage :ignore:
-  \newpage
+  
+  | ~C-c a a~   | See agenda for the week |
+  | ~“C-c a c”~ | See completed tasks     |
+  | ~“C-c a u”~ | See unscheduled tasks   |
 
+  | ~C-c a t~     | Compile global todo list                        |
+  | ~C-c C-x b~   | Open agenda task in dedicated indirect buffer   |
+  | ~F~           | Toggle follow mode: See details as you navigate |
+  | ~v~           | Change agenda view, e.g., to day or month       |
+  | ~f / b~       | Forward, backward a view, e.g., day or month    |
+  | ~R~           | See report of total clocked time                |
+  | ~. / j~       | Go to today, or prompt for a date               |
+  | ~e, t, a~     | Remotely set effort, state, or archive          |
+  | ~I, O, X~     | Start, stop, cancel clock on current item       |
+  | ~C-c C-x C-r~ | See clocked times report                        |
+  
+* Magit
+  {{{no-vertical-padding(1)}}}
+  
+~C-x g~ :: See status in another buffer.
+Press ~?~ to see options, including:
+
+| ~s~ | Add, stage changes            |
+| ~u~ | Unstage a change              |
+| ~k~ | Delete file, changes, locally |
+| ~i~ | Ignore file or pattern        |
+| ~c~ | Commit a change               |
+| ~x~ | Undo last commit              |
+| ~l~ | Show log                      |
+| ~P~ | Push                          |
+| ~F~ | Pull                          |
+| ~:~ | Execute raw git command       |
+
+:Details:
+
+  - ~x~ :: Undo last commit. Tantamount to ~git reset HEAD~~ when cursor is on most recent
+           commit; otherwise resets to whatever commit is under the cursor.
+	   
+  - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
+
+:End:
+
+* end multicols                                                      :ignore:
+#+latex: \end{multicols}
+* TODO COMMENT Work Day  
 * COMMENT footer
 
 # Local Variables:
