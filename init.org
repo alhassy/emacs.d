@@ -22,7 +22,20 @@
 # nicely with github README.md .
 
 * Abstract                                                   :ignore:
- 
+
+# See https://shields.io/
+#
+# https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>.svg
+#
+#+BEGIN_export html   
+<p align="center"><img src="emacs-logo.png" width=150 height=150/></p>
+<p align="center">
+	<a href="https://www.gnu.org/software/emacs/">        
+        <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a>
+	<a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic"/></a>
+</p>
+#+END_export
+
 #+begin_center
 *Abstract*
 #+end_center
