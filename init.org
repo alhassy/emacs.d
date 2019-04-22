@@ -15,20 +15,6 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs
 
-# Toggle comments with: C-c ;
-# C-l recenters window to top/center/bottom while keeping the point on the same line;
-# M-r moves the point to top/center/bottom without recentering the window.
-#
-# Read the tutorial! C-h t
-#
-# M-<DEL> and M-d delete a word backwards and forwards, respectively.
-# M-{ and M-} to move forward/backward by a paragraph.
-# M-/ complete partially typed words; this cycles through possible completions. 
-#
-#
-# Start a numbered list from any number using the syntax “N. [@N] ⋯”, a nice way to
-# have 0-numbered lists or lists with text in between that does not reset the numbering.
-
 # [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]]
 # INFOJS_OPT: view:info toc:t buttons:t
 #
@@ -690,7 +676,7 @@ The thesaurus is powered by the Wordnet ~wn~ tool, which can be invoked without 
 ;; (shell-command "brew install wordnet &")
 #+end_src
 
-Let's use Wordnet as a dictionary via the ~wordnut~ package.
+Let's use Wordnet as a dictionary via the [[https://github.com/gromnitsky/wordnut][wordnut]] package.
 #+BEGIN_SRC emacs-lisp
 (use-package wordnut
  :bind ("M-!" . wordnut-lookup-current-word))
@@ -1007,8 +993,6 @@ Note: Using spacemacs theme above.
       )
   )     
 )
-
-;; (setq initial-scratch-message "Welcome! This’ the scratch buffer" )
 #+end_src
 Now my startup message is,
 #+begin_src emacs-lisp
@@ -1023,6 +1007,38 @@ For some fun, run this cute method.
 Moreover, since I end up using org-mode most of the time, let's make that the default mode.
 #+BEGIN_SRC emacs-lisp
 (setq initial-major-mode 'org-mode)
+#+END_SRC
+
+** Persistent Scratch Buffer
+
+The ~*scratch*~ buffer is a nice playground for temporary data.
+
+I use Org-mode often, so that's how I want things to appear.
+#+BEGIN_SRC emacs-lisp
+(setq initial-scratch-message (concat
+  "#+Title: Persistent Scratch Buffer"
+  "\n#\n # Welcome! This’ a place for trying things out. \n"))
+#+END_SRC
+
+We might accidentally close this buffer, so we could utilise the following.
+#+BEGIN_SRC emacs-lisp
+;; A very simple function to recreate the scratch buffer:
+;; ( http://emacswiki.org/emacs/RecreateScratchBuffer )
+(defun my/create-scratch-buffer nil
+   "create a scratch buffer"
+   (interactive)
+   (switch-to-buffer (get-buffer-create "*scratch*"))
+   (insert initial-scratch-message)
+   (org-mode))   
+#+END_SRC
+
+However, by default its contents are not saved --which may be an issue if we have
+not relocated our playthings to their appropriate files. Whence let's save & restore
+the scratch buffer by default.
+#+BEGIN_SRC emacs-lisp
+(use-package persistent-scratch
+  :config  
+  (persistent-scratch-setup-default))
 #+END_SRC
 
 ** Spaceline: A sleek mode line
@@ -3239,18 +3255,6 @@ Disclaimer: I wrote the following /before/ I learned any lisp; everything below 
   "Kill all other buffers."
   (interactive)
   (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
-#+END_SRC
-
-** ~create-scratch-buffer~
-#+BEGIN_SRC emacs-lisp
-;; A very simple function to recreate the scratch buffer:
-;; ( http://emacswiki.org/emacs/RecreateScratchBuffer )
-(defun create-scratch-buffer nil
-   "create a scratch buffer"
-   (interactive)
-   (switch-to-buffer (get-buffer-create "*scratch*"))
-   (insert initial-scratch-message)
-   (lisp-interaction-mode))   
 #+END_SRC
 ** Switching from 2 horizontal windows to 2 vertical windows
 I often find myself switching from a horizontal view of two windows in Emacs to a
