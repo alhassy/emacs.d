@@ -21,12 +21,6 @@
 # Looks nice for standalone pages; doesn't incorporate
 # nicely with github README.md .
 
-# Keep OS up to date; 
-# brew update && brew upgrade
-# takes no time, if we're up to date.
-#
-# Do same for Emacs' packages?
-
 * Abstract                                                   :ignore:
  
 #+begin_center
@@ -947,6 +941,27 @@ See these [[https://github.com/purcell/exec-path-from-shell][docs]] for setting 
 | /Users/musa/Library/Haskell/bin | /usr/local/bin | /usr/bin | /bin | /usr/sbin | /sbin | /Library/TeX/texbin | /usr/local/share/dotnet | /opt/X11/bin | /Library/Frameworks/Mono.framework/Versions/Current/Commands | /Users/musa/Library/Haskell/bin |
 :End:
 
+** Keeping My System Up to Date
+#+BEGIN_SRC emacs-lisp
+(defun my/stay-up-to-date ()
+
+  "Ensure that OS and Emacs pacakges are up to date.
+
+   Takes ~5 secons when everything is up to date.
+  "
+
+  (async-shell-command "brew update && brew upgrade")
+  (other-window 1)
+  (rename-buffer "Keeping-system-up-to-date")
+    
+  (package-refresh-contents)
+  (insert "Emacs packages have been updated.")
+
+  (other-window 1)
+)
+
+(add-hook 'after-init-hook 'my/stay-up-to-date)
+#+END_SRC
 ** Who am I?
 #+begin_src emacs-lisp
 (setq user-full-name    "Musa Al-hassy"
