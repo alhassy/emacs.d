@@ -163,12 +163,12 @@ By default ~C-t~ is transpose characters; I'm using it quickly open a terminal.
 
 * columnbreak :ignore:
   \columnbreak
-* Spellchecking et. al.
+* Dictionary & Thesaurus
    {{{no-vertical-padding(1.5)}}}
    
 | ~M-$~   | Spellcheck word  |
-| “M-#” | Synonym for word |
-| TODO  | Define word      |
+| ~“M-#”~ | Synonym for word |
+| ~“M-!”~ | Define word      |
 
 * Textual Navigation
   {{{no-vertical-padding(1)}}}

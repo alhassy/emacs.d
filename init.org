@@ -516,8 +516,7 @@ discovering other commands easier.
 
 Use ~M-x (magit-list-repositories) RET~ to list local repositories:
 
-Below are the git repos I'd like to clone
-
+Below are the git repos I'd like to clone.
 #+begin_src emacs-lisp
 ;; Do not ask about this variable when cloning.
 (setq magit-clone-set-remote.pushDefault t)
@@ -544,7 +543,10 @@ Below are the git repos I'd like to clone
 (maybe-clone "https://github.com/alhassy/interactive-way-to-c" "~/interactive-way-to-c")
 
 ;; Private repos
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/carette/cs3fp3.git" "~/3fp3") ;; cat adventures
+;;
+(maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/CAS781" "~/cas781") ;; cat adventures
+;;
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/carette/cs3fp3.git" "~/3fp3")
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/RATH/RATH-Agda"     "~/RATH-Agda")
 (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-distribution.git" "~/3ea3/assignment-distribution")
 (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/notes.git" "~/3ea3/notes")
@@ -687,6 +689,15 @@ The thesaurus is powered by the Wordnet ~wn~ tool, which can be invoked without 
 ;; (shell-command "brew cask install xquartz &") ;; Dependency
 ;; (shell-command "brew install wordnet &")
 #+end_src
+
+Let's use Wordnet as a dictionary via the ~wordnut~ package.
+#+BEGIN_SRC emacs-lisp
+(use-package wordnut
+ :bind ("M-!" . wordnut-lookup-current-word))
+
+;; Use M-& for async shell commands. 
+#+END_SRC
+Use ~M-↑,↓~ to navigate dictionary results, and ~wordnut-search~ for a new search.
 
 :CurrentlyNotWorking:
 #+BEGIN_SRC emacs-lisp :tangle no
