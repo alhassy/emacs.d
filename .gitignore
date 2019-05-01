@@ -16,3 +16,4 @@ transient/
 /init.tex
 /org-clock-save.el
 /recentf
+_minted-*

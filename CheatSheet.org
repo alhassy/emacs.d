@@ -3,6 +3,16 @@ f7 preview changes
 f8 commit each change
 f9 push changes
 :End:
+
+:To_incorporate:
+
+# Toggle comments with: C-c ;
+#
+# Start a numbered list from any number using the syntax “N. [@N] ⋯”, a nice way to
+# have 0-numbered lists or lists with text in between that does not reset the numbering.
+
+:End:
+
 * Header :ignore:
 #+TITLE: Reference Sheet for Emacs
 # SUBTITLE: Cheat Sheet Template
@@ -47,7 +57,9 @@ then look at the resulting menu 😃
 
 + ~?~ :: Obtain help; see listing of possible commands.
 + ~q~ :: Quit current application, closing buffer.
-	 
+
+Read the tutorial with ~C-h t~!
+
 * TODO COMMENT Provide support for /three/ columns, not two.
 * Getting Help
   {{{no-vertical-padding(2.5)}}}  
@@ -187,7 +199,16 @@ By default ~C-t~ is transpose characters; I'm using it quickly open a terminal.
   | ~C-v~    | down page            |
   | ~M-v~    | up page              |
   | ~C-l~    | centre page          |
+  | ~M-r~    | relocate point       |
 
+:More_on_C-l_and_M-r:
+~C-l~ reorients the buffer so that the current line is at the
+top/center/bottom of the screen. Whereas ~M-r~ moves the point
+to top/center/bottom without recentering the window.
+:End:
+# C-l recenters window to top/center/bottom while keeping the point on the same line;
+# M-r moves the point to top/center/bottom without recentering the window.
+  
   _Org-mode_: All commands are prefixed by ~C-c~.
 
   | ~n,p~       | next, previous heading     |
@@ -200,14 +221,31 @@ By default ~C-t~ is transpose characters; I'm using it quickly open a terminal.
   | ~“s-p,n”~ | Previous, next src block  |
   | ~“s-e”~   | Toggled editing src block |
 
-* Completion
-  {{{no-vertical-padding(2)}}}
+* Mail
 
-  # [[https://company-mode.github.io/][Company-mode]] 
+  | ~C-x m~    | Compose   |
+  | ~C-c C-s~  | Send      |
+  | ~M-x gnus~ | Read mail |
+
+Then,
+| ~RET~ | Open article                     |
+| ~B m~ | Move an article                  |
+| ~!~   | Mark as read, but it keep around |
+| ~d~   | Mark as read; archive it.        |
+| ~R~   | Reply in-place.                  |
+| ~r~   | Reply in clean slate.            |
+
+Delete an article by moving it to ‘Trash’.
+  	 
+# Learn more by reading [[https://www.gnus.org/manual.html][The Gnus Manual]]; also available within Emacs by ~C-h i m gnus~ (•̀ᴗ•́)و
+  
+* [[https://company-mode.github.io/][Completion]]
+  {{{no-vertical-padding(2)}}}
   
   | ~M-/~       | Expand previous word dynamically |
   | ~M-<digit>~ | Select one of the 10 suggestions |
-  |           |                                  |
+
+# M-/ complete partially typed words; this cycles through possible completions. 
   
 * Narrowing 
   {{{no-vertical-padding(1)}}}
@@ -276,7 +314,7 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
 | ~C-c C-v d~   | Demarcate, split up, code block    |
 | ~C-c C-v t~   | Tangle all blocks in buffer        |
 
-* columnbreak :ignore:
+* COMMENT columnbreak :ignore:
   \columnbreak
 * Misc 
 #  {{{no-vertical-padding(1)}}}
@@ -384,6 +422,7 @@ Press ~?~ to see options, including:
   - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
 
 :End:
+
 
 * end multicols                                                      :ignore:
 #+latex: \end{multicols}
