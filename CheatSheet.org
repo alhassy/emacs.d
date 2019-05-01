@@ -19,7 +19,7 @@ f9 push changes
 # DATE: << Winter 2019 >>
 # When we don't provide a date, one is provided for us.
 #+MACRO: URL https://github.com/alhassy/emacs.d
-#+MACRO: ShowURL @@latex:{\tiny\hspace{6em}\url{ {{{URL}}} } }@@
+#+MACRO: ShowURL @@latex:{\tiny\hspace{34em}\url{ {{{URL}}} } }@@
 #+AUTHOR: [[http://www.cas.mcmaster.ca/~alhassm/][Musa Al-hassy]] {{{ShowURL}}}
 #+EMAIL: alhassy@gmail.com
 #+DESCRIPTION: This document is written by Musa Al-hassy for his learning in the Winter of 2019.
@@ -37,7 +37,9 @@ f9 push changes
 * Why?
 
 I have so many things installed, I'm forgetting some of the stuff
-that I installed to be more productive! Whence this personal cheat sheet.
+that I installed to be more productive! Whence this “personal” cheat sheet.
+---I'm not trying to be comprehensive; see the existing cheatsheets for [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][Emacs]]
+and [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][Org]].
 
 :More:
 There are already cheatsheets for [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][Emacs]], [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][Org]], and even [[https://github.com/alhassy/ElispCheatSheet/blob/master/CheatSheet.pdf][Elisp]];
@@ -55,12 +57,14 @@ As always, since I've installed ~which-key~, it suffices to press a prefix
 then look at the resulting menu 😃
 :End:
 
-+ ~?~ :: Obtain help; see listing of possible commands.
+| ~C-h h~         | Learn how to say ‘hello’ |
+| ~C-h t~         | Read the Emacs tutorial  |
+| ~C-h i m emacs~ | Read the Emacs manual    |
+
+In nearly every Emacs application, press
++ ~?, h~ :: Obtain help; see listing of possible commands.
 + ~q~ :: Quit current application, closing buffer.
 
-Read the tutorial with ~C-h t~!
-
-* TODO COMMENT Provide support for /three/ columns, not two.
 * Getting Help
   {{{no-vertical-padding(2.5)}}}  
   | ~C-h o~     | Describe symbol at point; best one.        |
@@ -221,8 +225,8 @@ to top/center/bottom without recentering the window.
   | ~“s-p,n”~ | Previous, next src block  |
   | ~“s-e”~   | Toggled editing src block |
 
-* Mail
-
+* [[https://www.gnus.org/manual.html][Mail]]
+  
   | ~C-x m~    | Compose   |
   | ~C-c C-s~  | Send      |
   | ~M-x gnus~ | Read mail |
@@ -338,20 +342,20 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
   
 With cursor at the beginning of an org headline:
 
-| ~#~     | Toggle ~COMMENT~-ing     |
-| ~t~     | Select state           |
-| ~s~     | Toggle narrowing       |
-| ~I,O~   | Clock in or out        |
-| ~p,n~   | Previous, next heading |
-| ~f,b~   | p,n for same-level     |
-| ~u~     | Upward to parent       |
-| ~c~     | Cycle visibility       |
-| ~w~     | Refile, relocate       |
-| ~^~     | Sort children trees    |
-| ~D,U~   | Move heading down, up  |
-| ~L,R~   | Promote, demote        |
-| ~1,2,3~ | Select priority        |
-| ~?~     | See possible keys      |
+| ~#~     | Toggle ~COMMENT~-ing        |
+| ~t~     | Select state              |
+| ~s~     | Toggle narrowing          |
+| ~I,O,E~ | Clock in, out; add effort |
+| ~p,n~   | Previous, next heading    |
+| ~f,b~   | p,n for same-level        |
+| ~u~     | Upward to parent          |
+| ~c~     | Cycle visibility          |
+| ~w~     | Refile, relocate          |
+| ~^~     | Sort children trees       |
+| ~D,U~   | Move heading down, up     |
+| ~L,R~   | Promote, demote           |
+| ~1,2,3~ | Select priority           |
+| ~?~     | See possible keys         |
 
 * Timestamps
   {{{no-vertical-padding(2)}}}
@@ -367,8 +371,9 @@ With cursor at the beginning of an org headline:
 * Clocking Time 
   {{{no-vertical-padding(2)}}}
   
-| ~C-c C-x C-i,o~ | Start, stop clock on tree    |
-| ~C-c C-x C-r~   | Insert, update, clock report |
+| ~C-c C-x C-i,o~ | Start, stop clock on tree       |
+| ~C-c C-x C-r~   | Insert, update, clock report    |
+| ~C-c C-x C-e~   | Insert effort for current clock |
 
 * Agenda
   {{{no-vertical-padding(2.5)}}}
@@ -401,7 +406,7 @@ With cursor at the beginning of an org headline:
   {{{no-vertical-padding(1)}}}
   
 ~C-x g~ :: See status in another buffer.
-Press ~?~ to see options, including:
+# Press ~?~ to see options, including:
 
 | ~s~ | Add, stage changes            |
 | ~u~ | Unstage a change              |
