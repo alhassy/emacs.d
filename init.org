@@ -1571,7 +1571,7 @@ https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-n
 https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-version-using-package-repos-git-clone-in-ubuntu
 :End:
 
-[[http://notesyoujustmightwanttosave.blogspot.com/][Here is useful Org-Mode Table Editing Cheatsheet.]]
+# [[http://notesyoujustmightwanttosave.blogspot.com/][Here is useful Org-Mode Table Editing Cheatsheet.]]
 
 Let's obtain Org-mode along with the extras that allow us to ignore
 heading names, but still utilise their contents --e.g., such as a heading
@@ -2381,6 +2381,25 @@ Here's another example graph,
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
+
+** [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework
+
+Org-mode documents can be transformed into beautiful slide decks
+with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] with the following two simple lines.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-reveal
+ :config (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"))
+#+END_SRC
+For example, execute --~C-c C-c~--  the following block to see an example slide-deck (─‿‿─)
+#+BEGIN_SRC emacs-lisp :tangle no
+(shell-command "curl https://raw.githubusercontent.com/yjwen/org-reveal/master/Readme.org >> Trying_out_reveal.org")
+(with-temp-buffer (find-file "Trying_out_reveal.org")
+ (org-reveal-export-to-html-and-browse)
+)
+#+END_SRC
+
+Org-mode exporting --~C-c C-e~-- now includes an option ~R~ for such reveal slide decks.
 
 ** Coloured LaTeX using Minted
 Execute the following for bib ref as well as minted
