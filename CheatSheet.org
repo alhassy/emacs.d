@@ -69,6 +69,9 @@ In nearly every Emacs application, press
 + ~q~ :: Quit current application, closing buffer.
 
 # Invoke ~describe-bindings~ to see what bindings you have, or use the helm-descbinds for a prettier cheat-sheet feel ;-)
+
+Use [[https://github.com/zachcurry/emacs-anywhere/issues][Emacs in any text area on my OS]] with ~Cmd Shift e~.
+
 * Getting Help
   {{{no-vertical-padding(2.5)}}}  
   | ~C-h o~     | Describe symbol at point; best one.        |

@@ -134,6 +134,10 @@ is at its core an Emacs Lisp program that yields the editor of my dreams
 --it encourages me to grow and to be creative, and I hope the same for all who use it;
 moreover, it reflects my personality such as what I value and what I neglect in my workflow.
 
+
+Finally, as will be shown below, you can literrally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
+for textually input in your operating system --no copy-paste required.
+
 * Booting Up
 ** ~~/.emacs~ vs. ~init.org~
 
@@ -1119,6 +1123,43 @@ Learn more by reading [[https://www.gnus.org/manual.html][The Gnus Manual]]; als
 
 - Or look at the [[https://www.gnu.org/software/emacs/refcards/pdf/gnus-refcard.pdf][Gnus Reference Card]].
 - Or, less comprehensively, this [[https://github.com/redguardtoo/mastering-emacs-in-one-year-guide/blob/master/gnus-guide-en.org#subscribe-groups][outline]].
+
+** Using Emacs in any text area on my OS
+
+Using the [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs-Anywhere]] tool, I can press ~Cmd Shift e~ to have an Emacs frame
+appear, produce text with Emacs editing capabilities, then ~C-x 5 0~ to have the
+resulting text dumped into the text area I was working in.
+
+This way I can use Emacs literally anywhere for textual input!
+
+For my Mac OSX:
+#+BEGIN_SRC emacs-lisp
+(shell-command "curl -fsSL https://raw.github.com/zachcurry/emacs-anywhere/master/install | bash")
+
+(server-start)
+#+END_SRC
+
+The tools that use emacs-anywhere --such as my web browser-- and emacs-anywhere
+itself need to be given sufficient OS permissions:
+#+begin_example org
+System Preferences → Security & Privacy → Accessibility
+#+end_example
+Then check the emacs-anywhere box from the following gui and provide a keyboard shortcut:
+#+begin_example org
+System Preferences → Keyboard → Shortcuts → Services
+#+end_example
+
+(•̀ᴗ•́)و
+
+I always want to be in Org-mode and input unicode:
+#+BEGIN_SRC elisp
+(add-hook 'ea-popup-hook
+  (lambda (app-name window-title x y w h)
+   (org-mode)
+   (set-input-method "Agda")
+  )  
+)  
+#+END_SRC
 
 * Cosmetics
 
@@ -3876,11 +3917,11 @@ C-c C-c: Evaluate src block.
     "#+EXPORT_FILE_NAME: README.md
      #+HTML: <h1> A Life Configuring Emacs </h1>
 
-     <p align="center"><img src="emacs-logo.png" width=150 height=150/></p>
-     <p align="center">
-     	<a href="https://www.gnu.org/software/emacs/">        
-             <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a>
-     	<a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic"/></a>
+     <p align=\"center\"><img src=\"emacs-logo.png\" width=150 height=150/></p>
+     <p align=\"center\">
+     	<a href=\"https://www.gnu.org/software/emacs/\">        
+             <img src=\"https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic\"/></a>
+     	<a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic\"/></a>
      </p>
      
      #+HTML: <h3> My Literate Setup </h3>
