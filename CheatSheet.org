@@ -123,7 +123,7 @@ for finding file, directory, buffer.
 | ~r~        | Rename a perspective.                                          |
 | ~A~        | Add buffer to current perspective & remove it from all others. |
   
-* columnbreak :ignore:
+* COMMENT columnbreak :ignore:
   \columnbreak
 * [[https://github.com/apchamberlain/undo-tree.el][Undo tree]]
   {{{no-vertical-padding(1.5)}}}
@@ -181,14 +181,15 @@ By default ~C-t~ is transpose characters; I'm using it quickly open a terminal.
 
 #+latex: {\color{white} . }
 
-* columnbreak :ignore:
+* COMMENT columnbreak :ignore:
   \columnbreak
 * Dictionary & Thesaurus
    {{{no-vertical-padding(1.5)}}}
    
-| ~M-$~   | Spellcheck word  |
-| ~“M-#”~ | Synonym for word |
-| ~“M-!”~ | Define word      |
+| ~M-$~   | Spellcheck word      |
+| ~“M-#”~ | Synonym for word     |
+| ~“M-!”~ | Define word          |
+| ~“M-^”~ | Grammar check region |
 
 * Textual Navigation
   {{{no-vertical-padding(1)}}}
@@ -370,7 +371,7 @@ With cursor at the beginning of an org headline:
   | ~S-↑,↓,→,←~   | Alter timestamp by a day →←, year ↓↑ |
   | ~C-c C-x C-t~ | Globally toggle date display         |
   
-* columnbreak                                                        :ignore:
+* COMMENT columnbreak                                                        :ignore:
   \columnbreak
 * Clocking Time 
   {{{no-vertical-padding(2)}}}
@@ -406,7 +407,7 @@ With cursor at the beginning of an org headline:
   | ~I, O, X~     | Start, stop, cancel clock on current item       |
   | ~C-c C-x C-r~ | See clocked times report                        |
   
-* Magit
+* COMMENT Magit
   {{{no-vertical-padding(1)}}}
   
 ~C-x g~ :: See status in another buffer.

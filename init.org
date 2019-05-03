@@ -728,6 +728,48 @@ Other typing resources include:
   some XMonad written in Haskell or Linux written in  C.
 + [[https://www.gnu.org/software/gtypist/index.html#downloading][GNU Typist]] --which is interactive in the terminal, so not ideal in Emacs--,
 
+** Using a Grammar & Style Checker
+
+Let's install [[https://github.com/mhayashi1120/Emacs-langtool][a grammar and style checker]].
+We get the offline tool from the bottom of the [[https://languagetool.org/][LanguageTool]] website, then relocate it
+as follows.
+#+BEGIN_SRC emacs-lisp
+(use-package langtool
+ :config
+  (setq langtool-language-tool-jar
+     "~/Applications/LanguageTool-4.5/languagetool-commandline.jar") 
+)
+#+END_SRC
+
+Now we can run ~langtool-check~ on the subsequent grammatically incorrect
+text --which is from the LanguageTool website-- which colours errors in red,
+when we click on them we get the reason why; then we may invoke
+~langtool-correct-buffer~ to quickly use the suggestions to fix each correction,
+and finally invoke ~langtool-check-done~ to stop any remaining red colouring.
+
+#+begin_example org
+LanguageTool offers spell and grammar checking. Just paste your text here
+and click the 'Check Text' button. Click the colored phrases for details
+on potential errors. or use this text too see an few of of the problems
+that LanguageTool can detecd. What do you thinks of grammar checkers?
+Please not that they are not perfect. Style issues get a blue marker:
+It's 5 P.M. in the afternoon. The weather was nice on Thursday, 27 June 2017
+--uh oh, that's the wrong date ;-)
+#+end_example
+
+By looking around the source code, I can do all three stages smoothly (•̀ᴗ•́)و
+#+BEGIN_SRC emacs-lisp
+;; Quickly check, correct, then clean up /region/ with M-^
+
+(add-hook 'langtool-error-exists-hook 
+  (lambda ()
+    (langtool-correct-buffer)
+    (langtool-check-done)
+  ))
+  
+(global-set-key "\M-^" 'langtool-check)
+#+END_SRC
+
 ** Unicode Input via Agda Input
  
 :agda2-include-dirs-Issue:
