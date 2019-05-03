@@ -57,14 +57,18 @@ As always, since I've installed ~which-key~, it suffices to press a prefix
 then look at the resulting menu 😃
 :End:
 
-| ~C-h h~         | Learn how to say ‘hello’ |
-| ~C-h t~         | Read the Emacs tutorial  |
-| ~C-h i m emacs~ | Read the Emacs manual    |
+| ~C-h C-h~       | Help for the help command  |
+| ~C-h h~         | Learn how to say ‘hello’  |
+| ~C-h t~         | Read the Emacs tutorial   |
+| ~C-h m~         | Help for current mode     |
+| ~C-h b~         | Describe all key bindings |
+| ~C-h i m emacs~ | Read the Emacs manual     |
 
 In nearly every Emacs application, press
 + ~?, h~ :: Obtain help; see listing of possible commands.
 + ~q~ :: Quit current application, closing buffer.
 
+# Invoke ~describe-bindings~ to see what bindings you have, or use the helm-descbinds for a prettier cheat-sheet feel ;-)
 * Getting Help
   {{{no-vertical-padding(2.5)}}}  
   | ~C-h o~     | Describe symbol at point; best one.        |
@@ -165,15 +169,15 @@ Undo Tree also has functions which save an undo state to a register and which re
   {{{no-vertical-padding(2)}}}
 
 By default ~C-t~ is transpose characters; I'm using it quickly open a terminal.
-| ~C-M-\~     | Indent region, mode dependent      |
-| ~C-x tab~   | Indent region /arg/ columns or ←,→   |
-| ~M-;~       | Toggle comment region              |
-| ~C-M-o~     | Move rest of line vertically down  |
-| ~M-u,l~     | Upcase, downcase rest of word      |
-| ~C-x C-u,l~ | Upcase, downcase region            |
-| ~M-t~       | Transpose current word with next   |
-| ~C-x C-t~   | Transpose current line with above  |
-
+| ~C-M-\~     | Indent region, mode dependent     |
+| ~C-x tab~   | Indent region /arg/ columns or ←,→  |
+| ~M-;~       | Toggle comment region             |
+| ~C-M-o~     | Move rest of line vertically down |
+| ~M-u,l~     | Upcase, downcase rest of word     |
+| ~C-x C-u,l~ | Upcase, downcase region           |
+| ~C-x r t~   | Prepend string to marked lines    |
+| ~M-t~       | Transpose current word with next  |
+| ~C-x C-t~   | Transpose current line with above |
 
 #+latex: {\color{white} . }
 

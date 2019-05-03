@@ -1,0 +1,255 @@
+:ImportantShortcuts: 
+f7 preview changes
+f8 commit each change
+f9 push changes
+:End:
+
+* Header :ignore:
+  :LOGBOOK:
+  CLOCK: [2019-05-02 Thu 12:58]--[2019-05-02 Thu 12:59] =>  0:01
+  - nice
+  :END:
+#+TITLE: Workflow Reference Sheet
+# SUBTITLE: Cheat Sheet Template
+# DATE: << Winter 2019 >>
+# When we don't provide a date, one is provided for us.
+#+MACRO: URL https://github.com/alhassy/emacs.d
+#+MACRO: ShowURL @@latex:{\tiny\hspace{34em}\url{ {{{URL}}} } }@@
+#+AUTHOR: [[http://www.cas.mcmaster.ca/~alhassm/][Musa Al-hassy]] {{{ShowURL}}}
+#+EMAIL: alhassy@gmail.com
+#+DESCRIPTION: This document is written by Musa Al-hassy for his learning in the Winter of 2019.
+#+STARTUP: hideblocks
+#+STARTUP: overview
+#+OPTIONS: d:nil
+
+#+TODO: | spacing 
+
+# MACRO: no-vertical-padding  @@latex:{\color{white}.}\vspace{-$1em}@@
+#+MACRO: no-vertical-padding  
+
+#+INCLUDE: CheatSheet/CheatSheetSetup.org
+* begin multicols :ignore:
+#+latex: \begin{multicols}{3}
+
+* Why?
+
+  A new way to work, a new habit, is difficult to form without reminder.
+  Whence this brief cheat sheet to get me going on this GTD process.
+  
+* Overview of the day
+
+#+latex: {\color{white} .}
+  
+*Start of the day*:  \hfill ~1 hour
+  
+  - Look at mail with ~M-x gnus~ and capture tasks indiscriminately /unless/ marked urgent.
+    
+  - Quickly review upcoming week in the agenda, ensuring you're working on the right stuff
+    --shuffle if need be.
+    
+  - If there are many ~C~ tasks, reschedule without a second thought. Aim for ≤15 tasks.
+    # - You've already provided consideration when assigning priorities.
+  
+  - Progress towards ~A~ tasks completion by documenting work completed.
+
+  A /good day/ is doing /at least/ all of the most important and urgent tasks --the ~A~ tasks.
+
+*End of the day*:
+  - Journal about what was completed and what was not.
+  - Process, schedule, and archive tasks.
+ 
+| ~C-c c~             | Capture an idea quickly   |
+| ~C-c a~             | Open agenda to see tasks  |
+| ~C-c a t~           | Compile global todo list  |
+| ~C-c a u~           | See unprocessed tasks     |
+| ~C-c C-s~           | Schedule task             |
+| ~C-c a c~           | See completed tasks       |
+| ~C-c C-x C-s~       | Archive task              |
+| ~(org-search-view)~ | Search todo's and archive |
+
+*Throughout the day*:
+When new tasks come up, enter them impulsively and indiscriminately.
+Do not make any further scheduling or processing considerations.
+  
+* spacing columnbreak :ignore:
+  \columnbreak
+  
+* Progressing Towards Completion
+
+#+latex: {\color{white} .}
+  
+:TaskStates:
++ A ~TODO~ task may be ~STARTED~ but we may have to be ~WAITING~ on others to
+  reply to our queries and we may put a task ~ON_HOLD~ indefinitely or have a task
+  ~CANCELLED~ before it's actually ~DONE~.
+:End:
+  
+| /Can't manage what you don't know!/ |
+| /Where does the time go?/           |
+| /Log it & document it!/             |
+
+# + Clock into a task, use an estimated effort, work, then clock-out noting
+#  what was accomplished.
+
+*Clock in* on a heading with ~I~, or in the subtree with ~C-c C-x C-i~.              
+
+  - An org-timer for 25 minutes starts, in case the task is dreadful.
+  
+*Clock out* of a heading with ~O~, or in the subtree with ~C-c C-x C-o~.
+
+   - When we clock-out, a note of what's accomplished is added to the task.
+   - Even if little, the note motivates progress.
+   - Continuous journaling is akin to literate programming
+     \hfill ---no one wants to do it after the fact.
+
+# vspace
+#+latex: {\color{white} .}
+
+Other ideas to assist in completing a task:
+
++ Add an arbitrary remark to a task with ~C-c C-z~.   
+   
++ Move the state of a task with ~C-c C-t~.
+  :More:
++  C-u [digit] C-c C-t :: Fast selection; no prefix argument forces cycling.
+   - 1 TODO, 2 STARTED, 3 DONE, 4 WAITING, 5 ON_HOLD, 6 CANCELLED. 
++ ‘C-u t’ in an agenda buffer.
++ We can also change through states using Shift- left, or right.
+:End:
+
++ Focus on a particular region when working to avoid being distracted.
+  ~C-x n n/e/s/w~ for narrowing to region, org element or subtree, or widen.
+
++ From anywhere, ~C-u C-c C-x C-i~ yields a pop-up for recently clocked in tasks.
+
+* Reflection; Journaling
+# {{{no-vertical-padding(3.5)}}}
+  
+# | ~C-c j~ | org-journal-new-entry |
+| ~C-c j~ | Discuss what's accomplished in journal  |
+| ~C-c C-j~ | New entry into journal |
+| ~C-c C-s~ | Search the journal |
+
+- What was accomplished today?
+  * See clocked times with ~C-c C-x C-r~.
+- What are some notably bad habits? Good habits?
+- What are some future steps?
+   
+* spacing columnbreak                                                :ignore:
+  \columnbreak
+  
+* Processing Tasks
+
+  Within the list of captured items, for each item we [[https://en.wikipedia.org/wiki/Getting_Things_Done#Workflow][do as follows]].
+  
+  0. Not actionable? Refile to trash, someday/maybe, or reference sections. 
+  1. Multiple steps to completion? Make it into a project.
+  2. Less than 2 minutes? Do it now.
+  3. Is someone else supposed to do this? Delegate!
+  4. If it has a specific date, schedule it; otherwise
+     tag it with context needed to get it done.
+
+* How to ‘Schedule’ a Task
+    
+  0. Provide an estimated time effort.
+    
+  1. On heading, press ~,~ then one of ~A, B, C~ to set its priority.
+    
+      | ~A~ | High urgency & important; rare.                  |
+      | ~B~ | Moderate urgency & importance; most tasks.       |
+      | ~C~ | Pretty much optional, or very quick or fun to do |
+          
+  2. Pick a date to get it done with ~C-c C-s~, then ~+n~ to have it be
+     started ~n~ days from now.
+
+    - Any time ≈ no time.
+    -  Always schedule /then/ reschedule, if needed.
+
+* Working with ‘Projects’
+
+  If a task needs less than 2 minutes, do it immediately
+  since the processing overhead is not worth it;
+  otherwise, it's a ‘project’ and should be split up into multiple tasks.
+
+  0. Append the project's name with ~[/]~ or ~[%]~ to get [[https://orgmode.org/manual/Checkboxes.html][progress statistics]].
+     
+  1. Produce a list of sub-tasks, in the form ~- [ ] subtask1~, that progress
+     the project to completion.
+     
+  2. Test toggle a task into completion with ~C-c C-c~ on it, now the statistics
+     are updated. If you manually toggle a task, use ~C-c #~ on the statistics
+     to update them.
+
+  At the top, for the project, add a single sentence description of a successful outcome,
+  defining ‘done’ and clarifying the desired outcome.
+
+# Describing the next action minimises procrastination as it makes it
+# easier to decide what to do next. You don't need to make a decision
+# of what to do every time you look at your list.
+
+* COMMENT Pomodoro                                        :move_to_init_file:
+  :PROPERTIES:
+  :Effort:   2:14
+  :END:
+  :LOGBOOK:
+  CLOCK: [2019-05-02 Thu 12:07]--[2019-05-02 Thu 12:08] =>  0:01
+  CLOCK: [2019-05-02 Thu 12:00]--[2019-05-02 Thu 12:04] =>  0:04
+  - noice
+  CLOCK: [2019-05-02 Thu 11:56]--[2019-05-02 Thu 12:00] =>  0:04
+  CLOCK: [2019-05-02 Thu 11:55]--[2019-05-02 Thu 11:56] =>  0:01
+  :END:
+    {{{no-vertical-padding(2.5)}}}
+
++ Effort estimates are for the entire task.
+
++ Sometimes it's hard to even get started on some tasks.
+
++ The code below ensures a 25 minute timer is started whenever clocking in happens.
+
+    - The timer is in the lower right of the modeline.
+
++ When the timer runs out, we get a notification.
+
++ We may have the momentum to continue on the dreadful task, or clock-out and take a break after
+  documenting what was accomplished.   
+
+#+BEGIN_SRC emacs-lisp
+(setq org-timer-default-timer 1)
+
+(add-hook 'org-clock-in-hook
+  (lambda () (org-timer-set-timer '(16))))
+
+(add-hook 'org-clock-out-hook
+  (lambda ()
+  ;; unless we clocked-out with less than a minute left,
+  ;; show disappointment message.
+  (unless (s-prefix? "0:00" (org-timer-value-string))
+     (message-box "The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave."))
+     (org-timer-stop)
+     ))
+#+END_SRC
+
+#+RESULTS:
+| (lambda nil (unless (s-prefix? 0:00 (org-timer-value-string)) (message-box The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave.)) (org-timer-stop)) | (lambda nil (if (s-prefix? 0:00 (org-timer-value-string)) nil (message-box The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave.))) | org-clock-remove-empty-clock-drawer |
+
+Note that this does not conflict with the total effort estimate for the task.
+
+#+RESULTS:
+| lambda | nil | (org-timer-set-timer (quote (16)))                                    |
+| lambda | nil | (if (not org-timer-current-timer) (org-timer-set-timer (quote (16)))) |
+  
+* COMMENT Add a default ~:Effort: 1:00~ to captured tasks 7automatically :move_to_init_file:
+
+* COMMENT Add a default “Done_Condition: ???” to captured tasks :move_to_init_file:
+
+    At the top, for the project, add a single sentence description of a successful outcome,
+  defining ‘done’ and clarifying the desired outcome.
+  
+* end multicols                                                      :ignore:
+#+latex: \end{multicols}
+* COMMENT footer
+
+# Local Variables:
+# eval: (load-file "CheatSheet.el")
+# compile-command: (my-org-latex-export-to-pdf)
+# End:
