@@ -6,8 +6,6 @@ f9 push changes
 
 :To_incorporate:
 
-# Toggle comments with: C-c ;
-#
 # Start a numbered list from any number using the syntax “N. [@N] ⋯”, a nice way to
 # have 0-numbered lists or lists with text in between that does not reset the numbering.
 
@@ -108,12 +106,29 @@ Using ~C-x 5 ...~ in place of ~C-x ...~ operates on the
 ~C-x 4 ?~ is for acting on the other window, where
 ~? = f, d, b~
 for finding file, directory, buffer.
+Perhaps most useful is ~C-x 4 c~ for working with
+different parts of the same buffer.
+
+:More_on_C_x_4_c:
+
+C-x 4 c clone-indirect-buffer-other-window.
+It splits the current window, clones the current buffer and visits the clone in the newly opened window.
+
+~C-x 2~ splits and copies the current buffer, but it's inappropriate for
+looking at one part of the buffer while working on another part since
+every editing change happens live, including superficial visual changes
+such as region folding and narrowing.
+Instead, we select the region we're working on, for example,
+then press ~C-x 4 c C-x n n~ to clone the buffer then to narrow
+the region we're working on.
+
+:End:
 
 # @@latex:\vspace{-1em}@@
 # windowmove package ; # buffer-flip 
 | ~“s-<arrow>”~ | Jump to window via arrow key |
-| ~“M-<tab>”~   | Flip to next buffer     |
-| ~“M-S-<tab>”~ | Flip to previous buffer |
+| ~“M-<tab>”~   | Flip to next buffer          |
+| ~“M-S-<tab>”~ | Flip to previous buffer      |
 
 * [[https://github.com/nex3/perspective-el][Workspace Manager]]
 #  {{{no-vertical-padding(2)}}}
@@ -148,26 +163,30 @@ Undo Tree also has functions which save an undo state to a register and which re
 * Killing
   {{{no-vertical-padding(2)}}}
   
-  | ~C,M-d~       | forward kill character, word |
-  | ~C,M-del~     | backward kill word prefix    |
-  | ~C-k~ , ~“M-k”~ | forward, backward kill line  |
-  | ~C-x del~     | backward kill sentence       |
-  |-------------+------------------------------|
-  | ~C,M-w~       | Kill, copy region            |
-  | ~C-x r k~     | Kill region                  |
-  |-------------+------------------------------|
-  | ~M-y~         | Show kill ring, with “helm”  |
+  | ~C,M-d~       | forward kill character, word               |
+  | ~C,M-del~     | backward kill word prefix                  |
+  | ~C-k~ , ~“M-k”~ | forward, backward kill line                |
+  | ~C-x del~     | backward kill sentence                     |
+  |-------------+--------------------------------------------|
+  | ~C,M-w~       | Kill, copy region                          |
+  | ~C-x r k~     | Kill region                                |
+  |-------------+--------------------------------------------|
+  | ~C-x C-o~     | Delete all but one consecutive blank lines |
+  |-------------+--------------------------------------------|
+  | ~M-y~         | Show kill ring, with “helm”                |
 
 #  By default ~M-k~ is forward kill sentence. 
 * Marking
   {{{no-vertical-padding(2)}}}
   
-  | ~C-SPC~     | Set mark              |
-  | ~C-x C-x~   | Exchange point & mark |
-  | ~M-h~       | Mark paragraph        |
-  | ~C-x h~     | Mark buffer           |
-  | ~C-u 𝓃 M-@~ | Mark 𝓃 words away     |
+  | ~C-SPC~       | Set mark              |
+  | ~C-x C-x~     | Exchange point & mark |
+  | ~C-x h~       | Mark buffer           |
+  | ~[C-u 𝓃] M-@~ | Mark a / 𝓃 words away |
+  | ~M-h~         | Mark current paragraph |
 
+* columnbreak :ignore:
+  \columnbreak
 * Formatting
   {{{no-vertical-padding(2)}}}
 
@@ -175,6 +194,7 @@ By default ~C-t~ is transpose characters; I'm using it quickly open a terminal.
 | ~C-M-\~     | Indent region, mode dependent     |
 | ~C-x tab~   | Indent region /arg/ columns or ←,→  |
 | ~M-;~       | Toggle comment region             |
+| ~C-c ;~     | Org toggle comment subtree        |
 | ~C-M-o~     | Move rest of line vertically down |
 | ~M-u,l~     | Upcase, downcase rest of word     |
 | ~C-x C-u,l~ | Upcase, downcase region           |
@@ -184,8 +204,6 @@ By default ~C-t~ is transpose characters; I'm using it quickly open a terminal.
 
 #+latex: {\color{white} . }
 
-* COMMENT columnbreak :ignore:
-  \columnbreak
 * Dictionary & Thesaurus
    {{{no-vertical-padding(1.5)}}}
    
@@ -278,6 +296,7 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
  | ~C-s~     | Search current buffer      |
  | ~“C-M-s”~ | Search /all/ buffers         |
  | ~“C-S-s”~ | Back to where search began |
+ | ~M-s M-w~ | Search region in Web       |
 
  ~C-c C-e~ during a search to make live edits.
  # Apply changes to orginal buffer with C-x C-s.
@@ -302,12 +321,14 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
  | ~C-M-<return>~ | Newline, cursor at start          |
  | ~C-<return>~   | New heading /after/ current content |
  | ~C-S-<return>~ | Ditto, but with a ~TODO~ marker     |
- | ~C-c -,*~      | Demote, promote headings to items |
  |--------------+-----------------------------------|
+ | ~C-c -,*~      | Demote, promote headings to items |
  | ~M-←,→~        | Promote, demote heading           |
+ |--------------+-----------------------------------|
  | ~C-c C-t~      | Set state of tree                 |
  | ~C-c , A,B,C~  | Set priority ~A, B,~ or ~C~ for tree  |
  | ~C-c , Spc~    | Remove priority from tree         |
+ | ~C-c C-x p,e~  | Set property, effort of tree      |
  |--------------+-----------------------------------|
  | ~M-↑,↓~        | Move /any/ org element up or down   |
  | ~M-S-↑,↓~      | Move a line up or down            |
@@ -326,15 +347,12 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
 | ~C-c C-v d~   | Demarcate, split up, code block    |
 | ~C-c C-v t~   | Tangle all blocks in buffer        |
 
-* COMMENT columnbreak :ignore:
-  \columnbreak
 * Misc 
 #  {{{no-vertical-padding(1)}}}
   
 ~M-x list-input-methods~ show all input methods  
 
 # C-x d :: orginally for dired
-| ~C-c C-x p,e~ | Set property, effort of tree              |
 | ~C-c C-x i~   | Capture column view in dynamic block      |
 | ~C-+~         | Increase text size                        |
 | ~C--~         | Decrease text size                        |
@@ -345,6 +363,8 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
 | ~“C-t”~       | Quickly pop-up a terminal                 |
 | ~C-c C-o~     | Open link at point                        |
 
+* COMMENT columnbreak :ignore:
+  \columnbreak
 * Org Speed Keys
   {{{no-vertical-padding(1)}}}
   
