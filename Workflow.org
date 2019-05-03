@@ -187,64 +187,6 @@ Other ideas to assist in completing a task:
 # easier to decide what to do next. You don't need to make a decision
 # of what to do every time you look at your list.
 
-* COMMENT Pomodoro                                        :move_to_init_file:
-  :PROPERTIES:
-  :Effort:   2:14
-  :END:
-  :LOGBOOK:
-  CLOCK: [2019-05-02 Thu 12:07]--[2019-05-02 Thu 12:08] =>  0:01
-  CLOCK: [2019-05-02 Thu 12:00]--[2019-05-02 Thu 12:04] =>  0:04
-  - noice
-  CLOCK: [2019-05-02 Thu 11:56]--[2019-05-02 Thu 12:00] =>  0:04
-  CLOCK: [2019-05-02 Thu 11:55]--[2019-05-02 Thu 11:56] =>  0:01
-  :END:
-    {{{no-vertical-padding(2.5)}}}
-
-+ Effort estimates are for the entire task.
-
-+ Sometimes it's hard to even get started on some tasks.
-
-+ The code below ensures a 25 minute timer is started whenever clocking in happens.
-
-    - The timer is in the lower right of the modeline.
-
-+ When the timer runs out, we get a notification.
-
-+ We may have the momentum to continue on the dreadful task, or clock-out and take a break after
-  documenting what was accomplished.   
-
-#+BEGIN_SRC emacs-lisp
-(setq org-timer-default-timer 1)
-
-(add-hook 'org-clock-in-hook
-  (lambda () (org-timer-set-timer '(16))))
-
-(add-hook 'org-clock-out-hook
-  (lambda ()
-  ;; unless we clocked-out with less than a minute left,
-  ;; show disappointment message.
-  (unless (s-prefix? "0:00" (org-timer-value-string))
-     (message-box "The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave."))
-     (org-timer-stop)
-     ))
-#+END_SRC
-
-#+RESULTS:
-| (lambda nil (unless (s-prefix? 0:00 (org-timer-value-string)) (message-box The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave.)) (org-timer-stop)) | (lambda nil (if (s-prefix? 0:00 (org-timer-value-string)) nil (message-box The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave.))) | org-clock-remove-empty-clock-drawer |
-
-Note that this does not conflict with the total effort estimate for the task.
-
-#+RESULTS:
-| lambda | nil | (org-timer-set-timer (quote (16)))                                    |
-| lambda | nil | (if (not org-timer-current-timer) (org-timer-set-timer (quote (16)))) |
-  
-* COMMENT Add a default ~:Effort: 1:00~ to captured tasks 7automatically :move_to_init_file:
-
-* COMMENT Add a default “Done_Condition: ???” to captured tasks :move_to_init_file:
-
-    At the top, for the project, add a single sentence description of a successful outcome,
-  defining ‘done’ and clarifying the desired outcome.
-  
 * end multicols                                                      :ignore:
 #+latex: \end{multicols}
 * COMMENT footer

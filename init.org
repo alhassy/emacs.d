@@ -1925,6 +1925,40 @@ Let's install some helpful views for our agenda.
 
 
 # Org-protocol is a great way to create capture notes in org-mode from other applications. 
+** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] --Dealing with dreadful tasks
+
+Effort estimates are for an entire task.
+Yet, sometimes it's hard to even get started on some tasks.
+
++ The code below ensures a 25 minute timer is started whenever clocking in happens.
+
+    - The timer is in the lower right of the modeline.
+
++ When the timer runs out, we get a notification.
+
++ We may have the momentum to continue on the dreadful task, or clock-out and take a break after
+  documenting what was accomplished.   
+
+#+BEGIN_SRC emacs-lisp
+;; Tasks get a 25 minute count down timer 
+(setq org-timer-default-timer 25)
+
+;; Use the timer we set when clocking in happens.
+(add-hook 'org-clock-in-hook
+  (lambda () (org-timer-set-timer '(16))))
+
+;; unless we clocked-out with less than a minute left,
+;; show disappointment message.
+(add-hook 'org-clock-out-hook
+  (lambda ()
+  (unless (s-prefix? "0:00" (org-timer-value-string))
+     (message-box "The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave."))
+     (org-timer-stop)
+     ))
+#+END_SRC
+
+Note that this does not conflict with the total effort estimate for the task.
+  
 ** Journaling
 
 Thus far I've made it easy to quickly capture ideas and tasks,
