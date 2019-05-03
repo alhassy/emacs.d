@@ -3171,7 +3171,7 @@ Alternatively, ignore the pop-up menu and write any block or language name.
      (type (yas-choose-value block)))
      (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
  $0
-,#+END_${1:$(car (split-string yas-text))}
+,#+end_${1:$(car (split-string yas-text))}
 #+END_SRC
 In this case, ~yas-text~ is equivalent to (~yas-field-value 1)~;
 it generally refers to the value of the field being mirrored with ~${n: ⋯yas-text⋯}~.
@@ -3318,7 +3318,7 @@ Exercise to the interested (source code) reader
 )
 #+end_src
 
-*** Agda Templates
+*** Equational Templates
 #+begin_src org :tangle "~/.emacs.d/yankpad.org"
 ,** fun: Function declaration with type signature 
 
@@ -3329,14 +3329,14 @@ $1 ${3:args} = ?$0
 
 begin
   ${1:left-hand-side}
-≡⟨ $0 ⟩
+≡⟨ ${3:reason-for-the-equality} ⟩
   ${2:right-hand-side}
-∎
+$0∎
 
 ,** eqn_step: Insert a step in a ≡-Reasoning block in Agda
-
-≡⟨ ${1:hint} ⟩
-  $0
+≡⟨ ${2:reason-for-the-equality} ⟩
+  ${1:new-expression}
+$0
 #+end_src
 
 *** Misc Templates

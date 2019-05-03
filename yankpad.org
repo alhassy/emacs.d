@@ -12,7 +12,7 @@
      (type (yas-choose-value block)))
      (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
  $0
-#+END_${1:$(car (split-string yas-text))}
+#+end_${1:$(car (split-string yas-text))}
 
 ** s_el: emacs-lisp
 #+begin_src emacs-lisp
@@ -73,15 +73,14 @@ $1 ${3:args} = ?$0
 
 begin
   ${1:left-hand-side}
-≡⟨ $0 ⟩
+≡⟨ ${3:reason-for-the-equality} ⟩
   ${2:right-hand-side}
-∎
+$0∎
 
 ** eqn_step: Insert a step in a ≡-Reasoning block in Agda
-
-≡⟨ ${1:hint} ⟩
-  $0
-
+≡⟨ ${2:reason-for-the-equality} ⟩
+  ${1:next-expression}
+$0
 ** remark: top-level literate comment
 
 {{{remark(${1:thoughts})}}} $0
