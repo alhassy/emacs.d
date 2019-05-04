@@ -173,7 +173,7 @@ me each time for the safety of such local variables.
 (load custom-file)
 #+end_src
 
-** Elementary Version Control
+** COMMENT Elementary Version Control
 :Properties:
 :TODO: Make some of these eshell commands that are executed?
        Usage would be to simply C-x C-e the fragment to have
@@ -235,7 +235,7 @@ Below I'll equip us with an Emacs ‘porcelain’ interface to git
 --it makes working with version control tremendously convenient.
 Moreover, I add a little pop-up so that I don't forget to commit often!
 
-** What's in, or at the top of, my ~~/.emacs~
+** COMMENT What's in, or at the top of, my ~~/.emacs~
 
 We evaluate every piece of emacs-lisp code available here when
 Emacs starts up by placing the following at the top of our ~.emacs~ file:
@@ -1032,8 +1032,9 @@ Emacs-wide variables ─to be used in other locations besides email.
 #+end_src
 
 By default, in Emacs, we may send mail: Write it in Emacs with ~C-x m~,
-then press ~C-c C-s~ to have it sent via your OS's default mailing system
---mine appears to be Gmail via the browser.
+then press ~C-c C-c~ to have it sent via your OS's default mailing system
+--mine appears to be Gmail via the browser. Or cancel sending mail with
+~C-c C-k~ --the same commands for capturing, discussed below (•̀ᴗ•́)و
 
 To send and read email in Emacs we use
 [[https://en.wikipedia.org/wiki/Gnus][GNUS]] --which, like many GNU itself, it a recursive acronym:
@@ -1041,7 +1042,7 @@ GNUS Network User Service.
 
   1. Execute, rather place in your init:
      #+begin_src emacs-lisp
-     (setq send-mail-function 'smtpmail-send-it)
+     (setq message-send-mail-function 'smtpmail-send-it)
      #+end_src
 
      Revert to the default OS mailing method by setting this variable to
@@ -1088,7 +1089,7 @@ I don't know what's your Gnus setup. To be honest, your question lacks the essen
 
   5. In Emacs, ~M-x gnus~ to see what's there.
      
-     Or compose mail with ~C-x m~ then send it with ~C-c C-s~.
+     Or compose mail with ~C-x m~ then send it with ~C-c C-c~.
      - Press ~C-h m~ to learn more about message mode for mail composition;
        or read [[https://www.gnus.org/manual/message.pdf][the Message Manual]].
 
@@ -1571,8 +1572,6 @@ https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-n
 https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-version-using-package-repos-git-clone-in-ubuntu
 :End:
 
-# [[http://notesyoujustmightwanttosave.blogspot.com/][Here is useful Org-Mode Table Editing Cheatsheet.]]
-
 Let's obtain Org-mode along with the extras that allow us to ignore
 heading names, but still utilise their contents --e.g., such as a heading
 named ‘preamble’ that contains org-mode setup for a file.
@@ -1584,14 +1583,21 @@ named ‘preamble’ that contains org-mode setup for a file.
   (ox-extras-activate '(ignore-headlines)))
 #+end_src
 
+This lets us use the ~:ignore:~ tag on headlines you'd like to have ignored, 
+while not ignoring their content --see [[https://emacs.stackexchange.com/a/17677/10352][here]].
++ Use the ~:noexport:~ tag to omit a headline /and/ its contents.
+
 Now, let's replace the content marker, “⋯”, with a nice
 unicode arrow.
 #+begin_src emacs-lisp
 (setq org-ellipsis " ⤵")
-
-;; Also, fold all source blocks on startup.
+#+end_src
+Also, fold all source blocks on startup.
+#+begin_src emacs-lisp
 (setq org-hide-block-startup t)
 #+end_src
+
+I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet.]]
 
 ** High Speed Literate Programming
 
@@ -2465,14 +2471,6 @@ Some initial languages we want org-babel to support:
 More languages can be added using ~add-to-list~.
 
 ** COMMENT ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
-Use the ~:ignore:~ tag on headlines you'd like to have ignored, 
-while not ignoring their content --see [[https://emacs.stackexchange.com/a/17677/10352][here]].
-#+BEGIN_SRC emacs-lisp
-(load "~/dotfiles/.emacs.d/ox-extra.el")
-(ox-extras-activate '(ignore-headlines))
-#+END_SRC
-
-Use the ~:noexport:~ tag to omit a headline /and/ its contents.
 
 ** COMMENT TODO org-mode header generation
 Generate an untitled org-mode skeleton file ~C-x t~ --similar to ~C-x C-f~ for finding files.
@@ -3646,18 +3644,6 @@ such a tedious decision.
   '(lambda () (interactive) (kill-buffer (current-buffer))))
 #+end_src
 * COMMENT Stuff I don't really use, but may want to look at later
-** Other fun things
-
-+ ~(nyan-mode)~ Use a cat on a rainbow to indicate the percentage of the buffer position.
-    [ Disabled ] 
-
-+ Googling words at point: ~M-x google-this-word~
-#+BEGIN_SRC emacs-lisp :tangle no
-(require 'google-this)
-#+END_SRC
-
-+ *ToDo* Manage, & automate, email from within Emacs using [[https://notmuchmail.org/][Notmuch -- Just an email system]].
-
 ** hooks and things for literate agda with org-agda
 #+BEGIN_SRC emacs-lisp  :tangle no
 ;; not needed
@@ -3776,40 +3762,7 @@ The above mechanism suffices, the following needn't be followed with ... unless 
     (delete-other-windows)))
 #+end_src
 
-** COMMENT Folding mode                                    :rarely_use_this:
-
-#+BEGIN_SRC emacs-lisp  :tangle no
-; (load "~/.emacs.d/folding-mode.el")
-; (folding-mode-add-find-file-hook)
-#+END_SRC
-*** COMMENT folding mode local variables
-
-I occasionally use a folding mode, due to work, so I append the following
-to the files that utilise it.
-
- Local Variables:
- eval: (folding-mode t)
- folded-file: t
- eval: (fold-set-marks ";;{{{ " ";;}}}")
- eval: (fold-whole-buffer)
- fold-internal-margins: 0
- end:
-
-** COMMENT Programming Language Support                               :TODO:
-
-
-instead of mmm-mode, we could use polymode alsong with org;
-https://www.reddit.com/r/emacs/comments/50p34n/polymode_is_awesome/
-
-M-x package-install RET polymode
-(require 'poly-org)
-(poly-org-mode t)
-(add-hook 'org-mode-hook 'poly-org-mode)
-
-now a source block automatically turns on the minor mode it needs!
-
-+ other multiple modes: https://www.emacswiki.org/emacs/MultipleModes
-+  https://wiki.haskell.org/Literate_programming#Multi-mode_support_in_Emacs
+** Programming Language Support                               :TODO:
 
 **** Haskell :tangle no
 #+BEGIN_SRC emacs-lisp
@@ -3850,7 +3803,7 @@ Sometimes I use Coq,
 ;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
 #+end_src
 
-** COMMENT Column Marker
+** Column Marker
 
 (  Maybe a hook would be better? Much better...? )
 
@@ -3868,7 +3821,7 @@ In this case, exporting to html produces curious symbols
 thereby prompting ~my-org-html-export-to-html~ below to
 take care of this.
 
-** COMMENT My global visual line mode                       :no_longer_used:
+** My global visual line mode                       :no_longer_used:
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (define-globalized-minor-mode my-visual-line-global-mode visual-line-mode
@@ -4006,9 +3959,6 @@ C-c C-c: Evaluate src block.
 (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
 (org-babel-load-file "~/.emacs.d/init.org")
-(org-babel-load-file "~/dotfiles/.emacs.d/init.org")
-
-(shell-command "rm ~/.emacs.elc")
 
 Read:  https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#haskell-preliminaries
 

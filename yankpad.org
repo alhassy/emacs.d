@@ -79,8 +79,9 @@ $0∎
 
 ** eqn_step: Insert a step in a ≡-Reasoning block in Agda
 ≡⟨ ${2:reason-for-the-equality} ⟩
-  ${1:next-expression}
+  ${1:new-expression}
 $0
+
 ** remark: top-level literate comment
 
 {{{remark(${1:thoughts})}}} $0
