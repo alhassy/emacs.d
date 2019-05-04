@@ -8,12 +8,11 @@
 #+OPTIONS: html-postamble:nil toc:nil d:nil
 #+PROPERTY: header-args :tangle init.el
 
-# (load-file "~/alhassy.github.io/content/AlBasmala.el")
-# (preview-article :browser t)
+# ─AlBasmala keywords─
 # DRAFT: yes
 #+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
 #+IMAGE: ../assets/img/emacs_logo.png
-#+CATEGORIES: Emacs
+#+CATEGORIES: Emacs Lisp
 
 # [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]]
 # INFOJS_OPT: view:info toc:t buttons:t
@@ -27,8 +26,10 @@
 #
 # https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>.svg
 #
-#+BEGIN_export html   
+#+BEGIN_export html :tangle to-github?
 <p align="center"><img src="emacs-logo.png" width=150 height=150/></p>
+#+END_export
+#+BEGIN_export html
 <p align="center">
 	<a href="https://www.gnu.org/software/emacs/">        
         <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a>
@@ -3643,6 +3644,42 @@ such a tedious decision.
 (global-set-key (kbd "C-x k")
   '(lambda () (interactive) (kill-buffer (current-buffer))))
 #+end_src
+** Publishing articles to my personal blog
+
+I try to [[https://alhassy.github.io/][blog]] occasionally, so here's a helpful function to quickly
+publish the current article to my blog.
+#+BEGIN_SRC emacs-lisp
+(define-key global-map "\C-cb" 'my/publish-to-blog)
+
+(cl-defun my/publish-to-blog (&optional (draft nil) (local nil))
+  "
+  Using ‘AlBasmala’ setup to publish current article to my blog.
+  Details of AlBasmala can be found here:
+  https://alhassy.github.io/AlBasmala/
+
+  Locally: ~/alhassy.github.io/content/AlBasmala.org
+  
+  A ‘draft’ will be produced in about ~7 seconds, but does not re-produce
+  a PDF and the article has a draft marker near the top. Otherwise,
+  it will generally take ~30 seconds due to PDF production, which is normal.
+  The default is not a draft and it takes ~20 seconds for the live
+  github.io page to update.
+  
+  The ‘local’ optiona indicates whether the resulting article should be
+  viewed using the local server or the live webpage. Live page is default.
+
+  When ‘draft’ and ‘local’ are both set, the resulting page may momentarily
+  show a page-not-found error, simply refresh.
+  "
+
+  (load-file "~/alhassy.github.io/content/AlBasmala.el")
+  (preview-article :draft draft)
+  (unless draft (publish))
+  (let ((server (if local "http://localhost:4000/" "https://alhassy.github.io/")))
+    (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
+)
+#+END_SRC
+
 * COMMENT Stuff I don't really use, but may want to look at later
 ** hooks and things for literate agda with org-agda
 #+BEGIN_SRC emacs-lisp  :tangle no
@@ -3911,12 +3948,12 @@ Some possibly interesting reads:
 #+end_src
 
 
+* COMMENT footer ─Making ~README.md~ and pushing to blog
 
-* COMMENT Making README.md
+;; Kill process buffer without confirmation.
+(setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-C-c C-c: Evaluate src block.
-
-#+NAME: make-readme
+#+NAME: make-readme-&-to-blog
 #+BEGIN_SRC emacs-lisp :results none
 (with-temp-buffer
     (insert 
@@ -3951,21 +3988,17 @@ C-c C-c: Evaluate src block.
     ;; (org-html-export-to-html)
     ;; (shell-command "mv README.html README.md")
 )
+
+;; publish-to-blog
+;;
+;; Different Emacs logos for blog and github.
+;; (toggle to-github? nil (my/publish-to-blog 'yes 'local))
+(toggle to-github? nil (my/publish-to-blog))
 #+END_SRC
 
-* COMMENT footer
-
-;; Kill process buffer without confirmation.
-(setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
-
-(org-babel-load-file "~/.emacs.d/init.org")
-
-Read:  https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md#haskell-preliminaries
-
 # Local Variables:
-# eval: (when nil (load-file "~/alhassy.github.io/content/AlBasmala.el"))
-# eval: (when nil (remove (concat "../content/" NAMEorg) commitables))
-# eval: (progn (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
+# eval: (setq to-github? t)
+# eval: (progn (org-babel-goto-named-src-block "make-readme-&-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1))
 # compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
 # End:
 

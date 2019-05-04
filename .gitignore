@@ -17,3 +17,9 @@ transient/
 /org-clock-save.el
 /recentf
 _minted-*
+/CheatSheet.bbl
+/CheatSheet.el
+/CheatSheet.tex
+/Workflow.bbl
+/Workflow.tex
+/custom.el
