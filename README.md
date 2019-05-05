@@ -100,7 +100,7 @@ As a [literate program](https://www.offerzen.com/blog/literate-programming-empow
 through my ever growing configuration files, ease of usability and reference
 for peers, and, most importantly, better maintainability for myself!
 
-Dear reader, when encountering a foregin command `X` I encourage you to execute `(describe-symbol 'X)`, or press `C-h o` with the cursor on `X`.
+Dear reader, when encountering a foreign command `X` I encourage you to execute `(describe-symbol 'X)`, or press `C-h o` with the cursor on `X`.
 An elementary Elisp Cheat Sheet can be found [here.](https://github.com/alhassy/ElispCheatSheet)
 
 
@@ -116,7 +116,7 @@ control with Magit. [Org](https://orgmode.org/index.html#sec-4) is an organisati
 formats &#x2013;html, latex, pdf, etc&#x2013; from a single source, keeping track of [schedules](https://orgmode.org/worg/org-tutorials/index.html#orgff7b885) & task management, blogging, habit tracking, personal information management tool, and [much more](http://orgmode.org/worg/org-contrib/).
 Moreover, its syntax is so [natural](https://karl-voit.at/2017/09/23/orgmode-as-markup-only/) that most people use it without even knowing!
 For me, Org allows me to do literate programming: I can program and document at the same time,
-with no need to seperate the two tasks and with the ability to generate multiple formats and files from a single file.
+with no need to separate the two tasks and with the ability to generate multiple formats and files from a single file.
 
 > If you are a professional writer…Emacs outshines all other editing software 
 > in approximately the same way that the noonday sun does the stars. 
@@ -178,7 +178,7 @@ is at its core an Emacs Lisp program that yields the editor of my dreams
 &#x2013;it encourages me to grow and to be creative, and I hope the same for all who use it;
 moreover, it reflects my personality such as what I value and what I neglect in my workflow.
 
-Finally, as will be shown below, you can literrally use [Emacs anywhere](https://github.com/zachcurry/emacs-anywhere/#usage)
+Finally, as will be shown below, you can literally use [Emacs anywhere](https://github.com/zachcurry/emacs-anywhere/#usage)
 for textually input in your operating system &#x2013;no copy-paste required.
 
 
@@ -241,7 +241,7 @@ Background:
 Recently I switched to mac &#x2013;first time trying the OS.
 I had to do a few `package-install`'s and it was annoying.
 I'm looking for the best way to package my Emacs installation 
-&#x2013;inlcuding my installed pacakages and configuration&#x2013;
+&#x2013;including my installed packages and configuration&#x2013;
 so that I can quickly install it anywhere, say if I go to another machine.
 It seems `use-package` allows me to configure and auto install packages. 
 On a new machine, when I clone my `.emacs.d` and start emacs,
@@ -411,7 +411,7 @@ A quick magit tutorial can be found on [jr0cket's blog](http://jr0cket.co.uk/201
     -   **`k`:** Kill, i.e., delete a file locally.
     -   **`K`:** This' `(magit-file-untrack)` which does `git rm --cached`.
     -   **`i`:** Add a file to the project `.gitignore` file. Nice stuff =)
-    -   **`u`:** Unstage a specfif staged change highlighed by cursor.
+    -   **`u`:** Unstage a specific staged change highlighted by cursor.
         `C-u s` stages everything &#x2013;tracked or not.
     -   **`c`:** Commit a change.
         -   A new buffer for the commit message appears, you write it then
@@ -433,18 +433,18 @@ A quick magit tutorial can be found on [jr0cket's blog](http://jr0cket.co.uk/201
     -   **`x`:** Undo last commit. Tantamount to `git reset HEAD~` when cursor is on most recent
         commit; otherwise resets to whatever commit is under the cursor.
     -   **`l`:** Show the log, another `l` for current branch; other options will be displayed.
-        -   Here `space` shows details in another buffer while cursour remains in current
+        -   Here `space` shows details in another buffer while cursor remains in current
             buffer and, moreover, continuing to press `space` scrolls through the other buffer!
             Neato.
     -   **`P`:** Push.
     -   **`F`:** Pull.
     -   **`:`:** Execute a raw git command; e.g., enter `whatchanged`.
     
-    The status buffer may be refereshed using `g`, and all magit buffer by `G`.
+    The status buffer may be refreshed using `g`, and all magit buffer by `G`.
     
     Press `tab` to see collapsed items, such as what text has been changed.
 
-Notice that every time you press one of these commands, a ‘pop-up’ of realted git options
+Notice that every time you press one of these commands, a ‘pop-up’ of related git options
 appears! Thus not only is there no need to memorize many of them, but this approach makes
 discovering other commands easier.
 
@@ -555,7 +555,7 @@ Note that Emacs' `ispell` is the interface to such a command line spelling utili
     
     (diminish 'flyspell-mode) ;; Don't show it in the modeline.
 
-Ecnabling fly-spell for text-mode enables it for org and latex modes since they
+Enabling fly-spell for text-mode enables it for org and latex modes since they
 derive from text-mode.
 
 Let us select a correct spelling merely by clicking on a word.
@@ -891,7 +891,7 @@ GNUS Network User Service.
 
 In gnus, by default items you've looked at disappear &#x2013;i.e., are archived.
 They can still be viewed in, say, the online browser if you like.
-In the `Group` view, `R` resets gnus, possibly retriving mail or alterations
+In the `Group` view, `R` resets gnus, possibly retrieving mail or alterations
 from other mail clients. `q` exits gnus in `Group` mode, `q` exits the particular
 view to go back to summary mode. Only after pressing `q` from within a group
 do changes take effect on articles &#x2013;such as moves, reads, deletes, etc.
@@ -2465,7 +2465,7 @@ Note that besides the arrow keys, we can also use `C-` or `M-` with `n, p` to
 navigate the options. Note that [by default](https://github.com/company-mode/company-mode/issues/360) company mode does not support completion for
 phrases containing hyphens &#x2013;this can be altered, if desired.
 
-Besides boring word completition, let's add support for [emojis](https://github.com/dunn/company-emoji).
+Besides boring word completion, let's add support for [emojis](https://github.com/dunn/company-emoji).
 
     (use-package company-emoji)
     (add-to-list 'company-backends 'company-emoji)
@@ -2561,7 +2561,7 @@ templates be globally accessible.
 Here's an example of a common template I perform by hand &#x2013;no more!
 I have the expected habit of copying a URL from someplace then forming
 a link to it by writing `[[URL] [description]]`, since the URL & syntax are already
-known, let's expand those and place the cursour at the only unknown &#x2013;the description.
+known, let's expand those and place the cursor at the only unknown &#x2013;the description.
 
     ** my-org-insert-link: cleverly insert a link copied to clipboard
      [[${1:`(clipboard-yank)`}][$2]] $0
@@ -2569,7 +2569,7 @@ known, let's expand those and place the cursour at the only unknown &#x2013;the 
 What's going on here?
 
 1.  This template is expanded with the keyword `my-org-insert-link`, then “tab”.
-2.  The cursour lands at position `$1`, which has default text being the result
+2.  The cursor lands at position `$1`, which has default text being the result
     of evaluating `(clipboard-yank)`. 
     
     We may evaluate Lisp code anywhere by enclosing it in backticks.
@@ -2577,7 +2577,7 @@ What's going on here?
 3.  If we're satisfied with the current field, we simply tab to the next field.
     Otherwise, we simply write text &#x2013;which overwrites the default text.
 
-4.  After enough tabbing we complete the template and the cursour lands
+4.  After enough tabbing we complete the template and the cursor lands
     at position `$0`.
 
 ⟪ Having default or mirrored text for `$2` would not allow me to see the URL
