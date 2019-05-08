@@ -122,19 +122,25 @@ and effort to make meaningful documentation --even when the project is private a
 #+end_quote
 # Comparing Emacs to an editor is like comparing GNU/Linux to a word processor. -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
 
-Consider reading ⋯ 
-+ [[https://www.fugue.co/blog/2015-11-11-guide-to-emacs.html][A CEO's Guide to Emacs]] --A non-programmer introduction to Emacs (•̀ᴗ•́)و
+# Consider reading ⋯
+Some possibly interesting reads:
++ [[https://sachachua.com/blog/wp-content/uploads/2013/05/How-to-Learn-Emacs-v2-Large.png][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
++ [[https://tuhdo.github.io/emacs-tutor.html][Emacs Mini-Manual, Part I of III]]
+  # + The [[http://tuhdo.github.io/emacs-tutor.html#orgheadline63][Emacs Mini Manual]], or
++ [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][Org and R Programming]] ---a tutorial on literate programming, e.g., evaluating code within ~src~ bloc.
++ Reference cards for [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][GNU Emacs]], [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][Org-mode]], and [[https://github.com/alhassy/ElispCheatSheet/blob/master/CheatSheet.pdf][Elisp]].
 + [[https://www.reddit.com/r/emacs/comments/6fytr5/when_did_you_start_using_emacs/][“When did you start using Emacs” discussion on Reddit]]
-+ The [[http://tuhdo.github.io/emacs-tutor.html#orgheadline63][Emacs Mini Manual]], or
 + [[https://david.rothlis.net/emacs/howtolearn.html][“How to Learn Emacs”]]
-+ [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
 + [[http://emacsrocks.com/][Video Series on Why Emacs Rocks]] 
-
++ [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
++ [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
++ [[https://github.com/caisah/emacs.dz][A list of people's nice emacs config files]]
+#  + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]  
+  
 Remember: Emacs is a flexible platform for developing end-user applications; e.g., this configuration file
 is at its core an Emacs Lisp program that yields the editor of my dreams 
 --it encourages me to grow and to be creative, and I hope the same for all who use it;
 moreover, it reflects my personality such as what I value and what I neglect in my workflow.
-
 
 Finally, as will be shown below, you can literrally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
 for textually input in your operating system --no copy-paste required.
@@ -2111,7 +2117,7 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 ;; Tell emacs where it is.
 ;; E.g., (async-shell-command "find / -name plantuml.jar")
 (setq org-plantuml-jar-path
-      (expand-file-name "/usr/local/./Cellar/plantuml/1.2019.3/libexec/plantuml.jar"))
+      (expand-file-name "/usr/local/Cellar/plantuml/1.2019.5/libexec/plantuml.jar"))
 
 ;; Enable C-c C-c to generate diagrams from plantuml src blocks.
 (add-to-list 'org-babel-load-languages '(plantuml . t) )
@@ -3915,17 +3921,6 @@ Finally, we can observe which features are active in our current Emacs with,
 (message "Features: %s" features)
 #+end_src
 
-Some possibly interesting reads:
-  + [[https://sachachua.com/blog/wp-content/uploads/2013/05/How-to-Learn-Emacs-v2-Large.png][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
-  + [[https://tuhdo.github.io/emacs-tutor.html][Emacs Mini-Manual, Part I of III]] 
-  + [[https://github.com/caisah/emacs.dz][A list of people's nice emacs config files]]
-  + [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
-  + [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][Org and R Programming]] ;;  a tutorial on literate programming, e.g., evaluating code within ~src~ bloc.
-  + [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][The GNU Emacs Reference Card]]
-  + [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][The Org-mode Reference Card]]
-  + [[https://github.com/alhassy/ElispCheatSheet/blob/master/CheatSheet.pdf][An Elisp Reference Card]]
-#  + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]  
-
 # List of installed packages: (mapcar 'car package-alist)
 * Undo tree :noexport:
 
@@ -3961,12 +3956,13 @@ Some possibly interesting reads:
      #+HTML: <h1> A Life Configuring Emacs </h1>
 
      <p align=\"center\"><img src=\"emacs-logo.png\" width=150 height=150/></p>
+
      <p align=\"center\">
      	<a href=\"https://www.gnu.org/software/emacs/\">        
              <img src=\"https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic\"/></a>
      	<a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic\"/></a>
      </p>
-     
+               
      #+HTML: <h3> My Literate Setup </h3>
      #+OPTIONS: toc:nil d:nil
      # Toc is displayed below at a strategic position.
