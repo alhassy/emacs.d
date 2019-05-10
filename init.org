@@ -6,19 +6,13 @@
 #+DESCRIPTION: My Emacs Initialisation File, Written in Org-mode.
 #+STARTUP: indent lognoteclock-out
 #+OPTIONS: html-postamble:nil toc:nil d:nil
-#+PROPERTY: header-args :tangle init.el
+#+PROPERTY: header-args :tangle init.el :comments both
 
 # ─AlBasmala keywords─
 # DRAFT: yes
 #+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
-
-# [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]]
-# INFOJS_OPT: view:info toc:t buttons:t
-#
-# Looks nice for standalone pages; doesn't incorporate
-# nicely with github README.md.
 
 * Abstract                                                   :ignore:
 
@@ -389,39 +383,6 @@ It does so by using the ~diminish~ package, so let's install that.
 #+end_src
 
 Here are other packages that I want to be installed onto my machine.
-#+BEGIN_SRC emacs-lisp
-;; (package-refresh-contents)     ;; Always stay up to date.
-
-;; Nice looking theme ^_^
-
-;; this gives me an error for some reason
-;; (use-package spacemacs-theme)
-
-;; “C-x” t to toggle between light and dark themes.
-
-(defun my/toggle-theme () "Toggle between dark and light themes."
-  (interactive)
-  ;; Load dark if light is top-most enabled theme, else load light.
-  (load-theme 
-  (if (equal (car custom-enabled-themes) 'spacemacs-light) 
-      'spacemacs-dark
-      'spacemacs-light
-  ) t )
-  
-  ;; The dark theme's modeline separator is ugly.
-  ;; Keep reading below regarding “powerline”.
-  ;; (setq powerline-default-separator 'arrow)
-  ;; (spaceline-spacemacs-theme)
-)
-
-(global-set-key "\C-x\ t" 'my/toggle-theme)
-
-;; Initially begin with the light theme.
-(load-theme 'spacemacs-light t)
-#+END_SRC
-
-The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
-A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 
 #+BEGIN_SRC emacs-lisp
 ;; Efficient version control.
@@ -1195,6 +1156,54 @@ Note: Using spacemacs theme above.
 ;; Keep self motivated!
 (setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 #+end_src
+** Theme
+#+BEGIN_SRC emacs-lisp
+;; Nice looking themes ^_^
+(use-package solarized-theme)
+(use-package doom-themes)
+;; (use-package spacemacs-theme)
+;; this gives me an error for some reason
+
+(defun my/disable-all-themes ()
+  (dolist (th custom-enabled-themes)
+          (disable-theme th))
+)
+
+(defun my/load-dark-theme ()
+  ;;   (load-theme 'spacemacs-dark)   ;; orginally
+  (my/disable-all-themes)
+  (load-theme 'doom-vibrant)
+)
+
+(defun my/load-light-theme ()
+  ;;   (load-theme 'spacemacs-light)   ;; orginally
+  ;; Recently I'm liking this ordered mixture. 
+  (load-theme 'solarized-light) (load-theme 'doom-solarized-light)
+)
+
+;; “C-x t” to toggle between light and dark themes.
+(defun my/toggle-theme () "Toggle between dark and light themes."
+  (interactive)
+  ;; Load dark if light is top-most enabled theme, else load light.
+  (if (equal (car custom-enabled-themes) 'doom-vibrant) 
+      (my/load-light-theme)
+      (my/load-dark-theme)
+  )
+  
+  ;; The dark theme's modeline separator is ugly.
+  ;; Keep reading below regarding “powerline”.
+  ;; (setq powerline-default-separator 'arrow)
+  ;; (spaceline-spacemacs-theme)
+)
+
+(global-set-key "\C-x\ t" 'my/toggle-theme)
+
+;; Initially begin with the light theme.
+(load-theme 'spacemacs-light t)
+#+END_SRC
+
+The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
+A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 
 ** Startup message: Emacs & Org versions
 #+begin_src emacs-lisp
@@ -3942,11 +3951,16 @@ Finally, we can observe which features are active in our current Emacs with,
 (setq undo-tree-visualizer-diff t)
 #+end_src
 
-
 * COMMENT footer ─Making ~README.md~ and pushing to blog
 
 ;; Kill process buffer without confirmation.
 (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
+
+# [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]]
+# INFOJS_OPT: view:info toc:t buttons:t
+#
+# Looks nice for standalone pages; doesn't incorporate
+# nicely with github README.md.
 
 #+NAME: make-readme-&-to-blog
 #+BEGIN_SRC emacs-lisp :results none
