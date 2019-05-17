@@ -2248,6 +2248,21 @@ This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Be
 --while quickly searching through the PlantUML [[http://plantuml.com/guide][manual]]:
 The above is known as an “activity diagram” and it's covered in §4.
 
+** Show off-screen Heading at the top of the window
+
+In case we forgot which heading we're under, let's keep
+the current heading stuck at the top of the window.
+#+BEGIN_SRC emacs-lisp
+ (use-package org-sticky-header
+  :config
+  (setq-default
+   org-sticky-header-full-path 'full
+   ;; Child and parent headings are seperated by a /.
+   org-sticky-header-outline-path-separator " / ")
+  :init (org-sticky-header-mode)
+)
+#+END_SRC
+
 ** Clocking Work Time
 
 Let's keep track of the time we spend working on tasks that we may have captured for ourselves the previous day.
