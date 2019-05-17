@@ -1255,6 +1255,13 @@ Moreover, since I end up using org-mode most of the time, let's make that the de
 (setq initial-major-mode 'org-mode)
 #+END_SRC
 
+One of the first things I normally do when I'm opening a file is to go to my
+home directory. Let's stop being so repetitive by starting at the home directory.
+#+BEGIN_SRC emacs-lisp
+;; Move to the user directory
+(cd "~/")
+#+END_SRC
+
 ** Persistent Scratch Buffer
 
 The ~*scratch*~ buffer is a nice playground for temporary data.
@@ -2828,7 +2835,7 @@ textfiles interpreted within Emacs 😼
 Why backups? Sometimes I may forget to submit a file, or edit, to my
 version control system, and it'd be nice to be able to see a local
 automatic backup. Whenever ‘I need space,’ then I simply empty
-the backup directory, if ever.
+the backup directory, if ever. That the backups are numbered is so sweet ^_^
 
 Like package installations, my backups are not kept in any version control
 system, like git; only locally.
@@ -3485,6 +3492,12 @@ Let's save a few precious seconds,
 #+begin_src emacs-lisp
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
+
+;; Enable ‘possibly confusing commands’
+(put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
+(put 'narrow-to-region 'disabled nil)
+(put 'narrow-to-page 'disabled nil)
 #+end_src
 
 ** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
