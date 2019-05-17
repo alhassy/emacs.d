@@ -486,9 +486,12 @@ Below are the git repos I'd like to clone.
 ;; Do not ask about this variable when cloning.
 (setq magit-clone-set-remote.pushDefault t)
 
-(defun maybe-clone (remote local)
+(cl-defun maybe-clone (remote &optional (local (concat "~/" (file-name-base remote))))
   "Clone a ‘remote’ repository if the ‘local’ directory does not exist.
     Yields ‘nil’ when no cloning transpires, otherwise yields “cloned-repo”.
+
+    ‘local’ is optional and defaults to the base name; e.g.,
+    if ‘remote’is ‘https://github.com/X/Y’ then ‘local’ becomes ‘~/Y’.
   "
   (unless (file-directory-p local)
      (magit-clone remote local)
@@ -500,14 +503,21 @@ Below are the git repos I'd like to clone.
 (setq magit-clone-set-remote.pushDefault 't)
 
 ;; Public repos
-(maybe-clone "https://github.com/alhassy/emacs.d.git" "~/.emacs.d/")
-(maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/alhassy.github.io")
-(maybe-clone "https://github.com/alhassy/CheatSheet" "~/CheatSheet")
-(maybe-clone "https://github.com/alhassy/ElispCheatSheet" "~/ElispCheatSheet")
-(maybe-clone "https://github.com/alhassy/MyUnicodeSymbols" "~/MyUnicodeSymbols")
-(maybe-clone "https://github.com/alhassy/interactive-way-to-c" "~/interactive-way-to-c")
+(maybe-clone "https://github.com/alhassy/emacs.d")
+(maybe-clone "https://github.com/alhassy/alhassy.github.io")
+(maybe-clone "https://github.com/alhassy/ElispCheatSheet")
+(maybe-clone "https://github.com/alhassy/org-agda-mode")
+(maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
+
+#+end_src
+:Other_repos_I_use:
+#+begin_src emacs-lisp
+(maybe-clone "https://github.com/alhassy/CheatSheet")
+(maybe-clone "https://github.com/alhassy/MyUnicodeSymbols")
+(maybe-clone "https://github.com/alhassy/interactive-way-to-c")
 (maybe-clone "https://github.com/alhassy/next-700-module-systems-proposal.git" "~/thesis-proposal")
-(maybe-clone "https://github.com/JacquesCarette/MathScheme" "~/MathScheme")
+(maybe-clone "https://github.com/JacquesCarette/MathScheme")
+(maybe-clone "https://github.com/alhassy/gentle-intro-to-reflection" "~/reflection/")
 
 ;; Private repos
 ;;
@@ -529,6 +539,7 @@ Below are the git repos I'd like to clone.
 ;
 ; (magit-list-repositories)
 #+end_src
+:End:
 
 Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/check-uncommitted/][uncommited changes]]
 --we might have had to step away from the computer and forgotten to commit.
