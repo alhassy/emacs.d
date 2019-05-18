@@ -573,7 +573,7 @@ Let's try this out:
 
 In doubt, execute ~C-h e~ to jump to the ~*Messages*~ buffer.
 
-** Fix spelling as you type --and a thesaurus too!
+** Fix spelling as you type --thesaurus & dictionary too!
 I would like to check spelling by default.
  + ~C-;~ :: Cycle through corrections for word at point.
  + ~M-$~ :: Check and correct spelling of the word at point
@@ -646,6 +646,13 @@ Finally, save to user dictionary without asking:
 (setq ispell-silently-savep t)
 #+END_SRC
 
+Let's keep track of my personal word set by having it be in my version controlled
+.emacs directory. [[http://aspell.net/man-html/Format-of-the-Personal-and-Replacement-Dictionaries.html][Note]] that the default location is ~~/.[i|a]spell.DICT~ for
+a specified dictionary ~DICT~.
+#+BEGIN_SRC emacs-lisp
+(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
+#+END_SRC
+
 Nowadays, I very rarely write non-literate programs, but if I do
 I'd like to check spelling only in comments/strings. E.g.,
 #+BEGIN_SRC emacs-lisp
@@ -676,6 +683,11 @@ Let's use Wordnet as a dictionary via the [[https://github.com/gromnitsky/wordnu
 ;; Use M-& for async shell commands.
 #+END_SRC
 Use ~M-↑,↓~ to navigate dictionary results, and ~wordnut-search~ for a new search.
+#
+# I'm using Wordnet for the dictionary since I'm also using it for the thesaurus.
+# An alternative is to use the lightweight ~define-word~ library; which I think
+# is not ideal since it provides way less info compared to wn.
+#
 
 :CurrentlyNotWorking:
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -710,6 +722,25 @@ Other typing resources include:
 + [[https://typing.io/][Typing.io]] is a tutor for coders: Lessons are based on open source code, such
   some XMonad written in Haskell or Linux written in  C.
 + [[https://www.gnu.org/software/gtypist/index.html#downloading][GNU Typist]] --which is interactive in the terminal, so not ideal in Emacs--,
+
+To assist in language learning, it may be nice to have an Emacs
+[[https://github.com/atykhonov/google-translate][interface]] to Google translate ---e.g., invoke ~google-translate-at-point~.
+#+BEGIN_SRC emacs-lisp
+(use-package google-translate
+ :config
+   (global-set-key "\C-ct" 'google-translate-at-point)
+)
+#+END_SRC
+
+Select the following then ~C-c t~,
+#+begin_quote
+Hey buddy, what're you up to?
+#+end_quote
+Then /detect language/ then /Arabic/ to obtain:
+#+begin_quote
+مرحباً يا صديقي ، ماذا تفعل؟
+#+end_quote
+Neato 😲
 
 ** Using a Grammar & Style Checker
 
@@ -1635,10 +1666,18 @@ unicode arrow.
 #+begin_src emacs-lisp
 (setq org-ellipsis " ⤵")
 #+end_src
-Also, fold all source blocks on startup.
+Also:
 #+begin_src emacs-lisp
+;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
-#+end_src
+
+;; I use indentation-sensitive programming languages.
+;; Tangling should preserve my indentation.
+(setq org-src-preserve-indentation t)
+
+;; Qive quote and verse blocks a nice look.
+(setq org-fontify-quote-and-verse-blocks t)
+#+END_SRC
 
 I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet.]]
 
