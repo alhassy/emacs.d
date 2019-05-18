@@ -1,4 +1,4 @@
-:ImportantShortcuts: 
+:ImportantShortcuts:
 f7 preview changes
 f8 commit each change
 f9 push changes
@@ -26,7 +26,7 @@ f9 push changes
 #+OPTIONS: d:nil
 
 # MACRO: no-vertical-padding  @@latex:{\color{white}.}\vspace{-$1em}@@
-#+MACRO: no-vertical-padding  
+#+MACRO: no-vertical-padding
 
 #+INCLUDE: CheatSheet/CheatSheetSetup.org
 * begin multicols :ignore:
@@ -71,17 +71,17 @@ In nearly every Emacs application, press
 Use [[https://github.com/zachcurry/emacs-anywhere/issues][Emacs in any text area on my OS]] with ~Cmd Shift e~.
 
 * Getting Help
-  {{{no-vertical-padding(2.5)}}}  
+  {{{no-vertical-padding(2.5)}}}
   | ~C-h o~     | Describe symbol at point; best one.        |
   | ~C-h k,f,m~ | Describe key press, function name, or mode |
   | ~C-h a~     | Apropos: Show commands matching a string   |
   | ~C-h e~     | Open ~*Messages*~ buffer in another window   |
   | ~C-h i~     | Enter ~Info~ documentation reader            |
-  
+
   :More_Info:
   In ~Info~:
-  
-  | ~h~        | Run ~Info~'s tutorial           |  
+
+  | ~h~        | Run ~Info~'s tutorial           |
   | ~i~        | Lookup item using index       |
   | ~m~        | Select menu item by name      |
   | ~g~        | Go to any node, by name       |
@@ -90,10 +90,10 @@ Use [[https://github.com/zachcurry/emacs-anywhere/issues][Emacs in any text area
   | ~b~        | Beginning of node             |
   | ~d~        | Return to main directory node |
 :End:
-  
+
 * Windows
   {{{no-vertical-padding(2)}}}
-  
+
 | ~C-x 0,1~ | Delete this, other windows      |
 | ~C-x 2,3~ | Split window above, to the side |
 | ~C-x o~   | Switch cursour to other window  |
@@ -125,7 +125,7 @@ the region we're working on.
 :End:
 
 # @@latex:\vspace{-1em}@@
-# windowmove package ; # buffer-flip 
+# windowmove package ; # buffer-flip
 | ~“s-<arrow>”~ | Jump to window via arrow key |
 | ~“M-<tab>”~   | Flip to next buffer          |
 | ~“M-S-<tab>”~ | Flip to previous buffer      |
@@ -134,24 +134,24 @@ the region we're working on.
 #  {{{no-vertical-padding(2)}}}
 
   All commands are prefixed by ~C-x x~; main commands:
-  
+
 | ~s~        | Select a space to go to or create it.                          |
 | ~n,→, p,←~ | Next, previous space                                           |
 | ~c~        | Query a perspective to kill.                                   |
 | ~r~        | Rename a perspective.                                          |
 | ~A~        | Add buffer to current perspective & remove it from all others. |
-  
+
 * COMMENT columnbreak :ignore:
   \columnbreak
 * [[https://github.com/apchamberlain/undo-tree.el][Undo tree]]
   {{{no-vertical-padding(1.5)}}}
-  
+
 + ~C-x u~ Visualise undo tree.
   - ~t, d~ toggle timestamps and diff display.
   - ~M-{,}~ Go to previous, next branching point.
-  - ~q~ Exit at currently selected state.            
+  - ~q~ Exit at currently selected state.
 + ~C-x r u~ Save current buffer state.
-+ ~C-x r U~ Restore saved buffer state.    
++ ~C-x r U~ Restore saved buffer state.
 
 Save & restore is useful for experimenting with
 a function definition, for example.
@@ -162,7 +162,7 @@ Undo Tree also has functions which save an undo state to a register and which re
 
 * Killing
   {{{no-vertical-padding(2)}}}
-  
+
   | ~C,M-d~       | forward kill character, word               |
   | ~C,M-del~     | backward kill word prefix                  |
   | ~C-k~ , ~“M-k”~ | forward, backward kill line                |
@@ -175,10 +175,10 @@ Undo Tree also has functions which save an undo state to a register and which re
   |-------------+--------------------------------------------|
   | ~M-y~         | Show kill ring, with “helm”                |
 
-#  By default ~M-k~ is forward kill sentence. 
+#  By default ~M-k~ is forward kill sentence.
 * Marking
   {{{no-vertical-padding(2)}}}
-  
+
   | ~C-SPC~       | Set mark              |
   | ~C-x C-x~     | Exchange point & mark |
   | ~C-x h~       | Mark buffer           |
@@ -206,15 +206,16 @@ By default ~C-t~ is transpose characters; I'm using it quickly open a terminal.
 
 * Dictionary & Thesaurus
    {{{no-vertical-padding(1.5)}}}
-   
-| ~M-$~   | Spellcheck word      |
-| ~“M-#”~ | Synonym for word     |
-| ~“M-!”~ | Define word          |
-| ~“M-^”~ | Grammar check region |
+
+| ~M-$~     | Spellcheck word         |
+| ~“M-#”~   | Synonym for word        |
+| ~“M-!”~   | Define word             |
+| ~“M-^”~   | Grammar check region    |
+| ~“C-c t”~ | Google translate region |
 
 * Textual Navigation
   {{{no-vertical-padding(1)}}}
-  
+
   | ~C-b, f~ | ←, → character       |
   | ~M-b, f~ | ←, → word            |
   |--------+----------------------|
@@ -238,7 +239,7 @@ to top/center/bottom without recentering the window.
 :End:
 # C-l recenters window to top/center/bottom while keeping the point on the same line;
 # M-r moves the point to top/center/bottom without recentering the window.
-  
+
   _Org-mode_: All commands are prefixed by ~C-c~.
 
   | ~n,p~       | next, previous heading     |
@@ -246,13 +247,13 @@ to top/center/bottom without recentering the window.
   | ~C-u~       | backward to higher heading |
   | ~C-j~       | ↑↓ jump to another heading |
   | ~“C-h”~     | Fold current tree          |
-  
+
   Using the “super key” to navigate between org blocks.
   | ~“s-p,n”~ | Previous, next src block  |
   | ~“s-e”~   | Toggled editing src block |
 
 * [[https://www.gnus.org/manual.html][Mail]]
-  
+
   | ~C-x m~    | Compose   |
   | ~C-c C-s~  | Send      |
   | ~M-x gnus~ | Read mail |
@@ -266,23 +267,23 @@ Then,
 | ~r~   | Reply in clean slate.            |
 
 Delete an article by moving it to ‘Trash’.
-  	 
+
 # Learn more by reading [[https://www.gnus.org/manual.html][The Gnus Manual]]; also available within Emacs by ~C-h i m gnus~ (•̀ᴗ•́)و
-  
+
 * [[https://company-mode.github.io/][Completion]]
   {{{no-vertical-padding(2)}}}
-  
+
   | ~M-/~       | Expand previous word dynamically |
   | ~M-<digit>~ | Select one of the 10 suggestions |
 
-# M-/ complete partially typed words; this cycles through possible completions. 
-  
-* Narrowing 
+# M-/ complete partially typed words; this cycles through possible completions.
+
+* Narrowing
   {{{no-vertical-padding(1)}}}
-  
+
 This allows us to “zoom in” or “focus” on a particular region;
 the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
-   
+
 | ~n~ | Narrow to region        |
 | ~w~ | Widen to full view      |
 | ~e~ | Narrow to org element   |
@@ -300,18 +301,18 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
 
  ~C-c C-e~ during a search to make live edits.
  # Apply changes to orginal buffer with C-x C-s.
- 
+
 * Org Visibility
   {{{no-vertical-padding(2)}}}
-  
+
 | ~tab~         | Cycle visibility                |
 | ~S-tab~       | Cycle /global/ visibility         |
 | ~C-c C-x C-v~ | Toggle inline image display     |
 | ~C-c C-x C-l~ | Toggle, preview, LaTeX for tree |
 
-* Structure Editing 
+* Structure Editing
   {{{no-vertical-padding(3)}}}
-  
+
 # | ~C-[S]-Ret~   | new [Todo] heading after current tree        |
 # | ~M-[S]-Ret~   | new [Todo] heading, item at current position |
 # Modifying ~<return>~
@@ -338,7 +339,7 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
 
 * Babel
   {{{no-vertical-padding(2)}}}
-  
+
 | ~C-c C-c~     | Execute code block                 |
 | ~C-c C-v j~   | Insert header argument             |
 | ~C-c C-v I~   | View, possibly global, header info |
@@ -347,10 +348,10 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
 | ~C-c C-v d~   | Demarcate, split up, code block    |
 | ~C-c C-v t~   | Tangle all blocks in buffer        |
 
-* Misc 
+* Misc
 #  {{{no-vertical-padding(1)}}}
-  
-~M-x list-input-methods~ show all input methods  
+
+~M-x list-input-methods~ show all input methods
 
 # C-x d :: orginally for dired
 | ~C-c C-x i~   | Capture column view in dynamic block      |
@@ -367,7 +368,7 @@ the rest of the buffer is ‘hidden’. All commands begin with ~C-x n~.
   \columnbreak
 * Org Speed Keys
   {{{no-vertical-padding(1)}}}
-  
+
 With cursor at the beginning of an org headline:
 
 | ~#~     | Toggle ~COMMENT~-ing        |
@@ -387,25 +388,25 @@ With cursor at the beginning of an org headline:
 
 * Timestamps
   {{{no-vertical-padding(2)}}}
-  
+
   | ~C-c .~       | Prompt for date & insert timestamp   |
   | ~C-c C-d~     | Insert deadline for tree             |
   | ~C-c C-s~     | Schedule a tree                      |
   | ~S-↑,↓,→,←~   | Alter timestamp by a day →←, year ↓↑ |
   | ~C-c C-x C-t~ | Globally toggle date display         |
-  
+
 * COMMENT columnbreak                                                        :ignore:
   \columnbreak
-* Clocking Time 
+* Clocking Time
   {{{no-vertical-padding(2)}}}
-  
+
 | ~C-c C-x C-i,o~ | Start, stop clock on tree       |
 | ~C-c C-x C-r~   | Insert, update, clock report    |
 | ~C-c C-x C-e~   | Insert effort for current clock |
 
 * Agenda
   {{{no-vertical-padding(2.5)}}}
-  
+
   | ~C-c c~   | Capture an idea quickly     |
   | ~C-c a~   | Open agenda to see tasks    |
   | ~C-c j~   | Discuss what's accomplished |
@@ -414,7 +415,7 @@ With cursor at the beginning of an org headline:
   | ~C-c C-a~ | Archive  a task             |
 
 
-  
+
   | ~C-c a a~   | See agenda for the week |
   | ~“C-c a c”~ | See completed tasks     |
   | ~“C-c a u”~ | See unscheduled tasks   |
@@ -429,10 +430,10 @@ With cursor at the beginning of an org headline:
   | ~e, t, a~     | Remotely set effort, state, or archive          |
   | ~I, O, X~     | Start, stop, cancel clock on current item       |
   | ~C-c C-x C-r~ | See clocked times report                        |
-  
+
 * COMMENT Magit
   {{{no-vertical-padding(1)}}}
-  
+
 ~C-x g~ :: See status in another buffer.
 # Press ~?~ to see options, including:
 
@@ -450,8 +451,8 @@ With cursor at the beginning of an org headline:
 :Details:
 
   - ~x~ :: Undo last commit. Tantamount to ~git reset HEAD~~ when cursor is on most recent
-           commit; otherwise resets to whatever commit is under the cursor.
-	   
+	   commit; otherwise resets to whatever commit is under the cursor.
+
   - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
 
 :End:
@@ -459,7 +460,7 @@ With cursor at the beginning of an org headline:
 
 * end multicols                                                      :ignore:
 #+latex: \end{multicols}
-* TODO COMMENT Work Day  
+* TODO COMMENT Work Day
 * COMMENT footer
 
 # Local Variables:
