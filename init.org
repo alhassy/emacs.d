@@ -174,6 +174,21 @@ me each time for the safety of such local variables.
 (load custom-file)
 #+end_src
 
+Rather than manually extracting the Lisp code from this literate document
+each time we alter it, let's instead add a ‘hook’ ─a method  that is invoked
+on a particular event, in this case when we save the file.
+
+#+BEGIN_SRC emacs-lisp
+(defun my/make-init-el ()
+  (org-babel-tangle)
+  (byte-compile-file "~/.emacs.d/init.el")
+  (load-file "~/.emacs.d/init.el")
+  (message "Tangled, compiled, and loaded init.el")
+)
+
+(add-hook 'after-save-hook 'my/make-init-el nil 'local-to-this-file-please)
+#+END_SRC
+
 ** COMMENT Elementary Version Control
 :Properties:
 :TODO: Make some of these eshell commands that are executed?
@@ -4117,5 +4132,5 @@ Finally, we can observe which features are active in our current Emacs with,
 # Local Variables:
 # eval: (setq to-github? t)
 # eval: (progn (org-babel-goto-named-src-block "make-readme-&-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1))
-# compile-command: (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
+# compile-command: (my/make-init-el)
 # End:
