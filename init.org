@@ -180,13 +180,66 @@ on a particular event, in this case when we save the file.
 
 #+BEGIN_SRC emacs-lisp
 (defun my/make-init-el ()
+  ;; Make init.el
   (org-babel-tangle)
   (byte-compile-file "~/.emacs.d/init.el")
   (load-file "~/.emacs.d/init.el")
-  (message "Tangled, compiled, and loaded init.el")
+
+  ;; Make README.md
+  (org-babel-goto-named-src-block "make-readme")
+  (org-babel-execute-src-block)
+
+  (message "Tangled, compiled, and loaded init.el; and made README.md")
 )
 
 (add-hook 'after-save-hook 'my/make-init-el nil 'local-to-this-file-please)
+#+END_SRC
+
+Where the following block has ~#+NAME: make-readme~ before it.
+This source block generates the ~README~ for the associated github repository.
+
+# [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]]
+# INFOJS_OPT: view:info toc:t buttons:t
+#
+# Looks nice for standalone pages; doesn't incorporate
+# nicely with github README.md.
+
+#+NAME: make-readme
+#+BEGIN_SRC emacs-lisp :results none
+(with-temp-buffer
+    (insert
+    "#+EXPORT_FILE_NAME: README.md
+     #+HTML: <h1> A Life Configuring Emacs </h1>
+
+     <p align=\"center\"><img src=\"emacs-logo.png\" width=150 height=150/></p>
+
+     <p align=\"center\">
+        <a href=\"https://www.gnu.org/software/emacs/\">
+             <img src=\"https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic\"/></a>
+        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic\"/></a>
+     </p>
+
+     #+HTML: <h3> My Literate Setup </h3>
+     #+OPTIONS: toc:nil d:nil
+     # Toc is displayed below at a strategic position.
+
+     I enjoy reading others' /literate/ configuration files and incorporating what I learn
+     into my own. The result is a sufficiently well-documented and accessible read that yields
+     a stylish and functional system (•̀ᴗ•́)و
+
+     This ~README.md~ has been automatically generated from my configuration
+     and its contents below could also be read in blog format, with /colour/, or as colourful PDF,
+     [[https://alhassy.github.io/init/][here]]. Enjoy :smile:
+
+      #+TOC: headlines 2
+      #+INCLUDE: init.org
+    ")
+    (org-mode)
+    (org-md-export-to-markdown)
+    ;; Coloured html does not work in Github, afaik.
+    ;; (org-html-export-to-html)
+    ;; (shell-command "mv README.html README.md")
+)
 #+END_SRC
 
 ** COMMENT Elementary Version Control
@@ -4051,49 +4104,7 @@ Finally, we can observe which features are active in our current Emacs with,
 ;; Kill process buffer without confirmation.
 (setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
 
-# [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]]
-# INFOJS_OPT: view:info toc:t buttons:t
-#
-# Looks nice for standalone pages; doesn't incorporate
-# nicely with github README.md.
-
-#+NAME: make-readme-&-to-blog
 #+BEGIN_SRC emacs-lisp :results none
-(with-temp-buffer
-    (insert
-    "#+EXPORT_FILE_NAME: README.md
-     #+HTML: <h1> A Life Configuring Emacs </h1>
-
-     <p align=\"center\"><img src=\"emacs-logo.png\" width=150 height=150/></p>
-
-     <p align=\"center\">
-        <a href=\"https://www.gnu.org/software/emacs/\">
-             <img src=\"https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic\"/></a>
-        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic\"/></a>
-     </p>
-
-     #+HTML: <h3> My Literate Setup </h3>
-     #+OPTIONS: toc:nil d:nil
-     # Toc is displayed below at a strategic position.
-
-     I enjoy reading others' /literate/ configuration files and incorporating what I learn
-     into my own. The result is a sufficiently well-documented and accessible read that yields
-     a stylish and functional system (•̀ᴗ•́)و
-
-     This ~README.md~ has been automatically generated from my configuration
-     and its contents below could also be read in blog format, with /colour/, or as colourful PDF,
-     [[https://alhassy.github.io/init/][here]]. Enjoy :smile:
-
-      #+TOC: headlines 2
-      #+INCLUDE: init.org
-    ")
-    (org-mode)
-    (org-md-export-to-markdown)
-    ;; Coloured html does not work in Github, afaik.
-    ;; (org-html-export-to-html)
-    ;; (shell-command "mv README.html README.md")
-)
-
 ;; No code execution on export
 ;; ⟪ For a particular block, we use “:eval never-export” ⟫
 ;;
@@ -4105,7 +4116,6 @@ Finally, we can observe which features are active in our current Emacs with,
 ;; (toggle to-github? nil (my/publish-to-blog 'yes 'local))
 (toggle to-github? nil (my/publish-to-blog))
 #+END_SRC
-
 
 # Local Variables:
 # eval: (setq to-github? t)
