@@ -6,7 +6,7 @@
 #+DESCRIPTION: My Emacs Initialisation File, Written in Org-mode.
 #+STARTUP: indent lognoteclock-out
 #+OPTIONS: html-postamble:nil toc:nil d:nil
-#+PROPERTY: header-args :tangle init.el :comments both
+#+PROPERTY: header-args :tangle init.el :comments link
 
 # ─AlBasmala keywords─
 # DRAFT: yes
@@ -508,6 +508,7 @@ Below are the git repos I'd like to clone.
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
 (maybe-clone "https://github.com/alhassy/org-agda-mode")
 (maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
+(maybe-clone "https://github.com/alhassy/islam")
 
 #+end_src
 :Other_repos_I_use:
@@ -1286,12 +1287,19 @@ Moreover, since I end up using org-mode most of the time, let's make that the de
 (setq initial-major-mode 'org-mode)
 #+END_SRC
 
+:Why_not_cd_HOME:
+
++ Remark ::
+  Not as useful as I orginally thought &&  magit doesn't recognise the git repo
+  this init file belongs in easily.
+
 One of the first things I normally do when I'm opening a file is to go to my
 home directory. Let's stop being so repetitive by starting at the home directory.
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; Move to the user directory
 (cd "~/")
 #+END_SRC
+:End:
 
 ** Persistent Scratch Buffer
 
@@ -1670,6 +1678,9 @@ Also:
 #+begin_src emacs-lisp
 ;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
+
+;; Avoid accidentally editing folded regions, say by adding text after an Org “⋯”.
+(setq org-catch-invisible-edits 'show)
 
 ;; I use indentation-sensitive programming languages.
 ;; Tangling should preserve my indentation.
@@ -2294,11 +2305,11 @@ the current heading stuck at the top of the window.
 #+BEGIN_SRC emacs-lisp
  (use-package org-sticky-header
   :config
-  (setq-default
+  (setq
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / ")
-  :init (org-sticky-header-mode)
+  :init (org-sticky-header-mode 1)
 )
 #+END_SRC
 
@@ -3380,9 +3391,13 @@ by utilising a [[https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-r
 <<my-org-lang-templates()>>
 ,#+end_src
 #+end_src
-#+begin_src org  :tangle "~/.emacs.d/yankpad.org" :noweb yes
+#+begin_src org  :tangle "~/.emacs.d/yankpad.org" :noweb yes :eval never-export
 <<my-org-lang-templates()>>
 #+end_src
+#
+# The “:eval never-export” means that this block is never tangled on document
+# export, C-c C-e.
+
 
 Now ~s-~, due to company mode, brings up a list of languages
 that I can then simply scroll down through, then “enter” upon to
