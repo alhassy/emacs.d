@@ -2786,7 +2786,6 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
    'success ;; otherwise we obtain a "compiler error".
 )
 #+END_SRC
-
 ** Interpret the Haskell source blocks in a file
 #+BEGIN_SRC emacs-lisp
 (defvar *current-module* "NoModuleNameSpecified"
@@ -2953,6 +2952,48 @@ the backup directory, if ever. That the backups are numbered is so sweet ^_^
 Like package installations, my backups are not kept in any version control
 system, like git; only locally.
 
+** Default Compilation Command
+
+Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
+when ~M-x recompile~ is invoked. One of my habits is to append
+most of my files with the following:
+#+begin_src org :tangle no
+# Local Variables:
+# eval: (message "Load file specific stuffs here")
+# compile-command: (async-shell-command (concat "open " (org-latex-export-to-pdf)))
+# End:
+#+end_src
+
+Since nearly every file I work with is ─or can be coerced into being─ in org mode,
+I usually have a section ~* footer~ that contains something like the above.
+
+Let's remove repeated matter.
+#+begin_src emacs-lisp
+compile -command
+
+;; Silently save before compiling.
+(setq compilation-ask-about-save nil)
+
+;; Silently kill previous compilation process before starting a new one.
+(setq compilation-always-kill t)
+
+;; Scroll as compilation output is procuded in *Compilation* buffer; e.g., pdflatex
+;; Use 'first-error to stop scrolling on the first error encountered.
+(setq compilation-scroll-output t)
+#+end_src
+
+
+#+BEGIN_SRC emacs-lisp
+;; My global compile command
+(setq compile-command
+  (async-shell-command (concat "open " (org-latex-export-to-pdf))))
+
+;; Bind ‘recompile’ to ‘C-c C-m’ ─“m” for “m”ake
+(global-set-key (kbd "C-c C-m") 'recompile)
+
+;; Also a helpful quick f-key.
+(global-set-key (kbd "<f7>") 'recompile)
+#+END_SRC
 ** COMMENT Keep buffers open across sessions :maybe_not_desirable:
 #+begin_src emacs-lisp
 ;; Keep open files open across sessions.
@@ -3617,23 +3658,6 @@ Let's save a few precious seconds,
 (put 'narrow-to-page 'disabled nil)
 #+end_src
 
-** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
-#+BEGIN_SRC emacs-lisp
-(defvar my-keys-minor-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-m") 'recompile)
-    map)
-  "my-keys-minor-mode keymap.")
-
-(define-minor-mode my-keys-minor-mode
-  "A minor mode so that my key settings override annoying major modes."
-  :init-value t
-  :lighter " my-keys")
-
-(my-keys-minor-mode)
-
-(diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
-#+END_SRC
 ** Reload buffer with ~f5~
 I do this so often it's not even funny.
 #+BEGIN_SRC emacs-lisp
@@ -3864,25 +3888,6 @@ publish the current article to my blog.
 (defun my-common-hook () (fci-mode) (orgstruct-mode) )
 (my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
 #+END_SRC
-** tooltip appears by mouse when compilation finishes :havent_used_in_some_time:
-from: https://emacswiki.org/emacs/CompileCommand
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(defun notify-compilation-result(buffer msg)
-  "Notify that the compilation is finished,
-close the *compilation* buffer if the compilation is successful,
-and set the focus back to Emacs frame"
-  (if (string-match "^finished" msg)
-    (progn
-     (delete-windows-on buffer)
-     (tooltip-show "\n Compilation Successful :-) \n "))
-    (tooltip-show "\n Compilation Failed :-( \n "))
-  (setq current-frame (car (car (cdr (current-frame-configuration)))))
-  (select-frame-set-input-focus current-frame)
-  )
-(add-to-list 'compilation-finish-functions
-             'notify-compilation-result)
-#+END_SRC
 ** floating toc material                      :no_longer_using_this:
 
 Add the following to a web-page if you'd like it to have a floating table of contents.
@@ -4102,26 +4107,16 @@ Finally, we can observe which features are active in our current Emacs with,
 (setq undo-tree-visualizer-diff t)
 #+end_src
 
-* COMMENT footer ─Making ~README.md~ and pushing to blog
+* COMMENT ─Pushing to blog─
 
-;; Kill process buffer without confirmation.
-(setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
-
+C-c C-c this snippet to export to blog.
 #+BEGIN_SRC emacs-lisp :results none
 ;; No code execution on export
 ;; ⟪ For a particular block, we use “:eval never-export” ⟫
 ;;
 (setq org-export-use-babel nil)
 
-;; publish-to-blog
-;;
 ;; Different Emacs logos for blog and github.
 ;; (toggle to-github? nil (my/publish-to-blog 'yes 'local))
 (toggle to-github? nil (my/publish-to-blog))
 #+END_SRC
-
-# Local Variables:
-# eval: (setq to-github? t)
-# eval: (progn (org-babel-goto-named-src-block "make-readme-&-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1))
-# compile-command: (my/make-init-el)
-# End:
