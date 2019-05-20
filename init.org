@@ -2994,7 +2994,7 @@ compile -command
 ;; Also a helpful quick f-key.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
-** Enabling CamelCase Aware Editing Operations
+** COMMENT Enabling CamelCase Aware Editing Operations :does_not_work_YET:
 [[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][Subword]] movement lets us treat “EmacsIsAwesome” as three words
 ─“Emacs”, “Is”, and “Awesome”─ which is desirable since such naming
 is common among coders. Now, for example, ~M-f~ moves along each subword.
@@ -3014,6 +3014,13 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 ;; Text selected with the mouse is automatically copied to clipboard.
 (setq mouse-drag-copy-region t)
 #+end_src
+
+** Dimming Unused Windows
+Let's dim windows, and even the whole Emacs frame, when not in use.
+#+BEGIN_SRC emacs-lisp
+(use-package dimmer
+  :config (dimmer-mode))
+#+END_SRC
 
 ** Having a workspace manager in Emacs
 
