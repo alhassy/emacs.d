@@ -14,6 +14,9 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
+# Got to go!
+# Todo ∷ There's some “tangle no”, look for them and remove them.
+
 * Abstract                                                   :ignore:
 
 # See https://shields.io/
@@ -2953,7 +2956,7 @@ the backup directory, if ever. That the backups are numbered is so sweet ^_^
 Like package installations, my backups are not kept in any version control
 system, like git; only locally.
 
-** COMMENT Default Compilation Command
+** Default Compilation Commands
 
 Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
 when ~M-x recompile~ is invoked. One of my habits is to append
@@ -2969,7 +2972,7 @@ Since nearly every file I work with is ─or can be coerced into being─ in org
 I usually have a section ~* footer~ that contains something like the above.
 
 Let's remove repeated matter.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Silently save before compiling.
 (setq compilation-ask-about-save nil)
 
@@ -2981,11 +2984,10 @@ Let's remove repeated matter.
 (setq compilation-scroll-output t)
 #+end_src
 
-
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; My global compile command
 (setq compile-command
-  (async-shell-command (concat "open " (org-latex-export-to-pdf))))
+  '(async-shell-command (concat "open " (org-latex-export-to-pdf))))
 
 ;; Bind ‘recompile’ to ‘C-c C-m’ ─“m” for “m”ake
 (global-set-key (kbd "C-c C-m") 'recompile)
