@@ -927,11 +927,6 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 :End:
 
 ** Locally ~toggle~ a variable
-:PROPERTIES:
-:FIXME: This utility should accept a sequence of forms, possibly utilise a progn?
-:END:
-
-*todo* body of toggle should be a progn?
 
 It is dangerous to load a file with local variables;
 instead we should load files without evaluating locals,
@@ -944,10 +939,14 @@ to accept all locals without being queried and so have the following
 combinator.
 
 #+begin_src emacs-lisp
-(defmacro toggle (variable value code)
+(defmacro toggle (variable value &rest code)
   "Locally set the value of ‘variable’ to be ‘value’ in the scope of ‘code’.
    In particular, the value of ‘variable’, if any, *is* affected
    to produce useful sideffects. It retains its orginal value outside this call.
+
+   This is a feature of Lisp's dynamic scope.
+   Essentilly this macro behaves like a let-statement with one item;
+   rather than use, say “-let”, I've used a possibly more informative name.
 
    Example uses include terse replacements for one-off let-statements,
    or, more likely, of temporarily toggeling important values, such as
@@ -956,39 +955,14 @@ combinator.
    Another example: ‘(toggle enable-local-variables :all ⋯)’ to preprocess files
    without being queried about possibly dangerous local variables.
   "
-  `(let ((_initial_value_ ,variable))
-        (setq ,variable ,value)
-        ,code
-        (setq ,variable _initial_value_)
+  `(let ((,variable ,value))
+        ,@code
   )
 )
 #+end_src
 
 Since emacs-lisp interprets definitions sequentially, I define ~toggle~ here
 since I employ it in the next section.
-
-:Discussion:
-#+begin_example emacs-lisp
-;; example usage
-(macroexpand '(toggle x "x" (message x)))
-
-(toggle x "x" (message x))
-
-(message x) ;; crashes since x is unassigned
-
-;; Notice that let's overshadow names. Put this into ElispCheatSheet
-;;
-(progn
-(setq NOPE "NOPE")
-(let ((NOPE "YUP")) )
-(message NOPE)
-)
-
-(toggle NOPE "x" (message x))
-
-NOPE ;; ⇒ "NOPE"
-#+end_example
-:End:
 
 ** Syncing to the System's ~$PATH~
 
