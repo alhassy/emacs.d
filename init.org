@@ -1406,12 +1406,15 @@ Other separators I've considered include ~'brace~ instead of an arrow,
 and ~'contour, 'chamfer, 'wave, 'zigzag~ which look like browser tabs
 that are curved, boxed, wavy, or in the style of driftwood.
 
-** Flashing when something goes wrong
+** Flashing when something goes wrong ─no blinking
 Make top and bottom of screen flash when something unexpected happens thereby observing a warning message in the minibuffer. E.g., C-g, or calling an unbound key sequence, or misspelling a word.
 #+BEGIN_SRC emacs-lisp
 (setq visible-bell 1)
 ;; Enable flashing mode-line on errors
 ;; On MacOS, this shows a caution symbol ^_^
+
+;; Blinking cursor rushes me to type; let's slow down.
+(blink-cursor-mode -1)
 #+END_SRC
 
 ** My to-do list: The initial buffer when Emacs opens up
