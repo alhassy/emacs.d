@@ -1223,8 +1223,11 @@ Note: Using spacemacs theme above.
 ;; Keep self motivated!
 (setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 #+end_src
-** Theme
+** Themes
 #+BEGIN_SRC emacs-lisp
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
+
 ;; Nice looking themes ^_^
 (use-package solarized-theme)
 (use-package doom-themes)
@@ -4128,6 +4131,7 @@ Finally, we can observe which features are active in our current Emacs with,
 ;; (toggle to-github? nil (my/publish-to-blog 'yes 'local))
 (toggle to-github? nil (my/publish-to-blog))
 #+END_SRC
+
 
 # Local Variables:
 # eval: (setq to-github? t)
