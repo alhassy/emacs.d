@@ -3288,6 +3288,18 @@ for completion of emoji names.
   :init (ac-emoji-setup)
 )
 :End:
+
+Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
+This is very useful when editing in a particular coding language, say via
+~C-c '~ for org-src blocks.
+#+BEGIN_SRC emacs-lisp
+(use-package company-quickhelp
+ :config
+   (setq company-quickhelp-delay 0.1)
+   (company-quickhelp-mode)
+)
+#+END_SRC
+
 ** Snippets -- Template Expansion
 
 It is common that there is a sequence of text that we tend to repeat
