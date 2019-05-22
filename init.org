@@ -17,6 +17,7 @@
 # Got to go!
 # Todo ∷ There's some “tangle no”, look for them and remove them.
 
+
 * Abstract                                                   :ignore:
 
 # See https://shields.io/
@@ -3123,6 +3124,16 @@ E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
 and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
 Both show a pop-up of other possible commands.
 
+Let's ensure ~C-x b~ shows us: Current buffers, recent files, and bookmarks
+─as well as the ability to create bookmarks, which is via ~C-x r b~ manually.
+#+BEGIN_SRC emacs-lisp
+(setq helm-mini-default-sources '(helm-source-buffers-list
+                                    helm-source-recentf
+                                    helm-source-bookmarks
+                                    helm-source-bookmark-set
+                                    helm-source-buffer-not-found))
+#+END_SRC
+
 Incidentally, helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the top program via
 ~helm-top~. It also serves as an interface to popular search engines
 and over 100 websites such as ~google, stackoverflow~, and ~arxive~.
@@ -4134,6 +4145,7 @@ Finally, we can observe which features are active in our current Emacs with,
 ;; Show a diff window displaying changes between undo nodes.
 (setq undo-tree-visualizer-diff t)
 #+end_src
+
 
 * COMMENT ─Pushing to blog─
 
