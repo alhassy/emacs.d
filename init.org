@@ -17,7 +17,6 @@
 # Got to go!
 # Todo ∷ There's some “tangle no”, look for them and remove them.
 
-
 * Abstract                                                   :ignore:
 
 # See https://shields.io/
@@ -665,6 +664,9 @@ I would like to check spelling by default.
 #+END_SRC
 # (add-hook 'text-mode-hook 'flyspell-mode)
 
+Enabling fly-spell for text-mode enables it for org and latex modes since they
+derive from text-mode.
+
 Flyspell needs a spell checking tool, which is not included in Emacs.
 We install ~aspell~ spell checker using, say, homebrew via ~brew install aspell~.
 Note that Emacs' ~ispell~ is the interface to such a command line spelling utility.
@@ -677,8 +679,13 @@ Note that Emacs' ~ispell~ is the interface to such a command line spelling utili
 (diminish 'flyspell-mode) ;; Don't show it in the modeline.
 #+END_SRC
 
-Ecnabling fly-spell for text-mode enables it for org and latex modes since they
-derive from text-mode.
+Allow spelling support for CamlCase words like “EmacsIsCool”.
+#+BEGIN_SRC emacs-lisp
+(setq  ispell-extra-args '("--sug-mode=ultra"
+                            "--run-together"
+                            "--run-together-limit=5"
+                            "--run-together-min=2"))
+#+END_SRC
 
 :Hook_TODO:
 Hook for after init?
