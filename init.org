@@ -679,13 +679,15 @@ Note that Emacs' ~ispell~ is the interface to such a command line spelling utili
 (diminish 'flyspell-mode) ;; Don't show it in the modeline.
 #+END_SRC
 
+:ignore_for_now:
 Allow spelling support for CamlCase words like “EmacsIsCool”.
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (setq  ispell-extra-args '("--sug-mode=ultra"
                             "--run-together"
                             "--run-together-limit=5"
                             "--run-together-min=2"))
 #+END_SRC
+:End:
 
 :Hook_TODO:
 Hook for after init?
@@ -1087,6 +1089,10 @@ See these [[https://github.com/purcell/exec-path-from-shell][docs]] for setting 
 )
 
 (add-hook 'after-init-hook 'my/stay-up-to-date)
+
+;; For now, doing this since I'm also calling my/stay-up-to-date with
+;; after-init-hook which hides the startup message.
+(add-hook 'after-init-hook 'display-startup-echo-area-message)
 #+END_SRC
 ** Who am I? ─Using Gnus for Gmail
 Let's set the following personal
@@ -1320,11 +1326,15 @@ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 (setq inhibit-startup-message t)
 
 (defun display-startup-echo-area-message ()
+  "The message that is shown after ‘user-init-file’ is loaded."
   (message
       (concat "Welcome "      user-full-name
               "! Emacs "      emacs-version
               "; Org-mode "   org-version
               "; System "    (system-name)
+                  (format "; Time %.3fs"
+                      (float-time (time-subtract (current-time)
+                                    before-init-time)))
       )
   )
 )
@@ -1435,10 +1445,9 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 ;; (setq initial-buffer-choice "~/Dropbox/todo.org")
 
 (split-window-right)			  ;; C-x 3
-(other-window 1)                                  ;; C-x 0
+(other-window 1)                              ;; C-x 0
 (toggle enable-local-variables :all           ;; Load *all* locals.
-    (toggle org-confirm-babel-evaluate nil    ;; Eval *all* blocks.
-      (find-file "~/.emacs.d/init.org")))
+      (find-file "~/.emacs.d/init.org"))
 #+END_SRC
 
 :primitive_approach_to_recent_files:
@@ -1746,8 +1755,14 @@ Also:
 ;; Tangling should preserve my indentation.
 (setq org-src-preserve-indentation t)
 
-;; Qive quote and verse blocks a nice look.
+;; Tab should do indent in code blocks
+(setq org-src-tab-acts-natively t)
+
+;; Give quote and verse blocks a nice look.
 (setq org-fontify-quote-and-verse-blocks t)
+
+;; Pressing ENTER on a link should follow it.
+(setq org-return-follows-link t)
 #+END_SRC
 
 I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet.]]
@@ -3133,6 +3148,10 @@ Both show a pop-up of other possible commands.
 
 Let's ensure ~C-x b~ shows us: Current buffers, recent files, and bookmarks
 ─as well as the ability to create bookmarks, which is via ~C-x r b~ manually.
+For example, I press ~C-x b~ then type any string and will have the option of
+making that a bookmark referring to the current location I'm working in, or
+jump to it if it's an existing bookmark, or make a buffer with that name,
+or find a file with that name.
 #+BEGIN_SRC emacs-lisp
 (setq helm-mini-default-sources '(helm-source-buffers-list
                                     helm-source-recentf
@@ -4153,10 +4172,10 @@ Finally, we can observe which features are active in our current Emacs with,
 (setq undo-tree-visualizer-diff t)
 #+end_src
 
-
 * COMMENT ─Pushing to blog─
 
 C-c C-c this snippet to export to blog.
+#+NAME: publish-to-blog
 #+BEGIN_SRC emacs-lisp :results none
 ;; No code execution on export
 ;; ⟪ For a particular block, we use “:eval never-export” ⟫
@@ -4167,3 +4186,14 @@ C-c C-c this snippet to export to blog.
 ;; (toggle to-github? nil (my/publish-to-blog 'yes 'local))
 (toggle to-github? nil (my/publish-to-blog))
 #+END_SRC
+* COMMENT footer
+
+f7 ∷ tangle and compile init.el
+f8 ∷ make readme
+f9 ∷ publish to blog
+
+# Local Variables:
+# eval: (global-set-key (kbd "<f8>") (lambda () (interactive) (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
+# eval: (global-set-key (kbd "<f9>") (lambda () (interactive) (org-babel-goto-named-src-block "publish-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
+# compile-command:  (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
+# End:
