@@ -578,14 +578,18 @@ Below are the git repos I'd like to clone.
 (maybe-clone "https://github.com/alhassy/emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
+(maybe-clone "https://github.com/alhassy/CatsCheatSheet")
 (maybe-clone "https://github.com/alhassy/org-agda-mode")
 (maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
 (maybe-clone "https://github.com/alhassy/islam")
-
 #+end_src
 :Other_repos_I_use:
 #+begin_src emacs-lisp
 (maybe-clone "https://github.com/alhassy/CheatSheet")
+
+(maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
+(maybe-clone "https://github.com/alhassy/PrologCheatSheet")
+
 (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols")
 (maybe-clone "https://github.com/alhassy/interactive-way-to-c")
 (maybe-clone "https://github.com/alhassy/next-700-module-systems-proposal.git" "~/thesis-proposal")
@@ -593,6 +597,11 @@ Below are the git repos I'd like to clone.
 (maybe-clone "https://github.com/alhassy/gentle-intro-to-reflection" "~/reflection/")
 
 ;; Private repos
+
+(maybe-clone "https://gitlab.cas.mcmaster.ca/schaapal/metaocaml-kwic.git" "~/alex") ;; metaprogramming, ocaml, phd
+(maybe-clone "https://gitlab.cas.mcmaster.ca/MathScheme/TheoryPresentations.git" "~/yasmine") ;; theory presentations, scala, phd
+(maybe-clone "https://gitlab.cas.mcmaster.ca/MathScheme/Differentiating-Programs.git" "~/noel") ;; calculus for datatypes, phd
+
 ;;
 (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/CAS781" "~/cas781") ;; cat adventures
 ;;
@@ -612,6 +621,9 @@ Below are the git repos I'd like to clone.
 ;
 ; (magit-list-repositories)
 #+end_src
+
+#+RESULTS:
+
 :End:
 
 Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/check-uncommitted/][uncommited changes]]
@@ -3704,7 +3716,7 @@ f x = x -- show x
 -- type error
 #+end_src
 :End:
-* Helpful Functions & Shortcuts
+* Helpful Utilities & Shortcuts
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
 # The subsections below detail the definitions.
@@ -3934,6 +3946,29 @@ publish the current article to my blog.
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
 )
 #+END_SRC
+
+** Excellent PDF Viewer
+Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library for viewing PDFs in Emacs.
+#+BEGIN_SRC emacs-lisp
+;; First: (async-shell-command "brew install --HEAD dunn/homebrew-emacs/pdf-tools")
+
+;; Then:
+(use-package pdf-tools
+  :ensure t
+  :config
+  (custom-set-variables
+    '(pdf-tools-handle-upgrades nil))
+  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo"))
+
+;; Finally:
+(pdf-tools-install)
+
+;; Now PDFs opened in Emacs are in pdfview-mode.
+#+END_SRC
+
+Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
+with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
+easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
 
 * COMMENT Stuff I don't really use, but may want to look at later
 ** hooks and things for literate agda with org-agda
@@ -4192,8 +4227,10 @@ f7 ∷ tangle and compile init.el
 f8 ∷ make readme
 f9 ∷ publish to blog
 
+(progn (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
+
 # Local Variables:
-# eval: (global-set-key (kbd "<f8>") (lambda () (interactive) (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
-# eval: (global-set-key (kbd "<f9>") (lambda () (interactive) (org-babel-goto-named-src-block "publish-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
+# eval: (local-set-key (kbd "<f8>") (lambda () (interactive) (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
+# eval: (local-set-key (kbd "<f9>") (lambda () (interactive) (org-babel-goto-named-src-block "publish-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # compile-command:  (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
 # End:

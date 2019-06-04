@@ -1,4 +1,6 @@
-personal_ws-1.1 en 38 
+personal_ws-1.1 en 49 
+prophethood
+datatypes
 applicative
 polymorphism
 Uncomment
@@ -7,6 +9,7 @@ morphisms
 compositional
 instantiations
 calculational
+Prolog
 unquotation
 morphism
 observationally
@@ -14,6 +17,7 @@ esotericity
 Goju
 subexpressions
 combinator
+namespace
 matchings
 Excerption
 hassy
@@ -36,5 +40,11 @@ journaling
 centric
 magit
 subexpression
+functor's
+functors
+Functors
+Destructuring
+Procedurally
 Musa
+Declaratively
 metaprogramming
