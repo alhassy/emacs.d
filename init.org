@@ -621,9 +621,6 @@ Below are the git repos I'd like to clone.
 ;
 ; (magit-list-repositories)
 #+end_src
-
-#+RESULTS:
-
 :End:
 
 Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/check-uncommitted/][uncommited changes]]
@@ -1006,6 +1003,11 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 :End:
 
 ** Locally ~toggle~ a variable
+:PROPERTIES:
+:FIXME: This utility should accept a sequence of forms, possibly utilise a progn?
+:END:
+
+*todo* body of toggle should be a progn?
 
 It is dangerous to load a file with local variables;
 instead we should load files without evaluating locals,
@@ -1042,6 +1044,29 @@ combinator.
 
 Since emacs-lisp interprets definitions sequentially, I define ~toggle~ here
 since I employ it in the next section.
+
+:Discussion:
+#+begin_example emacs-lisp
+;; example usage
+(macroexpand '(toggle x "x" (message x)))
+
+(toggle x "x" (message x))
+
+(message x) ;; crashes since x is unassigned
+
+;; Notice that let's overshadow names. Put this into ElispCheatSheet
+;;
+(progn
+(setq NOPE "NOPE")
+(let ((NOPE "YUP")) )
+(message NOPE)
+)
+
+(toggle NOPE "x" (message x))
+
+NOPE ;; ⇒ "NOPE"
+#+end_example
+:End:
 
 ** Syncing to the System's ~$PATH~
 
@@ -1457,9 +1482,10 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 ;; (setq initial-buffer-choice "~/Dropbox/todo.org")
 
 (split-window-right)			  ;; C-x 3
-(other-window 1)                              ;; C-x 0
+(other-window 1)                                  ;; C-x 0
 (toggle enable-local-variables :all           ;; Load *all* locals.
-      (find-file "~/.emacs.d/init.org"))
+    (toggle org-confirm-babel-evaluate nil    ;; Eval *all* blocks.
+      (find-file "~/.emacs.d/init.org")))
 #+END_SRC
 
 :primitive_approach_to_recent_files:
@@ -1702,6 +1728,22 @@ execute ~C-x o~.
 
 I /rarely/ make use of this feature; company mode & Helm together quickly provide
 an automatic replacement for nearly all of my uses.
+
+** Tabs
+I really like my Helm-supported ~C-x b~, but the visial appeal of a [[https://github.com/manateelazycat/awesome-tab][tab bar]] for Emacs
+is interesting. Let's try it out and see how long this lasts ---it may be like Neotree:
+Something cute to show to others, but not as fast as the keyboard.
+
+#+BEGIN_SRC emacs-lisp
+;; (async-shell-command "git clone --depth=1 https://github.com/manateelazycat/awesome-tab.git  ~/.emacs.d/elpa/awesome-tab")
+
+(load-file "~/.emacs.d/elpa/awesome-tab/awesome-tab.el")
+(awesome-tab-mode 1)
+
+;; Show me /all/ the tabs at once, in one group.
+(defun awesome-tab-buffer-groups ()
+  (list (awesome-tab-get-group-name (current-buffer))))
+#+END_SRC
 
 ** Window resizing using the golden ratio :Disabled:
 
@@ -2392,11 +2434,11 @@ the current heading stuck at the top of the window.
 #+BEGIN_SRC emacs-lisp
  (use-package org-sticky-header
   :config
-  (setq
+  (setq-default
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / ")
-  :init (org-sticky-header-mode 1)
+  :init (org-sticky-header-mode)
 )
 #+END_SRC
 
@@ -2650,6 +2692,7 @@ Some initial languages we want org-babel to support:
      (haskell . t)
      (ruby	 . t)
      (ocaml	 . t)
+     (C . t)  ;; Captial “C” gives access to C, C++, D
      (dot	 . t)
      (latex	 . t)
      (org	 . t)
@@ -2825,6 +2868,7 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
    'success ;; otherwise we obtain a "compiler error".
 )
 #+END_SRC
+
 ** Interpret the Haskell source blocks in a file
 #+BEGIN_SRC emacs-lisp
 (defvar *current-module* "NoModuleNameSpecified"
@@ -3735,6 +3779,23 @@ Let's save a few precious seconds,
 (put 'narrow-to-page 'disabled nil)
 #+end_src
 
+** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
+#+BEGIN_SRC emacs-lisp
+(defvar my-keys-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-m") 'recompile)
+    map)
+  "my-keys-minor-mode keymap.")
+
+(define-minor-mode my-keys-minor-mode
+  "A minor mode so that my key settings override annoying major modes."
+  :init-value t
+  :lighter " my-keys")
+
+(my-keys-minor-mode)
+
+(diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
+#+END_SRC
 ** Reload buffer with ~f5~
 I do this so often it's not even funny.
 #+BEGIN_SRC emacs-lisp
