@@ -17,6 +17,7 @@
 # Got to go!
 # Todo ∷ There's some “tangle no”, look for them and remove them.
 
+
 * Abstract                                                   :ignore:
 
 # See https://shields.io/
@@ -1067,6 +1068,12 @@ since I employ it in the next section.
 NOPE ;; ⇒ "NOPE"
 #+end_example
 :End:
+
+Let's always load local variables that we've marked as safe.
+( I tend to use loads of such locals! )
+#+BEGIN_SRC emacs-lisp
+(setq enable-local-variables :safe)
+#+END_SRC
 
 ** Syncing to the System's ~$PATH~
 
