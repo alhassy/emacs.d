@@ -3049,6 +3049,21 @@ the backup directory, if ever. That the backups are numbered is so sweet ^_^
 Like package installations, my backups are not kept in any version control
 system, like git; only locally.
 
+** Taking a tour of one's edits
+This package allows us to move around the edit points of a buffer
+/without/ actually undoing anything. We even obtain a brief description of what happend at each edit point. This seems useful for when I get interrupted or lose my train of
+thought: Just press ~C-c e ,~ to see what I did recently and where.
+
+#+BEGIN_SRC emacs-lisp
+(use-package goto-chg
+   ;; Give me a description of the change made at a particular stop.
+  :init (setq glc-default-span 0)
+  :bind (("C-c e ," . goto-last-change)
+         ("C-c e ." . goto-last-change-reverse)))
+#+END_SRC
+
+Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually performed.
+
 ** Default Compilation Commands
 
 Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
