@@ -3064,6 +3064,23 @@ thought: Just press ~C-c e ,~ to see what I did recently and where.
 
 Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually performed.
 
+** Edit as Root
+From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]]:
+
+#+BEGIN_SRC emacs-lisp
+(defun find-file-as-root ()
+  "Like `ido-find-file, but automatically edit the file with
+root-privileges (using tramp/sudo), if the file is not writable by
+user."
+  (interactive)
+  (let ((file (ido-read-file-name "Edit as root: ")))
+    (unless (file-writable-p file)
+      (setq file (concat "/sudo:root@localhost:" file)))
+    (find-file file)))
+
+(bind-key "C-x F" 'find-file-as-root)
+#+END_SRC
+
 ** Default Compilation Commands
 
 Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
