@@ -16,7 +16,8 @@
 
 # Got to go!
 # Todo ∷ There's some “tangle no”, look for them and remove them.
-
+#
+# (org-babel-load-file "init.org")
 
 * Abstract                                                   :ignore:
 
@@ -144,6 +145,12 @@ Finally, as will be shown below, you can literrally use [[https://github.com/zac
 for textually input in your operating system --no copy-paste required.
 
 * Booting Up
+Let's always load local variables that we've marked as safe.
+( I tend to use loads of such locals! )
+#+BEGIN_SRC emacs-lisp
+(setq enable-local-variables :safe)
+#+END_SRC
+
 ** ~~/.emacs~ vs. ~init.org~
 
 Why not keep Emac's configurations in the ~~/.emacs~ file?
@@ -182,7 +189,7 @@ Rather than manually extracting the Lisp code from this literate document
 each time we alter it, let's instead add a ‘hook’ ─a method  that is invoked
 on a particular event, in this case when we save the file.
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
 (defun my/make-init-el-and-README ()
   (interactive)
   ;; Make init.el
@@ -191,8 +198,9 @@ on a particular event, in this case when we save the file.
   (load-file "~/.emacs.d/init.el")
 
   ;; Make README.md
-  ;; (org-babel-goto-named-src-block "make-readme")
-  ;; (org-babel-execute-src-block)
+  (save-excursion
+    (org-babel-goto-named-src-block "make-readme")
+    (org-babel-execute-src-block))
 
   (message "Tangled, compiled, and loaded init.el; and made README.md")
 )
@@ -247,7 +255,7 @@ This source block generates the ~README~ for the associated github repository.
 )
 #+END_SRC
 
-** COMMENT Elementary Version Control
+** COMMENT TODO Elementary Version Control
 :Properties:
 :TODO: Make some of these eshell commands that are executed?
        Usage would be to simply C-x C-e the fragment to have
@@ -309,7 +317,7 @@ Below I'll equip us with an Emacs ‘porcelain’ interface to git
 --it makes working with version control tremendously convenient.
 Moreover, I add a little pop-up so that I don't forget to commit often!
 
-** COMMENT What's in, or at the top of, my ~~/.emacs~
+** COMMENT TODO What's in, or at the top of, my ~~/.emacs~
 
 We evaluate every piece of emacs-lisp code available here when
 Emacs starts up by placing the following at the top of our ~.emacs~ file:
@@ -453,6 +461,11 @@ shown to us in the modeline --the area near the bottom of Emacs.
 It does so by using the ~diminish~ package, so let's install that.
 #+begin_src emacs-lisp
 (use-package diminish)
+
+;; Let's hide some markers.
+(diminish 'eldoc-mode)
+(diminish 'org-indent-mode)
+(diminish 'subword-mode)
 #+end_src
 
 Here are other packages that I want to be installed onto my machine.
@@ -556,6 +569,8 @@ Use ~M-x (magit-list-repositories) RET~ to list local repositories:
 
 Below are the git repos I'd like to clone.
 #+begin_src emacs-lisp
+(use-package magit)
+
 ;; Do not ask about this variable when cloning.
 (setq magit-clone-set-remote.pushDefault t)
 
@@ -566,8 +581,11 @@ Below are the git repos I'd like to clone.
     ‘local’ is optional and defaults to the base name; e.g.,
     if ‘remote’is ‘https://github.com/X/Y’ then ‘local’ becomes ‘~/Y’.
   "
-  (unless (file-directory-p local)
-     (magit-clone remote local)
+  (if (file-directory-p local)
+
+     'repo-already-exists
+
+     (async-shell-command (concat "git clone " remote " " local))
      (add-to-list 'magit-repository-directories `(,local   . 0))
      'cloned-repo)
 )
@@ -576,7 +594,7 @@ Below are the git repos I'd like to clone.
 (setq magit-clone-set-remote.pushDefault 't)
 
 ;; Public repos
-(maybe-clone "https://github.com/alhassy/emacs.d")
+(maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
 (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
@@ -1003,7 +1021,7 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 ;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
 :End:
 
-** Locally ~toggle~ a variable
+** COMMENT Locally ~toggle~ a variable :not_needed:
 :PROPERTIES:
 :FIXME: This utility should accept a sequence of forms, possibly utilise a progn?
 :END:
@@ -1068,12 +1086,6 @@ since I employ it in the next section.
 NOPE ;; ⇒ "NOPE"
 #+end_example
 :End:
-
-Let's always load local variables that we've marked as safe.
-( I tend to use loads of such locals! )
-#+BEGIN_SRC emacs-lisp
-(setq enable-local-variables :safe)
-#+END_SRC
 
 ** Syncing to the System's ~$PATH~
 
@@ -1496,10 +1508,10 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 ;; (setq initial-buffer-choice "~/Dropbox/todo.org")
 
 (split-window-right)			  ;; C-x 3
-(other-window 1)                                  ;; C-x 0
-(toggle enable-local-variables :all           ;; Load *all* locals.
-    (toggle org-confirm-babel-evaluate nil    ;; Eval *all* blocks.
-      (find-file "~/.emacs.d/init.org")))
+(other-window 1)                              ;; C-x 0
+;; toggle enable-local-variables :all           ;; Load *all* locals.
+    ;; toggle org-confirm-babel-evaluate nil    ;; Eval *all* blocks.
+      (find-file "~/.emacs.d/init.org")
 #+END_SRC
 
 :primitive_approach_to_recent_files:
@@ -1556,7 +1568,9 @@ this package is no longer maintained. It works on my machine.
 
 (add-hook 'text-mode-hook
             '(lambda ()
-               (visual-line-mode 1)))
+               (visual-line-mode 1)
+                   (diminish 'visual-line-mode)
+               ))
 #+END_SRC
 
 :Ignore:
@@ -1749,14 +1763,16 @@ is interesting. Let's try it out and see how long this lasts ---it may be like N
 Something cute to show to others, but not as fast as the keyboard.
 
 #+BEGIN_SRC emacs-lisp
-;; (async-shell-command "git clone --depth=1 https://github.com/manateelazycat/awesome-tab.git  ~/.emacs.d/elpa/awesome-tab")
+; (async-shell-command
+;  "git clone --depth=1 https://github.com/manateelazycat/awesome-tab.git  ~/.emacs.d/elpa/awesome-tab")
 
 (load-file "~/.emacs.d/elpa/awesome-tab/awesome-tab.el")
-(awesome-tab-mode 1)
 
 ;; Show me /all/ the tabs at once, in one group.
 (defun awesome-tab-buffer-groups ()
   (list (awesome-tab-get-group-name (current-buffer))))
+
+(awesome-tab-mode t)
 #+END_SRC
 
 ** Window resizing using the golden ratio :Disabled:
@@ -1778,7 +1794,7 @@ After some time this got a bit annoying and I'm no longer  using this.
 
 :Updating_FAQ:
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (shell-command "rm ~/.emacs.d/elpa/org-9.2.3/*.elc")
 (byte-recompile-directory "~/.emacs.d/elpa/org-9.2.3/")
 #+END_SRC
@@ -2828,7 +2844,7 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
    org header, now we can unfold it whence we do so, then we go
    back to the line we want to be at.
   "
-  (interactive)
+  (interactive "nEnter line: ")
   (goto-line line)
   (org-previous-visible-heading 1)
   (org-cycle)
@@ -2934,7 +2950,7 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
    (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
          (buf (concat "*GHCI* " it)))
 
-     (toggle kill-buffer-query-functions nil (ignore-errors (kill-buffer buf)))
+     (-let [kill-buffer-query-functions nil] (ignore-errors (kill-buffer buf)))
      (org-babel-tangle it "haskell")
      (async-shell-command (concat "ghci " it) buf)
      (switch-to-buffer-other-window buf)
@@ -3019,7 +3035,7 @@ If the :tangle header arg is a list of files. Handle all files"
 (advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
 (advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
 #+end_src
-* Expected IDE Support
+* TODO Expected IDE Support
 
 ** Backups
 By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
@@ -3081,7 +3097,7 @@ user."
 (bind-key "C-x F" 'find-file-as-root)
 #+END_SRC
 
-** Default Compilation Commands
+** TODO Default Compilation Commands
 
 Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
 when ~M-x recompile~ is invoked. One of my habits is to append
@@ -3294,6 +3310,12 @@ will search for that particular word, region; then apply changes by ~C-x C-s~.
   (setq helm-swoop-speed-or-color nil)
   ;; If this value is t, split window inside the current window
   (setq helm-swoop-split-with-multiple-windows nil)
+
+)
+#+END_SRC
+
+:ThisBecomeMoreAnnoyingThanUseful:
+#+BEGIN_SRC emacs-lisp :tangle no
   ;; If there is no symbol at the cursor, use the last used words instead.
   (setq helm-swoop-pre-input-function
       (lambda ()
@@ -3301,8 +3323,10 @@ will search for that particular word, region; then apply changes by ~C-x C-s~.
           (if (eq (length $pre-input) 0)
               helm-swoop-pattern ;; this variable keeps the last used words
             $pre-input))))
-)
+
 #+END_SRC
+:End:
+
 Press ~M-i~ after a search has executed to enable it for all buffers.
 
 We can also limit our search to org files, or buffers of the same mode,
@@ -3472,9 +3496,11 @@ as a mere interface.
 ;; Nice “interface” to said program
 (use-package yankpad
   ;; :if company-mode ;; load & initialise only if company-mode is defined
+  :demand t
   :init
     ;; Location of templates
     (setq yankpad-file "~/.emacs.d/yankpad.org")
+    (setq yankpad-category "Category: Default")
   :config
     ;; If you want to complete snippets using company-mode
     ;; (add-to-list 'company-backends #'company-yankpad)
@@ -3482,7 +3508,6 @@ as a mere interface.
     (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand)
     ;; Load the snippet templates -- useful after yankpad is altered
     ;; (add-hook 'after-init-hook 'yankpad-reload)
-    (setq yankpad-category "Category: Default")
 )
 
 ;; Elementary textual completion backend.
@@ -3512,7 +3537,7 @@ then “tab” it into expansion.
 Yankpad requires we have an org file that contains our templates,
 so we tangle such a file ~~/.emacs.d/yankpad.org~, and have all of our
 templates be globally accessible.
-#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org"
+#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,#+Description: This is file is generated from my init.org; do not edit.
 
 ,* Default                                           :global:
@@ -3522,7 +3547,7 @@ Here's an example of a common template I perform by hand --no more!
 I have the expected habit of copying a URL from someplace then forming
 a link to it by writing ~[[URL] [description]]~, since the URL & syntax are already
 known, let's expand those and place the cursour at the only unknown --the description.
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+#+begin_src org :tangle "~/.emacs.d/yankpad.org" :comments none
 ,** my-org-insert-link: cleverly insert a link copied to clipboard
  [[${1:`(clipboard-yank)`}][$2]] $0
 #+end_src
@@ -3580,7 +3605,7 @@ concluding with actually loading this snippet mechanism globally.
 This produces a pop-up list of org-mode block types, if ~src~ is
 selected, then a list of my commonly used languages pops-up.
 Alternatively, ignore the pop-up menu and write any block or language name.
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** begin: produce an org-mode block
 ,#+begin_${1:environment$(let*
     ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
@@ -3627,7 +3652,7 @@ Whence,
 The template /text/ is then generated by the following simple loop
 --whose source block is named ~my-org-lang-templates~.
 #+NAME: my-org-lang-templates
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :export_never t
 (let (result) ;; ensure result is initially empty
    (dolist (x '( ("s_el" . "emacs-lisp")
                  ("s_org" . "org")
@@ -3648,7 +3673,7 @@ by utilising a [[https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-r
 <<my-org-lang-templates()>>
 ,#+end_src
 #+end_src
-#+begin_src org  :tangle "~/.emacs.d/yankpad.org" :noweb yes :eval never-export
+#+begin_src org  :tangle "~/.emacs.d/yankpad.org" :noweb yes :comments none
 <<my-org-lang-templates()>>
 #+end_src
 #
@@ -3721,7 +3746,7 @@ Exercise to the interested (source code) reader
 -- ping me, if you have questions.
 :End:
 *** Elisp Templates
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** loop:  Elisp's for each loop
 (dolist (${1:var} ${2:list-form})
         ${3:body})
@@ -3739,7 +3764,7 @@ Exercise to the interested (source code) reader
 #+end_src
 
 *** Equational Templates
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** fun: Function declaration with type signature
 
 ${1:fun-name} : ${2:arguments}
@@ -3760,7 +3785,7 @@ $0
 #+end_src
 
 *** Misc Templates
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** remark: top-level literate comment
 
 {{{remark(${1:thoughts})}}} $0
@@ -3768,9 +3793,9 @@ $0
 
 Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1 }}@@~.
 
-*** COMMENT Re-Enabling Templates
+***  Re-Enabling Templates
 After our yankpad templates are generated, we need to load it.
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 ;; After init hook; see above near use-package install.
 (yankpad-reload)
 #+END_SRC
@@ -4252,7 +4277,7 @@ take care of this.
 # on word boundaries and adds symbols to the fringe.
 # (set-default 'truncate-lines t)
 
-* Summary of Utilities Provided
+* COMMENT Summary of Utilities Provided
 
 | _Command_                                | _Action_                                                |
 | ~C-c C-m~                                | recompile file                                          |
@@ -4267,7 +4292,6 @@ take care of this.
 | ~M-x kill-other-buffers~                 | --self evident--                                        |
 | ~M-$~                                    | check spelling of word at point                         |
 | ~M-#~                                    | thesaurus look-up word at point                         |
-| ~(toggle name val ⋯)~                    | /Effectfully/ set ~name~ to ~val~ only for scope ~⋯~.   |
 | ~(my/org-run-haskell &optional file)~    | Interpret the Haskell org-blocks from a file into ghci. |
 | ~C-+/-~                                  | increase/decrease text size                             |
 | ~M-x my-org-html-export-to-html~         | make then open html from an org file                    |
@@ -4294,7 +4318,7 @@ Finally, we can observe which features are active in our current Emacs with,
 #+end_src
 
 # List of installed packages: (mapcar 'car package-alist)
-* Undo tree :noexport:
+* Undo tree                                                        :noexport:
 
 # Todo: Learn about weaving so that presentation order may differ from code tangeling order.
 

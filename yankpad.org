@@ -1,15 +1,10 @@
-# [[file:~/.emacs.d/init.org::*Snippets%20--%20Template%20Expansion][Snippets -- Template Expansion:2]]
 #+Description: This is file is generated from my init.org; do not edit.
 
 * Default                                           :global:
-# Snippets -- Template Expansion:2 ends here
 
-# [[file:~/.emacs.d/init.org::*Snippets%20--%20Template%20Expansion][Snippets -- Template Expansion:3]]
 ** my-org-insert-link: cleverly insert a link copied to clipboard
  [[${1:`(clipboard-yank)`}][$2]] $0
-# Snippets -- Template Expansion:3 ends here
 
-# [[file:~/.emacs.d/init.org::*Org-mode%20Templates%20--A%20reason%20I%20%E2%80%9Cgenerate%E2%80%9D%20templates%20;)][Org-mode Templates --A reason I “generate” templates ;):1]]
 ** begin: produce an org-mode block
 #+begin_${1:environment$(let*
     ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
@@ -18,9 +13,7 @@
      (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
  $0
 #+end_${1:$(car (split-string yas-text))}
-# Org-mode Templates --A reason I “generate” templates ;):1 ends here
 
-# [[file:~/.emacs.d/init.org::*Org-mode%20Templates%20--A%20reason%20I%20%E2%80%9Cgenerate%E2%80%9D%20templates%20;)][Org-mode Templates --A reason I “generate” templates ;):6]]
 ** s_el: emacs-lisp
 #+begin_src emacs-lisp
 $0
@@ -55,9 +48,7 @@ $0
 #+begin_src latex
 $0
 #+end_src
-# Org-mode Templates --A reason I “generate” templates ;):6 ends here
 
-# [[file:~/.emacs.d/init.org::*Elisp%20Templates][Elisp Templates:1]]
 ** loop:  Elisp's for each loop
 (dolist (${1:var} ${2:list-form})
         ${3:body})
@@ -72,9 +63,7 @@ $0
 (cond (${1:scenario₁} ${2:response₁})
       (${3:scenario₂} ${4:response₂})
 )
-# Elisp Templates:1 ends here
 
-# [[file:~/.emacs.d/init.org::*Equational%20Templates][Equational Templates:1]]
 ** fun: Function declaration with type signature
 
 ${1:fun-name} : ${2:arguments}
@@ -92,10 +81,7 @@ $0∎
 ≡⟨ ${2:reason-for-the-equality} ⟩
   ${1:new-expression}
 $0
-# Equational Templates:1 ends here
 
-# [[file:~/.emacs.d/init.org::*Misc%20Templates][Misc Templates:1]]
 ** remark: top-level literate comment
 
 {{{remark(${1:thoughts})}}} $0
-# Misc Templates:1 ends here
