@@ -118,9 +118,10 @@ and effort to make meaningful documentation --even when the project is private a
 #+end_quote
 # Comparing Emacs to an editor is like comparing GNU/Linux to a word processor. -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
 
-# Consider reading ⋯
 Some possibly interesting reads:
 + [[https://sachachua.com/blog/wp-content/uploads/2013/05/How-to-Learn-Emacs-v2-Large.png][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
++ [[http://ehneilsen.net/notebook/orgExamples/org-examples.html#sec-18][Emacs org-mode examples and cookbook]]
++ [[https://m00natic.github.io/emacs/emacs-wiki.html][An Opinionated Emacs guide for newbies and beyond]]
 + [[https://tuhdo.github.io/emacs-tutor.html][Emacs Mini-Manual, Part I of III]]
   # + The [[http://tuhdo.github.io/emacs-tutor.html#orgheadline63][Emacs Mini Manual]], or
 + [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][Org and R Programming]] ---a tutorial on literate programming, e.g., evaluating code within ~src~ bloc.
@@ -138,8 +139,13 @@ is at its core an Emacs Lisp program that yields the editor of my dreams
 --it encourages me to grow and to be creative, and I hope the same for all who use it;
 moreover, it reflects my personality such as what I value and what I neglect in my workflow.
 
-Finally, as will be shown below, you can literrally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
+Moreover, as will be shown below, you can literrally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
 for textually input in your operating system --no copy-paste required.
+
+Finally, here's some fun commands to try out:
++ ~M-x doctor~ ---generalising the idea of rubber ducks
++ ~M-x tetris~  or ~M-x gomoku~ ---a break with a classic
++ ~M-x butterfly~ ---in reference to [[https://xkcd.com/378/][“real programmers”]]
 
 * Booting Up
 Let's always load local variables that we've marked as safe.
@@ -1436,12 +1442,14 @@ We might accidentally close this buffer, so we could utilise the following.
 #+BEGIN_SRC emacs-lisp
 ;; A very simple function to recreate the scratch buffer:
 ;; ( http://emacswiki.org/emacs/RecreateScratchBuffer )
-(defun my/create-scratch-buffer nil
+(defun scratch ()
    "create a scratch buffer"
    (interactive)
-   (switch-to-buffer (get-buffer-create "*scratch*"))
+   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
    (insert initial-scratch-message)
    (org-mode))
+
+;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 #+END_SRC
 
 However, by default its contents are not saved --which may be an issue if we have
@@ -1451,13 +1459,6 @@ the scratch buffer by default.
 (use-package persistent-scratch
   :config
   (persistent-scratch-setup-default))
-#+END_SRC
-
-The sequence ~C-x b RET *scratch*~ is rather common, let's provide a quick utility for this:
-#+BEGIN_SRC emacs-lisp
-(defun scratch ()
-    (interactive)
-    (switch-to-buffer-other-window (get-buffer-create "*scratch*")))
 #+END_SRC
 
 ** Spaceline: A sleek mode line
@@ -1754,12 +1755,12 @@ execute ~C-x o~.
 I /rarely/ make use of this feature; company mode & Helm together quickly provide
 an automatic replacement for nearly all of my uses.
 
-** Tabs
+** Tabs :Disabled:
 I really like my Helm-supported ~C-x b~, but the visial appeal of a [[https://github.com/manateelazycat/awesome-tab][tab bar]] for Emacs
 is interesting. Let's try it out and see how long this lasts ---it may be like Neotree:
 Something cute to show to others, but not as fast as the keyboard.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 ; (async-shell-command
 ;  "git clone --depth=1 https://github.com/manateelazycat/awesome-tab.git  ~/.emacs.d/elpa/awesome-tab")
 
@@ -1771,6 +1772,8 @@ Something cute to show to others, but not as fast as the keyboard.
 
 (awesome-tab-mode t)
 #+END_SRC
+
+It's been less than three days and I've found this utility to be unhelpful, to me anyhow.
 
 ** Window resizing using the golden ratio :Disabled:
 
