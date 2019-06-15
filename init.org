@@ -1444,6 +1444,13 @@ the scratch buffer by default.
   (persistent-scratch-setup-default))
 #+END_SRC
 
+The sequence ~C-x b RET *scratch*~ is rather common, let's provide a quick utility for this:
+#+BEGIN_SRC emacs-lisp
+(defun scratch ()
+    (interactive)
+    (switch-to-buffer-other-window (get-buffer-create "*scratch*")))
+#+END_SRC
+
 ** Spaceline: A sleek mode line
 
 I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I do not like evil-mode and find spacemacs
