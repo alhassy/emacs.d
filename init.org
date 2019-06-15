@@ -14,9 +14,6 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
-# Got to go!
-# Todo ∷ There's some “tangle no”, look for them and remove them.
-#
 # (org-babel-load-file "init.org")
 
 * Abstract                                                   :ignore:
@@ -4072,6 +4069,11 @@ publish the current article to my blog.
   "
 
   (load-file "~/alhassy.github.io/content/AlBasmala.el")
+
+  ;; --MOVE ME TO ALBASMALA--
+  ;; Sometimes the file I'm working with is not a .org file, so:
+  (setq file.org (buffer-name))
+
   (preview-article :draft draft)
   (unless draft (publish))
   (let ((server (if local "http://localhost:4000/" "https://alhassy.github.io/")))
