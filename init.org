@@ -3071,6 +3071,18 @@ the backup directory, if ever. That the backups are numbered is so sweet ^_^
 Like package installations, my backups are not kept in any version control
 system, like git; only locally.
 
+Let's use an elementary diff system for backups.
+#+BEGIN_SRC emacs-lisp
+(use-package backup-walker
+  :commands backup-walker-start)
+#+END_SRC
+
+In a buffer that corresponds to a file, invoke ~backup-walker-start~
+to see a visual diff of changes /between/ versions.
+By default, you see the changes ‘backwards’: Red means
+delete these things to get to the older version; i.e.,
+the red ‘-’ are newer items.
+
 ** Taking a tour of one's edits
 This package allows us to move around the edit points of a buffer
 /without/ actually undoing anything. We even obtain a brief description of what happend at each edit point. This seems useful for when I get interrupted or lose my train of
