@@ -3037,6 +3037,12 @@ If the :tangle header arg is a list of files. Handle all files"
 #+end_src
 * TODO Expected IDE Support
 
+#+BEGIN_SRC emacs-lisp
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+#+END_SRC
+
 ** Backups
 By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
 let's keep old versions since there's disk space to go around
