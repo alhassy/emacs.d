@@ -677,6 +677,15 @@ Let's try this out:
 
 In doubt, execute ~C-h e~ to jump to the ~*Messages*~ buffer.
 
+Finally, one of the main points for using version control is to have
+access to historic versions of a file. The following utility
+allows us to ~M-x git-timemachine~ on a file and use ~p/n/g/q~ to look
+at previous, next, goto arbitrary historic versions, or quit.
+- If we want to roll back to a previous version, we just ~write-file~ as usual!
+#+BEGIN_SRC emacs-lisp
+(use-package git-timemachine)
+#+END_SRC
+
 ** Fix spelling as you type --thesaurus & dictionary too!
 I would like to check spelling by default.
  + ~C-;~ :: Cycle through corrections for word at point.
