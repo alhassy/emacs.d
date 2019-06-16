@@ -2473,6 +2473,17 @@ This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Be
 --while quickly searching through the PlantUML [[http://plantuml.com/guide][manual]]:
 The above is known as an “activity diagram” and it's covered in §4.
 
+** Org-Emphasise for Parts of Words
+
+From [[https://stackoverflow.com/a/24540651/3550444][stackoverflow]], the following incantation allows us to have
+parts of works emphasied with org-mode; e.g.,
+/half/ed, ~half~ed, and right in the m*idd*le! Super cool stuff!
+#+BEGIN_SRC emacs-lisp
+(setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
+(setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
+(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
+#+END_SRC
+
 ** Show off-screen Heading at the top of the window
 
 In case we forgot which heading we're under, let's keep
