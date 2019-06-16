@@ -16,6 +16,10 @@
 
 # (org-babel-load-file "init.org")
 
+#+BEGIN_SRC emacs-lisp
+;; (setq org-modules (quote (org-info org-tempo org-protocol org-habit org-mac-link)))
+#+END_SRC
+
 * Abstract                                                   :ignore:
 
 # See https://shields.io/
@@ -1348,8 +1352,8 @@ Note: Using spacemacs theme above.
 (setf custom-safe-themes t)
 
 ;; Nice looking themes ^_^
-(use-package solarized-theme)
-(use-package doom-themes)
+(use-package solarized-theme :demand t)
+(use-package doom-themes  :demand t)
 ;; (use-package spacemacs-theme)
 ;; this gives me an error for some reason
 
@@ -1612,7 +1616,7 @@ We can delete selected text just by hitting the backspace key.
   (delete-selection-mode 1)
 #+END_SRC
 
-** Highlight & complete parenthesis pair when cursor is near ;-
+** Highlight & complete parenthesis pair when cursor is near ;-)
 
 #+begin_src emacs-lisp
 ;; Highlight expression within matching parens when near one of them.
@@ -1648,7 +1652,6 @@ It supports, by default, ACSI pairs ~{}, [], ()~ and Unicode ~‘’, “”, �
 
 Let's add the org-emphasises markers.
 #+BEGIN_SRC emacs-lisp
-(electric-pair-mode
 (setq electric-pair-pairs
       '(
         (?~ . ?~)
@@ -1737,19 +1740,6 @@ a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
 (column-number-mode t)
 #+END_SRC
 
-** COMMENT “FIXME:” Keyword
-
-In the *middle* of a senctence, I need a FIXME: Woah!
-
-#+BEGIN_SRC emacs-lisp
-;; “FIXME:” is now a keyword, and so will be highlighted
-(font-lock-add-keywords nil
-'(("\\<\\(FIXME:\\)" 1
-font-lock-warning-face t)))
-;;
-;; Src: https://www.gnu.org/software/emacs/manual/html_node/emacs/Font-Lock.html#Font-Lock
-;; Also: https://stackoverflow.com/a/756856/3550444
-#+END_SRC
 ** Neotree: Directory Tree Listing
 We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp
@@ -3061,7 +3051,7 @@ If the :tangle header arg is a list of files. Handle all files"
 (advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
 (advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
 #+end_src
-* TODO Expected IDE Support
+* Expected IDE Support
 
 #+BEGIN_SRC emacs-lisp
 ;; Use 4 spaces in places of tabs when indenting.
@@ -3116,11 +3106,10 @@ and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???,
 #+BEGIN_SRC emacs-lisp
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
-  :init
-
+  :config
   ;; Adding a new keyword: TEST.
   (add-to-list 'hl-todo-keyword-faces '("TEST" . "#dc8cc3"))
-
+  :init
   (add-hook 'text-mode-hook (lambda () (hl-todo-mode t)))
 )
 #+END_SRC
@@ -3130,6 +3119,7 @@ mentioned]] in a magit status buffer ---which uses the keywords from ~hl-todo~.
 #+BEGIN_SRC emacs-lisp
 (use-package magit-todos
   :after magit
+  :after hl-todo
   :config
   (magit-todos-mode))
 #+END_SRC
@@ -4483,6 +4473,7 @@ f9 ∷ publish to blog
 (progn (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
 
 # Local Variables:
+# eval: (org-babel-load-file "init.org")
 # eval: (local-set-key (kbd "<f8>") (lambda () (interactive) (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # eval: (local-set-key (kbd "<f9>") (lambda () (interactive) (org-babel-goto-named-src-block "publish-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # compile-command:  (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
