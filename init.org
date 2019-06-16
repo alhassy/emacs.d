@@ -958,6 +958,10 @@ interactively: ~M-x customize-variable agda-input-user-translations~ then
 #+BEGIN_SRC emacs-lisp
 ;; category theory
 (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
+#+END_SRC
+:Hide:
+Not everyone needs to see my categorial interests.
+#+BEGIN_SRC emacs-lisp
 (add-to-list 'agda-input-user-translations '("alg" "𝒜𝓁ℊ"))
 (add-to-list 'agda-input-user-translations '("split" "▵"))
 (add-to-list 'agda-input-user-translations '("join" "▿"))
@@ -987,7 +991,9 @@ interactively: ~M-x customize-variable agda-input-user-translations~ then
 (add-to-list 'agda-input-user-translations '("ceil"   "⌈⌉"))
 (add-to-list 'agda-input-user-translations '("raise"  "⌈⌉"))
 (add-to-list 'agda-input-user-translations '("rad"    "⌈⌉"))
-
+#+END_SRC
+:End:
+#+BEGIN_SRC emacs-lisp
 ;; silly stuff
 ;;
 ;; angry, cry, why-you-no
@@ -1630,6 +1636,17 @@ the lightweight package ~electric~, which provided by Emacs out of the box.
 #+END_SRC
 
 It supports, by default, ACSI pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
+
+Let's add the org-emphasises markers.
+#+BEGIN_SRC emacs-lisp
+(electric-pair-mode
+(setq electric-pair-pairs
+      '(
+        (?~ . ?~)
+        (?* . ?*)
+        (?/ . ?/)
+       ))
+#+END_SRC
 
 *** COMMENT Smartparens                                                        :Nope:
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -4418,6 +4435,8 @@ avoid scaring anyone. I may use it in my personal stuff.
 (local-set-key (kbd "C-x x x") (λ (message-box "Terse!")))
 #+END_SRC
 
+* COMMENT FIXME Improvements
++ [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
 * COMMENT ─Pushing to blog─
 
 C-c C-c this snippet to export to blog.

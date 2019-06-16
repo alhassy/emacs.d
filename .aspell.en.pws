@@ -1,4 +1,4 @@
-personal_ws-1.1 en 49 
+personal_ws-1.1 en 50 
 prophethood
 datatypes
 applicative
@@ -12,6 +12,8 @@ calculational
 Prolog
 unquotation
 morphism
+preprocessor
+Preprocessor
 observationally
 esotericity
 Goju
@@ -40,9 +42,8 @@ journaling
 centric
 magit
 subexpression
-functor's
 functors
-Functors
+functor's
 Destructuring
 Procedurally
 Musa
