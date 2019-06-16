@@ -3100,7 +3100,10 @@ By default, you see the changes ‘backwards’: Red means
 delete these things to get to the older version; i.e.,
 the red ‘-’ are newer items.
 
-** Highlighting TODO-s
+** Highlighting TODO-s & Showing them in Magit
+Basic support todos. By default these include:
+TODO NEXT THEM PROG OKAY DONT FAIL DONE NOTE KLUDGE HACK TEMP FIXME
+and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
 #+BEGIN_SRC emacs-lisp
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
@@ -3113,9 +3116,20 @@ the red ‘-’ are newer items.
 )
 #+END_SRC
 
-Default todos include:
-TODO NEXT THEM PROG OKAY DONT FAIL DONE NOTE KLUDGE HACK TEMP FIXME
-and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
+Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
+mentioned]] in a magit status buffer ---which uses the keywords from ~hl-todo~.
+#+BEGIN_SRC emacs-lisp
+(use-package magit-todos
+  :after magit
+  :config
+  (magit-todos-mode))
+#+END_SRC
+
+Note that such TODO keywords are not propagated from sections that are
+COMMENT-ed out in org-mode.
+
+Seeing the TODO list with each commit is an incentive to actually tackle the
+items there (•̀ᴗ•́)و
 
 ** Taking a tour of one's edits
 This package allows us to move around the edit points of a buffer
