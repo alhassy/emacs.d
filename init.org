@@ -1321,6 +1321,15 @@ I always want to be in Org-mode and input unicode:
 )
 #+END_SRC
 
+** Restarting Emacs
+
+Sometimes I wish to close then reopen Emacs; unsurprisingly someone's thought of implementing that.
+#+BEGIN_SRC emacs-lisp
+;; Provides only the command “restart-emacs”.
+(use-package restart-emacs
+  :commands restart-emacs)
+#+END_SRC
+
 * Cosmetics
 
 # Font
@@ -2491,6 +2500,8 @@ parts of works emphasied with org-mode; e.g.,
 
 ** Making Block Delimiters Less Intrusive
 
+# (rasmus/org-prettify-src--update)
+
 Let us render Org-mode's
 ~#+begin_src~
 and
@@ -2577,7 +2588,6 @@ His setup also accounts for quotes.
 
 ;; Last up­dated: 2019-06-09
 #+end_src
-
 :End:
 
 His development relies on built-in prettify-symbols-mode, which disguises strings in a
@@ -2585,11 +2595,7 @@ buffer for the sake of readability or aesthetics.
 Following the example in the documentation, ~C-h f prettify-symbols-mode~,
 we can quickly approximate his efforts for ~example~ blocks as follows, however a main issue
 is that source blocks have busybodied headers which his setup disguises as ‘≡’.
-#+BEGIN_SRC emacs-lisp :tangle no
-;;
-;; Disabled ---it conflicts with Rasmus' setup
-;;
-
+#+BEGIN_SRC emacs-lisp
 (global-prettify-symbols-mode -1)
 
 (defvar my-prettify-alist nil
@@ -2605,7 +2611,7 @@ is that source blocks have busybodied headers which his setup disguises as ‘�
 
   (add-hook 'text-mode-hook modify)
   (add-hook 'prog-mode-hook modify)
-  ;; For org-src blocks, “C-c '” to see the prettifications of language constructs.
+  ;; For org-example blocks, “C-c '” to see the prettifications of language constructs.
   ;; Or alter the particular hook directly.
 )
 #+END_SRC
@@ -4618,8 +4624,11 @@ f9 ∷ publish to blog
 
 (progn (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
 
++ The org-mode invocation below actually enables the source block prettifications.
+
 # Local Variables:
 # eval: (org-babel-load-file "init.org")
+# eval: (org-mode)
 # eval: (local-set-key (kbd "<f8>") (lambda () (interactive) (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # eval: (local-set-key (kbd "<f9>") (lambda () (interactive) (org-babel-goto-named-src-block "publish-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # compile-command:  (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
