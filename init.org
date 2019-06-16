@@ -3132,7 +3132,7 @@ user."
 (bind-key "C-x F" 'find-file-as-root)
 #+END_SRC
 
-** TODO Default Compilation Commands
+** FIXME Default Compilation Commands
 
 Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
 when ~M-x recompile~ is invoked. One of my habits is to append
