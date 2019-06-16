@@ -4343,6 +4343,46 @@ Finally, we can observe which features are active in our current Emacs with,
 (setq undo-tree-visualizer-diff t)
 #+end_src
 
+* COMMENT Macros
+
+Here's a neat macro I made, but I /may/ avoid using it in the init in order to
+avoid scaring anyone. I may use it in my personal stuff.
+
+#+BEGIN_SRC emacs-lisp
+(defmacro λ (&rest body)
+  "Implementing Z-notation style, interactive, lambdas; ideally for inline use:
+
+   “λ α β … ω • body”  becomes an interactive function with arguments α, …, ω.
+
+   The args list may be empty, in which case the separator “•” may be omitted
+   entirely, if desired.
+  "
+
+  (let* ((parts (-split-on '• body)) args rest)
+
+    (if (<= 2 (length parts))
+        (progn (setq args (car parts)) (setq rest (cadr parts)))
+         ;; Otherwise, only one part was found ---no arguments were provided.
+         (setq args nil) (setq rest (car parts)))
+
+   `(lambda ,args (interactive) ,@rest)
+  ))
+
+;; Some tests
+
+(setq f (λ x y • (+ x y)))   ;; ⇒ (lambda (x y) (interactive) (+ x y))
+(setq g (λ • 'neato "woah")) ;; ⇒ (lambda (x y) (interactive) 'neato "woah")
+(setq h (λ "bye" 'bye))      ;; ⇒ (lambda (x y) (interactive) "bye" 'bye)
+(funcall f 1 2)
+(funcall g)
+(funcall h)
+
+;; intended use case
+
+(local-set-key (kbd "C-x x x") (lambda () (interactive) (message-box "Test!")))
+(local-set-key (kbd "C-x x x") (λ (message-box "Terse!")))
+#+END_SRC
+
 * COMMENT ─Pushing to blog─
 
 C-c C-c this snippet to export to blog.
