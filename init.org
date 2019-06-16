@@ -3083,6 +3083,23 @@ By default, you see the changes ‘backwards’: Red means
 delete these things to get to the older version; i.e.,
 the red ‘-’ are newer items.
 
+** Highlighting TODO-s
+#+BEGIN_SRC emacs-lisp
+;; NOTE that the highlighting works even in comments.
+(use-package hl-todo
+  :init
+
+  ;; Adding a new keyword: TEST.
+  (add-to-list 'hl-todo-keyword-faces '("TEST" . "#dc8cc3"))
+
+  (add-hook 'text-mode-hook (lambda () (hl-todo-mode t)))
+)
+#+END_SRC
+
+Default todos include:
+TODO NEXT THEM PROG OKAY DONT FAIL DONE NOTE KLUDGE HACK TEMP FIXME
+and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
+
 ** Taking a tour of one's edits
 This package allows us to move around the edit points of a buffer
 /without/ actually undoing anything. We even obtain a brief description of what happend at each edit point. This seems useful for when I get interrupted or lose my train of
