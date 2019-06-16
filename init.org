@@ -16,9 +16,14 @@
 
 # (org-babel-load-file "init.org")
 
+# Text and Prog modes are the [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Basic-Major-Modes.html][basic major modes]] that other modes inheirt from,
+# and so we can hook onto these two modes if we want something to work almost everywhere.
+
+:TODO:
 #+BEGIN_SRC emacs-lisp
 ;; (setq org-modules (quote (org-info org-tempo org-protocol org-habit org-mac-link)))
 #+END_SRC
+:End:
 
 * Abstract                                                   :ignore:
 
@@ -2482,6 +2487,136 @@ parts of works emphasied with org-mode; e.g.,
 (setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
 (setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
 (org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
+#+END_SRC
+
+** Making Block Delimiters Less Intrusive
+
+Let us render Org-mode's
+~#+begin_src~
+and
+~#+end_src~
+less obtrusively by, e.g., having the former render as a pencil marker ✎
+and the latter as a tombstone □ ---reminiscent of Halmos' QED end-of-proof marker.
+His setup also accounts for quotes.
+
+⟪ Incantation Omitted ---Visit [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]]'s site & copy-paste it, if you wish ⟫
+:Hide:
+#+begin_src emacs-lisp
+(with-eval-after-load 'org
+  (defvar-local rasmus/org-at-src-begin -1
+    "Variable that holds whether last position was a ")
+
+  (defvar rasmus/ob-header-symbol ?☰
+    "Symbol used for babel headers")
+
+  (defun rasmus/org-prettify-src--update ()
+    (let ((case-fold-search t)
+          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+          found)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward re nil t)
+          (goto-char (match-end 0))
+          (let ((args (org-trim
+                       (buffer-substring-no-properties (point)
+                                                       (line-end-position)))))
+            (when (org-string-nw-p args)
+              (let ((new-cell (cons args rasmus/ob-header-symbol)))
+                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+                (cl-pushnew new-cell found :test #'equal)))))
+        (setq prettify-symbols-alist
+              (cl-set-difference prettify-symbols-alist
+                                 (cl-set-difference
+                                  (cl-remove-if-not
+                                   (lambda (elm)
+                                     (eq (cdr elm) rasmus/ob-header-symbol))
+                                   prettify-symbols-alist)
+                                  found :test #'equal)))
+        ;; Clean up old font-lock-keywords.
+        (font-lock-remove-keywords nil prettify-symbols--keywords)
+        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+        (font-lock-add-keywords nil prettify-symbols--keywords)
+        (while (re-search-forward re nil t)
+          (font-lock-flush (line-beginning-position) (line-end-position))))))
+
+  (defun rasmus/org-prettify-src ()
+    "Hide src options via `prettify-symbols-mode'.
+
+  `prettify-symbols-mode' is used because it has uncollpasing. It's
+  may not be efficient."
+    (let* ((case-fold-search t)
+           (at-src-block (save-excursion
+                           (beginning-of-line)
+                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+      ;; Test if we moved out of a block.
+      (when (or (and rasmus/org-at-src-begin
+                     (not at-src-block))
+                ;; File was just opened.
+                (eq rasmus/org-at-src-begin -1))
+        (rasmus/org-prettify-src--update))
+      ;; Remove composition if at line; doesn't work properly.
+      ;; (when at-src-block
+      ;;   (with-silent-modifications
+      ;;     (remove-text-properties (match-end 0)
+      ;;                             (1+ (line-end-position))
+      ;;                             '(composition))))
+      (setq rasmus/org-at-src-begin at-src-block)))
+
+  (defun rasmus/org-prettify-symbols ()
+    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+          (cl-reduce 'append
+                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
+                               ("#+end_src"   . ?□) ;; ⏹
+                               ("#+header:" . ,rasmus/ob-header-symbol)
+                               ("#+begin_quote" . ?»)
+                               ("#+end_quote" . ?«)))))
+    (turn-on-prettify-symbols-mode)
+    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
+  (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols))
+
+;; Last up­dated: 2019-06-09
+#+end_src
+
+:End:
+
+His development relies on built-in prettify-symbols-mode, which disguises strings in a
+buffer for the sake of readability or aesthetics.
+Following the example in the documentation, ~C-h f prettify-symbols-mode~,
+we can quickly approximate his efforts for ~example~ blocks as follows, however a main issue
+is that source blocks have busybodied headers which his setup disguises as ‘≡’.
+#+BEGIN_SRC emacs-lisp :tangle no
+;;
+;; Disabled ---it conflicts with Rasmus' setup
+;;
+
+(global-prettify-symbols-mode -1)
+
+(defvar my-prettify-alist nil
+  "Musa's personal prettifications.")
+
+(push '("<=" . ?≤) my-prettify-alist)
+(push '("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) my-prettify-alist) ;; ℰ⇒
+(push '("#+end_example" . ?⇐) my-prettify-alist)                  ;; ⇐
+
+(-let [modify (lambda ()
+              (setq prettify-symbols-alist
+                    (append my-prettify-alist prettify-symbols-alist)))]
+
+  (add-hook 'text-mode-hook modify)
+  (add-hook 'prog-mode-hook modify)
+  ;; For org-src blocks, “C-c '” to see the prettifications of language constructs.
+  ;; Or alter the particular hook directly.
+)
+#+END_SRC
+
+See [[http://www.modernemacs.com/post/prettify-mode/][“Mathematical Notation in Emacs”]] for how such prettifications can make verbose (Python)
+scripts much more readable by employing more economical disguises.
+
+A nice sanity:
+#+BEGIN_SRC emacs-lisp
+;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
+(setq prettify-symbols-unprettify-at-point 'right-edge)
 #+END_SRC
 
 ** Show off-screen Heading at the top of the window
