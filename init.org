@@ -230,7 +230,7 @@ This source block generates the ~README~ for the associated github repository.
 # nicely with github README.md.
 
 #+NAME: make-readme
-#+BEGIN_SRC emacs-lisp :tangle no :results none :export_never t
+#+BEGIN_SRC emacs-lisp :tangle no :export_never t
 (with-temp-buffer
     (insert
     "#+EXPORT_FILE_NAME: README.md
@@ -266,6 +266,9 @@ This source block generates the ~README~ for the associated github repository.
     ;; (shell-command "mv README.html README.md")
 )
 #+END_SRC
+
+#+RESULTS: make-readme
+: README.md
 
 ** COMMENT TODO Elementary Version Control
 :Properties:
@@ -3460,6 +3463,13 @@ Try and be grateful.
   ("C-x r b" .'helm-filtered-bookmarks)
   ("C-x C-f" . 'helm-find-files)
 
+  ;; A menu of all “top-level items” in a file; e.g.,
+  ;; functions and constants in source code or headers in an org-mode file.
+  ;;
+  ;; Nifty way to familarise yourself with a new code base, or one from a while ago.
+  ;;
+  ("C-c i" . 'helm-imenu)
+
    ;; Show all meaningful Lisp symbols whose names match a given pattern.
    ;; Helpful for looking up commands.
    ("C-h a" . helm-apropos)
@@ -4614,7 +4624,7 @@ C-c C-c this snippet to export to blog.
 
 ;; Different Emacs logos for blog and github.
 ;; (toggle to-github? nil (my/publish-to-blog 'yes 'local))
-(toggle to-github? nil (my/publish-to-blog))
+(-let [to-github? nil] (my/publish-to-blog))
 #+END_SRC
 * COMMENT footer
 
@@ -4624,11 +4634,11 @@ f9 ∷ publish to blog
 
 (progn (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
 
-+ The org-mode invocation below actually enables the source block prettifications.
++ The org-mode-restart invocation below actually enables the source block prettifications.
 
 # Local Variables:
+# eval: (org-mode-restart)
 # eval: (org-babel-load-file "init.org")
-# eval: (org-mode)
 # eval: (local-set-key (kbd "<f8>") (lambda () (interactive) (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # eval: (local-set-key (kbd "<f9>") (lambda () (interactive) (org-babel-goto-named-src-block "publish-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # compile-command:  (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))

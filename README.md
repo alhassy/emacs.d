@@ -1,11 +1,11 @@
 <h1> A Life Configuring Emacs </h1>
 
-<p align="center"><img src="emacs-logo.png" width=150 height=150/></p>
+<p align`"center"><img src`"emacs-logo.png" width=150 height=150/></p>
 
-<p align="center">
-   <a href="<https://www.gnu.org/software/emacs/>">
-        <img src="<https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/>></a>
-   <a href="<https://orgmode.org/>"><img src="<https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic"/>></a>
+<p align`"center">
+        <a href`"<https://www.gnu.org/software/emacs/>">
+        <img src`"https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style`plastic"*><*a>
+   <a href`"https://orgmode.org/"><img src`"<https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic"/>></a>
 </p>
 
 <h3> My Literate Setup </h3>
@@ -21,78 +21,81 @@ and its contents below could also be read in blog format, with *colour*, or as c
 
 # Table of Contents
 
-1.  [Why Emacs?](#org4cab179)
-2.  [Booting Up](#org2209613)
-    1.  [`~/.emacs` vs. `init.org`](#org837cf29)
-    2.  [`use-package` &#x2013;The start of `init.el`](#orgba785f0)
-    3.  [`magit` &#x2013;Emacs' porcelain interface to git](#org4cbee41)
-    4.  [Fix spelling as you type &#x2013;thesaurus & dictionary too!](#org96bf09c)
-    5.  [Using a Grammar & Style Checker](#org666de64)
-    6.  [Unicode Input via Agda Input](#org14f998c)
-    7.  [Syncing to the System's `$PATH`](#org4454d6b)
-    8.  [Keeping My System Up to Date](#org9e066d9)
-    9.  [Who am I? ─Using Gnus for Gmail](#orgf86c722)
-    10. [Emacs keybindings for my brower](#org70ed367)
-    11. [Using Emacs in any text area on my OS](#org0781896)
-3.  [Cosmetics](#org6ab8afd)
-    1.  [Themes](#orgc05c34e)
-    2.  [Startup message: Emacs & Org versions](#org86fc691)
-    3.  [Persistent Scratch Buffer](#org5799d6b)
-    4.  [Spaceline: A sleek mode line](#org9431c6a)
-    5.  [Flashing when something goes wrong ─no blinking](#orgce5d47f)
-    6.  [My to-do list: The initial buffer when Emacs opens up](#orgbac1b85)
-    7.  [Showing date, time, and battery life](#orgb7e4475)
-    8.  [Hiding Scrollbar, tool bar, and menu](#orgde2adfe)
-    9.  [Increase/decrease text size](#org9a6305a)
-    10. [Delete Selection mode](#org5a6ba4c)
-    11. [Highlight & complete parenthesis pair when cursor is near ;-](#orgb8575fd)
-    12. [Minibuffer should display line and column numbers](#org923fbd4)
-    13. [Neotree: Directory Tree Listing](#orge64efcd)
-    14. [Tabs](#orgdab5b5a):Disabled:
-    15. [Window resizing using the golden ratio](#org6bbb103):Disabled:
-4.  [Life within Org-mode](#org4b36d70)
-    1.  [High Speed Literate Programming](#orgd171af5)
-    2.  [Using org-mode as a Day Planner](#org7ba86ad)
-    3.  [Automating Pomodoro &#x2013;Dealing with dreadful tasks](#org1a82d85)
-    4.  [Journaling](#org92ceffc)
+1.  [Why Emacs?](#orgfeaefc1)
+2.  [Booting Up](#orgcc16264)
+    1.  [`~/.emacs` vs. `init.org`](#org243a7c3)
+    2.  [`use-package` &#x2013;The start of `init.el`](#org484ce7e)
+    3.  [`magit` &#x2013;Emacs' porcelain interface to git](#org2576ace)
+    4.  [Fix spelling as you type &#x2013;thesaurus & dictionary too!](#orgeefc706)
+    5.  [Using a Grammar & Style Checker](#org3d724cc)
+    6.  [Unicode Input via Agda Input](#orgc191c7b)
+    7.  [Syncing to the System's `$PATH`](#orga6c8809)
+    8.  [Keeping My System Up to Date](#org482965c)
+    9.  [Who am I? ─Using Gnus for Gmail](#orgbd25103)
+    10. [Emacs keybindings for my brower](#orge3c3b5e)
+    11. [Using Emacs in any text area on my OS](#orgc394bd4)
+    12. [Restarting Emacs](#org4bd1117)
+3.  [Cosmetics](#orgf1949e5)
+    1.  [Themes](#org06910d7)
+    2.  [Startup message: Emacs & Org versions](#orgad94879)
+    3.  [Persistent Scratch Buffer](#org1c518b8)
+    4.  [Spaceline: A sleek mode line](#org5b86d5d)
+    5.  [Flashing when something goes wrong ─no blinking](#org7c27c05)
+    6.  [My to-do list: The initial buffer when Emacs opens up](#org0dce9e5)
+    7.  [Showing date, time, and battery life](#orga44c6fb)
+    8.  [Hiding Scrollbar, tool bar, and menu](#org5a3cb84)
+    9.  [Increase/decrease text size](#org13336b1)
+    10. [Delete Selection mode](#orge9a5626)
+    11. [Highlight & complete parenthesis pair when cursor is near ;-)](#org5c3ab64)
+    12. [Minibuffer should display line and column numbers](#org8939fb1)
+    13. [Neotree: Directory Tree Listing](#org1191040)
+    14. [Tabs](#org7eb9c6c):Disabled:
+    15. [Window resizing using the golden ratio](#org9476e7a):Disabled:
+4.  [Life within Org-mode](#org1d676dd)
+    1.  [High Speed Literate Programming](#org461e065)
+    2.  [Using org-mode as a Day Planner](#org55ae56b)
+    3.  [Automating Pomodoro &#x2013;Dealing with dreadful tasks](#org1ac0f0b)
+    4.  [Journaling](#org6e3ff74)
     5.  [Workflow States](#WorkflowStates)
-    6.  [Show off-screen Heading at the top of the window](#orgeb03668)
-    7.  [Clocking Work Time](#org3676b38)
-    8.  [Reveal.JS &#x2013; The HTML Presentation Framework](#orgb2946d7)
-    9.  [Coloured LaTeX using Minted](#orge3148e2)
-    10. [Executing code from `src` blocks](#org45d86c3)
-    11. [Hiding Emphasise Markers & Inlining Images](#org3fa76cd)
-    12. [Jumping without hassle](#orgc96b621)
-    13. [Folding within a subtree](#orgdb9e439)
-    14. [Making then opening html's from org's](#org75c50d4)
-    15. [Making then opening pdf's from org's](#orga8ef21f)
-    16. [Interpret the Haskell source blocks in a file](#org83885e7)
-5.  [Expected IDE Support](#orgd832cbc)
-    1.  [Backups](#orgd91c3c5)
-    2.  [Highlighting TODO-s](#org3125ea9)
-    3.  [Taking a tour of one's edits](#org035240f)
-    4.  [Edit as Root](#org42cb88c)
-    5.  [FIXME Default Compilation Commands](#org24d5275)
-    6.  [Enabling CamelCase Aware Editing Operations](#org1a68c0b)
-    7.  [Mouse Editing Support](#org69463f2)
-    8.  [Dimming Unused Windows](#orgdb8aa9e)
-    9.  [Having a workspace manager in Emacs](#org362a21e)
-    10. [Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab](#org1e1d797)
-    11. [Completion Frameworks](#orgfe236dc)
-    12. [Snippets &#x2013; Template Expansion](#org4f3d008)
-6.  [Helpful Utilities & Shortcuts](#org72cc3fe)
-    1.  [Bind `recompile` to `C-c C-m` &#x2013; “m” for “m”ake](#org7e28bc3)
-    2.  [Reload buffer with `f5`](#orgc2868f0)
-    3.  [Kill to start of line](#orga5ed2da)
-    4.  [`file-as-list` and `file-as-string`](#orgbef54c9)
-    5.  [`kill-other-buffers`](#org050f0bd)
-    6.  [Switching from 2 horizontal windows to 2 vertical windows](#org7030f77)
-    7.  [`re-replace-in-file`](#org9c09602)
-    8.  [Obtaining Values of `#+KEYWORD` Annotations](#orga4426a4)
-    9.  [Quickly pop-up a terminal, run a command, close it](#org473931b)
-    10. [`C-x k` kills current buffer](#orga4a522d)
-    11. [Publishing articles to my personal blog](#org280250e)
-    12. [Excellent PDF Viewer](#orgc0e7aa8)
+    6.  [Org-Emphasise for Parts of Words](#org410d4b7)
+    7.  [Making Block Delimiters Less Intrusive](#orge79ea0e)
+    8.  [Show off-screen Heading at the top of the window](#org734e6c2)
+    9.  [Clocking Work Time](#org781f53b)
+    10. [Reveal.JS &#x2013; The HTML Presentation Framework](#org7a13326)
+    11. [Coloured LaTeX using Minted](#orgbd009d5)
+    12. [Executing code from `src` blocks](#org5e8e042)
+    13. [Hiding Emphasise Markers & Inlining Images](#org8ce283d)
+    14. [Jumping without hassle](#org6a9d91a)
+    15. [Folding within a subtree](#org2d6b3d0)
+    16. [Making then opening html's from org's](#orgbbb9816)
+    17. [Making then opening pdf's from org's](#orgb4de340)
+    18. [Interpret the Haskell source blocks in a file](#orgdf62512)
+5.  [Expected IDE Support](#org7085035)
+    1.  [Backups](#orgf2103f5)
+    2.  [Highlighting TODO-s & Showing them in Magit](#org939e5e0)
+    3.  [Taking a tour of one's edits](#org4194652)
+    4.  [Edit as Root](#org745e17f)
+    5.  [FIXME Default Compilation Commands](#org869e249)
+    6.  [Enabling CamelCase Aware Editing Operations](#org91fb16b)
+    7.  [Mouse Editing Support](#org7ba752f)
+    8.  [Dimming Unused Windows](#org965e93a)
+    9.  [Having a workspace manager in Emacs](#org5c435f1)
+    10. [Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab](#orgd118edc)
+    11. [Completion Frameworks](#orgc492389)
+    12. [Snippets &#x2013; Template Expansion](#org9d0e3bf)
+6.  [Helpful Utilities & Shortcuts](#org83ebc16)
+    1.  [Bind `recompile` to `C-c C-m` &#x2013; “m” for “m”ake](#orgd77f3dd)
+    2.  [Reload buffer with `f5`](#org1258780)
+    3.  [Kill to start of line](#org11a4355)
+    4.  [`file-as-list` and `file-as-string`](#org7aca9ea)
+    5.  [`kill-other-buffers`](#org7d7f09c)
+    6.  [Switching from 2 horizontal windows to 2 vertical windows](#org785ae86)
+    7.  [`re-replace-in-file`](#org4a30080)
+    8.  [Obtaining Values of `#+KEYWORD` Annotations](#orge49a3dc)
+    9.  [Quickly pop-up a terminal, run a command, close it](#orgc9f100d)
+    10. [`C-x k` kills current buffer](#orga38a979)
+    11. [Publishing articles to my personal blog](#org3c76a70)
+    12. [Excellent PDF Viewer](#orge3e4bc7)
 
 <p align="center">
         <a href="https://www.gnu.org/software/emacs/">
@@ -114,7 +117,7 @@ Dear reader, when encountering a foregin command `X` I encourage you to execute 
 An elementary Elisp Cheat Sheet can be found [here.](https://github.com/alhassy/ElispCheatSheet)
 
 
-<a id="org4cab179"></a>
+<a id="orgfeaefc1"></a>
 
 # Why Emacs?
 
@@ -204,7 +207,7 @@ Finally, here's some fun commands to try out:
 -   `M-x butterfly` &#x2014;in reference to [“real programmers”](https://xkcd.com/378/)
 
 
-<a id="org2209613"></a>
+<a id="orgcc16264"></a>
 
 # Booting Up
 
@@ -214,7 +217,7 @@ Let's always load local variables that we've marked as safe.
     (setq enable-local-variables :safe)
 
 
-<a id="org837cf29"></a>
+<a id="org243a7c3"></a>
 
 ## `~/.emacs` vs. `init.org`
 
@@ -310,7 +313,7 @@ This source block generates the `README` for the associated github repository.
     )
 
 
-<a id="orgba785f0"></a>
+<a id="org484ce7e"></a>
 
 ## `use-package` &#x2013;The start of `init.el`
 
@@ -446,7 +449,7 @@ Finally, since I've symlinked my `.emacs`:
     (setq vc-follow-symlinks t)
 
 
-<a id="org4cbee41"></a>
+<a id="org2576ace"></a>
 
 ## `magit` &#x2013;Emacs' porcelain interface to git
 
@@ -575,8 +578,17 @@ Let's try this out:
 
 In doubt, execute `C-h e` to jump to the `*Messages*` buffer.
 
+Finally, one of the main points for using version control is to have
+access to historic versions of a file. The following utility
+allows us to `M-x git-timemachine` on a file and use `p/n/g/q` to look
+at previous, next, goto arbitrary historic versions, or quit.
 
-<a id="org96bf09c"></a>
+-   If we want to roll back to a previous version, we just `write-file` as usual!
+
+    (use-package git-timemachine)
+
+
+<a id="orgeefc706"></a>
 
 ## Fix spelling as you type &#x2013;thesaurus & dictionary too!
 
@@ -699,7 +711,7 @@ Then *detect language* then *Arabic* to obtain:
 Neato 😲
 
 
-<a id="org666de64"></a>
+<a id="org3d724cc"></a>
 
 ## Using a Grammar & Style Checker
 
@@ -740,7 +752,7 @@ By looking around the source code, I can do all three stages smoothly (•̀ᴗ�
     (global-set-key "\M-^" 'langtool-check)
 
 
-<a id="org14f998c"></a>
+<a id="orgc191c7b"></a>
 
 ## Unicode Input via Agda Input
 
@@ -766,35 +778,6 @@ interactively: `M-x customize-variable agda-input-user-translations` then
 
     ;; category theory
     (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
-    (add-to-list 'agda-input-user-translations '("alg" "𝒜𝓁ℊ"))
-    (add-to-list 'agda-input-user-translations '("split" "▵"))
-    (add-to-list 'agda-input-user-translations '("join" "▿"))
-    (add-to-list 'agda-input-user-translations '("adj" "⊣"))
-    (add-to-list 'agda-input-user-translations '(";;" "﹔"))
-    (add-to-list 'agda-input-user-translations '(";;" "⨾"))
-    (add-to-list 'agda-input-user-translations '(";;" "∘"))
-
-    ;; lattices
-    (add-to-list 'agda-input-user-translations '("meet" "⊓"))
-    (add-to-list 'agda-input-user-translations '("join" "⊔"))
-
-    ;; residuals
-    (add-to-list 'agda-input-user-translations '("syq"  "╳"))
-    (add-to-list 'agda-input-user-translations '("over" "╱"))
-    (add-to-list 'agda-input-user-translations '("under" "╲"))
-            ;; Maybe “\\” shortcut?
-
-    ;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
-    (add-to-list 'agda-input-user-translations '("|" "❙"))
-    (add-to-list 'agda-input-user-translations '("with" "❙"))
-
-    ;; adjunction isomorphism pair
-    (add-to-list 'agda-input-user-translations '("floor"  "⌊⌋"))
-    (add-to-list 'agda-input-user-translations '("lower"  "⌊⌋"))
-    (add-to-list 'agda-input-user-translations '("lad"    "⌊⌋"))
-    (add-to-list 'agda-input-user-translations '("ceil"   "⌈⌉"))
-    (add-to-list 'agda-input-user-translations '("raise"  "⌈⌉"))
-    (add-to-list 'agda-input-user-translations '("rad"    "⌈⌉"))
 
     ;; silly stuff
     ;;
@@ -823,7 +806,7 @@ Note that the effect of [Emacs unicode input](http://ergoemacs.org/emacs/emacs_n
 `abbrev-mode`.
 
 
-<a id="org4454d6b"></a>
+<a id="orga6c8809"></a>
 
 ## Syncing to the System's `$PATH`
 
@@ -841,7 +824,7 @@ when Org-mode attempts to produce a PDF.
 See these [docs](https://github.com/purcell/exec-path-from-shell) for setting other environment variables.
 
 
-<a id="org9e066d9"></a>
+<a id="org482965c"></a>
 
 ## Keeping My System Up to Date
 
@@ -869,7 +852,7 @@ See these [docs](https://github.com/purcell/exec-path-from-shell) for setting ot
     (add-hook 'after-init-hook 'display-startup-echo-area-message)
 
 
-<a id="orgf86c722"></a>
+<a id="orgbd25103"></a>
 
 ## Who am I? ─Using Gnus for Gmail
 
@@ -957,7 +940,7 @@ Learn more by reading [The Gnus Manual](https://www.gnus.org/manual.html); also 
 -   Or, less comprehensively, this [outline](https://github.com/redguardtoo/mastering-emacs-in-one-year-guide/blob/master/gnus-guide-en.org#subscribe-groups).
 
 
-<a id="org70ed367"></a>
+<a id="orge3c3b5e"></a>
 
 ## Emacs keybindings for my brower
 
@@ -967,7 +950,7 @@ Now `C-h` in my browser shows which Emacs-like bindings
 can be used to navigate my browser ^\_^
 
 
-<a id="org0781896"></a>
+<a id="orgc394bd4"></a>
 
 ## Using Emacs in any text area on my OS
 
@@ -1004,7 +987,18 @@ I always want to be in Org-mode and input unicode:
     )
 
 
-<a id="org6ab8afd"></a>
+<a id="org4bd1117"></a>
+
+## Restarting Emacs
+
+Sometimes I wish to close then reopen Emacs; unsurprisingly someone's thought of implementing that.
+
+    ;; Provides only the command “restart-emacs”.
+    (use-package restart-emacs
+      :commands restart-emacs)
+
+
+<a id="orgf1949e5"></a>
 
 # Cosmetics
 
@@ -1019,7 +1013,7 @@ I always want to be in Org-mode and input unicode:
     (setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 
 
-<a id="orgc05c34e"></a>
+<a id="org06910d7"></a>
 
 ## Themes
 
@@ -1027,8 +1021,8 @@ I always want to be in Org-mode and input unicode:
     (setf custom-safe-themes t)
 
     ;; Nice looking themes ^_^
-    (use-package solarized-theme)
-    (use-package doom-themes)
+    (use-package solarized-theme :demand t)
+    (use-package doom-themes  :demand t)
     ;; (use-package spacemacs-theme)
     ;; this gives me an error for some reason
 
@@ -1073,7 +1067,7 @@ The [Doom Themes](https://github.com/hlissner/emacs-doom-themes/tree/screenshots
 A showcase of many themes can be found [here](https://emacsthemes.com/).
 
 
-<a id="org86fc691"></a>
+<a id="orgad94879"></a>
 
 ## Startup message: Emacs & Org versions
 
@@ -1107,7 +1101,7 @@ Moreover, since I end up using org-mode most of the time, let's make that the de
     (setq initial-major-mode 'org-mode)
 
 
-<a id="org5799d6b"></a>
+<a id="org1c518b8"></a>
 
 ## Persistent Scratch Buffer
 
@@ -1141,7 +1135,7 @@ the scratch buffer by default.
       (persistent-scratch-setup-default))
 
 
-<a id="org9431c6a"></a>
+<a id="org5b86d5d"></a>
 
 ## Spaceline: A sleek mode line
 
@@ -1171,7 +1165,7 @@ and `'contour, 'chamfer, 'wave, 'zigzag` which look like browser tabs
 that are curved, boxed, wavy, or in the style of driftwood.
 
 
-<a id="orgce5d47f"></a>
+<a id="org7c27c05"></a>
 
 ## Flashing when something goes wrong ─no blinking
 
@@ -1185,7 +1179,7 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
     (blink-cursor-mode -1)
 
 
-<a id="orgbac1b85"></a>
+<a id="org0dce9e5"></a>
 
 ## My to-do list: The initial buffer when Emacs opens up
 
@@ -1199,7 +1193,7 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
           (find-file "~/.emacs.d/init.org")
 
 
-<a id="orgb7e4475"></a>
+<a id="orga44c6fb"></a>
 
 ## Showing date, time, and battery life
 
@@ -1223,7 +1217,7 @@ and coloured yellow otherwise. It is important to note that
 this package is no longer maintained. It works on my machine.
 
 
-<a id="orgde2adfe"></a>
+<a id="org5a3cb84"></a>
 
 ## Hiding Scrollbar, tool bar, and menu
 
@@ -1232,7 +1226,7 @@ this package is no longer maintained. It works on my machine.
     (menu-bar-mode -1)
 
 
-<a id="org9a6305a"></a>
+<a id="org13336b1"></a>
 
 ## Increase/decrease text size
 
@@ -1247,7 +1241,7 @@ this package is no longer maintained. It works on my machine.
                    ))
 
 
-<a id="org5a6ba4c"></a>
+<a id="orge9a5626"></a>
 
 ## Delete Selection mode
 
@@ -1258,9 +1252,9 @@ We can delete selected text just by hitting the backspace key.
     (delete-selection-mode 1)
 
 
-<a id="orgb8575fd"></a>
+<a id="org5c3ab64"></a>
 
-## Highlight & complete parenthesis pair when cursor is near ;-
+## Highlight & complete parenthesis pair when cursor is near ;-)
 
     ;; Highlight expression within matching parens when near one of them.
     (setq show-paren-delay 0)
@@ -1289,8 +1283,17 @@ the lightweight package `electric`, which provided by Emacs out of the box.
 
 It supports, by default, ACSI pairs `{}, [], ()` and Unicode `‘’, “”, ⟪⟫, ⟨⟩`.
 
+Let's add the org-emphasises markers.
 
-<a id="org923fbd4"></a>
+    (setq electric-pair-pairs
+          '(
+            (?~ . ?~)
+            (?* . ?*)
+            (?/ . ?/)
+           ))
+
+
+<a id="org8939fb1"></a>
 
 ## Minibuffer should display line and column numbers
 
@@ -1299,7 +1302,7 @@ It supports, by default, ACSI pairs `{}, [], ()` and Unicode `‘’, “”, �
     (column-number-mode t)
 
 
-<a id="orge64efcd"></a>
+<a id="org1191040"></a>
 
 ## Neotree: Directory Tree Listing
 
@@ -1335,7 +1338,7 @@ I *rarely* make use of this feature; company mode & Helm together quickly provid
 an automatic replacement for nearly all of my uses.
 
 
-<a id="orgdab5b5a"></a>
+<a id="org7eb9c6c"></a>
 
 ## Tabs     :Disabled:
 
@@ -1357,7 +1360,7 @@ Something cute to show to others, but not as fast as the keyboard.
 It's been less than three days and I've found this utility to be unhelpful, to me anyhow.
 
 
-<a id="org6bbb103"></a>
+<a id="org9476e7a"></a>
 
 ## Window resizing using the golden ratio     :Disabled:
 
@@ -1373,7 +1376,7 @@ are still readable.
 After some time this got a bit annoying and I'm no longer  using this.
 
 
-<a id="org4b36d70"></a>
+<a id="org1d676dd"></a>
 
 # Life within Org-mode
 
@@ -1421,7 +1424,7 @@ Also:
 I rarely use tables, but here is a useful [Org-Mode Table Editing Cheatsheet.](http://notesyoujustmightwanttosave.blogspot.com/)
 
 
-<a id="orgd171af5"></a>
+<a id="org461e065"></a>
 
 ## High Speed Literate Programming
 
@@ -1447,8 +1450,8 @@ controls, such as
 -   `w` refile current heading; options list pops-up to select which heading to move it to. Neato!
 -   `t` cycle through the available TODO states.
 -   `^` sort children of current subtree; brings up a list of sorting options.
--   `n/p` for next/previous *visible* heading.
--   `f/b` for jumping forward/backward to the next/previous *same-level* heading.
+-   `n/p` for next*previous /visible* heading.
+-   `f/b` for jumping forward*backward to the next*previous *same-level* heading.
 -   `D/U` move a heading down/up.
 -   `L/R` recursively promote (move leftwards) or demote (more rightwards) a heading.
 -   `1,2,3` to mark a heading with priority, highest to lowest.
@@ -1566,7 +1569,7 @@ In summary,
     (setq org-yank-adjusted-subtrees t)
 
 
-<a id="org7ba86ad"></a>
+<a id="org55ae56b"></a>
 
 ## Using org-mode as a Day Planner
 
@@ -1688,7 +1691,7 @@ by `C-c C-s` then pick a date by entering a number in the form `+n` to mean that
 
 **Step 3: Quickly review the upcoming week**
 The next day we begin our work, we press `C-c a a` to see the
-scheduled tasks for this week --`C-c C-s` to re-schedule the
+scheduled tasks for this week &#x2013;~C-c C-s~ to re-schedule the
 task under the cursor and `r` to refresh the agenda.
 
     (define-key global-map "\C-ca" 'org-agenda)
@@ -1788,7 +1791,7 @@ Let's install some helpful views for our agenda.
                       (org-agenda-overriding-header "Unscheduled TODO entries: "))))
 
 
-<a id="org1a82d85"></a>
+<a id="org1ac0f0b"></a>
 
 ## Automating [Pomodoro](https://en.wikipedia.org/wiki/Pomodoro_Technique) &#x2013;Dealing with dreadful tasks
 
@@ -1822,7 +1825,7 @@ Yet, sometimes it's hard to even get started on some tasks.
 Note that this does not conflict with the total effort estimate for the task.
 
 
-<a id="org92ceffc"></a>
+<a id="org6e3ff74"></a>
 
 ## Journaling
 
@@ -1940,8 +1943,8 @@ We can also change through states using Shift- left, or right.
 Let's draw a state diagram to show what such a workflow looks like.
 
 [PlantUML](http://plantuml.com/index) supports drawing diagrams in a tremendously simple format
-&#x2013;it even supports Graphviz/DOT directly and many other formats.
-Super simple setup instructions can be found [here](http://eschulte.github.io/babel-dev/DONE-integrate-plantuml-support.html); below are a bit more
+&#x2013;it even supports Graphviz*DOT directly and many other formats.
+Super simple setup instructions can be found [[http:/*eschulte.github.io*babel-dev*DONE-integrate-plantuml-support.html][here]]; below are a bit more
 involved instructions. Read the manual [here](http://plantuml.com/guide).
 
     ;; Install the tool
@@ -2036,7 +2039,68 @@ This particular workflow is inspired by [Bernt Hansen](http://doc.norang.ca/org-
 The above is known as an “activity diagram” and it's covered in §4.
 
 
-<a id="orgeb03668"></a>
+<a id="org410d4b7"></a>
+
+## Org-Emphasise for Parts of Words
+
+From [stackoverflow](https://stackoverflow.com/a/24540651/3550444), the following incantation allows us to have
+parts of works emphasied with org-mode; e.g.,
+*half*ed, `half`ed, and right in the m**idd**le! Super cool stuff!
+
+    (setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
+    (setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
+    (org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
+
+
+<a id="orge79ea0e"></a>
+
+## Making Block Delimiters Less Intrusive
+
+Let us render Org-mode's
+`#+begin_src`
+and
+`#+end_src`
+less obtrusively by, e.g., having the former render as a pencil marker ✎
+and the latter as a tombstone □ &#x2014;reminiscent of Halmos' QED end-of-proof marker.
+His setup also accounts for quotes.
+
+⟪ Incantation Omitted &#x2014;Visit [Rasmus Roulund](https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol)'s site & copy-paste it, if you wish ⟫
+
+His development relies on built-in prettify-symbols-mode, which disguises strings in a
+buffer for the sake of readability or aesthetics.
+Following the example in the documentation, `C-h f prettify-symbols-mode`,
+we can quickly approximate his efforts for `example` blocks as follows, however a main issue
+is that source blocks have busybodied headers which his setup disguises as ‘≡’.
+
+    (global-prettify-symbols-mode -1)
+
+    (defvar my-prettify-alist nil
+      "Musa's personal prettifications.")
+
+    (push '("<=" . ?≤) my-prettify-alist)
+    (push '("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) my-prettify-alist) ;; ℰ⇒
+    (push '("#+end_example" . ?⇐) my-prettify-alist)                  ;; ⇐
+
+    (-let [modify (lambda ()
+                  (setq prettify-symbols-alist
+                        (append my-prettify-alist prettify-symbols-alist)))]
+
+      (add-hook 'text-mode-hook modify)
+      (add-hook 'prog-mode-hook modify)
+      ;; For org-example blocks, “C-c '” to see the prettifications of language constructs.
+      ;; Or alter the particular hook directly.
+    )
+
+See [“Mathematical Notation in Emacs”](http://www.modernemacs.com/post/prettify-mode/) for how such prettifications can make verbose (Python)
+scripts much more readable by employing more economical disguises.
+
+A nice sanity:
+
+    ;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
+    (setq prettify-symbols-unprettify-at-point 'right-edge)
+
+
+<a id="org734e6c2"></a>
 
 ## Show off-screen Heading at the top of the window
 
@@ -2053,7 +2117,7 @@ the current heading stuck at the top of the window.
     )
 
 
-<a id="org3676b38"></a>
+<a id="org781f53b"></a>
 
 ## Clocking Work Time
 
@@ -2152,7 +2216,7 @@ will have will mention the time elapsed alongside the task name.
     When you've gone above your estimate time, the modeline shows it to be red.
 
 
-<a id="orgb2946d7"></a>
+<a id="org7a13326"></a>
 
 ## [Reveal.JS](https://revealjs.com/?transition=zoom#/) &#x2013; The HTML Presentation Framework
 
@@ -2162,17 +2226,17 @@ with [org-reveal](https://github.com/yjwen/org-reveal/blob/master/Readme.org) wi
     (use-package ox-reveal
      :config (setq org-reveal-root "https://cdn.jsdelivr.net/reveal.js/3.0.0/"))
 
-For example, execute --`C-c C-c`&#x2013;  the following block to see an example slide-deck (─‿‿─)
+For example, execute &#x2013;~C-c C-c~&#x2013;  the following block to see an example slide-deck (─‿‿─)
 
     (shell-command "curl https://raw.githubusercontent.com/yjwen/org-reveal/master/Readme.org >> Trying_out_reveal.org")
     (with-temp-buffer (find-file "Trying_out_reveal.org")
      (org-reveal-export-to-html-and-browse)
     )
 
-Org-mode exporting --`C-c C-e`&#x2013; now includes an option `R` for such reveal slide decks.
+Org-mode exporting &#x2013;~C-c C-e`-- now includes an option ~R` for such reveal slide decks.
 
 
-<a id="orge3148e2"></a>
+<a id="orgbd009d5"></a>
 
 ## Coloured LaTeX using Minted
 
@@ -2195,7 +2259,7 @@ For faster pdf generation, may consider invoking:
           '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 
 
-<a id="org45d86c3"></a>
+<a id="org5e8e042"></a>
 
 ## Executing code from `src` blocks
 
@@ -2239,7 +2303,7 @@ Some initial languages we want org-babel to support:
 More languages can be added using `add-to-list`.
 
 
-<a id="org3fa76cd"></a>
+<a id="org8ce283d"></a>
 
 ## Hiding Emphasise Markers & Inlining Images
 
@@ -2263,7 +2327,7 @@ The following is now disabled &#x2013;it makes my system slower than I'd like.
     (setq org-startup-with-latex-preview t)
 
 
-<a id="orgc96b621"></a>
+<a id="org6a9d91a"></a>
 
 ## Jumping without hassle
 
@@ -2282,7 +2346,7 @@ The following is now disabled &#x2013;it makes my system slower than I'd like.
     )
 
 
-<a id="orgdb9e439"></a>
+<a id="org2d6b3d0"></a>
 
 ## Folding within a subtree
 
@@ -2299,7 +2363,7 @@ The following is now disabled &#x2013;it makes my system slower than I'd like.
       (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 
 
-<a id="org75c50d4"></a>
+<a id="orgbbb9816"></a>
 
 ## Making then opening html's from org's
 
@@ -2317,7 +2381,7 @@ The following is now disabled &#x2013;it makes my system slower than I'd like.
     )
 
 
-<a id="orga8ef21f"></a>
+<a id="orgb4de340"></a>
 
 ## Making then opening pdf's from org's
 
@@ -2334,7 +2398,7 @@ The following is now disabled &#x2013;it makes my system slower than I'd like.
     )
 
 
-<a id="org83885e7"></a>
+<a id="orgdf62512"></a>
 
 ## Interpret the Haskell source blocks in a file
 
@@ -2398,16 +2462,16 @@ The following is now disabled &#x2013;it makes my system slower than I'd like.
     ;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
 
 
-<a id="orgd832cbc"></a>
+<a id="org7085035"></a>
 
-# TODO Expected IDE Support
+# Expected IDE Support
 
     ;; Use 4 spaces in places of tabs when indenting.
     (setq-default indent-tabs-mode nil)
     (setq-default tab-width 4)
 
 
-<a id="orgd91c3c5"></a>
+<a id="orgf2103f5"></a>
 
 ## Backups
 
@@ -2448,26 +2512,40 @@ delete these things to get to the older version; i.e.,
 the red ‘-’ are newer items.
 
 
-<a id="org3125ea9"></a>
+<a id="org939e5e0"></a>
 
-## Highlighting TODO-s
+## Highlighting TODO-s & Showing them in Magit
 
-    ;; NOTE that the highlighting works even in comments.
-    (use-package hl-todo
-      :init
-
-      ;; Adding a new keyword: TEST.
-      (add-to-list 'hl-todo-keyword-faces '("TEST" . "#dc8cc3"))
-
-      (add-hook 'text-mode-hook (lambda () (hl-todo-mode t)))
-    )
-
-Default todos include:
+Basic support todos. By default these include:
 TODO NEXT THEM PROG OKAY DONT FAIL DONE NOTE KLUDGE HACK TEMP FIXME
 and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
 
+    ;; NOTE that the highlighting works even in comments.
+    (use-package hl-todo
+      :config
+      ;; Adding a new keyword: TEST.
+      (add-to-list 'hl-todo-keyword-faces '("TEST" . "#dc8cc3"))
+      :init
+      (add-hook 'text-mode-hook (lambda () (hl-todo-mode t)))
+    )
 
-<a id="org035240f"></a>
+Lest these get buried in mountains of text, let's have them [become
+mentioned](https://github.com/alphapapa/magit-todos) in a magit status buffer &#x2014;which uses the keywords from `hl-todo`.
+
+    (use-package magit-todos
+      :after magit
+      :after hl-todo
+      :config
+      (magit-todos-mode))
+
+Note that such TODO keywords are not propagated from sections that are
+COMMENT-ed out in org-mode.
+
+Seeing the TODO list with each commit is an incentive to actually tackle the
+items there (•̀ᴗ•́)و
+
+
+<a id="org4194652"></a>
 
 ## Taking a tour of one's edits
 
@@ -2484,7 +2562,7 @@ thought: Just press `C-c e ,` to see what I did recently and where.
 Compare this with `C-x u`, or `undo-tree-visualise`, wherein undos are actually performed.
 
 
-<a id="org42cb88c"></a>
+<a id="org745e17f"></a>
 
 ## Edit as Root
 
@@ -2503,7 +2581,7 @@ From an [emacs-fu blog post](http://emacs-fu.blogspot.com/2013/03/editing-with-r
     (bind-key "C-x F" 'find-file-as-root)
 
 
-<a id="org24d5275"></a>
+<a id="org869e249"></a>
 
 ## FIXME Default Compilation Commands
 
@@ -2542,7 +2620,7 @@ Let's remove repeated matter.
     (global-set-key (kbd "<f7>") 'recompile)
 
 
-<a id="org1a68c0b"></a>
+<a id="org91fb16b"></a>
 
 ## Enabling CamelCase Aware Editing Operations
 
@@ -2553,7 +2631,7 @@ is common among coders. Now, for example, `M-f` moves along each subword.
     (global-subword-mode 1)
 
 
-<a id="org69463f2"></a>
+<a id="org7ba752f"></a>
 
 ## Mouse Editing Support
 
@@ -2561,7 +2639,7 @@ is common among coders. Now, for example, `M-f` moves along each subword.
     (setq mouse-drag-copy-region t)
 
 
-<a id="orgdb8aa9e"></a>
+<a id="org965e93a"></a>
 
 ## Dimming Unused Windows
 
@@ -2571,7 +2649,7 @@ Let's dim windows, and even the whole Emacs frame, when not in use.
       :config (dimmer-mode))
 
 
-<a id="org362a21e"></a>
+<a id="org5c435f1"></a>
 
 ## Having a workspace manager in Emacs
 
@@ -2603,7 +2681,7 @@ As always, since we've installed `which-key`, it suffices to press
 `C-x x` then look at the resulting menu 😃
 
 
-<a id="org1e1d797"></a>
+<a id="orgd118edc"></a>
 
 ## Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 
@@ -2630,7 +2708,7 @@ The [docs](https://github.com/killdash9/buffer-flip.el) for the following have u
     (global-set-key (kbd "M-<tab>") 'buffer-flip)
 
 
-<a id="orgfe236dc"></a>
+<a id="orgc492389"></a>
 
 ## Completion Frameworks
 
@@ -2798,7 +2876,7 @@ This is very useful when editing in a particular coding language, say via
     )
 
 
-<a id="org4f3d008"></a>
+<a id="org9d0e3bf"></a>
 
 ## Snippets &#x2013; Template Expansion
 
@@ -3111,7 +3189,7 @@ After our yankpad templates are generated, we need to load it.
     (yankpad-reload)
 
 
-<a id="org72cc3fe"></a>
+<a id="org83ebc16"></a>
 
 # Helpful Utilities & Shortcuts
 
@@ -3131,7 +3209,7 @@ Let's save a few precious seconds,
     (put 'narrow-to-page 'disabled nil)
 
 
-<a id="org7e28bc3"></a>
+<a id="orgd77f3dd"></a>
 
 ## Bind `recompile` to `C-c C-m` &#x2013; “m” for “m”ake
 
@@ -3151,7 +3229,7 @@ Let's save a few precious seconds,
     (diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
 
 
-<a id="orgc2868f0"></a>
+<a id="org1258780"></a>
 
 ## Reload buffer with `f5`
 
@@ -3171,7 +3249,7 @@ were regenerated &#x2013;Emacs should also prompt me if I make any changes!
     (global-auto-revert-mode 1)
 
 
-<a id="orga5ed2da"></a>
+<a id="org11a4355"></a>
 
 ## Kill to start of line
 
@@ -3181,7 +3259,7 @@ Dual to `C-k`,
     (global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
 
 
-<a id="orgbef54c9"></a>
+<a id="org7aca9ea"></a>
 
 ## `file-as-list` and `file-as-string`
 
@@ -3200,7 +3278,7 @@ Disclaimer: I wrote the following *before* I learned any lisp; everything below 
         (buffer-string)))
 
 
-<a id="org050f0bd"></a>
+<a id="org7d7f09c"></a>
 
 ## `kill-other-buffers`
 
@@ -3210,7 +3288,7 @@ Disclaimer: I wrote the following *before* I learned any lisp; everything below 
       (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
 
 
-<a id="org7030f77"></a>
+<a id="org785ae86"></a>
 
 ## Switching from 2 horizontal windows to 2 vertical windows
 
@@ -3233,7 +3311,7 @@ Instead I now only need to type `C-|` to make this switch.
     (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 
 
-<a id="org9c09602"></a>
+<a id="org4a30080"></a>
 
 ## `re-replace-in-file`
 
@@ -3280,7 +3358,7 @@ Example usage:
     )
 
 
-<a id="orga4426a4"></a>
+<a id="orge49a3dc"></a>
 
 ## Obtaining Values of `#+KEYWORD` Annotations
 
@@ -3306,7 +3384,7 @@ See [here](https://orgmode.org/manual/Org-syntax.html) on how to see the abstrac
 and how to manipulate it.
 
 
-<a id="org473931b"></a>
+<a id="orgc9f100d"></a>
 
 ## Quickly pop-up a terminal, run a command, close it
 
@@ -3332,7 +3410,7 @@ and how to manipulate it.
     (global-set-key "\C-t" 'toggle-terminal)
 
 
-<a id="orga4a522d"></a>
+<a id="orga38a979"></a>
 
 ## `C-x k` kills current buffer
 
@@ -3347,7 +3425,7 @@ such a tedious decision.
       '(lambda () (interactive) (kill-buffer (current-buffer))))
 
 
-<a id="org280250e"></a>
+<a id="org3c76a70"></a>
 
 ## Publishing articles to my personal blog
 
@@ -3390,7 +3468,7 @@ publish the current article to my blog.
     )
 
 
-<a id="orgc0e7aa8"></a>
+<a id="orge3e4bc7"></a>
 
 ## Excellent PDF Viewer
 
