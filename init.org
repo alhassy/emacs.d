@@ -128,7 +128,8 @@ and effort to make meaningful documentation --even when the project is private a
 # Comparing Emacs to an editor is like comparing GNU/Linux to a word processor. -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
 
 Some possibly interesting reads:
-+ [[https://sachachua.com/blog/wp-content/uploads/2013/05/How-to-Learn-Emacs-v2-Large.png][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
++ [[https://sachachua.com/blog/series/a-visual-guide-to-emacs/][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
++ [[http://emacsrocks.com/][Video Series on Why Emacs Rocks]] ---catch the enthusiasm!
 + [[http://ehneilsen.net/notebook/orgExamples/org-examples.html#sec-18][Emacs org-mode examples and cookbook]]
 + [[https://m00natic.github.io/emacs/emacs-wiki.html][An Opinionated Emacs guide for newbies and beyond]]
 + [[https://tuhdo.github.io/emacs-tutor.html][Emacs Mini-Manual, Part I of III]]
@@ -137,23 +138,32 @@ Some possibly interesting reads:
 + Reference cards for [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][GNU Emacs]], [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][Org-mode]], and [[https://github.com/alhassy/ElispCheatSheet/blob/master/CheatSheet.pdf][Elisp]].
 + [[https://www.reddit.com/r/emacs/comments/6fytr5/when_did_you_start_using_emacs/][“When did you start using Emacs” discussion on Reddit]]
 + [[https://david.rothlis.net/emacs/howtolearn.html][“How to Learn Emacs”]]
-+ [[http://emacsrocks.com/][Video Series on Why Emacs Rocks]]
 + [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
 + [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
 + [[https://github.com/caisah/emacs.dz][A list of people's nice emacs config files]]
 #  + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]
+
+---If eye-candy, a sleek and beautiful GUI, would entice you then consider starting with [[http://spacemacs.org/][spacemacs]].
+   Here's a helpful [[https://www.youtube.com/watch?v=hCNOB5jjtmc][installation video]], after which you may want to watch
+   [[https://www.youtube.com/watch?v=PVsSOmUB7ic][Org-mode in Spacemacs]] tutorial---
 
 Remember: Emacs is a flexible platform for developing end-user applications; e.g., this configuration file
 is at its core an Emacs Lisp program that yields the editor of my dreams
 --it encourages me to grow and to be creative, and I hope the same for all who use it;
 moreover, it reflects my personality such as what I value and what I neglect in my workflow.
 
+# why emacs ---not marching to someone-else's tune!
+#+begin_quote org
+/I’m stunned that you, as a professional software engineer, would eschew inferior computer languages that hinder your ability to craft code,
+/but you put up with editors that bind your fingers to someone else’s accepted practice. --- [[http://www.howardism.org/Technical/Emacs/why-emacs.html][Howard Abrams]]
+#+end_quote
+
 Moreover, as will be shown below, you can literrally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
 for textually input in your operating system --no copy-paste required.
 
 Finally, here's some fun commands to try out:
 + ~M-x doctor~ ---generalising the idea of rubber ducks
-+ ~M-x tetris~  or ~M-x gomoku~ ---a break with a classic
++ ~M-x tetris~  or ~M-x gomoku~ or ~M-x snake~---a break with a classic
 + ~M-x butterfly~ ---in reference to [[https://xkcd.com/378/][“real programmers”]]
 
 * Booting Up
@@ -1882,7 +1892,8 @@ Also:
 (setq org-return-follows-link t)
 #+END_SRC
 
-I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet.]]
+I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet]]
+and a [[http://www.howardism.org/Technical/Emacs/spreadsheet.html][friendly tutorial]].
 
 ** High Speed Literate Programming
 
