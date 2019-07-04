@@ -2672,6 +2672,8 @@ A nice sanity:
 
 (setq bibtex-completion-bibliography "~/thesis-proposal/References.bib")
 #+END_SRC
+#
+#  \bibliography{~/thesis-proposal/References.bib}
 
   Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter ~agda~ and you will be presented with
   all the entries in the bib database that mention ‘agda’. Super cool stuff.
@@ -3316,28 +3318,41 @@ and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???,
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
   :config
-  ;; Adding a new keyword: TEST.
-  (add-to-list 'hl-todo-keyword-faces '("TEST" . "#dc8cc3"))
-  :init
+  ;; Enable it for text-like locations
   (add-hook 'text-mode-hook (lambda () (hl-todo-mode t)))
+  ;; Adding some new keywords: TEST, WK, MA, JC.
+  (add-to-list 'hl-todo-keyword-faces '("TEST" . "#dc8cc3"))
+  (add-to-list 'hl-todo-keyword-faces '("MA" . "#dc8cc3"))
+  (add-to-list 'hl-todo-keyword-faces '("WK" . "#dc8cc3"))
+  (add-to-list 'hl-todo-keyword-faces '("JC" . "#dc8cc3"))
 )
 #+END_SRC
 
 Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
 mentioned]] in a magit status buffer ---which uses the keywords from ~hl-todo~.
 #+BEGIN_SRC emacs-lisp
+;; MA: The todo keywords work in code too!
 (use-package magit-todos
   :after magit
   :after hl-todo
   :config
+  ;; For some reason cannot use :custom with this package.
+  (custom-set-variables
+    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
   (magit-todos-mode))
 #+END_SRC
 
 Note that such TODO keywords are not propagated from sections that are
 COMMENT-ed out in org-mode.
 
+Open a Magit status buffer, or run ~magit-todos-list~ to show a dedicated to-do
+list buffer. You can then peek at items with space, or jump to them with enter.
+
 Seeing the TODO list with each commit is an incentive to actually tackle the
 items there (•̀ᴗ•́)و
+
++ Inline todo keywords are pickedup if they have a colon after them; e.g.,
+  TODO: example.
 
 ** Taking a tour of one's edits
 This package allows us to move around the edit points of a buffer
