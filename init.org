@@ -1675,16 +1675,25 @@ the lightweight package ~electric~, which provided by Emacs out of the box.
 (electric-pair-mode 1)
 #+END_SRC
 
-It supports, by default, ACSI pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
+It supports, by default, ACSII pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
 
 Let's add the org-emphasises markers.
 #+BEGIN_SRC emacs-lisp
 (setq electric-pair-pairs
-      '(
-        (?~ . ?~)
-        (?* . ?*)
-        (?/ . ?/)
-       ))
+         '(
+           (?~ . ?~)
+           (?* . ?*)
+           (?/ . ?/)
+          ))
+#+END_SRC
+
+Let's also, for example, avoid obtaining double ‘~’ and ‘/’ when searching for a file.
+#+BEGIN_SRC emacs-lisp
+;; Disable pairs when entering minibuffer
+(add-hook 'minibuffer-setup-hook (lambda () (electric-pair-mode 0)))
+
+;; Renable pairs when existing minibuffer
+(add-hook 'minibuffer-exit-hook (lambda () (electric-pair-mode 1)))
 #+END_SRC
 
 *** COMMENT Smartparens                                                        :Nope:
@@ -2501,16 +2510,20 @@ This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Be
 --while quickly searching through the PlantUML [[http://plantuml.com/guide][manual]]:
 The above is known as an “activity diagram” and it's covered in §4.
 
-** Org-Emphasise for Parts of Words
+** Org-Emphasise for Parts of Words :Disabled:
 
 From [[https://stackoverflow.com/a/24540651/3550444][stackoverflow]], the following incantation allows us to have
 parts of works emphasied with org-mode; e.g.,
 /half/ed, ~half~ed, and right in the m*idd*le! Super cool stuff!
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
 (setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
 (org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
 #+END_SRC
+
+I've disabled this feature since multiple occurrences
+of an emphasise marker are sometimes treated as one
+lengthy phrase being emphasised.
 
 ** Making Block Delimiters Less Intrusive
 
@@ -2527,7 +2540,6 @@ His setup also accounts for quotes.
 ⟪ Incantation Omitted ---Visit [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]]'s site & copy-paste it, if you wish ⟫
 :Hide:
 #+begin_src emacs-lisp
-(with-eval-after-load 'org
   (defvar-local rasmus/org-at-src-begin -1
     "Variable that holds whether last position was a ")
 
@@ -2598,10 +2610,11 @@ His setup also accounts for quotes.
                                ("#+end_quote" . ?«)))))
     (turn-on-prettify-symbols-mode)
     (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
-  (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols))
+  (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
 
 ;; Last up­dated: 2019-06-09
 #+end_src
+
 :End:
 
 His development relies on built-in prettify-symbols-mode, which disguises strings in a
@@ -2609,8 +2622,8 @@ buffer for the sake of readability or aesthetics.
 Following the example in the documentation, ~C-h f prettify-symbols-mode~,
 we can quickly approximate his efforts for ~example~ blocks as follows, however a main issue
 is that source blocks have busybodied headers which his setup disguises as ‘≡’.
-#+BEGIN_SRC emacs-lisp
-(global-prettify-symbols-mode -1)
+#+BEGIN_SRC emacs-lisp :tangle no
+(global-prettify-symbols-mode 1)
 
 (defvar my-prettify-alist nil
   "Musa's personal prettifications.")
@@ -2638,6 +2651,32 @@ A nice sanity:
 ;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 #+END_SRC
+
+** Working with Citations
+ [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
+
+ The following entity will display useful data
+ when the mouse hovers over it (•̀ᴗ•́)و If you click on it, then you're
+ in for a lot of super neat stuff, such as searching for the pdf online!
+
+ cite:agda_overview
+
+    #+BEGIN_SRC emacs-lisp
+(use-package org-ref :demand t)
+
+;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
+;; Most useful for non-LaTeX files.
+(setq reftex-default-bibliography '("~/thesis-proposal/References.bib"))
+
+(use-package helm-bibtex :demand t)
+
+(setq bibtex-completion-bibliography "~/thesis-proposal/References.bib")
+#+END_SRC
+
+  Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter ~agda~ and you will be presented with
+  all the entries in the bib database that mention ‘agda’. Super cool stuff.
+
+  Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][online]] or better yet as an org-file with ~M-x org-ref-help~.
 
 ** Show off-screen Heading at the top of the window
 
@@ -2865,18 +2904,22 @@ Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
 (setq org-latex-listings 'minted
       org-latex-packages-alist '(("" "minted"))
       org-latex-pdf-process
-      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+      '("pdflatex -shell-escape -output-directory %o %f"
         "biber %b"
-        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f")
+        "pdflatex -shell-escape -output-directory %o %f"
+        "pdflatex -shell-escape -output-directory %o %f")
 )
 #+END_SRC
 
-For faster pdf generation, may consider invoking:
+For faster pdf generation, possibly with errors, consider invoking:
 #+begin_example emacs-lisp
 (setq org-latex-pdf-process
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 #+end_example
+
+By default, Org exports LaTeX using the ~nonstopmode~ option, which tries
+its best to produce a PDF ---which ignores typesetting errors altogether,
+which is not necessary ideal when using LaTeX.
 
 ** Executing code from ~src~ blocks
 
@@ -3352,8 +3395,11 @@ Let's remove repeated matter.
 (setq compilation-always-kill t)
 
 ;; Scroll as compilation output is procuded in *Compilation* buffer; e.g., pdflatex
-;; Use 'first-error to stop scrolling on the first error encountered.
-(setq compilation-scroll-output t)
+;; Use 'first-error to stop scrolling on the first error encountered; otherwise ‘t’.
+(setq compilation-scroll-output 'first-error)
+
+;; Don't stop on informaiton messages or warnings; only on errors.
+(setq compilation-skip-threshold 2)
 #+end_src
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -4639,9 +4685,19 @@ C-c C-c this snippet to export to blog.
 #+END_SRC
 * COMMENT footer
 
-f7 ∷ tangle and compile init.el
-f8 ∷ make readme
-f9 ∷ publish to blog
+#+begin_src emacs-lisp
+;; Automatic line-wrapping should happen at the 80 column mark.
+(setq-default fill-column 80)
+
+f7 ∷ tangle and compile init.el         ;
+f8 ∷ make readme                        ;
+f9 ∷ publish to blog                    ;
+
+;; Reduce mental strain of locating the cursour when navigation happens;
+;; E.g., when we switch windows or scroll, we get a wave of light near the cursour.
+(beacon-mode 1)
+(setq beacon-color "#666600")
+#+end_src
 
 (progn (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
 
