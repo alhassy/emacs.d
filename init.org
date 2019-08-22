@@ -1,3 +1,5 @@
+# (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
+
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -14,6 +16,7 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
+* TODO COMMENT Clean up
 # (org-babel-load-file "init.org")
 
 # Text and Prog modes are the [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Basic-Major-Modes.html][basic major modes]] that other modes inheirt from,
@@ -23,7 +26,46 @@
 #+BEGIN_SRC emacs-lisp
 ;; (setq org-modules (quote (org-info org-tempo org-protocol org-habit org-mac-link)))
 #+END_SRC
+
+#+RESULTS:
+
 :End:
+
+# Includes fonts for subscripts; e.g., ₐₙₑₕᵢⱼₖₗₘₙₒₚₜₛ
+brew cask install font-symbola
+:unicode:
+Unicode doesn't intend to cover things
+that can be achieved with markup, so
+only a limited subset of the alphabet
+is available as subscript; but all is
+available as superscript, except ‘q’.
+ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜᵤᵥₓ
+⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁺ ⁻ ⁼ ⁽ ⁾ ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉ ₊ ₋ ₌ ₍ ₎
+ᵃ ᵇ ᶜ ᵈ ᵉ ᶠ ᵍ ʰ ⁱ ʲ ᵏ ˡ ᵐ ⁿ ᵒ ᵖ ʳ ˢ ᵗ ᵘ ᵛ ʷ ˣ ʸ ᶻ
+ᴬ ᴮ ᴰ ᴱ ᴳ ᴴ ᴵ ᴶ ᴷ ᴸ ᴹ ᴺ ᴼ ᴾ ᴿ ᵀ ᵁ ⱽ ᵂ
+ᵅ ᵝ ᵞ ᵟ ᵋ ᶿ ᶥ ᶲ ᵠ ᵡ ᵦ ᵧ ᵨ ᵩ ᵪ
+:End:
+
+;; In fill mode, when you type past the end of a line,
+;; Emacs automatically starts a new line, cleverly formatting paragraphs.
+;; This is a powerful form of “word wrap”.
+;;
+(add-to-hook org-mode-hook 'turn-on-auto-fill)
+
++ Emacs CheatSheet
+  - M-n 𝕏 / C-u n 𝕏 :: Repeat command 𝕏 $n$ times.
+       - /n/ may be omitted in the second form, defaulting to 4.
+       - Whence, it may be stacked: “C-u ⋯ C-u 𝕏” repeats command 𝕏
+         4ⁿ-times where n is the number of C-u commands.
+
+       - Holding ~Alt~ key and press ~1~ then ~2~ then ~3~ then release the
+         ~Alt~ key, and, say, press the ~j~ key. Now you have 123 j's
+         inserted lol.
+
+   - loop from cl-macs.el has support for destructing like CL:
+
+      (loop for (key . value) in my-list
+            collect (cons value key))
 
 * Abstract                                                   :ignore:
 
@@ -415,18 +457,24 @@ acts as its kernel.
 ;; (setq package-enable-at-startup nil)
 ;; Look at the *Messages* buffer before setting this to nil, then after.
 
+;; (setq gnutls-algorithm-priority nil) "NORMAL:-VERS-TLS1.3")
+
 ;; Internet repositories for new packages.
-(setq package-archives '(("org"       . "https://orgmode.org/elpa/")
-                         ("gnu"       . "https://elpa.gnu.org/packages/")
-                         ("melpa"     . "https://melpa.org/packages/")
-                         ("melpa-stable" . "https://stable.melpa.org/packages/")
+(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
+                         ("gnu"       . "http://elpa.gnu.org/packages/")
+                         ("melpa"     . "http://melpa.org/packages/")
+                         ("melpa-stable" . "http://stable.melpa.org/packages/")
                          ;; Maintainer is AWOL.
                          ;; ("marmalade" . "https://marmalade-repo.org/packages/")
                          ))
 
 ;; Actually get “package” to work.
 (package-initialize)
+
+(package-refresh-contents)
 #+END_SRC
+
+#+RESULTS:
 
 We can now:
 + ~M-x list-packages~ to see all melpa packages that can install
@@ -455,6 +503,9 @@ We now bootstrap ~use-package~,
 (require 'use-package)
 #+END_SRC
 
+#+RESULTS:
+: use-package
+
 We can now invoke ~(use-package XYZ :ensure t)~
 which should check for the ~XYZ~ package and make sure it is accessible.
 If not, the ~:ensure t~ part tells ~use-package~ to download it
@@ -466,6 +517,9 @@ by download ~.el~ files and placing them in the correct places on my system.
 #+begin_src emacs-lisp
 (setq use-package-always-ensure t)
 #+end_src
+
+#+RESULTS:
+: t
 
 Here's an example use of ~use-package~.
 Below I have my “show recent files pop-up” command set to ~C-x C-r~;
@@ -480,6 +534,9 @@ Moreover, I will be shown other commands I did not know about! Neato :-)
          (setq which-key-idle-delay 0.05)
 )
 #+END_SRC
+
+#+RESULTS:
+: t
 
 The ~:diminish~ keyword indicates that we do not want the mode's name to be
 shown to us in the modeline --the area near the bottom of Emacs.
@@ -708,7 +765,7 @@ at previous, next, goto arbitrary historic versions, or quit.
 (use-package git-timemachine)
 #+END_SRC
 
-** Fix spelling as you type --thesaurus & dictionary too!
+** TODO Fix spelling as you type --thesaurus & dictionary too!
 I would like to check spelling by default.
  + ~C-;~ :: Cycle through corrections for word at point.
  + ~M-$~ :: Check and correct spelling of the word at point
@@ -1381,8 +1438,9 @@ Note: Using spacemacs theme above.
 ;; Nice looking themes ^_^
 (use-package solarized-theme :demand t)
 (use-package doom-themes  :demand t)
-;; (use-package spacemacs-theme)
-;; this gives me an error for some reason
+(use-package spacemacs-common
+    :ensure spacemacs-theme
+    :config (load-theme 'spacemacs-light t))
 
 (defun my/disable-all-themes ()
   (dolist (th custom-enabled-themes)
@@ -1396,9 +1454,9 @@ Note: Using spacemacs theme above.
 )
 
 (defun my/load-light-theme ()
-  ;;   (load-theme 'spacemacs-light)   ;; orginally
+  (load-theme 'spacemacs-light)   ;; orginally
   ;; Recently I'm liking this ordered mixture.
-  (load-theme 'solarized-light) (load-theme 'doom-solarized-light)
+  ;; (load-theme 'solarized-light) (load-theme 'doom-solarized-light)
 )
 
 ;; “C-x t” to toggle between light and dark themes.
@@ -1419,7 +1477,8 @@ Note: Using spacemacs theme above.
 (global-set-key "\C-x\ t" 'my/toggle-theme)
 
 ;; Initially begin with the light theme.
-(load-theme 'spacemacs-light t)
+; (ignore-errors (load-theme 'spacemacs-light t))
+(my/toggle-theme)
 #+END_SRC
 
 The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
@@ -1528,7 +1587,7 @@ about the current mode, as well as other matters --such as time & date, for exam
   (setq powerline-default-separator 'arrow)
   :init
  (spaceline-helm-mode) ;; When using helm, mode line looks prettier.
- (spaceline-spacemacs-theme)
+ ; (ignore-errors (spaceline-spacemacs-theme))
 )
 #+END_SRC
 Other separators I've considered include ~'brace~ instead of an arrow,
@@ -2622,15 +2681,20 @@ buffer for the sake of readability or aesthetics.
 Following the example in the documentation, ~C-h f prettify-symbols-mode~,
 we can quickly approximate his efforts for ~example~ blocks as follows, however a main issue
 is that source blocks have busybodied headers which his setup disguises as ‘≡’.
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle yes
 (global-prettify-symbols-mode 1)
 
 (defvar my-prettify-alist nil
   "Musa's personal prettifications.")
 
 (push '("<=" . ?≤) my-prettify-alist)
+(push '("->" . ?→) my-prettify-alist)
+(push '("-->" . ?⟶) my-prettify-alist)
 (push '("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) my-prettify-alist) ;; ℰ⇒
 (push '("#+end_example" . ?⇐) my-prettify-alist)                  ;; ⇐
+(push '("{{{fold(" . ?↳) my-prettify-alist)
+(push '(")}}}" . ?↲) my-prettify-alist)
+(push '("{{{end-fold}}}" . ?↺) my-prettify-alist)
 
 (-let [modify (lambda ()
               (setq prettify-symbols-alist
@@ -2641,7 +2705,10 @@ is that source blocks have busybodied headers which his setup disguises as ‘�
   ;; For org-example blocks, “C-c '” to see the prettifications of language constructs.
   ;; Or alter the particular hook directly.
 )
-#+END_SRC
+#+end_src
+
+#+RESULTS:
+| (lambda nil (setq prettify-symbols-alist (append my-prettify-alist prettify-symbols-alist))) | flyspell-prog-mode |
 
 See [[http://www.modernemacs.com/post/prettify-mode/][“Mathematical Notation in Emacs”]] for how such prettifications can make verbose (Python)
 scripts much more readable by employing more economical disguises.
@@ -2651,6 +2718,42 @@ A nice sanity:
 ;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 #+END_SRC
+
+The ~↳Title Here↲ Contents ↺~ combination is for my makeshift HTML code folding macro
+---word-wrapped for readability.
+#+BEGIN_SRC org :tangle no
+,#+MACRO: end-fold  #+HTML: </details>
+,#+MACRO: fold      #+HTML: <details class="code-details"> <summary> <strong>
+                              <font face="Courier" size="3" color="green"> $1
+                              </font> </strong> </summary>
+#+END_SRC
+
+Let's have this fold-away in the source buffer as well by using [[https://www.emacswiki.org/emacs/FoldingMode][folding-mode]];
+with show/hide with ~C-<tab>~ key.
+#+BEGIN_SRC emacs-lisp
+(use-package folding
+ :init
+ ; (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
+ (setq folding-top-mark "{{{fold(")
+ (setq folding-bottom-mark "{{{end-fold}}}")
+ :config
+  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
+  (add-hook 'org-mode-hook #'folding-mode)
+)
+#+END_SRC
+
+#+RESULTS:
+: t
+
+:Example:
+
+{{{fold(nice)}}}
+
+hello
+
+{{{end-fold}}}
+
+:End:
 
 ** Working with Citations
  [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
@@ -2966,7 +3069,7 @@ Some initial languages we want org-babel to support:
 
 More languages can be added using ~add-to-list~.
 
-** COMMENT ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
+** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
 
 ** COMMENT TODO org-mode header generation
 Generate an untitled org-mode skeleton file ~C-x t~ --similar to ~C-x C-f~ for finding files.
@@ -3386,7 +3489,7 @@ user."
 (bind-key "C-x F" 'find-file-as-root)
 #+END_SRC
 
-** FIXME Default Compilation Commands
+** COMMENT FIXME Default Compilation Commands
 
 Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
 when ~M-x recompile~ is invoked. One of my habits is to append
@@ -3437,12 +3540,16 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 (global-subword-mode 1)
 #+end_src
 
-** COMMENT Keep buffers open across sessions :maybe_not_desirable:
-#+begin_src emacs-lisp
+** Keep buffers open across sessions                         :Disabled:
+#+begin_src emacs-lisp :tangle yes
 ;; Keep open files open across sessions.
 (desktop-save-mode 1)
 (setq desktop-restore-eager 10)
 #+end_src
+
+Not desirable since for when I want to make alterations to my Emacs system and don't
+want files to remain open. Time will tell.
+
 ** Mouse Editing Support
 #+begin_src emacs-lisp
 ;; Text selected with the mouse is automatically copied to clipboard.
@@ -3948,6 +4055,9 @@ Whence,
 )
 #+end_src
 
+#+RESULTS:
+: README.md
+
 The template /text/ is then generated by the following simple loop
 --whose source block is named ~my-org-lang-templates~.
 #+NAME: my-org-lang-templates
@@ -4098,7 +4208,7 @@ After our yankpad templates are generated, we need to load it.
 ;; After init hook; see above near use-package install.
 (yankpad-reload)
 #+END_SRC
-** COMMENT On the fly syntax checking     :Disabled:_want_it_within_org_src:
+** COMMENT On the fly syntax checking
 #+begin_src emacs-lisp
 (use-package flycheck
   :diminish
@@ -4129,6 +4239,7 @@ f :: Int -> String
 f x = x -- show x
 -- type error
 #+end_src
+
 :End:
 * Helpful Utilities & Shortcuts
 
@@ -4406,7 +4517,7 @@ Besides the expected PDF viewing utilities, such as search, annotation, and cont
 with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
 easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
 
-* COMMENT Stuff I don't really use, but may want to look at later
+* COMMENT TODO Stuff I don't really use, but may want to look at later
 ** hooks and things for literate agda with org-agda
 #+BEGIN_SRC emacs-lisp  :tangle no
 ;; not needed
@@ -4581,7 +4692,7 @@ take care of this.
 # on word boundaries and adds symbols to the fringe.
 # (set-default 'truncate-lines t)
 
-* COMMENT Summary of Utilities Provided
+* COMMENT TODO Summary of Utilities Provided
 
 | _Command_                                | _Action_                                                |
 | ~C-c C-m~                                | recompile file                                          |
@@ -4642,7 +4753,7 @@ Finally, we can observe which features are active in our current Emacs with,
 (setq undo-tree-visualizer-diff t)
 #+end_src
 
-* COMMENT Macros
+* COMMENT TODO Macros
 
 Here's a neat macro I made, but I /may/ avoid using it in the init in order to
 avoid scaring anyone. I may use it in my personal stuff.
@@ -4682,9 +4793,9 @@ avoid scaring anyone. I may use it in my personal stuff.
 (local-set-key (kbd "C-x x x") (λ (message-box "Terse!")))
 #+END_SRC
 
-* COMMENT FIXME Improvements
+* COMMENT TODO Improvements
 + [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
-* COMMENT ─Pushing to blog─
+* COMMENT TODO ─Pushing to blog─
 
 C-c C-c this snippet to export to blog.
 #+NAME: publish-to-blog
@@ -4717,6 +4828,8 @@ f9 ∷ publish to blog                    ;
 (progn (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
 
 + The org-mode-restart invocation below actually enables the source block prettifications.
+
+(use-package s :ensure t :demand t)
 
 # Local Variables:
 # eval: (org-mode-restart)
