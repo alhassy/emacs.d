@@ -1,3 +1,12 @@
+;; [[file:~/.emacs.d/init.org::*Abstract][Abstract:1]]
+(concat
+"<p align=\"center\">
+        <a href=\"https://www.gnu.org/software/emacs/\">
+        <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
+        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
+</p>")
+;; Abstract:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Booting%20Up][Booting Up:1]]
 (setq enable-local-variables :safe)
 ;; Booting Up:1 ends here
@@ -132,6 +141,15 @@
 ;; ~use-package~ --The start of ~init.el~:8 ends here
 
 ;; [[file:~/.emacs.d/init.org::*~magit~%20--Emacs'%20porcelain%20interface%20to%20git][~magit~ --Emacs' porcelain interface to git:1]]
+;; See here for a short & useful tutorial:
+;; https://alvinalexander.com/git/git-show-change-username-email-address
+(when (equal ""
+(shell-command-to-string "git config user.name"))
+  (shell-command "git config --global user.name \"Musa Al-hassy\"")
+  (shell-command "git config --global user.email \"alhassy@gmail.com\""))
+;; ~magit~ --Emacs' porcelain interface to git:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~magit~%20--Emacs'%20porcelain%20interface%20to%20git][~magit~ --Emacs' porcelain interface to git:2]]
 (use-package magit)
 
 ;; Do not ask about this variable when cloning.
@@ -164,9 +182,9 @@
 (maybe-clone "https://github.com/alhassy/org-agda-mode")
 (maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
 (maybe-clone "https://github.com/alhassy/islam")
-;; ~magit~ --Emacs' porcelain interface to git:1 ends here
+;; ~magit~ --Emacs' porcelain interface to git:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*~magit~%20--Emacs'%20porcelain%20interface%20to%20git][~magit~ --Emacs' porcelain interface to git:2]]
+;; [[file:~/.emacs.d/init.org::*~magit~%20--Emacs'%20porcelain%20interface%20to%20git][~magit~ --Emacs' porcelain interface to git:3]]
 (maybe-clone "https://github.com/alhassy/CheatSheet")
 
 (maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
@@ -202,9 +220,9 @@
 ;; to show me this buffer so that I can ‘push’ if I haven't already!
 ;
 ; (magit-list-repositories)
-;; ~magit~ --Emacs' porcelain interface to git:2 ends here
+;; ~magit~ --Emacs' porcelain interface to git:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*~magit~%20--Emacs'%20porcelain%20interface%20to%20git][~magit~ --Emacs' porcelain interface to git:3]]
+;; [[file:~/.emacs.d/init.org::*~magit~%20--Emacs'%20porcelain%20interface%20to%20git][~magit~ --Emacs' porcelain interface to git:4]]
 (require 'magit-git)
 
 (defun my/magit-check-file-and-popup ()
@@ -224,11 +242,11 @@
   '(lambda ()
       (add-hook 'hack-local-variables-hook 'my/magit-check-file-and-popup)
    ))
-;; ~magit~ --Emacs' porcelain interface to git:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*~magit~%20--Emacs'%20porcelain%20interface%20to%20git][~magit~ --Emacs' porcelain interface to git:4]]
-(use-package git-timemachine)
 ;; ~magit~ --Emacs' porcelain interface to git:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*~magit~%20--Emacs'%20porcelain%20interface%20to%20git][~magit~ --Emacs' porcelain interface to git:5]]
+(use-package git-timemachine)
+;; ~magit~ --Emacs' porcelain interface to git:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:1]]
 (use-package flyspell
@@ -349,45 +367,43 @@
 ;; Unicode Input via Agda Input:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:5]]
-;; category theory
 (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
 ;; Unicode Input via Agda Input:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:6]]
-(add-to-list 'agda-input-user-translations '("alg" "𝒜𝓁ℊ"))
-(add-to-list 'agda-input-user-translations '("split" "▵"))
-(add-to-list 'agda-input-user-translations '("join" "▿"))
-(add-to-list 'agda-input-user-translations '("adj" "⊣"))
-(add-to-list 'agda-input-user-translations '(";;" "﹔"))
-(add-to-list 'agda-input-user-translations '(";;" "⨾"))
-(add-to-list 'agda-input-user-translations '(";;" "∘"))
-
-;; lattices
-(add-to-list 'agda-input-user-translations '("meet" "⊓"))
-(add-to-list 'agda-input-user-translations '("join" "⊔"))
-
-;; residuals
-(add-to-list 'agda-input-user-translations '("syq"  "╳"))
-(add-to-list 'agda-input-user-translations '("over" "╱"))
-(add-to-list 'agda-input-user-translations '("under" "╲"))
-        ;; Maybe “\\” shortcut?
-
-;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
-(add-to-list 'agda-input-user-translations '("|" "❙"))
-(add-to-list 'agda-input-user-translations '("with" "❙"))
-
-;; adjunction isomorphism pair
-(add-to-list 'agda-input-user-translations '("floor"  "⌊⌋"))
-(add-to-list 'agda-input-user-translations '("lower"  "⌊⌋"))
-(add-to-list 'agda-input-user-translations '("lad"    "⌊⌋"))
-(add-to-list 'agda-input-user-translations '("ceil"   "⌈⌉"))
-(add-to-list 'agda-input-user-translations '("raise"  "⌈⌉"))
-(add-to-list 'agda-input-user-translations '("rad"    "⌈⌉"))
+(loop for item in
+      '(
+        ;; categorial
+        ("alg" "𝒜𝓁ℊ")
+        ("split" "▵")
+        ("join" "▿")
+        ("adj" "⊣")
+        (";;" "﹔")
+        (";;" "⨾")
+        (";;" "∘")
+        ;; lattices
+        ("meet" "⊓")
+        ("join" "⊔")
+        ;; residuals
+        ("syq"  "╳")
+        ("over" "╱")
+        ("under" "╲")
+        ;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
+        ("|" "❙")
+        ("with" "❙")
+        ;; adjunction isomorphism pair
+        ("floor"  "⌊⌋")
+        ("lower"  "⌊⌋")
+        ("lad"    "⌊⌋")
+        ("ceil"   "⌈⌉")
+        ("raise"  "⌈⌉")
+        ("rad"    "⌈⌉")
+        ;; more (key value) pairs here
+        )
+      do (add-to-list 'agda-input-user-translations item))
 ;; Unicode Input via Agda Input:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:7]]
-;; silly stuff
-;;
 ;; angry, cry, why-you-no
 (add-to-list 'agda-input-user-translations
    '("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)"))
@@ -1076,14 +1092,12 @@ noice
 
 ;; [[file:~/.emacs.d/init.org::*Show%20off-screen%20Heading%20at%20the%20top%20of%20the%20window][Show off-screen Heading at the top of the window:1]]
  (use-package org-sticky-header
-  :demand t
   :config
   (setq-default
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " / ")
-  :init (org-sticky-header-mode)
-)
+   org-sticky-header-outline-path-separator " / "))
+(org-sticky-header-mode)
 ;; Show off-screen Heading at the top of the window:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Clocking%20Work%20Time][Clocking Work Time:1]]

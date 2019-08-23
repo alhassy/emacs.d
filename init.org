@@ -14,15 +14,6 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
-:Hide:
-;; See here for a short & useful tutorial:
-;; https://alvinalexander.com/git/git-show-change-username-email-address
-(when (equal ""
-(shell-command-to-string "git config user.name"))
-  (shell-command "git config --global user.name \"Musa Al-hassy\"")
-  (shell-command "git config --global user.email \"alhassy@gmail.com\""))
-:End:
-
 * TODO COMMENT Clean up
 # (org-babel-load-file "init.org")
 
@@ -83,13 +74,21 @@ available as superscript, except ‘q’.
 #+BEGIN_export html :tangle to-github?
 <p align="center"><img src="emacs-logo.png" width=150 height=150/></p>
 #+END_export
-#+BEGIN_export html
-<p align="center">
-        <a href="https://www.gnu.org/software/emacs/">
-        <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a>
-        <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic"/></a>
-</p>
-#+END_export
+#+begin_src emacs-lisp
+(concat
+"<p align=\"center\">
+        <a href=\"https://www.gnu.org/software/emacs/\">
+        <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
+        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
+</p>")
+#+end_src
+
+#+RESULTS:
+: <p align="center">
+:         <a href="https://www.gnu.org/software/emacs/">
+:         <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a>
+:         <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.2.5-489a9f.svg?style=plastic"/></a>
+: </p>
 
 #+begin_center org
 *Abstract*
@@ -314,7 +313,7 @@ This source block generates the ~README~ for the associated github repository.
      </p>
 
      <p align=\"center\">
-       <img src=\"emacs-birthday-present.png\" width=150 height=150/>
+       <img src=\"emacs-birthday-present.png\" width=200 height=250/>
      </p>
      #+end_export
      #+HTML: <h3> My Literate Setup </h3>
@@ -339,6 +338,9 @@ This source block generates the ~README~ for the associated github repository.
     ;; (shell-command "mv README.html README.md")
 )
 #+END_SRC
+
+#+RESULTS: make-readme
+: README.md
 
 ** TODO COMMENT Elementary Version Control
 :Properties:
@@ -610,6 +612,15 @@ Finally, since I've symlinked my ~.emacs~:
 Why use ~magit~ as the interface to the git version control system?
 In a magit buffer nearly everything can be acted upon:
 Press ~return,~ or ~space~, to see details and ~tab~ to see children items, usually.
+
+#+BEGIN_SRC emacs-lisp
+;; See here for a short & useful tutorial:
+;; https://alvinalexander.com/git/git-show-change-username-email-address
+(when (equal ""
+(shell-command-to-string "git config user.name"))
+  (shell-command "git config --global user.name \"Musa Al-hassy\"")
+  (shell-command "git config --global user.email \"alhassy@gmail.com\""))
+#+END_SRC
 
 # Execute ~M-x dired~ to see the contents of a particular directory.
 #
@@ -1060,48 +1071,45 @@ Below are my personal Agda input symbol translations;
 e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX binding
 interactively: ~M-x customize-variable agda-input-user-translations~ then
 ~INS~ then for key sequence type ~set~ then ~INS~ and for string paste ~𝒮ℯ𝓉~.
-
+noice
 #+BEGIN_SRC emacs-lisp
-;; category theory
 (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
 #+END_SRC
-:Hide:
-Not everyone needs to see my categorial interests.
+Better yet, as a loop:
 #+BEGIN_SRC emacs-lisp
-(add-to-list 'agda-input-user-translations '("alg" "𝒜𝓁ℊ"))
-(add-to-list 'agda-input-user-translations '("split" "▵"))
-(add-to-list 'agda-input-user-translations '("join" "▿"))
-(add-to-list 'agda-input-user-translations '("adj" "⊣"))
-(add-to-list 'agda-input-user-translations '(";;" "﹔"))
-(add-to-list 'agda-input-user-translations '(";;" "⨾"))
-(add-to-list 'agda-input-user-translations '(";;" "∘"))
-
-;; lattices
-(add-to-list 'agda-input-user-translations '("meet" "⊓"))
-(add-to-list 'agda-input-user-translations '("join" "⊔"))
-
-;; residuals
-(add-to-list 'agda-input-user-translations '("syq"  "╳"))
-(add-to-list 'agda-input-user-translations '("over" "╱"))
-(add-to-list 'agda-input-user-translations '("under" "╲"))
-        ;; Maybe “\\” shortcut?
-
-;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
-(add-to-list 'agda-input-user-translations '("|" "❙"))
-(add-to-list 'agda-input-user-translations '("with" "❙"))
-
-;; adjunction isomorphism pair
-(add-to-list 'agda-input-user-translations '("floor"  "⌊⌋"))
-(add-to-list 'agda-input-user-translations '("lower"  "⌊⌋"))
-(add-to-list 'agda-input-user-translations '("lad"    "⌊⌋"))
-(add-to-list 'agda-input-user-translations '("ceil"   "⌈⌉"))
-(add-to-list 'agda-input-user-translations '("raise"  "⌈⌉"))
-(add-to-list 'agda-input-user-translations '("rad"    "⌈⌉"))
+(loop for item in
+      '(
+        ;; categorial
+        ("alg" "𝒜𝓁ℊ")
+        ("split" "▵")
+        ("join" "▿")
+        ("adj" "⊣")
+        (";;" "﹔")
+        (";;" "⨾")
+        (";;" "∘")
+        ;; lattices
+        ("meet" "⊓")
+        ("join" "⊔")
+        ;; residuals
+        ("syq"  "╳")
+        ("over" "╱")
+        ("under" "╲")
+        ;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
+        ("|" "❙")
+        ("with" "❙")
+        ;; adjunction isomorphism pair
+        ("floor"  "⌊⌋")
+        ("lower"  "⌊⌋")
+        ("lad"    "⌊⌋")
+        ("ceil"   "⌈⌉")
+        ("raise"  "⌈⌉")
+        ("rad"    "⌈⌉")
+        ;; more (key value) pairs here
+        )
+      do (add-to-list 'agda-input-user-translations item))
 #+END_SRC
-:End:
+Also some silly stuff:
 #+BEGIN_SRC emacs-lisp
-;; silly stuff
-;;
 ;; angry, cry, why-you-no
 (add-to-list 'agda-input-user-translations
    '("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)"))
@@ -1127,6 +1135,8 @@ Finally let's effect such translations.
 ;; activate translations
 (agda-input-setup)
 #+end_src
+
+#+RESULTS:
 
 Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs unicode input]] could be approximated using
 ~abbrev-mode~.
@@ -2616,7 +2626,7 @@ I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
 
-** TODO Making Block Delimiters Less Intrusive :no:exportprettify_symbols_not_loading:
+** TODO Making Block Delimiters Less Intrusive :noexport:prettify_symbols_not_loading:
 
 Let us render Org-mode's
 ~#+begin_src~
@@ -2832,14 +2842,12 @@ In case we forgot which heading we're under, let's keep
 the current heading stuck at the top of the window.
 #+BEGIN_SRC emacs-lisp
  (use-package org-sticky-header
-  :demand t
   :config
   (setq-default
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " / ")
-  :init (org-sticky-header-mode)
-)
+   org-sticky-header-outline-path-separator " / "))
+(org-sticky-header-mode)
 #+END_SRC
 
 ** Clocking Work Time
