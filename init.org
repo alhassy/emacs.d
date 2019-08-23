@@ -14,6 +14,15 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
+:Hide:
+;; See here for a short & useful tutorial:
+;; https://alvinalexander.com/git/git-show-change-username-email-address
+(when (equal ""
+(shell-command-to-string "git config user.name"))
+  (shell-command "git config --global user.name \"Musa Al-hassy\"")
+  (shell-command "git config --global user.email \"alhassy@gmail.com\""))
+:End:
+
 * TODO COMMENT Clean up
 # (org-babel-load-file "init.org")
 
@@ -290,19 +299,22 @@ This source block generates the ~README~ for the associated github repository.
 #+NAME: make-readme
 #+BEGIN_SRC emacs-lisp :tangle no :export_never t
 (with-temp-buffer
-    (insert
+    (insert (concat
     "#+EXPORT_FILE_NAME: README.md
      #+HTML: <h1> A Life Configuring Emacs </h1>
      #+begin_export html
      <p align=\"center\">
        <img src=\"emacs-logo.png\" width=150 height=150/>
-       <img src=\"emacs-birthday-present.png\" width=150 height=150/>
      </p>
 
      <p align=\"center\">
         <a href=\"https://www.gnu.org/software/emacs/\">
-             <img src=\"https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic\"/></a>
-        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic\"/></a>
+             <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
+        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
+     </p>
+
+     <p align=\"center\">
+       <img src=\"emacs-birthday-present.png\" width=150 height=150/>
      </p>
      #+end_export
      #+HTML: <h3> My Literate Setup </h3>
@@ -319,7 +331,7 @@ This source block generates the ~README~ for the associated github repository.
 
       #+TOC: headlines 2
       #+INCLUDE: init.org
-    ")
+    "))
     (org-mode)
     (org-md-export-to-markdown)
     ;; Coloured html does not work in Github, afaik.
@@ -327,9 +339,6 @@ This source block generates the ~README~ for the associated github repository.
     ;; (shell-command "mv README.html README.md")
 )
 #+END_SRC
-
-#+RESULTS: make-readme
-: README.md
 
 ** TODO COMMENT Elementary Version Control
 :Properties:
