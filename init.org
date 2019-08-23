@@ -1,5 +1,3 @@
-# (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
-
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -8,7 +6,7 @@
 #+DESCRIPTION: My Emacs Initialisation File, Written in Org-mode.
 #+STARTUP: indent lognoteclock-out
 #+OPTIONS: html-postamble:nil toc:nil d:nil
-#+PROPERTY: header-args :tangle init.el :comments link
+#+PROPERTY: header-args :tangle init.el :comments link :results none
 
 # ─AlBasmala keywords─
 # DRAFT: yes
@@ -243,31 +241,39 @@ For example, I tend to have local variables to produce ~README.md~'s
 and other matters, so Emacs' Custom utility will remember to not prompt
 me each time for the safety of such local variables.
 #+begin_src emacs-lisp
-;; (eshell-command "touch ~/.emacs.d/custom.el")
-
-(setq custom-file "~/.emacs.d/custom.el")
-(load custom-file)
+(-let [custom "~/.emacs.d/custom.el"]
+  (unless (file-exists-p custom)
+    (eshell-command (format "touch %s" custom)))
+  (setq custom-file custom)
+  (load custom-file))
 #+end_src
 
 Rather than manually extracting the Lisp code from this literate document
 each time we alter it, let's instead add a ‘hook’ ─a method  that is invoked
 on a particular event, in this case when we save the file.
 
-#+BEGIN_SRC emacs-lisp
+#+name: enable making init and readme
+#+BEGIN_SRC emacs-lisp :eval never-export
 (defun my/make-init-el-and-README ()
   (interactive)
-  ;; Make init.el
-  (org-babel-tangle)
-  (byte-compile-file "~/.emacs.d/init.el")
-  (load-file "~/.emacs.d/init.el")
-
-  ;; Make README.md
   (save-excursion
-    (org-babel-goto-named-src-block "make-readme")
-    (org-babel-execute-src-block))
+    (-let [org-export-use-babel nil]
 
-  (message "Tangled, compiled, and loaded init.el; and made README.md")
-)
+    ;; Register the language template function below
+    (unless (fboundp 'make-lang-template)
+      (org-babel-goto-named-src-block "make-lang-template")
+      (org-babel-execute-src-block))
+
+    ;; Make init.el
+    (org-babel-tangle)
+    (byte-compile-file "~/.emacs.d/init.el")
+    (load-file "~/.emacs.d/init.el")
+
+    ;; Make README.md
+    (org-babel-goto-named-src-block "make-readme")
+    (org-babel-execute-src-block)
+
+    (message "Tangled, compiled, and loaded init.el; and made README.md"))))
 
 (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+END_SRC
@@ -287,15 +293,18 @@ This source block generates the ~README~ for the associated github repository.
     (insert
     "#+EXPORT_FILE_NAME: README.md
      #+HTML: <h1> A Life Configuring Emacs </h1>
-
-     <p align=\"center\"><img src=\"emacs-logo.png\" width=150 height=150/></p>
+     #+begin_export html
+     <p align=\"center\">
+       <img src=\"emacs-logo.png\" width=150 height=150/>
+       <img src=\"emacs-birthday-present.png\" width=150 height=150/>
+     </p>
 
      <p align=\"center\">
         <a href=\"https://www.gnu.org/software/emacs/\">
              <img src=\"https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic\"/></a>
         <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-9.2.3-489a9f.svg?style=plastic\"/></a>
      </p>
-
+     #+end_export
      #+HTML: <h3> My Literate Setup </h3>
      #+OPTIONS: toc:nil d:nil
      # Toc is displayed below at a strategic position.
@@ -322,7 +331,7 @@ This source block generates the ~README~ for the associated github repository.
 #+RESULTS: make-readme
 : README.md
 
-** COMMENT TODO Elementary Version Control
+** TODO COMMENT Elementary Version Control
 :Properties:
 :TODO: Make some of these eshell commands that are executed?
        Usage would be to simply C-x C-e the fragment to have
@@ -384,7 +393,7 @@ Below I'll equip us with an Emacs ‘porcelain’ interface to git
 --it makes working with version control tremendously convenient.
 Moreover, I add a little pop-up so that I don't forget to commit often!
 
-** COMMENT TODO What's in, or at the top of, my ~~/.emacs~
+** TODO COMMENT What's in, or at the top of, my ~~/.emacs~
 
 We evaluate every piece of emacs-lisp code available here when
 Emacs starts up by placing the following at the top of our ~.emacs~ file:
@@ -765,7 +774,7 @@ at previous, next, goto arbitrary historic versions, or quit.
 (use-package git-timemachine)
 #+END_SRC
 
-** TODO Fix spelling as you type --thesaurus & dictionary too!
+** Fix spelling as you type --thesaurus & dictionary too!
 I would like to check spelling by default.
  + ~C-;~ :: Cycle through corrections for word at point.
  + ~M-$~ :: Check and correct spelling of the word at point
@@ -1835,6 +1844,17 @@ a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
 (column-number-mode t)
 #+END_SRC
 
+** Never lose the cursor
+Reduce mental strain of locating the cursour when navigation happens;
+e.g., when we switch windows or scroll, we get a wave of light near the cursor.
+#+begin_src emacs-lisp
+(use-package beacon
+  :ensure t
+  :demand t
+  :init
+  (setq beacon-color "#666600")
+  :config (beacon-mode))
+#+end_src
 ** Neotree: Directory Tree Listing
 We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp
@@ -2098,6 +2118,9 @@ to be tackled later on.
 (setq org-default-notes-file "~/Dropbox/todo.org")
 (define-key global-map "\C-cc" 'org-capture)
 #+end_src
+
+#+RESULTS:
+: org-capture
 
 By default we only get a ‘tasks’ form of capture, let's add some more.
 #+begin_src emacs-lisp
@@ -2584,9 +2607,7 @@ I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
 
-** Making Block Delimiters Less Intrusive
-
-# (rasmus/org-prettify-src--update)
+** TODO Making Block Delimiters Less Intrusive :no:exportprettify_symbols_not_loading:
 
 Let us render Org-mode's
 ~#+begin_src~
@@ -2676,13 +2697,18 @@ His setup also accounts for quotes.
 
 :End:
 
+# (rasmus/org-prettify-src--update)
+#+BEGIN_SRC emacs-lisp
+noice
+#+END_SRC
+
 His development relies on built-in prettify-symbols-mode, which disguises strings in a
 buffer for the sake of readability or aesthetics.
 Following the example in the documentation, ~C-h f prettify-symbols-mode~,
 we can quickly approximate his efforts for ~example~ blocks as follows, however a main issue
 is that source blocks have busybodied headers which his setup disguises as ‘≡’.
 #+begin_src emacs-lisp :tangle yes
-(global-prettify-symbols-mode 1)
+(global-prettify-symbols-mode)
 
 (defvar my-prettify-alist nil
   "Musa's personal prettifications.")
@@ -2696,6 +2722,8 @@ is that source blocks have busybodied headers which his setup disguises as ‘�
 (push '(")}}}" . ?↲) my-prettify-alist)
 (push '("{{{end-fold}}}" . ?↺) my-prettify-alist)
 
+(when (<= 1 2)) ;; prettify symbols not loading
+
 (-let [modify (lambda ()
               (setq prettify-symbols-alist
                     (append my-prettify-alist prettify-symbols-alist)))]
@@ -2704,11 +2732,9 @@ is that source blocks have busybodied headers which his setup disguises as ‘�
   (add-hook 'prog-mode-hook modify)
   ;; For org-example blocks, “C-c '” to see the prettifications of language constructs.
   ;; Or alter the particular hook directly.
+  (add-hook 'org-mode-hook modify) ;; for the folding blocks
 )
 #+end_src
-
-#+RESULTS:
-| (lambda nil (setq prettify-symbols-alist (append my-prettify-alist prettify-symbols-alist))) | flyspell-prog-mode |
 
 See [[http://www.modernemacs.com/post/prettify-mode/][“Mathematical Notation in Emacs”]] for how such prettifications can make verbose (Python)
 scripts much more readable by employing more economical disguises.
@@ -2733,9 +2759,9 @@ with show/hide with ~C-<tab>~ key.
 #+BEGIN_SRC emacs-lisp
 (use-package folding
  :init
- ; (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
- (setq folding-top-mark "{{{fold(")
- (setq folding-bottom-mark "{{{end-fold}}}")
+ (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
+ ; (setq folding-top-mark "{{{fold(")
+ ; (setq folding-bottom-mark "{{{end-fold}}}")
  :config
   (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
   (add-hook 'org-mode-hook #'folding-mode)
@@ -2746,6 +2772,14 @@ with show/hide with ~C-<tab>~ key.
 : t
 
 :Example:
+
+# The (org-mode-restart) invocation actually enables the source block prettifications.
+
+# Empty macros to make the example go through.
+#
+#+MACRO: end-fold
+#+MACRO: fold
+
 
 {{{fold(nice)}}}
 
@@ -2789,6 +2823,7 @@ In case we forgot which heading we're under, let's keep
 the current heading stuck at the top of the window.
 #+BEGIN_SRC emacs-lisp
  (use-package org-sticky-header
+  :demand t
   :config
   (setq-default
    org-sticky-header-full-path 'full
@@ -3071,7 +3106,7 @@ More languages can be added using ~add-to-list~.
 
 ** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
 
-** COMMENT TODO org-mode header generation
+** COMMENT org-mode header generation
 Generate an untitled org-mode skeleton file ~C-x t~ --similar to ~C-x C-f~ for finding files.
 
 First the template,
@@ -4038,6 +4073,7 @@ and textual space. Why? The purpose of templates is to reduce repetition,
 yet the above block would be repeated with only 3 parts ‘unknown’:
 The expansion keyword, the description, and the org-mode source block name.
 Whence,
+#+name: make-lang-template
 #+begin_src emacs-lisp :tangle yes
 (defun make-lang-template (key lang)
   "We make an org-mode source block snippet template.
@@ -4054,6 +4090,9 @@ Whence,
   ))
 )
 #+end_src
+
+#+RESULTS: make-lang-template
+: make-lang-template
 
 #+RESULTS:
 : README.md
@@ -4516,9 +4555,112 @@ Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library fo
 Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
 with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
 easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
+* Undo tree                                                        :noexport:
 
-* COMMENT TODO Stuff I don't really use, but may want to look at later
-** hooks and things for literate agda with org-agda
+# Todo: Learn about weaving so that presentation order may differ from code tangeling order.
+
+#+begin_src emacs-lisp :tangle yes
+;; Allow tree-semantics for undo operations.
+(package-install 'undo-tree)
+(global-undo-tree-mode)
+(diminish 'undo-tree-mode)
+
+;; Execute (undo-tree-visualize) then navigate along the tree to witness
+;; changes being made to your file live!
+
+;; Each node in the undo tree should have a timestamp.
+(setq undo-tree-visualizer-timestamps t)
+
+;; Show a diff window displaying changes between undo nodes.
+(setq undo-tree-visualizer-diff t)
+#+end_src
+
+* COMMENT TODO Improvements
++ [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
+
+** COMMENT TODO Macros
+
+Here's a neat macro I made, but I /may/ avoid using it in the init in order to
+avoid scaring anyone. I may use it in my personal stuff.
+
+#+BEGIN_SRC emacs-lisp
+(defmacro λ (&rest body)
+  "Implementing Z-notation style, interactive, lambdas; ideally for inline use:
+
+   “λ α β … ω • body”  becomes an interactive function with arguments α, …, ω.
+
+   The args list may be empty, in which case the separator “•” may be omitted
+   entirely, if desired.
+  "
+
+  (let* ((parts (-split-on '• body)) args rest)
+
+    (if (<= 2 (length parts))
+        (progn (setq args (car parts)) (setq rest (cadr parts)))
+         ;; Otherwise, only one part was found ---no arguments were provided.
+         (setq args nil) (setq rest (car parts)))
+
+   `(lambda ,args (interactive) ,@rest)
+  ))
+
+;; Some tests
+
+(setq f (λ x y • (+ x y)))   ;; ⇒ (lambda (x y) (interactive) (+ x y))
+(setq g (λ • 'neato "woah")) ;; ⇒ (lambda (x y) (interactive) 'neato "woah")
+(setq h (λ "bye" 'bye))      ;; ⇒ (lambda (x y) (interactive) "bye" 'bye)
+(funcall f 1 2)
+(funcall g)
+(funcall h)
+
+;; intended use case
+
+(local-set-key (kbd "C-x x x") (lambda () (interactive) (message-box "Test!")))
+(local-set-key (kbd "C-x x x") (λ (message-box "Terse!")))
+#+END_SRC
+
+** COMMENT TODO Summary of Utilities Provided
+
+| _Command_                                | _Action_                                                |
+| ~C-c C-m~                                | recompile file                                          |
+| ~<f5>~                                   | revert buffer                                           |
+| ~M-x k~                                  | kill to start of line                                   |
+| ~C-∣~                                    | toggle 2 windows from horizontal to vertical view       |
+| ~(file-as-list   pathHere)~              | construe a file as a list of lines                      |
+| ~(file-as-string pathHere)~              | construe a file as a string                             |
+| (~re-replace-in-file file regex whatDo)~ | perform an in-file regular expression rewrite           |
+| ~(mapsto this that)~                     | regex rewrite in current buffer: this ↦ that            |
+| ~M-x create-scratch-buffer~              | --self evident--                                        |
+| ~M-x kill-other-buffers~                 | --self evident--                                        |
+| ~M-$~                                    | check spelling of word at point                         |
+| ~M-#~                                    | thesaurus look-up word at point                         |
+| ~(my/org-run-haskell &optional file)~    | Interpret the Haskell org-blocks from a file into ghci. |
+| ~C-+/-~                                  | increase/decrease text size                             |
+| ~M-x my-org-html-export-to-html~         | make then open html from an org file                    |
+| ~C-c C-c~                                | execute code in an org ~src~ block                      |
+| ~<E~                                     | produce an emacs-lisp ~src~ block                       |
+| ~<g~                                     | produce a graph template ~src~ block                    |
+| ~C-x t~                                  | open a new untitled org template file                   |
+| ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file          |
+| ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~             |
+
+Since I'm using ~use-package~, I can invoke ~M-x describe-personal-keybindings~ to see what key bindings I've defined.
+Since not all my bindings are via ~use-package~, it does not yet cover all of my bindings.
+
+We could run ~C-h b~ to see our bindings:
+#+BEGIN_SRC emacs-lisp
+(use-package helm-descbinds
+  :defer t
+  :bind (("C-h b" . helm-descbinds)))
+#+END_SRC
+
+Finally, we can observe which features are active in our current Emacs with,
+#+begin_src emacs-lisp :tangle no
+(message "Features: %s" features)
+#+end_src
+
+# List of installed packages: (mapcar 'car package-alist)
+** COMMENT TODO Stuff I don't really use, but may want to look at later
+*** hooks and things for literate agda with org-agda
 #+BEGIN_SRC emacs-lisp  :tangle no
 ;; not needed
 (defun lagda-extension-whatdo ()
@@ -4535,7 +4677,7 @@ easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/
 (defun my-common-hook () (fci-mode) (orgstruct-mode) )
 (my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
 #+END_SRC
-** floating toc material                      :no_longer_using_this:
+*** floating toc material                            :no_longer_using_this:
 
 Add the following to a web-page if you'd like it to have a floating table of contents.
 + Perhaps consider making this a default for all org-files?
@@ -4551,7 +4693,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 #+HTML: </div> </small> </div>
 #+END_SRC
 
-** org-html-postamble-format
+*** org-html-postamble-format
  Look at the super short doc to know how to manipulate this variable.
  (describe-symbol 'org-html-postamble-format)
 
@@ -4569,7 +4711,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 `(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
 )
  #+END_SRC
-** to-consider-for-magit-list-repositories
+*** to-consider-for-magit-list-repositories
 
 The above mechanism suffices, the following needn't be followed with ... unless desired
 
@@ -4617,26 +4759,26 @@ The above mechanism suffices, the following needn't be followed with ... unless 
     (delete-other-windows)))
 #+end_src
 
-** Programming Language Support                               :TODO:
+*** Programming Language Support                                     :TODO:
 
-**** Haskell :tangle no
+***** Haskell :tangle no
 #+BEGIN_SRC emacs-lisp
 ;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
  (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
 #+END_SRC
 
-**** Kotlin
+***** Kotlin
 #+BEGIN_SRC emacs-lisp  :tangle no
 (load "~/.emacs.d/kotlin-mode.el")
 (setq kotlin-tab-width 2)
 #+END_SRC
 
-**** Lambda Prolog
+***** Lambda Prolog
 #+BEGIN_SRC emacs-lisp  :tangle no
 (load "/usr/local/packages/teyjus/emacs/teyjus.el")
 (setq tjcc "/usr/local/packages/teyjus/tjcc")
 #+END_SRC
-**** intero and haskell
+***** intero and haskell
 
   ;; ;;; To get completions in the REPL
   ;; (add-hook 'haskell-interactive-mode-hook 'company-mode)
@@ -4651,14 +4793,14 @@ The above mechanism suffices, the following needn't be followed with ... unless 
   (setq haskell-process-args-cabal-repl
         '("--ghc-options=-ferror-spans -fshow-loaded-modules"))
 
-** Coq Support
+*** Coq Support
 Sometimes I use Coq,
 #+begin_src emacs-lisp
 ;; Open .v files with Proof General's Coq mode
 ;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
 #+end_src
 
-** Column Marker
+*** Column Marker
 
 (  Maybe a hook would be better? Much better...? )
 
@@ -4676,7 +4818,7 @@ In this case, exporting to html produces curious symbols
 thereby prompting ~my-org-html-export-to-html~ below to
 take care of this.
 
-** My global visual line mode                       :no_longer_used:
+*** My global visual line mode                             :no_longer_used:
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (define-globalized-minor-mode my-visual-line-global-mode visual-line-mode
@@ -4691,110 +4833,6 @@ take care of this.
 # What I like about truncate-lines versus visual-line-mode is that the former doesn’t split
 # on word boundaries and adds symbols to the fringe.
 # (set-default 'truncate-lines t)
-
-* COMMENT TODO Summary of Utilities Provided
-
-| _Command_                                | _Action_                                                |
-| ~C-c C-m~                                | recompile file                                          |
-| ~<f5>~                                   | revert buffer                                           |
-| ~M-x k~                                  | kill to start of line                                   |
-| ~C-∣~                                    | toggle 2 windows from horizontal to vertical view       |
-| ~(file-as-list   pathHere)~              | construe a file as a list of lines                      |
-| ~(file-as-string pathHere)~              | construe a file as a string                             |
-| (~re-replace-in-file file regex whatDo)~ | perform an in-file regular expression rewrite           |
-| ~(mapsto this that)~                     | regex rewrite in current buffer: this ↦ that            |
-| ~M-x create-scratch-buffer~              | --self evident--                                        |
-| ~M-x kill-other-buffers~                 | --self evident--                                        |
-| ~M-$~                                    | check spelling of word at point                         |
-| ~M-#~                                    | thesaurus look-up word at point                         |
-| ~(my/org-run-haskell &optional file)~    | Interpret the Haskell org-blocks from a file into ghci. |
-| ~C-+/-~                                  | increase/decrease text size                             |
-| ~M-x my-org-html-export-to-html~         | make then open html from an org file                    |
-| ~C-c C-c~                                | execute code in an org ~src~ block                      |
-| ~<E~                                     | produce an emacs-lisp ~src~ block                       |
-| ~<g~                                     | produce a graph template ~src~ block                    |
-| ~C-x t~                                  | open a new untitled org template file                   |
-| ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file          |
-| ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~             |
-
-Since I'm using ~use-package~, I can invoke ~M-x describe-personal-keybindings~ to see what key bindings I've defined.
-Since not all my bindings are via ~use-package~, it does not yet cover all of my bindings.
-
-We could run ~C-h b~ to see our bindings:
-#+BEGIN_SRC emacs-lisp
-(use-package helm-descbinds
-  :defer t
-  :bind (("C-h b" . helm-descbinds)))
-#+END_SRC
-
-Finally, we can observe which features are active in our current Emacs with,
-#+begin_src emacs-lisp :tangle no
-(message "Features: %s" features)
-#+end_src
-
-# List of installed packages: (mapcar 'car package-alist)
-* Undo tree                                                        :noexport:
-
-# Todo: Learn about weaving so that presentation order may differ from code tangeling order.
-
-#+begin_src emacs-lisp :tangle yes
-;; Allow tree-semantics for undo operations.
-(package-install 'undo-tree)
-(global-undo-tree-mode)
-(diminish 'undo-tree-mode)
-
-;; Execute (undo-tree-visualize) then navigate along the tree to witness
-;; changes being made to your file live!
-
-;; Each node in the undo tree should have a timestamp.
-(setq undo-tree-visualizer-timestamps t)
-
-;; Show a diff window displaying changes between undo nodes.
-(setq undo-tree-visualizer-diff t)
-#+end_src
-
-* COMMENT TODO Macros
-
-Here's a neat macro I made, but I /may/ avoid using it in the init in order to
-avoid scaring anyone. I may use it in my personal stuff.
-
-#+BEGIN_SRC emacs-lisp
-(defmacro λ (&rest body)
-  "Implementing Z-notation style, interactive, lambdas; ideally for inline use:
-
-   “λ α β … ω • body”  becomes an interactive function with arguments α, …, ω.
-
-   The args list may be empty, in which case the separator “•” may be omitted
-   entirely, if desired.
-  "
-
-  (let* ((parts (-split-on '• body)) args rest)
-
-    (if (<= 2 (length parts))
-        (progn (setq args (car parts)) (setq rest (cadr parts)))
-         ;; Otherwise, only one part was found ---no arguments were provided.
-         (setq args nil) (setq rest (car parts)))
-
-   `(lambda ,args (interactive) ,@rest)
-  ))
-
-;; Some tests
-
-(setq f (λ x y • (+ x y)))   ;; ⇒ (lambda (x y) (interactive) (+ x y))
-(setq g (λ • 'neato "woah")) ;; ⇒ (lambda (x y) (interactive) 'neato "woah")
-(setq h (λ "bye" 'bye))      ;; ⇒ (lambda (x y) (interactive) "bye" 'bye)
-(funcall f 1 2)
-(funcall g)
-(funcall h)
-
-;; intended use case
-
-(local-set-key (kbd "C-x x x") (lambda () (interactive) (message-box "Test!")))
-(local-set-key (kbd "C-x x x") (λ (message-box "Terse!")))
-#+END_SRC
-
-* COMMENT TODO Improvements
-+ [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
 * COMMENT TODO ─Pushing to blog─
 
 C-c C-c this snippet to export to blog.
@@ -4811,30 +4849,9 @@ C-c C-c this snippet to export to blog.
 #+END_SRC
 * COMMENT footer
 
-#+begin_src emacs-lisp
-;; Automatic line-wrapping should happen at the 80 column mark.
-(setq-default fill-column 80)
-
-f7 ∷ tangle and compile init.el         ;
-f8 ∷ make readme                        ;
-f9 ∷ publish to blog                    ;
-
-;; Reduce mental strain of locating the cursour when navigation happens;
-;; E.g., when we switch windows or scroll, we get a wave of light near the cursour.
-(beacon-mode 1)
-(setq beacon-color "#666600")
-#+end_src
-
-(progn (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
-
-+ The org-mode-restart invocation below actually enables the source block prettifications.
-
-(use-package s :ensure t :demand t)
-
 # Local Variables:
 # eval: (org-mode-restart)
-# eval: (org-babel-load-file "init.org")
-# eval: (local-set-key (kbd "<f8>") (lambda () (interactive) (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
+# eval: (progn (org-babel-goto-named-src-block "enable making init and readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
 # eval: (local-set-key (kbd "<f9>") (lambda () (interactive) (org-babel-goto-named-src-block "publish-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # compile-command:  (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
 # End:
