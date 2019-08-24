@@ -14,6 +14,10 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
+# ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
+# (shell-command "brew install pandoc")
+# (use-package ox-pandoc)
+
 * TODO COMMENT Clean up
 # (org-babel-load-file "init.org")
 
@@ -74,7 +78,7 @@ available as superscript, except ‘q’.
 #+BEGIN_export html :tangle to-github?
 <p align="center"><img src="emacs-logo.png" width=150 height=150/></p>
 #+END_export
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no :exports results :wrap "export html" :results replace
 (concat
 "<p align=\"center\">
         <a href=\"https://www.gnu.org/software/emacs/\">
@@ -84,11 +88,13 @@ available as superscript, except ‘q’.
 #+end_src
 
 #+RESULTS:
-: <p align="center">
-:         <a href="https://www.gnu.org/software/emacs/">
-:         <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a>
-:         <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.2.5-489a9f.svg?style=plastic"/></a>
-: </p>
+#+begin_export html
+<p align="center">
+        <a href="https://www.gnu.org/software/emacs/">
+        <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a>
+        <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.2.5-489a9f.svg?style=plastic"/></a>
+</p>
+#+end_export
 
 #+begin_center org
 *Abstract*
@@ -257,34 +263,36 @@ me each time for the safety of such local variables.
 #+end_src
 
 Rather than manually extracting the Lisp code from this literate document
-each time we alter it, let's instead add a ‘hook’ ─a method  that is invoked
+each time we alter it, let's instead add a ‘hook’ ---a method  that is invoked
 on a particular event, in this case when we save the file.
+More precicely, in this case, ~C-x C-s~ is a normal save whereas
+~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 
 #+name: enable making init and readme
 #+BEGIN_SRC emacs-lisp :eval never-export
-(defun my/make-init-el-and-README ()
-  (interactive)
-  (save-excursion
-    (-let [org-export-use-babel nil]
+  (defun my/make-init-el-and-README ()
+    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
+    (when current-prefix-arg
+      (let (org-export-use-babel)
+        (save-excursion
+          ;; Make init.el
+          (org-babel-tangle)
+          (byte-compile-file "~/.emacs.d/init.el")
+          (load-file "~/.emacs.d/init.el")
 
-    ;; Register the language template function below
-    (unless (fboundp 'make-lang-template)
-      (org-babel-goto-named-src-block "make-lang-template")
-      (org-babel-execute-src-block))
+          ;; Make README.md
+          (org-babel-goto-named-src-block "make-readme")
+          (org-babel-execute-src-block)
 
-    ;; Make init.el
-    (org-babel-tangle)
-    (byte-compile-file "~/.emacs.d/init.el")
-    (load-file "~/.emacs.d/init.el")
+          (message "Tangled, compiled, and loaded init.el; and made README.md")))))
 
-    ;; Make README.md
-    (org-babel-goto-named-src-block "make-readme")
-    (org-babel-execute-src-block)
-
-    (message "Tangled, compiled, and loaded init.el; and made README.md"))))
-
-(add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
+  (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+END_SRC
+
+#+RESULTS: enable making init and readme
+:results:
+(my/make-init-el-and-README t)
+:end:
 
 Where the following block has ~#+NAME: make-readme~ before it.
 This source block generates the ~README~ for the associated github repository.
@@ -340,7 +348,9 @@ This source block generates the ~README~ for the associated github repository.
 #+END_SRC
 
 #+RESULTS: make-readme
-: README.md
+:results:
+README.md
+:end:
 
 ** TODO COMMENT Elementary Version Control
 :Properties:
@@ -1071,7 +1081,6 @@ Below are my personal Agda input symbol translations;
 e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX binding
 interactively: ~M-x customize-variable agda-input-user-translations~ then
 ~INS~ then for key sequence type ~set~ then ~INS~ and for string paste ~𝒮ℯ𝓉~.
-noice
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
 #+END_SRC
@@ -1764,6 +1773,36 @@ the lightweight package ~electric~, which provided by Emacs out of the box.
 
 It supports, by default, ACSII pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
 
+When writing Lisp, it is annoyong to have ‘<’ and ‘>’ be completed
+/and/ considered as pairs.
+Let's disassociate them from both notions.
+#+BEGIN_SRC emacs-lisp
+(setq electric-pair-inhibit-predicate
+      (lambda (c)
+        (or (member c '(?< ?>)) (electric-pair-default-inhibit c))))
+
+(when (< 1 2) 'bye)
+
+;; Act as usual unless a ‘<’ or ‘>’ is encountered.
+;; ( char-at is really “character at poisition”; C-h o! )
+(setq rainbow-delimiters-pick-face-function
+      (lambda (depth match loc)
+        (unless (member (char-after loc) '(?< ?>))
+          (rainbow-delimiters-default-pick-face depth match loc))))
+
+;; Final piece.
+(modify-syntax-entry ?< "(>")
+(modify-syntax-entry ?> ")<")
+#+END_SRC
+:Test:
+#+BEGIN_SRC emacs-lisp :tangle no
+(rainbow-delimiters-mode 1)
+(when (> 1 2) 'bye)
+
+(1- 3)
+#+END_SRC
+:End:
+
 Let's add the org-emphasises markers.
 #+BEGIN_SRC emacs-lisp
 (setq electric-pair-pairs
@@ -1858,9 +1897,17 @@ a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
 
 ** Minibuffer should display line and column numbers
 #+BEGIN_SRC emacs-lisp
-(global-display-line-numbers-mode t)
 ; (line-number-mode t)
 (column-number-mode t)
+#+END_SRC
+
+For line numbers on the side of the buffer:
+#+BEGIN_SRC emacs-lisp
+(global-display-line-numbers-mode t)
+
+;; Have a uniform width for displaying line numbers,
+;; rather than having the width grow as necessary.
+(setq display-line-numbers-width-start t)
 #+END_SRC
 
 ** Never lose the cursor
@@ -1981,6 +2028,9 @@ Also:
 #+begin_src emacs-lisp
 ;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
+
+;; Lists may be labelled with letters.
+(setq org-list-allow-alphabetical t)
 
 ;; Avoid accidentally editing folded regions, say by adding text after an Org “⋯”.
 (setq org-catch-invisible-edits 'show)
@@ -2626,7 +2676,7 @@ I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
 
-** TODO Making Block Delimiters Less Intrusive :noexport:prettify_symbols_not_loading:
+** TODO COMMENT Making Block Delimiters Less Intrusive :noexport:prettify_symbols_not_loading:
 
 Let us render Org-mode's
 ~#+begin_src~
@@ -2718,7 +2768,7 @@ His setup also accounts for quotes.
 
 # (rasmus/org-prettify-src--update)
 #+BEGIN_SRC emacs-lisp
-noice
+"noice"
 #+END_SRC
 
 His development relies on built-in prettify-symbols-mode, which disguises strings in a
@@ -2847,7 +2897,8 @@ the current heading stuck at the top of the window.
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / "))
-(org-sticky-header-mode)
+
+(add-hook 'org-mode-hook #'org-sticky-header-mode)
 #+END_SRC
 
 ** Clocking Work Time
@@ -3921,7 +3972,7 @@ This is very useful when editing in a particular coding language, say via
 )
 #+END_SRC
 
-** Snippets -- Template Expansion
+** TODO COMMENT Snippets -- Template Expansion
 
 It is common that there is a sequence of text that we tend to repeat
 often, possibly with a name or some other parameter altered.
@@ -4108,16 +4159,10 @@ Whence,
 )
 #+end_src
 
-#+RESULTS: make-lang-template
-: make-lang-template
-
-#+RESULTS:
-: README.md
-
 The template /text/ is then generated by the following simple loop
 --whose source block is named ~my-org-lang-templates~.
 #+NAME: my-org-lang-templates
-#+begin_src emacs-lisp :tangle no :export_never t
+#+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
 (let (result) ;; ensure result is initially empty
    (dolist (x '( ("s_el" . "emacs-lisp")
                  ("s_org" . "org")
@@ -4126,10 +4171,30 @@ The template /text/ is then generated by the following simple loop
                  ("s_c" . "c")
                  ("s_lx" . "latex")
                ) result)
-      (setq result (concat result "\n" (make-lang-template (car x) (cdr x))))
-   )
-)
+      (setq result (concat result "\n" (make-lang-template (car x) (cdr x))))))
 #+end_src
+
+hi
+# #+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
+#+BEGIN_SRC emacs-lisp :wrap "src org" :results_switches ":tangle nice.txt"
+"hello"
+#+END_SRC
+
+#+RESULTS:
+#+begin_src org
+hello
+#+end_src
+
+
+The /resulting text/ of this block is tangled to our yankpad; an example of the
+resulting text is:
+#+begin_example
+,** s_el: emacs-lisp
+,#+begin_src emacs-lisp
+$0
+,#+end_src
+#+end_example
+
 
 The /resulting text/ of this block, generated below, is tangled to our yankpad
 by utilising a [[https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-reference-syntax.html][noweb]] source block invocation:
@@ -4867,7 +4932,6 @@ C-c C-c this snippet to export to blog.
 * COMMENT footer
 
 # Local Variables:
-# eval: (org-mode-restart)
 # eval: (progn (org-babel-goto-named-src-block "enable making init and readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))
 # eval: (local-set-key (kbd "<f9>") (lambda () (interactive) (org-babel-goto-named-src-block "publish-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # compile-command:  (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))

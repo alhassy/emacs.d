@@ -1,12 +1,3 @@
-;; [[file:~/.emacs.d/init.org::*Abstract][Abstract:1]]
-(concat
-"<p align=\"center\">
-        <a href=\"https://www.gnu.org/software/emacs/\">
-        <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
-        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
-</p>")
-;; Abstract:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Booting%20Up][Booting Up:1]]
 (setq enable-local-variables :safe)
 ;; Booting Up:1 ends here
@@ -20,28 +11,23 @@
 ;; ~~/.emacs~ vs. ~init.org~:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::enable%20making%20init%20and%20readme][enable making init and readme]]
-(defun my/make-init-el-and-README ()
-  (interactive)
-  (save-excursion
-    (-let [org-export-use-babel nil]
+  (defun my/make-init-el-and-README ()
+    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
+    (when current-prefix-arg
+      (let (org-export-use-babel)
+        (save-excursion
+          ;; Make init.el
+          (org-babel-tangle)
+          (byte-compile-file "~/.emacs.d/init.el")
+          (load-file "~/.emacs.d/init.el")
 
-    ;; Register the language template function below
-    (unless (fboundp 'make-lang-template)
-      (org-babel-goto-named-src-block "make-lang-template")
-      (org-babel-execute-src-block))
+          ;; Make README.md
+          (org-babel-goto-named-src-block "make-readme")
+          (org-babel-execute-src-block)
 
-    ;; Make init.el
-    (org-babel-tangle)
-    (byte-compile-file "~/.emacs.d/init.el")
-    (load-file "~/.emacs.d/init.el")
+          (message "Tangled, compiled, and loaded init.el; and made README.md")))))
 
-    ;; Make README.md
-    (org-babel-goto-named-src-block "make-readme")
-    (org-babel-execute-src-block)
-
-    (message "Tangled, compiled, and loaded init.el; and made README.md"))))
-
-(add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
+  (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 ;; enable making init and readme ends here
 
 ;; [[file:~/.emacs.d/init.org::*~use-package~%20--The%20start%20of%20~init.el~][~use-package~ --The start of ~init.el~:1]]
@@ -689,27 +675,53 @@
 ;; Highlight & complete parenthesis pair when cursor is near ;-):3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlight%20&%20complete%20parenthesis%20pair%20when%20cursor%20is%20near%20;-)][Highlight & complete parenthesis pair when cursor is near ;-):4]]
+(setq electric-pair-inhibit-predicate
+      (lambda (c)
+        (or (member c '(?< ?>)) (electric-pair-default-inhibit c))))
+
+(when (< 1 2) 'bye)
+
+;; Act as usual unless a ‘<’ or ‘>’ is encountered.
+;; ( char-at is really “character at poisition”; C-h o! )
+(setq rainbow-delimiters-pick-face-function
+      (lambda (depth match loc)
+        (unless (member (char-after loc) '(?< ?>))
+          (rainbow-delimiters-default-pick-face depth match loc))))
+
+;; Final piece.
+(modify-syntax-entry ?< "(>")
+(modify-syntax-entry ?> ")<")
+;; Highlight & complete parenthesis pair when cursor is near ;-):4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Highlight%20&%20complete%20parenthesis%20pair%20when%20cursor%20is%20near%20;-)][Highlight & complete parenthesis pair when cursor is near ;-):6]]
 (setq electric-pair-pairs
          '(
            (?~ . ?~)
            (?* . ?*)
            (?/ . ?/)
           ))
-;; Highlight & complete parenthesis pair when cursor is near ;-):4 ends here
+;; Highlight & complete parenthesis pair when cursor is near ;-):6 ends here
 
-;; [[file:~/.emacs.d/init.org::*Highlight%20&%20complete%20parenthesis%20pair%20when%20cursor%20is%20near%20;-)][Highlight & complete parenthesis pair when cursor is near ;-):5]]
+;; [[file:~/.emacs.d/init.org::*Highlight%20&%20complete%20parenthesis%20pair%20when%20cursor%20is%20near%20;-)][Highlight & complete parenthesis pair when cursor is near ;-):7]]
 ;; Disable pairs when entering minibuffer
 (add-hook 'minibuffer-setup-hook (lambda () (electric-pair-mode 0)))
 
 ;; Renable pairs when existing minibuffer
 (add-hook 'minibuffer-exit-hook (lambda () (electric-pair-mode 1)))
-;; Highlight & complete parenthesis pair when cursor is near ;-):5 ends here
+;; Highlight & complete parenthesis pair when cursor is near ;-):7 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Minibuffer%20should%20display%20line%20and%20column%20numbers][Minibuffer should display line and column numbers:1]]
-(global-display-line-numbers-mode t)
 ; (line-number-mode t)
 (column-number-mode t)
 ;; Minibuffer should display line and column numbers:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Minibuffer%20should%20display%20line%20and%20column%20numbers][Minibuffer should display line and column numbers:2]]
+(global-display-line-numbers-mode t)
+
+;; Have a uniform width for displaying line numbers,
+;; rather than having the width grow as necessary.
+(setq display-line-numbers-width-start t)
+;; Minibuffer should display line and column numbers:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Never%20lose%20the%20cursor][Never lose the cursor:1]]
 (use-package beacon
@@ -752,6 +764,9 @@
 ;; [[file:~/.emacs.d/init.org::*Life%20within%20Org-mode][Life within Org-mode:4]]
 ;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
+
+;; Lists may be labelled with letters.
+(setq org-list-allow-alphabetical t)
 
 ;; Avoid accidentally editing folded regions, say by adding text after an Org “⋯”.
 (setq org-catch-invisible-edits 'show)
@@ -951,132 +966,6 @@
 ; Use fundamental mode when editing plantuml blocks with C-c '
 (add-to-list 'org-src-lang-modes (quote ("plantuml" . fundamental)))
 ;; Workflow States:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making%20Block%20Delimiters%20Less%20Intrusive][Making Block Delimiters Less Intrusive:1]]
-  (defvar-local rasmus/org-at-src-begin -1
-    "Variable that holds whether last position was a ")
-
-  (defvar rasmus/ob-header-symbol ?☰
-    "Symbol used for babel headers")
-
-  (defun rasmus/org-prettify-src--update ()
-    (let ((case-fold-search t)
-          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
-          found)
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward re nil t)
-          (goto-char (match-end 0))
-          (let ((args (org-trim
-                       (buffer-substring-no-properties (point)
-                                                       (line-end-position)))))
-            (when (org-string-nw-p args)
-              (let ((new-cell (cons args rasmus/ob-header-symbol)))
-                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
-                (cl-pushnew new-cell found :test #'equal)))))
-        (setq prettify-symbols-alist
-              (cl-set-difference prettify-symbols-alist
-                                 (cl-set-difference
-                                  (cl-remove-if-not
-                                   (lambda (elm)
-                                     (eq (cdr elm) rasmus/ob-header-symbol))
-                                   prettify-symbols-alist)
-                                  found :test #'equal)))
-        ;; Clean up old font-lock-keywords.
-        (font-lock-remove-keywords nil prettify-symbols--keywords)
-        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
-        (font-lock-add-keywords nil prettify-symbols--keywords)
-        (while (re-search-forward re nil t)
-          (font-lock-flush (line-beginning-position) (line-end-position))))))
-
-  (defun rasmus/org-prettify-src ()
-    "Hide src options via `prettify-symbols-mode'.
-
-  `prettify-symbols-mode' is used because it has uncollpasing. It's
-  may not be efficient."
-    (let* ((case-fold-search t)
-           (at-src-block (save-excursion
-                           (beginning-of-line)
-                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
-      ;; Test if we moved out of a block.
-      (when (or (and rasmus/org-at-src-begin
-                     (not at-src-block))
-                ;; File was just opened.
-                (eq rasmus/org-at-src-begin -1))
-        (rasmus/org-prettify-src--update))
-      ;; Remove composition if at line; doesn't work properly.
-      ;; (when at-src-block
-      ;;   (with-silent-modifications
-      ;;     (remove-text-properties (match-end 0)
-      ;;                             (1+ (line-end-position))
-      ;;                             '(composition))))
-      (setq rasmus/org-at-src-begin at-src-block)))
-
-  (defun rasmus/org-prettify-symbols ()
-    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
-          (cl-reduce 'append
-                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
-                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
-                               ("#+end_src"   . ?□) ;; ⏹
-                               ("#+header:" . ,rasmus/ob-header-symbol)
-                               ("#+begin_quote" . ?»)
-                               ("#+end_quote" . ?«)))))
-    (turn-on-prettify-symbols-mode)
-    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
-  (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
-
-;; Last up­dated: 2019-06-09
-;; Making Block Delimiters Less Intrusive:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making%20Block%20Delimiters%20Less%20Intrusive][Making Block Delimiters Less Intrusive:2]]
-noice
-;; Making Block Delimiters Less Intrusive:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making%20Block%20Delimiters%20Less%20Intrusive][Making Block Delimiters Less Intrusive:3]]
-(global-prettify-symbols-mode)
-
-(defvar my-prettify-alist nil
-  "Musa's personal prettifications.")
-
-(push '("<=" . ?≤) my-prettify-alist)
-(push '("->" . ?→) my-prettify-alist)
-(push '("-->" . ?⟶) my-prettify-alist)
-(push '("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) my-prettify-alist) ;; ℰ⇒
-(push '("#+end_example" . ?⇐) my-prettify-alist)                  ;; ⇐
-(push '("{{{fold(" . ?↳) my-prettify-alist)
-(push '(")}}}" . ?↲) my-prettify-alist)
-(push '("{{{end-fold}}}" . ?↺) my-prettify-alist)
-
-(when (<= 1 2)) ;; prettify symbols not loading
-
-(-let [modify (lambda ()
-              (setq prettify-symbols-alist
-                    (append my-prettify-alist prettify-symbols-alist)))]
-
-  (add-hook 'text-mode-hook modify)
-  (add-hook 'prog-mode-hook modify)
-  ;; For org-example blocks, “C-c '” to see the prettifications of language constructs.
-  ;; Or alter the particular hook directly.
-  (add-hook 'org-mode-hook modify) ;; for the folding blocks
-)
-;; Making Block Delimiters Less Intrusive:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making%20Block%20Delimiters%20Less%20Intrusive][Making Block Delimiters Less Intrusive:4]]
-;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
-(setq prettify-symbols-unprettify-at-point 'right-edge)
-;; Making Block Delimiters Less Intrusive:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making%20Block%20Delimiters%20Less%20Intrusive][Making Block Delimiters Less Intrusive:6]]
-(use-package folding
- :init
- (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
- ; (setq folding-top-mark "{{{fold(")
- ; (setq folding-bottom-mark "{{{end-fold}}}")
- :config
-  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
-  (add-hook 'org-mode-hook #'folding-mode)
-)
-;; Making Block Delimiters Less Intrusive:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Working%20with%20Citations][Working with Citations:1]]
 (use-package org-ref :demand t)
@@ -1590,92 +1479,6 @@ user."
    (company-quickhelp-mode)
 )
 ;; Completion Frameworks:11 ends here
-
-;; [[file:~/.emacs.d/init.org::*Snippets%20--%20Template%20Expansion][Snippets -- Template Expansion:1]]
-;; Yet another snippet extension program
-(use-package yasnippet
-  :diminish yas-minor-mode
-  :config
-    (yas-global-mode 1)
-    ;; respect the spacing in my snippet declarations
-    (setq yas-indent-line 'fixed)
-)
-
-;; Nice “interface” to said program
-(use-package yankpad
-  ;; :if company-mode ;; load & initialise only if company-mode is defined
-  :demand t
-  :init
-    ;; Location of templates
-    (setq yankpad-file "~/.emacs.d/yankpad.org")
-    (setq yankpad-category "Category: Default")
-  :config
-    ;; If you want to complete snippets using company-mode
-    ;; (add-to-list 'company-backends #'company-yankpad)
-    ;; If you want to expand snippets with hippie-expand
-    (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand)
-    ;; Load the snippet templates -- useful after yankpad is altered
-    ;; (add-hook 'after-init-hook 'yankpad-reload)
-)
-
-;; Elementary textual completion backend.
-(setq company-backends
-   (add-to-list 'company-backends 'company-dabbrev))
-;;
-;; Add yasnippet support for all company backends
-;; https://emacs.stackexchange.com/a/10520/10352
-;;
-(defvar company-mode/enable-yas t
-  "There can only be one main completition backend, so let's
-   enable yasnippet/yankpad as a secondary for all completion backends.")
-
-(defun company-mode/backend-with-yas (backend)
-  (if (or (not company-mode/enable-yas)
-          (and (listp backend) (member 'company-yankpad backend)))
-      backend
-    (append (if (consp backend) backend (list backend))
-            '(:with company-yankpad))))
-
-(setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
-;; Snippets -- Template Expansion:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Snippets%20--%20Template%20Expansion][Snippets -- Template Expansion:4]]
-(cl-defun org-insert-link ()
-  "Makes an org link by inserting the URL copied to clipboard
-  and prompting for the link description only.
-
-  Type over the shown link to change it, or tab to move to the description
-  field.
-
-  This overrides Org-mode's built-in ‘org-insert-link’ utility.
-  "
-  (interactive)
-  (insert "my-org-insert-link")
-  (yankpad-expand)
-)
-;; Snippets -- Template Expansion:4 ends here
-
-;; [[file:~/.emacs.d/init.org::make-lang-template][make-lang-template]]
-(defun make-lang-template (key lang)
-  "We make an org-mode source block snippet template.
-
-  ‘key’ is the expansion word key for the language ‘lang’;
-  the description for the snippet is also ‘lang’.
-  "
-  (s-join "\n" `(
-    ,(concat "** " key ": " lang)
-    ,(concat "#+begin_src " lang)
-    "$0"
-    "#+end_src"
-    "\n"
-  ))
-)
-;; make-lang-template ends here
-
-;; [[file:~/.emacs.d/init.org::*Re-Enabling%20Templates][Re-Enabling Templates:1]]
-;; After init hook; see above near use-package install.
-(yankpad-reload)
-;; Re-Enabling Templates:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Helpful%20Utilities%20&%20Shortcuts][Helpful Utilities & Shortcuts:1]]
 ;; change all prompts to y or n

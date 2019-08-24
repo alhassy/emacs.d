@@ -1,3 +1,15 @@
+;; [[file:~/.emacs.d/init.org::my-org-lang-templates][my-org-lang-templates]]
+(let (result) ;; ensure result is initially empty
+   (dolist (x '( ("s_el" . "emacs-lisp")
+                 ("s_org" . "org")
+                 ("s_hs" . "haskell")
+                 ("s_ag" . "agda2")
+                 ("s_c" . "c")
+                 ("s_lx" . "latex")
+               ) result)
+      (setq result (concat result "\n" (make-lang-template (car x) (cdr x))))))
+;; my-org-lang-templates ends here
+
 #+Description: This is file is generated from my init.org; do not edit.
 
 * Default                                           :global:
