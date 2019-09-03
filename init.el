@@ -164,10 +164,12 @@
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
+(maybe-clone "https://github.com/alhassy/RubyCheatSheet")
 (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
 (maybe-clone "https://github.com/alhassy/org-agda-mode")
 (maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
 (maybe-clone "https://github.com/alhassy/islam")
+(maybe-clone "https://gitlab.cas.mcmaster.ca/armstmp/cs3mi3.git" "~/3mi3")
 ;; ~magit~ --Emacs' porcelain interface to git:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*~magit~%20--Emacs'%20porcelain%20interface%20to%20git][~magit~ --Emacs' porcelain interface to git:3]]
@@ -919,11 +921,27 @@
 
 ;; [[file:~/.emacs.d/init.org::*Journaling][Journaling:1]]
 (use-package org-journal
-  :bind (("C-c j" . org-journal-new-entry))
+  ; :bind (("C-c j" . org-journal-new-entry))
   :config
-  (setq org-journal-dir "~/Dropbox/journal/")
-  (setq org-journal-file-type 'yearly)
+  (setq org-journal-dir "~/Dropbox/journal/"
+        org-journal-file-type 'yearly
+        org-journal-file-format "Personal-%Y-%m-%d")
 )
+
+(defun my/org-journal-new-entry (prefix)
+  " Open today’s journal file and start a new entry.
+
+    With a prefix, we use the work journal; otherwise the personal journal.
+  "
+  (interactive "P")
+  (if prefix
+      (let ((org-journal-file-format "Work-%Y-%m-%d"))
+        (org-journal-new-entry nil))
+    (org-journal-new-entry nil))
+  (org-mode) (org-show-all))
+
+;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
+(global-set-key (kbd "C-c j") 'my/org-journal-new-entry)
 ;; Journaling:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Workflow%20States][Workflow States:1]]
@@ -986,7 +1004,8 @@
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / "))
-(org-sticky-header-mode)
+
+(add-hook 'org-mode-hook #'org-sticky-header-mode)
 ;; Show off-screen Heading at the top of the window:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Clocking%20Work%20Time][Clocking Work Time:1]]
@@ -1139,6 +1158,32 @@
 (add-hook 'org-mode-hook '(lambda ()
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 ;; Folding within a subtree:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Ensuring%20Useful%20HTML%20Anchors][Ensuring Useful HTML Anchors:1]]
+(defun my/ensure-headline-ids (&rest _)
+  "Org trees without a :CUSTOM_ID: property have the property set to be their heading.
+
+   If multiple trees end-up with the same id property, issue a message and undo
+   any property insertion thus far.
+  "
+  (interactive)
+  (let ((ids))
+    (org-map-entries
+     (lambda ()
+       (org-with-point-at (point)
+         (let ((id (org-entry-get nil "CUSTOM_ID")))
+           (unless id
+             (setq id (s-replace " " "-" (nth 4 (org-heading-components))))
+             (if (not (member id ids))
+                 (push id ids)
+               (message-box "Oh no, a repeated id!\n\n\t%s" id)
+               (undo)
+               (setq quit-flag t))
+             (org-entry-put nil "CUSTOM_ID" id))))))))
+
+;; Whenever html export happens, ensure we have headline ids.
+(advice-add 'org-html-export-to-html :before 'my/ensure-headline-ids)
+;; Ensuring Useful HTML Anchors:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Making%20then%20opening%20html's%20from%20org's][Making then opening html's from org's:1]]
 (cl-defun my/org-html-export-to-html (&optional (filename (buffer-name)))
