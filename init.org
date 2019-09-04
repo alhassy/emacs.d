@@ -3554,6 +3554,9 @@ IDs from headings, by replacing spaces with hyphens, for headings without IDs.
 (advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
 #+END_SRC
 
+One may then use ~[[#my-custom-id]]~ to link to the entry with ~CUSTOM_ID~ property
+~my-custom-id~.
+
 ** Making then opening html's from org's
 :PROPERTIES:
 :CUSTOM_ID: Making-then-opening-html's-from-org's
@@ -3836,6 +3839,25 @@ items there (•̀ᴗ•́)و
 
 + Inline todo keywords are pickedup if they have a colon after them; e.g.,
   TODO: example.
+
+** Why has a line changed?
+ Press ~C-x v~ to find out!
+
+#+BEGIN_SRC emacs-lisp
+(use-package git-messenger :demand t)
+
+;; Show “v”ersion changes
+;; C-u C-x v ∷ Also show who authored the change and when.
+(global-set-key (kbd "C-x v") 'git-messenger:popup-message)
+
+;; Message menu let's us use magit diff to see the commit change.
+(setq git-messenger:use-magit-popup t)
+
+;; Always show who authored the commit and when.
+;; (setq git-messenger:show-detail t)
+#+END_SRC
+
+Perhaps this will motivate smaller, frequent, commits.
 
 ** Taking a tour of one's edits
 :PROPERTIES:
