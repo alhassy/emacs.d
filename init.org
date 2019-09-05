@@ -30,6 +30,12 @@
 (package-install 'fold-this)        ;; Folding away regions of text
 :End:
 
+#+BEGIN_SRC emacs-lisp
+(use-package
+  indent-guide)
+#+END_SRC
+
+
 * TODO COMMENT Clean up
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Clean-up
@@ -3748,6 +3754,10 @@ If the :tangle header arg is a list of files. Handle all files"
 ;; Use 4 spaces in places of tabs when indenting.
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
+
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent :demand t)
+(global-aggressive-indent-mode t)
 #+END_SRC
 
 ** Backups
@@ -4795,6 +4805,7 @@ f x = x -- show x
 
 :End:
 * Helpful Utilities & Shortcuts
+
 :PROPERTIES:
 :CUSTOM_ID: Helpful-Utilities-&-Shortcuts
 :END:
