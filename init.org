@@ -30,12 +30,6 @@
 (package-install 'fold-this)        ;; Folding away regions of text
 :End:
 
-#+BEGIN_SRC emacs-lisp
-(use-package
-  indent-guide)
-#+END_SRC
-
-
 * TODO COMMENT Clean up
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Clean-up
@@ -4034,6 +4028,15 @@ Let's remove repeated matter.
 ;; Also a helpful quick f-key.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
+** Moving Text Around
+
+This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
+#+BEGIN_SRC emacs-lisp
+;; M-↑,↓ moves line, or marked region; prefix is how many lines.
+(use-package move-text)
+(move-text-default-bindings)
+#+END_SRC
+
 ** Enabling CamelCase Aware Editing Operations
 :PROPERTIES:
 :CUSTOM_ID: Enabling-CamelCase-Aware-Editing-Operations
