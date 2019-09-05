@@ -3880,7 +3880,7 @@ Notice, as a hydra, I can use ~C-c e~ followed by any combination of
 ~,~ and ~.~ to navigate my recent edits /without/ having to supply the prefix
 each time.
 
-** What's Changed & Who's to Blame?
+** What's changed & who's to blame?
 Let's have, in a fringe, an indicator for altered regions in a version controlled
 file. Moreover, let's stage-&-commit straight from a working buffer.
 The symbols “+, =” appear in a fringe by default for alterations
