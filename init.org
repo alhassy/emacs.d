@@ -3858,15 +3858,6 @@ The symbols “+, =” appear in a fringe by default for alterations
   :ensure t
   :init (global-git-gutter+-mode)
   :diminish (git-gutter+-mode))
-
-;; Popup for Who's to blame for alterations.
-(use-package git-messenger :demand t)
-;;
-;; Message menu let's us use magit diff to see the commit change.
-(setq git-messenger:use-magit-popup t)
-;;
-;; Always show who authored the commit and when.
-;; (setq git-messenger:show-detail t)
 #+END_SRC
 
 Let's set a hydra so we can press ~C-x v n n p n~ to move the next two
@@ -3883,10 +3874,7 @@ At any point we may also press ~u 𝕩~ to denote ~C-u ⟪prefix⟫ 𝕩~.
   ("r" git-gutter+-revert-hunks "Revert hunk\n")
   ("c" git-gutter+-stage-and-commit "Stage & commit hunk")
   ("C" git-gutter+-stage-and-commit-whole-buffer "Stage & commit entire buffer")
-  ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer")
-  ("b" git-messenger:popup-message "Who's to blame?")
-  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
-  )
+  ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer"))
 #+END_SRC
 
 Commiting with ~C-x v c~ let's us use ~C-c C-k~ to cancel and ~C-c C-c~ to
@@ -3899,7 +3887,44 @@ Besides [[https://github.com/nonsequitur/git-gutter-plus][git-gutter+]] we may u
 ;; (global-diff-hl-mode)
 #+END_SRC
 
+A few more helpful version control features:
+#+BEGIN_SRC emacs-lisp
+;; Popup for who's to blame for alterations.
+(use-package git-messenger :demand t)
+;;
+;; Message menu let's us use magit diff to see the commit change.
+(setq git-messenger:use-magit-popup t)
+;;
+;; Always show who authored the commit and when.
+;; (setq git-messenger:show-detail t)
+
+;; View current file in browser on github.
+;; More generic is “browse-at-remote”.
+(use-package github-browse-file)
+
+;; Add these to the version control hydra.
+;;
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  ("b" git-messenger:popup-message "Who's to blame?")
+  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+  ("g" github-browse-file-blame "Show file in browser in github")
+  ("s" magit-status "Git status of current buffer"))
+#+END_SRC
+
 Perhaps ~C-x v b~ will motivate smaller, frequent, commits.
+
+Obtaining URL links to the current location of a file
+---URLs are added to the kill ring.
+Usefully, if [[https://gitlab.com/pidu/git-timemachine][git-timemachine-mode]] is active, the generated link
+points to the version of the file being visited.
+#+BEGIN_SRC emacs-lisp
+(use-package git-link)
+
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  ("l" git-link "Git URL for current location"))
+#+END_SRC
+
+Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
 
 ** Taking a tour of one's edits
 :PROPERTIES:
