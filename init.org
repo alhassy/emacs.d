@@ -4887,16 +4887,34 @@ Disclaimer: I wrote the following /before/ I learned any lisp; everything below 
     (buffer-string)))
 #+END_SRC
 
-** ~kill-other-buffers~
+** ~C-x k~ kills current buffer, ~C-u C-x k~ kills all others
 :PROPERTIES:
-:CUSTOM_ID: ~kill-other-buffers~
+:CUSTOM_ID: kill-buffers
 :END:
+
+Let's introduce a handy utility when I'd like to clean my buffers.
 #+BEGIN_SRC emacs-lisp
 (defun kill-other-buffers ()
-  "Kill all other buffers."
+  "Kill all other buffers and other windows."
   (interactive)
-  (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
+  (mapc 'kill-buffer (delq (current-buffer) (buffer-list)))
+  (delete-other-windows))
 #+END_SRC
+
+By default ~C-x k~ prompts to select which buffer
+should be selected. I almost always want to kill
+the current buffer, so let's not waste time making
+such a tedious decision.
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-x k")
+  '(lambda (&optional all)
+     "Kill current buffer, or all if prefix is provided.
+      Prompt only if there are unsaved changes."
+     (interactive "P")
+     (if all (kill-other-buffers)
+       (kill-buffer (current-buffer)))))
+#+end_src
+
 ** Switching from 2 horizontal windows to 2 vertical windows
 :PROPERTIES:
 :CUSTOM_ID: Switching-from-2-horizontal-windows-to-2-vertical-windows
@@ -5027,21 +5045,6 @@ and how to manipulate it.
 (global-set-key "\C-t" 'toggle-terminal)
 #+end_src
 
-** ~C-x k~ kills current buffer
-:PROPERTIES:
-:CUSTOM_ID: ~C-x-k~-kills-current-buffer
-:END:
-
-By default ~C-x k~ prompts to select which buffer
-should be selected. I almost always want to kill
-the current buffer, so let's not waste time making
-such a tedious decision.
-#+begin_src emacs-lisp
-;; Kill current buffer; prompt only if
-;; there are unsaved changes.
-(global-set-key (kbd "C-x k")
-  '(lambda () (interactive) (kill-buffer (current-buffer))))
-#+end_src
 ** Publishing articles to my personal blog
 :PROPERTIES:
 :CUSTOM_ID: Publishing-articles-to-my-personal-blog
