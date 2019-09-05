@@ -3838,16 +3838,49 @@ Seeing the TODO list with each commit is an incentive to actually tackle the
 items there (•̀ᴗ•́)و
 
 + Inline todo keywords are pickedup if they have a colon after them; e.g.,
-  TODO: example.
+  TODO: Example.
 
-** What's Changed & Who's to Blame?
+** Hydra: Supply a prefix only once
 Invoke all possible key extensions having a common prefix
 by supplying the prefix only once. C.f. “hydra-zoom” from the docs.
 After the prefix is supplied, all extensions are shown in a minibuffer.
 #+BEGIN_SRC emacs-lisp
 (use-package hydra :demand t)
+
+;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
+;;   ;; List of triples (extension method description) )
 #+END_SRC
 
+See [[Taking a tour of one's edits]] below for a small and useful example.
+
+** Taking a tour of one's edits
+:PROPERTIES:
+:CUSTOM_ID: Taking-a-tour-of-one's-edits
+:END:
+This package allows us to move around the edit points of a buffer
+/without/ actually undoing anything. We even obtain a brief description
+of what happend at each edit point.
+This seems useful for when I get interrupted or lose my train of
+thought: Just press ~C-c e ,~ to see what I did recently and where
+---the “e” is for “e”dit.
+
+#+BEGIN_SRC emacs-lisp
+;; Give me a description of the change made at a particular stop.
+(use-package goto-chg
+  :init (setq glc-default-span 0))
+
+(defhydra hydra-edits (global-map "C-c e")
+  ("," goto-last-change "Goto nᵗʰ last change")
+  ("." goto-last-change-reverse "Goto more recent change"))
+#+END_SRC
+
+Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually performed.
+
+Notice, as a hydra, I can use ~C-c e~ followed by any combination of
+~,~ and ~.~ to navigate my recent edits /without/ having to supply the prefix
+each time.
+
+** What's Changed & Who's to Blame?
 Let's have, in a fringe, an indicator for altered regions in a version controlled
 file. Moreover, let's stage-&-commit straight from a working buffer.
 The symbols “+, =” appear in a fringe by default for alterations
@@ -3925,24 +3958,6 @@ points to the version of the file being visited.
 #+END_SRC
 
 Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
-
-** Taking a tour of one's edits
-:PROPERTIES:
-:CUSTOM_ID: Taking-a-tour-of-one's-edits
-:END:
-This package allows us to move around the edit points of a buffer
-/without/ actually undoing anything. We even obtain a brief description of what happend at each edit point. This seems useful for when I get interrupted or lose my train of
-thought: Just press ~C-c e ,~ to see what I did recently and where.
-
-#+BEGIN_SRC emacs-lisp
-(use-package goto-chg
-   ;; Give me a description of the change made at a particular stop.
-  :init (setq glc-default-span 0)
-  :bind (("C-c e ," . goto-last-change)
-         ("C-c e ." . goto-last-change-reverse)))
-#+END_SRC
-
-Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually performed.
 
 ** Edit as Root
 :PROPERTIES:
