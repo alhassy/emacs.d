@@ -3840,9 +3840,10 @@ items there (•̀ᴗ•́)و
 + Inline todo keywords are pickedup if they have a colon after them; e.g.,
   TODO: example.
 
-** Why has a line changed?
- Press ~C-x v~ to find out!
-
+** What's Changed & Who's to Blame?
+Invoke all possible key extensions having a common prefix
+by supplying the prefix only once. C.f. “hydra-zoom” from the docs.
+After the prefix is supplied, all extensions are shown in a minibuffer.
 #+BEGIN_SRC emacs-lisp
 (use-package git-messenger :demand t)
 
