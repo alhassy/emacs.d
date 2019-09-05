@@ -3845,6 +3845,9 @@ items there (•̀ᴗ•́)و
   TODO: Example.
 
 ** Hydra: Supply a prefix only once
+:PROPERTIES:
+:CUSTOM_ID: Hydra:-Supply-a-prefix-only-once
+:END:
 Invoke all possible key extensions having a common prefix
 by supplying the prefix only once. C.f. “hydra-zoom” from the docs.
 After the prefix is supplied, all extensions are shown in a minibuffer.
@@ -3885,6 +3888,9 @@ Notice, as a hydra, I can use ~C-c e~ followed by any combination of
 each time.
 
 ** What's changed & who's to blame?
+:PROPERTIES:
+:CUSTOM_ID: more-version-control
+:END:
 Let's have, in a fringe, an indicator for altered regions in a version controlled
 file. Moreover, let's stage-&-commit straight from a working buffer.
 The symbols “+, =” appear in a fringe by default for alterations
@@ -4029,6 +4035,9 @@ Let's remove repeated matter.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
 ** Moving Text Around
+:PROPERTIES:
+:CUSTOM_ID: Moving-Text-Around
+:END:
 
 This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
 #+BEGIN_SRC emacs-lisp
@@ -4808,6 +4817,9 @@ f x = x -- show x
 
 :End:
 * Helpful Utilities & Shortcuts
+:PROPERTIES:
+:CUSTOM_ID: Helpful-Utilities-&-Shortcuts
+:END:
 
 :PROPERTIES:
 :CUSTOM_ID: Helpful-Utilities-&-Shortcuts

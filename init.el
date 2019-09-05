@@ -1280,6 +1280,10 @@
 ;; Use 4 spaces in places of tabs when indenting.
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
+
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent :demand t)
+(global-aggressive-indent-mode t)
 ;; Expected IDE Support:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Backups][Backups:1]]
@@ -1327,27 +1331,79 @@
   (magit-todos-mode))
 ;; Highlighting TODO-s & Showing them in Magit:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Why%20has%20a%20line%20changed?][Why has a line changed?:1]]
-(use-package git-messenger :demand t)
+;; [[file:~/.emacs.d/init.org::*Hydra:%20Supply%20a%20prefix%20only%20once][Hydra: Supply a prefix only once:1]]
+(use-package hydra :demand t)
 
-;; Show “v”ersion changes
-;; C-u C-x v ∷ Also show who authored the change and when.
-(global-set-key (kbd "C-x v") 'git-messenger:popup-message)
-
-;; Message menu let's us use magit diff to see the commit change.
-(setq git-messenger:use-magit-popup t)
-
-;; Always show who authored the commit and when.
-;; (setq git-messenger:show-detail t)
-;; Why has a line changed?:1 ends here
+;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
+;;   ;; List of triples (extension method description) )
+;; Hydra: Supply a prefix only once:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Taking%20a%20tour%20of%20one's%20edits][Taking a tour of one's edits:1]]
+;; Give me a description of the change made at a particular stop.
 (use-package goto-chg
-   ;; Give me a description of the change made at a particular stop.
-  :init (setq glc-default-span 0)
-  :bind (("C-c e ," . goto-last-change)
-         ("C-c e ." . goto-last-change-reverse)))
+  :init (setq glc-default-span 0))
+
+(defhydra hydra-edits (global-map "C-c e")
+  ("," goto-last-change "Goto nᵗʰ last change")
+  ("." goto-last-change-reverse "Goto more recent change"))
 ;; Taking a tour of one's edits:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:1]]
+;; Hunk navigation and commiting.
+(use-package git-gutter+
+  :ensure t
+  :init (global-git-gutter+-mode)
+  :diminish (git-gutter+-mode))
+;; What's changed & who's to blame?:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:2]]
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  "Version control"
+  ;; (extension method description)
+  ("n" git-gutter+-next-hunk "Next hunk")
+  ("p" git-gutter+-previous-hunk "Previous hunk")
+  ("=" git-gutter+-show-hunk "Show hunk diff")
+  ("r" git-gutter+-revert-hunks "Revert hunk\n")
+  ("c" git-gutter+-stage-and-commit "Stage & commit hunk")
+  ("C" git-gutter+-stage-and-commit-whole-buffer "Stage & commit entire buffer")
+  ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer"))
+;; What's changed & who's to blame?:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:3]]
+;; Colour fringe to indicate alterations.
+;; (use-package diff-hl)
+;; (global-diff-hl-mode)
+;; What's changed & who's to blame?:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:4]]
+;; Popup for who's to blame for alterations.
+(use-package git-messenger :demand t)
+;;
+;; Message menu let's us use magit diff to see the commit change.
+(setq git-messenger:use-magit-popup t)
+;;
+;; Always show who authored the commit and when.
+;; (setq git-messenger:show-detail t)
+
+;; View current file in browser on github.
+;; More generic is “browse-at-remote”.
+(use-package github-browse-file)
+
+;; Add these to the version control hydra.
+;;
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  ("b" git-messenger:popup-message "Who's to blame?")
+  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+  ("g" github-browse-file-blame "Show file in browser in github")
+  ("s" magit-status "Git status of current buffer"))
+;; What's changed & who's to blame?:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:5]]
+(use-package git-link)
+
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  ("l" git-link "Git URL for current location"))
+;; What's changed & who's to blame?:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Edit%20as%20Root][Edit as Root:1]]
 (defun find-file-as-root ()
@@ -1362,6 +1418,12 @@ user."
 
 (bind-key "C-x F" 'find-file-as-root)
 ;; Edit as Root:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Moving%20Text%20Around][Moving Text Around:1]]
+;; M-↑,↓ moves line, or marked region; prefix is how many lines.
+(use-package move-text)
+(move-text-default-bindings)
+;; Moving Text Around:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Enabling%20CamelCase%20Aware%20Editing%20Operations][Enabling CamelCase Aware Editing Operations:1]]
 (global-subword-mode 1)
@@ -1597,12 +1659,23 @@ user."
     (buffer-string)))
 ;; ~file-as-list~ and ~file-as-string~:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*~kill-other-buffers~][~kill-other-buffers~:1]]
+;; [[file:~/.emacs.d/init.org::*~C-x%20k~%20kills%20current%20buffer,%20~C-u%20C-x%20k~%20kills%20all%20others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others:1]]
 (defun kill-other-buffers ()
-  "Kill all other buffers."
+  "Kill all other buffers and other windows."
   (interactive)
-  (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
-;; ~kill-other-buffers~:1 ends here
+  (mapc 'kill-buffer (delq (current-buffer) (buffer-list)))
+  (delete-other-windows))
+;; ~C-x k~ kills current buffer, ~C-u C-x k~ kills all others:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~C-x%20k~%20kills%20current%20buffer,%20~C-u%20C-x%20k~%20kills%20all%20others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others:2]]
+(global-set-key (kbd "C-x k")
+  '(lambda (&optional all)
+     "Kill current buffer, or all if prefix is provided.
+      Prompt only if there are unsaved changes."
+     (interactive "P")
+     (if all (kill-other-buffers)
+       (kill-buffer (current-buffer)))))
+;; ~C-x k~ kills current buffer, ~C-u C-x k~ kills all others:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Switching%20from%202%20horizontal%20windows%20to%202%20vertical%20windows][Switching from 2 horizontal windows to 2 vertical windows:1]]
 (defun ensure-two-vertical-windows ()
@@ -1688,13 +1761,6 @@ user."
 
 (global-set-key "\C-t" 'toggle-terminal)
 ;; Quickly pop-up a terminal, run a command, close it:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*~C-x%20k~%20kills%20current%20buffer][~C-x k~ kills current buffer:1]]
-;; Kill current buffer; prompt only if
-;; there are unsaved changes.
-(global-set-key (kbd "C-x k")
-  '(lambda () (interactive) (kill-buffer (current-buffer))))
-;; ~C-x k~ kills current buffer:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Publishing%20articles%20to%20my%20personal%20blog][Publishing articles to my personal blog:1]]
 (define-key global-map "\C-cb" 'my/publish-to-blog)

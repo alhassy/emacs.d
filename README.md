@@ -82,28 +82,37 @@ and its contents below could also be read in blog format, with *colour*, or as c
 5.  [Expected IDE Support](#Expected-IDE-Support)
     1.  [Backups](#Backups)
     2.  [Highlighting TODO-s & Showing them in Magit](#Highlighting-TODO-s-&-Showing-them-in-Magit)
-    3.  [Taking a tour of one's edits](#Taking-a-tour-of-one's-edits)
-    4.  [Edit as Root](#Edit-as-Root)
-    5.  [Enabling CamelCase Aware Editing Operations](#Enabling-CamelCase-Aware-Editing-Operations)
-    6.  [Keep buffers open across sessions](#Keep-buffers-open-across-sessions):Disabled:
-    7.  [Mouse Editing Support](#Mouse-Editing-Support)
-    8.  [Dimming Unused Windows](#Dimming-Unused-Windows)
-    9.  [Having a workspace manager in Emacs](#Having-a-workspace-manager-in-Emacs)
-    10. [Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab](#Jump-between-windows-using-Cmd+Arrow-&-between-recent-buffers-with-Meta-Tab)
-    11. [Completion Frameworks](#Completion-Frameworks)
-6.  [Helpful Utilities & Shortcuts](#Helpful-Utilities-&-Shortcuts)
+    3.  [Hydra: Supply a prefix only once](#orgb095e0f)
+    4.  [Taking a tour of one's edits](#Taking-a-tour-of-one's-edits)
+    5.  [What's changed & who's to blame?](#org456aba3)
+    6.  [Edit as Root](#Edit-as-Root)
+    7.  [Moving Text Around](#org31fa2e1)
+    8.  [Enabling CamelCase Aware Editing Operations](#Enabling-CamelCase-Aware-Editing-Operations)
+    9.  [Keep buffers open across sessions](#Keep-buffers-open-across-sessions):Disabled:
+    10. [Mouse Editing Support](#Mouse-Editing-Support)
+    11. [Dimming Unused Windows](#Dimming-Unused-Windows)
+    12. [Having a workspace manager in Emacs](#Having-a-workspace-manager-in-Emacs)
+    13. [Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab](#Jump-between-windows-using-Cmd+Arrow-&-between-recent-buffers-with-Meta-Tab)
+    14. [Completion Frameworks](#Completion-Frameworks)
+6.  [Helpful Utilities & Shortcuts](#org94f0ed8)
     1.  [Bind `recompile` to `C-c C-m` &#x2013; “m” for “m”ake](#Bind-~recompile~-to-~C-c-C-m~----“m”-for-“m”ake)
     2.  [Reload buffer with `f5`](#Reload-buffer-with-~f5~)
     3.  [Kill to start of line](#Kill-to-start-of-line)
     4.  [`file-as-list` and `file-as-string`](#~file-as-list~-and-~file-as-string~)
-    5.  [`kill-other-buffers`](#~kill-other-buffers~)
+    5.  [`C-x k` kills current buffer, `C-u C-x k` kills all others](#kill-buffers)
     6.  [Switching from 2 horizontal windows to 2 vertical windows](#Switching-from-2-horizontal-windows-to-2-vertical-windows)
     7.  [`re-replace-in-file`](#~re-replace-in-file~)
     8.  [Obtaining Values of `#+KEYWORD` Annotations](#Obtaining-Values-of-~#+KEYWORD~-Annotations)
     9.  [Quickly pop-up a terminal, run a command, close it](#Quickly-pop-up-a-terminal,-run-a-command,-close-it)
-    10. [`C-x k` kills current buffer](#~C-x-k~-kills-current-buffer)
-    11. [Publishing articles to my personal blog](#Publishing-articles-to-my-personal-blog)
-    12. [Excellent PDF Viewer](#Excellent-PDF-Viewer)
+    10. [Publishing articles to my personal blog](#Publishing-articles-to-my-personal-blog)
+    11. [Excellent PDF Viewer](#Excellent-PDF-Viewer)
+
+    (concat
+    "<p align=\"center\">
+            <a href=\"https://www.gnu.org/software/emacs/\">
+            <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
+            <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
+    </p>")
 
 <p align="center">
         <a href="https://www.gnu.org/software/emacs/">
@@ -407,6 +416,8 @@ We now bootstrap `use-package`,
 
     (require 'use-package)
 
+    use-package
+
 We can now invoke `(use-package XYZ :ensure t)`
 which should check for the `XYZ` package and make sure it is accessible.
 If not, the `:ensure t` part tells `use-package` to download it
@@ -417,6 +428,8 @@ By default we would like to download packages, since I do not plan on installing
 by download `.el` files and placing them in the correct places on my system.
 
     (setq use-package-always-ensure t)
+
+    t
 
 Here's an example use of `use-package`.
 Below I have my “show recent files pop-up” command set to `C-x C-r`;
@@ -430,6 +443,8 @@ Moreover, I will be shown other commands I did not know about! Neato :-)
      :config (which-key-setup-side-window-bottom)
              (setq which-key-idle-delay 0.05)
     )
+
+    t
 
 The `:diminish` keyword indicates that we do not want the mode's name to be
 shown to us in the modeline &#x2013;the area near the bottom of Emacs.
@@ -1727,6 +1742,8 @@ to be tackled later on.
     (setq org-default-notes-file "~/Dropbox/todo.org")
     (define-key global-map "\C-cc" 'org-capture)
 
+    org-capture
+
 By default we only get a ‘tasks’ form of capture, let's add some more.
 
     (cl-defun my/make/org-capture-template
@@ -2160,6 +2177,8 @@ Let's use this!
     /' Note that we could omit the “center, left, right” if we wished,
        or used a “header” instead.'/
 
+![img](normal_task_states.png)
+
 <img src="../assets/img/workflow.png" alt="My Personal Task States">
 
 Of note:
@@ -2535,6 +2554,9 @@ IDs from headings, by replacing spaces with hyphens, for headings without IDs.
     (advice-add 'org-html-export-to-html :before 'my/ensure-headline-ids)
     (advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
 
+One may then use `[[#my-custom-id]]` to link to the entry with `CUSTOM_ID` property
+`my-custom-id`.
+
 
 <a id="Making-then-opening-html's-from-org's"></a>
 
@@ -2643,6 +2665,10 @@ IDs from headings, by replacing spaces with hyphens, for headings without IDs.
     (setq-default indent-tabs-mode nil)
     (setq-default tab-width 4)
 
+    ;; Always stay indented: Automatically have blocks reindented after every change.
+    (use-package aggressive-indent :demand t)
+    (global-aggressive-indent-mode t)
+
 
 <a id="Backups"></a>
 
@@ -2728,7 +2754,23 @@ Seeing the TODO list with each commit is an incentive to actually tackle the
 items there (•̀ᴗ•́)و
 
 -   Inline todo keywords are pickedup if they have a colon after them; e.g.,
-    TODO: example.
+    TODO: Example.
+
+
+<a id="orgb095e0f"></a>
+
+## Hydra: Supply a prefix only once
+
+Invoke all possible key extensions having a common prefix
+by supplying the prefix only once. C.f. “hydra-zoom” from the docs.
+After the prefix is supplied, all extensions are shown in a minibuffer.
+
+    (use-package hydra :demand t)
+
+    ;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
+    ;;   ;; List of triples (extension method description) )
+
+See [5.4](#Taking-a-tour-of-one's-edits) below for a small and useful example.
 
 
 <a id="Taking-a-tour-of-one's-edits"></a>
@@ -2736,16 +2778,103 @@ items there (•̀ᴗ•́)و
 ## Taking a tour of one's edits
 
 This package allows us to move around the edit points of a buffer
-*without* actually undoing anything. We even obtain a brief description of what happend at each edit point. This seems useful for when I get interrupted or lose my train of
-thought: Just press `C-c e ,` to see what I did recently and where.
+*without* actually undoing anything. We even obtain a brief description
+of what happend at each edit point.
+This seems useful for when I get interrupted or lose my train of
+thought: Just press `C-c e ,` to see what I did recently and where
+&#x2014;the “e” is for “e”dit.
 
+    ;; Give me a description of the change made at a particular stop.
     (use-package goto-chg
-       ;; Give me a description of the change made at a particular stop.
-      :init (setq glc-default-span 0)
-      :bind (("C-c e ," . goto-last-change)
-             ("C-c e ." . goto-last-change-reverse)))
+      :init (setq glc-default-span 0))
+
+    (defhydra hydra-edits (global-map "C-c e")
+      ("," goto-last-change "Goto nᵗʰ last change")
+      ("." goto-last-change-reverse "Goto more recent change"))
 
 Compare this with `C-x u`, or `undo-tree-visualise`, wherein undos are actually performed.
+
+Notice, as a hydra, I can use `C-c e` followed by any combination of
+`,` and `.` to navigate my recent edits *without* having to supply the prefix
+each time.
+
+
+<a id="org456aba3"></a>
+
+## What's changed & who's to blame?
+
+Let's have, in a fringe, an indicator for altered regions in a version controlled
+file. Moreover, let's stage-&-commit straight from a working buffer.
+The symbols “+, =” appear in a fringe by default for alterations
+&#x2014;we may change these if we like.
+
+    ;; Hunk navigation and commiting.
+    (use-package git-gutter+
+      :ensure t
+      :init (global-git-gutter+-mode)
+      :diminish (git-gutter+-mode))
+
+Let's set a hydra so we can press `C-x v n n p n` to move the next two
+altered hunks, move back one, then move to the next. This saves me having
+to supply the prefix `C-x v` each time I navigate among my alterations.
+At any point we may also press `u 𝕩` to denote `C-u ⟪prefix⟫ 𝕩`.
+
+    (defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+      "Version control"
+      ;; (extension method description)
+      ("n" git-gutter+-next-hunk "Next hunk")
+      ("p" git-gutter+-previous-hunk "Previous hunk")
+      ("=" git-gutter+-show-hunk "Show hunk diff")
+      ("r" git-gutter+-revert-hunks "Revert hunk\n")
+      ("c" git-gutter+-stage-and-commit "Stage & commit hunk")
+      ("C" git-gutter+-stage-and-commit-whole-buffer "Stage & commit entire buffer")
+      ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer"))
+
+Commiting with `C-x v c` let's us use `C-c C-k` to cancel and `C-c C-c` to
+submit the given message; `C-c C-a` to amend the previous commit.
+
+Besides [git-gutter+](https://github.com/nonsequitur/git-gutter-plus) we may use diff-hl:
+
+    ;; Colour fringe to indicate alterations.
+    ;; (use-package diff-hl)
+    ;; (global-diff-hl-mode)
+
+A few more helpful version control features:
+
+    ;; Popup for who's to blame for alterations.
+    (use-package git-messenger :demand t)
+    ;;
+    ;; Message menu let's us use magit diff to see the commit change.
+    (setq git-messenger:use-magit-popup t)
+    ;;
+    ;; Always show who authored the commit and when.
+    ;; (setq git-messenger:show-detail t)
+
+    ;; View current file in browser on github.
+    ;; More generic is “browse-at-remote”.
+    (use-package github-browse-file)
+
+    ;; Add these to the version control hydra.
+    ;;
+    (defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+      ("b" git-messenger:popup-message "Who's to blame?")
+      ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+      ("g" github-browse-file-blame "Show file in browser in github")
+      ("s" magit-status "Git status of current buffer"))
+
+Perhaps `C-x v b` will motivate smaller, frequent, commits.
+
+Obtaining URL links to the current location of a file
+&#x2014;URLs are added to the kill ring.
+Usefully, if [git-timemachine-mode](https://gitlab.com/pidu/git-timemachine) is active, the generated link
+points to the version of the file being visited.
+
+    (use-package git-link)
+
+    (defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+      ("l" git-link "Git URL for current location"))
+
+Read [here](https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control) for more about version control in general.
 
 
 <a id="Edit-as-Root"></a>
@@ -2765,6 +2894,17 @@ From an [emacs-fu blog post](http://emacs-fu.blogspot.com/2013/03/editing-with-r
         (find-file file)))
 
     (bind-key "C-x F" 'find-file-as-root)
+
+
+<a id="org31fa2e1"></a>
+
+## Moving Text Around
+
+This extends Org-mode's `M-↑,↓` to other modes, such as when coding.
+
+    ;; M-↑,↓ moves line, or marked region; prefix is how many lines.
+    (use-package move-text)
+    (move-text-default-bindings)
 
 
 <a id="Enabling-CamelCase-Aware-Editing-Operations"></a>
@@ -3042,7 +3182,7 @@ This is very useful when editing in a particular coding language, say via
     )
 
 
-<a id="Helpful-Utilities-&-Shortcuts"></a>
+<a id="org94f0ed8"></a>
 
 # Helpful Utilities & Shortcuts
 
@@ -3131,14 +3271,30 @@ Disclaimer: I wrote the following *before* I learned any lisp; everything below 
         (buffer-string)))
 
 
-<a id="~kill-other-buffers~"></a>
+<a id="kill-buffers"></a>
 
-## `kill-other-buffers`
+## `C-x k` kills current buffer, `C-u C-x k` kills all others
+
+Let's introduce a handy utility when I'd like to clean my buffers.
 
     (defun kill-other-buffers ()
-      "Kill all other buffers."
+      "Kill all other buffers and other windows."
       (interactive)
-      (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
+      (mapc 'kill-buffer (delq (current-buffer) (buffer-list)))
+      (delete-other-windows))
+
+By default `C-x k` prompts to select which buffer
+should be selected. I almost always want to kill
+the current buffer, so let's not waste time making
+such a tedious decision.
+
+    (global-set-key (kbd "C-x k")
+      '(lambda (&optional all)
+         "Kill current buffer, or all if prefix is provided.
+          Prompt only if there are unsaved changes."
+         (interactive "P")
+         (if all (kill-other-buffers)
+           (kill-buffer (current-buffer)))))
 
 
 <a id="Switching-from-2-horizontal-windows-to-2-vertical-windows"></a>
@@ -3261,21 +3417,6 @@ and how to manipulate it.
     )
 
     (global-set-key "\C-t" 'toggle-terminal)
-
-
-<a id="~C-x-k~-kills-current-buffer"></a>
-
-## `C-x k` kills current buffer
-
-By default `C-x k` prompts to select which buffer
-should be selected. I almost always want to kill
-the current buffer, so let's not waste time making
-such a tedious decision.
-
-    ;; Kill current buffer; prompt only if
-    ;; there are unsaved changes.
-    (global-set-key (kbd "C-x k")
-      '(lambda () (interactive) (kill-buffer (current-buffer))))
 
 
 <a id="Publishing-articles-to-my-personal-blog"></a>
