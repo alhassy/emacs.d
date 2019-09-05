@@ -3845,20 +3845,61 @@ Invoke all possible key extensions having a common prefix
 by supplying the prefix only once. C.f. “hydra-zoom” from the docs.
 After the prefix is supplied, all extensions are shown in a minibuffer.
 #+BEGIN_SRC emacs-lisp
+(use-package hydra :demand t)
+#+END_SRC
+
+Let's have, in a fringe, an indicator for altered regions in a version controlled
+file. Moreover, let's stage-&-commit straight from a working buffer.
+The symbols “+, =” appear in a fringe by default for alterations
+---we may change these if we like.
+#+BEGIN_SRC emacs-lisp
+;; Hunk navigation and commiting.
+(use-package git-gutter+
+  :ensure t
+  :init (global-git-gutter+-mode)
+  :diminish (git-gutter+-mode))
+
+;; Popup for Who's to blame for alterations.
 (use-package git-messenger :demand t)
-
-;; Show “v”ersion changes
-;; C-u C-x v ∷ Also show who authored the change and when.
-(global-set-key (kbd "C-x v") 'git-messenger:popup-message)
-
+;;
 ;; Message menu let's us use magit diff to see the commit change.
 (setq git-messenger:use-magit-popup t)
-
+;;
 ;; Always show who authored the commit and when.
 ;; (setq git-messenger:show-detail t)
 #+END_SRC
 
-Perhaps this will motivate smaller, frequent, commits.
+Let's set a hydra so we can press ~C-x v n n p n~ to move the next two
+altered hunks, move back one, then move to the next. This saves me having
+to supply the prefix ~C-x v~ each time I navigate among my alterations.
+At any point we may also press ~u 𝕩~ to denote ~C-u ⟪prefix⟫ 𝕩~.
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  "Version control"
+  ;; (extension method description)
+  ("n" git-gutter+-next-hunk "Next hunk")
+  ("p" git-gutter+-previous-hunk "Previous hunk")
+  ("=" git-gutter+-show-hunk "Show hunk diff")
+  ("r" git-gutter+-revert-hunks "Revert hunk\n")
+  ("c" git-gutter+-stage-and-commit "Stage & commit hunk")
+  ("C" git-gutter+-stage-and-commit-whole-buffer "Stage & commit entire buffer")
+  ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer")
+  ("b" git-messenger:popup-message "Who's to blame?")
+  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+  )
+#+END_SRC
+
+Commiting with ~C-x v c~ let's us use ~C-c C-k~ to cancel and ~C-c C-c~ to
+submit the given message; ~C-c C-a~ to amend the previous commit.
+
+Besides [[https://github.com/nonsequitur/git-gutter-plus][git-gutter+]] we may use diff-hl:
+#+BEGIN_SRC emacs-lisp
+;; Colour fringe to indicate alterations.
+;; (use-package diff-hl)
+;; (global-diff-hl-mode)
+#+END_SRC
+
+Perhaps ~C-x v b~ will motivate smaller, frequent, commits.
 
 ** Taking a tour of one's edits
 :PROPERTIES:

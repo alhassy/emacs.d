@@ -11,23 +11,23 @@
 ;; ~~/.emacs~ vs. ~init.org~:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::enable%20making%20init%20and%20readme][enable making init and readme]]
-  (defun my/make-init-el-and-README ()
-    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
-    (when current-prefix-arg
-      (let (org-export-use-babel)
-        (save-excursion
-          ;; Make init.el
-          (org-babel-tangle)
-          (byte-compile-file "~/.emacs.d/init.el")
-          (load-file "~/.emacs.d/init.el")
+(defun my/make-init-el-and-README ()
+  (interactive "P") ;; Places value of universal argument into: current-prefix-arg
+  (when current-prefix-arg
+    (let (org-export-use-babel)
+      (save-excursion
+        ;; Make init.el
+        (org-babel-tangle)
+        (byte-compile-file "~/.emacs.d/init.el")
+        (load-file "~/.emacs.d/init.el")
 
-          ;; Make README.md
-          (org-babel-goto-named-src-block "make-readme")
-          (org-babel-execute-src-block)
+        ;; Make README.md
+        (org-babel-goto-named-src-block "make-readme")
+        (org-babel-execute-src-block)
 
-          (message "Tangled, compiled, and loaded init.el; and made README.md")))))
+        (message "Tangled, compiled, and loaded init.el; and made README.md")))))
 
-  (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
+(add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 ;; enable making init and readme ends here
 
 ;; [[file:~/.emacs.d/init.org::*~use-package~%20--The%20start%20of%20~init.el~][~use-package~ --The start of ~init.el~:1]]
@@ -453,7 +453,7 @@
 ;; Who am I? ─Using Gnus for Gmail:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Who%20am%20I?%20%E2%94%80Using%20Gnus%20for%20Gmail][Who am I? ─Using Gnus for Gmail:2]]
-     (setq message-send-mail-function 'smtpmail-send-it)
+(setq message-send-mail-function 'smtpmail-send-it)
 ;; Who am I? ─Using Gnus for Gmail:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Using%20Emacs%20in%20any%20text%20area%20on%20my%20OS][Using Emacs in any text area on my OS:1]]
@@ -652,7 +652,7 @@
 ;; Increase/decrease text size:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Delete%20Selection%20mode][Delete Selection mode:1]]
-  (delete-selection-mode 1)
+(delete-selection-mode 1)
 ;; Delete Selection mode:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlight%20&%20complete%20parenthesis%20pair%20when%20cursor%20is%20near%20;-)][Highlight & complete parenthesis pair when cursor is near ;-):1]]
@@ -866,8 +866,8 @@
 ;; Using org-mode as a Day Planner:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:3]]
-  ;; Ensure notes are stored at the top of a tree.
-  (setq org-reverse-note-order nil)
+;; Ensure notes are stored at the top of a tree.
+(setq org-reverse-note-order nil)
 ;; Using org-mode as a Day Planner:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:4]]
@@ -998,7 +998,7 @@
 ;; Working with Citations:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Show%20off-screen%20Heading%20at%20the%20top%20of%20the%20window][Show off-screen Heading at the top of the window:1]]
- (use-package org-sticky-header
+(use-package org-sticky-header
   :config
   (setq-default
    org-sticky-header-full-path 'full
@@ -1094,7 +1094,7 @@
 ;; Executing code from ~src~ blocks:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Executing%20code%20from%20~src~%20blocks][Executing code from ~src~ blocks:2]]
- (org-babel-do-load-languages
+(org-babel-do-load-languages
    'org-babel-load-languages
    '(
      (emacs-lisp . t)
@@ -1181,8 +1181,9 @@
                (setq quit-flag t))
              (org-entry-put nil "CUSTOM_ID" id))))))))
 
-;; Whenever html export happens, ensure we have headline ids.
+;; Whenever html & md export happens, ensure we have headline ids.
 (advice-add 'org-html-export-to-html :before 'my/ensure-headline-ids)
+(advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
 ;; Ensuring Useful HTML Anchors:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Making%20then%20opening%20html's%20from%20org's][Making then opening html's from org's:1]]
@@ -1325,6 +1326,20 @@
     '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
   (magit-todos-mode))
 ;; Highlighting TODO-s & Showing them in Magit:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Why%20has%20a%20line%20changed?][Why has a line changed?:1]]
+(use-package git-messenger :demand t)
+
+;; Show “v”ersion changes
+;; C-u C-x v ∷ Also show who authored the change and when.
+(global-set-key (kbd "C-x v") 'git-messenger:popup-message)
+
+;; Message menu let's us use magit diff to see the commit change.
+(setq git-messenger:use-magit-popup t)
+
+;; Always show who authored the commit and when.
+;; (setq git-messenger:show-detail t)
+;; Why has a line changed?:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Taking%20a%20tour%20of%20one's%20edits][Taking a tour of one's edits:1]]
 (use-package goto-chg
