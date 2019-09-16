@@ -3575,7 +3575,7 @@ IDs from headings, by replacing spaces with hyphens, for headings without IDs.
 
 #+BEGIN_SRC emacs-lisp :tangle yes
 (defun my/ensure-headline-ids (&rest _)
-  "Org trees without a :CUSTOM_ID: property have the property set to be their heading.
+  "Org trees without a :CUSTOM_ID: property have the property set to be their heading. All non-alphanumeric characters are replaced with ‘-’.
 
    If multiple trees end-up with the same id property, issue a message and undo
    any property insertion thus far.
@@ -3587,7 +3587,7 @@ IDs from headings, by replacing spaces with hyphens, for headings without IDs.
        (org-with-point-at (point)
          (let ((id (org-entry-get nil "CUSTOM_ID")))
            (unless id
-             (setq id (s-replace " " "-" (nth 4 (org-heading-components))))
+             (setq id (s-replace-regexp "[^[:alnum:]]" "-" (nth 4 (org-heading-components))))
              (if (not (member id ids))
                  (push id ids)
                (message-box "Oh no, a repeated id!\n\n\t%s" id)
@@ -3602,6 +3602,11 @@ IDs from headings, by replacing spaces with hyphens, for headings without IDs.
 
 One may then use ~[[#my-custom-id]]~ to link to the entry with ~CUSTOM_ID~ property
 ~my-custom-id~.
+
+Interestingly, ~org-set-property~, ~C-c C-x p~, lets us insert a property from
+a selection of available ones, then we'll be prompted for a value for it
+from a list of values you've used elsewhere. This is useful for remaining
+consistent for when trees share similar properties.
 
 ** Making then opening html's from org's
 :PROPERTIES:
