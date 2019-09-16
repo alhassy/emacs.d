@@ -329,7 +329,7 @@
     (langtool-check-done)
   ))
 
-(global-set-key "\M-^" 'langtool-check)
+(global-set-key "\M-^" (lambda () (interactive) (message "Grammar checking begun ...") (langtool-check)))
 ;; Using a Grammar & Style Checker:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:1]]

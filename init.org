@@ -21,13 +21,28 @@
 # (shell-command "brew install pandoc")
 # (use-package ox-pandoc)
 
-;; Cannot mark an item DONE if it has a  TODO child
-(setq org-enforce-todo-dependencies t)
-
 ;; Omit empty lines between headings in the collapsed view
 (setq org-cycle-separator-lines 0)
 
 (package-install 'fold-this)        ;; Folding away regions of text
+
+#+BEGIN_SRC emacs-lisp :results replace :tangle yes
+(defun show-me ()
+  "Evaluate a Lisp expression and insert its value
+   as a comment at the end of the line.
+
+   Useful for documenting values or checking values.
+  "
+  (interactive)
+  (-let [it
+         (thread-last (thing-at-point 'line)
+           read-from-string
+           car
+           eval
+           (format " ;; ⇒ %s"))]
+    (end-of-line)
+    (insert it)))
+#+END_SRC
 :End:
 
 * TODO COMMENT Clean up
@@ -1044,7 +1059,7 @@ as follows.
 #+END_SRC
 
 Now we can run ~langtool-check~ on the subsequent grammatically incorrect
-text --which is from the LanguageTool website-- which colours errors in red,
+text ---which is from the LanguageTool website--- which colours errors in red,
 when we click on them we get the reason why; then we may invoke
 ~langtool-correct-buffer~ to quickly use the suggestions to fix each correction,
 and finally invoke ~langtool-check-done~ to stop any remaining red colouring.
@@ -1069,8 +1084,10 @@ By looking around the source code, I can do all three stages smoothly (•̀ᴗ�
     (langtool-check-done)
   ))
 
-(global-set-key "\M-^" 'langtool-check)
+(global-set-key "\M-^" (lambda () (interactive) (message "Grammar checking begun ...") (langtool-check)))
 #+END_SRC
+
+The checking command is silent, we added a bit of comforting acknowledgement to the user.
 
 ** Unicode Input via Agda Input
 :PROPERTIES:
@@ -2338,7 +2355,7 @@ to be tackled later on.
 By default we only get a ‘tasks’ form of capture, let's add some more.
 #+begin_src emacs-lisp
 (cl-defun my/make/org-capture-template
-   (shortcut heading &optional (no-todo nil) (description heading) (category heading))
+   (shortcut heading &optional (no-todo nil) (description heading) (category heading) (scheduled t))
   "Quickly produce an org-capture-template.
 
   After adding the result of this function to ‘org-capture-templates’,
@@ -2353,13 +2370,21 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 
   Defaults for ‘description’ and ‘category’ are set to the same as
   the ‘heading’. Default for ‘no-todo’ is ‘nil’.
+
+  Scheduled items appear in the agenda; true by default all items are.
+
+  The target is ‘file+headline’ and the type is ‘entry’; to see
+  other possibilities invoke: C-h o RET org-capture-templates.
+  The “%?” indicates the location of the Cursor, in the template,
+  when forming the entry.
   "
   `(,shortcut ,description entry
       (file+headline org-default-notes-file
          ,(concat heading "\n#+CATEGORY: " category))
-      , (concat "*" (unless no-todo " TODO") " %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n")
-      :empty-lines 1)
-)
+         , (concat "*" (unless no-todo " TODO") " %?\n:PROPERTIES:\n:"
+                (if scheduled "SCHEDULED" "CREATED")
+                ": %U\n:END:\n\n")
+      :empty-lines 1))
 
 (setq org-capture-templates
   `(
@@ -2369,13 +2394,22 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
      ,(my/make/org-capture-template "e" "Emacs (•̀ᴗ•́)و")
      ,(my/make/org-capture-template "b" "Blog")
      ,(my/make/org-capture-template "a" "Arbitrary Reading and Learning")
-     ,(my/make/org-capture-template "p" "Personal Matters")
-))
+     ,(my/make/org-capture-template "p" "Personal Matters")))
 #+end_src
 
 For now I capture everything into a single file.
 One would ideally keep separate client, project, information in its own org file.
 The ~#+CATEGORY~ appears alongside each task in the agenda view --keep reading.
+
+Looking at ~my/make/org-capture-template~, one notices that capture actually
+lets you add /any/ type of item to /any/ file.
+
+Let's also ensure TODO-s respect hierarchical structure.
+#+BEGIN_SRC emacs-lisp
+;; Cannot mark an item DONE if it has a  TODO child.
+;; Conversely, all children must be DONE in-order for a parent to be DONE.
+(setq org-enforce-todo-dependencies t)
+#+END_SRC
 
 *Where am I currently capturing?*
 + During meetings, when a nifty idea pops into my mind, I quickly capture it.
@@ -2424,6 +2458,14 @@ by ~C-c C-s~ then pick a date by entering a number in the form ~+n~ to mean that
 
   With time, it will become clear what is an unreasonable day
   verses what is an achievable day.
+
+Let's keep track of how many times, and when, we have pushed events to other dates.
+#+BEGIN_SRC emacs-lisp
+;; Add a note whenever a task's deadline or scheduled date is changed.
+(setq org-log-redeadline 'time)
+(setq org-log-reschedule 'time)
+#+END_SRC
+
 
 *Step 3: Quickly review the upcoming week*
 The next day we begin our work, we press ~C-c a a~ to see the
@@ -2500,8 +2542,9 @@ actually completed more than you thought, provided you make and archive tasks
 regularly. We can use ~(org-search-view)~ to search an org file /and/ the
 archive file too, if we enable it so.
 #+BEGIN_SRC emacs-lisp
-;; Include agenda archive files when searching for things
-(setq org-agenda-text-search-extra-files (quote (agenda-archives)))
+;; C-c a s ➩ Search feature also looks into archived files.
+;; Helpful when need to dig stuff up from the past.
+(setq org-agenda-text-search-extra-files '(agenda-archives))
 #+END_SRC
 
 #+begin_src emacs-lisp
@@ -2675,14 +2718,17 @@ Bindings available in the calendar-mode:
 :CUSTOM_ID: WorkflowStates
 :END:
 
-Here are some of my common workflow states, --the ‘!’ indicates a timestamp should be generated--
+Here are some of my common workflow states, ---the ‘X/Y’ indicates to do action ‘X’
+when entering a state and ‘Y’ when leaving it, with ‘!’ denoting a timestamp
+should be generated and ‘@’ denoting a user note should be made.
 #+begin_src emacs-lisp
 (setq org-todo-keywords
       (quote ((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
-              (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)")
-             )
-      )
-)
+              (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)"))))
+
+;; Since DONE is a terminal state, it has no exit-action.
+;; Let's explicitly indicate time should be noted.
+(setq org-log-done 'time)
 #+end_src
 
 The ~@~ brings up a pop-up to make a local note about why the state changed.
@@ -3097,7 +3143,7 @@ to the heading. We can punch in and out of tasks as many times as desired, say w
 switched to another task, and they will all be recorded into the drawer.
 
 #+begin_src emacs-lisp
-;; Record a note on what was acciomplished when clocking out of an item.
+;; Record a note on what was accomplished when clocking out of an item.
 (setq org-log-note-clock-out t)
 #+end_src
 
@@ -3111,7 +3157,7 @@ Moreover, we can overlay due dates and priorities to tasks in a non-intrusive wa
 easy to edit by hand.
 
 #+begin_src emacs-lisp
-;; List of all the files where todo items can be found. Only one for now.
+;; List of all the files & directories where todo items can be found. Only one for now.
 (setq org-agenda-files '("~/Dropbox/todo.org"))
 
 ;; How many days ahead the default agenda view should look

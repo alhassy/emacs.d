@@ -1,4 +1,4 @@
-personal_ws-1.1 en 83 
+personal_ws-1.1 en 86 
 matchings
 Goju
 instantiations
@@ -10,6 +10,7 @@ centric
 namespace
 desugars
 Procedurally
+variationals
 unitors
 combinators
 imamah
@@ -48,6 +49,7 @@ homoiconic
 algorithmically
 implementers
 Subsegment
+Administrivia
 adjoint
 Monoid
 invariants
@@ -55,6 +57,7 @@ disjunction
 Foundational
 runtime
 Mixins
+Agda
 functorial
 Surjection
 ACSII
