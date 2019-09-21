@@ -99,6 +99,190 @@ available as superscript, except ‘q’.
       (loop for (key . value) in my-list
             collect (cons value key))
 
+** COMMENT Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
+  :PROPERTIES:
+  :CUSTOM_ID: COMMENT-Referencing-Text-From-Code-Blocks----Attaching-prose-as-doc-strings
+  :END:
+  :PROPERTIES:
+
+  :END:
+
+Sources:
++ John Kitchin https://lists.gnu.org/archive/html/emacs-orgmode/2018-05/msg00350.html
++ https://kdr2.com/tech/emacs/1805-approach-org-ref-code-to-text.html
+
+# NAME: get-named-text
+#+NAME: commentary
+#+BEGIN_SRC emacs-lisp :var name="" :results replace
+(let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
+        (lambda (el)
+          (when (string= (org-element-property :name el) name)
+        el))
+        nil t)))
+  (let ((s (buffer-substring (org-element-property :contents-begin el)
+                 (org-element-property :contents-end el))))
+    (replace-regexp-in-string "\\\"" "\\\\\"" s)))
+#+END_SRC
+
+*** COMMENT Example
+   :PROPERTIES:
+   :CUSTOM_ID: COMMENT-Example
+   :END:
+   :PROPERTIES:
+
+   :END:
+For example:
+#+NAME: ADD
+#+BEGIN_SRC emacs-lisp -n -r :noweb yes :tangle test.el
+(defun add (x y)
+  "One line description of adding X and Y.
+  <<get-named-text("DOC-OF-ADD")>> ;; code to code
+  <<get-named-text("add-options")>>"
+  (+ x y)
+  )
+#+END_SRC
+
+#+NAME: DOC-OF-ADD
+We use the function add to calculate the sum of two numbers.
+
+#+NAME: add-options
+- one
+- two
+- three
+- and of course "optional things"
+
+**** There is a reason we only support two args
+    :PROPERTIES:
+    :CUSTOM_ID: There-is-a-reason-we-only-support-two-args
+    :END:
+    :PROPERTIES:
+    :ID:       BAD97113-3561-4A4A-BA07-0CD5BF6BA35F
+
+    :END:
+
+** itify
+   :PROPERTIES:
+   :CUSTOM_ID: itify
+   :END:
+   :PROPERTIES:
+
+   :END:
+
++ ~itify~ :: A macro that generates macros!
+
+  A common pattern I've observed is code of the form
+  ~(f (lambda (x) body-with-x) arg)~ ---i.e., there is a useful
+  function ~f~ that is invoked with two arguments; the first being a
+  function. The declaration ~(itify f~) will produce a macro named ~f-it~
+  that takes two arguments where the first is an expression involving
+  a free variable ~it~ such that
+         | /(f-it expr-with-it more)  ≈  (f (λ (it) expr-with-it) more)/  |
+
+  We then test this out on the utility ~rename-mixfix~.
+  - ~rename-mixfix~ :: Ignore outermost Agda argument markers ‘_’
+             when renaming an mixfix argument;
+             e.g., ~_[_⊗_]  ↦  _₀[_⊗_]¹~ where this particular renaming
+             is a prefix subscript 0 and postfix 1.
+
+*** ~Itify~: A macro that makes macros ♥‿♥
+    :PROPERTIES:
+    :CUSTOM_ID: -Itify---A-macro-that-makes-macros----
+    :END:
+    :PROPERTIES:
+
+    :END:
+
+   A common pattern I've observed is code of the form
+   ~(f (lambda (x) body-with-x) arg)~ ---i.e., there is a useful
+   function ~f~ that is invoked with two arguments; the first being a
+   function. The declaration ~(itify f~) will produce a macro named ~f-it~
+   that takes two arguments where the first is an expression involving
+   a free variable ~it~ such that
+          | ~(f-it expr-with-it more)  ≈  (f (λ (it) expr-with-it) more)~ |
+
+ I'm only considering binary functions, since they're my most common
+ case ---it's little trouble to move to the general case.
+
+ Let's consider the simplest binary operator whose first argument is
+ necessarily a function ---namely, function application.
+ #+BEGIN_SRC emacs-lisp
+(defun ap (f x) "bye" (funcall f x))
+ #+END_SRC
+
+ Let's form the desired macro:
+ #+BEGIN_SRC emacs-lisp
+(defmacro ap-it (itbody more)
+  (list 'ap (list 'lambda '(it) itbody) more)
+  ;; ≈ `(ap (lambda (it) ,itbody) ,more)
+  )
+ #+END_SRC
+
+ We have elected to present this with the ~list~ form
+ rather than the quasi-quote, since it's clear how to
+ yield the former as part of a macro /result/.
+
+ #+BEGIN_SRC emacs-lisp :tangle yes
+(defmacro itify (fname)
+  "
+   From a function (h f x), obtain a macro (h-it (⋯it⋯) x) that rewrites into
+   the orginal such that the first (functional) argument  may now be an expression
+   with free variable ‘it’. One declates (itify h) for a named top-level function ‘h’.
+
+   NOTE: Since functions are of the form (cons 'macro-or-fun (function (lambda args body)))
+   we can obtain the number of args by getting ‘args’ and taking its length.
+   Then we can change any of its indices to take an expression rather than a function.
+   Indeed, (macroexpand '(itify ap))
+     ⇒ (defalias (quote ap-it) (cons (quote macro) (function (lambda (itbody more)
+         (list (quote ap) (list (quote lambda) (quote (it)) itbody) more)))))      .
+  "
+
+  `(defmacro ,(intern (format "%s-it" (symbol-name fname))) (itbody more)
+       (list (quote ,fname) (list 'lambda '(it) itbody) more))
+)
+ #+END_SRC
+
+ Let's test this out.
+ #+BEGIN_SRC emacs-lisp
+;; 0. Too clunky
+(ap (lambda (it) (+ 2 it)) 3) ;; ⇒ 5
+
+;; 1. Desired
+(itify ap)
+(ap-it (+ 2 it) 3) ;; nice.
+
+;; 2. Works with lambdas?
+((lambda (e) (ap-it (+ 2 it) e)) 2)
+
+;; 3. Scoping is fine?
+;; Outermost ‘it’ belongs to --map; inner-most ‘it’ belongs to ap-it. (─‿‿─)
+(--map (ap-it (+ 2 it) it) '(1 2 3)) ;; ⇒ (3 4 5)
+
+;; 4. Works well with read/eval?
+(ap-it (eval (car (read-from-string "(+ 2 it)"))) 3) ;; ⇒ 5
+ #+END_SRC
+
+ A common use of the following will be when ‘threads’ are used for
+ sequential processing.
+ #+BEGIN_SRC emacs-lisp :tangle yes
+(itify funcall)
+ #+END_SRC
+
+ Now for a more useful and complex setting.
+ <<<rename-mixfix>>> source block here.
+
+ {{{fold(Unit Tests)}}}
+ #+BEGIN_SRC emacs-lisp :tangle yes
+(ert-deftest rename-mixfix ()
+
+  (should (equal (rename-mixfix #'identity "_⊕_") "_⊕_"))
+
+  (should (equal "_⊕′_" (rename-mixfix-it (eval (car (read-from-string "(concat it \"′\")"))) "_⊕_")))
+
+  (should  (equal (--map (rename-mixfix-it (format "₀%s¹" it) it) '("_⊕_" "_[_⊗_]" "he_lo" "he-lo"))
+       ;; Outermost ‘it’ belongs to --map; inner-most ‘it’ belongs to rename-mixfix-it.
+  '("_₀⊕¹_" "_₀[_⊗_]¹" "₀he_lo¹" "₀he-lo¹"))))
+ #+END_SRC
+ {{{end-fold}}}
 * Abstract                                                   :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -773,6 +957,7 @@ Below are the git repos I'd like to clone.
 (maybe-clone "https://github.com/alhassy/alhassy.github.io")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
 (maybe-clone "https://github.com/alhassy/RubyCheatSheet")
+(maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
 (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
 (maybe-clone "https://github.com/alhassy/org-agda-mode")
 (maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
@@ -2321,6 +2506,7 @@ In summary,
 :CUSTOM_ID: Using-org-mode-as-a-Day-Planner
 :END:
 
+- Rescheduled from "[2011-07-24 Sun]" on [2019-09-20 Fri 15:09]
 ⟪ This section is based on a dated, yet delightful, tutorial
   of the same title by [[http://newartisans.com/2007/08/using-org-mode-as-a-day-planner/][John Wiegley]]. ⟫
 
@@ -2348,9 +2534,6 @@ to be tackled later on.
 (setq org-default-notes-file "~/Dropbox/todo.org")
 (define-key global-map "\C-cc" 'org-capture)
 #+end_src
-
-#+RESULTS:
-: org-capture
 
 By default we only get a ‘tasks’ form of capture, let's add some more.
 #+begin_src emacs-lisp
@@ -2381,10 +2564,21 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
   `(,shortcut ,description entry
       (file+headline org-default-notes-file
          ,(concat heading "\n#+CATEGORY: " category))
-         , (concat "*" (unless no-todo " TODO") " %?\n:PROPERTIES:\n:"
-                (if scheduled "SCHEDULED" "CREATED")
-                ": %U\n:END:\n\n")
-      :empty-lines 1))
+         , (concat "*" (unless no-todo " TODO") " %?\n"
+                (when nil ;; this turned out to be a teribble idea.
+                  ":PROPERTIES:\n:"
+                (if scheduled
+                    "SCHEDULED: %^{Any time ≈ no time! Please schedule this task!}t"
+                  "CREATED: %U")
+                "\n:END:") "\n\n ")
+      :empty-lines 1 :time-prompt t))
+
+;; For now, let's automatically schedule items a week in advance.
+;; TODO: FIXME: This overwrites any scheduling I may have performed.
+(defun my/org-capture-schedule ()
+  (org-schedule nil "+7d"))
+
+(add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
 
 (setq org-capture-templates
   `(
@@ -3847,6 +4041,48 @@ to see a visual diff of changes /between/ versions.
 By default, you see the changes ‘backwards’: Red means
 delete these things to get to the older version; i.e.,
 the red ‘-’ are newer items.
+
+** Editor Documentation with Contextual Information
+
+I like [[https://github.com/Wilfred/helpful][helpful]] and wanted it to have the same behaviour as ~C-h o~, which ~helpful-at-point~ does not achieve. The incantation below makes ~C-h o~ use ~helpful~
+in that if the cursour is on a symbol, then it is offered to the user as a default search item for help, otherwise a plain search box for help appears. Using a universal argument lets us drop to the built-in help command.
+
+#+BEGIN_SRC emacs-lisp
+(defun my/describe-symbol (symbol)
+  "A “C-h o” replacement using “helpful”:
+   If there's a thing at point, offer that as default search item.
+
+   If a prefix is provided, i.e., “C-u C-h o” then the built-in
+   “describe-symbol” command is used.
+
+   ⇨ Pretty docstrings, with links and highlighting.
+   ⇨ Source code of symbol.
+   ⇨ Callers of function symbol.
+   ⇨ Key bindings for function symbol.
+   ⇨ Aliases.
+   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
+  "
+  (interactive "p")
+  (let* ((thing (symbol-at-point))
+         (val (completing-read
+               (format "Describe symbol (default %s): " thing)
+               (vconcat (list thing) obarray)
+               (lambda (vv)
+                (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                         describe-symbol-backends))
+               t nil nil))
+         (it (intern val)))
+
+    (if current-prefix-arg
+        (funcall #'describe-symbol it)
+      (cond
+       ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+       (t (helpful-symbol it))))))
+
+;; Keybindings.
+(global-set-key (kbd "C-h o") #'my/describe-symbol)
+(global-set-key (kbd "C-h k") #'helpful-key)
+#+END_SRC
 
 ** Highlighting TODO-s & Showing them in Magit
 :PROPERTIES:
