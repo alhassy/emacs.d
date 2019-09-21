@@ -13,8 +13,8 @@
 #+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
-
 :TASKS:
+
 # TODO: MA: ⇨ Add unit tests for the init file.
 
 # ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
@@ -27,6 +27,8 @@
 (package-install 'fold-this)        ;; Folding away regions of text
 
 #+BEGIN_SRC emacs-lisp :results replace :tangle yes
+show-me
+
 (defun show-me ()
   "Evaluate a Lisp expression and insert its value
    as a comment at the end of the line.
@@ -4083,6 +4085,18 @@ in that if the cursour is on a symbol, then it is offered to the user as a defau
 (global-set-key (kbd "C-h o") #'my/describe-symbol)
 (global-set-key (kbd "C-h k") #'helpful-key)
 #+END_SRC
+
+** Highlight Defined Emacs Lisp Symbols
+
+Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes
+it highlight all defined names ---as long as we're in Lisp mode, whence in
+org-src blocks we use ~C-c '~.
+#+BEGIN_SRC emacs-lisp
+(use-package highlight-defined)
+(add-hook 'emacs-lisp-mode-hook 'highlight-defined-mode)
+#+END_SRC
+
+Super helpful to avoid accidentally misspelling a word :smile:
 
 ** Highlighting TODO-s & Showing them in Magit
 :PROPERTIES:
