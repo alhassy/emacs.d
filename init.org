@@ -2768,8 +2768,35 @@ Let's install some helpful views for our agenda.
               (org-agenda-overriding-header "Unscheduled TODO entries: "))))
 #+end_src
 
-
 # Org-protocol is a great way to create capture notes in org-mode from other applications.
+** Super Agenda
+The following incentivizes us to make use of ~:tags:~ so that our agenda displays
+the tasks of the day depending on their tags ---possibly using complex predicates.
+This is far preferable to having them all in one big list.
+#+BEGIN_SRC emacs-lisp
+(use-package org-super-agenda)
+(org-super-agenda-mode)
+
+(setq org-super-agenda-groups
+      ;; Default order is 0, first come first serve.
+      ;; Items are “or”-ed by default.
+      '((:name "Important"
+               :tag "PackageFormer"
+               :and (:tag "JC" :priority "A")
+               :and (:tag "WK" :priority "A")
+               :priority "A")
+
+        ;; Groups supply their own section names when none are given
+        (:tag "personal")
+        (:tag "3mi3")
+        (:name "Emacs Init" :tag "init")
+        (:priority<= "B" :order 1)
+        )))
+#+END_SRC
+
+The [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]] homepage shows complex configurations and pleasant screenshots
+contrasting with and without the system.
+
 ** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] --Dealing with dreadful tasks
 :PROPERTIES:
 :CUSTOM_ID: Automating-[[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]]---Dealing-with-dreadful-tasks
