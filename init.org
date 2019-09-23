@@ -5044,6 +5044,9 @@ Observe that noweb could be utilised in a similar fashion to
 [[https://www.wisdomandwonder.com/article/10603/two-ways-to-share-static-key-pair-values-across-different-tangled-source-files-with-org-mode-literate-programming][share key-value pairs across different source files]].
 ⟫
 
+# Neat, but not what I want.
+# https://github.com/abo-abo/auto-yasnippet
+
 :Old_approach:
 Now we invoke the following incantation once so that...
 
@@ -5191,6 +5194,41 @@ f x = x -- show x
 #+end_src
 
 :End:
+** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
+
+Let's use a feature-full folding mode.
+#+BEGIN_SRC emacs-lisp
+(use-package origami)
+#+END_SRC
+
+With basic support for one of my languages.
+#+BEGIN_SRC emacs-lisp
+(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
+      origami-parser-alist)
+#+END_SRC
+
+With expected support for searching.
+#+BEGIN_SRC emacs-lisp
+(defun my/search-hook-function ()
+  (when origami-mode (origami-toggle-node (current-buffer) (point))))
+
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+;;
+;; Likewise for incremental search, isearch, users.
+;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
+#+END_SRC
+
+Along with a hydra for super quick navigation and easily folding, unfolding blocks! Love this one ^_^
+#+BEGIN_SRC emacs-lisp
+(defhydra folding-with-origami-mode (global-map "C-c f")
+  ("h" origami-close-node-recursively "Hide")
+  ("o" origami-open-node-recursively  "Open")
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("n" origami-next-fold "Next")
+  ("p" origami-previous-fold "Previous"))
+#+END_SRC
+
 * Helpful Utilities & Shortcuts
 :PROPERTIES:
 :CUSTOM_ID: Helpful-Utilities-&-Shortcuts
@@ -5844,6 +5882,15 @@ take care of this.
 # What I like about truncate-lines versus visual-line-mode is that the former doesn’t split
 # on word boundaries and adds symbols to the fringe.
 # (set-default 'truncate-lines t)
+*** theme magic
+[[https://github.com/jcaw/theme-magic][Theme-magic]] looks nice, in theory, but I've not found it to be useful, for me.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Automatically propagate Emacs theme changes to OS
+(use-package theme-magic)
+;; (shell-command "pip3 install pywal")
+(theme-magic-export-theme-mode)
+#+END_SRC
+
 * COMMENT TODO ─Pushing to blog─
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-─Pushing-to-blog─
