@@ -4480,6 +4480,53 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 #+END_SRC
 
+** Coding with a Fruit Salad: Semantic Highlighting
+
++ /Syntax/ highlighting ⇨ Specific words are highlighted in strong colours so that
+    the /structure/ can be easily gleaned.
+  - Generally this only includes a language's keywords, such as ~if, loop, begin, end , cond~.
+  - User defined names generally share one colour; usually black.
+  - Hence, an ~if~ block may be seen as one coloured keyword followed by
+    a blob of black text.
+
+  /Obvious keywords are highlighted while the rest remains in black!/
+
++ /Semantic/ highlighting ⇨ Identifiers obtain unique colouring.
+  - This makes it much easier to visually spot dependencies with a quick glance.
+    + One can *see* how data flows through a function.
+  - In dynamic languages, this is a visual form of typing: Different colours are
+    for different names.
+    + Especially helpful for (library) names that are almost the same.
+    + This can be accomplished anywhere in Emacs by pressing ~M-s h .~ on
+      a selected phrase.
+
++ Here are some reads:
+  - [[https://medium.com/@evnbr/coding-in-color-3a6db2743a1e][Coding in color: How to make syntax highlighting more useful]] ---an excellent, terse, read
+  - [[https://zwabel.wordpress.com/2009/01/08/c-ide-evolution-from-syntax-highlighting-to-semantic-highlighting/][C++ IDE Evolution: From Syntax Highlighting to Semantic Highlighting]]
+    + Names with a similar prefix share a colour, and class-local items share a colour.
+  - [[https://wordsandbuttons.online/lexical_differential_highlighting_instead_of_syntax_highlighting.html][Lexical differential highlighting instead of syntax highlighting]]
+    + /Ideally, the smaller the lexical difference, the greater the color difference should be./
+  - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
+  - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
+
+
+For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifiers Mode]] gives unique highlighting to identifiers.
+- It comes with support for a bunch of languages, and one can add support for others.
+- It picks colours adaptively to fit the theme; one uses ~M-x color-identifiers:regenerate-colors~ after a theme change.
+
+#+BEGIN_SRC emacs-lisp
+(use-package color-identifiers-mode)
+(global-color-identifiers-mode)
+#+END_SRC
+
+When writing a new name, after about ~5 seconds it obtains a colour which is then
+propagated immediately to any new occurrences. This timeout before recolouring
+is to avoid any lag from multithreading and can be changed by altering the following
+line (#64) in the source file, changing the ~5~ to a smaller number.
+#+BEGIN_SRC emacs-lisp :tangle no
+(run-with-idle-timer 5 t 'color-identifiers:refresh)))
+#+END_SRC
+
 ** Completion Frameworks
 :PROPERTIES:
 :CUSTOM_ID: Completion-Frameworks
