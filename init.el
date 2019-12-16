@@ -182,6 +182,8 @@
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
+(maybe-clone "https://github.com/alhassy/melpa")
+(maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
 (maybe-clone "https://github.com/alhassy/RubyCheatSheet")
 (maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
 (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
@@ -777,3 +779,1219 @@
   (require 'ox-extra)
   (ox-extras-activate '(ignore-headlines)))
 ;; Life within Org-mode:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Life%20within%20Org-mode][Life within Org-mode:3]]
+(setq org-ellipsis " ⤵")
+;; Life within Org-mode:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Life%20within%20Org-mode][Life within Org-mode:4]]
+;; Fold all source blocks on startup.
+(setq org-hide-block-startup t)
+
+;; Lists may be labelled with letters.
+(setq org-list-allow-alphabetical t)
+
+;; Avoid accidentally editing folded regions, say by adding text after an Org “⋯”.
+(setq org-catch-invisible-edits 'show)
+
+;; I use indentation-sensitive programming languages.
+;; Tangling should preserve my indentation.
+(setq org-src-preserve-indentation t)
+
+;; Tab should do indent in code blocks
+(setq org-src-tab-acts-natively t)
+
+;; Give quote and verse blocks a nice look.
+(setq org-fontify-quote-and-verse-blocks t)
+
+;; Pressing ENTER on a link should follow it.
+(setq org-return-follows-link t)
+;; Life within Org-mode:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Manipulating%20Sections][Manipulating Sections:1]]
+(setq org-use-speed-commands t)
+;; Manipulating Sections:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Seamless%20Navigation%20Between%20Source%20Blocks][Seamless Navigation Between Source Blocks:1]]
+;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
+;;
+(define-key org-mode-map (kbd "s-p") #'org-babel-previous-src-block)
+(define-key org-mode-map (kbd "s-n") #'org-babel-next-src-block)
+(define-key org-mode-map (kbd "s-e") #'org-edit-src-code)
+(define-key org-src-mode-map (kbd "s-e") #'org-edit-src-exit)
+;; Seamless Navigation Between Source Blocks:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Modifying%20~<return>~][Modifying ~<return>~:1]]
+(add-hook 'org-mode-hook '(lambda ()
+  (local-set-key (kbd "<return>") 'org-return-indent))
+  (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline))
+;; Modifying ~<return>~:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~C-a,e,k~%20and%20Yanking%20of%20sections][~C-a,e,k~ and Yanking of sections:1]]
+;; On an org-heading, C-a goes to after the star, heading markers.
+;; To use speed keys, run C-a C-a to get to the star markers.
+;;
+;; C-e goes to the end of the heading, not including the tags.
+;;
+(setq org-special-ctrl-a/e t)
+
+;; C-k no longer removes tags, if activated in the middle of a heading's name.
+(setq org-special-ctrl-k t)
+
+;; When you yank a subtree and paste it alongside a subtree of depth ‘d’,
+;; then the yanked tree's depth is adjusted to become depth ‘d’ as well.
+;; If you don't want this, then refile instead of copy pasting.
+(setq org-yank-adjusted-subtrees t)
+;; ~C-a,e,k~ and Yanking of sections:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:1]]
+(setq org-default-notes-file "~/Dropbox/todo.org")
+(define-key global-map "\C-cc" 'org-capture)
+;; Using org-mode as a Day Planner:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:2]]
+(cl-defun my/make/org-capture-template
+   (shortcut heading &optional (no-todo nil) (description heading) (category heading) (scheduled t))
+  "Quickly produce an org-capture-template.
+
+  After adding the result of this function to ‘org-capture-templates’,
+  we will be able perform a capture with “C-c c ‘shortcut’”
+  which will have description ‘description’.
+  It will be added to the tasks file under heading ‘heading’
+  and be marked with category  ‘category’.
+
+  ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
+  when it's merely an interesting note that needn't be acted upon.
+  ─Probably a bad idea─
+
+  Defaults for ‘description’ and ‘category’ are set to the same as
+  the ‘heading’. Default for ‘no-todo’ is ‘nil’.
+
+  Scheduled items appear in the agenda; true by default all items are.
+
+  The target is ‘file+headline’ and the type is ‘entry’; to see
+  other possibilities invoke: C-h o RET org-capture-templates.
+  The “%?” indicates the location of the Cursor, in the template,
+  when forming the entry.
+  "
+  `(,shortcut ,description entry
+      (file+headline org-default-notes-file
+         ,(concat heading "\n#+CATEGORY: " category))
+         , (concat "*" (unless no-todo " TODO") " %?\n"
+                (when nil ;; this turned out to be a teribble idea.
+                  ":PROPERTIES:\n:"
+                (if scheduled
+                    "SCHEDULED: %^{Any time ≈ no time! Please schedule this task!}t"
+                  "CREATED: %U")
+                "\n:END:") "\n\n ")
+      :empty-lines 1 :time-prompt t))
+
+;; For now, let's automatically schedule items a week in advance.
+;; TODO: FIXME: This overwrites any scheduling I may have performed.
+(defun my/org-capture-schedule ()
+  (org-schedule nil "+7d"))
+
+(add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
+
+(setq org-capture-templates
+  `(
+     ,(my/make/org-capture-template "t" "Tasks, Getting Things Done")
+     ,(my/make/org-capture-template "r" "Research")
+     ,(my/make/org-capture-template "m" "Email")
+     ,(my/make/org-capture-template "e" "Emacs (•̀ᴗ•́)و")
+     ,(my/make/org-capture-template "b" "Blog")
+     ,(my/make/org-capture-template "a" "Arbitrary Reading and Learning")
+     ,(my/make/org-capture-template "p" "Personal Matters")))
+;; Using org-mode as a Day Planner:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:3]]
+;; Cannot mark an item DONE if it has a  TODO child.
+;; Conversely, all children must be DONE in-order for a parent to be DONE.
+(setq org-enforce-todo-dependencies t)
+;; Using org-mode as a Day Planner:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:4]]
+  ;; Ensure notes are stored at the top of a tree.
+  (setq org-reverse-note-order nil)
+;; Using org-mode as a Day Planner:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:5]]
+;; Add a note whenever a task's deadline or scheduled date is changed.
+(setq org-log-redeadline 'time)
+(setq org-log-reschedule 'time)
+;; Using org-mode as a Day Planner:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:6]]
+(define-key global-map "\C-ca" 'org-agenda)
+;; Using org-mode as a Day Planner:6 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:7]]
+;; C-c a s ➩ Search feature also looks into archived files.
+;; Helpful when need to dig stuff up from the past.
+(setq org-agenda-text-search-extra-files '(agenda-archives))
+;; Using org-mode as a Day Planner:7 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:8]]
+;; Invoing the agenda command shows the agenda and enables
+;; the org-agenda variables.
+(org-agenda "a" "a")
+;; Using org-mode as a Day Planner:8 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:9]]
+;; Pressing ‘c’ in the org-agenda view shows all completed tasks,
+;; which should be archived.
+(add-to-list 'org-agenda-custom-commands
+  '("c" todo "DONE|ON_HOLD|CANCELLED" nil))
+;; Using org-mode as a Day Planner:9 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20org-mode%20as%20a%20Day%20Planner][Using org-mode as a Day Planner:10]]
+(add-to-list 'org-agenda-custom-commands
+  '("u" alltodo ""
+     ((org-agenda-skip-function
+        (lambda ()
+              (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
+              (org-agenda-overriding-header "Unscheduled TODO entries: "))))
+;; Using org-mode as a Day Planner:10 ends here
+
+;; [[file:~/.emacs.d/init.org::*Super%20Agenda][Super Agenda:1]]
+(use-package org-super-agenda)
+(org-super-agenda-mode)
+
+(setq org-super-agenda-groups
+      ;; Default order is 0, first come first serve.
+      ;; Items are “or”-ed by default.
+      '((:name "Important"
+               :tag "PackageFormer"
+               :and (:tag "JC" :priority "A")
+               :and (:tag "WK" :priority "A")
+               :priority "A")
+
+        ;; Groups supply their own section names when none are given
+        (:tag "personal")
+        (:tag "3mi3")
+        (:name "Emacs Init" :tag "init")
+        (:priority<= "B" :order 1)
+        ))
+;; Super Agenda:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Automating%20%5B%5Bhttps://en.wikipedia.org/wiki/Pomodoro_Technique%5D%5BPomodoro%5D%5D%20--Dealing%20with%20dreadful%20tasks][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] --Dealing with dreadful tasks:1]]
+;; Tasks get a 25 minute count down timer
+(setq org-timer-default-timer 25)
+
+;; Use the timer we set when clocking in happens.
+(add-hook 'org-clock-in-hook
+  (lambda () (org-timer-set-timer '(16))))
+
+;; unless we clocked-out with less than a minute left,
+;; show disappointment message.
+(add-hook 'org-clock-out-hook
+  (lambda ()
+  (unless (s-prefix? "0:00" (org-timer-value-string))
+     (message-box "The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave."))
+     (org-timer-stop)
+     ))
+;; Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] --Dealing with dreadful tasks:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Journaling][Journaling:1]]
+(use-package org-journal
+  ; :bind (("C-c j" . org-journal-new-entry))
+  :config
+  (setq org-journal-dir "~/Dropbox/journal/"
+        org-journal-file-type 'yearly
+        org-journal-file-format "Personal-%Y-%m-%d")
+)
+
+(defun my/org-journal-new-entry (prefix)
+  " Open today’s journal file and start a new entry.
+
+    With a prefix, we use the work journal; otherwise the personal journal.
+  "
+  (interactive "P")
+  (if prefix
+      (let ((org-journal-file-format "Work-%Y-%m-%d"))
+        (org-journal-new-entry nil))
+    (org-journal-new-entry nil))
+  (org-mode) (org-show-all))
+
+;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
+(global-set-key (kbd "C-c j") 'my/org-journal-new-entry)
+;; Journaling:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Workflow%20States][Workflow States:1]]
+(setq org-todo-keywords
+      (quote ((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
+              (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)"))))
+
+;; Since DONE is a terminal state, it has no exit-action.
+;; Let's explicitly indicate time should be noted.
+(setq org-log-done 'time)
+;; Workflow States:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Workflow%20States][Workflow States:2]]
+(setq org-todo-keyword-faces
+      (quote (("TODO" :foreground "red" :weight bold)
+              ("STARTED" :foreground "blue" :weight bold)
+              ("DONE" :foreground "forest green" :weight bold)
+              ("WAITING" :foreground "orange" :weight bold)
+              ("ON_HOLD" :foreground "magenta" :weight bold)
+              ("CANCELLED" :foreground "forest green" :weight bold))))
+;; Workflow States:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Workflow%20States][Workflow States:3]]
+(setq org-use-fast-todo-selection t)
+;; Workflow States:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Workflow%20States][Workflow States:4]]
+;; Install the tool
+; (async-shell-command "brew cask install java") ;; Dependency
+; (async-shell-command "brew install plantuml")
+
+;; Tell emacs where it is.
+;; E.g., (async-shell-command "find / -name plantuml.jar")
+(setq org-plantuml-jar-path
+      (expand-file-name "/usr/local/Cellar/plantuml/1.2019.5/libexec/plantuml.jar"))
+
+;; Enable C-c C-c to generate diagrams from plantuml src blocks.
+(add-to-list 'org-babel-load-languages '(plantuml . t) )
+(require 'ob-plantuml)
+
+; Use fundamental mode when editing plantuml blocks with C-c '
+(add-to-list 'org-src-lang-modes (quote ("plantuml" . fundamental)))
+;; Workflow States:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Working%20with%20Citations][Working with Citations:1]]
+(use-package org-ref :demand t)
+
+;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
+;; Most useful for non-LaTeX files.
+(setq reftex-default-bibliography '("~/thesis-proposal/References.bib"))
+
+(use-package helm-bibtex :demand t)
+
+(setq bibtex-completion-bibliography "~/thesis-proposal/References.bib")
+;; Working with Citations:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Show%20off-screen%20Heading%20at%20the%20top%20of%20the%20window][Show off-screen Heading at the top of the window:1]]
+ (use-package org-sticky-header
+  :config
+  (setq-default
+   org-sticky-header-full-path 'full
+   ;; Child and parent headings are seperated by a /.
+   org-sticky-header-outline-path-separator " / "))
+
+(add-hook 'org-mode-hook #'org-sticky-header-mode)
+;; Show off-screen Heading at the top of the window:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Clocking%20Work%20Time][Clocking Work Time:1]]
+;; Record a note on what was accomplished when clocking out of an item.
+(setq org-log-note-clock-out t)
+;; Clocking Work Time:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Clocking%20Work%20Time][Clocking Work Time:2]]
+;; List of all the files & directories where todo items can be found. Only one for now.
+(setq org-agenda-files '("~/Dropbox/todo.org"))
+
+;; How many days ahead the default agenda view should look
+(setq org-agenda-ndays 7)
+
+;; How many days early a deadline item will begin showing up in your agenda list.
+(setq org-deadline-warning-days 14)
+
+;; In the agenda view, days that have no associated tasks will still have a line showing the date.
+(setq org-agenda-show-all-dates t)
+
+(setq org-agenda-skip-deadline-if-done t)
+
+;; Scheduled items marked as complete will not show up in your agenda view.
+(setq org-agenda-skip-scheduled-if-done t)
+
+;; The agenda view – even in the 7-days-at-a-time view – will always begin on the current day.
+;; This is important, since while using org-mode as a day planner, you never want to think of
+;; days gone past. That’s something you do in other ways, such as when reviewing completed tasks.
+(setq org-agenda-start-on-weekday nil)
+;; Clocking Work Time:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Clocking%20Work%20Time][Clocking Work Time:3]]
+(setq confirm-kill-emacs 'yes-or-no-p)
+;; Clocking Work Time:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Clocking%20Work%20Time][Clocking Work Time:4]]
+;; Resume clocking task when emacs is restarted
+(org-clock-persistence-insinuate)
+
+;; Show lot of clocking history
+(setq org-clock-history-length 23)
+
+;; Resume clocking task on clock-in if the clock is open
+(setq org-clock-in-resume t)
+
+;; Sometimes I change tasks I'm clocking quickly - this removes clocked tasks with 0:00 duration
+(setq org-clock-out-remove-zero-time-clocks t)
+
+;; Clock out when moving task to a done state
+(setq org-clock-out-when-done t)
+
+;; Save the running clock and all clock history when exiting Emacs, load it on startup
+(setq org-clock-persist t)
+
+;; Do not prompt to resume an active clock
+;; (setq org-clock-persist-query-resume nil)
+
+;; Include current clocking task in clock reports
+(setq org-clock-report-include-clocking-task t)
+;; Clocking Work Time:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Clocking%20Work%20Time][Clocking Work Time:5]]
+(setq org-clock-sound "~/.emacs.d/school-bell.wav")
+;; Clocking Work Time:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*%5B%5Bhttps://revealjs.com/?transition=zoom#/%5D%5BReveal.JS%5D%5D%20--%20The%20HTML%20Presentation%20Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
+(use-package ox-reveal
+  :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
+;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*%5B%5Bhttps://revealjs.com/?transition=zoom#/%5D%5BReveal.JS%5D%5D%20--%20The%20HTML%20Presentation%20Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3]]
+(setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
+<font size=\"1\">
+<a href=\"?print-pdf&showNotes=true\">
+⟪ Flattened View ; Press <code>?</code> for Help ⟫
+</a>
+</font>")
+;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Coloured%20LaTeX%20using%20Minted][Coloured LaTeX using Minted:1]]
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -output-directory %o %f"
+        "biber %b"
+        "pdflatex -shell-escape -output-directory %o %f"
+        "pdflatex -shell-escape -output-directory %o %f")
+)
+;; Coloured LaTeX using Minted:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Executing%20code%20from%20~src~%20blocks][Executing code from ~src~ blocks:1]]
+; Seamless use of babel: No confirmation upon execution.
+;; Downside: Could accidentally evaluate harmful code.
+(setq org-confirm-babel-evaluate nil)
+;; Executing code from ~src~ blocks:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Executing%20code%20from%20~src~%20blocks][Executing code from ~src~ blocks:2]]
+ (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (emacs-lisp . t)
+     ;; (shell	 . t)
+     (python . t)
+     (haskell . t)
+     (ruby	 . t)
+     (ocaml	 . t)
+     (C . t)  ;; Captial “C” gives access to C, C++, D
+     (dot	 . t)
+     (latex	 . t)
+     (org	 . t)
+     (makefile	 . t)
+     ))
+
+;; Preserve my indentation for source code during export.
+(setq org-src-preserve-indentation t)
+
+;; The export process hangs Emacs, let's avoid this.
+;; MA: For one reason or another, this crashes more than I'd like.
+;; (setq org-export-in-background t)
+;; Executing code from ~src~ blocks:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Hiding%20Emphasise%20Markers%20&%20Inlining%20Images][Hiding Emphasise Markers & Inlining Images:1]]
+;; org-mode math is now highlighted ;-)
+(setq org-highlight-latex-and-related '(latex))
+
+;; Hide the *,=,/ markers
+(setq org-hide-emphasis-markers t)
+
+;; (setq org-pretty-entities t)
+;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+;; Hiding Emphasise Markers & Inlining Images:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Jumping%20without%20hassle][Jumping without hassle:1]]
+(defun my/org-goto-line (line)
+  "Go to the indicated line, unfolding the parent Org header.
+
+   Implementation: Go to the line, then look at the 1st previous
+   org header, now we can unfold it whence we do so, then we go
+   back to the line we want to be at.
+  "
+  (interactive "nEnter line: ")
+  (goto-line line)
+  (org-previous-visible-heading 1)
+  (org-cycle)
+  (goto-line line)
+)
+;; Jumping without hassle:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Folding%20within%20a%20subtree][Folding within a subtree:1]]
+(defun my/org-fold-current-subtree-anywhere-in-it ()
+  "Hide the current heading, while being anywhere inside it."
+  (interactive)
+  (save-excursion
+    (org-narrow-to-subtree)
+    (org-shifttab)
+    (widen))
+)
+
+(add-hook 'org-mode-hook '(lambda ()
+  (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
+;; Folding within a subtree:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Ensuring%20Useful%20HTML%20Anchors][Ensuring Useful HTML Anchors:1]]
+(defun my/ensure-headline-ids (&rest _)
+  "Org trees without a :CUSTOM_ID: property have the property set to be their heading. All non-alphanumeric characters are replaced with ‘-’.
+
+   If multiple trees end-up with the same id property, issue a message and undo
+   any property insertion thus far.
+  "
+  (interactive)
+  (let ((ids))
+    (org-map-entries
+     (lambda ()
+       (org-with-point-at (point)
+         (let ((id (org-entry-get nil "CUSTOM_ID")))
+           (unless id
+             (setq id (s-replace-regexp "[^[:alnum:]]" "-" (nth 4 (org-heading-components))))
+             (if (not (member id ids))
+                 (push id ids)
+               (message-box "Oh no, a repeated id!\n\n\t%s" id)
+               (undo)
+               (setq quit-flag t))
+             (org-entry-put nil "CUSTOM_ID" id))))))))
+
+;; Whenever html & md export happens, ensure we have headline ids.
+(advice-add 'org-html-export-to-html :before 'my/ensure-headline-ids)
+(advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
+;; Ensuring Useful HTML Anchors:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Making%20then%20opening%20html's%20from%20org's][Making then opening html's from org's:1]]
+(cl-defun my/org-html-export-to-html (&optional (filename (buffer-name)))
+  "Produce an HTML from the given ‘filename’, or otherwise current buffer,
+   then open it in my default brower.
+  "
+ (interactive)
+ (org-html-export-to-html)
+ (let ((it (concat (file-name-sans-extension buffer-file-name) ".html")))
+   (browse-url it)
+   (message (concat it " has been opened in Chromium."))
+   'success ;; otherwise we obtain a "compiler error".
+ )
+)
+;; Making then opening html's from org's:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Making%20then%20opening%20pdf's%20from%20org's][Making then opening pdf's from org's:1]]
+(cl-defun my/org-latex-export-to-pdf (&optional (filename (buffer-name)))
+  "Produce a PDF from the given ‘filename’, or otherwise current buffer,
+   then open it in my default viewer.
+  "
+ (interactive)
+ (org-latex-export-to-pdf)
+ (let ((it (concat (file-name-sans-extension filename) ".pdf")))
+   (eshell-command (concat "open " it  " & ")))
+   (message (concat it " has been opened in your PDF viewer."))
+   'success ;; otherwise we obtain a "compiler error".
+)
+;; Making then opening pdf's from org's:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Interpret%20the%20Haskell%20source%20blocks%20in%20a%20file][Interpret the Haskell source blocks in a file:1]]
+(defvar *current-module* "NoModuleNameSpecified"
+  "The name of the module, file, that source blocks are
+   currently being tangled to.
+
+   This technique is insipired by “Interactive Way to C”;
+   see https://alhassy.github.io/InteractiveWayToC/.
+  ")
+
+(defun current-module ()
+  "Returns the current module under focus."
+  *current-module*)
+
+(defun set-module (name)
+   "Set the name of the module currently under focus.
+
+    Usage: When a module is declared, i.e., a new file has begun,
+    then that source blocks header should be “:tangle (set-module ”name-here”)”.
+    succeeding source blocks now inherit this name and so are tangled
+    to the same module file. How? By placing the following line at the top
+    of your Org file: “‘#+PROPERTY: header-args :tangle (current-module))’.
+
+    This technique structures “Interactive Way to C”.
+   "
+   (setq *current-module* name)
+)
+
+(cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
+  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
+   and load the resulting ‘target’ file into a ghci buffer.
+
+   If no name is provided for the ‘target’ file that is generated from the
+   tangeling process, it is assumed to be the buffer's name with a ‘hs’ extension.
+
+   Note that this only loads the blocks tangled to ‘target’.
+
+   For example, file ‘X.org’ may have haskell blocks that tangle to files
+   ‘X.hs’, ‘Y.hs’ and ‘Z.hs’. If no target name is supplied, we tangle all blocks
+   but only load ‘X.hs’ into the ghci buffer. A helpful technique to load the
+   last, bottom most, defined haskell module, is to have the module declaration's
+   source block be ‘:tangle (setq CODE “Y.hs”)’, for example; then the following
+   code blocks will inherit this location provided our Org file has at the top
+   ‘#+PROPERTY: header-args :tangle (current-module))’.
+   Finally, our ‘compile-command’ suffices to be ‘(my/org-run-haskell CODE)’.
+   ─
+   This technique structures “Interactive Way to C”.
+  "
+   (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
+         (buf (concat "*GHCI* " it)))
+
+     (-let [kill-buffer-query-functions nil] (ignore-errors (kill-buffer buf)))
+     (org-babel-tangle it "haskell")
+     (async-shell-command (concat "ghci " it) buf)
+     (switch-to-buffer-other-window buf)
+     (end-of-buffer)
+   )
+)
+
+;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
+;; Interpret the Haskell source blocks in a file:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Expected%20IDE%20Support][Expected IDE Support:1]]
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent :demand t)
+(global-aggressive-indent-mode t)
+;; Expected IDE Support:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Backups][Backups:1]]
+;; New location for backups.
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+
+;; Never silently delete old backups.
+(setq delete-old-versions -1)
+
+;; Use version numbers for backup files.
+(setq version-control t)
+
+;; Even version controlled files get to be backed up.
+(setq vc-make-backup-files t)
+;; Backups:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Backups][Backups:2]]
+(use-package backup-walker
+  :commands backup-walker-start)
+;; Backups:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Editor%20Documentation%20with%20Contextual%20Information][Editor Documentation with Contextual Information:1]]
+(defun my/describe-symbol (symbol)
+  "A “C-h o” replacement using “helpful”:
+   If there's a thing at point, offer that as default search item.
+
+   If a prefix is provided, i.e., “C-u C-h o” then the built-in
+   “describe-symbol” command is used.
+
+   ⇨ Pretty docstrings, with links and highlighting.
+   ⇨ Source code of symbol.
+   ⇨ Callers of function symbol.
+   ⇨ Key bindings for function symbol.
+   ⇨ Aliases.
+   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
+  "
+  (interactive "p")
+  (let* ((thing (symbol-at-point))
+         (val (completing-read
+               (format "Describe symbol (default %s): " thing)
+               (vconcat (list thing) obarray)
+               (lambda (vv)
+                (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                         describe-symbol-backends))
+               t nil nil))
+         (it (intern val)))
+
+    (if current-prefix-arg
+        (funcall #'describe-symbol it)
+      (cond
+       ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+       (t (helpful-symbol it))))))
+
+;; Keybindings.
+(global-set-key (kbd "C-h o") #'my/describe-symbol)
+(global-set-key (kbd "C-h k") #'helpful-key)
+;; Editor Documentation with Contextual Information:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Highlight%20Defined%20Emacs%20Lisp%20Symbols][Highlight Defined Emacs Lisp Symbols:1]]
+(use-package highlight-defined)
+(add-hook 'emacs-lisp-mode-hook 'highlight-defined-mode)
+;; Highlight Defined Emacs Lisp Symbols:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Highlighting%20TODO-s%20&%20Showing%20them%20in%20Magit][Highlighting TODO-s & Showing them in Magit:1]]
+;; NOTE that the highlighting works even in comments.
+(use-package hl-todo
+  :config
+  ;; Enable it for text-like locations
+  (add-hook 'text-mode-hook (lambda () (hl-todo-mode t)))
+  ;; Adding some new keywords: TEST, WK, MA, JC.
+  (add-to-list 'hl-todo-keyword-faces '("TEST" . "#dc8cc3"))
+  (add-to-list 'hl-todo-keyword-faces '("MA" . "#dc8cc3"))
+  (add-to-list 'hl-todo-keyword-faces '("WK" . "#dc8cc3"))
+  (add-to-list 'hl-todo-keyword-faces '("JC" . "#dc8cc3"))
+)
+;; Highlighting TODO-s & Showing them in Magit:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Highlighting%20TODO-s%20&%20Showing%20them%20in%20Magit][Highlighting TODO-s & Showing them in Magit:2]]
+;; MA: The todo keywords work in code too!
+(use-package magit-todos
+  :after magit
+  :after hl-todo
+  :config
+  ;; For some reason cannot use :custom with this package.
+  (custom-set-variables
+    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+  (magit-todos-mode))
+;; Highlighting TODO-s & Showing them in Magit:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Hydra:%20Supply%20a%20prefix%20only%20once][Hydra: Supply a prefix only once:1]]
+(use-package hydra :demand t)
+
+;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
+;;   ;; List of triples (extension method description) )
+;; Hydra: Supply a prefix only once:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Taking%20a%20tour%20of%20one's%20edits][Taking a tour of one's edits:1]]
+;; Give me a description of the change made at a particular stop.
+(use-package goto-chg
+  :init (setq glc-default-span 0))
+
+(defhydra hydra-edits (global-map "C-c e")
+  ("," goto-last-change "Goto nᵗʰ last change")
+  ("." goto-last-change-reverse "Goto more recent change"))
+;; Taking a tour of one's edits:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:1]]
+;; Hunk navigation and commiting.
+(use-package git-gutter+
+  :ensure t
+  :init (global-git-gutter+-mode)
+  :diminish (git-gutter+-mode))
+;; What's changed & who's to blame?:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:2]]
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  "Version control"
+  ;; (extension method description)
+  ("n" git-gutter+-next-hunk "Next hunk")
+  ("p" git-gutter+-previous-hunk "Previous hunk")
+  ("=" git-gutter+-show-hunk "Show hunk diff")
+  ("r" git-gutter+-revert-hunks "Revert hunk\n")
+  ("c" git-gutter+-stage-and-commit "Stage & commit hunk")
+  ("C" git-gutter+-stage-and-commit-whole-buffer "Stage & commit entire buffer")
+  ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer"))
+;; What's changed & who's to blame?:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:3]]
+;; Colour fringe to indicate alterations.
+;; (use-package diff-hl)
+;; (global-diff-hl-mode)
+;; What's changed & who's to blame?:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:4]]
+;; Popup for who's to blame for alterations.
+(use-package git-messenger :demand t)
+;;
+;; Message menu let's us use magit diff to see the commit change.
+(setq git-messenger:use-magit-popup t)
+;;
+;; Always show who authored the commit and when.
+;; (setq git-messenger:show-detail t)
+
+;; View current file in browser on github.
+;; More generic is “browse-at-remote”.
+(use-package github-browse-file)
+
+;; Add these to the version control hydra.
+;;
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  ("b" git-messenger:popup-message "Who's to blame?")
+  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+  ("g" github-browse-file-blame "Show file in browser in github")
+  ("s" magit-status "Git status of current buffer"))
+;; What's changed & who's to blame?:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:5]]
+(use-package git-link)
+
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  ("l" git-link "Git URL for current location"))
+;; What's changed & who's to blame?:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*Edit%20as%20Root][Edit as Root:1]]
+(defun find-file-as-root ()
+  "Like `ido-find-file, but automatically edit the file with
+root-privileges (using tramp/sudo), if the file is not writable by
+user."
+  (interactive)
+  (let ((file (ido-read-file-name "Edit as root: ")))
+    (unless (file-writable-p file)
+      (setq file (concat "/sudo:root@localhost:" file)))
+    (find-file file)))
+
+(bind-key "C-x F" 'find-file-as-root)
+;; Edit as Root:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Moving%20Text%20Around][Moving Text Around:1]]
+;; M-↑,↓ moves line, or marked region; prefix is how many lines.
+(use-package move-text)
+(move-text-default-bindings)
+;; Moving Text Around:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Enabling%20CamelCase%20Aware%20Editing%20Operations][Enabling CamelCase Aware Editing Operations:1]]
+(global-subword-mode 1)
+;; Enabling CamelCase Aware Editing Operations:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Keep%20buffers%20open%20across%20sessions][Keep buffers open across sessions:1]]
+;; Keep open files open across sessions.
+(desktop-save-mode 1)
+(setq desktop-restore-eager 10)
+;; Keep buffers open across sessions:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Mouse%20Editing%20Support][Mouse Editing Support:1]]
+;; Text selected with the mouse is automatically copied to clipboard.
+(setq mouse-drag-copy-region t)
+;; Mouse Editing Support:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Dimming%20Unused%20Windows][Dimming Unused Windows:1]]
+(use-package dimmer
+  :config (dimmer-mode))
+;; Dimming Unused Windows:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Having%20a%20workspace%20manager%20in%20Emacs][Having a workspace manager in Emacs:1]]
+(use-package perspective)
+
+;; Activate it.
+(persp-mode)
+
+;; In the modeline, tell me which workspace I'm in.
+(persp-turn-on-modestring)
+;; Having a workspace manager in Emacs:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Jump%20between%20windows%20using%20Cmd+Arrow%20&%20between%20recent%20buffers%20with%20Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
+(use-package windmove
+  :config
+  ;; use command key on Mac
+  (windmove-default-keybindings 'super)
+  ;; wrap around at edges
+  (setq windmove-wrap-around t))
+;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Jump%20between%20windows%20using%20Cmd+Arrow%20&%20between%20recent%20buffers%20with%20Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2]]
+(use-package buffer-flip
+  :bind
+   (:map buffer-flip-map
+    ("M-<tab>" . buffer-flip-forward)
+    ("M-S-<tab>" . buffer-flip-backward)
+    ("C-g" . buffer-flip-abort))
+  :config
+    (setq buffer-flip-skip-patterns
+        '("^\\*helm\\b"))
+)
+;; key to begin cycling buffers.
+(global-set-key (kbd "M-<tab>") 'buffer-flip)
+;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Coding%20with%20a%20Fruit%20Salad:%20Semantic%20Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
+(use-package color-identifiers-mode)
+(global-color-identifiers-mode)
+;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Completion%20Frameworks][Completion Frameworks:1]]
+(use-package helm
+ :diminish
+ :init (helm-mode t)
+ :bind
+  ("C-x C-r" . helm-recentf)      ; search for recently edited
+
+  ;; Helm provides generic functions for completions to replace
+  ;; tab-completion in Emacs with no loss of functionality.
+  ("M-x" . 'helm-M-x)
+  ;; ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
+  ("C-x b". 'helm-mini) ;; see buffers & recent files; more useful.
+  ("C-x r b" .'helm-filtered-bookmarks)
+  ("C-x C-f" . 'helm-find-files)
+
+  ;; A menu of all “top-level items” in a file; e.g.,
+  ;; functions and constants in source code or headers in an org-mode file.
+  ;;
+  ;; Nifty way to familarise yourself with a new code base, or one from a while ago.
+  ;;
+  ("C-c i" . 'helm-imenu)
+
+   ;; Show all meaningful Lisp symbols whose names match a given pattern.
+   ;; Helpful for looking up commands.
+   ("C-h a" . helm-apropos)
+
+   ;; Look at what was cut recently & paste it in.
+   ("M-y" . helm-show-kill-ring)
+)
+;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
+
+;; Yet, let's keep tab-completetion anyhow.
+(define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
+(define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
+;; We can list ‘actions’ on the currently selected item by C-z.
+(define-key helm-map (kbd "C-z")  'helm-select-action)
+;; Completion Frameworks:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Completion%20Frameworks][Completion Frameworks:2]]
+(setq helm-mini-default-sources '(helm-source-buffers-list
+                                    helm-source-recentf
+                                    helm-source-bookmarks
+                                    helm-source-bookmark-set
+                                    helm-source-buffer-not-found))
+;; Completion Frameworks:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Completion%20Frameworks][Completion Frameworks:3]]
+;; (shell-command "brew install surfraw &")
+;;
+;; Invoke helm-surfraw
+;; Completion Frameworks:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Completion%20Frameworks][Completion Frameworks:4]]
+(use-package helm-swoop
+  :bind
+  (
+   ("C-s"     . 'helm-swoop)           ;; search current buffer
+   ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
+   ;; Go back to last position where ‘helm-swoop’ was called
+   ("C-S-s" . 'helm-swoop-back-to-last-point)
+  )
+ :config ;; Following from helm-swoop's github page.
+   ;; Give up colour for speed.
+  (setq helm-swoop-speed-or-color nil)
+  ;; If this value is t, split window inside the current window
+  (setq helm-swoop-split-with-multiple-windows nil)
+
+)
+;; Completion Frameworks:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Completion%20Frameworks][Completion Frameworks:7]]
+(use-package company
+  :diminish
+  :config
+    (setq company-dabbrev-other-buffers t
+          company-dabbrev-code-other-buffers t
+
+          ;; Allow (lengthy) numbers to be eligible for completion.
+          company-complete-number t
+
+          ;; M-⟪num⟫ to select an option according to its number.
+          company-show-numbers t
+
+          ;; Only 2 letters required for completion to activate.
+          company-minimum-prefix-length 2
+
+          ;; Do not downcase completions by default.
+          company-dabbrev-downcase nil
+
+          ;; Even if I write something with the ‘wrong’ case,
+          ;; provide the ‘correct’ casing.
+          company-dabbrev-ignore-case t
+
+          ;; Immediately activate completion.
+          company-idle-delay 0
+          )
+
+    (global-company-mode 1)
+)
+;; So fast that we don't need this.
+;; (global-set-key (kbd "C-c h") 'company-complete)
+;; Completion Frameworks:7 ends here
+
+;; [[file:~/.emacs.d/init.org::*Completion%20Frameworks][Completion Frameworks:8]]
+(use-package company-emoji)
+(add-to-list 'company-backends 'company-emoji)
+;; Completion Frameworks:8 ends here
+
+;; [[file:~/.emacs.d/init.org::*Completion%20Frameworks][Completion Frameworks:9]]
+(use-package emojify
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1) ;; Will install missing images, if need be.
+)
+;; Completion Frameworks:9 ends here
+
+;; [[file:~/.emacs.d/init.org::*Completion%20Frameworks][Completion Frameworks:11]]
+(use-package company-quickhelp
+ :config
+   (setq company-quickhelp-delay 0.1)
+   (company-quickhelp-mode)
+)
+;; Completion Frameworks:11 ends here
+
+;; [[file:~/.emacs.d/init.org::*Text%20Folding%20with%20%5B%5Bhttps://github.com/gregsexton/origami.el%5D%5BOrigami-mode%5D%5D][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1]]
+(use-package origami)
+;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Text%20Folding%20with%20%5B%5Bhttps://github.com/gregsexton/origami.el%5D%5BOrigami-mode%5D%5D][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2]]
+(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
+      origami-parser-alist)
+;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Text%20Folding%20with%20%5B%5Bhttps://github.com/gregsexton/origami.el%5D%5BOrigami-mode%5D%5D][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3]]
+(defun my/search-hook-function ()
+  (when origami-mode (origami-toggle-node (current-buffer) (point))))
+
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+;;
+;; Likewise for incremental search, isearch, users.
+;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
+;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Text%20Folding%20with%20%5B%5Bhttps://github.com/gregsexton/origami.el%5D%5BOrigami-mode%5D%5D][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4]]
+(defhydra folding-with-origami-mode (global-map "C-c f")
+  ("h" origami-close-node-recursively "Hide")
+  ("o" origami-open-node-recursively  "Open")
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("n" origami-next-fold "Next")
+  ("p" origami-previous-fold "Previous"))
+;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Helpful%20Utilities%20&%20Shortcuts][Helpful Utilities & Shortcuts:1]]
+;; change all prompts to y or n
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;; Enable ‘possibly confusing commands’
+(put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
+(put 'narrow-to-region 'disabled nil)
+(put 'narrow-to-page 'disabled nil)
+;; Helpful Utilities & Shortcuts:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Bind%20~recompile~%20to%20~C-c%20C-m~%20--%20%E2%80%9Cm%E2%80%9D%20for%20%E2%80%9Cm%E2%80%9Dake][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake:1]]
+(defvar my-keys-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-m") 'recompile)
+    map)
+  "my-keys-minor-mode keymap.")
+
+(define-minor-mode my-keys-minor-mode
+  "A minor mode so that my key settings override annoying major modes."
+  :init-value t
+  :lighter " my-keys")
+
+(my-keys-minor-mode)
+
+(diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
+;; Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Reload%20buffer%20with%20~f5~][Reload buffer with ~f5~:1]]
+(global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
+;; Reload buffer with ~f5~:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Reload%20buffer%20with%20~f5~][Reload buffer with ~f5~:2]]
+;; Auto update buffers that change on disk.
+;; Will be prompted if there are changes that could be lost.
+(global-auto-revert-mode 1)
+;; Reload buffer with ~f5~:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Kill%20to%20start%20of%20line][Kill to start of line:1]]
+;; M-k kills to the left
+(global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
+;; Kill to start of line:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~file-as-list~%20and%20~file-as-string~][~file-as-list~ and ~file-as-string~:1]]
+(defun file-as-list (filename)
+  "Return the contents of FILENAME as a list of lines"
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (split-string (buffer-string))))
+
+(defun file-as-string (filename)
+  "Return the contents of FILENAME as a list of lines"
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (buffer-string)))
+;; ~file-as-list~ and ~file-as-string~:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~C-x%20k~%20kills%20current%20buffer,%20~C-u%20C-x%20k~%20kills%20all%20others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others:1]]
+(defun kill-other-buffers ()
+  "Kill all other buffers and other windows."
+  (interactive)
+  (mapc 'kill-buffer (delq (current-buffer) (buffer-list)))
+  (delete-other-windows))
+;; ~C-x k~ kills current buffer, ~C-u C-x k~ kills all others:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~C-x%20k~%20kills%20current%20buffer,%20~C-u%20C-x%20k~%20kills%20all%20others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others:2]]
+(global-set-key (kbd "C-x k")
+  '(lambda (&optional all)
+     "Kill current buffer, or all if prefix is provided.
+      Prompt only if there are unsaved changes."
+     (interactive "P")
+     (if all (kill-other-buffers)
+       (kill-buffer (current-buffer)))))
+;; ~C-x k~ kills current buffer, ~C-u C-x k~ kills all others:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Switching%20from%202%20horizontal%20windows%20to%202%20vertical%20windows][Switching from 2 horizontal windows to 2 vertical windows:1]]
+(defun ensure-two-vertical-windows ()
+  "I used this method often when programming in Coq."
+ (interactive)
+ (other-window 1)			;; C-x 0
+ (let ((otherBuffer (buffer-name)))
+   (delete-window)			;; C-x 0
+   (split-window-right)			;; C-x 3
+   (other-window 1)			;; C-x 0
+   (switch-to-buffer otherBuffer)	;; C-x b RET
+ )
+ (other-window 1)
+)
+(global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
+;; Switching from 2 horizontal windows to 2 vertical windows:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~re-replace-in-file~][~re-replace-in-file~:1]]
+(defun re-replace-in-file (file regex whatDo)
+   "Find and replace a regular expression in-place in a file.
+
+   Terrible function … before I took the time to learn any Elisp!
+   "
+
+    (find-file file)
+    (goto-char 0)
+    (let ((altered (replace-regexp-in-string regex whatDo (buffer-string))))
+      (erase-buffer)
+      (insert altered)
+      (save-buffer)
+      (kill-buffer)
+   )
+)
+;; ~re-replace-in-file~:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~mapsto~:%20Simple%20rewriting%20for%20current%20buffer][~mapsto~: Simple rewriting for current buffer:1]]
+(defun mapsto (this that)
+  "In the current buffer make the regular expression rewrite: this ↦ that."
+  (let* ((current-location (point))
+       ;; Do not alter the case of the <replacement text>.
+       (altered (replace-regexp-in-string this (lambda (x) that) (buffer-string) 'no-fixed-case))
+       )
+      (erase-buffer)
+      (insert altered)
+      (save-buffer)
+      (goto-char current-location)
+  )
+)
+;; ~mapsto~: Simple rewriting for current buffer:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Obtaining%20Values%20of%20~#+KEYWORD~%20Annotations][Obtaining Values of ~#+KEYWORD~ Annotations:1]]
+;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
+(defun org-keywords ()
+  "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
+  (org-element-map (org-element-parse-buffer 'element) 'keyword
+                   (lambda (keyword) (cons (org-element-property :key keyword)
+                                           (org-element-property :value keyword)))))
+
+(defun org-keyword (KEYWORD)
+  "Get the value of a KEYWORD in the form of #+KEYWORD: value"
+  (cdr (assoc KEYWORD (org-keywords))))
+;; Obtaining Values of ~#+KEYWORD~ Annotations:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Quickly%20pop-up%20a%20terminal,%20run%20a%20command,%20close%20it%20---and%20zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
+(use-package shell-pop
+  :config (setq
+    ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
+    shell-pop-universal-key "C-t"
+
+    ;; Percentage for shell-buffer window size.
+    shell-pop-window-size 30
+
+    ;; Position of the popped buffer: top, bottom, left, right, full
+    shell-pop-window-position "bottom"
+ ))
+;; Quickly pop-up a terminal, run a command, close it ---and zsh:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Quickly%20pop-up%20a%20terminal,%20run%20a%20command,%20close%20it%20---and%20zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:2]]
+;; Be default, Emacs please use zsh
+(setq shell-file-name "/bin/zsh")
+;; Quickly pop-up a terminal, run a command, close it ---and zsh:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Publishing%20articles%20to%20my%20personal%20blog][Publishing articles to my personal blog:1]]
+(define-key global-map "\C-cb" 'my/publish-to-blog)
+
+(cl-defun my/publish-to-blog (&optional (draft nil) (local nil))
+  "
+  Using ‘AlBasmala’ setup to publish current article to my blog.
+  Details of AlBasmala can be found here:
+  https://alhassy.github.io/AlBasmala/
+
+  Locally: ~/alhassy.github.io/content/AlBasmala.org
+
+  A ‘draft’ will be produced in about ~7 seconds, but does not re-produce
+  a PDF and the article has a draft marker near the top. Otherwise,
+  it will generally take ~30 seconds due to PDF production, which is normal.
+  The default is not a draft and it takes ~20 seconds for the live
+  github.io page to update.
+
+  The ‘local’ optiona indicates whether the resulting article should be
+  viewed using the local server or the live webpage. Live page is default.
+
+  When ‘draft’ and ‘local’ are both set, the resulting page may momentarily
+  show a page-not-found error, simply refresh.
+  "
+
+  (load-file "~/alhassy.github.io/content/AlBasmala.el")
+
+  ;; --MOVE ME TO ALBASMALA--
+  ;; Sometimes the file I'm working with is not a .org file, so:
+  (setq file.org (buffer-name))
+
+  (preview-article :draft draft)
+  (unless draft (publish))
+  (let ((server (if local "http://localhost:4000/" "https://alhassy.github.io/")))
+    (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
+)
+;; Publishing articles to my personal blog:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Excellent%20PDF%20Viewer][Excellent PDF Viewer:1]]
+;; First: (async-shell-command "brew install --HEAD dunn/homebrew-emacs/pdf-tools")
+
+;; Then:
+(use-package pdf-tools
+  :ensure t
+  :config
+  (custom-set-variables
+    '(pdf-tools-handle-upgrades nil))
+  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo"))
+
+;; Finally:
+(pdf-tools-install)
+
+;; Now PDFs opened in Emacs are in pdfview-mode.
+;; Excellent PDF Viewer:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Undo%20tree][Undo tree:1]]
+;; Allow tree-semantics for undo operations.
+(package-install 'undo-tree)
+(global-undo-tree-mode)
+(diminish 'undo-tree-mode)
+
+;; Execute (undo-tree-visualize) then navigate along the tree to witness
+;; changes being made to your file live!
+
+;; Each node in the undo tree should have a timestamp.
+(setq undo-tree-visualizer-timestamps t)
+
+;; Show a diff window displaying changes between undo nodes.
+(setq undo-tree-visualizer-diff t)
+;; Undo tree:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20Emacs%20in%20any%20text%20area%20on%20my%20OS][Using Emacs in any text area on my OS:2]]
+(add-hook 'ea-popup-hook
+  (lambda (app-name window-title x y w h)
+   (org-mode)
+   (set-input-method "Agda")
+  )
+)
+;; Using Emacs in any text area on my OS:2 ends here

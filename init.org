@@ -27,8 +27,6 @@
 (package-install 'fold-this)        ;; Folding away regions of text
 
 #+BEGIN_SRC emacs-lisp :results replace :tangle yes
-show-me
-
 (defun show-me ()
   "Evaluate a Lisp expression and insert its value
    as a comment at the end of the line.
@@ -47,6 +45,79 @@ show-me
 #+END_SRC
 :End:
 
+* COMMENT Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
+
+Sources:
++ John Kitchin https://lists.gnu.org/archive/html/emacs-orgmode/2018-05/msg00350.html
++ https://kdr2.com/tech/emacs/1805-approach-org-ref-code-to-text.html
+
+I want both ~get-named-text~ and ~docs~ ^_^
+
+#+NAME: get-named-text
+#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
+(my/get-named-text name sep)
+#+END_SRC
+
+#+NAME: docs
+#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
+(my/get-named-text name sep)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(defun my/get-named-text (name sep)
+
+  (let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
+              (lambda (el) (when (string= (org-element-property :name el) name)
+                             el)))))
+    (concat "\n"
+            (s-join sep
+                    (loop for e in el
+                          for s = (buffer-substring (org-element-property :contents-begin e)
+                                                    (org-element-property :contents-end e))
+                          collect
+                          (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))))
+#+END_SRC
+
+#+NAME: OLD-get-named-text
+#+BEGIN_SRC emacs-lisp :var name="" :results replace :tangle no
+(let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
+            (lambda (el)
+              (when (string= (org-element-property :name el) name)
+                el))
+            nil t)))
+  (let ((s (buffer-substring (org-element-property :contents-begin el)
+                             (org-element-property :contents-end el))))
+    (concat "\n" (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))
+#+END_SRC
+
+Let's make ~get-named-text~ a globally defined and callable code block:
+#+BEGIN_SRC emacs-lisp
+(org-babel-lob-ingest (expand-file-name "~/.emacs.d/init.org"))
+#+END_SRC
+
+
+**  COMMENT Example
+For example:
+#+NAME: ADD
+#+BEGIN_SRC emacs-lisp -n -r :noweb yes :tangle test.el
+(defun add (x y)
+  "One line description of adding X and Y.
+<<get-named-text('DOC-OF-ADD)>> ;; code to code
+<<get-named-text('add-options)>>"
+  (+ x y)
+  )
+#+END_SRC
+
+#+NAME: DOC-OF-ADD
+We use the XXX function add to calculate the sum of two numbers.
+
+#+NAME: add-options
+- one
+- two
+- three
+- and of course "optional things"
+
++ There is a reason we only support two args
 * TODO COMMENT Clean up
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Clean-up
@@ -100,67 +171,6 @@ available as superscript, except ‘q’.
 
       (loop for (key . value) in my-list
             collect (cons value key))
-
-** COMMENT Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
-  :PROPERTIES:
-  :CUSTOM_ID: COMMENT-Referencing-Text-From-Code-Blocks----Attaching-prose-as-doc-strings
-  :END:
-  :PROPERTIES:
-
-  :END:
-
-Sources:
-+ John Kitchin https://lists.gnu.org/archive/html/emacs-orgmode/2018-05/msg00350.html
-+ https://kdr2.com/tech/emacs/1805-approach-org-ref-code-to-text.html
-
-# NAME: get-named-text
-#+NAME: commentary
-#+BEGIN_SRC emacs-lisp :var name="" :results replace
-(let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
-        (lambda (el)
-          (when (string= (org-element-property :name el) name)
-        el))
-        nil t)))
-  (let ((s (buffer-substring (org-element-property :contents-begin el)
-                 (org-element-property :contents-end el))))
-    (replace-regexp-in-string "\\\"" "\\\\\"" s)))
-#+END_SRC
-
-*** COMMENT Example
-   :PROPERTIES:
-   :CUSTOM_ID: COMMENT-Example
-   :END:
-   :PROPERTIES:
-
-   :END:
-For example:
-#+NAME: ADD
-#+BEGIN_SRC emacs-lisp -n -r :noweb yes :tangle test.el
-(defun add (x y)
-  "One line description of adding X and Y.
-  <<get-named-text("DOC-OF-ADD")>> ;; code to code
-  <<get-named-text("add-options")>>"
-  (+ x y)
-  )
-#+END_SRC
-
-#+NAME: DOC-OF-ADD
-We use the function add to calculate the sum of two numbers.
-
-#+NAME: add-options
-- one
-- two
-- three
-- and of course "optional things"
-
-**** There is a reason we only support two args
-    :PROPERTIES:
-    :CUSTOM_ID: There-is-a-reason-we-only-support-two-args
-    :END:
-    :PROPERTIES:
-    :ID:       BAD97113-3561-4A4A-BA07-0CD5BF6BA35F
-
-    :END:
 
 ** itify
    :PROPERTIES:
@@ -285,6 +295,8 @@ We use the function add to calculate the sum of two numbers.
   '("_₀⊕¹_" "_₀[_⊗_]¹" "₀he_lo¹" "₀he-lo¹"))))
  #+END_SRC
  {{{end-fold}}}
+
+
 * Abstract                                                   :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -518,9 +530,7 @@ More precisely, in this case, ~C-x C-s~ is a normal save whereas
 #+END_SRC
 
 #+RESULTS: enable making init and readme
-:results:
-(my/make-init-el-and-README t)
-:end:
+| my/make-init-el-and-README | t |
 
 Where the following block has ~#+NAME: make-readme~ before it.
 This source block generates the ~README~ for the associated github repository.
@@ -958,6 +968,8 @@ Below are the git repos I'd like to clone.
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
+(maybe-clone "https://github.com/alhassy/melpa")
+(maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
 (maybe-clone "https://github.com/alhassy/RubyCheatSheet")
 (maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
 (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
@@ -2791,7 +2803,7 @@ This is far preferable to having them all in one big list.
         (:tag "3mi3")
         (:name "Emacs Init" :tag "init")
         (:priority<= "B" :order 1)
-        )))
+        ))
 #+END_SRC
 
 The [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]] homepage shows complex configurations and pleasant screenshots
@@ -3556,18 +3568,36 @@ with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] 
 
 #+BEGIN_SRC emacs-lisp
 (use-package ox-reveal
- :config (setq org-reveal-root "https://cdn.jsdelivr.net/reveal.js/3.0.0/"))
+  :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
 #+END_SRC
 
-For example, execute --~C-c C-c~--  the following block to see an example slide-deck (─‿‿─)
+For example, execute, ~C-x C-e~ after the closing parenthesis of, the following block to see an example slide-deck (─‿‿─)
 #+BEGIN_SRC emacs-lisp :tangle no
-(shell-command "curl https://raw.githubusercontent.com/yjwen/org-reveal/master/Readme.org >> Trying_out_reveal.org")
-(with-temp-buffer (find-file "Trying_out_reveal.org")
- (org-reveal-export-to-html-and-browse)
-)
+(progn (shell-command "curl https://raw.githubusercontent.com/yjwen/org-reveal/696613edef0fe17a9c53146f79933fe7c4101100/Readme.org >> Trying_out_reveal.org")
+       (switch-to-buffer (find-file "Trying_out_reveal.org"))
+       (org-reveal-export-to-html-and-browse))
 #+END_SRC
 
-Org-mode exporting --~C-c C-e~-- now includes an option ~R~ for such reveal slide decks.
+Org-mode exporting, ~C-c C-e~, now includes an option ~R~ for such reveal slide decks.
+
+:Hide:
+[[https://alhassy.github.io/next-700-module-systems/proposal/defence-slides.html#/sec-title-slide][Here]] ([[https://raw.githubusercontent.com/alhassy/next-700-module-systems/master/proposal/defence-slides.org][source]]) is an example of org-reveal slides where I add a number to each page,
+use multiple columns, and extend the margins perhaps a bit too much.
+:End:
+
+Two dimensional slides may be a bit new to some people, so I like to give viewers
+an option, in tiny font, to view the slide-deck continuously and remind them that ~?~ provides useful shortcuts.
+#+BEGIN_SRC emacs-lisp
+(setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
+<font size=\"1\">
+<a href=\"?print-pdf&showNotes=true\">
+⟪ Flattened View ; Press <code>?</code> for Help ⟫
+</a>
+</font>")
+#+END_SRC
+One should remove the ~&showNotes=true~ if they do not want to include speaker notes in the flattened view.
+
+Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the resulting PDF locally.
 
 ** Coloured LaTeX using Minted
 :PROPERTIES:
@@ -4185,6 +4215,13 @@ After the prefix is supplied, all extensions are shown in a minibuffer.
 ;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
 ;;   ;; List of triples (extension method description) )
 #+END_SRC
+
+From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
+#+begin_quote
+Once you summon the Hydra through the prefixed binding (the body + any one head), all heads can be called in succession with only a short extension.
+
+The Hydra is vanquished once Hercules, any binding that isn't the Hydra's head, arrives. Note that Hercules, besides vanquishing the Hydra, will still serve his original purpose, calling his proper command. This makes the Hydra very seamless, it's like a minor mode that disables itself auto-magically.
+#+end_quote
 
 See [[Taking a tour of one's edits]] below for a small and useful example.
 
@@ -5457,11 +5494,56 @@ Note that capitalisation in a ”#+KeyWord” is irrelevant.
 See [[https://orgmode.org/manual/Org-syntax.html][here]] on how to see the abstract syntax tree of an org file
 and how to manipulate it.
 
-** Quickly pop-up a terminal, run a command, close it
-:PROPERTIES:
-:CUSTOM_ID: Quickly-pop-up-a-terminal,-run-a-command,-close-it
-:END:
-#+begin_src emacs-lisp
+** Quickly pop-up a terminal, run a command, close it ---and zsh
+
+/Pop up a terminal, do some work, then close it using the same command./
+
+[[https://github.com/kyagi/shell-pop-el][Shell-pop]] uses only one key action to work:
+If the buffer exists, and we're in it, then hide it; else jump to it; otherwise create it if it doesn't exit.
+Use universal arguments, e.g., ~C-u 5 C-t~, to have multiple shells and the same universal arguments to pop
+those shells up, but ~C-t~ to pop them away.
+
+#+BEGIN_SRC emacs-lisp
+(use-package shell-pop
+  :config (setq
+    ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
+    shell-pop-universal-key "C-t"
+
+    ;; Percentage for shell-buffer window size.
+    shell-pop-window-size 30
+
+    ;; Position of the popped buffer: top, bottom, left, right, full
+    shell-pop-window-position "bottom"
+ ))
+#+END_SRC
+# There are also a number of hooks for shell-pop. E.g., to unconditionally kill the buffer afterwards.
+
+Now that we have access to quick pop-up for a shell, let's get
+a pretty and practical shell: [[https://www.howtogeek.com/362409/what-is-zsh-and-why-should-you-use-it-instead-of-bash/][zsh]] along with the [[https://ohmyz.sh/][Oh My Zsh]] community
+configurations give us:
+
+1. ~brew install zsh~
+2. ~sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"~
+
+   This installs everything ^_^
+
+#+BEGIN_SRC emacs-lisp
+;; Be default, Emacs please use zsh
+(setq shell-file-name "/bin/zsh")
+#+END_SRC
+
+Out of the box, zsh comes with
++ git support; the left side indicates which branch we're on and
+  whether the repo is dirty, ✗.
++ Recursive path expansion; e.g., ~/u/lo/b TAB~ expands to ~/usr/local/bin/~
++ Over [[https://github.com/ohmyzsh/ohmyzsh/wiki/Plugins#apache2-macports][250+ Plugins]] and [[https://github.com/ohmyzsh/ohmyzsh/wiki/Themes][125+ Themes]] that are enabled by simply
+  mentioning their name in the ~.zshrc~ file.
+
+The defaults have been good enough for me, for now ---as all else is
+achieved via Emacs ;-)
+
+*** COMMENT Homemade attempt before learning about shell-pop :Posterity:Learning:
+#+begin_src emacs-lisp :tangle no
 (cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
    "Pop up a terminal, do some work, then close it using the same command.
 
