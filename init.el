@@ -353,6 +353,22 @@
 (global-set-key "\M-^" (lambda () (interactive) (message "Grammar checking begun ...") (langtool-check)))
 ;; Using a Grammar & Style Checker:2 ends here
 
+;; [[file:~/.emacs.d/init.org::*Lightweight%20Prose%20Proofchecking][Lightweight Prose Proofchecking:1]]
+(use-package writegood-mode
+  :config
+  ;; Load this whenver I'm composing prose.
+  (add-hook 'text-mode-hook 'writegood-mode)
+  (add-hook 'org-mode-hook 'writegood-mode)
+  ;; Some additional weasel words.
+  (--map (push it writegood-weasel-words)
+         '("some" "simple" "simply" "easy" "often" "easily" "probably"
+           "clearly"               ;; Is the premise undeniably true?
+           "experience shows"      ;; Whose? What kind? How does it do so?
+           "may have"              ;; It may also have not!
+           "it turns out that")))  ;; How does it turn out so?
+           ;; ↯ What is the evidence of highighted phrase? ↯
+;; Lightweight Prose Proofchecking:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:1]]
 ; (load (shell-command-to-string "agda-mode locate"))
 ;;
@@ -1477,7 +1493,8 @@
 ;; Hunk navigation and commiting.
 (use-package git-gutter+
   :ensure t
-  :init (global-git-gutter+-mode)
+  ;; Shucks, this is way to slow for large files.
+  ;; :init (global-git-gutter+-mode)
   :diminish (git-gutter+-mode))
 ;; What's changed & who's to blame?:1 ends here
 
