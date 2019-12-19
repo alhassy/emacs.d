@@ -1,6 +1,7 @@
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
+
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
 #+EMAIL: alhassy@gmail.com
@@ -15,289 +16,6 @@
 #+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
-:TASKS:
-
-# TODO: MA: ⇨ Add unit tests for the init file.
-
-# ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
-# (shell-command "brew install pandoc")
-# (use-package ox-pandoc)
-
-;; Omit empty lines between headings in the collapsed view
-(setq org-cycle-separator-lines 0)
-
-(package-install 'fold-this)        ;; Folding away regions of text
-
-#+BEGIN_SRC emacs-lisp :results replace :tangle yes
-(defun show-me ()
-  "Evaluate a Lisp expression and insert its value
-   as a comment at the end of the line.
-
-   Useful for documenting values or checking values.
-  "
-  (interactive)
-  (-let [it
-         (thread-last (thing-at-point 'line)
-           read-from-string
-           car
-           eval
-           (format " ;; ⇒ %s"))]
-    (end-of-line)
-    (insert it)))
-#+END_SRC
-:End:
-
-* COMMENT Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
-
-Sources:
-+ John Kitchin https://lists.gnu.org/archive/html/emacs-orgmode/2018-05/msg00350.html
-+ https://kdr2.com/tech/emacs/1805-approach-org-ref-code-to-text.html
-
-I want both ~get-named-text~ and ~docs~ ^_^
-
-#+NAME: get-named-text
-#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
-(my/get-named-text name sep)
-#+END_SRC
-
-#+NAME: docs
-#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
-(my/get-named-text name sep)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-(defun my/get-named-text (name sep)
-
-  (let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
-              (lambda (el) (when (string= (org-element-property :name el) name)
-                             el)))))
-    (concat "\n"
-            (s-join sep
-                    (loop for e in el
-                          for s = (buffer-substring (org-element-property :contents-begin e)
-                                                    (org-element-property :contents-end e))
-                          collect
-                          (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))))
-#+END_SRC
-
-#+NAME: OLD-get-named-text
-#+BEGIN_SRC emacs-lisp :var name="" :results replace :tangle no
-(let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
-            (lambda (el)
-              (when (string= (org-element-property :name el) name)
-                el))
-            nil t)))
-  (let ((s (buffer-substring (org-element-property :contents-begin el)
-                             (org-element-property :contents-end el))))
-    (concat "\n" (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))
-#+END_SRC
-
-Let's make ~get-named-text~ a globally defined and callable code block:
-#+BEGIN_SRC emacs-lisp
-(org-babel-lob-ingest (expand-file-name "~/.emacs.d/init.org"))
-#+END_SRC
-
-
-**  COMMENT Example
-For example:
-#+NAME: ADD
-#+BEGIN_SRC emacs-lisp -n -r :noweb yes :tangle test.el
-(defun add (x y)
-  "One line description of adding X and Y.
-<<get-named-text('DOC-OF-ADD)>> ;; code to code
-<<get-named-text('add-options)>>"
-  (+ x y)
-  )
-#+END_SRC
-
-#+NAME: DOC-OF-ADD
-We use the XXX function add to calculate the sum of two numbers.
-
-#+NAME: add-options
-- one
-- two
-- three
-- and of course "optional things"
-
-+ There is a reason we only support two args
-* TODO COMMENT Clean up
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Clean-up
-:END:
-# (org-babel-load-file "init.org")
-
-# Text and Prog modes are the [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Basic-Major-Modes.html][basic major modes]] that other modes inheirt from,
-# and so we can hook onto these two modes if we want something to work almost everywhere.
-
-:TODO:
-#+BEGIN_SRC emacs-lisp
-;; (setq org-modules (quote (org-info org-tempo org-protocol org-habit org-mac-link)))
-#+END_SRC
-
-#+RESULTS:
-
-:End:
-
-# Includes fonts for subscripts; e.g., ₐₙₑₕᵢⱼₖₗₘₙₒₚₜₛ
-brew cask install font-symbola
-:unicode:
-Unicode doesn't intend to cover things
-that can be achieved with markup, so
-only a limited subset of the alphabet
-is available as subscript; but all is
-available as superscript, except ‘q’.
-ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜᵤᵥₓ
-⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁺ ⁻ ⁼ ⁽ ⁾ ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉ ₊ ₋ ₌ ₍ ₎
-ᵃ ᵇ ᶜ ᵈ ᵉ ᶠ ᵍ ʰ ⁱ ʲ ᵏ ˡ ᵐ ⁿ ᵒ ᵖ ʳ ˢ ᵗ ᵘ ᵛ ʷ ˣ ʸ ᶻ
-ᴬ ᴮ ᴰ ᴱ ᴳ ᴴ ᴵ ᴶ ᴷ ᴸ ᴹ ᴺ ᴼ ᴾ ᴿ ᵀ ᵁ ⱽ ᵂ
-ᵅ ᵝ ᵞ ᵟ ᵋ ᶿ ᶥ ᶲ ᵠ ᵡ ᵦ ᵧ ᵨ ᵩ ᵪ
-:End:
-
-;; In fill mode, when you type past the end of a line,
-;; Emacs automatically starts a new line, cleverly formatting paragraphs.
-;; This is a powerful form of “word wrap”.
-;;
-(add-to-hook org-mode-hook 'turn-on-auto-fill)
-
-+ Emacs CheatSheet
-  - M-n 𝕏 / C-u n 𝕏 :: Repeat command 𝕏 $n$ times.
-       - /n/ may be omitted in the second form, defaulting to 4.
-       - Whence, it may be stacked: “C-u ⋯ C-u 𝕏” repeats command 𝕏
-         4ⁿ-times where n is the number of C-u commands.
-
-       - Holding ~Alt~ key and press ~1~ then ~2~ then ~3~ then release the
-         ~Alt~ key, and, say, press the ~j~ key. Now you have 123 j's
-         inserted lol.
-
-   - loop from cl-macs.el has support for destructing like CL:
-
-      (loop for (key . value) in my-list
-            collect (cons value key))
-
-** itify
-   :PROPERTIES:
-   :CUSTOM_ID: itify
-   :END:
-   :PROPERTIES:
-
-   :END:
-
-+ ~itify~ :: A macro that generates macros!
-
-  A common pattern I've observed is code of the form
-  ~(f (lambda (x) body-with-x) arg)~ ---i.e., there is a useful
-  function ~f~ that is invoked with two arguments; the first being a
-  function. The declaration ~(itify f~) will produce a macro named ~f-it~
-  that takes two arguments where the first is an expression involving
-  a free variable ~it~ such that
-         | /(f-it expr-with-it more)  ≈  (f (λ (it) expr-with-it) more)/  |
-
-  We then test this out on the utility ~rename-mixfix~.
-  - ~rename-mixfix~ :: Ignore outermost Agda argument markers ‘_’
-             when renaming an mixfix argument;
-             e.g., ~_[_⊗_]  ↦  _₀[_⊗_]¹~ where this particular renaming
-             is a prefix subscript 0 and postfix 1.
-
-*** ~Itify~: A macro that makes macros ♥‿♥
-    :PROPERTIES:
-    :CUSTOM_ID: -Itify---A-macro-that-makes-macros----
-    :END:
-    :PROPERTIES:
-
-    :END:
-
-   A common pattern I've observed is code of the form
-   ~(f (lambda (x) body-with-x) arg)~ ---i.e., there is a useful
-   function ~f~ that is invoked with two arguments; the first being a
-   function. The declaration ~(itify f~) will produce a macro named ~f-it~
-   that takes two arguments where the first is an expression involving
-   a free variable ~it~ such that
-          | ~(f-it expr-with-it more)  ≈  (f (λ (it) expr-with-it) more)~ |
-
- I'm only considering binary functions, since they're my most common
- case ---it's little trouble to move to the general case.
-
- Let's consider the simplest binary operator whose first argument is
- necessarily a function ---namely, function application.
- #+BEGIN_SRC emacs-lisp
-(defun ap (f x) "bye" (funcall f x))
- #+END_SRC
-
- Let's form the desired macro:
- #+BEGIN_SRC emacs-lisp
-(defmacro ap-it (itbody more)
-  (list 'ap (list 'lambda '(it) itbody) more)
-  ;; ≈ `(ap (lambda (it) ,itbody) ,more)
-  )
- #+END_SRC
-
- We have elected to present this with the ~list~ form
- rather than the quasi-quote, since it's clear how to
- yield the former as part of a macro /result/.
-
- #+BEGIN_SRC emacs-lisp :tangle yes
-(defmacro itify (fname)
-  "
-   From a function (h f x), obtain a macro (h-it (⋯it⋯) x) that rewrites into
-   the orginal such that the first (functional) argument  may now be an expression
-   with free variable ‘it’. One declates (itify h) for a named top-level function ‘h’.
-
-   NOTE: Since functions are of the form (cons 'macro-or-fun (function (lambda args body)))
-   we can obtain the number of args by getting ‘args’ and taking its length.
-   Then we can change any of its indices to take an expression rather than a function.
-   Indeed, (macroexpand '(itify ap))
-     ⇒ (defalias (quote ap-it) (cons (quote macro) (function (lambda (itbody more)
-         (list (quote ap) (list (quote lambda) (quote (it)) itbody) more)))))      .
-  "
-
-  `(defmacro ,(intern (format "%s-it" (symbol-name fname))) (itbody more)
-       (list (quote ,fname) (list 'lambda '(it) itbody) more))
-)
- #+END_SRC
-
- Let's test this out.
- #+BEGIN_SRC emacs-lisp
-;; 0. Too clunky
-(ap (lambda (it) (+ 2 it)) 3) ;; ⇒ 5
-
-;; 1. Desired
-(itify ap)
-(ap-it (+ 2 it) 3) ;; nice.
-
-;; 2. Works with lambdas?
-((lambda (e) (ap-it (+ 2 it) e)) 2)
-
-;; 3. Scoping is fine?
-;; Outermost ‘it’ belongs to --map; inner-most ‘it’ belongs to ap-it. (─‿‿─)
-(--map (ap-it (+ 2 it) it) '(1 2 3)) ;; ⇒ (3 4 5)
-
-;; 4. Works well with read/eval?
-(ap-it (eval (car (read-from-string "(+ 2 it)"))) 3) ;; ⇒ 5
- #+END_SRC
-
- A common use of the following will be when ‘threads’ are used for
- sequential processing.
- #+BEGIN_SRC emacs-lisp :tangle yes
-(itify funcall)
- #+END_SRC
-
- Now for a more useful and complex setting.
- <<<rename-mixfix>>> source block here.
-
- {{{fold(Unit Tests)}}}
- #+BEGIN_SRC emacs-lisp :tangle yes
-(ert-deftest rename-mixfix ()
-
-  (should (equal (rename-mixfix #'identity "_⊕_") "_⊕_"))
-
-  (should (equal "_⊕′_" (rename-mixfix-it (eval (car (read-from-string "(concat it \"′\")"))) "_⊕_")))
-
-  (should  (equal (--map (rename-mixfix-it (format "₀%s¹" it) it) '("_⊕_" "_[_⊗_]" "he_lo" "he-lo"))
-       ;; Outermost ‘it’ belongs to --map; inner-most ‘it’ belongs to rename-mixfix-it.
-  '("_₀⊕¹_" "_₀[_⊗_]¹" "₀he_lo¹" "₀he-lo¹"))))
- #+END_SRC
- {{{end-fold}}}
-
 * Abstract                                                   :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -349,10 +67,10 @@ in ~“this”~ configuration.
 - [[#abstract][Abstract]]
 - [[#why-emacs][Why Emacs?]]
 - [[#booting-up][Booting Up]]
-  - [[#emacs-vs-initorg][~~/.emacs~ vs. ~init.org~]]
-  - [[#use-package---the-start-of-initel][~use-package~ --The start of ~init.el~]]
-  - [[#magit---emacs-porcelain-interface-to-git][~magit~ --Emacs' porcelain interface to git]]
-  - [[#syncing-to-the-systems-path][Syncing to the System's ~$PATH~]]
+  - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
+  - [[#use-package----the-start-of-initel][=use-package= ---The start of =init.el=]]
+  - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
+  - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
   - [[#keeping-my-system-up-to-date][Keeping my system up to date]]
   - [[#who-am-i-using-gnus-for-gmail][Who am I? ─Using Gnus for Gmail]]
   - [[#emacs-keybindings-for-my-brower][Emacs keybindings for my brower]]
@@ -376,7 +94,7 @@ in ~“this”~ configuration.
   - [[#tabs][Tabs]]
   - [[#window-resizing-using-the-golden-ratio][Window resizing using the golden ratio]]
 - [[#prose][Prose]]
-  - [[#word-wrapping][Word Wrapping]]
+  - [[#fill-mode----word-wrapping][Fill-mode ---Word Wrapping]]
   - [[#fix-spelling-as-you-type---thesaurus--dictionary-too][Fix spelling as you type --thesaurus & dictionary too!]]
   - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
   - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
@@ -431,11 +149,11 @@ in ~“this”~ configuration.
   - [[#file-as-list-and-file-as-string][~file-as-list~ and ~file-as-string~]]
   - [[#c-x-k-kills-current-buffer-c-u-c-x-k-kills-all-others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
   - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
-  - [[#re-replace-in-file][~re-replace-in-file~]]
   - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
   - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
+- [[#conclusion][Conclusion]]
 
 * Why Emacs?
 :PROPERTIES:
@@ -581,7 +299,7 @@ Let's always load local variables that we've marked as safe.
 (setq enable-local-variables :safe)
 #+END_SRC
 
-** ~~/.emacs~ vs. ~init.org~
+** =~/.emacs= vs. =init.org=
 :PROPERTIES:
 :CUSTOM_ID: ~~/.emacs~-vs.-~init.org~
 :END:
@@ -863,7 +581,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 #+END_SRC
 :End:
 
-** ~use-package~ --The start of ~init.el~
+** =use-package= ---The start of =init.el=
 :PROPERTIES:
 :CUSTOM_ID: ~use-package~---The-start-of-~init.el~
 :END:
@@ -1042,7 +760,7 @@ Finally, since I've symlinked my ~.emacs~:
 (setq vc-follow-symlinks t)
 #+end_src
 
-** ~magit~ --Emacs' porcelain interface to git
+** =magit= ---Emacs' porcelain interface to git
 :PROPERTIES:
 :CUSTOM_ID: ~magit~---Emacs'-porcelain-interface-to-git
 :END:
@@ -1304,7 +1022,7 @@ NOPE ;; ⇒ "NOPE"
 #+end_example
 :End:
 
-** Syncing to the System's ~$PATH~
+** Syncing to the System's =$PATH=
 :PROPERTIES:
 :CUSTOM_ID: Syncing-to-the-System's-~$PATH~
 :END:
@@ -2148,10 +1866,10 @@ Let's setup a spellchecker and other expected features of a word processing tool
 ---however these features apply Emacs wide since nearly everything can is
 essentially text (•̀ᴗ•́)و
 
-** Word Wrapping
-We may press ~M-q~ to cleverly redistribute the line breaks within a paragraph,
-thereby making it look better. With a prefix argument, it justifies it as well
----i.e., pads extra white space to make the paragraph appear rectangular.
+** Fill-mode ---Word Wrapping
+In fill mode, when you type past the end of a line, Emacs automatically starts a
+new line, cleverly formatting paragraphs. This is a powerful form of “word
+wrap”.
 
 #+BEGIN_SRC emacs-lisp
 ;; Let's avoid going over 80 columns
@@ -2161,6 +1879,10 @@ thereby making it look better. With a prefix argument, it justifies it as well
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 #+END_SRC
+
+We may press ~M-q~ to cleverly redistribute the line breaks within any paragraph,
+thereby making it look better. With a prefix argument, it justifies it as well
+---i.e., pads extra white space to make the paragraph appear rectangular.
 
             Note that ~M-o M-s~ centres a line of text ;-) Fun stuff!
 
@@ -2483,8 +2205,10 @@ bindings on lorem ipsum, gibberish text.
 #+END_SRC
 :End:
 
-[[https://mazzo.li/posts/AgdaSort.html][Agda]] is one of my favourite languages, it's like Haskell on steroids.
-Let's set it up.
+[[https://mazzo.li/posts/AgdaSort.html][Agda]] is one of my favourite languages, it's like Haskell on steroids.  Let's set
+it up for the main sake of its Unicode input ---you may do likewise using TeX
+input.  ( [[https://www.joelonsoftware.com/2003/10/08/the-absolute-minimum-every-software-developer-absolutely-positively-must-know-about-unicode-and-character-sets-no-excuses/][The Absolute Minimum Every Software Developer Absolutely, Positively
+Must Know About Unicode and Character Sets (No Excuses!)]] )
 
 Executing ~agda-mode setup~ appends the following text to the ~.emacs~ file.
 Let's put it here ourselves.
@@ -2494,7 +2218,6 @@ Let's put it here ourselves.
 #+end_src
 
 I almost always want the ~agda-mode~ input method.
-
 #+BEGIN_SRC emacs-lisp
 (require 'agda-input)
 (add-hook 'text-mode-hook (lambda () (set-input-method "Agda")))
@@ -2523,6 +2246,21 @@ Additional arguments that may be useful include
 |          | - Outputs to ~stderr~ by default                               |
 
 :end:
+
+#+begin_quote
+Unicode doesn't intend to cover things that are achievable with markup, so only
+a limited subset of the alphabet is available as subscript; but all is available
+as superscript, except ‘q’.
+
+ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜᵤᵥₓ
+⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁺ ⁻ ⁼ ⁽ ⁾ ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉ ₊ ₋ ₌ ₍ ₎
+ᵃ ᵇ ᶜ ᵈ ᵉ ᶠ ᵍ ʰ ⁱ ʲ ᵏ ˡ ᵐ ⁿ ᵒ ᵖ ʳ ˢ ᵗ ᵘ ᵛ ʷ ˣ ʸ ᶻ
+ᴬ ᴮ ᴰ ᴱ ᴳ ᴴ ᴵ ᴶ ᴷ ᴸ ᴹ ᴺ ᴼ ᴾ ᴿ ᵀ ᵁ ⱽ ᵂ
+ᵅ ᵝ ᵞ ᵟ ᵋ ᶿ ᶥ ᶲ ᵠ ᵡ ᵦ ᵧ ᵨ ᵩ ᵪ
+
+~brew cask install font-symbola~
+⇒ Includes fonts for subscripts; e.g., ₐₙₑₕᵢⱼₖₗₘₙₒₚₜₛ
+#+end_quote
 
 Below are my personal Agda input symbol translations;
 e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX binding
@@ -2671,6 +2409,13 @@ Easiest way get latest version of org-mode:
 https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-new-org-mode-version-but-loads-the-old-versio
 
 https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-version-using-package-repos-git-clone-in-ubuntu
+:End:
+
+# TODO: Clean up org modules remark.
+:Org-modules:
+#+BEGIN_SRC emacs-lisp
+;; (setq org-modules (quote (org-info org-tempo org-protocol org-habit org-mac-link)))
+#+END_SRC
 :End:
 
 Let's obtain Org-mode along with the extras that allow us to ignore
@@ -5727,58 +5472,6 @@ Instead I now only need to type ~C-|~ to make this switch.
 )
 (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 #+END_SRC
-** ~re-replace-in-file~
-:PROPERTIES:
-:CUSTOM_ID: ~re-replace-in-file~
-:END:
-
-Disclaimer: I wrote the following /before/ I learned any lisp; everything below is probably terrible.
-#+BEGIN_SRC emacs-lisp
-(defun re-replace-in-file (file regex whatDo)
-   "Find and replace a regular expression in-place in a file.
-
-   Terrible function … before I took the time to learn any Elisp!
-   "
-
-    (find-file file)
-    (goto-char 0)
-    (let ((altered (replace-regexp-in-string regex whatDo (buffer-string))))
-      (erase-buffer)
-      (insert altered)
-      (save-buffer)
-      (kill-buffer)
-   )
-)
-#+END_SRC
-
-Example usage:
-#+BEGIN_EXAMPLE emacs-lisp
-;; Within mysite.html we rewrite: <h1.*h1>   ↦   <h1.*h1>\n NICE
-;; I.e., we add a line break after the first heading and a new word, “NICE”.
-(re-replace-in-file "mysite.html"
-                    "<h1.*h1>"
-                    (lambda (x) (concat x "\n NICE")))
-#+END_EXAMPLE
-
-*** ~mapsto~: Simple rewriting for current buffer
-:PROPERTIES:
-:CUSTOM_ID: ~mapsto~:-Simple-rewriting-for-current-buffer
-:END:
-#+BEGIN_SRC emacs-lisp
-(defun mapsto (this that)
-  "In the current buffer make the regular expression rewrite: this ↦ that."
-  (let* ((current-location (point))
-       ;; Do not alter the case of the <replacement text>.
-       (altered (replace-regexp-in-string this (lambda (x) that) (buffer-string) 'no-fixed-case))
-       )
-      (erase-buffer)
-      (insert altered)
-      (save-buffer)
-      (goto-char current-location)
-  )
-)
-#+END_SRC
-
 ** Obtaining Values of ~#+KEYWORD~ Annotations
 :PROPERTIES:
 :CUSTOM_ID: Obtaining-Values-of-~#+KEYWORD~-Annotations
@@ -5953,6 +5646,12 @@ Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library fo
 Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
 with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
 easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
+* Conclusion
+
+Emacs is fun ^_^
+
+Bye!
+
 * Undo tree                                                        :ignore:noexport:
 :PROPERTIES:
 :CUSTOM_ID: Undo-tree
@@ -6292,28 +5991,121 @@ take care of this.
 (theme-magic-export-theme-mode)
 #+END_SRC
 
-* COMMENT TODO ─Pushing to blog─
+** TODO COMMENT Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
+
+Sources:
++ John Kitchin https://lists.gnu.org/archive/html/emacs-orgmode/2018-05/msg00350.html
++ https://kdr2.com/tech/emacs/1805-approach-org-ref-code-to-text.html
+
+I want both ~get-named-text~ and ~docs~ ^_^
+
+#+NAME: get-named-text
+#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
+(my/get-named-text name sep)
+#+END_SRC
+
+#+NAME: docs
+#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
+(my/get-named-text name sep)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(defun my/get-named-text (name sep)
+
+  (let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
+              (lambda (el) (when (string= (org-element-property :name el) name)
+                             el)))))
+    (concat "\n"
+            (s-join sep
+                    (loop for e in el
+                          for s = (buffer-substring (org-element-property :contents-begin e)
+                                                    (org-element-property :contents-end e))
+                          collect
+                          (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))))
+#+END_SRC
+
+#+NAME: OLD-get-named-text
+#+BEGIN_SRC emacs-lisp :var name="" :results replace :tangle no
+(let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
+            (lambda (el)
+              (when (string= (org-element-property :name el) name)
+                el))
+            nil t)))
+  (let ((s (buffer-substring (org-element-property :contents-begin el)
+                             (org-element-property :contents-end el))))
+    (concat "\n" (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))
+#+END_SRC
+
+Let's make ~get-named-text~ a globally defined and callable code block:
+#+BEGIN_SRC emacs-lisp
+(org-babel-lob-ingest (expand-file-name "~/.emacs.d/init.org"))
+#+END_SRC
+
+
+***  COMMENT Example
+For example:
+#+NAME: ADD
+#+BEGIN_SRC emacs-lisp -n -r :noweb yes :tangle test.el
+(defun add (x y)
+  "One line description of adding X and Y.
+<<get-named-text('DOC-OF-ADD)>> ;; code to code
+<<get-named-text('add-options)>>"
+  (+ x y)
+  )
+#+END_SRC
+
+#+NAME: DOC-OF-ADD
+We use the XXX function add to calculate the sum of two numbers.
+
+#+NAME: add-options
+- one
+- two
+- three
+- and of course "optional things"
+
++ There is a reason we only support two args
+** Easy tasks
+
+# TODO: MA: ⇨ Add unit tests for the init file.
+
+# ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
+# (shell-command "brew install pandoc")
+# (use-package ox-pandoc)
+
+;; Omit empty lines between headings in the collapsed view
+(setq org-cycle-separator-lines 0)
+
+#+BEGIN_SRC emacs-lisp :results replace :tangle yes
+(defun show-me ()
+  "Evaluate a Lisp expression and insert its value
+   as a comment at the end of the line.
+
+   Useful for documenting values or checking values.
+  "
+  (interactive)
+  (-let [it
+         (thread-last (thing-at-point 'line)
+           read-from-string
+           car
+           eval
+           (format " ;; ⇒ %s"))]
+    (end-of-line)
+    (insert it)))
+#+END_SRC
+
+* COMMENT footer & pushing to blog
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-TODO-─Pushing-to-blog─
+:CUSTOM_ID: COMMENT-footer
 :END:
 
 C-c C-c this snippet to export to blog.
 #+NAME: publish-to-blog
 #+BEGIN_SRC emacs-lisp :results none
-;; No code execution on export
-;; ⟪ For a particular block, we use “:eval never-export” ⟫
-;;
-(setq org-export-use-babel nil)
-
 ;; Different Emacs logos for blog and github.
-;; (toggle to-github? nil (my/publish-to-blog 'yes 'local))
-(-let [to-github? nil] (my/publish-to-blog))
+;; No to-github? and No code execution on export.
+;; (my/publish-to-blog 'yes 'local)
+(let (org-export-use-babel to-github?) (my/publish-to-blog))
 #+END_SRC
-
-* COMMENT footer
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-footer
-:END:
 
 # Local Variables:
 # eval: (progn (org-babel-goto-named-src-block "enable making init and readme") (org-babel-execute-src-block) (outline-hide-sublevels 1))

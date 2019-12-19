@@ -1,4 +1,5 @@
-# Created 2019-12-19 Thu 12:03
+# Created 2019-12-19 Thu 12:31
+#+OPTIONS: html-postamble:nil toc:nil d:nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
@@ -15,7 +16,15 @@ This ~README.org~ has been automatically generated from my
 configuration and its contents below are accessible
 in (outdated) blog format, with /colour/, or as colourful
 PDF, [[https://alhassy.github.io/init/][here]]. Enjoy
+:smile:
 
+#+description: My Emacs Initialisation File, Written in Org-mode.
+#+startup: indent lognoteclock-out
+#+property: header-args :tangle init.el :comments link :results none
+
+#+sourcefile: https://github.com/alhassy/emacs.d/blob/master/init.org
+#+image: ../assets/img/emacs_logo.png
+#+categories: Emacs Lisp
 #+begin_src emacs-lisp :tangle no :exports results :wrap "export html" :results replace
 (concat
 "<p align=\"center\">
@@ -44,10 +53,10 @@ in ~“this”~ configuration.
 - [[#abstract][Abstract]]
 - [[#why-emacs][Why Emacs?]]
 - [[#booting-up][Booting Up]]
-  - [[#emacs-vs-initorg][~~/.emacs~ vs. ~init.org~]]
-  - [[#use-package---the-start-of-initel][~use-package~ --The start of ~init.el~]]
-  - [[#magit---emacs-porcelain-interface-to-git][~magit~ --Emacs' porcelain interface to git]]
-  - [[#syncing-to-the-systems-path][Syncing to the System's ~$PATH~]]
+  - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
+  - [[#use-package----the-start-of-initel][=use-package= ---The start of =init.el=]]
+  - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
+  - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
   - [[#keeping-my-system-up-to-date][Keeping my system up to date]]
   - [[#who-am-i-using-gnus-for-gmail][Who am I? ─Using Gnus for Gmail]]
   - [[#emacs-keybindings-for-my-brower][Emacs keybindings for my brower]]
@@ -71,7 +80,7 @@ in ~“this”~ configuration.
   - [[#tabs][Tabs]]
   - [[#window-resizing-using-the-golden-ratio][Window resizing using the golden ratio]]
 - [[#prose][Prose]]
-  - [[#word-wrapping][Word Wrapping]]
+  - [[#fill-mode----word-wrapping][Fill-mode ---Word Wrapping]]
   - [[#fix-spelling-as-you-type---thesaurus--dictionary-too][Fix spelling as you type --thesaurus & dictionary too!]]
   - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
   - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
@@ -126,11 +135,11 @@ in ~“this”~ configuration.
   - [[#file-as-list-and-file-as-string][~file-as-list~ and ~file-as-string~]]
   - [[#c-x-k-kills-current-buffer-c-u-c-x-k-kills-all-others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
   - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
-  - [[#re-replace-in-file][~re-replace-in-file~]]
   - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
   - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
+- [[#conclusion][Conclusion]]
 
 * Why Emacs?
 /Emacs is a flexible platform for developing end-user applications/ --unfortunately it is generally perceived as
@@ -262,7 +271,7 @@ Let's always load local variables that we've marked as safe.
 (setq enable-local-variables :safe)
 #+end_src
 
-** ~~/.emacs~ vs. ~init.org~
+** =~/.emacs= vs. =init.org=
 Why not keep Emac's configurations in the ~~/.emacs~ file?
 This is because the Emacs system may explicitly add, or alter, code
 in it.
@@ -399,7 +408,7 @@ Notes:
   #+end_src
   Looks nice for standalone pages, but doesn't incorporate nicely with github README.org.
 
-** ~use-package~ --The start of ~init.el~
+** =use-package= ---The start of =init.el=
 There are a few ways to install packages
 --run ~C-h C-e~ for a short overview.
 The easiest, for a beginner, is to use the command ~package-list-packages~
@@ -555,7 +564,7 @@ Finally, since I've symlinked my ~.emacs~:
 (setq vc-follow-symlinks t)
 #+end_src
 
-** ~magit~ --Emacs' porcelain interface to git
+** =magit= ---Emacs' porcelain interface to git
 Why use ~magit~ as the interface to the git version control system?
 In a magit buffer nearly everything can be acted upon:
 Press ~return,~ or ~space~, to see details and ~tab~ to see children items, usually.
@@ -704,7 +713,7 @@ at previous, next, goto arbitrary historic versions, or quit.
 (use-package git-timemachine)
 #+end_src
 
-** Syncing to the System's ~$PATH~
+** Syncing to the System's =$PATH=
 For one reason or another, on OS X it seems that an Emacs instance
 begun from the terminal may not inherit the terminal's environment
 variables, thus making it difficult to use utilities like ~pdflatex~
@@ -1284,10 +1293,10 @@ Let's setup a spellchecker and other expected features of a word processing tool
 ---however these features apply Emacs wide since nearly everything can is
 essentially text (•̀ᴗ•́)و
 
-** Word Wrapping
-We may press ~M-q~ to cleverly redistribute the line breaks within a paragraph,
-thereby making it look better. With a prefix argument, it justifies it as well
----i.e., pads extra white space to make the paragraph appear rectangular.
+** Fill-mode ---Word Wrapping
+In fill mode, when you type past the end of a line, Emacs automatically starts a
+new line, cleverly formatting paragraphs. This is a powerful form of “word
+wrap”.
 
 #+begin_src emacs-lisp
 ;; Let's avoid going over 80 columns
@@ -1297,6 +1306,10 @@ thereby making it look better. With a prefix argument, it justifies it as well
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 #+end_src
+
+We may press ~M-q~ to cleverly redistribute the line breaks within any paragraph,
+thereby making it look better. With a prefix argument, it justifies it as well
+---i.e., pads extra white space to make the paragraph appear rectangular.
 
 Note that ~M-o M-s~ centres a line of text ;-) Fun stuff!
 
@@ -1549,8 +1562,10 @@ See this [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs 
 bindings on lorem ipsum, gibberish text.
 
 ** Unicode Input via Agda Input
-[[https://mazzo.li/posts/AgdaSort.html][Agda]] is one of my favourite languages, it's like Haskell on steroids.
-Let's set it up.
+[[https://mazzo.li/posts/AgdaSort.html][Agda]] is one of my favourite languages, it's like Haskell on steroids.  Let's set
+it up for the main sake of its Unicode input ---you may do likewise using TeX
+input.  ( [[https://www.joelonsoftware.com/2003/10/08/the-absolute-minimum-every-software-developer-absolutely-positively-must-know-about-unicode-and-character-sets-no-excuses/][The Absolute Minimum Every Software Developer Absolutely, Positively
+Must Know About Unicode and Character Sets (No Excuses!)]] )
 
 Executing ~agda-mode setup~ appends the following text to the ~.emacs~ file.
 Let's put it here ourselves.
@@ -1560,12 +1575,26 @@ Let's put it here ourselves.
 #+end_src
 
 I almost always want the ~agda-mode~ input method.
-
 #+begin_src emacs-lisp
 (require 'agda-input)
 (add-hook 'text-mode-hook (lambda () (set-input-method "Agda")))
 (add-hook 'org-mode-hook (lambda () (set-input-method "Agda")))
 #+end_src
+
+#+begin_quote
+Unicode doesn't intend to cover things that are achievable with markup, so only
+a limited subset of the alphabet is available as subscript; but all is available
+as superscript, except ‘q’.
+
+ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜᵤᵥₓ
+⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁺ ⁻ ⁼ ⁽ ⁾ ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉ ₊ ₋ ₌ ₍ ₎
+ᵃ ᵇ ᶜ ᵈ ᵉ ᶠ ᵍ ʰ ⁱ ʲ ᵏ ˡ ᵐ ⁿ ᵒ ᵖ ʳ ˢ ᵗ ᵘ ᵛ ʷ ˣ ʸ ᶻ
+ᴬ ᴮ ᴰ ᴱ ᴳ ᴴ ᴵ ᴶ ᴷ ᴸ ᴹ ᴺ ᴼ ᴾ ᴿ ᵀ ᵁ ⱽ ᵂ
+ᵅ ᵝ ᵞ ᵟ ᵋ ᶿ ᶥ ᶲ ᵠ ᵡ ᵦ ᵧ ᵨ ᵩ ᵪ
+
+~brew cask install font-symbola~
+⇒ Includes fonts for subscripts; e.g., ₐₙₑₕᵢⱼₖₗₘₙₒₚₜₛ
+#+end_quote
 
 Below are my personal Agda input symbol translations;
 e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX binding
@@ -3577,51 +3606,6 @@ Instead I now only need to type ~C-|~ to make this switch.
 )
 (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 #+end_src
-** ~re-replace-in-file~
-Disclaimer: I wrote the following /before/ I learned any lisp; everything below is probably terrible.
-#+begin_src emacs-lisp
-(defun re-replace-in-file (file regex whatDo)
-   "Find and replace a regular expression in-place in a file.
-
-   Terrible function … before I took the time to learn any Elisp!
-   "
-
-    (find-file file)
-    (goto-char 0)
-    (let ((altered (replace-regexp-in-string regex whatDo (buffer-string))))
-      (erase-buffer)
-      (insert altered)
-      (save-buffer)
-      (kill-buffer)
-   )
-)
-#+end_src
-
-Example usage:
-#+begin_example emacs-lisp
-;; Within mysite.html we rewrite: <h1.*h1>   ↦   <h1.*h1>\n NICE
-;; I.e., we add a line break after the first heading and a new word, “NICE”.
-(re-replace-in-file "mysite.html"
-                    "<h1.*h1>"
-                    (lambda (x) (concat x "\n NICE")))
-#+end_example
-
-*** ~mapsto~: Simple rewriting for current buffer
-#+begin_src emacs-lisp
-(defun mapsto (this that)
-  "In the current buffer make the regular expression rewrite: this ↦ that."
-  (let* ((current-location (point))
-       ;; Do not alter the case of the <replacement text>.
-       (altered (replace-regexp-in-string this (lambda (x) that) (buffer-string) 'no-fixed-case))
-       )
-      (erase-buffer)
-      (insert altered)
-      (save-buffer)
-      (goto-char current-location)
-  )
-)
-#+end_src
-
 ** Obtaining Values of ~#+KEYWORD~ Annotations
 Org-mode settings are, for the most part, in the form ~#+KEYWORD: VALUE~. Of notable interest
 are the ~TITLE~ and ~NAME~ keywords. We use the following ~org-keywords~ function to obtain
@@ -3759,3 +3743,8 @@ Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library fo
 Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
 with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
 easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
+* Conclusion
+
+Emacs is fun ^_^
+
+Bye!

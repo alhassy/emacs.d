@@ -6,8 +6,20 @@ f9 push changes
 
 :To_incorporate:
 
-# Start a numbered list from any number using the syntax “N. [@N] ⋯”, a nice way to
-# have 0-numbered lists or lists with text in between that does not reset the numbering.
+Start a numbered list from any number using the syntax “N. [@N] ⋯”, a nice way to
+have 0-numbered lists or lists with text in between that does not reset the numbering.
+
+
+
++ Emacs CheatSheet
+  - M-n 𝕏 / C-u n 𝕏 :: Repeat command 𝕏 $n$ times.
+       - /n/ may be omitted in the second form, defaulting to 4.
+       - Whence, it may be stacked: “C-u ⋯ C-u 𝕏” repeats command 𝕏
+         4ⁿ-times where n is the number of C-u commands.
+
+       - Holding ~Alt~ key and press ~1~ then ~2~ then ~3~ then release the
+         ~Alt~ key, and, say, press the ~j~ key. Now you have 123 j's
+         inserted lol.
 
 :End:
 
@@ -451,7 +463,7 @@ With cursor at the beginning of an org headline:
 :Details:
 
   - ~x~ :: Undo last commit. Tantamount to ~git reset HEAD~~ when cursor is on most recent
-	   commit; otherwise resets to whatever commit is under the cursor.
+       commit; otherwise resets to whatever commit is under the cursor.
 
   - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
 
