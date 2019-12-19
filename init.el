@@ -44,72 +44,11 @@
           (org-babel-execute-src-block)
 
           ;; Acknowledgement
-          (message "Tangled, compiled, and loaded init.el; and made README.md … %d"
+          (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
                    (float-time (time-since time)))))))
 
   (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 ;; enable making init and readme ends here
-
-;; [[file:~/.emacs.d/init.org::make-readme][make-readme]]
-(with-temp-buffer
-    (insert
-    "#+EXPORT_FILE_NAME: README.org
-     #+HTML: <h1> A Life Configuring Emacs </h1>
-     #+OPTIONS: toc:nil d:nil
-     # Markdown links: [title](target)
-
-     # Logos and birthday present painting
-     #+begin_export html
-     <p align=\"center\">
-       <img src=\"emacs-logo.png\" width=150 height=150/>
-     </p>
-
-     <p align=\"center\">
-        <a href=\"https://www.gnu.org/software/emacs/\">
-             <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
-        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
-     </p>
-
-     <p align=\"center\">
-       <img src=\"emacs-birthday-present.png\" width=200 height=250/>
-     </p>
-     #+end_export
-
-     #+HTML: <h3> My Literate Setup </h3>
-
-     I enjoy reading others' /literate/ configuration files and
-     incorporating what I learn into my own. The result is a
-     sufficiently well-documented and accessible read that yields
-     a stylish and functional system (•̀ᴗ•́)و
-
-     This ~README.org~ has been automatically generated from my
-     configuration and its contents below are accessible
-     in (outdated) blog format, with /colour/, or as colourful
-     PDF, [[https://alhassy.github.io/init/][here]]. Enjoy
-     :smile:
-
-     #+INCLUDE: init.org
-    ")
-
-    ;; No code execution on export
-    ;; ⟪ For a particular block, we use “:eval never-export”. ⟫
-    (let ((org-export-use-babel nil))
-      (org-mode)
-      ;; (org-md-export-to-markdown)
-      ;; Coloured html does not work in Github, afaik.
-      ;; (org-html-export-to-html)
-      ;; (shell-command "mv README.html README.md")
-      ;; (package-install 'toc-org)
-      (toc-org-mode)
-      (toc-org-insert-toc)
-      ;; (setq org-toc-noexport-regexp ".*:ignore:.*") MA: Doesn't work.
-      ;; (delete "TOC" org-export-exclude-tags)
-      ;; (pop org-export-exclude-tags)
-      (org-org-export-to-org)
-      ;; (add-to-list 'org-export-exclude-tags "noexport")
-      ;; (add-to-list 'org-export-exclude-tags "TOC")
-      ))
-;; make-readme ends here
 
 ;; [[file:~/.emacs.d/init.org::*~use-package~%20--The%20start%20of%20~init.el~][~use-package~ --The start of ~init.el~:1]]
 ;; In ~/.emacs

@@ -345,8 +345,98 @@ An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispC
 and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of the bindings
 in ~“this”~ configuration.
 
-* Table of Contents                                                     :Github:TOC:
-# This empty tree is necessary for the README export, which fills it.
+* Github Table of Contents                                       :TOC:
+- [[#abstract][Abstract]]
+- [[#why-emacs][Why Emacs?]]
+- [[#booting-up][Booting Up]]
+  - [[#emacs-vs-initorg][~~/.emacs~ vs. ~init.org~]]
+  - [[#use-package---the-start-of-initel][~use-package~ --The start of ~init.el~]]
+  - [[#magit---emacs-porcelain-interface-to-git][~magit~ --Emacs' porcelain interface to git]]
+  - [[#syncing-to-the-systems-path][Syncing to the System's ~$PATH~]]
+  - [[#keeping-my-system-up-to-date][Keeping my system up to date]]
+  - [[#who-am-i-using-gnus-for-gmail][Who am I? ─Using Gnus for Gmail]]
+  - [[#emacs-keybindings-for-my-brower][Emacs keybindings for my brower]]
+  - [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
+  - [[#restarting-emacs][Restarting Emacs]]
+- [[#cosmetics][Cosmetics]]
+  - [[#themes][Themes]]
+  - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
+  - [[#persistent-scratch-buffer][Persistent Scratch Buffer]]
+  - [[#spaceline-a-sleek-mode-line][Spaceline: A sleek mode line]]
+  - [[#flashing-when-something-goes-wrong-no-blinking][Flashing when something goes wrong ─no blinking]]
+  - [[#my-to-do-list-the-initial-buffer-when-emacs-opens-up][My to-do list: The initial buffer when Emacs opens up]]
+  - [[#showing-date-time-and-battery-life][Showing date, time, and battery life]]
+  - [[#hiding-scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu]]
+  - [[#increasedecrease-text-size][Increase/decrease text size]]
+  - [[#delete-selection-mode][Delete Selection mode]]
+  - [[#highlight--complete-parenthesis-pair-when-cursor-is-near--][Highlight & complete parenthesis pair when cursor is near ;-)]]
+  - [[#minibuffer-should-display-line-and-column-numbers][Minibuffer should display line and column numbers]]
+  - [[#never-lose-the-cursor][Never lose the cursor]]
+  - [[#neotree-directory-tree-listing][Neotree: Directory Tree Listing]]
+  - [[#tabs][Tabs]]
+  - [[#window-resizing-using-the-golden-ratio][Window resizing using the golden ratio]]
+- [[#prose][Prose]]
+  - [[#word-wrapping][Word Wrapping]]
+  - [[#fix-spelling-as-you-type---thesaurus--dictionary-too][Fix spelling as you type --thesaurus & dictionary too!]]
+  - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
+  - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
+  - [[#placeholder-text----for-learning--experimenting][Placeholder Text ---For Learning & Experimenting]]
+  - [[#unicode-input-via-agda-input][Unicode Input via Agda Input]]
+  - [[#taking-a-tour-of-ones-edits][Taking a tour of one's edits]]
+  - [[#moving-text-around][Moving Text Around]]
+  - [[#enabling-camelcase-aware-editing-operations][Enabling CamelCase Aware Editing Operations]]
+- [[#life-within-org-mode][Life within Org-mode]]
+  - [[#high-speed-literate-programming][High Speed Literate Programming]]
+  - [[#using-org-mode-as-a-day-planner][Using org-mode as a Day Planner]]
+  - [[#super-agenda][Super Agenda]]
+  - [[#automating-pomodoro---dealing-with-dreadful-tasks][Automating Pomodoro --Dealing with dreadful tasks]]
+  - [[#journaling][Journaling]]
+  - [[#workflow-states][Workflow States]]
+  - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
+  - [[#working-with-citations][Working with Citations]]
+  - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen Heading at the top of the window]]
+  - [[#clocking-work-time][Clocking Work Time]]
+  - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+  - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
+  - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
+  - [[#ox-extra-using-ignore-to-ignore-headings-but-use-the-bodies][~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies]]
+  - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
+  - [[#jumping-without-hassle][Jumping without hassle]]
+  - [[#folding-within-a-subtree][Folding within a subtree]]
+  - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
+  - [[#making-then-opening-htmls-from-orgs][Making then opening html's from org's]]
+  - [[#making-then-opening-pdfs-from-orgs][Making then opening pdf's from org's]]
+  - [[#interpret-the-haskell-source-blocks-in-a-file][Interpret the Haskell source blocks in a file]]
+- [[#expected-ide-support][Expected IDE Support]]
+  - [[#backups][Backups]]
+  - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
+  - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
+  - [[#highlight-defined-emacs-lisp-symbols][Highlight Defined Emacs Lisp Symbols]]
+  - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
+  - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
+  - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
+  - [[#edit-as-root][Edit as Root]]
+  - [[#keep-buffers-open-across-sessions][Keep buffers open across sessions]]
+  - [[#mouse-editing-support][Mouse Editing Support]]
+  - [[#dimming-unused-windows][Dimming Unused Windows]]
+  - [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
+  - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
+  - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
+  - [[#completion-frameworks][Completion Frameworks]]
+  - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
+- [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
+  - [[#bind-recompile-to-c-c-c-m----m-for-make][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake]]
+  - [[#reload-buffer-with-f5][Reload buffer with ~f5~]]
+  - [[#kill-to-start-of-line][Kill to start of line]]
+  - [[#file-as-list-and-file-as-string][~file-as-list~ and ~file-as-string~]]
+  - [[#c-x-k-kills-current-buffer-c-u-c-x-k-kills-all-others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
+  - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
+  - [[#re-replace-in-file][~re-replace-in-file~]]
+  - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
+  - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
+  - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
+  - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
+
 * Why Emacs?
 :PROPERTIES:
 :CUSTOM_ID: Why-Emacs?
@@ -408,19 +498,22 @@ to run the code that removes the scroll-bar.
 ─[[https://so.nwalsh.com/2019/03/01/emacs][Norman Walsh]]
 #+end_quote
 
-I have used Emacs as an interface for developing cheat sheets, for making my blog, and as an application
-for ‘interactively learning C’. If anything Emacs is more like an OS than just a text editor
---“living within Emacs” provides an abstraction over whatever operating system my machine has:
-[[https://www.fugue.co/blog/2015-11-11-guide-to-emacs.html][It's so easy to take everything with me.]] Moreover, the desire to mould Emacs to my needs has made me
-a better programmer: I am now a more literate programmer and, due to Elisp's documentation-oriented nature, I actually take the time
-and effort to make meaningful documentation --even when the project is private and will likely only be seen by me.
+I have used Emacs as an interface for developing [[https://github.com/alhassy/CheatSheet#cheatsheet-examples][cheat sheets]], for making my
+blog, and as an application for ‘interactively learning C’. If anything Emacs is
+more like an OS than just a text editor --“living within Emacs” provides an
+abstraction over whatever operating system my machine has: [[https://www.fugue.co/blog/2015-11-11-guide-to-emacs.html][It's so easy to take
+everything with me.]] Moreover, the desire to mould Emacs to my needs has made me
+a better programmer: I am now a more literate programmer and, due to Elisp's
+documentation-oriented nature, I actually take the time and effort to make
+meaningful documentation --even when the project is private and will likely only
+be seen by me.
 
 #+begin_quote
 /Seeing Emacs as an editor is like seeing a car as a seating-accommodation./ -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
 #+end_quote
 # Comparing Emacs to an editor is like comparing GNU/Linux to a word processor. -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
 
-Some possibly interesting reads:
+Possibly interesting reads:
 + [[https://sachachua.com/blog/series/a-visual-guide-to-emacs/][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
 + [[http://emacsrocks.com/][Video Series on Why Emacs Rocks]] ---catch the enthusiasm!
 + [[http://ehneilsen.net/notebook/orgExamples/org-examples.html#sec-18][Emacs org-mode examples and cookbook]]
@@ -559,16 +652,18 @@ Where the following block has ~#+NAME: make-readme~ before it.
 This source block generates the ~README~ for the associated github repository.
 
 #+NAME: make-readme
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no :export_never t
+;; Update the table of contents in this file.
+;; (package-install 'toc-org)
+(toc-org-mode t)
+(toc-org-insert-toc)
+(save-buffer)
 (with-temp-buffer
     (insert
     "#+EXPORT_FILE_NAME: README.org
-     ,#+HTML: <h1> A Life Configuring Emacs </h1>
-     ,#+OPTIONS: toc:nil d:nil
-     # Markdown links: [title](target)
 
      # Logos and birthday present painting
-     ,#+begin_export html
+     #   begin_export html
      <p align=\"center\">
        <img src=\"emacs-logo.png\" width=150 height=150/>
      </p>
@@ -582,9 +677,7 @@ This source block generates the ~README~ for the associated github repository.
      <p align=\"center\">
        <img src=\"emacs-birthday-present.png\" width=200 height=250/>
      </p>
-     ,#+end_export
-
-     ,#+HTML: <h3> My Literate Setup </h3>
+     #   end_export
 
      I enjoy reading others' /literate/ configuration files and
      incorporating what I learn into my own. The result is a
@@ -604,25 +697,25 @@ This source block generates the ~README~ for the associated github repository.
     ;; ⟪ For a particular block, we use “:eval never-export”. ⟫
     (let ((org-export-use-babel nil))
       (org-mode)
-      ;; (org-md-export-to-markdown)
-      ;; Coloured html does not work in Github, afaik.
-      ;; (org-html-export-to-html)
-      ;; (shell-command "mv README.html README.md")
-      ;; (package-install 'toc-org)
-      (toc-org-mode)
-      (toc-org-insert-toc)
-      ;; (setq org-toc-noexport-regexp ".*:ignore:.*") MA: Doesn't work.
-      ;; (delete "TOC" org-export-exclude-tags)
-      ;; (pop org-export-exclude-tags)
-      (org-org-export-to-org)
-      ;; (add-to-list 'org-export-exclude-tags "noexport")
-      ;; (add-to-list 'org-export-exclude-tags "TOC")
-      ))
+      (org-org-export-to-org)))
 #+END_SRC
 Alternatively, evaluate the above source block with ~C-c C-c~ to produce a ~README~
 file.
 
 Notes:
++ Github supports several markup languages, one of which is Org-mode.
+  - It seems that Github uses [[https://github.com/bdewey/org-ruby][org-ruby]] to convert org-mode to html.
+  - [[https://github.com/novoid/github-orgmode-tests][Here]] is a repo demonstrating how Github interprets Org-mode files.
+
+  Above in the README block, we are deliberately not using ~#+begin_export html~
+  since it does not render; however, the raw text does.
+
++ It seems coloured HTML does not render well:
+  #+BEGIN_SRC emacs-lisp :tangle no
+(org-html-export-to-html)
+(shell-command "mv README.html README.md")
+#+END_SRC
+
 + [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]] with:
   #+BEGIN_SRC org :tangle no
 INFOJS_OPT: view:info toc:t buttons:t
