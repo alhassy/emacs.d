@@ -345,7 +345,7 @@ An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispC
 and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of the bindings
 in ~“this”~ configuration.
 
-* Github Table of Contents                                       :TOC:
+* Table of Contents                                               :Github:TOC:
 - [[#abstract][Abstract]]
 - [[#why-emacs][Why Emacs?]]
 - [[#booting-up][Booting Up]]
@@ -662,8 +662,9 @@ This source block generates the ~README~ for the associated github repository.
     (insert
     "#+EXPORT_FILE_NAME: README.org
 
-     # Logos and birthday present painting
-     #   begin_export html
+     # Logos and birthday present painting :ignore:
+     ,#+begin_export org
+     ,#+begin_export html
      <p align=\"center\">
        <img src=\"emacs-logo.png\" width=150 height=150/>
      </p>
@@ -677,8 +678,10 @@ This source block generates the ~README~ for the associated github repository.
      <p align=\"center\">
        <img src=\"emacs-birthday-present.png\" width=200 height=250/>
      </p>
-     #   end_export
+     ,#+end_export
+     ,#+end_export
 
+     # My Literate Setup
      I enjoy reading others' /literate/ configuration files and
      incorporating what I learn into my own. The result is a
      sufficiently well-documented and accessible read that yields
@@ -706,9 +709,6 @@ Notes:
 + Github supports several markup languages, one of which is Org-mode.
   - It seems that Github uses [[https://github.com/bdewey/org-ruby][org-ruby]] to convert org-mode to html.
   - [[https://github.com/novoid/github-orgmode-tests][Here]] is a repo demonstrating how Github interprets Org-mode files.
-
-  Above in the README block, we are deliberately not using ~#+begin_export html~
-  since it does not render; however, the raw text does.
 
 + It seems coloured HTML does not render well:
   #+BEGIN_SRC emacs-lisp :tangle no
