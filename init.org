@@ -662,10 +662,9 @@ This source block generates the ~README~ for the associated github repository.
     (insert
     "#+EXPORT_FILE_NAME: README.org
 
-     # Logos and birthday present painting :ignore:
-     ,#+begin_export org
-     ,#+begin_export html
-     <p align=\"center\">
+     # Logos and birthday present painting
+    ,#+HTML:" (s-collapse-whitespace (concat
+    " <p align=\"center\">
        <img src=\"emacs-logo.png\" width=150 height=150/>
      </p>
 
@@ -678,10 +677,11 @@ This source block generates the ~README~ for the associated github repository.
      <p align=\"center\">
        <img src=\"emacs-birthday-present.png\" width=200 height=250/>
      </p>
-     ,#+end_export
-     ,#+end_export
+    "))
 
-     # My Literate Setup
+   ;; My Literate Setup; need the empty new lines for the export
+   "
+
      I enjoy reading others' /literate/ configuration files and
      incorporating what I learn into my own. The result is a
      sufficiently well-documented and accessible read that yields
@@ -709,6 +709,7 @@ Notes:
 + Github supports several markup languages, one of which is Org-mode.
   - It seems that Github uses [[https://github.com/bdewey/org-ruby][org-ruby]] to convert org-mode to html.
   - [[https://github.com/novoid/github-orgmode-tests][Here]] is a repo demonstrating how Github interprets Org-mode files.
+  - org-ruby supports inline ~#+HTML~ but [[https://github.com/wallyqs/org-ruby/issues/51][not html blocks]].
 
 + It seems coloured HTML does not render well:
   #+BEGIN_SRC emacs-lisp :tangle no

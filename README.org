@@ -1,24 +1,10 @@
-# Created 2019-12-19 Thu 11:49
+# Created 2019-12-19 Thu 12:03
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
 #+export_file_name: README.org
 
-     #+begin_export html
-     <p align="center">
-       <img src="emacs-logo.png" width=150 height=150/>
-     </p>
-
-     <p align="center">
-        <a href="https://www.gnu.org/software/emacs/">
-             <img src="https://img.shields.io/badge/GNU%20Emacs-26.3-b48ead.svg?style=plastic"/></a>
-        <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.2.5-489a9f.svg?style=plastic"/></a>
-     </p>
-
-     <p align="center">
-       <img src="emacs-birthday-present.png" width=200 height=250/>
-     </p>
-#+end_export
+#+html: <p align="center"> <img src="emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.3-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.2.5-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="emacs-birthday-present.png" width=200 height=250/> </p>
 
 I enjoy reading others' /literate/ configuration files and
 incorporating what I learn into my own. The result is a
@@ -352,10 +338,9 @@ This source block generates the ~README~ for the associated github repository.
     (insert
     "#+EXPORT_FILE_NAME: README.org
 
-     # Logos and birthday present painting :ignore:
-     ,#+begin_export org
-     ,#+begin_export html
-     <p align=\"center\">
+     # Logos and birthday present painting
+    ,#+HTML:" (s-collapse-whitespace (concat
+    " <p align=\"center\">
        <img src=\"emacs-logo.png\" width=150 height=150/>
      </p>
 
@@ -368,10 +353,11 @@ This source block generates the ~README~ for the associated github repository.
      <p align=\"center\">
        <img src=\"emacs-birthday-present.png\" width=200 height=250/>
      </p>
-     ,#+end_export
-     ,#+end_export
+    "))
 
-     # My Literate Setup
+   ;; My Literate Setup; need the empty new lines for the export
+   "
+
      I enjoy reading others' /literate/ configuration files and
      incorporating what I learn into my own. The result is a
      sufficiently well-documented and accessible read that yields
@@ -399,6 +385,7 @@ Notes:
 - Github supports several markup languages, one of which is Org-mode.
   - It seems that Github uses [[https://github.com/bdewey/org-ruby][org-ruby]] to convert org-mode to html.
   - [[https://github.com/novoid/github-orgmode-tests][Here]] is a repo demonstrating how Github interprets Org-mode files.
+  - org-ruby supports inline ~#+HTML~ but [[https://github.com/wallyqs/org-ruby/issues/51][not html blocks]].
 
 - It seems coloured HTML does not render well:
   #+begin_src emacs-lisp :tangle no
