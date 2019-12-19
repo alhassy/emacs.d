@@ -32,7 +32,7 @@
   (defun my/make-init-el-and-README ()
     (interactive "P") ;; Places value of universal argument into: current-prefix-arg
     (when current-prefix-arg
-      (let (org-export-use-babel)
+      (let ((time (current-time)))
         (save-excursion
           ;; Make init.el
           (org-babel-tangle)
@@ -43,10 +43,73 @@
           (org-babel-goto-named-src-block "make-readme")
           (org-babel-execute-src-block)
 
-          (message "Tangled, compiled, and loaded init.el; and made README.md")))))
+          ;; Acknowledgement
+          (message "Tangled, compiled, and loaded init.el; and made README.md … %d"
+                   (float-time (time-since time)))))))
 
   (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 ;; enable making init and readme ends here
+
+;; [[file:~/.emacs.d/init.org::make-readme][make-readme]]
+(with-temp-buffer
+    (insert
+    "#+EXPORT_FILE_NAME: README.org
+     #+HTML: <h1> A Life Configuring Emacs </h1>
+     #+OPTIONS: toc:nil d:nil
+     # Markdown links: [title](target)
+
+     # Logos and birthday present painting
+     #+begin_export html
+     <p align=\"center\">
+       <img src=\"emacs-logo.png\" width=150 height=150/>
+     </p>
+
+     <p align=\"center\">
+        <a href=\"https://www.gnu.org/software/emacs/\">
+             <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
+        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
+     </p>
+
+     <p align=\"center\">
+       <img src=\"emacs-birthday-present.png\" width=200 height=250/>
+     </p>
+     #+end_export
+
+     #+HTML: <h3> My Literate Setup </h3>
+
+     I enjoy reading others' /literate/ configuration files and
+     incorporating what I learn into my own. The result is a
+     sufficiently well-documented and accessible read that yields
+     a stylish and functional system (•̀ᴗ•́)و
+
+     This ~README.org~ has been automatically generated from my
+     configuration and its contents below are accessible
+     in (outdated) blog format, with /colour/, or as colourful
+     PDF, [[https://alhassy.github.io/init/][here]]. Enjoy
+     :smile:
+
+     #+INCLUDE: init.org
+    ")
+
+    ;; No code execution on export
+    ;; ⟪ For a particular block, we use “:eval never-export”. ⟫
+    (let ((org-export-use-babel nil))
+      (org-mode)
+      ;; (org-md-export-to-markdown)
+      ;; Coloured html does not work in Github, afaik.
+      ;; (org-html-export-to-html)
+      ;; (shell-command "mv README.html README.md")
+      ;; (package-install 'toc-org)
+      (toc-org-mode)
+      (toc-org-insert-toc)
+      ;; (setq org-toc-noexport-regexp ".*:ignore:.*") MA: Doesn't work.
+      ;; (delete "TOC" org-export-exclude-tags)
+      ;; (pop org-export-exclude-tags)
+      (org-org-export-to-org)
+      ;; (add-to-list 'org-export-exclude-tags "noexport")
+      ;; (add-to-list 'org-export-exclude-tags "TOC")
+      ))
+;; make-readme ends here
 
 ;; [[file:~/.emacs.d/init.org::*~use-package~%20--The%20start%20of%20~init.el~][~use-package~ --The start of ~init.el~:1]]
 ;; In ~/.emacs
@@ -257,200 +320,6 @@
 (use-package git-timemachine)
 ;; ~magit~ --Emacs' porcelain interface to git:5 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:1]]
-(use-package flyspell
-  :hook (
-           (prog-mode . flyspell-prog-mode)
-           (text-mode . flyspell-mode))
-)
-;; Fix spelling as you type --thesaurus & dictionary too!:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:2]]
-(setq ispell-program-name "/usr/local/bin/aspell")
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
-
-(diminish 'flyspell-mode) ;; Don't show it in the modeline.
-;; Fix spelling as you type --thesaurus & dictionary too!:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:4]]
-(eval-after-load "flyspell"
-  ' (progn
-     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
-;; Fix spelling as you type --thesaurus & dictionary too!:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:5]]
-(global-font-lock-mode t)
-(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
-;; Fix spelling as you type --thesaurus & dictionary too!:5 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:6]]
-(setq ispell-silently-savep t)
-;; Fix spelling as you type --thesaurus & dictionary too!:6 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:7]]
-(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
-;; Fix spelling as you type --thesaurus & dictionary too!:7 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:8]]
-(add-hook          'c-mode-hook 'flyspell-prog-mode)
-(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
-;; Fix spelling as you type --thesaurus & dictionary too!:8 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:9]]
-(use-package synosaurus
-  :diminish synosaurus-mode
-  :init    (synosaurus-mode)
-  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace)
-)
-;; Fix spelling as you type --thesaurus & dictionary too!:9 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:10]]
-;; (shell-command "brew cask install xquartz &") ;; Dependency
-;; (shell-command "brew install wordnet &")
-;; Fix spelling as you type --thesaurus & dictionary too!:10 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:11]]
-(use-package wordnut
- :bind ("M-!" . wordnut-lookup-current-word))
-
-;; Use M-& for async shell commands.
-;; Fix spelling as you type --thesaurus & dictionary too!:11 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:13]]
-(autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
-;; Fix spelling as you type --thesaurus & dictionary too!:13 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:14]]
-(use-package speed-type)
-;; Fix spelling as you type --thesaurus & dictionary too!:14 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:15]]
-(use-package google-translate
- :config
-   (global-set-key "\C-ct" 'google-translate-at-point)
-)
-;; Fix spelling as you type --thesaurus & dictionary too!:15 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using%20a%20Grammar%20&%20Style%20Checker][Using a Grammar & Style Checker:1]]
-(use-package langtool
- :config
-  (setq langtool-language-tool-jar
-     "~/Applications/LanguageTool-4.5/languagetool-commandline.jar")
-)
-;; Using a Grammar & Style Checker:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using%20a%20Grammar%20&%20Style%20Checker][Using a Grammar & Style Checker:2]]
-;; Quickly check, correct, then clean up /region/ with M-^
-
-(add-hook 'langtool-error-exists-hook
-  (lambda ()
-    (langtool-correct-buffer)
-    (langtool-check-done)
-  ))
-
-(global-set-key "\M-^" (lambda () (interactive) (message "Grammar checking begun ...") (langtool-check)))
-;; Using a Grammar & Style Checker:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Lightweight%20Prose%20Proofchecking][Lightweight Prose Proofchecking:1]]
-(use-package writegood-mode
-  :config
-  ;; Load this whenver I'm composing prose.
-  (add-hook 'text-mode-hook 'writegood-mode)
-  (add-hook 'org-mode-hook 'writegood-mode)
-  ;; Some additional weasel words.
-  (--map (push it writegood-weasel-words)
-         '("some" "simple" "simply" "easy" "often" "easily" "probably"
-           "clearly"               ;; Is the premise undeniably true?
-           "experience shows"      ;; Whose? What kind? How does it do so?
-           "may have"              ;; It may also have not!
-           "it turns out that")))  ;; How does it turn out so?
-           ;; ↯ What is the evidence of highighted phrase? ↯
-;; Lightweight Prose Proofchecking:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:1]]
-; (load (shell-command-to-string "agda-mode locate"))
-;;
-;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
-; (makunbound 'agda2-include-dirs)
-;; Unicode Input via Agda Input:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:2]]
-(load-file (let ((coding-system-for-read 'utf-8))
-                (shell-command-to-string "/usr/local/bin/agda-mode locate")))
-;; Unicode Input via Agda Input:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:3]]
-(require 'agda-input)
-(add-hook 'text-mode-hook (lambda () (set-input-method "Agda")))
-(add-hook 'org-mode-hook (lambda () (set-input-method "Agda")))
-;; Unicode Input via Agda Input:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:4]]
-;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
-;; Unicode Input via Agda Input:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:5]]
-(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
-;; Unicode Input via Agda Input:5 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:6]]
-(loop for item in
-      '(
-        ;; categorial
-        ("alg" "𝒜𝓁ℊ")
-        ("split" "▵")
-        ("join" "▿")
-        ("adj" "⊣")
-        (";;" "﹔")
-        (";;" "⨾")
-        (";;" "∘")
-        ;; lattices
-        ("meet" "⊓")
-        ("join" "⊔")
-        ;; residuals
-        ("syq"  "╳")
-        ("over" "╱")
-        ("under" "╲")
-        ;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
-        ("|" "❙")
-        ("with" "❙")
-        ;; adjunction isomorphism pair
-        ("floor"  "⌊⌋")
-        ("lower"  "⌊⌋")
-        ("lad"    "⌊⌋")
-        ("ceil"   "⌈⌉")
-        ("raise"  "⌈⌉")
-        ("rad"    "⌈⌉")
-        ;; more (key value) pairs here
-        )
-      do (add-to-list 'agda-input-user-translations item))
-;; Unicode Input via Agda Input:6 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:7]]
-;; angry, cry, why-you-no
-(add-to-list 'agda-input-user-translations
-   '("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)"))
-;; confused, disapprove, dead, shrug
-(add-to-list 'agda-input-user-translations
-   '("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"))
-;; dance, csi
-(add-to-list 'agda-input-user-translations
-   '("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓" "•_•)
-( •_•)>⌐■-■
-(⌐■_■)
-"))
-;; love, pleased, success, yesss
-(add-to-list 'agda-input-user-translations
-   '("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
-;; Unicode Input via Agda Input:7 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:8]]
-;; activate translations
-(agda-input-setup)
-;; Unicode Input via Agda Input:8 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Syncing%20to%20the%20System's%20~$PATH~][Syncing to the System's ~$PATH~:1]]
 (use-package exec-path-from-shell
   :init
@@ -459,7 +328,7 @@
 )
 ;; Syncing to the System's ~$PATH~:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Keeping%20My%20System%20Up%20to%20Date][Keeping My System Up to Date:1]]
+;; [[file:~/.emacs.d/init.org::*Keeping%20my%20system%20up%20to%20date][Keeping my system up to date:1]]
 (defun my/stay-up-to-date ()
 
   "Ensure that OS and Emacs pacakges are up to date.
@@ -482,7 +351,7 @@
 ;; For now, doing this since I'm also calling my/stay-up-to-date with
 ;; after-init-hook which hides the startup message.
 (add-hook 'after-init-hook 'display-startup-echo-area-message)
-;; Keeping My System Up to Date:1 ends here
+;; Keeping my system up to date:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Who%20am%20I?%20%E2%94%80Using%20Gnus%20for%20Gmail][Who am I? ─Using Gnus for Gmail:1]]
 (setq user-full-name    "Musa Al-hassy"
@@ -788,6 +657,233 @@
 (neotree-toggle)
 ;; Neotree: Directory Tree Listing:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Word%20Wrapping][Word Wrapping:1]]
+;; Let's avoid going over 80 columns
+(setq fill-column 80)
+
+;; Wrap long lines when editing text
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+(add-hook 'org-mode-hook 'turn-on-auto-fill)
+;; Word Wrapping:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:1]]
+(use-package flyspell
+  :hook (
+           (prog-mode . flyspell-prog-mode)
+           (text-mode . flyspell-mode))
+)
+;; Fix spelling as you type --thesaurus & dictionary too!:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:2]]
+(setq ispell-program-name "/usr/local/bin/aspell")
+(setq ispell-dictionary "en_GB") ;; set the default dictionary
+
+(diminish 'flyspell-mode) ;; Don't show it in the modeline.
+;; Fix spelling as you type --thesaurus & dictionary too!:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:4]]
+(eval-after-load "flyspell"
+  ' (progn
+     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
+;; Fix spelling as you type --thesaurus & dictionary too!:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:5]]
+(global-font-lock-mode t)
+(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
+;; Fix spelling as you type --thesaurus & dictionary too!:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:6]]
+(setq ispell-silently-savep t)
+;; Fix spelling as you type --thesaurus & dictionary too!:6 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:7]]
+(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
+;; Fix spelling as you type --thesaurus & dictionary too!:7 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:8]]
+(add-hook          'c-mode-hook 'flyspell-prog-mode)
+(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
+;; Fix spelling as you type --thesaurus & dictionary too!:8 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:9]]
+(use-package synosaurus
+  :diminish synosaurus-mode
+  :init    (synosaurus-mode)
+  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
+           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace)
+)
+;; Fix spelling as you type --thesaurus & dictionary too!:9 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:10]]
+;; (shell-command "brew cask install xquartz &") ;; Dependency
+;; (shell-command "brew install wordnet &")
+;; Fix spelling as you type --thesaurus & dictionary too!:10 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:11]]
+(use-package wordnut
+ :bind ("M-!" . wordnut-lookup-current-word))
+
+;; Use M-& for async shell commands.
+;; Fix spelling as you type --thesaurus & dictionary too!:11 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:13]]
+(autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
+;; Fix spelling as you type --thesaurus & dictionary too!:13 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:14]]
+(use-package speed-type)
+;; Fix spelling as you type --thesaurus & dictionary too!:14 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fix%20spelling%20as%20you%20type%20--thesaurus%20&%20dictionary%20too!][Fix spelling as you type --thesaurus & dictionary too!:15]]
+(use-package google-translate
+ :config
+   (global-set-key "\C-ct" 'google-translate-at-point)
+)
+;; Fix spelling as you type --thesaurus & dictionary too!:15 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20a%20Grammar%20&%20Style%20Checker][Using a Grammar & Style Checker:1]]
+(use-package langtool
+ :config
+  (setq langtool-language-tool-jar
+     "~/Applications/LanguageTool-4.5/languagetool-commandline.jar")
+)
+;; Using a Grammar & Style Checker:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Using%20a%20Grammar%20&%20Style%20Checker][Using a Grammar & Style Checker:2]]
+;; Quickly check, correct, then clean up /region/ with M-^
+
+(add-hook 'langtool-error-exists-hook
+  (lambda ()
+    (langtool-correct-buffer)
+    (langtool-check-done)
+  ))
+
+(global-set-key "\M-^" (lambda () (interactive) (message "Grammar checking begun ...") (langtool-check)))
+;; Using a Grammar & Style Checker:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Lightweight%20Prose%20Proofchecking][Lightweight Prose Proofchecking:1]]
+(use-package writegood-mode
+  :config
+  ;; Load this whenver I'm composing prose.
+  (add-hook 'text-mode-hook 'writegood-mode)
+  (add-hook 'org-mode-hook 'writegood-mode)
+  ;; Some additional weasel words.
+  (--map (push it writegood-weasel-words)
+         '("some" "simple" "simply" "easy" "often" "easily" "probably"
+           "clearly"               ;; Is the premise undeniably true?
+           "experience shows"      ;; Whose? What kind? How does it do so?
+           "may have"              ;; It may also have not!
+           "it turns out that")))  ;; How does it turn out so?
+           ;; ↯ What is the evidence of highighted phrase? ↯
+;; Lightweight Prose Proofchecking:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Placeholder%20Text%20---For%20Learning%20&%20Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
+(use-package lorem-ipsum)
+;; Placeholder Text ---For Learning & Experimenting:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:1]]
+; (load (shell-command-to-string "agda-mode locate"))
+;;
+;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
+; (makunbound 'agda2-include-dirs)
+;; Unicode Input via Agda Input:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:2]]
+(load-file (let ((coding-system-for-read 'utf-8))
+                (shell-command-to-string "/usr/local/bin/agda-mode locate")))
+;; Unicode Input via Agda Input:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:3]]
+(require 'agda-input)
+(add-hook 'text-mode-hook (lambda () (set-input-method "Agda")))
+(add-hook 'org-mode-hook (lambda () (set-input-method "Agda")))
+;; Unicode Input via Agda Input:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:4]]
+;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
+;; Unicode Input via Agda Input:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:5]]
+(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
+;; Unicode Input via Agda Input:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:6]]
+(loop for item in
+      '(
+        ;; categorial
+        ("alg" "𝒜𝓁ℊ")
+        ("split" "▵")
+        ("join" "▿")
+        ("adj" "⊣")
+        (";;" "﹔")
+        (";;" "⨾")
+        (";;" "∘")
+        ;; lattices
+        ("meet" "⊓")
+        ("join" "⊔")
+        ;; residuals
+        ("syq"  "╳")
+        ("over" "╱")
+        ("under" "╲")
+        ;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
+        ("|" "❙")
+        ("with" "❙")
+        ;; adjunction isomorphism pair
+        ("floor"  "⌊⌋")
+        ("lower"  "⌊⌋")
+        ("lad"    "⌊⌋")
+        ("ceil"   "⌈⌉")
+        ("raise"  "⌈⌉")
+        ("rad"    "⌈⌉")
+        ;; more (key value) pairs here
+        )
+      do (add-to-list 'agda-input-user-translations item))
+;; Unicode Input via Agda Input:6 ends here
+
+;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:7]]
+;; angry, cry, why-you-no
+(add-to-list 'agda-input-user-translations
+   '("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)"))
+;; confused, disapprove, dead, shrug
+(add-to-list 'agda-input-user-translations
+   '("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"))
+;; dance, csi
+(add-to-list 'agda-input-user-translations
+   '("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓" "•_•)
+( •_•)>⌐■-■
+(⌐■_■)
+"))
+;; love, pleased, success, yesss
+(add-to-list 'agda-input-user-translations
+   '("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
+;; Unicode Input via Agda Input:7 ends here
+
+;; [[file:~/.emacs.d/init.org::*Unicode%20Input%20via%20Agda%20Input][Unicode Input via Agda Input:8]]
+;; activate translations
+(agda-input-setup)
+;; Unicode Input via Agda Input:8 ends here
+
+;; [[file:~/.emacs.d/init.org::*Taking%20a%20tour%20of%20one's%20edits][Taking a tour of one's edits:1]]
+;; Give me a description of the change made at a particular stop.
+(use-package goto-chg
+  :init (setq glc-default-span 0))
+
+(defhydra hydra-edits (global-map "C-c e")
+  ("," goto-last-change "Goto nᵗʰ last change")
+  ("." goto-last-change-reverse "Goto more recent change"))
+;; Taking a tour of one's edits:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Moving%20Text%20Around][Moving Text Around:1]]
+;; M-↑,↓ moves line, or marked region; prefix is how many lines.
+(use-package move-text)
+(move-text-default-bindings)
+;; Moving Text Around:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Enabling%20CamelCase%20Aware%20Editing%20Operations][Enabling CamelCase Aware Editing Operations:1]]
+(global-subword-mode 1)
+;; Enabling CamelCase Aware Editing Operations:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Life%20within%20Org-mode][Life within Org-mode:2]]
 (use-package org
   :ensure org-plus-contrib
@@ -1076,15 +1172,16 @@
 ;; Workflow States:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Working%20with%20Citations][Working with Citations:1]]
-(use-package org-ref :demand t)
-
 ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
 ;; Most useful for non-LaTeX files.
-(setq reftex-default-bibliography '("~/thesis-proposal/References.bib"))
+(setq reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
+(setq bibtex-completion-bibliography (car reftex-default-bibliography))
+
+(use-package org-ref
+  :demand t
+  :config (setq org-ref-default-bibliography reftex-default-bibliography))
 
 (use-package helm-bibtex :demand t)
-
-(setq bibtex-completion-bibliography "~/thesis-proposal/References.bib")
 ;; Working with Citations:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Show%20off-screen%20Heading%20at%20the%20top%20of%20the%20window][Show off-screen Heading at the top of the window:1]]
@@ -1441,6 +1538,30 @@
 (global-set-key (kbd "C-h k") #'helpful-key)
 ;; Editor Documentation with Contextual Information:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*~M-n,p~:%20Word-at-Point%20Navigation][~M-n,p~: Word-at-Point Navigation:1]]
+(use-package smartscan
+  :config
+    (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
+    (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
+    (global-set-key (kbd "M-'") 'my/symbol-replace))
+;; ~M-n,p~: Word-at-Point Navigation:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~M-n,p~:%20Word-at-Point%20Navigation][~M-n,p~: Word-at-Point Navigation:2]]
+(defun my/symbol-replace (replacement)
+  "Replace all standalone symbols in the buffer matching the one at point."
+  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
+  (save-excursion
+    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
+      (beginning-of-buffer)
+      ;; (query-replace-regexp symbol replacement)
+      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
+;; ~M-n,p~: Word-at-Point Navigation:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*~M-n,p~:%20Word-at-Point%20Navigation][~M-n,p~: Word-at-Point Navigation:3]]
+;; C-n, next line, inserts newlines when at the end of the buffer
+(setq next-line-add-newlines t)
+;; ~M-n,p~: Word-at-Point Navigation:3 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Highlight%20Defined%20Emacs%20Lisp%20Symbols][Highlight Defined Emacs Lisp Symbols:1]]
 (use-package highlight-defined)
 (add-hook 'emacs-lisp-mode-hook 'highlight-defined-mode)
@@ -1478,16 +1599,6 @@
 ;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
 ;;   ;; List of triples (extension method description) )
 ;; Hydra: Supply a prefix only once:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Taking%20a%20tour%20of%20one's%20edits][Taking a tour of one's edits:1]]
-;; Give me a description of the change made at a particular stop.
-(use-package goto-chg
-  :init (setq glc-default-span 0))
-
-(defhydra hydra-edits (global-map "C-c e")
-  ("," goto-last-change "Goto nᵗʰ last change")
-  ("." goto-last-change-reverse "Goto more recent change"))
-;; Taking a tour of one's edits:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's%20changed%20&%20who's%20to%20blame?][What's changed & who's to blame?:1]]
 ;; Hunk navigation and commiting.
@@ -1560,16 +1671,6 @@ user."
 
 (bind-key "C-x F" 'find-file-as-root)
 ;; Edit as Root:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Moving%20Text%20Around][Moving Text Around:1]]
-;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(use-package move-text)
-(move-text-default-bindings)
-;; Moving Text Around:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Enabling%20CamelCase%20Aware%20Editing%20Operations][Enabling CamelCase Aware Editing Operations:1]]
-(global-subword-mode 1)
-;; Enabling CamelCase Aware Editing Operations:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Keep%20buffers%20open%20across%20sessions][Keep buffers open across sessions:1]]
 ;; Keep open files open across sessions.
@@ -1926,11 +2027,15 @@ user."
 
     ;; Position of the popped buffer: top, bottom, left, right, full
     shell-pop-window-position "bottom"
+
+    ;; Please use an awesome shell.
+    shell-pop-term-shell "/bin/zsh"
  ))
 ;; Quickly pop-up a terminal, run a command, close it ---and zsh:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Quickly%20pop-up%20a%20terminal,%20run%20a%20command,%20close%20it%20---and%20zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:2]]
 ;; Be default, Emacs please use zsh
+;; E.g., M-x shell
 (setq shell-file-name "/bin/zsh")
 ;; Quickly pop-up a terminal, run a command, close it ---and zsh:2 ends here
 
