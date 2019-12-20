@@ -2,13 +2,15 @@
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 
+# TODO: Get rid of folding-mode in-favour of origami.
+
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
 #+EMAIL: alhassy@gmail.com
 #+DATE: 2018-07-25
 #+DESCRIPTION: My Emacs Initialisation File, Written in Org-mode.
 #+STARTUP: indent lognoteclock-out
-#+OPTIONS: html-postamble:nil toc:nil d:nil
+#+OPTIONS: html-postamble:nil toc:nil d:nil num:t
 #+PROPERTY: header-args :tangle init.el :comments link :results none
 
 # ─AlBasmala keywords─
@@ -16,7 +18,8 @@
 #+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
-* Abstract                                                   :ignore:
+
+* Abstract                                                           :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
 :END:
@@ -63,237 +66,109 @@ An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispC
 and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of the bindings
 in ~“this”~ configuration.
 
-* Table of Contents                                               :Github:TOC:
-- [[#abstract][Abstract]]
-- [[#why-emacs][Why Emacs?]]
-- [[#booting-up][Booting Up]]
-  - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
-  - [[#use-package----the-start-of-initel][=use-package= ---The start of =init.el=]]
-  - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
-  - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
-  - [[#keeping-my-system-up-to-date][Keeping my system up to date]]
-  - [[#who-am-i-using-gnus-for-gmail][Who am I? ─Using Gnus for Gmail]]
-  - [[#emacs-keybindings-for-my-brower][Emacs keybindings for my brower]]
-  - [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
-  - [[#restarting-emacs][Restarting Emacs]]
-- [[#cosmetics][Cosmetics]]
-  - [[#themes][Themes]]
-  - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
-  - [[#persistent-scratch-buffer][Persistent Scratch Buffer]]
-  - [[#spaceline-a-sleek-mode-line][Spaceline: A sleek mode line]]
-  - [[#flashing-when-something-goes-wrong-no-blinking][Flashing when something goes wrong ─no blinking]]
-  - [[#my-to-do-list-the-initial-buffer-when-emacs-opens-up][My to-do list: The initial buffer when Emacs opens up]]
-  - [[#showing-date-time-and-battery-life][Showing date, time, and battery life]]
-  - [[#hiding-scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu]]
-  - [[#increasedecrease-text-size][Increase/decrease text size]]
-  - [[#delete-selection-mode][Delete Selection mode]]
-  - [[#highlight--complete-parenthesis-pair-when-cursor-is-near--][Highlight & complete parenthesis pair when cursor is near ;-)]]
-  - [[#minibuffer-should-display-line-and-column-numbers][Minibuffer should display line and column numbers]]
-  - [[#never-lose-the-cursor][Never lose the cursor]]
-  - [[#neotree-directory-tree-listing][Neotree: Directory Tree Listing]]
-  - [[#tabs][Tabs]]
-  - [[#window-resizing-using-the-golden-ratio][Window resizing using the golden ratio]]
-- [[#prose][Prose]]
-  - [[#fill-mode----word-wrapping][Fill-mode ---Word Wrapping]]
-  - [[#fix-spelling-as-you-type---thesaurus--dictionary-too][Fix spelling as you type --thesaurus & dictionary too!]]
-  - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
-  - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
-  - [[#placeholder-text----for-learning--experimenting][Placeholder Text ---For Learning & Experimenting]]
-  - [[#unicode-input-via-agda-input][Unicode Input via Agda Input]]
-  - [[#taking-a-tour-of-ones-edits][Taking a tour of one's edits]]
-  - [[#moving-text-around][Moving Text Around]]
-  - [[#enabling-camelcase-aware-editing-operations][Enabling CamelCase Aware Editing Operations]]
-- [[#life-within-org-mode][Life within Org-mode]]
-  - [[#high-speed-literate-programming][High Speed Literate Programming]]
-  - [[#using-org-mode-as-a-day-planner][Using org-mode as a Day Planner]]
-  - [[#super-agenda][Super Agenda]]
-  - [[#automating-pomodoro---dealing-with-dreadful-tasks][Automating Pomodoro --Dealing with dreadful tasks]]
-  - [[#journaling][Journaling]]
-  - [[#workflow-states][Workflow States]]
-  - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
-  - [[#working-with-citations][Working with Citations]]
-  - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen Heading at the top of the window]]
-  - [[#clocking-work-time][Clocking Work Time]]
-  - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
-  - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
-  - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
-  - [[#ox-extra-using-ignore-to-ignore-headings-but-use-the-bodies][~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies]]
-  - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
-  - [[#jumping-without-hassle][Jumping without hassle]]
-  - [[#folding-within-a-subtree][Folding within a subtree]]
-  - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
-  - [[#making-then-opening-htmls-from-orgs][Making then opening html's from org's]]
-  - [[#making-then-opening-pdfs-from-orgs][Making then opening pdf's from org's]]
-  - [[#interpret-the-haskell-source-blocks-in-a-file][Interpret the Haskell source blocks in a file]]
-- [[#expected-ide-support][Expected IDE Support]]
-  - [[#backups][Backups]]
-  - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
-  - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
-  - [[#highlight-defined-emacs-lisp-symbols][Highlight Defined Emacs Lisp Symbols]]
-  - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
-  - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
-  - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
-  - [[#edit-as-root][Edit as Root]]
-  - [[#keep-buffers-open-across-sessions][Keep buffers open across sessions]]
-  - [[#mouse-editing-support][Mouse Editing Support]]
-  - [[#dimming-unused-windows][Dimming Unused Windows]]
-  - [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
-  - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
-  - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
-  - [[#completion-frameworks][Completion Frameworks]]
-  - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
-- [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
-  - [[#bind-recompile-to-c-c-c-m----m-for-make][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake]]
-  - [[#reload-buffer-with-f5][Reload buffer with ~f5~]]
-  - [[#kill-to-start-of-line][Kill to start of line]]
-  - [[#file-as-list-and-file-as-string][~file-as-list~ and ~file-as-string~]]
-  - [[#c-x-k-kills-current-buffer-c-u-c-x-k-kills-all-others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
-  - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
-  - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
-  - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
-  - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
-  - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
-- [[#conclusion][Conclusion]]
-
-* Why Emacs?
+* Table of Contents                                  :Github:noexport:QUOTE:TOC_2_org:
 :PROPERTIES:
-:CUSTOM_ID: Why-Emacs?
+:CUSTOM_ID: Table-of-Contents
 :END:
 
-/Emacs is a flexible platform for developing end-user applications/ --unfortunately it is generally perceived as
-merely a text editor. Some people use it specifically for one or two applications.
-
-For example, [[https://www.youtube.com/watch?v=FtieBc3KptU][writers]] use it as an interface for Org-mode and others use it as an interface for version
-control with Magit. [[https://orgmode.org/index.html#sec-4][Org]] is an organisation tool that can be used for typesetting which subsumes LaTeX, generating many different
-formats --html, latex, pdf, etc-- from a single source, keeping track of [[https://orgmode.org/worg/org-tutorials/index.html#orgff7b885][schedules]] & task management, blogging, habit tracking, personal information management tool, and [[http://orgmode.org/worg/org-contrib/][much more]].
-Moreover, its syntax is so [[https://karl-voit.at/2017/09/23/orgmode-as-markup-only/][natural]] that most people use it without even knowing!
-For me, Org allows me to do literate programming: I can program and document at the same time,
-with no need to seperate the two tasks and with the ability to generate multiple formats and files from a single file.
-
-#+begin_quote
-If you are a professional writer…Emacs outshines all other editing software
-in approximately the same way that the noonday sun does the stars.
-It is not just bigger and brighter; it simply makes everything else vanish.
-—[[http://project.cyberpunk.ru/lib/in_the_beginning_was_the_command_line/][Neal Stephenson]], /In the beginning was the command line/
-#+end_quote
-
-Of course Emacs comes with the basic features of a text editor, but it is much more;
-for example, it comes with a powerful notion of ‘undo’: Basic text editors have a single stream of undo,
-yet in Emacs, we have a tree --when we undo and make new edits, we branch off in our editing stream
-as if our text was being version controlled as we type! --We can even switch between such branches!
-
-# Todo: Learn about weaving so that presentation order may differ from code tangeling order.
-#
-#
-#+begin_src emacs-lisp :tangle no
-;; Allow tree-semantics for undo operations.
-(package-install 'undo-tree)
-(global-undo-tree-mode)
-(diminish 'undo-tree-mode)
-
-;; Execute (undo-tree-visualize) then navigate along the tree to witness
-;; changes being made to your file live!
-
-;; Each node in the undo tree should have a timestamp.
-(setq undo-tree-visualizer-timestamps t)
-
-;; Show a diff window displaying changes between undo nodes.
-(setq undo-tree-visualizer-diff t)
-#+end_src
-
-/Emacs is an extensible editor: You can make it into the editor of your dreams!/
-You can make it suited to your personal needs.
-If there's a feature you would like, a behaviour your desire, you can simply code that into Emacs with
-a bit of Lisp. As a programming language enthusiast, for me Emacs is my default Lisp interpreter
-and a customisable IDE that I use for other programming languages
---such as C, Haskell, Agda, Racket, and Prolog.
-Moreover, being a Lisp interpreter, we can alter the look and feel of Emacs live, without having
-to restart it --e.g., press ~C-x C-e~ after the final parenthesis of ~(scroll-bar-mode 0)~
-to run the code that removes the scroll-bar.
-
-#+begin_quote
-/I use Emacs every day. I rarely notice it. But when I do, it usually brings me joy./
-─[[https://so.nwalsh.com/2019/03/01/emacs][Norman Walsh]]
-#+end_quote
-
-I have used Emacs as an interface for developing [[https://github.com/alhassy/CheatSheet#cheatsheet-examples][cheat sheets]], for making my
-blog, and as an application for ‘interactively learning C’. If anything Emacs is
-more like an OS than just a text editor --“living within Emacs” provides an
-abstraction over whatever operating system my machine has: [[https://www.fugue.co/blog/2015-11-11-guide-to-emacs.html][It's so easy to take
-everything with me.]] Moreover, the desire to mould Emacs to my needs has made me
-a better programmer: I am now a more literate programmer and, due to Elisp's
-documentation-oriented nature, I actually take the time and effort to make
-meaningful documentation --even when the project is private and will likely only
-be seen by me.
-
-#+begin_quote
-/Seeing Emacs as an editor is like seeing a car as a seating-accommodation./ -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
-#+end_quote
-# Comparing Emacs to an editor is like comparing GNU/Linux to a word processor. -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
-
-Possibly interesting reads:
-+ [[https://sachachua.com/blog/series/a-visual-guide-to-emacs/][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
-+ [[http://emacsrocks.com/][Video Series on Why Emacs Rocks]] ---catch the enthusiasm!
-+ [[http://ehneilsen.net/notebook/orgExamples/org-examples.html#sec-18][Emacs org-mode examples and cookbook]]
-+ [[https://m00natic.github.io/emacs/emacs-wiki.html][An Opinionated Emacs guide for newbies and beyond]]
-+ [[https://tuhdo.github.io/emacs-tutor.html][Emacs Mini-Manual, Part I of III]]
-  # + The [[http://tuhdo.github.io/emacs-tutor.html#orgheadline63][Emacs Mini Manual]], or
-+ [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][Org and R Programming]] ---a tutorial on literate programming, e.g., evaluating code within ~src~ bloc.
-+ Reference cards for [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][GNU Emacs]], [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][Org-mode]], and [[https://github.com/alhassy/ElispCheatSheet/blob/master/CheatSheet.pdf][Elisp]].
-+ [[https://www.reddit.com/r/emacs/comments/6fytr5/when_did_you_start_using_emacs/][“When did you start using Emacs” discussion on Reddit]]
-+ [[https://david.rothlis.net/emacs/howtolearn.html][“How to Learn Emacs”]]
-+ [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
-+ [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
-+ [[https://github.com/caisah/emacs.dz][A list of people's nice emacs config files]]
-#  + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]
-
----If eye-candy, a sleek and beautiful GUI, would entice you then consider starting with [[http://spacemacs.org/][spacemacs]].
-   Here's a helpful [[https://www.youtube.com/watch?v=hCNOB5jjtmc][installation video]], after which you may want to watch
-   [[https://www.youtube.com/watch?v=PVsSOmUB7ic][Org-mode in Spacemacs]] tutorial---
-
-Remember: Emacs is a flexible platform for developing end-user applications; e.g., this configuration file
-is at its core an Emacs Lisp program that yields the editor of my dreams
---it encourages me to grow and to be creative, and I hope the same for all who use it;
-moreover, it reflects my personality such as what I value and what I neglect in my workflow.
-
-# why emacs ---not marching to someone-else's tune!
-#+begin_quote org
-/I’m stunned that you, as a professional software engineer, would eschew inferior computer languages that hinder your ability to craft code,
-/but you put up with editors that bind your fingers to someone else’s accepted practice. --- [[http://www.howardism.org/Technical/Emacs/why-emacs.html][Howard Abrams]]
-#+end_quote
-
- *The Power of Text Manipulation:*
- Emacs has ways to represent all kinds of information as text.
-
- E.g., if want to make a regular expression rename of files in a directory,
- there's no need to learn about a batch renaming tool: ~M-x dired <RET> M-x wdired-change-to-wdired-mode~ now simply perform a /usual/ find-and-replace, then
- save with the /usual/ ~C-x C-s~ to effect the changes!
-
- Likewise for other system utilities and services (•̀ᴗ•́)و
-
-Moreover, as will be shown below, you can literally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
-for textually input in your operating system --no copy-paste required.
-
-*Keyboard Navigation and Alteration*
-Suppose you wrote a paragraph of text, and wanted to ‘border’ it up for emphasies
-in hypens. Using the mouse to navigate along with a copy-paste of the hypens
-is vastely inferior to the incantation
-~M-{ C-u 80 - RET M-} C-u 80 - RET~.
-If we want to border up the previous 𝓃-many paragraphs,
-we simply prefix ~M-{,}~ above with  ~C-u 𝓃~
----a manual approach would have us count 𝓃 and slowly scroll.
-
-Finally, here's some fun commands to try out:
-+ ~M-x doctor~ ---generalising the idea of rubber ducks
-+ ~M-x tetris~  or ~M-x gomoku~ or ~M-x snake~---a break with a classic
-  - ~C-u 𝓃 M-x hanoi~ for the 𝓃-towers of Hanoi
-+ ~M-x butterfly~ ---in reference to [[https://xkcd.com/378/][“real programmers”]]
+#+BEGIN_QUOTE
+- [[Abstract][Abstract]]
+- [[Booting Up][Booting Up]]
+  - [[=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=]]
+  - [[=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=]]
+  - [[=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git]]
+  - [[Hydra: Supply a prefix only once][Hydra: Supply a prefix only once]]
+  - [[Syncing to the System's =$PATH=][Syncing to the System's =$PATH=]]
+  - [[Keeping my system up to date & Installing OS packages from within Emacs][Keeping my system up to date & Installing OS packages from within Emacs]]
+  - [[Who am I? ─Using Gnus for Gmail][Who am I? ─Using Gnus for Gmail]]
+  - [[Emacs keybindings for my brower][Emacs keybindings for my brower]]
+  - [[Using Emacs in any text area on my OS][Using Emacs in any text area on my OS]]
+  - [[Restarting Emacs][Restarting Emacs]]
+- [[Cosmetics][Cosmetics]]
+  - [[Themes][Themes]]
+  - [[Startup message: Emacs & Org versions][Startup message: Emacs & Org versions]]
+  - [[Persistent Scratch Buffer][Persistent Scratch Buffer]]
+  - [[Spaceline: A sleek mode line][Spaceline: A sleek mode line]]
+  - [[Flashing when something goes wrong ─no blinking][Flashing when something goes wrong ─no blinking]]
+  - [[My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up]]
+  - [[Showing date, time, and battery life][Showing date, time, and battery life]]
+  - [[Hiding Scrollbar, tool bar, and menu][Hiding Scrollbar, tool bar, and menu]]
+  - [[Increase/decrease text size][Increase/decrease text size]]
+  - [[Delete Selection mode][Delete Selection mode]]
+  - [[Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-)]]
+  - [[Minibuffer should display line and column numbers][Minibuffer should display line and column numbers]]
+  - [[Never lose the cursor][Never lose the cursor]]
+  - [[Neotree: Directory Tree Listing][Neotree: Directory Tree Listing]]
+  - [[Tabs][Tabs]]
+  - [[Window resizing using the golden ratio][Window resizing using the golden ratio]]
+- [[Prose][Prose]]
+  - [[Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping]]
+  - [[Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!]]
+  - [[Using a Grammar & Style Checker][Using a Grammar & Style Checker]]
+  - [[Lightweight Prose Proofchecking][Lightweight Prose Proofchecking]]
+  - [[Placeholder Text ---For Learning & Experimenting][Placeholder Text ---For Learning & Experimenting]]
+  - [[Unicode Input via Agda Input][Unicode Input via Agda Input]]
+  - [[Taking a tour of one's edits][Taking a tour of one's edits]]
+  - [[Moving Text Around][Moving Text Around]]
+  - [[Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations]]
+- [[Life within Org-mode][Life within Org-mode]]
+  - [[High Speed Literate Programming][High Speed Literate Programming]]
+  - [[Using org-mode as a Day Planner][Using org-mode as a Day Planner]]
+  - [[Super Agenda][Super Agenda]]
+  - [[Automating Pomodoro --Dealing with dreadful tasks][Automating Pomodoro --Dealing with dreadful tasks]]
+  - [[Journaling][Journaling]]
+  - [[Workflow States][Workflow States]]
+  - [[Org-Emphasise for Parts of Words][Org-Emphasise for Parts of Words]]
+  - [[Working with Citations][Working with Citations]]
+  - [[Show off-screen Heading at the top of the window][Show off-screen Heading at the top of the window]]
+  - [[Clocking Work Time][Clocking Work Time]]
+  - [[Reveal.JS -- The HTML Presentation Framework][Reveal.JS -- The HTML Presentation Framework]]
+  - [[Coloured LaTeX using Minted][Coloured LaTeX using Minted]]
+  - [[Executing code from ~src~ blocks][Executing code from ~src~ blocks]]
+  - [[~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies][~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies]]
+  - [[Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images]]
+  - [[Jumping without hassle][Jumping without hassle]]
+  - [[Folding within a subtree][Folding within a subtree]]
+  - [[Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors]]
+  - [[Making then opening html's from org's][Making then opening html's from org's]]
+  - [[Making then opening pdf's from org's][Making then opening pdf's from org's]]
+  - [[Interpret the Haskell source blocks in a file][Interpret the Haskell source blocks in a file]]
+- [[Expected IDE Support][Expected IDE Support]]
+  - [[Backups][Backups]]
+  - [[Editor Documentation with Contextual Information][Editor Documentation with Contextual Information]]
+  - [[~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation]]
+  - [[Highlight Defined Emacs Lisp Symbols][Highlight Defined Emacs Lisp Symbols]]
+  - [[Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit]]
+  - [[What's changed & who's to blame?][What's changed & who's to blame?]]
+  - [[Edit as Root][Edit as Root]]
+  - [[Keep buffers open across sessions][Keep buffers open across sessions]]
+  - [[Mouse Editing Support][Mouse Editing Support]]
+  - [[Dimming Unused Windows][Dimming Unused Windows]]
+  - [[Having a workspace manager in Emacs][Having a workspace manager in Emacs]]
+  - [[Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
+  - [[Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
+  - [[Completion Frameworks][Completion Frameworks]]
+  - [[Text Folding with Origami-mode][Text Folding with Origami-mode]]
+- [[Helpful Utilities & Shortcuts][Helpful Utilities & Shortcuts]]
+  - [[Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake]]
+  - [[Reload buffer with ~f5~][Reload buffer with ~f5~]]
+  - [[Kill to start of line][Kill to start of line]]
+  - [[~file-as-list~ and ~file-as-string~][~file-as-list~ and ~file-as-string~]]
+  - [[~C-x k~ kills current buffer, ~C-u C-x k~ kills all others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
+  - [[Switching from 2 horizontal windows to 2 vertical windows][Switching from 2 horizontal windows to 2 vertical windows]]
+  - [[Obtaining Values of ~#+KEYWORD~ Annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
+  - [[Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
+  - [[Publishing articles to my personal blog][Publishing articles to my personal blog]]
+  - [[Excellent PDF Viewer][Excellent PDF Viewer]]
+- [[Conclusion][Conclusion]]
+#+END_QUOTE
 
 * Booting Up
 :PROPERTIES:
 :CUSTOM_ID: Booting-Up
 :END:
-Let's always load local variables that we've marked as safe.
+Let's always load local variables that we've marked as safe
+---see the bottom of the source of this file for an example of local variables.
 ( I tend to use loads of such locals! )
 #+BEGIN_SRC emacs-lisp
 (setq enable-local-variables :safe)
@@ -330,7 +205,7 @@ For example, I tend to have local variables to produce ~README.md~'s
 and other matters, so Emacs' Custom utility will remember to not prompt
 me each time for the safety of such local variables.
 #+begin_src emacs-lisp
-(-let [custom "~/.emacs.d/custom.el"]
+(let ((custom "~/.emacs.d/custom.el"))
   (unless (file-exists-p custom)
     (eshell-command (format "touch %s" custom)))
   (setq custom-file custom)
@@ -366,13 +241,14 @@ More precisely, in this case, ~C-x C-s~ is a normal save whereas
   (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+END_SRC
 
+#+RESULTS: enable making init and readme
+
 Where the following block has ~#+NAME: make-readme~ before it.
 This source block generates the ~README~ for the associated github repository.
 
 #+NAME: make-readme
 #+BEGIN_SRC emacs-lisp :tangle no :export_never t
 ;; Update the table of contents in this file.
-;; (package-install 'toc-org)
 (toc-org-mode t)
 (toc-org-insert-toc)
 (save-buffer)
@@ -430,16 +306,66 @@ Notes:
   - org-ruby supports inline ~#+HTML~ but [[https://github.com/wallyqs/org-ruby/issues/51][not html blocks]].
 
 + It seems coloured HTML does not render well:
+
   #+BEGIN_SRC emacs-lisp :tangle no
 (org-html-export-to-html)
 (shell-command "mv README.html README.md")
 #+END_SRC
 
 + [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]] with:
+
   #+BEGIN_SRC org :tangle no
-INFOJS_OPT: view:info toc:t buttons:t
+#+INFOJS_OPT: view:info toc:t buttons:t
 #+END_SRC
-  Looks nice for standalone pages, but doesn't incorporate nicely with github README.org.
+  This looks nice for standalone pages, but doesn't incorporate nicely with
+  github README.org.
+
+The above mentioned package ~otc-org~, which creates an up-to-date table
+of contents in an org file, at any heading tagged ~:TOC:~.  It's useful
+primarily for README files on Github.
+#+BEGIN_SRC emacs-lisp
+(use-package toc-org
+  ;; Automatically update toc when saving an Org file.
+  :hook (org-mode . toc-org-mode))
+
+;; Make toc-org links appear to be the same as their visible text.
+(defun toc-org-hrefify-org (str &optional hash)
+  "Given a heading, transform it into a href using the org-mode rules."
+  (toc-org-format-visible-link str))
+#+END_SRC
+
+I'm not sure how I feel about actually having the Github-serving TOC
+in my source file. It's nice to have around, but it breaks HTML export
+since its links are /not/ well-behaved; e.g., ~:ignore:~-ed headlines
+appear in the toc, but do not link to any visible heading in the HTML;
+likewise, headings with URLS in their names break. As such, below
+I've developed a way to erase it altogether ---alternatively, one
+could mark the toc as ~:noexport:~.
+#+BEGIN_SRC emacs-lisp
+(cl-defun my/org-replace-tree-contents (heading &key (with "") (offset 0))
+  "Replace the contents of org tree HEADING with WITH, starting at OFFSET.
+
+Clear a subtree leaving first 3 lines untouched  ⇐  :offset 3
+Deleting a tree & its contents                   ⇐  :offset -1, or any negative number.
+Do nothing to a tree of 123456789 lines          ⇐  :offset 123456789
+
+Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
+  (interactive)
+  (save-excursion
+    (beginning-of-buffer)
+    (re-search-forward (format "^\\*+ %s" (regexp-quote heading)))
+    ;; To avoid ‘forward-line’ from spilling onto other trees.
+    (org-narrow-to-subtree)
+    (org-mark-subtree)
+    ;; The 1+ is to avoid the heading.
+    (dotimes (_ (1+ offset)) (forward-line))
+    (delete-region (region-beginning) (region-end))
+    (insert with)
+    (widen)))
+
+;; Erase :TOC: body.
+;; (my/org-replace-tree-contents "Table of Contents")
+#+END_SRC
 
 :OLD_markdown_readme__posterity_learning:
 #+BEGIN_SRC emacs-lisp :tangle no :export_never t
@@ -587,7 +513,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 :END:
 
 :Stuff_in_dot_emacs:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; In ~/.emacs
 ;;
 ;; (require 'package)
@@ -598,20 +524,56 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 #+end_src
 :End:
 
-There are a few ways to install packages
---run ~C-h C-e~ for a short overview.
-The easiest, for a beginner, is to use the command ~package-list-packages~
-then find the desired package, press ~i~ to mark it for installation, then
-install all marked packages by pressing ~x~.
+There are a few ways to install packages ---run ~C-h C-e~ for a short overview.
+The easiest, for a beginner, is to use the command ~package-list-packages~ then
+find the desired package, press ~i~ to mark it for installation, then install all
+marked packages by pressing ~x~.
 
-Alternatively, one uses the declarative configuration tool [[https://github.com/jwiegley/use-package/][use-package]]
---a meta-package that manages other packages and the way they interact.
+Alternatively, one uses the declarative configuration tool [[https://github.com/jwiegley/use-package/][use-package]] ---a
+macro/interface that manages other packages and the way they interact.
++ It allows us to tersely organise a package's configuration.
+  - By default, ~(use-package foo)~ only loads a package, if it's on our system.
+    * Use the standalone keyword ~:disabled~ to turn off loading
+      a module that, say, you're not using anymore.
++ It is /not/ a package manger, but we can make it one by having it automatically
+  install modules, via Emacs packing mechanism, when they're not in our system.
+
+  We achieve this by using the keyword option ~:ensure t~.
++ Here are common keywords we will use, in super simplified terms.
+  - ~:init   f₁ … fₙ~  /Always/ executes code forms ~fᵢ~ /before/ loading a package.
+  - ~:diminish str~  Uses /optional/ string ~str~ in the modeline to indicate
+                   this module is active. Things we use often needn't take
+                   real-estate down there and so no we provide no ~str~.
+  - ~:config f₁ … fₙ~ /Only/ executes code forms ~fᵢ~ /after/ loading a package.
+
+    The remaining keywords only take affect /after/ a module loads.
+
+  - ~:bind ((k₁ . f₁) … (kₙ . fₙ)~ Lets us bind keys ~kᵢ~, such as
+    ~"M-s o"~, to functions, such as =occur=.
+    * When /n = 1/, the extra outer parenthesis are not necessary.
+  - ~:hook ((m₁ … mₙ) . f)~ Enables functionality ~f~ whenever we're in one of the
+    modes ~mᵢ~, such as ~org-mode~. The ~. f~, along with the outermost parenthesis,
+    is optional and defaults to the name of the package ---Warning: Erroneous
+    behaviour happens if the package's name is not a function provided by the
+    package; a common case is when package's name does /not/ end in ~-mode~,
+    leading to the invocation ~((m₁ … mₙ) . <whatever-the-name-is>-mode)~ instead.
+    # More generally, it let's us hook functions fᵢ, which may depend on the
+    # current mode, to modules mᵢ.
+    Additionally, when /n = 1/, the extra outer parenthesis are not necessary.
+  - ~:custom (k₁ v₁ d₁) … (kₙ vₙ dₙ)~ Sets a package's custom variables ~kᵢ~ to have
+    values ~vᵢ~, along with /optional/ user documentation ~dᵢ~ to explain to yourself,
+    in the future, why you've made this decision.
+
+    This is essentially ~setq~ within ~:config~.
+
+# TODO: Give a terse overview of use-package, such as it not being a
+# package-manager itself but rather a package configuration interface.
 
 Background:
-Recently I switched to mac --first time trying the OS.
+Recently I switched to mac ---first time trying the OS.
 I had to do a few ~package-install~'s and it was annoying.
 I'm looking for the best way to package my Emacs installation
---inlcuding my installed pacakages and configuration--
+--including my installed packages and configuration--
 so that I can quickly install it anywhere, say if I go to another machine.
 It seems ~use-package~ allows me to configure and auto install packages.
 On a new machine, when I clone my ~.emacs.d~ and start emacs,
@@ -620,17 +582,11 @@ all of my packages through ~use-package~ when it detects they're missing.
 
 # The following block should be the top-most loaded items.
 
-First we need the basic ~package~ module which not only allows us to obtain ~use-package~ but
-acts as its kernel.
+First we need the basic ~package~ module which not only allows us to obtain
+~use-package~ but acts as its package manager.
 #+BEGIN_SRC emacs-lisp
 ;; Make all commands of the “package” module present.
 (require 'package)
-
-;; Speef up start up by not loading any packages at startup.
-;; (setq package-enable-at-startup nil)
-;; Look at the *Messages* buffer before setting this to nil, then after.
-
-;; (setq gnutls-algorithm-priority nil) "NORMAL:-VERS-TLS1.3")
 
 ;; Internet repositories for new packages.
 (setq package-archives '(("org"       . "http://orgmode.org/elpa/")
@@ -643,11 +599,8 @@ acts as its kernel.
 
 ;; Actually get “package” to work.
 (package-initialize)
-
 (package-refresh-contents)
 #+END_SRC
-
-#+RESULTS:
 
 We can now:
 + ~M-x list-packages~ to see all melpa packages that can install
@@ -658,11 +611,10 @@ We can now:
   at https://github.com/milkypostman/melpa
 
 :Faq:
-If there are issues with loading the archives,
-say, "Failed to download ‘gnu’ archive."
-then ensure you can both read and write, recursively, to your .emacs.d/
-E.g., within emacs try to execute (package-refresh-contents)
-and you'll observe a permissions error.
+If there are issues with loading the archives, say, "Failed to download ‘gnu’
+archive."  then ensure you can both read and write, recursively, to your
+.emacs.d/ E.g., within emacs try to execute (package-refresh-contents) and
+you'll observe a permissions error.
 :End:
 
 We now bootstrap ~use-package~,
@@ -670,78 +622,76 @@ We now bootstrap ~use-package~,
 ;; Unless it's already installed, update the packages archives,
 ;; then install the most recent version of “use-package”.
 (unless (package-installed-p 'use-package)
-  (package-refresh-contents)
   (package-install 'use-package))
 
 (require 'use-package)
 #+END_SRC
 
-#+RESULTS:
-: use-package
-
-We can now invoke ~(use-package XYZ :ensure t)~
-which should check for the ~XYZ~ package and make sure it is accessible.
-If not, the ~:ensure t~ part tells ~use-package~ to download it
---using ~package.el~--
-and place it somewhere accessible, in ~~/.emacs.d/elpa/~ by default.
-
-By default we would like to download packages, since I do not plan on installing them manually
-by download ~.el~ files and placing them in the correct places on my system.
+We can now invoke ~(use-package XYZ :ensure t)~ which should check for the ~XYZ~
+package and make sure it is accessible.  If not, the ~:ensure t~ part tells
+~use-package~ to download it --using ~package.el~-- and place it somewhere
+accessible, in ~~/.emacs.d/elpa/~ by default.  By default we would like to
+download packages, since I do not plan on installing them manually by download
+~.el~ files and placing them in the correct places on my system.
 #+begin_src emacs-lisp
 (setq use-package-always-ensure t)
 #+end_src
+The use of ~:ensure t~ only installs absent modules, but it does no updating.
+Let's set up [[https://github.com/rranelli/auto-package-update.el][an auto-update mechanism]].
+#+BEGIN_SRC emacs-lisp
+(use-package auto-package-update
+  :config
+  ;; Delete residual old versions
+  (setq auto-package-update-delete-old-versions t)
+  ;; Do not bother me when updates have taken place.
+  (setq auto-package-update-hide-results t)
+  ;; Update installed packages at startup if there is an update pending.
+  (auto-package-update-maybe))
+#+END_SRC
 
-#+RESULTS:
-: t
-
-Here's an example use of ~use-package~.
-Below I have my “show recent files pop-up” command set to ~C-x C-r~;
-but what if I forget? This mode shows me all key completions when I type ~C-x~, for example.
-Moreover, I will be shown other commands I did not know about! Neato :-)
+Here's another example use of ~use-package~.  Below I have my “show recent files
+pop-up” command set to ~C-x C-r~; but what if I forget? This mode shows me all key
+completions when I type ~C-x~, for example.  Moreover, I will be shown other
+commands I did not know about! Neato :-)
 #+BEGIN_SRC emacs-lisp
 ;; Making it easier to discover Emacs key presses.
 (use-package which-key
- :diminish which-key-mode
- :init (which-key-mode)
- :config (which-key-setup-side-window-bottom)
-         (setq which-key-idle-delay 0.05)
-)
+  :diminish
+  :config (which-key-mode)
+          (which-key-setup-side-window-bottom)
+          (setq which-key-idle-delay 0.05))
 #+END_SRC
 
-#+RESULTS:
-: t
-
-The ~:diminish~ keyword indicates that we do not want the mode's name to be
-shown to us in the modeline --the area near the bottom of Emacs.
-It does so by using the ~diminish~ package, so let's install that.
+The ~:diminish~ keyword indicates that we do not want the mode's name to be shown
+to us in the modeline ---the area near the bottom of Emacs.  It does so by using
+the ~diminish~ package, so let's install that.
 #+begin_src emacs-lisp
-(use-package diminish)
-
-;; Let's hide some markers.
-(diminish 'eldoc-mode)
-(diminish 'org-indent-mode)
-(diminish 'subword-mode)
+(use-package diminish
+  :config ;; Let's hide some markers.
+  (diminish 'eldoc-mode)
+  (diminish 'org-indent-mode)
+  (diminish 'subword-mode))
 #+end_src
 
 Here are other packages that I want to be installed onto my machine.
-
 #+BEGIN_SRC emacs-lisp
 ;; Efficient version control.
 (use-package magit
-  :config (global-set-key (kbd "C-x g") 'magit-status)
-)
+  :config (global-set-key (kbd "C-x g") 'magit-status))
 
 (use-package htmlize)
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 
-(use-package biblio)     ;; Quick BibTeX references, sometimes.
+;; Quick BibTeX references, sometimes.
+(use-package biblio)
 
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets)
-(add-hook 'org-mode-hook 'org-bullets-mode)
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode))
 
+;; Haskell's cool
 (use-package haskell-mode)
 
 (use-package dash)    ;; “A modern list library for Emacs”
@@ -934,8 +884,7 @@ Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/
 ;; after the locals have been loaded.
 (add-hook 'find-file-hook
   '(lambda ()
-      (add-hook 'hack-local-variables-hook 'my/magit-check-file-and-popup)
-   ))
+      (add-hook 'hack-local-variables-hook 'my/magit-check-file-and-popup)))
 #+end_src
 Let's try this out:
 #+BEGIN_EXAMPLE emacs-lisp
@@ -1022,6 +971,29 @@ NOPE ;; ⇒ "NOPE"
 #+end_example
 :End:
 
+** Hydra: Supply a prefix only once
+:PROPERTIES:
+:CUSTOM_ID: Hydra:-Supply-a-prefix-only-once
+:END:
+Invoke all possible key extensions having a common prefix
+by supplying the prefix only once. C.f. “hydra-zoom” from the docs.
+After the prefix is supplied, all extensions are shown in a minibuffer.
+#+BEGIN_SRC emacs-lisp
+(use-package hydra :demand t)
+
+;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
+;;   ;; List of triples (extension method description) )
+#+END_SRC
+
+From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
+#+begin_quote
+Once you summon the Hydra through the prefixed binding (the body + any one head), all heads can be called in succession with only a short extension.
+
+The Hydra is vanquished once Hercules, any binding that isn't the Hydra's head, arrives. Note that Hercules, besides vanquishing the Hydra, will still serve his original purpose, calling his proper command. This makes the Hydra very seamless, it's like a minor mode that disables itself auto-magically.
+#+end_quote
+
+See [[Taking a tour of one's edits]] below for a small and useful example.
+
 ** Syncing to the System's =$PATH=
 :PROPERTIES:
 :CUSTOM_ID: Syncing-to-the-System's-~$PATH~
@@ -1063,27 +1035,23 @@ See these [[https://github.com/purcell/exec-path-from-shell][docs]] for setting 
 | /Users/musa/Library/Haskell/bin | /usr/local/bin | /usr/bin | /bin | /usr/sbin | /sbin | /Library/TeX/texbin | /usr/local/share/dotnet | /opt/X11/bin | /Library/Frameworks/Mono.framework/Versions/Current/Commands | /Users/musa/Library/Haskell/bin |
 :End:
 
-** Keeping my system up to date
+** Keeping my system up to date & Installing OS packages from within Emacs
 :PROPERTIES:
-:CUSTOM_ID: Keeping-My-System-Up-to-Date
+:CUSTOM_ID: Keeping-my-system-up-to-date---Installing-OS-packages-from-within-Emacs
 :END:
+Let's ensure our system is always up to date.
 #+BEGIN_SRC emacs-lisp
 (defun my/stay-up-to-date ()
+  "Ensure that OS and Emacs package listings are up to date.
 
-  "Ensure that OS and Emacs pacakges are up to date.
-
-   Takes ~5 secons when everything is up to date.
-  "
-
+   Takes ~5 seconds when everything is up to date."
   (async-shell-command "brew update && brew upgrade")
   (other-window 1)
   (rename-buffer "Keeping-system-up-to-date")
 
-  (package-refresh-contents)
-  (insert "Emacs packages have been updated.")
-
-  (other-window 1)
-)
+  (package-refresh-contents 'please-do-so-in-the-background)
+  (message "Updated Emacs package manager.")
+  (other-window 1))
 
 (add-hook 'after-init-hook 'my/stay-up-to-date)
 
@@ -1091,6 +1059,33 @@ See these [[https://github.com/purcell/exec-path-from-shell][docs]] for setting 
 ;; after-init-hook which hides the startup message.
 (add-hook 'after-init-hook 'display-startup-echo-area-message)
 #+END_SRC
+
+Sometimes Emacs packages depend on existing system binaries,
+~use-package~ let's us ensure these exist using the ~:ensure-system-package~
+keyword extension.
+
+- This is like ~:ensure t~ but operates at the OS level and uses your default
+  OS package manager.
+
+Let's obtain the extension.
+#+BEGIN_SRC emacs-lisp
+;; Auto installing OS system packages
+(use-package use-package-ensure-system-package)
+#+END_SRC
+Here's an example use:
+#+BEGIN_SRC emacs-lisp :tangle no
+(shell-command-to-string "type rg") ;; ⇒ rg not found
+(use-package rg
+  :ensure-system-package rg) ;; ⇒ There's a buffer *system-packages*
+                             ;;   installing this tool at the OS level!
+#+END_SRC
+If you look at the ~*Messages*~ buffer, via ~C-h e~, on machine it says
+~brew install rg: finished~ ---it uses ~brew~ which is my OS package manager!
+
++ The [[https://github.com/jwiegley/use-package#use-package-ensure-system-package][use-package-ensure-system-package]] documentation for a flurry of use cases.
++ The extension makes use of [[https://gitlab.com/jabranham/system-packages][system-packages]]; see its documentation to learn
+  more about managing installed OS packages from within Emacs.
+
 ** Who am I? ─Using Gnus for Gmail
 :PROPERTIES:
 :CUSTOM_ID: Who-am-I?-─Using-Gnus-for-Gmail
@@ -1238,10 +1233,8 @@ I always want to be in Org-mode and input unicode:
 #+BEGIN_SRC elisp
 (add-hook 'ea-popup-hook
   (lambda (app-name window-title x y w h)
-   (org-mode)
-   (set-input-method "Agda")
-  )
-)
+    (org-mode)
+    (set-input-method "Agda")))
 #+END_SRC
 
 ** Restarting Emacs
@@ -1548,36 +1541,11 @@ this package is no longer maintained. It works on my machine.
 :PROPERTIES:
 :CUSTOM_ID: Increase/decrease-text-size
 :END:
-# and word wrapping
-
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-+") 'text-scale-increase)
 (global-set-key (kbd "C--") 'text-scale-decrease)
-  ;; C-x C-0 restores the default font size
-
-(add-hook 'text-mode-hook
-            '(lambda ()
-               (visual-line-mode 1)
-                   (diminish 'visual-line-mode)
-               ))
+;; C-x C-0 restores the default font size
 #+END_SRC
-
-:Ignore:
-
-Reason: It seems on a file of ~10,000 lines, having this enabled
-         results in notable lag for Helm! To investigate at a later date.
-
-         The culprit may be fci-mode, as it is reported in the profiler.
-
-
-Show ruler at 80 characters, for text and prog mode.
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package fill-column-indicator)
-(add-hook 'text-mode-hook 'fci-mode)
-(add-hook 'prog-mode-hook 'fci-mode)
-#+END_SRC
-
-:End:
 
 ** Delete Selection mode
 :PROPERTIES:
@@ -1605,12 +1573,8 @@ We can delete selected text just by hitting the backspace key.
 
 ;; Colour parens, and other delimiters, depending on their depth.
 ;; Very useful for parens heavy languages like Lisp.
-(use-package rainbow-delimiters)
-
-(add-hook 'org-mode-hook
-  '(lambda () (rainbow-delimiters-mode 1)))
-(add-hook 'prog-mode-hook
-  '(lambda () (rainbow-delimiters-mode 1)))
+(use-package rainbow-delimiters
+  :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
 #+end_src
 
 For example,
@@ -1779,11 +1743,8 @@ Reduce mental strain of locating the cursour when navigation happens;
 e.g., when we switch windows or scroll, we get a wave of light near the cursor.
 #+begin_src emacs-lisp
 (use-package beacon
-  :ensure t
-  :demand t
-  :init
-  (setq beacon-color "#666600")
-  :config (beacon-mode))
+  :config (setq beacon-color "#666600")
+  :hook ((org-mode text-mode) . beacon-mode))
 #+end_src
 ** Neotree: Directory Tree Listing
 :PROPERTIES:
@@ -1806,7 +1767,11 @@ We open a nifty file manager upon startup.
 ;; Open it up upon startup.
 (neotree-toggle)
 #+END_SRC
-By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file management.
+By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file
+management.
+
+  ⟨ Edit: As a naive user, this is what I thought; yet a year later,
+                  I've almost never used neotree. ⟩
 
 Useful navigational commands include
 + ~U~ to go up a directory.
@@ -1861,12 +1826,18 @@ are still readable.
 After some time this got a bit annoying and I'm no longer  using this.
 
 * Prose
+:PROPERTIES:
+:CUSTOM_ID: Prose
+:END:
 
 Let's setup a spellchecker and other expected features of a word processing tool
----however these features apply Emacs wide since nearly everything can is
+---however these features apply Emacs-wide since nearly everything is
 essentially text (•̀ᴗ•́)و
 
 ** Fill-mode ---Word Wrapping
+:PROPERTIES:
+:CUSTOM_ID: Fill-mode----Word-Wrapping
+:END:
 In fill mode, when you type past the end of a line, Emacs automatically starts a
 new line, cleverly formatting paragraphs. This is a powerful form of “word
 wrap”.
@@ -1900,19 +1871,17 @@ I would like to check spelling by default.
 
 #+BEGIN_SRC emacs-lisp
 (use-package flyspell
-  :hook (
-           (prog-mode . flyspell-prog-mode)
-           (text-mode . flyspell-mode))
-)
+  :hook ((prog-mode . flyspell-prog-mode)
+         (text-mode . flyspell-mode)))
 #+END_SRC
 # (add-hook 'text-mode-hook 'flyspell-mode)
 
 Enabling fly-spell for text-mode enables it for org and latex modes since they
 derive from text-mode.
 
-Flyspell needs a spell checking tool, which is not included in Emacs.
-We install ~aspell~ spell checker using, say, homebrew via ~brew install aspell~.
-Note that Emacs' ~ispell~ is the interface to such a command line spelling utility.
+Flyspell needs a spell checking tool, which is not included in Emacs.  We
+install ~aspell~ spell checker using, say, homebrew via ~brew install aspell~.  Note
+that Emacs' ~ispell~ is the interface to such a command line spelling utility.
 # See available dictionary via ~aspell dicts~.
 
 #+BEGIN_SRC emacs-lisp
@@ -2106,25 +2075,30 @@ By looking around the source code, I can do all three stages smoothly (•̀ᴗ�
 
 (add-hook 'langtool-error-exists-hook
   (lambda ()
-    (langtool-correct-buffer)
-    (langtool-check-done)
-  ))
+     (langtool-correct-buffer)
+     (langtool-check-done)))
 
-(global-set-key "\M-^" (lambda () (interactive) (message "Grammar checking begun ...") (langtool-check)))
+(global-set-key "\M-^"
+                (lambda ()
+                  (interactive)
+                  (message "Grammar checking begun ...")
+                  (langtool-check)))
 #+END_SRC
 
 The checking command is silent, we added a bit of comforting acknowledgement to the user.
 
 ** Lightweight Prose Proofchecking
+:PROPERTIES:
+:CUSTOM_ID: Lightweight-Prose-Proofchecking
+:END:
 Let's [[https://github.com/bnbeckwith/writegood-mode][write good]]!
 
 #+BEGIN_SRC emacs-lisp
 (use-package writegood-mode
-  :config
   ;; Load this whenver I'm composing prose.
-  (add-hook 'text-mode-hook 'writegood-mode)
-  (add-hook 'org-mode-hook 'writegood-mode)
+  :hook (text-mode org-mode)
   ;; Some additional weasel words.
+  :config
   (--map (push it writegood-weasel-words)
          '("some" "simple" "simply" "easy" "often" "easily" "probably"
            "clearly"               ;; Is the premise undeniably true?
@@ -2173,6 +2147,9 @@ Sentences that cut out the following problems may become stronger
    Harder to catch manually, but easier mechanically ;-)
 
 ** Placeholder Text ---For Learning & Experimenting
+:PROPERTIES:
+:CUSTOM_ID: Placeholder-Text----For-Learning---Experimenting
+:END:
 
 When learning about Emacs formatting commands, such as zap-to-char ~M-z~
 or transpose ~M-t~, it's best to have filler text ---even better when
@@ -2221,7 +2198,7 @@ I almost always want the ~agda-mode~ input method.
 #+BEGIN_SRC emacs-lisp
 (require 'agda-input)
 (add-hook 'text-mode-hook (lambda () (set-input-method "Agda")))
-(add-hook 'org-mode-hook (lambda () (set-input-method "Agda")))
+(add-hook 'org-mode-hook  (lambda () (set-input-method "Agda")))
 #+END_SRC
 
 :agda_Command_line_arguments:
@@ -2463,8 +2440,8 @@ Also:
 (setq org-return-follows-link t)
 #+END_SRC
 
-I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet]]
-and a [[http://www.howardism.org/Technical/Emacs/spreadsheet.html][friendly tutorial]].
+I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet]] and
+a [[http://www.howardism.org/Technical/Emacs/spreadsheet.html][friendly tutorial]].
 
 ** High Speed Literate Programming
 :PROPERTIES:
@@ -2541,8 +2518,8 @@ Interestingly, ~s-l~ is “goto line”.
 + Usually we want a newline then we indent, let's make that the default.
    #+BEGIN_SRC emacs-lisp
 (add-hook 'org-mode-hook '(lambda ()
-  (local-set-key (kbd "<return>") 'org-return-indent))
-  (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline))
+   (local-set-key (kbd "<return>") 'org-return-indent))
+   (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline))
 #+END_SRC
 
    Notice that I've also added another kind of return, for when I want to
@@ -2746,7 +2723,6 @@ Let's keep track of how many times, and when, we have pushed events to other dat
 (setq org-log-reschedule 'time)
 #+END_SRC
 
-
 *Step 3: Quickly review the upcoming week*
 The next day we begin our work, we press ~C-c a a~ to see the
 scheduled tasks for this week --~C-c C-s~ to re-schedule the
@@ -2828,7 +2804,7 @@ archive file too, if we enable it so.
 #+END_SRC
 
 #+begin_src emacs-lisp
-;; Invoing the agenda command shows the agenda and enables
+;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
 (org-agenda "a" "a")
 #+end_src
@@ -2854,6 +2830,9 @@ Let's install some helpful views for our agenda.
 
 # Org-protocol is a great way to create capture notes in org-mode from other applications.
 ** Super Agenda
+:PROPERTIES:
+:CUSTOM_ID: Super-Agenda
+:END:
 The following incentivizes us to make use of ~:tags:~ so that our agenda displays
 the tasks of the day depending on their tags ---possibly using complex predicates.
 This is far preferable to having them all in one big list.
@@ -2912,8 +2891,7 @@ Yet, sometimes it's hard to even get started on some tasks.
   (lambda ()
   (unless (s-prefix? "0:00" (org-timer-value-string))
      (message-box "The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave."))
-     (org-timer-stop)
-     ))
+     (org-timer-stop)))
 #+END_SRC
 
 Note that this does not conflict with the total effort estimate for the task.
@@ -3198,7 +3176,7 @@ I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
 
-** TODO COMMENT Making Block Delimiters Less Intrusive :noexport:prettify_symbols_not_loading:
+** TODO COMMENT NO: Making Block Delimiters Less Intrusive :noexport:prettify_symbols_not_loading:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Making-Block-Delimiters-Less-Intrusive
 :END:
@@ -3425,13 +3403,12 @@ In case we forgot which heading we're under, let's keep
 the current heading stuck at the top of the window.
 #+BEGIN_SRC emacs-lisp
  (use-package org-sticky-header
+  :hook (org-mode . org-sticky-header-mode)
   :config
   (setq-default
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / "))
-
-(add-hook 'org-mode-hook #'org-sticky-header-mode)
 #+END_SRC
 
 ** Clocking Work Time
@@ -3553,7 +3530,7 @@ will have will mention the time elapsed alongside the task name.
 
   When you've gone above your estimate time, the modeline shows it to be red.
 
-** COMMENT ⟨replaced with yankpand, below⟩ Template expansion (<s Tab, etc.)
+** COMMENT NO: ⟨replaced with yankpand, below⟩ Template expansion (<s Tab, etc.)
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-⟨replaced-with-yankpand,-below⟩-Template-expansion-(<s-Tab,-etc.)
 :END:
@@ -3752,7 +3729,7 @@ More languages can be added using ~add-to-list~.
 :CUSTOM_ID: ~ox-extra~:-Using-~:ignore:~-to-ignore-headings-but-use-the-bodies
 :END:
 
-** COMMENT org-mode header generation
+** COMMENT NO: org-mode header generation
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-org-mode-header-generation
 :END:
@@ -3884,8 +3861,7 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
   (save-excursion
     (org-narrow-to-subtree)
     (org-shifttab)
-    (widen))
-)
+    (widen)))
 
 (add-hook 'org-mode-hook '(lambda ()
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
@@ -4037,7 +4013,7 @@ consistent for when trees share similar properties.
 ;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
 #+END_SRC
 
-** COMMENT Exporting Tables to CSV
+** COMMENT NO: Exporting Tables to CSV
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Exporting-Tables-to-CSV
 :END:
@@ -4048,7 +4024,7 @@ Org-mode can export tables as TAB or comma delimited formats. I set the default 
 Exporting to CSV format is the only one I use and this provides the default so I can just hit RETURN when prompted for the format.
 
 To export the following table I put the cursor inside the table and hit M-x org-table-export which prompts for a filename and the format which defaults to orgtbl-to-csv from the setting above.
-** COMMENT tangeling to multiple files, org-mode
+** COMMENT NO: tangeling to multiple files, org-mode
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-tangeling-to-multiple-files,-org-mode
 :END:
@@ -4176,11 +4152,18 @@ delete these things to get to the older version; i.e.,
 the red ‘-’ are newer items.
 
 ** Editor Documentation with Contextual Information
+:PROPERTIES:
+:CUSTOM_ID: Editor-Documentation-with-Contextual-Information
+:END:
 
-I like [[https://github.com/Wilfred/helpful][helpful]] and wanted it to have the same behaviour as ~C-h o~, which ~helpful-at-point~ does not achieve. The incantation below makes ~C-h o~ use ~helpful~
-in that if the cursour is on a symbol, then it is offered to the user as a default search item for help, otherwise a plain search box for help appears. Using a universal argument lets us drop to the built-in help command.
+/Emacs is an extensible self-documenting editor!/
 
+Let's use a helpful Emacs /documentation/ system that cleanly shows a lot of
+contextual information ---then let's /extend/ that to work as we want it to:
+~C-h o~ to describe the symbol at point.
 #+BEGIN_SRC emacs-lisp
+(use-package helpful)
+
 (defun my/describe-symbol (symbol)
   "A “C-h o” replacement using “helpful”:
    If there's a thing at point, offer that as default search item.
@@ -4217,7 +4200,16 @@ in that if the cursour is on a symbol, then it is offered to the user as a defau
 (global-set-key (kbd "C-h k") #'helpful-key)
 #+END_SRC
 
+I like [[https://github.com/Wilfred/helpful][helpful]] and wanted it to have the same behaviour as ~C-h o~, which
+~helpful-at-point~ does not achieve. The incantation above makes ~C-h o~ use ~helpful~
+in that if the cursor is on a symbol, then it is offered to the user as a
+default search item for help, otherwise a plain search box for help
+appears. Using a universal argument lets us drop to the built-in help command.
+
 ** ~M-n,p~: Word-at-Point Navigation
+:PROPERTIES:
+:CUSTOM_ID: -M-n-p---Word-at-Point-Navigation
+:END:
 
 Let's mimic the ~C-n,p~ constructs from line to word, so that unoccupied ~M-n,p~ now
 serve to take us to the next or previous instance of the word under the
@@ -4256,6 +4248,9 @@ Also …
 #+END_SRC
 
 ** Highlight Defined Emacs Lisp Symbols
+:PROPERTIES:
+:CUSTOM_ID: Highlight-Defined-Emacs-Lisp-Symbols
+:END:
 
 Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes
 it highlight all defined names ---as long as we're in Lisp mode, whence in
@@ -4277,15 +4272,12 @@ and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???,
 #+BEGIN_SRC emacs-lisp
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
-  :config
   ;; Enable it for text-like locations
-  (add-hook 'text-mode-hook (lambda () (hl-todo-mode t)))
-  ;; Adding some new keywords: TEST, WK, MA, JC.
-  (add-to-list 'hl-todo-keyword-faces '("TEST" . "#dc8cc3"))
-  (add-to-list 'hl-todo-keyword-faces '("MA" . "#dc8cc3"))
-  (add-to-list 'hl-todo-keyword-faces '("WK" . "#dc8cc3"))
-  (add-to-list 'hl-todo-keyword-faces '("JC" . "#dc8cc3"))
-)
+  :hook ((text-mode org-mode prog-mode) . hl-todo-mode)
+  :init
+  ;; Adding new keywords
+  (loop for kw in '("TEST" "MA" "WK" "JC")
+        do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
 #+END_SRC
 
 Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
@@ -4313,29 +4305,6 @@ items there (•̀ᴗ•́)و
 
 + Inline todo keywords are pickedup if they have a colon after them; e.g.,
   TODO: Example.
-
-** Hydra: Supply a prefix only once
-:PROPERTIES:
-:CUSTOM_ID: Hydra:-Supply-a-prefix-only-once
-:END:
-Invoke all possible key extensions having a common prefix
-by supplying the prefix only once. C.f. “hydra-zoom” from the docs.
-After the prefix is supplied, all extensions are shown in a minibuffer.
-#+BEGIN_SRC emacs-lisp
-(use-package hydra :demand t)
-
-;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
-;;   ;; List of triples (extension method description) )
-#+END_SRC
-
-From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
-#+begin_quote
-Once you summon the Hydra through the prefixed binding (the body + any one head), all heads can be called in succession with only a short extension.
-
-The Hydra is vanquished once Hercules, any binding that isn't the Hydra's head, arrives. Note that Hercules, besides vanquishing the Hydra, will still serve his original purpose, calling his proper command. This makes the Hydra very seamless, it's like a minor mode that disables itself auto-magically.
-#+end_quote
-
-See [[Taking a tour of one's edits]] below for a small and useful example.
 
 ** What's changed & who's to blame?
 :PROPERTIES:
@@ -4581,6 +4550,9 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have
 #+END_SRC
 
 ** Coding with a Fruit Salad: Semantic Highlighting
+:PROPERTIES:
+:CUSTOM_ID: Coding-with-a-Fruit-Salad--Semantic-Highlighting
+:END:
 
 + /Syntax/ highlighting ⇨ Specific words are highlighted in strong colours so that
     the /structure/ can be easily gleaned.
@@ -5258,7 +5230,7 @@ After our yankpad templates are generated, we need to load it.
 ;; After init hook; see above near use-package install.
 (yankpad-reload)
 #+END_SRC
-** COMMENT On the fly syntax checking
+** COMMENT NO: On the fly syntax checking
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-On-the-fly-syntax-checking
 :END:
@@ -5295,6 +5267,9 @@ f x = x -- show x
 
 :End:
 ** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
+:PROPERTIES:
+:CUSTOM_ID: Text-Folding-with---https---github-com-gregsexton-origami-el--Origami-mode--
+:END:
 
 Let's use a feature-full folding mode.
 #+BEGIN_SRC emacs-lisp
@@ -5502,6 +5477,9 @@ See [[https://orgmode.org/manual/Org-syntax.html][here]] on how to see the abstr
 and how to manipulate it.
 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
+:PROPERTIES:
+:CUSTOM_ID: Quickly-pop-up-a-terminal--run-a-command--close-it----and-zsh
+:END:
 
 /Pop up a terminal, do some work, then close it using the same command./
 
@@ -5554,6 +5532,9 @@ The defaults have been good enough for me, for now ---as all else is
 achieved via Emacs ;-)
 
 *** COMMENT Homemade attempt before learning about shell-pop :Posterity:Learning:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Homemade-attempt-before-learning-about-shell-pop
+:END:
 #+begin_src emacs-lisp :tangle no
 (cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
    "Pop up a terminal, do some work, then close it using the same command.
@@ -5647,12 +5628,14 @@ Besides the expected PDF viewing utilities, such as search, annotation, and cont
 with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
 easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
 * Conclusion
-
-Emacs is fun ^_^
+:PROPERTIES:
+:CUSTOM_ID: Conclusion
+:END:
+                         Emacs   is   fun ^_^
 
 Bye!
 
-* Undo tree                                                        :ignore:noexport:
+* Undo tree                                         :ignore:noexport:
 :PROPERTIES:
 :CUSTOM_ID: Undo-tree
 :END:
@@ -5756,11 +5739,13 @@ avoid scaring anyone. I may use it in my personal stuff.
 Since I'm using ~use-package~, I can invoke ~M-x describe-personal-keybindings~ to see what key bindings I've defined.
 Since not all my bindings are via ~use-package~, it does not yet cover all of my bindings.
 
-We could run ~C-h b~ to see our bindings:
+We could run ~C-h b~ to see /all/ our bindings
+---or ~M-x describe-personal-bindings~ to see only those
+set throughout our init file.
 #+BEGIN_SRC emacs-lisp
 (use-package helm-descbinds
   :defer t
-  :bind (("C-h b" . helm-descbinds)))
+  :bind ("C-h b" . helm-descbinds))
 #+END_SRC
 
 Finally, we can observe which features are active in our current Emacs with,
@@ -5983,6 +5968,9 @@ take care of this.
 # on word boundaries and adds symbols to the fringe.
 # (set-default 'truncate-lines t)
 *** theme magic
+:PROPERTIES:
+:CUSTOM_ID: theme-magic
+:END:
 [[https://github.com/jcaw/theme-magic][Theme-magic]] looks nice, in theory, but I've not found it to be useful, for me.
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; Automatically propagate Emacs theme changes to OS
@@ -5992,6 +5980,9 @@ take care of this.
 #+END_SRC
 
 ** TODO COMMENT Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Referencing-Text-From-Code-Blocks----Attaching-prose-as-doc-strings
+:END:
 
 Sources:
 + John Kitchin https://lists.gnu.org/archive/html/emacs-orgmode/2018-05/msg00350.html
@@ -6043,6 +6034,9 @@ Let's make ~get-named-text~ a globally defined and callable code block:
 
 
 ***  COMMENT Example
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Example
+:END:
 For example:
 #+NAME: ADD
 #+BEGIN_SRC emacs-lisp -n -r :noweb yes :tangle test.el
@@ -6065,6 +6059,9 @@ We use the XXX function add to calculate the sum of two numbers.
 
 + There is a reason we only support two args
 ** Easy tasks
+:PROPERTIES:
+:CUSTOM_ID: Easy-tasks
+:END:
 
 # TODO: MA: ⇨ Add unit tests for the init file.
 
@@ -6095,7 +6092,7 @@ We use the XXX function add to calculate the sum of two numbers.
 
 * COMMENT footer & pushing to blog
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-footer
+:CUSTOM_ID: COMMENT-footer---pushing-to-blog
 :END:
 
 C-c C-c this snippet to export to blog.
