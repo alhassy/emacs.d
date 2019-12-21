@@ -40,7 +40,7 @@ An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispC
 and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of the bindings
 in ~“this”~ configuration.
 
-* Table of Contents                                  :Github:QUOTE:TOC_2_org:
+* Table of Contents                                  :Github:QUOTE:TOC:
 #+BEGIN_QUOTE
 - [[Booting Up][Booting Up]]
   - [[=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=]]
