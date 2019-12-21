@@ -1,11 +1,8 @@
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
-
+#
 # TODO: Get rid of folding-mode in-favour of origami.
-
-# (which-key-mode -1)
-# (persp-mode -1)
 
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -22,7 +19,7 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
-* Abstract                                                           :ignore:
+* Abstract        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
 :END:
@@ -69,7 +66,7 @@ An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispC
 and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of the bindings
 in ~“this”~ configuration.
 
-* Table of Contents                                  :Github:QUOTE:TOC_2_org:
+* Table of Contents  :Github:QUOTE:TOC_2_org:
 :PROPERTIES:
 :CUSTOM_ID: Table-of-Contents
 :END:
@@ -80,6 +77,7 @@ in ~“this”~ configuration.
   - [[=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=]]
   - [[=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=]]
   - [[~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~]]
+  - [[Installing Emacs packages directly from source][Installing Emacs packages directly from source]]
   - [[=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git]]
   - [[Syncing to the System's =$PATH=][Syncing to the System's =$PATH=]]
   - [[Keeping my system up to date][Keeping my system up to date]]
@@ -87,16 +85,16 @@ in ~“this”~ configuration.
   - [[Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail]]
   - [[Hydra: Supply a prefix only once][Hydra: Supply a prefix only once]]
 - [[Cosmetics][Cosmetics]]
-  - [[Themes][Themes]]
   - [[Startup message: Emacs & Org versions][Startup message: Emacs & Org versions]]
+  - [[Themes][Themes]]
   - [[Persistent Scratch Buffer][Persistent Scratch Buffer]]
   - [[Spaceline: A sleek mode line][Spaceline: A sleek mode line]]
-  - [[Flashing when something goes wrong ─no blinking][Flashing when something goes wrong ─no blinking]]
+  - [[Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking]]
   - [[My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up]]
   - [[Showing date, time, and battery life][Showing date, time, and battery life]]
   - [[Hiding Scrollbar, tool bar, and menu][Hiding Scrollbar, tool bar, and menu]]
   - [[Increase/decrease text size][Increase/decrease text size]]
-  - [[Delete Selection mode][Delete Selection mode]]
+  - [[Delete Selection Mode][Delete Selection Mode]]
   - [[Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-)]]
   - [[Minibuffer should display line and column numbers][Minibuffer should display line and column numbers]]
   - [[Never lose the cursor][Never lose the cursor]]
@@ -147,7 +145,6 @@ in ~“this”~ configuration.
   - [[Keep buffers open across sessions][Keep buffers open across sessions]]
   - [[Mouse Editing Support][Mouse Editing Support]]
   - [[Dimming Unused Windows][Dimming Unused Windows]]
-  - [[Having a workspace manager in Emacs][Having a workspace manager in Emacs]]
   - [[Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
   - [[Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
   - [[Completion Frameworks][Completion Frameworks]]
@@ -166,10 +163,6 @@ in ~“this”~ configuration.
   - [[Publishing articles to my personal blog][Publishing articles to my personal blog]]
   - [[Excellent PDF Viewer][Excellent PDF Viewer]]
 - [[Conclusion][Conclusion]]
-- [[Approaches Before Reading Documentation][Approaches Before Reading Documentation]]
-  - [[Elementary Version Control][Elementary Version Control]]
-  - [[What's in, or at the top of, my ~~/.emacs~][What's in, or at the top of, my ~~/.emacs~]]
-  - [[README.md][README.md]]
 #+END_QUOTE
 
 * Booting Up
@@ -494,6 +487,9 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
   (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+END_SRC
 
+#+RESULTS: enable making init and readme
+| my/make-init-el-and-README | t |
+
 Where the following block has ~#+NAME: make-readme~ before it.
 This source block generates the ~README~ for the associated Github repository.
 #+NAME: make-readme
@@ -614,6 +610,26 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 ;; Erase :TOC: body.
 ;; (my/org-replace-tree-contents "Table of Contents")
 #+END_SRC
+** Installing Emacs packages directly from source
+
+[[https://github.com/quelpa/quelpa-use-package][Quelpa]] allows us to build Emacs packages directly from source repositories.  It
+derives its name from the German word /Quelle/, for /souce/ [code], adjoined to
+ELPA.  Its ~use-package~ interface allows us to use ~use-package~ like normal but
+when we want to install a file from souce we use the keyword ~:quelpa t~.
+
+
+# Example invocation.
+# (quelpa '(discover-my-major :fetcher git :url "https://framagit.org/steckerhalter/discover-my-major.git"))
+#+BEGIN_SRC emacs-lisp
+(use-package quelpa-use-package)
+#+END_SRC
+
+Let's use this to obtain an improved info-mode from the EmacsWiki.
+#+BEGIN_SRC emacs-lisp
+(use-package info+
+  :quelpa (info+ :fetcher wiki :url "https://www.emacswiki.org/emacs/info%2b.el"))
+#+END_SRC
+
 ** =magit= ---Emacs' porcelain interface to git
 :PROPERTIES:
 :CUSTOM_ID: ~magit~---Emacs'-porcelain-interface-to-git
@@ -1065,22 +1081,10 @@ See [[Taking a tour of one's edits]] below for a small and useful example.
 :CUSTOM_ID: Cosmetics
 :END:
 
-# Font
-# (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12"))
-
-:ExperimentingWithBackgroundColours:
-Note: Using spacemacs theme above.
-
-#+begin_src emacs-lisp :tangle no
-;; try background colour for html:  ---nice soft yellow, pleasing---
-;;
-(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
+#+begin_src emacs-lisp
+;; Keep self motivated!
+(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 #+end_src
-
-(set-background-color "white")
-(set-background-color "#eae3cb")   -- a bit dark
-(set-background-color "#fcf4dc")   -- nice!
-:End:
 
 #+begin_src emacs-lisp
 ;; Make it very easy to see the line with the cursor.
@@ -1090,65 +1094,10 @@ Note: Using spacemacs theme above.
 ;; upon save.
 (add-hook 'before-save-hook 'whitespace-cleanup)
 
-;; Keep self motivated!
-(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+;; Nice soft yellow, pleasing ---try background colour for html export ;-)
+(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
+;; "white"; or this darker yellow "#eae3cb"
 #+end_src
-** Themes
-:PROPERTIES:
-:CUSTOM_ID: Themes
-:END:
-#+BEGIN_SRC emacs-lisp
-;; Treat all themes as safe; no query before use.
-(setf custom-safe-themes t)
-
-;; Nice looking themes ^_^
-(use-package solarized-theme :demand t)
-(use-package doom-themes  :demand t)
-(use-package spacemacs-common
-    :ensure spacemacs-theme
-    :config (load-theme 'spacemacs-light t))
-
-(defun my/disable-all-themes ()
-  (dolist (th custom-enabled-themes)
-          (disable-theme th))
-)
-
-(defun my/load-dark-theme ()
-  ;;   (load-theme 'spacemacs-dark)   ;; orginally
-  (my/disable-all-themes)
-  (load-theme 'doom-vibrant)
-)
-
-(defun my/load-light-theme ()
-  (load-theme 'spacemacs-light)   ;; orginally
-  ;; Recently I'm liking this ordered mixture.
-  ;; (load-theme 'solarized-light) (load-theme 'doom-solarized-light)
-)
-
-;; “C-x t” to toggle between light and dark themes.
-(defun my/toggle-theme () "Toggle between dark and light themes."
-  (interactive)
-  ;; Load dark if light is top-most enabled theme, else load light.
-  (if (equal (car custom-enabled-themes) 'doom-vibrant)
-      (my/load-light-theme)
-      (my/load-dark-theme)
-  )
-
-  ;; The dark theme's modeline separator is ugly.
-  ;; Keep reading below regarding “powerline”.
-  ;; (setq powerline-default-separator 'arrow)
-  ;; (spaceline-spacemacs-theme)
-)
-
-(global-set-key "\C-x\ t" 'my/toggle-theme)
-
-;; Initially begin with the light theme.
-; (ignore-errors (load-theme 'spacemacs-light t))
-(my/toggle-theme)
-#+END_SRC
-
-The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
-A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 
 ** Startup message: Emacs & Org versions
 :PROPERTIES:
@@ -1164,13 +1113,10 @@ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
       (concat "Welcome "      user-full-name
               "! Emacs "      emacs-version
               "; Org-mode "   org-version
-              "; System "    (system-name)
+              "; System "     (system-name)
                   (format "; Time %.3fs"
                       (float-time (time-subtract (current-time)
-                                    before-init-time)))
-      )
-  )
-)
+                                    before-init-time))))))
 #+end_src
 Now my startup message is,
 #+begin_src emacs-lisp
@@ -1180,11 +1126,6 @@ Now my startup message is,
 For some fun, run this cute method.
 #+BEGIN_SRC emacs-lisp :tangle no
 (animate-birthday-present user-full-name)
-#+END_SRC
-
-Moreover, since I end up using org-mode most of the time, let's make that the default mode.
-#+BEGIN_SRC emacs-lisp
-(setq initial-major-mode 'org-mode)
 #+END_SRC
 
 :Why_not_cd_HOME:
@@ -1201,6 +1142,45 @@ home directory. Let's stop being so repetitive by starting at the home directory
 #+END_SRC
 :End:
 
+** Themes
+:PROPERTIES:
+:CUSTOM_ID: Themes
+:END:
+#+BEGIN_SRC emacs-lisp
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
+
+;; Nice looking themes ^_^
+(use-package solarized-theme)
+(use-package doom-themes)
+(use-package spacemacs-common
+  :ensure spacemacs-theme)
+
+;; Infinite list my commonly used themes.
+(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
+(setcdr (last my/themes) my/themes)
+
+(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
+  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’."
+  (interactive)
+  (dolist (τ custom-enabled-themes)
+    (disable-theme τ))
+  (when new-theme (load-theme new-theme)))
+
+;; The dark theme's modeline separator is ugly.
+;; Keep reading below regarding “powerline”.
+;; (setq powerline-default-separator 'arrow)
+;; (spaceline-spacemacs-theme)
+
+;; “C-x t” to toggle between personal themes.
+(defalias 'my/toggle-theme #' my/disable-all-themes)
+(global-set-key "\C-x\ t" 'my/toggle-theme)
+(my/toggle-theme)
+#+END_SRC
+
++ The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
++ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
+
 ** Persistent Scratch Buffer
 :PROPERTIES:
 :CUSTOM_ID: Persistent-Scratch-Buffer
@@ -1208,34 +1188,37 @@ home directory. Let's stop being so repetitive by starting at the home directory
 
 The ~*scratch*~ buffer is a nice playground for temporary data.
 
-I use Org-mode often, so that's how I want things to appear.
+However, by default its contents are not saved --which may be an issue if we
+have not relocated our playthings to their appropriate files. Whence let's save
+& restore the scratch buffer by default.
 #+BEGIN_SRC emacs-lisp
-(setq initial-scratch-message (concat
-  "#+Title: Persistent Scratch Buffer"
-  "\n#\n # Welcome! This’ a place for trying things out. \n"))
+(use-package persistent-scratch
+  ;; Enable both autosave and restore the last saved state of scratch
+  ;; buffer, if any, on Emacs start.
+  :config (persistent-scratch-setup-default))
 #+END_SRC
 
 We might accidentally close this buffer, so we could utilise the following.
 #+BEGIN_SRC emacs-lisp
-;; A very simple function to recreate the scratch buffer:
-;; ( http://emacswiki.org/emacs/RecreateScratchBuffer )
 (defun scratch ()
-   "create a scratch buffer"
+   "Recreate the scratch buffer, loading any persistent state."
    (interactive)
    (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
    (insert initial-scratch-message)
-   (org-mode))
+   (ignore-errors (persistent-scratch-restore))
+   (persistent-scratch-autosave-mode 1)
+   (org-mode)
+   (local-set-key (kbd "C-x C-s") 'persistent-scratch-save))
 
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 #+END_SRC
 
-However, by default its contents are not saved --which may be an issue if we have
-not relocated our playthings to their appropriate files. Whence let's save & restore
-the scratch buffer by default.
+I use Org-mode often, so that's how I want things to appear.
 #+BEGIN_SRC emacs-lisp
-(use-package persistent-scratch
-  :config
-  (persistent-scratch-setup-default))
+(setq initial-scratch-message (concat
+  "#+Title: Persistent Scratch Buffer"
+  "\n#\n# Welcome! This’ a place for trying things out."
+  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
 #+END_SRC
 
 ** Spaceline: A sleek mode line
@@ -1243,76 +1226,66 @@ the scratch buffer by default.
 :CUSTOM_ID: Spaceline:-A-sleek-mode-line
 :END:
 
-I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I do not like evil-mode and find spacemacs
-to “hide things” from me --whereas Emacs “”encourages” me to learn more--,
-however it is a configuration and I enjoy reading Emacs configs in order to
-improve my own setup. From Spacemacs I've adopted Helm for list completion,
-its sleek light & dark themes, and its modified powerline setup.
+I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I do not like evil-mode and find
+spacemacs to “hide things” from me ---whereas Emacs “”encourages” me to learn
+more---, however it is a configuration and I enjoy reading Emacs configs in
+order to improve my own setup. From Spacemacs I've adopted Helm for list
+completion, its sleek light & dark themes, and its modified powerline setup.
 
-The ‘modeline’ is a part near the bottom of Emacs that gives information
-about the current mode, as well as other matters --such as time & date, for example.
+The ‘modeline’ is a part near the bottom of Emacs that gives information about
+the current mode, as well as other matters --such as time & date, for example.
 
 #+BEGIN_SRC emacs-lisp
+;; When using helm & info & default, mode line looks prettier.
 (use-package spaceline
-  :config
-  (require 'spaceline-config)
-  (setq spaceline-buffer-encoding-abbrev-p nil)
-  (setq spaceline-line-column-p nil)
-  (setq spaceline-line-p nil)
-  (setq powerline-default-separator 'arrow)
-  :init
- (spaceline-helm-mode) ;; When using helm, mode line looks prettier.
- ; (ignore-errors (spaceline-spacemacs-theme))
-)
+  :custom (spaceline-buffer-encoding-abbrev-p nil)
+          (spaceline-line-column-p nil)
+          (spaceline-line-p nil)
+          (powerline-default-separator 'arrow)
+  :config (require 'spaceline-config)
+          (spaceline-helm-mode)
+          (spaceline-info-mode)
+          (spaceline-emacs-theme))
 #+END_SRC
+
 Other separators I've considered include ~'brace~ instead of an arrow,
 and ~'contour, 'chamfer, 'wave, 'zigzag~ which look like browser tabs
 that are curved, boxed, wavy, or in the style of driftwood.
 
-** Flashing when something goes wrong ─no blinking
+** Flashing when something goes wrong ---no blinking
 :PROPERTIES:
 :CUSTOM_ID: Flashing-when-something-goes-wrong-─no-blinking
 :END:
-Make top and bottom of screen flash when something unexpected happens thereby observing a warning message in the minibuffer. E.g., C-g, or calling an unbound key sequence, or misspelling a word.
+Make top and bottom of screen flash when something unexpected happens thereby
+observing a warning message in the minibuffer. E.g., C-g, or calling an unbound
+key sequence, or misspelling a word.
 #+BEGIN_SRC emacs-lisp
 (setq visible-bell 1)
-;; Enable flashing mode-line on errors
-;; On MacOS, this shows a caution symbol ^_^
+#+END_SRC
+Enable flashing mode-line on errors.  On MacOS, this shows a caution symbol ^_^
 
-;; Blinking cursor rushes me to type; let's slow down.
-(blink-cursor-mode -1)
+A blinking cursor rushes me to type; let's slow down.
+… Recentely I'm thinking that a blinking cursours prompts me to continue
+upwards and onwards.
+#+BEGIN_SRC emacs-lisp
+(blink-cursor-mode 1)
 #+END_SRC
 
 ** My to-do list: The initial buffer when Emacs opens up
 :PROPERTIES:
 :CUSTOM_ID: My-to-do-list:-The-initial-buffer-when-Emacs-opens-up
 :END:
+I almost always have Emacs open; I don't need a dashboard, but would like to see
+my to-do list and my init file, side-by-side.
 #+BEGIN_SRC emacs-lisp
 (find-file "~/Dropbox/todo.org")
-;; (setq initial-buffer-choice "~/Dropbox/todo.org")
-
 (split-window-right)			  ;; C-x 3
 (other-window 1)                              ;; C-x 0
-;; toggle enable-local-variables :all           ;; Load *all* locals.
-    ;; toggle org-confirm-babel-evaluate nil    ;; Eval *all* blocks.
-      (find-file "~/.emacs.d/init.org")
+(let ((enable-local-variables :all)           ;; Load *all* locals.
+      (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
+  (find-file "~/.emacs.d/init.org"))
 #+END_SRC
 
-:primitive_approach_to_recent_files:
-#+BEGIN_SRC emacs-lisp :tangle no
-;; List recently accessed files upon startup
-
-(recentf-mode 1)                   ;; Part of Emacs
-(setq recentf-max-menu-items 25)
-(global-set-key "\C-x\ \C-r" 'recentf-open-files)
-
-(when nil ;; nil since I don't use this feature often enough.
-  (split-window-below)			  ;; C-x 3
-  (other-window 1)                                ;; C-x 0
-  (recentf-open-files)
-)
-#+END_SRC
-:end:
 ** Showing date, time, and battery life
 :PROPERTIES:
 :CUSTOM_ID: Showing-date,-time,-and-battery-life
@@ -1321,17 +1294,14 @@ Make top and bottom of screen flash when something unexpected happens thereby ob
 (setq display-time-day-and-date t)
 (display-time)
 
-;; (display-battery-mode 1)
+;; (display-battery-mode -1)
 ;; Nope; let's use a fancy indicator …
-
+;;
 (use-package fancy-battery
   :diminish
-  :config
-    (setq fancy-battery-show-percentage t)
-    (setq battery-update-interval 15)
-    (fancy-battery-mode)
-    (display-battery-mode)
-)
+  :custom (fancy-battery-show-percentage  t)
+          (battery-update-interval       15)
+  :config (fancy-battery-mode))
 #+END_SRC
 
 This will show remaining battery life, coloured green if charging
@@ -1342,32 +1312,36 @@ this package is no longer maintained. It works on my machine.
 :PROPERTIES:
 :CUSTOM_ID: Hiding-Scrollbar,-tool-bar,-and-menu
 :END:
+As a laptop user, screen space is important, so let's remove rarely used visual
+items.
 #+BEGIN_SRC emacs-lisp
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
-(menu-bar-mode -1)
+(tool-bar-mode   -1)  ;; No large icons please
+(scroll-bar-mode -1)  ;; No visual indicator please
+(menu-bar-mode   -1)  ;; The Mac OS top pane has menu options
 #+END_SRC
 
 ** Increase/decrease text size
 :PROPERTIES:
 :CUSTOM_ID: Increase/decrease-text-size
 :END:
+The ‘usual’ text zoom keys ~C-±~ …
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-+") 'text-scale-increase)
 (global-set-key (kbd "C--") 'text-scale-decrease)
 ;; C-x C-0 restores the default font size
 #+END_SRC
 
-** Delete Selection mode
-:PROPERTIES:
-:CUSTOM_ID: Delete-Selection-mode
-:END:
+If thou knowst the ELisp, forgive this shadowing of the ~negative-argument~
+… we've still got ~M--~ though.
+
+** Delete Selection Mode
+
 Delete Selection mode lets you treat an Emacs region much like a typical text
-selection outside of Emacs: You can replace the active region.
-We can delete selected text just by hitting the backspace key.
+selection outside of Emacs: You can replace the active region.  We can delete
+selected text just by hitting the backspace key.
 
 #+BEGIN_SRC emacs-lisp
-  (delete-selection-mode 1)
+(delete-selection-mode 1)
 #+END_SRC
 
 ** Highlight & complete parenthesis pair when cursor is near ;-)
@@ -1375,28 +1349,29 @@ We can delete selected text just by hitting the backspace key.
 :CUSTOM_ID: Highlight-&-complete-parenthesis-pair-when-cursor-is-near-;-)
 :END:
 
+Highlight parens within matching parens when near one of them.
 #+begin_src emacs-lisp
-;; Highlight expression within matching parens when near one of them.
 (setq show-paren-delay 0)
-(setq blink-matching-paren nil)
-(setq show-paren-style 'expression)
+(setq show-paren-style 'mixed)
 (show-paren-mode)
+#+end_src
 
-;; Colour parens, and other delimiters, depending on their depth.
-;; Very useful for parens heavy languages like Lisp.
+Colour parens, and other delimiters, depending on their depth.
+Very useful for parens heavy languages like Lisp.
+#+begin_src emacs-lisp
 (use-package rainbow-delimiters
+  :disabled
   :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
 #+end_src
 
-For example,
+For example:
 #+begin_src emacs-lisp :tangle no
 (blue (purple (forest (green (yellow (blue))))))
 #+end_src
 
 There is a powerful package called ‘smartparens’ for working with pair-able
 characters, but I've found it to be too much for my uses. Instead I'll utilise
-the lightweight package ~electric~, which provided by Emacs out of the box.
-
+the lightweight package ~electric~, which Emacs provides out of the box.
 #+BEGIN_SRC emacs-lisp
 (electric-pair-mode 1)
 #+END_SRC
@@ -1404,45 +1379,38 @@ the lightweight package ~electric~, which provided by Emacs out of the box.
 It supports, by default, ACSII pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
 
 When writing Lisp, it is annoyong to have ‘<’ and ‘>’ be completed
-/and/ considered as pairs.
-Let's disassociate them from both notions.
+/and/ considered as pairs.  Let's disassociate them from both notions.
 #+BEGIN_SRC emacs-lisp
+;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
 (setq electric-pair-inhibit-predicate
       (lambda (c)
-        (or (member c '(?< ?>)) (electric-pair-default-inhibit c))))
+        (or (member c '(?< ?> ?~)) (electric-pair-default-inhibit c))))
 
-(when (< 1 2) 'bye)
+;; Treat ‘<’ and ‘>’ as if they were words, instead of ‘parenthesis’.
+(modify-syntax-entry ?< "w<")
+(modify-syntax-entry ?> "w>")
+#+END_SRC
 
+:Rainbow_delims:
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; Act as usual unless a ‘<’ or ‘>’ is encountered.
 ;; ( char-at is really “character at poisition”; C-h o! )
 (setq rainbow-delimiters-pick-face-function
       (lambda (depth match loc)
         (unless (member (char-after loc) '(?< ?>))
           (rainbow-delimiters-default-pick-face depth match loc))))
-
-;; Final piece.
-(modify-syntax-entry ?< "(>")
-(modify-syntax-entry ?> ")<")
-#+END_SRC
-:Test:
-#+BEGIN_SRC emacs-lisp :tangle no
-(rainbow-delimiters-mode 1)
-(when (> 1 2) 'bye)
-
-(1- 3)
 #+END_SRC
 :End:
 
-Let's add the org-emphasises markers.
+Let's add the org-emphasises markers: If we select a word then press
+=*=, it becomes bold; likewise for ~/~ for emphasise.
 #+BEGIN_SRC emacs-lisp
 (setq electric-pair-pairs
-         '(
-           (?~ . ?~)
+         '(;; (?~ . ?~)
            (?* . ?*)
-           (?/ . ?/)
-          ))
+           (?/ . ?/)))
 #+END_SRC
-
+I use ‘~’ too much when that the compleition for it is annoying.
 Let's also, for example, avoid obtaining double ‘~’ and ‘/’ when searching for a file.
 #+BEGIN_SRC emacs-lisp
 ;; Disable pairs when entering minibuffer
@@ -1451,82 +1419,6 @@ Let's also, for example, avoid obtaining double ‘~’ and ‘/’ when searchi
 ;; Renable pairs when existing minibuffer
 (add-hook 'minibuffer-exit-hook (lambda () (electric-pair-mode 1)))
 #+END_SRC
-
-*** COMMENT Smartparens                                                        :Nope:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Smartparens
-:END:
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package smartparens
-  :init
-  (smartparens-global-mode 1)
-  (show-smartparens-global-mode +1)
-
-  :bind (
-
-         ("M-f" . sp-forward-sexp)  ;; Move forward one  expression.
-         ("M-b" . sp-backward-sexp) ;; Move backward one expression.
-
-         ;; Going to the start & end of current expr in pair-able character.
-         ("M-a" . sp-beginning-of-sexp)
-         ("M-e" . sp-end-of-sexp)
-
-         ;; Going forwards deep down & up current expr; treating it as a tree.
-         ("M-d" . sp-down-sexp)
-         ("M-u" . sp-up-sexp)
-         ;; Acending & descending backwards; i.e., leftwards.
-         ("M-n" . sp-backward-down-sexp)
-         ("M-p" . sp-backward-up-sexp)
-
-         ;; Unwrapping: Removing pair-able characters.
-         ("M-w" . sp-unwrap-sexp)
-         ("M-m" . sp-backward-unwrap-sexp)
-
-         ;; “Slurping”: Move closing character forward/backward to include next sexp.
-         ;; “Barfing”: Contract a sexp, or string, by pushing a its last/first item out.
-         ;; See below for examples.
-         ("M-)" . sp-forward-slurp-sexp)
-         ("M-(" . sp-backward-slurp-sexp)
-         ("M-]" . sp-forward-barf-sexp)
-         ("M-[" . sp-backward-barf-sexp)
-
-         ;; Transpose two bracketed terms; e.g., a b c ⟪Here⟫ ⟶ a c b ⟪Here⟫
-         ;; Transpose backwards by being on the token;
-         ;; transpose forwards by being after the token.
-         ("M-t" . sp-transpose-sexp)
-
-         )
-
-  :config
-  ;; Enable smartparens everywhere
-  (use-package smartparens-config)
-
-  (setq
-   ;; smartparens-strict-mode t
-   ;; sp-autoinsert-if-followed-by-word t
-   ;; sp-autoskip-closing-pair 'always
-   sp-hybrid-kill-entire-symbol nil)
-
-  ;; In Elisp & org modes, do not ‘close’ a back-tick or single quote!
-  (sp-local-pair 'emacs-lisp-mode "`" nil :when '(sp-in-string-p))
-  (sp-local-pair 'emacs-lisp-mode "'" nil :when '(sp-in-string-p))
-  (sp-local-pair 'org-mode "`" nil :when '(sp-in-string-p))
-  (sp-local-pair 'org-mode "'" nil :when '(sp-in-string-p))
-  )
-#+END_SRC
-
-*Wrapping*
-To enclose a token with a pair-able character, at the start of the expression
-press ~C-ESCAPE-SPACE~, select the region, followed by a pair-able character such as ~[, {, ", ', *,~ etc.
-To wrap a single token forwards, use ~C-M-SPACE~.
-
-Examples of slurping & barfing --i.e., sexp inclusion and contraction.
-#+begin_example
-a [x y z] b  ⟶“M-) inside [⋯]”⟶  a [x y z b]
-a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
-[a x y z b]  ⟶“M-] inside [⋯]”⟶  a [x y z b]
-[a x y z b]  ⟶“M-] inside [⋯]”⟶  [a x y z] b
-#+end_example
 
 ** Minibuffer should display line and column numbers
 :PROPERTIES:
@@ -1537,13 +1429,12 @@ a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
 (column-number-mode t)
 #+END_SRC
 
-For line numbers on the side of the buffer:
+For line numbers on the side of the buffer; moreover let's have a
+uniform width for displaying line numbers, rather than having the
+width grow as necessary.
 #+BEGIN_SRC emacs-lisp
-(global-display-line-numbers-mode t)
-
-;; Have a uniform width for displaying line numbers,
-;; rather than having the width grow as necessary.
 (setq display-line-numbers-width-start t)
+(global-display-line-numbers-mode      t)
 #+END_SRC
 
 ** Never lose the cursor
@@ -1555,7 +1446,7 @@ e.g., when we switch windows or scroll, we get a wave of light near the cursor.
 #+begin_src emacs-lisp
 (use-package beacon
   :config (setq beacon-color "#666600")
-  :hook ((org-mode text-mode) . beacon-mode))
+  :hook   ((org-mode text-mode) . beacon-mode))
 #+end_src
 ** Neotree: Directory Tree Listing
 :PROPERTIES:
@@ -1563,20 +1454,19 @@ e.g., when we switch windows or scroll, we get a wave of light near the cursor.
 :END:
 We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp
-;; neotree --sidebar for project file navigation
-(use-package neotree
-  :config (global-set-key "\C-x\ d" 'neotree-toggle))
-
+;; Fancy icons for neotree
 ;; Only do this once:
-(when nil
-  (use-package all-the-icons)
-  (all-the-icons-install-fonts 'install-without-asking))
+(use-package all-the-icons
+  :config (all-the-icons-install-fonts 'install-without-asking))
 
-(setq neo-theme 'icons)
-(neotree-refresh)
+;; Sidebar for project file navigation
+(use-package neotree
+  :config (global-set-key "\C-x\ d" 'neotree-toggle)
+          (setq neo-theme 'icons)
+          (neotree-refresh))
 
 ;; Open it up upon startup.
-(neotree-toggle)
+;; (neotree-toggle)
 #+END_SRC
 By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file
 management.
@@ -1595,7 +1485,7 @@ execute ~C-x o~.
 I /rarely/ make use of this feature; company mode & Helm together quickly provide
 an automatic replacement for nearly all of my uses.
 
-** Tabs :Disabled:
+** Tabs                                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Tabs
 :END:
@@ -1603,22 +1493,20 @@ I really like my Helm-supported ~C-x b~, but the visial appeal of a [[https://gi
 is interesting. Let's try it out and see how long this lasts ---it may be like Neotree:
 Something cute to show to others, but not as fast as the keyboard.
 
-#+BEGIN_SRC emacs-lisp :tangle no
-; (async-shell-command
-;  "git clone --depth=1 https://github.com/manateelazycat/awesome-tab.git  ~/.emacs.d/elpa/awesome-tab")
-
-(load-file "~/.emacs.d/elpa/awesome-tab/awesome-tab.el")
+#+BEGIN_SRC emacs-lisp
+(use-package awesome-tab
+  :disabled
+  :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
+  :config (awesome-tab-mode t))
 
 ;; Show me /all/ the tabs at once, in one group.
 (defun awesome-tab-buffer-groups ()
   (list (awesome-tab-get-group-name (current-buffer))))
-
-(awesome-tab-mode t)
 #+END_SRC
 
 It's been less than three days and I've found this utility to be unhelpful, to me anyhow.
 
-** Window resizing using the golden ratio :Disabled:
+** Window resizing using the golden ratio                         :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Window-resizing-using-the-golden-ratio
 :END:
@@ -1628,8 +1516,9 @@ the window containing the cursor is the largest, according to the golden ratio.
 Consequently, the window we're working with is nice and large yet the other windows
 are still readable.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package golden-ratio
+  :disabled
   :diminish golden-ratio-mode
   :init (golden-ratio-mode 1))
 #+end_src
@@ -2253,6 +2142,13 @@ Also:
 
 I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet]] and
 a [[http://www.howardism.org/Technical/Emacs/spreadsheet.html][friendly tutorial]].
+
+
+Moreover, since I end up using org-mode most of the time, let's make that the
+default mode.
+#+BEGIN_SRC emacs-lisp
+(setq initial-major-mode 'org-mode)
+#+END_SRC
 
 ** High Speed Literate Programming
 :PROPERTIES:
@@ -4312,7 +4208,7 @@ Let's dim windows, and even the whole Emacs frame, when not in use.
   :config (dimmer-mode))
 #+END_SRC
 
-** Having a workspace manager in Emacs
+** COMMENT Having a workspace manager in Emacs
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
 :END:
@@ -5512,7 +5408,7 @@ easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/
 
 Bye!
 
-* Undo tree                                         :ignore:noexport:
+* Undo tree    :ignore:noexport:
 :PROPERTIES:
 :CUSTOM_ID: Undo-tree
 :END:
@@ -5536,7 +5432,7 @@ Bye!
 #+end_src
 :End:
 
-* Approaches Before Reading Documentation :Posterity:Learning:
+* Approaches Before Reading Documentation :Posterity:Learning:noexport:
 ** Elementary Version Control
 
 [[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
@@ -5666,13 +5562,132 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 )
 #+END_SRC
 
+** List recently accessed files upon startup
+#+BEGIN_SRC emacs-lisp :tangle no
+(recentf-mode 1)                   ;; Part of Emacs
+(setq recentf-max-menu-items 25)
+(global-set-key "\C-x\ \C-r" 'recentf-open-files)
+
+(split-window-below)			  ;; C-x 3
+(other-window 1)                              ;; C-x 0
+(recentf-open-files)
+#+END_SRC
+
 * COMMENT TODO Improvements
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-Improvements
 :END:
-+ [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
 
-** COMMENT TODO Macros
+** Easy tasks
+:PROPERTIES:
+:CUSTOM_ID: Easy-tasks
+:END:
+
+# TODO: MA: ⇨ Add unit tests for the init file.
+
+# ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
+# (shell-command "brew install pandoc")
+# (use-package ox-pandoc)
+
+;; Omit empty lines between headings in the collapsed view
+(setq org-cycle-separator-lines 0)
+
+#+BEGIN_SRC emacs-lisp :results replace :tangle yes
+(defun show-me ()
+  "Evaluate a Lisp expression and insert its value
+   as a comment at the end of the line.
+
+   Useful for documenting values or checking values.
+  "
+  (interactive)
+  (-let [it
+         (thread-last (thing-at-point 'line)
+           read-from-string
+           car
+           eval
+           (format " ;; ⇒ %s"))]
+    (end-of-line)
+    (insert it)))
+#+END_SRC
+
++ [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
+** Smartparens
+
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Smartparens
+:END:
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package smartparens
+  :init
+  (smartparens-global-mode 1)
+  (show-smartparens-global-mode +1)
+
+  :bind (
+
+         ("M-f" . sp-forward-sexp)  ;; Move forward one  expression.
+         ("M-b" . sp-backward-sexp) ;; Move backward one expression.
+
+         ;; Going to the start & end of current expr in pair-able character.
+         ("M-a" . sp-beginning-of-sexp)
+         ("M-e" . sp-end-of-sexp)
+
+         ;; Going forwards deep down & up current expr; treating it as a tree.
+         ("M-d" . sp-down-sexp)
+         ("M-u" . sp-up-sexp)
+         ;; Acending & descending backwards; i.e., leftwards.
+         ("M-n" . sp-backward-down-sexp)
+         ("M-p" . sp-backward-up-sexp)
+
+         ;; Unwrapping: Removing pair-able characters.
+         ("M-w" . sp-unwrap-sexp)
+         ("M-m" . sp-backward-unwrap-sexp)
+
+         ;; “Slurping”: Move closing character forward/backward to include next sexp.
+         ;; “Barfing”: Contract a sexp, or string, by pushing a its last/first item out.
+         ;; See below for examples.
+         ("M-)" . sp-forward-slurp-sexp)
+         ("M-(" . sp-backward-slurp-sexp)
+         ("M-]" . sp-forward-barf-sexp)
+         ("M-[" . sp-backward-barf-sexp)
+
+         ;; Transpose two bracketed terms; e.g., a b c ⟪Here⟫ ⟶ a c b ⟪Here⟫
+         ;; Transpose backwards by being on the token;
+         ;; transpose forwards by being after the token.
+         ("M-t" . sp-transpose-sexp)
+
+         )
+
+  :config
+  ;; Enable smartparens everywhere
+  (use-package smartparens-config)
+
+  (setq
+   ;; smartparens-strict-mode t
+   ;; sp-autoinsert-if-followed-by-word t
+   ;; sp-autoskip-closing-pair 'always
+   sp-hybrid-kill-entire-symbol nil)
+
+  ;; In Elisp & org modes, do not ‘close’ a back-tick or single quote!
+  (sp-local-pair 'emacs-lisp-mode "`" nil :when '(sp-in-string-p))
+  (sp-local-pair 'emacs-lisp-mode "'" nil :when '(sp-in-string-p))
+  (sp-local-pair 'org-mode "`" nil :when '(sp-in-string-p))
+  (sp-local-pair 'org-mode "'" nil :when '(sp-in-string-p))
+  )
+#+END_SRC
+
+*Wrapping*
+To enclose a token with a pair-able character, at the start of the expression
+press ~C-ESCAPE-SPACE~, select the region, followed by a pair-able character such as ~[, {, ", ', *,~ etc.
+To wrap a single token forwards, use ~C-M-SPACE~.
+
+Examples of slurping & barfing --i.e., sexp inclusion and contraction.
+#+begin_example
+a [x y z] b  ⟶“M-) inside [⋯]”⟶  a [x y z b]
+a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
+[a x y z b]  ⟶“M-] inside [⋯]”⟶  a [x y z b]
+[a x y z b]  ⟶“M-] inside [⋯]”⟶  [a x y z] b
+#+end_example
+** Macros
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-Macros
 :END:
@@ -5715,7 +5730,7 @@ avoid scaring anyone. I may use it in my personal stuff.
 (local-set-key (kbd "C-x x x") (λ (message-box "Terse!")))
 #+END_SRC
 
-** COMMENT TODO Summary of Utilities Provided
+** Summary of Utilities Provided
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-Summary-of-Utilities-Provided
 :END:
@@ -5761,7 +5776,7 @@ Finally, we can observe which features are active in our current Emacs with,
 #+end_src
 
 # List of installed packages: (mapcar 'car package-alist)
-** COMMENT TODO Stuff I don't really use, but may want to look at later
+** Stuff I don't really use, but may want to look at later
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-Stuff-I-don't-really-use,-but-may-want-to-look-at-later
 :END:
@@ -5986,7 +6001,7 @@ take care of this.
 (theme-magic-export-theme-mode)
 #+END_SRC
 
-** TODO COMMENT Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
+** Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Referencing-Text-From-Code-Blocks----Attaching-prose-as-doc-strings
 :END:
@@ -6065,42 +6080,7 @@ We use the XXX function add to calculate the sum of two numbers.
 - and of course "optional things"
 
 + There is a reason we only support two args
-** Easy tasks
-:PROPERTIES:
-:CUSTOM_ID: Easy-tasks
-:END:
-
-# TODO: MA: ⇨ Add unit tests for the init file.
-
-# ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
-# (shell-command "brew install pandoc")
-# (use-package ox-pandoc)
-
-;; Omit empty lines between headings in the collapsed view
-(setq org-cycle-separator-lines 0)
-
-#+BEGIN_SRC emacs-lisp :results replace :tangle yes
-(defun show-me ()
-  "Evaluate a Lisp expression and insert its value
-   as a comment at the end of the line.
-
-   Useful for documenting values or checking values.
-  "
-  (interactive)
-  (-let [it
-         (thread-last (thing-at-point 'line)
-           read-from-string
-           car
-           eval
-           (format " ;; ⇒ %s"))]
-    (end-of-line)
-    (insert it)))
-#+END_SRC
-
 * COMMENT footer & pushing to blog
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-footer---pushing-to-blog
-:END:
 
 C-c C-c this snippet to export to blog.
 #+NAME: publish-to-blog

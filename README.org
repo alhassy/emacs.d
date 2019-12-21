@@ -1,4 +1,4 @@
-# Created 2019-12-20 Fri 20:23
+# Created 2019-12-21 Sat 00:16
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:t :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
@@ -63,8 +63,8 @@ in ~“this”~ configuration.
   - [[Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail]]
   - [[Hydra: Supply a prefix only once][Hydra: Supply a prefix only once]]
 - [[Cosmetics][Cosmetics]]
-  - [[Themes][Themes]]
   - [[Startup message: Emacs & Org versions][Startup message: Emacs & Org versions]]
+  - [[Themes][Themes]]
   - [[Persistent Scratch Buffer][Persistent Scratch Buffer]]
   - [[Spaceline: A sleek mode line][Spaceline: A sleek mode line]]
   - [[Flashing when something goes wrong ─no blinking][Flashing when something goes wrong ─no blinking]]
@@ -123,7 +123,6 @@ in ~“this”~ configuration.
   - [[Keep buffers open across sessions][Keep buffers open across sessions]]
   - [[Mouse Editing Support][Mouse Editing Support]]
   - [[Dimming Unused Windows][Dimming Unused Windows]]
-  - [[Having a workspace manager in Emacs][Having a workspace manager in Emacs]]
   - [[Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
   - [[Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
   - [[Completion Frameworks][Completion Frameworks]]
@@ -434,6 +433,10 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
     (when current-prefix-arg
       (let ((time (current-time)))
         (save-excursion
+          ;; remove any other initialisation file candidates
+          (shell-command (format "mv ~/.emacs ~/.emacs_%s" (format-time-string "%Y-%m-%d")))
+          (shell-command (format "mv ~/.emacs.el ~/.emacs.el_%s" (format-time-string "%Y-%m-%d")))
+
           ;; Make init.el
           (org-babel-tangle)
           (byte-compile-file "~/.emacs.d/init.el")
@@ -922,6 +925,11 @@ See [[Taking a tour of one's edits]] below for a small and useful example.
 
 * Cosmetics
 #+begin_src emacs-lisp
+;; Keep self motivated!
+(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+#+end_src
+
+#+begin_src emacs-lisp
 ;; Make it very easy to see the line with the cursor.
 (global-hl-line-mode t)
 
@@ -929,62 +937,13 @@ See [[Taking a tour of one's edits]] below for a small and useful example.
 ;; upon save.
 (add-hook 'before-save-hook 'whitespace-cleanup)
 
-;; Keep self motivated!
-(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+;; The default font
+(add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12"))
+
+;; Nice soft yellow, pleasing ---try background colour for html export ;-)
+(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
+;; "white"; or this darker yellow "#eae3cb"
 #+end_src
-** Themes
-#+begin_src emacs-lisp
-;; Treat all themes as safe; no query before use.
-(setf custom-safe-themes t)
-
-;; Nice looking themes ^_^
-(use-package solarized-theme :demand t)
-(use-package doom-themes  :demand t)
-(use-package spacemacs-common
-    :ensure spacemacs-theme
-    :config (load-theme 'spacemacs-light t))
-
-(defun my/disable-all-themes ()
-  (dolist (th custom-enabled-themes)
-          (disable-theme th))
-)
-
-(defun my/load-dark-theme ()
-  ;;   (load-theme 'spacemacs-dark)   ;; orginally
-  (my/disable-all-themes)
-  (load-theme 'doom-vibrant)
-)
-
-(defun my/load-light-theme ()
-  (load-theme 'spacemacs-light)   ;; orginally
-  ;; Recently I'm liking this ordered mixture.
-  ;; (load-theme 'solarized-light) (load-theme 'doom-solarized-light)
-)
-
-;; “C-x t” to toggle between light and dark themes.
-(defun my/toggle-theme () "Toggle between dark and light themes."
-  (interactive)
-  ;; Load dark if light is top-most enabled theme, else load light.
-  (if (equal (car custom-enabled-themes) 'doom-vibrant)
-      (my/load-light-theme)
-      (my/load-dark-theme)
-  )
-
-  ;; The dark theme's modeline separator is ugly.
-  ;; Keep reading below regarding “powerline”.
-  ;; (setq powerline-default-separator 'arrow)
-  ;; (spaceline-spacemacs-theme)
-)
-
-(global-set-key "\C-x\ t" 'my/toggle-theme)
-
-;; Initially begin with the light theme.
-; (ignore-errors (load-theme 'spacemacs-light t))
-(my/toggle-theme)
-#+end_src
-
-The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
-A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 
 ** Startup message: Emacs & Org versions
 #+begin_src emacs-lisp
@@ -997,13 +956,10 @@ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
       (concat "Welcome "      user-full-name
               "! Emacs "      emacs-version
               "; Org-mode "   org-version
-              "; System "    (system-name)
+              "; System "     (system-name)
                   (format "; Time %.3fs"
                       (float-time (time-subtract (current-time)
-                                    before-init-time)))
-      )
-  )
-)
+                                    before-init-time))))))
 #+end_src
 Now my startup message is,
 #+begin_src emacs-lisp
@@ -1015,10 +971,41 @@ For some fun, run this cute method.
 (animate-birthday-present user-full-name)
 #+end_src
 
-Moreover, since I end up using org-mode most of the time, let's make that the default mode.
+** Themes
 #+begin_src emacs-lisp
-(setq initial-major-mode 'org-mode)
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
+
+;; Nice looking themes ^_^
+(use-package solarized-theme)
+(use-package doom-themes)
+(use-package spacemacs-common
+  :ensure spacemacs-theme)
+
+;; Infinite list my commonly used themes.
+(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
+(setcdr (last my/themes) my/themes)
+
+(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
+  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’."
+  (interactive)
+  (dolist (τ custom-enabled-themes)
+    (disable-theme τ))
+  (when new-theme (load-theme new-theme)))
+
+;; The dark theme's modeline separator is ugly.
+;; Keep reading below regarding “powerline”.
+;; (setq powerline-default-separator 'arrow)
+;; (spaceline-spacemacs-theme)
+
+;; “C-x t” to toggle between personal themes.
+(defalias 'my/toggle-theme #' my/disable-all-themes)
+(global-set-key "\C-x\ t" 'my/toggle-theme)
+(my/toggle-theme)
 #+end_src
+
+- The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
+- A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 
 ** Persistent Scratch Buffer
 The ~*scratch*~ buffer is a nice playground for temporary data.
@@ -1027,7 +1014,7 @@ I use Org-mode often, so that's how I want things to appear.
 #+begin_src emacs-lisp
 (setq initial-scratch-message (concat
   "#+Title: Persistent Scratch Buffer"
-  "\n#\n # Welcome! This’ a place for trying things out. \n"))
+  "\n#\n# Welcome! This’ a place for trying things out. \n\n"))
 #+end_src
 
 We might accidentally close this buffer, so we could utilise the following.
@@ -1044,13 +1031,14 @@ We might accidentally close this buffer, so we could utilise the following.
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 #+end_src
 
-However, by default its contents are not saved --which may be an issue if we have
-not relocated our playthings to their appropriate files. Whence let's save & restore
-the scratch buffer by default.
+However, by default its contents are not saved --which may be an issue if we
+have not relocated our playthings to their appropriate files. Whence let's save
+& restore the scratch buffer by default.
 #+begin_src emacs-lisp
 (use-package persistent-scratch
-  :config
-  (persistent-scratch-setup-default))
+  ;; Enable both autosave and restore the last saved state of scratch
+  ;; buffer, if any, on Emacs start.
+  :config (persistent-scratch-setup-default))
 #+end_src
 
 ** Spaceline: A sleek mode line
@@ -1242,20 +1230,19 @@ e.g., when we switch windows or scroll, we get a wave of light near the cursor.
 ** Neotree: Directory Tree Listing
 We open a nifty file manager upon startup.
 #+begin_src emacs-lisp
-;; neotree --sidebar for project file navigation
-(use-package neotree
-  :config (global-set-key "\C-x\ d" 'neotree-toggle))
-
+;; Fancy icons for neotree
 ;; Only do this once:
-(when nil
-  (use-package all-the-icons)
-  (all-the-icons-install-fonts 'install-without-asking))
+(use-package all-the-icons
+  :config (all-the-icons-install-fonts 'install-without-asking))
 
-(setq neo-theme 'icons)
-(neotree-refresh)
+;; Sidebar for project file navigation
+(use-package neotree
+  :config (global-set-key "\C-x\ d" 'neotree-toggle)
+          (setq neo-theme 'icons)
+          (neotree-refresh))
 
 ;; Open it up upon startup.
-(neotree-toggle)
+;; (neotree-toggle)
 #+end_src
 By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file
 management.
@@ -1774,6 +1761,13 @@ Also:
 
 I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet]] and
 a [[http://www.howardism.org/Technical/Emacs/spreadsheet.html][friendly tutorial]].
+
+
+Moreover, since I end up using org-mode most of the time, let's make that the
+default mode.
+#+begin_src emacs-lisp
+(setq initial-major-mode 'org-mode)
+#+end_src
 
 ** High Speed Literate Programming
 
@@ -3183,35 +3177,6 @@ Let's dim windows, and even the whole Emacs frame, when not in use.
 (use-package dimmer
   :config (dimmer-mode))
 #+end_src
-
-** Having a workspace manager in Emacs
-I've loved using XMonad as a window tiling manager.
-I've enjoyed the ability to segregate my tasks
-according to what ‘project’ I'm working on;
-such as research, marking, Emacs play, etc.
-With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
-
-That is, I can have a million buffers, but only those
-that belong to a workspace will be visible when I'm switching between buffers, for example.
-
-#+begin_src emacs-lisp
-(use-package perspective)
-
-;; Activate it.
-(persp-mode)
-
-;; In the modeline, tell me which workspace I'm in.
-(persp-turn-on-modestring)
-#+end_src
-
-All commands are prefixed by ~C-x x~; main commands:
-- ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext one, or go to ‘p’revious one.
-- ~c~ :: Query a perspective to kill.
-- ~r~ :: Rename a perspective.
-- ~A~ :: Add buffer to current perspective & remove it from all others.
-
-As always, since we've installed ~which-key~, it suffices to press
-~C-x x~ then look at the resulting menu 😃
 
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 #+begin_src emacs-lisp

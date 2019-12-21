@@ -92,6 +92,10 @@
     (when current-prefix-arg
       (let ((time (current-time)))
         (save-excursion
+          ;; remove any other initialisation file candidates
+          (shell-command (format "mv ~/.emacs ~/.emacs_%s" (format-time-string "%Y-%m-%d")))
+          (shell-command (format "mv ~/.emacs.el ~/.emacs.el_%s" (format-time-string "%Y-%m-%d")))
+
           ;; Make init.el
           (org-babel-tangle)
           (byte-compile-file "~/.emacs.d/init.el")
@@ -144,6 +148,15 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 ;; Erase :TOC: body.
 ;; (my/org-replace-tree-contents "Table of Contents")
 ;; ~README~ ---From ~init.org~ to ~init.el~:6 ends here
+
+;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:1]]
+(use-package quelpa-use-package)
+;; Installing Emacs packages directly from source:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:2]]
+(use-package info+
+  :quelpa (info+ :fetcher wiki :url "https://www.emacswiki.org/emacs/info%2b.el"))
+;; Installing Emacs packages directly from source:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git:1]]
 ;; See here for a short & useful tutorial:
@@ -320,6 +333,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;;   ;; List of triples (extension method description) )
 ;; Hydra: Supply a prefix only once:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Cosmetics][Cosmetics:1]]
+;; Keep self motivated!
+(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+;; Cosmetics:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Cosmetics][Cosmetics:2]]
 ;; Make it very easy to see the line with the cursor.
 (global-hl-line-mode t)
@@ -328,59 +346,10 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; upon save.
 (add-hook 'before-save-hook 'whitespace-cleanup)
 
-;; Keep self motivated!
-(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+;; Nice soft yellow, pleasing ---try background colour for html export ;-)
+(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
+;; "white"; or this darker yellow "#eae3cb"
 ;; Cosmetics:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Themes][Themes:1]]
-;; Treat all themes as safe; no query before use.
-(setf custom-safe-themes t)
-
-;; Nice looking themes ^_^
-(use-package solarized-theme :demand t)
-(use-package doom-themes  :demand t)
-(use-package spacemacs-common
-    :ensure spacemacs-theme
-    :config (load-theme 'spacemacs-light t))
-
-(defun my/disable-all-themes ()
-  (dolist (th custom-enabled-themes)
-          (disable-theme th))
-)
-
-(defun my/load-dark-theme ()
-  ;;   (load-theme 'spacemacs-dark)   ;; orginally
-  (my/disable-all-themes)
-  (load-theme 'doom-vibrant)
-)
-
-(defun my/load-light-theme ()
-  (load-theme 'spacemacs-light)   ;; orginally
-  ;; Recently I'm liking this ordered mixture.
-  ;; (load-theme 'solarized-light) (load-theme 'doom-solarized-light)
-)
-
-;; “C-x t” to toggle between light and dark themes.
-(defun my/toggle-theme () "Toggle between dark and light themes."
-  (interactive)
-  ;; Load dark if light is top-most enabled theme, else load light.
-  (if (equal (car custom-enabled-themes) 'doom-vibrant)
-      (my/load-light-theme)
-      (my/load-dark-theme)
-  )
-
-  ;; The dark theme's modeline separator is ugly.
-  ;; Keep reading below regarding “powerline”.
-  ;; (setq powerline-default-separator 'arrow)
-  ;; (spaceline-spacemacs-theme)
-)
-
-(global-set-key "\C-x\ t" 'my/toggle-theme)
-
-;; Initially begin with the light theme.
-; (ignore-errors (load-theme 'spacemacs-light t))
-(my/toggle-theme)
-;; Themes:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:1]]
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
@@ -392,103 +361,124 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
       (concat "Welcome "      user-full-name
               "! Emacs "      emacs-version
               "; Org-mode "   org-version
-              "; System "    (system-name)
+              "; System "     (system-name)
                   (format "; Time %.3fs"
                       (float-time (time-subtract (current-time)
-                                    before-init-time)))
-      )
-  )
-)
+                                    before-init-time))))))
 ;; Startup message: Emacs & Org versions:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:2]]
 ;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.3; System alhassy-air.local
 ;; Startup message: Emacs & Org versions:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:4]]
-(setq initial-major-mode 'org-mode)
-;; Startup message: Emacs & Org versions:4 ends here
+;; [[file:~/.emacs.d/init.org::*Themes][Themes:1]]
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
+
+;; Nice looking themes ^_^
+(use-package solarized-theme)
+(use-package doom-themes)
+(use-package spacemacs-common
+  :ensure spacemacs-theme)
+
+;; Infinite list my commonly used themes.
+(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
+(setcdr (last my/themes) my/themes)
+
+(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
+  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’."
+  (interactive)
+  (dolist (τ custom-enabled-themes)
+    (disable-theme τ))
+  (when new-theme (load-theme new-theme)))
+
+;; The dark theme's modeline separator is ugly.
+;; Keep reading below regarding “powerline”.
+;; (setq powerline-default-separator 'arrow)
+;; (spaceline-spacemacs-theme)
+
+;; “C-x t” to toggle between personal themes.
+(defalias 'my/toggle-theme #' my/disable-all-themes)
+(global-set-key "\C-x\ t" 'my/toggle-theme)
+(my/toggle-theme)
+;; Themes:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:1]]
-(setq initial-scratch-message (concat
-  "#+Title: Persistent Scratch Buffer"
-  "\n#\n # Welcome! This’ a place for trying things out. \n"))
+(use-package persistent-scratch
+  ;; Enable both autosave and restore the last saved state of scratch
+  ;; buffer, if any, on Emacs start.
+  :config (persistent-scratch-setup-default))
 ;; Persistent Scratch Buffer:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:2]]
-;; A very simple function to recreate the scratch buffer:
-;; ( http://emacswiki.org/emacs/RecreateScratchBuffer )
 (defun scratch ()
-   "create a scratch buffer"
+   "Recreate the scratch buffer, loading any persistent state."
    (interactive)
    (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
    (insert initial-scratch-message)
-   (org-mode))
+   (ignore-errors (persistent-scratch-restore))
+   (persistent-scratch-autosave-mode 1)
+   (org-mode)
+   (local-set-key (kbd "C-x C-s") 'persistent-scratch-save))
 
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 ;; Persistent Scratch Buffer:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:3]]
-(use-package persistent-scratch
-  :config
-  (persistent-scratch-setup-default))
+(setq initial-scratch-message (concat
+  "#+Title: Persistent Scratch Buffer"
+  "\n#\n# Welcome! This’ a place for trying things out."
+  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
 ;; Persistent Scratch Buffer:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Spaceline: A sleek mode line][Spaceline: A sleek mode line:1]]
+;; When using helm & info & default, mode line looks prettier.
 (use-package spaceline
-  :config
-  (require 'spaceline-config)
-  (setq spaceline-buffer-encoding-abbrev-p nil)
-  (setq spaceline-line-column-p nil)
-  (setq spaceline-line-p nil)
-  (setq powerline-default-separator 'arrow)
-  :init
- (spaceline-helm-mode) ;; When using helm, mode line looks prettier.
- ; (ignore-errors (spaceline-spacemacs-theme))
-)
+  :custom (spaceline-buffer-encoding-abbrev-p nil)
+          (spaceline-line-column-p nil)
+          (spaceline-line-p nil)
+          (powerline-default-separator 'arrow)
+  :config (require 'spaceline-config)
+          (spaceline-helm-mode)
+          (spaceline-info-mode)
+          (spaceline-emacs-theme))
 ;; Spaceline: A sleek mode line:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Flashing when something goes wrong ─no blinking][Flashing when something goes wrong ─no blinking:1]]
+;; [[file:~/.emacs.d/init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:1]]
 (setq visible-bell 1)
-;; Enable flashing mode-line on errors
-;; On MacOS, this shows a caution symbol ^_^
+;; Flashing when something goes wrong ---no blinking:1 ends here
 
-;; Blinking cursor rushes me to type; let's slow down.
-(blink-cursor-mode -1)
-;; Flashing when something goes wrong ─no blinking:1 ends here
+;; [[file:~/.emacs.d/init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:2]]
+(blink-cursor-mode 1)
+;; Flashing when something goes wrong ---no blinking:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up:1]]
 (find-file "~/Dropbox/todo.org")
-;; (setq initial-buffer-choice "~/Dropbox/todo.org")
-
 (split-window-right)			  ;; C-x 3
 (other-window 1)                              ;; C-x 0
-;; toggle enable-local-variables :all           ;; Load *all* locals.
-    ;; toggle org-confirm-babel-evaluate nil    ;; Eval *all* blocks.
-      (find-file "~/.emacs.d/init.org")
+(let ((enable-local-variables :all)           ;; Load *all* locals.
+      (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
+  (find-file "~/.emacs.d/init.org"))
 ;; My to-do list: The initial buffer when Emacs opens up:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Showing date, time, and battery life][Showing date, time, and battery life:1]]
 (setq display-time-day-and-date t)
 (display-time)
 
-;; (display-battery-mode 1)
+;; (display-battery-mode -1)
 ;; Nope; let's use a fancy indicator …
-
+;;
 (use-package fancy-battery
   :diminish
-  :config
-    (setq fancy-battery-show-percentage t)
-    (setq battery-update-interval 15)
-    (fancy-battery-mode)
-    (display-battery-mode)
-)
+  :custom (fancy-battery-show-percentage  t)
+          (battery-update-interval       15)
+  :config (fancy-battery-mode))
 ;; Showing date, time, and battery life:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Hiding Scrollbar, tool bar, and menu][Hiding Scrollbar, tool bar, and menu:1]]
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
-(menu-bar-mode -1)
+(tool-bar-mode   -1)  ;; No large icons please
+(scroll-bar-mode -1)  ;; No visual indicator please
+(menu-bar-mode   -1)  ;; The Mac OS top pane has menu options
 ;; Hiding Scrollbar, tool bar, and menu:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Increase/decrease text size][Increase/decrease text size:1]]
@@ -497,62 +487,51 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; C-x C-0 restores the default font size
 ;; Increase/decrease text size:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Delete Selection mode][Delete Selection mode:1]]
-  (delete-selection-mode 1)
-;; Delete Selection mode:1 ends here
+;; [[file:~/.emacs.d/init.org::*Delete Selection Mode][Delete Selection Mode:1]]
+(delete-selection-mode 1)
+;; Delete Selection Mode:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):1]]
-;; Highlight expression within matching parens when near one of them.
 (setq show-paren-delay 0)
-(setq blink-matching-paren nil)
-(setq show-paren-style 'expression)
+(setq show-paren-style 'mixed)
 (show-paren-mode)
-
-;; Colour parens, and other delimiters, depending on their depth.
-;; Very useful for parens heavy languages like Lisp.
-(use-package rainbow-delimiters
-  :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
 ;; Highlight & complete parenthesis pair when cursor is near ;-):1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):3]]
-(electric-pair-mode 1)
-;; Highlight & complete parenthesis pair when cursor is near ;-):3 ends here
+;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):2]]
+(use-package rainbow-delimiters
+  :disable
+  :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
+;; Highlight & complete parenthesis pair when cursor is near ;-):2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):4]]
-(setq electric-pair-inhibit-predicate
-      (lambda (c)
-        (or (member c '(?< ?>)) (electric-pair-default-inhibit c))))
-
-(when (< 1 2) 'bye)
-
-;; Act as usual unless a ‘<’ or ‘>’ is encountered.
-;; ( char-at is really “character at poisition”; C-h o! )
-(setq rainbow-delimiters-pick-face-function
-      (lambda (depth match loc)
-        (unless (member (char-after loc) '(?< ?>))
-          (rainbow-delimiters-default-pick-face depth match loc))))
-
-;; Final piece.
-(modify-syntax-entry ?< "(>")
-(modify-syntax-entry ?> ")<")
+(electric-pair-mode 1)
 ;; Highlight & complete parenthesis pair when cursor is near ;-):4 ends here
 
-;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):6]]
-(setq electric-pair-pairs
-         '(
-           (?~ . ?~)
-           (?* . ?*)
-           (?/ . ?/)
-          ))
-;; Highlight & complete parenthesis pair when cursor is near ;-):6 ends here
+;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):5]]
+;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
+(setq electric-pair-inhibit-predicate
+      (lambda (c)
+        (or (member c '(?< ?> ?~)) (electric-pair-default-inhibit c))))
+
+;; Treat ‘<’ and ‘>’ as if they were words, instead of ‘parenthesis’.
+(modify-syntax-entry ?< "w<")
+(modify-syntax-entry ?> "w>")
+;; Highlight & complete parenthesis pair when cursor is near ;-):5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):7]]
+(setq electric-pair-pairs
+         '(;; (?~ . ?~)
+           (?* . ?*)
+           (?/ . ?/)))
+;; Highlight & complete parenthesis pair when cursor is near ;-):7 ends here
+
+;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):8]]
 ;; Disable pairs when entering minibuffer
 (add-hook 'minibuffer-setup-hook (lambda () (electric-pair-mode 0)))
 
 ;; Renable pairs when existing minibuffer
 (add-hook 'minibuffer-exit-hook (lambda () (electric-pair-mode 1)))
-;; Highlight & complete parenthesis pair when cursor is near ;-):7 ends here
+;; Highlight & complete parenthesis pair when cursor is near ;-):8 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Minibuffer should display line and column numbers][Minibuffer should display line and column numbers:1]]
 ; (line-number-mode t)
@@ -560,35 +539,49 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Minibuffer should display line and column numbers:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Minibuffer should display line and column numbers][Minibuffer should display line and column numbers:2]]
-(global-display-line-numbers-mode t)
-
-;; Have a uniform width for displaying line numbers,
-;; rather than having the width grow as necessary.
 (setq display-line-numbers-width-start t)
+(global-display-line-numbers-mode      t)
 ;; Minibuffer should display line and column numbers:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Never lose the cursor][Never lose the cursor:1]]
 (use-package beacon
   :config (setq beacon-color "#666600")
-  :hook ((org-mode text-mode) . beacon-mode))
+  :hook   ((org-mode text-mode) . beacon-mode))
 ;; Never lose the cursor:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Neotree: Directory Tree Listing][Neotree: Directory Tree Listing:1]]
-;; neotree --sidebar for project file navigation
-(use-package neotree
-  :config (global-set-key "\C-x\ d" 'neotree-toggle))
-
+;; Fancy icons for neotree
 ;; Only do this once:
-(when nil
-  (use-package all-the-icons)
-  (all-the-icons-install-fonts 'install-without-asking))
+(use-package all-the-icons
+  :config (all-the-icons-install-fonts 'install-without-asking))
 
-(setq neo-theme 'icons)
-(neotree-refresh)
+;; Sidebar for project file navigation
+(use-package neotree
+  :config (global-set-key "\C-x\ d" 'neotree-toggle)
+          (setq neo-theme 'icons)
+          (neotree-refresh))
 
 ;; Open it up upon startup.
-(neotree-toggle)
+;; (neotree-toggle)
 ;; Neotree: Directory Tree Listing:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Tabs][Tabs:1]]
+(use-package awesome-tab
+  :disable
+  :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
+  :config (awesome-tab-mode t))
+
+;; Show me /all/ the tabs at once, in one group.
+(defun awesome-tab-buffer-groups ()
+  (list (awesome-tab-get-group-name (current-buffer))))
+;; Tabs:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Window resizing using the golden ratio][Window resizing using the golden ratio:1]]
+(use-package golden-ratio
+  :disable
+  :diminish golden-ratio-mode
+  :init (golden-ratio-mode 1))
+;; Window resizing using the golden ratio:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:1]]
 ;; Let's avoid going over 80 columns
@@ -856,6 +849,10 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Pressing ENTER on a link should follow it.
 (setq org-return-follows-link t)
 ;; Life within Org-mode:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:6]]
+(setq initial-major-mode 'org-mode)
+;; Life within Org-mode:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Manipulating Sections][Manipulating Sections:1]]
 (setq org-use-speed-commands t)
@@ -1619,16 +1616,6 @@ user."
 (use-package dimmer
   :config (dimmer-mode))
 ;; Dimming Unused Windows:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Having a workspace manager in Emacs][Having a workspace manager in Emacs:1]]
-(use-package perspective)
-
-;; Activate it.
-(persp-mode)
-
-;; In the modeline, tell me which workspace I'm in.
-(persp-turn-on-modestring)
-;; Having a workspace manager in Emacs:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove
