@@ -40,22 +40,6 @@ An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispC
 and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of the bindings
 in ~“this”~ configuration.
 
-* Table of Contents                                  :Github:QUOTE:TOC:
-#+BEGIN_QUOTE
-- [[Booting Up][Booting Up]]
-  - [[=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=]]
-  - [[=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=]]
-  - [[~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~]]
-  - [[Installing Emacs packages directly from source][Installing Emacs packages directly from source]]
-  - [[=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git]]
-  - [[Syncing to the System's =$PATH=][Syncing to the System's =$PATH=]]
-  - [[Keeping my system up to date][Keeping my system up to date]]
-  - [[Installing OS packages from within Emacs ---Amethyst!][Installing OS packages from within Emacs ---Amethyst!]]
-  - [[Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail]]
-  - [[Hydra: Supply a prefix only once][Hydra: Supply a prefix only once]]
-- [[Conclusion][Conclusion]]
-#+END_QUOTE
-
 * Booting Up
 Let's decide on where we want to setup our declarations for personalising Emacs
 to our needs. Then, let's bootstrap Emacs' primitive packaging mechanism with a
