@@ -1,7 +1,7 @@
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
-#
+
 # TODO: Get rid of folding-mode in-favour of origami.
 
 #+TITLE: A Life Configuring Emacs
@@ -18,6 +18,12 @@
 #+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
+
+:Remarks:
+(use-package FEATURE :ensure ACTUAL-PACKAGE-NAME)
+⇒ When the feature and actual package name differ; e.g.,
+  p.el ends with ~(provide 'f) means we need (use-package f : ensure p)
+  :End:
 
 * Abstract        :ignore:
 :PROPERTIES:
@@ -113,25 +119,18 @@ in ~“this”~ configuration.
   - [[Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations]]
 - [[Life within Org-mode][Life within Org-mode]]
   - [[High Speed Literate Programming][High Speed Literate Programming]]
-  - [[Using org-mode as a Day Planner][Using org-mode as a Day Planner]]
-  - [[Super Agenda][Super Agenda]]
-  - [[Automating Pomodoro --Dealing with dreadful tasks][Automating Pomodoro --Dealing with dreadful tasks]]
-  - [[Journaling][Journaling]]
-  - [[Workflow States][Workflow States]]
+  - [[Executing code from ~src~ blocks][Executing code from ~src~ blocks]]
+  - [[Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images]]
+  - [[~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies][~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies]]
   - [[Org-Emphasise for Parts of Words][Org-Emphasise for Parts of Words]]
   - [[Working with Citations][Working with Citations]]
   - [[Show off-screen Heading at the top of the window][Show off-screen Heading at the top of the window]]
   - [[Clocking Work Time][Clocking Work Time]]
   - [[Reveal.JS -- The HTML Presentation Framework][Reveal.JS -- The HTML Presentation Framework]]
   - [[Coloured LaTeX using Minted][Coloured LaTeX using Minted]]
-  - [[Executing code from ~src~ blocks][Executing code from ~src~ blocks]]
-  - [[~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies][~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies]]
-  - [[Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images]]
   - [[Jumping without hassle][Jumping without hassle]]
   - [[Folding within a subtree][Folding within a subtree]]
   - [[Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors]]
-  - [[Making then opening html's from org's][Making then opening html's from org's]]
-  - [[Making then opening pdf's from org's][Making then opening pdf's from org's]]
   - [[Interpret the Haskell source blocks in a file][Interpret the Haskell source blocks in a file]]
 - [[Expected IDE Support][Expected IDE Support]]
   - [[Backups][Backups]]
@@ -444,6 +443,10 @@ Here are other packages that I want to be installed onto my machine.
 ;; Lisp libraries with Haskell-like naming.
 (use-package dash)    ;; “A modern list library for Emacs”
 (use-package s   )    ;; “The long lost Emacs string manipulation library”.
+
+;; Library for working with system files;
+;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
+(use-package f)
 #+END_SRC
 
 Note:
@@ -462,21 +465,26 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
 
 #+name: enable making init and readme
 #+BEGIN_SRC emacs-lisp :eval never-export
-  (defun my/make-init-el-and-README ()
+(defun my/make-init-el-and-README ()
     (interactive "P") ;; Places value of universal argument into: current-prefix-arg
     (when current-prefix-arg
-      (let ((time (current-time)))
+      (let* ((time      (current-time))
+                 (_date     (format-time-string "_%Y-%m-%d"))
+                 (.emacs    "~/.emacs")
+                 (.emacs.el "~/.emacs.el"))
+
         (save-excursion
           ;; remove any other initialisation file candidates
-          (shell-command (format "mv ~/.emacs ~/.emacs_%s" (format-time-string "%Y-%m-%d")))
-          (shell-command (format "mv ~/.emacs.el ~/.emacs.el_%s" (format-time-string "%Y-%m-%d")))
+          (ignore-errors
+            (f-move .emacs    (concat .emacs _data))
+            (f-move .emacs.el (concat .emacs.el _data)))
 
           ;; Make init.el
           (org-babel-tangle)
-          (byte-compile-file "~/.emacs.d/init.el")
+          ; (byte-compile-file "~/.emacs.d/init.el")
           (load-file "~/.emacs.d/init.el")
 
-          ;; Make README.md
+          ;; Make README.org
           (org-babel-goto-named-src-block "make-readme")
           (org-babel-execute-src-block)
 
@@ -487,15 +495,12 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
   (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+END_SRC
 
-#+RESULTS: enable making init and readme
-| my/make-init-el-and-README | t |
-
 Where the following block has ~#+NAME: make-readme~ before it.
 This source block generates the ~README~ for the associated Github repository.
 #+NAME: make-readme
 #+BEGIN_SRC emacs-lisp :tangle no :export_never t
 ;; Update the table of contents in this file.
-(toc-org-mode t)
+(toc-org-mode)
 (toc-org-insert-toc)
 (save-buffer)
 (with-temp-buffer
@@ -940,7 +945,7 @@ window manager for macOS along the lines of xmonad.”
       '(install . "brew cask install"))
 
 ;; If the given system package doesn't exist; install it.
-(system-packages-ensure "amethyst")
+;; (system-packages-ensure "amethyst")
 #+END_SRC
 
 Neato! Now I can live in Emacs even more ^_^
@@ -2068,6 +2073,8 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 (global-subword-mode 1)
 #+end_src
 
+* COMMENT Literate Programming with Org-mode
+
 * Life within Org-mode
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
@@ -2076,8 +2083,8 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 :Updating_FAQ:
 
 #+BEGIN_SRC emacs-lisp :tangle no
-(shell-command "rm ~/.emacs.d/elpa/org-9.2.3/*.elc")
-(byte-recompile-directory "~/.emacs.d/elpa/org-9.2.3/")
+(shell-command "rm ~/.emacs.d/elpa/org-9.3/*.elc")
+(byte-recompile-directory "~/.emacs.d/elpa/org-9.3/")
 #+END_SRC
 
 Easiest way get latest version of org-mode:
@@ -2088,15 +2095,8 @@ https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-n
 https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-version-using-package-repos-git-clone-in-ubuntu
 :End:
 
-# TODO: Clean up org modules remark.
-:Org-modules:
-#+BEGIN_SRC emacs-lisp
-;; (setq org-modules (quote (org-info org-tempo org-protocol org-habit org-mac-link)))
-#+END_SRC
-:End:
-
 Let's obtain Org-mode along with the extras that allow us to ignore
-heading names, but still utilise their contents --e.g., such as a heading
+heading names, but still utilise their contents ---e.g., such as a heading
 named ‘preamble’ that contains org-mode setup for a file.
 #+begin_src emacs-lisp
 (use-package org
@@ -2106,8 +2106,10 @@ named ‘preamble’ that contains org-mode setup for a file.
   (ox-extras-activate '(ignore-headlines)))
 #+end_src
 
-This lets us use the ~:ignore:~ tag on headlines you'd like to have ignored,
-while not ignoring their content --see [[https://emacs.stackexchange.com/a/17677/10352][here]].
+~org-plus-contrib~ contain the files that are included with Emacs plus all
+  contributions from the [[https://code.orgmode.org/bzg/org-mode/src/master/contrib][org-mode repoistory]].
++ Use the ~:ignore:~ tag on headlines you'd like to have ignored,
+  while not ignoring their content.
 + Use the ~:noexport:~ tag to omit a headline /and/ its contents.
 
 Now, let's replace the content marker, “⋯”, with a nice
@@ -2142,7 +2144,6 @@ Also:
 
 I rarely use tables, but here is a useful [[http://notesyoujustmightwanttosave.blogspot.com/][Org-Mode Table Editing Cheatsheet]] and
 a [[http://www.howardism.org/Technical/Emacs/spreadsheet.html][friendly tutorial]].
-
 
 Moreover, since I end up using org-mode most of the time, let's make that the
 default mode.
@@ -2271,7 +2272,91 @@ In summary,
 (setq org-alphabetical-lists t)
 :End:
 
-** Using org-mode as a Day Planner
+** Executing code from ~src~ blocks
+:PROPERTIES:
+:CUSTOM_ID: Executing-code-from-~src~-blocks
+:END:
+
+For example, to execute a shell command in emacs,
+write a ~src~ with a shell command, then ~C-c c-c~ to see the results.
+Emacs will generally query you to ensure you're sure about executing the
+(possibly dangerous) code block; let's stop that:
+#+BEGIN_SRC emacs-lisp
+; Seamless use of babel: No confirmation upon execution.
+;; Downside: Could accidentally evaluate harmful code.
+(setq org-confirm-babel-evaluate nil)
+#+END_SRC
+
+A worked out example can be obtained as follows: ~<g TAB~ then ~C-c C-C~ to make a nice
+simple graph --the code for this is in the next section.
+
+Some initial languages we want org-babel to support:
+#+BEGIN_SRC emacs-lisp
+ (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (emacs-lisp . t)
+     ;; (shell	 . t)
+     (python . t)
+     (haskell . t)
+     (ruby	 . t)
+     (ocaml	 . t)
+     (C . t)  ;; Captial “C” gives access to C, C++, D
+     (dot	 . t)
+     (latex	 . t)
+     (org	 . t)
+     (makefile	 . t)
+     ))
+
+;; Preserve my indentation for source code during export.
+(setq org-src-preserve-indentation t)
+
+;; The export process hangs Emacs, let's avoid this.
+;; MA: For one reason or another, this crashes more than I'd like.
+;; (setq org-export-in-background t)
+#+END_SRC
+
+More languages can be added using ~add-to-list~.
+
+** Hiding Emphasise Markers & Inlining Images
+:PROPERTIES:
+:CUSTOM_ID: Hiding-Emphasise-Markers-&-Inlining-Images
+:END:
+#+BEGIN_SRC emacs-lisp
+;; org-mode math is now highlighted ;-)
+(setq org-highlight-latex-and-related '(latex))
+
+;; Hide the *,=,/ markers
+(setq org-hide-emphasis-markers t)
+
+;; (setq org-pretty-entities t)
+;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+#+END_SRC
+
+The following is now disabled --it makes my system slower than I'd like.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Let's set inline images.
+(setq org-display-inline-images t)
+(setq org-redisplay-inline-images t)
+(setq org-startup-with-inline-images "inlineimages")
+
+;; Automatically convert LaTeX fragments to inline images.
+(setq org-startup-with-latex-preview t)
+#+END_SRC
+
+:yay_it_worked:
+
+$e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
+
+~awkward~ or $not$
+
+:end:
+
+** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
+:PROPERTIES:
+:CUSTOM_ID: ~ox-extra~:-Using-~:ignore:~-to-ignore-headings-but-use-the-bodies
+:END:
+** COMMENT Using org-mode as a Day Planner
 :PROPERTIES:
 :CUSTOM_ID: Using-org-mode-as-a-Day-Planner
 :END:
@@ -2536,7 +2621,7 @@ Let's install some helpful views for our agenda.
 #+end_src
 
 # Org-protocol is a great way to create capture notes in org-mode from other applications.
-** Super Agenda
+** COMMENT Super Agenda
 :PROPERTIES:
 :CUSTOM_ID: Super-Agenda
 :END:
@@ -2567,7 +2652,7 @@ This is far preferable to having them all in one big list.
 The [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]] homepage shows complex configurations and pleasant screenshots
 contrasting with and without the system.
 
-** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] --Dealing with dreadful tasks
+** COMMENT Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] --Dealing with dreadful tasks
 :PROPERTIES:
 :CUSTOM_ID: Automating-[[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]]---Dealing-with-dreadful-tasks
 :END:
@@ -2603,7 +2688,7 @@ Yet, sometimes it's hard to even get started on some tasks.
 
 Note that this does not conflict with the total effort estimate for the task.
 
-** Journaling
+** COMMENT Journaling
 :PROPERTIES:
 :CUSTOM_ID: Journaling
 :END:
@@ -2705,7 +2790,7 @@ Bindings available in the calendar-mode:
 # C-c C-f (org-forward-heading-same-level) with org-journal-open-next-entry
 # C-c C-b (org-backward-heading-same-level) with org-journal-open-previous-entry
 
-** Workflow States
+** COMMENT Workflow States
 :PROPERTIES:
 :CUSTOM_ID: WorkflowStates
 :END:
@@ -3385,57 +3470,6 @@ By default, Org exports LaTeX using the ~nonstopmode~ option, which tries
 its best to produce a PDF ---which ignores typesetting errors altogether,
 which is not necessary ideal when using LaTeX.
 
-** Executing code from ~src~ blocks
-:PROPERTIES:
-:CUSTOM_ID: Executing-code-from-~src~-blocks
-:END:
-
-For example, to execute a shell command in emacs,
-write a ~src~ with a shell command, then ~C-c c-c~ to see the results.
-Emacs will generally query you to ensure you're sure about executing the
-(possibly dangerous) code block; let's stop that:
-#+BEGIN_SRC emacs-lisp
-; Seamless use of babel: No confirmation upon execution.
-;; Downside: Could accidentally evaluate harmful code.
-(setq org-confirm-babel-evaluate nil)
-#+END_SRC
-
-A worked out example can be obtained as follows: ~<g TAB~ then ~C-c C-C~ to make a nice
-simple graph --the code for this is in the next section.
-
-Some initial languages we want org-babel to support:
-#+BEGIN_SRC emacs-lisp
- (org-babel-do-load-languages
-   'org-babel-load-languages
-   '(
-     (emacs-lisp . t)
-     ;; (shell	 . t)
-     (python . t)
-     (haskell . t)
-     (ruby	 . t)
-     (ocaml	 . t)
-     (C . t)  ;; Captial “C” gives access to C, C++, D
-     (dot	 . t)
-     (latex	 . t)
-     (org	 . t)
-     (makefile	 . t)
-     ))
-
-;; Preserve my indentation for source code during export.
-(setq org-src-preserve-indentation t)
-
-;; The export process hangs Emacs, let's avoid this.
-;; MA: For one reason or another, this crashes more than I'd like.
-;; (setq org-export-in-background t)
-#+END_SRC
-
-More languages can be added using ~add-to-list~.
-
-** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
-:PROPERTIES:
-:CUSTOM_ID: ~ox-extra~:-Using-~:ignore:~-to-ignore-headings-but-use-the-bodies
-:END:
-
 ** COMMENT NO: org-mode header generation
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-org-mode-header-generation
@@ -3500,40 +3534,6 @@ Then the functionality,
 
 (global-set-key (kbd "C-x t") 'new-untitled-org-template)
 #+END_SRC
-
-** Hiding Emphasise Markers & Inlining Images
-:PROPERTIES:
-:CUSTOM_ID: Hiding-Emphasise-Markers-&-Inlining-Images
-:END:
-#+BEGIN_SRC emacs-lisp
-;; org-mode math is now highlighted ;-)
-(setq org-highlight-latex-and-related '(latex))
-
-;; Hide the *,=,/ markers
-(setq org-hide-emphasis-markers t)
-
-;; (setq org-pretty-entities t)
-;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
-#+END_SRC
-
-The following is now disabled --it makes my system slower than I'd like.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Let's set inline images.
-(setq org-display-inline-images t)
-(setq org-redisplay-inline-images t)
-(setq org-startup-with-inline-images "inlineimages")
-
-;; Automatically convert LaTeX fragments to inline images.
-(setq org-startup-with-latex-preview t)
-#+END_SRC
-
-:yay_it_worked:
-
-$e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
-
-~awkward~ or $not$
-
-:end:
 
 ** Jumping without hassle
 :PROPERTIES:
@@ -3617,43 +3617,6 @@ Interestingly, ~org-set-property~, ~C-c C-x p~, lets us insert a property from
 a selection of available ones, then we'll be prompted for a value for it
 from a list of values you've used elsewhere. This is useful for remaining
 consistent for when trees share similar properties.
-
-** Making then opening html's from org's
-:PROPERTIES:
-:CUSTOM_ID: Making-then-opening-html's-from-org's
-:END:
-#+BEGIN_SRC emacs-lisp
-(cl-defun my/org-html-export-to-html (&optional (filename (buffer-name)))
-  "Produce an HTML from the given ‘filename’, or otherwise current buffer,
-   then open it in my default brower.
-  "
- (interactive)
- (org-html-export-to-html)
- (let ((it (concat (file-name-sans-extension buffer-file-name) ".html")))
-   (browse-url it)
-   (message (concat it " has been opened in Chromium."))
-   'success ;; otherwise we obtain a "compiler error".
- )
-)
-#+END_SRC
-
-** Making then opening pdf's from org's
-:PROPERTIES:
-:CUSTOM_ID: Making-then-opening-pdf's-from-org's
-:END:
-#+BEGIN_SRC emacs-lisp
-(cl-defun my/org-latex-export-to-pdf (&optional (filename (buffer-name)))
-  "Produce a PDF from the given ‘filename’, or otherwise current buffer,
-   then open it in my default viewer.
-  "
- (interactive)
- (org-latex-export-to-pdf)
- (let ((it (concat (file-name-sans-extension filename) ".pdf")))
-   (eshell-command (concat "open " it  " & ")))
-   (message (concat it " has been opened in your PDF viewer."))
-   'success ;; otherwise we obtain a "compiler error".
-)
-#+END_SRC
 
 ** Interpret the Haskell source blocks in a file
 :PROPERTIES:

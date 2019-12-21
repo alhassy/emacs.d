@@ -84,24 +84,33 @@
 ;; Lisp libraries with Haskell-like naming.
 (use-package dash)    ;; “A modern list library for Emacs”
 (use-package s   )    ;; “The long lost Emacs string manipulation library”.
+
+;; Library for working with system files;
+;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
+(use-package f)
 ;; =use-package= ---The start of =init.el=:7 ends here
 
 ;; [[file:~/.emacs.d/init.org::enable making init and readme][enable making init and readme]]
-  (defun my/make-init-el-and-README ()
+(defun my/make-init-el-and-README ()
     (interactive "P") ;; Places value of universal argument into: current-prefix-arg
     (when current-prefix-arg
-      (let ((time (current-time)))
+      (let* ((time      (current-time))
+                 (_date     (format-time-string "_%Y-%m-%d"))
+                 (.emacs    "~/.emacs")
+                 (.emacs.el "~/.emacs.el"))
+
         (save-excursion
           ;; remove any other initialisation file candidates
-          (shell-command (format "mv ~/.emacs ~/.emacs_%s" (format-time-string "%Y-%m-%d")))
-          (shell-command (format "mv ~/.emacs.el ~/.emacs.el_%s" (format-time-string "%Y-%m-%d")))
+          (ignore-errors
+            (f-move .emacs    (concat .emacs _data))
+            (f-move .emacs.el (concat .emacs.el _data)))
 
           ;; Make init.el
           (org-babel-tangle)
-          (byte-compile-file "~/.emacs.d/init.el")
+          ; (byte-compile-file "~/.emacs.d/init.el")
           (load-file "~/.emacs.d/init.el")
 
-          ;; Make README.md
+          ;; Make README.org
           (org-babel-goto-named-src-block "make-readme")
           (org-babel-execute-src-block)
 
@@ -311,7 +320,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
       '(install . "brew cask install"))
 
 ;; If the given system package doesn't exist; install it.
-(system-packages-ensure "amethyst")
+;; (system-packages-ensure "amethyst")
 ;; Installing OS packages from within Emacs ---Amethyst!:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail:1]]
@@ -499,7 +508,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):2]]
 (use-package rainbow-delimiters
-  :disable
+  :disabled
   :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
 ;; Highlight & complete parenthesis pair when cursor is near ;-):2 ends here
 
@@ -567,7 +576,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Tabs][Tabs:1]]
 (use-package awesome-tab
-  :disable
+  :disabled
   :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
   :config (awesome-tab-mode t))
 
@@ -578,7 +587,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Window resizing using the golden ratio][Window resizing using the golden ratio:1]]
 (use-package golden-ratio
-  :disable
+  :disabled
   :diminish golden-ratio-mode
   :init (golden-ratio-mode 1))
 ;; Window resizing using the golden ratio:1 ends here
@@ -811,22 +820,18 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Enabling CamelCase Aware Editing Operations:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:2]]
-;; (setq org-modules (quote (org-info org-tempo org-protocol org-habit org-mac-link)))
-;; Life within Org-mode:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:3]]
 (use-package org
   :ensure org-plus-contrib
   :config
   (require 'ox-extra)
   (ox-extras-activate '(ignore-headlines)))
+;; Life within Org-mode:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:3]]
+(setq org-ellipsis " ⤵")
 ;; Life within Org-mode:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:4]]
-(setq org-ellipsis " ⤵")
-;; Life within Org-mode:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:5]]
 ;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
 
@@ -848,11 +853,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; Pressing ENTER on a link should follow it.
 (setq org-return-follows-link t)
-;; Life within Org-mode:5 ends here
+;; Life within Org-mode:4 ends here
 
-;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:6]]
+;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:5]]
 (setq initial-major-mode 'org-mode)
-;; Life within Org-mode:6 ends here
+;; Life within Org-mode:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Manipulating Sections][Manipulating Sections:1]]
 (setq org-use-speed-commands t)
@@ -890,219 +895,47 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (setq org-yank-adjusted-subtrees t)
 ;; ~C-a,e,k~ and Yanking of sections:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:1]]
-(setq org-default-notes-file "~/Dropbox/todo.org")
-(define-key global-map "\C-cc" 'org-capture)
-;; Using org-mode as a Day Planner:1 ends here
+;; [[file:~/.emacs.d/init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:1]]
+; Seamless use of babel: No confirmation upon execution.
+;; Downside: Could accidentally evaluate harmful code.
+(setq org-confirm-babel-evaluate nil)
+;; Executing code from ~src~ blocks:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:2]]
-(cl-defun my/make/org-capture-template
-   (shortcut heading &optional (no-todo nil) (description heading) (category heading) (scheduled t))
-  "Quickly produce an org-capture-template.
+;; [[file:~/.emacs.d/init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:2]]
+ (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (emacs-lisp . t)
+     ;; (shell	 . t)
+     (python . t)
+     (haskell . t)
+     (ruby	 . t)
+     (ocaml	 . t)
+     (C . t)  ;; Captial “C” gives access to C, C++, D
+     (dot	 . t)
+     (latex	 . t)
+     (org	 . t)
+     (makefile	 . t)
+     ))
 
-  After adding the result of this function to ‘org-capture-templates’,
-  we will be able perform a capture with “C-c c ‘shortcut’”
-  which will have description ‘description’.
-  It will be added to the tasks file under heading ‘heading’
-  and be marked with category  ‘category’.
+;; Preserve my indentation for source code during export.
+(setq org-src-preserve-indentation t)
 
-  ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
-  when it's merely an interesting note that needn't be acted upon.
-  ─Probably a bad idea─
+;; The export process hangs Emacs, let's avoid this.
+;; MA: For one reason or another, this crashes more than I'd like.
+;; (setq org-export-in-background t)
+;; Executing code from ~src~ blocks:2 ends here
 
-  Defaults for ‘description’ and ‘category’ are set to the same as
-  the ‘heading’. Default for ‘no-todo’ is ‘nil’.
+;; [[file:~/.emacs.d/init.org::*Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images:1]]
+;; org-mode math is now highlighted ;-)
+(setq org-highlight-latex-and-related '(latex))
 
-  Scheduled items appear in the agenda; true by default all items are.
+;; Hide the *,=,/ markers
+(setq org-hide-emphasis-markers t)
 
-  The target is ‘file+headline’ and the type is ‘entry’; to see
-  other possibilities invoke: C-h o RET org-capture-templates.
-  The “%?” indicates the location of the Cursor, in the template,
-  when forming the entry.
-  "
-  `(,shortcut ,description entry
-      (file+headline org-default-notes-file
-         ,(concat heading "\n#+CATEGORY: " category))
-         , (concat "*" (unless no-todo " TODO") " %?\n"
-                (when nil ;; this turned out to be a teribble idea.
-                  ":PROPERTIES:\n:"
-                (if scheduled
-                    "SCHEDULED: %^{Any time ≈ no time! Please schedule this task!}t"
-                  "CREATED: %U")
-                "\n:END:") "\n\n ")
-      :empty-lines 1 :time-prompt t))
-
-;; For now, let's automatically schedule items a week in advance.
-;; TODO: FIXME: This overwrites any scheduling I may have performed.
-(defun my/org-capture-schedule ()
-  (org-schedule nil "+7d"))
-
-(add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
-
-(setq org-capture-templates
-  `(
-     ,(my/make/org-capture-template "t" "Tasks, Getting Things Done")
-     ,(my/make/org-capture-template "r" "Research")
-     ,(my/make/org-capture-template "m" "Email")
-     ,(my/make/org-capture-template "e" "Emacs (•̀ᴗ•́)و")
-     ,(my/make/org-capture-template "b" "Blog")
-     ,(my/make/org-capture-template "a" "Arbitrary Reading and Learning")
-     ,(my/make/org-capture-template "p" "Personal Matters")))
-;; Using org-mode as a Day Planner:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:3]]
-;; Cannot mark an item DONE if it has a  TODO child.
-;; Conversely, all children must be DONE in-order for a parent to be DONE.
-(setq org-enforce-todo-dependencies t)
-;; Using org-mode as a Day Planner:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:4]]
-  ;; Ensure notes are stored at the top of a tree.
-  (setq org-reverse-note-order nil)
-;; Using org-mode as a Day Planner:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:5]]
-;; Add a note whenever a task's deadline or scheduled date is changed.
-(setq org-log-redeadline 'time)
-(setq org-log-reschedule 'time)
-;; Using org-mode as a Day Planner:5 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:6]]
-(define-key global-map "\C-ca" 'org-agenda)
-;; Using org-mode as a Day Planner:6 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:7]]
-;; C-c a s ➩ Search feature also looks into archived files.
-;; Helpful when need to dig stuff up from the past.
-(setq org-agenda-text-search-extra-files '(agenda-archives))
-;; Using org-mode as a Day Planner:7 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:8]]
-;; Invoking the agenda command shows the agenda and enables
-;; the org-agenda variables.
-(org-agenda "a" "a")
-;; Using org-mode as a Day Planner:8 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:9]]
-;; Pressing ‘c’ in the org-agenda view shows all completed tasks,
-;; which should be archived.
-(add-to-list 'org-agenda-custom-commands
-  '("c" todo "DONE|ON_HOLD|CANCELLED" nil))
-;; Using org-mode as a Day Planner:9 ends here
-
-;; [[file:~/.emacs.d/init.org::*Using org-mode as a Day Planner][Using org-mode as a Day Planner:10]]
-(add-to-list 'org-agenda-custom-commands
-  '("u" alltodo ""
-     ((org-agenda-skip-function
-        (lambda ()
-              (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
-              (org-agenda-overriding-header "Unscheduled TODO entries: "))))
-;; Using org-mode as a Day Planner:10 ends here
-
-;; [[file:~/.emacs.d/init.org::*Super Agenda][Super Agenda:1]]
-(use-package org-super-agenda)
-(org-super-agenda-mode)
-
-(setq org-super-agenda-groups
-      ;; Default order is 0, first come first serve.
-      ;; Items are “or”-ed by default.
-      '((:name "Important"
-               :tag "PackageFormer"
-               :and (:tag "JC" :priority "A")
-               :and (:tag "WK" :priority "A")
-               :priority "A")
-
-        ;; Groups supply their own section names when none are given
-        (:tag "personal")
-        (:tag "3mi3")
-        (:name "Emacs Init" :tag "init")
-        (:priority<= "B" :order 1)
-        ))
-;; Super Agenda:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique\][Pomodoro\]] --Dealing with dreadful tasks][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] --Dealing with dreadful tasks:1]]
-;; Tasks get a 25 minute count down timer
-(setq org-timer-default-timer 25)
-
-;; Use the timer we set when clocking in happens.
-(add-hook 'org-clock-in-hook
-  (lambda () (org-timer-set-timer '(16))))
-
-;; unless we clocked-out with less than a minute left,
-;; show disappointment message.
-(add-hook 'org-clock-out-hook
-  (lambda ()
-  (unless (s-prefix? "0:00" (org-timer-value-string))
-     (message-box "The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave."))
-     (org-timer-stop)))
-;; Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] --Dealing with dreadful tasks:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Journaling][Journaling:1]]
-(use-package org-journal
-  ; :bind (("C-c j" . org-journal-new-entry))
-  :config
-  (setq org-journal-dir "~/Dropbox/journal/"
-        org-journal-file-type 'yearly
-        org-journal-file-format "Personal-%Y-%m-%d")
-)
-
-(defun my/org-journal-new-entry (prefix)
-  " Open today’s journal file and start a new entry.
-
-    With a prefix, we use the work journal; otherwise the personal journal.
-  "
-  (interactive "P")
-  (if prefix
-      (let ((org-journal-file-format "Work-%Y-%m-%d"))
-        (org-journal-new-entry nil))
-    (org-journal-new-entry nil))
-  (org-mode) (org-show-all))
-
-;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
-(global-set-key (kbd "C-c j") 'my/org-journal-new-entry)
-;; Journaling:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Workflow States][Workflow States:1]]
-(setq org-todo-keywords
-      (quote ((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
-              (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)"))))
-
-;; Since DONE is a terminal state, it has no exit-action.
-;; Let's explicitly indicate time should be noted.
-(setq org-log-done 'time)
-;; Workflow States:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Workflow States][Workflow States:2]]
-(setq org-todo-keyword-faces
-      (quote (("TODO" :foreground "red" :weight bold)
-              ("STARTED" :foreground "blue" :weight bold)
-              ("DONE" :foreground "forest green" :weight bold)
-              ("WAITING" :foreground "orange" :weight bold)
-              ("ON_HOLD" :foreground "magenta" :weight bold)
-              ("CANCELLED" :foreground "forest green" :weight bold))))
-;; Workflow States:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Workflow States][Workflow States:3]]
-(setq org-use-fast-todo-selection t)
-;; Workflow States:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Workflow States][Workflow States:4]]
-;; Install the tool
-; (async-shell-command "brew cask install java") ;; Dependency
-; (async-shell-command "brew install plantuml")
-
-;; Tell emacs where it is.
-;; E.g., (async-shell-command "find / -name plantuml.jar")
-(setq org-plantuml-jar-path
-      (expand-file-name "/usr/local/Cellar/plantuml/1.2019.5/libexec/plantuml.jar"))
-
-;; Enable C-c C-c to generate diagrams from plantuml src blocks.
-(add-to-list 'org-babel-load-languages '(plantuml . t) )
-(require 'ob-plantuml)
-
-; Use fundamental mode when editing plantuml blocks with C-c '
-(add-to-list 'org-src-lang-modes (quote ("plantuml" . fundamental)))
-;; Workflow States:4 ends here
+;; (setq org-pretty-entities t)
+;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+;; Hiding Emphasise Markers & Inlining Images:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
 ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
@@ -1215,48 +1048,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 )
 ;; Coloured LaTeX using Minted:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:1]]
-; Seamless use of babel: No confirmation upon execution.
-;; Downside: Could accidentally evaluate harmful code.
-(setq org-confirm-babel-evaluate nil)
-;; Executing code from ~src~ blocks:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:2]]
- (org-babel-do-load-languages
-   'org-babel-load-languages
-   '(
-     (emacs-lisp . t)
-     ;; (shell	 . t)
-     (python . t)
-     (haskell . t)
-     (ruby	 . t)
-     (ocaml	 . t)
-     (C . t)  ;; Captial “C” gives access to C, C++, D
-     (dot	 . t)
-     (latex	 . t)
-     (org	 . t)
-     (makefile	 . t)
-     ))
-
-;; Preserve my indentation for source code during export.
-(setq org-src-preserve-indentation t)
-
-;; The export process hangs Emacs, let's avoid this.
-;; MA: For one reason or another, this crashes more than I'd like.
-;; (setq org-export-in-background t)
-;; Executing code from ~src~ blocks:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images:1]]
-;; org-mode math is now highlighted ;-)
-(setq org-highlight-latex-and-related '(latex))
-
-;; Hide the *,=,/ markers
-(setq org-hide-emphasis-markers t)
-
-;; (setq org-pretty-entities t)
-;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
-;; Hiding Emphasise Markers & Inlining Images:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Jumping without hassle][Jumping without hassle:1]]
 (defun my/org-goto-line (line)
   "Go to the indicated line, unfolding the parent Org header.
@@ -1312,35 +1103,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (advice-add 'org-html-export-to-html :before 'my/ensure-headline-ids)
 (advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
 ;; Ensuring Useful HTML Anchors:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making then opening html's from org's][Making then opening html's from org's:1]]
-(cl-defun my/org-html-export-to-html (&optional (filename (buffer-name)))
-  "Produce an HTML from the given ‘filename’, or otherwise current buffer,
-   then open it in my default brower.
-  "
- (interactive)
- (org-html-export-to-html)
- (let ((it (concat (file-name-sans-extension buffer-file-name) ".html")))
-   (browse-url it)
-   (message (concat it " has been opened in Chromium."))
-   'success ;; otherwise we obtain a "compiler error".
- )
-)
-;; Making then opening html's from org's:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making then opening pdf's from org's][Making then opening pdf's from org's:1]]
-(cl-defun my/org-latex-export-to-pdf (&optional (filename (buffer-name)))
-  "Produce a PDF from the given ‘filename’, or otherwise current buffer,
-   then open it in my default viewer.
-  "
- (interactive)
- (org-latex-export-to-pdf)
- (let ((it (concat (file-name-sans-extension filename) ".pdf")))
-   (eshell-command (concat "open " it  " & ")))
-   (message (concat it " has been opened in your PDF viewer."))
-   'success ;; otherwise we obtain a "compiler error".
-)
-;; Making then opening pdf's from org's:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Interpret the Haskell source blocks in a file][Interpret the Haskell source blocks in a file:1]]
 (defvar *current-module* "NoModuleNameSpecified"
