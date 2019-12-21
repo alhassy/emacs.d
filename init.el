@@ -1,14 +1,90 @@
-;; [[file:~/.emacs.d/init.org::*Booting Up][Booting Up:1]]
-(setq enable-local-variables :safe)
-;; Booting Up:1 ends here
+;; [[file:~/.emacs.d/init.org::*Support for ‘Custom’][Support for ‘Custom’:1]]
+(setq custom-file "~/.emacs.d/custom.el")
+(load custom-file)
+;; Support for ‘Custom’:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=:1]]
-(let ((custom "~/.emacs.d/custom.el"))
-  (unless (file-exists-p custom)
-    (eshell-command (format "touch %s" custom)))
-  (setq custom-file custom)
-  (load custom-file))
-;; =~/.emacs= vs. =init.org=:1 ends here
+;; [[file:~/.emacs.d/init.org::*Support for ‘Custom’][Support for ‘Custom’:2]]
+(setq enable-local-variables :safe)
+;; Support for ‘Custom’:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:1]]
+;; Make all commands of the “package” module present.
+(require 'package)
+
+;; Internet repositories for new packages.
+(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
+                         ("gnu"       . "http://elpa.gnu.org/packages/")
+                         ("melpa"     . "http://melpa.org/packages/")
+                         ("melpa-stable" . "http://stable.melpa.org/packages/")))
+
+;; Actually get “package” to work.
+(package-initialize)
+(package-refresh-contents)
+;; =use-package= ---The start of =init.el=:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:2]]
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+
+(require 'use-package)
+;; =use-package= ---The start of =init.el=:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:3]]
+(setq use-package-always-ensure t)
+;; =use-package= ---The start of =init.el=:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:4]]
+(use-package auto-package-update
+  :config
+  ;; Delete residual old versions
+  (setq auto-package-update-delete-old-versions t)
+  ;; Do not bother me when updates have taken place.
+  (setq auto-package-update-hide-results t)
+  ;; Update installed packages at startup if there is an update pending.
+  (auto-package-update-maybe))
+;; =use-package= ---The start of =init.el=:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:5]]
+;; Making it easier to discover Emacs key presses.
+(use-package which-key
+  :diminish
+  :config (which-key-mode)
+          (which-key-setup-side-window-bottom)
+          (setq which-key-idle-delay 0.05))
+;; =use-package= ---The start of =init.el=:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:6]]
+(use-package diminish
+  :config ;; Let's hide some markers.
+    (diminish 'eldoc-mode)
+    (diminish 'org-indent-mode)
+    (diminish 'subword-mode))
+;; =use-package= ---The start of =init.el=:6 ends here
+
+;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:7]]
+;; Efficient version control.
+(use-package magit
+  :config (global-set-key (kbd "C-x g") 'magit-status))
+
+(use-package htmlize)
+;; Main use: Org produced htmls are coloured.
+;; Can be used to export a file into a coloured html.
+
+;; Quick BibTeX references, sometimes.
+(use-package biblio)
+
+;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
+;; https://github.com/emacsorphanage/org-bullets
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode))
+
+;; Haskell's cool
+(use-package haskell-mode)
+
+;; Lisp libraries with Haskell-like naming.
+(use-package dash)    ;; “A modern list library for Emacs”
+(use-package s   )    ;; “The long lost Emacs string manipulation library”.
+;; =use-package= ---The start of =init.el=:7 ends here
 
 ;; [[file:~/.emacs.d/init.org::enable making init and readme][enable making init and readme]]
   (defun my/make-init-el-and-README ()
@@ -32,7 +108,7 @@
   (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 ;; enable making init and readme ends here
 
-;; [[file:~/.emacs.d/init.org::*=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=:6]]
+;; [[file:~/.emacs.d/init.org::*~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~:5]]
 (use-package toc-org
   ;; Automatically update toc when saving an Org file.
   :hook (org-mode . toc-org-mode))
@@ -41,9 +117,9 @@
 (defun toc-org-hrefify-org (str &optional hash)
   "Given a heading, transform it into a href using the org-mode rules."
   (toc-org-format-visible-link str))
-;; =~/.emacs= vs. =init.org=:6 ends here
+;; ~README~ ---From ~init.org~ to ~init.el~:5 ends here
 
-;; [[file:~/.emacs.d/init.org::*=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=:7]]
+;; [[file:~/.emacs.d/init.org::*~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~:6]]
 (cl-defun my/org-replace-tree-contents (heading &key (with "") (offset 0))
   "Replace the contents of org tree HEADING with WITH, starting at OFFSET.
 
@@ -67,95 +143,7 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 
 ;; Erase :TOC: body.
 ;; (my/org-replace-tree-contents "Table of Contents")
-;; =~/.emacs= vs. =init.org=:7 ends here
-
-;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:2]]
-;; Make all commands of the “package” module present.
-(require 'package)
-
-;; Internet repositories for new packages.
-(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
-                         ("gnu"       . "http://elpa.gnu.org/packages/")
-                         ("melpa"     . "http://melpa.org/packages/")
-                         ("melpa-stable" . "http://stable.melpa.org/packages/")
-                         ;; Maintainer is AWOL.
-                         ;; ("marmalade" . "https://marmalade-repo.org/packages/")
-                         ))
-
-;; Actually get “package” to work.
-(package-initialize)
-(package-refresh-contents)
-;; =use-package= ---The start of =init.el=:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:3]]
-;; Unless it's already installed, update the packages archives,
-;; then install the most recent version of “use-package”.
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package))
-
-(require 'use-package)
-;; =use-package= ---The start of =init.el=:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:4]]
-(setq use-package-always-ensure t)
-;; =use-package= ---The start of =init.el=:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:5]]
-(use-package auto-package-update
-  :config
-  ;; Delete residual old versions
-  (setq auto-package-update-delete-old-versions t)
-  ;; Do not bother me when updates have taken place.
-  (setq auto-package-update-hide-results t)
-  ;; Update installed packages at startup if there is an update pending.
-  (auto-package-update-maybe))
-;; =use-package= ---The start of =init.el=:5 ends here
-
-;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:6]]
-;; Making it easier to discover Emacs key presses.
-(use-package which-key
-  :diminish
-  :config (which-key-mode)
-          (which-key-setup-side-window-bottom)
-          (setq which-key-idle-delay 0.05))
-;; =use-package= ---The start of =init.el=:6 ends here
-
-;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:7]]
-(use-package diminish
-  :config ;; Let's hide some markers.
-  (diminish 'eldoc-mode)
-  (diminish 'org-indent-mode)
-  (diminish 'subword-mode))
-;; =use-package= ---The start of =init.el=:7 ends here
-
-;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:8]]
-;; Efficient version control.
-(use-package magit
-  :config (global-set-key (kbd "C-x g") 'magit-status))
-
-(use-package htmlize)
-;; Main use: Org produced htmls are coloured.
-;; Can be used to export a file into a coloured html.
-
-;; Quick BibTeX references, sometimes.
-(use-package biblio)
-
-;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
-;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets
-  :hook (org-mode . org-bullets-mode))
-
-;; Haskell's cool
-(use-package haskell-mode)
-
-(use-package dash)    ;; “A modern list library for Emacs”
-(use-package s   )    ;; “The long lost Emacs string manipulation library”.
-;; =use-package= ---The start of =init.el=:8 ends here
-
-;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:9]]
-;; Don't ask for confirmation when opening symlinked files.
-(setq vc-follow-symlinks t)
-;; =use-package= ---The start of =init.el=:9 ends here
+;; ~README~ ---From ~init.org~ to ~init.el~:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git:1]]
 ;; See here for a short & useful tutorial:
@@ -173,45 +161,40 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 (setq magit-clone-set-remote.pushDefault t)
 
 (cl-defun maybe-clone (remote &optional (local (concat "~/" (file-name-base remote))))
-  "Clone a ‘remote’ repository if the ‘local’ directory does not exist.
-    Yields ‘nil’ when no cloning transpires, otherwise yields “cloned-repo”.
+  "Clone a REMOTE repository if the LOCAL directory does not exist.
 
-    ‘local’ is optional and defaults to the base name; e.g.,
-    if ‘remote’is ‘https://github.com/X/Y’ then ‘local’ becomes ‘~/Y’.
-  "
+Yields ‘repo-already-exists’ when no cloning transpires,
+otherwise yields ‘cloned-repo’.
+
+LOCAL is optional and defaults to the base name; e.g.,
+if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (if (file-directory-p local)
+      'repo-already-exists
+    (async-shell-command (concat "git clone " remote " " local))
+    (add-to-list 'magit-repository-directories `(,local   . 0))
+    'cloned-repo))
 
-     'repo-already-exists
-
-     (async-shell-command (concat "git clone " remote " " local))
-     (add-to-list 'magit-repository-directories `(,local   . 0))
-     'cloned-repo)
-)
-
-;; Set variable without asking.
-(setq magit-clone-set-remote.pushDefault 't)
-
-;; Public repos
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io")
+(maybe-clone "https://github.com/alhassy/CheatSheet")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
-(maybe-clone "https://github.com/alhassy/melpa")
-(maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
-(maybe-clone "https://github.com/alhassy/RubyCheatSheet")
-(maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
 (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
-(maybe-clone "https://github.com/alhassy/org-agda-mode")
-(maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
 (maybe-clone "https://github.com/alhassy/islam")
-(maybe-clone "https://gitlab.cas.mcmaster.ca/armstmp/cs3mi3.git" "~/3mi3")
+
+;; For brevity, many more ‘maybe-clone’ clauses are hidden in the source file.
 ;; =magit= ---Emacs' porcelain interface to git:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git:3]]
-(maybe-clone "https://github.com/alhassy/CheatSheet")
-
 (maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
+(maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
+(maybe-clone "https://github.com/alhassy/org-agda-mode")
+(maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
+(maybe-clone "https://github.com/alhassy/RubyCheatSheet")
+(maybe-clone "https://github.com/alhassy/melpa")
 (maybe-clone "https://github.com/alhassy/PrologCheatSheet")
+(maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
 
+(maybe-clone "https://gitlab.cas.mcmaster.ca/armstmp/cs3mi3.git" "~/3mi3")
 (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols")
 (maybe-clone "https://github.com/alhassy/interactive-way-to-c")
 (maybe-clone "https://github.com/alhassy/next-700-module-systems-proposal.git" "~/thesis-proposal")
@@ -269,22 +252,14 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 (use-package git-timemachine)
 ;; =magit= ---Emacs' porcelain interface to git:5 ends here
 
-;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
-(use-package hydra :demand t)
-
-;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
-;;   ;; List of triples (extension method description) )
-;; Hydra: Supply a prefix only once:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Syncing to the System's =$PATH=][Syncing to the System's =$PATH=:1]]
 (use-package exec-path-from-shell
   :init
-    (when (memq window-system '(mac ns x))
-     (exec-path-from-shell-initialize))
-)
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize)))
 ;; Syncing to the System's =$PATH=:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Keeping my system up to date & Installing OS packages from within Emacs][Keeping my system up to date & Installing OS packages from within Emacs:1]]
+;; [[file:~/.emacs.d/init.org::*Keeping my system up to date][Keeping my system up to date:1]]
 (defun my/stay-up-to-date ()
   "Ensure that OS and Emacs package listings are up to date.
 
@@ -302,33 +277,48 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 ;; For now, doing this since I'm also calling my/stay-up-to-date with
 ;; after-init-hook which hides the startup message.
 (add-hook 'after-init-hook 'display-startup-echo-area-message)
-;; Keeping my system up to date & Installing OS packages from within Emacs:1 ends here
+;; Keeping my system up to date:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Keeping my system up to date & Installing OS packages from within Emacs][Keeping my system up to date & Installing OS packages from within Emacs:2]]
+;; [[file:~/.emacs.d/init.org::*Installing OS packages from within Emacs ---Amethyst!][Installing OS packages from within Emacs ---Amethyst!:1]]
 ;; Auto installing OS system packages
 (use-package use-package-ensure-system-package)
-;; Keeping my system up to date & Installing OS packages from within Emacs:2 ends here
+;; Installing OS packages from within Emacs ---Amethyst!:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Who am I? ─Using Gnus for Gmail][Who am I? ─Using Gnus for Gmail:1]]
+;; [[file:~/.emacs.d/init.org::*Installing OS packages from within Emacs ---Amethyst!][Installing OS packages from within Emacs ---Amethyst!:3]]
+;; An Emacs-based interface to the package manager of your operating system.
+(use-package helm-system-packages)
+;; Installing OS packages from within Emacs ---Amethyst!:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Installing OS packages from within Emacs ---Amethyst!][Installing OS packages from within Emacs ---Amethyst!:4]]
+;; Unlike the Helm variant, we need to specify our OS pacman.
+(setq system-packages-package-manager 'brew)
+
+;; Use “brew cask install” instead of “brew install” for installing programs.
+(setf (nth 2 (assoc 'brew system-packages-supported-package-managers))
+      '(install . "brew cask install"))
+
+;; If the given system package doesn't exist; install it.
+(system-packages-ensure "amethyst")
+;; Installing OS packages from within Emacs ---Amethyst!:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail:1]]
 (setq user-full-name    "Musa Al-hassy"
       user-mail-address "alhassy@gmail.com")
-;; Who am I? ─Using Gnus for Gmail:1 ends here
+;; Who am I? ---Using Gnus for Gmail:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Who am I? ─Using Gnus for Gmail][Who am I? ─Using Gnus for Gmail:2]]
+;; [[file:~/.emacs.d/init.org::*Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail:2]]
      (setq message-send-mail-function 'smtpmail-send-it)
-;; Who am I? ─Using Gnus for Gmail:2 ends here
+;; Who am I? ---Using Gnus for Gmail:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Using Emacs in any text area on my OS][Using Emacs in any text area on my OS:1]]
-(shell-command "curl -fsSL https://raw.github.com/zachcurry/emacs-anywhere/master/install | bash")
+;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
+;; Invoke all possible key extensions having a common prefix by
+;; supplying the prefix only once.
+(use-package hydra)
 
-(server-start)
-;; Using Emacs in any text area on my OS:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Restarting Emacs][Restarting Emacs:1]]
-;; Provides only the command “restart-emacs”.
-(use-package restart-emacs
-  :commands restart-emacs)
-;; Restarting Emacs:1 ends here
+;; The standard syntax:
+;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
+;;   ;; List of triples (extension method description) )
+;; Hydra: Supply a prefix only once:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Cosmetics][Cosmetics:2]]
 ;; Make it very easy to see the line with the cursor.
@@ -1608,6 +1598,12 @@ user."
 (bind-key "C-x F" 'find-file-as-root)
 ;; Edit as Root:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Restarting Emacs][Restarting Emacs:1]]
+;; Provides only the command “restart-emacs”.
+(use-package restart-emacs
+  :commands restart-emacs)
+;; Restarting Emacs:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Keep buffers open across sessions][Keep buffers open across sessions:1]]
 ;; Keep open files open across sessions.
 (desktop-save-mode 1)
@@ -2012,9 +2008,7 @@ user."
 (setq undo-tree-visualizer-diff t)
 ;; Undo tree:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Using Emacs in any text area on my OS][Using Emacs in any text area on my OS:2]]
-(add-hook 'ea-popup-hook
-  (lambda (app-name window-title x y w h)
-    (org-mode)
-    (set-input-method "Agda")))
-;; Using Emacs in any text area on my OS:2 ends here
+;; [[file:~/.emacs.d/init.org::*Elementary Version Control][Elementary Version Control:1]]
+;; Don't ask for confirmation when opening symlinked files.
+(setq vc-follow-symlinks t)
+;; Elementary Version Control:1 ends here

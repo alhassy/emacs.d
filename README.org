@@ -1,11 +1,11 @@
-# Created 2019-12-20 Fri 13:34
-#+OPTIONS: html-postamble:nil toc:nil d:nil num:t
+# Created 2019-12-20 Fri 20:23
+#+OPTIONS: html-postamble:nil toc:nil d:nil num:t :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
 #+export_file_name: README.org
 
-#+html: <p align="center"> <img src="emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.3-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="emacs-birthday-present.png" width=200 height=250/> </p>
+#+html: <p align="center"> <img src="emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="emacs-birthday-present.png" width=200 height=250/> </p>
 
 I enjoy reading others' /literate/ configuration files and
 incorporating what I learn into my own. The result is a
@@ -50,52 +50,382 @@ An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispC
 and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of the bindings
 in ~“this”~ configuration.
 
+* Table of Contents                                  :Github:QUOTE:TOC_2_org:
+#+BEGIN_QUOTE
+- [[Booting Up][Booting Up]]
+  - [[=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=]]
+  - [[=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=]]
+  - [[~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~]]
+  - [[=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git]]
+  - [[Syncing to the System's =$PATH=][Syncing to the System's =$PATH=]]
+  - [[Keeping my system up to date][Keeping my system up to date]]
+  - [[Installing OS packages from within Emacs ---Amethyst!][Installing OS packages from within Emacs ---Amethyst!]]
+  - [[Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail]]
+  - [[Hydra: Supply a prefix only once][Hydra: Supply a prefix only once]]
+- [[Cosmetics][Cosmetics]]
+  - [[Themes][Themes]]
+  - [[Startup message: Emacs & Org versions][Startup message: Emacs & Org versions]]
+  - [[Persistent Scratch Buffer][Persistent Scratch Buffer]]
+  - [[Spaceline: A sleek mode line][Spaceline: A sleek mode line]]
+  - [[Flashing when something goes wrong ─no blinking][Flashing when something goes wrong ─no blinking]]
+  - [[My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up]]
+  - [[Showing date, time, and battery life][Showing date, time, and battery life]]
+  - [[Hiding Scrollbar, tool bar, and menu][Hiding Scrollbar, tool bar, and menu]]
+  - [[Increase/decrease text size][Increase/decrease text size]]
+  - [[Delete Selection mode][Delete Selection mode]]
+  - [[Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-)]]
+  - [[Minibuffer should display line and column numbers][Minibuffer should display line and column numbers]]
+  - [[Never lose the cursor][Never lose the cursor]]
+  - [[Neotree: Directory Tree Listing][Neotree: Directory Tree Listing]]
+  - [[Tabs][Tabs]]
+  - [[Window resizing using the golden ratio][Window resizing using the golden ratio]]
+- [[Prose][Prose]]
+  - [[Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping]]
+  - [[Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!]]
+  - [[Using a Grammar & Style Checker][Using a Grammar & Style Checker]]
+  - [[Lightweight Prose Proofchecking][Lightweight Prose Proofchecking]]
+  - [[Placeholder Text ---For Learning & Experimenting][Placeholder Text ---For Learning & Experimenting]]
+  - [[Unicode Input via Agda Input][Unicode Input via Agda Input]]
+  - [[Taking a tour of one's edits][Taking a tour of one's edits]]
+  - [[Moving Text Around][Moving Text Around]]
+  - [[Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations]]
+- [[Life within Org-mode][Life within Org-mode]]
+  - [[High Speed Literate Programming][High Speed Literate Programming]]
+  - [[Using org-mode as a Day Planner][Using org-mode as a Day Planner]]
+  - [[Super Agenda][Super Agenda]]
+  - [[Automating Pomodoro --Dealing with dreadful tasks][Automating Pomodoro --Dealing with dreadful tasks]]
+  - [[Journaling][Journaling]]
+  - [[Workflow States][Workflow States]]
+  - [[Org-Emphasise for Parts of Words][Org-Emphasise for Parts of Words]]
+  - [[Working with Citations][Working with Citations]]
+  - [[Show off-screen Heading at the top of the window][Show off-screen Heading at the top of the window]]
+  - [[Clocking Work Time][Clocking Work Time]]
+  - [[Reveal.JS -- The HTML Presentation Framework][Reveal.JS -- The HTML Presentation Framework]]
+  - [[Coloured LaTeX using Minted][Coloured LaTeX using Minted]]
+  - [[Executing code from ~src~ blocks][Executing code from ~src~ blocks]]
+  - [[~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies][~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies]]
+  - [[Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images]]
+  - [[Jumping without hassle][Jumping without hassle]]
+  - [[Folding within a subtree][Folding within a subtree]]
+  - [[Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors]]
+  - [[Making then opening html's from org's][Making then opening html's from org's]]
+  - [[Making then opening pdf's from org's][Making then opening pdf's from org's]]
+  - [[Interpret the Haskell source blocks in a file][Interpret the Haskell source blocks in a file]]
+- [[Expected IDE Support][Expected IDE Support]]
+  - [[Backups][Backups]]
+  - [[Editor Documentation with Contextual Information][Editor Documentation with Contextual Information]]
+  - [[~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation]]
+  - [[Highlight Defined Emacs Lisp Symbols][Highlight Defined Emacs Lisp Symbols]]
+  - [[Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit]]
+  - [[What's changed & who's to blame?][What's changed & who's to blame?]]
+  - [[Edit as Root][Edit as Root]]
+  - [[Restarting Emacs][Restarting Emacs]]
+  - [[Keep buffers open across sessions][Keep buffers open across sessions]]
+  - [[Mouse Editing Support][Mouse Editing Support]]
+  - [[Dimming Unused Windows][Dimming Unused Windows]]
+  - [[Having a workspace manager in Emacs][Having a workspace manager in Emacs]]
+  - [[Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
+  - [[Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
+  - [[Completion Frameworks][Completion Frameworks]]
+  - [[Text Folding with Origami-mode][Text Folding with Origami-mode]]
+- [[Helpful Utilities & Shortcuts][Helpful Utilities & Shortcuts]]
+  - [[Emacs keybindings for my browser][Emacs keybindings for my browser]]
+  - [[Using Emacs in any text area on my OS][Using Emacs in any text area on my OS]]
+  - [[Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake]]
+  - [[Reload buffer with ~f5~][Reload buffer with ~f5~]]
+  - [[Kill to start of line][Kill to start of line]]
+  - [[~file-as-list~ and ~file-as-string~][~file-as-list~ and ~file-as-string~]]
+  - [[~C-x k~ kills current buffer, ~C-u C-x k~ kills all others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
+  - [[Switching from 2 horizontal windows to 2 vertical windows][Switching from 2 horizontal windows to 2 vertical windows]]
+  - [[Obtaining Values of ~#+KEYWORD~ Annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
+  - [[Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
+  - [[Publishing articles to my personal blog][Publishing articles to my personal blog]]
+  - [[Excellent PDF Viewer][Excellent PDF Viewer]]
+- [[Conclusion][Conclusion]]
+- [[Approaches Before Reading Documentation][Approaches Before Reading Documentation]]
+  - [[Elementary Version Control][Elementary Version Control]]
+  - [[What's in, or at the top of, my ~~/.emacs~][What's in, or at the top of, my ~~/.emacs~]]
+  - [[README.md][README.md]]
+#+END_QUOTE
+
 * Booting Up
-Let's always load local variables that we've marked as safe
+Let's decide on where we want to setup our declarations for personalising Emacs
+to our needs. Then, let's bootstrap Emacs' primitive packaging mechanism with a
+slick interface ---which not only installs Emacs packages but also programs at
+the operating system level, all from inside Emacs!  Finally, let's declare who
+we are and use that to setup Emacs email service.
+
+** =~/.emacs= vs. =init.org=
+
+/Emacs is extenible/: When Emacs is started, it tried to load a user's Lisp
+program known as a initialisation file which specfies how Emacs should look and
+behave for you.  Emacs looks for the init file using the filenames =~/.emacs.el,
+~/.emacs,= or =~/.emacs.d/init.el= ---it looks for the first one that exists, in
+that order; at least it does so on my machine.  Below we'll avoid any confusion
+by /ensuring/ that only one of them is in our system.  Regardless, execute =C-h o
+user-init-file= to see the name of the init file loaded. Having no init file is
+tantamount to have an empty init file.
+
+- One can read about the various Emacs initialisation files [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html#Init-File][online]] or
+  within Emacs by the sequence ~C-h i m emacs RET i init file RET~.
+- A /friendly/ tutorial on ‘beginning a =.emacs= file’ can be read
+  [[https://www.gnu.org/software/emacs/manual/html_node/eintr/Beginning-init-File.html#Beginning-init-File][online]] or within Emacs by ~C-h i m emacs lisp intro RET i .emacs RET~.
+- After inserting some lisp code and saving, such as ~(set-background-color
+    "salmon")~, one can load the changes with ~M-x eval-buffer~.
+- In a terminal, use ~emacs -Q~ to open emacs without any initialisation files.
+
+Besides writing Lisp in an init file, one may use Emacs' customisation
+interface, ~M-x customize~: Point and click to change Emacs to your needs. The
+resulting customisations are, by default, automatically thrown into your init
+file ---=~/.emacs= is created for you if you have no init file.  This interface is
+great for beginners, but one major drawback is that it's a bit difficult to
+share settings since it's not amicable to copy-pasting.
+
+We shall use =~/.emacs.d/init.el= as the initialisation file so that /all/ of our
+Emacs related files live in the /same/ directory: =~/.emacs.d/=.
+
+A raw code file is difficult to maintain, especially for a /large/ system such as
+Emacs. Instead, we're going with a ‘literate programming’ approach: The
+intialisation configuration is presented in an essay fromat, along with headings
+and subheadings, intended for consumption by humans such as myself, that,
+incidentally, can be ‘tangled’ into a raw code file that is comprehensible by a
+machine. We achieve this goal using [[#Life-within-Org-mode][org-mode]] ---/Emacs' killer app/--- which is
+discussed in great detail later on.
+
+*** /Adventure time!/ “Honey, where's my init?”
+
+Let's use the three possible locations for the initialisation files
+to explore how Emacs finds them. Make the following three files.
+
+_~/.emacs.el_
+#+begin_src emacs-lisp :tangle no
+;; Emacs looks for this first;
+(set-background-color "chocolate3")
+(message-box ".emacs.el says hello")
+#+end_src
+_~/.emacs_
+#+begin_src emacs-lisp :tangle no
+;; else; looks for this one;
+(set-background-color "plum4")
+(message-box ".emacs says hello")
+#+end_src
+_~/.emacs.d/init.el_
+#+begin_src emacs-lisp :tangle no
+;; Finally, if neither are found; it looks for this one.
+(set-background-color "salmon")
+(message-box ".emacs.d/init.el says hello")
+#+end_src
+
+Now restart your Emacs to see how there super tiny initilaisation files
+affect your editor. Delete some of these files in-order for others to take effect!
+
+*** /Adventure time!/ Using Emacs' Easy Customisation Interface
+
+We have chosen not to keep configurations in ~~/.emacs~ since
+Emacs may explicitly add, or alter, code in it.
+
+Let's see this in action!
+
+Execute the following to see additions to the ~~/.emacs~ have been added by
+‘custom’.
+1. =M-x customize-variable RET line-number-mode RET=
+2. Then press: ~toggle~, ~state~, then ~1~.
+3. Now take a look: =C-x C-f ~/.emacs=
+
+*** Support for ‘Custom’
+
+Let the Emacs customisation GUI insert configurations into its own file, not
+touching or altering my initialisation file.  For example, I tend to have local
+variables to produce ~README.org~'s and other matters, so Emacs' Custom utility
+will remember to not prompt me each time for the safety of such local variables.
+#+begin_src emacs-lisp
+(setq custom-file "~/.emacs.d/custom.el")
+(load custom-file)
+#+end_src
+
+Speaking of local variables, let's always ones we've already marked as safe
 ---see the bottom of the source of this file for an example of local variables.
-( I tend to use loads of such locals! )
+( At one point, all my files had locals! )
 #+begin_src emacs-lisp
 (setq enable-local-variables :safe)
 #+end_src
 
-** =~/.emacs= vs. =init.org=
-Why not keep Emac's configurations in the ~~/.emacs~ file?
-This is because the Emacs system may explicitly add, or alter, code
-in it.
+** =use-package= ---The start of =init.el=
 
-For example, execute the following
-1. ~M-x customize-variable RET line-number-mode RET~
-2. Then press: ~toggle~, ~state~, then ~1~.
-3. Now take a look: ~(find-file "~/.emacs")~
-Notice how additions to the file have been created by `custom'.
+There are a few ways to install packages ---run ~C-h C-e~ for a short overview.
+The easiest, for a beginner, is to use the command ~package-list-packages~ then
+find the desired package, press ~i~ to mark it for installation, then install all
+marked packages by pressing ~x~.
 
-As such, I've chosen to write my Emacs' initialisation configurations
-in a file named ~~/.emacs.d/init.org~: I have a literate configuration which
-is then loaded using org-mode's tangling feature.
-Read more about Emacs' initialisation configurations [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Init-File.html#Init-File][here.]]
+- /Interactively/:  ~M-x list-packages~ to see all melpa packages that can install
+  - Not in alphabetical order, so maybe search with ~C-s~.
+  - Press ~Enter~ on a package to see its description.
+- Or more quickly, to install, say, the haskell mode: ~M-x package-install RET
+    unicode-fonts RET~.
 
-Off topic, I love tiling window managers and had been using [[https://xmonad.org][xmonad]]
-until recently when I obtained a mac machine and now use
-[[https://ianyh.com/amethyst/][Amethyst]] -- “Tiling window manager for macOS along the lines of xmonad.”
+“From rags to riches”: Recently I switched to Mac ---first time trying the OS.
+I had to do a few ~package-install~'s and it was annoying.  I'm looking for the
+best way to package my Emacs installation ---including my installed packages and
+configuration--- so that I can quickly install it anywhere, say if I go to
+another machine.  It seems ~use-package~ allows me to configure and auto install
+packages.  On a new machine, when I clone my ~.emacs.d~ and start Emacs, on the
+first start it should automatically install and compile all of my packages
+through ~use-package~ when it detects they're missing.
 
-Let the Emacs' gui insert default configurations and customisation
-into its own file, not touching or altering my initialisation file.
-For example, I tend to have local variables to produce ~README.md~'s
-and other matters, so Emacs' Custom utility will remember to not prompt
-me each time for the safety of such local variables.
+First we load ~package~, the built-in package manager.  It is by default only
+connected to the GNU ELPA (Emacs Lisp Package Archive) repository, so we
+extended it with other popular repositories; such as the much larger [[https://melpa.org/#/][MELPA]]
+(Milkypostman's ELPA) ---it builds packages [[https://github.com/melpa/melpa][directly from the source-code
+reposistories of developers]], rather than having all packages in one repository.
 #+begin_src emacs-lisp
-(let ((custom "~/.emacs.d/custom.el"))
-  (unless (file-exists-p custom)
-    (eshell-command (format "touch %s" custom)))
-  (setq custom-file custom)
-  (load custom-file))
+;; Make all commands of the “package” module present.
+(require 'package)
+
+;; Internet repositories for new packages.
+(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
+                         ("gnu"       . "http://elpa.gnu.org/packages/")
+                         ("melpa"     . "http://melpa.org/packages/")
+                         ("melpa-stable" . "http://stable.melpa.org/packages/")))
+
+;; Actually get “package” to work.
+(package-initialize)
+(package-refresh-contents)
 #+end_src
 
-Rather than manually extracting the Lisp code from this literate document
-each time we alter it, let's instead add a ‘hook’ ---a method  that is invoked
-on a particular event, in this case when we save the file.
-More precisely, in this case, ~C-x C-s~ is a normal save whereas
-~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
+- All installed packages are placed, by default, in =~/.emacs.d/elpa=.
+- *Neato:* /If one module requires others to run, they will be installed automatically./
+
+The declarative configuration tool [[https://github.com/jwiegley/use-package/][use-package]] is a
+macro/interface that manages other packages and the way they interact.
+- It allows us to tersely organise a package's configuration.
+  - By default, ~(use-package foo)~ only loads a package, if it's on our system.
+    - Use the standalone keyword ~:disabled~ to turn off loading
+      a module that, say, you're not using anymore.
+- It is /not/ a package manger, but we can make it one by having it automatically
+  install modules, via Emacs packing mechanism, when they're not in our system.
+
+  We achieve this by using the keyword option ~:ensure t~.
+- Here are common keywords we will use, in super simplified terms.
+  - ~:init   f₁ … fₙ~  /Always/ executes code forms ~fᵢ~ /before/ loading a package.
+  - ~:diminish str~  Uses /optional/ string ~str~ in the modeline to indicate
+    this module is active. Things we use often needn't take
+    real-estate down there and so no we provide no ~str~.
+  - ~:config f₁ … fₙ~ /Only/ executes code forms ~fᵢ~ /after/ loading a package.
+
+    The remaining keywords only take affect /after/ a module loads.
+
+  - ~:bind ((k₁ . f₁) … (kₙ . fₙ)~ Lets us bind keys ~kᵢ~, such as
+    ~"M-s o"~, to functions, such as =occur=.
+    - When /n = 1/, the extra outer parenthesis are not necessary.
+  - ~:hook ((m₁ … mₙ) . f)~ Enables functionality ~f~ whenever we're in one of the
+    modes ~mᵢ~, such as ~org-mode~. The ~. f~, along with the outermost parenthesis,
+    is optional and defaults to the name of the package ---Warning: Erroneous
+    behaviour happens if the package's name is not a function provided by the
+    package; a common case is when package's name does /not/ end in ~-mode~,
+    leading to the invocation ~((m₁ … mₙ) . <whatever-the-name-is>-mode)~ instead.
+
+    Additionally, when /n = 1/, the extra outer parenthesis are not necessary.
+  - ~:custom (k₁ v₁ d₁) … (kₙ vₙ dₙ)~ Sets a package's custom variables ~kᵢ~ to have
+    values ~vᵢ~, along with /optional/ user documentation ~dᵢ~ to explain to yourself,
+    in the future, why you've made this decision.
+
+    This is essentially ~setq~ within ~:config~.
+
+We now bootstrap ~use-package~.
+#+begin_src emacs-lisp
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+
+(require 'use-package)
+#+end_src
+
+We can now invoke ~(use-package XYZ :ensure t)~ which should check for the ~XYZ~
+package and make sure it is accessible.  If not, the ~:ensure t~ part tells
+~use-package~ to download it ---using the built-in ~package~ manager--- and place it
+somewhere accessible, in =~/.emacs.d/elpa/= by default.  By default we would like
+to download packages, since I do not plan on installing them manually by
+downloading Lisp files and placing them in the correct places on my system.
+#+begin_src emacs-lisp
+(setq use-package-always-ensure t)
+#+end_src
+The use of ~:ensure t~ only installs absent modules, but it does no updating.
+Let's set up [[https://github.com/rranelli/auto-package-update.el][an auto-update mechanism]].
+#+begin_src emacs-lisp
+(use-package auto-package-update
+  :config
+  ;; Delete residual old versions
+  (setq auto-package-update-delete-old-versions t)
+  ;; Do not bother me when updates have taken place.
+  (setq auto-package-update-hide-results t)
+  ;; Update installed packages at startup if there is an update pending.
+  (auto-package-update-maybe))
+#+end_src
+
+Here's another example use of ~use-package~.  Later on, I have a “show recent files
+pop-up” command set to ~C-x C-r~; but what if I forget? This mode shows me all key
+completions when I type ~C-x~, for example.  Moreover, I will be shown other
+commands I did not know about! Neato :-)
+#+begin_src emacs-lisp
+;; Making it easier to discover Emacs key presses.
+(use-package which-key
+  :diminish
+  :config (which-key-mode)
+          (which-key-setup-side-window-bottom)
+          (setq which-key-idle-delay 0.05))
+#+end_src
+⟨ Honestly, I seldom even acknowledge this pop-up; but it's always nice to show
+to people when I'm promoting Emacs. ⟩
+
+Above, the ~:diminish~ keyword indicates that we do not want the mode's name to be
+shown to us in the modeline ---the area near the bottom of Emacs.  It does so by
+using the ~diminish~ package, so let's install that.
+#+begin_src emacs-lisp
+(use-package diminish
+  :config ;; Let's hide some markers.
+    (diminish 'eldoc-mode)
+    (diminish 'org-indent-mode)
+    (diminish 'subword-mode))
+#+end_src
+
+Here are other packages that I want to be installed onto my machine.
+#+begin_src emacs-lisp
+;; Efficient version control.
+(use-package magit
+  :config (global-set-key (kbd "C-x g") 'magit-status))
+
+(use-package htmlize)
+;; Main use: Org produced htmls are coloured.
+;; Can be used to export a file into a coloured html.
+
+;; Quick BibTeX references, sometimes.
+(use-package biblio)
+
+;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
+;; https://github.com/emacsorphanage/org-bullets
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode))
+
+;; Haskell's cool
+(use-package haskell-mode)
+
+;; Lisp libraries with Haskell-like naming.
+(use-package dash)    ;; “A modern list library for Emacs”
+(use-package s   )    ;; “The long lost Emacs string manipulation library”.
+#+end_src
+
+Note:
+- [[https://github.com/magnars/dash.el][dash]]: “A modern list library for Emacs”
+  - E.g., ~(--filter (> it 10) (list 8 9 10 11 12))~
+- [[https://github.com/magnars/s.el][s]]: “The long lost Emacs string manipulation library”.
+  - E.g., ~s-trim, s-replace, s-join~.
+
+** ~README~ ---From ~init.org~ to ~init.el~
+
+Rather than manually extracting the Lisp code from this literate document each
+time we alter it, let's instead add a ‘hook’ ---a method that is invoked on a
+particular event, in this case when we save the file.  More precisely, in this
+case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
+~init.elc~ and ~README.md~.
 
 #+name: enable making init and readme
 #+begin_src emacs-lisp :eval never-export
@@ -120,11 +450,8 @@ More precisely, in this case, ~C-x C-s~ is a normal save whereas
   (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+end_src
 
-#+results: enable making init and readme
-
 Where the following block has ~#+NAME: make-readme~ before it.
-This source block generates the ~README~ for the associated github repository.
-
+This source block generates the ~README~ for the associated Github repository.
 #+name: make-readme
 #+begin_src emacs-lisp :tangle no :export_never t
 ;; Update the table of contents in this file.
@@ -185,21 +512,18 @@ Notes:
   - org-ruby supports inline ~#+HTML~ but [[https://github.com/wallyqs/org-ruby/issues/51][not html blocks]].
 
 - It seems coloured HTML does not render well:
-
   #+begin_src emacs-lisp :tangle no
   (org-html-export-to-html)
   (shell-command "mv README.html README.md")
   #+end_src
-
 - [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]] with:
-
   #+begin_src org :tangle no
   ,#+INFOJS_OPT: view:info toc:t buttons:t
   #+end_src
   This looks nice for standalone pages, but doesn't incorporate nicely with
   github README.org.
 
-The above mentioned package ~otc-org~, which creates an up-to-date table
+The above mentioned package ~toc-org~, which creates an up-to-date table
 of contents in an org file, at any heading tagged ~:TOC:~.  It's useful
 primarily for README files on Github.
 #+begin_src emacs-lisp
@@ -213,13 +537,14 @@ primarily for README files on Github.
   (toc-org-format-visible-link str))
 #+end_src
 
-I'm not sure how I feel about actually having the Github-serving TOC
-in my source file. It's nice to have around, but it breaks HTML export
-since its links are /not/ well-behaved; e.g., ~:ignore:~-ed headlines
-appear in the toc, but do not link to any visible heading in the HTML;
-likewise, headings with URLS in their names break. As such, below
-I've developed a way to erase it altogether ---alternatively, one
-could mark the toc as ~:noexport:~.
+I'm not sure how I feel about actually having the Github-serving TOC in my
+source file. It's nice to have around, from an essay-perspecive, but it breaks
+HTML export since its links are /not/ well-behaved; e.g., ~:ignore:~-ed headlines
+appear in the toc, but do not link to any visible heading in the HTML; likewise,
+headings with URLS in their names break. As such, below I've developed a way to
+erase it altogether ---alternatively, one could mark the toc as ~:noexport:~, but
+this would then, in my current approach, not result in a toc in the resulting
+README.
 #+begin_src emacs-lisp
 (cl-defun my/org-replace-tree-contents (heading &key (with "") (offset 0))
   "Replace the contents of org tree HEADING with WITH, starting at OFFSET.
@@ -245,186 +570,16 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 ;; Erase :TOC: body.
 ;; (my/org-replace-tree-contents "Table of Contents")
 #+end_src
-
-** =use-package= ---The start of =init.el=
-There are a few ways to install packages ---run ~C-h C-e~ for a short overview.
-The easiest, for a beginner, is to use the command ~package-list-packages~ then
-find the desired package, press ~i~ to mark it for installation, then install all
-marked packages by pressing ~x~.
-
-Alternatively, one uses the declarative configuration tool [[https://github.com/jwiegley/use-package/][use-package]] ---a
-macro/interface that manages other packages and the way they interact.
-- It allows us to tersely organise a package's configuration.
-  - By default, ~(use-package foo)~ only loads a package, if it's on our system.
-    - Use the standalone keyword ~:disabled~ to turn off loading
-      a module that, say, you're not using anymore.
-- It is /not/ a package manger, but we can make it one by having it automatically
-  install modules, via Emacs packing mechanism, when they're not in our system.
-
-  We achieve this by using the keyword option ~:ensure t~.
-- Here are common keywords we will use, in super simplified terms.
-  - ~:init   f₁ … fₙ~  /Always/ executes code forms ~fᵢ~ /before/ loading a package.
-  - ~:diminish str~  Uses /optional/ string ~str~ in the modeline to indicate
-    this module is active. Things we use often needn't take
-    real-estate down there and so no we provide no ~str~.
-  - ~:config f₁ … fₙ~ /Only/ executes code forms ~fᵢ~ /after/ loading a package.
-
-    The remaining keywords only take affect /after/ a module loads.
-
-  - ~:bind ((k₁ . f₁) … (kₙ . fₙ)~ Lets us bind keys ~kᵢ~, such as
-    ~"M-s o"~, to functions, such as =occur=.
-    - When /n = 1/, the extra outer parenthesis are not necessary.
-  - ~:hook ((m₁ … mₙ) . f)~ Enables functionality ~f~ whenever we're in one of the
-    modes ~mᵢ~, such as ~org-mode~. The ~. f~, along with the outermost parenthesis,
-    is optional and defaults to the name of the package ---Warning: Erroneous
-    behaviour happens if the package's name is not a function provided by the
-    package; a common case is when package's name does /not/ end in ~-mode~,
-    leading to the invocation ~((m₁ … mₙ) . <whatever-the-name-is>-mode)~ instead.
-
-    Additionally, when /n = 1/, the extra outer parenthesis are not necessary.
-  - ~:custom (k₁ v₁ d₁) … (kₙ vₙ dₙ)~ Sets a package's custom variables ~kᵢ~ to have
-    values ~vᵢ~, along with /optional/ user documentation ~dᵢ~ to explain to yourself,
-    in the future, why you've made this decision.
-
-    This is essentially ~setq~ within ~:config~.
-
-Background:
-Recently I switched to mac ---first time trying the OS.
-I had to do a few ~package-install~'s and it was annoying.
-I'm looking for the best way to package my Emacs installation
---including my installed packages and configuration--
-so that I can quickly install it anywhere, say if I go to another machine.
-It seems ~use-package~ allows me to configure and auto install packages.
-On a new machine, when I clone my ~.emacs.d~ and start emacs,
-on the first start it should automatically install and compile
-all of my packages through ~use-package~ when it detects they're missing.
-
-First we need the basic ~package~ module which not only allows us to obtain
-~use-package~ but acts as its package manager.
-#+begin_src emacs-lisp
-;; Make all commands of the “package” module present.
-(require 'package)
-
-;; Internet repositories for new packages.
-(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
-                         ("gnu"       . "http://elpa.gnu.org/packages/")
-                         ("melpa"     . "http://melpa.org/packages/")
-                         ("melpa-stable" . "http://stable.melpa.org/packages/")
-                         ;; Maintainer is AWOL.
-                         ;; ("marmalade" . "https://marmalade-repo.org/packages/")
-                         ))
-
-;; Actually get “package” to work.
-(package-initialize)
-(package-refresh-contents)
-#+end_src
-
-We can now:
-- ~M-x list-packages~ to see all melpa packages that can install
-  - Not in alphabetical order, so maybe search with ~C-s~.
-- For example to download the haskell mode: ~M-x package-install RET haskell-mode RET~.
-  - Or maybe to install ~unicode-fonts~ ;-)
-- Read more at http://ergoemacs.org/emacs/emacs_package_system.html or
-  at https://github.com/milkypostman/melpa
-
-We now bootstrap ~use-package~,
-#+begin_src emacs-lisp
-;; Unless it's already installed, update the packages archives,
-;; then install the most recent version of “use-package”.
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package))
-
-(require 'use-package)
-#+end_src
-
-We can now invoke ~(use-package XYZ :ensure t)~ which should check for the ~XYZ~
-package and make sure it is accessible.  If not, the ~:ensure t~ part tells
-~use-package~ to download it --using ~package.el~-- and place it somewhere
-accessible, in ~~/.emacs.d/elpa/~ by default.  By default we would like to
-download packages, since I do not plan on installing them manually by download
-~.el~ files and placing them in the correct places on my system.
-#+begin_src emacs-lisp
-(setq use-package-always-ensure t)
-#+end_src
-The use of ~:ensure t~ only installs absent modules, but it does no updating.
-Let's set up [[https://github.com/rranelli/auto-package-update.el][an auto-update mechanism]].
-#+begin_src emacs-lisp
-(use-package auto-package-update
-  :config
-  ;; Delete residual old versions
-  (setq auto-package-update-delete-old-versions t)
-  ;; Do not bother me when updates have taken place.
-  (setq auto-package-update-hide-results t)
-  ;; Update installed packages at startup if there is an update pending.
-  (auto-package-update-maybe))
-#+end_src
-
-Here's another example use of ~use-package~.  Below I have my “show recent files
-pop-up” command set to ~C-x C-r~; but what if I forget? This mode shows me all key
-completions when I type ~C-x~, for example.  Moreover, I will be shown other
-commands I did not know about! Neato :-)
-#+begin_src emacs-lisp
-;; Making it easier to discover Emacs key presses.
-(use-package which-key
-  :diminish
-  :config (which-key-mode)
-          (which-key-setup-side-window-bottom)
-          (setq which-key-idle-delay 0.05))
-#+end_src
-
-The ~:diminish~ keyword indicates that we do not want the mode's name to be shown
-to us in the modeline ---the area near the bottom of Emacs.  It does so by using
-the ~diminish~ package, so let's install that.
-#+begin_src emacs-lisp
-(use-package diminish
-  :config ;; Let's hide some markers.
-  (diminish 'eldoc-mode)
-  (diminish 'org-indent-mode)
-  (diminish 'subword-mode))
-#+end_src
-
-Here are other packages that I want to be installed onto my machine.
-#+begin_src emacs-lisp
-;; Efficient version control.
-(use-package magit
-  :config (global-set-key (kbd "C-x g") 'magit-status))
-
-(use-package htmlize)
-;; Main use: Org produced htmls are coloured.
-;; Can be used to export a file into a coloured html.
-
-;; Quick BibTeX references, sometimes.
-(use-package biblio)
-
-;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
-;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets
-  :hook (org-mode . org-bullets-mode))
-
-;; Haskell's cool
-(use-package haskell-mode)
-
-(use-package dash)    ;; “A modern list library for Emacs”
-(use-package s   )    ;; “The long lost Emacs string manipulation library”.
-#+end_src
-
-Note:
-- [[https://github.com/magnars/dash.el][dash]]: “A modern list library for Emacs”
-  - E.g., ~(--filter (> it 10) (list 8 9 10 11 12))~
-- [[https://github.com/magnars/s.el][s]]: “The long lost Emacs string manipulation library”.
-  - E.g., ~s-trim, s-replace, s-join~.
-
-Finally, since I've symlinked my ~.emacs~:
-#+begin_src emacs-lisp
-;; Don't ask for confirmation when opening symlinked files.
-(setq vc-follow-symlinks t)
-#+end_src
-
 ** =magit= ---Emacs' porcelain interface to git
-Why use ~magit~ as the interface to the git version control system?
-In a magit buffer nearly everything can be acted upon:
-Press ~return,~ or ~space~, to see details and ~tab~ to see children items, usually.
+Let's setup an Emacs ‘porcelain’ interface to git ---it makes working with
+version control tremendously convenient.  Moreover, I add a little pop-up so
+that I don't forget to commit often!
 
+Why use ~magit~ as the interface to the git version control system?  In ~magit~
+buffer nearly everything can be acted upon: Press =return=, or =space=, to see
+details and =tab= to see children items, usually.
+
+First, let's setup our git credentials.
 #+begin_src emacs-lisp
 ;; See here for a short & useful tutorial:
 ;; https://alvinalexander.com/git/git-show-change-username-email-address
@@ -434,18 +589,25 @@ Press ~return,~ or ~space~, to see details and ~tab~ to see children items, usua
   (shell-command "git config --global user.email \"alhassy@gmail.com\""))
 #+end_src
 
-Below is my personal quick guide to working with magit.
-A quick magit tutorial can be found on [[http://jr0cket.co.uk/2012/12/driving-git-with-emacs-pure-magic-with.html.html][jr0cket's blog]]
+Below is my personal quick guide to working with magit ---for a full tutorial
+see [[http://jr0cket.co.uk/2012/12/driving-git-with-emacs-pure-magic-with.html.html][jr0cket's blog]].
+
+- ~dired~ :: See the contents of a particular directory.
 
 - ~magit-init~ :: Put a project under version control.
      The mini-buffer will prompt you for the top level folder version.
      A ~.git~ folder will be created there.
 
-- ~magit-status~ , ~C-x g~ :: See status in another buffer. Press ~?~ to see options,
-     including:
+- ~magit-status~ , ~C-x g~ :: See status in another buffer.
+     Press ~?~ to see options, including:
+  - g :: Refresh the status buffer.
+  - TAB :: See collapsed items, such as what text has been changed.
   - ~q~ :: Quit magit, or go to previous magit screen.
   - ~s~ :: Stage, i.e., add, a file to version control.
        Add all untracked files by selecting the /Untracked files/ title.
+
+       [[https://softwareengineering.stackexchange.com/a/119807/185815][The staging area is akin to a pet store; commiting is taking the pet home.]]
+
   - ~k~ :: Kill, i.e., delete a file locally.
   - ~K~ :: This' ~(magit-file-untrack)~ which does ~git rm --cached~.
   - ~i~ :: Add a file to the project ~.gitignore~ file. Nice stuff =)
@@ -466,7 +628,6 @@ A quick magit tutorial can be found on [[http://jr0cket.co.uk/2012/12/driving-gi
 
   - ~d~ :: Show differences, another ~d~ or another option.
     - This is magit! Each hunk can be acted upon; e.g., ~s~ or ~c~ or ~k~ ;-)
-    - [[https://softwareengineering.stackexchange.com/a/119807/185815][The staging area is akin to a pet store; commiting is taking the pet home.]]
   - ~v~ :: Revert a commit.
   - ~x~ :: Undo last commit. Tantamount to ~git reset HEAD~~ when cursor is on most recent
        commit; otherwise resets to whatever commit is under the cursor.
@@ -478,17 +639,12 @@ A quick magit tutorial can be found on [[http://jr0cket.co.uk/2012/12/driving-gi
   - ~F~ :: Pull.
   - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
 
-  The status buffer may be refereshed using ~g~, and all magit buffer by ~G~.
+Notice that every time you press one of these commands, a ‘pop-up’ of realted
+git options appears! Thus not only is there no need to memorise many of them,
+but this approach makes /discovering/ other commands easier.
 
-  Press ~tab~ to see collapsed items, such as what text has been changed.
-
-Notice that every time you press one of these commands, a ‘pop-up’ of realted git options
-appears! Thus not only is there no need to memorize many of them, but this approach makes
-discovering other commands easier.
-
-Use ~M-x (magit-list-repositories) RET~ to list local repositories:
-
-Below are the git repos I'd like to clone.
+Below are the git repos I'd like to clone ---along with a function to do so
+quickly.
 #+begin_src emacs-lisp
 (use-package magit)
 
@@ -496,40 +652,30 @@ Below are the git repos I'd like to clone.
 (setq magit-clone-set-remote.pushDefault t)
 
 (cl-defun maybe-clone (remote &optional (local (concat "~/" (file-name-base remote))))
-  "Clone a ‘remote’ repository if the ‘local’ directory does not exist.
-    Yields ‘nil’ when no cloning transpires, otherwise yields “cloned-repo”.
+  "Clone a REMOTE repository if the LOCAL directory does not exist.
 
-    ‘local’ is optional and defaults to the base name; e.g.,
-    if ‘remote’is ‘https://github.com/X/Y’ then ‘local’ becomes ‘~/Y’.
-  "
+Yields ‘repo-already-exists’ when no cloning transpires,
+otherwise yields ‘cloned-repo’.
+
+LOCAL is optional and defaults to the base name; e.g.,
+if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (if (file-directory-p local)
+      'repo-already-exists
+    (async-shell-command (concat "git clone " remote " " local))
+    (add-to-list 'magit-repository-directories `(,local   . 0))
+    'cloned-repo))
 
-     'repo-already-exists
-
-     (async-shell-command (concat "git clone " remote " " local))
-     (add-to-list 'magit-repository-directories `(,local   . 0))
-     'cloned-repo)
-)
-
-;; Set variable without asking.
-(setq magit-clone-set-remote.pushDefault 't)
-
-;; Public repos
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io")
+(maybe-clone "https://github.com/alhassy/CheatSheet")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
-(maybe-clone "https://github.com/alhassy/melpa")
-(maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
-(maybe-clone "https://github.com/alhassy/RubyCheatSheet")
-(maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
 (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
-(maybe-clone "https://github.com/alhassy/org-agda-mode")
-(maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
 (maybe-clone "https://github.com/alhassy/islam")
-(maybe-clone "https://gitlab.cas.mcmaster.ca/armstmp/cs3mi3.git" "~/3mi3")
+
+;; For brevity, many more ‘maybe-clone’ clauses are hidden in the source file.
 #+end_src
 Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/check-uncommitted/][uncommited changes]]
---we might have had to step away from the computer and forgotten to commit.
+---we might have had to step away from the computer and forgotten to commit.
 #+begin_src emacs-lisp
 (require 'magit-git)
 
@@ -550,43 +696,16 @@ Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/
   '(lambda ()
       (add-hook 'hack-local-variables-hook 'my/magit-check-file-and-popup)))
 #+end_src
-Let's try this out:
-#+begin_example emacs-lisp
-(progn (eshell-command "echo change-here >> ~/dotfiles/.emacs")
-       (find-file "~/dotfiles/.emacs")
-)
-#+end_example
 
-In doubt, execute ~C-h e~ to jump to the ~*Messages*~ buffer.
-
-Finally, one of the main points for using version control is to have
-access to historic versions of a file. The following utility
-allows us to ~M-x git-timemachine~ on a file and use ~p/n/g/q~ to look
-at previous, next, goto arbitrary historic versions, or quit.
-- If we want to roll back to a previous version, we just ~write-file~ as usual!
+Finally, one of the main points for using version control is to have access to
+historic versions of a file. The following utility allows us to ~M-x
+git-timemachine~ on a file and use ~p/n/g/q~ to look at previous, next, goto
+arbitrary historic versions, or quit.
+- If we want to roll back to a previous version, we just ~write-file~ or ~C-x C-s~
+  as usual! The power of text!
 #+begin_src emacs-lisp
 (use-package git-timemachine)
 #+end_src
-
-** Hydra: Supply a prefix only once
-Invoke all possible key extensions having a common prefix
-by supplying the prefix only once. C.f. “hydra-zoom” from the docs.
-After the prefix is supplied, all extensions are shown in a minibuffer.
-#+begin_src emacs-lisp
-(use-package hydra :demand t)
-
-;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
-;;   ;; List of triples (extension method description) )
-#+end_src
-
-From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
-#+begin_quote
-Once you summon the Hydra through the prefixed binding (the body + any one head), all heads can be called in succession with only a short extension.
-
-The Hydra is vanquished once Hercules, any binding that isn't the Hydra's head, arrives. Note that Hercules, besides vanquishing the Hydra, will still serve his original purpose, calling his proper command. This makes the Hydra very seamless, it's like a minor mode that disables itself auto-magically.
-#+end_quote
-
-See [[Taking a tour of one's edits]] below for a small and useful example.
 
 ** Syncing to the System's =$PATH=
 For one reason or another, on OS X it seems that an Emacs instance
@@ -597,14 +716,12 @@ when Org-mode attempts to produce a PDF.
 #+begin_src emacs-lisp
 (use-package exec-path-from-shell
   :init
-    (when (memq window-system '(mac ns x))
-     (exec-path-from-shell-initialize))
-)
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize)))
 #+end_src
 
-See these [[https://github.com/purcell/exec-path-from-shell][docs]] for setting other environment variables.
-
-** Keeping my system up to date & Installing OS packages from within Emacs
+See the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] documentation for setting other environment variables.
+** Keeping my system up to date
 Let's ensure our system is always up to date.
 #+begin_src emacs-lisp
 (defun my/stay-up-to-date ()
@@ -626,9 +743,10 @@ Let's ensure our system is always up to date.
 (add-hook 'after-init-hook 'display-startup-echo-area-message)
 #+end_src
 
-Sometimes Emacs packages depend on existing system binaries,
-~use-package~ let's us ensure these exist using the ~:ensure-system-package~
-keyword extension.
+** Installing OS packages from within Emacs ---Amethyst!
+
+Sometimes Emacs packages depend on existing system binaries, ~use-package~ let's
+us ensure these exist using the ~:ensure-system-package~ keyword extension.
 
 - This is like ~:ensure t~ but operates at the OS level and uses your default
   OS package manager.
@@ -645,16 +763,50 @@ Here's an example use:
   :ensure-system-package rg) ;; ⇒ There's a buffer *system-packages*
                              ;;   installing this tool at the OS level!
 #+end_src
-If you look at the ~*Messages*~ buffer, via ~C-h e~, on machine it says
+If you look at the ~*Messages*~ buffer, via ~C-h e~, on my machine it says
 ~brew install rg: finished~ ---it uses ~brew~ which is my OS package manager!
 
 - The [[https://github.com/jwiegley/use-package#use-package-ensure-system-package][use-package-ensure-system-package]] documentation for a flurry of use cases.
-- The extension makes use of [[https://gitlab.com/jabranham/system-packages][system-packages]]; see its documentation to learn
-  more about managing installed OS packages from within Emacs.
 
-** Who am I? ─Using Gnus for Gmail
-Let's set the following personal
-Emacs-wide variables ─to be used in other locations besides email.
+The extension makes use of [[https://gitlab.com/jabranham/system-packages][system-packages]]; see its documentation to learn
+more about managing installed OS packages from within Emacs. This is itself
+a powerful tool, however it's interface ~M-x system-packages-install~ leaves much
+to be desired ---namely, tab-compleition listing all available packages,
+seeing their descriptions, and visiting their webpages.
+This is remedied by [[https://github.com/emacs-helm/helm-system-packages][M-x helm-system-packages]] then ~RET~ to see a system
+package's description, or ~TAB~ for the other features!
+/This is so cool!/
+
+#+begin_src emacs-lisp
+;; An Emacs-based interface to the package manager of your operating system.
+(use-package helm-system-packages)
+#+end_src
+
+The Helm counterpart is great for /discovarability/, whereas
+the plain ~system-packages~ is great for /programmability/.
+
+It is tedious to arrange my program windows manually, and as such I love tiling
+window managers, which automatically arrange them.  I had been using [[https://xmonad.org][xmonad]]
+until recently when I obtained a Mac machine and now use [[https://ianyh.com/amethyst/][Amethyst]] ---“Tiling
+window manager for macOS along the lines of xmonad.”
+
+#+begin_src emacs-lisp
+;; Unlike the Helm variant, we need to specify our OS pacman.
+(setq system-packages-package-manager 'brew)
+
+;; Use “brew cask install” instead of “brew install” for installing programs.
+(setf (nth 2 (assoc 'brew system-packages-supported-package-managers))
+      '(install . "brew cask install"))
+
+;; If the given system package doesn't exist; install it.
+(system-packages-ensure "amethyst")
+#+end_src
+
+Neato! Now I can live in Emacs even more ^_^
+
+** Who am I? ---Using Gnus for Gmail
+Let's set the following personal Emacs-wide variables ---to be used in other
+locations besides email.
 #+begin_src emacs-lisp
 (setq user-full-name    "Musa Al-hassy"
       user-mail-address "alhassy@gmail.com")
@@ -662,18 +814,16 @@ Emacs-wide variables ─to be used in other locations besides email.
 
 By default, in Emacs, we may send mail: Write it in Emacs with ~C-x m~,
 then press ~C-c C-c~ to have it sent via your OS's default mailing system
---mine appears to be Gmail via the browser. Or cancel sending mail with
-~C-c C-k~ --the same commands for capturing, discussed below (•̀ᴗ•́)و
+---mine appears to be Gmail via the browser. Or cancel sending mail with
+~C-c C-k~ ---the same commands for org-capturing, discussed below (•̀ᴗ•́)و
 
-To send and read email in Emacs we use
-[[https://en.wikipedia.org/wiki/Gnus][GNUS]] --which, like many GNU itself, it a recursive acronym:
-GNUS Network User Service.
+To send and read email in Emacs we use [[https://en.wikipedia.org/wiki/Gnus][GNUS]], which, like GNU itself, is a
+recursive acronym: GNUS Network User Service.
 
 1. Execute, rather place in your init:
    #+begin_src emacs-lisp
         (setq message-send-mail-function 'smtpmail-send-it)
    #+end_src
-
    Revert to the default OS mailing method by setting this variable to
    ~mailclient-send-it~.
 
@@ -694,9 +844,9 @@ GNUS Network User Service.
 
 3. Enable “2 step authentication” for Gmail following [[https://emacs.stackexchange.com/a/33309/10352][these]] instructions.
 
-4. You will then obtain a secret password, the ~x~ marks below, which you insert in a file
-   named ~~/.authinfo~ as follows --using your email address.
-   #+begin_src
+4. You will then obtain a secret password, the ~x~ marks below, which you insert
+   in a file named ~~/.authinfo~ as follows ---using your email address.
+   #+begin_src shell :tangle no
         machine imap.gmail.com login alhassy@gmail.com password xxxxxxxxxxxxxxxx port imaps
         machine smtp.gmail.com login alhassy@gmail.com password xxxxxxxxxxxxxxxx port 587
    #+end_src
@@ -704,87 +854,71 @@ GNUS Network User Service.
 5. In Emacs, ~M-x gnus~ to see what's there.
 
    Or compose mail with ~C-x m~ then send it with ~C-c C-c~.
-   - Press ~C-h m~ to learn more about message mode for mail composition;
-     or read [[https://www.gnus.org/manual/message.pdf][the Message Manual]].
+   - Press ~C-h m~ to learn more about message mode for mail composition; or
+     read the [[https://www.gnus.org/manual/message.pdf][Message Manual]].
 
-In gnus, by default items you've looked at disappear --i.e., are archived.
-They can still be viewed in, say, the online browser if you like.
+In gnus, by default items you've looked at disappear ---i.e., are archived.
+They can still be viewed in, say, your online browser if you like.
 In the ~Group~ view, ~R~ resets gnus, possibly retriving mail or alterations
 from other mail clients. ~q~ exits gnus in ~Group~ mode, ~q~ exits the particular
 view to go back to summary mode. Only after pressing ~q~ from within a group
-do changes take effect on articles --such as moves, reads, deletes, etc.
+do changes take effect on articles ---such as moves, reads, deletes, etc.
 
 - RET :: Open an article.
 
-- B m :: Move an article, in its current state, to another group
-     --i.e., ‘label’ using Gmail parlance.
+- B m :: Move an article, in its current state, to another group ---i.e.,
+     ‘label’ using Gmail parlance.
 
      Something to consider doing when finished with an article.
 
-     To delete an article, simply move it to ‘trash’ --of course this will delete it
+     To delete an article, simply move it to ‘trash’ ---of course this will delete it
      in other mail clients as well. There is no return from trash.
 
-     Emails can always be achieved --never delete, maybe?
+     Emails can always be archieved ---never delete, maybe?
 
-- ! :: mark an article as read, but to be kept around
-     --e.g., you have not replied to it, or it requires more reading at a later time.
+- ! :: Mark an article as read, but to be kept around ---e.g., you have not
+     replied to it, or it requires more reading at a later time.
 
 - R :: Reply to email with sender's content there in place.
   - ~r~ to reply to an email with sender's content in adjacent buffer.
 
-- d :: mark an article as done, i.e., read it and it can be archived.
+- d :: Mark an article as done, i.e., read it and it can be archived.
 
-Learn more by reading [[https://www.gnus.org/manual.html][The Gnus Manual]]; also available within Emacs by ~C-h i m gnus~ (•̀ᴗ•́)و
-
+Learn more by reading [[https://www.gnus.org/manual.html][The Gnus Manual]]; also available within Emacs by ~C-h i m
+gnus~ (•̀ᴗ•́)و
 - Or look at the [[https://www.gnu.org/software/emacs/refcards/pdf/gnus-refcard.pdf][Gnus Reference Card]].
 - Or, less comprehensively, this [[https://github.com/redguardtoo/mastering-emacs-in-one-year-guide/blob/master/gnus-guide-en.org#subscribe-groups][outline]].
-** Emacs keybindings for my brower
-I've downloaded the [[https://chrome.google.com/webstore/detail/vimium/dbepggeogbaibhgnhhndojpepiihcmeb/related][Vimium]] extension for Google Chrome,
-and have copy-pasted [[https://gist.github.com/dmgerman/6f0e5f9ffc6484dfaf53][these]] Emacs key bindings into it.
-Now ~C-h~ in my browser shows which Emacs-like bindings
-can be used to navigate my browser ^_^
+** Hydra: Supply a prefix only once
+Sometimes we have keybindings that share a common prefix, say ~C-c j~ and ~C-c k~,
+and we invoke them in an arbitrary sequence, it would be nice to invoke the
+shared prefix /only once/ thereby having:
+| ~C-c j C-c j C-c k C-c k M-3 C-c j M-5 C-c k~ | ≈ | ~C-c jjkk3j5k~ |
 
-** Using Emacs in any text area on my OS
-Using the [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs-Anywhere]] tool, I can press ~Cmd Shift e~ to have an Emacs frame
-appear, produce text with Emacs editing capabilities, then ~C-x 5 0~ to have the
-resulting text dumped into the text area I was working in.
+- The [[https://github.com/abo-abo/hydra#the-one-with-the-least-amount-of-code][“hydra-zoom”]] example from the documentation really showcases this utility.
+- After the prefix is supplied, all extensions are shown in a minibuffer.
 
-This way I can use Emacs literally anywhere for textual input!
-
-For my Mac OSX:
 #+begin_src emacs-lisp
-(shell-command "curl -fsSL https://raw.github.com/zachcurry/emacs-anywhere/master/install | bash")
+;; Invoke all possible key extensions having a common prefix by
+;; supplying the prefix only once.
+(use-package hydra)
 
-(server-start)
+;; The standard syntax:
+;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
+;;   ;; List of triples (extension method description) )
 #+end_src
 
-The tools that use emacs-anywhere --such as my web browser-- and emacs-anywhere
-itself need to be given sufficient OS permissions:
-#+begin_example org
-System Preferences → Security & Privacy → Accessibility
-#+end_example
-Then check the emacs-anywhere box from the following gui and provide a keyboard shortcut:
-#+begin_example org
-System Preferences → Keyboard → Shortcuts → Services
-#+end_example
+From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
+#+begin_quote
+Once you summon the Hydra through the prefixed binding (the body + any one
+head), all heads can be called in succession with only a short extension.
 
-(•̀ᴗ•́)و
+The Hydra is vanquished once Hercules, any binding that isn't the Hydra's head,
+arrives. Note that Hercules, besides vanquishing the Hydra, will still serve his
+original purpose, calling his proper command. This makes the Hydra very
+seamless, it's like a minor mode that disables itself auto-magically.
+#+end_quote
 
-I always want to be in Org-mode and input unicode:
-#+begin_src elisp
-(add-hook 'ea-popup-hook
-  (lambda (app-name window-title x y w h)
-    (org-mode)
-    (set-input-method "Agda")))
-#+end_src
-
-** Restarting Emacs
-Sometimes I wish to close then reopen Emacs; unsurprisingly someone's thought of implementing that.
-#+begin_src emacs-lisp
-;; Provides only the command “restart-emacs”.
-(use-package restart-emacs
-  :commands restart-emacs)
-#+end_src
+See [[Taking a tour of one's edits]] below for a small and useful example.
 
 * Cosmetics
 #+begin_src emacs-lisp
@@ -3017,7 +3151,17 @@ user."
 (bind-key "C-x F" 'find-file-as-root)
 #+end_src
 
+** Restarting Emacs
+Sometimes I wish to close then reopen Emacs; unsurprisingly someone's thought of
+implementing that.
+#+begin_src emacs-lisp
+;; Provides only the command “restart-emacs”.
+(use-package restart-emacs
+  :commands restart-emacs)
+#+end_src
+
 ** Keep buffers open across sessions                               :Disabled:
+
 #+begin_src emacs-lisp :tangle yes
 ;; Keep open files open across sessions.
 (desktop-save-mode 1)
@@ -3368,6 +3512,54 @@ Let's save a few precious seconds,
 (put 'narrow-to-page 'disabled nil)
 #+end_src
 
+** Emacs keybindings for my browser                                :Disabled:
+#+begin_center
+⟨ I was a bit too Emacs-happy at one-point; this' cool, but I rarely use it. ⟩
+#+end_center
+
+I've downloaded the [[https://chrome.google.com/webstore/detail/vimium/dbepggeogbaibhgnhhndojpepiihcmeb/related][Vimium]] extension for Google Chrome,
+and have copy-pasted [[https://gist.github.com/dmgerman/6f0e5f9ffc6484dfaf53][these]] Emacs key bindings into it.
+Now ~C-h~ in my browser shows which Emacs-like bindings
+can be used to navigate my browser ^_^
+
+** Using Emacs in any text area on my OS                           :Disabled:
+#+begin_center
+⟨ I was a bit too Emacs-happy at one-point; this' cool, but I rarely use it. ⟩
+#+end_center
+
+Using the [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs-Anywhere]] tool, I can press ~Cmd Shift e~ to have an Emacs frame
+appear, produce text with Emacs editing capabilities, then ~C-x 5 0~ to have the
+resulting text dumped into the text area I was working in.
+
+This way I can use Emacs literally anywhere for textual input!
+
+For my Mac OSX:
+#+begin_src emacs-lisp :tangle no
+(shell-command "curl -fsSL https://raw.github.com/zachcurry/emacs-anywhere/master/install | bash")
+
+(server-start)
+#+end_src
+
+The tools that use emacs-anywhere ---such as my web browser--- and emacs-anywhere
+itself need to be given sufficient OS permissions:
+#+begin_example org
+System Preferences → Security & Privacy → Accessibility
+#+end_example
+Then check the emacs-anywhere box from the following gui and provide a keyboard shortcut:
+#+begin_example org
+System Preferences → Keyboard → Shortcuts → Services
+#+end_example
+
+(•̀ᴗ•́)و
+
+I always want to be in Org-mode and input unicode:
+#+begin_src elisp :tangle no
+(add-hook 'ea-popup-hook
+  (lambda (app-name window-title x y w h)
+    (org-mode)
+    (set-input-method "Agda")))
+#+end_src
+
 ** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
 #+begin_src emacs-lisp
 (defvar my-keys-minor-mode-map
@@ -3609,3 +3801,122 @@ easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/
 Emacs   is   fun ^_^
 
 Bye!
+
+* Approaches Before Reading Documentation                :Posterity:Learning:
+** Elementary Version Control
+
+[[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
+are pointers to memory location of a given filename!
+Soft links are preferable since they defer to the orginal filename
+and can work across servers.
+
+We can declare them as follows,
+#+begin_example shell
+ln -s source_file myfile
+#+end_example
+
+If ~repo~ refers to a directory under version control
+--or Dropbox-- we move our init file and emacs directory to it,
+then make soft links to these locations so that whenever ~~/.emacs~
+is accessed it will refer to ~repo/.emacs~ and likewise for ~.emacs.d~ :-)
+
+On a new machine, copy-paste any existing emacs configs we want
+to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
+links only.
+
+#+begin_example shell
+repo=~/Dropbox     ## or my git repository: ~/dotfiles
+
+cd ~
+
+mv .emacs $repo/
+ln -s $repo/.emacs .emacs
+
+mv .emacs.elc $repo/
+ln -s $repo/.emacs.elc .emacs.elc
+
+mv .emacs.d/ $repo/
+ln -s $repo/.emacs.d/ .emacs.d
+#+end_example
+Note the extra ~/~ after ~.emacs.d~!
+
+You may need to unlink soft links if you already have them;
+e.g., ~unlink .emacs.d~.
+
+To make another softlink to a file, say in a blogging directory,
+we ~cd~ to the location of interest then execute, say:
+~ln -s $repo/.emacs.d/init.org init.org~
+
+While we're at it, let's make this super-duper file (and another) easily
+accessible --since we'll be altering it often--:
+#+begin_example shell
+cd ~
+
+ln -s dotfiles/.emacs.d/init.org init.org
+ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
+#+end_example
+
+Below I'll equip us with an Emacs ‘porcelain’ interface to git
+--it makes working with version control tremendously convenient.
+Moreover, I add a little pop-up so that I don't forget to commit often!
+
+Finally, since I've symlinked my ~.emacs~:
+#+begin_src emacs-lisp
+;; Don't ask for confirmation when opening symlinked files.
+(setq vc-follow-symlinks t)
+#+end_src
+** What's in, or at the top of, my ~~/.emacs~
+#+begin_src emacs-lisp :tangle no
+(org-babel-load-file "~/.emacs.d/init.org")
+;;
+;; My Emacs settings: (find-file "~/.emacs.d/init.org")
+#+end_src
+( I do not generate my ~.emacs~ file from this source code in-fear of
+   overriding functionality inserted by ~custom~. )
+
+Our ~.emacs~ should be byte-compiled so that when we start Emacs it will
+automatically determine if the ~init.org~ file has changed and if so it
+would tangle it producing the ~init.el~ file which will then be loaded immediately.
+** README.md
+#+begin_src emacs-lisp :tangle no :export_never t
+(with-temp-buffer
+    (insert (concat
+    "#+EXPORT_FILE_NAME: README.md
+     ,#+HTML: <h1> A Life Configuring Emacs </h1>
+     ,#+begin_export html
+     <p align=\"center\">
+       <img src=\"emacs-logo.png\" width=150 height=150/>
+     </p>
+
+     <p align=\"center\">
+        <a href=\"https://www.gnu.org/software/emacs/\">
+             <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
+        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
+     </p>
+
+     <p align=\"center\">
+       <img src=\"emacs-birthday-present.png\" width=200 height=250/>
+     </p>
+     ,#+end_export
+     ,#+HTML: <h3> My Literate Setup </h3>
+     ,#+OPTIONS: toc:nil d:nil
+     # Toc is displayed below at a strategic position.
+
+     I enjoy reading others' /literate/ configuration files and incorporating what I learn
+     into my own. The result is a sufficiently well-documented and accessible read that yields
+     a stylish and functional system (•̀ᴗ•́)و
+
+     This ~README.md~ has been automatically generated from my configuration
+     and its contents below could also be read in blog format, with /colour/, or as colourful PDF,
+     [[https://alhassy.github.io/init/][here]]. Enjoy :smile:
+
+      ,#+TOC: headlines 2
+      ,#+INCLUDE: init.org
+    "))
+    (org-mode)
+    (org-md-export-to-markdown)
+    ;; Coloured html does not work in Github, afaik.
+    ;; (org-html-export-to-html)
+    ;; (shell-command "mv README.html README.md")
+)
+#+end_src
