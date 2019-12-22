@@ -1,7 +1,7 @@
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
-
+#
 # TODO: Get rid of folding-mode in-favour of origami.
 
 #+TITLE: A Life Configuring Emacs
@@ -23,6 +23,10 @@
 (use-package FEATURE :ensure ACTUAL-PACKAGE-NAME)
 ⇒ When the feature and actual package name differ; e.g.,
   p.el ends with ~(provide 'f) means we need (use-package f : ensure p)
+
+   :bind (:map some-mode-map ("C-a b" . do-the-thing))
+≈ (define-key some-mode-map (kbd "C-a b")  'do-the-thing)
+
   :End:
 
 * Abstract        :ignore:
@@ -72,13 +76,12 @@ An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispC
 and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of the bindings
 in ~“this”~ configuration.
 
-* Table of Contents  :Github:QUOTE:TOC:
+* Table of Contents  :Github:TOC:
 # :Github:QUOTE:TOC_2_org:  ⇒ breaks on github
 :PROPERTIES:
 :CUSTOM_ID: Table-of-Contents
 :END:
 
-#+BEGIN_QUOTE
 - [[#abstract][Abstract]]
 - [[#booting-up][Booting Up]]
   - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
@@ -89,36 +92,42 @@ in ~“this”~ configuration.
   - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
   - [[#keeping-my-system-up-to-date][Keeping my system up to date]]
   - [[#installing-os-packages-from-within-emacs----amethyst][Installing OS packages from within Emacs ---Amethyst!]]
+  - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
   - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
   - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
+  - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
 - [[#cosmetics][Cosmetics]]
   - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
-  - [[#themes][Themes]]
-  - [[#persistent-scratch-buffer][Persistent Scratch Buffer]]
-  - [[#spaceline-a-sleek-mode-line][Spaceline: A sleek mode line]]
-  - [[#flashing-when-something-goes-wrong----no-blinking][Flashing when something goes wrong ---no blinking]]
+  - [[#being-at-the-helm----completion-framework][“Being at the Helm” ---Completion Framework]]
   - [[#my-to-do-list-the-initial-buffer-when-emacs-opens-up][My to-do list: The initial buffer when Emacs opens up]]
-  - [[#showing-date-time-and-battery-life][Showing date, time, and battery life]]
-  - [[#hiding-scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu]]
-  - [[#increasedecrease-text-size][Increase/decrease text size]]
-  - [[#delete-selection-mode][Delete Selection Mode]]
-  - [[#highlight--complete-parenthesis-pair-when-cursor-is-near--][Highlight & complete parenthesis pair when cursor is near ;-)]]
-  - [[#minibuffer-should-display-line-and-column-numbers][Minibuffer should display line and column numbers]]
+  - [[#exquisite-themes][Exquisite Themes]]
+  - [[#a-sleek--informative-mode-line][A sleek & informative mode line]]
   - [[#never-lose-the-cursor][Never lose the cursor]]
+  - [[#dimming-unused-windows][Dimming Unused Windows]]
+  - [[#flashing-when-something-goes-wrong----no-blinking][Flashing when something goes wrong ---no blinking]]
+  - [[#hiding-scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu]]
+  - [[#highlight--complete-parenthesis-pair-when-cursor-is-near--][Highlight & complete parenthesis pair when cursor is near ;-)]]
   - [[#neotree-directory-tree-listing][Neotree: Directory Tree Listing]]
   - [[#tabs][Tabs]]
   - [[#window-resizing-using-the-golden-ratio][Window resizing using the golden ratio]]
+  - [[#persistent-scratch-buffer][Persistent Scratch Buffer]]
 - [[#prose][Prose]]
   - [[#fill-mode----word-wrapping][Fill-mode ---Word Wrapping]]
+  - [[#word-completion][Word Completion]]
   - [[#fix-spelling-as-you-type---thesaurus--dictionary-too][Fix spelling as you type --thesaurus & dictionary too!]]
   - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
   - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
   - [[#placeholder-text----for-learning--experimenting][Placeholder Text ---For Learning & Experimenting]]
   - [[#unicode-input-via-agda-input][Unicode Input via Agda Input]]
-  - [[#taking-a-tour-of-ones-edits][Taking a tour of one's edits]]
+  - [[#increasedecrease-text-size][Increase/decrease text size]]
   - [[#moving-text-around][Moving Text Around]]
   - [[#enabling-camelcase-aware-editing-operations][Enabling CamelCase Aware Editing Operations]]
+  - [[#mouse-editing-support][Mouse Editing Support]]
+  - [[#delete-selection-mode][Delete Selection Mode]]
+  - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
+  - [[#taking-a-tour-of-ones-edits][Taking a tour of one's edits]]
 - [[#life-within-org-mode][Life within Org-mode]]
+  - [[#getting-started][Getting Started]]
   - [[#high-speed-literate-programming][High Speed Literate Programming]]
   - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
   - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
@@ -134,22 +143,18 @@ in ~“this”~ configuration.
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#interpret-the-haskell-source-blocks-in-a-file][Interpret the Haskell source blocks in a file]]
 - [[#expected-ide-support][Expected IDE Support]]
-  - [[#backups][Backups]]
   - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
-  - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
   - [[#highlight-defined-emacs-lisp-symbols][Highlight Defined Emacs Lisp Symbols]]
-  - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
-  - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
-  - [[#edit-as-root][Edit as Root]]
-  - [[#restarting-emacs][Restarting Emacs]]
-  - [[#keep-buffers-open-across-sessions][Keep buffers open across sessions]]
-  - [[#mouse-editing-support][Mouse Editing Support]]
-  - [[#dimming-unused-windows][Dimming Unused Windows]]
-  - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
-  - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
-  - [[#completion-frameworks][Completion Frameworks]]
   - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
+  - [[#edit-as-root][Edit as Root]]
+  - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
+  - [[#restarting-emacs][Restarting Emacs]]
+  - [[#backups][Backups]]
+  - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
+  - [[#keep-buffers-open-across-sessions][Keep buffers open across sessions]]
+  - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
 - [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
+  - [[#documentation-pop-ups][Documentation Pop-Ups]]
   - [[#emacs-keybindings-for-my-browser][Emacs keybindings for my browser]]
   - [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
   - [[#bind-recompile-to-c-c-c-m----m-for-make][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake]]
@@ -159,11 +164,8 @@ in ~“this”~ configuration.
   - [[#c-x-k-kills-current-buffer-c-u-c-x-k-kills-all-others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
   - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
   - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
-  - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
-  - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
 - [[#conclusion][Conclusion]]
-#+END_QUOTE
 
 * Booting Up
 :PROPERTIES:
@@ -940,16 +942,36 @@ window manager for macOS along the lines of xmonad.”
 #+BEGIN_SRC emacs-lisp
 ;; Unlike the Helm variant, we need to specify our OS pacman.
 (setq system-packages-package-manager 'brew)
-
+#+END_SRC
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; Use “brew cask install” instead of “brew install” for installing programs.
 (setf (nth 2 (assoc 'brew system-packages-supported-package-managers))
       '(install . "brew cask install"))
 
 ;; If the given system package doesn't exist; install it.
-;; (system-packages-ensure "amethyst")
+(system-packages-ensure "amethyst")
 #+END_SRC
 
 Neato! Now I can live in Emacs even more ^_^
+
+** Excellent PDF Viewer
+:PROPERTIES:
+:CUSTOM_ID: Excellent-PDF-Viewer
+:END:
+Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library for viewing PDFs in Emacs.
+#+BEGIN_SRC emacs-lisp
+(use-package pdf-tools
+  :init   (system-packages-ensure "pdf-tools")
+  :custom (pdf-tools-handle-upgrades nil)
+          (pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+  :config (pdf-tools-install))
+
+;; Now PDFs opened in Emacs are in pdfview-mode.
+#+END_SRC
+
+Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
+with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
+easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
 
 ** Who am I? ---Using Gnus for Gmail
 Let's set the following personal Emacs-wide variables ---to be used in other
@@ -958,6 +980,11 @@ locations besides email.
 (setq user-full-name    "Musa Al-hassy"
       user-mail-address "alhassy@gmail.com")
 #+end_src
+
+For some fun, run this cute method.
+#+BEGIN_SRC emacs-lisp :tangle no
+(animate-birthday-present user-full-name)
+#+END_SRC
 
 By default, in Emacs, we may send mail: Write it in Emacs with ~C-x m~,
 then press ~C-c C-c~ to have it sent via your OS's default mailing system
@@ -1082,33 +1109,79 @@ seamless, it's like a minor mode that disables itself auto-magically.
 
 See [[Taking a tour of one's edits]] below for a small and useful example.
 
+** Quickly pop-up a terminal, run a command, close it ---and zsh
+:PROPERTIES:
+:CUSTOM_ID: Quickly-pop-up-a-terminal--run-a-command--close-it----and-zsh
+:END:
+
+/Pop up a terminal, do some work, then close it using the same command./
+
+[[https://github.com/kyagi/shell-pop-el][Shell-pop]] uses only one key action to work: If the buffer exists, and we're in
+it, then hide it; else jump to it; otherwise create it if it doesn't exit.  Use
+universal arguments, e.g., ~C-u 5 C-t~, to have multiple shells and the same
+universal arguments to pop those shells up, but ~C-t~ to pop them away.
+
+#+BEGIN_SRC emacs-lisp
+(use-package shell-pop
+  :custom
+    ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
+    (shell-pop-universal-key "C-t")
+
+    ;; Percentage for shell-buffer window size.
+    (shell-pop-window-size 30)
+
+    ;; Position of the popped buffer: top, bottom, left, right, full.
+    (shell-pop-window-position "bottom")
+
+    ;; Please use an awesome shell.
+    (shell-pop-term-shell "/bin/zsh"))
+#+END_SRC
+# There are also a number of hooks for shell-pop. E.g., to unconditionally kill the buffer afterwards.
+
+Now that we have access to quick pop-up for a shell, let's get a pretty and
+practical shell: [[https://www.howtogeek.com/362409/what-is-zsh-and-why-should-you-use-it-instead-of-bash/][zsh]] along with the [[https://ohmyz.sh/][Oh My Zsh]] community configurations give us:
+
+1. ~brew install zsh~
+2. ~sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"~
+
+   This installs everything ^_^
+
+#+BEGIN_SRC emacs-lisp
+;; Be default, Emacs please use zsh
+;; E.g., M-x shell
+(setq shell-file-name "/bin/zsh")
+#+END_SRC
+
+Out of the box, zsh comes with
++ git support; the left side indicates which branch we're on and
+  whether the repo is dirty, ✗.
++ Recursive path expansion; e.g., ~/u/lo/b TAB~ expands to ~/usr/local/bin/~
++ Over [[https://github.com/ohmyzsh/ohmyzsh/wiki/Plugins#apache2-macports][250+ Plugins]] and [[https://github.com/ohmyzsh/ohmyzsh/wiki/Themes][125+ Themes]] that are enabled by simply
+  mentioning their name in the ~.zshrc~ file.
+
+The defaults have been good enough for me, for now ---as all else is achieved
+via Emacs ;-)
+
 * Cosmetics
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
 :END:
 
-#+begin_src emacs-lisp
-;; Keep self motivated!
-(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
-#+end_src
-
-#+begin_src emacs-lisp
-;; Make it very easy to see the line with the cursor.
-(global-hl-line-mode t)
-
-;; Clean up any accidental trailing whitespace and in other places,
-;; upon save.
-(add-hook 'before-save-hook 'whitespace-cleanup)
-
-;; Nice soft yellow, pleasing ---try background colour for html export ;-)
-(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
-;; "white"; or this darker yellow "#eae3cb"
-#+end_src
+Upon startup, we want to be greeted with a useful, yet unobtrusive, message
+briefly detailing major system details. Moreover, the bottom-most area of
+the screen should display batter life, data, & time. Likewise, we may have
+a casual file explorer ---primarily to show-off to newcomers, since great
+functionality is found with ~M-x dired~.
 
 ** Startup message: Emacs & Org versions
 :PROPERTIES:
 :CUSTOM_ID: Startup-message:-Emacs-&-Org-versions
 :END:
+
+Let's always welcome ourselves when Emacs begins with a helpful message.  For
+example, which user account is running and what are the version numbers of our
+primary tools.
+
 #+begin_src emacs-lisp
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
@@ -1129,153 +1202,160 @@ Now my startup message is,
 ;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.3; System alhassy-air.local
 #+end_src
 
-For some fun, run this cute method.
-#+BEGIN_SRC emacs-lisp :tangle no
-(animate-birthday-present user-full-name)
+Let's change the Emacs frame to mention the name of the buffer in focus,
+as well as a nice ‘motto’:
+#+begin_src emacs-lisp
+;; Keep self motivated!
+(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+#+end_src
+** “Being at the Helm” ---Completion Framework
+
+Whenever we're have a choice to make from a list, [[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible
+completions.  This is extremely helpful for when switching between buffers, =C-x
+b=, and discovering & learning about other commands!  E.g., press ~M-x~ to see
+recently executed commands and other possible commands!
+
+/Try and be grateful!/
+#+BEGIN_SRC emacs-lisp
+(use-package helm
+ :diminish
+ :init (helm-mode t)
+ :bind (("M-x"     . helm-M-x)
+        ("C-x C-f" . helm-find-files)
+        ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
+        ("C-x r b" . helm-filtered-bookmarks)
+        ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
+        ("C-c i"   . helm-imenu)
+        ("C-h a"   . helm-apropos)
+        ;; Look at what was cut recently & paste it in.
+        ("M-y" . helm-show-kill-ring)
+
+        :map helm-map
+        ;; We can list ‘actions’ on the currently selected item by C-z.
+        ("C-z" . helm-select-action)
+        ;; Let's keep tab-completetion anyhow.
+        ("TAB"   . helm-execute-persistent-action)
+        ("<tab>" . helm-execute-persistent-action)))
 #+END_SRC
 
-:Why_not_cd_HOME:
+Helm provides generic functions for completions to replace
+tab-completion in Emacs with no loss of functionality.
 
-+ Remark ::
-  Not as useful as I orginally thought &&  magit doesn't recognise the git repo
-  this init file belongs in easily.
++ The =execute-extended-command=, the default “M-x”, is replaced with ~helm-M-x~
+  which shows possible command completions.
 
-One of the first things I normally do when I'm opening a file is to go to my
-home directory. Let's stop being so repetitive by starting at the home directory.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Move to the user directory
-(cd "~/")
+  Likewise with ~apropos~, which is helpful for looking up commands.
+  It shows all meaningful Lisp symbols whose names match a given pattern.
+
++ The ‘Helm-mini’, ~C-x b~, shows all buffers, recently opened files,
+  bookmarks, and allows us to create new bookmarks and buffers!
+
++ The ‘Helm-imenu’, ~C-c i~, yields a a menu of all “top-level items” in a file;
+  e.g., functions and constants in source code or headers in an org-mode file.
+
+  ⟳ Nifty way to familarise yourself with a new code base, or one from a while
+  ago.
+
++ When Helm is active, ~C-x~ lists possible course of actions on the currently
+  selected item.
+
+When ~helm-mode~ is enabled, even help commands make use of it.
+E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
+and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
+Both show a pop-up of other possible commands.
+
+Let's ensure ~C-x b~ shows us: Current buffers, recent files, and bookmarks
+---as well as the ability to create bookmarks, which is via ~C-x r b~ manually.
+For example, I press ~C-x b~ then type any string and will have the option of
+making that a bookmark referring to the current location I'm working in, or
+jump to it if it's an existing bookmark, or make a buffer with that name,
+or find a file with that name.
+#+BEGIN_SRC emacs-lisp
+(setq helm-mini-default-sources '(helm-source-buffers-list
+                                    helm-source-recentf
+                                    helm-source-bookmarks
+                                    helm-source-bookmark-set
+                                    helm-source-buffer-not-found))
 #+END_SRC
+
+Incidentally, Helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the ~top~ program via
+~helm-top~. It also serves as an interface to popular search engines
+and over 100 websites such as ~google, stackoverflow, ctan~, and ~arxiv~.
+#+begin_src emacs-lisp
+(system-packages-ensure "surfraw")
+; ⇒  “M-x helm-surfraw” or “C-x c s”
+#+end_src
+If we want to perform a google search, with interactive suggestions,
+then invoke ~helm-google-suggest~ ---which can be acted for other serves,
+such as Wikipedia or Youtube by ~C-z~. For more google specific options,
+there is the ~google-this~ package.
+
+Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].  It allows us to
+not only search the current buffer but also the other buffers and to make live
+edits by pressing ~C-c C-e~ when a search buffer exists. Incidentally, executing
+~C-s~ on a word, region, will search for that particular word, region; then make
+changes with ~C-c C-e~ and apply them by ~C-x C-s~.
+#+BEGIN_SRC emacs-lisp
+(use-package helm-swoop
+  :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
+          ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
+          ;; Go back to last position where ‘helm-swoop’ was called
+          ("C-S-s" . 'helm-swoop-back-to-last-point))
+  :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
+          (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
+#+END_SRC
+
+:ThisBecomeMoreAnnoyingThanUseful:
+#+BEGIN_SRC emacs-lisp :tangle no
+  ;; If there is no symbol at the cursor, use the last used words instead.
+  (setq helm-swoop-pre-input-function
+      (lambda ()
+        (let (($pre-input (thing-at-point 'symbol)))
+          (if (eq (length $pre-input) 0)
+              helm-swoop-pattern ;; this variable keeps the last used words
+            $pre-input))))
+
+#+END_SRC
+
+Press ~M-i~ after a search has executed to enable it for all buffers.
+
+We can also limit our search to org files, or buffers of the same mode,
+or buffers belonging to the same project!
+
+Note that on the Mac, I can still perform default Emacs search using
+/Cmd+f/.
 :End:
+:Old_ivy_counsel_swiper_shenanigans:
++ There is a super duper neato search capability we can utilise -- ~swiper~.
++ We also use the ~counsel~, a collection of completion, ~ivy~, enhanced versions of
+  common Emacs commands.
+#+begin_src emacs-lisp :tangle no
+(use-package ivy ;; More powerful but ugly looking completetion framework.
+                 ;; Helm is prettier.
+                 ;; Needed for Counsel, below.
+ :config
 
-** Themes
-:PROPERTIES:
-:CUSTOM_ID: Themes
-:END:
-#+BEGIN_SRC emacs-lisp
-;; Treat all themes as safe; no query before use.
-(setf custom-safe-themes t)
+  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
+  (setq ivy-use-virtual-buffers t)
+  ;; number of result lines to display
+  (setq ivy-height 10)
+  ;; does not count candidates
+  (setq ivy-count-format "")
+  ;; no regexp by default
+  (setq ivy-initial-inputs-alist nil))
 
-;; Nice looking themes ^_^
-(use-package solarized-theme)
-(use-package doom-themes)
-(use-package spacemacs-common
-  :ensure spacemacs-theme)
+(use-package counsel
+  :bind*                              ; load when pressed
+  (("C-s"     . swiper)
+   ;; ("C-x C-r" . counsel-recentf)     ; search for recently edited
+   ("<f1> l"  . counsel-find-library)   ; find an Emacs Lisp library
+   ("<f2> u"  . counsel-unicode-char))) ; insert a unicode symbol using a pop-up
+#+end_src
 
-;; Infinite list my commonly used themes.
-(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
-(setcdr (last my/themes) my/themes)
-
-(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
-  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’."
-  (interactive)
-  (dolist (τ custom-enabled-themes)
-    (disable-theme τ))
-  (when new-theme (load-theme new-theme)))
-
-;; The dark theme's modeline separator is ugly.
-;; Keep reading below regarding “powerline”.
-;; (setq powerline-default-separator 'arrow)
-;; (spaceline-spacemacs-theme)
-
-;; “C-x t” to toggle between personal themes.
-(defalias 'my/toggle-theme #' my/disable-all-themes)
-(global-set-key "\C-x\ t" 'my/toggle-theme)
-(my/toggle-theme)
-#+END_SRC
-
-+ The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
-+ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
-
-** Persistent Scratch Buffer
-:PROPERTIES:
-:CUSTOM_ID: Persistent-Scratch-Buffer
-:END:
-
-The ~*scratch*~ buffer is a nice playground for temporary data.
-
-However, by default its contents are not saved --which may be an issue if we
-have not relocated our playthings to their appropriate files. Whence let's save
-& restore the scratch buffer by default.
-#+BEGIN_SRC emacs-lisp
-(use-package persistent-scratch
-  ;; Enable both autosave and restore the last saved state of scratch
-  ;; buffer, if any, on Emacs start.
-  :config (persistent-scratch-setup-default))
-#+END_SRC
-
-We might accidentally close this buffer, so we could utilise the following.
-#+BEGIN_SRC emacs-lisp
-(defun scratch ()
-   "Recreate the scratch buffer, loading any persistent state."
-   (interactive)
-   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
-   (insert initial-scratch-message)
-   (ignore-errors (persistent-scratch-restore))
-   (persistent-scratch-autosave-mode 1)
-   (org-mode)
-   (local-set-key (kbd "C-x C-s") 'persistent-scratch-save))
-
-;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
-#+END_SRC
-
-I use Org-mode often, so that's how I want things to appear.
-#+BEGIN_SRC emacs-lisp
-(setq initial-scratch-message (concat
-  "#+Title: Persistent Scratch Buffer"
-  "\n#\n# Welcome! This’ a place for trying things out."
-  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
-#+END_SRC
-
-** Spaceline: A sleek mode line
-:PROPERTIES:
-:CUSTOM_ID: Spaceline:-A-sleek-mode-line
-:END:
-
-I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I do not like evil-mode and find
-spacemacs to “hide things” from me ---whereas Emacs “”encourages” me to learn
-more---, however it is a configuration and I enjoy reading Emacs configs in
-order to improve my own setup. From Spacemacs I've adopted Helm for list
-completion, its sleek light & dark themes, and its modified powerline setup.
-
-The ‘modeline’ is a part near the bottom of Emacs that gives information about
-the current mode, as well as other matters --such as time & date, for example.
-
-#+BEGIN_SRC emacs-lisp
-;; When using helm & info & default, mode line looks prettier.
-(use-package spaceline
-  :custom (spaceline-buffer-encoding-abbrev-p nil)
-          (spaceline-line-column-p nil)
-          (spaceline-line-p nil)
-          (powerline-default-separator 'arrow)
-  :config (require 'spaceline-config)
-          (spaceline-helm-mode)
-          (spaceline-info-mode)
-          (spaceline-emacs-theme))
-#+END_SRC
-
-Other separators I've considered include ~'brace~ instead of an arrow,
-and ~'contour, 'chamfer, 'wave, 'zigzag~ which look like browser tabs
-that are curved, boxed, wavy, or in the style of driftwood.
-
-** Flashing when something goes wrong ---no blinking
-:PROPERTIES:
-:CUSTOM_ID: Flashing-when-something-goes-wrong-─no-blinking
-:END:
-Make top and bottom of screen flash when something unexpected happens thereby
-observing a warning message in the minibuffer. E.g., C-g, or calling an unbound
-key sequence, or misspelling a word.
-#+BEGIN_SRC emacs-lisp
-(setq visible-bell 1)
-#+END_SRC
-Enable flashing mode-line on errors.  On MacOS, this shows a caution symbol ^_^
-
-A blinking cursor rushes me to type; let's slow down.
-… Recentely I'm thinking that a blinking cursours prompts me to continue
-upwards and onwards.
-#+BEGIN_SRC emacs-lisp
-(blink-cursor-mode 1)
-#+END_SRC
+~swiper~ is an alternative to Emacs' default incremental search.
+It shows an overview of all matches --navigate using arrow keys.
+There is also a helm based version of swiper.
+:end:
 
 ** My to-do list: The initial buffer when Emacs opens up
 :PROPERTIES:
@@ -1292,17 +1372,69 @@ my to-do list and my init file, side-by-side.
   (find-file "~/.emacs.d/init.org"))
 #+END_SRC
 
-** Showing date, time, and battery life
+** Exquisite Themes
+
+Emacs' default theme leaves much to be desired:
+It does not look sleek and shiny, which usually
+leaves first-timers with a poor, shallow, impression of the system.
+
+Below we install a few themes that make Emacs look exquisite.
+We cycle between the chosen themes with ~C-x t~.
+
++ ~M-x load-theme RET TAB~ shows all themes, including built-in ones,
+  that may be loaded.
++ Loading multiple themes results in their pallets mixed.
+  - ~M-x disable-theme~ to remove a theme from the current pallet.
+
+#+BEGIN_SRC emacs-lisp
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
+
+;; Nice looking themes ^_^
+(use-package solarized-theme)
+(use-package doom-themes)
+(use-package spacemacs-common
+  :ensure spacemacs-theme)
+#+END_SRC
+
++ The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
++ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
+
+#+BEGIN_SRC emacs-lisp
+;; Infinite list of my commonly used themes.
+(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
+(setcdr (last my/themes) my/themes)
+#+END_SRC
+
+“C-x t” to toggle between the personal themes.
+#+BEGIN_SRC emacs-lisp
+(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
+  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’."
+  (interactive)
+  (dolist (τ custom-enabled-themes)
+    (disable-theme τ))
+  (when new-theme (load-theme new-theme)))
+
+(defalias 'my/toggle-theme #' my/disable-all-themes)
+(global-set-key "\C-x\ t" 'my/toggle-theme)
+(my/toggle-theme)
+#+END_SRC
+** A sleek & informative mode line
 :PROPERTIES:
-:CUSTOM_ID: Showing-date,-time,-and-battery-life
+:CUSTOM_ID: Spaceline:-A-sleek-mode-line
 :END:
+
+The ‘modeline’ is a part near the bottom of Emacs that gives information about
+the current mode, as well as other matters ---such as time & date, for example.
+
+Let's have it also show remaining battery life, coloured green if charging
+and coloured yellow otherwise. It is important to note that
+this package is no longer maintained. It works on my machine.
 #+BEGIN_SRC emacs-lisp
 (setq display-time-day-and-date t)
 (display-time)
-
 ;; (display-battery-mode -1)
 ;; Nope; let's use a fancy indicator …
-;;
 (use-package fancy-battery
   :diminish
   :custom (fancy-battery-show-percentage  t)
@@ -1310,9 +1442,78 @@ my to-do list and my init file, side-by-side.
   :config (fancy-battery-mode))
 #+END_SRC
 
-This will show remaining battery life, coloured green if charging
-and coloured yellow otherwise. It is important to note that
-this package is no longer maintained. It works on my machine.
+Likewise, let's have the modeline display column numbers, but not line numbers.
+Instead, let's have line numbers on the side of the buffer; moreover let's have
+a uniform width for displaying line numbers, rather than having the width grow
+as necessary.
+#+BEGIN_SRC emacs-lisp
+(column-number-mode                    t)
+;; (line-number-mode                   t)
+(setq display-line-numbers-width-start t)
+(global-display-line-numbers-mode      t)
+#+END_SRC
+
+I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I find spacemacs to “hide things”
+from me ---whereas Emacs “encourages” me to learn more---, however it is a
+configuration and I enjoy reading Emacs configs in order to improve my own
+setup. From Spacemacs I've adopted Helm for list completion, its sleek light &
+dark themes, and its modified powerline setup.
+#+BEGIN_SRC emacs-lisp
+;; When using helm & info & default, mode line looks prettier.
+(use-package spaceline
+  :custom (spaceline-buffer-encoding-abbrev-p nil)
+          (spaceline-line-column-p nil)
+          (spaceline-line-p nil)
+          (powerline-default-separator 'arrow)
+  :config (require 'spaceline-config)
+          (spaceline-helm-mode)
+          (spaceline-info-mode)
+          (spaceline-emacs-theme))
+#+END_SRC
+
+Other separators ---of modeline information--- that I've considered include
+~'brace~ instead of an arrow, and ~'contour, 'chamfer, 'wave, 'zigzag~ which look
+like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
+** Never lose the cursor
+:PROPERTIES:
+:CUSTOM_ID: Never-lose-the-cursor
+:END:
+Let's have the entire line containing the cursour be slightly highlighted.
+#+BEGIN_SRC emacs-lisp
+;; Make it very easy to see the line with the cursor.
+(global-hl-line-mode t)
+#+END_SRC
+
+Moreover, we reduce the mental strain of locating the cursour when navigation happens:
+When we switch windows or scroll, for example, we get a wave of light near the cursor.
+#+begin_src emacs-lisp
+(use-package beacon
+  :config (setq beacon-color "#666600")
+  :hook   ((org-mode text-mode) . beacon-mode))
+#+end_src
+
+** Dimming Unused Windows
+Let's dim windows, and even the whole Emacs frame, when not in use.
+#+BEGIN_SRC emacs-lisp
+(use-package dimmer
+  :config (dimmer-mode))
+#+END_SRC
+
+** Flashing when something goes wrong ---no blinking
+Make top and bottom of screen flash when something unexpected happens thereby
+observing a warning message in the minibuffer. E.g., C-g, or calling an unbound
+key sequence, or misspelling a word.
+#+BEGIN_SRC emacs-lisp
+(setq visible-bell 1)
+#+END_SRC
+Enable flashing mode-line on errors.  On MacOS, this shows a caution symbol ^_^
+
+A blinking cursor rushes me to type; let's slow down.
+… Recentely I'm thinking that a blinking cursours prompts me to continue
+upwards and onwards.
+#+BEGIN_SRC emacs-lisp
+(blink-cursor-mode 1)
+#+END_SRC
 
 ** Hiding Scrollbar, tool bar, and menu
 :PROPERTIES:
@@ -1326,38 +1527,14 @@ items.
 (menu-bar-mode   -1)  ;; The Mac OS top pane has menu options
 #+END_SRC
 
-** Increase/decrease text size
-:PROPERTIES:
-:CUSTOM_ID: Increase/decrease-text-size
-:END:
-The ‘usual’ text zoom keys ~C-±~ …
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "C-+") 'text-scale-increase)
-(global-set-key (kbd "C--") 'text-scale-decrease)
-;; C-x C-0 restores the default font size
-#+END_SRC
-
-If thou knowst the ELisp, forgive this shadowing of the ~negative-argument~
-… we've still got ~M--~ though.
-
-** Delete Selection Mode
-
-Delete Selection mode lets you treat an Emacs region much like a typical text
-selection outside of Emacs: You can replace the active region.  We can delete
-selected text just by hitting the backspace key.
-
-#+BEGIN_SRC emacs-lisp
-(delete-selection-mode 1)
-#+END_SRC
-
 ** Highlight & complete parenthesis pair when cursor is near ;-)
 :PROPERTIES:
 :CUSTOM_ID: Highlight-&-complete-parenthesis-pair-when-cursor-is-near-;-)
 :END:
 
-Highlight parens within matching parens when near one of them.
+Highlight matching ‘parenthesis’ when near one of them.
 #+begin_src emacs-lisp
-(setq show-paren-delay 0)
+(setq show-paren-delay  0)
 (setq show-paren-style 'mixed)
 (show-paren-mode)
 #+end_src
@@ -1381,7 +1558,6 @@ the lightweight package ~electric~, which Emacs provides out of the box.
 #+BEGIN_SRC emacs-lisp
 (electric-pair-mode 1)
 #+END_SRC
-
 It supports, by default, ACSII pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
 
 When writing Lisp, it is annoyong to have ‘<’ and ‘>’ be completed
@@ -1408,17 +1584,18 @@ When writing Lisp, it is annoyong to have ‘<’ and ‘>’ be completed
 #+END_SRC
 :End:
 
-Let's add the org-emphasises markers: If we select a word then press
-=*=, it becomes bold; likewise for ~/~ for emphasise.
-#+BEGIN_SRC emacs-lisp
+*Adding Org-emphasise markers for pair completion ---Disabled.*
+
+Let's add the org-emphasises markers: If we select a word then press =*=, it
+becomes bold; likewise for ~/~ for emphasise.
+#+BEGIN_SRC emacs-lisp :tangle no
 (setq electric-pair-pairs
-         '(;; (?~ . ?~)
+         '((?~ . ?~)
            (?* . ?*)
            (?/ . ?/)))
-#+END_SRC
-I use ‘~’ too much when that the compleition for it is annoying.
-Let's also, for example, avoid obtaining double ‘~’ and ‘/’ when searching for a file.
-#+BEGIN_SRC emacs-lisp
+
+;; Let's also, for example, avoid obtaining double ‘~’ and ‘/’ when searching for a file.
+
 ;; Disable pairs when entering minibuffer
 (add-hook 'minibuffer-setup-hook (lambda () (electric-pair-mode 0)))
 
@@ -1426,34 +1603,8 @@ Let's also, for example, avoid obtaining double ‘~’ and ‘/’ when searchi
 (add-hook 'minibuffer-exit-hook (lambda () (electric-pair-mode 1)))
 #+END_SRC
 
-** Minibuffer should display line and column numbers
-:PROPERTIES:
-:CUSTOM_ID: Minibuffer-should-display-line-and-column-numbers
-:END:
-#+BEGIN_SRC emacs-lisp
-; (line-number-mode t)
-(column-number-mode t)
-#+END_SRC
-
-For line numbers on the side of the buffer; moreover let's have a
-uniform width for displaying line numbers, rather than having the
-width grow as necessary.
-#+BEGIN_SRC emacs-lisp
-(setq display-line-numbers-width-start t)
-(global-display-line-numbers-mode      t)
-#+END_SRC
-
-** Never lose the cursor
-:PROPERTIES:
-:CUSTOM_ID: Never-lose-the-cursor
-:END:
-Reduce mental strain of locating the cursour when navigation happens;
-e.g., when we switch windows or scroll, we get a wave of light near the cursor.
-#+begin_src emacs-lisp
-(use-package beacon
-  :config (setq beacon-color "#666600")
-  :hook   ((org-mode text-mode) . beacon-mode))
-#+end_src
+I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
+Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
 ** Neotree: Directory Tree Listing
 :PROPERTIES:
 :CUSTOM_ID: Neotree:-Directory-Tree-Listing
@@ -1531,14 +1682,60 @@ are still readable.
 
 After some time this got a bit annoying and I'm no longer  using this.
 
+** Persistent Scratch Buffer
+:PROPERTIES:
+:CUSTOM_ID: Persistent-Scratch-Buffer
+:END:
+
+The ~*scratch*~ buffer is a nice playground for temporary data or experiments.
+
+However, by default its contents are not saved --which may be an issue if we
+have not relocated our playthings to their appropriate files. Whence let's save
+& restore the scratch buffer by default.
+#+BEGIN_SRC emacs-lisp
+(use-package persistent-scratch
+  ;; Enable both autosave and restore the last saved state of scratch
+  ;; buffer, if any, on Emacs start.
+  :config (persistent-scratch-setup-default))
+#+END_SRC
+
+We might accidentally close this buffer, so we could utilise the following.
+#+BEGIN_SRC emacs-lisp
+(defun scratch ()
+   "Recreate the scratch buffer, loading any persistent state."
+   (interactive)
+   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
+   (insert initial-scratch-message)
+   (ignore-errors (persistent-scratch-restore))
+   (persistent-scratch-autosave-mode 1)
+   (org-mode)
+   (local-set-key (kbd "C-x C-s") 'persistent-scratch-save))
+
+;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
+#+END_SRC
+
+I use Org-mode often, so that's how I want things to appear.
+#+BEGIN_SRC emacs-lisp
+(setq initial-scratch-message (concat
+  "#+Title: Persistent Scratch Buffer"
+  "\n#\n# Welcome! This’ a place for trying things out."
+  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
+#+END_SRC
+
 * Prose
 :PROPERTIES:
 :CUSTOM_ID: Prose
 :END:
 
-Let's setup a spellchecker and other expected features of a word processing tool
+Emacs can be setup with a spellchecker and other expected features of a word processing tool
 ---however these features apply Emacs-wide since nearly everything is
 essentially text (•̀ᴗ•́)و
+
+Let's start off by cleaning-up any accidental trailing whitespace and in other
+places upon save.
+#+begin_src emacs-lisp
+(add-hook 'before-save-hook 'whitespace-cleanup)
+#+end_src
 
 ** Fill-mode ---Word Wrapping
 :PROPERTIES:
@@ -1562,6 +1759,84 @@ thereby making it look better. With a prefix argument, it justifies it as well
 ---i.e., pads extra white space to make the paragraph appear rectangular.
 
             Note that ~M-o M-s~ centres a line of text ;-) Fun stuff!
+
+** Word Completion
+Let's enable [[https://company-mode.github.io/][“complete anything” mode]] ---it ought to start in half a second and
+only need two characters to get going, which means word suggestions are provided
+and so I need only type partial words then tab to get the full word!
+#+begin_src emacs-lisp
+(use-package company
+  :diminish
+  :config
+  (global-company-mode 1)
+  (setq ;; Only 2 letters required for completion to activate.
+        company-minimum-prefix-length 2
+
+        ;; Search other buffers for compleition candidates
+        company-dabbrev-other-buffers t
+        company-dabbrev-code-other-buffers t
+
+        ;; Allow (lengthy) numbers to be eligible for completion.
+        company-complete-number t
+
+        ;; M-⟪num⟫ to select an option according to its number.
+        company-show-numbers t
+
+        ;; Do not downcase completions by default.
+        company-dabbrev-downcase nil
+
+        ;; Even if I write something with the ‘wrong’ case,
+        ;; provide the ‘correct’ casing.
+        company-dabbrev-ignore-case t
+
+        ;; Immediately activate completion.
+        company-idle-delay 0))
+
+;; It's so fast that we don't need a key-binding!
+;; (global-set-key (kbd "C-c h") 'company-complete)
+#+end_src
+Note that ~M-/~ goes through a sequence of completions.  Besides the
+arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to navigate the options. Note
+that [[https://github.com/company-mode/company-mode/issues/360][by default]] company mode does not support completion for phrases containing
+hyphens ---this can be altered, if desired.
+
+Besides boring word completion, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
+#+begin_src emacs-lisp
+(use-package company-emoji
+  :config (add-to-list 'company-backends 'company-emoji))
+#+end_src
+
+For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
+
+➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
+All emoji names are lowercase. ◀
+
+The libraries ~emojify~ and ~emojify-logos~ provides cool items like =:haskell: :emacs:
+:org: :ruby: :python:=.
+Unfortunately they do not easily export to html with org-mode, so I'm not using them.
+:Alternatives:
+#+BEGIN_SRC emacs-lisp
+(use-package emojify
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
+#+END_SRC
+
+(use-package emojify-logos
+:after emojify)
+
+For example,
+#+begin_src emacs-lisp :tangle no
+ :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:
+#+end_src
+Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emojify-insert-emoji)~ to see more.
+
+Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
+for completion of emoji names.
+
+(use-package ac-emoji
+  :init (ac-emoji-setup)
+)
+:End:
 
 ** Fix spelling as you type --thesaurus & dictionary too!
 :PROPERTIES:
@@ -2023,6 +2298,96 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 ;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
 :End:
 
+** Increase/decrease text size
+:PROPERTIES:
+:CUSTOM_ID: Increase/decrease-text-size
+:END:
+The ‘usual’ text zoom keys ~C-±~ …
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
+;; C-x C-0 restores the default font size
+#+END_SRC
+
+If thou knowst the ELisp, forgive this shadowing of the ~negative-argument~
+… we've still got ~M--~ though.
+** Moving Text Around
+:PROPERTIES:
+:CUSTOM_ID: Moving-Text-Around
+:END:
+
+This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
+#+BEGIN_SRC emacs-lisp
+;; M-↑,↓ moves line, or marked region; prefix is how many lines.
+(use-package move-text)
+(move-text-default-bindings)
+#+END_SRC
+
+** Enabling CamelCase Aware Editing Operations
+:PROPERTIES:
+:CUSTOM_ID: Enabling-CamelCase-Aware-Editing-Operations
+:END:
+[[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][Subword]] movement lets us treat “EmacsIsAwesome” as three words
+─“Emacs”, “Is”, and “Awesome”─ which is desirable since such naming
+is common among coders. Now, for example, ~M-f~ moves along each subword.
+
+#+begin_src emacs-lisp
+(global-subword-mode 1)
+#+end_src
+
+** Mouse Editing Support
+:PROPERTIES:
+:CUSTOM_ID: Mouse-Editing-Support
+:END:
+Text selected with the mouse is automatically copied to clipboard.
+#+begin_src emacs-lisp
+(setq mouse-drag-copy-region t)
+#+end_src
+
+** Delete Selection Mode
+
+Delete Selection mode lets you treat an Emacs region much like a typical text
+selection outside of Emacs: You can replace the active region.  We can delete
+selected text just by hitting the backspace key.
+
+#+BEGIN_SRC emacs-lisp
+(delete-selection-mode 1)
+#+END_SRC
+** ~M-n,p~: Word-at-Point Navigation
+
+Let's mimic the ~C-n,p~ constructs from line to word, so that unoccupied ~M-n,p~ now
+serve to take us to the next or previous instance of the word under the
+cursor. This is less intrusive than searching ~C-s~ or listing all occurrences ~M-s
+o~.
+#+BEGIN_SRC emacs-lisp
+(use-package smartscan
+  :config
+    (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
+    (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
+    (global-set-key (kbd "M-'") 'my/symbol-replace))
+#+END_SRC
+
+Unfortunately, as it currently is, there is no universal argument support:
+~C-u 2 M-p~ does /not/ take you to the second previous instance of a word
+---the prefix is instead ignored.
+
+The default symbol replacement is [[https://github.com/mickeynp/smart-scan/issues/23][over-zealous]] in that it replaces sub-terms
+occurring as parts of larger words. Let's do something about that.
+#+BEGIN_SRC emacs-lisp
+(defun my/symbol-replace (replacement)
+  "Replace all standalone symbols in the buffer matching the one at point."
+  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
+  (save-excursion
+    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
+      (beginning-of-buffer)
+      ;; (query-replace-regexp symbol replacement)
+      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
+#+END_SRC
+Also …
+#+BEGIN_SRC emacs-lisp
+;; C-n, next line, inserts newlines when at the end of the buffer
+(setq next-line-add-newlines t)
+#+END_SRC
 ** Taking a tour of one's edits
 :PROPERTIES:
 :CUSTOM_ID: Taking-a-tour-of-one's-edits
@@ -2050,32 +2415,7 @@ Notice, as a hydra, I can use ~C-c e~ followed by any combination of
 ~,~ and ~.~ to navigate my recent edits /without/ having to supply the prefix
 each time.
 
-** Moving Text Around
-:PROPERTIES:
-:CUSTOM_ID: Moving-Text-Around
-:END:
-
-This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
-#+BEGIN_SRC emacs-lisp
-;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(use-package move-text)
-(move-text-default-bindings)
-#+END_SRC
-
-** Enabling CamelCase Aware Editing Operations
-:PROPERTIES:
-:CUSTOM_ID: Enabling-CamelCase-Aware-Editing-Operations
-:END:
-[[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][Subword]] movement lets us treat “EmacsIsAwesome” as three words
-─“Emacs”, “Is”, and “Awesome”─ which is desirable since such naming
-is common among coders. Now, for example, ~M-f~ moves along each subword.
-
-#+begin_src emacs-lisp
-(global-subword-mode 1)
-#+end_src
-
 * COMMENT Literate Programming with Org-mode
-
 * Life within Org-mode
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
@@ -2096,6 +2436,7 @@ https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-n
 https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-version-using-package-repos-git-clone-in-ubuntu
 :End:
 
+** Getting Started
 Let's obtain Org-mode along with the extras that allow us to ignore
 heading names, but still utilise their contents ---e.g., such as a heading
 named ‘preamble’ that contains org-mode setup for a file.
@@ -2109,17 +2450,14 @@ named ‘preamble’ that contains org-mode setup for a file.
 
 ~org-plus-contrib~ contain the files that are included with Emacs plus all
   contributions from the [[https://code.orgmode.org/bzg/org-mode/src/master/contrib][org-mode repoistory]].
-+ Use the ~:ignore:~ tag on headlines you'd like to have ignored,
-  while not ignoring their content.
++ Use the ~:ignore:~ tag on headlines you'd like to have ignored, while not
+  ignoring their content.
 + Use the ~:noexport:~ tag to omit a headline /and/ its contents.
 
-Now, let's replace the content marker, “⋯”, with a nice
-unicode arrow.
 #+begin_src emacs-lisp
+;; Replace the content marker, “⋯”, with a nice unicode arrow.
 (setq org-ellipsis " ⤵")
-#+end_src
-Also:
-#+begin_src emacs-lisp
+
 ;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
 
@@ -2164,7 +2502,7 @@ default mode.
 
 Let's enable the [[http://notesyoujustmightwanttosave.blogspot.com/2011/12/org-speed-keys.html][Org Speed Keys]] so that when the cursor is at the beginning of
 a headline, we can perform fast manipulation & navigation using the standard Emacs movement
-controls, such as
+controls, such as:
 + ~#~ toggle ~COMMENT~-ing for an org-header.
 + ~s~ toggles “narrowing” to a subtree; i.e., hide the rest of the document.
 
@@ -2186,35 +2524,35 @@ controls, such as
 + ~L/R~ recursively promote (move leftwards) or demote (more rightwards) a heading.
 + ~1,2,3~ to mark a heading with priority, highest to lowest.
 
-We can add our own speed keys by altering the ~org-speed-commands-user~ variable.
+We can add our own speed keys by altering the ~org-speed-commands-user~
+association list variable.
 
+#  To see the commands available, execute  ~M-x org-speed-command-help~.
 Moreover, ~?~ to see a complete list of keys available.
 #+BEGIN_SRC emacs-lisp
 (setq org-use-speed-commands t)
 #+END_SRC
-#  Add more speed commands by adding to this association list.
-#  (describe-symbol 'org-speed-commands-user)
-#
-#  To see the commands available, execute
-# (org-speed-command-help)
 
 *** Seamless Navigation Between Source Blocks
 :PROPERTIES:
 :CUSTOM_ID: Seamless-Navigation-Between-Source-Blocks
 :END:
 
-Finally, let's use the “super key” --aka the command or windows key--
-to jump to the previous, next, or toggle editing org-mode source blocks.
+The “super key” ---aka the command or windows key--- can be used to jump to the
+previous, next, or toggle editing org-mode source blocks.
 #+begin_src emacs-lisp
 ;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
 ;;
-(define-key org-mode-map (kbd "s-p") #'org-babel-previous-src-block)
-(define-key org-mode-map (kbd "s-n") #'org-babel-next-src-block)
-(define-key org-mode-map (kbd "s-e") #'org-edit-src-code)
-(define-key org-src-mode-map (kbd "s-e") #'org-edit-src-exit)
+(use-package org
+  :bind (:map org-mode-map
+              ("s-p" . org-babel-previous-src-block)
+              ("s-n" . org-babel-next-src-block)
+              ("s-e" . org-edit-src-code)
+         :map org-src-mode-map
+              ("s-e" . org-edit-src-exit))
 #+end_src
 
-Interestingly, ~s-l~ is “goto line”.
+                       Interestingly, ~s-l~ is “goto line”.
 
 *** Modifying ~<return>~
 :PROPERTIES:
@@ -2222,9 +2560,10 @@ Interestingly, ~s-l~ is “goto line”.
 :END:
 
 + ~C-RET, C-S-RET~ make a new heading where the latter marks it as a ~TODO~.
-+ By default ~M-RET~ makes it easy to work with existing list items, headings, tables, etc
-  by creating a new item, heading, etc.
-+ Usually we want a newline then we indent, let's make that the default.
++ By default ~M-RET~ makes it easy to work with existing list items, headings,
+  tables, etc by creating a new item, heading, etc.
+
+Usually we want a newline then we indent, let's make that the default.
    #+BEGIN_SRC emacs-lisp
 (add-hook 'org-mode-hook '(lambda ()
    (local-set-key (kbd "<return>") 'org-return-indent))
@@ -2235,7 +2574,7 @@ Interestingly, ~s-l~ is “goto line”.
    break-out of the indentation approach and start working at the beginning of
    the line.
 
-In summary,
+In summary:
 | key          | method                                  | behaviour                         |
 |--------------+-----------------------------------------+-----------------------------------|
 | ~<return>~     | ~org-return-indent~                       | Newline with indentation          |
@@ -2248,48 +2587,44 @@ In summary,
 :PROPERTIES:
 :CUSTOM_ID: ~C-a,e,k~-and-Yanking-of-sections
 :END:
-# Editing & Special Key Handling
+
+On an org-heading, =C-a= goes to after the star, heading markers.
+To use speed keys, run =C-a C-a= to get to the star markers.
+
+=C-e= goes to the end of the heading, not including the tags.
 #+begin_src emacs-lisp
-;; On an org-heading, C-a goes to after the star, heading markers.
-;; To use speed keys, run C-a C-a to get to the star markers.
-;;
-;; C-e goes to the end of the heading, not including the tags.
-;;
 (setq org-special-ctrl-a/e t)
-
-;; C-k no longer removes tags, if activated in the middle of a heading's name.
-(setq org-special-ctrl-k t)
-
-;; When you yank a subtree and paste it alongside a subtree of depth ‘d’,
-;; then the yanked tree's depth is adjusted to become depth ‘d’ as well.
-;; If you don't want this, then refile instead of copy pasting.
-(setq org-yank-adjusted-subtrees t)
 #+end_src
 
-:Does_not_work_for_me:
-;; adds alphabetical lists like
-;;  a. item one
-;;  b. item two
-(setq org-alphabetical-lists t)
-:End:
+=C-k= no longer removes tags, if activated in the middle of a heading's name.
+#+begin_src emacs-lisp
+(setq org-special-ctrl-k t) ;; MA: Does not work …!
+#+end_src
+
+When you yank a subtree and paste it alongside a subtree of depth /‘d’/, then the
+yanked tree's depth is adjusted to become depth /‘d’/ as well.  If you don't want
+this, then refile instead of copy-pasting.
+#+begin_src emacs-lisp
+(setq org-yank-adjusted-subtrees t)
+#+end_src
 
 ** Executing code from ~src~ blocks
 :PROPERTIES:
 :CUSTOM_ID: Executing-code-from-~src~-blocks
 :END:
 
-For example, to execute a shell command in emacs,
-write a ~src~ with a shell command, then ~C-c c-c~ to see the results.
-Emacs will generally query you to ensure you're sure about executing the
-(possibly dangerous) code block; let's stop that:
+For example, to execute a shell command in Emacs, write a ~src~ with a shell
+command, then ~C-c c-c~ to see the results.  Emacs will generally query you to
+ensure you're confident about executing the (possibly dangerous) code block;
+let's stop that:
 #+BEGIN_SRC emacs-lisp
-; Seamless use of babel: No confirmation upon execution.
+;; Seamless use of babel: No confirmation upon execution.
 ;; Downside: Could accidentally evaluate harmful code.
 (setq org-confirm-babel-evaluate nil)
 #+END_SRC
 
 A worked out example can be obtained as follows: ~<g TAB~ then ~C-c C-C~ to make a nice
-simple graph --the code for this is in the next section.
+simple graph ---the code for this is in the next section.
 
 Some initial languages we want org-babel to support:
 #+BEGIN_SRC emacs-lisp
@@ -3779,49 +4114,6 @@ If the :tangle header arg is a list of files. Handle all files"
 (global-aggressive-indent-mode t)
 #+END_SRC
 
-** Backups
-:PROPERTIES:
-:CUSTOM_ID: Backups
-:END:
-By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
-let's keep old versions since there's disk space to go around
---what am I going to do with 500gigs when nearly all my ‘software’ is
-textfiles interpreted within Emacs 😼
-
-#+BEGIN_SRC emacs-lisp
-;; New location for backups.
-(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-
-;; Never silently delete old backups.
-(setq delete-old-versions -1)
-
-;; Use version numbers for backup files.
-(setq version-control t)
-
-;; Even version controlled files get to be backed up.
-(setq vc-make-backup-files t)
-#+END_SRC
-
-Why backups? Sometimes I may forget to submit a file, or edit, to my
-version control system, and it'd be nice to be able to see a local
-automatic backup. Whenever ‘I need space,’ then I simply empty
-the backup directory, if ever. That the backups are numbered is so sweet ^_^
-
-Like package installations, my backups are not kept in any version control
-system, like git; only locally.
-
-Let's use an elementary diff system for backups.
-#+BEGIN_SRC emacs-lisp
-(use-package backup-walker
-  :commands backup-walker-start)
-#+END_SRC
-
-In a buffer that corresponds to a file, invoke ~backup-walker-start~
-to see a visual diff of changes /between/ versions.
-By default, you see the changes ‘backwards’: Red means
-delete these things to get to the older version; i.e.,
-the red ‘-’ are newer items.
-
 ** Editor Documentation with Contextual Information
 :PROPERTIES:
 :CUSTOM_ID: Editor-Documentation-with-Contextual-Information
@@ -3877,47 +4169,6 @@ in that if the cursor is on a symbol, then it is offered to the user as a
 default search item for help, otherwise a plain search box for help
 appears. Using a universal argument lets us drop to the built-in help command.
 
-** ~M-n,p~: Word-at-Point Navigation
-:PROPERTIES:
-:CUSTOM_ID: -M-n-p---Word-at-Point-Navigation
-:END:
-
-Let's mimic the ~C-n,p~ constructs from line to word, so that unoccupied ~M-n,p~ now
-serve to take us to the next or previous instance of the word under the
-cursor. This is less intrusive than searching ~C-s~ or listing all occurrences ~M-s
-o~.
-
-#+BEGIN_SRC emacs-lisp
-(use-package smartscan
-  :config
-    (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
-    (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
-    (global-set-key (kbd "M-'") 'my/symbol-replace))
-#+END_SRC
-
-Unfortunately, as it currently is, there is no universal argument support:
-~C-u 2 M-p~ does /not/ take you to the second previous instance of a word
----the prefix is instead ignored.
-
-The default symbol replacement is [[https://github.com/mickeynp/smart-scan/issues/23][over-zealous]] in that it replaces sub-terms
-occurring as parts of larger words. Let's do something about that.
-#+BEGIN_SRC emacs-lisp
-(defun my/symbol-replace (replacement)
-  "Replace all standalone symbols in the buffer matching the one at point."
-  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
-  (save-excursion
-    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
-      (beginning-of-buffer)
-      ;; (query-replace-regexp symbol replacement)
-      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
-#+END_SRC
-
-Also …
-#+BEGIN_SRC emacs-lisp
-;; C-n, next line, inserts newlines when at the end of the buffer
-(setq next-line-add-newlines t)
-#+END_SRC
-
 ** Highlight Defined Emacs Lisp Symbols
 :PROPERTIES:
 :CUSTOM_ID: Highlight-Defined-Emacs-Lisp-Symbols
@@ -3933,7 +4184,152 @@ org-src blocks we use ~C-c '~.
 
 Super helpful to avoid accidentally misspelling a word :smile:
 
-** Highlighting TODO-s & Showing them in Magit
+** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
+:PROPERTIES:
+:CUSTOM_ID: Text-Folding-with---https---github-com-gregsexton-origami-el--Origami-mode--
+:END:
+
+Let's use a feature-full folding mode.
+#+BEGIN_SRC emacs-lisp
+(use-package origami)
+#+END_SRC
+
+With basic support for one of my languages.
+#+BEGIN_SRC emacs-lisp
+(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
+      origami-parser-alist)
+#+END_SRC
+
+With expected support for searching.
+#+BEGIN_SRC emacs-lisp
+(defun my/search-hook-function ()
+  (when origami-mode (origami-toggle-node (current-buffer) (point))))
+
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+;;
+;; Likewise for incremental search, isearch, users.
+;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
+#+END_SRC
+
+Along with a hydra for super quick navigation and easily folding, unfolding blocks! Love this one ^_^
+#+BEGIN_SRC emacs-lisp
+(defhydra folding-with-origami-mode (global-map "C-c f")
+  ("h" origami-close-node-recursively "Hide")
+  ("o" origami-open-node-recursively  "Open")
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("n" origami-next-fold "Next")
+  ("p" origami-previous-fold "Previous"))
+#+END_SRC
+
+
+** Edit as Root
+:PROPERTIES:
+:CUSTOM_ID: Edit-as-Root
+:END:
+From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]]:
+
+#+BEGIN_SRC emacs-lisp
+(defun find-file-as-root ()
+  "Like `ido-find-file, but automatically edit the file with
+root-privileges (using tramp/sudo), if the file is not writable by
+user."
+  (interactive)
+  (let ((file (ido-read-file-name "Edit as root: ")))
+    (unless (file-writable-p file)
+      (setq file (concat "/sudo:root@localhost:" file)))
+    (find-file file)))
+
+(bind-key "C-x F" 'find-file-as-root)
+#+END_SRC
+
+** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
+:PROPERTIES:
+:CUSTOM_ID: Jump-between-windows-using-Cmd+Arrow-&-between-recent-buffers-with-Meta-Tab
+:END:
+#+BEGIN_SRC emacs-lisp
+(use-package windmove
+  :config
+  ;; use command key on Mac
+  (windmove-default-keybindings 'super)
+  ;; wrap around at edges
+  (setq windmove-wrap-around t))
+  #+END_SRC
+
+The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have usage examples.
+#+BEGIN_SRC emacs-lisp
+(use-package buffer-flip
+  :bind
+   (:map buffer-flip-map
+    ("M-<tab>" . buffer-flip-forward)
+    ("M-S-<tab>" . buffer-flip-backward)
+    ("C-g" . buffer-flip-abort))
+  :config
+    (setq buffer-flip-skip-patterns
+        '("^\\*helm\\b"))
+)
+;; key to begin cycling buffers.
+(global-set-key (kbd "M-<tab>") 'buffer-flip)
+#+END_SRC
+
+** Restarting Emacs
+:PROPERTIES:
+:CUSTOM_ID: Restarting-Emacs
+:END:
+
+Sometimes I wish to close then reopen Emacs; unsurprisingly someone's thought of
+implementing that.
+#+BEGIN_SRC emacs-lisp
+;; Provides only the command “restart-emacs”.
+(use-package restart-emacs
+  :commands restart-emacs)
+#+END_SRC
+
+
+** Backups
+:PROPERTIES:
+:CUSTOM_ID: Backups
+:END:
+By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
+let's keep old versions since there's disk space to go around
+--what am I going to do with 500gigs when nearly all my ‘software’ is
+textfiles interpreted within Emacs 😼
+
+#+BEGIN_SRC emacs-lisp
+;; New location for backups.
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+
+;; Never silently delete old backups.
+(setq delete-old-versions -1)
+
+;; Use version numbers for backup files.
+(setq version-control t)
+
+;; Even version controlled files get to be backed up.
+(setq vc-make-backup-files t)
+#+END_SRC
+
+Why backups? Sometimes I may forget to submit a file, or edit, to my
+version control system, and it'd be nice to be able to see a local
+automatic backup. Whenever ‘I need space,’ then I simply empty
+the backup directory, if ever. That the backups are numbered is so sweet ^_^
+
+Like package installations, my backups are not kept in any version control
+system, like git; only locally.
+
+Let's use an elementary diff system for backups.
+#+BEGIN_SRC emacs-lisp
+(use-package backup-walker
+  :commands backup-walker-start)
+#+END_SRC
+
+In a buffer that corresponds to a file, invoke ~backup-walker-start~
+to see a visual diff of changes /between/ versions.
+By default, you see the changes ‘backwards’: Red means
+delete these things to get to the older version; i.e.,
+the red ‘-’ are newer items.
+
+** COMMENT Highlighting TODO-s & Showing them in Magit
 :PROPERTIES:
 :CUSTOM_ID: Highlighting-TODO-s-&-Showing-them-in-Magit
 :END:
@@ -3949,6 +4345,9 @@ and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???,
   ;; Adding new keywords
   (loop for kw in '("TEST" "MA" "WK" "JC")
         do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
+
+;; Error (use-package): hl-todo/:init: Symbol’s value as variable is void: hl-todo-keyword-faces
+
 #+END_SRC
 
 Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
@@ -4061,25 +4460,6 @@ points to the version of the file being visited.
 
 Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
 
-** Edit as Root
-:PROPERTIES:
-:CUSTOM_ID: Edit-as-Root
-:END:
-From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]]:
-
-#+BEGIN_SRC emacs-lisp
-(defun find-file-as-root ()
-  "Like `ido-find-file, but automatically edit the file with
-root-privileges (using tramp/sudo), if the file is not writable by
-user."
-  (interactive)
-  (let ((file (ido-read-file-name "Edit as root: ")))
-    (unless (file-writable-p file)
-      (setq file (concat "/sudo:root@localhost:" file)))
-    (find-file file)))
-
-(bind-key "C-x F" 'find-file-as-root)
-#+END_SRC
 
 ** COMMENT FIXME Default Compilation Commands
 :PROPERTIES:
@@ -4126,19 +4506,6 @@ Let's remove repeated matter.
 ;; Also a helpful quick f-key.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
-** Restarting Emacs
-:PROPERTIES:
-:CUSTOM_ID: Restarting-Emacs
-:END:
-
-Sometimes I wish to close then reopen Emacs; unsurprisingly someone's thought of
-implementing that.
-#+BEGIN_SRC emacs-lisp
-;; Provides only the command “restart-emacs”.
-(use-package restart-emacs
-  :commands restart-emacs)
-#+END_SRC
-
 ** Keep buffers open across sessions                         :Disabled:
 
 :PROPERTIES:
@@ -4152,25 +4519,6 @@ implementing that.
 
 Not desirable since for when I want to make alterations to my Emacs system and don't
 want files to remain open. Time will tell.
-
-** Mouse Editing Support
-:PROPERTIES:
-:CUSTOM_ID: Mouse-Editing-Support
-:END:
-#+begin_src emacs-lisp
-;; Text selected with the mouse is automatically copied to clipboard.
-(setq mouse-drag-copy-region t)
-#+end_src
-
-** Dimming Unused Windows
-:PROPERTIES:
-:CUSTOM_ID: Dimming-Unused-Windows
-:END:
-Let's dim windows, and even the whole Emacs frame, when not in use.
-#+BEGIN_SRC emacs-lisp
-(use-package dimmer
-  :config (dimmer-mode))
-#+END_SRC
 
 ** COMMENT Having a workspace manager in Emacs
 :PROPERTIES:
@@ -4204,35 +4552,6 @@ All commands are prefixed by ~C-x x~; main commands:
 
 As always, since we've installed ~which-key~, it suffices to press
 ~C-x x~ then look at the resulting menu 😃
-
-** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
-:PROPERTIES:
-:CUSTOM_ID: Jump-between-windows-using-Cmd+Arrow-&-between-recent-buffers-with-Meta-Tab
-:END:
-#+BEGIN_SRC emacs-lisp
-(use-package windmove
-  :config
-  ;; use command key on Mac
-  (windmove-default-keybindings 'super)
-  ;; wrap around at edges
-  (setq windmove-wrap-around t))
-  #+END_SRC
-
-The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have usage examples.
-#+BEGIN_SRC emacs-lisp
-(use-package buffer-flip
-  :bind
-   (:map buffer-flip-map
-    ("M-<tab>" . buffer-flip-forward)
-    ("M-S-<tab>" . buffer-flip-backward)
-    ("C-g" . buffer-flip-abort))
-  :config
-    (setq buffer-flip-skip-patterns
-        '("^\\*helm\\b"))
-)
-;; key to begin cycling buffers.
-(global-set-key (kbd "M-<tab>") 'buffer-flip)
-#+END_SRC
 
 ** Coding with a Fruit Salad: Semantic Highlighting
 :PROPERTIES:
@@ -4282,259 +4601,6 @@ is to avoid any lag from multithreading and can be changed by altering the follo
 line (#64) in the source file, changing the ~5~ to a smaller number.
 #+BEGIN_SRC emacs-lisp :tangle no
 (run-with-idle-timer 5 t 'color-identifiers:refresh)))
-#+END_SRC
-
-** Completion Frameworks
-:PROPERTIES:
-:CUSTOM_ID: Completion-Frameworks
-:END:
-[[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible completions and also shows recently executed commands when pressing ~M-x~.
-
-Extremely helpful for when switching between buffers, =C-x b=,
-and discovering & learning about other commands!
-E.g., press ~M-x~ to see recently executed commands and other possible commands!
-
-Try and be grateful.
-#+BEGIN_SRC emacs-lisp
-(use-package helm
- :diminish
- :init (helm-mode t)
- :bind
-  ("C-x C-r" . helm-recentf)      ; search for recently edited
-
-  ;; Helm provides generic functions for completions to replace
-  ;; tab-completion in Emacs with no loss of functionality.
-  ("M-x" . 'helm-M-x)
-  ;; ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
-  ("C-x b". 'helm-mini) ;; see buffers & recent files; more useful.
-  ("C-x r b" .'helm-filtered-bookmarks)
-  ("C-x C-f" . 'helm-find-files)
-
-  ;; A menu of all “top-level items” in a file; e.g.,
-  ;; functions and constants in source code or headers in an org-mode file.
-  ;;
-  ;; Nifty way to familarise yourself with a new code base, or one from a while ago.
-  ;;
-  ("C-c i" . 'helm-imenu)
-
-   ;; Show all meaningful Lisp symbols whose names match a given pattern.
-   ;; Helpful for looking up commands.
-   ("C-h a" . helm-apropos)
-
-   ;; Look at what was cut recently & paste it in.
-   ("M-y" . helm-show-kill-ring)
-)
-;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
-
-;; Yet, let's keep tab-completetion anyhow.
-(define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
-(define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
-;; We can list ‘actions’ on the currently selected item by C-z.
-(define-key helm-map (kbd "C-z")  'helm-select-action)
-#+END_SRC
-
-When ~helm-mode~ is enabled, even help commands make use of it.
-E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
-and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
-Both show a pop-up of other possible commands.
-
-Let's ensure ~C-x b~ shows us: Current buffers, recent files, and bookmarks
-─as well as the ability to create bookmarks, which is via ~C-x r b~ manually.
-For example, I press ~C-x b~ then type any string and will have the option of
-making that a bookmark referring to the current location I'm working in, or
-jump to it if it's an existing bookmark, or make a buffer with that name,
-or find a file with that name.
-#+BEGIN_SRC emacs-lisp
-(setq helm-mini-default-sources '(helm-source-buffers-list
-                                    helm-source-recentf
-                                    helm-source-bookmarks
-                                    helm-source-bookmark-set
-                                    helm-source-buffer-not-found))
-#+END_SRC
-
-Incidentally, helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the top program via
-~helm-top~. It also serves as an interface to popular search engines
-and over 100 websites such as ~google, stackoverflow~, and ~arxive~.
-#+begin_src emacs-lisp
-;; (shell-command "brew install surfraw &")
-;;
-;; Invoke helm-surfraw
-#+end_src
-If we want to perform a google search, with interactive suggestions,
-then invoke ~helm-google-suggest~ --which can be acted for other serves,
-such as Wikipedia or Youtube by ~C-z~. For more google specific options,
-there is the ~google-this~ package.
-
-Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].
-It allows us to not only search the current buffer but also
-the other buffers and to make live edits by pressing ~C-c C-e~
-when a search buffer exists. Incidentally, executing ~C-s~ on a word, region,
-will search for that particular word, region; then apply changes by ~C-x C-s~.
-#+BEGIN_SRC emacs-lisp
-(use-package helm-swoop
-  :bind
-  (
-   ("C-s"     . 'helm-swoop)           ;; search current buffer
-   ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
-   ;; Go back to last position where ‘helm-swoop’ was called
-   ("C-S-s" . 'helm-swoop-back-to-last-point)
-  )
- :config ;; Following from helm-swoop's github page.
-   ;; Give up colour for speed.
-  (setq helm-swoop-speed-or-color nil)
-  ;; If this value is t, split window inside the current window
-  (setq helm-swoop-split-with-multiple-windows nil)
-
-)
-#+END_SRC
-
-:ThisBecomeMoreAnnoyingThanUseful:
-#+BEGIN_SRC emacs-lisp :tangle no
-  ;; If there is no symbol at the cursor, use the last used words instead.
-  (setq helm-swoop-pre-input-function
-      (lambda ()
-        (let (($pre-input (thing-at-point 'symbol)))
-          (if (eq (length $pre-input) 0)
-              helm-swoop-pattern ;; this variable keeps the last used words
-            $pre-input))))
-
-#+END_SRC
-:End:
-
-Press ~M-i~ after a search has executed to enable it for all buffers.
-
-We can also limit our search to org files, or buffers of the same mode,
-or buffers belonging to the same project!
-
-Note that on the Mac, I can still perform default Emacs search using
-/Cmd+f/.
-
-:Old_ivy_counsel_swiper_shenanigans:
-+ There is a super duper neato search capability we can utilise -- ~swiper~.
-+ We also use the ~counsel~, a collection of completion, ~ivy~, enhanced versions of
-  common Emacs commands.
-#+begin_src emacs-lisp :tangle no
-(use-package ivy ;; More powerful but ugly looking completetion framework.
-                 ;; Helm is prettier.
-                 ;; Needed for Counsel, below.
- :config
-
-  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
-  (setq ivy-use-virtual-buffers t)
-  ;; number of result lines to display
-  (setq ivy-height 10)
-  ;; does not count candidates
-  (setq ivy-count-format "")
-  ;; no regexp by default
-  (setq ivy-initial-inputs-alist nil)
-)
-
-(use-package counsel
-  :bind*                              ; load when pressed
-  (
-   ("C-s"     . swiper)
-   ;; ("C-x C-r" . counsel-recentf)      ; search for recently edited
-   ("<f1> l"  . counsel-find-library) ; find an Emacs Lisp library
-   ("<f2> u"  . counsel-unicode-char) ; insert a unicode symbol using a pop-up
-  ))
-#+end_src
-
-~swiper~ is an alternative to Emacs' default incremental search.
-It shows an overview of all matches --navigate using arrow keys.
-There is also a helm based version of swiper.
-:end:
-
-Finally, let's enable [[https://company-mode.github.io/][“complete anything” mode]]
---it ought to start in half a second and only need two characters to get going,
-which means word suggestions are provided and so I need only type partial words
-then tab to get the full word!
-#+begin_src emacs-lisp
-(use-package company
-  :diminish
-  :config
-    (setq company-dabbrev-other-buffers t
-          company-dabbrev-code-other-buffers t
-
-          ;; Allow (lengthy) numbers to be eligible for completion.
-          company-complete-number t
-
-          ;; M-⟪num⟫ to select an option according to its number.
-          company-show-numbers t
-
-          ;; Only 2 letters required for completion to activate.
-          company-minimum-prefix-length 2
-
-          ;; Do not downcase completions by default.
-          company-dabbrev-downcase nil
-
-          ;; Even if I write something with the ‘wrong’ case,
-          ;; provide the ‘correct’ casing.
-          company-dabbrev-ignore-case t
-
-          ;; Immediately activate completion.
-          company-idle-delay 0
-          )
-
-    (global-company-mode 1)
-)
-;; So fast that we don't need this.
-;; (global-set-key (kbd "C-c h") 'company-complete)
-#+end_src
-Note that ~M-/~ goes through a sequence of completions.
-Note that besides the arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to
-navigate the options. Note that [[https://github.com/company-mode/company-mode/issues/360][by default]] company mode does not support completion for
-phrases containing hyphens --this can be altered, if desired.
-
-Besides boring word completition, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
-#+begin_src emacs-lisp
-(use-package company-emoji)
-(add-to-list 'company-backends 'company-emoji)
-#+end_src
-
-For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
-
-➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
-All emoji names are lowercase. ◀
-# :end: does not html export nicely.
-
-The libraries ~emojify, emojify-logos~ provides cool items like :haskell: :emacs: :org: :ruby: :python:.
-Unfortunately they do not easily export to html with org-mode, so I'm not using
-them.
-
-:Alternatives:
-#+BEGIN_SRC emacs-lisp
-(use-package emojify
- :config (setq emojify-display-style 'image)
- :init (global-emojify-mode 1) ;; Will install missing images, if need be.
-)
-#+END_SRC
-
-(use-package emojify-logos
-:after emojify)
-
-For example,
-#+begin_src emacs-lisp :tangle no
- :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:
-#+end_src
-Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emojify-insert-emoji)~ to see more.
-
-Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
-for completion of emoji names.
-
-(use-package ac-emoji
-  :init (ac-emoji-setup)
-)
-:End:
-
-Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
-This is very useful when editing in a particular coding language, say via
-~C-c '~ for org-src blocks.
-#+BEGIN_SRC emacs-lisp
-(use-package company-quickhelp
- :config
-   (setq company-quickhelp-delay 0.1)
-   (company-quickhelp-mode)
-)
 #+END_SRC
 
 ** TODO COMMENT Snippets -- Template Expansion
@@ -4951,44 +5017,6 @@ f x = x -- show x
 #+end_src
 
 :End:
-** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
-:PROPERTIES:
-:CUSTOM_ID: Text-Folding-with---https---github-com-gregsexton-origami-el--Origami-mode--
-:END:
-
-Let's use a feature-full folding mode.
-#+BEGIN_SRC emacs-lisp
-(use-package origami)
-#+END_SRC
-
-With basic support for one of my languages.
-#+BEGIN_SRC emacs-lisp
-(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
-      origami-parser-alist)
-#+END_SRC
-
-With expected support for searching.
-#+BEGIN_SRC emacs-lisp
-(defun my/search-hook-function ()
-  (when origami-mode (origami-toggle-node (current-buffer) (point))))
-
-;; Open folded nodes if a search stops there.
-(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-;;
-;; Likewise for incremental search, isearch, users.
-;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
-#+END_SRC
-
-Along with a hydra for super quick navigation and easily folding, unfolding blocks! Love this one ^_^
-#+BEGIN_SRC emacs-lisp
-(defhydra folding-with-origami-mode (global-map "C-c f")
-  ("h" origami-close-node-recursively "Hide")
-  ("o" origami-open-node-recursively  "Open")
-  ("t" origami-toggle-all-nodes  "Toggle buffer")
-  ("n" origami-next-fold "Next")
-  ("p" origami-previous-fold "Previous"))
-#+END_SRC
-
 * Helpful Utilities & Shortcuts
 :PROPERTIES:
 :CUSTOM_ID: Helpful-Utilities-&-Shortcuts
@@ -5011,6 +5039,16 @@ Let's save a few precious seconds,
 (put 'narrow-to-page 'disabled nil)
 #+end_src
 
+** Documentation Pop-Ups
+Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
+This is very useful when editing in a particular coding language, say via
+~C-c '~ for org-src blocks.
+#+BEGIN_SRC emacs-lisp
+(use-package company-quickhelp
+ :config
+   (setq company-quickhelp-delay 0.1)
+   (company-quickhelp-mode))
+#+END_SRC
 ** Emacs keybindings for my browser :Disabled:
 #+begin_center
 ⟨ I was a bit too Emacs-happy at one-point; this' cool, but I rarely use it. ⟩
@@ -5213,88 +5251,6 @@ Note that capitalisation in a ”#+KeyWord” is irrelevant.
 See [[https://orgmode.org/manual/Org-syntax.html][here]] on how to see the abstract syntax tree of an org file
 and how to manipulate it.
 
-** Quickly pop-up a terminal, run a command, close it ---and zsh
-:PROPERTIES:
-:CUSTOM_ID: Quickly-pop-up-a-terminal--run-a-command--close-it----and-zsh
-:END:
-
-/Pop up a terminal, do some work, then close it using the same command./
-
-[[https://github.com/kyagi/shell-pop-el][Shell-pop]] uses only one key action to work:
-If the buffer exists, and we're in it, then hide it; else jump to it; otherwise create it if it doesn't exit.
-Use universal arguments, e.g., ~C-u 5 C-t~, to have multiple shells and the same universal arguments to pop
-those shells up, but ~C-t~ to pop them away.
-
-#+BEGIN_SRC emacs-lisp
-(use-package shell-pop
-  :config (setq
-    ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
-    shell-pop-universal-key "C-t"
-
-    ;; Percentage for shell-buffer window size.
-    shell-pop-window-size 30
-
-    ;; Position of the popped buffer: top, bottom, left, right, full
-    shell-pop-window-position "bottom"
-
-    ;; Please use an awesome shell.
-    shell-pop-term-shell "/bin/zsh"
- ))
-#+END_SRC
-# There are also a number of hooks for shell-pop. E.g., to unconditionally kill the buffer afterwards.
-
-Now that we have access to quick pop-up for a shell, let's get
-a pretty and practical shell: [[https://www.howtogeek.com/362409/what-is-zsh-and-why-should-you-use-it-instead-of-bash/][zsh]] along with the [[https://ohmyz.sh/][Oh My Zsh]] community
-configurations give us:
-
-1. ~brew install zsh~
-2. ~sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"~
-
-   This installs everything ^_^
-
-#+BEGIN_SRC emacs-lisp
-;; Be default, Emacs please use zsh
-;; E.g., M-x shell
-(setq shell-file-name "/bin/zsh")
-#+END_SRC
-
-Out of the box, zsh comes with
-+ git support; the left side indicates which branch we're on and
-  whether the repo is dirty, ✗.
-+ Recursive path expansion; e.g., ~/u/lo/b TAB~ expands to ~/usr/local/bin/~
-+ Over [[https://github.com/ohmyzsh/ohmyzsh/wiki/Plugins#apache2-macports][250+ Plugins]] and [[https://github.com/ohmyzsh/ohmyzsh/wiki/Themes][125+ Themes]] that are enabled by simply
-  mentioning their name in the ~.zshrc~ file.
-
-The defaults have been good enough for me, for now ---as all else is
-achieved via Emacs ;-)
-
-*** COMMENT Homemade attempt before learning about shell-pop :Posterity:Learning:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Homemade-attempt-before-learning-about-shell-pop
-:END:
-#+begin_src emacs-lisp :tangle no
-(cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
-   "Pop up a terminal, do some work, then close it using the same command.
-
-   The toggle behaviour is tied into the existence of the pop-up buffer.
-   If the buffer exists, kill it; else create it.
-   "
-   (interactive)
-   (cond
-     ;; when the terminal buffer is alive, kill it.
-     ((get-buffer name)  (kill-buffer name)
-                         (ignore-errors (delete-window)))
-     ;; otherwise, set value to refer to a new eshell buffer.
-     (t                  (split-window-right)
-                         (other-window 1)
-                         (eshell)
-                         (rename-buffer name))
-   )
-)
-
-(global-set-key "\C-t" 'toggle-terminal)
-#+end_src
-
 ** Publishing articles to my personal blog
 :PROPERTIES:
 :CUSTOM_ID: Publishing-articles-to-my-personal-blog
@@ -5339,31 +5295,6 @@ publish the current article to my blog.
 )
 #+END_SRC
 
-** Excellent PDF Viewer
-:PROPERTIES:
-:CUSTOM_ID: Excellent-PDF-Viewer
-:END:
-Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library for viewing PDFs in Emacs.
-#+BEGIN_SRC emacs-lisp
-;; First: (async-shell-command "brew install --HEAD dunn/homebrew-emacs/pdf-tools")
-
-;; Then:
-(use-package pdf-tools
-  :ensure t
-  :config
-  (custom-set-variables
-    '(pdf-tools-handle-upgrades nil))
-  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo"))
-
-;; Finally:
-(pdf-tools-install)
-
-;; Now PDFs opened in Emacs are in pdfview-mode.
-#+END_SRC
-
-Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
-with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
-easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
 * Conclusion
 :PROPERTIES:
 :CUSTOM_ID: Conclusion
@@ -5397,6 +5328,10 @@ Bye!
 :End:
 
 * Approaches Before Reading Documentation :Posterity:Learning:noexport:
+;; Nice soft yellow, pleasing ---try background colour for html export ;-)
+(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
+;; "white"; or this darker yellow "#eae3cb"
+
 ** Elementary Version Control
 
 [[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
@@ -5537,6 +5472,27 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 (recentf-open-files)
 #+END_SRC
 
+** Homemade attempt before learning about shell-pop
+#+begin_src emacs-lisp :tangle no
+(cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
+   "Pop up a terminal, do some work, then close it using the same command.
+
+   The toggle behaviour is tied into the existence of the pop-up buffer.
+   If the buffer exists, kill it; else create it.
+   "
+   (interactive)
+   (cond
+     ;; when the terminal buffer is alive, kill it.
+     ((get-buffer name)  (kill-buffer name)
+                         (ignore-errors (delete-window)))
+     ;; otherwise, set value to refer to a new eshell buffer.
+     (t                  (split-window-right)
+                         (other-window 1)
+                         (eshell)
+                         (rename-buffer name))))
+
+(global-set-key "\C-t" 'toggle-terminal)
+#+end_src
 * COMMENT TODO Improvements
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-Improvements

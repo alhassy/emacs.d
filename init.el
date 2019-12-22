@@ -314,23 +314,26 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; [[file:~/.emacs.d/init.org::*Installing OS packages from within Emacs ---Amethyst!][Installing OS packages from within Emacs ---Amethyst!:4]]
 ;; Unlike the Helm variant, we need to specify our OS pacman.
 (setq system-packages-package-manager 'brew)
-
-;; Use “brew cask install” instead of “brew install” for installing programs.
-(setf (nth 2 (assoc 'brew system-packages-supported-package-managers))
-      '(install . "brew cask install"))
-
-;; If the given system package doesn't exist; install it.
-;; (system-packages-ensure "amethyst")
 ;; Installing OS packages from within Emacs ---Amethyst!:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Excellent PDF Viewer][Excellent PDF Viewer:1]]
+(use-package pdf-tools
+  :init   (system-packages-ensure "pdf-tools")
+  :custom (pdf-tools-handle-upgrades nil)
+          (pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+  :config (pdf-tools-install))
+
+;; Now PDFs opened in Emacs are in pdfview-mode.
+;; Excellent PDF Viewer:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail:1]]
 (setq user-full-name    "Musa Al-hassy"
       user-mail-address "alhassy@gmail.com")
 ;; Who am I? ---Using Gnus for Gmail:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail:2]]
+;; [[file:~/.emacs.d/init.org::*Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail:3]]
      (setq message-send-mail-function 'smtpmail-send-it)
-;; Who am I? ---Using Gnus for Gmail:2 ends here
+;; Who am I? ---Using Gnus for Gmail:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
 ;; Invoke all possible key extensions having a common prefix by
@@ -342,23 +345,27 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;;   ;; List of triples (extension method description) )
 ;; Hydra: Supply a prefix only once:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Cosmetics][Cosmetics:1]]
-;; Keep self motivated!
-(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
-;; Cosmetics:1 ends here
+;; [[file:~/.emacs.d/init.org::*Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
+(use-package shell-pop
+  :custom
+    ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
+    (shell-pop-universal-key "C-t")
 
-;; [[file:~/.emacs.d/init.org::*Cosmetics][Cosmetics:2]]
-;; Make it very easy to see the line with the cursor.
-(global-hl-line-mode t)
+    ;; Percentage for shell-buffer window size.
+    (shell-pop-window-size 30)
 
-;; Clean up any accidental trailing whitespace and in other places,
-;; upon save.
-(add-hook 'before-save-hook 'whitespace-cleanup)
+    ;; Position of the popped buffer: top, bottom, left, right, full.
+    (shell-pop-window-position "bottom")
 
-;; Nice soft yellow, pleasing ---try background colour for html export ;-)
-(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
-;; "white"; or this darker yellow "#eae3cb"
-;; Cosmetics:2 ends here
+    ;; Please use an awesome shell.
+    (shell-pop-term-shell "/bin/zsh"))
+;; Quickly pop-up a terminal, run a command, close it ---and zsh:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:2]]
+;; Be default, Emacs please use zsh
+;; E.g., M-x shell
+(setq shell-file-name "/bin/zsh")
+;; Quickly pop-up a terminal, run a command, close it ---and zsh:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:1]]
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
@@ -380,86 +387,55 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.3; System alhassy-air.local
 ;; Startup message: Emacs & Org versions:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Themes][Themes:1]]
-;; Treat all themes as safe; no query before use.
-(setf custom-safe-themes t)
+;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:3]]
+;; Keep self motivated!
+(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+;; Startup message: Emacs & Org versions:3 ends here
 
-;; Nice looking themes ^_^
-(use-package solarized-theme)
-(use-package doom-themes)
-(use-package spacemacs-common
-  :ensure spacemacs-theme)
+;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion Framework][“Being at the Helm” ---Completion Framework:1]]
+(use-package helm
+ :diminish
+ :init (helm-mode t)
+ :bind (("M-x"     . helm-M-x)
+        ("C-x C-f" . helm-find-files)
+        ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
+        ("C-x r b" . helm-filtered-bookmarks)
+        ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
+        ("C-c i"   . helm-imenu)
+        ("C-h a"   . helm-apropos)
+        ;; Look at what was cut recently & paste it in.
+        ("M-y" . helm-show-kill-ring)
 
-;; Infinite list my commonly used themes.
-(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
-(setcdr (last my/themes) my/themes)
+        :map helm-map
+        ;; We can list ‘actions’ on the currently selected item by C-z.
+        ("C-z" . helm-select-action)
+        ;; Let's keep tab-completetion anyhow.
+        ("TAB"   . helm-execute-persistent-action)
+        ("<tab>" . helm-execute-persistent-action)))
+;; “Being at the Helm” ---Completion Framework:1 ends here
 
-(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
-  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’."
-  (interactive)
-  (dolist (τ custom-enabled-themes)
-    (disable-theme τ))
-  (when new-theme (load-theme new-theme)))
+;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion Framework][“Being at the Helm” ---Completion Framework:2]]
+(setq helm-mini-default-sources '(helm-source-buffers-list
+                                    helm-source-recentf
+                                    helm-source-bookmarks
+                                    helm-source-bookmark-set
+                                    helm-source-buffer-not-found))
+;; “Being at the Helm” ---Completion Framework:2 ends here
 
-;; The dark theme's modeline separator is ugly.
-;; Keep reading below regarding “powerline”.
-;; (setq powerline-default-separator 'arrow)
-;; (spaceline-spacemacs-theme)
+;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion Framework][“Being at the Helm” ---Completion Framework:3]]
+(system-packages-ensure "surfraw")
+; ⇒  “M-x helm-surfraw” or “C-x c s”
+;; “Being at the Helm” ---Completion Framework:3 ends here
 
-;; “C-x t” to toggle between personal themes.
-(defalias 'my/toggle-theme #' my/disable-all-themes)
-(global-set-key "\C-x\ t" 'my/toggle-theme)
-(my/toggle-theme)
-;; Themes:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:1]]
-(use-package persistent-scratch
-  ;; Enable both autosave and restore the last saved state of scratch
-  ;; buffer, if any, on Emacs start.
-  :config (persistent-scratch-setup-default))
-;; Persistent Scratch Buffer:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:2]]
-(defun scratch ()
-   "Recreate the scratch buffer, loading any persistent state."
-   (interactive)
-   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
-   (insert initial-scratch-message)
-   (ignore-errors (persistent-scratch-restore))
-   (persistent-scratch-autosave-mode 1)
-   (org-mode)
-   (local-set-key (kbd "C-x C-s") 'persistent-scratch-save))
-
-;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
-;; Persistent Scratch Buffer:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:3]]
-(setq initial-scratch-message (concat
-  "#+Title: Persistent Scratch Buffer"
-  "\n#\n# Welcome! This’ a place for trying things out."
-  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
-;; Persistent Scratch Buffer:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Spaceline: A sleek mode line][Spaceline: A sleek mode line:1]]
-;; When using helm & info & default, mode line looks prettier.
-(use-package spaceline
-  :custom (spaceline-buffer-encoding-abbrev-p nil)
-          (spaceline-line-column-p nil)
-          (spaceline-line-p nil)
-          (powerline-default-separator 'arrow)
-  :config (require 'spaceline-config)
-          (spaceline-helm-mode)
-          (spaceline-info-mode)
-          (spaceline-emacs-theme))
-;; Spaceline: A sleek mode line:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:1]]
-(setq visible-bell 1)
-;; Flashing when something goes wrong ---no blinking:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:2]]
-(blink-cursor-mode 1)
-;; Flashing when something goes wrong ---no blinking:2 ends here
+;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion Framework][“Being at the Helm” ---Completion Framework:4]]
+(use-package helm-swoop
+  :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
+          ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
+          ;; Go back to last position where ‘helm-swoop’ was called
+          ("C-S-s" . 'helm-swoop-back-to-last-point))
+  :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
+          (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
+;; “Being at the Helm” ---Completion Framework:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up:1]]
 (find-file "~/Dropbox/todo.org")
@@ -470,19 +446,91 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (find-file "~/.emacs.d/init.org"))
 ;; My to-do list: The initial buffer when Emacs opens up:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Showing date, time, and battery life][Showing date, time, and battery life:1]]
+;; [[file:~/.emacs.d/init.org::*Exquisite Themes][Exquisite Themes:1]]
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
+
+;; Nice looking themes ^_^
+(use-package solarized-theme)
+(use-package doom-themes)
+(use-package spacemacs-common
+  :ensure spacemacs-theme)
+;; Exquisite Themes:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Exquisite Themes][Exquisite Themes:2]]
+;; Infinite list of my commonly used themes.
+(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
+(setcdr (last my/themes) my/themes)
+;; Exquisite Themes:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Exquisite Themes][Exquisite Themes:3]]
+(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
+  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’."
+  (interactive)
+  (dolist (τ custom-enabled-themes)
+    (disable-theme τ))
+  (when new-theme (load-theme new-theme)))
+
+(defalias 'my/toggle-theme #' my/disable-all-themes)
+(global-set-key "\C-x\ t" 'my/toggle-theme)
+(my/toggle-theme)
+;; Exquisite Themes:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*A sleek & informative mode line][A sleek & informative mode line:1]]
 (setq display-time-day-and-date t)
 (display-time)
-
 ;; (display-battery-mode -1)
 ;; Nope; let's use a fancy indicator …
-;;
 (use-package fancy-battery
   :diminish
   :custom (fancy-battery-show-percentage  t)
           (battery-update-interval       15)
   :config (fancy-battery-mode))
-;; Showing date, time, and battery life:1 ends here
+;; A sleek & informative mode line:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*A sleek & informative mode line][A sleek & informative mode line:2]]
+(column-number-mode                    t)
+;; (line-number-mode                   t)
+(setq display-line-numbers-width-start t)
+(global-display-line-numbers-mode      t)
+;; A sleek & informative mode line:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*A sleek & informative mode line][A sleek & informative mode line:3]]
+;; When using helm & info & default, mode line looks prettier.
+(use-package spaceline
+  :custom (spaceline-buffer-encoding-abbrev-p nil)
+          (spaceline-line-column-p nil)
+          (spaceline-line-p nil)
+          (powerline-default-separator 'arrow)
+  :config (require 'spaceline-config)
+          (spaceline-helm-mode)
+          (spaceline-info-mode)
+          (spaceline-emacs-theme))
+;; A sleek & informative mode line:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Never lose the cursor][Never lose the cursor:1]]
+;; Make it very easy to see the line with the cursor.
+(global-hl-line-mode t)
+;; Never lose the cursor:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Never lose the cursor][Never lose the cursor:2]]
+(use-package beacon
+  :config (setq beacon-color "#666600")
+  :hook   ((org-mode text-mode) . beacon-mode))
+;; Never lose the cursor:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Dimming Unused Windows][Dimming Unused Windows:1]]
+(use-package dimmer
+  :config (dimmer-mode))
+;; Dimming Unused Windows:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:1]]
+(setq visible-bell 1)
+;; Flashing when something goes wrong ---no blinking:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:2]]
+(blink-cursor-mode 1)
+;; Flashing when something goes wrong ---no blinking:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Hiding Scrollbar, tool bar, and menu][Hiding Scrollbar, tool bar, and menu:1]]
 (tool-bar-mode   -1)  ;; No large icons please
@@ -490,18 +538,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (menu-bar-mode   -1)  ;; The Mac OS top pane has menu options
 ;; Hiding Scrollbar, tool bar, and menu:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Increase/decrease text size][Increase/decrease text size:1]]
-(global-set-key (kbd "C-+") 'text-scale-increase)
-(global-set-key (kbd "C--") 'text-scale-decrease)
-;; C-x C-0 restores the default font size
-;; Increase/decrease text size:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Delete Selection Mode][Delete Selection Mode:1]]
-(delete-selection-mode 1)
-;; Delete Selection Mode:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):1]]
-(setq show-paren-delay 0)
+(setq show-paren-delay  0)
 (setq show-paren-style 'mixed)
 (show-paren-mode)
 ;; Highlight & complete parenthesis pair when cursor is near ;-):1 ends here
@@ -526,37 +564,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (modify-syntax-entry ?< "w<")
 (modify-syntax-entry ?> "w>")
 ;; Highlight & complete parenthesis pair when cursor is near ;-):5 ends here
-
-;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):7]]
-(setq electric-pair-pairs
-         '(;; (?~ . ?~)
-           (?* . ?*)
-           (?/ . ?/)))
-;; Highlight & complete parenthesis pair when cursor is near ;-):7 ends here
-
-;; [[file:~/.emacs.d/init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):8]]
-;; Disable pairs when entering minibuffer
-(add-hook 'minibuffer-setup-hook (lambda () (electric-pair-mode 0)))
-
-;; Renable pairs when existing minibuffer
-(add-hook 'minibuffer-exit-hook (lambda () (electric-pair-mode 1)))
-;; Highlight & complete parenthesis pair when cursor is near ;-):8 ends here
-
-;; [[file:~/.emacs.d/init.org::*Minibuffer should display line and column numbers][Minibuffer should display line and column numbers:1]]
-; (line-number-mode t)
-(column-number-mode t)
-;; Minibuffer should display line and column numbers:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Minibuffer should display line and column numbers][Minibuffer should display line and column numbers:2]]
-(setq display-line-numbers-width-start t)
-(global-display-line-numbers-mode      t)
-;; Minibuffer should display line and column numbers:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Never lose the cursor][Never lose the cursor:1]]
-(use-package beacon
-  :config (setq beacon-color "#666600")
-  :hook   ((org-mode text-mode) . beacon-mode))
-;; Never lose the cursor:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Neotree: Directory Tree Listing][Neotree: Directory Tree Listing:1]]
 ;; Fancy icons for neotree
@@ -592,6 +599,38 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   :init (golden-ratio-mode 1))
 ;; Window resizing using the golden ratio:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:1]]
+(use-package persistent-scratch
+  ;; Enable both autosave and restore the last saved state of scratch
+  ;; buffer, if any, on Emacs start.
+  :config (persistent-scratch-setup-default))
+;; Persistent Scratch Buffer:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:2]]
+(defun scratch ()
+   "Recreate the scratch buffer, loading any persistent state."
+   (interactive)
+   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
+   (insert initial-scratch-message)
+   (ignore-errors (persistent-scratch-restore))
+   (persistent-scratch-autosave-mode 1)
+   (org-mode)
+   (local-set-key (kbd "C-x C-s") 'persistent-scratch-save))
+
+;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
+;; Persistent Scratch Buffer:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:3]]
+(setq initial-scratch-message (concat
+  "#+Title: Persistent Scratch Buffer"
+  "\n#\n# Welcome! This’ a place for trying things out."
+  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
+;; Persistent Scratch Buffer:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Prose][Prose:1]]
+(add-hook 'before-save-hook 'whitespace-cleanup)
+;; Prose:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:1]]
 ;; Let's avoid going over 80 columns
 (setq fill-column 80)
@@ -600,6 +639,49 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 ;; Fill-mode ---Word Wrapping:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Word Completion][Word Completion:1]]
+(use-package company
+  :diminish
+  :config
+  (global-company-mode 1)
+  (setq ;; Only 2 letters required for completion to activate.
+        company-minimum-prefix-length 2
+
+        ;; Search other buffers for compleition candidates
+        company-dabbrev-other-buffers t
+        company-dabbrev-code-other-buffers t
+
+        ;; Allow (lengthy) numbers to be eligible for completion.
+        company-complete-number t
+
+        ;; M-⟪num⟫ to select an option according to its number.
+        company-show-numbers t
+
+        ;; Do not downcase completions by default.
+        company-dabbrev-downcase nil
+
+        ;; Even if I write something with the ‘wrong’ case,
+        ;; provide the ‘correct’ casing.
+        company-dabbrev-ignore-case t
+
+        ;; Immediately activate completion.
+        company-idle-delay 0))
+
+;; It's so fast that we don't need a key-binding!
+;; (global-set-key (kbd "C-c h") 'company-complete)
+;; Word Completion:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Word Completion][Word Completion:2]]
+(use-package company-emoji
+  :config (add-to-list 'company-backends 'company-emoji))
+;; Word Completion:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Word Completion][Word Completion:3]]
+(use-package emojify
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
+;; Word Completion:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:1]]
 (use-package flyspell
@@ -799,15 +881,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (agda-input-setup)
 ;; Unicode Input via Agda Input:8 ends here
 
-;; [[file:~/.emacs.d/init.org::*Taking a tour of one's edits][Taking a tour of one's edits:1]]
-;; Give me a description of the change made at a particular stop.
-(use-package goto-chg
-  :init (setq glc-default-span 0))
-
-(defhydra hydra-edits (global-map "C-c e")
-  ("," goto-last-change "Goto nᵗʰ last change")
-  ("." goto-last-change-reverse "Goto more recent change"))
-;; Taking a tour of one's edits:1 ends here
+;; [[file:~/.emacs.d/init.org::*Increase/decrease text size][Increase/decrease text size:1]]
+(global-set-key (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
+;; C-x C-0 restores the default font size
+;; Increase/decrease text size:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Moving Text Around][Moving Text Around:1]]
 ;; M-↑,↓ moves line, or marked region; prefix is how many lines.
@@ -819,19 +897,60 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (global-subword-mode 1)
 ;; Enabling CamelCase Aware Editing Operations:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:2]]
+;; [[file:~/.emacs.d/init.org::*Mouse Editing Support][Mouse Editing Support:1]]
+(setq mouse-drag-copy-region t)
+;; Mouse Editing Support:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Delete Selection Mode][Delete Selection Mode:1]]
+(delete-selection-mode 1)
+;; Delete Selection Mode:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation:1]]
+(use-package smartscan
+  :config
+    (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
+    (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
+    (global-set-key (kbd "M-'") 'my/symbol-replace))
+;; ~M-n,p~: Word-at-Point Navigation:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation:2]]
+(defun my/symbol-replace (replacement)
+  "Replace all standalone symbols in the buffer matching the one at point."
+  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
+  (save-excursion
+    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
+      (beginning-of-buffer)
+      ;; (query-replace-regexp symbol replacement)
+      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
+;; ~M-n,p~: Word-at-Point Navigation:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation:3]]
+;; C-n, next line, inserts newlines when at the end of the buffer
+(setq next-line-add-newlines t)
+;; ~M-n,p~: Word-at-Point Navigation:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Taking a tour of one's edits][Taking a tour of one's edits:1]]
+;; Give me a description of the change made at a particular stop.
+(use-package goto-chg
+  :init (setq glc-default-span 0))
+
+(defhydra hydra-edits (global-map "C-c e")
+  ("," goto-last-change "Goto nᵗʰ last change")
+  ("." goto-last-change-reverse "Goto more recent change"))
+;; Taking a tour of one's edits:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Getting Started][Getting Started:1]]
 (use-package org
   :ensure org-plus-contrib
   :config
   (require 'ox-extra)
   (ox-extras-activate '(ignore-headlines)))
-;; Life within Org-mode:2 ends here
+;; Getting Started:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:3]]
+;; [[file:~/.emacs.d/init.org::*Getting Started][Getting Started:2]]
+;; Replace the content marker, “⋯”, with a nice unicode arrow.
 (setq org-ellipsis " ⤵")
-;; Life within Org-mode:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:4]]
 ;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
 
@@ -853,11 +972,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; Pressing ENTER on a link should follow it.
 (setq org-return-follows-link t)
-;; Life within Org-mode:4 ends here
+;; Getting Started:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Life within Org-mode][Life within Org-mode:5]]
+;; [[file:~/.emacs.d/init.org::*Getting Started][Getting Started:3]]
 (setq initial-major-mode 'org-mode)
-;; Life within Org-mode:5 ends here
+;; Getting Started:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Manipulating Sections][Manipulating Sections:1]]
 (setq org-use-speed-commands t)
@@ -866,10 +985,13 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; [[file:~/.emacs.d/init.org::*Seamless Navigation Between Source Blocks][Seamless Navigation Between Source Blocks:1]]
 ;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
 ;;
-(define-key org-mode-map (kbd "s-p") #'org-babel-previous-src-block)
-(define-key org-mode-map (kbd "s-n") #'org-babel-next-src-block)
-(define-key org-mode-map (kbd "s-e") #'org-edit-src-code)
-(define-key org-src-mode-map (kbd "s-e") #'org-edit-src-exit)
+(use-package org
+  :bind (:map org-mode-map
+              ("s-p" . org-babel-previous-src-block)
+              ("s-n" . org-babel-next-src-block)
+              ("s-e" . org-edit-src-code)
+         :map org-src-mode-map
+              ("s-e" . org-edit-src-exit))
 ;; Seamless Navigation Between Source Blocks:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Modifying ~<return>~][Modifying ~<return>~:1]]
@@ -879,24 +1001,19 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Modifying ~<return>~:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*~C-a,e,k~ and Yanking of sections][~C-a,e,k~ and Yanking of sections:1]]
-;; On an org-heading, C-a goes to after the star, heading markers.
-;; To use speed keys, run C-a C-a to get to the star markers.
-;;
-;; C-e goes to the end of the heading, not including the tags.
-;;
 (setq org-special-ctrl-a/e t)
-
-;; C-k no longer removes tags, if activated in the middle of a heading's name.
-(setq org-special-ctrl-k t)
-
-;; When you yank a subtree and paste it alongside a subtree of depth ‘d’,
-;; then the yanked tree's depth is adjusted to become depth ‘d’ as well.
-;; If you don't want this, then refile instead of copy pasting.
-(setq org-yank-adjusted-subtrees t)
 ;; ~C-a,e,k~ and Yanking of sections:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*~C-a,e,k~ and Yanking of sections][~C-a,e,k~ and Yanking of sections:2]]
+(setq org-special-ctrl-k t) ;; MA: Does not work …!
+;; ~C-a,e,k~ and Yanking of sections:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*~C-a,e,k~ and Yanking of sections][~C-a,e,k~ and Yanking of sections:3]]
+(setq org-yank-adjusted-subtrees t)
+;; ~C-a,e,k~ and Yanking of sections:3 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:1]]
-; Seamless use of babel: No confirmation upon execution.
+;; Seamless use of babel: No confirmation upon execution.
 ;; Downside: Could accidentally evaluate harmful code.
 (setq org-confirm-babel-evaluate nil)
 ;; Executing code from ~src~ blocks:1 ends here
@@ -1175,25 +1292,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (global-aggressive-indent-mode t)
 ;; Expected IDE Support:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Backups][Backups:1]]
-;; New location for backups.
-(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-
-;; Never silently delete old backups.
-(setq delete-old-versions -1)
-
-;; Use version numbers for backup files.
-(setq version-control t)
-
-;; Even version controlled files get to be backed up.
-(setq vc-make-backup-files t)
-;; Backups:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Backups][Backups:2]]
-(use-package backup-walker
-  :commands backup-walker-start)
-;; Backups:2 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Editor Documentation with Contextual Information][Editor Documentation with Contextual Information:1]]
 (use-package helpful)
 
@@ -1233,57 +1331,102 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (global-set-key (kbd "C-h k") #'helpful-key)
 ;; Editor Documentation with Contextual Information:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation:1]]
-(use-package smartscan
-  :config
-    (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
-    (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
-    (global-set-key (kbd "M-'") 'my/symbol-replace))
-;; ~M-n,p~: Word-at-Point Navigation:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation:2]]
-(defun my/symbol-replace (replacement)
-  "Replace all standalone symbols in the buffer matching the one at point."
-  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
-  (save-excursion
-    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
-      (beginning-of-buffer)
-      ;; (query-replace-regexp symbol replacement)
-      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
-;; ~M-n,p~: Word-at-Point Navigation:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation:3]]
-;; C-n, next line, inserts newlines when at the end of the buffer
-(setq next-line-add-newlines t)
-;; ~M-n,p~: Word-at-Point Navigation:3 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Highlight Defined Emacs Lisp Symbols][Highlight Defined Emacs Lisp Symbols:1]]
 (use-package highlight-defined)
 (add-hook 'emacs-lisp-mode-hook 'highlight-defined-mode)
 ;; Highlight Defined Emacs Lisp Symbols:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:1]]
-;; NOTE that the highlighting works even in comments.
-(use-package hl-todo
-  ;; Enable it for text-like locations
-  :hook ((text-mode org-mode prog-mode) . hl-todo-mode)
-  :init
-  ;; Adding new keywords
-  (loop for kw in '("TEST" "MA" "WK" "JC")
-        do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
-;; Highlighting TODO-s & Showing them in Magit:1 ends here
+;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1]]
+(use-package origami)
+;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:2]]
-;; MA: The todo keywords work in code too!
-(use-package magit-todos
-  :after magit
-  :after hl-todo
+;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2]]
+(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
+      origami-parser-alist)
+;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3]]
+(defun my/search-hook-function ()
+  (when origami-mode (origami-toggle-node (current-buffer) (point))))
+
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+;;
+;; Likewise for incremental search, isearch, users.
+;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
+;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4]]
+(defhydra folding-with-origami-mode (global-map "C-c f")
+  ("h" origami-close-node-recursively "Hide")
+  ("o" origami-open-node-recursively  "Open")
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("n" origami-next-fold "Next")
+  ("p" origami-previous-fold "Previous"))
+;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Edit as Root][Edit as Root:1]]
+(defun find-file-as-root ()
+  "Like `ido-find-file, but automatically edit the file with
+root-privileges (using tramp/sudo), if the file is not writable by
+user."
+  (interactive)
+  (let ((file (ido-read-file-name "Edit as root: ")))
+    (unless (file-writable-p file)
+      (setq file (concat "/sudo:root@localhost:" file)))
+    (find-file file)))
+
+(bind-key "C-x F" 'find-file-as-root)
+;; Edit as Root:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
+(use-package windmove
   :config
-  ;; For some reason cannot use :custom with this package.
-  (custom-set-variables
-    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
-  (magit-todos-mode))
-;; Highlighting TODO-s & Showing them in Magit:2 ends here
+  ;; use command key on Mac
+  (windmove-default-keybindings 'super)
+  ;; wrap around at edges
+  (setq windmove-wrap-around t))
+;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2]]
+(use-package buffer-flip
+  :bind
+   (:map buffer-flip-map
+    ("M-<tab>" . buffer-flip-forward)
+    ("M-S-<tab>" . buffer-flip-backward)
+    ("C-g" . buffer-flip-abort))
+  :config
+    (setq buffer-flip-skip-patterns
+        '("^\\*helm\\b"))
+)
+;; key to begin cycling buffers.
+(global-set-key (kbd "M-<tab>") 'buffer-flip)
+;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Restarting Emacs][Restarting Emacs:1]]
+;; Provides only the command “restart-emacs”.
+(use-package restart-emacs
+  :commands restart-emacs)
+;; Restarting Emacs:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Backups][Backups:1]]
+;; New location for backups.
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+
+;; Never silently delete old backups.
+(setq delete-old-versions -1)
+
+;; Use version numbers for backup files.
+(setq version-control t)
+
+;; Even version controlled files get to be backed up.
+(setq vc-make-backup-files t)
+;; Backups:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Backups][Backups:2]]
+(use-package backup-walker
+  :commands backup-walker-start)
+;; Backups:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:1]]
 ;; Hunk navigation and commiting.
@@ -1343,222 +1486,16 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   ("l" git-link "Git URL for current location"))
 ;; What's changed & who's to blame?:5 ends here
 
-;; [[file:~/.emacs.d/init.org::*Edit as Root][Edit as Root:1]]
-(defun find-file-as-root ()
-  "Like `ido-find-file, but automatically edit the file with
-root-privileges (using tramp/sudo), if the file is not writable by
-user."
-  (interactive)
-  (let ((file (ido-read-file-name "Edit as root: ")))
-    (unless (file-writable-p file)
-      (setq file (concat "/sudo:root@localhost:" file)))
-    (find-file file)))
-
-(bind-key "C-x F" 'find-file-as-root)
-;; Edit as Root:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Restarting Emacs][Restarting Emacs:1]]
-;; Provides only the command “restart-emacs”.
-(use-package restart-emacs
-  :commands restart-emacs)
-;; Restarting Emacs:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Keep buffers open across sessions][Keep buffers open across sessions:1]]
 ;; Keep open files open across sessions.
 (desktop-save-mode 1)
 (setq desktop-restore-eager 10)
 ;; Keep buffers open across sessions:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Mouse Editing Support][Mouse Editing Support:1]]
-;; Text selected with the mouse is automatically copied to clipboard.
-(setq mouse-drag-copy-region t)
-;; Mouse Editing Support:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Dimming Unused Windows][Dimming Unused Windows:1]]
-(use-package dimmer
-  :config (dimmer-mode))
-;; Dimming Unused Windows:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
-(use-package windmove
-  :config
-  ;; use command key on Mac
-  (windmove-default-keybindings 'super)
-  ;; wrap around at edges
-  (setq windmove-wrap-around t))
-;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2]]
-(use-package buffer-flip
-  :bind
-   (:map buffer-flip-map
-    ("M-<tab>" . buffer-flip-forward)
-    ("M-S-<tab>" . buffer-flip-backward)
-    ("C-g" . buffer-flip-abort))
-  :config
-    (setq buffer-flip-skip-patterns
-        '("^\\*helm\\b"))
-)
-;; key to begin cycling buffers.
-(global-set-key (kbd "M-<tab>") 'buffer-flip)
-;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
 (use-package color-identifiers-mode)
 (global-color-identifiers-mode)
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Completion Frameworks][Completion Frameworks:1]]
-(use-package helm
- :diminish
- :init (helm-mode t)
- :bind
-  ("C-x C-r" . helm-recentf)      ; search for recently edited
-
-  ;; Helm provides generic functions for completions to replace
-  ;; tab-completion in Emacs with no loss of functionality.
-  ("M-x" . 'helm-M-x)
-  ;; ("C-x b". 'helm-buffers-list) ;; Avoid seeing all those *helm⋯* mini buffers!
-  ("C-x b". 'helm-mini) ;; see buffers & recent files; more useful.
-  ("C-x r b" .'helm-filtered-bookmarks)
-  ("C-x C-f" . 'helm-find-files)
-
-  ;; A menu of all “top-level items” in a file; e.g.,
-  ;; functions and constants in source code or headers in an org-mode file.
-  ;;
-  ;; Nifty way to familarise yourself with a new code base, or one from a while ago.
-  ;;
-  ("C-c i" . 'helm-imenu)
-
-   ;; Show all meaningful Lisp symbols whose names match a given pattern.
-   ;; Helpful for looking up commands.
-   ("C-h a" . helm-apropos)
-
-   ;; Look at what was cut recently & paste it in.
-   ("M-y" . helm-show-kill-ring)
-)
-;; (global-set-key (kbd "M-x") 'execute-extended-command) ;; Default “M-x”
-
-;; Yet, let's keep tab-completetion anyhow.
-(define-key helm-map (kbd "TAB") #'helm-execute-persistent-action)
-(define-key helm-map (kbd "<tab>") #'helm-execute-persistent-action)
-;; We can list ‘actions’ on the currently selected item by C-z.
-(define-key helm-map (kbd "C-z")  'helm-select-action)
-;; Completion Frameworks:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Completion Frameworks][Completion Frameworks:2]]
-(setq helm-mini-default-sources '(helm-source-buffers-list
-                                    helm-source-recentf
-                                    helm-source-bookmarks
-                                    helm-source-bookmark-set
-                                    helm-source-buffer-not-found))
-;; Completion Frameworks:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Completion Frameworks][Completion Frameworks:3]]
-;; (shell-command "brew install surfraw &")
-;;
-;; Invoke helm-surfraw
-;; Completion Frameworks:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Completion Frameworks][Completion Frameworks:4]]
-(use-package helm-swoop
-  :bind
-  (
-   ("C-s"     . 'helm-swoop)           ;; search current buffer
-   ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
-   ;; Go back to last position where ‘helm-swoop’ was called
-   ("C-S-s" . 'helm-swoop-back-to-last-point)
-  )
- :config ;; Following from helm-swoop's github page.
-   ;; Give up colour for speed.
-  (setq helm-swoop-speed-or-color nil)
-  ;; If this value is t, split window inside the current window
-  (setq helm-swoop-split-with-multiple-windows nil)
-
-)
-;; Completion Frameworks:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Completion Frameworks][Completion Frameworks:7]]
-(use-package company
-  :diminish
-  :config
-    (setq company-dabbrev-other-buffers t
-          company-dabbrev-code-other-buffers t
-
-          ;; Allow (lengthy) numbers to be eligible for completion.
-          company-complete-number t
-
-          ;; M-⟪num⟫ to select an option according to its number.
-          company-show-numbers t
-
-          ;; Only 2 letters required for completion to activate.
-          company-minimum-prefix-length 2
-
-          ;; Do not downcase completions by default.
-          company-dabbrev-downcase nil
-
-          ;; Even if I write something with the ‘wrong’ case,
-          ;; provide the ‘correct’ casing.
-          company-dabbrev-ignore-case t
-
-          ;; Immediately activate completion.
-          company-idle-delay 0
-          )
-
-    (global-company-mode 1)
-)
-;; So fast that we don't need this.
-;; (global-set-key (kbd "C-c h") 'company-complete)
-;; Completion Frameworks:7 ends here
-
-;; [[file:~/.emacs.d/init.org::*Completion Frameworks][Completion Frameworks:8]]
-(use-package company-emoji)
-(add-to-list 'company-backends 'company-emoji)
-;; Completion Frameworks:8 ends here
-
-;; [[file:~/.emacs.d/init.org::*Completion Frameworks][Completion Frameworks:9]]
-(use-package emojify
- :config (setq emojify-display-style 'image)
- :init (global-emojify-mode 1) ;; Will install missing images, if need be.
-)
-;; Completion Frameworks:9 ends here
-
-;; [[file:~/.emacs.d/init.org::*Completion Frameworks][Completion Frameworks:11]]
-(use-package company-quickhelp
- :config
-   (setq company-quickhelp-delay 0.1)
-   (company-quickhelp-mode)
-)
-;; Completion Frameworks:11 ends here
-
-;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1]]
-(use-package origami)
-;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2]]
-(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
-      origami-parser-alist)
-;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3]]
-(defun my/search-hook-function ()
-  (when origami-mode (origami-toggle-node (current-buffer) (point))))
-
-;; Open folded nodes if a search stops there.
-(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-;;
-;; Likewise for incremental search, isearch, users.
-;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
-;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4]]
-(defhydra folding-with-origami-mode (global-map "C-c f")
-  ("h" origami-close-node-recursively "Hide")
-  ("o" origami-open-node-recursively  "Open")
-  ("t" origami-toggle-all-nodes  "Toggle buffer")
-  ("n" origami-next-fold "Next")
-  ("p" origami-previous-fold "Previous"))
-;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Helpful Utilities & Shortcuts][Helpful Utilities & Shortcuts:1]]
 ;; change all prompts to y or n
@@ -1570,6 +1507,13 @@ user."
 (put 'narrow-to-region 'disabled nil)
 (put 'narrow-to-page 'disabled nil)
 ;; Helpful Utilities & Shortcuts:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Documentation Pop-Ups][Documentation Pop-Ups:1]]
+(use-package company-quickhelp
+ :config
+   (setq company-quickhelp-delay 0.1)
+   (company-quickhelp-mode))
+;; Documentation Pop-Ups:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake:1]]
 (defvar my-keys-minor-mode-map
@@ -1664,29 +1608,6 @@ user."
   (cdr (assoc KEYWORD (org-keywords))))
 ;; Obtaining Values of ~#+KEYWORD~ Annotations:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
-(use-package shell-pop
-  :config (setq
-    ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
-    shell-pop-universal-key "C-t"
-
-    ;; Percentage for shell-buffer window size.
-    shell-pop-window-size 30
-
-    ;; Position of the popped buffer: top, bottom, left, right, full
-    shell-pop-window-position "bottom"
-
-    ;; Please use an awesome shell.
-    shell-pop-term-shell "/bin/zsh"
- ))
-;; Quickly pop-up a terminal, run a command, close it ---and zsh:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:2]]
-;; Be default, Emacs please use zsh
-;; E.g., M-x shell
-(setq shell-file-name "/bin/zsh")
-;; Quickly pop-up a terminal, run a command, close it ---and zsh:2 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Publishing articles to my personal blog][Publishing articles to my personal blog:1]]
 (define-key global-map "\C-cb" 'my/publish-to-blog)
 
@@ -1723,23 +1644,6 @@ user."
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
 )
 ;; Publishing articles to my personal blog:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Excellent PDF Viewer][Excellent PDF Viewer:1]]
-;; First: (async-shell-command "brew install --HEAD dunn/homebrew-emacs/pdf-tools")
-
-;; Then:
-(use-package pdf-tools
-  :ensure t
-  :config
-  (custom-set-variables
-    '(pdf-tools-handle-upgrades nil))
-  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo"))
-
-;; Finally:
-(pdf-tools-install)
-
-;; Now PDFs opened in Emacs are in pdfview-mode.
-;; Excellent PDF Viewer:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Undo tree][Undo tree:1]]
 ;; Allow tree-semantics for undo operations.
