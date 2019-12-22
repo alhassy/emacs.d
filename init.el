@@ -991,7 +991,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
               ("s-n" . org-babel-next-src-block)
               ("s-e" . org-edit-src-code)
          :map org-src-mode-map
-              ("s-e" . org-edit-src-exit))
+              ("s-e" . org-edit-src-exit)))
 ;; Seamless Navigation Between Source Blocks:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Modifying ~<return>~][Modifying ~<return>~:1]]

@@ -2549,7 +2549,7 @@ previous, next, or toggle editing org-mode source blocks.
               ("s-n" . org-babel-next-src-block)
               ("s-e" . org-edit-src-code)
          :map org-src-mode-map
-              ("s-e" . org-edit-src-exit))
+              ("s-e" . org-edit-src-exit)))
 #+end_src
 
                        Interestingly, ~s-l~ is “goto line”.
