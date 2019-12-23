@@ -102,8 +102,8 @@
         (save-excursion
           ;; remove any other initialisation file candidates
           (ignore-errors
-            (f-move .emacs    (concat .emacs _data))
-            (f-move .emacs.el (concat .emacs.el _data)))
+            (f-move .emacs    (concat .emacs _date))
+            (f-move .emacs.el (concat .emacs.el _date)))
 
           ;; Make init.el
           (org-babel-tangle)
@@ -366,6 +366,12 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; E.g., M-x shell
 (setq shell-file-name "/bin/zsh")
 ;; Quickly pop-up a terminal, run a command, close it ---and zsh:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Restarting Emacs ---Keeping buffers open across sessions?][Restarting Emacs ---Keeping buffers open across sessions?:1]]
+;; Provides only the command “restart-emacs”.
+(use-package restart-emacs
+  :commands restart-emacs)
+;; Restarting Emacs ---Keeping buffers open across sessions?:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Automatic Backups][Automatic Backups:1]]
 ;; New location for backups.
@@ -1010,6 +1016,35 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (setq initial-major-mode 'org-mode)
 ;; Getting Started:3 ends here
 
+;; [[file:~/.emacs.d/init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:1]]
+;; Seamless use of babel: No confirmation upon execution.
+;; Downside: Could accidentally evaluate harmful code.
+(setq org-confirm-babel-evaluate nil)
+;; Executing code from ~src~ blocks:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:2]]
+ (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (shell      . t)
+     (python     . t)
+     (haskell    . t)
+     (ruby       . t)
+     (ocaml      . t)
+     (C          . t)  ;; Captial “C” gives access to C, C++, D
+     (dot        . t)
+     (latex      . t)
+     (org        . t)
+     (makefile   . t)))
+
+;; Preserve my indentation for source code during export.
+(setq org-src-preserve-indentation t)
+
+;; The export process hangs Emacs, let's avoid this.
+;; MA: For one reason or another, this crashes more than I'd like.
+;; (setq org-export-in-background t)
+;; Executing code from ~src~ blocks:2 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Manipulating Sections][Manipulating Sections:1]]
 (setq org-use-speed-commands t)
 ;; Manipulating Sections:1 ends here
@@ -1044,37 +1079,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (setq org-yank-adjusted-subtrees t)
 ;; ~C-a,e,k~ and Yanking of sections:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:1]]
-;; Seamless use of babel: No confirmation upon execution.
-;; Downside: Could accidentally evaluate harmful code.
-(setq org-confirm-babel-evaluate nil)
-;; Executing code from ~src~ blocks:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:2]]
- (org-babel-do-load-languages
-   'org-babel-load-languages
-   '(
-     (emacs-lisp . t)
-     ;; (shell	 . t)
-     (python . t)
-     (haskell . t)
-     (ruby	 . t)
-     (ocaml	 . t)
-     (C . t)  ;; Captial “C” gives access to C, C++, D
-     (dot	 . t)
-     (latex	 . t)
-     (org	 . t)
-     (makefile	 . t)
-     ))
-
-;; Preserve my indentation for source code during export.
-(setq org-src-preserve-indentation t)
-
-;; The export process hangs Emacs, let's avoid this.
-;; MA: For one reason or another, this crashes more than I'd like.
-;; (setq org-export-in-background t)
-;; Executing code from ~src~ blocks:2 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images:1]]
 ;; org-mode math is now highlighted ;-)
 (setq org-highlight-latex-and-related '(latex))
@@ -1083,23 +1087,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (setq org-hide-emphasis-markers t)
 
 ;; (setq org-pretty-entities t)
-;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+;; to have \alpha, \to and others display as utf8
+;; http://orgmode.org/manual/Special-symbols.html
 ;; Hiding Emphasise Markers & Inlining Images:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
-;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
-;; Most useful for non-LaTeX files.
-(setq reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
-(setq bibtex-completion-bibliography (car reftex-default-bibliography))
-
-(use-package org-ref
-  :demand t
-  :config (setq org-ref-default-bibliography reftex-default-bibliography))
-
-(use-package helm-bibtex :demand t)
-;; Working with Citations:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Show off-screen Heading at the top of the window][Show off-screen Heading at the top of the window:1]]
+;; [[file:~/.emacs.d/init.org::*Show off-screen heading at the top of the window][Show off-screen heading at the top of the window:1]]
  (use-package org-sticky-header
   :hook (org-mode . org-sticky-header-mode)
   :config
@@ -1107,95 +1099,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / "))
-;; Show off-screen Heading at the top of the window:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Clocking Work Time][Clocking Work Time:1]]
-;; Record a note on what was accomplished when clocking out of an item.
-(setq org-log-note-clock-out t)
-;; Clocking Work Time:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Clocking Work Time][Clocking Work Time:2]]
-;; List of all the files & directories where todo items can be found. Only one for now.
-(setq org-agenda-files '("~/Dropbox/todo.org"))
-
-;; How many days ahead the default agenda view should look
-(setq org-agenda-ndays 7)
-
-;; How many days early a deadline item will begin showing up in your agenda list.
-(setq org-deadline-warning-days 14)
-
-;; In the agenda view, days that have no associated tasks will still have a line showing the date.
-(setq org-agenda-show-all-dates t)
-
-(setq org-agenda-skip-deadline-if-done t)
-
-;; Scheduled items marked as complete will not show up in your agenda view.
-(setq org-agenda-skip-scheduled-if-done t)
-
-;; The agenda view – even in the 7-days-at-a-time view – will always begin on the current day.
-;; This is important, since while using org-mode as a day planner, you never want to think of
-;; days gone past. That’s something you do in other ways, such as when reviewing completed tasks.
-(setq org-agenda-start-on-weekday nil)
-;; Clocking Work Time:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Clocking Work Time][Clocking Work Time:3]]
-(setq confirm-kill-emacs 'yes-or-no-p)
-;; Clocking Work Time:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Clocking Work Time][Clocking Work Time:4]]
-;; Resume clocking task when emacs is restarted
-(org-clock-persistence-insinuate)
-
-;; Show lot of clocking history
-(setq org-clock-history-length 23)
-
-;; Resume clocking task on clock-in if the clock is open
-(setq org-clock-in-resume t)
-
-;; Sometimes I change tasks I'm clocking quickly - this removes clocked tasks with 0:00 duration
-(setq org-clock-out-remove-zero-time-clocks t)
-
-;; Clock out when moving task to a done state
-(setq org-clock-out-when-done t)
-
-;; Save the running clock and all clock history when exiting Emacs, load it on startup
-(setq org-clock-persist t)
-
-;; Do not prompt to resume an active clock
-;; (setq org-clock-persist-query-resume nil)
-
-;; Include current clocking task in clock reports
-(setq org-clock-report-include-clocking-task t)
-;; Clocking Work Time:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Clocking Work Time][Clocking Work Time:5]]
-(setq org-clock-sound "~/.emacs.d/school-bell.wav")
-;; Clocking Work Time:5 ends here
-
-;; [[file:~/.emacs.d/init.org::*[[https://revealjs.com/?transition=zoom#/\][Reveal.JS\]] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
-(use-package ox-reveal
-  :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
-;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*[[https://revealjs.com/?transition=zoom#/\][Reveal.JS\]] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3]]
-(setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
-<font size=\"1\">
-<a href=\"?print-pdf&showNotes=true\">
-⟪ Flattened View ; Press <code>?</code> for Help ⟫
-</a>
-</font>")
-;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Coloured LaTeX using Minted][Coloured LaTeX using Minted:1]]
-(setq org-latex-listings 'minted
-      org-latex-packages-alist '(("" "minted"))
-      org-latex-pdf-process
-      '("pdflatex -shell-escape -output-directory %o %f"
-        "biber %b"
-        "pdflatex -shell-escape -output-directory %o %f"
-        "pdflatex -shell-escape -output-directory %o %f")
-)
-;; Coloured LaTeX using Minted:1 ends here
+;; Show off-screen heading at the top of the window:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Jumping without hassle][Jumping without hassle:1]]
 (defun my/org-goto-line (line)
@@ -1209,8 +1113,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (goto-line line)
   (org-previous-visible-heading 1)
   (org-cycle)
-  (goto-line line)
-)
+  (goto-line line))
 ;; Jumping without hassle:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Folding within a subtree][Folding within a subtree:1]]
@@ -1226,13 +1129,157 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 ;; Folding within a subtree:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:1]]
+  (defvar-local rasmus/org-at-src-begin -1
+    "Variable that holds whether last position was a ")
+
+  (defvar rasmus/ob-header-symbol ?☰
+    "Symbol used for babel headers")
+
+  (defun rasmus/org-prettify-src--update ()
+    (let ((case-fold-search t)
+          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+          found)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward re nil t)
+          (goto-char (match-end 0))
+          (let ((args (org-trim
+                       (buffer-substring-no-properties (point)
+                                                       (line-end-position)))))
+            (when (org-string-nw-p args)
+              (let ((new-cell (cons args rasmus/ob-header-symbol)))
+                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+                (cl-pushnew new-cell found :test #'equal)))))
+        (setq prettify-symbols-alist
+              (cl-set-difference prettify-symbols-alist
+                                 (cl-set-difference
+                                  (cl-remove-if-not
+                                   (lambda (elm)
+                                     (eq (cdr elm) rasmus/ob-header-symbol))
+                                   prettify-symbols-alist)
+                                  found :test #'equal)))
+        ;; Clean up old font-lock-keywords.
+        (font-lock-remove-keywords nil prettify-symbols--keywords)
+        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+        (font-lock-add-keywords nil prettify-symbols--keywords)
+        (while (re-search-forward re nil t)
+          (font-lock-flush (line-beginning-position) (line-end-position))))))
+
+  (defun rasmus/org-prettify-src ()
+    "Hide src options via `prettify-symbols-mode'.
+
+  `prettify-symbols-mode' is used because it has uncollpasing. It's
+  may not be efficient."
+    (let* ((case-fold-search t)
+           (at-src-block (save-excursion
+                           (beginning-of-line)
+                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+      ;; Test if we moved out of a block.
+      (when (or (and rasmus/org-at-src-begin
+                     (not at-src-block))
+                ;; File was just opened.
+                (eq rasmus/org-at-src-begin -1))
+        (rasmus/org-prettify-src--update))
+      ;; Remove composition if at line; doesn't work properly.
+      ;; (when at-src-block
+      ;;   (with-silent-modifications
+      ;;     (remove-text-properties (match-end 0)
+      ;;                             (1+ (line-end-position))
+      ;;                             '(composition))))
+      (setq rasmus/org-at-src-begin at-src-block)))
+
+  (defun rasmus/org-prettify-symbols ()
+    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+          (cl-reduce 'append
+                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
+                               ("#+end_src"   . ?□) ;; ⏹
+                               ("#+header:" . ,rasmus/ob-header-symbol)
+                               ("#+begin_quote" . ?»)
+                               ("#+end_quote" . ?«)))))
+    (turn-on-prettify-symbols-mode)
+    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
+
+
+;; Last up­dated: 2019-06-09
+;; Making Block Delimiters Less Intrusive:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:2]]
+(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+;; Making Block Delimiters Less Intrusive:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:3]]
+(global-prettify-symbols-mode)
+
+(defvar my/prettify-alist nil
+  "Musa's personal prettifications.")
+
+(loop for pair in '(("<=" . ?≤) (">=" . ?≥)
+                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                    ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
+                    ("#+end_example"   . ?⇐)                ;; ⇐
+                    ("{{{fold("        . ?↳)
+                    (")}}}"            . ?↲)
+                    ("{{{end-fold}}}"  . ?↺))
+      do (push pair my/prettify-alist))
+
+(loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
+      do (add-hook hk (lambda ()
+                        (setq prettify-symbols-alist
+                              (append my/prettify-alist prettify-symbols-alist)))))
+;; Making Block Delimiters Less Intrusive:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:4]]
+;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
+(setq prettify-symbols-unprettify-at-point 'right-edge)
+;; Making Block Delimiters Less Intrusive:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:6]]
+(use-package folding
+ :init
+ (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
+ ; (setq folding-top-mark "{{{fold(")
+ ; (setq folding-bottom-mark "{{{end-fold}}}")
+ :config
+  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
+  (add-hook 'org-mode-hook #'folding-mode))
+;; Making Block Delimiters Less Intrusive:6 ends here
+
+;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
+;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
+;; Most useful for non-LaTeX files.
+(setq reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
+(setq bibtex-completion-bibliography (car reftex-default-bibliography))
+
+(use-package org-ref
+  :config (setq org-ref-default-bibliography reftex-default-bibliography))
+
+(use-package helm-bibtex)
+;; Working with Citations:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Coloured LaTeX using Minted][Coloured LaTeX using Minted:1]]
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -output-directory %o %f"
+        "biber %b"
+        "pdflatex -shell-escape -output-directory %o %f"
+        "pdflatex -shell-escape -output-directory %o %f"))
+;; Coloured LaTeX using Minted:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors:1]]
 (defun my/ensure-headline-ids (&rest _)
-  "Org trees without a :CUSTOM_ID: property have the property set to be their heading. All non-alphanumeric characters are replaced with ‘-’.
+  "Org trees without a :CUSTOM_ID: property have the property set to be their heading.
 
-   If multiple trees end-up with the same id property, issue a message and undo
-   any property insertion thus far.
-  "
+All non-alphanumeric characters are cleverly replaced with ‘-’.
+
+If multiple trees end-up with the same id property, issue a
+message and undo any property insertion thus far.
+
+E.g., ↯ We'll go on a ∀∃⇅ adventure
+   ↦  We'll-go-on-a-adventure
+"
   (interactive)
   (let ((ids))
     (org-map-entries
@@ -1240,7 +1287,12 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
        (org-with-point-at (point)
          (let ((id (org-entry-get nil "CUSTOM_ID")))
            (unless id
-             (setq id (s-replace-regexp "[^[:alnum:]]" "-" (nth 4 (org-heading-components))))
+             (thread-last (nth 4 (org-heading-components))
+               (s-replace-regexp "[^[:alnum:]']" "-")
+               (s-replace-regexp "-+" "-")
+               (s-chop-prefix "-")
+               (s-chop-suffix "-")
+               (setq id))
              (if (not (member id ids))
                  (push id ids)
                (message-box "Oh no, a repeated id!\n\n\t%s" id)
@@ -1249,72 +1301,25 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
              (org-entry-put nil "CUSTOM_ID" id))))))))
 
 ;; Whenever html & md export happens, ensure we have headline ids.
-(advice-add 'org-html-export-to-html :before 'my/ensure-headline-ids)
+(advice-add 'org-html-export-to-html   :before 'my/ensure-headline-ids)
 (advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
 ;; Ensuring Useful HTML Anchors:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Interpret the Haskell source blocks in a file][Interpret the Haskell source blocks in a file:1]]
-(defvar *current-module* "NoModuleNameSpecified"
-  "The name of the module, file, that source blocks are
-   currently being tangled to.
+;; [[file:~/.emacs.d/init.org::*[[https://revealjs.com/?transition=zoom#/\][Reveal.JS\]] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
+(use-package ox-reveal
+  :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
+;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1 ends here
 
-   This technique is insipired by “Interactive Way to C”;
-   see https://alhassy.github.io/InteractiveWayToC/.
-  ")
+;; [[file:~/.emacs.d/init.org::*[[https://revealjs.com/?transition=zoom#/\][Reveal.JS\]] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3]]
+(setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
+<font size=\"1\">
+<a href=\"?print-pdf&showNotes=true\">
+⟪ Flattened View ; Press <code>?</code> for Help ⟫
+</a>
+</font>")
+;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3 ends here
 
-(defun current-module ()
-  "Returns the current module under focus."
-  *current-module*)
-
-(defun set-module (name)
-   "Set the name of the module currently under focus.
-
-    Usage: When a module is declared, i.e., a new file has begun,
-    then that source blocks header should be “:tangle (set-module ”name-here”)”.
-    succeeding source blocks now inherit this name and so are tangled
-    to the same module file. How? By placing the following line at the top
-    of your Org file: “‘#+PROPERTY: header-args :tangle (current-module))’.
-
-    This technique structures “Interactive Way to C”.
-   "
-   (setq *current-module* name)
-)
-
-(cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
-  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
-   and load the resulting ‘target’ file into a ghci buffer.
-
-   If no name is provided for the ‘target’ file that is generated from the
-   tangeling process, it is assumed to be the buffer's name with a ‘hs’ extension.
-
-   Note that this only loads the blocks tangled to ‘target’.
-
-   For example, file ‘X.org’ may have haskell blocks that tangle to files
-   ‘X.hs’, ‘Y.hs’ and ‘Z.hs’. If no target name is supplied, we tangle all blocks
-   but only load ‘X.hs’ into the ghci buffer. A helpful technique to load the
-   last, bottom most, defined haskell module, is to have the module declaration's
-   source block be ‘:tangle (setq CODE “Y.hs”)’, for example; then the following
-   code blocks will inherit this location provided our Org file has at the top
-   ‘#+PROPERTY: header-args :tangle (current-module))’.
-   Finally, our ‘compile-command’ suffices to be ‘(my/org-run-haskell CODE)’.
-   ─
-   This technique structures “Interactive Way to C”.
-  "
-   (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
-         (buf (concat "*GHCI* " it)))
-
-     (-let [kill-buffer-query-functions nil] (ignore-errors (kill-buffer buf)))
-     (org-babel-tangle it "haskell")
-     (async-shell-command (concat "ghci " it) buf)
-     (switch-to-buffer-other-window buf)
-     (end-of-buffer)
-   )
-)
-
-;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
-;; Interpret the Haskell source blocks in a file:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Expected IDE Support][Expected IDE Support:1]]
+;; [[file:~/.emacs.d/init.org::*Programming][Programming:1]]
 ;; Use 4 spaces in places of tabs when indenting.
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
@@ -1322,7 +1327,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Always stay indented: Automatically have blocks reindented after every change.
 (use-package aggressive-indent :demand t)
 (global-aggressive-indent-mode t)
-;; Expected IDE Support:1 ends here
+;; Programming:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Editor Documentation with Contextual Information][Editor Documentation with Contextual Information:1]]
 (use-package helpful)
@@ -1367,6 +1372,69 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (use-package highlight-defined)
 (add-hook 'emacs-lisp-mode-hook 'highlight-defined-mode)
 ;; Highlight Defined Emacs Lisp Symbols:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:1]]
+;; Hunk navigation and commiting.
+(use-package git-gutter+
+  :ensure t
+  ;; Shucks, this is way to slow for large files.
+  ;; :init (global-git-gutter+-mode)
+  :diminish (git-gutter+-mode))
+;; What's changed & who's to blame?:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:2]]
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  "Version control"
+  ;; (extension method description)
+  ("n" git-gutter+-next-hunk "Next hunk")
+  ("p" git-gutter+-previous-hunk "Previous hunk")
+  ("=" git-gutter+-show-hunk "Show hunk diff")
+  ("r" git-gutter+-revert-hunks "Revert hunk\n")
+  ("c" git-gutter+-stage-and-commit "Stage & commit hunk")
+  ("C" git-gutter+-stage-and-commit-whole-buffer "Stage & commit entire buffer")
+  ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer"))
+;; What's changed & who's to blame?:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:3]]
+;; Colour fringe to indicate alterations.
+;; (use-package diff-hl)
+;; (global-diff-hl-mode)
+;; What's changed & who's to blame?:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:4]]
+;; Popup for who's to blame for alterations.
+(use-package git-messenger :demand t)
+;;
+;; Message menu let's us use magit diff to see the commit change.
+(setq git-messenger:use-magit-popup t)
+;;
+;; Always show who authored the commit and when.
+;; (setq git-messenger:show-detail t)
+
+;; View current file in browser on github.
+;; More generic is “browse-at-remote”.
+(use-package github-browse-file)
+
+;; Add these to the version control hydra.
+;;
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  ("b" git-messenger:popup-message "Who's to blame?")
+  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+  ("g" github-browse-file-blame "Show file in browser in github")
+  ("s" magit-status "Git status of current buffer"))
+;; What's changed & who's to blame?:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:5]]
+(use-package git-link)
+
+(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+  ("l" git-link "Git URL for current location"))
+;; What's changed & who's to blame?:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
+(use-package color-identifiers-mode)
+(global-color-identifiers-mode)
+;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1]]
 (use-package origami)
@@ -1435,81 +1503,6 @@ user."
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Restarting Emacs][Restarting Emacs:1]]
-;; Provides only the command “restart-emacs”.
-(use-package restart-emacs
-  :commands restart-emacs)
-;; Restarting Emacs:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:1]]
-;; Hunk navigation and commiting.
-(use-package git-gutter+
-  :ensure t
-  ;; Shucks, this is way to slow for large files.
-  ;; :init (global-git-gutter+-mode)
-  :diminish (git-gutter+-mode))
-;; What's changed & who's to blame?:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:2]]
-(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
-  "Version control"
-  ;; (extension method description)
-  ("n" git-gutter+-next-hunk "Next hunk")
-  ("p" git-gutter+-previous-hunk "Previous hunk")
-  ("=" git-gutter+-show-hunk "Show hunk diff")
-  ("r" git-gutter+-revert-hunks "Revert hunk\n")
-  ("c" git-gutter+-stage-and-commit "Stage & commit hunk")
-  ("C" git-gutter+-stage-and-commit-whole-buffer "Stage & commit entire buffer")
-  ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer"))
-;; What's changed & who's to blame?:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:3]]
-;; Colour fringe to indicate alterations.
-;; (use-package diff-hl)
-;; (global-diff-hl-mode)
-;; What's changed & who's to blame?:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:4]]
-;; Popup for who's to blame for alterations.
-(use-package git-messenger :demand t)
-;;
-;; Message menu let's us use magit diff to see the commit change.
-(setq git-messenger:use-magit-popup t)
-;;
-;; Always show who authored the commit and when.
-;; (setq git-messenger:show-detail t)
-
-;; View current file in browser on github.
-;; More generic is “browse-at-remote”.
-(use-package github-browse-file)
-
-;; Add these to the version control hydra.
-;;
-(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
-  ("b" git-messenger:popup-message "Who's to blame?")
-  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
-  ("g" github-browse-file-blame "Show file in browser in github")
-  ("s" magit-status "Git status of current buffer"))
-;; What's changed & who's to blame?:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:5]]
-(use-package git-link)
-
-(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
-  ("l" git-link "Git URL for current location"))
-;; What's changed & who's to blame?:5 ends here
-
-;; [[file:~/.emacs.d/init.org::*Keep buffers open across sessions][Keep buffers open across sessions:1]]
-;; Keep open files open across sessions.
-(desktop-save-mode 1)
-(setq desktop-restore-eager 10)
-;; Keep buffers open across sessions:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
-(use-package color-identifiers-mode)
-(global-color-identifiers-mode)
-;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Helpful Utilities & Shortcuts][Helpful Utilities & Shortcuts:1]]
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -1559,20 +1552,6 @@ user."
 ;; M-k kills to the left
 (global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
 ;; Kill to start of line:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*~file-as-list~ and ~file-as-string~][~file-as-list~ and ~file-as-string~:1]]
-(defun file-as-list (filename)
-  "Return the contents of FILENAME as a list of lines"
-  (with-temp-buffer
-    (insert-file-contents filename)
-    (split-string (buffer-string))))
-
-(defun file-as-string (filename)
-  "Return the contents of FILENAME as a list of lines"
-  (with-temp-buffer
-    (insert-file-contents filename)
-    (buffer-string)))
-;; ~file-as-list~ and ~file-as-string~:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*~C-x k~ kills current buffer, ~C-u C-x k~ kills all others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others:1]]
 (defun kill-other-buffers ()
@@ -1678,3 +1657,64 @@ user."
 ;; Don't ask for confirmation when opening symlinked files.
 (setq vc-follow-symlinks t)
 ;; Elementary Version Control:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Interpret the Haskell source blocks in a file][Interpret the Haskell source blocks in a file:1]]
+(defvar *current-module* "NoModuleNameSpecified"
+  "The name of the module, file, that source blocks are
+   currently being tangled to.
+
+   This technique is insipired by “Interactive Way to C”;
+   see https://alhassy.github.io/InteractiveWayToC/.
+  ")
+
+(defun current-module ()
+  "Returns the current module under focus."
+  *current-module*)
+
+(defun set-module (name)
+   "Set the name of the module currently under focus.
+
+    Usage: When a module is declared, i.e., a new file has begun,
+    then that source blocks header should be “:tangle (set-module ”name-here”)”.
+    succeeding source blocks now inherit this name and so are tangled
+    to the same module file. How? By placing the following line at the top
+    of your Org file: “‘#+PROPERTY: header-args :tangle (current-module))’.
+
+    This technique structures “Interactive Way to C”.
+   "
+   (setq *current-module* name)
+)
+
+(cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
+  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
+   and load the resulting ‘target’ file into a ghci buffer.
+
+   If no name is provided for the ‘target’ file that is generated from the
+   tangeling process, it is assumed to be the buffer's name with a ‘hs’ extension.
+
+   Note that this only loads the blocks tangled to ‘target’.
+
+   For example, file ‘X.org’ may have haskell blocks that tangle to files
+   ‘X.hs’, ‘Y.hs’ and ‘Z.hs’. If no target name is supplied, we tangle all blocks
+   but only load ‘X.hs’ into the ghci buffer. A helpful technique to load the
+   last, bottom most, defined haskell module, is to have the module declaration's
+   source block be ‘:tangle (setq CODE “Y.hs”)’, for example; then the following
+   code blocks will inherit this location provided our Org file has at the top
+   ‘#+PROPERTY: header-args :tangle (current-module))’.
+   Finally, our ‘compile-command’ suffices to be ‘(my/org-run-haskell CODE)’.
+   ─
+   This technique structures “Interactive Way to C”.
+  "
+   (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
+         (buf (concat "*GHCI* " it)))
+
+     (-let [kill-buffer-query-functions nil] (ignore-errors (kill-buffer buf)))
+     (org-babel-tangle it "haskell")
+     (async-shell-command (concat "ghci " it) buf)
+     (switch-to-buffer-other-window buf)
+     (end-of-buffer)
+   )
+)
+
+;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
+;; Interpret the Haskell source blocks in a file:1 ends here

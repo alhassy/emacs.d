@@ -96,6 +96,7 @@ in ~“this”~ configuration.
   - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
   - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
+  - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
   - [[#automatic-backups][Automatic Backups]]
 - [[#cosmetics][Cosmetics]]
   - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
@@ -127,32 +128,29 @@ in ~“this”~ configuration.
   - [[#delete-selection-mode][Delete Selection Mode]]
   - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
   - [[#taking-a-tour-of-ones-edits][Taking a tour of one's edits]]
-- [[#life-within-org-mode][Life within Org-mode]]
+- [[#org-mode-administrivia][Org-Mode Administrivia]]
   - [[#getting-started][Getting Started]]
-  - [[#high-speed-literate-programming][High Speed Literate Programming]]
   - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
+  - [[#high-speed-literate-programming][High Speed Literate Programming]]
   - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
   - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
-  - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
-  - [[#working-with-citations][Working with Citations]]
-  - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen Heading at the top of the window]]
-  - [[#clocking-work-time][Clocking Work Time]]
-  - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
-  - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
+  - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
   - [[#jumping-without-hassle][Jumping without hassle]]
   - [[#folding-within-a-subtree][Folding within a subtree]]
+  - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
+- [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
+  - [[#working-with-citations][Working with Citations]]
+  - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
-  - [[#interpret-the-haskell-source-blocks-in-a-file][Interpret the Haskell source blocks in a file]]
-- [[#expected-ide-support][Expected IDE Support]]
+  - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+- [[#programming][Programming]]
   - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
   - [[#highlight-defined-emacs-lisp-symbols][Highlight Defined Emacs Lisp Symbols]]
+  - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
+  - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
   - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
   - [[#edit-as-root][Edit as Root]]
   - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
-  - [[#restarting-emacs][Restarting Emacs]]
-  - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
-  - [[#keep-buffers-open-across-sessions][Keep buffers open across sessions]]
-  - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
 - [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
   - [[#documentation-pop-ups][Documentation Pop-Ups]]
   - [[#emacs-keybindings-for-my-browser][Emacs keybindings for my browser]]
@@ -1161,6 +1159,26 @@ Out of the box, zsh comes with
 The defaults have been good enough for me, for now ---as all else is achieved
 via Emacs ;-)
 
+** Restarting Emacs ---Keeping buffers open across sessions?
+:PROPERTIES:
+:CUSTOM_ID: Restarting-Emacs
+:END:
+
+Sometimes I wish to close then reopen Emacs; unsurprisingly someone's
+thought of implementing that.
+#+BEGIN_SRC emacs-lisp
+;; Provides only the command “restart-emacs”.
+(use-package restart-emacs
+  :commands restart-emacs)
+#+END_SRC
+
+The following is disabled. I found it a nuisance to have my files
+open across sessions ---If I'm closing Emacs, it's for a good reason.
+#+begin_example emacs-lisp
+;; Keep open files open across sessions.
+(desktop-save-mode 1)
+(setq desktop-restore-eager 10)
+#+end_example
 ** Automatic Backups
 :PROPERTIES:
 :CUSTOM_ID: Backups
@@ -2485,12 +2503,10 @@ Notice, as a hydra, I can use ~C-c e~ followed by any combination of
 ~,~ and ~.~ to navigate my recent edits /without/ having to supply the prefix
 each time.
 
-* COMMENT Literate Programming with Org-mode
-* Life within Org-mode
+* Org-Mode Administrivia
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
-
 :Updating_FAQ:
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -2506,7 +2522,7 @@ https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-n
 https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-version-using-package-repos-git-clone-in-ubuntu
 :End:
 
-** Getting Started
+** Getting Started                                                  :ignore:
 Let's obtain Org-mode along with the extras that allow us to ignore
 heading names, but still utilise their contents ---e.g., such as a heading
 named ‘preamble’ that contains org-mode setup for a file.
@@ -2559,6 +2575,50 @@ default mode.
 #+BEGIN_SRC emacs-lisp
 (setq initial-major-mode 'org-mode)
 #+END_SRC
+
+** Executing code from ~src~ blocks
+:PROPERTIES:
+:CUSTOM_ID: Executing-code-from-~src~-blocks
+:END:
+
+For example, to execute a shell command in Emacs, write a ~src~ with a shell
+command, then ~C-c c-c~ to see the results.  Emacs will generally query you to
+ensure you're confident about executing the (possibly dangerous) code block;
+let's stop that:
+#+BEGIN_SRC emacs-lisp
+;; Seamless use of babel: No confirmation upon execution.
+;; Downside: Could accidentally evaluate harmful code.
+(setq org-confirm-babel-evaluate nil)
+#+END_SRC
+
+A worked out example can be obtained as follows: ~<g TAB~ then ~C-c C-C~ to make a nice
+simple graph ---the code for this is in the next section.
+
+Some initial languages we want org-babel to support:
+#+BEGIN_SRC emacs-lisp
+ (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (shell      . t)
+     (python     . t)
+     (haskell    . t)
+     (ruby       . t)
+     (ocaml      . t)
+     (C          . t)  ;; Captial “C” gives access to C, C++, D
+     (dot        . t)
+     (latex      . t)
+     (org        . t)
+     (makefile   . t)))
+
+;; Preserve my indentation for source code during export.
+(setq org-src-preserve-indentation t)
+
+;; The export process hangs Emacs, let's avoid this.
+;; MA: For one reason or another, this crashes more than I'd like.
+;; (setq org-export-in-background t)
+#+END_SRC
+
+More languages can be added using ~add-to-list~.
 
 ** High Speed Literate Programming
 :PROPERTIES:
@@ -2678,50 +2738,6 @@ this, then refile instead of copy-pasting.
 (setq org-yank-adjusted-subtrees t)
 #+end_src
 
-** Executing code from ~src~ blocks
-:PROPERTIES:
-:CUSTOM_ID: Executing-code-from-~src~-blocks
-:END:
-
-For example, to execute a shell command in Emacs, write a ~src~ with a shell
-command, then ~C-c c-c~ to see the results.  Emacs will generally query you to
-ensure you're confident about executing the (possibly dangerous) code block;
-let's stop that:
-#+BEGIN_SRC emacs-lisp
-;; Seamless use of babel: No confirmation upon execution.
-;; Downside: Could accidentally evaluate harmful code.
-(setq org-confirm-babel-evaluate nil)
-#+END_SRC
-
-A worked out example can be obtained as follows: ~<g TAB~ then ~C-c C-C~ to make a nice
-simple graph ---the code for this is in the next section.
-
-Some initial languages we want org-babel to support:
-#+BEGIN_SRC emacs-lisp
- (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     (shell      . t)
-     (python     . t)
-     (haskell    . t)
-     (ruby       . t)
-     (ocaml      . t)
-     (C          . t)  ;; Captial “C” gives access to C, C++, D
-     (dot        . t)
-     (latex      . t)
-     (org        . t)
-     (makefile   . t)))
-
-;; Preserve my indentation for source code during export.
-(setq org-src-preserve-indentation t)
-
-;; The export process hangs Emacs, let's avoid this.
-;; MA: For one reason or another, this crashes more than I'd like.
-;; (setq org-export-in-background t)
-#+END_SRC
-
-More languages can be added using ~add-to-list~.
-
 ** Hiding Emphasise Markers & Inlining Images
 :PROPERTIES:
 :CUSTOM_ID: Hiding-Emphasise-Markers-&-Inlining-Images
@@ -2775,7 +2791,60 @@ I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
 
+** Show off-screen heading at the top of the window
+:PROPERTIES:
+:CUSTOM_ID: Show-off-screen-Heading-at-the-top-of-the-window
+:END:
 
+In case we forgot which heading we're under, let's keep
+the current heading stuck at the top of the window.
+#+BEGIN_SRC emacs-lisp
+ (use-package org-sticky-header
+  :hook (org-mode . org-sticky-header-mode)
+  :config
+  (setq-default
+   org-sticky-header-full-path 'full
+   ;; Child and parent headings are seperated by a /.
+   org-sticky-header-outline-path-separator " / "))
+#+END_SRC
+
+** Jumping without hassle
+:PROPERTIES:
+:CUSTOM_ID: Jumping-without-hassle
+:END:
+
+#+BEGIN_SRC emacs-lisp
+(defun my/org-goto-line (line)
+  "Go to the indicated line, unfolding the parent Org header.
+
+   Implementation: Go to the line, then look at the 1st previous
+   org header, now we can unfold it whence we do so, then we go
+   back to the line we want to be at.
+  "
+  (interactive "nEnter line: ")
+  (goto-line line)
+  (org-previous-visible-heading 1)
+  (org-cycle)
+  (goto-line line))
+#+END_SRC
+
+** Folding within a subtree
+:PROPERTIES:
+:CUSTOM_ID: Folding-within-a-subtree
+:END:
+
+#+BEGIN_SRC emacs-lisp
+(defun my/org-fold-current-subtree-anywhere-in-it ()
+  "Hide the current heading, while being anywhere inside it."
+  (interactive)
+  (save-excursion
+    (org-narrow-to-subtree)
+    (org-shifttab)
+    (widen)))
+
+(add-hook 'org-mode-hook '(lambda ()
+  (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
+#+END_SRC
 
 ** Making Block Delimiters Less Intrusive
 :PROPERTIES:
@@ -2952,14 +3021,178 @@ with show/hide with ~C-<tab>~ key.
   (add-hook 'org-mode-hook #'folding-mode))
 #+END_SRC
 
-** COMMENT Using org-mode as a Day Planner
+* Org-Mode ⇒ PDF & HTML
+In this section we consider the Org-mode exporters for PDFs and
+HTMLs. For example, we account for LaTeX citations and reliable HTML
+anchors.
+
+** Working with Citations
+:PROPERTIES:
+:CUSTOM_ID: Working-with-Citations
+:END:
+ [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
+
+ The following entity will display useful data
+ when the mouse hovers over it (•̀ᴗ•́)و If you click on it, then you're
+ in for a lot of super neat stuff, such as searching for the pdf online!
+
+cite:agda_overview
+
+    #+BEGIN_SRC emacs-lisp
+;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
+;; Most useful for non-LaTeX files.
+(setq reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
+(setq bibtex-completion-bibliography (car reftex-default-bibliography))
+
+(use-package org-ref
+  :config (setq org-ref-default-bibliography reftex-default-bibliography))
+
+(use-package helm-bibtex)
+#+END_SRC
+
+  Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter ~agda~ and you will be presented with
+  all the entries in the bib database that mention ‘agda’. Super cool stuff.
+
+  Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][online]] or better yet as an org-file with ~M-x
+  org-ref-help~.
+
+  This is an Org-mode application since the citations have tooltips
+  and export nicely to LaTeX & HTML via the Org-mode exporter.
+
+** Coloured LaTeX using Minted
+:PROPERTIES:
+:CUSTOM_ID: Coloured-LaTeX-using-Minted
+:END:
+Execute the following for bib ref as well as minted Org-mode uses the
+Minted package for source code highlighting in PDF/LaTeX ---which in
+turn requires the pygmentize system tool.
+#+BEGIN_SRC emacs-lisp
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -output-directory %o %f"
+        "biber %b"
+        "pdflatex -shell-escape -output-directory %o %f"
+        "pdflatex -shell-escape -output-directory %o %f"))
+#+END_SRC
+
+For faster pdf generation, possibly with errors, consider invoking:
+#+begin_example emacs-lisp
+(setq org-latex-pdf-process
+      '("pdflatex -interaction nonstopmode -output-directory %o %f"))
+#+end_example
+
+By default, Org exports LaTeX using the ~nonstopmode~ option, which tries
+its best to produce a PDF ---which ignores typesetting errors altogether,
+which is not necessary ideal when using LaTeX.
+
+** Ensuring Useful HTML Anchors
+:PROPERTIES:
+:CUSTOM_ID: Ensuring-Useful-HTML-Anchors
+:END:
+Upon HTML export, each tree heading is assigned an ID to be used for hyperlinks.
+Default IDs are something like ~org1957a9d~, which does not endure the test of time:
+Re-export will produce a different id. Here's a rough snippet to generate
+IDs from headings, by replacing spaces with hyphens, for headings without IDs.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(defun my/ensure-headline-ids (&rest _)
+  "Org trees without a :CUSTOM_ID: property have the property set to be their heading.
+
+All non-alphanumeric characters are cleverly replaced with ‘-’.
+
+If multiple trees end-up with the same id property, issue a
+message and undo any property insertion thus far.
+
+E.g., ↯ We'll go on a ∀∃⇅ adventure
+   ↦  We'll-go-on-a-adventure
+"
+  (interactive)
+  (let ((ids))
+    (org-map-entries
+     (lambda ()
+       (org-with-point-at (point)
+         (let ((id (org-entry-get nil "CUSTOM_ID")))
+           (unless id
+             (thread-last (nth 4 (org-heading-components))
+               (s-replace-regexp "[^[:alnum:]']" "-")
+               (s-replace-regexp "-+" "-")
+               (s-chop-prefix "-")
+               (s-chop-suffix "-")
+               (setq id))
+             (if (not (member id ids))
+                 (push id ids)
+               (message-box "Oh no, a repeated id!\n\n\t%s" id)
+               (undo)
+               (setq quit-flag t))
+             (org-entry-put nil "CUSTOM_ID" id))))))))
+
+;; Whenever html & md export happens, ensure we have headline ids.
+(advice-add 'org-html-export-to-html   :before 'my/ensure-headline-ids)
+(advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
+#+END_SRC
+
+One may then use ~[[#my-custom-id]]~ to link to the entry with ~CUSTOM_ID~
+property ~my-custom-id~.
+
+Interestingly, ~org-set-property~, ~C-c C-x p~, lets us insert a property
+from a selection of available ones, then we'll be prompted for a value
+for it from a list of values you've used elsewhere. This is useful for
+remaining consistent for when trees share similar properties.
+
+** [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework
+:PROPERTIES:
+:CUSTOM_ID: [[https://revealjs.com/?transition=zoom#/][Reveal.JS]]----The-HTML-Presentation-Framework
+:END:
+
+Org-mode documents can be transformed into beautiful slide decks
+with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] with the following two simple lines.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-reveal
+  :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
+#+END_SRC
+
+For example, execute, ~C-x C-e~ after the closing parenthesis of, the
+following block to see an example slide-deck (─‿‿─)
+#+BEGIN_SRC emacs-lisp :tangle no
+(progn (shell-command "curl https://raw.githubusercontent.com/yjwen/org-reveal/696613edef0fe17a9c53146f79933fe7c4101100/Readme.org >> Trying_out_reveal.org")
+       (switch-to-buffer (find-file "Trying_out_reveal.org"))
+       (org-reveal-export-to-html-and-browse))
+#+END_SRC
+
+Org-mode exporting, ~C-c C-e~, now includes an option ~R~ for such reveal slide decks.
+
+:Hide:
+[[https://alhassy.github.io/next-700-module-systems/proposal/defence-slides.html#/sec-title-slide][Here]] ([[https://raw.githubusercontent.com/alhassy/next-700-module-systems/master/proposal/defence-slides.org][source]]) is an example of org-reveal slides where I add a number to each page,
+use multiple columns, and extend the margins perhaps a bit too much.
+:End:
+
+Two dimensional slides may be a bit new to some people, so I like to
+give viewers an option, in tiny font, to view the slide-deck
+continuously and remind them that ~?~ provides useful shortcuts.
+#+BEGIN_SRC emacs-lisp
+(setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
+<font size=\"1\">
+<a href=\"?print-pdf&showNotes=true\">
+⟪ Flattened View ; Press <code>?</code> for Help ⟫
+</a>
+</font>")
+#+END_SRC
+One should remove the ~&showNotes=true~ if they do not want to include
+speaker notes in the flattened view.
+
+Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
+resulting PDF locally.
+
+* COMMENT Life within Org-mode
+** Using org-mode as a Day Planner
 :PROPERTIES:
 :CUSTOM_ID: Using-org-mode-as-a-Day-Planner
 :END:
 
-- Rescheduled from "[2011-07-24 Sun]" on [2019-09-20 Fri 15:09]
-⟪ This section is based on a dated, yet delightful, tutorial
-  of the same title by [[http://newartisans.com/2007/08/using-org-mode-as-a-day-planner/][John Wiegley]]. ⟫
+     ⟪ This section is based on a dated, yet delightful, tutorial
+                 of the same title by [[http://newartisans.com/2007/08/using-org-mode-as-a-day-planner/][John Wiegley]]. ⟫
 
 We want a day-planner with the following use:
 0. “Mindlessly” & rapidly create new tasks.
@@ -3546,57 +3779,7 @@ This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Be
 --while quickly searching through the PlantUML [[http://plantuml.com/guide][manual]]:
 The above is known as an “activity diagram” and it's covered in §4.
 
-** Working with Citations
-:PROPERTIES:
-:CUSTOM_ID: Working-with-Citations
-:END:
- [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
-
- The following entity will display useful data
- when the mouse hovers over it (•̀ᴗ•́)و If you click on it, then you're
- in for a lot of super neat stuff, such as searching for the pdf online!
-
-cite:agda_overview
-
-    #+BEGIN_SRC emacs-lisp
-
-;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
-;; Most useful for non-LaTeX files.
-(setq reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
-(setq bibtex-completion-bibliography (car reftex-default-bibliography))
-
-(use-package org-ref
-  :demand t
-  :config (setq org-ref-default-bibliography reftex-default-bibliography))
-
-(use-package helm-bibtex :demand t)
-#+END_SRC
-#
-#  \bibliography{~/thesis-proposal/References.bib}
-
-  Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter ~agda~ and you will be presented with
-  all the entries in the bib database that mention ‘agda’. Super cool stuff.
-
-  Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][online]] or better yet as an org-file with ~M-x org-ref-help~.
-
-** Show off-screen Heading at the top of the window
-:PROPERTIES:
-:CUSTOM_ID: Show-off-screen-Heading-at-the-top-of-the-window
-:END:
-
-In case we forgot which heading we're under, let's keep
-the current heading stuck at the top of the window.
-#+BEGIN_SRC emacs-lisp
- (use-package org-sticky-header
-  :hook (org-mode . org-sticky-header-mode)
-  :config
-  (setq-default
-   org-sticky-header-full-path 'full
-   ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " / "))
-#+END_SRC
-
-** Clocking Work Time
+** COMMENT Clocking Work Time
 :PROPERTIES:
 :CUSTOM_ID: Clocking-Work-Time
 :END:
@@ -3794,372 +3977,7 @@ Here's another example graph,
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
 
-** [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework
-:PROPERTIES:
-:CUSTOM_ID: [[https://revealjs.com/?transition=zoom#/][Reveal.JS]]----The-HTML-Presentation-Framework
-:END:
-
-Org-mode documents can be transformed into beautiful slide decks
-with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] with the following two simple lines.
-
-#+BEGIN_SRC emacs-lisp
-(use-package ox-reveal
-  :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
-#+END_SRC
-
-For example, execute, ~C-x C-e~ after the closing parenthesis of, the following block to see an example slide-deck (─‿‿─)
-#+BEGIN_SRC emacs-lisp :tangle no
-(progn (shell-command "curl https://raw.githubusercontent.com/yjwen/org-reveal/696613edef0fe17a9c53146f79933fe7c4101100/Readme.org >> Trying_out_reveal.org")
-       (switch-to-buffer (find-file "Trying_out_reveal.org"))
-       (org-reveal-export-to-html-and-browse))
-#+END_SRC
-
-Org-mode exporting, ~C-c C-e~, now includes an option ~R~ for such reveal slide decks.
-
-:Hide:
-[[https://alhassy.github.io/next-700-module-systems/proposal/defence-slides.html#/sec-title-slide][Here]] ([[https://raw.githubusercontent.com/alhassy/next-700-module-systems/master/proposal/defence-slides.org][source]]) is an example of org-reveal slides where I add a number to each page,
-use multiple columns, and extend the margins perhaps a bit too much.
-:End:
-
-Two dimensional slides may be a bit new to some people, so I like to give viewers
-an option, in tiny font, to view the slide-deck continuously and remind them that ~?~ provides useful shortcuts.
-#+BEGIN_SRC emacs-lisp
-(setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
-<font size=\"1\">
-<a href=\"?print-pdf&showNotes=true\">
-⟪ Flattened View ; Press <code>?</code> for Help ⟫
-</a>
-</font>")
-#+END_SRC
-One should remove the ~&showNotes=true~ if they do not want to include speaker notes in the flattened view.
-
-Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the resulting PDF locally.
-
-** Coloured LaTeX using Minted
-:PROPERTIES:
-:CUSTOM_ID: Coloured-LaTeX-using-Minted
-:END:
-Execute the following for bib ref as well as minted
-Org-mode uses the Minted package for source code highlighting in PDF/LaTeX
---which in turn requires the pygmentize system tool.
-#+BEGIN_SRC emacs-lisp
-(setq org-latex-listings 'minted
-      org-latex-packages-alist '(("" "minted"))
-      org-latex-pdf-process
-      '("pdflatex -shell-escape -output-directory %o %f"
-        "biber %b"
-        "pdflatex -shell-escape -output-directory %o %f"
-        "pdflatex -shell-escape -output-directory %o %f")
-)
-#+END_SRC
-
-For faster pdf generation, possibly with errors, consider invoking:
-#+begin_example emacs-lisp
-(setq org-latex-pdf-process
-      '("pdflatex -interaction nonstopmode -output-directory %o %f"))
-#+end_example
-
-By default, Org exports LaTeX using the ~nonstopmode~ option, which tries
-its best to produce a PDF ---which ignores typesetting errors altogether,
-which is not necessary ideal when using LaTeX.
-
-** COMMENT NO: org-mode header generation
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-org-mode-header-generation
-:END:
-Generate an untitled org-mode skeleton file ~C-x t~ --similar to ~C-x C-f~ for finding files.
-
-First the template,
-# For some reason if I use "org" as source language my variable "thedate"
-# is not utilised, hence I'm using emacs-lisp as language.
-#
-#+NAME: org template
-#+BEGIN_SRC latex :var thedate=(format-time-string "%a %Y-%m-%d") :tangle template.org :exports code
-,#+TITLE: ???
-,#+DATE: thedate
-,#+DESCRIPTION: A new radical entry of things I'm learning!
-,#+AUTHOR: Musa Al-hassy
-,#+EMAIL: alhassy@gmail.com
-,#+IMAGE: ../assets/img/rwh-200.jpg
-,#+CATEGORIES: ExampleTags Elisp Haskell Frama-C Specfications Krakatoa
-,#+OPTIONS: toc:nil html-postamble:nil
-,# Other possible are num:nil todo:nil pri:nil tags:nil ^:nil
-,#+STARTUP: indent
-
-,* Abstract       :ignore:
-,#+BEGIN_CENTER
-*Abstract*
-
-This article serves to accomplish *???*.
-Write your goal then attempt to realise it, otherwise there's no explicit direction!
-
-,#+END_CENTER
-
-,* Introduction
-
-Let's recall concepts ~X~ needed to discuss notions $Y$.
-
-,* Middle
-
-We're learnin'!
-
-,* Conclusion
-
-Yeah! That was some fun stuff!
-
-,* COMMENT footer
-
-# Local Variables:
-# eval: (setq NAME (file-name-sans-extension (buffer-name)))
-# eval: (load-file "AlBasmala.el")
-# End:
-#+END_SRC
-
-Then the functionality,
-#+BEGIN_SRC emacs-lisp
-(defun new-untitled-org-template ()
-  "Produce an org-mode file template."
-  (interactive)
-  (switch-to-buffer (generate-new-buffer "*Untitled*"))
-  (insert (file-as-string "~/.emacs.d/template.org"))
-  (org-mode)
-)
-
-(global-set-key (kbd "C-x t") 'new-untitled-org-template)
-#+END_SRC
-
-** Jumping without hassle
-:PROPERTIES:
-:CUSTOM_ID: Jumping-without-hassle
-:END:
-
-#+BEGIN_SRC emacs-lisp
-(defun my/org-goto-line (line)
-  "Go to the indicated line, unfolding the parent Org header.
-
-   Implementation: Go to the line, then look at the 1st previous
-   org header, now we can unfold it whence we do so, then we go
-   back to the line we want to be at.
-  "
-  (interactive "nEnter line: ")
-  (goto-line line)
-  (org-previous-visible-heading 1)
-  (org-cycle)
-  (goto-line line)
-)
-#+END_SRC
-
-** Folding within a subtree
-:PROPERTIES:
-:CUSTOM_ID: Folding-within-a-subtree
-:END:
-
-#+BEGIN_SRC emacs-lisp
-(defun my/org-fold-current-subtree-anywhere-in-it ()
-  "Hide the current heading, while being anywhere inside it."
-  (interactive)
-  (save-excursion
-    (org-narrow-to-subtree)
-    (org-shifttab)
-    (widen)))
-
-(add-hook 'org-mode-hook '(lambda ()
-  (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
-#+END_SRC
-
-** Ensuring Useful HTML Anchors
-:PROPERTIES:
-:CUSTOM_ID: Ensuring-Useful-HTML-Anchors
-:END:
-Upon HTML export, each tree heading is assigned an ID to be used for hyperlinks.
-Default IDs are something like ~org1957a9d~, which does not endure the test of time:
-Re-export will produce a different id. Here's a rough snippet to generate
-IDs from headings, by replacing spaces with hyphens, for headings without IDs.
-
-#+BEGIN_SRC emacs-lisp :tangle yes
-(defun my/ensure-headline-ids (&rest _)
-  "Org trees without a :CUSTOM_ID: property have the property set to be their heading. All non-alphanumeric characters are replaced with ‘-’.
-
-   If multiple trees end-up with the same id property, issue a message and undo
-   any property insertion thus far.
-  "
-  (interactive)
-  (let ((ids))
-    (org-map-entries
-     (lambda ()
-       (org-with-point-at (point)
-         (let ((id (org-entry-get nil "CUSTOM_ID")))
-           (unless id
-             (setq id (s-replace-regexp "[^[:alnum:]]" "-" (nth 4 (org-heading-components))))
-             (if (not (member id ids))
-                 (push id ids)
-               (message-box "Oh no, a repeated id!\n\n\t%s" id)
-               (undo)
-               (setq quit-flag t))
-             (org-entry-put nil "CUSTOM_ID" id))))))))
-
-;; Whenever html & md export happens, ensure we have headline ids.
-(advice-add 'org-html-export-to-html :before 'my/ensure-headline-ids)
-(advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
-#+END_SRC
-
-One may then use ~[[#my-custom-id]]~ to link to the entry with ~CUSTOM_ID~ property
-~my-custom-id~.
-
-Interestingly, ~org-set-property~, ~C-c C-x p~, lets us insert a property from
-a selection of available ones, then we'll be prompted for a value for it
-from a list of values you've used elsewhere. This is useful for remaining
-consistent for when trees share similar properties.
-
-** Interpret the Haskell source blocks in a file
-:PROPERTIES:
-:CUSTOM_ID: Interpret-the-Haskell-source-blocks-in-a-file
-:END:
-#+BEGIN_SRC emacs-lisp
-(defvar *current-module* "NoModuleNameSpecified"
-  "The name of the module, file, that source blocks are
-   currently being tangled to.
-
-   This technique is insipired by “Interactive Way to C”;
-   see https://alhassy.github.io/InteractiveWayToC/.
-  ")
-
-(defun current-module ()
-  "Returns the current module under focus."
-  *current-module*)
-
-(defun set-module (name)
-   "Set the name of the module currently under focus.
-
-    Usage: When a module is declared, i.e., a new file has begun,
-    then that source blocks header should be “:tangle (set-module ”name-here”)”.
-    succeeding source blocks now inherit this name and so are tangled
-    to the same module file. How? By placing the following line at the top
-    of your Org file: “‘#+PROPERTY: header-args :tangle (current-module))’.
-
-    This technique structures “Interactive Way to C”.
-   "
-   (setq *current-module* name)
-)
-
-(cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
-  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
-   and load the resulting ‘target’ file into a ghci buffer.
-
-   If no name is provided for the ‘target’ file that is generated from the
-   tangeling process, it is assumed to be the buffer's name with a ‘hs’ extension.
-
-   Note that this only loads the blocks tangled to ‘target’.
-
-   For example, file ‘X.org’ may have haskell blocks that tangle to files
-   ‘X.hs’, ‘Y.hs’ and ‘Z.hs’. If no target name is supplied, we tangle all blocks
-   but only load ‘X.hs’ into the ghci buffer. A helpful technique to load the
-   last, bottom most, defined haskell module, is to have the module declaration's
-   source block be ‘:tangle (setq CODE “Y.hs”)’, for example; then the following
-   code blocks will inherit this location provided our Org file has at the top
-   ‘#+PROPERTY: header-args :tangle (current-module))’.
-   Finally, our ‘compile-command’ suffices to be ‘(my/org-run-haskell CODE)’.
-   ─
-   This technique structures “Interactive Way to C”.
-  "
-   (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
-         (buf (concat "*GHCI* " it)))
-
-     (-let [kill-buffer-query-functions nil] (ignore-errors (kill-buffer buf)))
-     (org-babel-tangle it "haskell")
-     (async-shell-command (concat "ghci " it) buf)
-     (switch-to-buffer-other-window buf)
-     (end-of-buffer)
-   )
-)
-
-;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
-#+END_SRC
-
-** COMMENT NO: Exporting Tables to CSV
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Exporting-Tables-to-CSV
-:END:
-
-Org-mode can export tables as TAB or comma delimited formats. I set the default format to CSV with:
-
-(setq org-table-export-default-format "orgtbl-to-csv")
-Exporting to CSV format is the only one I use and this provides the default so I can just hit RETURN when prompted for the format.
-
-To export the following table I put the cursor inside the table and hit M-x org-table-export which prompts for a filename and the format which defaults to orgtbl-to-csv from the setting above.
-** COMMENT NO: tangeling to multiple files, org-mode
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-tangeling-to-multiple-files,-org-mode
-:END:
-From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
-
-#+begin_src emacs-lisp :tangle no
-(defun org-babel-tangle-collect-blocks-handle-tangle-list (&optional language tangle-file)
-  "Can be used as :override advice for `org-babel-tangle-collect-blocks'.
-Handles lists of :tangle files."
-  (let ((counter 0) last-heading-pos blocks)
-    (org-babel-map-src-blocks (buffer-file-name)
-      (let ((current-heading-pos
-         (org-with-wide-buffer
-          (org-with-limited-levels (outline-previous-heading)))))
-    (if (eq last-heading-pos current-heading-pos) (cl-incf counter)
-      (setq counter 1)
-      (setq last-heading-pos current-heading-pos)))
-      (unless (org-in-commented-heading-p)
-    (let* ((info (org-babel-get-src-block-info)) ;; MA: not “light”!
-                                          ;; (describe-symbol 'org-babel-get-src-block-info)
-           (src-lang (nth 0 info))
-           (src-tfiles (cdr (assq :tangle (nth 2 info))))) ; Tobias: accept list for :tangle
-      (unless (consp src-tfiles) ; Tobias: unify handling of strings and lists for :tangle
-        (setq src-tfiles (list src-tfiles))) ; Tobias: unify handling
-      (dolist (src-tfile src-tfiles) ; Tobias: iterate over list
-        (unless (or (string= src-tfile "no")
-            (and tangle-file (not (equal tangle-file src-tfile)))
-            (and language (not (string= language src-lang))))
-          ;; Add the spec for this block to blocks under its
-          ;; language.
-          (let ((by-lang (assoc src-lang blocks))
-            (block (org-babel-tangle-single-block counter)))
-        (setcdr (assoc :tangle (nth 4 block)) src-tfile) ; Tobias:
-        (if by-lang (setcdr by-lang (cons block (cdr by-lang)))
-          (push (cons src-lang (list block)) blocks)))))))) ; Tobias: just ()
-    ;; Ensure blocks are in the correct order.
-    (mapcar (lambda (b) (cons (car b) (nreverse (cdr b)))) blocks)))
-
-(defun org-babel-tangle-single-block-handle-tangle-list (oldfun block-counter &optional only-this-block)
-  "Can be used as :around advice for `org-babel-tangle-single-block'.
-If the :tangle header arg is a list of files. Handle all files"
-  (let* ((info (org-babel-get-src-block-info))
-     (params (nth 2 info))
-     (tfiles (cdr (assoc :tangle params))))
-    (if (null (and only-this-block (consp tfiles)))
-    (funcall oldfun block-counter only-this-block)
-      (cl-assert (listp tfiles) nil
-         ":tangle only allows a tangle file name or a list of tangle file names")
-      (let ((ret (mapcar
-          (lambda (tfile)
-            (let (old-get-info)
-              (cl-letf* (((symbol-function 'old-get-info) (symbol-function 'org-babel-get-src-block-info))
-                 ((symbol-function 'org-babel-get-src-block-info)
-                  `(lambda (&rest get-info-args)
-                     (let* ((info (apply 'old-get-info get-info-args))
-                        (params (nth 2 info))
-                        (tfile-cons (assoc :tangle params)))
-                       (setcdr tfile-cons ,tfile)
-                       info))))
-            (funcall oldfun block-counter only-this-block))))
-          tfiles)))
-    (if only-this-block
-        (list (cons (cl-caaar ret) (mapcar #'cadar ret)))
-      ret)))))
-
-(advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
-(advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
-#+end_src
-* Expected IDE Support
-:PROPERTIES:
-:CUSTOM_ID: Expected-IDE-Support
-:END:
+* Programming
 
 #+BEGIN_SRC emacs-lisp
 ;; Use 4 spaces in places of tabs when indenting.
@@ -4225,7 +4043,6 @@ I like [[https://github.com/Wilfred/helpful][helpful]] and wanted it to have the
 in that if the cursor is on a symbol, then it is offered to the user as a
 default search item for help, otherwise a plain search box for help
 appears. Using a universal argument lets us drop to the built-in help command.
-
 ** Highlight Defined Emacs Lisp Symbols
 :PROPERTIES:
 :CUSTOM_ID: Highlight-Defined-Emacs-Lisp-Symbols
@@ -4241,155 +4058,6 @@ org-src blocks we use ~C-c '~.
 
 Super helpful to avoid accidentally misspelling a word :smile:
 
-** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
-:PROPERTIES:
-:CUSTOM_ID: Text-Folding-with---https---github-com-gregsexton-origami-el--Origami-mode--
-:END:
-
-Let's use a feature-full folding mode.
-#+BEGIN_SRC emacs-lisp
-(use-package origami)
-#+END_SRC
-
-With basic support for one of my languages.
-#+BEGIN_SRC emacs-lisp
-(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
-      origami-parser-alist)
-#+END_SRC
-
-With expected support for searching.
-#+BEGIN_SRC emacs-lisp
-(defun my/search-hook-function ()
-  (when origami-mode (origami-toggle-node (current-buffer) (point))))
-
-;; Open folded nodes if a search stops there.
-(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-;;
-;; Likewise for incremental search, isearch, users.
-;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
-#+END_SRC
-
-Along with a hydra for super quick navigation and easily folding, unfolding blocks! Love this one ^_^
-#+BEGIN_SRC emacs-lisp
-(defhydra folding-with-origami-mode (global-map "C-c f")
-  ("h" origami-close-node-recursively "Hide")
-  ("o" origami-open-node-recursively  "Open")
-  ("t" origami-toggle-all-nodes  "Toggle buffer")
-  ("n" origami-next-fold "Next")
-  ("p" origami-previous-fold "Previous"))
-#+END_SRC
-
-
-** Edit as Root
-:PROPERTIES:
-:CUSTOM_ID: Edit-as-Root
-:END:
-From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]]:
-
-#+BEGIN_SRC emacs-lisp
-(defun find-file-as-root ()
-  "Like `ido-find-file, but automatically edit the file with
-root-privileges (using tramp/sudo), if the file is not writable by
-user."
-  (interactive)
-  (let ((file (ido-read-file-name "Edit as root: ")))
-    (unless (file-writable-p file)
-      (setq file (concat "/sudo:root@localhost:" file)))
-    (find-file file)))
-
-(bind-key "C-x F" 'find-file-as-root)
-#+END_SRC
-
-** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
-:PROPERTIES:
-:CUSTOM_ID: Jump-between-windows-using-Cmd+Arrow-&-between-recent-buffers-with-Meta-Tab
-:END:
-#+BEGIN_SRC emacs-lisp
-(use-package windmove
-  :config
-  ;; use command key on Mac
-  (windmove-default-keybindings 'super)
-  ;; wrap around at edges
-  (setq windmove-wrap-around t))
-  #+END_SRC
-
-The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have usage examples.
-#+BEGIN_SRC emacs-lisp
-(use-package buffer-flip
-  :bind
-   (:map buffer-flip-map
-    ("M-<tab>" . buffer-flip-forward)
-    ("M-S-<tab>" . buffer-flip-backward)
-    ("C-g" . buffer-flip-abort))
-  :config
-    (setq buffer-flip-skip-patterns
-        '("^\\*helm\\b"))
-)
-;; key to begin cycling buffers.
-(global-set-key (kbd "M-<tab>") 'buffer-flip)
-#+END_SRC
-
-** Restarting Emacs
-:PROPERTIES:
-:CUSTOM_ID: Restarting-Emacs
-:END:
-
-Sometimes I wish to close then reopen Emacs; unsurprisingly someone's thought of
-implementing that.
-#+BEGIN_SRC emacs-lisp
-;; Provides only the command “restart-emacs”.
-(use-package restart-emacs
-  :commands restart-emacs)
-#+END_SRC
-
-
-
-** COMMENT Highlighting TODO-s & Showing them in Magit
-:PROPERTIES:
-:CUSTOM_ID: Highlighting-TODO-s-&-Showing-them-in-Magit
-:END:
-Basic support todos. By default these include:
-TODO NEXT THEM PROG OKAY DONT FAIL DONE NOTE KLUDGE HACK TEMP FIXME
-and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
-#+BEGIN_SRC emacs-lisp
-;; NOTE that the highlighting works even in comments.
-(use-package hl-todo
-  ;; Enable it for text-like locations
-  :hook ((text-mode org-mode prog-mode) . hl-todo-mode)
-  :init
-  ;; Adding new keywords
-  (loop for kw in '("TEST" "MA" "WK" "JC")
-        do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
-
-;; Error (use-package): hl-todo/:init: Symbol’s value as variable is void: hl-todo-keyword-faces
-
-#+END_SRC
-
-Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
-mentioned]] in a magit status buffer ---which uses the keywords from ~hl-todo~.
-#+BEGIN_SRC emacs-lisp
-;; MA: The todo keywords work in code too!
-(use-package magit-todos
-  :after magit
-  :after hl-todo
-  :config
-  ;; For some reason cannot use :custom with this package.
-  (custom-set-variables
-    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
-  (magit-todos-mode))
-#+END_SRC
-
-Note that such TODO keywords are not propagated from sections that are
-COMMENT-ed out in org-mode.
-
-Open a Magit status buffer, or run ~magit-todos-list~ to show a dedicated to-do
-list buffer. You can then peek at items with space, or jump to them with enter.
-
-Seeing the TODO list with each commit is an incentive to actually tackle the
-items there (•̀ᴗ•́)و
-
-+ Inline todo keywords are pickedup if they have a colon after them; e.g.,
-  TODO: Example.
 
 ** What's changed & who's to blame?
 :PROPERTIES:
@@ -4475,6 +4143,52 @@ points to the version of the file being visited.
 
 Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
 
+** COMMENT Highlighting TODO-s & Showing them in Magit
+:PROPERTIES:
+:CUSTOM_ID: Highlighting-TODO-s-&-Showing-them-in-Magit
+:END:
+Basic support todos. By default these include:
+TODO NEXT THEM PROG OKAY DONT FAIL DONE NOTE KLUDGE HACK TEMP FIXME
+and any sequence of X's or ?'s of length at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
+#+BEGIN_SRC emacs-lisp
+;; NOTE that the highlighting works even in comments.
+(use-package hl-todo
+  ;; Enable it for text-like locations
+  :hook ((text-mode org-mode prog-mode) . hl-todo-mode)
+  :init
+  ;; Adding new keywords
+  (loop for kw in '("TEST" "MA" "WK" "JC")
+        do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
+
+;; Error (use-package): hl-todo/:init: Symbol’s value as variable is void: hl-todo-keyword-faces
+
+#+END_SRC
+
+Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
+mentioned]] in a magit status buffer ---which uses the keywords from ~hl-todo~.
+#+BEGIN_SRC emacs-lisp
+;; MA: The todo keywords work in code too!
+(use-package magit-todos
+  :after magit
+  :after hl-todo
+  :config
+  ;; For some reason cannot use :custom with this package.
+  (custom-set-variables
+    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+  (magit-todos-mode))
+#+END_SRC
+
+Note that such TODO keywords are not propagated from sections that are
+COMMENT-ed out in org-mode.
+
+Open a Magit status buffer, or run ~magit-todos-list~ to show a dedicated to-do
+list buffer. You can then peek at items with space, or jump to them with enter.
+
+Seeing the TODO list with each commit is an incentive to actually tackle the
+items there (•̀ᴗ•́)و
+
++ Inline todo keywords are pickedup if they have a colon after them; e.g.,
+  TODO: Example.
 
 ** COMMENT FIXME Default Compilation Commands
 :PROPERTIES:
@@ -4521,53 +4235,43 @@ Let's remove repeated matter.
 ;; Also a helpful quick f-key.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
-** Keep buffers open across sessions                         :Disabled:
 
+** COMMENT NO: On the fly syntax checking
 :PROPERTIES:
-:CUSTOM_ID: Keep-buffers-open-across-sessions
+:CUSTOM_ID: COMMENT-On-the-fly-syntax-checking
 :END:
-#+begin_src emacs-lisp :tangle yes
-;; Keep open files open across sessions.
-(desktop-save-mode 1)
-(setq desktop-restore-eager 10)
+#+begin_src emacs-lisp
+(use-package flycheck
+  :diminish
+  :defer 2
+  :init (global-flycheck-mode)
+  :custom
+  (flycheck-display-errors-delay .3))
 #+end_src
 
-Not desirable since for when I want to make alterations to my Emacs system and don't
-want files to remain open. Time will tell.
+:Ignore:
+https://emacs.stackexchange.com/questions/7844/org-mode-have-flycheck-resolve-relative-config-while-editing-code-blocks
+#+begin_src emacs-lisp :tangle no
+(defadvice org-edit-src-code (around set-buffer-file-name activate compile)
+  (let ((file-name (buffer-file-name)))
+    ad-do-it
+    (setq buffer-file-name file-name)))
+#+end_src
 
-** COMMENT Having a workspace manager in Emacs
-:PROPERTIES:
-:CUSTOM_ID: Having-a-workspace-manager-in-Emacs
-:END:
+In an org-src block, we press ~C-c '~ to get into the language's
+mode where flycheck will provide many warnings.
+#+begin_src haskell :tangle no
+module Main where
 
-I've loved using XMonad as a window tiling manager.
-I've enjoyed the ability to segregate my tasks
-according to what ‘project’ I'm working on;
-such as research, marking, Emacs play, etc.
-With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
+main :: IO ()
+main = putStrLn $ "nice" ++ f 0
 
-That is, I can have a million buffers, but only those
-that belong to a workspace will be visible when I'm switching between buffers, for example.
+f :: Int -> String
+f x = x -- show x
+-- type error
+#+end_src
 
-#+BEGIN_SRC emacs-lisp
-(use-package perspective)
-
-;; Activate it.
-(persp-mode)
-
-;; In the modeline, tell me which workspace I'm in.
-(persp-turn-on-modestring)
-#+END_SRC
-
-All commands are prefixed by ~C-x x~; main commands:
-+ ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext one, or go to ‘p’revious one.
-+ ~c~ :: Query a perspective to kill.
-+ ~r~ :: Rename a perspective.
-+ ~A~ :: Add buffer to current perspective & remove it from all others.
-
-As always, since we've installed ~which-key~, it suffices to press
-~C-x x~ then look at the resulting menu 😃
-
+:End:
 ** Coding with a Fruit Salad: Semantic Highlighting
 :PROPERTIES:
 :CUSTOM_ID: Coding-with-a-Fruit-Salad--Semantic-Highlighting
@@ -4617,6 +4321,128 @@ line (#64) in the source file, changing the ~5~ to a smaller number.
 #+BEGIN_SRC emacs-lisp :tangle no
 (run-with-idle-timer 5 t 'color-identifiers:refresh)))
 #+END_SRC
+
+
+** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
+:PROPERTIES:
+:CUSTOM_ID: Text-Folding-with---https---github-com-gregsexton-origami-el--Origami-mode--
+:END:
+
+Let's use a feature-full folding mode.
+#+BEGIN_SRC emacs-lisp
+(use-package origami)
+#+END_SRC
+
+With basic support for one of my languages.
+#+BEGIN_SRC emacs-lisp
+(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
+      origami-parser-alist)
+#+END_SRC
+
+With expected support for searching.
+#+BEGIN_SRC emacs-lisp
+(defun my/search-hook-function ()
+  (when origami-mode (origami-toggle-node (current-buffer) (point))))
+
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+;;
+;; Likewise for incremental search, isearch, users.
+;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
+#+END_SRC
+
+Along with a hydra for super quick navigation and easily folding, unfolding blocks! Love this one ^_^
+#+BEGIN_SRC emacs-lisp
+(defhydra folding-with-origami-mode (global-map "C-c f")
+  ("h" origami-close-node-recursively "Hide")
+  ("o" origami-open-node-recursively  "Open")
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("n" origami-next-fold "Next")
+  ("p" origami-previous-fold "Previous"))
+#+END_SRC
+
+** Edit as Root
+:PROPERTIES:
+:CUSTOM_ID: Edit-as-Root
+:END:
+From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]]:
+
+#+BEGIN_SRC emacs-lisp
+(defun find-file-as-root ()
+  "Like `ido-find-file, but automatically edit the file with
+root-privileges (using tramp/sudo), if the file is not writable by
+user."
+  (interactive)
+  (let ((file (ido-read-file-name "Edit as root: ")))
+    (unless (file-writable-p file)
+      (setq file (concat "/sudo:root@localhost:" file)))
+    (find-file file)))
+
+(bind-key "C-x F" 'find-file-as-root)
+#+END_SRC
+
+** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
+:PROPERTIES:
+:CUSTOM_ID: Jump-between-windows-using-Cmd+Arrow-&-between-recent-buffers-with-Meta-Tab
+:END:
+#+BEGIN_SRC emacs-lisp
+(use-package windmove
+  :config
+  ;; use command key on Mac
+  (windmove-default-keybindings 'super)
+  ;; wrap around at edges
+  (setq windmove-wrap-around t))
+  #+END_SRC
+
+The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have usage examples.
+#+BEGIN_SRC emacs-lisp
+(use-package buffer-flip
+  :bind
+   (:map buffer-flip-map
+    ("M-<tab>" . buffer-flip-forward)
+    ("M-S-<tab>" . buffer-flip-backward)
+    ("C-g" . buffer-flip-abort))
+  :config
+    (setq buffer-flip-skip-patterns
+        '("^\\*helm\\b"))
+)
+;; key to begin cycling buffers.
+(global-set-key (kbd "M-<tab>") 'buffer-flip)
+#+END_SRC
+
+
+** COMMENT Having a workspace manager in Emacs
+:PROPERTIES:
+:CUSTOM_ID: Having-a-workspace-manager-in-Emacs
+:END:
+
+I've loved using XMonad as a window tiling manager.
+I've enjoyed the ability to segregate my tasks
+according to what ‘project’ I'm working on;
+such as research, marking, Emacs play, etc.
+With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
+
+That is, I can have a million buffers, but only those
+that belong to a workspace will be visible when I'm switching between buffers, for example.
+
+#+BEGIN_SRC emacs-lisp
+(use-package perspective)
+
+;; Activate it.
+(persp-mode)
+
+;; In the modeline, tell me which workspace I'm in.
+(persp-turn-on-modestring)
+#+END_SRC
+
+All commands are prefixed by ~C-x x~; main commands:
++ ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext one, or go to ‘p’revious one.
++ ~c~ :: Query a perspective to kill.
++ ~r~ :: Rename a perspective.
++ ~A~ :: Add buffer to current perspective & remove it from all others.
+
+As always, since we've installed ~which-key~, it suffices to press
+~C-x x~ then look at the resulting menu 😃
 
 ** TODO COMMENT Snippets -- Template Expansion
 :PROPERTIES:
@@ -4996,42 +4822,6 @@ After our yankpad templates are generated, we need to load it.
 ;; After init hook; see above near use-package install.
 (yankpad-reload)
 #+END_SRC
-** COMMENT NO: On the fly syntax checking
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-On-the-fly-syntax-checking
-:END:
-#+begin_src emacs-lisp
-(use-package flycheck
-  :diminish
-  :defer 2
-  :init (global-flycheck-mode)
-  :custom
-  (flycheck-display-errors-delay .3))
-#+end_src
-
-:Ignore:
-https://emacs.stackexchange.com/questions/7844/org-mode-have-flycheck-resolve-relative-config-while-editing-code-blocks
-#+begin_src emacs-lisp :tangle no
-(defadvice org-edit-src-code (around set-buffer-file-name activate compile)
-  (let ((file-name (buffer-file-name)))
-    ad-do-it
-    (setq buffer-file-name file-name)))
-#+end_src
-
-In an org-src block, we press ~C-c '~ to get into the language's
-mode where flycheck will provide many warnings.
-#+begin_src haskell :tangle no
-module Main where
-
-main :: IO ()
-main = putStrLn $ "nice" ++ f 0
-
-f :: Int -> String
-f x = x -- show x
--- type error
-#+end_src
-
-:End:
 * Helpful Utilities & Shortcuts
 :PROPERTIES:
 :CUSTOM_ID: Helpful-Utilities-&-Shortcuts
@@ -5322,7 +5112,7 @@ Bye!
 #+end_src
 :End:
 
-* Approaches Before Reading Documentation :Posterity:Learning:noexport:
+* Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 ;; Nice soft yellow, pleasing ---try background colour for html export ;-)
 (add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
 ;; "white"; or this darker yellow "#eae3cb"
@@ -5488,6 +5278,78 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 
 (global-set-key "\C-t" 'toggle-terminal)
 #+end_src
+** Exporting Tables to CSV :Documentation:
+
+Org-mode can export tables as TAB or comma delimited formats. I set the default format to CSV with:
+
+(setq org-table-export-default-format "orgtbl-to-csv")
+Exporting to CSV format is the only one I use and this provides the default so I can just hit RETURN when prompted for the format.
+
+To export the following table I put the cursor inside the table and hit M-x org-table-export which prompts for a filename and the format which defaults to orgtbl-to-csv from the setting above.
+** Interpret the Haskell source blocks in a file :Cool_but_have_not_used_this_in_some_time:
+:PROPERTIES:
+:CUSTOM_ID: Interpret-the-Haskell-source-blocks-in-a-file
+:END:
+#+BEGIN_SRC emacs-lisp
+(defvar *current-module* "NoModuleNameSpecified"
+  "The name of the module, file, that source blocks are
+   currently being tangled to.
+
+   This technique is insipired by “Interactive Way to C”;
+   see https://alhassy.github.io/InteractiveWayToC/.
+  ")
+
+(defun current-module ()
+  "Returns the current module under focus."
+  *current-module*)
+
+(defun set-module (name)
+   "Set the name of the module currently under focus.
+
+    Usage: When a module is declared, i.e., a new file has begun,
+    then that source blocks header should be “:tangle (set-module ”name-here”)”.
+    succeeding source blocks now inherit this name and so are tangled
+    to the same module file. How? By placing the following line at the top
+    of your Org file: “‘#+PROPERTY: header-args :tangle (current-module))’.
+
+    This technique structures “Interactive Way to C”.
+   "
+   (setq *current-module* name)
+)
+
+(cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
+  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
+   and load the resulting ‘target’ file into a ghci buffer.
+
+   If no name is provided for the ‘target’ file that is generated from the
+   tangeling process, it is assumed to be the buffer's name with a ‘hs’ extension.
+
+   Note that this only loads the blocks tangled to ‘target’.
+
+   For example, file ‘X.org’ may have haskell blocks that tangle to files
+   ‘X.hs’, ‘Y.hs’ and ‘Z.hs’. If no target name is supplied, we tangle all blocks
+   but only load ‘X.hs’ into the ghci buffer. A helpful technique to load the
+   last, bottom most, defined haskell module, is to have the module declaration's
+   source block be ‘:tangle (setq CODE “Y.hs”)’, for example; then the following
+   code blocks will inherit this location provided our Org file has at the top
+   ‘#+PROPERTY: header-args :tangle (current-module))’.
+   Finally, our ‘compile-command’ suffices to be ‘(my/org-run-haskell CODE)’.
+   ─
+   This technique structures “Interactive Way to C”.
+  "
+   (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
+         (buf (concat "*GHCI* " it)))
+
+     (-let [kill-buffer-query-functions nil] (ignore-errors (kill-buffer buf)))
+     (org-babel-tangle it "haskell")
+     (async-shell-command (concat "ghci " it) buf)
+     (switch-to-buffer-other-window buf)
+     (end-of-buffer)
+   )
+)
+
+;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
+#+END_SRC
 * COMMENT TODO Improvements
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-Improvements
@@ -5995,6 +5857,75 @@ We use the XXX function add to calculate the sum of two numbers.
 - and of course "optional things"
 
 + There is a reason we only support two args
+** Tangeling to multiple files
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-tangeling-to-multiple-files,-org-mode
+:END:
+From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
+
+#+begin_src emacs-lisp :tangle no
+(defun org-babel-tangle-collect-blocks-handle-tangle-list (&optional language tangle-file)
+  "Can be used as :override advice for `org-babel-tangle-collect-blocks'.
+Handles lists of :tangle files."
+  (let ((counter 0) last-heading-pos blocks)
+    (org-babel-map-src-blocks (buffer-file-name)
+      (let ((current-heading-pos
+         (org-with-wide-buffer
+          (org-with-limited-levels (outline-previous-heading)))))
+    (if (eq last-heading-pos current-heading-pos) (cl-incf counter)
+      (setq counter 1)
+      (setq last-heading-pos current-heading-pos)))
+      (unless (org-in-commented-heading-p)
+    (let* ((info (org-babel-get-src-block-info)) ;; MA: not “light”!
+                                          ;; (describe-symbol 'org-babel-get-src-block-info)
+           (src-lang (nth 0 info))
+           (src-tfiles (cdr (assq :tangle (nth 2 info))))) ; Tobias: accept list for :tangle
+      (unless (consp src-tfiles) ; Tobias: unify handling of strings and lists for :tangle
+        (setq src-tfiles (list src-tfiles))) ; Tobias: unify handling
+      (dolist (src-tfile src-tfiles) ; Tobias: iterate over list
+        (unless (or (string= src-tfile "no")
+            (and tangle-file (not (equal tangle-file src-tfile)))
+            (and language (not (string= language src-lang))))
+          ;; Add the spec for this block to blocks under its
+          ;; language.
+          (let ((by-lang (assoc src-lang blocks))
+            (block (org-babel-tangle-single-block counter)))
+        (setcdr (assoc :tangle (nth 4 block)) src-tfile) ; Tobias:
+        (if by-lang (setcdr by-lang (cons block (cdr by-lang)))
+          (push (cons src-lang (list block)) blocks)))))))) ; Tobias: just ()
+    ;; Ensure blocks are in the correct order.
+    (mapcar (lambda (b) (cons (car b) (nreverse (cdr b)))) blocks)))
+
+(defun org-babel-tangle-single-block-handle-tangle-list (oldfun block-counter &optional only-this-block)
+  "Can be used as :around advice for `org-babel-tangle-single-block'.
+If the :tangle header arg is a list of files. Handle all files"
+  (let* ((info (org-babel-get-src-block-info))
+     (params (nth 2 info))
+     (tfiles (cdr (assoc :tangle params))))
+    (if (null (and only-this-block (consp tfiles)))
+    (funcall oldfun block-counter only-this-block)
+      (cl-assert (listp tfiles) nil
+         ":tangle only allows a tangle file name or a list of tangle file names")
+      (let ((ret (mapcar
+          (lambda (tfile)
+            (let (old-get-info)
+              (cl-letf* (((symbol-function 'old-get-info) (symbol-function 'org-babel-get-src-block-info))
+                 ((symbol-function 'org-babel-get-src-block-info)
+                  `(lambda (&rest get-info-args)
+                     (let* ((info (apply 'old-get-info get-info-args))
+                        (params (nth 2 info))
+                        (tfile-cons (assoc :tangle params)))
+                       (setcdr tfile-cons ,tfile)
+                       info))))
+            (funcall oldfun block-counter only-this-block))))
+          tfiles)))
+    (if only-this-block
+        (list (cons (cl-caaar ret) (mapcar #'cadar ret)))
+      ret)))))
+
+(advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
+(advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
+#+end_src
 * COMMENT footer & pushing to blog
 
 C-c C-c this snippet to export to blog.
