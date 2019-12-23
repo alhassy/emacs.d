@@ -155,7 +155,6 @@ in ~“this”~ configuration.
   - [[#documentation-pop-ups][Documentation Pop-Ups]]
   - [[#emacs-keybindings-for-my-browser][Emacs keybindings for my browser]]
   - [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
-  - [[#bind-recompile-to-c-c-c-m----m-for-make][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake]]
   - [[#reload-buffer-with-f5][Reload buffer with ~f5~]]
   - [[#kill-to-start-of-line][Kill to start of line]]
   - [[#c-x-k-kills-current-buffer-c-u-c-x-k-kills-all-others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
@@ -4022,16 +4021,14 @@ contextual information ---then let's /extend/ that to work as we want it to:
                (format "Describe symbol (default %s): " thing)
                (vconcat (list thing) obarray)
                (lambda (vv)
-                (cl-some (lambda (x) (funcall (nth 1 x) vv))
-                         describe-symbol-backends))
+                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                          describe-symbol-backends))
                t nil nil))
          (it (intern val)))
-
-    (if current-prefix-arg
-        (funcall #'describe-symbol it)
-      (cond
-       ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
-       (t (helpful-symbol it))))))
+    (cond
+     (current-prefix-arg (funcall #'describe-symbol it))
+     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+     (t (helpful-symbol it)))))
 
 ;; Keybindings.
 (global-set-key (kbd "C-h o") #'my/describe-symbol)
@@ -4906,26 +4903,6 @@ I always want to be in Org-mode and input unicode:
     (set-input-method "Agda")))
 #+END_SRC
 
-** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
-:PROPERTIES:
-:CUSTOM_ID: Bind-~recompile~-to-~C-c-C-m~----“m”-for-“m”ake
-:END:
-#+BEGIN_SRC emacs-lisp
-(defvar my-keys-minor-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-m") 'recompile)
-    map)
-  "my-keys-minor-mode keymap.")
-
-(define-minor-mode my-keys-minor-mode
-  "A minor mode so that my key settings override annoying major modes."
-  :init-value t
-  :lighter " my-keys")
-
-(my-keys-minor-mode)
-
-(diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
-#+END_SRC
 ** Reload buffer with ~f5~
 :PROPERTIES:
 :CUSTOM_ID: Reload-buffer-with-~f5~
@@ -4990,21 +4967,23 @@ such a tedious decision.
 :CUSTOM_ID: Switching-from-2-horizontal-windows-to-2-vertical-windows
 :END:
 I often find myself switching from a horizontal view of two windows in Emacs to a
-vertical view. This requires a variation of ~C-x 1 RET C - x 3 RET C-x o X-x b RET~.
+vertical view. This requires a variation of ~C-x 1 RET C-x 3 RET C-x o C-x b RET~.
 Instead I now only need to type ~C-|~ to make this switch.
 #+BEGIN_SRC emacs-lisp
 (defun ensure-two-vertical-windows ()
-  "I used this method often when programming in Coq."
- (interactive)
- (other-window 1)			;; C-x 0
- (let ((otherBuffer (buffer-name)))
-   (delete-window)			;; C-x 0
-   (split-window-right)			;; C-x 3
-   (other-window 1)			;; C-x 0
-   (switch-to-buffer otherBuffer)	;; C-x b RET
- )
- (other-window 1)
-)
+  "I used this method often when programming in Coq.
+
+When there are two vertical windows, this method ensures the left-most
+window contains the buffer with the cursour in it."
+  (interactive)
+  (let ((otherBuffer (buffer-name)))
+    (other-window 1)                ;; C-x 0
+    (delete-window)                 ;; C-x 0
+    (split-window-right)			;; C-x 3
+    (other-window 1)                ;; C-x 0
+    (switch-to-buffer otherBuffer)	;; C-x b RET
+    (other-window 1)))
+
 (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 #+END_SRC
 ** Obtaining Values of ~#+KEYWORD~ Annotations
