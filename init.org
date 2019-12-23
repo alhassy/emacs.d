@@ -96,6 +96,7 @@ in ~“this”~ configuration.
   - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
   - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
+  - [[#automatic-backups][Automatic Backups]]
 - [[#cosmetics][Cosmetics]]
   - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
   - [[#being-at-the-helm----completion-framework][“Being at the Helm” ---Completion Framework]]
@@ -149,7 +150,6 @@ in ~“this”~ configuration.
   - [[#edit-as-root][Edit as Root]]
   - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
   - [[#restarting-emacs][Restarting Emacs]]
-  - [[#backups][Backups]]
   - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
   - [[#keep-buffers-open-across-sessions][Keep buffers open across sessions]]
   - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
@@ -479,8 +479,8 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
         (save-excursion
           ;; remove any other initialisation file candidates
           (ignore-errors
-            (f-move .emacs    (concat .emacs _data))
-            (f-move .emacs.el (concat .emacs.el _data)))
+            (f-move .emacs    (concat .emacs _date))
+            (f-move .emacs.el (concat .emacs.el _date)))
 
           ;; Make init.el
           (org-babel-tangle)
@@ -961,7 +961,7 @@ Neato! Now I can live in Emacs even more ^_^
 Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library for viewing PDFs in Emacs.
 #+BEGIN_SRC emacs-lisp
 (use-package pdf-tools
-  :init   (system-packages-ensure "pdf-tools")
+  ; :init   (system-packages-ensure "pdf-tools")
   :custom (pdf-tools-handle-upgrades nil)
           (pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
   :config (pdf-tools-install))
@@ -1161,6 +1161,77 @@ Out of the box, zsh comes with
 
 The defaults have been good enough for me, for now ---as all else is achieved
 via Emacs ;-)
+
+** Automatic Backups
+:PROPERTIES:
+:CUSTOM_ID: Backups
+:END:
+By default, Emacs saves backup files ---those ending in =~=--- in the current
+directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in
+case we need to look for a backup; moreover, let's keep old versions since
+there's disk space to go around ---what am I going to do with 500gigs when nearly
+all my ‘software’ is textfiles interpreted within Emacs 😼
+
+#+BEGIN_SRC emacs-lisp
+;; New location for backups.
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+
+;; Silently delete execess backup versions
+(setq delete-old-versions t)
+
+;; Only keep the last 1000 backups of a file.
+(setq kept-old-versions 1000)
+
+;; Even version controlled files get to be backed up.
+(setq vc-make-backup-files t)
+
+;; Use version numbers for backup files.
+(setq version-control t)
+#+END_SRC
+
+Why backups? Sometimes I may forget to submit a file, or edit, to my
+version control system, and it'd be nice to be able to see a local
+automatic backup. Whenever ‘I need space,’ then I simply empty
+the backup directory, if ever. That the backups are numbered is so sweet ^_^
+
+Like package installations, my backups are not kept in any version control
+system, like git; only locally.
+
+Let's use an elementary diff system for backups.
+#+BEGIN_SRC emacs-lisp
+(use-package backup-walker
+  :commands backup-walker-start)
+#+END_SRC
+
+In a buffer that corresponds to a file, invoke ~backup-walker-start~
+to see a visual diff of changes /between/ versions.
+By default, you see the changes ‘backwards’: Red means
+delete these things to get to the older version; i.e.,
+the red ‘-’ are newer items.
+
+To create backups explicitly use save-buffer (C-x C-s) with prefix arguments.
+
+diff-backup and dired-diff-backup compares a file with its backup or vice versa. But there is no function to restore backup files.
+
+Emacs only makes a backup the very first time a buffer is saved; I'd prefer
+Emacs makes backups everytime I save! ---If I saved, that means I'm at an
+important checkpoint, so please check what I have so far as a backup!
+#+BEGIN_SRC emacs-lisp
+;; Make Emacs backup everytime I save
+
+(defun my/force-backup-of-buffer ()
+  "Lie to Emacs, telling it the curent buffer has yet to be backed up."
+  (setq buffer-backed-up nil))
+
+(add-hook 'before-save-hook  'my/force-backup-of-buffer)
+#+END_SRC
+# See the name of the latest backup, which is appeneded by a number for each save ;-)
+# (file-newest-backup "~/.emacs.d/init.org")
+
+It is intestesting to note that the above snippet could be modified to [[https://stackoverflow.com/a/6918217/3550444][make our
+own backup system]], were Emacs lacked one, by having our function simply save
+copies of our file ---on each save--- where the filename is augmented with a
+timestamp.
 
 * Cosmetics
 :PROPERTIES:
@@ -1613,8 +1684,8 @@ We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp
 ;; Fancy icons for neotree
 ;; Only do this once:
-(use-package all-the-icons
-  :config (all-the-icons-install-fonts 'install-without-asking))
+(use-package all-the-icons)
+  ; :config (all-the-icons-install-fonts 'install-without-asking)
 
 ;; Sidebar for project file navigation
 (use-package neotree
@@ -4286,48 +4357,6 @@ implementing that.
 #+END_SRC
 
 
-** Backups
-:PROPERTIES:
-:CUSTOM_ID: Backups
-:END:
-By default, Emacs saves backup files -- those ending in ~ -- in the current directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in case we need to look for a backup; moreover,
-let's keep old versions since there's disk space to go around
---what am I going to do with 500gigs when nearly all my ‘software’ is
-textfiles interpreted within Emacs 😼
-
-#+BEGIN_SRC emacs-lisp
-;; New location for backups.
-(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-
-;; Never silently delete old backups.
-(setq delete-old-versions -1)
-
-;; Use version numbers for backup files.
-(setq version-control t)
-
-;; Even version controlled files get to be backed up.
-(setq vc-make-backup-files t)
-#+END_SRC
-
-Why backups? Sometimes I may forget to submit a file, or edit, to my
-version control system, and it'd be nice to be able to see a local
-automatic backup. Whenever ‘I need space,’ then I simply empty
-the backup directory, if ever. That the backups are numbered is so sweet ^_^
-
-Like package installations, my backups are not kept in any version control
-system, like git; only locally.
-
-Let's use an elementary diff system for backups.
-#+BEGIN_SRC emacs-lisp
-(use-package backup-walker
-  :commands backup-walker-start)
-#+END_SRC
-
-In a buffer that corresponds to a file, invoke ~backup-walker-start~
-to see a visual diff of changes /between/ versions.
-By default, you see the changes ‘backwards’: Red means
-delete these things to get to the older version; i.e.,
-the red ‘-’ are newer items.
 
 ** COMMENT Highlighting TODO-s & Showing them in Magit
 :PROPERTIES:

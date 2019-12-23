@@ -318,7 +318,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Excellent PDF Viewer][Excellent PDF Viewer:1]]
 (use-package pdf-tools
-  :init   (system-packages-ensure "pdf-tools")
+  ; :init   (system-packages-ensure "pdf-tools")
   :custom (pdf-tools-handle-upgrades nil)
           (pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
   :config (pdf-tools-install))
@@ -366,6 +366,38 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; E.g., M-x shell
 (setq shell-file-name "/bin/zsh")
 ;; Quickly pop-up a terminal, run a command, close it ---and zsh:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Automatic Backups][Automatic Backups:1]]
+;; New location for backups.
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+
+;; Silently delete execess backup versions
+(setq delete-old-versions t)
+
+;; Only keep the last 1000 backups of a file.
+(setq kept-old-versions 1000)
+
+;; Even version controlled files get to be backed up.
+(setq vc-make-backup-files t)
+
+;; Use version numbers for backup files.
+(setq version-control t)
+;; Automatic Backups:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Automatic Backups][Automatic Backups:2]]
+(use-package backup-walker
+  :commands backup-walker-start)
+;; Automatic Backups:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Automatic Backups][Automatic Backups:3]]
+;; Make Emacs backup everytime I save
+
+(defun my/force-backup-of-buffer ()
+  "Lie to Emacs, telling it the curent buffer has yet to be backed up."
+  (setq buffer-backed-up nil))
+
+(add-hook 'before-save-hook  'my/force-backup-of-buffer)
+;; Automatic Backups:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:1]]
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
@@ -568,8 +600,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; [[file:~/.emacs.d/init.org::*Neotree: Directory Tree Listing][Neotree: Directory Tree Listing:1]]
 ;; Fancy icons for neotree
 ;; Only do this once:
-(use-package all-the-icons
-  :config (all-the-icons-install-fonts 'install-without-asking))
+(use-package all-the-icons)
+  ; :config (all-the-icons-install-fonts 'install-without-asking)
 
 ;; Sidebar for project file navigation
 (use-package neotree
@@ -1408,25 +1440,6 @@ user."
 (use-package restart-emacs
   :commands restart-emacs)
 ;; Restarting Emacs:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Backups][Backups:1]]
-;; New location for backups.
-(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-
-;; Never silently delete old backups.
-(setq delete-old-versions -1)
-
-;; Use version numbers for backup files.
-(setq version-control t)
-
-;; Even version controlled files get to be backed up.
-(setq vc-make-backup-files t)
-;; Backups:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Backups][Backups:2]]
-(use-package backup-walker
-  :commands backup-walker-start)
-;; Backups:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:1]]
 ;; Hunk navigation and commiting.
