@@ -1,4 +1,4 @@
-# Created 2019-12-23 Mon 14:16
+# Created 2019-12-23 Mon 14:34
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
@@ -41,6 +41,7 @@ and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/C
 in ~“this”~ configuration.
 
 * Table of Contents                                              :Github:TOC:
+- [[#why-emacs][Why Emacs?]]
 - [[#booting-up][Booting Up]]
   - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
   - [[#use-package----the-start-of-initel][=use-package= ---The start of =init.el=]]
@@ -112,7 +113,6 @@ in ~“this”~ configuration.
   - [[#documentation-pop-ups][Documentation Pop-Ups]]
   - [[#emacs-keybindings-for-my-browser][Emacs keybindings for my browser]]
   - [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
-  - [[#bind-recompile-to-c-c-c-m----m-for-make][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake]]
   - [[#reload-buffer-with-f5][Reload buffer with ~f5~]]
   - [[#kill-to-start-of-line][Kill to start of line]]
   - [[#c-x-k-kills-current-buffer-c-u-c-x-k-kills-all-others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
@@ -120,6 +120,129 @@ in ~“this”~ configuration.
   - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
   - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
 - [[#conclusion][Conclusion]]
+
+* Why Emacs?
+/Emacs is a flexible platform for developing end-user applications/ --unfortunately it is generally perceived as
+merely a text editor. Some people use it specifically for one or two applications.
+
+For example, [[https://www.youtube.com/watch?v=FtieBc3KptU][writers]] use it as an interface for Org-mode and others use it as an interface for version
+control with Magit. [[https://orgmode.org/index.html#sec-4][Org]] is an organisation tool that can be used for typesetting which subsumes LaTeX, generating many different
+formats --html, latex, pdf, etc-- from a single source, keeping track of [[https://orgmode.org/worg/org-tutorials/index.html#orgff7b885][schedules]] & task management, blogging, habit tracking, personal information management tool, and [[http://orgmode.org/worg/org-contrib/][much more]].
+Moreover, its syntax is so [[https://karl-voit.at/2017/09/23/orgmode-as-markup-only/][natural]] that most people use it without even knowing!
+For me, Org allows me to do literate programming: I can program and document at the same time,
+with no need to seperate the two tasks and with the ability to generate multiple formats and files from a single file.
+
+#+begin_quote
+If you are a professional writer…Emacs outshines all other editing software
+in approximately the same way that the noonday sun does the stars.
+It is not just bigger and brighter; it simply makes everything else vanish.
+—[[http://project.cyberpunk.ru/lib/in_the_beginning_was_the_command_line/][Neal Stephenson]], /In the beginning was the command line/
+#+end_quote
+
+Of course Emacs comes with the basic features of a text editor, but it is much more;
+for example, it comes with a powerful notion of ‘undo’: Basic text editors have a single stream of undo,
+yet in Emacs, we have a tree --when we undo and make new edits, we branch off in our editing stream
+as if our text was being version controlled as we type! --We can even switch between such branches!
+
+#+begin_src emacs-lisp :tangle no
+;; Allow tree-semantics for undo operations.
+(package-install 'undo-tree)
+(global-undo-tree-mode)
+(diminish 'undo-tree-mode)
+
+;; Execute (undo-tree-visualize) then navigate along the tree to witness
+;; changes being made to your file live!
+
+;; Each node in the undo tree should have a timestamp.
+(setq undo-tree-visualizer-timestamps t)
+
+;; Show a diff window displaying changes between undo nodes.
+(setq undo-tree-visualizer-diff t)
+#+end_src
+
+/Emacs is an extensible editor: You can make it into the editor of your dreams!/
+You can make it suited to your personal needs.
+If there's a feature you would like, a behaviour your desire, you can simply code that into Emacs with
+a bit of Lisp. As a programming language enthusiast, for me Emacs is my default Lisp interpreter
+and a customisable IDE that I use for other programming languages
+--such as C, Haskell, Agda, Racket, and Prolog.
+Moreover, being a Lisp interpreter, we can alter the look and feel of Emacs live, without having
+to restart it --e.g., press ~C-x C-e~ after the final parenthesis of ~(scroll-bar-mode 0)~
+to run the code that removes the scroll-bar.
+
+#+begin_quote
+/I use Emacs every day. I rarely notice it. But when I do, it usually brings me joy./
+─[[https://so.nwalsh.com/2019/03/01/emacs][Norman Walsh]]
+#+end_quote
+
+I have used Emacs as an interface for developing [[https://github.com/alhassy/CheatSheet#cheatsheet-examples][cheat sheets]], for making my
+blog, and as an application for ‘interactively learning C’. If anything Emacs is
+more like an OS than just a text editor --“living within Emacs” provides an
+abstraction over whatever operating system my machine has: [[https://www.fugue.co/blog/2015-11-11-guide-to-emacs.html][It's so easy to take
+everything with me.]] Moreover, the desire to mould Emacs to my needs has made me
+a better programmer: I am now a more literate programmer and, due to Elisp's
+documentation-oriented nature, I actually take the time and effort to make
+meaningful documentation --even when the project is private and will likely only
+be seen by me.
+
+#+begin_quote
+/Seeing Emacs as an editor is like seeing a car as a seating-accommodation./ -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
+#+end_quote
+
+Possibly interesting reads:
+- [[https://sachachua.com/blog/series/a-visual-guide-to-emacs/][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
+- [[http://emacsrocks.com/][Video Series on Why Emacs Rocks]] ---catch the enthusiasm!
+- [[http://ehneilsen.net/notebook/orgExamples/org-examples.html#sec-18][Emacs org-mode examples and cookbook]]
+- [[https://m00natic.github.io/emacs/emacs-wiki.html][An Opinionated Emacs guide for newbies and beyond]]
+- [[https://tuhdo.github.io/emacs-tutor.html][Emacs Mini-Manual, Part I of III]]
+- [[https://github.com/erikriverson/org-mode-R-tutorial/blob/master/org-mode-R-tutorial.org][Org and R Programming]] ---a tutorial on literate programming, e.g., evaluating code within ~src~ bloc.
+- Reference cards for [[https://www.gnu.org/software/emacs/refcards/pdf/refcard.pdf][GNU Emacs]], [[https://www.gnu.org/software/emacs/refcards/pdf/orgcard.pdf][Org-mode]], and [[https://github.com/alhassy/ElispCheatSheet/blob/master/CheatSheet.pdf][Elisp]].
+- [[https://www.reddit.com/r/emacs/comments/6fytr5/when_did_you_start_using_emacs/][“When did you start using Emacs” discussion on Reddit]]
+- [[https://david.rothlis.net/emacs/howtolearn.html][“How to Learn Emacs”]]
+- [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
+- [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
+- [[https://github.com/caisah/emacs.dz][A list of people's nice emacs config files]]
+
+---If eye-candy, a sleek and beautiful GUI, would entice you then consider starting with [[http://spacemacs.org/][spacemacs]].
+   Here's a helpful [[https://www.youtube.com/watch?v=hCNOB5jjtmc][installation video]], after which you may want to watch
+   [[https://www.youtube.com/watch?v=PVsSOmUB7ic][Org-mode in Spacemacs]] tutorial---
+
+Remember: Emacs is a flexible platform for developing end-user applications; e.g., this configuration file
+is at its core an Emacs Lisp program that yields the editor of my dreams
+--it encourages me to grow and to be creative, and I hope the same for all who use it;
+moreover, it reflects my personality such as what I value and what I neglect in my workflow.
+
+#+begin_quote
+/I’m stunned that you, as a professional software engineer, would eschew inferior computer languages that hinder your ability to craft code,
+/but you put up with editors that bind your fingers to someone else’s accepted practice. --- [[http://www.howardism.org/Technical/Emacs/why-emacs.html][Howard Abrams]]
+#+end_quote
+
+*The Power of Text Manipulation:*
+Emacs has ways to represent all kinds of information as text.
+
+E.g., if want to make a regular expression rename of files in a directory,
+there's no need to learn about a batch renaming tool: ~M-x dired <RET> M-x wdired-change-to-wdired-mode~ now simply perform a /usual/ find-and-replace, then
+save with the /usual/ ~C-x C-s~ to effect the changes!
+
+Likewise for other system utilities and services (•̀ᴗ•́)و
+
+Moreover, as will be shown below, you can literally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
+for textually input in your operating system --no copy-paste required.
+
+*Keyboard Navigation and Alteration*
+Suppose you wrote a paragraph of text, and wanted to ‘border’ it up for emphasies
+in hypens. Using the mouse to navigate along with a copy-paste of the hypens
+is vastely inferior to the incantation
+~M-{ C-u 80 - RET M-} C-u 80 - RET~.
+If we want to border up the previous 𝓃-many paragraphs,
+we simply prefix ~M-{,}~ above with  ~C-u 𝓃~
+---a manual approach would have us count 𝓃 and slowly scroll.
+
+Finally, here's some fun commands to try out:
+- ~M-x doctor~ ---generalising the idea of rubber ducks
+- ~M-x tetris~  or ~M-x gomoku~ or ~M-x snake~---a break with a classic
+  - ~C-u 𝓃 M-x hanoi~ for the 𝓃-towers of Hanoi
+- ~M-x butterfly~ ---in reference to [[https://xkcd.com/378/][“real programmers”]]
 
 * Booting Up
 Let's decide on where we want to setup our declarations for personalising Emacs
@@ -2603,16 +2726,14 @@ contextual information ---then let's /extend/ that to work as we want it to:
                (format "Describe symbol (default %s): " thing)
                (vconcat (list thing) obarray)
                (lambda (vv)
-                (cl-some (lambda (x) (funcall (nth 1 x) vv))
-                         describe-symbol-backends))
+                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                          describe-symbol-backends))
                t nil nil))
          (it (intern val)))
-
-    (if current-prefix-arg
-        (funcall #'describe-symbol it)
-      (cond
-       ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
-       (t (helpful-symbol it))))))
+    (cond
+     (current-prefix-arg (funcall #'describe-symbol it))
+     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+     (t (helpful-symbol it)))))
 
 ;; Keybindings.
 (global-set-key (kbd "C-h o") #'my/describe-symbol)
@@ -2916,23 +3037,6 @@ I always want to be in Org-mode and input unicode:
     (set-input-method "Agda")))
 #+end_src
 
-** Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake
-#+begin_src emacs-lisp
-(defvar my-keys-minor-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-m") 'recompile)
-    map)
-  "my-keys-minor-mode keymap.")
-
-(define-minor-mode my-keys-minor-mode
-  "A minor mode so that my key settings override annoying major modes."
-  :init-value t
-  :lighter " my-keys")
-
-(my-keys-minor-mode)
-
-(diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
-#+end_src
 ** Reload buffer with ~f5~
 I do this so often it's not even funny.
 #+begin_src emacs-lisp
@@ -2984,21 +3088,23 @@ such a tedious decision.
 
 ** Switching from 2 horizontal windows to 2 vertical windows
 I often find myself switching from a horizontal view of two windows in Emacs to a
-vertical view. This requires a variation of ~C-x 1 RET C - x 3 RET C-x o X-x b RET~.
+vertical view. This requires a variation of ~C-x 1 RET C-x 3 RET C-x o C-x b RET~.
 Instead I now only need to type ~C-|~ to make this switch.
 #+begin_src emacs-lisp
 (defun ensure-two-vertical-windows ()
-  "I used this method often when programming in Coq."
- (interactive)
- (other-window 1)			;; C-x 0
- (let ((otherBuffer (buffer-name)))
-   (delete-window)			;; C-x 0
-   (split-window-right)			;; C-x 3
-   (other-window 1)			;; C-x 0
-   (switch-to-buffer otherBuffer)	;; C-x b RET
- )
- (other-window 1)
-)
+  "I used this method often when programming in Coq.
+
+When there are two vertical windows, this method ensures the left-most
+window contains the buffer with the cursour in it."
+  (interactive)
+  (let ((otherBuffer (buffer-name)))
+    (other-window 1)                ;; C-x 0
+    (delete-window)                 ;; C-x 0
+    (split-window-right)			;; C-x 3
+    (other-window 1)                ;; C-x 0
+    (switch-to-buffer otherBuffer)	;; C-x b RET
+    (other-window 1)))
+
 (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 #+end_src
 ** Obtaining Values of ~#+KEYWORD~ Annotations
