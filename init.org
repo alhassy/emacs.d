@@ -132,8 +132,8 @@ in ~“this”~ configuration.
   - [[#high-speed-literate-programming][High Speed Literate Programming]]
   - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
   - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
-  - [[#ox-extra-using-ignore-to-ignore-headings-but-use-the-bodies][~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies]]
   - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
+  - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
   - [[#working-with-citations][Working with Citations]]
   - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen Heading at the top of the window]]
   - [[#clocking-work-time][Clocking Work Time]]
@@ -160,7 +160,6 @@ in ~“this”~ configuration.
   - [[#bind-recompile-to-c-c-c-m----m-for-make][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake]]
   - [[#reload-buffer-with-f5][Reload buffer with ~f5~]]
   - [[#kill-to-start-of-line][Kill to start of line]]
-  - [[#file-as-list-and-file-as-string][~file-as-list~ and ~file-as-string~]]
   - [[#c-x-k-kills-current-buffer-c-u-c-x-k-kills-all-others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
   - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
   - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
@@ -2701,19 +2700,17 @@ Some initial languages we want org-babel to support:
 #+BEGIN_SRC emacs-lisp
  (org-babel-do-load-languages
    'org-babel-load-languages
-   '(
-     (emacs-lisp . t)
-     ;; (shell	 . t)
-     (python . t)
-     (haskell . t)
-     (ruby	 . t)
-     (ocaml	 . t)
-     (C . t)  ;; Captial “C” gives access to C, C++, D
-     (dot	 . t)
-     (latex	 . t)
-     (org	 . t)
-     (makefile	 . t)
-     ))
+   '((emacs-lisp . t)
+     (shell      . t)
+     (python     . t)
+     (haskell    . t)
+     (ruby       . t)
+     (ocaml      . t)
+     (C          . t)  ;; Captial “C” gives access to C, C++, D
+     (dot        . t)
+     (latex      . t)
+     (org        . t)
+     (makefile   . t)))
 
 ;; Preserve my indentation for source code during export.
 (setq org-src-preserve-indentation t)
@@ -2737,10 +2734,11 @@ More languages can be added using ~add-to-list~.
 (setq org-hide-emphasis-markers t)
 
 ;; (setq org-pretty-entities t)
-;; to have \alpha, \to and others display as utf8 http://orgmode.org/manual/Special-symbols.html
+;; to have \alpha, \to and others display as utf8
+;; http://orgmode.org/manual/Special-symbols.html
 #+END_SRC
 
-The following is now disabled --it makes my system slower than I'd like.
+The following is now disabled ---it makes my system slower than I'd like.
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; Let's set inline images.
 (setq org-display-inline-images t)
@@ -2759,10 +2757,201 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
 
 :end:
 
-** ~ox-extra~: Using ~:ignore:~ to ignore headings but use the bodies
+** Org-Emphasise for Parts of Words :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: ~ox-extra~:-Using-~:ignore:~-to-ignore-headings-but-use-the-bodies
+:CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
 :END:
+
+From [[https://stackoverflow.com/a/24540651/3550444][stackoverflow]], the following incantation allows us to have
+parts of works emphasied with org-mode; e.g.,
+/half/ed, ~half~ed, and right in the m*idd*le! Super cool stuff!
+#+BEGIN_SRC emacs-lisp :tangle no
+(setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
+(setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
+(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
+#+END_SRC
+
+I've disabled this feature since multiple occurrences
+of an emphasise marker are sometimes treated as one
+lengthy phrase being emphasised.
+
+
+
+** Making Block Delimiters Less Intrusive
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Making-Block-Delimiters-Less-Intrusive
+:END:
+
+Let us render Org-mode's ~#+begin_src~ and ~#+end_src~ less obtrusively by, e.g.,
+having the former render as a pencil marker ✎ and the latter as a tombstone □
+---reminiscent of Halmos' QED end-of-proof marker.  His setup also accounts for
+quotes.
+
+⟪ Incantation Omitted ---Visit [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]]'s site & copy-paste it, if you wish ⟫
+:Hide:
+#+begin_src emacs-lisp
+  (defvar-local rasmus/org-at-src-begin -1
+    "Variable that holds whether last position was a ")
+
+  (defvar rasmus/ob-header-symbol ?☰
+    "Symbol used for babel headers")
+
+  (defun rasmus/org-prettify-src--update ()
+    (let ((case-fold-search t)
+          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+          found)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward re nil t)
+          (goto-char (match-end 0))
+          (let ((args (org-trim
+                       (buffer-substring-no-properties (point)
+                                                       (line-end-position)))))
+            (when (org-string-nw-p args)
+              (let ((new-cell (cons args rasmus/ob-header-symbol)))
+                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+                (cl-pushnew new-cell found :test #'equal)))))
+        (setq prettify-symbols-alist
+              (cl-set-difference prettify-symbols-alist
+                                 (cl-set-difference
+                                  (cl-remove-if-not
+                                   (lambda (elm)
+                                     (eq (cdr elm) rasmus/ob-header-symbol))
+                                   prettify-symbols-alist)
+                                  found :test #'equal)))
+        ;; Clean up old font-lock-keywords.
+        (font-lock-remove-keywords nil prettify-symbols--keywords)
+        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+        (font-lock-add-keywords nil prettify-symbols--keywords)
+        (while (re-search-forward re nil t)
+          (font-lock-flush (line-beginning-position) (line-end-position))))))
+
+  (defun rasmus/org-prettify-src ()
+    "Hide src options via `prettify-symbols-mode'.
+
+  `prettify-symbols-mode' is used because it has uncollpasing. It's
+  may not be efficient."
+    (let* ((case-fold-search t)
+           (at-src-block (save-excursion
+                           (beginning-of-line)
+                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+      ;; Test if we moved out of a block.
+      (when (or (and rasmus/org-at-src-begin
+                     (not at-src-block))
+                ;; File was just opened.
+                (eq rasmus/org-at-src-begin -1))
+        (rasmus/org-prettify-src--update))
+      ;; Remove composition if at line; doesn't work properly.
+      ;; (when at-src-block
+      ;;   (with-silent-modifications
+      ;;     (remove-text-properties (match-end 0)
+      ;;                             (1+ (line-end-position))
+      ;;                             '(composition))))
+      (setq rasmus/org-at-src-begin at-src-block)))
+
+  (defun rasmus/org-prettify-symbols ()
+    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+          (cl-reduce 'append
+                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
+                               ("#+end_src"   . ?□) ;; ⏹
+                               ("#+header:" . ,rasmus/ob-header-symbol)
+                               ("#+begin_quote" . ?»)
+                               ("#+end_quote" . ?«)))))
+    (turn-on-prettify-symbols-mode)
+    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
+
+
+;; Last up­dated: 2019-06-09
+#+end_src
+
+:End:
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+#+END_SRC
+
+His development relies on built-in prettify-symbols-mode, which
+disguises strings in a buffer for the sake of readability or
+aesthetics.  Following the example in the documentation, ~C-h f
+prettify-symbols-mode~, we can quickly approximate his efforts for
+~example~ blocks as follows, however a main issue is that source blocks
+have busybodied headers which his setup disguises as ‘≡’.
+#+begin_src emacs-lisp :tangle yes
+(global-prettify-symbols-mode)
+
+(defvar my/prettify-alist nil
+  "Musa's personal prettifications.")
+
+(loop for pair in '(("<=" . ?≤) (">=" . ?≥)
+                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                    ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
+                    ("#+end_example"   . ?⇐)                ;; ⇐
+                    ("{{{fold("        . ?↳)
+                    (")}}}"            . ?↲)
+                    ("{{{end-fold}}}"  . ?↺))
+      do (push pair my/prettify-alist))
+
+(loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
+      do (add-hook hk (lambda ()
+                        (setq prettify-symbols-alist
+                              (append my/prettify-alist prettify-symbols-alist)))))
+#+end_src
+
+:Did_it_work:
+#+begin_example lisp
+(<= (+ 1 1) (--> 2))
+#+end_example
+:End:
+
+See [[http://www.modernemacs.com/post/prettify-mode/][“Mathematical Notation in Emacs”]] for how such prettifications can
+make verbose (Python) scripts much more readable by employing more
+economical disguises.
+
+A nice sanity:
+#+BEGIN_SRC emacs-lisp
+;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
+(setq prettify-symbols-unprettify-at-point 'right-edge)
+#+END_SRC
+
+The ~↳Title Here↲ Contents ↺~ combination is for my makeshift HTML code
+folding macro ---word-wrapped for readability.
+#+BEGIN_SRC org :tangle no
+,#+MACRO: end-fold  #+HTML: </details>
+,#+MACRO: fold      #+HTML: <details class="code-details"> <summary> <strong>
+                              <font face="Courier" size="3" color="green"> $1
+                              </font> </strong> </summary>
+#+END_SRC
+
+:Example:
+# The (org-mode-restart) invocation actually enables the source block prettifications.
+
+# Empty macros to make the example go through.
+#
+#+MACRO: end-fold
+#+MACRO: fold
+
+{{{fold(nice)}}}
+
+hello
+
+{{{end-fold}}}
+
+:End:
+
+Let's have this fold-away in the source buffer as well by using [[https://www.emacswiki.org/emacs/FoldingMode][folding-mode]];
+with show/hide with ~C-<tab>~ key.
+#+BEGIN_SRC emacs-lisp
+(use-package folding
+ :init
+ (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
+ ; (setq folding-top-mark "{{{fold(")
+ ; (setq folding-bottom-mark "{{{end-fold}}}")
+ :config
+  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
+  (add-hook 'org-mode-hook #'folding-mode))
+#+END_SRC
+
 ** COMMENT Using org-mode as a Day Planner
 :PROPERTIES:
 :CUSTOM_ID: Using-org-mode-as-a-Day-Planner
@@ -3356,209 +3545,6 @@ Of note:
 This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Bernt Hansen]]
 --while quickly searching through the PlantUML [[http://plantuml.com/guide][manual]]:
 The above is known as an “activity diagram” and it's covered in §4.
-
-** Org-Emphasise for Parts of Words :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
-:END:
-
-From [[https://stackoverflow.com/a/24540651/3550444][stackoverflow]], the following incantation allows us to have
-parts of works emphasied with org-mode; e.g.,
-/half/ed, ~half~ed, and right in the m*idd*le! Super cool stuff!
-#+BEGIN_SRC emacs-lisp :tangle no
-(setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
-(setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
-(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
-#+END_SRC
-
-I've disabled this feature since multiple occurrences
-of an emphasise marker are sometimes treated as one
-lengthy phrase being emphasised.
-
-** TODO COMMENT NO: Making Block Delimiters Less Intrusive :noexport:prettify_symbols_not_loading:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Making-Block-Delimiters-Less-Intrusive
-:END:
-
-Let us render Org-mode's
-~#+begin_src~
-and
-~#+end_src~
-less obtrusively by, e.g., having the former render as a pencil marker ✎
-and the latter as a tombstone □ ---reminiscent of Halmos' QED end-of-proof marker.
-His setup also accounts for quotes.
-
-⟪ Incantation Omitted ---Visit [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]]'s site & copy-paste it, if you wish ⟫
-:Hide:
-#+begin_src emacs-lisp
-  (defvar-local rasmus/org-at-src-begin -1
-    "Variable that holds whether last position was a ")
-
-  (defvar rasmus/ob-header-symbol ?☰
-    "Symbol used for babel headers")
-
-  (defun rasmus/org-prettify-src--update ()
-    (let ((case-fold-search t)
-          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
-          found)
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward re nil t)
-          (goto-char (match-end 0))
-          (let ((args (org-trim
-                       (buffer-substring-no-properties (point)
-                                                       (line-end-position)))))
-            (when (org-string-nw-p args)
-              (let ((new-cell (cons args rasmus/ob-header-symbol)))
-                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
-                (cl-pushnew new-cell found :test #'equal)))))
-        (setq prettify-symbols-alist
-              (cl-set-difference prettify-symbols-alist
-                                 (cl-set-difference
-                                  (cl-remove-if-not
-                                   (lambda (elm)
-                                     (eq (cdr elm) rasmus/ob-header-symbol))
-                                   prettify-symbols-alist)
-                                  found :test #'equal)))
-        ;; Clean up old font-lock-keywords.
-        (font-lock-remove-keywords nil prettify-symbols--keywords)
-        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
-        (font-lock-add-keywords nil prettify-symbols--keywords)
-        (while (re-search-forward re nil t)
-          (font-lock-flush (line-beginning-position) (line-end-position))))))
-
-  (defun rasmus/org-prettify-src ()
-    "Hide src options via `prettify-symbols-mode'.
-
-  `prettify-symbols-mode' is used because it has uncollpasing. It's
-  may not be efficient."
-    (let* ((case-fold-search t)
-           (at-src-block (save-excursion
-                           (beginning-of-line)
-                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
-      ;; Test if we moved out of a block.
-      (when (or (and rasmus/org-at-src-begin
-                     (not at-src-block))
-                ;; File was just opened.
-                (eq rasmus/org-at-src-begin -1))
-        (rasmus/org-prettify-src--update))
-      ;; Remove composition if at line; doesn't work properly.
-      ;; (when at-src-block
-      ;;   (with-silent-modifications
-      ;;     (remove-text-properties (match-end 0)
-      ;;                             (1+ (line-end-position))
-      ;;                             '(composition))))
-      (setq rasmus/org-at-src-begin at-src-block)))
-
-  (defun rasmus/org-prettify-symbols ()
-    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
-          (cl-reduce 'append
-                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
-                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
-                               ("#+end_src"   . ?□) ;; ⏹
-                               ("#+header:" . ,rasmus/ob-header-symbol)
-                               ("#+begin_quote" . ?»)
-                               ("#+end_quote" . ?«)))))
-    (turn-on-prettify-symbols-mode)
-    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
-  (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
-
-;; Last up­dated: 2019-06-09
-#+end_src
-
-:End:
-
-# (rasmus/org-prettify-src--update)
-#+BEGIN_SRC emacs-lisp
-"noice"
-#+END_SRC
-
-His development relies on built-in prettify-symbols-mode, which disguises strings in a
-buffer for the sake of readability or aesthetics.
-Following the example in the documentation, ~C-h f prettify-symbols-mode~,
-we can quickly approximate his efforts for ~example~ blocks as follows, however a main issue
-is that source blocks have busybodied headers which his setup disguises as ‘≡’.
-#+begin_src emacs-lisp :tangle yes
-(global-prettify-symbols-mode)
-
-(defvar my-prettify-alist nil
-  "Musa's personal prettifications.")
-
-(push '("<=" . ?≤) my-prettify-alist)
-(push '("->" . ?→) my-prettify-alist)
-(push '("-->" . ?⟶) my-prettify-alist)
-(push '("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) my-prettify-alist) ;; ℰ⇒
-(push '("#+end_example" . ?⇐) my-prettify-alist)                  ;; ⇐
-(push '("{{{fold(" . ?↳) my-prettify-alist)
-(push '(")}}}" . ?↲) my-prettify-alist)
-(push '("{{{end-fold}}}" . ?↺) my-prettify-alist)
-
-(when (<= 1 2)) ;; prettify symbols not loading
-
-(-let [modify (lambda ()
-              (setq prettify-symbols-alist
-                    (append my-prettify-alist prettify-symbols-alist)))]
-
-  (add-hook 'text-mode-hook modify)
-  (add-hook 'prog-mode-hook modify)
-  ;; For org-example blocks, “C-c '” to see the prettifications of language constructs.
-  ;; Or alter the particular hook directly.
-  (add-hook 'org-mode-hook modify) ;; for the folding blocks
-)
-#+end_src
-
-See [[http://www.modernemacs.com/post/prettify-mode/][“Mathematical Notation in Emacs”]] for how such prettifications can make verbose (Python)
-scripts much more readable by employing more economical disguises.
-
-A nice sanity:
-#+BEGIN_SRC emacs-lisp
-;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
-(setq prettify-symbols-unprettify-at-point 'right-edge)
-#+END_SRC
-
-The ~↳Title Here↲ Contents ↺~ combination is for my makeshift HTML code folding macro
----word-wrapped for readability.
-#+BEGIN_SRC org :tangle no
-,#+MACRO: end-fold  #+HTML: </details>
-,#+MACRO: fold      #+HTML: <details class="code-details"> <summary> <strong>
-                              <font face="Courier" size="3" color="green"> $1
-                              </font> </strong> </summary>
-#+END_SRC
-
-Let's have this fold-away in the source buffer as well by using [[https://www.emacswiki.org/emacs/FoldingMode][folding-mode]];
-with show/hide with ~C-<tab>~ key.
-#+BEGIN_SRC emacs-lisp
-(use-package folding
- :init
- (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
- ; (setq folding-top-mark "{{{fold(")
- ; (setq folding-bottom-mark "{{{end-fold}}}")
- :config
-  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
-  (add-hook 'org-mode-hook #'folding-mode)
-)
-#+END_SRC
-
-#+RESULTS:
-: t
-
-:Example:
-
-# The (org-mode-restart) invocation actually enables the source block prettifications.
-
-# Empty macros to make the example go through.
-#
-#+MACRO: end-fold
-#+MACRO: fold
-
-
-{{{fold(nice)}}}
-
-hello
-
-{{{end-fold}}}
-
-:End:
 
 ** Working with Citations
 :PROPERTIES:
@@ -5181,26 +5167,6 @@ Dual to ~C-k~,
 ;; M-k kills to the left
 (global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
 #+END_SRC
-** ~file-as-list~ and ~file-as-string~
-:PROPERTIES:
-:CUSTOM_ID: ~file-as-list~-and-~file-as-string~
-:END:
-
-Disclaimer: I wrote the following /before/ I learned any lisp; everything below is probably terrible.
-#+BEGIN_SRC emacs-lisp
-(defun file-as-list (filename)
-  "Return the contents of FILENAME as a list of lines"
-  (with-temp-buffer
-    (insert-file-contents filename)
-    (split-string (buffer-string))))
-
-(defun file-as-string (filename)
-  "Return the contents of FILENAME as a list of lines"
-  (with-temp-buffer
-    (insert-file-contents filename)
-    (buffer-string)))
-#+END_SRC
-
 ** ~C-x k~ kills current buffer, ~C-u C-x k~ kills all others
 :PROPERTIES:
 :CUSTOM_ID: kill-buffers
