@@ -159,7 +159,8 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 ;; ~README~ ---From ~init.org~ to ~init.el~:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:1]]
-(use-package quelpa-use-package)
+(use-package quelpa-use-package
+  :custom (quelpa-upgrade-p t)) ;; Always try to update packages
 ;; Installing Emacs packages directly from source:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:2]]
@@ -373,6 +374,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   :commands restart-emacs)
 ;; Restarting Emacs ---Keeping buffers open across sessions?:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Restarting Emacs ---Keeping buffers open across sessions?][Restarting Emacs ---Keeping buffers open across sessions?:2]]
+(setq-default save-place t)
+(setq save-place-file "~/.emacs.d/etc/saveplace")
+;; Restarting Emacs ---Keeping buffers open across sessions?:2 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Automatic Backups][Automatic Backups:1]]
 ;; New location for backups.
 (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
@@ -562,6 +568,13 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   :config (dimmer-mode))
 ;; Dimming Unused Windows:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Buffer names are necessarily injective][Buffer names are necessarily injective:1]]
+;; Note that ‘uniquify’ is builtin.
+(require 'uniquify)
+(setq uniquify-separator "/"               ;; The separator in buffer names.
+      uniquify-buffer-name-style 'forward) ;; names/in/this/style
+;; Buffer names are necessarily injective:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:1]]
 (setq visible-bell 1)
 ;; Flashing when something goes wrong ---no blinking:1 ends here
@@ -639,9 +652,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:1]]
 (use-package persistent-scratch
-  ;; Enable both autosave and restore the last saved state of scratch
-  ;; buffer, if any, on Emacs start.
-  :config (persistent-scratch-setup-default))
+  ;; In this mode, the usual save key saves to the underlying persistent file.
+  :bind (:map persistent-scratch-mode-map
+              ("C-x C-s" . persistent-scratch-save)))
 ;; Persistent Scratch Buffer:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:2]]
@@ -649,11 +662,10 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
    "Recreate the scratch buffer, loading any persistent state."
    (interactive)
    (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
-   (insert initial-scratch-message)
-   (ignore-errors (persistent-scratch-restore))
-   (persistent-scratch-autosave-mode 1)
+   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
    (org-mode)
-   (local-set-key (kbd "C-x C-s") 'persistent-scratch-save))
+   (persistent-scratch-mode)
+   (persistent-scratch-autosave-mode 1))
 
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 ;; Persistent Scratch Buffer:2 ends here
@@ -670,13 +682,16 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Prose:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:1]]
-;; Let's avoid going over 80 columns
-(setq fill-column 80)
+(setq-default fill-column 80          ;; Let's avoid going over 80 columns
+              truncate-lines nil      ;; I never want to scroll horizontally
+              indent-tabs-mode nil)   ;; Use spaces instead of tabs
+;; Fill-mode ---Word Wrapping:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:2]]
 ;; Wrap long lines when editing text
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
-;; Fill-mode ---Word Wrapping:1 ends here
+;; Fill-mode ---Word Wrapping:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Word Completion][Word Completion:1]]
 (use-package company
@@ -695,6 +710,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
         ;; M-⟪num⟫ to select an option according to its number.
         company-show-numbers t
+
+        ;; Edge of the completion list cycles around.
+        company-selection-wrap-around t
 
         ;; Do not downcase completions by default.
         company-dabbrev-downcase nil
@@ -781,7 +799,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Fix spelling as you type --thesaurus & dictionary too!:11 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:13]]
-(autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
+;; The Typing Of Emacs, a game.
+;; (use-package typing-of-emacs)
+;; quelpa!
 ;; Fix spelling as you type --thesaurus & dictionary too!:13 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:14]]
@@ -1246,6 +1266,14 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (add-hook 'org-mode-hook #'folding-mode))
 ;; Making Block Delimiters Less Intrusive:6 ends here
 
+;; [[file:~/.emacs.d/init.org::*Org-Mode ⇒ PDF & HTML][Org-Mode ⇒ PDF & HTML:1]]
+;; default to 4 headlines of export
+(setq org-export-headline-levels 4)
+
+;; no numbers by default at export
+(setq org-export-with-section-numbers nil)
+;; Org-Mode ⇒ PDF & HTML:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
 ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
 ;; Most useful for non-LaTeX files.
@@ -1305,6 +1333,50 @@ E.g., ↯ We'll go on a ∀∃⇅ adventure
 (advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
 ;; Ensuring Useful HTML Anchors:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*HTML “Folded Drawers”][HTML “Folded Drawers”:1]]
+(defun my/org-drawer-format (name contents)
+  "Export to HTML the drawers named with prefix ‘fold_’, ignoring case.
+
+The resulting drawer is a ‘code-details’ and so appears folded;
+the user clicks it to see the information therein.
+Henceforth, these are called ‘fold drawers’.
+
+Drawers without such a prefix may be nonetheless exported if their
+body contains ‘:export: t’ ---this switch does not appear in the output.
+Thus, we are biased to generally not exporting non-fold drawers.
+
+One may suspend export of fold drawers by having ‘:export: nil’
+in their body definition.
+
+Fold drawers naturally come with a title.
+Either it is specfied in the drawer body by ‘:title: ⋯’,
+or otherwise the drawer's name is used with all underscores replaced
+by spaces.
+"
+  (let* ((contents′ (replace-regexp-in-string ":export:.*\n?" "" contents))
+         (fold? (s-prefix? "fold_" name 'ignore-case))
+         (export? (string-match ":export:\s+t" contents))
+         (not-export? (string-match ":export:\s+nil" contents))
+         (title′ (and (string-match ":title:\\(.*\\)\n" contents)
+                      (match-string 1 contents))))
+
+    ;; Ensure we have a title.
+    (unless title′ (setq title′ (s-join " " (cdr (s-split "_" name)))))
+
+    ;; Output
+    (cond
+     ((and export? (not fold?)) contents′)
+     (not-export? nil)
+     (fold?
+      (thread-last contents′
+        (replace-regexp-in-string ":title:.*\n" "")
+        (format "<details class=\"code-details\"> <summary> <strong>
+            <font face=\"Courier\" size=\"3\" color=\"green\"> %s
+            </font> </strong> </summary> %s </details>" title′))))))
+
+(setq org-html-format-drawer-function 'my/org-drawer-format)
+;; HTML “Folded Drawers”:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*[[https://revealjs.com/?transition=zoom#/\][Reveal.JS\]] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
 (use-package ox-reveal
   :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
@@ -1329,6 +1401,13 @@ E.g., ↯ We'll go on a ∀∃⇅ adventure
 (global-aggressive-indent-mode t)
 ;; Programming:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Eldoc for Lisp and Haskell][Eldoc for Lisp and Haskell:1]]
+(add-hook 'emacs-lisp-mode-hook 'turn-on-eldoc-mode)
+(add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
+(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
+(add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
+;; Eldoc for Lisp and Haskell:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Editor Documentation with Contextual Information][Editor Documentation with Contextual Information:1]]
 (use-package helpful)
 
@@ -1352,16 +1431,14 @@ E.g., ↯ We'll go on a ∀∃⇅ adventure
                (format "Describe symbol (default %s): " thing)
                (vconcat (list thing) obarray)
                (lambda (vv)
-                (cl-some (lambda (x) (funcall (nth 1 x) vv))
-                         describe-symbol-backends))
+                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                          describe-symbol-backends))
                t nil nil))
          (it (intern val)))
-
-    (if current-prefix-arg
-        (funcall #'describe-symbol it)
-      (cond
-       ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
-       (t (helpful-symbol it))))))
+    (cond
+     (current-prefix-arg (funcall #'describe-symbol it))
+     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+     (t (helpful-symbol it)))))
 
 ;; Keybindings.
 (global-set-key (kbd "C-h o") #'my/describe-symbol)
@@ -1507,11 +1584,9 @@ user."
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
 
-;; Enable ‘possibly confusing commands’
-(put 'downcase-region 'disabled nil)
-(put 'upcase-region 'disabled nil)
-(put 'narrow-to-region 'disabled nil)
-(put 'narrow-to-page 'disabled nil)
+;; Enable all ‘possibly confusing commands’ such as helpful but
+;; initially-worrisome “narrow-to-region”, C-x n n.
+(setq disabled-command-function nil)
 ;; Helpful Utilities & Shortcuts:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Documentation Pop-Ups][Documentation Pop-Ups:1]]
@@ -1520,23 +1595,6 @@ user."
    (setq company-quickhelp-delay 0.1)
    (company-quickhelp-mode))
 ;; Documentation Pop-Ups:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake][Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake:1]]
-(defvar my-keys-minor-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-m") 'recompile)
-    map)
-  "my-keys-minor-mode keymap.")
-
-(define-minor-mode my-keys-minor-mode
-  "A minor mode so that my key settings override annoying major modes."
-  :init-value t
-  :lighter " my-keys")
-
-(my-keys-minor-mode)
-
-(diminish 'my-keys-minor-mode) ;; Don't show it in the modeline.
-;; Bind ~recompile~ to ~C-c C-m~ -- “m” for “m”ake:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Reload buffer with ~f5~][Reload buffer with ~f5~:1]]
 (global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
@@ -1573,17 +1631,19 @@ user."
 
 ;; [[file:~/.emacs.d/init.org::*Switching from 2 horizontal windows to 2 vertical windows][Switching from 2 horizontal windows to 2 vertical windows:1]]
 (defun ensure-two-vertical-windows ()
-  "I used this method often when programming in Coq."
- (interactive)
- (other-window 1)			;; C-x 0
- (let ((otherBuffer (buffer-name)))
-   (delete-window)			;; C-x 0
-   (split-window-right)			;; C-x 3
-   (other-window 1)			;; C-x 0
-   (switch-to-buffer otherBuffer)	;; C-x b RET
- )
- (other-window 1)
-)
+  "I used this method often when programming in Coq.
+
+When there are two vertical windows, this method ensures the left-most
+window contains the buffer with the cursour in it."
+  (interactive)
+  (let ((otherBuffer (buffer-name)))
+    (other-window 1)                ;; C-x 0
+    (delete-window)                 ;; C-x 0
+    (split-window-right)			;; C-x 3
+    (other-window 1)                ;; C-x 0
+    (switch-to-buffer otherBuffer)	;; C-x b RET
+    (other-window 1)))
+
 (global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
 ;; Switching from 2 horizontal windows to 2 vertical windows:1 ends here
 

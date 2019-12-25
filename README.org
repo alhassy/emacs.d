@@ -1,4 +1,4 @@
-# Created 2019-12-23 Mon 14:34
+# Created 2019-12-25 Wed 06:52
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
@@ -65,6 +65,7 @@ in ~“this”~ configuration.
   - [[#a-sleek--informative-mode-line][A sleek & informative mode line]]
   - [[#never-lose-the-cursor][Never lose the cursor]]
   - [[#dimming-unused-windows][Dimming Unused Windows]]
+  - [[#buffer-names-are-necessarily-injective][Buffer names are necessarily injective]]
   - [[#flashing-when-something-goes-wrong----no-blinking][Flashing when something goes wrong ---no blinking]]
   - [[#hiding-scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu]]
   - [[#highlight--complete-parenthesis-pair-when-cursor-is-near--][Highlight & complete parenthesis pair when cursor is near ;-)]]
@@ -100,8 +101,10 @@ in ~“this”~ configuration.
   - [[#working-with-citations][Working with Citations]]
   - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
+  - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
 - [[#programming][Programming]]
+  - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
   - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
   - [[#highlight-defined-emacs-lisp-symbols][Highlight Defined Emacs Lisp Symbols]]
   - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
@@ -165,7 +168,7 @@ You can make it suited to your personal needs.
 If there's a feature you would like, a behaviour your desire, you can simply code that into Emacs with
 a bit of Lisp. As a programming language enthusiast, for me Emacs is my default Lisp interpreter
 and a customisable IDE that I use for other programming languages
---such as C, Haskell, Agda, Racket, and Prolog.
+--such as C, Haskell, Agda, Lisp, and Prolog.
 Moreover, being a Lisp interpreter, we can alter the look and feel of Emacs live, without having
 to restart it --e.g., press ~C-x C-e~ after the final parenthesis of ~(scroll-bar-mode 0)~
 to run the code that removes the scroll-bar.
@@ -229,14 +232,14 @@ Likewise for other system utilities and services (•̀ᴗ•́)و
 Moreover, as will be shown below, you can literally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
 for textually input in your operating system --no copy-paste required.
 
-*Keyboard Navigation and Alteration*
-Suppose you wrote a paragraph of text, and wanted to ‘border’ it up for emphasies
-in hypens. Using the mouse to navigate along with a copy-paste of the hypens
-is vastely inferior to the incantation
-~M-{ C-u 80 - RET M-} C-u 80 - RET~.
-If we want to border up the previous 𝓃-many paragraphs,
-we simply prefix ~M-{,}~ above with  ~C-u 𝓃~
----a manual approach would have us count 𝓃 and slowly scroll.
+*Keyboard Navigation and Alteration* Suppose you wrote a paragraph of text, and
+wanted to ‘border’ it up for emphasies in hypens. Using the mouse to navigate
+along with a copy-paste of the hypens is vastely inferior to the incantation ~M-{
+C-u 80 - RET M-} C-u 80 - RET~.  If we want to border up the previous 𝓃-many
+paragraphs, we simply prefix ~M-{,}~ above with ~C-u 𝓃~ ---a manual approach would
+have us count 𝓃 and slowly scroll.  ( Exercise: What incantation of keys
+‘underlines’ the current line with /only/ the necessary amount of dashes?
+---Solution in the source file. )
 
 Finally, here's some fun commands to try out:
 - ~M-x doctor~ ---generalising the idea of rubber ducks
@@ -354,7 +357,6 @@ find the desired package, press ~i~ to mark it for installation, then install al
 marked packages by pressing ~x~.
 
 - /Interactively/:  ~M-x list-packages~ to see all melpa packages that can install
-  - Not in alphabetical order, so maybe search with ~C-s~.
   - Press ~Enter~ on a package to see its description.
 - Or more quickly, to install, say, the haskell mode: ~M-x package-install RET
     unicode-fonts RET~.
@@ -421,6 +423,11 @@ macro/interface that manages other packages and the way they interact.
     leading to the invocation ~((m₁ … mₙ) . <whatever-the-name-is>-mode)~ instead.
 
     Additionally, when /n = 1/, the extra outer parenthesis are not necessary.
+
+    Outside of =use-package=, one normally uses a ~add-hook~ clause.  Likewise, an
+    ‘advice’ can be given to a function to make it behave differently ---this is
+    known as ‘decoration’ or an ‘attribute’ in other languages.
+
   - ~:custom (k₁ v₁ d₁) … (kₙ vₙ dₙ)~ Sets a package's custom variables ~kᵢ~ to have
     values ~vᵢ~, along with /optional/ user documentation ~dᵢ~ to explain to yourself,
     in the future, why you've made this decision.
@@ -688,7 +695,8 @@ when we want to install a file from souce we use the keyword ~:quelpa t~.
 
 
 #+begin_src emacs-lisp
-(use-package quelpa-use-package)
+(use-package quelpa-use-package
+  :custom (quelpa-upgrade-p t)) ;; Always try to update packages
 #+end_src
 
 Let's use this to obtain an improved info-mode from the EmacsWiki.
@@ -828,11 +836,11 @@ Finally, one of the main points for using version control is to have access to
 historic versions of a file. The following utility allows us to ~M-x
 git-timemachine~ on a file and use ~p/n/g/q~ to look at previous, next, goto
 arbitrary historic versions, or quit.
-- If we want to roll back to a previous version, we just ~write-file~ or ~C-x C-s~
-  as usual! The power of text!
 #+begin_src emacs-lisp
 (use-package git-timemachine)
 #+end_src
+If we want to roll back to a previous version, we just ~write-file~ or ~C-x C-s~ as
+usual! The power of text!
 
 ** Syncing to the System's =$PATH=
 For one reason or another, on OS X it seems that an Emacs instance
@@ -1123,7 +1131,9 @@ thought of implementing that.
 #+begin_src emacs-lisp
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :commands restart-emacs)
+  :commands restart-emacs
+  ;; Let's define an alias so there's no need to remember the order.
+  :config (defalias 'emacs-restart #'restart-emacs))
 #+end_src
 
 The following is disabled. I found it a nuisance to have my files
@@ -1133,6 +1143,14 @@ open across sessions ---If I'm closing Emacs, it's for a good reason.
 (desktop-save-mode 1)
 (setq desktop-restore-eager 10)
 #+end_example
+
+Instead, let's try the following: When you visit a file, point goes to the last
+place where it was when you previously visited the same file.
+#+begin_src emacs-lisp
+(setq-default save-place t)
+(setq save-place-file "~/.emacs.d/etc/saveplace")
+#+end_src
+
 ** Automatic Backups
 By default, Emacs saves backup files ---those ending in =~=--- in the current
 directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in
@@ -1293,6 +1311,9 @@ E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
 and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
 Both show a pop-up of other possible commands.
 
+       Here's a nifty tutorial:
+[[http://tuhdo.github.io/helm-intro.html][A package in a league of its own: Helm]]
+
 Let's ensure ~C-x b~ shows us: Current buffers, recent files, and bookmarks
 ---as well as the ability to create bookmarks, which is via ~C-x r b~ manually.
 For example, I press ~C-x b~ then type any string and will have the option of
@@ -1333,6 +1354,9 @@ changes with ~C-c C-e~ and apply them by ~C-x C-s~.
   :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
           (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
 #+end_src
+
+- ~C-u 𝓃 C-s~ does a search but showing 𝓃 contextual lines!
+- ~helm-multi-swoop-all~, ~C-M-s~, lets us grep files anywhere!
 
 ** My to-do list: The initial buffer when Emacs opens up
 I almost always have Emacs open; I don't need a dashboard, but would like to see
@@ -1465,6 +1489,30 @@ Let's dim windows, and even the whole Emacs frame, when not in use.
 (use-package dimmer
   :config (dimmer-mode))
 #+end_src
+
+A more ‘fine-grained’ [[https://github.com/larstvei/Focus][tool]] dims all text except the ‘paragraph’ you're working
+on. It's nifty, but not for me.
+
+** Buffer names are necessarily injective
+By default when multiple files sharing the same name are opened, say for
+comparison from different directories, their buffers are named uniquely by
+having the format “⟨file-name⟩ <𝓃>”, for numbers 𝓃. It'd be more helpful
+to have the buffer names reflect their location.
+#+begin_src emacs-lisp
+;; Note that ‘uniquify’ is builtin.
+(require 'uniquify)
+(setq uniquify-separator "/"               ;; The separator in buffer names.
+      uniquify-buffer-name-style 'forward) ;; names/in/this/style
+#+end_src
+
+Note that this does not affect cloning buffers, ~C-x 4 c~.
+
+( A function /f/ is /injective/ precisely when it's /distinction-preserving/; i.e.,
+  /x ≠ y ≡ f x ≠ f y/. We can tell whether two things are the same or not, by
+  ‘zooming in’ on their particular property ‘f’, which may be easier to compare.
+  E.g., object IDs, hashcodes, unique keys in database tables. )
+
+( Why am I bringing this up? I like math and seldom get to use it; so why not! )
 
 ** Flashing when something goes wrong ---no blinking
 Make top and bottom of screen flash when something unexpected happens thereby
@@ -1629,9 +1677,9 @@ have not relocated our playthings to their appropriate files. Whence let's save
 & restore the scratch buffer by default.
 #+begin_src emacs-lisp
 (use-package persistent-scratch
-  ;; Enable both autosave and restore the last saved state of scratch
-  ;; buffer, if any, on Emacs start.
-  :config (persistent-scratch-setup-default))
+  ;; In this mode, the usual save key saves to the underlying persistent file.
+  :bind (:map persistent-scratch-mode-map
+              ("C-x C-s" . persistent-scratch-save)))
 #+end_src
 
 We might accidentally close this buffer, so we could utilise the following.
@@ -1640,11 +1688,10 @@ We might accidentally close this buffer, so we could utilise the following.
    "Recreate the scratch buffer, loading any persistent state."
    (interactive)
    (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
-   (insert initial-scratch-message)
-   (ignore-errors (persistent-scratch-restore))
-   (persistent-scratch-autosave-mode 1)
+   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
    (org-mode)
-   (local-set-key (kbd "C-x C-s") 'persistent-scratch-save))
+   (persistent-scratch-mode)
+   (persistent-scratch-autosave-mode 1))
 
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 #+end_src
@@ -1668,15 +1715,25 @@ places upon save.
 (add-hook 'before-save-hook 'whitespace-cleanup)
 #+end_src
 
+See [[http://ergoemacs.org/emacs/whitespace-mode.html][here]] for making whitespace visible; including spaces, tabs, and newlines
+
+
 ** Fill-mode ---Word Wrapping
 In fill mode, when you type past the end of a line, Emacs automatically starts a
 new line, cleverly formatting paragraphs. This is a powerful form of “word
 wrap”.
 
 #+begin_src emacs-lisp
-;; Let's avoid going over 80 columns
-(setq fill-column 80)
+(setq-default fill-column 80          ;; Let's avoid going over 80 columns
+              truncate-lines nil      ;; I never want to scroll horizontally
+              indent-tabs-mode nil)   ;; Use spaces instead of tabs
+#+end_src
 
+Certain variables are sensibly local to a buffer, and so ~setq~ only alters their
+value for one buffer. Using ~setq-default~ we change a variable's default value,
+in every buffer.
+
+#+begin_src emacs-lisp
 ;; Wrap long lines when editing text
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
@@ -1709,6 +1766,9 @@ and so I need only type partial words then tab to get the full word!
 
         ;; M-⟪num⟫ to select an option according to its number.
         company-show-numbers t
+
+        ;; Edge of the completion list cycles around.
+        company-selection-wrap-around t
 
         ;; Do not downcase completions by default.
         company-dabbrev-downcase nil
@@ -1744,10 +1804,13 @@ The libraries ~emojify~ and ~emojify-logos~ provides cool items like =:haskell: 
 Unfortunately they do not easily export to html with org-mode, so I'm not using them.
 
 ** Fix spelling as you type --thesaurus & dictionary too!
-I would like to check spelling by default.
+I would like to check spelling on the fly.
 - ~C-;~ :: Cycle through corrections for word at point.
 - ~M-$~ :: Check and correct spelling of the word at point
 - ~M-x ispell-change-dictionary RET TAB~ :: To see what dictionaries are available.
+
+~flyspell-prog-mode~ enables spell checking for programming by only considering
+comments and strings.
 
 #+begin_src emacs-lisp
 (use-package flyspell
@@ -1829,7 +1892,9 @@ Use ~M-↑,↓~ to navigate dictionary results, and ~wordnut-search~ for a new s
 Use this game to help you learn to spell words that you're having trouble with;
 see ~~/Dropbox/spelling.txt~.
 #+begin_src emacs-lisp
-(autoload 'typing-of-emacs "~/.emacs.d/typing.el" "The Typing Of Emacs, a game." t)
+;; The Typing Of Emacs, a game.
+;; (use-package typing-of-emacs)
+;; quelpa!
 #+end_src
 
 Practice touch typing using [[https://github.com/hagleitn/speed-type][speed-type]].
@@ -2544,6 +2609,14 @@ In this section we consider the Org-mode exporters for PDFs and
 HTMLs. For example, we account for LaTeX citations and reliable HTML
 anchors.
 
+#+begin_src emacs-lisp
+;; default to 4 headlines of export
+(setq org-export-headline-levels 4)
+
+;; no numbers by default at export
+(setq org-export-with-section-numbers nil)
+#+end_src
+
 ** Working with Citations
 [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
 
@@ -2649,6 +2722,87 @@ from a selection of available ones, then we'll be prompted for a value
 for it from a list of values you've used elsewhere. This is useful for
 remaining consistent for when trees share similar properties.
 
+** HTML “Folded Drawers”
+#+begin_src emacs-lisp
+(defun my/org-drawer-format (name contents)
+  "Export to HTML the drawers named with prefix ‘fold_’, ignoring case.
+
+The resulting drawer is a ‘code-details’ and so appears folded;
+the user clicks it to see the information therein.
+Henceforth, these are called ‘fold drawers’.
+
+Drawers without such a prefix may be nonetheless exported if their
+body contains ‘:export: t’ ---this switch does not appear in the output.
+Thus, we are biased to generally not exporting non-fold drawers.
+
+One may suspend export of fold drawers by having ‘:export: nil’
+in their body definition.
+
+Fold drawers naturally come with a title.
+Either it is specfied in the drawer body by ‘:title: ⋯’,
+or otherwise the drawer's name is used with all underscores replaced
+by spaces.
+"
+  (let* ((contents′ (replace-regexp-in-string ":export:.*\n?" "" contents))
+         (fold? (s-prefix? "fold_" name 'ignore-case))
+         (export? (string-match ":export:\s+t" contents))
+         (not-export? (string-match ":export:\s+nil" contents))
+         (title′ (and (string-match ":title:\\(.*\\)\n" contents)
+                      (match-string 1 contents))))
+
+    ;; Ensure we have a title.
+    (unless title′ (setq title′ (s-join " " (cdr (s-split "_" name)))))
+
+    ;; Output
+    (cond
+     ((and export? (not fold?)) contents′)
+     (not-export? nil)
+     (fold?
+      (thread-last contents′
+        (replace-regexp-in-string ":title:.*\n" "")
+        (format "<details class=\"code-details\"> <summary> <strong>
+            <font face=\"Courier\" size=\"3\" color=\"green\"> %s
+            </font> </strong> </summary> %s </details>" title′))))))
+
+(setq org-html-format-drawer-function 'my/org-drawer-format)
+#+end_src
+
+With the following invocations we only see the odd indexed ‘hello’s, where the
+latter two are folded up.
+#+begin_src org :tangle no
+:this-drawer-is-exported:
+:export: t
+hello 1
+:End:
+
+:this-drawer-is-NOT-exported:
+hello 2
+:End:
+
+:fold_This_drawer_has_a_title_in_the_body:
+:title: I am the drawer title 0
+
+hello 3
+:End:
+
+:fold_This_drawer_is_NOT_exported:
+:title: Why are we here?
+:export: nil
+
+hello 4
+:End:
+
+:fold_I_am_the_drawer_title_1:
+
+hello 5
+:End:
+#+end_src
+
+I doubt I could show an example in the Github README, since no HTML export is
+happening using my setup. In case you're reading this on my blog, which has
+exported HTML. Here's the example:
+Now that I've written this, I'm thinking it may have been preferably to use an org-block…?
+
 ** [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework
 Org-mode documents can be transformed into beautiful slide decks
 with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] with the following two simple lines.
@@ -2695,6 +2849,17 @@ resulting PDF locally.
 ;; Always stay indented: Automatically have blocks reindented after every change.
 (use-package aggressive-indent :demand t)
 (global-aggressive-indent-mode t)
+#+end_src
+
+** Eldoc for Lisp and Haskell
+In =emacs-lisp-mode= we can enable =eldoc-mode= to display information
+about a function or a variable in the echo area. Likewise for Haskell.
+
+#+begin_src emacs-lisp
+(add-hook 'emacs-lisp-mode-hook 'turn-on-eldoc-mode)
+(add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
+(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
+(add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
 #+end_src
 
 ** Editor Documentation with Contextual Information
@@ -2972,11 +3137,9 @@ Let's save a few precious seconds,
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
 
-;; Enable ‘possibly confusing commands’
-(put 'downcase-region 'disabled nil)
-(put 'upcase-region 'disabled nil)
-(put 'narrow-to-region 'disabled nil)
-(put 'narrow-to-page 'disabled nil)
+;; Enable all ‘possibly confusing commands’ such as helpful but
+;; initially-worrisome “narrow-to-region”, C-x n n.
+(setq disabled-command-function nil)
 #+end_src
 
 ** Documentation Pop-Ups
