@@ -307,40 +307,25 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
     (exec-path-from-shell-initialize)))
 ;; Syncing to the System's =$PATH=:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Keeping my system up to date][Keeping my system up to date:1]]
-(defun my/stay-up-to-date ()
-  "Ensure that OS and Emacs package listings are up to date.
-
-   Takes ~5 seconds when everything is up to date."
-  (async-shell-command "brew update && brew upgrade")
-  (other-window 1)
-  (rename-buffer "Keeping-system-up-to-date")
-
-  (package-refresh-contents 'please-do-so-in-the-background)
-  (message "Updated Emacs package manager.")
-  (other-window 1))
-
-(add-hook 'after-init-hook 'my/stay-up-to-date)
-
-;; For now, doing this since I'm also calling my/stay-up-to-date with
-;; after-init-hook which hides the startup message.
-(add-hook 'after-init-hook 'display-startup-echo-area-message)
-;; Keeping my system up to date:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Installing OS packages from within Emacs ---Amethyst!][Installing OS packages from within Emacs ---Amethyst!:1]]
+;; [[file:~/.emacs.d/init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:1]]
 ;; Auto installing OS system packages
 (use-package use-package-ensure-system-package)
-;; Installing OS packages from within Emacs ---Amethyst!:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Installing OS packages from within Emacs ---Amethyst!][Installing OS packages from within Emacs ---Amethyst!:3]]
+;; Ensure our operating system is always up to date.
+;; This is run whenever we open Emacs & so wont take long if we're up to date.
+;; It happens in the background ^_^
+(system-packages-update)
+;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:3]]
 ;; An Emacs-based interface to the package manager of your operating system.
 (use-package helm-system-packages)
-;; Installing OS packages from within Emacs ---Amethyst!:3 ends here
+;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*Installing OS packages from within Emacs ---Amethyst!][Installing OS packages from within Emacs ---Amethyst!:4]]
+;; [[file:~/.emacs.d/init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:4]]
 ;; Unlike the Helm variant, we need to specify our OS pacman.
 (setq system-packages-package-manager 'brew)
-;; Installing OS packages from within Emacs ---Amethyst!:4 ends here
+;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Having a workspace manager in Emacs][Having a workspace manager in Emacs:1]]
 (use-package perspective
@@ -697,8 +682,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Sidebar for project file navigation
 (use-package neotree
   :config (global-set-key "\C-x\ d" 'neotree-toggle)
-          (setq neo-theme 'icons)
-          (neotree-refresh))
+          (setq neo-theme 'icons))
 
 ;; Open it up upon startup.
 ;; (neotree-toggle)
@@ -1896,3 +1880,23 @@ window contains the buffer with the cursour in it."
 
 ;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
 ;; Interpret the Haskell source blocks in a file:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Keeping my system up to date][Keeping my system up to date:1]]
+(defun my/stay-up-to-date ()
+  "Ensure that OS and Emacs package listings are up to date.
+
+   Takes ~5 seconds when everything is up to date."
+  (async-shell-command "brew update && brew upgrade")
+  (other-window 1)
+  (rename-buffer "Keeping-system-up-to-date")
+
+  (package-refresh-contents 'please-do-so-in-the-background)
+  (message "Updated Emacs package manager.")
+  (other-window 1))
+
+(add-hook 'after-init-hook 'my/stay-up-to-date)
+
+;; For now, doing this since I'm also calling my/stay-up-to-date with
+;; after-init-hook which hides the startup message.
+(add-hook 'after-init-hook 'display-startup-echo-area-message)
+;; Keeping my system up to date:1 ends here

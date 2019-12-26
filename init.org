@@ -100,8 +100,7 @@ in ~“this”~ configuration.
   - [[#installing-emacs-packages-directly-from-source][Installing Emacs packages directly from source]]
   - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
   - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
-  - [[#keeping-my-system-up-to-date][Keeping my system up to date]]
-  - [[#installing-os-packages-from-within-emacs----amethyst][Installing OS packages from within Emacs ---Amethyst!]]
+  - [[#installing-os-packages-and-automatically-keeping-my-system-up-to-data-from-within-emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs]]
   - [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
   - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
   - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
@@ -701,7 +700,7 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
 ~init.elc~ and ~README.md~.
 
 #+name: enable making init and readme
-#+BEGIN_SRC emacs-lisp :eval never-export
+#+begin_src emacs-lisp :eval never-export
 (defun my/make-init-el-and-README ()
     (interactive "P") ;; Places value of universal argument into: current-prefix-arg
     (when current-prefix-arg
@@ -730,12 +729,12 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
                    (float-time (time-since time)))))))
 
   (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
-#+END_SRC
+#+end_src
 
 Where the following block has ~#+NAME: make-readme~ before it.
 This source block generates the ~README~ for the associated Github repository.
 #+NAME: make-readme
-#+BEGIN_SRC emacs-lisp :tangle no :export_never t
+#+begin_src emacs-lisp :tangle no :export_never t
 ;; Update the table of contents in this file.
 (toc-org-mode)
 (toc-org-insert-toc)
@@ -783,7 +782,7 @@ This source block generates the ~README~ for the associated Github repository.
     (let ((org-export-use-babel nil))
       (org-mode)
       (org-org-export-to-org)))
-#+END_SRC
+#+end_src
 Alternatively, evaluate the above source block with ~C-c C-c~ to produce a ~README~
 file.
 
@@ -1111,29 +1110,7 @@ See the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]
 (set-exec-path-from-shell-PATH)
 #+END_SRC
 :End:
-** Keeping my system up to date
-Let's ensure our system is always up to date.
-#+BEGIN_SRC emacs-lisp
-(defun my/stay-up-to-date ()
-  "Ensure that OS and Emacs package listings are up to date.
-
-   Takes ~5 seconds when everything is up to date."
-  (async-shell-command "brew update && brew upgrade")
-  (other-window 1)
-  (rename-buffer "Keeping-system-up-to-date")
-
-  (package-refresh-contents 'please-do-so-in-the-background)
-  (message "Updated Emacs package manager.")
-  (other-window 1))
-
-(add-hook 'after-init-hook 'my/stay-up-to-date)
-
-;; For now, doing this since I'm also calling my/stay-up-to-date with
-;; after-init-hook which hides the startup message.
-(add-hook 'after-init-hook 'display-startup-echo-area-message)
-#+END_SRC
-
-** Installing OS packages from within Emacs ---Amethyst!
+** Installing OS packages, and automatically keeping my system up to data, from within Emacs
 
 Sometimes Emacs packages depend on existing system binaries, ~use-package~ let's
 us ensure these exist using the ~:ensure-system-package~ keyword extension.
@@ -1145,8 +1122,13 @@ Let's obtain the extension.
 #+BEGIN_SRC emacs-lisp
 ;; Auto installing OS system packages
 (use-package use-package-ensure-system-package)
+
+;; Ensure our operating system is always up to date.
+;; This is run whenever we open Emacs & so wont take long if we're up to date.
+;; It happens in the background ^_^
+(system-packages-update)
 #+END_SRC
-Here's an example use:
+Here's an example use for Emacs packages that require OS packages:
 #+BEGIN_SRC emacs-lisp :tangle no
 (shell-command-to-string "type rg") ;; ⇒ rg not found
 (use-package rg
@@ -2074,8 +2056,7 @@ We open a nifty file manager upon startup.
 ;; Sidebar for project file navigation
 (use-package neotree
   :config (global-set-key "\C-x\ d" 'neotree-toggle)
-          (setq neo-theme 'icons)
-          (neotree-refresh))
+          (setq neo-theme 'icons))
 
 ;; Open it up upon startup.
 ;; (neotree-toggle)
@@ -3335,6 +3316,7 @@ quotes.
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+(org-mode-restart)
 #+END_SRC
 
 His development relies on built-in prettify-symbols-mode, which
@@ -5002,10 +4984,11 @@ resulting text is the above “s_org” block.
 <<my-org-lang-templates()>>
 ,#+end_src
 #+end_example
+:ActuallyDoIt:
 #+begin_src org  :tangle "~/.emacs.d/yankpad.org" :noweb yes :comments none
 <<my-org-lang-templates()>>
 #+end_src
-#
+:End:
 # The “:eval never-export” means that this block is never tangled on document
 # export, C-c C-e.
 
@@ -5693,6 +5676,36 @@ Let's remove repeated matter.
 ;; Also a helpful quick f-key.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
+** Keeping my system up to date
+Let's ensure our system is always up to date.
+#+BEGIN_SRC emacs-lisp
+(defun my/stay-up-to-date ()
+  "Ensure that OS and Emacs package listings are up to date.
+
+   Takes ~5 seconds when everything is up to date."
+  (async-shell-command "brew update && brew upgrade")
+  (other-window 1)
+  (rename-buffer "Keeping-system-up-to-date")
+
+  (package-refresh-contents 'please-do-so-in-the-background)
+  (message "Updated Emacs package manager.")
+  (other-window 1))
+
+(add-hook 'after-init-hook 'my/stay-up-to-date)
+
+;; For now, doing this since I'm also calling my/stay-up-to-date with
+;; after-init-hook which hides the startup message.
+(add-hook 'after-init-hook 'display-startup-echo-area-message)
+#+END_SRC
+
+:MacOS:
+After an OS upgrade, the XCode Command Line Utilities
+may need to be reset.
+
+In a terminal execute: xcode-select --install
+
+May need to actually reboot the system as well.
+:End:
 * COMMENT TODO Improvements
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-Improvements
@@ -6282,8 +6295,10 @@ C-c C-c this snippet to export to blog.
 (let (org-export-use-babel to-github?) (my/publish-to-blog))
 #+END_SRC
 
+ (outline-hide-sublevels 3)
+
 # Local Variables:
-# eval: (progn (org-babel-goto-named-src-block "enable making init and readme") (org-babel-execute-src-block) (outline-hide-sublevels 5))
+# eval: (progn (org-babel-goto-named-src-block "enable making init and readme") (org-babel-execute-src-block))
 # eval: (local-set-key (kbd "<f9>") (lambda () (interactive) (org-babel-goto-named-src-block "publish-to-blog") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
 # compile-command:  (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
 # End:

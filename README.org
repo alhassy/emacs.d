@@ -1,4 +1,4 @@
-# Created 2019-12-26 Thu 09:26
+# Created 2019-12-26 Thu 12:21
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
@@ -49,8 +49,7 @@ in ~“this”~ configuration.
   - [[#installing-emacs-packages-directly-from-source][Installing Emacs packages directly from source]]
   - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
   - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
-  - [[#keeping-my-system-up-to-date][Keeping my system up to date]]
-  - [[#installing-os-packages-from-within-emacs----amethyst][Installing OS packages from within Emacs ---Amethyst!]]
+  - [[#installing-os-packages-and-automatically-keeping-my-system-up-to-data-from-within-emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs]]
   - [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
   - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
   - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
@@ -879,29 +878,7 @@ when Org-mode attempts to produce a PDF.
 #+end_src
 
 See the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] documentation for setting other environment variables.
-** Keeping my system up to date
-Let's ensure our system is always up to date.
-#+begin_src emacs-lisp
-(defun my/stay-up-to-date ()
-  "Ensure that OS and Emacs package listings are up to date.
-
-   Takes ~5 seconds when everything is up to date."
-  (async-shell-command "brew update && brew upgrade")
-  (other-window 1)
-  (rename-buffer "Keeping-system-up-to-date")
-
-  (package-refresh-contents 'please-do-so-in-the-background)
-  (message "Updated Emacs package manager.")
-  (other-window 1))
-
-(add-hook 'after-init-hook 'my/stay-up-to-date)
-
-;; For now, doing this since I'm also calling my/stay-up-to-date with
-;; after-init-hook which hides the startup message.
-(add-hook 'after-init-hook 'display-startup-echo-area-message)
-#+end_src
-
-** Installing OS packages from within Emacs ---Amethyst!
+** Installing OS packages, and automatically keeping my system up to data, from within Emacs
 
 Sometimes Emacs packages depend on existing system binaries, ~use-package~ let's
 us ensure these exist using the ~:ensure-system-package~ keyword extension.
@@ -913,8 +890,13 @@ Let's obtain the extension.
 #+begin_src emacs-lisp
 ;; Auto installing OS system packages
 (use-package use-package-ensure-system-package)
+
+;; Ensure our operating system is always up to date.
+;; This is run whenever we open Emacs & so wont take long if we're up to date.
+;; It happens in the background ^_^
+(system-packages-update)
 #+end_src
-Here's an example use:
+Here's an example use for Emacs packages that require OS packages:
 #+begin_src emacs-lisp :tangle no
 (shell-command-to-string "type rg") ;; ⇒ rg not found
 (use-package rg
@@ -1708,8 +1690,7 @@ We open a nifty file manager upon startup.
 ;; Sidebar for project file navigation
 (use-package neotree
   :config (global-set-key "\C-x\ d" 'neotree-toggle)
-          (setq neo-theme 'icons)
-          (neotree-refresh))
+          (setq neo-theme 'icons))
 
 ;; Open it up upon startup.
 ;; (neotree-toggle)
@@ -3469,9 +3450,6 @@ resulting text is the above “s_org” block.
 <<my-org-lang-templates()>>
 ,#+end_src
 #+end_example
-#+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes :comments none
-<<my-org-lang-templates()>>
-#+end_src
 
 Now ~s_~, due to company mode, brings up a list of languages that I can then
 scroll down through, then “enter” upon to expand. Moreover, the prefix ~s_~ means
