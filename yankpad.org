@@ -1,15 +1,3 @@
-;; [[file:~/.emacs.d/init.org::my-org-lang-templates][my-org-lang-templates]]
-(let (result) ;; ensure result is initially empty
-   (dolist (x '( ("s_el" . "emacs-lisp")
-                 ("s_org" . "org")
-                 ("s_hs" . "haskell")
-                 ("s_ag" . "agda2")
-                 ("s_c" . "c")
-                 ("s_lx" . "latex")
-               ) result)
-      (setq result (concat result "\n" (make-lang-template (car x) (cdr x))))))
-;; my-org-lang-templates ends here
-
 #+Description: This is file is generated from my init.org; do not edit.
 
 * Default                                           :global:
@@ -26,40 +14,425 @@
  $0
 #+end_${1:$(car (split-string yas-text))}
 
-** s_el: emacs-lisp
-#+begin_src emacs-lisp
-$0
-#+end_src
-
-
-** s_org: org
+** s_org: src block for org
 #+begin_src org
 $0
 #+end_src
 
-
-** s_hs: haskell
-#+begin_src haskell
-$0
-#+end_src
-
-
-** s_ag: agda2
+** s_agda2: src block for agda2
 #+begin_src agda2
 $0
 #+end_src
 
-
-** s_c: c
-#+begin_src c
+** s_any: src block for any
+#+begin_src any
 $0
 #+end_src
 
+** s_emacs-lisp: src block for emacs-lisp
+#+begin_src emacs-lisp
+$0
+#+end_src
 
-** s_lx: latex
+** s_shell: src block for shell
+#+begin_src shell
+$0
+#+end_src
+
+** s_python: src block for python
+#+begin_src python
+$0
+#+end_src
+
+** s_haskell: src block for haskell
+#+begin_src haskell
+$0
+#+end_src
+
+** s_ruby: src block for ruby
+#+begin_src ruby
+$0
+#+end_src
+
+** s_ocaml: src block for ocaml
+#+begin_src ocaml
+$0
+#+end_src
+
+** s_C: src block for C
+#+begin_src C
+$0
+#+end_src
+
+** s_dot: src block for dot
+#+begin_src dot
+$0
+#+end_src
+
+** s_latex: src block for latex
 #+begin_src latex
 $0
 #+end_src
+
+** s_org: src block for org
+#+begin_src org
+$0
+#+end_src
+
+** s_makefile: src block for makefile
+#+begin_src makefile
+$0
+#+end_src
+
+** e_org: example block for org
+#+begin_example org
+$0
+#+end_example
+
+** e_agda2: example block for agda2
+#+begin_example agda2
+$0
+#+end_example
+
+** e_any: example block for any
+#+begin_example any
+$0
+#+end_example
+
+** e_emacs-lisp: example block for emacs-lisp
+#+begin_example emacs-lisp
+$0
+#+end_example
+
+** e_shell: example block for shell
+#+begin_example shell
+$0
+#+end_example
+
+** e_python: example block for python
+#+begin_example python
+$0
+#+end_example
+
+** e_haskell: example block for haskell
+#+begin_example haskell
+$0
+#+end_example
+
+** e_ruby: example block for ruby
+#+begin_example ruby
+$0
+#+end_example
+
+** e_ocaml: example block for ocaml
+#+begin_example ocaml
+$0
+#+end_example
+
+** e_C: example block for C
+#+begin_example C
+$0
+#+end_example
+
+** e_dot: example block for dot
+#+begin_example dot
+$0
+#+end_example
+
+** e_latex: example block for latex
+#+begin_example latex
+$0
+#+end_example
+
+** e_org: example block for org
+#+begin_example org
+$0
+#+end_example
+
+** e_makefile: example block for makefile
+#+begin_example makefile
+$0
+#+end_example
+
+** q_org: quote block for org
+#+begin_quote org
+$0
+#+end_quote
+
+** q_agda2: quote block for agda2
+#+begin_quote agda2
+$0
+#+end_quote
+
+** q_any: quote block for any
+#+begin_quote any
+$0
+#+end_quote
+
+** q_emacs-lisp: quote block for emacs-lisp
+#+begin_quote emacs-lisp
+$0
+#+end_quote
+
+** q_shell: quote block for shell
+#+begin_quote shell
+$0
+#+end_quote
+
+** q_python: quote block for python
+#+begin_quote python
+$0
+#+end_quote
+
+** q_haskell: quote block for haskell
+#+begin_quote haskell
+$0
+#+end_quote
+
+** q_ruby: quote block for ruby
+#+begin_quote ruby
+$0
+#+end_quote
+
+** q_ocaml: quote block for ocaml
+#+begin_quote ocaml
+$0
+#+end_quote
+
+** q_C: quote block for C
+#+begin_quote C
+$0
+#+end_quote
+
+** q_dot: quote block for dot
+#+begin_quote dot
+$0
+#+end_quote
+
+** q_latex: quote block for latex
+#+begin_quote latex
+$0
+#+end_quote
+
+** q_org: quote block for org
+#+begin_quote org
+$0
+#+end_quote
+
+** q_makefile: quote block for makefile
+#+begin_quote makefile
+$0
+#+end_quote
+
+** v_org: verse block for org
+#+begin_verse org
+$0
+#+end_verse
+
+** v_agda2: verse block for agda2
+#+begin_verse agda2
+$0
+#+end_verse
+
+** v_any: verse block for any
+#+begin_verse any
+$0
+#+end_verse
+
+** v_emacs-lisp: verse block for emacs-lisp
+#+begin_verse emacs-lisp
+$0
+#+end_verse
+
+** v_shell: verse block for shell
+#+begin_verse shell
+$0
+#+end_verse
+
+** v_python: verse block for python
+#+begin_verse python
+$0
+#+end_verse
+
+** v_haskell: verse block for haskell
+#+begin_verse haskell
+$0
+#+end_verse
+
+** v_ruby: verse block for ruby
+#+begin_verse ruby
+$0
+#+end_verse
+
+** v_ocaml: verse block for ocaml
+#+begin_verse ocaml
+$0
+#+end_verse
+
+** v_C: verse block for C
+#+begin_verse C
+$0
+#+end_verse
+
+** v_dot: verse block for dot
+#+begin_verse dot
+$0
+#+end_verse
+
+** v_latex: verse block for latex
+#+begin_verse latex
+$0
+#+end_verse
+
+** v_org: verse block for org
+#+begin_verse org
+$0
+#+end_verse
+
+** v_makefile: verse block for makefile
+#+begin_verse makefile
+$0
+#+end_verse
+
+** c_org: center block for org
+#+begin_center org
+$0
+#+end_center
+
+** c_agda2: center block for agda2
+#+begin_center agda2
+$0
+#+end_center
+
+** c_any: center block for any
+#+begin_center any
+$0
+#+end_center
+
+** c_emacs-lisp: center block for emacs-lisp
+#+begin_center emacs-lisp
+$0
+#+end_center
+
+** c_shell: center block for shell
+#+begin_center shell
+$0
+#+end_center
+
+** c_python: center block for python
+#+begin_center python
+$0
+#+end_center
+
+** c_haskell: center block for haskell
+#+begin_center haskell
+$0
+#+end_center
+
+** c_ruby: center block for ruby
+#+begin_center ruby
+$0
+#+end_center
+
+** c_ocaml: center block for ocaml
+#+begin_center ocaml
+$0
+#+end_center
+
+** c_C: center block for C
+#+begin_center C
+$0
+#+end_center
+
+** c_dot: center block for dot
+#+begin_center dot
+$0
+#+end_center
+
+** c_latex: center block for latex
+#+begin_center latex
+$0
+#+end_center
+
+** c_org: center block for org
+#+begin_center org
+$0
+#+end_center
+
+** c_makefile: center block for makefile
+#+begin_center makefile
+$0
+#+end_center
+
+** ex_org: export block for org
+#+begin_export org
+$0
+#+end_export
+
+** ex_agda2: export block for agda2
+#+begin_export agda2
+$0
+#+end_export
+
+** ex_any: export block for any
+#+begin_export any
+$0
+#+end_export
+
+** ex_emacs-lisp: export block for emacs-lisp
+#+begin_export emacs-lisp
+$0
+#+end_export
+
+** ex_shell: export block for shell
+#+begin_export shell
+$0
+#+end_export
+
+** ex_python: export block for python
+#+begin_export python
+$0
+#+end_export
+
+** ex_haskell: export block for haskell
+#+begin_export haskell
+$0
+#+end_export
+
+** ex_ruby: export block for ruby
+#+begin_export ruby
+$0
+#+end_export
+
+** ex_ocaml: export block for ocaml
+#+begin_export ocaml
+$0
+#+end_export
+
+** ex_C: export block for C
+#+begin_export C
+$0
+#+end_export
+
+** ex_dot: export block for dot
+#+begin_export dot
+$0
+#+end_export
+
+** ex_latex: export block for latex
+#+begin_export latex
+$0
+#+end_export
+
+** ex_org: export block for org
+#+begin_export org
+$0
+#+end_export
+
+** ex_makefile: export block for makefile
+#+begin_export makefile
+$0
+#+end_export
 
 ** loop:  Elisp's for each loop
 (dolist (${1:var} ${2:list-form})
@@ -84,16 +457,12 @@ $1 ${3:args} = ?$0
 ** eqn_begin: Start a ≡-Reasoning block in Agda
 
 begin
-  ${1:left-hand-side}
-≡⟨ ${3:reason-for-the-equality} ⟩
-  ${2:right-hand-side}
-$0∎
+  ${1:complicated-side}
+$0≡⟨ ${3:reason-for-the-equality} ⟩
+ ${2:simpler-side}
+∎
 
 ** eqn_step: Insert a step in a ≡-Reasoning block in Agda
 ≡⟨ ${2:reason-for-the-equality} ⟩
   ${1:new-expression}
 $0
-
-** remark: top-level literate comment
-
-{{{remark(${1:thoughts})}}} $0

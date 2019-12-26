@@ -29,6 +29,15 @@
 
   :End:
 
+# (require 'org-id) ⇒ for using noweb-refs
+# (require 'ox)     ⇒ for export functions
+# (require 'ox-org)     ⇒ for export functions
+# (use-package org
+#   :ensure org-plus-contrib
+#   :config
+#   (require 'ox-extra)
+#   (ox-extras-activate '(ignore-headlines)))
+
 * Abstract        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -124,6 +133,7 @@ in ~“this”~ configuration.
   - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
   - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
   - [[#placeholder-text----for-learning--experimenting][Placeholder Text ---For Learning & Experimenting]]
+  - [[#some-text-to-make-us-smile][Some text to make us smile]]
   - [[#unicode-input-via-agda-input][Unicode Input via Agda Input]]
   - [[#increasedecrease-text-size][Increase/decrease text size]]
   - [[#moving-text-around][Moving Text Around]]
@@ -158,6 +168,7 @@ in ~“this”~ configuration.
   - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
   - [[#edit-as-root][Edit as Root]]
   - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
+  - [[#snippets----template-expansion][Snippets ---Template Expansion]]
 - [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
   - [[#documentation-pop-ups][Documentation Pop-Ups]]
   - [[#emacs-keybindings-for-my-browser][Emacs keybindings for my browser]]
@@ -197,24 +208,27 @@ for example, it comes with a powerful notion of ‘undo’: Basic text editors h
 yet in Emacs, we have a tree --when we undo and make new edits, we branch off in our editing stream
 as if our text was being version controlled as we type! --We can even switch between such branches!
 
-# Todo: Learn about weaving so that presentation order may differ from code tangeling order.
-#
-#
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :noweb-ref undo-tree-setup
 ;; Allow tree-semantics for undo operations.
-(package-install 'undo-tree)
-(global-undo-tree-mode)
-(diminish 'undo-tree-mode)
+(use-package undo-tree
+  :diminish                       ;; Don't show an icon in the modeline
+  :config
+    ;; Always have it on
+    (global-undo-tree-mode)
+
+    ;; Each node in the undo tree should have a timestamp.
+    (setq undo-tree-visualizer-timestamps t)
+
+    ;; Show a diff window displaying changes between undo nodes.
+    (setq undo-tree-visualizer-diff t))
 
 ;; Execute (undo-tree-visualize) then navigate along the tree to witness
 ;; changes being made to your file live!
-
-;; Each node in the undo tree should have a timestamp.
-(setq undo-tree-visualizer-timestamps t)
-
-;; Show a diff window displaying changes between undo nodes.
-(setq undo-tree-visualizer-diff t)
 #+end_src
+( The above snippet has a ~noweb-ref~: It is presented here in a natural
+position, but is only executable once ~use-package~ is setup and so it
+is weaved there! We can /present/ code in any order and /tangle/ it to
+the order the compilers need it to be! )
 
 /Emacs is an extensible editor: You can make it into the editor of your dreams!/
 You can make it suited to your personal needs.
@@ -585,7 +599,7 @@ We now bootstrap ~use-package~.
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-(require 'use-package)
+(eval-when-compile (require 'use-package))
 #+END_SRC
 
 We can now invoke ~(use-package XYZ :ensure t)~ which should check for the ~XYZ~
@@ -671,6 +685,12 @@ Note:
   - E.g., ~(--filter (> it 10) (list 8 9 10 11 12))~
 + [[https://github.com/magnars/s.el][s]]: “The long lost Emacs string manipulation library”.
   - E.g., ~s-trim, s-replace, s-join~.
+
+Remember that snippet for ~undo-tree~ in the introductory section?
+Let's activate it now, after ~use-package~ has been setup.
+#+BEGIN_SRC emacs-lisp :noweb yes
+  <<undo-tree-setup>>
+#+END_SRC
 
 ** ~README~ ---From ~init.org~ to ~init.el~
 
@@ -837,14 +857,20 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 [[https://github.com/quelpa/quelpa-use-package][Quelpa]] allows us to build Emacs packages directly from source repositories.  It
 derives its name from the German word /Quelle/, for /souce/ [code], adjoined to
 ELPA.  Its ~use-package~ interface allows us to use ~use-package~ like normal but
-when we want to install a file from souce we use the keyword ~:quelpa t~.
-
+when we want to install a file from souce we use the keyword ~:quelpa~.
 
 # Example invocation.
 # (quelpa '(discover-my-major :fetcher git :url "https://framagit.org/steckerhalter/discover-my-major.git"))
 #+BEGIN_SRC emacs-lisp
-(use-package quelpa-use-package
-  :custom (quelpa-upgrade-p t)) ;; Always try to update packages
+(use-package quelpa
+  :custom (quelpa-upgrade-p t "Always try to update packages")
+  :config
+  ;; Get ‘quelpa-use-package’ via ‘quelpa’
+  (quelpa
+   '(quelpa-use-package
+     :fetcher git
+     :url "https://github.com/quelpa/quelpa-use-package.git"))
+  (require 'quelpa-use-package))
 #+END_SRC
 
 Let's use this to obtain an improved info-mode from the EmacsWiki.
@@ -2169,7 +2195,6 @@ places upon save.
 
 See [[http://ergoemacs.org/emacs/whitespace-mode.html][here]] for making whitespace visible; including spaces, tabs, and newlines
 
-
 ** Fill-mode ---Word Wrapping
 :PROPERTIES:
 :CUSTOM_ID: Fill-mode----Word-Wrapping
@@ -2594,7 +2619,22 @@ which means “pain in and of itself”.
 See this [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] to try out the textual navigation and formatting
 bindings on lorem ipsum, gibberish text.
 
+** Some text to make us smile
+
+The  [[https://github.com/davep/dad-joke.el][dad-joke]] queries [[https://icanhazdadjoke.com][https://icanhazdadjoke.com]] to bring us some funny.
+#+begin_src emacs-lisp
+(use-package dad-joke
+  :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
+#+end_src
+
+For example, ~M-x dad-joke~ now inserts:
+#+begin_quote org
+What are the strongest days of the week? Saturday and Sunday...the rest are
+weekdays.
+#+end_quote
+
 ** Unicode Input via Agda Input
+
 :PROPERTIES:
 :CUSTOM_ID: Unicode-Input-via-Agda-Input
 :END:
@@ -2620,7 +2660,7 @@ Let's put it here ourselves.
                 (shell-command-to-string "/usr/local/bin/agda-mode locate")))
 #+end_src
 
-I almost always want the ~agda-mode~ input method.
+I almost always want the ~agda-mode~ input method ---it's like the TeX method, but better.
 #+BEGIN_SRC emacs-lisp
 (require 'agda-input)
 (add-hook 'text-mode-hook (lambda () (set-input-method "Agda")))
@@ -4548,8 +4588,9 @@ list buffer. You can then peek at items with space, or jump to them with enter.
 Seeing the TODO list with each commit is an incentive to actually tackle the
 items there (•̀ᴗ•́)و
 
++ Ensure you exclude generated files, such as the Emacs backups directory,
+  from being consulte. Using ~magit~, press ~i~ to mark items to be ignored.
 + This feature also works outside of git repos.
-
 
 Add these to the version control hydra.
 #+BEGIN_SRC emacs-lisp
@@ -4601,8 +4642,7 @@ blocks in Org-mode. Whence, the above example is a complete Haskell program,
 with a named module and ~main~ method.
 
 I think the built-in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Flymake.html][flymake]] syntax checker is better for Emacs Lisp,
-so let's use that for that.
-
+so let's use that for ELisp.
 #+BEGIN_SRC emacs-lisp
 (use-package flymake
   :hook ((emacs-lisp-mode . (lambda () (flycheck-mode -1)))
@@ -4612,7 +4652,6 @@ so let's use that for that.
               ("C-c ! p" . flymake-goto-prev-error)))
 #+END_SRC
 
-flymake-display-err-menu-for-current-line
 Try it out:
 #+begin_src emacs-lisp :tangle no
 (setq 1 2) ;; Error: ‘1’ is not a variable.
@@ -4623,9 +4662,13 @@ Try it out:
 :CUSTOM_ID: Coding-with-a-Fruit-Salad--Semantic-Highlighting
 :END:
 
+What should be highlighted when we write code? Static keywords with fixed uses,
+or dynamic user-defined names?
+
 + /Syntax/ highlighting ⇨ Specific words are highlighted in strong colours so that
-    the /structure/ can be easily gleaned.
-  - Generally this only includes a language's keywords, such as ~if, loop, begin, end , cond~.
+  the /structure/ can be easily gleaned.
+  - Generally this only includes a language's keywords, such as ~if, loop, begin,
+    end, cond~.
   - User defined names generally share one colour; usually black.
   - Hence, an ~if~ block may be seen as one coloured keyword followed by
     a blob of black text.
@@ -4641,7 +4684,24 @@ Try it out:
     + This can be accomplished anywhere in Emacs by pressing ~M-s h .~ on
       a selected phrase.
 
-+ Here are some reads:
+For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifiers Mode]] gives unique highlighting to identifiers.
+- It comes with support for a bunch of languages, and one can add support for others.
+- It picks colours adaptively to fit the theme; one uses ~M-x color-identifiers:regenerate-colors~ after a theme change.
+
+#+begin_src emacs-lisp
+(use-package color-identifiers-mode
+  :config (global-color-identifiers-mode))
+#+END_SRC
+
+When writing a new name, after about ~5 seconds it obtains a colour which is then
+propagated immediately to any new occurrences. This timeout before recolouring
+is to avoid any lag from multithreading and can be changed by altering the following
+line (#64) in the source file, changing the ~5~ to a smaller number.
+#+BEGIN_SRC emacs-lisp :tangle no
+(run-with-idle-timer 5 t 'color-identifiers:refresh)
+#+END_SRC
+
+Here are further reads:
   - [[https://medium.com/@evnbr/coding-in-color-3a6db2743a1e][Coding in color: How to make syntax highlighting more useful]] ---an excellent, terse, read
   - [[https://zwabel.wordpress.com/2009/01/08/c-ide-evolution-from-syntax-highlighting-to-semantic-highlighting/][C++ IDE Evolution: From Syntax Highlighting to Semantic Highlighting]]
     + Names with a similar prefix share a colour, and class-local items share a colour.
@@ -4650,30 +4710,17 @@ Try it out:
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-
-For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifiers Mode]] gives unique highlighting to identifiers.
-- It comes with support for a bunch of languages, and one can add support for others.
-- It picks colours adaptively to fit the theme; one uses ~M-x color-identifiers:regenerate-colors~ after a theme change.
-
-#+BEGIN_SRC emacs-lisp
-(use-package color-identifiers-mode)
-(global-color-identifiers-mode)
-#+END_SRC
-
-When writing a new name, after about ~5 seconds it obtains a colour which is then
-propagated immediately to any new occurrences. This timeout before recolouring
-is to avoid any lag from multithreading and can be changed by altering the following
-line (#64) in the source file, changing the ~5~ to a smaller number.
-#+BEGIN_SRC emacs-lisp :tangle no
-(run-with-idle-timer 5 t 'color-identifiers:refresh)))
-#+END_SRC
-
 ** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
 :PROPERTIES:
 :CUSTOM_ID: Text-Folding-with---https---github-com-gregsexton-origami-el--Origami-mode--
 :END:
 
-Let's use a feature-full folding mode.
+Literate programming within Org-mode is not always ideal,
+so we use a programming mode directly and then may want
+to have arbitrary ‘sections’ of text folded up.
+Let's describe how to accomplish this goal.
+
+We use a feature-full folding mode.
 #+BEGIN_SRC emacs-lisp
 (use-package origami)
 #+END_SRC
@@ -4696,7 +4743,8 @@ With expected support for searching.
 ;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
 #+END_SRC
 
-Along with a hydra for super quick navigation and easily folding, unfolding blocks! Love this one ^_^
+Along with a hydra for super quick navigation and easily folding, unfolding
+blocks! Love this one ^_^
 #+BEGIN_SRC emacs-lisp
 (defhydra folding-with-origami-mode (global-map "C-c f")
   ("h" origami-close-node-recursively "Hide")
@@ -4715,8 +4763,8 @@ From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once
 #+BEGIN_SRC emacs-lisp
 (defun find-file-as-root ()
   "Like `ido-find-file, but automatically edit the file with
-root-privileges (using tramp/sudo), if the file is not writable by
-user."
+root-privileges (using tramp/sudo), if the file is not writable
+by user."
   (interactive)
   (let ((file (ido-read-file-name "Edit as root: ")))
     (unless (file-writable-p file)
@@ -4755,14 +4803,11 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 #+END_SRC
 
-** TODO COMMENT Snippets -- Template Expansion
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Snippets----Template-Expansion
-:END:
+** Snippets ---Template Expansion
 
 It is common that there is a sequence of text that we tend to repeat
 often, possibly with a name or some other parameter altered.
-Such a snippet could be written once then provided by a simple
+Such a ‘snippet’ could be written once then provided by a simple
 Lisp insert command with the parameters being queried. Luckily, others
 have written such pleasant utilities.
 
@@ -4776,72 +4821,72 @@ template body is then the body of the org heading.
 Any of ~Key, Words, For, Expansion, Here~ will rewrite into the body
 of the org tree. This is much more terse, and I even don't bother
 with that; instead preferring to tangle my templates using yankpad
-as a mere interface.
+as a mere interface. It is important to note that Yankpad also provides
+features that are not in Yassnippet, such as allowing arbitrary language
+code to be executed ---one simply uses an org-src block!
+
+There are only be one major completion backend for any mode, but
+other backends can serve as secondary ones. Here's a function to
+make ~company-yankpad~ a secondary of all existing backends.
+#+begin_src emacs-lisp
+;; Add yasnippet support for all company backends
+;;
+(cl-defun my/company-backend-with-yankpad (backend)
+  "There can only be one main completition backend, so let's
+   enable yasnippet/yankpad as a secondary for all completion
+   backends.
+
+   Src: https://emacs.stackexchange.com/a/10520/10352"
+
+  (if (and (listp backend) (member 'company-yankpad backend))
+      backend
+    (append (if (consp backend) backend (list backend))
+            '(:with company-yankpad))))
+#+end_src
 
 #+begin_src emacs-lisp
 ;; Yet another snippet extension program
 (use-package yasnippet
-  :diminish yas-minor-mode
+  :diminish
   :config
-    (yas-global-mode 1)
+    (yas-global-mode 1) ;; Always have this on for when using yasnippet syntax within yankpad
     ;; respect the spacing in my snippet declarations
-    (setq yas-indent-line 'fixed)
-)
+    (setq yas-indent-line 'fixed))
 
-;; Nice “interface” to said program
+;; Alternative, Org-based extension program
 (use-package yankpad
-  ;; :if company-mode ;; load & initialise only if company-mode is defined
-  :demand t
-  :init
+  :diminish
+  :config
     ;; Location of templates
     (setq yankpad-file "~/.emacs.d/yankpad.org")
-    (setq yankpad-category "Category: Default")
-  :config
-    ;; If you want to complete snippets using company-mode
-    ;; (add-to-list 'company-backends #'company-yankpad)
-    ;; If you want to expand snippets with hippie-expand
-    (add-to-list 'hippie-expand-try-functions-list #'yankpad-expand)
-    ;; Load the snippet templates -- useful after yankpad is altered
-    ;; (add-hook 'after-init-hook 'yankpad-reload)
-)
 
-;; Elementary textual completion backend.
-(setq company-backends
-   (add-to-list 'company-backends 'company-dabbrev))
-;;
-;; Add yasnippet support for all company backends
-;; https://emacs.stackexchange.com/a/10520/10352
-;;
-(defvar company-mode/enable-yas t
-  "There can only be one main completition backend, so let's
-   enable yasnippet/yankpad as a secondary for all completion backends.")
+    ;; Ignore major mode, always use defaults.
+    ;; Yankpad will freeze if no org heading has the name of the given category.
+    (setq yankpad-category "Default")
 
-(defun company-mode/backend-with-yas (backend)
-  (if (or (not company-mode/enable-yas)
-          (and (listp backend) (member 'company-yankpad backend)))
-      backend
-    (append (if (consp backend) backend (list backend))
-            '(:with company-yankpad))))
+    ;; Load the snippet templates ---useful after yankpad is altered
+    (yankpad-reload)
 
-(setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+    ;; Set company-backend as a secondary completion backend to all existing backends.
+    (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
 #+end_src
 
-With these settings, along with the ~company~ backend, I may type a keyword
-then “tab” it into expansion.
+With these settings, along with the ~company~ backend, I may type a keyword then
+“tab” it into expansion.
 
-Yankpad requires we have an org file that contains our templates,
-so we tangle such a file ~~/.emacs.d/yankpad.org~, and have all of our
-templates be globally accessible.
+Yankpad requires we have an org file that contains our templates, so we tangle
+such a file ~~/.emacs.d/yankpad.org~, and have all of our templates be globally
+accessible.
 #+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,#+Description: This is file is generated from my init.org; do not edit.
 
 ,* Default                                           :global:
 #+end_src
 
-Here's an example of a common template I perform by hand --no more!
+Here's an example of a common template I perform by hand ---no more!
 I have the expected habit of copying a URL from someplace then forming
 a link to it by writing ~[[URL] [description]]~, since the URL & syntax are already
-known, let's expand those and place the cursour at the only unknown --the description.
+known, let's expand those and place the cursour at the only unknown ---the description.
 #+begin_src org :tangle "~/.emacs.d/yankpad.org" :comments none
 ,** my-org-insert-link: cleverly insert a link copied to clipboard
  [[${1:`(clipboard-yank)`}][$2]] $0
@@ -4851,9 +4896,9 @@ What's going on here?
 0. This template is expanded with the keyword ~my-org-insert-link~, then “tab”.
 1. The cursour lands at position ~$1~, which has default text being the result
   of evaluating ~(clipboard-yank)~.
-  # I've documented this default as being the url.
+  # I've ‘documented’ this default as being the url.
 
-  # If I leave out the ~$(clipboard-yank)~ part, the default would simply be ~url~.
+  # If I leave out the ~$(clipboard-yank)~ part, the default would simply be ~url~ pasted in.
 
   We may evaluate Lisp code anywhere by enclosing it in backticks.
 
@@ -4872,37 +4917,34 @@ Hence, the ~$2~ field has no default. ⟫
 Let's overwrite the usual way to insert such links, via ~C-c C-l~.
 #+BEGIN_SRC emacs-lisp
 (cl-defun org-insert-link ()
-  "Makes an org link by inserting the URL copied to clipboard
-  and prompting for the link description only.
+  "Makes an org link by inserting the URL copied to clipboard and
+  prompting for the link description only.
 
-  Type over the shown link to change it, or tab to move to the description
-  field.
+  Type over the shown link to change it, or tab to move to the
+  description field.
 
-  This overrides Org-mode's built-in ‘org-insert-link’ utility.
-  "
+  This overrides Org-mode's built-in ‘org-insert-link’ utility;
+  whence C-c C-l uses the snippet."
   (interactive)
   (insert "my-org-insert-link")
-  (yankpad-expand)
-)
+  (yankpad-expand))
 #+END_SRC
 
-The [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippe manual]] is an accessible read, as is the
- [[https://github.com/Kungsgeten/yankpad][Yankpad manual]], and showcases many other utilities; such as
-having certain snippets being activated enabled only in particular
-modes or on demand. Of note is that field ~$n~ can be accessed in
-code with the invocation ~(yas-field-value n)~.
+The [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet manual]] is an accessible read, as is the [[https://github.com/Kungsgeten/yankpad][Yankpad manual]], and
+ showcases many other utilities; such as having certain snippets being
+ enabled only in particular modes or on demand. Of note is that field ~$n~ can be
+ accessed in code with the invocation ~(yas-field-value n)~.
 
 The rest of this section is other templates, not much for now,
 concluding with actually loading this snippet mechanism globally.
 
-*** Org-mode Templates --A reason I “generate” templates ;)
-:PROPERTIES:
-:CUSTOM_ID: Org-mode-Templates---A-reason-I-“generate”-templates-;)
-:END:
+         The remaining subsections discuss contents of my yankpad file.
 
-This produces a pop-up list of org-mode block types, if ~src~ is
-selected, then a list of my commonly used languages pops-up.
-Alternatively, ignore the pop-up menu and write any block or language name.
+*** Org-mode Templates ---A reason I “generate” templates ;)
+
+This produces a pop-up list of org-mode block types, if ~src~ is selected, then a
+list of my commonly used languages pops-up.  Alternatively, ignore the pop-up
+menu and write any block or language name.
 #+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** begin: produce an org-mode block
 ,#+begin_${1:environment$(let*
@@ -4916,82 +4958,50 @@ Alternatively, ignore the pop-up menu and write any block or language name.
 In this case, ~yas-text~ is equivalent to (~yas-field-value 1)~;
 it generally refers to the value of the field being mirrored with ~${n: ⋯yas-text⋯}~.
 
-However, going through pop-ups takes precious time.
+However, going through pop-ups takes precious time ---besides being slightly annyoing.
 Let's introduce a template for my most utilised kind of language blocks.
-#+begin_src org :tangle no
-,** s-el: Elisp org-block
-,#+begin_src emacs-lisp
-$0
-,#+end_src
-#+end_src
-
-However, doing this for each language I want is a waste of time
-and textual space. Why? The purpose of templates is to reduce repetition,
-yet the above block would be repeated with only 3 parts ‘unknown’:
-The expansion keyword, the description, and the org-mode source block name.
-Whence,
-#+name: make-lang-template
-#+begin_src emacs-lisp :tangle yes
-(defun make-lang-template (key lang)
-  "We make an org-mode source block snippet template.
-
-  ‘key’ is the expansion word key for the language ‘lang’;
-  the description for the snippet is also ‘lang’.
-  "
-  (s-join "\n" `(
-    ,(concat "** " key ": " lang)
-    ,(concat "#+begin_src " lang)
-    "$0"
-    "#+end_src"
-    "\n"
-  ))
-)
-#+end_src
-
-The template /text/ is then generated by the following simple loop
---whose source block is named ~my-org-lang-templates~.
-#+NAME: my-org-lang-templates
-#+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
-(let (result) ;; ensure result is initially empty
-   (dolist (x '( ("s_el" . "emacs-lisp")
-                 ("s_org" . "org")
-                 ("s_hs" . "haskell")
-                 ("s_ag" . "agda2")
-                 ("s_c" . "c")
-                 ("s_lx" . "latex")
-               ) result)
-      (setq result (concat result "\n" (make-lang-template (car x) (cdr x))))))
-#+end_src
-
-hi
-# #+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
-#+BEGIN_SRC emacs-lisp :wrap "src org" :results_switches ":tangle nice.txt"
-"hello"
-#+END_SRC
-
-#+RESULTS:
-#+begin_src org
-hello
-#+end_src
-
-
-The /resulting text/ of this block is tangled to our yankpad; an example of the
-resulting text is:
 #+begin_example
-,** s_el: emacs-lisp
-,#+begin_src emacs-lisp
+,** s_org: src block for org
+,#+begin_src org
 $0
 ,#+end_src
 #+end_example
 
+However, doing this for each language I want is a waste of time and textual
+space. Why? The purpose of templates is to reduce repetition, yet the above
+block would be repeated with only 3 parts ‘unknown’: The expansion keyword, the
+description, and the org-mode source block name.  Whence, the template /text/ is
+generated by the following basic loop ---whose source block is named
+~my-org-lang-templates~.
+#+NAME: my-org-lang-templates
+#+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
+;; We make an org BLOCK snippet template for each LANG the user has declared.
+;;
+(loop for (shortcut . block) in '(("s_" . "src")
+                                  ("e_" . "example")
+                                  ("q_" . "quote")
+                                  ("v_" . "verse")
+                                  ("c_" . "center")
+                                  ("ex_" . "export"))
+      concat (loop for lang in (-cons* "org" "agda2" "any" ;; Extra ‘languages’
+                                       ;; Also include whatever languages we've loaded for literate programming.
+                                       (--map (symbol-name (car it)) org-babel-load-languages))
+                   for key         = (concat shortcut lang)
+                   for description = (concat block " block for " lang)
+                   concat (concat "\n** " key ": " description
+                                  "\n#+begin_" block " " lang
+                                  "\n$0"
+                                  "\n#+end_" block "\n")))
+#+end_src
 
 The /resulting text/ of this block, generated below, is tangled to our yankpad
-by utilising a [[https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-reference-syntax.html][noweb]] source block invocation:
-#+begin_src org :tangle no
+by utilising a [[https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-reference-syntax.html][noweb]] source block invocation. An example of the
+resulting text is the above “s_org” block.
+#+begin_example org
 ,#+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes
 <<my-org-lang-templates()>>
 ,#+end_src
-#+end_src
+#+end_example
 #+begin_src org  :tangle "~/.emacs.d/yankpad.org" :noweb yes :comments none
 <<my-org-lang-templates()>>
 #+end_src
@@ -4999,78 +5009,46 @@ by utilising a [[https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-r
 # The “:eval never-export” means that this block is never tangled on document
 # export, C-c C-e.
 
-Now ~s-~, due to company mode, brings up a list of languages
-that I can then simply scroll down through, then “enter” upon to
-expand. Moreover, the prefix ~s-~ means that the key is mostly irrelevant,
-since I needn't remember it because company-mode immediately lists possible completions.
-Super neat stuff :-)
+Now ~s_~, due to company mode, brings up a list of languages that I can then
+scroll down through, then “enter” upon to expand. Moreover, the prefix ~s_~ means
+that the key is mostly irrelevant, since I needn't remember it because
+company-mode immediately lists possible completions /along/ with the /descriptions/
+for the snippets. Likewise for examples with ~e_~ or quotes with ~q_~.  Super neat
+stuff :-)
 
-Ain't this reminiscent of meta-programming ;-)
+                 Ain't this reminiscent of meta-programming ;-)
 
-⟪ Incidentally, I originally wrote an Elisp script to temporarily
-open the yankpad, then append the desired text. However, such
-an approach is brittle: I have to manually execute said script.
-
-In contrast, using noweb invocations to tangle the results is
-more flexible: Any time the tangling is performed, the yankpad
+Using =noweb= invocations, any time the tangling is performed, the yankpad
 is kept up to date --no personal intervention from myself.
-
-Observe that noweb could be utilised in a similar fashion to
-[[https://www.wisdomandwonder.com/article/10603/two-ways-to-share-static-key-pair-values-across-different-tangled-source-files-with-org-mode-literate-programming][share key-value pairs across different source files]].
-⟫
 
 # Neat, but not what I want.
 # https://github.com/abo-abo/auto-yasnippet
-
-:Old_approach:
-Now we invoke the following incantation once so that...
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(with-temp-buffer
-
-   (find-file "~/.emacs.d/yankpad.org")
-   (end-of-buffer)
-
-   (dolist (x '( ("s-el" . "emacs-lisp")
-                 ("s-hs" . "haskell")
-                 ("s-ag" . "agda2")
-                 ("s-c" . "c")
-                 ("s-lx" . "latex")
-               ))
-      (insert (make-lang-template (car x) (cdr x))))
-
-   (save-buffer)
-   (kill-buffer)
-   (yankpad-reload)
-)
-#+END_SRC
-
-(yankpad-reload)
-:End:
 
 :Fun_albeit_useless_exercise:
 
 Let's push this frontier a bit more …
 
-In expressive languages like Agda, one can not only be type polymorphic
-but also ‘level polymorphic’ --since types constitute a hierarchy
-where a ‘type’ is uninterestingly an ‘element’ of a higher ‘type’, ad infinitum.
-For example, the type of a level polymorphic ′choice’ function would
-~{a : Level} (A : Set a) → A~ --note that such a choice function cannot
-exist since for any type ~A~ it returns an element of ~A~, then what of the empty
-type. Anyhow, the template ~{${1:a} : Level} → (${2:A} : Set $1) → $0~
-would suffice to make this happen. Yet, what if we wanted
-/n/-many sets?
+In expressive languages like Agda, one can not only be type polymorphic but also
+‘level polymorphic’ ---since types constitute a hierarchy where a ‘type’ is
+uninterestingly an ‘element’ of a higher ‘type’, ad infinitum.  For example, the
+type of a level polymorphic ′choice’ function would be ~{a : Level} (A : Set a) → A~
+---note that such a choice function cannot exist since for any type ~A~ it returns
+an element of ~A~, then what of the empty type. Anyhow, the template ~{${1:a} :
+Level} → (${2:A} : Set $1) → $0~ would suffice to make this happen. Yet, what if
+we wanted /n/-many sets?
 
 Make a function that takes /n ≤ 26/ as input, produces a list of
 levels, then uses each level to produce a list of type names ;-)
-Exercise to the interested (source code) reader
--- ping me, if you have questions.
 :End:
+
 *** Elisp Templates
 :PROPERTIES:
 :CUSTOM_ID: Elisp-Templates
 :END:
+The following snippets were rather useful as I began learning Lisp to construct
+my editor of choice ---I love Emacs so much. Admittedly, I still need the first
+one below and usually beat around the bush by using ~(loop for ⋯ do ⋯)~, which is
+‘noisier’ but easier to remember and to read for non-Lispers.
 #+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** loop:  Elisp's for each loop
 (dolist (${1:var} ${2:list-form})
@@ -5092,6 +5070,12 @@ Exercise to the interested (source code) reader
 :PROPERTIES:
 :CUSTOM_ID: Equational-Templates
 :END:
+
+To show ~ℒ = ℛ~, one starts at the complicated side, say /ℒ/, then, with the aim of
+simplification, tries to end at the simpler side, /𝓡/.  Along the way, one
+justifies each step of the calculation. This approach is popular in the proof
+assistant Agda; [[https://alhassy.github.io/PathCat/][Examples]]. Read more about [[http://www.mathmeth.com/][informal calculational proofs]].
+
 #+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** fun: Function declaration with type signature
 
@@ -5101,10 +5085,10 @@ $1 ${3:args} = ?$0
 ,** eqn_begin: Start a ≡-Reasoning block in Agda
 
 begin
-  ${1:left-hand-side}
-≡⟨ ${3:reason-for-the-equality} ⟩
-  ${2:right-hand-side}
-$0∎
+  ${1:complicated-side}
+$0≡⟨ ${3:reason-for-the-equality} ⟩
+ ${2:simpler-side}
+∎
 
 ,** eqn_step: Insert a step in a ≡-Reasoning block in Agda
 ≡⟨ ${2:reason-for-the-equality} ⟩
@@ -5112,7 +5096,10 @@ $0∎
 $0
 #+end_src
 
-*** Misc Templates
+One expands ~eqn_begin~, tabs to fill in the three main locations, then
+/immediately/ types ~eqn_step~ to produce a new step in a calculational proof.
+
+*** COMMENT Misc Templates
 :PROPERTIES:
 :CUSTOM_ID: Misc-Templates
 :END:
@@ -5124,7 +5111,7 @@ $0
 
 Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1 }}@@~.
 
-***  Re-Enabling Templates
+*** Re-Enabling Templates
 :PROPERTIES:
 :CUSTOM_ID: Re-Enabling-Templates
 :END:
@@ -5150,7 +5137,7 @@ Let's save a few precious seconds,
 
 ;; Enable all ‘possibly confusing commands’ such as helpful but
 ;; initially-worrisome “narrow-to-region”, C-x n n.
-(setq disabled-command-function nil)
+(setq-default disabled-command-function nil)
 #+end_src
 
 ** Documentation Pop-Ups
@@ -5378,30 +5365,6 @@ publish the current article to my blog.
                          Emacs   is   fun ^_^
 
 Bye!
-
-* Undo tree    :ignore:noexport:
-:PROPERTIES:
-:CUSTOM_ID: Undo-tree
-:END:
-
-# Todo: Learn about weaving so that presentation order may differ from code tangeling order.
-:Hide:
-#+begin_src emacs-lisp :tangle yes
-;; Allow tree-semantics for undo operations.
-(package-install 'undo-tree)
-(global-undo-tree-mode)
-(diminish 'undo-tree-mode)
-
-;; Execute (undo-tree-visualize) then navigate along the tree to witness
-;; changes being made to your file live!
-
-;; Each node in the undo tree should have a timestamp.
-(setq undo-tree-visualizer-timestamps t)
-
-;; Show a diff window displaying changes between undo nodes.
-(setq undo-tree-visualizer-diff t)
-#+end_src
-:End:
 
 * Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 ;; Nice soft yellow, pleasing ---try background colour for html export ;-)
@@ -6307,6 +6270,8 @@ If the :tangle header arg is a list of files. Handle all files"
 (advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
 #+end_src
 * COMMENT footer & pushing to blog
+
+(emacs-restart)
 
 C-c C-c this snippet to export to blog.
 #+NAME: publish-to-blog

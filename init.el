@@ -26,7 +26,7 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-(require 'use-package)
+(eval-when-compile (require 'use-package))
 ;; =use-package= ---The start of =init.el=:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:3]]
@@ -89,6 +89,24 @@
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 (use-package f)
 ;; =use-package= ---The start of =init.el=:7 ends here
+
+;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:8]]
+  ;; Allow tree-semantics for undo operations.
+  (use-package undo-tree
+    :diminish                       ;; Don't show an icon in the modeline
+    :config
+      ;; Always have it on
+      (global-undo-tree-mode)
+  
+      ;; Each node in the undo tree should have a timestamp.
+      (setq undo-tree-visualizer-timestamps t)
+  
+      ;; Show a diff window displaying changes between undo nodes.
+      (setq undo-tree-visualizer-diff t))
+  
+  ;; Execute (undo-tree-visualize) then navigate along the tree to witness
+  ;; changes being made to your file live!
+;; =use-package= ---The start of =init.el=:8 ends here
 
 ;; [[file:~/.emacs.d/init.org::enable making init and readme][enable making init and readme]]
 (defun my/make-init-el-and-README ()
@@ -159,8 +177,15 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 ;; ~README~ ---From ~init.org~ to ~init.el~:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:1]]
-(use-package quelpa-use-package
-  :custom (quelpa-upgrade-p t)) ;; Always try to update packages
+(use-package quelpa
+  :custom (quelpa-upgrade-p t "Always try to update packages")
+  :config
+  ;; Get ‘quelpa-use-package’ via ‘quelpa’
+  (quelpa
+   '(quelpa-use-package
+     :fetcher git
+     :url "https://github.com/quelpa/quelpa-use-package.git"))
+  (require 'quelpa-use-package))
 ;; Installing Emacs packages directly from source:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:2]]
@@ -904,6 +929,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (use-package lorem-ipsum)
 ;; Placeholder Text ---For Learning & Experimenting:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Some text to make us smile][Some text to make us smile:1]]
+(use-package dad-joke
+  :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
+;; Some text to make us smile:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:1]]
 ; (load (shell-command-to-string "agda-mode locate"))
 ;;
@@ -1498,15 +1528,15 @@ by spaces.
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:5]]
 (use-package git-link)
 
-(defhydra hydra-version-control (git-gutter-mode-map "C-x v")
+(defhydra hydra-version-control (global-map "C-x v")
   ("l" git-link "Git URL for current location"))
 ;; What's changed & who's to blame?:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:1]]
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
+  :init (global-hl-todo-mode)   ;; Enable it everywhere.
   :config
-  (global-hl-todo-mode)   ;; Enable it everywhere.
   ;; Adding new keywords
   (loop for kw in '("TEST" "MA" "WK" "JC")
         do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
@@ -1550,8 +1580,8 @@ by spaces.
 ;; On the fly syntax checking:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
-(use-package color-identifiers-mode)
-(global-color-identifiers-mode)
+(use-package color-identifiers-mode
+  :config (global-color-identifiers-mode))
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1]]
@@ -1586,8 +1616,8 @@ by spaces.
 ;; [[file:~/.emacs.d/init.org::*Edit as Root][Edit as Root:1]]
 (defun find-file-as-root ()
   "Like `ido-find-file, but automatically edit the file with
-root-privileges (using tramp/sudo), if the file is not writable by
-user."
+root-privileges (using tramp/sudo), if the file is not writable
+by user."
   (interactive)
   (let ((file (ido-read-file-name "Edit as root: ")))
     (unless (file-writable-p file)
@@ -1621,13 +1651,76 @@ user."
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
 
+;; [[file:~/.emacs.d/init.org::*Snippets ---Template Expansion][Snippets ---Template Expansion:1]]
+;; Add yasnippet support for all company backends
+;;
+(cl-defun my/company-backend-with-yankpad (backend)
+  "There can only be one main completition backend, so let's
+   enable yasnippet/yankpad as a secondary for all completion
+   backends.
+
+   Src: https://emacs.stackexchange.com/a/10520/10352"
+
+  (if (and (listp backend) (member 'company-yankpad backend))
+      backend
+    (append (if (consp backend) backend (list backend))
+            '(:with company-yankpad))))
+;; Snippets ---Template Expansion:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Snippets ---Template Expansion][Snippets ---Template Expansion:2]]
+;; Yet another snippet extension program
+(use-package yasnippet
+  :diminish
+  :config
+    (yas-global-mode 1) ;; Always have this on for when using yasnippet syntax within yankpad
+    ;; respect the spacing in my snippet declarations
+    (setq yas-indent-line 'fixed))
+
+;; Alternative, Org-based extension program
+(use-package yankpad
+  :diminish
+  :config
+    ;; Location of templates
+    (setq yankpad-file "~/.emacs.d/yankpad.org")
+
+    ;; Ignore major mode, always use defaults.
+    ;; Yankpad will freeze if no org heading has the name of the given category.
+    (setq yankpad-category "Default")
+
+    ;; Load the snippet templates ---useful after yankpad is altered
+    (yankpad-reload)
+
+    ;; Set company-backend as a secondary completion backend to all existing backends.
+    (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
+;; Snippets ---Template Expansion:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Snippets ---Template Expansion][Snippets ---Template Expansion:5]]
+(cl-defun org-insert-link ()
+  "Makes an org link by inserting the URL copied to clipboard and
+  prompting for the link description only.
+
+  Type over the shown link to change it, or tab to move to the
+  description field.
+
+  This overrides Org-mode's built-in ‘org-insert-link’ utility;
+  whence C-c C-l uses the snippet."
+  (interactive)
+  (insert "my-org-insert-link")
+  (yankpad-expand))
+;; Snippets ---Template Expansion:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*Re-Enabling Templates][Re-Enabling Templates:1]]
+;; After init hook; see above near use-package install.
+(yankpad-reload)
+;; Re-Enabling Templates:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Helpful Utilities & Shortcuts][Helpful Utilities & Shortcuts:1]]
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
 
 ;; Enable all ‘possibly confusing commands’ such as helpful but
 ;; initially-worrisome “narrow-to-region”, C-x n n.
-(setq disabled-command-function nil)
+(setq-default disabled-command-function nil)
 ;; Helpful Utilities & Shortcuts:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Documentation Pop-Ups][Documentation Pop-Ups:1]]
@@ -1737,22 +1830,6 @@ window contains the buffer with the cursour in it."
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
 )
 ;; Publishing articles to my personal blog:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Undo tree][Undo tree:1]]
-;; Allow tree-semantics for undo operations.
-(package-install 'undo-tree)
-(global-undo-tree-mode)
-(diminish 'undo-tree-mode)
-
-;; Execute (undo-tree-visualize) then navigate along the tree to witness
-;; changes being made to your file live!
-
-;; Each node in the undo tree should have a timestamp.
-(setq undo-tree-visualizer-timestamps t)
-
-;; Show a diff window displaying changes between undo nodes.
-(setq undo-tree-visualizer-diff t)
-;; Undo tree:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Elementary Version Control][Elementary Version Control:1]]
 ;; Don't ask for confirmation when opening symlinked files.
