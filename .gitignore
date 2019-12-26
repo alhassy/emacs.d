@@ -23,3 +23,6 @@ _minted-*
 /Workflow.bbl
 /Workflow.tex
 /custom.el
+/backups/
+/quelpa/
+/.persistent-scratch

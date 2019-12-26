@@ -1,4 +1,4 @@
-# Created 2019-12-25 Wed 06:52
+# Created 2019-12-25 Wed 21:46
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
@@ -51,12 +51,14 @@ in ~“this”~ configuration.
   - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
   - [[#keeping-my-system-up-to-date][Keeping my system up to date]]
   - [[#installing-os-packages-from-within-emacs----amethyst][Installing OS packages from within Emacs ---Amethyst!]]
+  - [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
   - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
   - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
   - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
   - [[#automatic-backups][Automatic Backups]]
+  - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
 - [[#cosmetics][Cosmetics]]
   - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
   - [[#being-at-the-helm----completion-framework][“Being at the Helm” ---Completion Framework]]
@@ -105,9 +107,10 @@ in ~“this”~ configuration.
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
 - [[#programming][Programming]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
-  - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
-  - [[#highlight-defined-emacs-lisp-symbols][Highlight Defined Emacs Lisp Symbols]]
+  - [[#highlight-defined-lisp-symbols][Highlight Defined Lisp Symbols]]
   - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
+  - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
+  - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
   - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
   - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
   - [[#edit-as-root][Edit as Root]]
@@ -579,7 +582,7 @@ This source block generates the ~README~ for the associated Github repository.
     "#+EXPORT_FILE_NAME: README.org
 
      # Logos and birthday present painting
-    ,#+HTML:" (s-collapse-whitespace (concat
+     ,#+HTML:" (s-collapse-whitespace (concat
     " <p align=\"center\">
        <img src=\"emacs-logo.png\" width=150 height=150/>
      </p>
@@ -940,6 +943,33 @@ window manager for macOS along the lines of xmonad.”
 
 Neato! Now I can live in Emacs even more ^_^
 
+** Having a workspace manager in Emacs
+I've loved using XMonad as a window tiling manager.  I've enjoyed the ability to
+segregate my tasks according to what ‘project’ I'm working on; such as research,
+marking, Emacs play, etc.  With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
+
+That is, I can have a million buffers, but only those that belong to a workspace
+will be visible when I'm switching between buffers, for example.
+( The awesome-tab and centaur-tab, mentioned elsewhere here, can be used to
+achieve the same thing by ‘grouping buffers together’. )
+
+#+begin_src emacs-lisp
+(use-package perspective
+  :config ;; Activate it.
+          (persp-mode)
+          ;; In the modeline, tell me which workspace I'm in.
+          (persp-turn-on-modestring))
+#+end_src
+
+All commands are prefixed by ~C-x x~; main commands:
+- ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext
+     one, or go to ‘p’revious one.
+- ~c~ :: Query a perspective to kill.
+- ~r~ :: Rename a perspective.
+- ~A~ :: Add buffer to current perspective & remove it from all others.
+
+As always, since we've installed ~which-key~, it suffices to press ~C-x x~ then look
+at the resulting menu 😃
 ** Excellent PDF Viewer
 Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library for viewing PDFs in Emacs.
 #+begin_src emacs-lisp
@@ -1147,7 +1177,7 @@ open across sessions ---If I'm closing Emacs, it's for a good reason.
 Instead, let's try the following: When you visit a file, point goes to the last
 place where it was when you previously visited the same file.
 #+begin_src emacs-lisp
-(setq-default save-place t)
+(setq-default save-place  t)
 (setq save-place-file "~/.emacs.d/etc/saveplace")
 #+end_src
 
@@ -1189,15 +1219,10 @@ Let's use an elementary diff system for backups.
   :commands backup-walker-start)
 #+end_src
 
-In a buffer that corresponds to a file, invoke ~backup-walker-start~
-to see a visual diff of changes /between/ versions.
-By default, you see the changes ‘backwards’: Red means
-delete these things to get to the older version; i.e.,
+In a buffer that corresponds to a file, invoke ~backup-walker-start~ to see a
+visual diff of changes /between/ versions.  By default, you see the changes
+‘backwards’: Red means delete these things to get to the older version; i.e.,
 the red ‘-’ are newer items.
-
-To create backups explicitly use save-buffer (C-x C-s) with prefix arguments.
-
-diff-backup and dired-diff-backup compares a file with its backup or vice versa. But there is no function to restore backup files.
 
 Emacs only makes a backup the very first time a buffer is saved; I'd prefer
 Emacs makes backups everytime I save! ---If I saved, that means I'm at an
@@ -1217,6 +1242,56 @@ own backup system]], were Emacs lacked one, by having our function simply save
 copies of our file ---on each save--- where the filename is augmented with a
 timestamp.
 
+- =diff-backup= compares a file with its backup or vice versa.
+
+** Editor Documentation with Contextual Information
+/Emacs is an extensible self-documenting editor!/
+
+Let's use a helpful Emacs /documentation/ system that cleanly shows a lot of
+contextual information ---then let's /extend/ that to work as we want it to:
+~C-h o~ to describe the symbol at point.
+#+begin_src emacs-lisp
+(use-package helpful)
+
+(defun my/describe-symbol (symbol)
+  "A “C-h o” replacement using “helpful”:
+   If there's a thing at point, offer that as default search item.
+
+   If a prefix is provided, i.e., “C-u C-h o” then the built-in
+   “describe-symbol” command is used.
+
+   ⇨ Pretty docstrings, with links and highlighting.
+   ⇨ Source code of symbol.
+   ⇨ Callers of function symbol.
+   ⇨ Key bindings for function symbol.
+   ⇨ Aliases.
+   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
+  "
+  (interactive "p")
+  (let* ((thing (symbol-at-point))
+         (val (completing-read
+               (format "Describe symbol (default %s): " thing)
+               (vconcat (list thing) obarray)
+               (lambda (vv)
+                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                          describe-symbol-backends))
+               t nil nil))
+         (it (intern val)))
+    (cond
+     (current-prefix-arg (funcall #'describe-symbol it))
+     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+     (t (helpful-symbol it)))))
+
+;; Keybindings.
+(global-set-key (kbd "C-h o") #'my/describe-symbol)
+(global-set-key (kbd "C-h k") #'helpful-key)
+#+end_src
+
+I like [[https://github.com/Wilfred/helpful][helpful]] and wanted it to have the same behaviour as ~C-h o~, which
+~helpful-at-point~ does not achieve. The incantation above makes ~C-h o~ use ~helpful~
+in that if the cursor is on a symbol, then it is offered to the user as a
+default search item for help, otherwise a plain search box for help
+appears. Using a universal argument lets us drop to the built-in help command.
 * Cosmetics
 Upon startup, we want to be greeted with a useful, yet unobtrusive, message
 briefly detailing major system details. Moreover, the bottom-most area of
@@ -1653,6 +1728,8 @@ Something cute to show to others, but not as fast as the keyboard.
 #+end_src
 
 It's been less than three days and I've found this utility to be unhelpful, to me anyhow.
+
+An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
 
 ** Window resizing using the golden ratio                          :Disabled:
 Let's load the following package, which automatically resizes windows so that
@@ -2560,10 +2637,8 @@ have busybodied headers which his setup disguises as ‘≡’.
 (loop for pair in '(("<=" . ?≤) (">=" . ?≥)
                     ("->" . ?→) ("-->". ?⟶) ;; threading operators
                     ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                    ("#+end_example"   . ?⇐)                ;; ⇐
-                    ("{{{fold("        . ?↳)
-                    (")}}}"            . ?↲)
-                    ("{{{end-fold}}}"  . ?↺))
+                    ("#+end_example"   . ?⇐))                ;; ⇐
+
       do (push pair my/prettify-alist))
 
 (loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
@@ -2580,28 +2655,6 @@ A nice sanity:
 #+begin_src emacs-lisp
 ;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
 (setq prettify-symbols-unprettify-at-point 'right-edge)
-#+end_src
-
-The ~↳Title Here↲ Contents ↺~ combination is for my makeshift HTML code
-folding macro ---word-wrapped for readability.
-#+begin_src org :tangle no
-,#+MACRO: end-fold  #+HTML: </details>
-,#+MACRO: fold      #+HTML: <details class="code-details"> <summary> <strong>
-                              <font face="Courier" size="3" color="green"> $1
-                              </font> </strong> </summary>
-#+end_src
-
-Let's have this fold-away in the source buffer as well by using [[https://www.emacswiki.org/emacs/FoldingMode][folding-mode]];
-with show/hide with ~C-<tab>~ key.
-#+begin_src emacs-lisp
-(use-package folding
- :init
- (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
- ; (setq folding-top-mark "{{{fold(")
- ; (setq folding-bottom-mark "{{{end-fold}}}")
- :config
-  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
-  (add-hook 'org-mode-hook #'folding-mode))
 #+end_src
 
 * Org-Mode ⇒ PDF & HTML
@@ -2847,8 +2900,8 @@ resulting PDF locally.
 (setq-default tab-width 4)
 
 ;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent :demand t)
-(global-aggressive-indent-mode t)
+(use-package aggressive-indent
+  :config (global-aggressive-indent-mode t))
 #+end_src
 
 ** Eldoc for Lisp and Haskell
@@ -2856,84 +2909,37 @@ In =emacs-lisp-mode= we can enable =eldoc-mode= to display information
 about a function or a variable in the echo area. Likewise for Haskell.
 
 #+begin_src emacs-lisp
-(add-hook 'emacs-lisp-mode-hook 'turn-on-eldoc-mode)
+(add-hook 'emacs-lisp-mode-hook       'turn-on-eldoc-mode)
 (add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
-(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
-(add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
+(add-hook 'haskell-mode-hook          'turn-on-haskell-doc-mode)
+(add-hook 'haskell-mode-hook          'turn-on-haskell-indent)
 #+end_src
 
-** Editor Documentation with Contextual Information
-/Emacs is an extensible self-documenting editor!/
+** Highlight Defined Lisp Symbols
 
-Let's use a helpful Emacs /documentation/ system that cleanly shows a lot of
-contextual information ---then let's /extend/ that to work as we want it to:
-~C-h o~ to describe the symbol at point.
+Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes it
+highlight all defined names ---as long as we're in Lisp mode, whence in org-src
+blocks we use ~C-c '~.
 #+begin_src emacs-lisp
-(use-package helpful)
-
-(defun my/describe-symbol (symbol)
-  "A “C-h o” replacement using “helpful”:
-   If there's a thing at point, offer that as default search item.
-
-   If a prefix is provided, i.e., “C-u C-h o” then the built-in
-   “describe-symbol” command is used.
-
-   ⇨ Pretty docstrings, with links and highlighting.
-   ⇨ Source code of symbol.
-   ⇨ Callers of function symbol.
-   ⇨ Key bindings for function symbol.
-   ⇨ Aliases.
-   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
-  "
-  (interactive "p")
-  (let* ((thing (symbol-at-point))
-         (val (completing-read
-               (format "Describe symbol (default %s): " thing)
-               (vconcat (list thing) obarray)
-               (lambda (vv)
-                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
-                          describe-symbol-backends))
-               t nil nil))
-         (it (intern val)))
-    (cond
-     (current-prefix-arg (funcall #'describe-symbol it))
-     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
-     (t (helpful-symbol it)))))
-
-;; Keybindings.
-(global-set-key (kbd "C-h o") #'my/describe-symbol)
-(global-set-key (kbd "C-h k") #'helpful-key)
+;; Emacs Lisp specific
+(use-package highlight-defined
+  :hook (emacs-lisp-mode . highlight-defined-mode))
 #+end_src
 
-I like [[https://github.com/Wilfred/helpful][helpful]] and wanted it to have the same behaviour as ~C-h o~, which
-~helpful-at-point~ does not achieve. The incantation above makes ~C-h o~ use ~helpful~
-in that if the cursor is on a symbol, then it is offered to the user as a
-default search item for help, otherwise a plain search box for help
-appears. Using a universal argument lets us drop to the built-in help command.
-** Highlight Defined Emacs Lisp Symbols
-Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes
-it highlight all defined names ---as long as we're in Lisp mode, whence in
-org-src blocks we use ~C-c '~.
-#+begin_src emacs-lisp
-(use-package highlight-defined)
-(add-hook 'emacs-lisp-mode-hook 'highlight-defined-mode)
-#+end_src
-
-Super helpful to avoid accidentally misspelling a word :smile:
-
+Super helpful in making my Emacs configuration: If a name is not highlighted,
+then I've misspelled it or it doesn't exist! :smile:
 
 ** What's changed & who's to blame?
-Let's have, in a fringe, an indicator for altered regions in a version controlled
-file. Moreover, let's stage-&-commit straight from a working buffer.
-The symbols “+, =” appear in a fringe by default for alterations
----we may change these if we like.
+Let's have, in a fringe, an indicator for altered regions in a version
+controlled file.  The symbols “+, =” appear in a fringe by default for
+alterations ---we may change these if we like.
+
 #+begin_src emacs-lisp
 ;; Hunk navigation and commiting.
-(use-package git-gutter+
-  :ensure t
-  ;; Shucks, this is way to slow for large files.
-  ;; :init (global-git-gutter+-mode)
-  :diminish (git-gutter+-mode))
+(use-package git-gutter
+  :diminish
+  :config (global-git-gutter-mode))
+;; Diff updates happen in real time according when user is idle.
 #+end_src
 
 Let's set a hydra so we can press ~C-x v n n p n~ to move the next two
@@ -2941,22 +2947,21 @@ altered hunks, move back one, then move to the next. This saves me having
 to supply the prefix ~C-x v~ each time I navigate among my alterations.
 At any point we may also press ~u 𝕩~ to denote ~C-u ⟪prefix⟫ 𝕩~.
 #+begin_src emacs-lisp
-(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+(defhydra hydra-version-control (global-map "C-x v")
   "Version control"
-  ;; (extension method description)
-  ("n" git-gutter+-next-hunk "Next hunk")
-  ("p" git-gutter+-previous-hunk "Previous hunk")
-  ("=" git-gutter+-show-hunk "Show hunk diff")
-  ("r" git-gutter+-revert-hunks "Revert hunk\n")
-  ("c" git-gutter+-stage-and-commit "Stage & commit hunk")
-  ("C" git-gutter+-stage-and-commit-whole-buffer "Stage & commit entire buffer")
-  ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer"))
+  ;; Syntax: (extension method description)
+  ("n" git-gutter:next-hunk      "Next hunk")
+  ("p" git-gutter:previous-hunk  "Previous hunk")
+  ("d" git-gutter:popup-hunk     "Show hunk diff")
+  ("r" git-gutter:revert-hunk    "Revert hunk\n")
+  ("c" git-gutter:stage-hunk     "Stage hunk")
+  ("s" git-gutter:statistic      "How many added & deleted lines"))
 #+end_src
 
 Commiting with ~C-x v c~ let's us use ~C-c C-k~ to cancel and ~C-c C-c~ to
 submit the given message; ~C-c C-a~ to amend the previous commit.
 
-Besides [[https://github.com/nonsequitur/git-gutter-plus][git-gutter+]] we may use diff-hl:
+Alternatively, we may use [[https://github.com/dgutov/diff-hl][diff-hl]]:
 #+begin_src emacs-lisp
 ;; Colour fringe to indicate alterations.
 ;; (use-package diff-hl)
@@ -2966,13 +2971,11 @@ Besides [[https://github.com/nonsequitur/git-gutter-plus][git-gutter+]] we may u
 A few more helpful version control features:
 #+begin_src emacs-lisp
 ;; Popup for who's to blame for alterations.
-(use-package git-messenger :demand t)
-;;
-;; Message menu let's us use magit diff to see the commit change.
-(setq git-messenger:use-magit-popup t)
-;;
-;; Always show who authored the commit and when.
-;; (setq git-messenger:show-detail t)
+(use-package git-messenger
+  :config ;; Always show who authored the commit and when.
+          (setq git-messenger:show-detail t)
+          ;; Message menu let's us use magit diff to see the commit change.
+          (setq git-messenger:use-magit-popup t))
 
 ;; View current file in browser on github.
 ;; More generic is “browse-at-remote”.
@@ -2980,7 +2983,7 @@ A few more helpful version control features:
 
 ;; Add these to the version control hydra.
 ;;
-(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+(defhydra hydra-version-control (global-map "C-x v")
   ("b" git-messenger:popup-message "Who's to blame?")
   ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
   ("g" github-browse-file-blame "Show file in browser in github")
@@ -2996,11 +2999,116 @@ points to the version of the file being visited.
 #+begin_src emacs-lisp
 (use-package git-link)
 
-(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+(defhydra hydra-version-control (global-map "C-x v")
   ("l" git-link "Git URL for current location"))
 #+end_src
 
 Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
+
+** Highlighting TODO-s & Showing them in Magit
+Basic support todos. By default these include: TODO NEXT THEM PROG OKAY DONT
+FAIL DONE NOTE KLUDGE HACK TEMP FIXME and any sequence of X's or ?'s of length
+at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
+#+begin_src emacs-lisp
+;; NOTE that the highlighting works even in comments.
+(use-package hl-todo
+  :config
+  (global-hl-todo-mode)   ;; Enable it everywhere.
+  ;; Adding new keywords
+  (loop for kw in '("TEST" "MA" "WK" "JC")
+        do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
+#+end_src
+
+Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
+mentioned]] in a magit status buffer ---which uses the keywords from ~hl-todo~.
+#+begin_src emacs-lisp
+;; MA: The todo keywords work in code too!
+(use-package magit-todos
+  :after magit
+  :after hl-todo
+  :config
+  ;; For some reason cannot use :custom with this package.
+  (custom-set-variables
+    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+  ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
+  (setq magit-todos-exclude-globs '("*.html"))
+  (magit-todos-mode))
+#+end_src
+
+Note that such TODO keywords are not propagated from sections that are
+COMMENT-ed out in org-mode.
+
+Open a Magit status buffer, or run ~magit-todos-list~ to show a dedicated to-do
+list buffer. You can then peek at items with space, or jump to them with enter.
+
+Seeing the TODO list with each commit is an incentive to actually tackle the
+items there (•̀ᴗ•́)و
+
+- This feature also works outside of git repos.
+
+
+Add these to the version control hydra.
+#+begin_src emacs-lisp
+(defhydra hydra-version-control (global-map "C-x v")
+  ("t" helm-magit-todos "Show TODOs lists for this repo."))
+#+end_src
+
+** On the fly syntax checking
+[[https://www.flycheck.org/en/latest/][Flycheck]] is a on-the-fly syntax checker that relies on external programs to
+check buffers; which must be installed separately.
+
+- E.g., ghc is required for Haskell; whereas Emacs Lisp is checked by Emacs'
+  own byte compiler, ~emacs-lisp~.
+- Sometimes more than one checking tool applies, use ~C-c ! s~ to select a
+  different checker.
+- =C-c ! n,p,l= takes you to the ‘n’ext or ‘p’revious
+  error, or ‘l’ist all errors in another buffer.
+
+  ~C-c ! c~ to explicitly recheck the buffer.
+
+#+begin_src emacs-lisp
+(use-package flycheck
+  :diminish
+  :init (global-flycheck-mode)
+  :config ;; There may be multiple tools; I have GHC not Stack, so let's avoid that.
+  (setq-default flycheck-disabled-checkers '(haskell-stack-ghc emacs-lisp-checkdoc))
+  :custom (flycheck-display-errors-delay .3))
+#+end_src
+
+In an org-src block, we press ~C-c '~ to get into the language's mode where
+flycheck will provide warnings.
+#+begin_src haskell :tangle no
+module Main where
+
+main :: IO ()
+main = putStrLn $ "nice" ++ f 0
+
+f :: Int -> String
+f x = x -- show x
+-- type error
+#+end_src
+
+In-general, flycheck is intended for self-contained raw code ---not for source
+blocks in Org-mode. Whence, the above example is a complete Haskell program,
+with a named module and ~main~ method.
+
+I think the built-in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Flymake.html][flymake]] syntax checker is better for Emacs Lisp,
+so let's use that for that.
+
+#+begin_src emacs-lisp
+(use-package flymake
+  :hook ((emacs-lisp-mode . (lambda () (flycheck-mode -1)))
+         (emacs-lisp-mode . flymake-mode))
+  :bind (:map flymake-mode-map
+              ("C-c ! n" . flymake-goto-next-error)
+              ("C-c ! p" . flymake-goto-prev-error)))
+#+end_src
+
+flymake-display-err-menu-for-current-line
+Try it out:
+#+begin_src emacs-lisp :tangle no
+(setq 1 2) ;; Error: ‘1’ is not a variable.
+#+end_src
 
 ** Coding with a Fruit Salad: Semantic Highlighting
 - /Syntax/ highlighting ⇨ Specific words are highlighted in strong colours so that
@@ -3047,7 +3155,6 @@ line (#64) in the source file, changing the ~5~ to a smaller number.
 #+begin_src emacs-lisp :tangle no
 (run-with-idle-timer 5 t 'color-identifiers:refresh)))
 #+end_src
-
 
 ** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
 Let's use a feature-full folding mode.
@@ -3125,7 +3232,6 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have
 ;; key to begin cycling buffers.
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 #+end_src
-
 
 * Helpful Utilities & Shortcuts
 Here is a collection of Emacs-lisp functions that I have come to use in other files.

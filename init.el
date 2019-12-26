@@ -317,6 +317,14 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (setq system-packages-package-manager 'brew)
 ;; Installing OS packages from within Emacs ---Amethyst!:4 ends here
 
+;; [[file:~/.emacs.d/init.org::*Having a workspace manager in Emacs][Having a workspace manager in Emacs:1]]
+(use-package perspective
+  :config ;; Activate it.
+          (persp-mode)
+          ;; In the modeline, tell me which workspace I'm in.
+          (persp-turn-on-modestring))
+;; Having a workspace manager in Emacs:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Excellent PDF Viewer][Excellent PDF Viewer:1]]
 (use-package pdf-tools
   ; :init   (system-packages-ensure "pdf-tools")
@@ -371,11 +379,13 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; [[file:~/.emacs.d/init.org::*Restarting Emacs ---Keeping buffers open across sessions?][Restarting Emacs ---Keeping buffers open across sessions?:1]]
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :commands restart-emacs)
+  :commands restart-emacs
+  ;; Let's define an alias so there's no need to remember the order.
+  :config (defalias 'emacs-restart #'restart-emacs))
 ;; Restarting Emacs ---Keeping buffers open across sessions?:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Restarting Emacs ---Keeping buffers open across sessions?][Restarting Emacs ---Keeping buffers open across sessions?:2]]
-(setq-default save-place t)
+(setq-default save-place  t)
 (setq save-place-file "~/.emacs.d/etc/saveplace")
 ;; Restarting Emacs ---Keeping buffers open across sessions?:2 ends here
 
@@ -410,6 +420,43 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 (add-hook 'before-save-hook  'my/force-backup-of-buffer)
 ;; Automatic Backups:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Editor Documentation with Contextual Information][Editor Documentation with Contextual Information:1]]
+(use-package helpful)
+
+(defun my/describe-symbol (symbol)
+  "A “C-h o” replacement using “helpful”:
+   If there's a thing at point, offer that as default search item.
+
+   If a prefix is provided, i.e., “C-u C-h o” then the built-in
+   “describe-symbol” command is used.
+
+   ⇨ Pretty docstrings, with links and highlighting.
+   ⇨ Source code of symbol.
+   ⇨ Callers of function symbol.
+   ⇨ Key bindings for function symbol.
+   ⇨ Aliases.
+   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
+  "
+  (interactive "p")
+  (let* ((thing (symbol-at-point))
+         (val (completing-read
+               (format "Describe symbol (default %s): " thing)
+               (vconcat (list thing) obarray)
+               (lambda (vv)
+                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                          describe-symbol-backends))
+               t nil nil))
+         (it (intern val)))
+    (cond
+     (current-prefix-arg (funcall #'describe-symbol it))
+     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+     (t (helpful-symbol it)))))
+
+;; Keybindings.
+(global-set-key (kbd "C-h o") #'my/describe-symbol)
+(global-set-key (kbd "C-h k") #'helpful-key)
+;; Editor Documentation with Contextual Information:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:1]]
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
@@ -1238,10 +1285,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (loop for pair in '(("<=" . ?≤) (">=" . ?≥)
                     ("->" . ?→) ("-->". ?⟶) ;; threading operators
                     ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                    ("#+end_example"   . ?⇐)                ;; ⇐
-                    ("{{{fold("        . ?↳)
-                    (")}}}"            . ?↲)
-                    ("{{{end-fold}}}"  . ?↺))
+                    ("#+end_example"   . ?⇐))                ;; ⇐
+
       do (push pair my/prettify-alist))
 
 (loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
@@ -1254,17 +1299,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 ;; Making Block Delimiters Less Intrusive:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:6]]
-(use-package folding
- :init
- (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
- ; (setq folding-top-mark "{{{fold(")
- ; (setq folding-bottom-mark "{{{end-fold}}}")
- :config
-  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
-  (add-hook 'org-mode-hook #'folding-mode))
-;; Making Block Delimiters Less Intrusive:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Org-Mode ⇒ PDF & HTML][Org-Mode ⇒ PDF & HTML:1]]
 ;; default to 4 headlines of export
@@ -1397,79 +1431,41 @@ by spaces.
 (setq-default tab-width 4)
 
 ;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent :demand t)
-(global-aggressive-indent-mode t)
+(use-package aggressive-indent
+  :config (global-aggressive-indent-mode t))
 ;; Programming:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Eldoc for Lisp and Haskell][Eldoc for Lisp and Haskell:1]]
-(add-hook 'emacs-lisp-mode-hook 'turn-on-eldoc-mode)
+(add-hook 'emacs-lisp-mode-hook       'turn-on-eldoc-mode)
 (add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
-(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
-(add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
+(add-hook 'haskell-mode-hook          'turn-on-haskell-doc-mode)
+(add-hook 'haskell-mode-hook          'turn-on-haskell-indent)
 ;; Eldoc for Lisp and Haskell:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Editor Documentation with Contextual Information][Editor Documentation with Contextual Information:1]]
-(use-package helpful)
-
-(defun my/describe-symbol (symbol)
-  "A “C-h o” replacement using “helpful”:
-   If there's a thing at point, offer that as default search item.
-
-   If a prefix is provided, i.e., “C-u C-h o” then the built-in
-   “describe-symbol” command is used.
-
-   ⇨ Pretty docstrings, with links and highlighting.
-   ⇨ Source code of symbol.
-   ⇨ Callers of function symbol.
-   ⇨ Key bindings for function symbol.
-   ⇨ Aliases.
-   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
-  "
-  (interactive "p")
-  (let* ((thing (symbol-at-point))
-         (val (completing-read
-               (format "Describe symbol (default %s): " thing)
-               (vconcat (list thing) obarray)
-               (lambda (vv)
-                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
-                          describe-symbol-backends))
-               t nil nil))
-         (it (intern val)))
-    (cond
-     (current-prefix-arg (funcall #'describe-symbol it))
-     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
-     (t (helpful-symbol it)))))
-
-;; Keybindings.
-(global-set-key (kbd "C-h o") #'my/describe-symbol)
-(global-set-key (kbd "C-h k") #'helpful-key)
-;; Editor Documentation with Contextual Information:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Highlight Defined Emacs Lisp Symbols][Highlight Defined Emacs Lisp Symbols:1]]
-(use-package highlight-defined)
-(add-hook 'emacs-lisp-mode-hook 'highlight-defined-mode)
-;; Highlight Defined Emacs Lisp Symbols:1 ends here
+;; [[file:~/.emacs.d/init.org::*Highlight Defined Lisp Symbols][Highlight Defined Lisp Symbols:1]]
+;; Emacs Lisp specific
+(use-package highlight-defined
+  :hook (emacs-lisp-mode . highlight-defined-mode))
+;; Highlight Defined Lisp Symbols:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:1]]
 ;; Hunk navigation and commiting.
-(use-package git-gutter+
-  :ensure t
-  ;; Shucks, this is way to slow for large files.
-  ;; :init (global-git-gutter+-mode)
-  :diminish (git-gutter+-mode))
+(use-package git-gutter
+  :diminish
+  :config (global-git-gutter-mode))
+;; Diff updates happen in real time according when user is idle.
 ;; What's changed & who's to blame?:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:2]]
-(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+(defhydra hydra-version-control (global-map "C-x v")
   "Version control"
-  ;; (extension method description)
-  ("n" git-gutter+-next-hunk "Next hunk")
-  ("p" git-gutter+-previous-hunk "Previous hunk")
-  ("=" git-gutter+-show-hunk "Show hunk diff")
-  ("r" git-gutter+-revert-hunks "Revert hunk\n")
-  ("c" git-gutter+-stage-and-commit "Stage & commit hunk")
-  ("C" git-gutter+-stage-and-commit-whole-buffer "Stage & commit entire buffer")
-  ("U" git-gutter+-unstage-whole-buffer "Unstage whole buffer"))
+  ;; Syntax: (extension method description)
+  ("n" git-gutter:next-hunk      "Next hunk")
+  ("p" git-gutter:previous-hunk  "Previous hunk")
+  ("d" git-gutter:popup-hunk     "Show hunk diff")
+  ("r" git-gutter:revert-hunk    "Revert hunk\n")
+  ("c" git-gutter:stage-hunk     "Stage hunk")
+  ("s" git-gutter:statistic      "How many added & deleted lines"))
 ;; What's changed & who's to blame?:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:3]]
@@ -1480,13 +1476,11 @@ by spaces.
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:4]]
 ;; Popup for who's to blame for alterations.
-(use-package git-messenger :demand t)
-;;
-;; Message menu let's us use magit diff to see the commit change.
-(setq git-messenger:use-magit-popup t)
-;;
-;; Always show who authored the commit and when.
-;; (setq git-messenger:show-detail t)
+(use-package git-messenger
+  :config ;; Always show who authored the commit and when.
+          (setq git-messenger:show-detail t)
+          ;; Message menu let's us use magit diff to see the commit change.
+          (setq git-messenger:use-magit-popup t))
 
 ;; View current file in browser on github.
 ;; More generic is “browse-at-remote”.
@@ -1494,7 +1488,7 @@ by spaces.
 
 ;; Add these to the version control hydra.
 ;;
-(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+(defhydra hydra-version-control (global-map "C-x v")
   ("b" git-messenger:popup-message "Who's to blame?")
   ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
   ("g" github-browse-file-blame "Show file in browser in github")
@@ -1504,9 +1498,56 @@ by spaces.
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:5]]
 (use-package git-link)
 
-(defhydra hydra-version-control (git-gutter+-mode-map "C-x v")
+(defhydra hydra-version-control (git-gutter-mode-map "C-x v")
   ("l" git-link "Git URL for current location"))
 ;; What's changed & who's to blame?:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:1]]
+;; NOTE that the highlighting works even in comments.
+(use-package hl-todo
+  :config
+  (global-hl-todo-mode)   ;; Enable it everywhere.
+  ;; Adding new keywords
+  (loop for kw in '("TEST" "MA" "WK" "JC")
+        do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
+;; Highlighting TODO-s & Showing them in Magit:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:2]]
+;; MA: The todo keywords work in code too!
+(use-package magit-todos
+  :after magit
+  :after hl-todo
+  :config
+  ;; For some reason cannot use :custom with this package.
+  (custom-set-variables
+    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+  ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
+  (setq magit-todos-exclude-globs '("*.html"))
+  (magit-todos-mode))
+;; Highlighting TODO-s & Showing them in Magit:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:3]]
+(defhydra hydra-version-control (global-map "C-x v")
+  ("t" helm-magit-todos "Show TODOs lists for this repo."))
+;; Highlighting TODO-s & Showing them in Magit:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*On the fly syntax checking][On the fly syntax checking:1]]
+(use-package flycheck
+  :diminish
+  :init (global-flycheck-mode)
+  :config ;; There may be multiple tools; I have GHC not Stack, so let's avoid that.
+  (setq-default flycheck-disabled-checkers '(haskell-stack-ghc emacs-lisp-checkdoc))
+  :custom (flycheck-display-errors-delay .3))
+;; On the fly syntax checking:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*On the fly syntax checking][On the fly syntax checking:3]]
+(use-package flymake
+  :hook ((emacs-lisp-mode . (lambda () (flycheck-mode -1)))
+         (emacs-lisp-mode . flymake-mode))
+  :bind (:map flymake-mode-map
+              ("C-c ! n" . flymake-goto-next-error)
+              ("C-c ! p" . flymake-goto-prev-error)))
+;; On the fly syntax checking:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
 (use-package color-identifiers-mode)
