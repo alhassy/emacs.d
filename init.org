@@ -19,25 +19,6 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
-:Remarks:
-(use-package FEATURE :ensure ACTUAL-PACKAGE-NAME)
-⇒ When the feature and actual package name differ; e.g.,
-  p.el ends with ~(provide 'f) means we need (use-package f : ensure p)
-
-   :bind (:map some-mode-map ("C-a b" . do-the-thing))
-≈ (define-key some-mode-map (kbd "C-a b")  'do-the-thing)
-
-  :End:
-
-# (require 'org-id) ⇒ for using noweb-refs
-# (require 'ox)     ⇒ for export functions
-# (require 'ox-org)     ⇒ for export functions
-# (use-package org
-#   :ensure org-plus-contrib
-#   :config
-#   (require 'ox-extra)
-#   (ox-extras-activate '(ignore-headlines)))
-
 * Abstract        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -151,12 +132,20 @@ in ~“this”~ configuration.
   - [[#jumping-without-hassle][Jumping without hassle]]
   - [[#folding-within-a-subtree][Folding within a subtree]]
   - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
+  - [[#org-modes-𝒳-block-expansions][Org-mode's ~<𝒳~ Block Expansions]]
 - [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
   - [[#working-with-citations][Working with Citations]]
   - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+- [[#life-within-org-mode][Life within Org-mode]]
+  - [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
+  - [[#super-agenda][Super Agenda]]
+  - [[#automating-pomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
+  - [[#journaling][Journaling]]
+  - [[#workflow-states][Workflow States]]
+  - [[#clocking-work-time][Clocking Work Time]]
 - [[#programming][Programming]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
   - [[#highlight-defined-lisp-symbols][Highlight Defined Lisp Symbols]]
@@ -174,7 +163,7 @@ in ~“this”~ configuration.
   - [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
   - [[#reload-buffer-with-f5][Reload buffer with ~f5~]]
   - [[#kill-to-start-of-line][Kill to start of line]]
-  - [[#c-x-k-kills-current-buffer-c-u-c-x-k-kills-all-others][~C-x k~ kills current buffer, ~C-u C-x k~ kills all others]]
+  - [[#killing-buffers--windows-c-x-k-has-a-family][Killing buffers & windows: ~C-x k~ has a family]]
   - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
   - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
   - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
@@ -643,6 +632,7 @@ shown to us in the modeline ---the area near the bottom of Emacs.  It does so by
 using the ~diminish~ package, so let's install that.
 #+begin_src emacs-lisp
 (use-package diminish
+  :demand t
   :config ;; Let's hide some markers.
     (diminish 'eldoc-mode)
     (diminish 'org-indent-mode)
@@ -652,6 +642,9 @@ using the ~diminish~ package, so let's install that.
 Here are other packages that I want to be installed onto my machine.
 #+BEGIN_SRC emacs-lisp
 ;; Efficient version control.
+;;
+;; Bottom of Emacs will show what branch you're on
+;; and whether the local file is modified or not.
 (use-package magit
   :config (global-set-key (kbd "C-x g") 'magit-status))
 
@@ -702,33 +695,33 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
 #+name: enable making init and readme
 #+begin_src emacs-lisp :eval never-export
 (defun my/make-init-el-and-README ()
-    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
-    (when current-prefix-arg
-      (let* ((time      (current-time))
-                 (_date     (format-time-string "_%Y-%m-%d"))
-                 (.emacs    "~/.emacs")
-                 (.emacs.el "~/.emacs.el"))
+  "Tangle an el and a github README from my init.org."
+  (interactive "P") ;; Places value of universal argument into: current-prefix-arg
+  (when current-prefix-arg
+    (let* ((time      (current-time))
+           (_date     (format-time-string "_%Y-%m-%d"))
+           (.emacs    "~/.emacs")
+           (.emacs.el "~/.emacs.el"))
+      ;; Make README.org
+      (save-excursion
+        (org-babel-goto-named-src-block "make-readme")
+        (org-babel-execute-src-block))
 
-        (save-excursion
-          ;; remove any other initialisation file candidates
-          (ignore-errors
-            (f-move .emacs    (concat .emacs _date))
-            (f-move .emacs.el (concat .emacs.el _date)))
+      ;; remove any other initialisation file candidates
+      (ignore-errors
+        (f-move .emacs    (concat .emacs _date))
+        (f-move .emacs.el (concat .emacs.el _date)))
 
-          ;; Make init.el
-          (org-babel-tangle)
-          ; (byte-compile-file "~/.emacs.d/init.el")
-          (load-file "~/.emacs.d/init.el")
+      ;; Make init.el
+      (org-babel-tangle)
+      ;; (byte-compile-file "~/.emacs.d/init.el")
+      (load-file "~/.emacs.d/init.el")
 
-          ;; Make README.org
-          (org-babel-goto-named-src-block "make-readme")
-          (org-babel-execute-src-block)
+      ;; Acknowledgement
+      (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
+               (float-time (time-since time))))))
 
-          ;; Acknowledgement
-          (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
-                   (float-time (time-since time)))))))
-
-  (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
+(add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+end_src
 
 Where the following block has ~#+NAME: make-readme~ before it.
@@ -872,9 +865,11 @@ when we want to install a file from souce we use the keyword ~:quelpa~.
   (require 'quelpa-use-package))
 #+END_SRC
 
-Let's use this to obtain an improved info-mode from the EmacsWiki.
-#+BEGIN_SRC emacs-lisp
+Let's use this to obtain an improved info-mode from the EmacsWiki. [Disabled for
+now]
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package info+
+  :disabled
   :quelpa (info+ :fetcher wiki :url "https://www.emacswiki.org/emacs/info%2b.el"))
 #+END_SRC
 
@@ -1770,6 +1765,11 @@ It shows an overview of all matches --navigate using arrow keys.
 There is also a helm based version of swiper.
 :end:
 
+Finally, note that there is now a ~M-x helm-info~ command to show documentation,
+possibly with examples, of the packages installed. For example,
+~M-x helm-info RET dash RET -parition RET~ to see how the parition function from the
+dash library works via examples ;-)
+
 ** My to-do list: The initial buffer when Emacs opens up
 :PROPERTIES:
 :CUSTOM_ID: My-to-do-list:-The-initial-buffer-when-Emacs-opens-up
@@ -1860,7 +1860,8 @@ Instead, let's have line numbers on the side of the buffer; moreover let's have
 a uniform width for displaying line numbers, rather than having the width grow
 as necessary.
 #+BEGIN_SRC emacs-lisp
-(column-number-mode                    t)
+;; Following two taken care of in the spaceline package, below.
+;; (column-number-mode                 t)
 ;; (line-number-mode                   t)
 (setq display-line-numbers-width-start t)
 (global-display-line-numbers-mode      t)
@@ -1875,8 +1876,7 @@ dark themes, and its modified powerline setup.
 ;; When using helm & info & default, mode line looks prettier.
 (use-package spaceline
   :custom (spaceline-buffer-encoding-abbrev-p nil)
-          (spaceline-line-column-p nil)
-          (spaceline-line-p nil)
+          (spaceline-line-column-p t) ;; Show “line-number : column-number” in modeline.
           (powerline-default-separator 'arrow)
   :config (require 'spaceline-config)
           (spaceline-helm-mode)
@@ -1901,6 +1901,7 @@ Moreover, we reduce the mental strain of locating the cursour when navigation ha
 When we switch windows or scroll, for example, we get a wave of light near the cursor.
 #+begin_src emacs-lisp
 (use-package beacon
+  :diminish
   :config (setq beacon-color "#666600")
   :hook   ((org-mode text-mode) . beacon-mode))
 #+end_src
@@ -2198,6 +2199,9 @@ in every buffer.
 ;; Wrap long lines when editing text
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
+
+;; Do not show the “Fill” indicator in the mode line.
+(diminish 'auto-fill-function)
 #+END_SRC
 
 We may press ~M-q~ to cleverly redistribute the line breaks within any paragraph,
@@ -2301,6 +2305,7 @@ comments and strings.
 
 #+BEGIN_SRC emacs-lisp
 (use-package flyspell
+  :diminish
   :hook ((prog-mode . flyspell-prog-mode)
          (text-mode . flyspell-mode)))
 #+END_SRC
@@ -2317,8 +2322,6 @@ that Emacs' ~ispell~ is the interface to such a command line spelling utility.
 #+BEGIN_SRC emacs-lisp
 (setq ispell-program-name "/usr/local/bin/aspell")
 (setq ispell-dictionary "en_GB") ;; set the default dictionary
-
-(diminish 'flyspell-mode) ;; Don't show it in the modeline.
 #+END_SRC
 
 :ignore_for_now:
@@ -2529,6 +2532,8 @@ Let's [[https://github.com/bnbeckwith/writegood-mode][write good]]!
 (use-package writegood-mode
   ;; Load this whenver I'm composing prose.
   :hook (text-mode org-mode)
+  ;; Don't show me the “Wg” marker in the mode line
+  :diminish
   ;; Some additional weasel words.
   :config
   (--map (push it writegood-weasel-words)
@@ -3360,6 +3365,57 @@ A nice sanity:
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 #+END_SRC
 
+** Org-mode's ~<𝒳~ Block Expansions
+In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for
+source blocks or ~<q~ for quote blocks.  It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode
+structure template expansion necessitate explicitly loading ~org-tempo~.
+#+begin_src emacs-lisp
+(require 'org-tempo)
+#+end_src
+
+To insert source blocks with the assistance of a pop-up: ~C-c C-v d~ ;-)
+Perhaps more usefully, invoking within a source block splits it up into two
+seperate blocks! Moreover, if invoked on a selected region, it puts the region
+into a new code block! Wow!
+
++ ~<X~ allows you to obtain the org-block assigned to shortcut ~x~.
++ ~C-c C-v C-d~ and ~C-c C-v d~ refer to the ~org-babel-demarcate-block~, which
+  provides /source/ blocks.
++ ~C-c C-,~ refers to ~org-insert-structure-template~, which provides non-source
+  blocks, such as quote ~<q~, comment ~<C~, center ~<c~, notes ~<n~, examples ~<e~, and ~<l~
+  and ~<h~ and ~<a~ for LaTeX and HTML and ASCII export blocks.
+
+  - The contents of comment blocks are ignored upon export.
+
+| We shall improve upon this system below using snippets. |
+E.g., ~s_em TAB~ to obtain an org-src block marked with ~emacs-lisp~ as the
+language.  This saves us a few key strokes.
+
+*** COMMENT TODO Demoing Dot Graphs
+# Graphviz: Press <g-TAB to obtain a minimal editable example.
+ #+BEGIN_SRC dot :file simple_markov.png :cmdline -Kdot -Tpng :results replace
+ digraph {
+      node [color=black,fillcolor=white,shape=rectangle,style=filled,fontname="Helvetica"];
+      A[label="Hello"];
+    A -> D;
+    A -> B;
+    D -> C;
+    B -> C;
+    C -> C;
+  }
+ #+END_SRC
+
+ #+RESULTS:
+ [[file:simple_markov.png]]
+
+*** COMMENT Parallel
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Parallel
+:END:
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
+#+END_SRC
 * Org-Mode ⇒ PDF & HTML
 In this section we consider the Org-mode exporters for PDFs and
 HTMLs. For example, we account for LaTeX citations and reliable HTML
@@ -3619,11 +3675,17 @@ speaker notes in the flattened view.
 Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
 resulting PDF locally.
 
-* COMMENT Life within Org-mode
-** Using org-mode as a Day Planner
-:PROPERTIES:
-:CUSTOM_ID: Using-org-mode-as-a-Day-Planner
-:END:
+* Life within Org-mode
+
+It's hard to estimate how long a task takes if you don't keep
+‘clock-in and clock-out’ of tasks. We can ‘capture’ todos right in the middle
+of a task /without/ context-switching; e.g., no opening a todos file!
+After some reflection on the relative importance of the tasks, we can
+schedule them into our ‘agenda’.
+
+                                 Let's do this!
+
+** Using Org-Mode as a Day Planner
 
      ⟪ This section is based on a dated, yet delightful, tutorial
                  of the same title by [[http://newartisans.com/2007/08/using-org-mode-as-a-day-planner/][John Wiegley]]. ⟫
@@ -3633,9 +3695,11 @@ We want a day-planner with the following use:
 1. Schedule and archive tasks at the end, or start, of the work day.
 2. Glance at a week's tasks, shuffle if need be.
 3. Prioritise the day's tasks. Aim for ≤15 tasks.
-4. Progress towards ~A~ tasks completion by documenting work completed.
+4. Progress towards completion of ~A~ tasks by documenting work completed.
 5. Repeat! During the day, if anything comes up, capture it and intentionally
    forget about it.
+
+*** Capturing ideas & notes without interrupting the current workflow
 
 [[https://orgmode.org/org.html#Setting-up-capture][Capture]] lets me quickly make notes & capture ideas, with associated reference material,
 without any interruption to the current work flow. Without losing focus on what you're doing,
@@ -3643,13 +3707,16 @@ quickly jot down a note of something important that just came up.
 
 E.g., I have a task, or something I wish to note down, rather than opening
 some file, then making a heading, then writing it; instead, I press
-~C-c c t~ and a pop-up appears, I make my note, and it disappears with my
-notes file(s) now being altered! Moreover, by default it provide a timestamp
-and a link to the file location where I made the note --helpful for tasks, tickets,
+~C-c c t~ and a pop-up appears, I make my note, and it disappears ---with my
+notes file(s) now being altered! Moreover, by default it provides a timestamp
+and a link to the file location where I made the note ---helpful for tasks, tickets,
 to be tackled later on.
 
 #+begin_src emacs-lisp
+;; Location of my todos/notes file
 (setq org-default-notes-file "~/Dropbox/todo.org")
+
+;; “C-c c” to quickly capture a task/note
 (define-key global-map "\C-cc" 'org-capture)
 #+end_src
 
@@ -3672,7 +3739,7 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
   Defaults for ‘description’ and ‘category’ are set to the same as
   the ‘heading’. Default for ‘no-todo’ is ‘nil’.
 
-  Scheduled items appear in the agenda; true by default all items are.
+  Scheduled items appear in the agenda; true by default.
 
   The target is ‘file+headline’ and the type is ‘entry’; to see
   other possibilities invoke: C-h o RET org-capture-templates.
@@ -3691,30 +3758,31 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
                 "\n:END:") "\n\n ")
       :empty-lines 1 :time-prompt t))
 
+(setq org-capture-templates
+      (loop for (shortcut heading)
+            in (-partition 2 '("t" "Tasks, Getting Things Done"
+                               "r" "Research"
+                               "m" "Email"
+                               "e" "Emacs (•̀ᴗ•́)و"
+                               "b" "Blog"
+                               "a" "Arbitrary Reading and Learning"
+                               "p" "Personal Matters"))
+            collect  (my/make/org-capture-template shortcut heading)))
+
 ;; For now, let's automatically schedule items a week in advance.
 ;; TODO: FIXME: This overwrites any scheduling I may have performed.
 (defun my/org-capture-schedule ()
   (org-schedule nil "+7d"))
 
 (add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
-
-(setq org-capture-templates
-  `(
-     ,(my/make/org-capture-template "t" "Tasks, Getting Things Done")
-     ,(my/make/org-capture-template "r" "Research")
-     ,(my/make/org-capture-template "m" "Email")
-     ,(my/make/org-capture-template "e" "Emacs (•̀ᴗ•́)و")
-     ,(my/make/org-capture-template "b" "Blog")
-     ,(my/make/org-capture-template "a" "Arbitrary Reading and Learning")
-     ,(my/make/org-capture-template "p" "Personal Matters")))
 #+end_src
 
-For now I capture everything into a single file.
-One would ideally keep separate client, project, information in its own org file.
-The ~#+CATEGORY~ appears alongside each task in the agenda view --keep reading.
+For now I capture everything into a single file.  One would ideally keep
+separate client, project, information in its own org file.  The ~#+CATEGORY~
+appears alongside each task in the agenda view ---keep reading.
 
-Looking at ~my/make/org-capture-template~, one notices that capture actually
-lets you add /any/ type of item to /any/ file.
++ Looking at ~my/make/org-capture-template~, one notices that capture actually
+  lets you add /any/ type of item to /any/ file.
 
 Let's also ensure TODO-s respect hierarchical structure.
 #+BEGIN_SRC emacs-lisp
@@ -3738,31 +3806,35 @@ Let's also ensure TODO-s respect hierarchical structure.
   (setq org-reverse-note-order nil)
   #+end_src
 
+- Org-protocol is a way to create capture notes in org-mode from other applications.
+
 Anyhow…
-
-Step 1: When new tasks come up
+*** Step 1: When new tasks come up
 Isn't it great that we can squirrel away info into some default location
-then immediately return to what we were doing before --with speed & minimal distraction! ♥‿♥
-Indeed, if our system for task management were slow then we may not produce tasks and so forget them altogether! щ(゜ロ゜щ)
-+ Entering tasks is a desirably impulsive act;
-   do not make any further scheduling considerations.
+then immediately return to what we were doing before ---with speed & minimal distraction! ♥‿♥
+Indeed, if our system for task management were slow then we may not produce
+tasks and so forget them altogether! щ(゜ロ゜щ)
 
-   The next step, the review stage occurring at the end or the start of
-   the workday, is for processing.
++ Entering tasks is a desirably impulsive act; do not make any further
+  scheduling considerations.
+
+  The next step, the review stage occurring at the end or the start of the
+  workday, is for processing.
 
 #+begin_quote
-/The reason for this is that entering new tasks should be impulsive, not reasoned.//
-/Your reasoning skills are required for the task at hand, not every new tidbit.//
-/You may even find that during the few hours that transpire between creating a/
-/task and categorizing it, you’ve either already done it or discovered it doesn’t/
-/need to be done at all!/ -- [[http://newartisans.com/2007/08/using-org-mode-as-a-day-planner/][John Wiegley]]
+The reason for this is that entering new tasks should be impulsive, not reasoned.
+Your reasoning skills are required for the task at hand, not every new tidbit.
+You may even find that during the few hours that transpire between creating a
+task and categorizing it, you’ve either already done it or discovered it doesn’t
+need to be done at all! ---[[http://newartisans.com/2007/08/using-org-mode-as-a-day-planner/][John Wiegley]]
 #+end_quote
 
-When my computer isn't handy, make a note on my phone then transfer it later.
+When my computer isn't handy, I'll make a note on my phone then transfer it later.
+*** Step 2: Filing your tasks
+At a later time, a time of reflection, we go to our tasks list and actually
+schedule time to get them done by ~C-c C-s~ then pick a date by entering a number
+in the form ~+𝓃~ to mean that task is due ~𝓃~ days from now.
 
-*Step 2: Filing your tasks*
-At a later time, a time of reflection, we go to our tasks list and actually schedule time to get them done
-by ~C-c C-s~ then pick a date by entering a number in the form ~+n~ to mean that task is due ~n~ days from now.
 + Tasks with no due date are ones that “could happen anytime”, most likely no time at all.
 + At least schedule tasks reasonably far off in the future, then reassess when the time comes.
 + An uncompleted task is by default rescheduled to the current day, each day, along with how overdue it is.
@@ -3777,16 +3849,15 @@ Let's keep track of how many times, and when, we have pushed events to other dat
 (setq org-log-redeadline 'time)
 (setq org-log-reschedule 'time)
 #+END_SRC
-
-*Step 3: Quickly review the upcoming week*
+*** Step 3: Quickly review the upcoming week
 The next day we begin our work, we press ~C-c a a~ to see the
-scheduled tasks for this week --~C-c C-s~ to re-schedule the
+scheduled tasks for this week ---~C-c C-s~ to re-schedule the
 task under the cursor and ~r~ to refresh the agenda.
 #+begin_src emacs-lisp
 (define-key global-map "\C-ca" 'org-agenda)
 #+end_src
 
-*Step 4: Getting ready for the day*
+*** Step 4: Getting ready for the day
 After having seen our tasks for the week, we press ~d~ to enter daily view
 for the current day. Now we decide whether the items for today are
 ~A~: of high urgency & important; ~B~: of moderate urgency & importance; or
@@ -3803,10 +3874,10 @@ for the current day. Now we decide whether the items for today are
   ~A~ task. These are the “bread and butter” tasks that make up your day to day
   life.
 
-On a task item, press ~,~ then one of ~A, B, C~ to set its priority.
-Then ~r~ to refresh.
+On a task item, or any org-heading, press ~,~ then one of ~A, B, C~ to set its
+priority.  Then ~r~ to refresh.
 
-*Step 5: Doing the work*
+*** Step 5: Doing the work
 Since ~A~ tasks are the important and urgent ones, if you do all of the ~A~ tasks and
 nothing else today, no one would suffer. It's a good day (─‿‿─).
 
@@ -3818,40 +3889,39 @@ Either at the end of the day or the start of the next.
   them for later in the week without a second thought.
   - You've already provided consideration when assigning priorities.
 
-*Step 6: Moving a task toward completion*
+*** Step 6: Moving a task toward completion
 My workflow states are described in the section
 [[Workflow States]] and contain states: ~TODO, STARTED, WAITING, ON_HOLD, CANCELLED, DONE~.
 + Tasks marked ~WAITING~ are ones for which we are awaiting some event, like someone
   to reply to our query. As such, these tasks can be rescheduled until I give up
-  or the awaited event happens --in which case I go to ~STARTED~ and document
+  or the awaited event happens ---in which case I go to ~STARTED~ and document
   the reply to my query.
 + The task may be put off indefinitely with ~ON_HOLD~, or I may choose never to do it
   with ~CANCELLED~. Along with ~DONE~, these three mark a task as completed
   and so it needn't appear in any agenda view.
 
-I personally clock-in and clock-out of tasks --keep reading--,
-where upon clocking-out I'm prompted for a note about what I've accomplished
-so far.
-Entering a comment about what I've done, even if it's very little,
-feels like I'm getting something done. It's an explicit marker of progress.
+I personally clock-in and clock-out of tasks ---keep reading---, where upon
+clocking-out I'm prompted for a note about what I've accomplished so far.
+Entering a comment about what I've done, even if it's very little, feels like
+I'm getting something done. It's an explicit marker of progress.
 
 In the past, I would make a “captain's log” at the end of the day, but that's
 like commenting code after it's written, I didn't always feel like doing it and
 it wasn't that important after the fact. The continuous approach of noting after
 every clock-out is much more practical, for me at least.
 
-*Step 7: Archiving Tasks*
-During the review state,
-when a task is completed, ‘archive’ it with ~C-c C-x C-s~: This marks it as done, adds a time stamp,
-and moves it to a local ~*.org_archive~ file. This was our ‘to do’ list becomes a ‘ta da’ list showcasing
+*** Step 7: Archiving Tasks
+During the review state, when a task is completed, ‘archive’ it with ~C-c C-x
+C-s~: This marks it as done, adds a time stamp, and moves it to a local
+~*.org_archive~ file. What was our ‘to do’ list becomes a ‘ta da’ list showcasing
 all we have done (•̀ᴗ•́)و
 
-Archiving keeps task lists clutter free, but unlike deletion it allows
-us, possibly rarely, to look up details of a task or what tasks were completed
-in a certain time frame --which may be a motivational act, to see that you have
+Archiving keeps task lists clutter free, but unlike deletion it allows us,
+possibly rarely, to look up details of a task or what tasks were completed in a
+certain time frame ---which may be a motivational act, to see that you have
 actually completed more than you thought, provided you make and archive tasks
-regularly. We can use ~(org-search-view)~ to search an org file /and/ the
-archive file too, if we enable it so.
+regularly. We can use ~M-x org-search-view~ to search an org file /and/ the archive
+file too, if we enable it so.
 #+BEGIN_SRC emacs-lisp
 ;; C-c a s ➩ Search feature also looks into archived files.
 ;; Helpful when need to dig stuff up from the past.
@@ -3861,20 +3931,22 @@ archive file too, if we enable it so.
 #+begin_src emacs-lisp
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
-(org-agenda "a" "a")
+(org-agenda "a" "a") ;; ➩ Show my agenda upon Emacs startup.
 #+end_src
 
 Let's install some helpful views for our agenda.
+
 + ~C-c a c~: See completed tasks at the end of the day and archive them.
-  #+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 ;; Pressing ‘c’ in the org-agenda view shows all completed tasks,
 ;; which should be archived.
 (add-to-list 'org-agenda-custom-commands
   '("c" todo "DONE|ON_HOLD|CANCELLED" nil))
 #+end_src
+
 + ~C-c a u~: See unscheduled, undeadlined, and undated tasks in my todo files.
   Which should then be scheduled or archived.
-  #+begin_src emacs-lisp
+   #+begin_src emacs-lisp
 (add-to-list 'org-agenda-custom-commands
   '("u" alltodo ""
      ((org-agenda-skip-function
@@ -3883,42 +3955,37 @@ Let's install some helpful views for our agenda.
               (org-agenda-overriding-header "Unscheduled TODO entries: "))))
 #+end_src
 
-# Org-protocol is a great way to create capture notes in org-mode from other applications.
-** COMMENT Super Agenda
+** Super Agenda
 :PROPERTIES:
 :CUSTOM_ID: Super-Agenda
 :END:
 The following incentivizes us to make use of ~:tags:~ so that our agenda displays
 the tasks of the day depending on their tags ---possibly using complex predicates.
-This is far preferable to having them all in one big list.
+/This is far preferable to having them all in one big list./
 #+BEGIN_SRC emacs-lisp
-(use-package org-super-agenda)
-(org-super-agenda-mode)
+(use-package org-super-agenda
+  :config
+  (org-super-agenda-mode)
+  (setq org-super-agenda-groups
+        ;; Default order is 0, first come first serve.
+        ;; Items are “or”-ed by default.
+        '((:name "Important"
+                 :tag "PackageFormer"
+                 :and (:tag "JC" :priority "A")
+                 :and (:tag "WK" :priority "A")
+                 :priority "A")
 
-(setq org-super-agenda-groups
-      ;; Default order is 0, first come first serve.
-      ;; Items are “or”-ed by default.
-      '((:name "Important"
-               :tag "PackageFormer"
-               :and (:tag "JC" :priority "A")
-               :and (:tag "WK" :priority "A")
-               :priority "A")
-
-        ;; Groups supply their own section names when none are given
-        (:tag "personal")
-        (:tag "3mi3")
-        (:name "Emacs Init" :tag "init")
-        (:priority<= "B" :order 1)
-        ))
+          ;; Groups supply their own section names when none are given
+          (:tag "personal")
+          (:tag "3mi3")
+          (:name "Emacs Init" :tag "init")
+          (:priority<= "B" :order 1)))))
 #+END_SRC
 
 The [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]] homepage shows complex configurations and pleasant screenshots
 contrasting with and without the system.
 
-** COMMENT Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] --Dealing with dreadful tasks
-:PROPERTIES:
-:CUSTOM_ID: Automating-[[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]]---Dealing-with-dreadful-tasks
-:END:
+** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”
 
 Effort estimates are for an entire task.
 Yet, sometimes it's hard to even get started on some tasks.
@@ -3929,8 +3996,8 @@ Yet, sometimes it's hard to even get started on some tasks.
 
 + When the timer runs out, we get a notification.
 
-+ We may have the momentum to continue on the dreadful task, or clock-out and take a break after
-  documenting what was accomplished.
++ We may have the momentum to continue on the difficult task, or clock-out and
+  take a break after documenting what was accomplished.
 
 #+BEGIN_SRC emacs-lisp
 ;; Tasks get a 25 minute count down timer
@@ -3945,126 +4012,116 @@ Yet, sometimes it's hard to even get started on some tasks.
 (add-hook 'org-clock-out-hook
   (lambda ()
   (unless (s-prefix? "0:00" (org-timer-value-string))
-     (message-box "The basic 25 minutes on this dreadful task are not up; it's a shame to see you leave."))
+     (message-box "The basic 25 minutes on this difficult task are not up; it's a shame to see you leave."))
      (org-timer-stop)))
 #+END_SRC
 
 Note that this does not conflict with the total effort estimate for the task.
 
-** COMMENT Journaling
-:PROPERTIES:
-:CUSTOM_ID: Journaling
-:END:
+⟨ I'm told there's a package already made for this ---maybe I need to stop writing
+good, and do more searches; then again, I've learned a lot by writing code. ⟩
 
-Thus far I've made it easy to quickly capture ideas and tasks,
-not so much on the analysis phase:
+** Journaling
+
+Thus far I've made it easy to quickly capture ideas and tasks, not so much on
+the analysis phase:
 
 - What was accomplished today?
 - What are some notably bad habits? Good habits?
 - What are some future steps?
 
-Rather than overloading the capture mechanism for such thoughts,
-let's employ ~org-journal~ --journal entries are stored in files such as
-~journal/20190407~, where the file name is simply the date, or only one
-file per year as I've set it up below.
-Each entry is the week day, along with the date,
-then each child tree is an actual entry with a personal
-title preceded by the time the entry was made.
-Unlike capture and its agenda support, journal ensures entries are maintained in
-chronological order with calendar support.
+Rather than overloading the capture mechanism for such thoughts, let's employ
+~org-journal~ ---journal entries are stored in files such as ~journal/20190407~,
+where the file name is simply the date, or only one file per year as I've set it
+up below.  Each entry is the week day, along with the date, then each child tree
+is an actual entry with a personal title preceded by the time the entry was
+made.  Unlike capture and its agenda support, journal ensures entries are
+maintained in chronological order with calendar support.
 
-Since org files are plain text files, an entry can
-be written anywhere and later ported to the journal.
+Since org files are plain text files, an entry can be written anywhere and later
+ported to the journal.
 
-The separation of concerns is to emphasise the capture stage
-as being quick and relatively mindless, whereas the Journaling
-stage as being mindful.
-Even though we may utilise capture to provide quick support for including
-journal entries, I have set my journal to be on a yearly basis --one file per year--
-since I want to be able to look at previous entries when making the current entry;
-after all, it's hard to compare and contrast easily unless there's multiple entries
-opened already.
+The separation of concerns is to emphasise the capture stage as being quick and
+relatively mindless, whereas the journaling stage as being mindful.  Even though
+we may utilise capture to provide quick support for including journal entries, I
+have set my journal to be on a yearly basis ---one file per year--- since I want
+to be able to look at previous entries when making the current entry; after all,
+it's hard to compare and contrast easily unless there's multiple entries opened
+already.
 
-As such, ideally at the end of the day, I can review what
-has happened, and what has not, and why this is the case,
-and what I intend to do about it, and what problems were encountered
-and how they were solved --in case the problem is encountered again in the future.
-*Consequently, if I encounter previously confronted situations, problems,*
-*all I have to do is reread my journal to get an idea of how to progress.*
-Read more about [[https://www.google.com/search?q=on+the+importance+of+reviwing+your+day+daily&oq=on+the+importance+of+reviwing+your+day+daily&aqs=chrome..69i57.367j0j7&sourceid=chrome&ie=UTF-8][the importance of reviewing your day on a daily basis]].
+As such, ideally at the end of the day, I can review what has happened, and what
+has not, and why this is the case, and what I intend to do about it, and what
+problems were encountered and how they were solved ---in case the problem is
+encountered again in the future.  *Consequently, if I encounter previously
+confronted situations, problems,* *all I have to do is reread my journal to get an
+idea of how to progress.* Read more about [[https://www.google.com/search?q=on+the+importance+of+reviwing+your+day+daily&oq=on+the+importance+of+reviwing+your+day+daily&aqs=chrome..69i57.367j0j7&sourceid=chrome&ie=UTF-8][the importance of reviewing your day on
+a daily basis]].
 
-Moreover, by journaling with Org on a daily basis, it can be
-relatively easy to produce a report on what has been happening
-recently, at work for example. For now, there is no need to
-have multiple journals, for work and for personal life, as
-such I will utilise the tag ~:work:~ for non-personal matters.
+Moreover, by journaling with Org on a daily basis, it can be relatively easy to
+produce a report on what has been happening recently, at work for example. I'd
+like to have multiple journals, for work and for personal life, as such I will
+utilise a prefix argument to obtain my work specific entries.
 
 Anyhow, the setup:
 #+begin_src emacs-lisp
-(use-package org-journal
-  ; :bind (("C-c j" . org-journal-new-entry))
-  :config
-  (setq org-journal-dir "~/Dropbox/journal/"
-        org-journal-file-type 'yearly
-        org-journal-file-format "Personal-%Y-%m-%d")
-)
-
 (defun my/org-journal-new-entry (prefix)
-  " Open today’s journal file and start a new entry.
+  "Open today’s journal file and start a new entry.
 
-    With a prefix, we use the work journal; otherwise the personal journal.
-  "
+  With a prefix, we use the work journal; otherwise the personal journal."
   (interactive "P")
-  (if prefix
-      (let ((org-journal-file-format "Work-%Y-%m-%d"))
-        (org-journal-new-entry nil))
-    (org-journal-new-entry nil))
-  (org-mode) (org-show-all))
+  (-let [org-journal-file-format (if prefix "Work-%Y-%m-%d" org-journal-file-format)]
+    (org-journal-new-entry nil)
+    (org-mode)
+    (org-show-all)))
 
-;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
-(global-set-key (kbd "C-c j") 'my/org-journal-new-entry)
+(use-package org-journal
+  ;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
+  :bind (("C-c j" . my/org-journal-new-entry))
+  :config
+  (setq org-journal-dir         "~/Dropbox/journal/"
+        org-journal-file-type   'yearly
+        org-journal-file-format "Personal-%Y-%m-%d"))
 #+end_src
 
 Bindings available in ~org-journal-mode~, when journaling:
 + ~C-c C-j~: Insert a new entry into the current journal file.
-   - Note keys for ~org-journal-new-entry~ overwrite those for ~org-goto~.
+   - Note that keys for ~org-journal-new-entry~ shadow those for ~org-goto~.
 + ~C-c C-s~: Search the journal for a string.
-  - Note keys for ~org-journal-search~ overwrite those for ~org-schedule~.
+  - Note that keys for ~org-journal-search~ shadow those for ~org-schedule~.
 
 # C-c C-f - go to the next journal file.
 # C-c C-b - go to the previous journal file.
 
-All journal entries are registered in the Emacs Calendar.
-To see available journal entries do ~M-x calendar~.
-Bindings available in the calendar-mode:
+# Some key-bindings in org-journal overwrite org-mode key bindings
+
+# Major modes are supposed to only use key bindings of the form C-c C-?, where ?
+# can be any letter. With org-mode already using most interesting keys,
+# collisions are inevitable. Currently, org-journal overwrites
+#
+# C-c C-f (org-forward-heading-same-level) with org-journal-open-next-entry
+# C-c C-b (org-backward-heading-same-level) with org-journal-open-previous-entry
+#
+
+All journal entries are registered in the Emacs Calendar.  To see available
+journal entries do ~M-x calendar~.  Bindings available in the calendar-mode:
 
 + ~j~: View an entry in a new buffer.
      # C-j - view an entry but do not switch to it.
-+ ~i j~: add a new entry into the day’s file
-+ ~f w/m/y/f/F~: Search in all entries of the current week, month, year, all of time,
++ ~i j~: ‘I’nsert a new ‘j’ournal entry into the day’s file.
++ ~f w/m/y/f/F~: ‘F’ind, search, in all entries of the current week, month, year, all of time,
   of in all entries in the future.
 #
 # [ - go to previous day with journal entries.
 # ] - go to next day with journal entries.
-
-# Some key-bindings in org-journal overwrite org-mode key bindings
-# Major modes are supposed to only use key bindings of the form C-c C-?, where ? can be any letter. With org-mode already using most interesting keys, collisions are inevitable. Currently, org-journal overwrites
-#
-# C-c C-f (org-forward-heading-same-level) with org-journal-open-next-entry
-# C-c C-b (org-backward-heading-same-level) with org-journal-open-previous-entry
-
-** COMMENT Workflow States
-:PROPERTIES:
-:CUSTOM_ID: WorkflowStates
-:END:
+** Workflow States
 
 Here are some of my common workflow states, ---the ‘X/Y’ indicates to do action ‘X’
 when entering a state and ‘Y’ when leaving it, with ‘!’ denoting a timestamp
 should be generated and ‘@’ denoting a user note should be made.
 #+begin_src emacs-lisp
 (setq org-todo-keywords
-      (quote ((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
-              (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)"))))
+      '((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
+        (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)")))
 
 ;; Since DONE is a terminal state, it has no exit-action.
 ;; Let's explicitly indicate time should be noted.
@@ -4073,26 +4130,25 @@ should be generated and ‘@’ denoting a user note should be made.
 
 The ~@~ brings up a pop-up to make a local note about why the state changed.
 *Super cool stuff!*
-In particular, we transition from ~TODO~ to ~STARTED~ once 15 minutes, or a
-reasonable amount, of work has transpired.
-Since all but one state are marked for logging, we could use the
-~lognotestate~ logging facility of org-mode, which prompts for a note
-every time a task’s state is changed.
 
-Entering a comment about what I've done, even if it's very little,
-feels like I'm getting something done. It's an explicit marker of progress
-and motivates me to want to change my task's states more often until I see
-it marked ~DONE~.
+In particular, we transition from ~TODO~ to ~STARTED~ once 15 minutes, or a
+reasonable amount, of work has transpired.  Since all but one state are marked
+for logging, we could use the ~lognotestate~ logging facility of org-mode, which
+prompts for a note every time a task’s state is changed.
+
+Entering a comment about what I've done, even if it's very little, feels like
+I'm getting something done. It's an explicit marker of progress and motivates me
+to want to change my task's states more often until I see it marked ~DONE~.
 
 Here's how they are coloured,
 #+begin_src emacs-lisp
 (setq org-todo-keyword-faces
-      (quote (("TODO" :foreground "red" :weight bold)
-              ("STARTED" :foreground "blue" :weight bold)
-              ("DONE" :foreground "forest green" :weight bold)
-              ("WAITING" :foreground "orange" :weight bold)
-              ("ON_HOLD" :foreground "magenta" :weight bold)
-              ("CANCELLED" :foreground "forest green" :weight bold))))
+      '(("TODO"      :foreground "red"          :weight bold)
+        ("STARTED"   :foreground "blue"         :weight bold)
+        ("DONE"      :foreground "forest green" :weight bold)
+        ("WAITING"   :foreground "orange"       :weight bold)
+        ("ON_HOLD"   :foreground "magenta"      :weight bold)
+        ("CANCELLED" :foreground "forest green" :weight bold)))
 #+end_src
 
 Now we press ~C-c C-t~ then the letter shortcut to actually make the state of an org heading.
@@ -4106,7 +4162,7 @@ We can also change through states using Shift- left, or right.
 Let's draw a state diagram to show what such a workflow looks like.
 
 [[http://plantuml.com/index][PlantUML]] supports drawing diagrams in a tremendously simple format
---it even supports Graphviz/DOT directly and many other formats.
+---it even supports Graphviz/DOT directly and many other formats.
 Super simple setup instructions can be found [[http://eschulte.github.io/babel-dev/DONE-integrate-plantuml-support.html][here]]; below are a bit more
 involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 
@@ -4118,22 +4174,22 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 ;; Tell emacs where it is.
 ;; E.g., (async-shell-command "find / -name plantuml.jar")
 (setq org-plantuml-jar-path
-      (expand-file-name "/usr/local/Cellar/plantuml/1.2019.5/libexec/plantuml.jar"))
+      (expand-file-name "/usr/local/Cellar/plantuml/1.2019.13/libexec/plantuml.jar"))
 
 ;; Enable C-c C-c to generate diagrams from plantuml src blocks.
 (add-to-list 'org-babel-load-languages '(plantuml . t) )
 (require 'ob-plantuml)
 
 ; Use fundamental mode when editing plantuml blocks with C-c '
-(add-to-list 'org-src-lang-modes (quote ("plantuml" . fundamental)))
+(add-to-list 'org-src-lang-modes '("plantuml" . fundamental))
 #+end_src
-
+#
 # (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/")
 
 Let's use this!
 # The source block is replaced with the generated image in-place, by default.
 # #+begin_src plantuml :file workflow.png :exports code :cache (progn (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/") "yes")
-#+begin_src plantuml :file workflow.png :exports code :cache "yes" :tangle no
+#+begin_src plantuml :file workflow.png :exports code :cache yes :tangle no :results (and (org-display-inline-images t t) 'replace)
 skinparam defaultTextAlignment center  /' Text alignment '/
 
 skinparam titleBorderRoundCorner 15
@@ -4142,9 +4198,9 @@ skinparam titleBorderColor red
 skinparam titleBackgroundColor Aqua-CadetBlue
 title My Personal Task States
 
-[*] -> Todo  /' This is my starting state '/
-Done -right-> [*]  /' This is an end state '/
-Cancelled -up-> [*]  /' This is an end state '/
+[*] -> Todo          /' This is my starting state '/
+Done -right-> [*]    /' This is an end state      '/
+Cancelled -up-> [*]  /' This is an end state      '/
 
 /'A task is “Todo”, then it's “started”, then finally it's “done”. '/
 Todo    -right-> Started
@@ -4152,7 +4208,7 @@ Started -down->  Waiting
 Waiting -up->    Started
 Started -right-> Done
 
-/'Along the way, I may put pause the task for some reason then
+/'Along the way, I may pause the task for some reason then
   return to it. This may be since I'm “Blocked” since I need
   something, or the task has been put on “hold” since it may not
   be important right now, and it may be “cancelled” eventually.
@@ -4178,25 +4234,28 @@ Cancelled : c
 Done      : d
 
 /' If a task is paused, we should document why this is the case. '/
-note right of Waiting: Note what is\nblocking us.
-note right of Cancelled: Note reason\nfor cancellation.
-note bottom of On_Hold: Note reason\nfor reduced priority.
+note right  of Waiting:   Note what is\nblocking us.
+note right  of Cancelled: Note reason\nfor cancellation.
+note bottom of On_Hold:   Note reason\nfor reduced priority.
 
 center footer  ♥‿♥ Org-mode is so cool (•̀ᴗ•́)و
 /' Note that we could omit the “center, left, right” if we wished,
    or used a “header” instead.'/
 #+end_src
 
-#+RESULTS[b18d24821fb7ae373e8a7efe4b0c3a27d0469837]:
-[[file:normal_task_states.png]]
+#+RESULTS[be722b7f6a40cf685468918df82a3b22468e3d24]:
+[[file:workflow.png]]
 
 # (org-display-inline-images t t)
 # (shell-command "rm workflow.png")
 #+HTML: <img src="../assets/img/workflow.png" alt="My Personal Task States">
 
 Of note:
+
 + Multiline comments are with ~/' comment here '/~, single quote starts a one-line comment.
+
 + Nodes don't need to be declared, and their names may contain spaces if they are enclosed in double-quotes.
+
 + One forms an arrow between two nodes by writing a line with ~x ->[label here] y~
   or ~y <- x~; or using ~-->~ and ~<--~ for dashed lines. The label is optional.
 
@@ -4204,49 +4263,52 @@ Of note:
 
 + To declare that a node ~x~ has fields ~d, f~ we make two new lines having
   ~x : f~ and ~x : d~.
-+ One adds a note by a node ~x~ as follows: ~note right of x: words then newline\nthen more words~.
+
++ One adds a note near a node ~x~ as follows: ~note right of x: words then newline\nthen more words~.
+
   Likewise for notes on the ~left, top, bottom~.
-  # - A note can be on several lines. It's terminated by ~end note~.
- + Interesting sprites and many other things can be done with PlantUML. Read the docs.
 
-This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Bernt Hansen]]
---while quickly searching through the PlantUML [[http://plantuml.com/guide][manual]]:
-The above is known as an “activity diagram” and it's covered in §4.
+  - A note can be on several lines. It's terminated by ~end note~.
 
-** COMMENT Clocking Work Time
-:PROPERTIES:
-:CUSTOM_ID: Clocking-Work-Time
-:END:
++ Interesting sprites and many other things can be done with PlantUML. Read the docs.
 
-Let's keep track of the time we spend working on tasks that we may have captured for ourselves the previous day.
-Such statistics provides a good idea of how long it actually takes me to accomplish a certain task in the future
-and it lets me know where my time has gone.
+This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Bernt Hansen]] ---while quickly searching
+through the PlantUML [[http://plantuml.com/guide][manual]]: The above is known as an “activity diagram” and
+it's covered in §4.
+** Clocking Work Time
+
+Let's keep track of the time we spend working on tasks that we may have captured
+for ourselves the previous day.  Such statistics provides a good idea of how
+long it actually takes me to accomplish a certain task in the future and it lets
+me know where my time has gone.
 
 + Clock in :: on a heading with ~I~, or in the subtree with ~C-c C-x C-i~.
 + Clock out :: of a heading with ~O~, or in the subtree with ~C-c C-x C-o~.
 + Clock report :: See clocked times with ~C-c C-x C-r~.
 
-After clocking out, the start and end times, as well as the elapsed time, are added to a drawer
-to the heading. We can punch in and out of tasks as many times as desired, say we took a break or
-switched to another task, and they will all be recorded into the drawer.
+After clocking out, the start and end times, as well as the elapsed time, are
+added to a drawer to the heading. We can punch in and out of tasks as many times
+as desired, say we took a break or switched to another task, and they will all
+be recorded into the drawer.
 
 #+begin_src emacs-lisp
 ;; Record a note on what was accomplished when clocking out of an item.
 (setq org-log-note-clock-out t)
 #+end_src
 
-To get started, we could estimate how long a task will take and clock-in;
-then clock-out and see how long it actually took.
+To get started, we could estimate how long a task will take and clock-in; then
+clock-out and see how long it actually took.
 
 # To review the day’s accomplishments, type ‘l’
 # (org-agenda-log-mode) from the agenda view.
 
-Moreover, we can overlay due dates and priorities to tasks in a non-intrusive way that is
-easy to edit by hand.
+Moreover, we can overlay due dates and priorities to tasks in a non-intrusive
+way that is easy to edit by hand.
 
 #+begin_src emacs-lisp
-;; List of all the files & directories where todo items can be found. Only one for now.
-(setq org-agenda-files '("~/Dropbox/todo.org"))
+;; List of all the files & directories where todo items can be found. Only one
+;; for now: My default notes file.
+(setq org-agenda-files (list org-default-notes-file))
 
 ;; How many days ahead the default agenda view should look
 (setq org-agenda-ndays 7)
@@ -4257,14 +4319,16 @@ easy to edit by hand.
 ;; In the agenda view, days that have no associated tasks will still have a line showing the date.
 (setq org-agenda-show-all-dates t)
 
-(setq org-agenda-skip-deadline-if-done t)
-
 ;; Scheduled items marked as complete will not show up in your agenda view.
 (setq org-agenda-skip-scheduled-if-done t)
+(setq org-agenda-skip-deadline-if-done  t)
+#+end_src
 
-;; The agenda view – even in the 7-days-at-a-time view – will always begin on the current day.
-;; This is important, since while using org-mode as a day planner, you never want to think of
-;; days gone past. That’s something you do in other ways, such as when reviewing completed tasks.
+The agenda view –--even in the 7-days-at-a-time view--– will always begin on the
+current day.  This is important, since while using org-mode as a day planner,
+you never want to think of days gone past. That’s something you do in other
+ways, such as when reviewing completed tasks.
+#+begin_src emacs-lisp
 (setq org-agenda-start-on-weekday nil)
 #+end_src
 
@@ -4275,6 +4339,7 @@ way to ensure I don't quit Emacs accidentally.
 (setq confirm-kill-emacs 'yes-or-no-p)
 #+end_src
 
+A few more settings:
 #+begin_src emacs-lisp
 ;; Resume clocking task when emacs is restarted
 (org-clock-persistence-insinuate)
@@ -4285,7 +4350,7 @@ way to ensure I don't quit Emacs accidentally.
 ;; Resume clocking task on clock-in if the clock is open
 (setq org-clock-in-resume t)
 
-;; Sometimes I change tasks I'm clocking quickly - this removes clocked tasks with 0:00 duration
+;; Sometimes I change tasks I'm clocking quickly ---this removes clocked tasks with 0:00 duration
 (setq org-clock-out-remove-zero-time-clocks t)
 
 ;; Clock out when moving task to a done state
@@ -4295,13 +4360,13 @@ way to ensure I don't quit Emacs accidentally.
 (setq org-clock-persist t)
 
 ;; Do not prompt to resume an active clock
-;; (setq org-clock-persist-query-resume nil)
+(setq org-clock-persist-query-resume nil)
 
 ;; Include current clocking task in clock reports
 (setq org-clock-report-include-clocking-task t)
 #+end_src
 
-*Finding tasks to clock in*
+*** Finding tasks to clock in
 Use one of the following options, with the top-most being the first to be tried.
 + From anywhere, ~C-u C-c C-x C-i~ yields a pop-up for recently clocked in tasks.
 + Pick something off today's agenda scheduled items.
@@ -4311,15 +4376,17 @@ Use one of the following options, with the top-most being the first to be tried.
 # Reporting activities
 # C-c C-x i
 
-+ ~C-c C-x C-d~ also provides a quick summary of clocked time for the current org file.
+~C-c C-x C-d~ also provides a quick summary of clocked time for the current org file.
 
-*Estimates versus actual time*
-Before clocking into a task, add to the properties drawer ~:Effort: 1:25~ or ~C-c C-x C-e~, for a task
-that you estimate will take an hour an twenty-five minutes, for example. Now the modeline
-will have will mention the time elapsed alongside the task name.
-+ This is also useful when you simply want to put a time limit on a task that wont be
-  completed anytime soon, say writing a thesis or a long article, but you still want
-  to work on it for an hour a day and be warned when you exceed such a time constraint.
+*** Estimates versus actual time
+Before clocking into a task, add to the properties drawer ~:Effort: 1:25~ or ~C-c
+C-x C-e~, for a task that you estimate will take an hour and twenty-five minutes,
+for example. Now the modeline will mention the time elapsed alongside the task
+name. *Woah!*
++ This is also useful when you simply want to put a time limit on a task that
+  wont be completed anytime soon, say writing a thesis or a long article, but
+  you still want to work on it for an hour a day and be warned when you exceed
+  such a time constraint.
 
   :Not_working_for_me:
   Even if you switch tasks then clock into this task again, the alarm will ring
@@ -4330,86 +4397,7 @@ will have will mention the time elapsed alongside the task name.
 #+end_src
    :end:
 
-  When you've gone above your estimate time, the modeline shows it to be red.
-
-** COMMENT NO: ⟨replaced with yankpand, below⟩ Template expansion (<s Tab, etc.)
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-⟨replaced-with-yankpand,-below⟩-Template-expansion-(<s-Tab,-etc.)
-:END:
-In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for source blocks
-or ~<q~ for quote blocks.
-It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode structure template expansion
-necessitate explicitly loading ~org-tempo~.
-#+begin_src emacs-lisp
-;; (require 'org-tempo)
-;; (use-package org-contrib)
-#+end_src
-
-To insert source blocks with the assistance of a pop-up: ~C-c C-v d~ ;-)
-Perhaps more usefully, invokcaing within a source block splits it up into two
-seperate blocks! Moreover, if invoked on a selected region, it puts the region
-into a new code block! Wow!
-
-+ ~<X~ allows you to obtain the org-block assigned to shortcut ~x~.
-+ ~C-C C-v C-d~ and ~C-c C-v d~ refer to the ~org-babel-demarcate-block~, which
-  provides /source/ blocks.
-+ ~C-c C-,~ refers to ~org-insert-structure-template~, which
-  provides non-source blocks, such as quote ~<q~ and comment ~C~.
-
-*** ~<el~ Emacs-lisp source blocks
-:PROPERTIES:
-:CUSTOM_ID: ~<el~-Emacs-lisp-source-blocks
-:END:
-
-~<el~ to begin an emacs-lisp source block -- ~<e~ is for an example block.
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'org-structure-template-alist
-     '("el" . "src emacs-lisp"))
-
-(require 'org-tempo)
-;; (defun org--check-org-structure-template-alist (x) "n" t)
-#+END_SRC
-
-
-*** COMMENT TODO Demoing Dot Graphs
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-TODO-Demoing-Dot-Graphs
-:END:
-We include one to demo the capabilities of the previous subsection.
-
-#+BEGIN_SRC emacs-lisp
-;; Graphviz: Press <g-TAB to obtain a minimal editable example.
-(add-to-list 'org-structure-template-alist
-        '("g" "#+begin_src dot :results output graphics :file \"/tmp/graph.pdf\" :exports both
-   digraph G {
-      node [color=black,fillcolor=white,shape=rectangle,style=filled,fontname=\"Helvetica\"];
-      A[label=\"A\"]
-      B[label=\"B\"]
-      A->B
-   }\n#+end_src" "<src lang=\"dot\">\n\n</src>"))
-#+END_SRC
-
-Here's another example graph,
-#+BEGIN_EXAMPLE org
- #+BEGIN_SRC dot :file simple_markov.png :cmdline -Kdot -Tpng
- graph {
-   rankdir="UD";
-    A -- D;
-    A -- B;
-    D -- C;
-    B -- C;
-  }
- #+END_SRC
-#+END_EXAMPLE
-
-*** COMMENT Parallel
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Parallel
-:END:
-
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
-#+END_SRC
+  When you've gone above your estimate time, the modeline colours it red.
 
 * Programming
 
@@ -4433,6 +4421,12 @@ about a function or a variable in the echo area. Likewise for Haskell.
 (add-hook 'haskell-mode-hook          'turn-on-haskell-doc-mode)
 (add-hook 'haskell-mode-hook          'turn-on-haskell-indent)
 #+END_SRC
+
+The less casual Haskeller would likely want to use [[https://haskell-lang.org/intero][intero]] to obtain
+more support; e.g., obtain suggestions from GHC about redundant imports
+or type signatures.
+
+The more
 
 ** Highlight Defined Lisp Symbols
 
@@ -4829,7 +4823,7 @@ make ~company-yankpad~ a secondary of all existing backends.
 #+begin_src emacs-lisp
 ;; Yet another snippet extension program
 (use-package yasnippet
-  :diminish
+  :diminish yas-minor-mode
   :config
     (yas-global-mode 1) ;; Always have this on for when using yasnippet syntax within yankpad
     ;; respect the spacing in my snippet declarations
@@ -4978,7 +4972,8 @@ generated by the following basic loop ---whose source block is named
 
 The /resulting text/ of this block, generated below, is tangled to our yankpad
 by utilising a [[https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-reference-syntax.html][noweb]] source block invocation. An example of the
-resulting text is the above “s_org” block.
+resulting text is the above “s_org” block. The result is *83* template expansions
+---that would have been a bit much to write by hand.
 #+begin_example org
 ,#+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes
 <<my-org-lang-templates()>>
@@ -5205,6 +5200,9 @@ were regenerated --Emacs should also prompt me if I make any changes!
 ;; Auto update buffers that change on disk.
 ;; Will be prompted if there are changes that could be lost.
 (global-auto-revert-mode 1)
+
+;; Don't show me the “ARev” marker in the mode line
+(diminish 'auto-revert-mode)
 #+end_src
 
 ** Kill to start of line
@@ -5216,33 +5214,39 @@ Dual to ~C-k~,
 ;; M-k kills to the left
 (global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
 #+END_SRC
-** ~C-x k~ kills current buffer, ~C-u C-x k~ kills all others
-:PROPERTIES:
-:CUSTOM_ID: kill-buffers
-:END:
+** Killing buffers & windows: ~C-x k~ has a family
 
-Let's introduce a handy utility when I'd like to clean my buffers.
-#+BEGIN_SRC emacs-lisp
-(defun kill-other-buffers ()
-  "Kill all other buffers and other windows."
-  (interactive)
-  (mapc 'kill-buffer (delq (current-buffer) (buffer-list)))
-  (delete-other-windows))
-#+END_SRC
+Let's extend the standard ~C-x k~ with prefix support, so that we can invoke
+variations: Kill /this/ buffer, kill /other/ buffer, or kill /all other/ buffers.
 
-By default ~C-x k~ prompts to select which buffer
-should be selected. I almost always want to kill
-the current buffer, so let's not waste time making
-such a tedious decision.
+By default ~C-x k~ prompts to select which buffer should be selected. I almost
+always want to kill the current buffer, so let's not waste time making such a
+tedious decision. Moreover, if I've killed a buffer, I usually also don't want
+the residual window, so let's get rid of it.
 #+begin_src emacs-lisp
 (global-set-key (kbd "C-x k")
-  '(lambda (&optional all)
-     "Kill current buffer, or all if prefix is provided.
-      Prompt only if there are unsaved changes."
+  (lambda (&optional prefix)
+"C-x k     ⇒ Kill current buffer & window
+C-u C-x k ⇒ Kill OTHER window and its buffer
+C-u C-u C-x C-k ⇒ Kill all other buffers and windows
+
+Prompt only if there are unsaved changes."
      (interactive "P")
-     (if all (kill-other-buffers)
-       (kill-buffer (current-buffer)))))
+     (pcase (or (car prefix) 0)
+       ;; C-x k     ⇒ Kill current buffer & window
+       (0  (kill-this-buffer)
+           (unless (one-window-p) (delete-window)))
+       ;; C-u C-x k ⇒ Kill OTHER window and its buffer
+       (4  (other-window 1)
+           (kill-this-buffer)
+           (unless (one-window-p) (delete-window)))
+       ;; C-u C-u C-x C-k ⇒ Kill all other buffers and windows
+       (16   (mapc 'kill-buffer (delq (current-buffer) (buffer-list)))
+             (delete-other-windows)))))
 #+end_src
+
+The incantation ~C-u C-x k~ will reduce the noise of all the documentation buffers
+I tend to consult.
 
 ** Switching from 2 horizontal windows to 2 vertical windows
 :PROPERTIES:
@@ -5706,7 +5710,7 @@ In a terminal execute: xcode-select --install
 
 May need to actually reboot the system as well.
 :End:
-* COMMENT TODO Improvements
+* TODO COMMENT Improvements
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-Improvements
 :END:

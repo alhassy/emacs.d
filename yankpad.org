@@ -29,6 +29,11 @@ $0
 $0
 #+end_src
 
+** s_plantuml: src block for plantuml
+#+begin_src plantuml
+$0
+#+end_src
+
 ** s_emacs-lisp: src block for emacs-lisp
 #+begin_src emacs-lisp
 $0
@@ -96,6 +101,11 @@ $0
 
 ** e_any: example block for any
 #+begin_example any
+$0
+#+end_example
+
+** e_plantuml: example block for plantuml
+#+begin_example plantuml
 $0
 #+end_example
 
@@ -169,6 +179,11 @@ $0
 $0
 #+end_quote
 
+** q_plantuml: quote block for plantuml
+#+begin_quote plantuml
+$0
+#+end_quote
+
 ** q_emacs-lisp: quote block for emacs-lisp
 #+begin_quote emacs-lisp
 $0
@@ -236,6 +251,11 @@ $0
 
 ** v_any: verse block for any
 #+begin_verse any
+$0
+#+end_verse
+
+** v_plantuml: verse block for plantuml
+#+begin_verse plantuml
 $0
 #+end_verse
 
@@ -309,6 +329,11 @@ $0
 $0
 #+end_center
 
+** c_plantuml: center block for plantuml
+#+begin_center plantuml
+$0
+#+end_center
+
 ** c_emacs-lisp: center block for emacs-lisp
 #+begin_center emacs-lisp
 $0
@@ -376,6 +401,11 @@ $0
 
 ** ex_any: export block for any
 #+begin_export any
+$0
+#+end_export
+
+** ex_plantuml: export block for plantuml
+#+begin_export plantuml
 $0
 #+end_export
 
