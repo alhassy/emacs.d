@@ -61,10 +61,20 @@ As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-w
 through my ever growing configuration files, ease of usability and reference
 for peers, and, most importantly, better maintainability for myself!
 
-Dear reader, when encountering a foregin command ~X~ I encourage you to execute ~(describe-symbol 'X)~, or press ~C-h o~ with the cursor on ~X~.
-An elementary Elisp Cheat Sheet can be found [[https://github.com/alhassy/ElispCheatSheet][here]]
-and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of the bindings
-in ~“this”~ configuration.
+Dear reader, when encountering a foregin command ~X~ I encourage you to execute
+~(describe-symbol 'X)~, or press ~C-h o~ with the cursor on ~X~.  An elementary Elisp
+Cheat Sheet can be found [[https://github.com/alhassy/ElispCheatSheet][here]] and here is a 2-page 3-column [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] of
+the bindings in ~“this”~ configuration.
++ ~C-h o~ ⇒ *What's this thing?*
++ ~C-h e~ ⇒ *What'd /Emacs/ do?*
++ ~C-h l~ ⇒ *What'd /I/ do?*
++ “I accidentally hit a key, which one and what did it do!?” ⇒ ~C-h e~ and ~C-h l~,
+  then use ~C-h o~ to get more details on the action.
+  ;-)
+
+Finally, ~C-h d~ asks nicely what ‘d’ocumentation you're interested in.
+After providing a few keywords, the =apropos= tool yields possible functions
+and variables that may accomplish my goal.
 
 * Table of Contents  :Github:TOC:
 # :Github:QUOTE:TOC_2_org:  ⇒ breaks on github
@@ -82,6 +92,7 @@ in ~“this”~ configuration.
   - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
   - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
   - [[#installing-os-packages-and-automatically-keeping-my-system-up-to-data-from-within-emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs]]
+  - [[#being-at-the-helm----completion--narrowing-framework][“Being at the Helm” ---Completion & Narrowing Framework]]
   - [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
   - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
   - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
@@ -92,7 +103,6 @@ in ~“this”~ configuration.
   - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
 - [[#cosmetics][Cosmetics]]
   - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
-  - [[#being-at-the-helm----completion-framework][“Being at the Helm” ---Completion Framework]]
   - [[#my-to-do-list-the-initial-buffer-when-emacs-opens-up][My to-do list: The initial buffer when Emacs opens up]]
   - [[#exquisite-themes][Exquisite Themes]]
   - [[#a-sleek--informative-mode-line][A sleek & informative mode line]]
@@ -109,7 +119,8 @@ in ~“this”~ configuration.
 - [[#prose][Prose]]
   - [[#fill-mode----word-wrapping][Fill-mode ---Word Wrapping]]
   - [[#word-completion][Word Completion]]
-  - [[#fix-spelling-as-you-type---thesaurus--dictionary-too][Fix spelling as you type --thesaurus & dictionary too!]]
+  - [[#fix-spelling-as-you-type----thesaurus--dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!]]
+  - [[#touch-typing][Touch Typing]]
   - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
   - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
   - [[#placeholder-text----for-learning--experimenting][Placeholder Text ---For Learning & Experimenting]]
@@ -121,7 +132,8 @@ in ~“this”~ configuration.
   - [[#mouse-editing-support][Mouse Editing Support]]
   - [[#delete-selection-mode][Delete Selection Mode]]
   - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
-  - [[#taking-a-tour-of-ones-edits][Taking a tour of one's edits]]
+  - [[#letter-based-navigation][Letter-based Navigation]]
+  - [[#c-c-e-np-taking-a-tour-of-ones-edits][~C-c e n,p~: Taking a tour of one's edits]]
 - [[#org-mode-administrivia][Org-Mode Administrivia]]
   - [[#getting-started][Getting Started]]
   - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
@@ -139,6 +151,7 @@ in ~“this”~ configuration.
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+  - [[#org-mode--html][Org-mode ⇐ HTML]]
 - [[#life-within-org-mode][Life within Org-mode]]
   - [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
   - [[#super-agenda][Super Agenda]]
@@ -147,14 +160,15 @@ in ~“this”~ configuration.
   - [[#workflow-states][Workflow States]]
   - [[#clocking-work-time][Clocking Work Time]]
 - [[#programming][Programming]]
+  - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
-  - [[#highlight-defined-lisp-symbols][Highlight Defined Lisp Symbols]]
+  - [[#jumping-to-definitions--references][Jumping to definitions & references]]
+  - [[#aggressive-indentation][Aggressive Indentation]]
   - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
   - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
   - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
   - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
   - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
-  - [[#edit-as-root][Edit as Root]]
   - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
   - [[#snippets----template-expansion][Snippets ---Template Expansion]]
 - [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
@@ -167,7 +181,7 @@ in ~“this”~ configuration.
   - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
   - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
   - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
-- [[#conclusion][Conclusion]]
+- [[#conclusion----why-configuration-files-should-be-literate][Conclusion ---Why Configuration Files Should be Literate]]
 
 * Why Emacs?
 :PROPERTIES:
@@ -262,7 +276,9 @@ Possibly interesting reads:
 + [[https://orgmode.org/index.html#sec-4][The Org-mode Reference Manual]] or [[https://orgmode.org/worg/][Worg: Community-Written Docs]] which includes a [[https://orgmode.org/worg/org-tutorials/index.html][meta-tutorial]].
 + [[https://github.com/emacs-tw/awesome-emacs][Awesome Emacs]]: A community driven list of useful Emacs packages, libraries and others.
 + [[https://github.com/caisah/emacs.dz][A list of people's nice emacs config files]]
-#  + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]
+  #  + [[https://emacs.stackexchange.com/questions/3143/can-i-use-org-mode-to-structure-my-emacs-or-other-el-configuration-file][Stackexchange: Using org-mode to structure config files]]
++ [[http://emacslife.com/how-to-read-emacs-lisp.html][Read Lisp, Tweak Emacs: How to read Emacs Lisp so that you can customize Emacs]]
++ [[https://practicaltypography.com/why-racket-why-lisp.html][Why Racket? Why Lisp?]]
 
 ---If eye-candy, a sleek and beautiful GUI, would entice you then consider starting with [[http://spacemacs.org/][spacemacs]].
    Here's a helpful [[https://www.youtube.com/watch?v=hCNOB5jjtmc][installation video]], after which you may want to watch
@@ -275,8 +291,10 @@ moreover, it reflects my personality such as what I value and what I neglect in 
 
 # why emacs ---not marching to someone-else's tune!
 #+begin_quote org
-/I’m stunned that you, as a professional software engineer, would eschew inferior computer languages that hinder your ability to craft code,
-/but you put up with editors that bind your fingers to someone else’s accepted practice. --- [[http://www.howardism.org/Technical/Emacs/why-emacs.html][Howard Abrams]]
+I’m stunned that you, as a professional software engineer, would eschew inferior
+computer languages that hinder your ability to craft code, but you put up with
+editors that bind your fingers to someone else’s accepted practice. ---[[http://www.howardism.org/Technical/Emacs/why-emacs.html][Howard
+Abrams]]
 #+end_quote
 
  *The Power of Text Manipulation:*
@@ -307,77 +325,38 @@ Finally, here's some fun commands to try out:
   - ~C-u 𝓃 M-x hanoi~ for the 𝓃-towers of Hanoi
 + ~M-x butterfly~ ---in reference to [[https://xkcd.com/378/][“real programmers”]]
 
-* TODO COMMENT Gibberish: Why a monolithic configuration?
+Before we get started…
+
+*Why a monolithic configuration?*
+
 Why am I keeping my entire configuration ---from those involving cosmetics &
 prose to those of agendas & programming--- in one file?  Being monolithic ---“a
 large, mountain-sized, indivisible block of stone”--- is generally not ideal in
-nearly any project: E.g., a book is split into chapters and a software is
-partitioned into modules. Using Org-mode, we can still partition our setup while
-remaining in one file. An Emacs configuration is a personal leisurely project,
-and one file is a simple architecture: I don't have to worry about many files
-and the troubles of moving content between them; instead, I have headings and
-move content almost instantenously ---org-refile by pressing ~w~ at the start of
-the reader---. Moreover, being one file, it is easy to distribute and to extract
+nearly any project: E.g., a book is split into chapters and a piece of software
+is partitioned into modules. Using Org-mode, we can still partition our setup
+while remaining in one file. An Emacs configuration is a personal, leisurely
+project, and one file is a simple architecture: I don't have to worry about many
+files and the troubles of moving content between them; instead, I have headings
+and move content almost instantaneously ---org-refile by pressing ~w~ at the start
+of the reader. Moreover, being one file, it is easy to distribute and to extract
 artefacts from it ---such as the README for Github, the HTML for my blog, the
 colourful PDF rendition, and the all-important Emacs Lisp raw code
 file. Moreover, with a single ~#~ I can quickly comment out whole sections,
 thereby momentarily disabling features.
 
-The only reason I would use multiple files for setting up my editor would be if
-I did not have a literate programming environment; i.e., Org-mode.
+There's no point in being modular if there's nothing explaining what's going on,
+so I document.
 
-Org:
-+ You can still get easy organization with headers, and they're collapsable
-+ It's still easy to search for settings because all of them are in there
-+ Documentation! For yourself; no point in being modular if there's nothing
-  explaining what's going on.
-+ Really easy to quickly /re-organise/ code!
-+ Using :noexport:
-  - The advantage of separate files is that you can selectively pick which one
-    to load. (as opposed to comment out blocks of code in a big file, which is
-    less easy to manage)
+The [[#Conclusion---Why-Configuration-Files-Should-be-Literate][concluding]] section of this read further argues the benefits of maintaining
+literate, and monolithic, configuration files. As a convention, I will try to
+motivate the features I set up and I will prefix my local functions with, well,
+~my/~ ---this way it's easy to see all my defined functions, and this way I cannot
+accidentally shadow existing utilities. Moreover, besides browsing the web, I do
+nearly everything in Emacs and so the start-up time is unimportant to me: Once
+begun, I have no intention of spawning another instance nor closing the current
+one.
 
-  The important thing is the ability to have an easily navigatable
-  hierarchy. This' achievable with a nested directory/org-heading structure.
-
-+ Really easy to delete content!
-  - After a while, I come back and realise I've implemented something silly or
-    that is avilable via MELPA, I can quickly delete it.
-+ Many files requires coming up with descriptive file names.
-  - Instead, prefer descriptive org headings ^_^
-+ Multiple files ⇒ Makes it harder to remember which features live where.
-  - Instead, have headings with an introducttory paragraph that explains the
-    kind of features being considered ---or, lazily, look at the outlined view
-    of subheadings to see what's there.
-  - Harder to review the whole project, when its in pieces.
-
-  Many small files is great for collobaration ---there'll likely be less merge
-  conflicts. However, this is a one-Emacsen project.
-
-+ Using headings does not conflict with the Single Responsibility Principle nor
-  of Separation of Concerns. ---This totally ignores the Interface Segregation
-  Principle, but in the grand scheme of things, I'm happy this way and I like
-  being happy.
-
-+ Some programming languages perform better when there are many small files
-  ---glaring at Agda here. Others have a bit of a cost to linking all the files
-  together. There's no fast and hard rule it seems.
-
-+ Programs are meant to be read by humans and only incidentally for computers to
-  execute -- Donald Knuth.
-
-+ Programs without documentation have no value; it's like a claim without
-  evidence!
-
-+ Herein, I'll aim to have source blocks that do not exceed 30 lines ---read
-  more [[https://dzone.com/articles/rule-30-%E2%80%93-when-method-class-or][here]].  This is more likely to ensure (possibly by extracting code into
-  its own functions): The listing fits on one screen, avoiding deeply nested
-  control structures, non repeating common logical patterns, increased
-  confidence that the implementation meets the stated purpose.
-
-+ I will prefix my local functions with, well, ~my/~.  This way it's easy to see
-  all my defined functions, and this way I cannot accidentally shadow existing
-  utilities.
+                                     Enjoy!
 
 * Booting Up
 :PROPERTIES:
@@ -634,9 +613,7 @@ using the ~diminish~ package, so let's install that.
 (use-package diminish
   :demand t
   :config ;; Let's hide some markers.
-    (diminish 'eldoc-mode)
-    (diminish 'org-indent-mode)
-    (diminish 'subword-mode))
+    (diminish  'org-indent-mode))
 #+end_src
 
 Here are other packages that I want to be installed onto my machine.
@@ -714,7 +691,7 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
 
       ;; Make init.el
       (org-babel-tangle)
-      ;; (byte-compile-file "~/.emacs.d/init.el")
+      (byte-compile-file "~/.emacs.d/init.el")
       (load-file "~/.emacs.d/init.el")
 
       ;; Acknowledgement
@@ -1123,6 +1100,10 @@ Let's obtain the extension.
 ;; It happens in the background ^_^
 (system-packages-update)
 #+END_SRC
+
+After an update to Mac OS, one may need to [[https://emacs.stackexchange.com/questions/53026/how-to-restore-file-system-access-in-macos-catalina][restore file system access privileges
+to Emacs]].
+
 Here's an example use for Emacs packages that require OS packages:
 #+BEGIN_SRC emacs-lisp :tangle no
 (shell-command-to-string "type rg") ;; ⇒ rg not found
@@ -1172,6 +1153,169 @@ window manager for macOS along the lines of xmonad.”
 
 Neato! Now I can live in Emacs even more ^_^
 
+** “Being at the Helm” ---Completion & Narrowing Framework
+
+Whenever we have a choice to make from a list, [[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible
+completions and narrows the list of choices as we type.  This is extremely
+helpful for when switching between buffers, =C-x b=, and discovering & learning
+about other commands!  E.g., press ~M-x~ to see recently executed commands and
+other possible commands! Press ~M-x~ and just start typing, methods mentioning
+what you've typed are suddenly listed!
+
+| Remembrance comes with time, until then /ask/ Emacs! |
+
+/Try and be grateful!/
+#+BEGIN_SRC emacs-lisp
+(use-package helm
+ :diminish
+ :init (helm-mode t)
+ :bind (("M-x"     . helm-M-x)
+        ("C-x C-f" . helm-find-files)
+        ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
+        ("C-x r b" . helm-filtered-bookmarks)
+        ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
+        ("C-c i"   . helm-imenu)
+        ("C-h a"   . helm-apropos)
+        ;; Look at what was cut recently & paste it in.
+        ("M-y" . helm-show-kill-ring)
+
+        :map helm-map
+        ;; We can list ‘actions’ on the currently selected item by C-z.
+        ("C-z" . helm-select-action)
+        ;; Let's keep tab-completetion anyhow.
+        ("TAB"   . helm-execute-persistent-action)
+        ("<tab>" . helm-execute-persistent-action)))
+#+END_SRC
+
+Helm provides generic functions for completions to replace
+tab-completion in Emacs with no loss of functionality.
+
++ The =execute-extended-command=, the default “M-x”, is replaced with ~helm-M-x~
+  which shows possible command completions.
+
+  Likewise with ~apropos~, which is helpful for looking up commands.
+  It shows all meaningful Lisp symbols whose names match a given pattern.
+
++ The ‘Helm-mini’, ~C-x b~, shows all buffers, recently opened files,
+  bookmarks, and allows us to create new bookmarks and buffers!
+
++ The ‘Helm-imenu’, ~C-c i~, yields a a menu of all “top-level items” in a file;
+  e.g., functions and constants in source code or headers in an org-mode file.
+
+  ⟳ Nifty way to familarise yourself with a new code base, or one from a while
+  ago.
+
++ When Helm is active, ~C-x~ lists possible course of actions on the currently
+  selected item.
+
+When ~helm-mode~ is enabled, even help commands make use of it.
+E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
+and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
+Both show a pop-up of other possible commands.
+
+                            Here's a nifty tutorial:
+                     [[http://tuhdo.github.io/helm-intro.html][A package in a league of its own: Helm]]
+
+Let's ensure ~C-x b~ shows us: Current buffers, recent files, and bookmarks
+---as well as the ability to create bookmarks, which is via ~C-x r b~ manually.
+For example, I press ~C-x b~ then type any string and will have the option of
+making that a bookmark referring to the current location I'm working in, or
+jump to it if it's an existing bookmark, or make a buffer with that name,
+or find a file with that name.
+#+BEGIN_SRC emacs-lisp
+(setq helm-mini-default-sources '(helm-source-buffers-list
+                                    helm-source-recentf
+                                    helm-source-bookmarks
+                                    helm-source-bookmark-set
+                                    helm-source-buffer-not-found))
+#+END_SRC
+
+Incidentally, Helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the ~top~ program via
+~helm-top~. It also serves as an interface to popular search engines
+and over 100 websites such as ~google, stackoverflow, ctan~, and ~arxiv~.
+#+begin_src emacs-lisp
+(system-packages-ensure "surfraw")
+; ⇒  “M-x helm-surfraw” or “C-x c s”
+#+end_src
+If we want to perform a google search, with interactive suggestions,
+then invoke ~helm-google-suggest~ ---which can be acted for other serves,
+such as Wikipedia or Youtube by ~C-z~. For more google specific options,
+there is the ~google-this~ package.
+
+Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].  It allows us to
+not only search the current buffer but also the other buffers and to make live
+edits by pressing ~C-c C-e~ when a search buffer exists. Incidentally, executing
+~C-s~ on a word, region, will search for that particular word, region; then make
+changes with ~C-c C-e~ and apply them by ~C-x C-s~.
+#+BEGIN_SRC emacs-lisp
+(use-package helm-swoop
+  :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
+          ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
+          ;; Go back to last position where ‘helm-swoop’ was called
+          ("C-S-s" . 'helm-swoop-back-to-last-point))
+  :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
+          (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
+#+END_SRC
+
++            ~C-u 𝓃 C-s~ does a search but showing 𝓃 contextual lines!
++               ~helm-multi-swoop-all~, ~C-M-s~, lets us grep files anywhere!
+
+:ThisBecameMoreAnnoyingThanUseful:
+#+BEGIN_SRC emacs-lisp :tangle no
+  ;; If there is no symbol at the cursor, use the last used words instead.
+  (setq helm-swoop-pre-input-function
+      (lambda ()
+        (let (($pre-input (thing-at-point 'symbol)))
+          (if (eq (length $pre-input) 0)
+              helm-swoop-pattern ;; this variable keeps the last used words
+            $pre-input))))
+
+#+END_SRC
+
+Press ~M-i~ after a search has executed to enable it for all buffers.
+
+We can also limit our search to org files, or buffers of the same mode,
+or buffers belonging to the same project!
+
+Note that on the Mac, I can still perform default Emacs search using
+/Cmd+f/.
+:End:
+:Old_ivy_counsel_swiper_shenanigans:
++ There is a super duper neato search capability we can utilise -- ~swiper~.
++ We also use the ~counsel~, a collection of completion, ~ivy~, enhanced versions of
+  common Emacs commands.
+#+begin_src emacs-lisp :tangle no
+(use-package ivy ;; More powerful but ugly looking completetion framework.
+                 ;; Helm is prettier.
+                 ;; Needed for Counsel, below.
+ :config
+
+  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
+  (setq ivy-use-virtual-buffers t)
+  ;; number of result lines to display
+  (setq ivy-height 10)
+  ;; does not count candidates
+  (setq ivy-count-format "")
+  ;; no regexp by default
+  (setq ivy-initial-inputs-alist nil))
+
+(use-package counsel
+  :bind*                              ; load when pressed
+  (("C-s"     . swiper)
+   ;; ("C-x C-r" . counsel-recentf)     ; search for recently edited
+   ("<f1> l"  . counsel-find-library)   ; find an Emacs Lisp library
+   ("<f2> u"  . counsel-unicode-char))) ; insert a unicode symbol using a pop-up
+#+end_src
+
+~swiper~ is an alternative to Emacs' default incremental search.
+It shows an overview of all matches --navigate using arrow keys.
+There is also a helm based version of swiper.
+:end:
+
+Finally, note that there is now a ~M-x helm-info~ command to show documentation,
+possibly with examples, of the packages installed. For example,
+~M-x helm-info RET dash RET -parition RET~ to see how the parition function from the
+dash library works via examples ;-)
 ** Having a workspace manager in Emacs
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
@@ -1295,6 +1439,57 @@ I don't know what's your Gnus setup. To be honest, your question lacks the essen
      - Press ~C-h m~ to learn more about message mode for mail composition; or
        read the [[https://www.gnus.org/manual/message.pdf][Message Manual]].
 
+#+BEGIN_SRC emacs-lisp
+;; After startup, if Emacs is idle for 5seconds, then start Gnus.
+;; Gnus is slow upon startup since it fetches all mails upon startup.
+;; (run-with-idle-timer 5 nil #'gnus)
+#+END_SRC
+
+Learn more by reading [[https://www.gnu.org/software/emacs/manual/html_mono/gnus.html#Top][The Gnus Newsreader Manual]]; also available within Emacs by
+~C-h i m gnus~ (•̀ᴗ•́)و
+
+- Or look at the [[https://www.gnu.org/software/emacs/refcards/pdf/gnus-refcard.pdf][Gnus Reference Card]].
+- Or, less comprehensively, this [[https://github.com/redguardtoo/mastering-emacs-in-one-year-guide/blob/master/gnus-guide-en.org#subscribe-groups][outline]].
+
+[[https://www.emacswiki.org/emacs/GnusTutorial][EmacsWiki]] has a less technical and more user friendly tutorial.
+
+*** Prettifications
+Let's add the icon  near my mail groups ^_^
+#+BEGIN_SRC emacs-lisp
+;; Fancy icons for Emacs
+;; Only do this once:
+(use-package all-the-icons)
+  ; :config (all-the-icons-install-fonts 'install-without-asking)
+
+;; Make mail look pretty
+(use-package all-the-icons-gnus
+  :config (all-the-icons-gnus-setup))
+
+;; While we're at it: Make dired, ‘dir’ectory ‘ed’itor, look pretty
+(use-package all-the-icons-dired
+  :hook (dired-mode . all-the-icons-dired-mode))
+#+END_SRC
+
+Next, let's paste in some [[http://groups.google.com/group/gnu.emacs.gnus/browse_thread/thread/a673a74356e7141f][eye-candy for Gnus]]:
+#+begin_src emacs-lisp
+(setq gnus-sum-thread-tree-vertical        "│"
+      gnus-sum-thread-tree-leaf-with-other "├─► "
+      gnus-sum-thread-tree-single-leaf     "╰─► "
+      gnus-summary-line-format
+      (concat
+       "%0{%U%R%z%}"
+       "%3{│%}" "%1{%d%}" "%3{│%}"
+       "  "
+       "%4{%-20,20f%}"
+       "  "
+       "%3{│%}"
+       " "
+       "%1{%B%}"
+       "%s\n"))
+#+end_src
+
+*** Super Terse Tutorial
+
 In gnus, by default items you've looked at disappear ---i.e., are archived.
 They can still be viewed in, say, your online browser if you like.
 In the ~Group~ view, ~R~ resets gnus, possibly retriving mail or alterations
@@ -1302,9 +1497,37 @@ from other mail clients. ~q~ exits gnus in ~Group~ mode, ~q~ exits the particula
 view to go back to summary mode. Only after pressing ~q~ from within a group
 do changes take effect on articles ---such as moves, reads, deletes, etc.
 
-  + RET :: Open an article.
++ Expected keys: ~RET~ enter/open an item, ~q~ quit and return to previous view, ~g~
+    refresh view ---i.e., ‘g’et new articles.
 
-  + B m :: Move an article, in its current state, to another group ---i.e.,
++ =RET=: Enter a group by pressing, well, the enter key.
+  - Use ~SPC~ to open a group and automatically one first article there.
+  - Use ~C-u RET~ to see all mail in a folder instead of just unread mail.
+
++ Only groups/folders with unread mail will be shown, use ~L/l~ to toggle between
+  listing all groups.
+
++ ~SPC, DEL~ to scroll forward and backward; or ~C-v, M-v~ as always.
+
++ =G G=: Search mail at server side in the group buffer.
+  - Limit search to particular folders/groups by marking them with ~#~, or
+    unmarking them with ~M-#~.
+
++ ~/ /,a:~ Filter mail according to subject or author; there are many
+  other options, see [[https://www.gnu.org/software/emacs/manual/html_mono/gnus.html#Limiting][§3.8 Limiting]].
+
++ =d=:  Mark an article as done, i.e., read it and it can be archived.
+
++ =!=: Mark an article as read, but to be kept around ---e.g., you have not
+    replied to it, or it requires more reading at a later time.
+
+  This lets us read mail offline; cached mail is found at =~/News/cache/=.
+
+  #+BEGIN_SRC emacs-lisp :tangle "~/.gnus"
+  (setq gnus-use-cache 'use-as-much-cache-as-possible)
+#+END_SRC
+
++ =B m=:  Move an article, in its current state, to another group ---i.e.,
     ‘label’ using Gmail parlance.
 
     Something to consider doing when finished with an article.
@@ -1314,18 +1537,128 @@ do changes take effect on articles ---such as moves, reads, deletes, etc.
 
     Emails can always be archieved ---never delete, maybe?
 
-  + ! :: Mark an article as read, but to be kept around ---e.g., you have not
-    replied to it, or it requires more reading at a later time.
++ =R, r=: Reply with sender's quoted text in place, or without but
+  still visible in an adjacent buffer.
+  - Likewise ~S W~ or ~S w~ to reply all, ‘wide reply’, with or without quoted text.
+  - ~C-c C-z~ Delete everything from current position till the end.
+  - ~C-c C-e~ Replace selected region with ‘[...]’; when omitting parts of quoted text.
 
-  + R :: Reply to email with sender's content there in place.
-    - ~r~ to reply to an email with sender's content in adjacent buffer.
++ Press ~m~ to compose mail; or ~C-x m~ from anywhere in Emacs to do so.
+  - ~C-c C-c~ to send the mail.
+  - ~S D e~ to resend an article as new mail: Alter body, subject, etc, before
+  - ~C-c C-f~ to forward mail.
+    sending.
 
-  + d ::  Mark an article as done, i.e., read it and it can be archived.
++ ~C-c C-a~ to attach a file; it'll be embedded in the mail body as plaintext.
+  - Press ~o~ on an attachment to save it locally.
 
-Learn more by reading [[https://www.gnus.org/manual.html][The Gnus Manual]]; also available within Emacs by ~C-h i m
-gnus~ (•̀ᴗ•́)و
-- Or look at the [[https://www.gnu.org/software/emacs/refcards/pdf/gnus-refcard.pdf][Gnus Reference Card]].
-- Or, less comprehensively, this [[https://github.com/redguardtoo/mastering-emacs-in-one-year-guide/blob/master/gnus-guide-en.org#subscribe-groups][outline]].
+*** Auto-completing mail addresses
+In order to get going quickly, using [[https://github.com/redguardtoo/gmail2bbdb][gmail2bbdb]], let's convert our Gmail
+contacts into a BBDB file ---the [[http://bbdb.sourceforge.net/][Insidious Big Brother Database]] is an
+address-book application that we'll use for E-mail; if you want to use it as a
+address-book application to keep track of contacts, notes, their organisation,
+etc, then consider additionally installing [[https://github.com/emacs-helm/helm-bbdb][helm-bbdb]] which gives a nice menu
+interface.
+
+ - From the [[https://www.google.com/contacts][Gmail Contacts page]], obtain a =contacts.vcf= file by clicking “More ->
+   Export -> vCard format -> Export”.
+- Run command =M-x gmail2bbdb-import-file= and select =contacts.vcf=; a ~bbdb~ file
+  will be created in my Dropbox folder.
+- Press ~C-x m~ then begin typing a contact's name and you'll be queried about
+  setting up BBDB, say yes.
+
+#+begin_src emacs-lisp
+(use-package gmail2bbdb
+  :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
+
+(use-package bbdb
+ :demand t
+ ;; :after company-mode ;; The “com”plete “any”thig mode is set below in §Prose
+ :hook   (message-mode . bbdb-insinuate-gnus)
+         (gnus-startup-hook . bbdb-insinuate-gnus)
+ :custom (bbdb-file gmail2bbdb-bbdb-file)
+         (bbdb-use-pop-up t)                        ;; allow popups for addresses
+ :config (add-to-list 'company-backends 'company-bbdb))
+ #+end_src
+
+Here is an [[http://emacs-fu.blogspot.com/2009/08/managing-e-mail-addresses-with-bbdb.html][emacs-fu]] article on managing e-mail addressed with bbdb.
+
+*** Feeds to Blogs                                               :Disabled:
+One can easily subscribe to an RSS feed in Gnus: Just press ~G R~ in the group
+buffer view, then follow the prompts. However, doing so programmatically is much
+harder.  Below is my heartfelt attempt at doing so ---if you want a feed reader
+in Emacs that “just works”, then [[https://github.com/skeeto/elfeed][elfeed]] is the way to go. When all is said and
+done, the code below had me reading Gnus implementations and led me to conclude
+that /Gnus has a great key-based interface but a /poor programming interface/ ---or
+maybe I need to actually read the manual instead of frantically consulting
+source code.
+
+My homemade hack to getting tagged feeds programmatically into Gnus.
+#+begin_src emacs-lisp :tangle no
+;; Always show Gnus items organised by topic.
+(add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
+
+;; From Group view, press ^, then SPC on Gwene, then look for the site you want to follow.
+;; If it's not there, add it via the web interface http://gwene.org/
+(add-to-list 'gnus-secondary-select-methods '(nntp "news.gwene.org"))
+;;
+;; E.g., http://nullprogram.com/feed/ uses an Atom feed which Gnus does not
+;; support natively.  But it can be found on Gwene.
+
+(setq my/gnus-feeds
+      ;; topic  title  url
+      '(Emacs "C‘est La 𝒵" https://cestlaz.github.io/rss.xml
+        Emacs "Marcin Borkowski's Blog" http://mbork.pl?action=rss
+        Emacs "Howardism" http://www.howardism.org/rss.xml
+        Islam "Shia Islam Blogspot" http://welcometoshiaislam.blogspot.com/feeds/posts/default?alt=rss
+        Cats "Hedonistic Learning" http://www.hedonisticlearning.com/rss.xml
+        Cats "Functorial Blog"  https://blog.functorial.com/feed.rss
+        Programming "Joel on Software" http://www.joelonsoftware.com/rss.xml
+        Haskell "Lysxia's Blog"  https://blog.poisson.chat/rss.xml))
+
+;; If fubared, then:
+;; (ignore-errors (f-delete "~/News/" 'force) (f-delete "~/.newsrc.eld"))
+
+;; Execute this after a Gnus buffer has been opened.
+(progn
+(use-package with-simulated-input)
+(loop for (topic title url)
+      in (-partition 3 my/gnus-feeds)
+      ;; url & topic are symbols, make them strings.
+      for url′   = (symbol-name url)
+      for topic′ = (symbol-name topic)
+      ;; Avoid spacing issues by using a Unicode ghost space “ ”.
+      for title′ = (gnus-newsgroup-savable-name (s-replace " " " " title))
+      for input  = (format "C-SPC C-a %s RET RET" title′)
+      do
+      ; cl-letf* (((symbol-function 'insert) (lambda (x) nil))) ;; see the (undo) below.
+      ;; Add the group
+      (with-simulated-input input
+        (gnus-group-make-rss-group url′))
+      ;; Ensure it lives in the right topic category.
+      (if (equal 'no-such-topic (alist-get topic gnus-topic-alist 'no-such-topic nil #'string=))
+        (push (list topic′ title′) gnus-topic-alist) ;; make topic if it doesnt exist
+      (setf (alist-get topic′ gnus-topic-alist 'no-such-topic nil #'string=)
+            (cons title′ (alist-get topic gnus-topic-alist 'no-such-topic nil #'string=)))))
+      ;; Acknowledgement
+      (message "Now switch into the GNUS group buffer, and refresh the topics; i.e., t t."))
+
+      ;; The previous command performs an insert, since it's intended to be interactively
+      ;; used; let's undo the insert.
+      ; (undo-only)
+
+;; (setq gnus-permanently-visible-groups ".*")
+;;
+;; Show topic alphabetically? The topics list is rendered in reverse order.
+;; (reverse (cl-sort gnus-topic-alist 'string-lessp :key 'car))
+#+end_src
+
+Ironically, I've decide that “no, I do not want to see my blogs in Emacs” for
+the same reasons I do not activelly use ~M-x eww~ to browse the web in Emacs: I
+like seeing the colours, fonts, and math symbols that the authours have labored
+over to producing quality content. Apparently, I'm shallow and I'm okay with it
+---but not that shallow, since I'm constantly pushing Emacs which looks ugly by
+default but it's unreasonably powerful.
 ** Hydra: Supply a prefix only once
 Sometimes we have keybindings that share a common prefix, say ~C-c j~ and ~C-c k~,
 and we invoke them in an arbitrary sequence, it would be nice to invoke the
@@ -1595,14 +1928,18 @@ primary tools.
               "! Emacs "      emacs-version
               "; Org-mode "   org-version
               "; System "     (system-name)
-                  (format "; Time %.3fs"
-                      (float-time (time-subtract (current-time)
-                                    before-init-time))))))
+              "; Time "       (emacs-init-time))))
 #+end_src
 Now my startup message is,
 #+begin_src emacs-lisp
-;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.3; System alhassy-air.local
+;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.3; System alhassy-air.local
 #+end_src
+:Manually_Computing_Init_Time:
+#+BEGIN_SRC emacs-lisp
+(format "; Time %.3fs"
+        (float-time (time-subtract (current-time) before-init-time)))
+#+END_SRC
+:End:
 
 Let's change the Emacs frame to mention the name of the buffer in focus,
 as well as a nice ‘motto’:
@@ -1610,166 +1947,6 @@ as well as a nice ‘motto’:
 ;; Keep self motivated!
 (setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 #+end_src
-** “Being at the Helm” ---Completion Framework
-
-Whenever we're have a choice to make from a list, [[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible
-completions.  This is extremely helpful for when switching between buffers, =C-x
-b=, and discovering & learning about other commands!  E.g., press ~M-x~ to see
-recently executed commands and other possible commands!
-
-/Try and be grateful!/
-#+BEGIN_SRC emacs-lisp
-(use-package helm
- :diminish
- :init (helm-mode t)
- :bind (("M-x"     . helm-M-x)
-        ("C-x C-f" . helm-find-files)
-        ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
-        ("C-x r b" . helm-filtered-bookmarks)
-        ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
-        ("C-c i"   . helm-imenu)
-        ("C-h a"   . helm-apropos)
-        ;; Look at what was cut recently & paste it in.
-        ("M-y" . helm-show-kill-ring)
-
-        :map helm-map
-        ;; We can list ‘actions’ on the currently selected item by C-z.
-        ("C-z" . helm-select-action)
-        ;; Let's keep tab-completetion anyhow.
-        ("TAB"   . helm-execute-persistent-action)
-        ("<tab>" . helm-execute-persistent-action)))
-#+END_SRC
-
-Helm provides generic functions for completions to replace
-tab-completion in Emacs with no loss of functionality.
-
-+ The =execute-extended-command=, the default “M-x”, is replaced with ~helm-M-x~
-  which shows possible command completions.
-
-  Likewise with ~apropos~, which is helpful for looking up commands.
-  It shows all meaningful Lisp symbols whose names match a given pattern.
-
-+ The ‘Helm-mini’, ~C-x b~, shows all buffers, recently opened files,
-  bookmarks, and allows us to create new bookmarks and buffers!
-
-+ The ‘Helm-imenu’, ~C-c i~, yields a a menu of all “top-level items” in a file;
-  e.g., functions and constants in source code or headers in an org-mode file.
-
-  ⟳ Nifty way to familarise yourself with a new code base, or one from a while
-  ago.
-
-+ When Helm is active, ~C-x~ lists possible course of actions on the currently
-  selected item.
-
-When ~helm-mode~ is enabled, even help commands make use of it.
-E.g., ~C-h o~ runs ~describe-symbol~ for the symbol at point,
-and ~C-h w~ runs ~where-is~ to find the key binding of the symbol at point.
-Both show a pop-up of other possible commands.
-
-                            Here's a nifty tutorial:
-                     [[http://tuhdo.github.io/helm-intro.html][A package in a league of its own: Helm]]
-
-Let's ensure ~C-x b~ shows us: Current buffers, recent files, and bookmarks
----as well as the ability to create bookmarks, which is via ~C-x r b~ manually.
-For example, I press ~C-x b~ then type any string and will have the option of
-making that a bookmark referring to the current location I'm working in, or
-jump to it if it's an existing bookmark, or make a buffer with that name,
-or find a file with that name.
-#+BEGIN_SRC emacs-lisp
-(setq helm-mini-default-sources '(helm-source-buffers-list
-                                    helm-source-recentf
-                                    helm-source-bookmarks
-                                    helm-source-bookmark-set
-                                    helm-source-buffer-not-found))
-#+END_SRC
-
-Incidentally, Helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the ~top~ program via
-~helm-top~. It also serves as an interface to popular search engines
-and over 100 websites such as ~google, stackoverflow, ctan~, and ~arxiv~.
-#+begin_src emacs-lisp
-(system-packages-ensure "surfraw")
-; ⇒  “M-x helm-surfraw” or “C-x c s”
-#+end_src
-If we want to perform a google search, with interactive suggestions,
-then invoke ~helm-google-suggest~ ---which can be acted for other serves,
-such as Wikipedia or Youtube by ~C-z~. For more google specific options,
-there is the ~google-this~ package.
-
-Let's switch to a powerful searching mechanism -- [[https://github.com/ShingoFukuyama/helm-swoop][helm-swoop]].  It allows us to
-not only search the current buffer but also the other buffers and to make live
-edits by pressing ~C-c C-e~ when a search buffer exists. Incidentally, executing
-~C-s~ on a word, region, will search for that particular word, region; then make
-changes with ~C-c C-e~ and apply them by ~C-x C-s~.
-#+BEGIN_SRC emacs-lisp
-(use-package helm-swoop
-  :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
-          ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
-          ;; Go back to last position where ‘helm-swoop’ was called
-          ("C-S-s" . 'helm-swoop-back-to-last-point))
-  :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
-          (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
-#+END_SRC
-
-+            ~C-u 𝓃 C-s~ does a search but showing 𝓃 contextual lines!
-+               ~helm-multi-swoop-all~, ~C-M-s~, lets us grep files anywhere!
-
-:ThisBecomeMoreAnnoyingThanUseful:
-#+BEGIN_SRC emacs-lisp :tangle no
-  ;; If there is no symbol at the cursor, use the last used words instead.
-  (setq helm-swoop-pre-input-function
-      (lambda ()
-        (let (($pre-input (thing-at-point 'symbol)))
-          (if (eq (length $pre-input) 0)
-              helm-swoop-pattern ;; this variable keeps the last used words
-            $pre-input))))
-
-#+END_SRC
-
-Press ~M-i~ after a search has executed to enable it for all buffers.
-
-We can also limit our search to org files, or buffers of the same mode,
-or buffers belonging to the same project!
-
-Note that on the Mac, I can still perform default Emacs search using
-/Cmd+f/.
-:End:
-:Old_ivy_counsel_swiper_shenanigans:
-+ There is a super duper neato search capability we can utilise -- ~swiper~.
-+ We also use the ~counsel~, a collection of completion, ~ivy~, enhanced versions of
-  common Emacs commands.
-#+begin_src emacs-lisp :tangle no
-(use-package ivy ;; More powerful but ugly looking completetion framework.
-                 ;; Helm is prettier.
-                 ;; Needed for Counsel, below.
- :config
-
-  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
-  (setq ivy-use-virtual-buffers t)
-  ;; number of result lines to display
-  (setq ivy-height 10)
-  ;; does not count candidates
-  (setq ivy-count-format "")
-  ;; no regexp by default
-  (setq ivy-initial-inputs-alist nil))
-
-(use-package counsel
-  :bind*                              ; load when pressed
-  (("C-s"     . swiper)
-   ;; ("C-x C-r" . counsel-recentf)     ; search for recently edited
-   ("<f1> l"  . counsel-find-library)   ; find an Emacs Lisp library
-   ("<f2> u"  . counsel-unicode-char))) ; insert a unicode symbol using a pop-up
-#+end_src
-
-~swiper~ is an alternative to Emacs' default incremental search.
-It shows an overview of all matches --navigate using arrow keys.
-There is also a helm based version of swiper.
-:end:
-
-Finally, note that there is now a ~M-x helm-info~ command to show documentation,
-possibly with examples, of the packages installed. For example,
-~M-x helm-info RET dash RET -parition RET~ to see how the parition function from the
-dash library works via examples ;-)
-
 ** My to-do list: The initial buffer when Emacs opens up
 :PROPERTIES:
 :CUSTOM_ID: My-to-do-list:-The-initial-buffer-when-Emacs-opens-up
@@ -1784,6 +1961,9 @@ my to-do list and my init file, side-by-side.
       (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
   (find-file "~/.emacs.d/init.org"))
 #+END_SRC
+
+There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile
+yet minimalist splash screen showing recent files, projects, and bookmarks.
 
 ** Exquisite Themes
 
@@ -1832,6 +2012,12 @@ We cycle between the chosen themes with ~C-x t~.
 (global-set-key "\C-x\ t" 'my/toggle-theme)
 (my/toggle-theme)
 #+END_SRC
+
+Apparently, there's already a package that accomplishes these goals and more:
+[[https://github.com/myTerminal/theme-looper][theme-looper]]. I may switch to it, but for now my simple function above is
+slightly informative, to me at least, about how themes work and it does what I
+want.
+
 ** A sleek & informative mode line
 :PROPERTIES:
 :CUSTOM_ID: Spaceline:-A-sleek-mode-line
@@ -2049,15 +2235,10 @@ Org headers, for which the ‘completed closing pair’ must tiresomely be delet
 :END:
 We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp
-;; Fancy icons for neotree
-;; Only do this once:
-(use-package all-the-icons)
-  ; :config (all-the-icons-install-fonts 'install-without-asking)
-
 ;; Sidebar for project file navigation
 (use-package neotree
   :config (global-set-key "\C-x\ d" 'neotree-toggle)
-          (setq neo-theme 'icons))
+          (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
 
 ;; Open it up upon startup.
 ;; (neotree-toggle)
@@ -2078,6 +2259,9 @@ execute ~C-x o~.
 
 I /rarely/ make use of this feature; company mode & Helm together quickly provide
 an automatic replacement for nearly all of my uses.
+
++ Reminiscent of GUI file managers is [[https://github.com/ralesi/ranger.el#features][ranger]]; e.g., it has multi-column
+  display of parent directories along with a file preview mechanism.
 
 ** Tabs                                                           :Disabled:
 :PROPERTIES:
@@ -2150,6 +2334,10 @@ We might accidentally close this buffer, so we could utilise the following.
    (persistent-scratch-autosave-mode 1))
 
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
+
+;; Upon startup, close the default scratch buffer and open one as specfied above
+(kill-buffer "*scratch*")
+(scratch)
 #+END_SRC
 
 I use Org-mode often, so that's how I want things to appear.
@@ -2175,7 +2363,8 @@ places upon save.
 (add-hook 'before-save-hook 'whitespace-cleanup)
 #+end_src
 
-See [[http://ergoemacs.org/emacs/whitespace-mode.html][here]] for making whitespace visible; including spaces, tabs, and newlines
+- Org-mode is a writer's best friend; it's large enough to deserve its own sections.
+- See [[http://ergoemacs.org/emacs/whitespace-mode.html][here]] for making whitespace visible; including spaces, tabs, and newlines
 
 ** Fill-mode ---Word Wrapping
 :PROPERTIES:
@@ -2291,10 +2480,7 @@ for completion of emoji names.
 )
 :End:
 
-** Fix spelling as you type --thesaurus & dictionary too!
-:PROPERTIES:
-:CUSTOM_ID: Fix-spelling-as-you-type---thesaurus-&-dictionary-too!
-:END:
+** Fix spelling as you type ---thesaurus & dictionary too!
 I would like to check spelling on the fly.
  + ~C-;~ :: Cycle through corrections for word at point.
  + ~M-$~ :: Check and correct spelling of the word at point
@@ -2324,38 +2510,16 @@ that Emacs' ~ispell~ is the interface to such a command line spelling utility.
 (setq ispell-dictionary "en_GB") ;; set the default dictionary
 #+END_SRC
 
-:ignore_for_now:
-Allow spelling support for CamlCase words like “EmacsIsCool”.
+[Disabled] Allow spelling support for CamlCase words like “EmacsIsCool”.
 #+BEGIN_SRC emacs-lisp :tangle no
 (setq  ispell-extra-args '("--sug-mode=ultra"
                             "--run-together"
                             "--run-together-limit=5"
                             "--run-together-min=2"))
 #+END_SRC
-:End:
 
-:Hook_TODO:
-Hook for after init?
-(dolist (hook '(text-mode-hook))
-  (add-hook hook (lambda () (flyspell-mode 1))))
-:End:
-
-:Old_global_flyspell:
-Not a good idea...
-
-;; Maybe a hook is better? Much better ...?
-(define-globalized-minor-mode my-flyspell-global-mode flyspell-mode
-  (lambda ()
-
-    ;; spawns an ispell process
-    (flyspell-mode 1)
-
-))
-(my-flyspell-global-mode 1)
-
-:End:
-
-Let us select a correct spelling merely by clicking on a word.
+Let us select a correct spelling merely by clicking on a word
+---for the rare days I have a mouse.
 #+begin_src emacs-lisp
 (eval-after-load "flyspell"
   ' (progn
@@ -2394,10 +2558,10 @@ Use the thesaurus Emacs frontend [[https://github.com/hpdeifel/synosaurus][Synos
   :diminish synosaurus-mode
   :init    (synosaurus-mode)
   :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace)
-)
+           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
 #+end_src
-The thesaurus is powered by the Wordnet ~wn~ tool, which can be invoked without an internet connection!
+The thesaurus is powered by the Wordnet ~wn~ tool, which can be invoked without an
+internet connection!
 #+begin_src emacs-lisp
 ;; (shell-command "brew cask install xquartz &") ;; Dependency
 ;; (shell-command "brew install wordnet &")
@@ -2411,13 +2575,11 @@ Let's use Wordnet as a dictionary via the [[https://github.com/gromnitsky/wordnu
 ;; Use M-& for async shell commands.
 #+END_SRC
 Use ~M-↑,↓~ to navigate dictionary results, and ~wordnut-search~ for a new search.
-#
-# I'm using Wordnet for the dictionary since I'm also using it for the thesaurus.
-# An alternative is to use the lightweight ~define-word~ library; which I think
-# is not ideal since it provides way less info compared to wn.
-#
 
-:CurrentlyNotWorking:
+An alternative to =wordnut= is to use the lightweight ~define-word~ package; which I
+think is not ideal since it provides way less information.
+
+:PowerthesaurusCurrentlyNotWorking:
 #+BEGIN_SRC emacs-lisp :tangle no
 (load "~/dotfiles/.emacs.d/powerthesaurus.el")
 (global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
@@ -2425,13 +2587,15 @@ Use ~M-↑,↓~ to navigate dictionary results, and ~wordnut-search~ for a new s
 ;; Website currently down ... https://github.com/SavchenkoValeriy/emacs-powerthesaurus/issues/6
 #+END_SRC
 :End:
-
+** Touch Typing
 Use this game to help you learn to spell words that you're having trouble with;
-see ~~/Dropbox/spelling.txt~.
-#+BEGIN_SRC emacs-lisp
+e.g., I have a file ~~/Dropbox/spelling.txt~ with words I have trouble spelling,
+which I open then run ~M-x typing-of-emacs~ in order to improve spelling said
+words.
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; The Typing Of Emacs, a game.
-;; (use-package typing-of-emacs)
-;; quelpa!
+(use-package typing-of-emacs
+  :quelpa (typing :fetcher wiki :url "https://www.emacswiki.org/emacs/typing.el"))
 #+END_SRC
 
 Practice touch typing using [[https://github.com/hagleitn/speed-type][speed-type]].
@@ -2444,22 +2608,19 @@ or random text for practice. The timer begins when the first key is pressed
 and stats are shown when the last letter is entered.
 
 Other typing resources include:
-+ [[https://www.emacswiki.org/emacs/TypingOfEmacs][Typing of Emacs]] --an Emacs alternative to speed type, possibly more engaging.
-+ [[https://alternativeto.net/software/klavaro/][Klavaro]] --a GUI based yet language-independent typing tutor.
++ [[https://www.emacswiki.org/emacs/TypingOfEmacs][Typing of Emacs]] ---an Emacs alternative to speed type, possibly more engaging.
++ [[https://alternativeto.net/software/klavaro/][Klavaro]] ---a GUI based yet language-independent typing tutor.
   - I'm enjoying this tool in getting started with Arabic typing.
-  - The plan is to move to using the online [[https://makinghijrah.com/arabic-typing/][Making Hijrah]] tutor which
-    concludes the basic lesson plan with a few short narrations.
 + [[https://typing.io/][Typing.io]] is a tutor for coders: Lessons are based on open source code, such
-  some XMonad written in Haskell or Linux written in  C.
-+ [[https://www.gnu.org/software/gtypist/index.html#downloading][GNU Typist]] --which is interactive in the terminal, so not ideal in Emacs--,
+  some XMonad written in Haskell or Linux written in C.
++ [[https://www.gnu.org/software/gtypist/index.html#downloading][GNU Typist]] ---which is interactive in the terminal, so not ideal in Emacs--,
 
 To assist in language learning, it may be nice to have an Emacs
 [[https://github.com/atykhonov/google-translate][interface]] to Google translate ---e.g., invoke ~google-translate-at-point~.
 #+BEGIN_SRC emacs-lisp
 (use-package google-translate
  :config
-   (global-set-key "\C-ct" 'google-translate-at-point)
-)
+   (global-set-key "\C-ct" 'google-translate-at-point))
 #+END_SRC
 
 Select the following then ~C-c t~,
@@ -2649,8 +2810,8 @@ Let's put it here ourselves.
 I almost always want the ~agda-mode~ input method ---it's like the TeX method, but better.
 #+BEGIN_SRC emacs-lisp
 (require 'agda-input)
-(add-hook 'text-mode-hook (lambda () (set-input-method "Agda")))
-(add-hook 'org-mode-hook  (lambda () (set-input-method "Agda")))
+(setq default-input-method "Agda")
+(toggle-input-method)  ;; C-\
 #+END_SRC
 
 :agda_Command_line_arguments:
@@ -2804,6 +2965,7 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 
 #+begin_src emacs-lisp
 (global-subword-mode 1)
+(diminish  'subword-mode)
 #+end_src
 
 ** Mouse Editing Support
@@ -2859,15 +3021,62 @@ Also …
 ;; C-n, next line, inserts newlines when at the end of the buffer
 (setq next-line-add-newlines t)
 #+END_SRC
-** Taking a tour of one's edits
-:PROPERTIES:
-:CUSTOM_ID: Taking-a-tour-of-one's-edits
-:END:
+** Letter-based Navigation
+At a glance of possible positions, across windows,
+and a key to jump there is a feature provided to us by [[https://github.com/winterTTr/ace-jump-mode/wiki/AceJump-FAQ][ace-jump]]
+---here is an [[https://www.youtube.com/watch?feature=player_embedded&v=UZkpmegySnc#!][emacs-rocks 2-minute video]].
+
+For example, =C-c SPC m= greys our all windows and places a red
+letter at the start of any word that begins with /m/, then I may
+press a letter to jump to the associated position in the
+associated window. Using ~C-u C-c SPC~ and ~C-u C-u C-c SPC~ let
+me jump to any character or to any visible line.
+
+➩ Super simple use case: Fix your eyes on an occurence of a word, then ~C-c SPC~
+  to quickly jump to it so as to edit the sentence in which it occurs.
+  - It's like ~C-s~ but more lightweight.
+
+#+begin_src emacs-lisp
+(use-package ace-jump-mode
+  :config (bind-key* "C-c SPC" 'ace-jump-mode))
+
+;; See ace-jump issues to configure for use of home row keys.
+#+end_src
+
+There is a newer and somewhat more powerful package, [[https://github.com/abo-abo/avy][avy]], which accompishes the
+same goal.  It uses a tree style to jumipng: Locations are given two letter
+combinations, one presses one letter to jump to a group of text, then another
+letter to jump somewhere in that grouping. I prefer ace-jump since it greys
+everthing out, whereas avy surrounds jump locations with a box.
+Here is an [[https://www.youtube.com/watch?v=zar4GsOBU0g][emacs-doom 6-minute video]] for avy.
+
+There is also [[https://github.com/tam17aki/ace-isearch][ace-isearch]] for bridinging different navgiational methods ---one
+begins incremental search, ~s-f~, then according to a pause and length of input,
+one of the navgiational methods, such as isearch or avy or helm-swoop, will be
+begun.  I'm okay with using ~C-s~ for helm-swoop and ~C-c SPC~ for ace-jump, and
+still have ~s-f~ for incremental search, which I hardly use.
+
+*What is bind-keys**?
+
+Major modes provide specfic use and so their bindings always take precedence
+over global bindings ---e.g., the major mode binding may do what the global does
+but with extra mode-specfic behaviour, such as indentation. Other times, a major
+mode's binding simply uses the same key presses with completely unrelated
+behaviour.  If we want to avoid having our global keybindings shadowed by a
+major mode, we may use the ~bind-key*~ /macro/ of ~use-package~, or the ~bind-keys*~
+/macro/ when there are multiple keys; these are macros, not clauses.  ---These
+essentially creates a dedicated minor mode behind the scenes, which saves us the
+work of [[https://emacs.stackexchange.com/a/358/10352][doing it ourselves]].
+
+|   | ~(bind-keys* (k₁ . f₁) … (kₙ . fₙ))~                           |
+| ≈ | These keybindings override all minor modes that use keys =kᵢ=. |
+
+** ~C-c e n,p~: Taking a tour of one's edits
 This package allows us to move around the edit points of a buffer
 /without/ actually undoing anything. We even obtain a brief description
 of what happend at each edit point.
 This seems useful for when I get interrupted or lose my train of
-thought: Just press ~C-c e ,~ to see what I did recently and where
+thought: Just press ~C-c e p~ to see what I did recently and where
 ---the “e” is for “e”dit.
 
 #+BEGIN_SRC emacs-lisp
@@ -2876,14 +3085,14 @@ thought: Just press ~C-c e ,~ to see what I did recently and where
   :init (setq glc-default-span 0))
 
 (defhydra hydra-edits (global-map "C-c e")
-  ("," goto-last-change "Goto nᵗʰ last change")
-  ("." goto-last-change-reverse "Goto more recent change"))
+  ("p" goto-last-change "Goto nᵗʰ last change")
+  ("n" goto-last-change-reverse "Goto more recent change"))
 #+END_SRC
 
 Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually performed.
 
 Notice, as a hydra, I can use ~C-c e~ followed by any combination of
-~,~ and ~.~ to navigate my recent edits /without/ having to supply the prefix
+~p~ and ~n~ to navigate my recent edits /without/ having to supply the prefix
 each time.
 
 * Org-Mode Administrivia
@@ -2904,6 +3113,13 @@ https://stackoverflow.com/questions/31855904/emacs-sees-the-directory-with-the-n
 
 https://emacs.stackexchange.com/questions/27597/how-to-update-org-to-latest-version-using-package-repos-git-clone-in-ubuntu
 :End:
+
+Let's get Org-mode setup so that we can quickly move between headings and
+org-blocks ---~n,p~ on heading starts and ~s-n,p~ on blocks---, then let's prettify
+the leading stars of headings, Org's formatting delimiters, and even its blocks
+delimiters by making them less intrusive thereby ‘fading into the background’
+and drawing minimal attention.  This has been useful when promoting Org-mode by
+sharing my screen with others.
 
 ** Getting Started                                                  :ignore:
 Let's obtain Org-mode along with the extras that allow us to ignore
@@ -3375,17 +3591,16 @@ structure template expansion necessitate explicitly loading ~org-tempo~.
 
 To insert source blocks with the assistance of a pop-up: ~C-c C-v d~ ;-)
 Perhaps more usefully, invoking within a source block splits it up into two
-seperate blocks! Moreover, if invoked on a selected region, it puts the region
+separate blocks! Moreover, if invoked on a selected region, it puts the region
 into a new code block! Wow!
 
-+ ~<X~ allows you to obtain the org-block assigned to shortcut ~x~.
-+ ~C-c C-v C-d~ and ~C-c C-v d~ refer to the ~org-babel-demarcate-block~, which
-  provides /source/ blocks.
 + ~C-c C-,~ refers to ~org-insert-structure-template~, which provides non-source
   blocks, such as quote ~<q~, comment ~<C~, center ~<c~, notes ~<n~, examples ~<e~, and ~<l~
   and ~<h~ and ~<a~ for LaTeX and HTML and ASCII export blocks.
-
+  - ~<X~ allows you to obtain the org-block assigned to shortcut ~X~.
   - The contents of comment blocks are ignored upon export.
++ ~C-c C-v C-d~ and ~C-c C-v d~ refer to the ~org-babel-demarcate-block~, which
+  provides /source/ blocks.
 
 | We shall improve upon this system below using snippets. |
 E.g., ~s_em TAB~ to obtain an org-src block marked with ~emacs-lisp~ as the
@@ -3674,6 +3889,20 @@ speaker notes in the flattened view.
 
 Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
 resulting PDF locally.
+
+** Org-mode ⇐ HTML
+
+The following let's us copy htlm into org format using eww, Emacs' built-in web browser.
+#+BEGIN_SRC emacs-lisp
+;; See: https://emacs.stackexchange.com/questions/7171/paste-html-into-org-mode
+(use-package org-eww
+ :quelpa (org-eww :fetcher git :url "https://github.com/Fuco1/org-mode.git"))
+#+END_SRC
+
+It does not work as I'd like, but may prove useful to have around.
+
++ Possibly useful: Open a webpage with ~M-x eww~ then toggle ~M-x read-only-mode~ to
+  edit the text, say for notes or deletions, as you read! No need to copy-paste.
 
 * Life within Org-mode
 
@@ -3979,7 +4208,7 @@ the tasks of the day depending on their tags ---possibly using complex predicate
           (:tag "personal")
           (:tag "3mi3")
           (:name "Emacs Init" :tag "init")
-          (:priority<= "B" :order 1)))))
+          (:priority<= "B" :order 1))))
 #+END_SRC
 
 The [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]] homepage shows complex configurations and pleasant screenshots
@@ -4401,15 +4630,22 @@ name. *Woah!*
 
 * Programming
 
-#+BEGIN_SRC emacs-lisp
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
+Herein we configure utilites for version control, function and variable lookup,
+and template expansion for inescapably repetitive scenarios.
 
-;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-  :config (global-aggressive-indent-mode t))
+** Highlight defined Lisp symbols
+
+Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes it
+highlight all defined names ---as long as we're in Lisp mode, whence in org-src
+blocks we use ~C-c '~.
+#+BEGIN_SRC emacs-lisp
+;; Emacs Lisp specific
+(use-package highlight-defined
+  :hook (emacs-lisp-mode . highlight-defined-mode))
 #+END_SRC
+
+Super helpful in making my Emacs configuration: If a name is not highlighted,
+then I've misspelled it or it doesn't exist! :smile:
 
 ** Eldoc for Lisp and Haskell
 In =emacs-lisp-mode= we can enable =eldoc-mode= to display information
@@ -4428,19 +4664,50 @@ or type signatures.
 
 The more
 
-** Highlight Defined Lisp Symbols
+** Jumping to definitions & references
 
-Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes it
-highlight all defined names ---as long as we're in Lisp mode, whence in org-src
-blocks we use ~C-c '~.
+Out-of-the-box Emacs has ‘xref’ utilities ~M-.~ and ~C-u M-.~ to [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html#Xref][Find Identifier
+References]]; however, tags to source definitions need to be generated using the
+=etags= program. Nonetheless, the xref utilites are impressive and some just work:
+For example, ~M-?~ cleverly finds /all/ references for an identifier in ‘near by’
+files; whereas ~C-u M-. RET my/.*~, for example, uses the given regular expression
+to list all identifiers with prefix ~my/~, thereby listing my personally defined
+names ^_^
+
+| =C-M-. 𝓇𝓮ℊ𝓮𝓍= | Find all identifiers whose name matches the given pattern |
+
+Let's get [[https://github.com/jacktasia/dumb-jump][dumb-jump]], where the ‘dumb’ is possibly due to the fact
+that it works by brute-force regular-expression lookup of
+pre-defined ‘definitional template’ rules. It “just works” ^_^
 #+BEGIN_SRC emacs-lisp
-;; Emacs Lisp specific
-(use-package highlight-defined
-  :hook (emacs-lisp-mode . highlight-defined-mode))
+(use-package dumb-jump
+  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
+         ("M-g ."     . dumb-jump-go-other-window)
+         ("M-g b"     . dumb-jump-back)
+         ("M-g p"     . dumb-jump-go-prompt)
+         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
+  :config
+  ;; If source file is visible, just shift focus to it.
+  (setq dumb-jump-use-visible-window t))
 #+END_SRC
 
-Super helpful in making my Emacs configuration: If a name is not highlighted,
-then I've misspelled it or it doesn't exist! :smile:
+In Lisp, for binding macros, it lists all possible mentions of the bound
+variable ---the first is likely what is desired.  Alternatively, one could just
+add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
+works fine even for locally bound definitions.  It works depending on the
+extension of a file.
+** Aggressive Indentation
+
+With a single space or tab, my code should always remain indented.
+#+BEGIN_SRC emacs-lisp
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent
+  :config (global-aggressive-indent-mode t))
+
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+#+END_SRC
 
 ** What's changed & who's to blame?
 :PROPERTIES:
@@ -4691,10 +4958,9 @@ Here are further reads:
 :CUSTOM_ID: Text-Folding-with---https---github-com-gregsexton-origami-el--Origami-mode--
 :END:
 
-Literate programming within Org-mode is not always ideal,
-so we use a programming mode directly and then may want
-to have arbitrary ‘sections’ of text folded up.
-Let's describe how to accomplish this goal.
+Literate programming within Org-mode is not always ideal, so we use a
+programming mode directly and then may want to have arbitrary ‘sections’ of text
+folded up.  Let's describe how to accomplish this goal.
 
 We use a feature-full folding mode.
 #+BEGIN_SRC emacs-lisp
@@ -4730,54 +4996,39 @@ blocks! Love this one ^_^
   ("p" origami-previous-fold "Previous"))
 #+END_SRC
 
-** Edit as Root
-:PROPERTIES:
-:CUSTOM_ID: Edit-as-Root
-:END:
-From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]]:
-
-#+BEGIN_SRC emacs-lisp
-(defun find-file-as-root ()
-  "Like `ido-find-file, but automatically edit the file with
-root-privileges (using tramp/sudo), if the file is not writable
-by user."
-  (interactive)
-  (let ((file (ido-read-file-name "Edit as root: ")))
-    (unless (file-writable-p file)
-      (setq file (concat "/sudo:root@localhost:" file)))
-    (find-file file)))
-
-(bind-key "C-x F" 'find-file-as-root)
-#+END_SRC
 
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 :PROPERTIES:
 :CUSTOM_ID: Jump-between-windows-using-Cmd+Arrow-&-between-recent-buffers-with-Meta-Tab
 :END:
+We can use ~C-x o~ to switch to the ‘o’ther window, and ~C-u 𝓃 C-x o~ to switch to
+the 𝓃-th next clockwise window, but using ~s-↑,↓,←,→~ may be faster.
+
 #+BEGIN_SRC emacs-lisp
 (use-package windmove
-  :config
-  ;; use command key on Mac
-  (windmove-default-keybindings 'super)
-  ;; wrap around at edges
-  (setq windmove-wrap-around t))
+  :config ;; use command key on Mac
+          (windmove-default-keybindings 'super)
+          ;; wrap around at edges
+          (setq windmove-wrap-around t))
   #+END_SRC
 
-The [[https://github.com/killdash9/buffer-flip.el][docs]] for the following have usage examples.
+The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, have usage examples.
 #+BEGIN_SRC emacs-lisp
 (use-package buffer-flip
   :bind
    (:map buffer-flip-map
-    ("M-<tab>" . buffer-flip-forward)
+    ("M-<tab>"   . buffer-flip-forward)
     ("M-S-<tab>" . buffer-flip-backward)
-    ("C-g" . buffer-flip-abort))
+    ("C-g"       . buffer-flip-abort))
   :config
     (setq buffer-flip-skip-patterns
-        '("^\\*helm\\b"))
-)
+        '("^\\*helm\\b")))
 ;; key to begin cycling buffers.
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 #+END_SRC
+
+See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
+into new configurations.
 
 ** Snippets ---Template Expansion
 
@@ -5130,7 +5381,8 @@ This is very useful when editing in a particular coding language, say via
 #+END_SRC
 ** Emacs keybindings for my browser :Disabled:
 #+begin_center
-⟨ I was a bit too Emacs-happy at one-point; this' cool, but I rarely use it. ⟩
+⟨ I was a bit too Emacs-happy at one-point; this' cool, but I rarely use it;
+except ~C-x b~: A buffer approach is far superior to a tab-based one. ⟩
 #+end_center
 
 I've downloaded the [[https://chrome.google.com/webstore/detail/vimium/dbepggeogbaibhgnhhndojpepiihcmeb/related][Vimium]] extension for Google Chrome,
@@ -5345,13 +5597,128 @@ publish the current article to my blog.
 )
 #+END_SRC
 
-* Conclusion
+* Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
-:CUSTOM_ID: Conclusion
+:CUSTOM_ID: Conclusion---Why-Configuration-Files-Should-be-Literate
 :END:
+
+A configuration file sets up various features for a tool ---and serves as an
+essential learning point.  In order to remember them, what they do, and possibly
+where you learned about them ---which may include additional resources--- it is
+pertinent to document such facts. Benefits of documentating features include:
++ A list of the features with human readable names! ---In case you forget what you invested time on!
++ Personal documentation! ---Reduce wasting time Googling things that you knew in the past!
++ Convincing Need
+  - Making notes with decriptive text, as suggested below,
+    will make it clear whether you actually need the feature
+    or “just threw it becuase it looks cool” ---which leads to ‘init bankruptcy’.
+
+    Moreover, actually documenting a feature may make it more to recall
+    that you have the feature and have notes for it.
+
+#+begin_quote
+Programs are meant to be read by humans and only incidentally for computers to
+execute. ---Donald Knuth
+#+end_quote
+
+Alongside a feature's installation, I've tried to provide the following:
++ /Why/ would I want this? Motivation!
+  - Example scenerios and use-cases.
++ /How/ do I actually use it? Super terse usage details to “get going”!
++ /Where/ is the offical documentation page, or repository? Discovarability!
++ Comparisions: Are there other similar features, builtin or otherwise? How do they compare?
+  Why have I decided for this one instead of another one?
++ Additional comments and reminders related to the feature.
+  - E.g., why the feature is now disabled, ‘commented out’, when
+    before it was useful.
+
+#+begin_quote
+Programs without documentation have little value; it's like a claim without evidence! ---Me
+#+end_quote
+
+Here are some benefits of having a tool's configurations written literately
+as an Org-mode file, then tangeling as appropriate.
+
++ Modularity! ---or *“In Praise of the Monolith”*
+  # ---*Why Configurations Should Live in Monolithic Files*
+
+  It may not be feasible, or practical, to split a tool's configuration file
+  into multiple file hierarchy. Yet, with Org-mode we may reify the hierarchical
+  structure as ‘sections’ and have the resulting configuration read more like
+  a novel, easily folding and navigating, between sections.
+
+  - Section headers provide organisation and they're collapsable.
+
+  Even if you can make multiple files, using one monolithic file allows:
+
+  - Really easy to quickly /re-organise/ code!
+    * Use ~w~ to move content almost instanteously!
+    * In contrast, it's harder to review an entire project, when it's in pieces.
+  - Many files requires coming up with descriptive file names; instead
+    prefer descriptive org headings ^_^
+  - Easily navigatable hierarchy with a nested directory/org-heading structure.
+    * Have headings with an introducttory paragraph that explains the
+      kind of features being considered ---or, lazily, look at the outlined view
+      of subheadings to see what's there.
+  - Easy search & review of features since they're in one file.
+    * Multiple files makes it harder to remember which features live where.
+  - One file is easy to distribute & share!
+
+  # Using headings does not conflict with the Single Responsibility Principle nor
+  # of Separation of Concerns. ---This totally ignores the Interface Segregation
+  # Principle, but in the grand scheme of things, I'm happy this way and I like
+  # being happy.
+
+  Many small files are great for collobaration ---there'll likely be less merge
+  conflicts. However, configuration files are usually a one-person project.
+
+  # + Some programming languages perform better when there are many small files
+  #   ---glaring at Agda here. Others have a bit of a cost to linking all the files
+  #   together. There's no fast and hard rule it seems.
+
++ Toggle feature selection without altering any code!
+
+  With a single ~#~ key press, we can comment out a section, thereby disabling the
+  features it provides. The features are neither deleted nor forgotten, but we
+  can experiment with having them there or not /without/ altering any code!
+  Alternatively, one mays use the ~:noexport:~ tag on a section header.
+
+  In contrast, an illiterate setup would have us commenting out large chunks of
+  code, which is not as easy to manage.
+
++ Really easy to delete content!
+
+  After a while, I come back and realise I've implemented something silly or
+  that is available via some external package, I can quickly delete it.
+
++ Can quickly export to different mediums!
+
+  If you want to share your configuration with others, then an HTML rendition
+  with a table of contents and text sprinkled everywhere is more likely to
+  attract onlookers since they can easily jump to the sections they're interested in.
+
++ Easily digestible chunks of code!
+
+  With a literate approach, one is empowered to have short source blocks; e.g.,
+  not exceeding 30 lines ---read more [[https://dzone.com/articles/rule-30-%E2%80%93-when-method-class-or][here]].  This is more likely to ensure
+  (possibly by extracting code into its own functions): The listing fits on one
+  screen, avoiding deeply nested control structures, non-repeating common
+  logical patterns, increased confidence that the implementation meets the
+  stated purpose.
+
+The only reason I would use multiple files or raw code for setting up a tool
+would be if I did not have a literate programming environment; i.e., Org-mode.
+
+--------------------------------------------------------------------------------
+
                          Emacs   is   fun ^_^
 
 Bye!
+
+--------------------------------------------------------------------------------
+
+# Image: Being replaced at the office
+https://i.redd.it/g6yi40gbivv31.jpg
 
 * Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 ;; Nice soft yellow, pleasing ---try background colour for html export ;-)
@@ -5715,6 +6082,26 @@ May need to actually reboot the system as well.
 :CUSTOM_ID: COMMENT-TODO-Improvements
 :END:
 
+** Learn about TRAMP & Edit as Root
+:PROPERTIES:
+:CUSTOM_ID: Edit-as-Root
+:END:
+From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]].
+#+BEGIN_SRC emacs-lisp
+(defun find-file-as-root ()
+  "Like `ido-find-file, but automatically edit the file with
+root-privileges (using tramp/sudo), if the file is not writable
+by user."
+  (interactive)
+  (let ((file (ido-read-file-name "Edit as root: ")))
+    (unless (file-writable-p file)
+      (setq file (concat "/sudo:root@localhost:" file)))
+    (find-file file)))
+
+(bind-key "C-x F" 'find-file-as-root)
+#+END_SRC
+
+Incidentally, TRAMP allows us to do the same thing.
 ** Easy tasks
 :PROPERTIES:
 :CUSTOM_ID: Easy-tasks
@@ -6032,7 +6419,6 @@ The above mechanism suffices, the following needn't be followed with ... unless 
 :PROPERTIES:
 :CUSTOM_ID: Programming-Language-Support
 :END:
-
 ***** Haskell :tangle no
 :PROPERTIES:
 :CUSTOM_ID: Haskell-:tangle-no
@@ -6040,15 +6426,6 @@ The above mechanism suffices, the following needn't be followed with ... unless 
 #+BEGIN_SRC emacs-lisp
 ;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
  (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-#+END_SRC
-
-***** Kotlin
-:PROPERTIES:
-:CUSTOM_ID: Kotlin
-:END:
-#+BEGIN_SRC emacs-lisp  :tangle no
-(load "~/.emacs.d/kotlin-mode.el")
-(setq kotlin-tab-width 2)
 #+END_SRC
 
 ***** Lambda Prolog
@@ -6077,7 +6454,7 @@ The above mechanism suffices, the following needn't be followed with ... unless 
   (setq haskell-process-args-cabal-repl
         '("--ghc-options=-ferror-spans -fshow-loaded-modules"))
 
-*** Coq Support
+**** Coq Support
 :PROPERTIES:
 :CUSTOM_ID: Coq-Support
 :END:
@@ -6108,24 +6485,6 @@ In this case, exporting to html produces curious symbols
 thereby prompting ~my-org-html-export-to-html~ below to
 take care of this.
 
-*** My global visual line mode                             :no_longer_used:
-:PROPERTIES:
-:CUSTOM_ID: My-global-visual-line-mode
-:END:
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(define-globalized-minor-mode my-visual-line-global-mode visual-line-mode
-  (lambda ()
-
-    ;; Wrap words in all buffers
-    (visual-line-mode t)
-
-))
-(my-visual-line-global-mode 1)
-#+END_SRC
-# What I like about truncate-lines versus visual-line-mode is that the former doesn’t split
-# on word boundaries and adds symbols to the fringe.
-# (set-default 'truncate-lines t)
 *** theme magic
 :PROPERTIES:
 :CUSTOM_ID: theme-magic
@@ -6298,8 +6657,6 @@ C-c C-c this snippet to export to blog.
 ;; (my/publish-to-blog 'yes 'local)
 (let (org-export-use-babel to-github?) (my/publish-to-blog))
 #+END_SRC
-
- (outline-hide-sublevels 3)
 
 # Local Variables:
 # eval: (progn (org-babel-goto-named-src-block "enable making init and readme") (org-babel-execute-src-block))

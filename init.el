@@ -114,31 +114,31 @@
 
 ;; [[file:~/.emacs.d/init.org::enable making init and readme][enable making init and readme]]
 (defun my/make-init-el-and-README ()
-    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
-    (when current-prefix-arg
-      (let* ((time      (current-time))
-                 (_date     (format-time-string "_%Y-%m-%d"))
-                 (.emacs    "~/.emacs")
-                 (.emacs.el "~/.emacs.el"))
+  "Tangle an el and a github README from my init.org."
+  (interactive "P") ;; Places value of universal argument into: current-prefix-arg
+  (when current-prefix-arg
+    (let* ((time      (current-time))
+           (_date     (format-time-string "_%Y-%m-%d"))
+           (.emacs    "~/.emacs")
+           (.emacs.el "~/.emacs.el"))
+      ;; Make README.org
+      (save-excursion
+        (org-babel-goto-named-src-block "make-readme")
+        (org-babel-execute-src-block))
 
-        (save-excursion
-          ;; remove any other initialisation file candidates
-          (ignore-errors
-            (f-move .emacs    (concat .emacs _date))
-            (f-move .emacs.el (concat .emacs.el _date)))
+      ;; remove any other initialisation file candidates
+      (ignore-errors
+        (f-move .emacs    (concat .emacs _date))
+        (f-move .emacs.el (concat .emacs.el _date)))
 
-          ;; Make init.el
-          (org-babel-tangle)
-          ; (byte-compile-file "~/.emacs.d/init.el")
-          (load-file "~/.emacs.d/init.el")
+      ;; Make init.el
+      (org-babel-tangle)
+      (byte-compile-file "~/.emacs.d/init.el")
+      (load-file "~/.emacs.d/init.el")
 
-          ;; Make README.org
-          (org-babel-goto-named-src-block "make-readme")
-          (org-babel-execute-src-block)
-
-          ;; Acknowledgement
-          (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
-                   (float-time (time-since time)))))))
+      ;; Acknowledgement
+      (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
+               (float-time (time-since time))))))
 
 (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 ;; enable making init and readme ends here
@@ -326,6 +326,51 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (setq system-packages-package-manager 'brew)
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
 
+;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion & Narrowing Framework][“Being at the Helm” ---Completion & Narrowing Framework:1]]
+(use-package helm
+ :diminish
+ :init (helm-mode t)
+ :bind (("M-x"     . helm-M-x)
+        ("C-x C-f" . helm-find-files)
+        ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
+        ("C-x r b" . helm-filtered-bookmarks)
+        ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
+        ("C-c i"   . helm-imenu)
+        ("C-h a"   . helm-apropos)
+        ;; Look at what was cut recently & paste it in.
+        ("M-y" . helm-show-kill-ring)
+
+        :map helm-map
+        ;; We can list ‘actions’ on the currently selected item by C-z.
+        ("C-z" . helm-select-action)
+        ;; Let's keep tab-completetion anyhow.
+        ("TAB"   . helm-execute-persistent-action)
+        ("<tab>" . helm-execute-persistent-action)))
+;; “Being at the Helm” ---Completion & Narrowing Framework:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion & Narrowing Framework][“Being at the Helm” ---Completion & Narrowing Framework:2]]
+(setq helm-mini-default-sources '(helm-source-buffers-list
+                                    helm-source-recentf
+                                    helm-source-bookmarks
+                                    helm-source-bookmark-set
+                                    helm-source-buffer-not-found))
+;; “Being at the Helm” ---Completion & Narrowing Framework:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion & Narrowing Framework][“Being at the Helm” ---Completion & Narrowing Framework:3]]
+(system-packages-ensure "surfraw")
+; ⇒  “M-x helm-surfraw” or “C-x c s”
+;; “Being at the Helm” ---Completion & Narrowing Framework:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion & Narrowing Framework][“Being at the Helm” ---Completion & Narrowing Framework:4]]
+(use-package helm-swoop
+  :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
+          ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
+          ;; Go back to last position where ‘helm-swoop’ was called
+          ("C-S-s" . 'helm-swoop-back-to-last-point))
+  :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
+          (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
+;; “Being at the Helm” ---Completion & Narrowing Framework:4 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Having a workspace manager in Emacs][Having a workspace manager in Emacs:1]]
 (use-package perspective
   :config ;; Activate it.
@@ -352,6 +397,58 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; [[file:~/.emacs.d/init.org::*Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail:3]]
      (setq message-send-mail-function 'smtpmail-send-it)
 ;; Who am I? ---Using Gnus for Gmail:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail:6]]
+;; After startup, if Emacs is idle for 5seconds, then start Gnus.
+;; Gnus is slow upon startup since it fetches all mails upon startup.
+;; (run-with-idle-timer 5 nil #'gnus)
+;; Who am I? ---Using Gnus for Gmail:6 ends here
+
+;; [[file:~/.emacs.d/init.org::*Prettifications][Prettifications:1]]
+;; Fancy icons for Emacs
+;; Only do this once:
+(use-package all-the-icons)
+  ; :config (all-the-icons-install-fonts 'install-without-asking)
+
+;; Make mail look pretty
+(use-package all-the-icons-gnus
+  :config (all-the-icons-gnus-setup))
+
+;; While we're at it: Make dired, ‘dir’ectory ‘ed’itor, look pretty
+(use-package all-the-icons-dired
+  :hook (dired-mode . all-the-icons-dired-mode))
+;; Prettifications:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Prettifications][Prettifications:2]]
+(setq gnus-sum-thread-tree-vertical        "│"
+      gnus-sum-thread-tree-leaf-with-other "├─► "
+      gnus-sum-thread-tree-single-leaf     "╰─► "
+      gnus-summary-line-format
+      (concat
+       "%0{%U%R%z%}"
+       "%3{│%}" "%1{%d%}" "%3{│%}"
+       "  "
+       "%4{%-20,20f%}"
+       "  "
+       "%3{│%}"
+       " "
+       "%1{%B%}"
+       "%s\n"))
+;; Prettifications:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Auto-completing mail addresses][Auto-completing mail addresses:1]]
+(use-package gmail2bbdb
+  :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
+
+(use-package bbdb
+ :demand t
+ ;; :after company-mode ;; The “com”plete “any”thig mode is set below in §Prose
+ :hook   (message-mode . bbdb-insinuate-gnus)
+         (gnus-startup-hook . bbdb-insinuate-gnus)
+ :custom (bbdb-file gmail2bbdb-bbdb-file)
+         (bbdb-use-pop-up t)                        ;; allow popups for addresses
+ :config (add-to-list 'company-backends 'company-bbdb))
+;; Auto-completing mail addresses:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
 ;; Invoke all possible key extensions having a common prefix by
@@ -492,51 +589,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 ;; Startup message: Emacs & Org versions:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion Framework][“Being at the Helm” ---Completion Framework:1]]
-(use-package helm
- :diminish
- :init (helm-mode t)
- :bind (("M-x"     . helm-M-x)
-        ("C-x C-f" . helm-find-files)
-        ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
-        ("C-x r b" . helm-filtered-bookmarks)
-        ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
-        ("C-c i"   . helm-imenu)
-        ("C-h a"   . helm-apropos)
-        ;; Look at what was cut recently & paste it in.
-        ("M-y" . helm-show-kill-ring)
-
-        :map helm-map
-        ;; We can list ‘actions’ on the currently selected item by C-z.
-        ("C-z" . helm-select-action)
-        ;; Let's keep tab-completetion anyhow.
-        ("TAB"   . helm-execute-persistent-action)
-        ("<tab>" . helm-execute-persistent-action)))
-;; “Being at the Helm” ---Completion Framework:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion Framework][“Being at the Helm” ---Completion Framework:2]]
-(setq helm-mini-default-sources '(helm-source-buffers-list
-                                    helm-source-recentf
-                                    helm-source-bookmarks
-                                    helm-source-bookmark-set
-                                    helm-source-buffer-not-found))
-;; “Being at the Helm” ---Completion Framework:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion Framework][“Being at the Helm” ---Completion Framework:3]]
-(system-packages-ensure "surfraw")
-; ⇒  “M-x helm-surfraw” or “C-x c s”
-;; “Being at the Helm” ---Completion Framework:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*“Being at the Helm” ---Completion Framework][“Being at the Helm” ---Completion Framework:4]]
-(use-package helm-swoop
-  :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
-          ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
-          ;; Go back to last position where ‘helm-swoop’ was called
-          ("C-S-s" . 'helm-swoop-back-to-last-point))
-  :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
-          (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
-;; “Being at the Helm” ---Completion Framework:4 ends here
-
 ;; [[file:~/.emacs.d/init.org::*My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up:1]]
 (find-file "~/Dropbox/todo.org")
 (split-window-right)			  ;; C-x 3
@@ -674,15 +726,10 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Highlight & complete parenthesis pair when cursor is near ;-):5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Neotree: Directory Tree Listing][Neotree: Directory Tree Listing:1]]
-;; Fancy icons for neotree
-;; Only do this once:
-(use-package all-the-icons)
-  ; :config (all-the-icons-install-fonts 'install-without-asking)
-
 ;; Sidebar for project file navigation
 (use-package neotree
   :config (global-set-key "\C-x\ d" 'neotree-toggle)
-          (setq neo-theme 'icons))
+          (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
 
 ;; Open it up upon startup.
 ;; (neotree-toggle)
@@ -724,6 +771,10 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
    (persistent-scratch-autosave-mode 1))
 
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
+
+;; Upon startup, close the default scratch buffer and open one as specfied above
+(kill-buffer "*scratch*")
+(scratch)
 ;; Persistent Scratch Buffer:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:3]]
@@ -798,80 +849,72 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
  :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
 ;; Word Completion:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:1]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:1]]
 (use-package flyspell
   :diminish
   :hook ((prog-mode . flyspell-prog-mode)
          (text-mode . flyspell-mode)))
-;; Fix spelling as you type --thesaurus & dictionary too!:1 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:2]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:2]]
 (setq ispell-program-name "/usr/local/bin/aspell")
 (setq ispell-dictionary "en_GB") ;; set the default dictionary
-;; Fix spelling as you type --thesaurus & dictionary too!:2 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:4]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:4]]
 (eval-after-load "flyspell"
   ' (progn
      (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
      (define-key flyspell-mouse-map [mouse-3] #'undefined)))
-;; Fix spelling as you type --thesaurus & dictionary too!:4 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:4 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:5]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:5]]
 (global-font-lock-mode t)
 (custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
-;; Fix spelling as you type --thesaurus & dictionary too!:5 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:5 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:6]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:6]]
 (setq ispell-silently-savep t)
-;; Fix spelling as you type --thesaurus & dictionary too!:6 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:6 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:7]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:7]]
 (setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
-;; Fix spelling as you type --thesaurus & dictionary too!:7 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:7 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:8]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:8]]
 (add-hook          'c-mode-hook 'flyspell-prog-mode)
 (add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
-;; Fix spelling as you type --thesaurus & dictionary too!:8 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:8 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:9]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:9]]
 (use-package synosaurus
   :diminish synosaurus-mode
   :init    (synosaurus-mode)
   :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace)
-)
-;; Fix spelling as you type --thesaurus & dictionary too!:9 ends here
+           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
+;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:10]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:10]]
 ;; (shell-command "brew cask install xquartz &") ;; Dependency
 ;; (shell-command "brew install wordnet &")
-;; Fix spelling as you type --thesaurus & dictionary too!:10 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:11]]
+;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:11]]
 (use-package wordnut
  :bind ("M-!" . wordnut-lookup-current-word))
 
 ;; Use M-& for async shell commands.
-;; Fix spelling as you type --thesaurus & dictionary too!:11 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:13]]
-;; The Typing Of Emacs, a game.
-;; (use-package typing-of-emacs)
-;; quelpa!
-;; Fix spelling as you type --thesaurus & dictionary too!:13 ends here
-
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:14]]
+;; [[file:~/.emacs.d/init.org::*Touch Typing][Touch Typing:2]]
 (use-package speed-type)
-;; Fix spelling as you type --thesaurus & dictionary too!:14 ends here
+;; Touch Typing:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Fix spelling as you type --thesaurus & dictionary too!][Fix spelling as you type --thesaurus & dictionary too!:15]]
+;; [[file:~/.emacs.d/init.org::*Touch Typing][Touch Typing:3]]
 (use-package google-translate
  :config
-   (global-set-key "\C-ct" 'google-translate-at-point)
-)
-;; Fix spelling as you type --thesaurus & dictionary too!:15 ends here
+   (global-set-key "\C-ct" 'google-translate-at-point))
+;; Touch Typing:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Using a Grammar & Style Checker][Using a Grammar & Style Checker:1]]
 (use-package langtool
@@ -1052,15 +1095,22 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (setq next-line-add-newlines t)
 ;; ~M-n,p~: Word-at-Point Navigation:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*Taking a tour of one's edits][Taking a tour of one's edits:1]]
+;; [[file:~/.emacs.d/init.org::*Letter-based Navigation][Letter-based Navigation:1]]
+(use-package ace-jump-mode
+  :config (bind-key* "C-c SPC" 'ace-jump-mode))
+
+;; See ace-jump issues to configure for use of home row keys.
+;; Letter-based Navigation:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*~C-c e n,p~: Taking a tour of one's edits][~C-c e n,p~: Taking a tour of one's edits:1]]
 ;; Give me a description of the change made at a particular stop.
 (use-package goto-chg
   :init (setq glc-default-span 0))
 
 (defhydra hydra-edits (global-map "C-c e")
-  ("," goto-last-change "Goto nᵗʰ last change")
-  ("." goto-last-change-reverse "Goto more recent change"))
-;; Taking a tour of one's edits:1 ends here
+  ("p" goto-last-change "Goto nᵗʰ last change")
+  ("n" goto-last-change-reverse "Goto more recent change"))
+;; ~C-c e n,p~: Taking a tour of one's edits:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Getting Started][Getting Started:1]]
 (use-package org
@@ -1448,6 +1498,12 @@ by spaces.
 </font>")
 ;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3 ends here
 
+;; [[file:~/.emacs.d/init.org::*Org-mode ⇐ HTML][Org-mode ⇐ HTML:1]]
+;; See: https://emacs.stackexchange.com/questions/7171/paste-html-into-org-mode
+(use-package org-eww
+ :quelpa (org-eww :fetcher git :url "https://github.com/Fuco1/org-mode.git"))
+;; Org-mode ⇐ HTML:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:1]]
 ;; Location of my todos/notes file
 (setq org-default-notes-file "~/Dropbox/todo.org")
@@ -1578,7 +1634,7 @@ by spaces.
           (:tag "personal")
           (:tag "3mi3")
           (:name "Emacs Init" :tag "init")
-          (:priority<= "B" :order 1)))))
+          (:priority<= "B" :order 1))))
 ;; Super Agenda:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique\][Pomodoro\]] ---“Commit for only 25 minutes!”][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1]]
@@ -1722,15 +1778,11 @@ by spaces.
 (setq org-clock-sound "~/.emacs.d/school-bell.wav")
 ;; Estimates versus actual time:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Programming][Programming:1]]
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-
-;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-  :config (global-aggressive-indent-mode t))
-;; Programming:1 ends here
+;; [[file:~/.emacs.d/init.org::*Highlight defined Lisp symbols][Highlight defined Lisp symbols:1]]
+;; Emacs Lisp specific
+(use-package highlight-defined
+  :hook (emacs-lisp-mode . highlight-defined-mode))
+;; Highlight defined Lisp symbols:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Eldoc for Lisp and Haskell][Eldoc for Lisp and Haskell:1]]
 (add-hook 'emacs-lisp-mode-hook       'turn-on-eldoc-mode)
@@ -1739,11 +1791,27 @@ by spaces.
 (add-hook 'haskell-mode-hook          'turn-on-haskell-indent)
 ;; Eldoc for Lisp and Haskell:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Highlight Defined Lisp Symbols][Highlight Defined Lisp Symbols:1]]
-;; Emacs Lisp specific
-(use-package highlight-defined
-  :hook (emacs-lisp-mode . highlight-defined-mode))
-;; Highlight Defined Lisp Symbols:1 ends here
+;; [[file:~/.emacs.d/init.org::*Jumping to definitions & references][Jumping to definitions & references:1]]
+(use-package dumb-jump
+  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
+         ("M-g ."     . dumb-jump-go-other-window)
+         ("M-g b"     . dumb-jump-back)
+         ("M-g p"     . dumb-jump-go-prompt)
+         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
+  :config
+  ;; If source file is visible, just shift focus to it.
+  (setq dumb-jump-use-visible-window t))
+;; Jumping to definitions & references:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Aggressive Indentation][Aggressive Indentation:1]]
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent
+  :config (global-aggressive-indent-mode t))
+
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+;; Aggressive Indentation:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:1]]
 ;; Hunk navigation and commiting.
@@ -1880,40 +1948,24 @@ by spaces.
   ("p" origami-previous-fold "Previous"))
 ;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4 ends here
 
-;; [[file:~/.emacs.d/init.org::*Edit as Root][Edit as Root:1]]
-(defun find-file-as-root ()
-  "Like `ido-find-file, but automatically edit the file with
-root-privileges (using tramp/sudo), if the file is not writable
-by user."
-  (interactive)
-  (let ((file (ido-read-file-name "Edit as root: ")))
-    (unless (file-writable-p file)
-      (setq file (concat "/sudo:root@localhost:" file)))
-    (find-file file)))
-
-(bind-key "C-x F" 'find-file-as-root)
-;; Edit as Root:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove
-  :config
-  ;; use command key on Mac
-  (windmove-default-keybindings 'super)
-  ;; wrap around at edges
-  (setq windmove-wrap-around t))
+  :config ;; use command key on Mac
+          (windmove-default-keybindings 'super)
+          ;; wrap around at edges
+          (setq windmove-wrap-around t))
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2]]
 (use-package buffer-flip
   :bind
    (:map buffer-flip-map
-    ("M-<tab>" . buffer-flip-forward)
+    ("M-<tab>"   . buffer-flip-forward)
     ("M-S-<tab>" . buffer-flip-backward)
-    ("C-g" . buffer-flip-abort))
+    ("C-g"       . buffer-flip-abort))
   :config
     (setq buffer-flip-skip-patterns
-        '("^\\*helm\\b"))
-)
+        '("^\\*helm\\b")))
 ;; key to begin cycling buffers.
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
