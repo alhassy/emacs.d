@@ -1,4 +1,4 @@
-# Created 2019-12-31 Tue 19:27
+# Created 2019-12-31 Tue 22:43
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:t :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
@@ -60,20 +60,28 @@ Finally, ~C-h d~ asks nicely what ‘d’ocumentation you're interested in.
 After providing a few keywords, the =apropos= tool yields possible functions
 and variables that may accomplish my goal.
 
-* Table of Contents                                              :Github:TOC:
+* Table of Contents                                                  :Github:
+- [[#abstract][Abstract]]
 - [[#why-emacs][Why Emacs?]]
 - [[#booting-up][Booting Up]]
-  - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
-  - [[#use-package----the-start-of-initel][=use-package= ---The start of =init.el=]]
-  - [[#readme----from-initorg-to-initel][~README~ ---From ~init.org~ to ~init.el~]]
+  - [[#emacs-vs-initorg][~/.emacs vs. init.org]]
+    - [[#adventure-time-honey-wheres-my-init][Adventure time! “Honey, where's my init?”]]
+    - [[#adventure-time-using-emacs-easy-customisation-interface][Adventure time! Using Emacs' Easy Customisation Interface]]
+    - [[#support-for-custom][Support for ‘Custom’]]
+  - [[#use-package----the-start-of-initel][use-package ---The start of init.el]]
+  - [[#readme----from-initorg-to-initel][README ---From init.org to init.el]]
   - [[#installing-emacs-packages-directly-from-source][Installing Emacs packages directly from source]]
-  - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
-  - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
+  - [[#magit----emacs-porcelain-interface-to-git][magit ---Emacs' porcelain interface to git]]
+  - [[#syncing-to-the-systems-path][Syncing to the System's $PATH]]
   - [[#installing-os-packages-and-automatically-keeping-my-system-up-to-data-from-within-emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs]]
   - [[#being-at-the-helm----completion--narrowing-framework][“Being at the Helm” ---Completion & Narrowing Framework]]
   - [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
   - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
   - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
+    - [[#prettifications][Prettifications]]
+    - [[#super-terse-tutorial][Super Terse Tutorial]]
+    - [[#auto-completing-mail-addresses][Auto-completing mail addresses]]
+    - [[#feeds-to-blogs][Feeds to Blogs]]
   - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
@@ -109,30 +117,49 @@ and variables that may accomplish my goal.
   - [[#enabling-camelcase-aware-editing-operations][Enabling CamelCase Aware Editing Operations]]
   - [[#mouse-editing-support][Mouse Editing Support]]
   - [[#delete-selection-mode][Delete Selection Mode]]
-  - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
+  - [[#m-np-word-at-point-navigation][M-n,p: Word-at-Point Navigation]]
   - [[#letter-based-navigation][Letter-based Navigation]]
-  - [[#c-c-e-np-taking-a-tour-of-ones-edits][~C-c e n,p~: Taking a tour of one's edits]]
+  - [[#c-c-e-np-taking-a-tour-of-ones-edits][C-c e n,p: Taking a tour of one's edits]]
 - [[#org-mode-administrivia][Org-Mode Administrivia]]
-  - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
+  - [[#getting-started][Getting Started]]
+  - [[#executing-code-from-src-blocks][Executing code from src blocks]]
   - [[#high-speed-literate-programming][High Speed Literate Programming]]
+    - [[#manipulating-sections][Manipulating Sections]]
+    - [[#seamless-navigation-between-source-blocks][Seamless Navigation Between Source Blocks]]
+    - [[#modifying-return][Modifying <return>]]
+    - [[#c-aek-and-yanking-of-sections][C-a,e,k and Yanking of sections]]
   - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
   - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
   - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
   - [[#jumping-without-hassle][Jumping without hassle]]
   - [[#folding-within-a-subtree][Folding within a subtree]]
+  - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
+  - [[#org-modes-𝒳-block-expansions][Org-mode's <𝒳 Block Expansions]]
+    - [[#todo-demoing-dot-graphs][TODO Demoing Dot Graphs]]
 - [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
   - [[#working-with-citations][Working with Citations]]
   - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
-  - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+  - [[#httpsrevealjscomtransitionzoomrevealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+  - [[#org-mode--html][Org-mode ⇐ HTML]]
 - [[#life-within-org-mode][Life within Org-mode]]
   - [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
+    - [[#capturing-ideas--notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow]]
+    - [[#step-1-when-new-tasks-come-up][Step 1: When new tasks come up]]
+    - [[#step-2-filing-your-tasks][Step 2: Filing your tasks]]
+    - [[#step-3-quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week]]
+    - [[#step-4-getting-ready-for-the-day][Step 4: Getting ready for the day]]
+    - [[#step-5-doing-the-work][Step 5: Doing the work]]
+    - [[#step-6-moving-a-task-toward-completion][Step 6: Moving a task toward completion]]
+    - [[#step-7-archiving-tasks][Step 7: Archiving Tasks]]
   - [[#super-agenda][Super Agenda]]
-  - [[#automating-pomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
+  - [[#automating-httpsenwikipediaorgwikipomodoro_techniquepomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
   - [[#journaling][Journaling]]
   - [[#workflow-states][Workflow States]]
   - [[#clocking-work-time][Clocking Work Time]]
+    - [[#finding-tasks-to-clock-in][Finding tasks to clock in]]
+    - [[#estimates-versus-actual-time][Estimates versus actual time]]
 - [[#programming][Programming]]
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
@@ -142,18 +169,23 @@ and variables that may accomplish my goal.
   - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
   - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
   - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
-  - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
+  - [[#text-folding-with-httpsgithubcomgregsextonorigamielorigami-mode][Text Folding with Origami-mode]]
   - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
   - [[#snippets----template-expansion][Snippets ---Template Expansion]]
+    - [[#org-mode-templates----a-reason-i-generate-templates-][Org-mode Templates ---A reason I “generate” templates ;)]]
+    - [[#elisp-templates][Elisp Templates]]
+    - [[#equational-templates][Equational Templates]]
+    - [[#misc-templates][Misc Templates]]
+    - [[#re-enabling-templates][Re-Enabling Templates]]
 - [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
   - [[#documentation-pop-ups][Documentation Pop-Ups]]
   - [[#emacs-keybindings-for-my-browser][Emacs keybindings for my browser]]
   - [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
-  - [[#reload-buffer-with-f5][Reload buffer with ~f5~]]
+  - [[#reload-buffer-with-f5][Reload buffer with f5]]
   - [[#kill-to-start-of-line][Kill to start of line]]
-  - [[#killing-buffers--windows-c-x-k-has-a-family][Killing buffers & windows: ~C-x k~ has a family]]
+  - [[#killing-buffers--windows-c-x-k-has-a-family][Killing buffers & windows: C-x k has a family]]
   - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
-  - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
+  - [[#obtaining-values-of-keyword-annotations][Obtaining Values of #+KEYWORD Annotations]]
   - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
 - [[#conclusion----why-configuration-files-should-be-literate][Conclusion ---Why Configuration Files Should be Literate]]
 
@@ -611,7 +643,7 @@ Let's activate it now, after ~use-package~ has been setup.
   <<undo-tree-setup>>
 #+end_src
 
-** ~README~ ---From ~init.org~ to ~init.el~
+** =README= ---From =init.org= to =init.el=
 
 Rather than manually extracting the Lisp code from this literate document each
 time we alter it, let's instead add a ‘hook’ ---a method that is invoked on a
@@ -656,8 +688,6 @@ This source block generates the ~README~ for the associated Github repository.
 #+name: make-readme
 #+begin_src emacs-lisp :tangle no :export_never t
 ;; Update the table of contents in this file.
-(toc-org-mode)
-(toc-org-insert-toc)
 (save-buffer)
 (with-temp-buffer
     (insert
@@ -724,14 +754,18 @@ Notes:
   This looks nice for standalone pages, but doesn't incorporate nicely with
   github README.org.
 
-The above mentioned package ~toc-org~, which creates an up-to-date table
-of contents in an org file, at any heading tagged ~:TOC:~.  It's useful
-primarily for README files on Github.
+The above mentioned package [[https://github.com/alphapapa/org-make-toc][org-make-toc]], which creates an up-to-date table of
+contents in an org file, at any heading tagged ~:TOC:~.  It's useful primarily for
+README files on Github. There is also [[https://github.com/snosov1/toc-org][toc-org]], but it provides only a top-level
+TOC; whereas this package allows TOCs at the sibling level, say, to produce a
+TOC of only the subsections of a particular heading.  Org-make-toc has much more
+features regarding TOC creation.
 #+begin_src emacs-lisp
-(use-package toc-org
+(use-package org-make-toc
   ;; Automatically update toc when saving an Org file.
-  :hook (org-mode . toc-org-mode))
+  :hook (org-mode . org-make-toc-mode))
 #+end_src
+
 I'm not sure how I feel about actually having the Github-serving TOC in my
 source file. It's nice to have around, from an essay-perspecive, but it breaks
 HTML export since its links are /not/ well-behaved; e.g., ~:ignore:~-ed headlines
@@ -762,7 +796,7 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
     (insert with)
     (widen)))
 
-;; Erase :TOC: body.
+;; Erase :TOC: body ---provided we're using toc-org.
 ;; (my/org-replace-tree-contents "Table of Contents")
 #+end_src
 ** Installing Emacs packages directly from source
@@ -2971,6 +3005,53 @@ the current heading stuck at the top of the window.
 
 (add-hook 'org-mode-hook '(lambda ()
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
+#+end_src
+
+** Making Block Delimiters Less Intrusive
+Let us render Org-mode's ~#+begin_src~ and ~#+end_src~ less obtrusively by, e.g.,
+having the former render as a pencil marker ✎ and the latter as a tombstone □
+---reminiscent of Halmos' QED end-of-proof marker.  His setup also accounts for
+quotes.
+
+⟪ Incantation Omitted ---Visit [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]]'s site & copy-paste it, if you wish ⟫
+#+begin_src emacs-lisp
+(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+(org-mode-restart)
+#+end_src
+
+His development relies on built-in prettify-symbols-mode, which
+disguises strings in a buffer for the sake of readability or
+aesthetics.  Following the example in the documentation, ~C-h f
+prettify-symbols-mode~, we can quickly approximate his efforts for
+~example~ blocks as follows, however a main issue is that source blocks
+have busybodied headers which his setup disguises as ‘≡’.
+#+begin_src emacs-lisp :tangle yes
+(global-prettify-symbols-mode)
+
+(defvar my/prettify-alist nil
+  "Musa's personal prettifications.")
+
+(loop for pair in '(("<=" . ?≤) (">=" . ?≥)
+                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                    ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
+                    ("#+end_example"   . ?⇐))                ;; ⇐
+
+      do (push pair my/prettify-alist))
+
+(loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
+      do (add-hook hk (lambda ()
+                        (setq prettify-symbols-alist
+                              (append my/prettify-alist prettify-symbols-alist)))))
+#+end_src
+
+See [[http://www.modernemacs.com/post/prettify-mode/][“Mathematical Notation in Emacs”]] for how such prettifications can
+make verbose (Python) scripts much more readable by employing more
+economical disguises.
+
+A nice sanity:
+#+begin_src emacs-lisp
+;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
+(setq prettify-symbols-unprettify-at-point 'right-edge)
 #+end_src
 
 * Org-Mode ⇒ PDF & HTML

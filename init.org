@@ -2,7 +2,7 @@
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 #
-# ≥ 6000 line org file.
+# ≥ 6600 line org file.
 
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -76,109 +76,138 @@ Finally, ~C-h d~ asks nicely what ‘d’ocumentation you're interested in.
 After providing a few keywords, the =apropos= tool yields possible functions
 and variables that may accomplish my goal.
 
-* Table of Contents  :Github:TOC:
-# :Github:QUOTE:TOC_2_org:  ⇒ breaks on github
+* Table of Contents  :Github:
 :PROPERTIES:
 :CUSTOM_ID: Table-of-Contents
+:TOC: this
 :END:
-
-- [[#abstract][Abstract]]
-- [[#why-emacs][Why Emacs?]]
-- [[#booting-up][Booting Up]]
-  - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
-  - [[#use-package----the-start-of-initel][=use-package= ---The start of =init.el=]]
-  - [[#readme----from-initorg-to-initel][~README~ ---From ~init.org~ to ~init.el~]]
-  - [[#installing-emacs-packages-directly-from-source][Installing Emacs packages directly from source]]
-  - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
-  - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
-  - [[#installing-os-packages-and-automatically-keeping-my-system-up-to-data-from-within-emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs]]
-  - [[#being-at-the-helm----completion--narrowing-framework][“Being at the Helm” ---Completion & Narrowing Framework]]
-  - [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
-  - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
-  - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
-  - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
-  - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
-  - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
-  - [[#automatic-backups][Automatic Backups]]
-  - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
-- [[#cosmetics][Cosmetics]]
-  - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
-  - [[#my-to-do-list-the-initial-buffer-when-emacs-opens-up][My to-do list: The initial buffer when Emacs opens up]]
-  - [[#exquisite-themes][Exquisite Themes]]
-  - [[#a-sleek--informative-mode-line][A sleek & informative mode line]]
-  - [[#never-lose-the-cursor][Never lose the cursor]]
-  - [[#dimming-unused-windows][Dimming Unused Windows]]
-  - [[#buffer-names-are-necessarily-injective][Buffer names are necessarily injective]]
-  - [[#flashing-when-something-goes-wrong----no-blinking][Flashing when something goes wrong ---no blinking]]
-  - [[#hiding-scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu]]
-  - [[#highlight--complete-parenthesis-pair-when-cursor-is-near--][Highlight & complete parenthesis pair when cursor is near ;-)]]
-  - [[#neotree-directory-tree-listing][Neotree: Directory Tree Listing]]
-  - [[#tabs][Tabs]]
-  - [[#window-resizing-using-the-golden-ratio][Window resizing using the golden ratio]]
-  - [[#persistent-scratch-buffer][Persistent Scratch Buffer]]
-- [[#prose][Prose]]
-  - [[#fill-mode----word-wrapping][Fill-mode ---Word Wrapping]]
-  - [[#word-completion][Word Completion]]
-  - [[#fix-spelling-as-you-type----thesaurus--dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!]]
-  - [[#touch-typing][Touch Typing]]
-  - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
-  - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
-  - [[#placeholder-text----for-learning--experimenting][Placeholder Text ---For Learning & Experimenting]]
-  - [[#some-text-to-make-us-smile][Some text to make us smile]]
-  - [[#unicode-input-via-agda-input][Unicode Input via Agda Input]]
-  - [[#increasedecrease-text-size][Increase/decrease text size]]
-  - [[#moving-text-around][Moving Text Around]]
-  - [[#enabling-camelcase-aware-editing-operations][Enabling CamelCase Aware Editing Operations]]
-  - [[#mouse-editing-support][Mouse Editing Support]]
-  - [[#delete-selection-mode][Delete Selection Mode]]
-  - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
-  - [[#letter-based-navigation][Letter-based Navigation]]
-  - [[#c-c-e-np-taking-a-tour-of-ones-edits][~C-c e n,p~: Taking a tour of one's edits]]
-- [[#org-mode-administrivia][Org-Mode Administrivia]]
-  - [[#getting-started][Getting Started]]
-  - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
-  - [[#high-speed-literate-programming][High Speed Literate Programming]]
-  - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
-  - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
-  - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
-  - [[#jumping-without-hassle][Jumping without hassle]]
-  - [[#folding-within-a-subtree][Folding within a subtree]]
-- [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
-  - [[#working-with-citations][Working with Citations]]
-  - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
-  - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
-  - [[#html-folded-drawers][HTML “Folded Drawers”]]
-  - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
-- [[#life-within-org-mode][Life within Org-mode]]
-  - [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
-  - [[#super-agenda][Super Agenda]]
-  - [[#automating-pomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
-  - [[#journaling][Journaling]]
-  - [[#workflow-states][Workflow States]]
-  - [[#clocking-work-time][Clocking Work Time]]
-- [[#programming][Programming]]
-  - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
-  - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
-  - [[#jumping-to-definitions--references][Jumping to definitions & references]]
-  - [[#aggressive-indentation][Aggressive Indentation]]
-  - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
-  - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
-  - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
-  - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
-  - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
-  - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
-  - [[#snippets----template-expansion][Snippets ---Template Expansion]]
-- [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
-  - [[#documentation-pop-ups][Documentation Pop-Ups]]
-  - [[#emacs-keybindings-for-my-browser][Emacs keybindings for my browser]]
-  - [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
-  - [[#reload-buffer-with-f5][Reload buffer with ~f5~]]
-  - [[#kill-to-start-of-line][Kill to start of line]]
-  - [[#killing-buffers--windows-c-x-k-has-a-family][Killing buffers & windows: ~C-x k~ has a family]]
-  - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
-  - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
-  - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
-- [[#conclusion----why-configuration-files-should-be-literate][Conclusion ---Why Configuration Files Should be Literate]]
+-  [[#abstract][Abstract]]
+-  [[#why-emacs][Why Emacs?]]
+-  [[#booting-up][Booting Up]]
+  -  [[#emacs-vs-initorg][~/.emacs vs. init.org]]
+    -  [[#adventure-time-honey-wheres-my-init][Adventure time! “Honey, where's my init?”]]
+    -  [[#adventure-time-using-emacs-easy-customisation-interface][Adventure time! Using Emacs' Easy Customisation Interface]]
+    -  [[#support-for-custom][Support for ‘Custom’]]
+  -  [[#use-package----the-start-of-initel][use-package ---The start of init.el]]
+  -  [[#readme----from-initorg-to-initel][README ---From init.org to init.el]]
+  -  [[#installing-emacs-packages-directly-from-source][Installing Emacs packages directly from source]]
+  -  [[#magit----emacs-porcelain-interface-to-git][magit ---Emacs' porcelain interface to git]]
+  -  [[#syncing-to-the-systems-path][Syncing to the System's $PATH]]
+  -  [[#installing-os-packages-and-automatically-keeping-my-system-up-to-data-from-within-emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs]]
+  -  [[#being-at-the-helm----completion--narrowing-framework][“Being at the Helm” ---Completion & Narrowing Framework]]
+  -  [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
+  -  [[#excellent-pdf-viewer][Excellent PDF Viewer]]
+  -  [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
+    -  [[#prettifications][Prettifications]]
+    -  [[#super-terse-tutorial][Super Terse Tutorial]]
+    -  [[#auto-completing-mail-addresses][Auto-completing mail addresses]]
+    -  [[#feeds-to-blogs][Feeds to Blogs]]
+  -  [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
+  -  [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
+  -  [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
+  -  [[#automatic-backups][Automatic Backups]]
+  -  [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
+-  [[#cosmetics][Cosmetics]]
+  -  [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
+  -  [[#my-to-do-list-the-initial-buffer-when-emacs-opens-up][My to-do list: The initial buffer when Emacs opens up]]
+  -  [[#exquisite-themes][Exquisite Themes]]
+  -  [[#a-sleek--informative-mode-line][A sleek & informative mode line]]
+  -  [[#never-lose-the-cursor][Never lose the cursor]]
+  -  [[#dimming-unused-windows][Dimming Unused Windows]]
+  -  [[#buffer-names-are-necessarily-injective][Buffer names are necessarily injective]]
+  -  [[#flashing-when-something-goes-wrong----no-blinking][Flashing when something goes wrong ---no blinking]]
+  -  [[#hiding-scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu]]
+  -  [[#highlight--complete-parenthesis-pair-when-cursor-is-near--][Highlight & complete parenthesis pair when cursor is near ;-)]]
+  -  [[#neotree-directory-tree-listing][Neotree: Directory Tree Listing]]
+  -  [[#tabs][Tabs]]
+  -  [[#window-resizing-using-the-golden-ratio][Window resizing using the golden ratio]]
+  -  [[#persistent-scratch-buffer][Persistent Scratch Buffer]]
+-  [[#prose][Prose]]
+  -  [[#fill-mode----word-wrapping][Fill-mode ---Word Wrapping]]
+  -  [[#word-completion][Word Completion]]
+  -  [[#fix-spelling-as-you-type----thesaurus--dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!]]
+  -  [[#touch-typing][Touch Typing]]
+  -  [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
+  -  [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
+  -  [[#placeholder-text----for-learning--experimenting][Placeholder Text ---For Learning & Experimenting]]
+  -  [[#some-text-to-make-us-smile][Some text to make us smile]]
+  -  [[#unicode-input-via-agda-input][Unicode Input via Agda Input]]
+  -  [[#increasedecrease-text-size][Increase/decrease text size]]
+  -  [[#moving-text-around][Moving Text Around]]
+  -  [[#enabling-camelcase-aware-editing-operations][Enabling CamelCase Aware Editing Operations]]
+  -  [[#mouse-editing-support][Mouse Editing Support]]
+  -  [[#delete-selection-mode][Delete Selection Mode]]
+  -  [[#m-np-word-at-point-navigation][M-n,p: Word-at-Point Navigation]]
+  -  [[#letter-based-navigation][Letter-based Navigation]]
+  -  [[#c-c-e-np-taking-a-tour-of-ones-edits][C-c e n,p: Taking a tour of one's edits]]
+-  [[#org-mode-administrivia][Org-Mode Administrivia]]
+  -  [[#getting-started][Getting Started]]
+  -  [[#executing-code-from-src-blocks][Executing code from src blocks]]
+  -  [[#high-speed-literate-programming][High Speed Literate Programming]]
+    -  [[#manipulating-sections][Manipulating Sections]]
+    -  [[#seamless-navigation-between-source-blocks][Seamless Navigation Between Source Blocks]]
+    -  [[#modifying-return][Modifying <return>]]
+    -  [[#c-aek-and-yanking-of-sections][C-a,e,k and Yanking of sections]]
+  -  [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
+  -  [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
+  -  [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
+  -  [[#jumping-without-hassle][Jumping without hassle]]
+  -  [[#folding-within-a-subtree][Folding within a subtree]]
+  -  [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
+  -  [[#org-modes-𝒳-block-expansions][Org-mode's <𝒳 Block Expansions]]
+    -  [[#todo-demoing-dot-graphs][TODO Demoing Dot Graphs]]
+-  [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
+  -  [[#working-with-citations][Working with Citations]]
+  -  [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
+  -  [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
+  -  [[#html-folded-drawers][HTML “Folded Drawers”]]
+  -  [[#httpsrevealjscomtransitionzoomrevealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+  -  [[#org-mode--html][Org-mode ⇐ HTML]]
+-  [[#life-within-org-mode][Life within Org-mode]]
+  -  [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
+    -  [[#capturing-ideas--notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow]]
+    -  [[#step-1-when-new-tasks-come-up][Step 1: When new tasks come up]]
+    -  [[#step-2-filing-your-tasks][Step 2: Filing your tasks]]
+    -  [[#step-3-quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week]]
+    -  [[#step-4-getting-ready-for-the-day][Step 4: Getting ready for the day]]
+    -  [[#step-5-doing-the-work][Step 5: Doing the work]]
+    -  [[#step-6-moving-a-task-toward-completion][Step 6: Moving a task toward completion]]
+    -  [[#step-7-archiving-tasks][Step 7: Archiving Tasks]]
+  -  [[#super-agenda][Super Agenda]]
+  -  [[#automating-httpsenwikipediaorgwikipomodoro_techniquepomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
+  -  [[#journaling][Journaling]]
+  -  [[#workflow-states][Workflow States]]
+  -  [[#clocking-work-time][Clocking Work Time]]
+    -  [[#finding-tasks-to-clock-in][Finding tasks to clock in]]
+    -  [[#estimates-versus-actual-time][Estimates versus actual time]]
+-  [[#programming][Programming]]
+  -  [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
+  -  [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
+  -  [[#jumping-to-definitions--references][Jumping to definitions & references]]
+  -  [[#aggressive-indentation][Aggressive Indentation]]
+  -  [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
+  -  [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
+  -  [[#on-the-fly-syntax-checking][On the fly syntax checking]]
+  -  [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
+  -  [[#text-folding-with-httpsgithubcomgregsextonorigamielorigami-mode][Text Folding with Origami-mode]]
+  -  [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
+  -  [[#snippets----template-expansion][Snippets ---Template Expansion]]
+    -  [[#org-mode-templates----a-reason-i-generate-templates-][Org-mode Templates ---A reason I “generate” templates ;)]]
+    -  [[#elisp-templates][Elisp Templates]]
+    -  [[#equational-templates][Equational Templates]]
+    -  [[#misc-templates][Misc Templates]]
+    -  [[#re-enabling-templates][Re-Enabling Templates]]
+-  [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
+  -  [[#documentation-pop-ups][Documentation Pop-Ups]]
+  -  [[#emacs-keybindings-for-my-browser][Emacs keybindings for my browser]]
+  -  [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
+  -  [[#reload-buffer-with-f5][Reload buffer with f5]]
+  -  [[#kill-to-start-of-line][Kill to start of line]]
+  -  [[#killing-buffers--windows-c-x-k-has-a-family][Killing buffers & windows: C-x k has a family]]
+  -  [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
+  -  [[#obtaining-values-of-keyword-annotations][Obtaining Values of #+KEYWORD Annotations]]
+  -  [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
+-  [[#conclusion----why-configuration-files-should-be-literate][Conclusion ---Why Configuration Files Should be Literate]]
 
 * Why Emacs?
 :PROPERTIES:
@@ -659,7 +688,7 @@ Let's activate it now, after ~use-package~ has been setup.
   <<undo-tree-setup>>
 #+END_SRC
 
-** ~README~ ---From ~init.org~ to ~init.el~
+** =README= ---From =init.org= to =init.el=
 
 Rather than manually extracting the Lisp code from this literate document each
 time we alter it, let's instead add a ‘hook’ ---a method that is invoked on a
@@ -704,8 +733,6 @@ This source block generates the ~README~ for the associated Github repository.
 #+NAME: make-readme
 #+begin_src emacs-lisp :tangle no :export_never t
 ;; Update the table of contents in this file.
-(toc-org-mode)
-(toc-org-insert-toc)
 (save-buffer)
 (with-temp-buffer
     (insert
@@ -772,22 +799,17 @@ Notes:
   This looks nice for standalone pages, but doesn't incorporate nicely with
   github README.org.
 
-The above mentioned package ~toc-org~, which creates an up-to-date table
-of contents in an org file, at any heading tagged ~:TOC:~.  It's useful
-primarily for README files on Github.
+The above mentioned package [[https://github.com/alphapapa/org-make-toc][org-make-toc]], which creates an up-to-date table of
+contents in an org file, at any heading tagged ~:TOC:~.  It's useful primarily for
+README files on Github. There is also [[https://github.com/snosov1/toc-org][toc-org]], but it provides only a top-level
+TOC; whereas this package allows TOCs at the sibling level, say, to produce a
+TOC of only the subsections of a particular heading.  Org-make-toc has much more
+features regarding TOC creation.
 #+BEGIN_SRC emacs-lisp
-(use-package toc-org
+(use-package org-make-toc
   ;; Automatically update toc when saving an Org file.
-  :hook (org-mode . toc-org-mode))
+  :hook (org-mode . org-make-toc-mode))
 #+END_SRC
-:From_toc-org_github:
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Make toc-org links appear to be the same as their visible text.
-(defun toc-org-hrefify-org (str &optional hash)
-  "Given a heading, transform it into a href using the org-mode rules."
-  (toc-org-format-visible-link str))
-#+END_SRC
-:End:
 
 I'm not sure how I feel about actually having the Github-serving TOC in my
 source file. It's nice to have around, from an essay-perspecive, but it breaks
@@ -819,7 +841,7 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
     (insert with)
     (widen)))
 
-;; Erase :TOC: body.
+;; Erase :TOC: body ---provided we're using toc-org.
 ;; (my/org-replace-tree-contents "Table of Contents")
 #+END_SRC
 ** Installing Emacs packages directly from source
@@ -3445,7 +3467,7 @@ the current heading stuck at the top of the window.
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
 
-** COMMENT Making Block Delimiters Less Intrusive
+** Making Block Delimiters Less Intrusive
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Making-Block-Delimiters-Less-Intrusive
 :END:
@@ -5717,6 +5739,10 @@ Bye!
 ![Image-Being-replaced-at-the-office](https://i.redd.it/g6yi40gbivv31.jpg)
 
 * Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
+:PROPERTIES:
+:TOC: ignore
+:END:
+
 ;; Nice soft yellow, pleasing ---try background colour for html export ;-)
 (add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
 ;; "white"; or this darker yellow "#eae3cb"
@@ -6075,7 +6101,7 @@ May need to actually reboot the system as well.
 :End:
 * TODO COMMENT Improvements
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-TODO-Improvements
+:TOC: ignore
 :END:
 
 ** Learn about TRAMP & Edit as Root
@@ -6650,6 +6676,9 @@ If the :tangle header arg is a list of files. Handle all files"
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
 * COMMENT footer & pushing to blog
+:PROPERTIES:
+:TOC: ignore
+:END:
 
 (emacs-restart)
 
