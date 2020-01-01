@@ -1,11 +1,11 @@
-# Created 2019-12-31 Tue 18:14
+# Created 2019-12-31 Tue 19:27
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:t :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
 #+export_file_name: README.org
 
-#+html: <p align="center"> <img src="emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="emacs-birthday-present.png" width=200 height=250/> </p>
+#+html: <p align="center"> <img src="emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3.1-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="emacs-birthday-present.png" width=200 height=250/> </p>
 
 I enjoy reading others' /literate/ configuration files and
 incorporating what I learn into my own. The result is a
@@ -120,15 +120,12 @@ and variables that may accomplish my goal.
   - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
   - [[#jumping-without-hassle][Jumping without hassle]]
   - [[#folding-within-a-subtree][Folding within a subtree]]
-  - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
-  - [[#org-modes-𝒳-block-expansions][Org-mode's ~<𝒳~ Block Expansions]]
 - [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
   - [[#working-with-citations][Working with Citations]]
   - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
-  - [[#org-mode--html][Org-mode ⇐ HTML]]
 - [[#life-within-org-mode][Life within Org-mode]]
   - [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
   - [[#super-agenda][Super Agenda]]
@@ -322,7 +319,8 @@ motivate the features I set up and I will prefix my local functions with, well,
 accidentally shadow existing utilities. Moreover, besides browsing the web, I do
 nearly everything in Emacs and so the start-up time is unimportant to me: Once
 begun, I have no intention of spawning another instance nor closing the current
-one.
+one. ( Upon an initial startup using this configuration, it takes a total of
+121 seconds to install all the packages featured here. )
 
 Enjoy!
 
@@ -733,13 +731,7 @@ primarily for README files on Github.
 (use-package toc-org
   ;; Automatically update toc when saving an Org file.
   :hook (org-mode . toc-org-mode))
-
-;; Make toc-org links appear to be the same as their visible text.
-(defun toc-org-hrefify-org (str &optional hash)
-  "Given a heading, transform it into a href using the org-mode rules."
-  (toc-org-format-visible-link str))
 #+end_src
-
 I'm not sure how I feel about actually having the Github-serving TOC in my
 source file. It's nice to have around, from an essay-perspecive, but it breaks
 HTML export since its links are /not/ well-behaved; e.g., ~:ignore:~-ed headlines
@@ -1540,7 +1532,7 @@ thought of implementing that.
 #+begin_src emacs-lisp
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :commands restart-emacs
+  :demand t
   ;; Let's define an alias so there's no need to remember the order.
   :config (defalias 'emacs-restart #'restart-emacs))
 #+end_src
@@ -2053,8 +2045,7 @@ We might accidentally close this buffer, so we could utilise the following.
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 
 ;; Upon startup, close the default scratch buffer and open one as specfied above
-(kill-buffer "*scratch*")
-(scratch)
+(ignore-errors (kill-buffer "*scratch*") (scratch))
 #+end_src
 
 I use Org-mode often, so that's how I want things to appear.
@@ -2982,90 +2973,10 @@ the current heading stuck at the top of the window.
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+end_src
 
-** Making Block Delimiters Less Intrusive
-Let us render Org-mode's ~#+begin_src~ and ~#+end_src~ less obtrusively by, e.g.,
-having the former render as a pencil marker ✎ and the latter as a tombstone □
----reminiscent of Halmos' QED end-of-proof marker.  His setup also accounts for
-quotes.
-
-⟪ Incantation Omitted ---Visit [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]]'s site & copy-paste it, if you wish ⟫
-#+begin_src emacs-lisp
-(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
-(org-mode-restart)
-#+end_src
-
-His development relies on built-in prettify-symbols-mode, which
-disguises strings in a buffer for the sake of readability or
-aesthetics.  Following the example in the documentation, ~C-h f
-prettify-symbols-mode~, we can quickly approximate his efforts for
-~example~ blocks as follows, however a main issue is that source blocks
-have busybodied headers which his setup disguises as ‘≡’.
-#+begin_src emacs-lisp :tangle yes
-(global-prettify-symbols-mode)
-
-(defvar my/prettify-alist nil
-  "Musa's personal prettifications.")
-
-(loop for pair in '(("<=" . ?≤) (">=" . ?≥)
-                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
-                    ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                    ("#+end_example"   . ?⇐))                ;; ⇐
-
-      do (push pair my/prettify-alist))
-
-(loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
-      do (add-hook hk (lambda ()
-                        (setq prettify-symbols-alist
-                              (append my/prettify-alist prettify-symbols-alist)))))
-#+end_src
-
-See [[http://www.modernemacs.com/post/prettify-mode/][“Mathematical Notation in Emacs”]] for how such prettifications can
-make verbose (Python) scripts much more readable by employing more
-economical disguises.
-
-A nice sanity:
-#+begin_src emacs-lisp
-;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
-(setq prettify-symbols-unprettify-at-point 'right-edge)
-#+end_src
-
-** Org-mode's ~<𝒳~ Block Expansions
-In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for
-source blocks or ~<q~ for quote blocks.  It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode
-structure template expansion necessitate explicitly loading ~org-tempo~.
-#+begin_src emacs-lisp
-(require 'org-tempo)
-#+end_src
-
-To insert source blocks with the assistance of a pop-up: ~C-c C-v d~ ;-)
-Perhaps more usefully, invoking within a source block splits it up into two
-separate blocks! Moreover, if invoked on a selected region, it puts the region
-into a new code block! Wow!
-
-- ~C-c C-,~ refers to ~org-insert-structure-template~, which provides non-source
-  blocks, such as quote ~<q~, comment ~<C~, center ~<c~, notes ~<n~, examples ~<e~, and ~<l~
-  and ~<h~ and ~<a~ for LaTeX and HTML and ASCII export blocks.
-  - ~<X~ allows you to obtain the org-block assigned to shortcut ~X~.
-  - The contents of comment blocks are ignored upon export.
-- ~C-c C-v C-d~ and ~C-c C-v d~ refer to the ~org-babel-demarcate-block~, which
-  provides /source/ blocks.
-
-| We shall improve upon this system below using snippets. |
-E.g., ~s_em TAB~ to obtain an org-src block marked with ~emacs-lisp~ as the
-language.  This saves us a few key strokes.
-
 * Org-Mode ⇒ PDF & HTML
 In this section we consider the Org-mode exporters for PDFs and
 HTMLs. For example, we account for LaTeX citations and reliable HTML
 anchors.
-
-#+begin_src emacs-lisp
-;; default to 4 headlines of export
-(setq org-export-headline-levels 4)
-
-;; no numbers by default at export
-(setq org-export-with-section-numbers nil)
-#+end_src
 
 ** Working with Citations
 [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
@@ -3288,20 +3199,6 @@ speaker notes in the flattened view.
 
 Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
 resulting PDF locally.
-
-** Org-mode ⇐ HTML
-
-The following let's us copy htlm into org format using eww, Emacs' built-in web browser.
-#+begin_src emacs-lisp
-;; See: https://emacs.stackexchange.com/questions/7171/paste-html-into-org-mode
-(use-package org-eww
- :quelpa (org-eww :fetcher git :url "https://github.com/Fuco1/org-mode.git"))
-#+end_src
-
-It does not work as I'd like, but may prove useful to have around.
-
-- Possibly useful: Open a webpage with ~M-x eww~ then toggle ~M-x read-only-mode~ to
-  edit the text, say for notes or deletions, as you read! No need to copy-paste.
 
 * Life within Org-mode
 
@@ -4958,4 +4855,4 @@ Bye!
 
 -----
 
-https://i.redd.it/g6yi40gbivv31.jpg
+![Image-Being-replaced-at-the-office](https://i.redd.it/g6yi40gbivv31.jpg)

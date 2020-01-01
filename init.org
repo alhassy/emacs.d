@@ -143,15 +143,12 @@ and variables that may accomplish my goal.
   - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
   - [[#jumping-without-hassle][Jumping without hassle]]
   - [[#folding-within-a-subtree][Folding within a subtree]]
-  - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
-  - [[#org-modes-𝒳-block-expansions][Org-mode's ~<𝒳~ Block Expansions]]
 - [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
   - [[#working-with-citations][Working with Citations]]
   - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
-  - [[#org-mode--html][Org-mode ⇐ HTML]]
 - [[#life-within-org-mode][Life within Org-mode]]
   - [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
   - [[#super-agenda][Super Agenda]]
@@ -354,7 +351,8 @@ motivate the features I set up and I will prefix my local functions with, well,
 accidentally shadow existing utilities. Moreover, besides browsing the web, I do
 nearly everything in Emacs and so the start-up time is unimportant to me: Once
 begun, I have no intention of spawning another instance nor closing the current
-one.
+one. ( Upon an initial startup using this configuration, it takes a total of
+121 seconds to install all the packages featured here. )
 
                                      Enjoy!
 
@@ -781,12 +779,15 @@ primarily for README files on Github.
 (use-package toc-org
   ;; Automatically update toc when saving an Org file.
   :hook (org-mode . toc-org-mode))
-
+#+END_SRC
+:From_toc-org_github:
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; Make toc-org links appear to be the same as their visible text.
 (defun toc-org-hrefify-org (str &optional hash)
   "Given a heading, transform it into a href using the org-mode rules."
   (toc-org-format-visible-link str))
 #+END_SRC
+:End:
 
 I'm not sure how I feel about actually having the Github-serving TOC in my
 source file. It's nice to have around, from an essay-perspecive, but it breaks
@@ -1754,7 +1755,7 @@ thought of implementing that.
 #+BEGIN_SRC emacs-lisp
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :commands restart-emacs
+  :demand t
   ;; Let's define an alias so there's no need to remember the order.
   :config (defalias 'emacs-restart #'restart-emacs))
 #+END_SRC
@@ -2336,8 +2337,7 @@ We might accidentally close this buffer, so we could utilise the following.
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 
 ;; Upon startup, close the default scratch buffer and open one as specfied above
-(kill-buffer "*scratch*")
-(scratch)
+(ignore-errors (kill-buffer "*scratch*") (scratch))
 #+END_SRC
 
 I use Org-mode often, so that's how I want things to appear.
@@ -3445,7 +3445,7 @@ the current heading stuck at the top of the window.
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
 
-** Making Block Delimiters Less Intrusive
+** COMMENT Making Block Delimiters Less Intrusive
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Making-Block-Delimiters-Less-Intrusive
 :END:
@@ -3581,7 +3581,7 @@ A nice sanity:
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 #+END_SRC
 
-** Org-mode's ~<𝒳~ Block Expansions
+** COMMENT Org-mode's ~<𝒳~ Block Expansions
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for
 source blocks or ~<q~ for quote blocks.  It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode
 structure template expansion necessitate explicitly loading ~org-tempo~.
@@ -3623,26 +3623,20 @@ language.  This saves us a few key strokes.
  #+RESULTS:
  [[file:simple_markov.png]]
 
-*** COMMENT Parallel
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Parallel
-:END:
-
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
-#+END_SRC
 * Org-Mode ⇒ PDF & HTML
 In this section we consider the Org-mode exporters for PDFs and
 HTMLs. For example, we account for LaTeX citations and reliable HTML
 anchors.
 
-#+BEGIN_SRC emacs-lisp
-;; default to 4 headlines of export
+:Possibly_breaking_toc-org:
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Use 3 headlines of export, which is the default
 (setq org-export-headline-levels 4)
 
 ;; no numbers by default at export
 (setq org-export-with-section-numbers nil)
 #+END_SRC
+:End:
 
 ** Working with Citations
 :PROPERTIES:
@@ -3857,6 +3851,8 @@ with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] 
 (use-package ox-reveal
   :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
 #+END_SRC
+# MA: ??? It looks like ox-reveal is being abandoned in favor of org-re-reveal,
+# a fork compatible with org-mode 9.2?
 
 For example, execute, ~C-x C-e~ after the closing parenthesis of, the
 following block to see an example slide-deck (─‿‿─)
@@ -3890,7 +3886,7 @@ speaker notes in the flattened view.
 Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
 resulting PDF locally.
 
-** Org-mode ⇐ HTML
+** COMMENT Org-mode ⇐ HTML
 
 The following let's us copy htlm into org format using eww, Emacs' built-in web browser.
 #+BEGIN_SRC emacs-lisp
@@ -5717,8 +5713,8 @@ Bye!
 
 --------------------------------------------------------------------------------
 
-# Image: Being replaced at the office
-https://i.redd.it/g6yi40gbivv31.jpg
+# Render image in Gitub README
+![Image-Being-replaced-at-the-office](https://i.redd.it/g6yi40gbivv31.jpg)
 
 * Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 ;; Nice soft yellow, pleasing ---try background colour for html export ;-)
@@ -6645,6 +6641,14 @@ If the :tangle header arg is a list of files. Handle all files"
 (advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
 (advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
 #+end_src
+** Parallel
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Parallel
+:END:
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
+#+END_SRC
 * COMMENT footer & pushing to blog
 
 (emacs-restart)

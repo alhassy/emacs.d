@@ -22,6 +22,7 @@
 (package-refresh-contents)
 ;; =use-package= ---The start of =init.el=:1 ends here
 
+
 ;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:2]]
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
@@ -57,9 +58,7 @@
 (use-package diminish
   :demand t
   :config ;; Let's hide some markers.
-    (diminish 'eldoc-mode)
-    (diminish 'org-indent-mode)
-    (diminish 'subword-mode))
+    (diminish  'org-indent-mode))
 ;; =use-package= ---The start of =init.el=:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:7]]
@@ -101,13 +100,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; =use-package= ---The start of =init.el=:8 ends here
@@ -143,18 +142,16 @@
 (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 ;; enable making init and readme ends here
 
+
+
+
 ;; [[file:~/.emacs.d/init.org::*~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~:5]]
 (use-package toc-org
   ;; Automatically update toc when saving an Org file.
   :hook (org-mode . toc-org-mode))
-
-;; Make toc-org links appear to be the same as their visible text.
-(defun toc-org-hrefify-org (str &optional hash)
-  "Given a heading, transform it into a href using the org-mode rules."
-  (toc-org-format-visible-link str))
 ;; ~README~ ---From ~init.org~ to ~init.el~:5 ends here
 
-;; [[file:~/.emacs.d/init.org::*~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~:6]]
+;; [[file:~/.emacs.d/init.org::*~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~:7]]
 (cl-defun my/org-replace-tree-contents (heading &key (with "") (offset 0))
   "Replace the contents of org tree HEADING with WITH, starting at OFFSET.
 
@@ -178,7 +175,7 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 
 ;; Erase :TOC: body.
 ;; (my/org-replace-tree-contents "Table of Contents")
-;; ~README~ ---From ~init.org~ to ~init.el~:6 ends here
+;; ~README~ ---From ~init.org~ to ~init.el~:7 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:1]]
 (use-package quelpa
@@ -575,19 +572,22 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
               "! Emacs "      emacs-version
               "; Org-mode "   org-version
               "; System "     (system-name)
-                  (format "; Time %.3fs"
-                      (float-time (time-subtract (current-time)
-                                    before-init-time))))))
+              "; Time "       (emacs-init-time))))
 ;; Startup message: Emacs & Org versions:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:2]]
-;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.2.3; System alhassy-air.local
+;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.3; System alhassy-air.local
 ;; Startup message: Emacs & Org versions:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:3]]
+(format "; Time %.3fs"
+        (float-time (time-subtract (current-time) before-init-time)))
+;; Startup message: Emacs & Org versions:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:4]]
 ;; Keep self motivated!
 (setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
-;; Startup message: Emacs & Org versions:3 ends here
+;; Startup message: Emacs & Org versions:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up:1]]
 (find-file "~/Dropbox/todo.org")
@@ -773,8 +773,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 
 ;; Upon startup, close the default scratch buffer and open one as specfied above
-(kill-buffer "*scratch*")
-(scratch)
+(ignore-errors (kill-buffer "*scratch*") (scratch))
 ;; Persistent Scratch Buffer:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:3]]
@@ -979,8 +978,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:3]]
 (require 'agda-input)
-(add-hook 'text-mode-hook (lambda () (set-input-method "Agda")))
-(add-hook 'org-mode-hook  (lambda () (set-input-method "Agda")))
+(setq default-input-method "Agda")
+(toggle-input-method)  ;; C-\
 ;; Unicode Input via Agda Input:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:4]]
@@ -1053,6 +1052,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; C-x C-0 restores the default font size
 ;; Increase/decrease text size:1 ends here
 
+
 ;; [[file:~/.emacs.d/init.org::*Moving Text Around][Moving Text Around:1]]
 ;; M-↑,↓ moves line, or marked region; prefix is how many lines.
 (use-package move-text)
@@ -1061,6 +1061,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations:1]]
 (global-subword-mode 1)
+(diminish  'subword-mode)
 ;; Enabling CamelCase Aware Editing Operations:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Mouse Editing Support][Mouse Editing Support:1]]
@@ -1172,6 +1173,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
      (org        . t)
      (makefile   . t)))
 
+
 ;; Preserve my indentation for source code during export.
 (setq org-src-preserve-indentation t)
 
@@ -1251,6 +1253,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (goto-line line))
 ;; Jumping without hassle:1 ends here
 
+
 ;; [[file:~/.emacs.d/init.org::*Folding within a subtree][Folding within a subtree:1]]
 (defun my/org-fold-current-subtree-anywhere-in-it ()
   "Hide the current heading, while being anywhere inside it."
@@ -1264,118 +1267,12 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 ;; Folding within a subtree:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:1]]
-  (defvar-local rasmus/org-at-src-begin -1
-    "Variable that holds whether last position was a ")
+; (eval-buffer)
+(when t
 
-  (defvar rasmus/ob-header-symbol ?☰
-    "Symbol used for babel headers")
-
-  (defun rasmus/org-prettify-src--update ()
-    (let ((case-fold-search t)
-          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
-          found)
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward re nil t)
-          (goto-char (match-end 0))
-          (let ((args (org-trim
-                       (buffer-substring-no-properties (point)
-                                                       (line-end-position)))))
-            (when (org-string-nw-p args)
-              (let ((new-cell (cons args rasmus/ob-header-symbol)))
-                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
-                (cl-pushnew new-cell found :test #'equal)))))
-        (setq prettify-symbols-alist
-              (cl-set-difference prettify-symbols-alist
-                                 (cl-set-difference
-                                  (cl-remove-if-not
-                                   (lambda (elm)
-                                     (eq (cdr elm) rasmus/ob-header-symbol))
-                                   prettify-symbols-alist)
-                                  found :test #'equal)))
-        ;; Clean up old font-lock-keywords.
-        (font-lock-remove-keywords nil prettify-symbols--keywords)
-        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
-        (font-lock-add-keywords nil prettify-symbols--keywords)
-        (while (re-search-forward re nil t)
-          (font-lock-flush (line-beginning-position) (line-end-position))))))
-
-  (defun rasmus/org-prettify-src ()
-    "Hide src options via `prettify-symbols-mode'.
-
-  `prettify-symbols-mode' is used because it has uncollpasing. It's
-  may not be efficient."
-    (let* ((case-fold-search t)
-           (at-src-block (save-excursion
-                           (beginning-of-line)
-                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
-      ;; Test if we moved out of a block.
-      (when (or (and rasmus/org-at-src-begin
-                     (not at-src-block))
-                ;; File was just opened.
-                (eq rasmus/org-at-src-begin -1))
-        (rasmus/org-prettify-src--update))
-      ;; Remove composition if at line; doesn't work properly.
-      ;; (when at-src-block
-      ;;   (with-silent-modifications
-      ;;     (remove-text-properties (match-end 0)
-      ;;                             (1+ (line-end-position))
-      ;;                             '(composition))))
-      (setq rasmus/org-at-src-begin at-src-block)))
-
-  (defun rasmus/org-prettify-symbols ()
-    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
-          (cl-reduce 'append
-                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
-                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
-                               ("#+end_src"   . ?□) ;; ⏹
-                               ("#+header:" . ,rasmus/ob-header-symbol)
-                               ("#+begin_quote" . ?»)
-                               ("#+end_quote" . ?«)))))
-    (turn-on-prettify-symbols-mode)
-    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
-
-
-;; Last up­dated: 2019-06-09
-;; Making Block Delimiters Less Intrusive:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:2]]
-(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
-(org-mode-restart)
-;; Making Block Delimiters Less Intrusive:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:3]]
-(global-prettify-symbols-mode)
-
-(defvar my/prettify-alist nil
-  "Musa's personal prettifications.")
-
-(loop for pair in '(("<=" . ?≤) (">=" . ?≥)
-                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
-                    ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                    ("#+end_example"   . ?⇐))                ;; ⇐
-
-      do (push pair my/prettify-alist))
-
-(loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
-      do (add-hook hk (lambda ()
-                        (setq prettify-symbols-alist
-                              (append my/prettify-alist prettify-symbols-alist)))))
-;; Making Block Delimiters Less Intrusive:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:4]]
-;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
-(setq prettify-symbols-unprettify-at-point 'right-edge)
-;; Making Block Delimiters Less Intrusive:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Org-mode's ~<𝒳~ Block Expansions][Org-mode's ~<𝒳~ Block Expansions:1]]
-(require 'org-tempo)
-;; Org-mode's ~<𝒳~ Block Expansions:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Org-Mode ⇒ PDF & HTML][Org-Mode ⇒ PDF & HTML:1]]
 ;; default to 4 headlines of export
-(setq org-export-headline-levels 4)
 
 ;; no numbers by default at export
 (setq org-export-with-section-numbers nil)
@@ -1484,6 +1381,7 @@ by spaces.
 (setq org-html-format-drawer-function 'my/org-drawer-format)
 ;; HTML “Folded Drawers”:1 ends here
 
+
 ;; [[file:~/.emacs.d/init.org::*[[https://revealjs.com/?transition=zoom#/\][Reveal.JS\]] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
 (use-package ox-reveal
   :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
@@ -1497,12 +1395,6 @@ by spaces.
 </a>
 </font>")
 ;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Org-mode ⇐ HTML][Org-mode ⇐ HTML:1]]
-;; See: https://emacs.stackexchange.com/questions/7171/paste-html-into-org-mode
-(use-package org-eww
- :quelpa (org-eww :fetcher git :url "https://github.com/Fuco1/org-mode.git"))
-;; Org-mode ⇐ HTML:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:1]]
 ;; Location of my todos/notes file
@@ -1664,6 +1556,9 @@ by spaces.
     (org-journal-new-entry nil)
     (org-mode)
     (org-show-all)))
+
+
+
 
 (use-package org-journal
   ;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
@@ -2242,3 +2137,5 @@ window contains the buffer with the cursour in it."
 ;; after-init-hook which hides the startup message.
 (add-hook 'after-init-hook 'display-startup-echo-area-message)
 ;; Keeping my system up to date:1 ends here
+
+)
