@@ -438,13 +438,13 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
 
 (use-package bbdb
- :demand t
- ;; :after company-mode ;; The “com”plete “any”thig mode is set below in §Prose
- :hook   (message-mode . bbdb-insinuate-gnus)
-         (gnus-startup-hook . bbdb-insinuate-gnus)
- :custom (bbdb-file gmail2bbdb-bbdb-file)
-         (bbdb-use-pop-up t)                        ;; allow popups for addresses
- :config (add-to-list 'company-backends 'company-bbdb))
+  :demand t
+  :after company ;; The “com”plete “any”thig mode is set below in §Prose
+  :hook   (message-mode . bbdb-insinuate-gnus)
+  (gnus-startup-hook . bbdb-insinuate-gnus)
+  :custom (bbdb-file gmail2bbdb-bbdb-file)
+  (bbdb-use-pop-up t)                        ;; allow popups for addresses
+  :config (add-to-list 'company-backends 'company-bbdb))
 ;; Auto-completing mail addresses:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
