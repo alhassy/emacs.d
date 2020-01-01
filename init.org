@@ -26,7 +26,7 @@
 
 * Abstract                                                  :ignore:noexport:
 :PROPERTIES:
-:CUSTOM_ID: Abstract
+
 :END:
 
 # See https://shields.io/
@@ -83,112 +83,137 @@ Finally, ~C-h d~ asks nicely what ‘d’ocumentation you're interested in.
 After providing a few keywords, the =apropos= tool yields possible functions
 and variables that may accomplish my goal.
 
-* Table of Contents                                        :Github:TOC:
+* Table of Contents                                        :Github:TOC_4:
 :PROPERTIES:
-:CUSTOM_ID: Table-of-Contents
+
 :END:
 
-- [[Why Emacs?][Why Emacs?]]
-- [[Booting Up][Booting Up]]
-  - [[=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=]]
-  - [[=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=]]
-  - [[=README= ---From =init.org= to =init.el=][=README= ---From =init.org= to =init.el=]]
-  - [[Installing Emacs packages directly from source][Installing Emacs packages directly from source]]
-  - [[=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git]]
-  - [[Syncing to the System's =$PATH=][Syncing to the System's =$PATH=]]
-  - [[Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs]]
-  - [[“Being at the Helm” ---Completion & Narrowing Framework][“Being at the Helm” ---Completion & Narrowing Framework]]
-  - [[Having a workspace manager in Emacs][Having a workspace manager in Emacs]]
-  - [[Excellent PDF Viewer][Excellent PDF Viewer]]
-  - [[Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail]]
-  - [[Hydra: Supply a prefix only once][Hydra: Supply a prefix only once]]
-  - [[Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
-  - [[Restarting Emacs ---Keeping buffers open across sessions?][Restarting Emacs ---Keeping buffers open across sessions?]]
-  - [[Automatic Backups][Automatic Backups]]
-  - [[Editor Documentation with Contextual Information][Editor Documentation with Contextual Information]]
-- [[Cosmetics][Cosmetics]]
-  - [[Startup message: Emacs & Org versions][Startup message: Emacs & Org versions]]
-  - [[My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up]]
-  - [[Exquisite Themes][Exquisite Themes]]
-  - [[A sleek & informative mode line][A sleek & informative mode line]]
-  - [[Never lose the cursor][Never lose the cursor]]
-  - [[Dimming Unused Windows][Dimming Unused Windows]]
-  - [[Buffer names are necessarily injective][Buffer names are necessarily injective]]
-  - [[Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking]]
-  - [[Hiding Scrollbar, tool bar, and menu][Hiding Scrollbar, tool bar, and menu]]
-  - [[Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-)]]
-  - [[Neotree: Directory Tree Listing][Neotree: Directory Tree Listing]]
-  - [[Tabs][Tabs]]
-  - [[Window resizing using the golden ratio][Window resizing using the golden ratio]]
-  - [[Persistent Scratch Buffer][Persistent Scratch Buffer]]
-- [[Prose][Prose]]
-  - [[Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping]]
-  - [[Word Completion][Word Completion]]
-  - [[Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!]]
-  - [[Touch Typing][Touch Typing]]
-  - [[Using a Grammar & Style Checker][Using a Grammar & Style Checker]]
-  - [[Lightweight Prose Proofchecking][Lightweight Prose Proofchecking]]
-  - [[Placeholder Text ---For Learning & Experimenting][Placeholder Text ---For Learning & Experimenting]]
-  - [[Some text to make us smile][Some text to make us smile]]
-  - [[Unicode Input via Agda Input][Unicode Input via Agda Input]]
-  - [[Increase/decrease text size][Increase/decrease text size]]
-  - [[Moving Text Around][Moving Text Around]]
-  - [[Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations]]
-  - [[Mouse Editing Support][Mouse Editing Support]]
-  - [[Delete Selection Mode][Delete Selection Mode]]
-  - [[~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation]]
-  - [[Letter-based Navigation][Letter-based Navigation]]
-  - [[~C-c e n,p~: Taking a tour of one's edits][~C-c e n,p~: Taking a tour of one's edits]]
-- [[Org-Mode Administrivia][Org-Mode Administrivia]]
-  - [[Getting Started][Getting Started]]
-  - [[Executing code from ~src~ blocks][Executing code from ~src~ blocks]]
-  - [[High Speed Literate Programming][High Speed Literate Programming]]
-  - [[Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images]]
-  - [[Org-Emphasise for Parts of Words][Org-Emphasise for Parts of Words]]
-  - [[Show off-screen heading at the top of the window][Show off-screen heading at the top of the window]]
-  - [[Jumping without hassle][Jumping without hassle]]
-  - [[Folding within a subtree][Folding within a subtree]]
-  - [[Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive]]
-- [[Org-Mode ⇒ PDF & HTML][Org-Mode ⇒ PDF & HTML]]
-  - [[Working with Citations][Working with Citations]]
-  - [[Coloured LaTeX using Minted][Coloured LaTeX using Minted]]
-  - [[Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors]]
-  - [[HTML “Folded Drawers”][HTML “Folded Drawers”]]
-  - [[Reveal.JS -- The HTML Presentation Framework][Reveal.JS -- The HTML Presentation Framework]]
-- [[Life within Org-mode][Life within Org-mode]]
-  - [[Using Org-Mode as a Day Planner][Using Org-Mode as a Day Planner]]
-  - [[Super Agenda][Super Agenda]]
-  - [[Automating Pomodoro ---“Commit for only 25 minutes!”][Automating Pomodoro ---“Commit for only 25 minutes!”]]
-  - [[Journaling][Journaling]]
-  - [[Workflow States][Workflow States]]
-  - [[Clocking Work Time][Clocking Work Time]]
-- [[Programming][Programming]]
-  - [[Highlight defined Lisp symbols][Highlight defined Lisp symbols]]
-  - [[Eldoc for Lisp and Haskell][Eldoc for Lisp and Haskell]]
-  - [[Jumping to definitions & references][Jumping to definitions & references]]
-  - [[Aggressive Indentation][Aggressive Indentation]]
-  - [[What's changed & who's to blame?][What's changed & who's to blame?]]
-  - [[Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit]]
-  - [[On the fly syntax checking][On the fly syntax checking]]
-  - [[Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
-  - [[Text Folding with Origami-mode][Text Folding with Origami-mode]]
-  - [[Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
-  - [[Snippets ---Template Expansion][Snippets ---Template Expansion]]
-- [[Helpful Utilities & Shortcuts][Helpful Utilities & Shortcuts]]
-  - [[Documentation Pop-Ups][Documentation Pop-Ups]]
-  - [[Emacs keybindings for my browser][Emacs keybindings for my browser]]
-  - [[Using Emacs in any text area on my OS][Using Emacs in any text area on my OS]]
-  - [[Reload buffer with ~f5~][Reload buffer with ~f5~]]
-  - [[Kill to start of line][Kill to start of line]]
-  - [[Killing buffers & windows: ~C-x k~ has a family][Killing buffers & windows: ~C-x k~ has a family]]
-  - [[Switching from 2 horizontal windows to 2 vertical windows][Switching from 2 horizontal windows to 2 vertical windows]]
-  - [[Obtaining Values of ~#+KEYWORD~ Annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
-  - [[Publishing articles to my personal blog][Publishing articles to my personal blog]]
-- [[Conclusion ---Why Configuration Files Should be Literate][Conclusion ---Why Configuration Files Should be Literate]]
+- [[#why-emacs][Why Emacs?]]
+- [[#booting-up][Booting Up]]
+  - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
+    - [[#adventure-time-honey-wheres-my-init][/Adventure time!/ “Honey, where's my init?”]]
+    - [[#adventure-time-using-emacs-easy-customisation-interface][/Adventure time!/ Using Emacs' Easy Customisation Interface]]
+    - [[#support-for-custom][Support for ‘Custom’]]
+  - [[#use-package----the-start-of-initel][=use-package= ---The start of =init.el=]]
+  - [[#readme----from-initorg-to-initel][=README= ---From =init.org= to =init.el=]]
+  - [[#installing-emacs-packages-directly-from-source][Installing Emacs packages directly from source]]
+  - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
+  - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
+  - [[#installing-os-packages-and-automatically-keeping-my-system-up-to-data-from-within-emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs]]
+  - [[#being-at-the-helm----completion--narrowing-framework][“Being at the Helm” ---Completion & Narrowing Framework]]
+  - [[#having-a-workspace-manager-in-emacs][Having a workspace manager in Emacs]]
+  - [[#excellent-pdf-viewer][Excellent PDF Viewer]]
+  - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
+    - [[#prettifications][Prettifications]]
+    - [[#super-terse-tutorial][Super Terse Tutorial]]
+    - [[#auto-completing-mail-addresses][Auto-completing mail addresses]]
+    - [[#feeds-to-blogs][Feeds to Blogs]]
+  - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
+  - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
+  - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
+  - [[#automatic-backups][Automatic Backups]]
+  - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
+- [[#cosmetics][Cosmetics]]
+  - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
+  - [[#my-to-do-list-the-initial-buffer-when-emacs-opens-up][My to-do list: The initial buffer when Emacs opens up]]
+  - [[#exquisite-themes][Exquisite Themes]]
+  - [[#a-sleek--informative-mode-line][A sleek & informative mode line]]
+  - [[#never-lose-the-cursor][Never lose the cursor]]
+  - [[#dimming-unused-windows][Dimming Unused Windows]]
+  - [[#buffer-names-are-necessarily-injective][Buffer names are necessarily injective]]
+  - [[#flashing-when-something-goes-wrong----no-blinking][Flashing when something goes wrong ---no blinking]]
+  - [[#hiding-scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu]]
+  - [[#highlight--complete-parenthesis-pair-when-cursor-is-near--][Highlight & complete parenthesis pair when cursor is near ;-)]]
+  - [[#neotree-directory-tree-listing][Neotree: Directory Tree Listing]]
+  - [[#tabs][Tabs]]
+  - [[#window-resizing-using-the-golden-ratio][Window resizing using the golden ratio]]
+  - [[#persistent-scratch-buffer][Persistent Scratch Buffer]]
+- [[#prose][Prose]]
+  - [[#fill-mode----word-wrapping][Fill-mode ---Word Wrapping]]
+  - [[#word-completion][Word Completion]]
+  - [[#fix-spelling-as-you-type----thesaurus--dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!]]
+  - [[#touch-typing][Touch Typing]]
+  - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
+  - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
+  - [[#placeholder-text----for-learning--experimenting][Placeholder Text ---For Learning & Experimenting]]
+  - [[#some-text-to-make-us-smile][Some text to make us smile]]
+  - [[#unicode-input-via-agda-input][Unicode Input via Agda Input]]
+  - [[#increasedecrease-text-size][Increase/decrease text size]]
+  - [[#moving-text-around][Moving Text Around]]
+  - [[#enabling-camelcase-aware-editing-operations][Enabling CamelCase Aware Editing Operations]]
+  - [[#mouse-editing-support][Mouse Editing Support]]
+  - [[#delete-selection-mode][Delete Selection Mode]]
+  - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
+  - [[#letter-based-navigation][Letter-based Navigation]]
+  - [[#c-c-e-np-taking-a-tour-of-ones-edits][~C-c e n,p~: Taking a tour of one's edits]]
+- [[#org-mode-administrivia][Org-Mode Administrivia]]
+  - [[#getting-started][Getting Started]]
+  - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
+  - [[#high-speed-literate-programming][High Speed Literate Programming]]
+    - [[#manipulating-sections][Manipulating Sections]]
+    - [[#seamless-navigation-between-source-blocks][Seamless Navigation Between Source Blocks]]
+    - [[#modifying-return][Modifying ~<return>~]]
+    - [[#c-aek-and-yanking-of-sections][~C-a,e,k~ and Yanking of sections]]
+  - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
+  - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
+  - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
+  - [[#jumping-without-hassle][Jumping without hassle]]
+  - [[#folding-within-a-subtree][Folding within a subtree]]
+  - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
+- [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
+  - [[#working-with-citations][Working with Citations]]
+  - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
+  - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
+  - [[#html-folded-drawers][HTML “Folded Drawers”]]
+  - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+- [[#life-within-org-mode][Life within Org-mode]]
+  - [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
+    - [[#capturing-ideas--notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow]]
+    - [[#step-1-when-new-tasks-come-up][Step 1: When new tasks come up]]
+    - [[#step-2-filing-your-tasks][Step 2: Filing your tasks]]
+    - [[#step-3-quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week]]
+    - [[#step-4-getting-ready-for-the-day][Step 4: Getting ready for the day]]
+    - [[#step-5-doing-the-work][Step 5: Doing the work]]
+    - [[#step-6-moving-a-task-toward-completion][Step 6: Moving a task toward completion]]
+    - [[#step-7-archiving-tasks][Step 7: Archiving Tasks]]
+  - [[#super-agenda][Super Agenda]]
+  - [[#automating-pomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
+  - [[#journaling][Journaling]]
+  - [[#workflow-states][Workflow States]]
+  - [[#clocking-work-time][Clocking Work Time]]
+    - [[#finding-tasks-to-clock-in][Finding tasks to clock in]]
+    - [[#estimates-versus-actual-time][Estimates versus actual time]]
+- [[#programming][Programming]]
+  - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
+  - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
+  - [[#jumping-to-definitions--references][Jumping to definitions & references]]
+  - [[#aggressive-indentation][Aggressive Indentation]]
+  - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
+  - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
+  - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
+  - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
+  - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
+  - [[#jump-between-windows-using-cmdarrow--between-recent-buffers-with-meta-tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab]]
+  - [[#snippets----template-expansion][Snippets ---Template Expansion]]
+    - [[#org-mode-templates----a-reason-i-generate-templates-][Org-mode Templates ---A reason I “generate” templates ;)]]
+    - [[#elisp-templates][Elisp Templates]]
+    - [[#equational-templates][Equational Templates]]
+    - [[#re-enabling-templates][Re-Enabling Templates]]
+- [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
+  - [[#documentation-pop-ups][Documentation Pop-Ups]]
+  - [[#emacs-keybindings-for-my-browser][Emacs keybindings for my browser]]
+  - [[#using-emacs-in-any-text-area-on-my-os][Using Emacs in any text area on my OS]]
+  - [[#reload-buffer-with-f5][Reload buffer with ~f5~]]
+  - [[#kill-to-start-of-line][Kill to start of line]]
+  - [[#killing-buffers--windows-c-x-k-has-a-family][Killing buffers & windows: ~C-x k~ has a family]]
+  - [[#switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows]]
+  - [[#obtaining-values-of-keyword-annotations][Obtaining Values of ~#+KEYWORD~ Annotations]]
+  - [[#publishing-articles-to-my-personal-blog][Publishing articles to my personal blog]]
+- [[#conclusion----why-configuration-files-should-be-literate][Conclusion ---Why Configuration Files Should be Literate]]
 
 * Why Emacs?
 :PROPERTIES:
-:CUSTOM_ID: Why-Emacs
+
 :END:
 
 /Emacs is a flexible platform for developing end-user applications/ --unfortunately it is generally perceived as
@@ -364,7 +389,7 @@ one. ( Upon an initial startup using this configuration, it takes a total of
 
 * Booting Up
 :PROPERTIES:
-:CUSTOM_ID: Booting-Up
+
 :END:
 
 Let's decide on where we want to setup our declarations for personalising Emacs
@@ -375,7 +400,7 @@ we are and use that to setup Emacs email service.
 
 ** =~/.emacs= vs. =init.org=
 :PROPERTIES:
-:CUSTOM_ID: emacs-vs-init-org
+
 :END:
 :PROPERTIES:
 
@@ -422,7 +447,7 @@ discussed in great detail later on.
 
 *** /Adventure time!/ “Honey, where's my init?”
 :PROPERTIES:
-:CUSTOM_ID: Adventure-time-Honey-where's-my-init
+
 :END:
 :PROPERTIES:
 
@@ -455,7 +480,7 @@ affect your editor. Delete some of these files in-order for others to take effec
 
 *** /Adventure time!/ Using Emacs' Easy Customisation Interface
 :PROPERTIES:
-:CUSTOM_ID: Adventure-time-Using-Emacs'-Easy-Customisation-Interface
+
 :END:
 :PROPERTIES:
 
@@ -474,7 +499,7 @@ Execute the following to see additions to the ~~/.emacs~ have been added by
 
 *** Support for ‘Custom’
 :PROPERTIES:
-:CUSTOM_ID: Support-for-Custom
+
 :END:
 :PROPERTIES:
 
@@ -498,7 +523,7 @@ Speaking of local variables, let's always ones we've already marked as safe
 
 ** =use-package= ---The start of =init.el=
 :PROPERTIES:
-:CUSTOM_ID: use-package-The-start-of-init-el
+
 :END:
 :PROPERTIES:
 
@@ -697,7 +722,7 @@ Let's activate it now, after ~use-package~ has been setup.
 
 ** =README= ---From =init.org= to =init.el=
 :PROPERTIES:
-:CUSTOM_ID: README-From-init-org-to-init-el
+
 :END:
 :PROPERTIES:
 
@@ -863,7 +888,7 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 #+END_SRC
 ** Installing Emacs packages directly from source
 :PROPERTIES:
-:CUSTOM_ID: Installing-Emacs-packages-directly-from-source
+
 :END:
 :PROPERTIES:
 
@@ -898,7 +923,7 @@ now]
 
 ** =magit= ---Emacs' porcelain interface to git
 :PROPERTIES:
-:CUSTOM_ID: magit-Emacs'-porcelain-interface-to-git
+
 :END:
 :PROPERTIES:
 
@@ -1097,7 +1122,7 @@ usual! The power of text!
 
 ** Syncing to the System's =$PATH=
 :PROPERTIES:
-:CUSTOM_ID: Syncing-to-the-System's-PATH
+
 :END:
 :PROPERTIES:
 
@@ -1136,7 +1161,7 @@ See the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]
 :End:
 ** Installing OS packages, and automatically keeping my system up to data, from within Emacs
 :PROPERTIES:
-:CUSTOM_ID: Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs
+
 :END:
 :PROPERTIES:
 
@@ -1213,7 +1238,7 @@ Neato! Now I can live in Emacs even more ^_^
 
 ** “Being at the Helm” ---Completion & Narrowing Framework
 :PROPERTIES:
-:CUSTOM_ID: Being-at-the-Helm-Completion-Narrowing-Framework
+
 :END:
 :PROPERTIES:
 
@@ -1382,7 +1407,7 @@ possibly with examples, of the packages installed. For example,
 dash library works via examples ;-)
 ** Having a workspace manager in Emacs
 :PROPERTIES:
-:CUSTOM_ID: Having-a-workspace-manager-in-Emacs
+
 :END:
 :PROPERTIES:
 
@@ -1416,7 +1441,7 @@ As always, since we've installed ~which-key~, it suffices to press ~C-x x~ then 
 at the resulting menu 😃
 ** Excellent PDF Viewer
 :PROPERTIES:
-:CUSTOM_ID: Excellent-PDF-Viewer
+
 :END:
 :PROPERTIES:
 
@@ -1438,7 +1463,7 @@ easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/
 
 ** Who am I? ---Using Gnus for Gmail
 :PROPERTIES:
-:CUSTOM_ID: Who-am-I-Using-Gnus-for-Gmail
+
 :END:
 :PROPERTIES:
 
@@ -1531,7 +1556,7 @@ Learn more by reading [[https://www.gnu.org/software/emacs/manual/html_mono/gnus
 
 *** Prettifications
 :PROPERTIES:
-:CUSTOM_ID: Prettifications
+
 :END:
 :PROPERTIES:
 
@@ -1572,7 +1597,7 @@ Next, let's paste in some [[http://groups.google.com/group/gnu.emacs.gnus/browse
 
 *** Super Terse Tutorial
 :PROPERTIES:
-:CUSTOM_ID: Super-Terse-Tutorial
+
 :END:
 :PROPERTIES:
 
@@ -1642,7 +1667,7 @@ do changes take effect on articles ---such as moves, reads, deletes, etc.
 
 *** Auto-completing mail addresses
 :PROPERTIES:
-:CUSTOM_ID: Auto-completing-mail-addresses
+
 :END:
 :PROPERTIES:
 
@@ -1679,7 +1704,7 @@ Here is an [[http://emacs-fu.blogspot.com/2009/08/managing-e-mail-addresses-with
 
 *** Feeds to Blogs                                               :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Feeds-to-Blogs
+
 :END:
 :PROPERTIES:
 
@@ -1761,7 +1786,7 @@ over to producing quality content. Apparently, I'm shallow and I'm okay with it
 default but it's unreasonably powerful.
 ** Hydra: Supply a prefix only once
 :PROPERTIES:
-:CUSTOM_ID: Hydra-Supply-a-prefix-only-once
+
 :END:
 :PROPERTIES:
 
@@ -1799,7 +1824,7 @@ See [[#Taking-a-tour-of-one's-edits][Taking a tour of one's edits]] below for a 
 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 :PROPERTIES:
-:CUSTOM_ID: Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh
+
 :END:
 :PROPERTIES:
 
@@ -1855,7 +1880,7 @@ via Emacs ;-)
 
 ** Restarting Emacs ---Keeping buffers open across sessions?
 :PROPERTIES:
-:CUSTOM_ID: Restarting-Emacs-Keeping-buffers-open-across-sessions
+
 :END:
 :PROPERTIES:
 
@@ -1888,7 +1913,7 @@ place where it was when you previously visited the same file.
 
 ** Automatic Backups
 :PROPERTIES:
-:CUSTOM_ID: Automatic-Backups
+
 :END:
 :PROPERTIES:
 
@@ -1962,7 +1987,7 @@ timestamp.
 
 ** Editor Documentation with Contextual Information
 :PROPERTIES:
-:CUSTOM_ID: Editor-Documentation-with-Contextual-Information
+
 :END:
 :PROPERTIES:
 
@@ -2017,7 +2042,7 @@ default search item for help, otherwise a plain search box for help
 appears. Using a universal argument lets us drop to the built-in help command.
 * Cosmetics
 :PROPERTIES:
-:CUSTOM_ID: Cosmetics
+
 :END:
 
 Upon startup, we want to be greeted with a useful, yet unobtrusive, message
@@ -2028,7 +2053,7 @@ functionality is found with ~M-x dired~.
 
 ** Startup message: Emacs & Org versions
 :PROPERTIES:
-:CUSTOM_ID: Startup-message-Emacs-Org-versions
+
 :END:
 :PROPERTIES:
 
@@ -2070,7 +2095,7 @@ as well as a nice ‘motto’:
 #+end_src
 ** My to-do list: The initial buffer when Emacs opens up
 :PROPERTIES:
-:CUSTOM_ID: My-to-do-list-The-initial-buffer-when-Emacs-opens-up
+
 :END:
 :PROPERTIES:
 
@@ -2091,7 +2116,7 @@ yet minimalist splash screen showing recent files, projects, and bookmarks.
 
 ** Exquisite Themes
 :PROPERTIES:
-:CUSTOM_ID: Exquisite-Themes
+
 :END:
 :PROPERTIES:
 
@@ -2150,7 +2175,7 @@ want.
 
 ** A sleek & informative mode line
 :PROPERTIES:
-:CUSTOM_ID: A-sleek-informative-mode-line
+
 :END:
 :PROPERTIES:
 
@@ -2208,7 +2233,7 @@ Other separators ---of modeline information--- that I've considered include
 like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
 ** Never lose the cursor
 :PROPERTIES:
-:CUSTOM_ID: Never-lose-the-cursor
+
 :END:
 :PROPERTIES:
 
@@ -2230,7 +2255,7 @@ When we switch windows or scroll, for example, we get a wave of light near the c
 
 ** Dimming Unused Windows
 :PROPERTIES:
-:CUSTOM_ID: Dimming-Unused-Windows
+
 :END:
 :PROPERTIES:
 
@@ -2246,7 +2271,7 @@ on. It's nifty, but not for me.
 
 ** Buffer names are necessarily injective
 :PROPERTIES:
-:CUSTOM_ID: Buffer-names-are-necessarily-injective
+
 :END:
 :PROPERTIES:
 
@@ -2273,7 +2298,7 @@ to have the buffer names reflect their location.
 
 ** Flashing when something goes wrong ---no blinking
 :PROPERTIES:
-:CUSTOM_ID: Flashing-when-something-goes-wrong-no-blinking
+
 :END:
 :PROPERTIES:
 
@@ -2295,7 +2320,7 @@ upwards and onwards.
 
 ** Hiding Scrollbar, tool bar, and menu
 :PROPERTIES:
-:CUSTOM_ID: Hiding-Scrollbar-tool-bar-and-menu
+
 :END:
 :PROPERTIES:
 
@@ -2310,7 +2335,7 @@ items.
 
 ** Highlight & complete parenthesis pair when cursor is near ;-)
 :PROPERTIES:
-:CUSTOM_ID: Highlight-complete-parenthesis-pair-when-cursor-is-near
+
 :END:
 :PROPERTIES:
 
@@ -2391,7 +2416,7 @@ I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when mark
 Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
 ** Neotree: Directory Tree Listing
 :PROPERTIES:
-:CUSTOM_ID: Neotree-Directory-Tree-Listing
+
 :END:
 :PROPERTIES:
 
@@ -2428,7 +2453,7 @@ an automatic replacement for nearly all of my uses.
 
 ** Tabs                                                           :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Tabs
+
 :END:
 :PROPERTIES:
 
@@ -2454,7 +2479,7 @@ An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
 
 ** Window resizing using the golden ratio                         :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Window-resizing-using-the-golden-ratio
+
 :END:
 :PROPERTIES:
 
@@ -2476,7 +2501,7 @@ After some time this got a bit annoying and I'm no longer  using this.
 
 ** Persistent Scratch Buffer
 :PROPERTIES:
-:CUSTOM_ID: Persistent-Scratch-Buffer
+
 :END:
 :PROPERTIES:
 
@@ -2521,7 +2546,7 @@ I use Org-mode often, so that's how I want things to appear.
 
 * Prose
 :PROPERTIES:
-:CUSTOM_ID: Prose
+
 :END:
 
 Emacs can be setup with a spellchecker and other expected features of a word processing tool
@@ -2539,7 +2564,7 @@ places upon save.
 
 ** Fill-mode ---Word Wrapping
 :PROPERTIES:
-:CUSTOM_ID: Fill-mode-Word-Wrapping
+
 :END:
 :PROPERTIES:
 
@@ -2575,7 +2600,7 @@ thereby making it look better. With a prefix argument, it justifies it as well
 
 ** Word Completion
 :PROPERTIES:
-:CUSTOM_ID: Word-Completion
+
 :END:
 :PROPERTIES:
 
@@ -2662,7 +2687,7 @@ for completion of emoji names.
 
 ** Fix spelling as you type ---thesaurus & dictionary too!
 :PROPERTIES:
-:CUSTOM_ID: Fix-spelling-as-you-type-thesaurus-dictionary-too
+
 :END:
 :PROPERTIES:
 
@@ -2775,7 +2800,7 @@ think is not ideal since it provides way less information.
 :End:
 ** Touch Typing
 :PROPERTIES:
-:CUSTOM_ID: Touch-Typing
+
 :END:
 :PROPERTIES:
 
@@ -2827,7 +2852,7 @@ Neato 😲
 
 ** Using a Grammar & Style Checker
 :PROPERTIES:
-:CUSTOM_ID: Using-a-Grammar-Style-Checker
+
 :END:
 :PROPERTIES:
 
@@ -2880,7 +2905,7 @@ The checking command is silent, we added a bit of comforting acknowledgement to 
 
 ** Lightweight Prose Proofchecking
 :PROPERTIES:
-:CUSTOM_ID: Lightweight-Prose-Proofchecking
+
 :END:
 :PROPERTIES:
 
@@ -2944,7 +2969,7 @@ Sentences that cut out the following problems may become stronger
 
 ** Placeholder Text ---For Learning & Experimenting
 :PROPERTIES:
-:CUSTOM_ID: Placeholder-Text-For-Learning-Experimenting
+
 :END:
 :PROPERTIES:
 
@@ -2969,7 +2994,7 @@ bindings on lorem ipsum, gibberish text.
 
 ** Some text to make us smile
 :PROPERTIES:
-:CUSTOM_ID: Some-text-to-make-us-smile
+
 :END:
 :PROPERTIES:
 
@@ -2989,7 +3014,7 @@ weekdays.
 
 ** Unicode Input via Agda Input
 :PROPERTIES:
-:CUSTOM_ID: Unicode-Input-via-Agda-Input
+
 :END:
 :PROPERTIES:
 
@@ -3145,7 +3170,7 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 
 ** Increase/decrease text size
 :PROPERTIES:
-:CUSTOM_ID: Increase-decrease-text-size
+
 :END:
 :PROPERTIES:
 
@@ -3161,7 +3186,7 @@ If thou knowst the ELisp, forgive this shadowing of the ~negative-argument~
 … we've still got ~M--~ though.
 ** Moving Text Around
 :PROPERTIES:
-:CUSTOM_ID: Moving-Text-Around
+
 :END:
 :PROPERTIES:
 
@@ -3176,7 +3201,7 @@ This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
 
 ** Enabling CamelCase Aware Editing Operations
 :PROPERTIES:
-:CUSTOM_ID: Enabling-CamelCase-Aware-Editing-Operations
+
 :END:
 :PROPERTIES:
 
@@ -3192,7 +3217,7 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 
 ** Mouse Editing Support
 :PROPERTIES:
-:CUSTOM_ID: Mouse-Editing-Support
+
 :END:
 :PROPERTIES:
 
@@ -3204,7 +3229,7 @@ Text selected with the mouse is automatically copied to clipboard.
 
 ** Delete Selection Mode
 :PROPERTIES:
-:CUSTOM_ID: Delete-Selection-Mode
+
 :END:
 :PROPERTIES:
 
@@ -3219,7 +3244,7 @@ selected text just by hitting the backspace key.
 #+END_SRC
 ** ~M-n,p~: Word-at-Point Navigation
 :PROPERTIES:
-:CUSTOM_ID: M-n-p-Word-at-Point-Navigation
+
 :END:
 :PROPERTIES:
 
@@ -3260,7 +3285,7 @@ Also …
 #+END_SRC
 ** Letter-based Navigation
 :PROPERTIES:
-:CUSTOM_ID: Letter-based-Navigation
+
 :END:
 :PROPERTIES:
 
@@ -3316,7 +3341,7 @@ work of [[https://emacs.stackexchange.com/a/358/10352][doing it ourselves]].
 
 ** ~C-c e n,p~: Taking a tour of one's edits
 :PROPERTIES:
-:CUSTOM_ID: C-c-e-n-p-Taking-a-tour-of-one's-edits
+
 :END:
 :PROPERTIES:
 
@@ -3346,7 +3371,7 @@ each time.
 
 * Org-Mode Administrivia
 :PROPERTIES:
-:CUSTOM_ID: Org-Mode-Administrivia
+
 :END:
 :Updating_FAQ:
 
@@ -3372,7 +3397,7 @@ sharing my screen with others.
 
 ** Getting Started                                                  :ignore:
 :PROPERTIES:
-:CUSTOM_ID: Getting-Started
+
 :END:
 Let's obtain Org-mode along with the extras that allow us to ignore
 heading names, but still utilise their contents ---e.g., such as a heading
@@ -3429,7 +3454,7 @@ default mode.
 
 ** Executing code from ~src~ blocks
 :PROPERTIES:
-:CUSTOM_ID: Executing-code-from-src-blocks
+
 :END:
 
 For example, to execute a shell command in Emacs, write a ~src~ with a shell
@@ -3473,7 +3498,7 @@ More languages can be added using ~add-to-list~.
 
 ** High Speed Literate Programming
 :PROPERTIES:
-:CUSTOM_ID: High-Speed-Literate-Programming
+
 :END:
 :PROPERTIES:
 
@@ -3481,7 +3506,7 @@ More languages can be added using ~add-to-list~.
 
 *** Manipulating Sections
 :PROPERTIES:
-:CUSTOM_ID: Manipulating-Sections
+
 :END:
 :PROPERTIES:
 
@@ -3522,7 +3547,7 @@ Moreover, ~?~ to see a complete list of keys available.
 
 *** Seamless Navigation Between Source Blocks
 :PROPERTIES:
-:CUSTOM_ID: Seamless-Navigation-Between-Source-Blocks
+
 :END:
 :PROPERTIES:
 
@@ -3546,7 +3571,7 @@ previous, next, or toggle editing org-mode source blocks.
 
 *** Modifying ~<return>~
 :PROPERTIES:
-:CUSTOM_ID: Modifying-return
+
 :END:
 :PROPERTIES:
 
@@ -3578,7 +3603,7 @@ In summary:
 
 *** ~C-a,e,k~ and Yanking of sections
 :PROPERTIES:
-:CUSTOM_ID: C-a-e-k-and-Yanking-of-sections
+
 :END:
 :PROPERTIES:
 
@@ -3606,7 +3631,7 @@ this, then refile instead of copy-pasting.
 
 ** Hiding Emphasise Markers & Inlining Images
 :PROPERTIES:
-:CUSTOM_ID: Hiding-Emphasise-Markers-Inlining-Images
+
 :END:
 :PROPERTIES:
 
@@ -3644,7 +3669,7 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
 
 ** Org-Emphasise for Parts of Words :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
+
 :END:
 :PROPERTIES:
 
@@ -3665,7 +3690,7 @@ lengthy phrase being emphasised.
 
 ** Show off-screen heading at the top of the window
 :PROPERTIES:
-:CUSTOM_ID: Show-off-screen-heading-at-the-top-of-the-window
+
 :END:
 :PROPERTIES:
 
@@ -3685,7 +3710,7 @@ the current heading stuck at the top of the window.
 
 ** Jumping without hassle
 :PROPERTIES:
-:CUSTOM_ID: Jumping-without-hassle
+
 :END:
 :PROPERTIES:
 
@@ -3708,7 +3733,7 @@ the current heading stuck at the top of the window.
 
 ** Folding within a subtree
 :PROPERTIES:
-:CUSTOM_ID: Folding-within-a-subtree
+
 :END:
 :PROPERTIES:
 
@@ -3729,7 +3754,7 @@ the current heading stuck at the top of the window.
 
 ** Making Block Delimiters Less Intrusive
 :PROPERTIES:
-:CUSTOM_ID: Making-Block-Delimiters-Less-Intrusive
+
 :END:
 :PROPERTIES:
 
@@ -3868,7 +3893,7 @@ A nice sanity:
 
 ** COMMENT Org-mode's ~<𝒳~ Block Expansions
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-Org-mode's-𝒳-Block-Expansions
+
 :END:
 :PROPERTIES:
 
@@ -3899,7 +3924,7 @@ language.  This saves us a few key strokes.
 
 *** COMMENT TODO Demoing Dot Graphs
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-TODO-Demoing-Dot-Graphs
+
 :END:
 :PROPERTIES:
 
@@ -3922,7 +3947,7 @@ language.  This saves us a few key strokes.
 
 * Org-Mode ⇒ PDF & HTML
 :PROPERTIES:
-:CUSTOM_ID: Org-Mode-PDF-HTML
+
 :END:
 In this section we consider the Org-mode exporters for PDFs and
 HTMLs. For example, we account for LaTeX citations and reliable HTML
@@ -3940,7 +3965,7 @@ anchors.
 
 ** Working with Citations
 :PROPERTIES:
-:CUSTOM_ID: Working-with-Citations
+
 :END:
 :PROPERTIES:
 
@@ -3976,7 +4001,7 @@ cite:agda_overview
 
 ** Coloured LaTeX using Minted
 :PROPERTIES:
-:CUSTOM_ID: Coloured-LaTeX-using-Minted
+
 :END:
 :PROPERTIES:
 
@@ -4006,7 +4031,7 @@ which is not necessary ideal when using LaTeX.
 
 ** Ensuring Useful HTML Anchors
 :PROPERTIES:
-:CUSTOM_ID: Ensuring-Useful-HTML-Anchors
+
 :END:
 :PROPERTIES:
 
@@ -4063,7 +4088,7 @@ remaining consistent for when trees share similar properties.
 
 ** HTML “Folded Drawers”
 :PROPERTIES:
-:CUSTOM_ID: HTML-Folded-Drawers
+
 :END:
 :PROPERTIES:
 
@@ -4156,7 +4181,7 @@ Now that I've written this, I'm thinking it may have been preferably to use an o
 
 ** [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework
 :PROPERTIES:
-:CUSTOM_ID: https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework
+
 :END:
 :PROPERTIES:
 
@@ -4206,7 +4231,7 @@ resulting PDF locally.
 
 ** COMMENT Org-mode ⇐ HTML
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-Org-mode-HTML
+
 :END:
 :PROPERTIES:
 
@@ -4226,7 +4251,7 @@ It does not work as I'd like, but may prove useful to have around.
 
 * Life within Org-mode
 :PROPERTIES:
-:CUSTOM_ID: Life-within-Org-mode
+
 :END:
 
 It's hard to estimate how long a task takes if you don't keep
@@ -4239,7 +4264,7 @@ schedule them into our ‘agenda’.
 
 ** Using Org-Mode as a Day Planner
 :PROPERTIES:
-:CUSTOM_ID: Using-Org-Mode-as-a-Day-Planner
+
 :END:
 :PROPERTIES:
 
@@ -4259,7 +4284,7 @@ We want a day-planner with the following use:
 
 *** Capturing ideas & notes without interrupting the current workflow
 :PROPERTIES:
-:CUSTOM_ID: Capturing-ideas-notes-without-interrupting-the-current-workflow
+
 :END:
 :PROPERTIES:
 
@@ -4375,7 +4400,7 @@ Let's also ensure TODO-s respect hierarchical structure.
 Anyhow…
 *** Step 1: When new tasks come up
 :PROPERTIES:
-:CUSTOM_ID: Step-1-When-new-tasks-come-up
+
 :END:
 :PROPERTIES:
 
@@ -4402,7 +4427,7 @@ need to be done at all! ---[[http://newartisans.com/2007/08/using-org-mode-as-a-
 When my computer isn't handy, I'll make a note on my phone then transfer it later.
 *** Step 2: Filing your tasks
 :PROPERTIES:
-:CUSTOM_ID: Step-2-Filing-your-tasks
+
 :END:
 :PROPERTIES:
 
@@ -4427,7 +4452,7 @@ Let's keep track of how many times, and when, we have pushed events to other dat
 #+END_SRC
 *** Step 3: Quickly review the upcoming week
 :PROPERTIES:
-:CUSTOM_ID: Step-3-Quickly-review-the-upcoming-week
+
 :END:
 :PROPERTIES:
 
@@ -4441,7 +4466,7 @@ task under the cursor and ~r~ to refresh the agenda.
 
 *** Step 4: Getting ready for the day
 :PROPERTIES:
-:CUSTOM_ID: Step-4-Getting-ready-for-the-day
+
 :END:
 :PROPERTIES:
 
@@ -4467,7 +4492,7 @@ priority.  Then ~r~ to refresh.
 
 *** Step 5: Doing the work
 :PROPERTIES:
-:CUSTOM_ID: Step-5-Doing-the-work
+
 :END:
 :PROPERTIES:
 
@@ -4485,7 +4510,7 @@ Either at the end of the day or the start of the next.
 
 *** Step 6: Moving a task toward completion
 :PROPERTIES:
-:CUSTOM_ID: Step-6-Moving-a-task-toward-completion
+
 :END:
 :PROPERTIES:
 
@@ -4512,7 +4537,7 @@ every clock-out is much more practical, for me at least.
 
 *** Step 7: Archiving Tasks
 :PROPERTIES:
-:CUSTOM_ID: Step-7-Archiving-Tasks
+
 :END:
 :PROPERTIES:
 
@@ -4563,7 +4588,7 @@ Let's install some helpful views for our agenda.
 
 ** Super Agenda
 :PROPERTIES:
-:CUSTOM_ID: Super-Agenda
+
 :END:
 :PROPERTIES:
 
@@ -4596,7 +4621,7 @@ contrasting with and without the system.
 
 ** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”
 :PROPERTIES:
-:CUSTOM_ID: Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes
+
 :END:
 :PROPERTIES:
 
@@ -4638,7 +4663,7 @@ good, and do more searches; then again, I've learned a lot by writing code. ⟩
 
 ** Journaling
 :PROPERTIES:
-:CUSTOM_ID: Journaling
+
 :END:
 :PROPERTIES:
 
@@ -4736,7 +4761,7 @@ journal entries do ~M-x calendar~.  Bindings available in the calendar-mode:
 # ] - go to next day with journal entries.
 ** Workflow States
 :PROPERTIES:
-:CUSTOM_ID: Workflow-States
+
 :END:
 :PROPERTIES:
 
@@ -4905,7 +4930,7 @@ through the PlantUML [[http://plantuml.com/guide][manual]]: The above is known a
 it's covered in §4.
 ** Clocking Work Time
 :PROPERTIES:
-:CUSTOM_ID: Clocking-Work-Time
+
 :END:
 :PROPERTIES:
 
@@ -5002,7 +5027,7 @@ A few more settings:
 
 *** Finding tasks to clock in
 :PROPERTIES:
-:CUSTOM_ID: Finding-tasks-to-clock-in
+
 :END:
 :PROPERTIES:
 
@@ -5020,7 +5045,7 @@ Use one of the following options, with the top-most being the first to be tried.
 
 *** Estimates versus actual time
 :PROPERTIES:
-:CUSTOM_ID: Estimates-versus-actual-time
+
 :END:
 :PROPERTIES:
 
@@ -5047,7 +5072,7 @@ name. *Woah!*
 
 * Programming
 :PROPERTIES:
-:CUSTOM_ID: Programming
+
 :END:
 
 Herein we configure utilites for version control, function and variable lookup,
@@ -5055,7 +5080,7 @@ and template expansion for inescapably repetitive scenarios.
 
 ** Highlight defined Lisp symbols
 :PROPERTIES:
-:CUSTOM_ID: Highlight-defined-Lisp-symbols
+
 :END:
 :PROPERTIES:
 
@@ -5075,7 +5100,7 @@ then I've misspelled it or it doesn't exist! :smile:
 
 ** Eldoc for Lisp and Haskell
 :PROPERTIES:
-:CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
+
 :END:
 :PROPERTIES:
 
@@ -5098,7 +5123,7 @@ The more
 
 ** Jumping to definitions & references
 :PROPERTIES:
-:CUSTOM_ID: Jumping-to-definitions-references
+
 :END:
 :PROPERTIES:
 
@@ -5136,7 +5161,7 @@ works fine even for locally bound definitions.  It works depending on the
 extension of a file.
 ** Aggressive Indentation
 :PROPERTIES:
-:CUSTOM_ID: Aggressive-Indentation
+
 :END:
 :PROPERTIES:
 
@@ -5155,7 +5180,7 @@ With a single space or tab, my code should always remain indented.
 
 ** What's changed & who's to blame?
 :PROPERTIES:
-:CUSTOM_ID: What's-changed-who's-to-blame
+
 :END:
 :PROPERTIES:
 
@@ -5238,7 +5263,7 @@ Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control
 
 ** Highlighting TODO-s & Showing them in Magit
 :PROPERTIES:
-:CUSTOM_ID: Highlighting-TODO-s-Showing-them-in-Magit
+
 :END:
 :PROPERTIES:
 
@@ -5293,7 +5318,7 @@ Add these to the version control hydra.
 
 ** On the fly syntax checking
 :PROPERTIES:
-:CUSTOM_ID: On-the-fly-syntax-checking
+
 :END:
 :PROPERTIES:
 
@@ -5355,7 +5380,7 @@ Try it out:
 
 ** Coding with a Fruit Salad: Semantic Highlighting
 :PROPERTIES:
-:CUSTOM_ID: Coding-with-a-Fruit-Salad-Semantic-Highlighting
+
 :END:
 :PROPERTIES:
 
@@ -5411,7 +5436,7 @@ Here are further reads:
 
 ** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
 :PROPERTIES:
-:CUSTOM_ID: Text-Folding-with-https-github-com-gregsexton-origami-el-Origami-mode
+
 :END:
 :PROPERTIES:
 
@@ -5458,7 +5483,7 @@ blocks! Love this one ^_^
 
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 :PROPERTIES:
-:CUSTOM_ID: Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab
+
 :END:
 :PROPERTIES:
 
@@ -5494,7 +5519,7 @@ into new configurations.
 
 ** Snippets ---Template Expansion
 :PROPERTIES:
-:CUSTOM_ID: Snippets-Template-Expansion
+
 :END:
 :PROPERTIES:
 
@@ -5637,7 +5662,7 @@ concluding with actually loading this snippet mechanism globally.
 
 *** Org-mode Templates ---A reason I “generate” templates ;)
 :PROPERTIES:
-:CUSTOM_ID: Org-mode-Templates-A-reason-I-generate-templates
+
 :END:
 :PROPERTIES:
 
@@ -5746,7 +5771,7 @@ levels, then uses each level to produce a list of type names ;-)
 
 *** Elisp Templates
 :PROPERTIES:
-:CUSTOM_ID: Elisp-Templates
+
 :END:
 :PROPERTIES:
 
@@ -5774,7 +5799,7 @@ one below and usually beat around the bush by using ~(loop for ⋯ do ⋯)~, whi
 
 *** Equational Templates
 :PROPERTIES:
-:CUSTOM_ID: Equational-Templates
+
 :END:
 :PROPERTIES:
 
@@ -5810,7 +5835,7 @@ One expands ~eqn_begin~, tabs to fill in the three main locations, then
 
 *** COMMENT Misc Templates
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-Misc-Templates
+
 :END:
 :PROPERTIES:
 
@@ -5825,7 +5850,7 @@ Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1
 
 *** Re-Enabling Templates
 :PROPERTIES:
-:CUSTOM_ID: Re-Enabling-Templates
+
 :END:
 :PROPERTIES:
 
@@ -5837,7 +5862,7 @@ After our yankpad templates are generated, we need to load it.
 #+END_SRC
 * Helpful Utilities & Shortcuts
 :PROPERTIES:
-:CUSTOM_ID: Helpful-Utilities-Shortcuts
+
 :END:
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
@@ -5857,7 +5882,7 @@ Let's save a few precious seconds,
 
 ** Documentation Pop-Ups
 :PROPERTIES:
-:CUSTOM_ID: Documentation-Pop-Ups
+
 :END:
 :PROPERTIES:
 
@@ -5873,7 +5898,7 @@ This is very useful when editing in a particular coding language, say via
 #+END_SRC
 ** Emacs keybindings for my browser :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Emacs-keybindings-for-my-browser
+
 :END:
 :PROPERTIES:
 
@@ -5890,7 +5915,7 @@ can be used to navigate my browser ^_^
 
 ** Using Emacs in any text area on my OS                          :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Using-Emacs-in-any-text-area-on-my-OS
+
 :END:
 :PROPERTIES:
 
@@ -5935,7 +5960,7 @@ I always want to be in Org-mode and input unicode:
 
 ** Reload buffer with ~f5~
 :PROPERTIES:
-:CUSTOM_ID: Reload-buffer-with-f5
+
 :END:
 :PROPERTIES:
 
@@ -5963,7 +5988,7 @@ were regenerated --Emacs should also prompt me if I make any changes!
 
 ** Kill to start of line
 :PROPERTIES:
-:CUSTOM_ID: Kill-to-start-of-line
+
 :END:
 :PROPERTIES:
 
@@ -5975,7 +6000,7 @@ Dual to ~C-k~,
 #+END_SRC
 ** Killing buffers & windows: ~C-x k~ has a family
 :PROPERTIES:
-:CUSTOM_ID: Killing-buffers-windows-C-x-k-has-a-family
+
 :END:
 :PROPERTIES:
 
@@ -6015,7 +6040,7 @@ I tend to consult.
 
 ** Switching from 2 horizontal windows to 2 vertical windows
 :PROPERTIES:
-:CUSTOM_ID: Switching-from-2-horizontal-windows-to-2-vertical-windows
+
 :END:
 :PROPERTIES:
 
@@ -6042,7 +6067,7 @@ window contains the buffer with the cursour in it."
 #+END_SRC
 ** Obtaining Values of ~#+KEYWORD~ Annotations
 :PROPERTIES:
-:CUSTOM_ID: Obtaining-Values-of-KEYWORD-Annotations
+
 :END:
 :PROPERTIES:
 
@@ -6074,7 +6099,7 @@ and how to manipulate it.
 
 ** Publishing articles to my personal blog
 :PROPERTIES:
-:CUSTOM_ID: Publishing-articles-to-my-personal-blog
+
 :END:
 :PROPERTIES:
 
@@ -6121,7 +6146,7 @@ publish the current article to my blog.
 
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
-:CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate
+
 :END:
 
 A configuration file sets up various features for a tool ---and serves as an
@@ -6244,7 +6269,7 @@ Bye!
 
 * COMMENT Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-Approaches-Before-Reading-Documentation
+
 :END:
 
 ;; Nice soft yellow, pleasing ---try background colour for html export ;-)
@@ -6253,7 +6278,7 @@ Bye!
 
 ** Elementary Version Control
 :PROPERTIES:
-:CUSTOM_ID: Elementary-Version-Control
+
 :END:
 :PROPERTIES:
 
@@ -6321,7 +6346,7 @@ Finally, since I've symlinked my ~.emacs~:
 #+end_src
 ** What's in, or at the top of, my ~~/.emacs~
 :PROPERTIES:
-:CUSTOM_ID: What's-in-or-at-the-top-of-my-emacs
+
 :END:
 :PROPERTIES:
 
@@ -6350,7 +6375,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 :End:
 ** README.md
 :PROPERTIES:
-:CUSTOM_ID: README-md
+
 :END:
 :PROPERTIES:
 
@@ -6400,7 +6425,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 
 ** List recently accessed files upon startup
 :PROPERTIES:
-:CUSTOM_ID: List-recently-accessed-files-upon-startup
+
 :END:
 :PROPERTIES:
 
@@ -6417,7 +6442,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 
 ** Homemade attempt before learning about shell-pop
 :PROPERTIES:
-:CUSTOM_ID: Homemade-attempt-before-learning-about-shell-pop
+
 :END:
 :PROPERTIES:
 
@@ -6444,7 +6469,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 #+end_src
 ** Exporting Tables to CSV :Documentation:
 :PROPERTIES:
-:CUSTOM_ID: Exporting-Tables-to-CSV
+
 :END:
 :PROPERTIES:
 
@@ -6458,7 +6483,7 @@ Exporting to CSV format is the only one I use and this provides the default so I
 To export the following table I put the cursor inside the table and hit M-x org-table-export which prompts for a filename and the format which defaults to orgtbl-to-csv from the setting above.
 ** Interpret the Haskell source blocks in a file :Cool_but_have_not_used_this_in_some_time:
 :PROPERTIES:
-:CUSTOM_ID: Interpret-the-Haskell-source-blocks-in-a-file
+
 :END:
 :PROPERTIES:
 
@@ -6525,7 +6550,7 @@ To export the following table I put the cursor inside the table and hit M-x org-
 #+END_SRC
 ** Makeshift HTML Folded Drawers: Folding-mode & Org-Macros
 :PROPERTIES:
-:CUSTOM_ID: Makeshift-HTML-Folded-Drawers-Folding-mode-Org-Macros
+
 :END:
 :PROPERTIES:
 
@@ -6578,7 +6603,7 @@ with show/hide with ~C-<tab>~ key.
 
 ** Default Compilation Commands ---Local Variables
 :PROPERTIES:
-:CUSTOM_ID: Default-Compilation-Commands-Local-Variables
+
 :END:
 :PROPERTIES:
 
@@ -6626,7 +6651,7 @@ Let's remove repeated matter.
 #+END_SRC
 ** Keeping my system up to date
 :PROPERTIES:
-:CUSTOM_ID: Keeping-my-system-up-to-date
+
 :END:
 :PROPERTIES:
 
@@ -6662,12 +6687,12 @@ May need to actually reboot the system as well.
 :End:
 * TODO COMMENT Improvements
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-Improvements
+
 :END:
 
 ** Learn about TRAMP & Edit as Root
 :PROPERTIES:
-:CUSTOM_ID: Learn-about-TRAMP-Edit-as-Root
+
 :END:
 :PROPERTIES:
 
@@ -6690,7 +6715,7 @@ by user."
 Incidentally, TRAMP allows us to do the same thing.
 ** Easy tasks
 :PROPERTIES:
-:CUSTOM_ID: Easy-tasks
+
 :END:
 :PROPERTIES:
 
@@ -6726,7 +6751,7 @@ Incidentally, TRAMP allows us to do the same thing.
 + [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
 ** Smartparens
 :PROPERTIES:
-:CUSTOM_ID: Smartparens
+
 :END:
 :PROPERTIES:
 
@@ -6808,7 +6833,7 @@ a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
 #+end_example
 ** Macros
 :PROPERTIES:
-:CUSTOM_ID: Macros
+
 :END:
 :PROPERTIES:
 
@@ -6854,7 +6879,7 @@ avoid scaring anyone. I may use it in my personal stuff.
 
 ** Summary of Utilities Provided
 :PROPERTIES:
-:CUSTOM_ID: Summary-of-Utilities-Provided
+
 :END:
 :PROPERTIES:
 
@@ -6903,14 +6928,14 @@ Finally, we can observe which features are active in our current Emacs with,
 # List of installed packages: (mapcar 'car package-alist)
 ** Stuff I don't really use, but may want to look at later
 :PROPERTIES:
-:CUSTOM_ID: Stuff-I-don't-really-use-but-may-want-to-look-at-later
+
 :END:
 :PROPERTIES:
 
 :END:
 *** hooks and things for literate agda with org-agda
 :PROPERTIES:
-:CUSTOM_ID: hooks-and-things-for-literate-agda-with-org-agda
+
 :END:
 :PROPERTIES:
 
@@ -6933,7 +6958,7 @@ Finally, we can observe which features are active in our current Emacs with,
 #+END_SRC
 *** floating toc material                            :no_longer_using_this:
 :PROPERTIES:
-:CUSTOM_ID: floating-toc-material
+
 :END:
 :PROPERTIES:
 
@@ -6955,7 +6980,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 
 *** org-html-postamble-format
 :PROPERTIES:
-:CUSTOM_ID: org-html-postamble-format
+
 :END:
 :PROPERTIES:
 
@@ -6979,7 +7004,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
  #+END_SRC
 *** to-consider-for-magit-list-repositories
 :PROPERTIES:
-:CUSTOM_ID: to-consider-for-magit-list-repositories
+
 :END:
 :PROPERTIES:
 
@@ -7033,14 +7058,14 @@ The above mechanism suffices, the following needn't be followed with ... unless 
 
 *** Programming Language Support                                     :TODO:
 :PROPERTIES:
-:CUSTOM_ID: Programming-Language-Support
+
 :END:
 :PROPERTIES:
 
 :END:
 ***** Haskell :tangle no
 :PROPERTIES:
-:CUSTOM_ID: Haskell-tangle-no
+
 :END:
 :PROPERTIES:
 
@@ -7052,7 +7077,7 @@ The above mechanism suffices, the following needn't be followed with ... unless 
 
 ***** Lambda Prolog
 :PROPERTIES:
-:CUSTOM_ID: Lambda-Prolog
+
 :END:
 :PROPERTIES:
 
@@ -7063,7 +7088,7 @@ The above mechanism suffices, the following needn't be followed with ... unless 
 #+END_SRC
 ***** intero and haskell
 :PROPERTIES:
-:CUSTOM_ID: intero-and-haskell
+
 :END:
 :PROPERTIES:
 
@@ -7084,7 +7109,7 @@ The above mechanism suffices, the following needn't be followed with ... unless 
 
 **** Coq Support
 :PROPERTIES:
-:CUSTOM_ID: Coq-Support
+
 :END:
 :PROPERTIES:
 
@@ -7097,7 +7122,7 @@ Sometimes I use Coq,
 
 *** Column Marker
 :PROPERTIES:
-:CUSTOM_ID: Column-Marker
+
 :END:
 :PROPERTIES:
 
@@ -7121,7 +7146,7 @@ take care of this.
 
 *** theme magic
 :PROPERTIES:
-:CUSTOM_ID: theme-magic
+
 :END:
 :PROPERTIES:
 
@@ -7136,7 +7161,7 @@ take care of this.
 
 ** Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
 :PROPERTIES:
-:CUSTOM_ID: Referencing-Text-From-Code-Blocks-Attaching-prose-as-doc-strings
+
 :END:
 :PROPERTIES:
 
@@ -7193,7 +7218,7 @@ Let's make ~get-named-text~ a globally defined and callable code block:
 
 ***  COMMENT Example
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-Example
+
 :END:
 :PROPERTIES:
 
@@ -7221,7 +7246,7 @@ We use the XXX function add to calculate the sum of two numbers.
 + There is a reason we only support two args
 ** Tangeling to multiple files
 :PROPERTIES:
-:CUSTOM_ID: Tangeling-to-multiple-files
+
 :END:
 :PROPERTIES:
 
@@ -7293,7 +7318,7 @@ If the :tangle header arg is a list of files. Handle all files"
 #+end_src
 ** Parallel
 :PROPERTIES:
-:CUSTOM_ID: Parallel
+
 :END:
 :PROPERTIES:
 
@@ -7304,9 +7329,10 @@ If the :tangle header arg is a list of files. Handle all files"
 #+END_SRC
 * COMMENT footer & pushing to blog :noexport:
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-footer-pushing-to-blog
+
 :END:
 
+;; NO!
 (defun toc-org-hrefify-gh (str &optional hash)
   "Given a heading, transform it into a href using the org-mode
 rules."
