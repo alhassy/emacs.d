@@ -83,7 +83,7 @@ Finally, ~C-h d~ asks nicely what ‘d’ocumentation you're interested in.
 After providing a few keywords, the =apropos= tool yields possible functions
 and variables that may accomplish my goal.
 
-* Table of Contents                                        :Github:TOC_2_gh:
+* Table of Contents                                        :Github:TOC:
 :PROPERTIES:
 :CUSTOM_ID: Table-of-Contents
 :END:

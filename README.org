@@ -1,4 +1,4 @@
-# Created 2020-01-01 Wed 13:06
+# Created 2020-01-01 Wed 13:09
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:t :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
@@ -62,7 +62,7 @@ Finally, ~C-h d~ asks nicely what ‘d’ocumentation you're interested in.
 After providing a few keywords, the =apropos= tool yields possible functions
 and variables that may accomplish my goal.
 
-* Table of Contents                                         :Github:TOC_2_gh:
+* Table of Contents                                              :Github:TOC:
 - [[Why Emacs?][Why Emacs?]]
 - [[Booting Up][Booting Up]]
   - [[=~/.emacs= vs. =init.org=][=~/.emacs= vs. =init.org=]]
