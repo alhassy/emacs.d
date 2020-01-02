@@ -773,7 +773,7 @@ generates the ~README~ for the associated Github repository.
     "#+EXPORT_FILE_NAME: README.org
 
      # Logos and birthday present painting
-     #+HTML:" (s-collapse-whitespace (concat
+     ,#+HTML:" (s-collapse-whitespace (concat
     " <p align=\"center\">
        <img src=\"emacs-logo.png\" width=150 height=150/>
      </p>
@@ -6284,10 +6284,9 @@ Bye!
 
 --------------------------------------------------------------------------------
 
-# Render image in Gitub README
-![Image-Being-replaced-at-the-office](https://i.redd.it/g6yi40gbivv31.jpg)
+#+HTML: ![Image-Being-replaced-at-the-office](https://i.redd.it/g6yi40gbivv31.jpg)
 
-* Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
+* COMMENT Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 :PROPERTIES:
 
 :END:
@@ -6705,7 +6704,7 @@ In a terminal execute: xcode-select --install
 
 May need to actually reboot the system as well.
 :End:
-* TODO Improvements                                                :noexport:
+* TODO COMMENT Improvements                                                :noexport:
 :PROPERTIES:
 
 :END:
@@ -7347,7 +7346,7 @@ If the :tangle header arg is a list of files. Handle all files"
 #+BEGIN_SRC emacs-lisp :tangle no
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
-* footer & pushing to blog                                         :noexport:
+* COMMENT footer & pushing to blog                                         :noexport:
 
 (emacs-restart)
 
