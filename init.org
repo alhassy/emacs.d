@@ -2,7 +2,7 @@
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 #
-# ≥ 6600 line org file.
+# ≥ 7300 line org file, with auto-generated TOC.
 
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -10,7 +10,7 @@
 #+DATE: 2018-07-25
 #+DESCRIPTION: My Emacs Initialisation File, Written in Org-mode.
 #+STARTUP: indent lognoteclock-out
-#+OPTIONS: html-postamble:nil toc:nil d:nil num:t :results nil
+#+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+PROPERTY: header-args :tangle init.el :comments link :results none
 
 # ─AlBasmala keywords─
@@ -19,15 +19,7 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
-# toc-org uses :noexport: to exclude items from the TOC,
-# but what if we want said items to be exported by org-mode,
-# whence we remove this element from the org's excluded tags.
-# (setq org-export-exclude-tags nil)
-
-* Abstract                                                  :ignore:noexport:
-:PROPERTIES:
-
-:END:
+* Abstract                                                           :ignore:
 
 # See https://shields.io/
 #
@@ -84,10 +76,6 @@ After providing a few keywords, the =apropos= tool yields possible functions
 and variables that may accomplish my goal.
 
 * Table of Contents                                        :Github:TOC_4:
-:PROPERTIES:
-
-:END:
-
 - [[#why-emacs][Why Emacs?]]
 - [[#booting-up][Booting Up]]
   - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
@@ -96,8 +84,12 @@ and variables that may accomplish my goal.
     - [[#support-for-custom][Support for ‘Custom’]]
   - [[#use-package----the-start-of-initel][=use-package= ---The start of =init.el=]]
   - [[#readme----from-initorg-to-initel][=README= ---From =init.org= to =init.el=]]
+    - [[#the-mymake-init-el-and-readme-function][The =my/make-init-el-and-README= function]]
+    - [[#the-org-block-named-make-readme][The Org-block named =make-readme=]]
+    - [[#table-of-contents-for-org-vs-github][‘Table of Contents’ for Org vs. Github]]
+    - [[#alternate-approaches-to-generating-a-readme][Alternate approaches to generating a README]]
   - [[#installing-emacs-packages-directly-from-source][Installing Emacs packages directly from source]]
-  - [[#magit----emacs-porcelain-interface-to-git][=magit= ---Emacs' porcelain interface to git]]
+  - [[#magit----emacs-porcelain-interface-to-gitq][=magit= ---Emacs' porcelain interface to gitq]]
   - [[#syncing-to-the-systems-path][Syncing to the System's =$PATH=]]
   - [[#installing-os-packages-and-automatically-keeping-my-system-up-to-data-from-within-emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs]]
   - [[#being-at-the-helm----completion--narrowing-framework][“Being at the Helm” ---Completion & Narrowing Framework]]
@@ -147,7 +139,6 @@ and variables that may accomplish my goal.
   - [[#letter-based-navigation][Letter-based Navigation]]
   - [[#c-c-e-np-taking-a-tour-of-ones-edits][~C-c e n,p~: Taking a tour of one's edits]]
 - [[#org-mode-administrivia][Org-Mode Administrivia]]
-  - [[#getting-started][Getting Started]]
   - [[#executing-code-from-src-blocks][Executing code from ~src~ blocks]]
   - [[#high-speed-literate-programming][High Speed Literate Programming]]
     - [[#manipulating-sections][Manipulating Sections]]
@@ -160,6 +151,7 @@ and variables that may accomplish my goal.
   - [[#jumping-without-hassle][Jumping without hassle]]
   - [[#folding-within-a-subtree][Folding within a subtree]]
   - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
+  - [[#org-modes-𝒳-block-expansions][Org-mode's ~<𝒳~ Block Expansions]]
 - [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
   - [[#working-with-citations][Working with Citations]]
   - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
@@ -724,15 +716,17 @@ Let's activate it now, after ~use-package~ has been setup.
 :PROPERTIES:
 
 :END:
-:PROPERTIES:
-
-:END:
 
 Rather than manually extracting the Lisp code from this literate document each
 time we alter it, let's instead add a ‘hook’ ---a method that is invoked on a
 particular event, in this case when we save the file.  More precisely, in this
 case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
 ~init.elc~ and ~README.md~.
+
+*** The =my/make-init-el-and-README= function
+
+We ‘hook on’ the following function to the usual save method
+that is associated with this file only.
 
 #+name: enable making init and readme
 #+begin_src emacs-lisp :eval never-export
@@ -746,7 +740,7 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
            (.emacs.el "~/.emacs.el"))
       ;; Make README.org
       (save-excursion
-        (org-babel-goto-named-src-block "make-readme")
+        (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
         (org-babel-execute-src-block))
 
       ;; remove any other initialisation file candidates
@@ -766,8 +760,10 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
 (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+end_src
 
-Where the following block has ~#+NAME: make-readme~ before it.
-This source block generates the ~README~ for the associated Github repository.
+*** The Org-block named =make-readme=
+
+Where the following block has ~#+NAME: make-readme~ before it.  This source block
+generates the ~README~ for the associated Github repository.
 #+NAME: make-readme
 #+begin_src emacs-lisp :tangle no :export_never t
 ;; Update the table of contents in this file.
@@ -819,39 +815,44 @@ This source block generates the ~README~ for the associated Github repository.
 Alternatively, evaluate the above source block with ~C-c C-c~ to produce a ~README~
 file.
 
-Notes:
-+ Github supports several markup languages, one of which is Org-mode.
-  - It seems that Github uses [[https://github.com/bdewey/org-ruby][org-ruby]] to convert org-mode to html.
-  - [[https://github.com/novoid/github-orgmode-tests][Here]] is a repo demonstrating how Github interprets Org-mode files.
-  - org-ruby supports inline ~#+HTML~ but [[https://github.com/wallyqs/org-ruby/issues/51][not html blocks]].
+*** ‘Table of Contents’ for Org vs. Github
 
-+ It seems coloured HTML does not render well:
-    #+BEGIN_SRC emacs-lisp :tangle no
-(org-html-export-to-html)
-(shell-command "mv README.html README.md")
-#+END_SRC
-+ [[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]] with:
-    #+BEGIN_SRC org :tangle no
-#+INFOJS_OPT: view:info toc:t buttons:t
-#+END_SRC
-  This looks nice for standalone pages, but doesn't incorporate nicely with
-  github README.org.
-
-The above mentioned package [[https://github.com/alphapapa/org-make-toc][org-make-toc]], which creates an up-to-date table of
+The above mentioned package [[https://github.com/snosov1/toc-org][toc-org]], which creates an up-to-date table of
 contents in an org file, at any heading tagged ~:TOC:~.  It's useful primarily for
-README files on Github. There is also [[https://github.com/snosov1/toc-org][toc-org]], but it provides only a top-level
-TOC; whereas this package allows TOCs at the sibling level, say, to produce a
-TOC of only the subsections of a particular heading.  Org-make-toc has much more
-features regarding TOC creation.
+README files on Github. There is also [[https://github.com/alphapapa/org-make-toc][org-make-toc]], which is more flexible: The
+former provides only a top-level TOC; whereas this package allows TOCs at the
+sibling level, say, to produce a TOC of only the subsections of a particular
+heading, and other TOC features. Unlike toc-org, org-make-toc uses property drawers
+to designate TOC matter.
 #+BEGIN_SRC emacs-lisp
-(use-package org-make-toc
-  ;; Automatically update toc when saving an Org file.
-  :hook (org-mode . org-make-toc-mode))
-
 (use-package toc-org
+  ;; Use both “:ignore_N:” and ":export_N:” to exlude headings from the TOC.
+  :custom (toc-org-noexport-regexp
+           "\\(^*+\\)\s+.*:\\(ignore\\|noexport\\)\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)")
   ;; Automatically update toc when saving an Org file.
   :hook (org-mode . toc-org-mode))
 #+END_SRC
+
+However, [[https://github.com/snosov1/toc-org/issues/54#issuecomment-363710561][toc-org produces broken links for numbered sections]].
+That is, if we use =#+OPTIONS: num:t= then a section, say
+~** =~/.emacs= vs. =init.org=~ as the first subheading of the third
+heading, then it renders with the text preceeded by =3.1=.
+On the left-most part of the heading, Github provides a a link option;
+clicking provides a link to this exact location in the README,
+changing the current URL to something like
+=https://github.com/alhassy/emacs.d#31-emacs-vs-initorg=.
+Now, toc-org produces Github-style anchors from Org headings,
+but does not account for numbers, and so gives us
+=https://github.com/alhassy/emacs.d#emacs-vs-initorg=, which is
+so close but missing the translated number, ~31~.
+
+I've experimented with using toc-org links using org-style, instead of the
+default Github style, but it seems that the org-style completely breaks
+rendering the resulting readme.
+Likewise, [[https://github.com/snosov1/toc-org/issues/3][it seems]] that headings that are links break the TOC link; whence
+my section on the Reveal slide-deck system has a broken link to it.
+Perhaps org-make-toc solves these issues ---something to look into.
+# TODO: MA: Does org-make-toc solve this issues?
 
 I'm not sure how I feel about actually having the Github-serving TOC in my
 source file. It's nice to have around, from an essay-perspecive, but it breaks
@@ -886,10 +887,54 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 ;; Erase :TOC: body ---provided we're using toc-org.
 ;; (my/org-replace-tree-contents "Table of Contents")
 #+END_SRC
-** Installing Emacs packages directly from source
-:PROPERTIES:
+*** Alternate approaches to generating a README
 
-:END:
+Github supports several markup languages, one of which is Org-mode.
+  - It seems that Github uses [[https://github.com/bdewey/org-ruby][org-ruby]] to convert org-mode to html.
+  - [[https://github.com/novoid/github-orgmode-tests][Here]] is a repo demonstrating how Github interprets Org-mode files.
+  - org-ruby supports inline ~#+HTML~ but [[https://github.com/wallyqs/org-ruby/issues/51][not html blocks]].
+
+It seems coloured HTML does not render well:
+#+BEGIN_example emacs-lisp
+(org-html-export-to-html)
+(shell-command "mv README.html README.md")
+#+END_example
+
+[[https://orgmode.org/manual/JavaScript-support.html][JavaScript supported display of web pages]] with:
+#+BEGIN_example org
+#+INFOJS_OPT: view:info toc:t buttons:t
+#+END_example
+This looks nice for standalone pages, but doesn't incorporate nicely with github
+README.org.
+
+Usually, Github readme files are in markdown, which we may obtain from an Org
+file with =M-x org-md-export-to-markdown=.
+
+- [ ] By default, this approach results in grey-coloured source blocks ---eek!
+
+- [X] It allows strategic placement of a table of contents.
+
+      Declare ~#+options: toc:nil~ at the top of the Org file, then have =#+TOC:
+  headlines 2= in a strategic position for a table of contents, say after a brief
+  explanation of what the readme is for.
+
+- [X] It allows us to preview the readme locally before comitting, using [[https://github.com/joeyespo/grip][grip]].
+
+
+   #+BEGIN_SRC emacs-lisp :tangle no
+   ;; grip looks for README.md
+   (system-packages-ensure "grip")
+   ;; Next: (async-shell-command "cd ~/.emacs.d/; grip")
+   #+END_SRC
+
+   We can approximate this behaviour for the other approaches:
+    1. Export to markdown.
+    2. =COMMENT=-out any =:TOC:=-tagged sections ---their links are not valid
+       markdown links, since they don't refer to any markdown labels.
+    3. Rename the exported file to =README.md=.
+    4. Run ~grip~.
+
+** Installing Emacs packages directly from source
 :PROPERTIES:
 
 :END:
@@ -921,10 +966,7 @@ now]
   :quelpa (info+ :fetcher wiki :url "https://www.emacswiki.org/emacs/info%2b.el"))
 #+END_SRC
 
-** =magit= ---Emacs' porcelain interface to git
-:PROPERTIES:
-
-:END:
+** =magit= ---Emacs' porcelain interface to gitq
 :PROPERTIES:
 
 :END:
@@ -1882,9 +1924,6 @@ via Emacs ;-)
 :PROPERTIES:
 
 :END:
-:PROPERTIES:
-
-:END:
 
 Sometimes I wish to close then reopen Emacs; unsurprisingly someone's
 thought of implementing that.
@@ -2689,9 +2728,6 @@ for completion of emoji names.
 :PROPERTIES:
 
 :END:
-:PROPERTIES:
-
-:END:
 I would like to check spelling on the fly.
  + ~C-;~ :: Cycle through corrections for word at point.
  + ~M-$~ :: Check and correct spelling of the word at point
@@ -2704,9 +2740,8 @@ comments and strings.
 (use-package flyspell
   :diminish
   :hook ((prog-mode . flyspell-prog-mode)
-         (text-mode . flyspell-mode)))
+         (org-mode text-mode . flyspell-mode)))
 #+END_SRC
-# (add-hook 'text-mode-hook 'flyspell-mode)
 
 Enabling fly-spell for text-mode enables it for org and latex modes since they
 derive from text-mode.
@@ -2799,9 +2834,6 @@ think is not ideal since it provides way less information.
 #+END_SRC
 :End:
 ** Touch Typing
-:PROPERTIES:
-
-:END:
 :PROPERTIES:
 
 :END:
@@ -3013,17 +3045,6 @@ weekdays.
 #+end_quote
 
 ** Unicode Input via Agda Input
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
-
-:PROPERTIES:
-
-:END:
-
 :agda2-include-dirs-Issue:
 #+BEGIN_SRC emacs-lisp
 ; (load (shell-command-to-string "agda-mode locate"))
@@ -3099,55 +3120,57 @@ interactively: ~M-x customize-variable agda-input-user-translations~ then
 #+END_SRC
 Better yet, as a loop:
 #+BEGIN_SRC emacs-lisp
-(loop for item in
-      '(
-        ;; categorial
-        ("alg" "𝒜𝓁ℊ")
-        ("split" "▵")
-        ("join" "▿")
-        ("adj" "⊣")
-        (";;" "﹔")
-        (";;" "⨾")
-        (";;" "∘")
-        ;; lattices
-        ("meet" "⊓")
-        ("join" "⊔")
-        ;; residuals
-        ("syq"  "╳")
-        ("over" "╱")
-        ("under" "╲")
-        ;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
-        ("|" "❙")
-        ("with" "❙")
-        ;; adjunction isomorphism pair
-        ("floor"  "⌊⌋")
-        ("lower"  "⌊⌋")
-        ("lad"    "⌊⌋")
-        ("ceil"   "⌈⌉")
-        ("raise"  "⌈⌉")
-        ("rad"    "⌈⌉")
+(loop for item
+      in '(;; categorial ;;
+           ("alg" "𝒜𝓁ℊ")
+           ("split" "▵")
+           ("join" "▿")
+           ("adj" "⊣")
+           (";;" "﹔")
+           (";;" "⨾")
+           (";;" "∘")
+           ;; lattices ;;
+           ("meet" "⊓")
+           ("join" "⊔")
+           ;; residuals
+           ("syq"  "╳")
+           ("over" "╱")
+           ("under" "╲")
+           ;; Z-quantification range notation ;;
+           ;; e.g., “∀ x ❙ R • P” ;;
+           ("|"    "❙")
+           ("with" "❙")
+           ;; adjunction isomorphism pair ;;
+           ("floor"  "⌊⌋")
+           ("lower"  "⌊⌋")
+           ("lad"    "⌊⌋")
+           ("ceil"   "⌈⌉")
+           ("raise"  "⌈⌉")
+           ("rad"    "⌈⌉")
         ;; more (key value) pairs here
         )
       do (add-to-list 'agda-input-user-translations item))
 #+END_SRC
 Also some silly stuff:
-#+BEGIN_SRC emacs-lisp
-;; angry, cry, why-you-no
-(add-to-list 'agda-input-user-translations
-   '("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)"))
-;; confused, disapprove, dead, shrug
-(add-to-list 'agda-input-user-translations
-   '("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"))
-;; dance, csi
-(add-to-list 'agda-input-user-translations
-   '("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓" "•_•)
-( •_•)>⌐■-■
-(⌐■_■)
-"))
-;; love, pleased, success, yesss
-(add-to-list 'agda-input-user-translations
-   '("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
-#+END_SRC
+#+begin_src emacs-lisp
+;; Add to the list of translations using “emot” and the given, more specfic, name.
+;; Whence, \emot shows all possible emotions.
+(loop for emot
+      in `(;; angry, cry, why-you-no
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")
+           ;; confused, disapprove, dead, shrug
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯")
+           ;; dance, csi
+           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
+            ,(s-collapse-whitespace "•_•)
+                                      ( •_•)>⌐■-■
+                                      (⌐■_■)"))
+           ;; love, pleased, success, yesss
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
+      do
+      (add-to-list 'agda-input-user-translations emot)
+      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
+#+end_src
 
 # If you change this setting manually, without using the
 # customization buffer, you need to call (agda-input-setup) in
@@ -3169,9 +3192,6 @@ Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs
 :End:
 
 ** Increase/decrease text size
-:PROPERTIES:
-
-:END:
 :PROPERTIES:
 
 :END:
@@ -3891,10 +3911,7 @@ A nice sanity:
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 #+END_SRC
 
-** COMMENT Org-mode's ~<𝒳~ Block Expansions
-:PROPERTIES:
-
-:END:
+** Org-mode's ~<𝒳~ Block Expansions
 :PROPERTIES:
 
 :END:
@@ -5480,7 +5497,6 @@ blocks! Love this one ^_^
   ("p" origami-previous-fold "Previous"))
 #+END_SRC
 
-
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 :PROPERTIES:
 
@@ -5654,6 +5670,10 @@ The [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet 
  showcases many other utilities; such as having certain snippets being
  enabled only in particular modes or on demand. Of note is that field ~$n~ can be
  accessed in code with the invocation ~(yas-field-value n)~.
+
+Incidentally, I used this snippet setup to [[https://www.youtube.com/watch?v=NYOOF9xKBz8&feature=youtu.be][demo]] the idea of repetitious code in
+grouping constructs within dependently-typed languages, which was accepted and
+led to my doctoral research on a [[https://alhassy.github.io/next-700-module-systems/][‘do it yourself module system’]].
 
 The rest of this section is other templates, not much for now,
 concluding with actually loading this snippet mechanism globally.
@@ -6267,7 +6287,7 @@ Bye!
 # Render image in Gitub README
 ![Image-Being-replaced-at-the-office](https://i.redd.it/g6yi40gbivv31.jpg)
 
-* COMMENT Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
+* Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 :PROPERTIES:
 
 :END:
@@ -6685,7 +6705,7 @@ In a terminal execute: xcode-select --install
 
 May need to actually reboot the system as well.
 :End:
-* TODO COMMENT Improvements
+* TODO Improvements                                                :noexport:
 :PROPERTIES:
 
 :END:
@@ -7327,27 +7347,7 @@ If the :tangle header arg is a list of files. Handle all files"
 #+BEGIN_SRC emacs-lisp :tangle no
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
-* COMMENT footer & pushing to blog :noexport:
-:PROPERTIES:
-
-:END:
-
-;; NO!
-(defun toc-org-hrefify-gh (str &optional hash)
-  "Given a heading, transform it into a href using the org-mode
-rules."
-  (toc-org-format-visible-link str))
-
-#+TOC: headlines 2
-#+BEGIN_SRC emacs-lisp
-(system-packages-ensure "grip") ;; Now: cd myrepo; grip;
-;; grip looks for README.md, so let's make one via a symbolic link.
-;; (async-shell-command "ln -s README.org README.md")
-;; (async-shell-command "cd ~/.emacs.d/; grip")
-#+END_SRC
-
-(advice-remove 'org-md-export-to-markdown 'my/ensure-headline-ids)
-(shell-command (format "cd ~/.emacs.d/; mv %s README.md" (org-md-export-to-markdown)))
+* footer & pushing to blog                                         :noexport:
 
 (emacs-restart)
 

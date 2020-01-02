@@ -22,7 +22,6 @@
 (package-refresh-contents)
 ;; =use-package= ---The start of =init.el=:1 ends here
 
-
 ;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:2]]
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
@@ -100,13 +99,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; =use-package= ---The start of =init.el=:8 ends here
@@ -122,7 +121,7 @@
            (.emacs.el "~/.emacs.el"))
       ;; Make README.org
       (save-excursion
-        (org-babel-goto-named-src-block "make-readme")
+        (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
         (org-babel-execute-src-block))
 
       ;; remove any other initialisation file candidates
@@ -142,16 +141,17 @@
 (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 ;; enable making init and readme ends here
 
-
-
-
-;; [[file:~/.emacs.d/init.org::*~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~:5]]
+;; [[file:~/.emacs.d/init.org::*‘Table of Contents’ for Org vs. Github][‘Table of Contents’ for Org vs. Github:1]]
 (use-package toc-org
+  ;; Override all toc-org header exlcusions, just use “:ignore:” to exlude a
+  ;; heading from the TOC.
+  :custom (toc-org-noexport-regexp
+           "\\(^*+\\)\s+.*:ignore\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)")
   ;; Automatically update toc when saving an Org file.
   :hook (org-mode . toc-org-mode))
-;; ~README~ ---From ~init.org~ to ~init.el~:5 ends here
+;; ‘Table of Contents’ for Org vs. Github:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*~README~ ---From ~init.org~ to ~init.el~][~README~ ---From ~init.org~ to ~init.el~:7]]
+;; [[file:~/.emacs.d/init.org::*‘Table of Contents’ for Org vs. Github][‘Table of Contents’ for Org vs. Github:2]]
 (cl-defun my/org-replace-tree-contents (heading &key (with "") (offset 0))
   "Replace the contents of org tree HEADING with WITH, starting at OFFSET.
 
@@ -173,9 +173,9 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
     (insert with)
     (widen)))
 
-;; Erase :TOC: body.
+;; Erase :TOC: body ---provided we're using toc-org.
 ;; (my/org-replace-tree-contents "Table of Contents")
-;; ~README~ ---From ~init.org~ to ~init.el~:7 ends here
+;; ‘Table of Contents’ for Org vs. Github:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:1]]
 (use-package quelpa
@@ -189,16 +189,16 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
   (require 'quelpa-use-package))
 ;; Installing Emacs packages directly from source:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git:1]]
+;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to gitq][=magit= ---Emacs' porcelain interface to gitq:1]]
 ;; See here for a short & useful tutorial:
 ;; https://alvinalexander.com/git/git-show-change-username-email-address
 (when (equal ""
 (shell-command-to-string "git config user.name"))
   (shell-command "git config --global user.name \"Musa Al-hassy\"")
   (shell-command "git config --global user.email \"alhassy@gmail.com\""))
-;; =magit= ---Emacs' porcelain interface to git:1 ends here
+;; =magit= ---Emacs' porcelain interface to gitq:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git:2]]
+;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to gitq][=magit= ---Emacs' porcelain interface to gitq:2]]
 (use-package magit)
 
 ;; Do not ask about this variable when cloning.
@@ -226,9 +226,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (maybe-clone "https://github.com/alhassy/islam")
 
 ;; For brevity, many more ‘maybe-clone’ clauses are hidden in the source file.
-;; =magit= ---Emacs' porcelain interface to git:2 ends here
+;; =magit= ---Emacs' porcelain interface to gitq:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git:3]]
+;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to gitq][=magit= ---Emacs' porcelain interface to gitq:3]]
 (maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
 (maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
 (maybe-clone "https://github.com/alhassy/org-agda-mode")
@@ -269,9 +269,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; to show me this buffer so that I can ‘push’ if I haven't already!
 ;
 ; (magit-list-repositories)
-;; =magit= ---Emacs' porcelain interface to git:3 ends here
+;; =magit= ---Emacs' porcelain interface to gitq:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git:4]]
+;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to gitq][=magit= ---Emacs' porcelain interface to gitq:4]]
 (require 'magit-git)
 
 (defun my/magit-check-file-and-popup ()
@@ -290,11 +290,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (add-hook 'find-file-hook
   '(lambda ()
       (add-hook 'hack-local-variables-hook 'my/magit-check-file-and-popup)))
-;; =magit= ---Emacs' porcelain interface to git:4 ends here
+;; =magit= ---Emacs' porcelain interface to gitq:4 ends here
 
-;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to git][=magit= ---Emacs' porcelain interface to git:5]]
+;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to gitq][=magit= ---Emacs' porcelain interface to gitq:5]]
 (use-package git-timemachine)
-;; =magit= ---Emacs' porcelain interface to git:5 ends here
+;; =magit= ---Emacs' porcelain interface to gitq:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Syncing to the System's =$PATH=][Syncing to the System's =$PATH=:1]]
 (use-package exec-path-from-shell
@@ -438,13 +438,13 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
 
 (use-package bbdb
-  :demand t
-  :after company ;; The “com”plete “any”thig mode is set below in §Prose
-  :hook   (message-mode . bbdb-insinuate-gnus)
-  (gnus-startup-hook . bbdb-insinuate-gnus)
-  :custom (bbdb-file gmail2bbdb-bbdb-file)
-  (bbdb-use-pop-up t)                        ;; allow popups for addresses
-  :config (add-to-list 'company-backends 'company-bbdb))
+ :demand t
+ :after company ;; The “com”plete “any”thig mode is set below in §Prose
+ :hook   (message-mode . bbdb-insinuate-gnus)
+         (gnus-startup-hook . bbdb-insinuate-gnus)
+ :custom (bbdb-file gmail2bbdb-bbdb-file)
+         (bbdb-use-pop-up t)                        ;; allow popups for addresses
+ :config (add-to-list 'company-backends 'company-bbdb))
 ;; Auto-completing mail addresses:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
@@ -482,7 +482,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; [[file:~/.emacs.d/init.org::*Restarting Emacs ---Keeping buffers open across sessions?][Restarting Emacs ---Keeping buffers open across sessions?:1]]
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :commands restart-emacs
+  :demand t
   ;; Let's define an alias so there's no need to remember the order.
   :config (defalias 'emacs-restart #'restart-emacs))
 ;; Restarting Emacs ---Keeping buffers open across sessions?:1 ends here
@@ -1052,7 +1052,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; C-x C-0 restores the default font size
 ;; Increase/decrease text size:1 ends here
 
-
 ;; [[file:~/.emacs.d/init.org::*Moving Text Around][Moving Text Around:1]]
 ;; M-↑,↓ moves line, or marked region; prefix is how many lines.
 (use-package move-text)
@@ -1173,7 +1172,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
      (org        . t)
      (makefile   . t)))
 
-
 ;; Preserve my indentation for source code during export.
 (setq org-src-preserve-indentation t)
 
@@ -1253,7 +1251,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (goto-line line))
 ;; Jumping without hassle:1 ends here
 
-
 ;; [[file:~/.emacs.d/init.org::*Folding within a subtree][Folding within a subtree:1]]
 (defun my/org-fold-current-subtree-anywhere-in-it ()
   "Hide the current heading, while being anywhere inside it."
@@ -1267,16 +1264,110 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 ;; Folding within a subtree:1 ends here
 
-; (eval-buffer)
-(when t
+;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:1]]
+  (defvar-local rasmus/org-at-src-begin -1
+    "Variable that holds whether last position was a ")
+
+  (defvar rasmus/ob-header-symbol ?☰
+    "Symbol used for babel headers")
+
+  (defun rasmus/org-prettify-src--update ()
+    (let ((case-fold-search t)
+          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+          found)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward re nil t)
+          (goto-char (match-end 0))
+          (let ((args (org-trim
+                       (buffer-substring-no-properties (point)
+                                                       (line-end-position)))))
+            (when (org-string-nw-p args)
+              (let ((new-cell (cons args rasmus/ob-header-symbol)))
+                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+                (cl-pushnew new-cell found :test #'equal)))))
+        (setq prettify-symbols-alist
+              (cl-set-difference prettify-symbols-alist
+                                 (cl-set-difference
+                                  (cl-remove-if-not
+                                   (lambda (elm)
+                                     (eq (cdr elm) rasmus/ob-header-symbol))
+                                   prettify-symbols-alist)
+                                  found :test #'equal)))
+        ;; Clean up old font-lock-keywords.
+        (font-lock-remove-keywords nil prettify-symbols--keywords)
+        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+        (font-lock-add-keywords nil prettify-symbols--keywords)
+        (while (re-search-forward re nil t)
+          (font-lock-flush (line-beginning-position) (line-end-position))))))
+
+  (defun rasmus/org-prettify-src ()
+    "Hide src options via `prettify-symbols-mode'.
+
+  `prettify-symbols-mode' is used because it has uncollpasing. It's
+  may not be efficient."
+    (let* ((case-fold-search t)
+           (at-src-block (save-excursion
+                           (beginning-of-line)
+                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+      ;; Test if we moved out of a block.
+      (when (or (and rasmus/org-at-src-begin
+                     (not at-src-block))
+                ;; File was just opened.
+                (eq rasmus/org-at-src-begin -1))
+        (rasmus/org-prettify-src--update))
+      ;; Remove composition if at line; doesn't work properly.
+      ;; (when at-src-block
+      ;;   (with-silent-modifications
+      ;;     (remove-text-properties (match-end 0)
+      ;;                             (1+ (line-end-position))
+      ;;                             '(composition))))
+      (setq rasmus/org-at-src-begin at-src-block)))
+
+  (defun rasmus/org-prettify-symbols ()
+    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+          (cl-reduce 'append
+                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
+                               ("#+end_src"   . ?□) ;; ⏹
+                               ("#+header:" . ,rasmus/ob-header-symbol)
+                               ("#+begin_quote" . ?»)
+                               ("#+end_quote" . ?«)))))
+    (turn-on-prettify-symbols-mode)
+    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
 
 
-;; [[file:~/.emacs.d/init.org::*Org-Mode ⇒ PDF & HTML][Org-Mode ⇒ PDF & HTML:1]]
-;; default to 4 headlines of export
+;; Last up­dated: 2019-06-09
+;; Making Block Delimiters Less Intrusive:1 ends here
 
-;; no numbers by default at export
-(setq org-export-with-section-numbers nil)
-;; Org-Mode ⇒ PDF & HTML:1 ends here
+;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:2]]
+(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+(org-mode-restart)
+;; Making Block Delimiters Less Intrusive:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:3]]
+(global-prettify-symbols-mode)
+
+(defvar my/prettify-alist nil
+  "Musa's personal prettifications.")
+
+(loop for pair in '(("<=" . ?≤) (">=" . ?≥)
+                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                    ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
+                    ("#+end_example"   . ?⇐))                ;; ⇐
+
+      do (push pair my/prettify-alist))
+
+(loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
+      do (add-hook hk (lambda ()
+                        (setq prettify-symbols-alist
+                              (append my/prettify-alist prettify-symbols-alist)))))
+;; Making Block Delimiters Less Intrusive:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:4]]
+;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
+(setq prettify-symbols-unprettify-at-point 'right-edge)
+;; Making Block Delimiters Less Intrusive:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
 ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
@@ -1302,7 +1393,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors:1]]
 (defun my/ensure-headline-ids (&rest _)
-  "Org trees without a :CUSTOM_ID: property have the property set to be their heading.
+  "Org trees without a
 
 All non-alphanumeric characters are cleverly replaced with ‘-’.
 
@@ -1381,13 +1472,12 @@ by spaces.
 (setq org-html-format-drawer-function 'my/org-drawer-format)
 ;; HTML “Folded Drawers”:1 ends here
 
-
-;; [[file:~/.emacs.d/init.org::*[[https://revealjs.com/?transition=zoom#/\][Reveal.JS\]] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
+;; [[file:~/.emacs.d/init.org::*\[\[https://revealjs.com/?transition=zoom#/\]\[Reveal.JS\]\] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
 (use-package ox-reveal
   :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
 ;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*[[https://revealjs.com/?transition=zoom#/\][Reveal.JS\]] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3]]
+;; [[file:~/.emacs.d/init.org::*\[\[https://revealjs.com/?transition=zoom#/\]\[Reveal.JS\]\] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3]]
 (setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
 <font size=\"1\">
 <a href=\"?print-pdf&showNotes=true\">
@@ -1529,7 +1619,7 @@ by spaces.
           (:priority<= "B" :order 1))))
 ;; Super Agenda:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique\][Pomodoro\]] ---“Commit for only 25 minutes!”][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1]]
+;; [[file:~/.emacs.d/init.org::*Automating \[\[https://en.wikipedia.org/wiki/Pomodoro_Technique\]\[Pomodoro\]\] ---“Commit for only 25 minutes!”][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1]]
 ;; Tasks get a 25 minute count down timer
 (setq org-timer-default-timer 25)
 
@@ -1556,9 +1646,6 @@ by spaces.
     (org-journal-new-entry nil)
     (org-mode)
     (org-show-all)))
-
-
-
 
 (use-package org-journal
   ;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
@@ -1814,16 +1901,16 @@ by spaces.
   :config (global-color-identifiers-mode))
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1]]
+;; [[file:~/.emacs.d/init.org::*Text Folding with \[\[https://github.com/gregsexton/origami.el\]\[Origami-mode\]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1]]
 (use-package origami)
 ;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2]]
+;; [[file:~/.emacs.d/init.org::*Text Folding with \[\[https://github.com/gregsexton/origami.el\]\[Origami-mode\]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2]]
 (push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
       origami-parser-alist)
 ;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3]]
+;; [[file:~/.emacs.d/init.org::*Text Folding with \[\[https://github.com/gregsexton/origami.el\]\[Origami-mode\]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3]]
 (defun my/search-hook-function ()
   (when origami-mode (origami-toggle-node (current-buffer) (point))))
 
@@ -1834,7 +1921,7 @@ by spaces.
 ;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
 ;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*Text Folding with [[https://github.com/gregsexton/origami.el\][Origami-mode]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4]]
+;; [[file:~/.emacs.d/init.org::*Text Folding with \[\[https://github.com/gregsexton/origami.el\]\[Origami-mode\]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4]]
 (defhydra folding-with-origami-mode (global-map "C-c f")
   ("h" origami-close-node-recursively "Hide")
   ("o" origami-open-node-recursively  "Open")
@@ -2051,91 +2138,3 @@ window contains the buffer with the cursour in it."
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
 )
 ;; Publishing articles to my personal blog:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Elementary Version Control][Elementary Version Control:1]]
-;; Don't ask for confirmation when opening symlinked files.
-(setq vc-follow-symlinks t)
-;; Elementary Version Control:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Interpret the Haskell source blocks in a file][Interpret the Haskell source blocks in a file:1]]
-(defvar *current-module* "NoModuleNameSpecified"
-  "The name of the module, file, that source blocks are
-   currently being tangled to.
-
-   This technique is insipired by “Interactive Way to C”;
-   see https://alhassy.github.io/InteractiveWayToC/.
-  ")
-
-(defun current-module ()
-  "Returns the current module under focus."
-  *current-module*)
-
-(defun set-module (name)
-   "Set the name of the module currently under focus.
-
-    Usage: When a module is declared, i.e., a new file has begun,
-    then that source blocks header should be “:tangle (set-module ”name-here”)”.
-    succeeding source blocks now inherit this name and so are tangled
-    to the same module file. How? By placing the following line at the top
-    of your Org file: “‘#+PROPERTY: header-args :tangle (current-module))’.
-
-    This technique structures “Interactive Way to C”.
-   "
-   (setq *current-module* name)
-)
-
-(cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
-  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
-   and load the resulting ‘target’ file into a ghci buffer.
-
-   If no name is provided for the ‘target’ file that is generated from the
-   tangeling process, it is assumed to be the buffer's name with a ‘hs’ extension.
-
-   Note that this only loads the blocks tangled to ‘target’.
-
-   For example, file ‘X.org’ may have haskell blocks that tangle to files
-   ‘X.hs’, ‘Y.hs’ and ‘Z.hs’. If no target name is supplied, we tangle all blocks
-   but only load ‘X.hs’ into the ghci buffer. A helpful technique to load the
-   last, bottom most, defined haskell module, is to have the module declaration's
-   source block be ‘:tangle (setq CODE “Y.hs”)’, for example; then the following
-   code blocks will inherit this location provided our Org file has at the top
-   ‘#+PROPERTY: header-args :tangle (current-module))’.
-   Finally, our ‘compile-command’ suffices to be ‘(my/org-run-haskell CODE)’.
-   ─
-   This technique structures “Interactive Way to C”.
-  "
-   (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
-         (buf (concat "*GHCI* " it)))
-
-     (-let [kill-buffer-query-functions nil] (ignore-errors (kill-buffer buf)))
-     (org-babel-tangle it "haskell")
-     (async-shell-command (concat "ghci " it) buf)
-     (switch-to-buffer-other-window buf)
-     (end-of-buffer)
-   )
-)
-
-;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
-;; Interpret the Haskell source blocks in a file:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Keeping my system up to date][Keeping my system up to date:1]]
-(defun my/stay-up-to-date ()
-  "Ensure that OS and Emacs package listings are up to date.
-
-   Takes ~5 seconds when everything is up to date."
-  (async-shell-command "brew update && brew upgrade")
-  (other-window 1)
-  (rename-buffer "Keeping-system-up-to-date")
-
-  (package-refresh-contents 'please-do-so-in-the-background)
-  (message "Updated Emacs package manager.")
-  (other-window 1))
-
-(add-hook 'after-init-hook 'my/stay-up-to-date)
-
-;; For now, doing this since I'm also calling my/stay-up-to-date with
-;; after-init-hook which hides the startup message.
-(add-hook 'after-init-hook 'display-startup-echo-area-message)
-;; Keeping my system up to date:1 ends here
-
-)
