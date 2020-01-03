@@ -1,4 +1,4 @@
-# Created 2020-01-01 Wed 19:59
+# Created 2020-01-02 Thu 20:50
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
@@ -85,6 +85,7 @@ and variables that may accomplish my goal.
   - [[#who-am-i----using-gnus-for-gmail][Who am I? ---Using Gnus for Gmail]]
     - [[#prettifications][Prettifications]]
     - [[#super-terse-tutorial][Super Terse Tutorial]]
+    - [[#capturing-mail-as-todonotes][Capturing Mail as Todo/Notes]]
     - [[#auto-completing-mail-addresses][Auto-completing mail addresses]]
     - [[#feeds-to-blogs][Feeds to Blogs]]
   - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
@@ -647,7 +648,6 @@ case, ~C-x C-s~ is a normal save whereas ~C-u C-x C-s~ is a save after forming
 ~init.elc~ and ~README.md~.
 
 *** The =my/make-init-el-and-README= function
-
 We ‘hook on’ the following function to the usual save method
 that is associated with this file only.
 
@@ -684,7 +684,6 @@ that is associated with this file only.
 #+end_src
 
 *** The Org-block named =make-readme=
-
 Where the following block has ~#+NAME: make-readme~ before it.  This source block
 generates the ~README~ for the associated Github repository.
 #+name: make-readme
@@ -739,7 +738,6 @@ Alternatively, evaluate the above source block with ~C-c C-c~ to produce a ~READ
 file.
 
 *** ‘Table of Contents’ for Org vs. Github
-
 The above mentioned package [[https://github.com/snosov1/toc-org][toc-org]], which creates an up-to-date table of
 contents in an org file, at any heading tagged ~:TOC:~.  It's useful primarily for
 README files on Github. There is also [[https://github.com/alphapapa/org-make-toc][org-make-toc]], which is more flexible: The
@@ -810,7 +808,6 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 ;; (my/org-replace-tree-contents "Table of Contents")
 #+end_src
 *** Alternate approaches to generating a README
-
 Github supports several markup languages, one of which is Org-mode.
 - It seems that Github uses [[https://github.com/bdewey/org-ruby][org-ruby]] to convert org-mode to html.
 - [[https://github.com/novoid/github-orgmode-tests][Here]] is a repo demonstrating how Github interprets Org-mode files.
@@ -1404,12 +1401,26 @@ do changes take effect on articles ---such as moves, reads, deletes, etc.
 - =B m=:  Move an article, in its current state, to another group ---i.e.,
   ‘label’ using Gmail parlance.
 
-  Something to consider doing when finished with an article.
+  - Something to consider doing when finished with an article.
 
   To delete an article, simply move it to ‘trash’ ---of course this will delete it
   in other mail clients as well. There is no return from trash.
 
   Emails can always be archieved ---never delete, maybe?
+
+  Anyhow, ~B m Trash~ is too verbose, let's just use ~t~ for “trash”:
+  #+begin_src emacs-lisp
+  (bind-key "t"
+            (lambda (N) (interactive "P") (gnus-summary-move-article N "[Gmail]/Trash"))
+            gnus-summary-mode-map)
+
+  ;; Orginally: t ⇒ gnus-summary-toggle-header
+  #+end_src
+
+  - Select and deselect many articles before
+    moving them by pressing ~#~ and ~M-#~, respectively, anywhere on the entry.
+
+  - As usual, you can mark a region, =C-SPC=, then move all entries therein.
 
 - =R, r=: Reply with sender's quoted text in place, or without but
   still visible in an adjacent buffer.
@@ -1425,6 +1436,35 @@ do changes take effect on articles ---such as moves, reads, deletes, etc.
 
 - ~C-c C-a~ to attach a file; it'll be embedded in the mail body as plaintext.
   - Press ~o~ on an attachment to save it locally.
+
+*** Capturing Mail as Todo/Notes
+Sometime mail contains useful reference material or may be a self-contained
+task. Rather than using our inbox as a todo-list, we can copy the content of the
+mail and store it away in our todos/notes files.  [[#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing]] below, is a way to,
+well, capture ideas and notes /without/ interrupting the current workflow.  Below,
+in the section on capturing, we define ~my/org-capture-buffer~ which quickly
+captures the contents of the current buffer as notes to store away.  We use that
+method in the article view of mail so that ~c~ captures mail content with the
+option to provide additional remarks, and ~C~ to silently do so without additional
+remarks.
+
+#+begin_src emacs-lisp
+(bind-key "c" #'my/org-capture-buffer gnus-article-mode-map)
+;; Orginally: c ⇒ gnus-summary-catchup-and-exit
+
+(bind-key "C"
+          (lambda (&optional keys)
+            (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
+          gnus-article-mode-map)
+;; Orginally: C ⇒ gnus-summary-cancel-article
+#+end_src
+
+Gnus’ default =c= only enables a bad habit: Subscribing to stuff that you don't
+read, since you can mark all entries as read with one key. We now replace it
+with a ‘c’apturing mechanism that captures the current message as a todo or note
+for further processing. Likewise, the default =C= is to cancel posting an article;
+we replace it to be a silent capture: Squirrel away informative mail content
+without adding additional remarks.
 
 *** Auto-completing mail addresses
 In order to get going quickly, using [[https://github.com/redguardtoo/gmail2bbdb][gmail2bbdb]], let's convert our Gmail
@@ -2638,6 +2678,23 @@ The ‘usual’ text zoom keys ~C-±~ …
 
 If thou knowst the ELisp, forgive this shadowing of the ~negative-argument~
 … we've still got ~M--~ though.
+
+Curious, this is one of the very first things I did when
+began using Emacs; yet, perhaps I would not have done
+it if I was simply told the defaults:
+- ~C-x C-=,+~ increases text size
+- ~C-x C--~ decreases test size
+- ~C-x C-0~ restores it to the default size
+
+So, the above snippet seems to save us of the prefix
+~C-x~ and we lose on using ‘=’ for text increase and worse we
+need the shift-key to get access to the ‘+’.
+
+I suppose this is just a habit inherited from using other tools. Fortunately, I
+did not inherit the need for the /common user access/ bindings ~C-x~ kill, ~C-c~ copy,
+~C-v~ paste, nor ~C-z~ undo of other applications. If you're interested, ~M-x
+cua-mode~ to enable [[https://www.gnu.org/software/emacs/manual/html_node/emacs/CUA-Bindings.html][CUA Bindings]].
+
 ** Moving Text Around
 This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
 #+begin_src emacs-lisp
@@ -3395,10 +3452,11 @@ to be tackled later on.
 (setq org-default-notes-file "~/Dropbox/todo.org")
 
 ;; “C-c c” to quickly capture a task/note
-(define-key global-map "\C-cc" 'org-capture)
+(define-key global-map "\C-cc" #'my/org-capture) ;; See below.
 #+end_src
 
 By default we only get a ‘tasks’ form of capture, let's add some more.
+
 #+begin_src emacs-lisp
 (cl-defun my/make/org-capture-template
    (shortcut heading &optional (no-todo nil) (description heading) (category heading) (scheduled t))
@@ -3440,6 +3498,7 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
       (loop for (shortcut heading)
             in (-partition 2 '("t" "Tasks, Getting Things Done"
                                "r" "Research"
+                               "2" "2FA3"
                                "m" "Email"
                                "e" "Emacs (•̀ᴗ•́)و"
                                "b" "Blog"
@@ -3483,6 +3542,57 @@ Let's also ensure TODO-s respect hierarchical structure.
     ;; Ensure notes are stored at the top of a tree.
     (setq org-reverse-note-order nil)
   #+end_src
+
+Yet another place to capture content is from mail, such as for reference
+material, or self-contained tasks. See [[#Capturing-Mail-as-Todo-Notes][above]] for this discussion.
+
+#+begin_src emacs-lisp
+(cl-defun my/org-capture-buffer (&optional keys no-additional-remarks
+                                           (heading-regexp "Subject: \\(.*\\)"))
+  "Capture the current [narrowed] buffer as a todo/note.
+
+This is mostly intended for capturing mail as todo tasks ^_^
+
+When NO-ADDITIONAL-REMARKS is provided, and a heading is found,
+then make and store the note without showing a pop-up.
+This is useful for when we capture self-contained mail.
+
+The HEADING-REGEXP must have a regexp parenthesis construction
+which is used to obtain a suitable heading for the resulting todo/note."
+  (interactive "P")
+  (let* ((current-content (substring-no-properties (buffer-string)))
+         (heading         (progn (string-match heading-regexp current-content)
+                                 (or (match-string 1 current-content) ""))))
+    (org-capture keys)
+    (insert heading "\n\n\n\n" (s-repeat 80 "-") "\n\n\n" current-content)
+
+    ;; The overtly verbose conditions are for the sake of clarity.
+    ;; Moreover, even though the final could have “t”, being explicit
+    ;; communicates exactly the necessary conditions.
+    ;; Being so verbose leads to mutual exclusive clauses, whence order is irrelevant.
+    (cond
+     ((s-blank? heading)
+        (beginning-of-buffer) (end-of-line))
+     ((and no-additional-remarks (not (s-blank? heading)))
+        (org-capture-finalize))
+     ((not (or no-additional-remarks (s-blank? heading)))
+        (beginning-of-buffer) (forward-line 2) (indent-for-tab-command)))))
+#+end_src
+With that in-hand, we use a wrapper to ~org-capture~ to make use of it.
+#+begin_src emacs-lisp
+(defun my/org-capture (&optional prefix keys)
+  "Capture something!
+
+      C-c c   ⇒ Capture something; likewise for “C-uⁿ C-c c” where n ≥ 3.
+C-u   C-c c   ⇒ Capture current [narrowed] buffer.
+C-u 5 C-c c   ⇒ Capture current [narrowed] buffer without adding additional remarks.
+C-u C-u C-c c ⇒ Goto last note stored."
+  (interactive "p")
+  (case prefix
+    (4     (my/org-capture-buffer keys))
+    (5     (my/org-capture-buffer keys :no-additional-remarks))
+    (t     (org-capture prefix keys))))
+#+end_src
 
 - Org-protocol is a way to create capture notes in org-mode from other applications.
 
@@ -4998,4 +5108,4 @@ Bye!
 
 -----
 
-#+html: ![Image-Being-replaced-at-the-office](https://i.redd.it/g6yi40gbivv31.jpg)
+#+html: <p align="center"><img src="https://i.redd.it/g6yi40gbivv31.jpg" width=150 height=150/></p>
