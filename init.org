@@ -24,31 +24,6 @@
 :CUSTOM_ID: Abstract
 :END:
 
-# See https://shields.io/
-#
-# https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>.svg
-#
-#+BEGIN_export html :tangle to-github?
-<p align="center"><img src="emacs-logo.png" width=150 height=150/></p>
-#+END_export
-#+begin_src emacs-lisp :tangle no :exports results :wrap "export html" :results replace
-(concat
-"<p align=\"center\">
-        <a href=\"https://www.gnu.org/software/emacs/\">
-        <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
-        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
-</p>")
-#+end_src
-
-#+RESULTS:
-#+begin_export html
-<p align="center">
-        <a href="https://www.gnu.org/software/emacs/">
-        <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a>
-        <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.2.5-489a9f.svg?style=plastic"/></a>
-</p>
-#+end_export
-
 #+html: <p align="center">
 #+begin_center text
 *Abstract*
@@ -214,9 +189,6 @@ and variables that may accomplish my goal.
 :PROPERTIES:
 :CUSTOM_ID: Why-Emacs
 :END:
-:PROPERTIES:
-
-:END:
 
 /Emacs is a flexible platform for developing end-user applications/ --unfortunately it is generally perceived as
 merely a text editor. Some people use it specifically for one or two applications.
@@ -376,6 +348,50 @@ thereby momentarily disabling features.
 
 There's no point in being modular if there's nothing explaining what's going on,
 so I document.
+
+#+begin_src plantuml :file images/literate-programming.png :tangle no :exports results :eval never-export :results (progn (org-display-inline-images t t) "replace")
+skinparam defaultTextAlignment center  /' Text alignment '/
+
+skinparam titleBorderRoundCorner 15
+skinparam titleBorderThickness 2
+skinparam titleBorderColor red
+skinparam titleBackgroundColor Aqua-CadetBlue
+title Literate Programming with Org-Mode
+
+actor You
+
+You --> (Code) : Ideas
+You --> (Text) : Ideas
+
+[**Org Mode**] as Org
+
+(Text) --> Org : Writing
+(Code) --> Org : Writing
+
+Org --[#green]> (Document) : ‘Weaving’
+Org --[#green]> (RawCode)  : ‘Tangeling’
+
+database Computer as "**Computer**
+---
+interpreter
+---
+compiler"
+
+cloud People {
+:jasim:
+:kathy:
+}
+
+(Document) --[#green]> People : PDF, HTML, Text
+(RawCode) --[#green]> (Computer) : tex, java, c, py
+
+center footer  ♥‿♥ Write once, generate many (•̀ᴗ•́)و
+#+end_src
+#+RESULTS:
+[[file:images/literate-programming.png]]
+#
+# (org-display-inline-images t t)
+⟨ This image was created in org-mode; details [[#Workflow-States][below]]. ⟩
 
 The [[#Conclusion---Why-Configuration-Files-Should-be-Literate][concluding]] section of this read further argues the benefits of maintaining
 literate, and monolithic, configuration files. As a convention, I will try to
@@ -803,7 +819,6 @@ Where the following block has ~#+NAME: make-readme~ before it.  This source bloc
 generates the ~README~ for the associated Github repository.
 #+NAME: make-readme
 #+begin_src emacs-lisp :tangle no :export_never t
-;; Update the table of contents in this file.
 (save-buffer)
 (with-temp-buffer
     (insert
@@ -812,7 +827,7 @@ generates the ~README~ for the associated Github repository.
      # Logos and birthday present painting
      ,#+HTML:" (s-collapse-whitespace (concat
     " <p align=\"center\">
-       <img src=\"emacs-logo.png\" width=150 height=150/>
+       <img src=\"images/emacs-logo.png\" width=150 height=150/>
      </p>
 
      <p align=\"center\">
@@ -822,7 +837,7 @@ generates the ~README~ for the associated Github repository.
      </p>
 
      <p align=\"center\">
-       <img src=\"emacs-birthday-present.png\" width=200 height=250/>
+       <img src=\"images/emacs-birthday-present.png\" width=200 height=250/>
      </p>
     "))
 
@@ -851,6 +866,11 @@ generates the ~README~ for the associated Github repository.
 #+end_src
 Alternatively, evaluate the above source block with ~C-c C-c~ to produce a ~README~
 file.
+
+For the ‘badges’, see https://shields.io/.  The syntax above is structured:
+#+begin_example org
+https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>.svg
+#+end_example
 
 *** ‘Table of Contents’ for Org vs. Github
 :PROPERTIES:
@@ -1257,12 +1277,6 @@ See the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]
 :PROPERTIES:
 :CUSTOM_ID: Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Sometimes Emacs packages depend on existing system binaries, ~use-package~ let's
 us ensure these exist using the ~:ensure-system-package~ keyword extension.
@@ -1330,7 +1344,6 @@ window manager for macOS along the lines of xmonad.”
 ;; If the given system package doesn't exist; install it.
 (system-packages-ensure "amethyst")
 #+END_SRC
-
 Neato! Now I can live in Emacs even more ^_^
 
 ** “Being at the Helm” ---Completion & Narrowing Framework
@@ -4641,7 +4654,7 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 
 #+begin_src emacs-lisp
 (cl-defun my/make/org-capture-template
-   (shortcut heading &optional (no-todo nil) (description heading) (category heading) (scheduled t))
+   (shortcut heading &optional (no-todo t) (description heading) (category heading) (scheduled t))
   "Quickly produce an org-capture-template.
 
   After adding the result of this function to ‘org-capture-templates’,
@@ -4652,7 +4665,7 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 
   ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
   when it's merely an interesting note that needn't be acted upon.
-  ─Probably a bad idea─
+  We omit TODO-s since not everything needs to be propogated to our agenda!
 
   Defaults for ‘description’ and ‘category’ are set to the same as
   the ‘heading’. Default for ‘no-todo’ is ‘nil’.
@@ -4683,8 +4696,10 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
                                "2" "2FA3"
                                "m" "Email"
                                "e" "Emacs (•̀ᴗ•́)و"
+                               "i" "Islam"
                                "b" "Blog"
                                "a" "Arbitrary Reading and Learning"
+                               "l" "Programming Languages"
                                "p" "Personal Matters"))
             collect  (my/make/org-capture-template shortcut heading)))
 
@@ -5174,12 +5189,6 @@ journal entries do ~M-x calendar~.  Bindings available in the calendar-mode:
 :PROPERTIES:
 :CUSTOM_ID: Workflow-States
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Here are some of my common workflow states, ---the ‘X/Y’ indicates to do action ‘X’
 when entering a state and ‘Y’ when leaving it, with ‘!’ denoting a timestamp
@@ -5255,8 +5264,7 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 Let's use this!
 # The source block is replaced with the generated image in-place, by default.
 # #+begin_src plantuml :file workflow.png :exports code :cache (progn (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/") "yes")
-# begin_src plantuml :file workflow.png :exports code :cache yes :tangle no :results (and (org-display-inline-images t t) 'replace)
-#+begin_src plantuml :file workflow.png :tangle no :exports both :eval never-export
+#+begin_src plantuml :file images/workflow.png :tangle no :exports both :eval never-export :results replace
 skinparam defaultTextAlignment center  /' Text alignment '/
 
 skinparam titleBorderRoundCorner 15
@@ -5310,8 +5318,8 @@ center footer  ♥‿♥ Org-mode is so cool (•̀ᴗ•́)و
    or used a “header” instead.'/
 #+end_src
 
-#+RESULTS[be722b7f6a40cf685468918df82a3b22468e3d24]:
-[[file:workflow.png]]
+#+RESULTS:
+[[file:images/workflow.png]]
 
 # (org-display-inline-images t t)
 # (shell-command "rm workflow.png")
@@ -5342,6 +5350,17 @@ Of note:
 This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Bernt Hansen]] ---while quickly searching
 through the PlantUML [[http://plantuml.com/guide][manual]]: The above is known as an “activity diagram” and
 it's covered in §4.
+
+Org-mode may be used with PlantUML:
++  See §11,12 for using Org-mode notation to form ‘mindmaps’ and ‘work breakdown
+  structures’.
+
++ Org-mode text formatters are also acknowledged but the delimiters must be
+  doubled; see §16.1.
+
+You can quickly write and see the resulting UMLs using
+https://liveuml.com/, for the most part.
+
 ** Clocking Work Time
 :PROPERTIES:
 :CUSTOM_ID: Clocking-Work-Time
@@ -5718,11 +5737,13 @@ at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
 #+BEGIN_SRC emacs-lisp
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
-  :init (global-hl-todo-mode)   ;; Enable it everywhere.
+  ;; I want todo-words highlighted in prose, not just in code fragements.
+  :hook (org-mode . hl-todo-mode)
   :config
-  ;; Adding new keywords
-  (loop for kw in '("TEST" "MA" "WK" "JC")
-        do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
+    (global-hl-todo-mode)   ;; Enable it everywhere.
+    ;; Adding new keywords
+    (loop for kw in '("TEST" "MA" "WK" "JC")
+          do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
 #+END_SRC
 
 Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
@@ -6774,8 +6795,7 @@ Bye!
 
 --------------------------------------------------------------------------------
 
-# Image-Being-replaced-at-the-office
-#+HTML: <p align="center"><img src="https://i.redd.it/g6yi40gbivv31.jpg" width=150 height=150/></p>
+#+HTML: <p align="center"><img src="https://i.redd.it/g6yi40gbivv31.jpg"  alt="Being replaced at the office"/></p>
 
 * COMMENT Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 :PROPERTIES:

@@ -26,3 +26,5 @@ _minted-*
 /backups/
 /quelpa/
 /.persistent-scratch
+/.last-package-update-day
+/semanticdb/
