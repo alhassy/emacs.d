@@ -4594,9 +4594,6 @@ It does not work as I'd like, but may prove useful to have around.
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
-:PROPERTIES:
-
-:END:
 
 It's hard to estimate how long a task takes if you don't keep
 ‘clock-in and clock-out’ of tasks. We can ‘capture’ todos right in the middle
@@ -4609,9 +4606,6 @@ schedule them into our ‘agenda’.
 ** Using Org-Mode as a Day Planner
 :PROPERTIES:
 :CUSTOM_ID: Using-Org-Mode-as-a-Day-Planner
-:END:
-:PROPERTIES:
-
 :END:
 
      ⟪ This section is based on a dated, yet delightful, tutorial
@@ -4856,12 +4850,7 @@ Let's keep track of how many times, and when, we have pushed events to other dat
 :PROPERTIES:
 :CUSTOM_ID: Step-3-Quickly-review-the-upcoming-week
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 The next day we begin our work, we press ~C-c a a~ to see the
 scheduled tasks for this week ---~C-c C-s~ to re-schedule the
 task under the cursor and ~r~ to refresh the agenda.
@@ -4869,15 +4858,12 @@ task under the cursor and ~r~ to refresh the agenda.
 (define-key global-map "\C-ca" 'org-agenda)
 #+end_src
 
+The next section, [[Super Agenda]], will discuss acting on entries in the agenda
+buffer.
+
 *** Step 4: Getting ready for the day
 :PROPERTIES:
 :CUSTOM_ID: Step-4-Getting-ready-for-the-day
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 After having seen our tasks for the week, we press ~d~ to enter daily view
 for the current day. Now we decide whether the items for today are
@@ -4953,12 +4939,6 @@ every clock-out is much more practical, for me at least.
 :PROPERTIES:
 :CUSTOM_ID: Step-7-Archiving-Tasks
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 During the review state, when a task is completed, ‘archive’ it with ~C-c C-x
 C-s~: This marks it as done, adds a time stamp, and moves it to a local
 ~*.org_archive~ file. What was our ‘to do’ list becomes a ‘ta da’ list showcasing
@@ -5003,16 +4983,70 @@ Let's install some helpful views for our agenda.
               (org-agenda-overriding-header "Unscheduled TODO entries: "))))
 #+end_src
 
+/At the end of the day, let's schedule at least 3 things that must be done the
+next day; i.e., have priority =A=./
+
 ** Super Agenda
 :PROPERTIES:
 :CUSTOM_ID: Super-Agenda
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
+The agenda dispatch menu, ~C-c a~, has options for displaying tasks.  One may add
+new ways to view tasks by altering the ~org-agenda-custom-commands~ variable
+---e.g., above we added two, one for completed tasks and one for unscheduled
+tasks.
 
-:END:
+
+# Moreover, we can overlay due dates and priorities to tasks in a non-intrusive
+# way that is easy to edit by hand.
+Let's setup the basics of our agenda.
+#+begin_src emacs-lisp
+;; List of all the files & directories where todo items can be found. Only one
+;; for now: My default notes file.
+(setq org-agenda-files (list org-default-notes-file))
+
+;; How many days ahead the default agenda view should look
+(setq org-agenda-ndays 7)
+
+;; How many days early a deadline item will begin showing up in your agenda list.
+(setq org-deadline-warning-days 14)
+
+;; In the agenda view, days that have no associated tasks will still have a line showing the date.
+(setq org-agenda-show-all-dates t)
+
+;; Scheduled items marked as complete will not show up in your agenda view.
+(setq org-agenda-skip-scheduled-if-done t)
+(setq org-agenda-skip-deadline-if-done  t)
+#+end_src
+
+The agenda view, like nearly all Emacs entities, is interactive:
++ =𝓃 f,b= ⇒ Look forward at next week's agenda, or backward to a previous week.
+  - The optional $𝓃$ means do the action =𝓃=-many times;
+    it defaults to 1.
++ =𝓃 n,p= to navigate to next and previous entries.
++ =t= ⇒ cycle TODO state of the current entry.
++ =±= ⇒ cycle priority state.
++ =𝓃 S-⇆= ⇒ Shift date time by $𝓃$ days; 1 day by default.
++ =C-c C-s= ⇒ Reschedule an entry.
++ =s= ⇒ save all agenda buffers; i.e., save the org-files where the agenda items live.
++ =g= ⇒ Rebuild agenda according to any changes made thus far.
++ =F= ⇒ Toggle ‘follow mode’: As you go up/down entries, you can see their
+  details in an adjacent window.
+  - =SPC= ⇒ Show details of a single entry in other window; stay in Agenda.
++ =RET, TAB= ⇒ Go to the current entry in the current window or in a new
+  adjacent window, so as to alter task details.
+
+# ;; Easy way to capture tasks when in agenda view.
+# (define-key org-agenda-mode-map "c" #'org-capture)
+
+The agenda view –--even in the 7-days-at-a-time view--– will always begin on the
+current day.  This is important, since while using org-mode as a day planner,
+you never want to think of days gone past. That’s something you do in other
+ways, such as when reviewing completed tasks.
+#+begin_src emacs-lisp
+(setq org-agenda-start-on-weekday nil)
+#+end_src
+
 The following incentivizes us to make use of ~:tags:~ so that our agenda displays
 the tasks of the day depending on their tags ---possibly using complex predicates.
 /This is far preferable to having them all in one big list./
@@ -5397,36 +5431,6 @@ clock-out and see how long it actually took.
 # To review the day’s accomplishments, type ‘l’
 # (org-agenda-log-mode) from the agenda view.
 
-Moreover, we can overlay due dates and priorities to tasks in a non-intrusive
-way that is easy to edit by hand.
-
-#+begin_src emacs-lisp
-;; List of all the files & directories where todo items can be found. Only one
-;; for now: My default notes file.
-(setq org-agenda-files (list org-default-notes-file))
-
-;; How many days ahead the default agenda view should look
-(setq org-agenda-ndays 7)
-
-;; How many days early a deadline item will begin showing up in your agenda list.
-(setq org-deadline-warning-days 14)
-
-;; In the agenda view, days that have no associated tasks will still have a line showing the date.
-(setq org-agenda-show-all-dates t)
-
-;; Scheduled items marked as complete will not show up in your agenda view.
-(setq org-agenda-skip-scheduled-if-done t)
-(setq org-agenda-skip-deadline-if-done  t)
-#+end_src
-
-The agenda view –--even in the 7-days-at-a-time view--– will always begin on the
-current day.  This is important, since while using org-mode as a day planner,
-you never want to think of days gone past. That’s something you do in other
-ways, such as when reviewing completed tasks.
-#+begin_src emacs-lisp
-(setq org-agenda-start-on-weekday nil)
-#+end_src
-
 Sometimes, at the beginning at least, I would accidentally invoke the transposed
 command ~C-x C-c~, which saves all buffers and quits Emacs. So here's a helpful
 way to ensure I don't quit Emacs accidentally.
@@ -5465,12 +5469,6 @@ A few more settings:
 :PROPERTIES:
 :CUSTOM_ID: Finding-tasks-to-clock-in
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 Use one of the following options, with the top-most being the first to be tried.
 + From anywhere, ~C-u C-c C-x C-i~ yields a pop-up for recently clocked in tasks.
 + Pick something off today's agenda scheduled items.
@@ -5485,12 +5483,6 @@ Use one of the following options, with the top-most being the first to be tried.
 *** Estimates versus actual time
 :PROPERTIES:
 :CUSTOM_ID: Estimates-versus-actual-time
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 Before clocking into a task, add to the properties drawer ~:Effort: 1:25~ or ~C-c
 C-x C-e~, for a task that you estimate will take an hour and twenty-five minutes,
