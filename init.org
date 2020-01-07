@@ -726,9 +726,6 @@ Here are other packages that I want to be installed onto my machine.
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 
-;; Quick BibTeX references, sometimes.
-(use-package biblio)
-
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
 (use-package org-bullets
@@ -4307,17 +4304,20 @@ cite:agda_overview
 (use-package org-ref
   :config (setq org-ref-default-bibliography reftex-default-bibliography))
 
+;; Quick BibTeX references, sometimes.
 (use-package helm-bibtex)
+(use-package biblio)
 #+END_SRC
 
-  Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter ~agda~ and you will be presented with
-  all the entries in the bib database that mention ‘agda’. Super cool stuff.
+  Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter =emacs= and you will be
+  presented with all the entries in the bib database that mention ‘emacs’. Super
+  cool stuff. Moreover, if no such entries exist, then we can look some up
+  using the interface!
 
-  Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][online]] or better yet as an org-file with ~M-x
-  org-ref-help~.
+  Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][online]] or better yet as an org-file with ~M-x org-ref-help~.
 
-  This is an Org-mode application since the citations have tooltips
-  and export nicely to LaTeX & HTML via the Org-mode exporter.
+  This is an Org-mode application since the citations have tooltips and export
+  nicely to LaTeX & HTML via the Org-mode exporter.
 
 ** Coloured LaTeX using Minted
 :PROPERTIES:
