@@ -1,11 +1,11 @@
-# Created 2020-01-07 Tue 05:59
+# Created 2020-01-07 Tue 07:16
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
 #+export_file_name: README.org
 
-#+html: <p align="center"> <img src="images/emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3.1-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="images/emacs-birthday-present.png" width=200 height=250/> </p>
+#+html: <p align="center"> <img src="images/emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3.1-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="images/emacs-birthday-present.png" width=300 height=250/> </p>
 
 I enjoy reading others' /literate/ configuration files and
 incorporating what I learn into my own. The result is a
@@ -137,6 +137,7 @@ and variables that may accomplish my goal.
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+  - [[#org-mode--html][Org-mode ⇐ HTML]]
 - [[#life-within-org-mode][Life within Org-mode]]
   - [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
     - [[#capturing-ideas--notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow]]
@@ -150,10 +151,14 @@ and variables that may accomplish my goal.
   - [[#super-agenda][Super Agenda]]
   - [[#automating-pomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
   - [[#journaling][Journaling]]
+    - [[#the-setup][The Setup]]
+    - [[#super-terse-tutorial-1][Super Terse Tutorial]]
+    - [[#guided-journaling][Guided Journaling]]
   - [[#workflow-states][Workflow States]]
   - [[#clocking-work-time][Clocking Work Time]]
     - [[#finding-tasks-to-clock-in][Finding tasks to clock in]]
     - [[#estimates-versus-actual-time][Estimates versus actual time]]
+  - [[#habit-formation][Habit Formation]]
 - [[#programming][Programming]]
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
@@ -169,6 +174,7 @@ and variables that may accomplish my goal.
     - [[#org-mode-templates----a-reason-i-generate-templates-][Org-mode Templates ---A reason I “generate” templates ;)]]
     - [[#elisp-templates][Elisp Templates]]
     - [[#equational-templates][Equational Templates]]
+    - [[#templates-from-other-places-in-my-init][Templates from other places in my init]]
     - [[#re-enabling-templates][Re-Enabling Templates]]
 - [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
   - [[#documentation-pop-ups][Documentation Pop-Ups]]
@@ -337,6 +343,7 @@ thereby momentarily disabling features.
 There's no point in being modular if there's nothing explaining what's going on,
 so I document.
 
+#+html: <p style="text-align:center">
 #+begin_src plantuml :file images/literate-programming.png :tangle no :exports results :eval never-export :results (progn (org-display-inline-images t t) "replace")
 skinparam defaultTextAlignment center  /' Text alignment '/
 
@@ -379,6 +386,7 @@ center footer  ♥‿♥ Write once, generate many (•̀ᴗ•́)و
 [[file:images/literate-programming.png]]
 
 ⟨ This image was created in org-mode; details [[#Workflow-States][below]]. ⟩
+#+html: </p>
 
 The [[#Conclusion---Why-Configuration-Files-Should-be-Literate][concluding]] section of this read further argues the benefits of maintaining
 literate, and monolithic, configuration files. As a convention, I will try to
@@ -642,9 +650,6 @@ Here are other packages that I want to be installed onto my machine.
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 
-;; Quick BibTeX references, sometimes.
-(use-package biblio)
-
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
 (use-package org-bullets
@@ -740,7 +745,7 @@ generates the ~README~ for the associated Github repository.
      </p>
 
      <p align=\"center\">
-       <img src=\"images/emacs-birthday-present.png\" width=200 height=250/>
+       <img src=\"images/emacs-birthday-present.png\" width=300 height=250/>
      </p>
     "))
 
@@ -3246,17 +3251,20 @@ in for a lot of super neat stuff, such as searching for the pdf online!
 (use-package org-ref
   :config (setq org-ref-default-bibliography reftex-default-bibliography))
 
+;; Quick BibTeX references, sometimes.
 (use-package helm-bibtex)
+(use-package biblio)
 #+end_src
 
-Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter ~agda~ and you will be presented with
-all the entries in the bib database that mention ‘agda’. Super cool stuff.
+Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter =emacs= and you will be
+presented with all the entries in the bib database that mention ‘emacs’. Super
+cool stuff. Moreover, if no such entries exist, then we can look some up
+using the interface!
 
-Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][online]] or better yet as an org-file with ~M-x
-  org-ref-help~.
+Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][online]] or better yet as an org-file with ~M-x org-ref-help~.
 
-This is an Org-mode application since the citations have tooltips
-and export nicely to LaTeX & HTML via the Org-mode exporter.
+This is an Org-mode application since the citations have tooltips and export
+nicely to LaTeX & HTML via the Org-mode exporter.
 
 ** Coloured LaTeX using Minted
 Execute the following for bib ref as well as minted Org-mode uses the
@@ -3449,6 +3457,19 @@ speaker notes in the flattened view.
 
 Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
 resulting PDF locally.
+
+** Org-mode ⇐ HTML                                                 :Disabled:
+The following let's us copy htlm into org format using eww, Emacs' built-in web browser.
+#+begin_src emacs-lisp :tangle no
+;; See: https://emacs.stackexchange.com/questions/7171/paste-html-into-org-mode
+(use-package org-eww
+ :quelpa (org-eww :fetcher git :url "https://github.com/Fuco1/org-mode.git"))
+#+end_src
+
+It does not work as I'd like, but may prove useful to have around.
+
+- Possibly useful: Open a webpage with ~M-x eww~ then toggle ~M-x read-only-mode~ to
+  edit the text, say for notes or deletions, as you read! No need to copy-paste.
 
 * Life within Org-mode
 It's hard to estimate how long a task takes if you don't keep
@@ -3665,6 +3686,14 @@ in the form ~+𝓃~ to mean that task is due ~𝓃~ days from now.
   With time, it will become clear what is an unreasonable day
   verses what is an achievable day.
 
+[[https://orgmode.org/manual/Repeated-tasks.html][Repeat tasks]] by a repeater such as ‘+1m’ or ‘+7d’ in their timestamps; e.g.,
+  ~DEADLINE: <2005-10-01 Sat +1m>.~
+
+A ‘project’ is a task that has multiple steps, each as a checkbox item. It can
+be given a percentage marker to show progress: Place ~[%]~ after its name, then
+press ~C-c #~ on the name to see a completion percentage ---press ~C-c C-c~ on a
+checkbox item to toggle its completion state.
+
 Let's keep track of how many times, and when, we have pushed events to other dates.
 #+begin_src emacs-lisp
 ;; Add a note whenever a task's deadline or scheduled date is changed.
@@ -3678,6 +3707,8 @@ task under the cursor and ~r~ to refresh the agenda.
 #+begin_src emacs-lisp
 (define-key global-map "\C-ca" 'org-agenda)
 #+end_src
+
+- Show the next 𝓃 days schedule ⇐ =C-u 𝓃 C-c a a=.
 
 The next section, [[Super Agenda]], will discuss acting on entries in the agenda
 buffer.
@@ -3795,6 +3826,9 @@ Let's setup the basics of our agenda.
 ;; for now: My default notes file.
 (setq org-agenda-files (list org-default-notes-file))
 
+;; Display tags really close to their tasks.
+(setq org-agenda-tags-column -10)
+
 ;; How many days ahead the default agenda view should look
 (setq org-agenda-span 'week) ;; May be any number.
 
@@ -3814,11 +3848,14 @@ The agenda view, like nearly all Emacs entities, is interactive:
   - The optional $𝓃$ means do the action =𝓃=-many times;
     it defaults to 1.
 - =w, d= ⇒ toggle week view, or day view; use ~v~ to see possible views.
+  - E.g., ~C-u 2017 v y~ shows us the specific year 2017.
 - =𝓃 n,p= to navigate to next and previous entries.
 - =t= ⇒ cycle TODO state of the current entry.
 - =±= ⇒ cycle priority state.
 - =𝓃 S-⇆= ⇒ Shift date time by $𝓃$ days; 1 day by default.
-- =C-c C-s= ⇒ Reschedule an entry.
+- =C-c C-s= ⇒ Reschedule an entry; prefix it with ~C-u~ to remove a scheduled entry.
+  - [[https://orgmode.org/manual/Repeated-tasks.html][Repeat tasks]] by a repeater such as ‘+1m’ or ‘+7d’
+  in their timestamps; e.g., ~DEADLINE: <2005-10-01 Sat +1m>.~
 - =s= ⇒ save all agenda buffers; i.e., save the org-files where the agenda items live.
 - =g= ⇒ Rebuild agenda according to any changes made thus far.
 - =F= ⇒ Toggle ‘follow mode’: As you go up/down entries, you can see their
@@ -3915,7 +3952,8 @@ made.  Unlike capture and its agenda support, journal ensures entries are
 maintained in chronological order with calendar support.
 
 Since org files are plain text files, an entry can be written anywhere and later
-ported to the journal.
+ported to the journal. Or, written directly in the journal file if we add the
+necessary Org-header: Asterisks and time.
 
 The separation of concerns is to emphasise the capture stage as being quick and
 relatively mindless, whereas the journaling stage as being mindful.  Even though
@@ -3938,6 +3976,8 @@ produce a report on what has been happening recently, at work for example. I'd
 like to have multiple journals, for work and for personal life, as such I will
 utilise a prefix argument to obtain my work specific entries.
 
+*** The Setup
+
 Anyhow, the setup:
 #+begin_src emacs-lisp
 (defun my/org-journal-new-entry (prefix)
@@ -3959,6 +3999,8 @@ Anyhow, the setup:
         org-journal-file-format "Personal-%Y-%m-%d"))
 #+end_src
 
+*** Super Terse Tutorial
+
 Bindings available in ~org-journal-mode~, when journaling:
 - ~C-c C-j~: Insert a new entry into the current journal file.
   - Note that keys for ~org-journal-new-entry~ shadow those for ~org-goto~.
@@ -3972,6 +4014,89 @@ journal entries do ~M-x calendar~.  Bindings available in the calendar-mode:
 - ~i j~: ‘I’nsert a new ‘j’ournal entry into the day’s file.
 - ~f w/m/y/f/F~: ‘F’ind, search, in all entries of the current week, month, year, all of time,
   of in all entries in the future.
+
+*** Guided Journaling
+
+Sometimes it can be tough to journal, but filling in a template can be a way to
+get started. Later on, we will setup [[Snippets ---Template Expansion]] which will
+allow us to write =journal_guided= then ~TAB~ to obtain the template below. Each =$𝓃=
+indicates a position that we may input text, after which we ~TAB~ to move to next
+location.
+
+Just like the ~undo-tree~ setup at the start of this read, we use a =noweb-ref=
+to present this template in a natural position; then later when template
+expansion it setup, we request it to be tangled.
+
+#+begin_src org :noweb-ref templates-from-other-places-in-my-init :tangle no
+,** journal_guided: Introspection & Growth
+I'm writing from ${1:location}.
+
+Gut answer, today I feel ${2:scale}/10.
+⇒ ${3:Few words or paragraphs to explain what's on your mind.}
+
+${4: All things which cause us to groan or recoil are part of the tax of
+life. These things you should never hope or seek to escape.  Life is a battle,
+and to live is to fight.
+
+⟨ Press TAB once you've read this mantra. ⟩
+$(when yas-moving-away-p "")
+}
+`(progn
+  (eww "https://www.dailyinspirationalquotes.in/")
+  (sit-for 2) (when nil let eww load)
+  (read-only-mode -1)
+  (goto-line 52)
+  (kill-line)
+  (kill-buffer)
+  (yank))`
+${7:
+Self Beliefs:
++ I am working on a healthier lifestyle, including a low-carb diet.
+
+  - I’m also investing in a healthy, long-lasting relationship.
+
+  ➩ These are what I want and are important to me. ⇦
+
++ I will not use any substances to avoid real issues in my life. I must own them.
+
++ Everything I’m searching for is already inside of me.
+
++ Progress is more important than perfection.
+
+⟨ Press TAB once you've read these beliefs. ⟩
+$(when yas-moving-away-p "")
+}
+
+,*Three things I'm grateful for:*
+1. ${8:??? … e.g., old relationship, something great yesterday, an opportunity I
+   have today, something simple near me within sight}
+2. ${9:??? … e.g., old relationship, something great yesterday, an opportunity I
+   have today, something simple near me within sight}
+3. ${10:??? … e.g., old relationship, something great yesterday, an opportunity I
+   have today, something simple near me within sight}
+
+,*Three things that would make today great:*
+1. ${11:???}
+2. ${12:???}
+3. ${13:???}
+
+,*What one thing is top of mind today?*
+${14:???}
+
+,*What’s one opportunity I want to go after?*
+${15:???}
+
+,*What’s one thing I’m really proud of OR I’m amazed and in awe of?*
+${16:???}
+
+$0
+#+end_src
+
+Besides a bit of webscraping to obtain a daily inspirational quote image, and
+the necessary yasnippet code, this template was taken from a discussion on
+[[https://news.ycombinator.com/item?id=20849148][Hacker news: “I find journaling indispensable”]].  In time, I will likely alter it
+to meet my needs, but I like it as it is right now (•̀ᴗ•́)و
+
 ** Workflow States
 Here are some of my common workflow states, ---the ‘X/Y’ indicates to do action ‘X’
 when entering a state and ‘Y’ when leaving it, with ‘!’ denoting a timestamp
@@ -4214,6 +4339,50 @@ name. *Woah!*
 
   When you've gone above your estimate time, the modeline colours it red.
 
+** Habit Formation
+
+/The/ reason to use habits is that they come with a graph indicating consistency
+by colour, and the goal of the game is to have [[https://lifehacker.com/jerry-seinfelds-productivity-secret-281626][the longest possible chain]] ---no
+red days!
+
+A ‘habit’ is a usual (recurring) todo task marked as a habit:
+Use =C-c C-x p= to set the =STYLE= property to =habit= on a task to set it as a habit.
+
+#+begin_src emacs-lisp
+;; Show habits for every day in the agenda.
+(setq org-habit-show-habits t)
+(setq org-habit-show-habits-only-for-today nil)
+
+;; This shows the ‘Seinfeld consistency’ graph closer to the habit heading.
+(setq org-habit-graph-column 90)
+
+;; In order to see the habit graphs, which I've placed rightwards, let's
+;; always open org-agenda in ‘full screen’.
+(setq org-agenda-window-setup 'only-window)
+#+end_src
+
+| /inch by inch anything's a cinch!/ |
+
+~!~ means today and ~⋆~ means a task has been done on that day;
+intuitively green means you're on track, yellow is warning sign of overdue,
+red is overdue, and blue is an acceptable break day.
+
+Here's an example habit from the [[https://orgmode.org/manual/Tracking-your-habits.html][Org-mode manual]], where ~.+𝒳d/𝒴d~ reads
+/perform the habit once every 𝒳 days, but never let me go 𝒴 days without doing it./
+#+begin_example org
+,** TODO Shave
+   SCHEDULED: <2020-01-08 Wed .+2d/4d>
+   :PROPERTIES:
+   :STYLE:    habit
+   :END:
+#+end_example
+/Shave every 2 days, but we can take a 3-day break; however, on the 4th day,
+gotta shave!/
+
+Remember that in the agenda view if you alter a task, say with ~t~ to mark it
+done, then you need to use ~s~ to save the underlying todo/notes files; otherwise,
+any ~g~ will revert the change in the agenda buffer.
+
 * Programming
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
@@ -4375,7 +4544,7 @@ at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
   ;; I want todo-words highlighted in prose, not just in code fragements.
-  :hook (org-mode . hl-todo-mode)
+  ;; :hook (org-mode . hl-todo-mode)
   :config
     (global-hl-todo-mode)   ;; Enable it everywhere.
     ;; Adding new keywords
@@ -4675,7 +4844,7 @@ I have the expected habit of copying a URL from someplace then forming
 a link to it by writing ~[[URL] [description]]~, since the URL & syntax are already
 known, let's expand those and place the cursour at the only unknown ---the description.
 #+begin_src org :tangle "~/.emacs.d/yankpad.org" :comments none
-,** my-org-insert-link: cleverly insert a link copied to clipboard
+,** my_org_insert_link: cleverly insert a link copied to clipboard
  [[${1:`(clipboard-yank)`}][$2]] $0
 #+end_src
 
@@ -4708,9 +4877,11 @@ Let's overwrite the usual way to insert such links, via ~C-c C-l~.
   This overrides Org-mode's built-in ‘org-insert-link’ utility;
   whence C-c C-l uses the snippet."
   (interactive)
-  (insert "my-org-insert-link")
+  (insert "my_org_insert_link")
   (yankpad-expand))
 #+end_src
+
+/Warning!/ Snippet names cannot have hypens in them ---in this setup at least.
 
 The [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet manual]] is an accessible read, as is the [[https://github.com/Kungsgeten/yankpad][Yankpad manual]], and
  showcases many other utilities; such as having certain snippets being
@@ -4851,6 +5022,19 @@ $0
 
 One expands ~eqn_begin~, tabs to fill in the three main locations, then
 /immediately/ types ~eqn_step~ to produce a new step in a calculational proof.
+
+*** Templates from other places in my init
+
+In this setup, I have some templates appear elsewhere, tagged with =:noweb-ref
+templates-from-other-places-in-my-init=. They are presented in natural positions,
+but can only occur to the machine after template expansion is setup.  Using
+org-mode, we are able to /present/ code in any order and /tangle/ it to the order
+the compilers need it to be!
+
+Let's activate all such templates, now after template expansion has been setup.
+#+begin_src emacs-lisp :tangle "~/.emacs.d/yankpad.org" :comments none :noweb yes
+  <<templates-from-other-places-in-my-init>>
+#+end_src
 
 *** Re-Enabling Templates
 After our yankpad templates are generated, we need to load it.

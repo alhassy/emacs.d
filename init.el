@@ -72,9 +72,6 @@
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 
-;; Quick BibTeX references, sometimes.
-(use-package biblio)
-
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
 (use-package org-bullets
@@ -1397,7 +1394,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (use-package org-ref
   :config (setq org-ref-default-bibliography reftex-default-bibliography))
 
+;; Quick BibTeX references, sometimes.
 (use-package helm-bibtex)
+(use-package biblio)
 ;; Working with Citations:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Coloured LaTeX using Minted][Coloured LaTeX using Minted:1]]
@@ -1670,6 +1669,9 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; for now: My default notes file.
 (setq org-agenda-files (list org-default-notes-file))
 
+;; Display tags really close to their tasks.
+(setq org-agenda-tags-column -10)
+
 ;; How many days ahead the default agenda view should look
 (setq org-agenda-span 'week) ;; May be any number.
 
@@ -1719,7 +1721,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
      (org-timer-stop)))
 ;; Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Journaling][Journaling:1]]
+;; [[file:~/.emacs.d/init.org::*The Setup][The Setup:1]]
 (defun my/org-journal-new-entry (prefix)
   "Open today’s journal file and start a new entry.
 
@@ -1737,7 +1739,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
   (setq org-journal-dir         "~/Dropbox/journal/"
         org-journal-file-type   'yearly
         org-journal-file-format "Personal-%Y-%m-%d"))
-;; Journaling:1 ends here
+;; The Setup:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Workflow States][Workflow States:1]]
 (setq org-todo-keywords
@@ -1819,6 +1821,19 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; [[file:~/.emacs.d/init.org::*Estimates versus actual time][Estimates versus actual time:1]]
 (setq org-clock-sound "~/.emacs.d/school-bell.wav")
 ;; Estimates versus actual time:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Habit Formation][Habit Formation:1]]
+;; Show habits for every day in the agenda.
+(setq org-habit-show-habits t)
+(setq org-habit-show-habits-only-for-today nil)
+
+;; This shows the ‘Seinfeld consistency’ graph closer to the habit heading.
+(setq org-habit-graph-column 90)
+
+;; In order to see the habit graphs, which I've placed rightwards, let's
+;; always open org-agenda in ‘full screen’.
+(setq org-agenda-window-setup 'only-window)
+;; Habit Formation:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlight defined Lisp symbols][Highlight defined Lisp symbols:1]]
 ;; Emacs Lisp specific
@@ -2068,7 +2083,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
   This overrides Org-mode's built-in ‘org-insert-link’ utility;
   whence C-c C-l uses the snippet."
   (interactive)
-  (insert "my-org-insert-link")
+  (insert "my_org_insert_link")
   (yankpad-expand))
 ;; Snippets ---Template Expansion:5 ends here
 
