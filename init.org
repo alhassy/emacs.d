@@ -349,6 +349,7 @@ thereby momentarily disabling features.
 There's no point in being modular if there's nothing explaining what's going on,
 so I document.
 
+#+html: <p style="text-align:center">
 #+begin_src plantuml :file images/literate-programming.png :tangle no :exports results :eval never-export :results (progn (org-display-inline-images t t) "replace")
 skinparam defaultTextAlignment center  /' Text alignment '/
 
@@ -392,6 +393,7 @@ center footer  ♥‿♥ Write once, generate many (•̀ᴗ•́)و
 #
 # (org-display-inline-images t t)
 ⟨ This image was created in org-mode; details [[#Workflow-States][below]]. ⟩
+#+html: </p>
 
 The [[#Conclusion---Why-Configuration-Files-Should-be-Literate][concluding]] section of this read further argues the benefits of maintaining
 literate, and monolithic, configuration files. As a convention, I will try to
@@ -834,7 +836,7 @@ generates the ~README~ for the associated Github repository.
      </p>
 
      <p align=\"center\">
-       <img src=\"images/emacs-birthday-present.png\" width=200 height=250/>
+       <img src=\"images/emacs-birthday-present.png\" width=300 height=250/>
      </p>
     "))
 
