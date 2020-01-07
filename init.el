@@ -143,10 +143,9 @@
 
 ;; [[file:~/.emacs.d/init.org::*‘Table of Contents’ for Org vs. Github][‘Table of Contents’ for Org vs. Github:1]]
 (use-package toc-org
-  ;; Override all toc-org header exlcusions, just use “:ignore:” to exlude a
-  ;; heading from the TOC.
+  ;; Use both “:ignore_N:” and ":export_N:” to exlude headings from the TOC.
   :custom (toc-org-noexport-regexp
-           "\\(^*+\\)\s+.*:ignore\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)")
+           "\\(^*+\\)\s+.*:\\(ignore\\|noexport\\)\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)")
   ;; Automatically update toc when saving an Org file.
   :hook (org-mode . toc-org-mode))
 ;; ‘Table of Contents’ for Org vs. Github:1 ends here
@@ -433,6 +432,25 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
        "%s\n"))
 ;; Prettifications:2 ends here
 
+;; [[file:~/.emacs.d/init.org::*Super Terse Tutorial][Super Terse Tutorial:2]]
+(bind-key "t"
+          (lambda (N) (interactive "P") (gnus-summary-move-article N "[Gmail]/Trash"))
+          gnus-summary-mode-map)
+
+;; Orginally: t ⇒ gnus-summary-toggle-header
+;; Super Terse Tutorial:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Capturing Mail as Todo/Notes][Capturing Mail as Todo/Notes:1]]
+(bind-key "c" #'my/org-capture-buffer gnus-article-mode-map)
+;; Orginally: c ⇒ gnus-summary-catchup-and-exit
+
+(bind-key "C"
+          (lambda (&optional keys)
+            (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
+          gnus-article-mode-map)
+;; Orginally: C ⇒ gnus-summary-cancel-article
+;; Capturing Mail as Todo/Notes:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Auto-completing mail addresses][Auto-completing mail addresses:1]]
 (use-package gmail2bbdb
   :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
@@ -578,11 +596,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:2]]
 ;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.3; System alhassy-air.local
 ;; Startup message: Emacs & Org versions:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:3]]
-(format "; Time %.3fs"
-        (float-time (time-subtract (current-time) before-init-time)))
-;; Startup message: Emacs & Org versions:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:4]]
 ;; Keep self motivated!
@@ -852,7 +865,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (use-package flyspell
   :diminish
   :hook ((prog-mode . flyspell-prog-mode)
-         (text-mode . flyspell-mode)))
+         (org-mode text-mode . flyspell-mode)))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:2]]
@@ -991,54 +1004,56 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Unicode Input via Agda Input:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:6]]
-(loop for item in
-      '(
-        ;; categorial
-        ("alg" "𝒜𝓁ℊ")
-        ("split" "▵")
-        ("join" "▿")
-        ("adj" "⊣")
-        (";;" "﹔")
-        (";;" "⨾")
-        (";;" "∘")
-        ;; lattices
-        ("meet" "⊓")
-        ("join" "⊔")
-        ;; residuals
-        ("syq"  "╳")
-        ("over" "╱")
-        ("under" "╲")
-        ;; Z-quantification range notation, e.g., “∀ x ❙ R • P”
-        ("|" "❙")
-        ("with" "❙")
-        ;; adjunction isomorphism pair
-        ("floor"  "⌊⌋")
-        ("lower"  "⌊⌋")
-        ("lad"    "⌊⌋")
-        ("ceil"   "⌈⌉")
-        ("raise"  "⌈⌉")
-        ("rad"    "⌈⌉")
+(loop for item
+      in '(;; categorial ;;
+           ("alg" "𝒜𝓁ℊ")
+           ("split" "▵")
+           ("join" "▿")
+           ("adj" "⊣")
+           (";;" "﹔")
+           (";;" "⨾")
+           (";;" "∘")
+           ;; lattices ;;
+           ("meet" "⊓")
+           ("join" "⊔")
+           ;; residuals
+           ("syq"  "╳")
+           ("over" "╱")
+           ("under" "╲")
+           ;; Z-quantification range notation ;;
+           ;; e.g., “∀ x ❙ R • P” ;;
+           ("|"    "❙")
+           ("with" "❙")
+           ;; adjunction isomorphism pair ;;
+           ("floor"  "⌊⌋")
+           ("lower"  "⌊⌋")
+           ("lad"    "⌊⌋")
+           ("ceil"   "⌈⌉")
+           ("raise"  "⌈⌉")
+           ("rad"    "⌈⌉")
         ;; more (key value) pairs here
         )
       do (add-to-list 'agda-input-user-translations item))
 ;; Unicode Input via Agda Input:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:7]]
-;; angry, cry, why-you-no
-(add-to-list 'agda-input-user-translations
-   '("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)"))
-;; confused, disapprove, dead, shrug
-(add-to-list 'agda-input-user-translations
-   '("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"))
-;; dance, csi
-(add-to-list 'agda-input-user-translations
-   '("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓" "•_•)
-( •_•)>⌐■-■
-(⌐■_■)
-"))
-;; love, pleased, success, yesss
-(add-to-list 'agda-input-user-translations
-   '("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
+;; Add to the list of translations using “emot” and the given, more specfic, name.
+;; Whence, \emot shows all possible emotions.
+(loop for emot
+      in `(;; angry, cry, why-you-no
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")
+           ;; confused, disapprove, dead, shrug
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯")
+           ;; dance, csi
+           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
+            ,(s-collapse-whitespace "•_•)
+                                      ( •_•)>⌐■-■
+                                      (⌐■_■)"))
+           ;; love, pleased, success, yesss
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
+      do
+      (add-to-list 'agda-input-user-translations emot)
+      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
 ;; Unicode Input via Agda Input:7 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:8]]
@@ -1369,6 +1384,10 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 ;; Making Block Delimiters Less Intrusive:4 ends here
 
+;; [[file:~/.emacs.d/init.org::*Org-mode's ~<𝒳~ Block Expansions][Org-mode's ~<𝒳~ Block Expansions:1]]
+(require 'org-tempo)
+;; Org-mode's ~<𝒳~ Block Expansions:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
 ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
 ;; Most useful for non-LaTeX files.
@@ -1491,26 +1510,23 @@ by spaces.
 (setq org-default-notes-file "~/Dropbox/todo.org")
 
 ;; “C-c c” to quickly capture a task/note
-(define-key global-map "\C-cc" 'org-capture)
+(define-key global-map "\C-cc" #'my/org-capture) ;; See below.
 ;; Capturing ideas & notes without interrupting the current workflow:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:2]]
 (cl-defun my/make/org-capture-template
-   (shortcut heading &optional (no-todo nil) (description heading) (category heading) (scheduled t))
+   (shortcut heading &optional (no-todo nil) (description heading) (scheduled t))
   "Quickly produce an org-capture-template.
 
   After adding the result of this function to ‘org-capture-templates’,
   we will be able perform a capture with “C-c c ‘shortcut’”
   which will have description ‘description’.
-  It will be added to the tasks file under heading ‘heading’
-  and be marked with category  ‘category’.
+  It will be added to the tasks file under heading ‘heading’.
 
   ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
   when it's merely an interesting note that needn't be acted upon.
-  ─Probably a bad idea─
 
-  Defaults for ‘description’ and ‘category’ are set to the same as
-  the ‘heading’. Default for ‘no-todo’ is ‘nil’.
+  Default for ‘description’ is ‘heading’. Default for ‘no-todo’ is ‘nil’.
 
   Scheduled items appear in the agenda; true by default.
 
@@ -1520,9 +1536,8 @@ by spaces.
   when forming the entry.
   "
   `(,shortcut ,description entry
-      (file+headline org-default-notes-file
-         ,(concat heading "\n#+CATEGORY: " category))
-         , (concat "*" (unless no-todo " TODO") " %?\n"
+      (file+headline org-default-notes-file ,heading)
+         ,(concat "*" (unless no-todo " TODO") " %?\n"
                 (when nil ;; this turned out to be a teribble idea.
                   ":PROPERTIES:\n:"
                 (if scheduled
@@ -1535,10 +1550,13 @@ by spaces.
       (loop for (shortcut heading)
             in (-partition 2 '("t" "Tasks, Getting Things Done"
                                "r" "Research"
+                               "2" "2FA3"
                                "m" "Email"
                                "e" "Emacs (•̀ᴗ•́)و"
+                               "i" "Islam"
                                "b" "Blog"
                                "a" "Arbitrary Reading and Learning"
+                               "l" "Programming Languages"
                                "p" "Personal Matters"))
             collect  (my/make/org-capture-template shortcut heading)))
 
@@ -1560,6 +1578,54 @@ by spaces.
   ;; Ensure notes are stored at the top of a tree.
   (setq org-reverse-note-order nil)
 ;; Capturing ideas & notes without interrupting the current workflow:4 ends here
+
+;; [[file:~/.emacs.d/init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:5]]
+(cl-defun my/org-capture-buffer (&optional keys no-additional-remarks
+                                           (heading-regexp "Subject: \\(.*\\)"))
+  "Capture the current [narrowed] buffer as a todo/note.
+
+This is mostly intended for capturing mail as todo tasks ^_^
+
+When NO-ADDITIONAL-REMARKS is provided, and a heading is found,
+then make and store the note without showing a pop-up.
+This is useful for when we capture self-contained mail.
+
+The HEADING-REGEXP must have a regexp parenthesis construction
+which is used to obtain a suitable heading for the resulting todo/note."
+  (interactive "P")
+  (let* ((current-content (substring-no-properties (buffer-string)))
+         (heading         (progn (string-match heading-regexp current-content)
+                                 (or (match-string 1 current-content) ""))))
+    (org-capture keys)
+    (insert heading "\n\n\n\n" (s-repeat 80 "-") "\n\n\n" current-content)
+
+    ;; The overtly verbose conditions are for the sake of clarity.
+    ;; Moreover, even though the final could have “t”, being explicit
+    ;; communicates exactly the necessary conditions.
+    ;; Being so verbose leads to mutual exclusive clauses, whence order is irrelevant.
+    (cond
+     ((s-blank? heading)
+        (beginning-of-buffer) (end-of-line))
+     ((and no-additional-remarks (not (s-blank? heading)))
+        (org-capture-finalize))
+     ((not (or no-additional-remarks (s-blank? heading)))
+        (beginning-of-buffer) (forward-line 2) (indent-for-tab-command)))))
+;; Capturing ideas & notes without interrupting the current workflow:5 ends here
+
+;; [[file:~/.emacs.d/init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:6]]
+(defun my/org-capture (&optional prefix keys)
+  "Capture something!
+
+      C-c c   ⇒ Capture something; likewise for “C-uⁿ C-c c” where n ≥ 3.
+C-u   C-c c   ⇒ Capture current [narrowed] buffer.
+C-u 5 C-c c   ⇒ Capture current [narrowed] buffer without adding additional remarks.
+C-u C-u C-c c ⇒ Goto last note stored."
+  (interactive "p")
+  (case prefix
+    (4     (my/org-capture-buffer keys))
+    (5     (my/org-capture-buffer keys :no-additional-remarks))
+    (t     (org-capture prefix keys))))
+;; Capturing ideas & notes without interrupting the current workflow:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Step 2: Filing your tasks][Step 2: Filing your tasks:1]]
 ;; Add a note whenever a task's deadline or scheduled date is changed.
@@ -1600,24 +1666,41 @@ by spaces.
 ;; Step 7: Archiving Tasks:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Super Agenda][Super Agenda:1]]
+;; List of all the files & directories where todo items can be found. Only one
+;; for now: My default notes file.
+(setq org-agenda-files (list org-default-notes-file))
+
+;; How many days ahead the default agenda view should look
+(setq org-agenda-span 'week) ;; May be any number.
+
+;; How many days early a deadline item will begin showing up in your agenda list.
+(setq org-deadline-warning-days 14)
+
+;; In the agenda view, days that have no associated tasks will still have a line showing the date.
+(setq org-agenda-show-all-dates t)
+
+;; Scheduled items marked as complete will not show up in your agenda view.
+(setq org-agenda-skip-scheduled-if-done t)
+(setq org-agenda-skip-deadline-if-done  t)
+;; Super Agenda:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Super Agenda][Super Agenda:2]]
+(setq org-agenda-start-on-weekday nil)
+;; Super Agenda:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Super Agenda][Super Agenda:3]]
 (use-package org-super-agenda
+  :after origami-mode
+  :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
+  :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
   :config
   (org-super-agenda-mode)
   (setq org-super-agenda-groups
-        ;; Default order is 0, first come first serve.
-        ;; Items are “or”-ed by default.
-        '((:name "Important"
-                 :tag "PackageFormer"
-                 :and (:tag "JC" :priority "A")
-                 :and (:tag "WK" :priority "A")
-                 :priority "A")
-
-          ;; Groups supply their own section names when none are given
-          (:tag "personal")
-          (:tag "3mi3")
-          (:name "Emacs Init" :tag "init")
-          (:priority<= "B" :order 1))))
-;; Super Agenda:1 ends here
+        '((:name "Important" :priority "A")
+          (:name "Personal" :habit t)
+          ;; For everything else, nicely display their heading hierarchy list.
+          (:auto-map (lambda (e) (org-format-outline-path (org-get-outline-path)))))))
+;; Super Agenda:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Automating \[\[https://en.wikipedia.org/wiki/Pomodoro_Technique\]\[Pomodoro\]\] ---“Commit for only 25 minutes!”][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1]]
 ;; Tasks get a 25 minute count down timer
@@ -1704,33 +1787,10 @@ by spaces.
 ;; Clocking Work Time:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Clocking Work Time][Clocking Work Time:2]]
-;; List of all the files & directories where todo items can be found. Only one
-;; for now: My default notes file.
-(setq org-agenda-files (list org-default-notes-file))
-
-;; How many days ahead the default agenda view should look
-(setq org-agenda-ndays 7)
-
-;; How many days early a deadline item will begin showing up in your agenda list.
-(setq org-deadline-warning-days 14)
-
-;; In the agenda view, days that have no associated tasks will still have a line showing the date.
-(setq org-agenda-show-all-dates t)
-
-;; Scheduled items marked as complete will not show up in your agenda view.
-(setq org-agenda-skip-scheduled-if-done t)
-(setq org-agenda-skip-deadline-if-done  t)
+(setq confirm-kill-emacs 'yes-or-no-p)
 ;; Clocking Work Time:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Clocking Work Time][Clocking Work Time:3]]
-(setq org-agenda-start-on-weekday nil)
-;; Clocking Work Time:3 ends here
-
-;; [[file:~/.emacs.d/init.org::*Clocking Work Time][Clocking Work Time:4]]
-(setq confirm-kill-emacs 'yes-or-no-p)
-;; Clocking Work Time:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Clocking Work Time][Clocking Work Time:5]]
 ;; Resume clocking task when emacs is restarted
 (org-clock-persistence-insinuate)
 
@@ -1754,7 +1814,7 @@ by spaces.
 
 ;; Include current clocking task in clock reports
 (setq org-clock-report-include-clocking-task t)
-;; Clocking Work Time:5 ends here
+;; Clocking Work Time:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Estimates versus actual time][Estimates versus actual time:1]]
 (setq org-clock-sound "~/.emacs.d/school-bell.wav")
@@ -1852,11 +1912,13 @@ by spaces.
 ;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:1]]
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
-  :init (global-hl-todo-mode)   ;; Enable it everywhere.
+  ;; I want todo-words highlighted in prose, not just in code fragements.
+  :hook (org-mode . hl-todo-mode)
   :config
-  ;; Adding new keywords
-  (loop for kw in '("TEST" "MA" "WK" "JC")
-        do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
+    (global-hl-todo-mode)   ;; Enable it everywhere.
+    ;; Adding new keywords
+    (loop for kw in '("TEST" "MA" "WK" "JC")
+          do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
 ;; Highlighting TODO-s & Showing them in Magit:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:2]]
@@ -1901,16 +1963,16 @@ by spaces.
   :config (global-color-identifiers-mode))
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Text Folding with \[\[https://github.com/gregsexton/origami.el\]\[Origami-mode\]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1]]
+;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:1]]
 (use-package origami)
-;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:1 ends here
+;; Text Folding with Origami-mode:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Text Folding with \[\[https://github.com/gregsexton/origami.el\]\[Origami-mode\]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2]]
+;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:2]]
 (push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
       origami-parser-alist)
-;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:2 ends here
+;; Text Folding with Origami-mode:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Text Folding with \[\[https://github.com/gregsexton/origami.el\]\[Origami-mode\]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3]]
+;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:3]]
 (defun my/search-hook-function ()
   (when origami-mode (origami-toggle-node (current-buffer) (point))))
 
@@ -1919,16 +1981,16 @@ by spaces.
 ;;
 ;; Likewise for incremental search, isearch, users.
 ;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
-;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:3 ends here
+;; Text Folding with Origami-mode:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*Text Folding with \[\[https://github.com/gregsexton/origami.el\]\[Origami-mode\]\]][Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4]]
+;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:4]]
 (defhydra folding-with-origami-mode (global-map "C-c f")
   ("h" origami-close-node-recursively "Hide")
   ("o" origami-open-node-recursively  "Open")
   ("t" origami-toggle-all-nodes  "Toggle buffer")
   ("n" origami-next-fold "Next")
   ("p" origami-previous-fold "Previous"))
-;; Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]:4 ends here
+;; Text Folding with Origami-mode:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove

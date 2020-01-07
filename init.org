@@ -2,7 +2,7 @@
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 #
-# ≥ 7300 line org file, with auto-generated TOC.
+# ≥ 7900 line org file, with auto-generated TOC.
 
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -759,9 +759,6 @@ Let's activate it now, after ~use-package~ has been setup.
 ** =README= ---From =init.org= to =init.el=
 :PROPERTIES:
 :CUSTOM_ID: README-From-init-org-to-init-el
-:END:
-:PROPERTIES:
-
 :END:
 
 Rather than manually extracting the Lisp code from this literate document each
@@ -1832,12 +1829,7 @@ without adding additional remarks.
 :PROPERTIES:
 :CUSTOM_ID: Auto-completing-mail-addresses
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 In order to get going quickly, using [[https://github.com/redguardtoo/gmail2bbdb][gmail2bbdb]], let's convert our Gmail
 contacts into a BBDB file ---the [[http://bbdb.sourceforge.net/][Insidious Big Brother Database]] is an
 address-book application that we'll use for E-mail; if you want to use it as a
@@ -2268,7 +2260,7 @@ Now my startup message is,
 ;; Welcome Musa Al-hassy! Emacs 26.1; Org-mode 9.3; System alhassy-air.local
 #+end_src
 :Manually_Computing_Init_Time:
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (format "; Time %.3fs"
         (float-time (time-subtract (current-time) before-init-time)))
 #+END_SRC
@@ -4571,12 +4563,6 @@ resulting PDF locally.
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Org-mode-HTML
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 The following let's us copy htlm into org format using eww, Emacs' built-in web browser.
 #+BEGIN_SRC emacs-lisp
@@ -4648,21 +4634,18 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 
 #+begin_src emacs-lisp
 (cl-defun my/make/org-capture-template
-   (shortcut heading &optional (no-todo t) (description heading) (category heading) (scheduled t))
+   (shortcut heading &optional (no-todo nil) (description heading) (scheduled t))
   "Quickly produce an org-capture-template.
 
   After adding the result of this function to ‘org-capture-templates’,
   we will be able perform a capture with “C-c c ‘shortcut’”
   which will have description ‘description’.
-  It will be added to the tasks file under heading ‘heading’
-  and be marked with category  ‘category’.
+  It will be added to the tasks file under heading ‘heading’.
 
   ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
   when it's merely an interesting note that needn't be acted upon.
-  We omit TODO-s since not everything needs to be propogated to our agenda!
 
-  Defaults for ‘description’ and ‘category’ are set to the same as
-  the ‘heading’. Default for ‘no-todo’ is ‘nil’.
+  Default for ‘description’ is ‘heading’. Default for ‘no-todo’ is ‘nil’.
 
   Scheduled items appear in the agenda; true by default.
 
@@ -4672,9 +4655,8 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
   when forming the entry.
   "
   `(,shortcut ,description entry
-      (file+headline org-default-notes-file
-         ,(concat heading "\n#+CATEGORY: " category))
-         , (concat "*" (unless no-todo " TODO") " %?\n"
+      (file+headline org-default-notes-file ,heading)
+         ,(concat "*" (unless no-todo " TODO") " %?\n"
                 (when nil ;; this turned out to be a teribble idea.
                   ":PROPERTIES:\n:"
                 (if scheduled
@@ -4706,8 +4688,7 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 #+end_src
 
 For now I capture everything into a single file.  One would ideally keep
-separate client, project, information in its own org file.  The ~#+CATEGORY~
-appears alongside each task in the agenda view ---keep reading.
+separate client, project, information in its own org file.
 
 + Looking at ~my/make/org-capture-template~, one notices that capture actually
   lets you add /any/ type of item to /any/ file.
@@ -4792,12 +4773,7 @@ Anyhow…
 :PROPERTIES:
 :CUSTOM_ID: Step-1-When-new-tasks-come-up
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Isn't it great that we can squirrel away info into some default location
 then immediately return to what we were doing before ---with speed & minimal distraction! ♥‿♥
 Indeed, if our system for task management were slow then we may not produce
@@ -4821,12 +4797,6 @@ When my computer isn't handy, I'll make a note on my phone then transfer it late
 *** Step 2: Filing your tasks
 :PROPERTIES:
 :CUSTOM_ID: Step-2-Filing-your-tasks
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 At a later time, a time of reflection, we go to our tasks list and actually
 schedule time to get them done by ~C-c C-s~ then pick a date by entering a number
@@ -4888,12 +4858,7 @@ priority.  Then ~r~ to refresh.
 :PROPERTIES:
 :CUSTOM_ID: Step-5-Doing-the-work
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Since ~A~ tasks are the important and urgent ones, if you do all of the ~A~ tasks and
 nothing else today, no one would suffer. It's a good day (─‿‿─).
 
@@ -4909,12 +4874,7 @@ Either at the end of the day or the start of the next.
 :PROPERTIES:
 :CUSTOM_ID: Step-6-Moving-a-task-toward-completion
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 My workflow states are described in the section
 [[Workflow States]] and contain states: ~TODO, STARTED, WAITING, ON_HOLD, CANCELLED, DONE~.
 + Tasks marked ~WAITING~ are ones for which we are awaiting some event, like someone
@@ -4996,7 +4956,6 @@ new ways to view tasks by altering the ~org-agenda-custom-commands~ variable
 ---e.g., above we added two, one for completed tasks and one for unscheduled
 tasks.
 
-
 # Moreover, we can overlay due dates and priorities to tasks in a non-intrusive
 # way that is easy to edit by hand.
 Let's setup the basics of our agenda.
@@ -5006,7 +4965,7 @@ Let's setup the basics of our agenda.
 (setq org-agenda-files (list org-default-notes-file))
 
 ;; How many days ahead the default agenda view should look
-(setq org-agenda-ndays 7)
+(setq org-agenda-span 'week) ;; May be any number.
 
 ;; How many days early a deadline item will begin showing up in your agenda list.
 (setq org-deadline-warning-days 14)
@@ -5023,6 +4982,7 @@ The agenda view, like nearly all Emacs entities, is interactive:
 + =𝓃 f,b= ⇒ Look forward at next week's agenda, or backward to a previous week.
   - The optional $𝓃$ means do the action =𝓃=-many times;
     it defaults to 1.
++ =w, d= ⇒ toggle week view, or day view; use ~v~ to see possible views.
 + =𝓃 n,p= to navigate to next and previous entries.
 + =t= ⇒ cycle TODO state of the current entry.
 + =±= ⇒ cycle priority state.
@@ -5047,31 +5007,56 @@ ways, such as when reviewing completed tasks.
 (setq org-agenda-start-on-weekday nil)
 #+end_src
 
-The following incentivizes us to make use of ~:tags:~ so that our agenda displays
-the tasks of the day depending on their tags ---possibly using complex predicates.
-/This is far preferable to having them all in one big list./
+Instead of having the day's tasks all in one field, org-super-agenda allows us
+to use predicates to group entries together; e.g., by considering an entry's
+=:tags:= or its priority level. Since I'm placing all my tasks in a single file,
+under appropriate parent headings, I want entries to be shown according to their
+parent heading. Of-course, the top-most grouping, the important tasks, should be
+pulled out of their group and placed at the top.
 #+BEGIN_SRC emacs-lisp
 (use-package org-super-agenda
+  :after origami-mode
+  :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
+  :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
   :config
   (org-super-agenda-mode)
   (setq org-super-agenda-groups
+        '((:name "Important" :priority "A")
+          (:name "Personal" :habit t)
+          ;; For everything else, nicely display their heading hierarchy list.
+          (:auto-map (lambda (e) (org-format-outline-path (org-get-outline-path)))))))
+
+#+END_SRC
+
+:OlderSetup:
+#+BEGIN_SRC emacs-lisp :tangle no
         ;; Default order is 0, first come first serve.
         ;; Items are “or”-ed by default.
         '((:name "Important"
                  :tag "PackageFormer"
+                 :tag "PF"
+                 :tag "research"
                  :and (:tag "JC" :priority "A")
                  :and (:tag "WK" :priority "A")
                  :priority "A")
 
           ;; Groups supply their own section names when none are given
-          (:tag "personal")
-          (:tag "3mi3")
+          (:name "Living the dream!" :tag "personal")
+          (:name "Discrete Mathematics" :tag "2fa3")
           (:name "Emacs Init" :tag "init")
-          (:priority<= "B" :order 1))))
+          ;; (:priority<= "B" :order 1)
+          ;; Everything else automatically gets its own group
+          (:auto-category t)
+          )))
 #+END_SRC
+:End:
++ Origami mode ---see below in [[Text Folding with Origami-mode]]---
+  works well with super-agenda. Just ~M-x origami-mode~ then ~C-c f~ to
+  enable the folding hydra.
 
-The [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]] homepage shows complex configurations and pleasant screenshots
-contrasting with and without the system.
+The [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]] homepage shows complex configurations and pleasant
+screenshots contrasting with and without the system.
+E.g., you can change how entries in particular headings are displayed and coloured.
 
 ** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”
 :PROPERTIES:
@@ -5121,12 +5106,6 @@ good, and do more searches; then again, I've learned a lot by writing code. ⟩
 ** Journaling
 :PROPERTIES:
 :CUSTOM_ID: Journaling
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Thus far I've made it easy to quickly capture ideas and tasks, not so much on
@@ -5897,22 +5876,12 @@ Here are further reads:
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
-:PROPERTIES:
-:CUSTOM_ID: Text-Folding-with-https-github-com-gregsexton-origami-el-Origami-mode
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
-
+** Text Folding with Origami-mode
 Literate programming within Org-mode is not always ideal, so we use a
 programming mode directly and then may want to have arbitrary ‘sections’ of text
 folded up.  Let's describe how to accomplish this goal.
 
-We use a feature-full folding mode.
+We use a feature-full folding mode,  [[https://github.com/gregsexton/origami.el][Origami-mode]].
 #+BEGIN_SRC emacs-lisp
 (use-package origami)
 #+END_SRC

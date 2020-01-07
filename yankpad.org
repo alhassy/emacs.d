@@ -29,6 +29,11 @@ $0
 $0
 #+end_src
 
+** s_ditta: src block for ditta
+#+begin_src ditta
+$0
+#+end_src
+
 ** s_plantuml: src block for plantuml
 #+begin_src plantuml
 $0
@@ -101,6 +106,11 @@ $0
 
 ** e_any: example block for any
 #+begin_example any
+$0
+#+end_example
+
+** e_ditta: example block for ditta
+#+begin_example ditta
 $0
 #+end_example
 
@@ -179,6 +189,11 @@ $0
 $0
 #+end_quote
 
+** q_ditta: quote block for ditta
+#+begin_quote ditta
+$0
+#+end_quote
+
 ** q_plantuml: quote block for plantuml
 #+begin_quote plantuml
 $0
@@ -251,6 +266,11 @@ $0
 
 ** v_any: verse block for any
 #+begin_verse any
+$0
+#+end_verse
+
+** v_ditta: verse block for ditta
+#+begin_verse ditta
 $0
 #+end_verse
 
@@ -329,6 +349,11 @@ $0
 $0
 #+end_center
 
+** c_ditta: center block for ditta
+#+begin_center ditta
+$0
+#+end_center
+
 ** c_plantuml: center block for plantuml
 #+begin_center plantuml
 $0
@@ -401,6 +426,11 @@ $0
 
 ** ex_any: export block for any
 #+begin_export any
+$0
+#+end_export
+
+** ex_ditta: export block for ditta
+#+begin_export ditta
 $0
 #+end_export
 

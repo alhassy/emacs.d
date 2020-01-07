@@ -1,11 +1,11 @@
-# Created 2020-01-02 Thu 20:50
+# Created 2020-01-07 Tue 05:59
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
 #+export_file_name: README.org
 
-#+html: <p align="center"> <img src="emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3.1-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="emacs-birthday-present.png" width=200 height=250/> </p>
+#+html: <p align="center"> <img src="images/emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3.1-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="images/emacs-birthday-present.png" width=200 height=250/> </p>
 
 I enjoy reading others' /literate/ configuration files and
 incorporating what I learn into my own. The result is a
@@ -25,15 +25,6 @@ PDF, [[https://alhassy.github.io/init/][here]]. Enjoy
 #+sourcefile: https://github.com/alhassy/emacs.d/blob/master/init.org
 #+image: ../assets/img/emacs_logo.png
 #+categories: Emacs Lisp
-
-#+begin_src emacs-lisp :tangle no :exports results :wrap "export html" :results replace
-(concat
-"<p align=\"center\">
-        <a href=\"https://www.gnu.org/software/emacs/\">
-        <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
-        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
-</p>")
-#+end_src
 
 #+html: <p align="center">
 #+begin_center
@@ -345,6 +336,49 @@ thereby momentarily disabling features.
 
 There's no point in being modular if there's nothing explaining what's going on,
 so I document.
+
+#+begin_src plantuml :file images/literate-programming.png :tangle no :exports results :eval never-export :results (progn (org-display-inline-images t t) "replace")
+skinparam defaultTextAlignment center  /' Text alignment '/
+
+skinparam titleBorderRoundCorner 15
+skinparam titleBorderThickness 2
+skinparam titleBorderColor red
+skinparam titleBackgroundColor Aqua-CadetBlue
+title Literate Programming with Org-Mode
+
+actor You
+
+You --> (Code) : Ideas
+You --> (Text) : Ideas
+
+[**Org Mode**] as Org
+
+(Text) --> Org : Writing
+(Code) --> Org : Writing
+
+Org --[#green]> (Document) : ‘Weaving’
+Org --[#green]> (RawCode)  : ‘Tangeling’
+
+database Computer as "**Computer**
+---
+interpreter
+---
+compiler"
+
+cloud People {
+:jasim:
+:kathy:
+}
+
+(Document) --[#green]> People : PDF, HTML, Text
+(RawCode) --[#green]> (Computer) : tex, java, c, py
+
+center footer  ♥‿♥ Write once, generate many (•̀ᴗ•́)و
+#+end_src
+#+results:
+[[file:images/literate-programming.png]]
+
+⟨ This image was created in org-mode; details [[#Workflow-States][below]]. ⟩
 
 The [[#Conclusion---Why-Configuration-Files-Should-be-Literate][concluding]] section of this read further argues the benefits of maintaining
 literate, and monolithic, configuration files. As a convention, I will try to
@@ -688,7 +722,6 @@ Where the following block has ~#+NAME: make-readme~ before it.  This source bloc
 generates the ~README~ for the associated Github repository.
 #+name: make-readme
 #+begin_src emacs-lisp :tangle no :export_never t
-;; Update the table of contents in this file.
 (save-buffer)
 (with-temp-buffer
     (insert
@@ -697,7 +730,7 @@ generates the ~README~ for the associated Github repository.
      # Logos and birthday present painting
      ,#+HTML:" (s-collapse-whitespace (concat
     " <p align=\"center\">
-       <img src=\"emacs-logo.png\" width=150 height=150/>
+       <img src=\"images/emacs-logo.png\" width=150 height=150/>
      </p>
 
      <p align=\"center\">
@@ -707,7 +740,7 @@ generates the ~README~ for the associated Github repository.
      </p>
 
      <p align=\"center\">
-       <img src=\"emacs-birthday-present.png\" width=200 height=250/>
+       <img src=\"images/emacs-birthday-present.png\" width=200 height=250/>
      </p>
     "))
 
@@ -736,6 +769,11 @@ generates the ~README~ for the associated Github repository.
 #+end_src
 Alternatively, evaluate the above source block with ~C-c C-c~ to produce a ~README~
 file.
+
+For the ‘badges’, see https://shields.io/.  The syntax above is structured:
+#+begin_example org
+https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>.svg
+#+end_example
 
 *** ‘Table of Contents’ for Org vs. Github
 The above mentioned package [[https://github.com/snosov1/toc-org][toc-org]], which creates an up-to-date table of
@@ -1097,7 +1135,6 @@ window manager for macOS along the lines of xmonad.”
 ;; If the given system package doesn't exist; install it.
 (system-packages-ensure "amethyst")
 #+end_src
-
 Neato! Now I can live in Emacs even more ^_^
 
 ** “Being at the Helm” ---Completion & Narrowing Framework
@@ -3459,21 +3496,18 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 
 #+begin_src emacs-lisp
 (cl-defun my/make/org-capture-template
-   (shortcut heading &optional (no-todo nil) (description heading) (category heading) (scheduled t))
+   (shortcut heading &optional (no-todo nil) (description heading) (scheduled t))
   "Quickly produce an org-capture-template.
 
   After adding the result of this function to ‘org-capture-templates’,
   we will be able perform a capture with “C-c c ‘shortcut’”
   which will have description ‘description’.
-  It will be added to the tasks file under heading ‘heading’
-  and be marked with category  ‘category’.
+  It will be added to the tasks file under heading ‘heading’.
 
   ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
   when it's merely an interesting note that needn't be acted upon.
-  ─Probably a bad idea─
 
-  Defaults for ‘description’ and ‘category’ are set to the same as
-  the ‘heading’. Default for ‘no-todo’ is ‘nil’.
+  Default for ‘description’ is ‘heading’. Default for ‘no-todo’ is ‘nil’.
 
   Scheduled items appear in the agenda; true by default.
 
@@ -3483,9 +3517,8 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
   when forming the entry.
   "
   `(,shortcut ,description entry
-      (file+headline org-default-notes-file
-         ,(concat heading "\n#+CATEGORY: " category))
-         , (concat "*" (unless no-todo " TODO") " %?\n"
+      (file+headline org-default-notes-file ,heading)
+         ,(concat "*" (unless no-todo " TODO") " %?\n"
                 (when nil ;; this turned out to be a teribble idea.
                   ":PROPERTIES:\n:"
                 (if scheduled
@@ -3501,8 +3534,10 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
                                "2" "2FA3"
                                "m" "Email"
                                "e" "Emacs (•̀ᴗ•́)و"
+                               "i" "Islam"
                                "b" "Blog"
                                "a" "Arbitrary Reading and Learning"
+                               "l" "Programming Languages"
                                "p" "Personal Matters"))
             collect  (my/make/org-capture-template shortcut heading)))
 
@@ -3515,8 +3550,7 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 #+end_src
 
 For now I capture everything into a single file.  One would ideally keep
-separate client, project, information in its own org file.  The ~#+CATEGORY~
-appears alongside each task in the agenda view ---keep reading.
+separate client, project, information in its own org file.
 
 - Looking at ~my/make/org-capture-template~, one notices that capture actually
   lets you add /any/ type of item to /any/ file.
@@ -3645,6 +3679,9 @@ task under the cursor and ~r~ to refresh the agenda.
 (define-key global-map "\C-ca" 'org-agenda)
 #+end_src
 
+The next section, [[Super Agenda]], will discuss acting on entries in the agenda
+buffer.
+
 *** Step 4: Getting ready for the day
 After having seen our tasks for the week, we press ~d~ to enter daily view
 for the current day. Now we decide whether the items for today are
@@ -3743,32 +3780,88 @@ Let's install some helpful views for our agenda.
                 (org-agenda-overriding-header "Unscheduled TODO entries: "))))
   #+end_src
 
+/At the end of the day, let's schedule at least 3 things that must be done the
+next day; i.e., have priority =A=./
+
 ** Super Agenda
-The following incentivizes us to make use of ~:tags:~ so that our agenda displays
-the tasks of the day depending on their tags ---possibly using complex predicates.
-/This is far preferable to having them all in one big list./
+The agenda dispatch menu, ~C-c a~, has options for displaying tasks.  One may add
+new ways to view tasks by altering the ~org-agenda-custom-commands~ variable
+---e.g., above we added two, one for completed tasks and one for unscheduled
+tasks.
+
+Let's setup the basics of our agenda.
+#+begin_src emacs-lisp
+;; List of all the files & directories where todo items can be found. Only one
+;; for now: My default notes file.
+(setq org-agenda-files (list org-default-notes-file))
+
+;; How many days ahead the default agenda view should look
+(setq org-agenda-span 'week) ;; May be any number.
+
+;; How many days early a deadline item will begin showing up in your agenda list.
+(setq org-deadline-warning-days 14)
+
+;; In the agenda view, days that have no associated tasks will still have a line showing the date.
+(setq org-agenda-show-all-dates t)
+
+;; Scheduled items marked as complete will not show up in your agenda view.
+(setq org-agenda-skip-scheduled-if-done t)
+(setq org-agenda-skip-deadline-if-done  t)
+#+end_src
+
+The agenda view, like nearly all Emacs entities, is interactive:
+- =𝓃 f,b= ⇒ Look forward at next week's agenda, or backward to a previous week.
+  - The optional $𝓃$ means do the action =𝓃=-many times;
+    it defaults to 1.
+- =w, d= ⇒ toggle week view, or day view; use ~v~ to see possible views.
+- =𝓃 n,p= to navigate to next and previous entries.
+- =t= ⇒ cycle TODO state of the current entry.
+- =±= ⇒ cycle priority state.
+- =𝓃 S-⇆= ⇒ Shift date time by $𝓃$ days; 1 day by default.
+- =C-c C-s= ⇒ Reschedule an entry.
+- =s= ⇒ save all agenda buffers; i.e., save the org-files where the agenda items live.
+- =g= ⇒ Rebuild agenda according to any changes made thus far.
+- =F= ⇒ Toggle ‘follow mode’: As you go up/down entries, you can see their
+  details in an adjacent window.
+  - =SPC= ⇒ Show details of a single entry in other window; stay in Agenda.
+- =RET, TAB= ⇒ Go to the current entry in the current window or in a new
+  adjacent window, so as to alter task details.
+
+The agenda view –--even in the 7-days-at-a-time view--– will always begin on the
+current day.  This is important, since while using org-mode as a day planner,
+you never want to think of days gone past. That’s something you do in other
+ways, such as when reviewing completed tasks.
+#+begin_src emacs-lisp
+(setq org-agenda-start-on-weekday nil)
+#+end_src
+
+Instead of having the day's tasks all in one field, org-super-agenda allows us
+to use predicates to group entries together; e.g., by considering an entry's
+=:tags:= or its priority level. Since I'm placing all my tasks in a single file,
+under appropriate parent headings, I want entries to be shown according to their
+parent heading. Of-course, the top-most grouping, the important tasks, should be
+pulled out of their group and placed at the top.
 #+begin_src emacs-lisp
 (use-package org-super-agenda
+  :after origami-mode
+  :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
+  :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
   :config
   (org-super-agenda-mode)
   (setq org-super-agenda-groups
-        ;; Default order is 0, first come first serve.
-        ;; Items are “or”-ed by default.
-        '((:name "Important"
-                 :tag "PackageFormer"
-                 :and (:tag "JC" :priority "A")
-                 :and (:tag "WK" :priority "A")
-                 :priority "A")
-
-          ;; Groups supply their own section names when none are given
-          (:tag "personal")
-          (:tag "3mi3")
-          (:name "Emacs Init" :tag "init")
-          (:priority<= "B" :order 1))))
+        '((:name "Important" :priority "A")
+          (:name "Personal" :habit t)
+          ;; For everything else, nicely display their heading hierarchy list.
+          (:auto-map (lambda (e) (org-format-outline-path (org-get-outline-path)))))))
 #+end_src
 
-The [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]] homepage shows complex configurations and pleasant screenshots
-contrasting with and without the system.
+- Origami mode ---see below in [[Text Folding with Origami-mode]]---
+  works well with super-agenda. Just ~M-x origami-mode~ then ~C-c f~ to
+  enable the folding hydra.
+
+The [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]] homepage shows complex configurations and pleasant
+screenshots contrasting with and without the system.
+E.g., you can change how entries in particular headings are displayed and coloured.
 
 ** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”
 Effort estimates are for an entire task.
@@ -3950,7 +4043,7 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 
 Let's use this!
 
-#+begin_src plantuml :file workflow.png :tangle no :exports both :eval never-export
+#+begin_src plantuml :file images/workflow.png :tangle no :exports both :eval never-export :results replace
 skinparam defaultTextAlignment center  /' Text alignment '/
 
 skinparam titleBorderRoundCorner 15
@@ -4004,8 +4097,8 @@ center footer  ♥‿♥ Org-mode is so cool (•̀ᴗ•́)و
    or used a “header” instead.'/
 #+end_src
 
-#+results[be722b7f6a40cf685468918df82a3b22468e3d24]:
-[[file:workflow.png]]
+#+results:
+[[file:images/workflow.png]]
 
 Of note:
 
@@ -4032,6 +4125,17 @@ Of note:
 This particular workflow is inspired by [[http://doc.norang.ca/org-mode.html][Bernt Hansen]] ---while quickly searching
 through the PlantUML [[http://plantuml.com/guide][manual]]: The above is known as an “activity diagram” and
 it's covered in §4.
+
+Org-mode may be used with PlantUML:
+- See §11,12 for using Org-mode notation to form ‘mindmaps’ and ‘work breakdown
+  structures’.
+
+- Org-mode text formatters are also acknowledged but the delimiters must be
+  doubled; see §16.1.
+
+You can quickly write and see the resulting UMLs using
+https://liveuml.com/, for the most part.
+
 ** Clocking Work Time
 Let's keep track of the time we spend working on tasks that we may have captured
 for ourselves the previous day.  Such statistics provides a good idea of how
@@ -4054,36 +4158,6 @@ be recorded into the drawer.
 
 To get started, we could estimate how long a task will take and clock-in; then
 clock-out and see how long it actually took.
-
-Moreover, we can overlay due dates and priorities to tasks in a non-intrusive
-way that is easy to edit by hand.
-
-#+begin_src emacs-lisp
-;; List of all the files & directories where todo items can be found. Only one
-;; for now: My default notes file.
-(setq org-agenda-files (list org-default-notes-file))
-
-;; How many days ahead the default agenda view should look
-(setq org-agenda-ndays 7)
-
-;; How many days early a deadline item will begin showing up in your agenda list.
-(setq org-deadline-warning-days 14)
-
-;; In the agenda view, days that have no associated tasks will still have a line showing the date.
-(setq org-agenda-show-all-dates t)
-
-;; Scheduled items marked as complete will not show up in your agenda view.
-(setq org-agenda-skip-scheduled-if-done t)
-(setq org-agenda-skip-deadline-if-done  t)
-#+end_src
-
-The agenda view –--even in the 7-days-at-a-time view--– will always begin on the
-current day.  This is important, since while using org-mode as a day planner,
-you never want to think of days gone past. That’s something you do in other
-ways, such as when reviewing completed tasks.
-#+begin_src emacs-lisp
-(setq org-agenda-start-on-weekday nil)
-#+end_src
 
 Sometimes, at the beginning at least, I would accidentally invoke the transposed
 command ~C-x C-c~, which saves all buffers and quits Emacs. So here's a helpful
@@ -4300,11 +4374,13 @@ at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
 #+begin_src emacs-lisp
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
-  :init (global-hl-todo-mode)   ;; Enable it everywhere.
+  ;; I want todo-words highlighted in prose, not just in code fragements.
+  :hook (org-mode . hl-todo-mode)
   :config
-  ;; Adding new keywords
-  (loop for kw in '("TEST" "MA" "WK" "JC")
-        do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
+    (global-hl-todo-mode)   ;; Enable it everywhere.
+    ;; Adding new keywords
+    (loop for kw in '("TEST" "MA" "WK" "JC")
+          do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
 #+end_src
 
 Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
@@ -4446,12 +4522,12 @@ Here are further reads:
 - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
 - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-** Text Folding with [[https://github.com/gregsexton/origami.el][Origami-mode]]
+** Text Folding with Origami-mode
 Literate programming within Org-mode is not always ideal, so we use a
 programming mode directly and then may want to have arbitrary ‘sections’ of text
 folded up.  Let's describe how to accomplish this goal.
 
-We use a feature-full folding mode.
+We use a feature-full folding mode,  [[https://github.com/gregsexton/origami.el][Origami-mode]].
 #+begin_src emacs-lisp
 (use-package origami)
 #+end_src
@@ -5108,4 +5184,4 @@ Bye!
 
 -----
 
-#+html: <p align="center"><img src="https://i.redd.it/g6yi40gbivv31.jpg" width=150 height=150/></p>
+#+html: <p align="center"><img src="https://i.redd.it/g6yi40gbivv31.jpg"  alt="Being replaced at the office"/></p>
