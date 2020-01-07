@@ -140,6 +140,7 @@ and variables that may accomplish my goal.
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
+  - [[#org-mode--html][Org-mode ⇐ HTML]]
 - [[#life-within-org-mode][Life within Org-mode]]
   - [[#using-org-mode-as-a-day-planner][Using Org-Mode as a Day Planner]]
     - [[#capturing-ideas--notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow]]
@@ -157,6 +158,7 @@ and variables that may accomplish my goal.
   - [[#clocking-work-time][Clocking Work Time]]
     - [[#finding-tasks-to-clock-in][Finding tasks to clock in]]
     - [[#estimates-versus-actual-time][Estimates versus actual time]]
+  - [[#habit-formation][Habit Formation]]
 - [[#programming][Programming]]
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
@@ -4260,9 +4262,6 @@ language.  This saves us a few key strokes.
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
 :END:
-:PROPERTIES:
-
-:END:
 In this section we consider the Org-mode exporters for PDFs and
 HTMLs. For example, we account for LaTeX citations and reliable HTML
 anchors.
@@ -4281,12 +4280,7 @@ anchors.
 :PROPERTIES:
 :CUSTOM_ID: Working-with-Citations
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
  [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
 
  The following entity will display useful data
@@ -4323,12 +4317,7 @@ cite:agda_overview
 :PROPERTIES:
 :CUSTOM_ID: Coloured-LaTeX-using-Minted
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Execute the following for bib ref as well as minted Org-mode uses the
 Minted package for source code highlighting in PDF/LaTeX ---which in
 turn requires the pygmentize system tool.
@@ -4356,12 +4345,7 @@ which is not necessary ideal when using LaTeX.
 :PROPERTIES:
 :CUSTOM_ID: Ensuring-Useful-HTML-Anchors
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Upon HTML export, each tree heading is assigned an ID to be used for hyperlinks.
 Default IDs are something like ~org1957a9d~, which does not endure the test of time:
 Re-export will produce a different id. Here's a rough snippet to generate
@@ -4416,12 +4400,7 @@ remaining consistent for when trees share similar properties.
 :PROPERTIES:
 :CUSTOM_ID: HTML-Folded-Drawers
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+BEGIN_SRC emacs-lisp
 (defun my/org-drawer-format (name contents)
   "Export to HTML the drawers named with prefix ‘fold_’, ignoring case.
@@ -4512,12 +4491,6 @@ Now that I've written this, I'm thinking it may have been preferably to use an o
 :PROPERTIES:
 :CUSTOM_ID: https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Org-mode documents can be transformed into beautiful slide decks
 with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] with the following two simple lines.
@@ -4561,13 +4534,13 @@ speaker notes in the flattened view.
 Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
 resulting PDF locally.
 
-** COMMENT Org-mode ⇐ HTML
+** Org-mode ⇐ HTML :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Org-mode-HTML
 :END:
 
 The following let's us copy htlm into org format using eww, Emacs' built-in web browser.
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; See: https://emacs.stackexchange.com/questions/7171/paste-html-into-org-mode
 (use-package org-eww
  :quelpa (org-eww :fetcher git :url "https://github.com/Fuco1/org-mode.git"))
@@ -4812,6 +4785,14 @@ in the form ~+𝓃~ to mean that task is due ~𝓃~ days from now.
   With time, it will become clear what is an unreasonable day
   verses what is an achievable day.
 
+[[https://orgmode.org/manual/Repeated-tasks.html][Repeat tasks]] by a repeater such as ‘+1m’ or ‘+7d’ in their timestamps; e.g.,
+  ~DEADLINE: <2005-10-01 Sat +1m>.~
+
+A ‘project’ is a task that has multiple steps, each as a checkbox item. It can
+be given a percentage marker to show progress: Place ~[%]~ after its name, then
+press ~C-c #~ on the name to see a completion percentage ---press ~C-c C-c~ on a
+checkbox item to toggle its completion state.
+
 Let's keep track of how many times, and when, we have pushed events to other dates.
 #+BEGIN_SRC emacs-lisp
 ;; Add a note whenever a task's deadline or scheduled date is changed.
@@ -4829,6 +4810,8 @@ task under the cursor and ~r~ to refresh the agenda.
 #+begin_src emacs-lisp
 (define-key global-map "\C-ca" 'org-agenda)
 #+end_src
+
++ Show the next 𝓃 days schedule ⇐ =C-u 𝓃 C-c a a=.
 
 The next section, [[Super Agenda]], will discuss acting on entries in the agenda
 buffer.
@@ -4966,6 +4949,9 @@ Let's setup the basics of our agenda.
 ;; for now: My default notes file.
 (setq org-agenda-files (list org-default-notes-file))
 
+;; Display tags really close to their tasks.
+(setq org-agenda-tags-column -10)
+
 ;; How many days ahead the default agenda view should look
 (setq org-agenda-span 'week) ;; May be any number.
 
@@ -4985,11 +4971,14 @@ The agenda view, like nearly all Emacs entities, is interactive:
   - The optional $𝓃$ means do the action =𝓃=-many times;
     it defaults to 1.
 + =w, d= ⇒ toggle week view, or day view; use ~v~ to see possible views.
+  - E.g., ~C-u 2017 v y~ shows us the specific year 2017.
 + =𝓃 n,p= to navigate to next and previous entries.
 + =t= ⇒ cycle TODO state of the current entry.
 + =±= ⇒ cycle priority state.
 + =𝓃 S-⇆= ⇒ Shift date time by $𝓃$ days; 1 day by default.
-+ =C-c C-s= ⇒ Reschedule an entry.
++ =C-c C-s= ⇒ Reschedule an entry; prefix it with ~C-u~ to remove a scheduled entry.
+  - [[https://orgmode.org/manual/Repeated-tasks.html][Repeat tasks]] by a repeater such as ‘+1m’ or ‘+7d’
+  in their timestamps; e.g., ~DEADLINE: <2005-10-01 Sat +1m>.~
 + =s= ⇒ save all agenda buffers; i.e., save the org-files where the agenda items live.
 + =g= ⇒ Rebuild agenda according to any changes made thus far.
 + =F= ⇒ Toggle ‘follow mode’: As you go up/down entries, you can see their
@@ -5063,12 +5052,6 @@ E.g., you can change how entries in particular headings are displayed and colour
 ** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”
 :PROPERTIES:
 :CUSTOM_ID: Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Effort estimates are for an entire task.
@@ -5380,12 +5363,6 @@ https://liveuml.com/, for the most part.
 :PROPERTIES:
 :CUSTOM_ID: Clocking-Work-Time
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Let's keep track of the time we spend working on tasks that we may have captured
 for ourselves the previous day.  Such statistics provides a good idea of how
@@ -5484,6 +5461,50 @@ name. *Woah!*
    :end:
 
   When you've gone above your estimate time, the modeline colours it red.
+
+** Habit Formation
+
+/The/ reason to use habits is that they come with a graph indicating consistency
+by colour, and the goal of the game is to have [[https://lifehacker.com/jerry-seinfelds-productivity-secret-281626][the longest possible chain]] ---no
+red days!
+
+A ‘habit’ is a usual (recurring) todo task marked as a habit:
+Use =C-c C-x p= to set the =STYLE= property to =habit= on a task to set it as a habit.
+
+#+BEGIN_SRC emacs-lisp
+;; Show habits for every day in the agenda.
+(setq org-habit-show-habits t)
+(setq org-habit-show-habits-only-for-today nil)
+
+;; This shows the ‘Seinfeld consistency’ graph closer to the habit heading.
+(setq org-habit-graph-column 90)
+
+;; In order to see the habit graphs, which I've placed rightwards, let's
+;; always open org-agenda in ‘full screen’.
+(setq org-agenda-window-setup 'only-window)
+#+END_SRC
+
+| /inch by inch anything's a cinch!/ |
+
+~!~ means today and ~⋆~ means a task has been done on that day;
+intuitively green means you're on track, yellow is warning sign of overdue,
+red is overdue, and blue is an acceptable break day.
+
+Here's an example habit from the [[https://orgmode.org/manual/Tracking-your-habits.html][Org-mode manual]], where ~.+𝒳d/𝒴d~ reads
+/perform the habit once every 𝒳 days, but never let me go 𝒴 days without doing it./
+#+begin_example org
+,** TODO Shave
+   SCHEDULED: <2020-01-08 Wed .+2d/4d>
+   :PROPERTIES:
+   :STYLE:    habit
+   :END:
+#+end_example
+/Shave every 2 days, but we can take a 3-day break; however, on the 4th day,
+gotta shave!/
+
+Remember that in the agenda view if you alter a task, say with ~t~ to mark it
+done, then you need to use ~s~ to save the underlying todo/notes files; otherwise,
+any ~g~ will revert the change in the agenda buffer.
 
 * Programming
 :PROPERTIES:
