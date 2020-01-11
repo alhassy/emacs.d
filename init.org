@@ -45,6 +45,7 @@ the bindings in ~“this”~ configuration.
 + ~C-h o~ ⇒ *What's this thing?*
 + ~C-h e~ ⇒ *What'd /Emacs/ do?*
 + ~C-h l~ ⇒ *What'd /I/ do?*
++ ~C-h ?~ ⇒ *What're the help topics?* ---gives possible completions to “C-h ⋯”.
 + “I accidentally hit a key, which one and what did it do!?” ⇒ ~C-h e~ and ~C-h l~,
   then use ~C-h o~ to get more details on the action.
   ;-)
@@ -151,6 +152,7 @@ and variables that may accomplish my goal.
     - [[#step-5-doing-the-work][Step 5: Doing the work]]
     - [[#step-6-moving-a-task-toward-completion][Step 6: Moving a task toward completion]]
     - [[#step-7-archiving-tasks][Step 7: Archiving Tasks]]
+  - [[#tag-youre-it][Tag! You're it!]]
   - [[#super-agenda][Super Agenda]]
   - [[#automating-pomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
   - [[#journaling][Journaling]]
@@ -839,7 +841,7 @@ generates the ~README~ for the associated Github repository.
      </p>
 
      <p align=\"center\">
-       <img src=\"images/emacs-birthday-present.png\" width=300 height=250/>
+       <img src=\"images/emacs-birthday-present.png\" width=250 height=250/>
      </p>
     "))
 
@@ -4609,8 +4611,11 @@ to be tackled later on.
 (define-key global-map "\C-cc" #'my/org-capture) ;; See below.
 #+end_src
 
-By default we only get a ‘tasks’ form of capture, let's add some more.
+⇒ Org capture actually lets us add /any/ type of entry to /any/ type of file!  ⇐
 
+( For now, I'm only using it to add entries to my tasks lists. )
+
+By default we only get a ‘tasks’ form of capture, let's add some more.
 #+begin_src emacs-lisp
 (cl-defun my/make/org-capture-template
    (shortcut heading &optional (no-todo nil) (description heading) (scheduled t))
@@ -4669,7 +4674,13 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
 For now I capture everything into a single file.  One would ideally keep
 separate client, project, information in its own org file.
 
-+ Looking at ~my/make/org-capture-template~, one notices that capture actually
+Rather than adding notes to particular Org headings in my =todo.org= file, I could
+defer such a choice by having only one template and have ~C-c a~ automatically use
+it. Then I could ‘refile’ tasks to their appropriate parent headings with ~w~.
+This allows us to seperate the concerns of capturing ideas from doing any form
+of processing. Something to consider.
+
++ Again: Looking at ~my/make/org-capture-template~, one notices that capture actually
   lets you add /any/ type of item to /any/ file.
 
 Let's also ensure TODO-s respect hierarchical structure.
@@ -4935,15 +4946,61 @@ Let's install some helpful views for our agenda.
 /At the end of the day, let's schedule at least 3 things that must be done the
 next day; i.e., have priority =A=./
 
+** Tag! You're it!
+
+Even when items are categorised under their own parent headings, they may be
+related in some way and that can made explicit by adding a ~:tag:~ to their
+headings; e.g., two entries both have the ~:jasim:@work:~ tags, then looking for
+the ~:@work:~ tag shows me all entries that are tagged as “at work”.
+
+            | Tags provide a cross-section of one's entries. |
+
+Tags let us find related stuff quickly, even though they're differently
+categorised.
+
+/After calling ~org-agenda~, we may select ~m~ to match for tags, or use
+~org-tags-view~ to search for tags./
+
+*What to tag?* Common tags are =:@laptop:, :@work:, :@home:= to identify the
+location where tasks take place ---Use: When I'm at a particular place, I need
+only consider tasks that apply to that place ;-) Other tags I use are =:𝑭𝑳:= to
+identify remarks or email or request from person 𝑭irstname 𝑳astname. Finally, I
+also use =:project_name:= to identify notes that may be of interest to a
+particular project, but are more appropriately categorised elsewhere ---e.g.,
+when learning about an Emacs feature, I may tag my notes with another project's
+name to consider whether that feature could be useful there.
+
+*How to tag?*
+Use ~C-c C-q~, or ~org-set-tags-command~, on a heading or just the speed key ~:~ on
+the asterisks of a heading to set the tags of an item ---as usual, with Helm we
+obtain a window of all existing tags to select from. Unfortunatley, this only
+supports having one tag; for more, you can add them in manually or …
+
+#+begin_src emacs-lisp
+(use-package helm-org) ;; Helm for org headlines and keywords completion.
+(add-to-list 'helm-completing-read-handlers-alist
+             '(org-set-tags-command . helm-org-completing-read-tags))
+
+;; Also provides: helm-org-capture-templates
+#+end_src
+
+Now ~:~ or ~C-c C-q~ will show existing tags for the current heading, press ~TAB~ to
+obtain a list of all exisiting tags, press ~C-SPC~ to select the desired tags,
+then =TAB= or =RET= to confirm the resulting tag list, and ~RET~ to finish or ~TAB~ to
+select more tags.
+
 ** Super Agenda
 :PROPERTIES:
 :CUSTOM_ID: Super-Agenda
 :END:
 
-The agenda dispatch menu, ~C-c a~, has options for displaying tasks.  One may add
-new ways to view tasks by altering the ~org-agenda-custom-commands~ variable
----e.g., above we added two, one for completed tasks and one for unscheduled
-tasks.
+Org agenda is an interactive tool for generating summary reports from Org data
+---e.g., commonly, the weekly task list is generated from todo tasks.
+
+The agenda dispatch menu, ~C-c a~, has options for displaying tasks ---e.g., ~C-c a
+m~ generates a list of entries having the same tags.  new ways to view tasks by
+altering the ~org-agenda-custom-commands~ variable ---e.g., above we added two,
+one for completed tasks and one for unscheduled tasks.
 
 # Moreover, we can overlay due dates and priorities to tasks in a non-intrusive
 # way that is easy to edit by hand.
@@ -5021,6 +5078,10 @@ pulled out of their group and placed at the top.
           ;; For everything else, nicely display their heading hierarchy list.
           (:auto-map (lambda (e) (org-format-outline-path (org-get-outline-path)))))))
 
+;; MA: No noticable effect when using org-super-agenda :/
+;;
+;; Leave new line at the end of an entry.
+;; (setq org-blank-before-new-entry '((heading . t) (plain-list-item . t)))
 #+END_SRC
 
 :OlderSetup:
@@ -5196,6 +5257,9 @@ journal entries do ~M-x calendar~.  Bindings available in the calendar-mode:
 # ] - go to next day with journal entries.
 
 *** Guided Journaling
+:PROPERTIES:
+:CUSTOM_ID: Guided-Journaling
+:END:
 
 Sometimes it can be tough to journal, but filling in a template can be a way to
 get started. Later on, we will setup [[Snippets ---Template Expansion]] which will
