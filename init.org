@@ -179,6 +179,7 @@ and variables that may accomplish my goal.
     - [[#org-mode-templates----a-reason-i-generate-templates-][Org-mode Templates ---A reason I “generate” templates ;)]]
     - [[#elisp-templates][Elisp Templates]]
     - [[#equational-templates][Equational Templates]]
+    - [[#my_-templates-to-obtain-user-information][=my_⋯= Templates to obtain User Information]]
     - [[#templates-from-other-places-in-my-init][Templates from other places in my init]]
     - [[#re-enabling-templates][Re-Enabling Templates]]
 - [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
@@ -1735,6 +1736,8 @@ Next, let's paste in some [[http://groups.google.com/group/gnu.emacs.gnus/browse
 :CUSTOM_ID: Super-Terse-Tutorial
 :END:
 
+                        ⟨ See the [[https://www.gnu.org/software/emacs/refcards/pdf/gnus-refcard.pdf][GNUS Reference Card]]! ⟩
+
 In gnus, by default items you've looked at disappear ---i.e., are archived.
 They can still be viewed in, say, your online browser if you like.
 In the ~Group~ view, ~R~ resets gnus, possibly retriving mail or alterations
@@ -1818,7 +1821,7 @@ do changes take effect on articles ---such as moves, reads, deletes, etc.
 
 Sometime mail contains useful reference material or may be a self-contained
 task. Rather than using our inbox as a todo-list, we can copy the content of the
-mail and store it away in our todos/notes files.  [[#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing]] below, is a way to,
+mail and store it away in our todos/notes files.  [[#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing]], below, is a way to,
 well, capture ideas and notes /without/ interrupting the current workflow.  Below,
 in the section on capturing, we define ~my/org-capture-buffer~ which quickly
 captures the contents of the current buffer as notes to store away.  We use that
@@ -6460,12 +6463,6 @@ one below and usually beat around the bush by using ~(loop for ⋯ do ⋯)~, whi
 :PROPERTIES:
 :CUSTOM_ID: Equational-Templates
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 To show ~ℒ = ℛ~, one starts at the complicated side, say /ℒ/, then, with the aim of
 simplification, tries to end at the simpler side, /𝓡/.  Along the way, one
@@ -6512,6 +6509,35 @@ One expands ~eqn_begin~, tabs to fill in the three main locations, then
 #+end_src
 
 Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1 }}@@~.
+
+*** =my_⋯= Templates to obtain User Information
+
+Let's add templates for links to common user information ^_^
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** my_name: User's name
+`user-full-name`
+
+,** my_email: User's email address
+`user-mail-address`
+
+,** my_github: User's Github repoistory link
+https://github.com/alhassy/
+
+,** my_emacsdrepo: User's version controlled Emacs init file
+https://github.com/alhassy/emacs.d
+
+,** my_blog: User's blog website
+https://alhassy.github.io/
+
+,** my_webpage: User's organisation website
+http://www.cas.mcmaster.ca/~alhassm/
+
+,** my_twitter: User's Twitter profile
+https://twitter.com/musa314
+#+end_src
+
+It may be useful to also have Org-link variants of these …
 
 *** Templates from other places in my init
 

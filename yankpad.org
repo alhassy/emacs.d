@@ -2,6 +2,25 @@
 
 * Default                                           :global:
 
+** my_name: User's name
+`user-full-name`
+
+** my_email: User's email address
+`user-mail-address`
+
+** my_github: User's Github repoistory link
+https://github.com/alhassy/
+
+** my_emacsdrepo: User's version controlled Emacs init file
+https://github.com/alhassy/emacs.d
+
+** my_blog: User's blog website
+https://alhassy.github.io/
+
+** my_webpage: User's organisation website
+http://www.cas.mcmaster.ca/~alhassm/
+** my_twitter: User's Twitter profile
+https://twitter.com/musa314
 ** journal_guided: Introspection & Growth
   I'm writing from ${1:location}.
 
