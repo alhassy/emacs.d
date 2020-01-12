@@ -827,33 +827,56 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   :config
   (global-company-mode 1)
   (setq ;; Only 2 letters required for completion to activate.
-        company-minimum-prefix-length 2
+   company-minimum-prefix-length 2
 
-        ;; Search other buffers for compleition candidates
-        company-dabbrev-other-buffers t
-        company-dabbrev-code-other-buffers t
+   ;; Search other buffers for compleition candidates
+   company-dabbrev-other-buffers t
+   company-dabbrev-code-other-buffers t
 
-        ;; Allow (lengthy) numbers to be eligible for completion.
-        company-complete-number t
+   ;; Show candidates according to importance, then case, then in-buffer frequency
+   company-transformers '(company-sort-by-backend-importance
+                          company-sort-prefer-same-case-prefix
+                          company-sort-by-occurrence)
 
-        ;; M-⟪num⟫ to select an option according to its number.
-        company-show-numbers t
+   ;; Flushright any annotations for a compleition;
+   ;; e.g., the description of what a snippet template word expands into.
+   company-tooltip-align-annotations t
 
-        ;; Edge of the completion list cycles around.
-        company-selection-wrap-around t
+   ;; Allow (lengthy) numbers to be eligible for completion.
+   company-complete-number t
 
-        ;; Do not downcase completions by default.
-        company-dabbrev-downcase nil
+   ;; M-⟪num⟫ to select an option according to its number.
+   company-show-numbers t
 
-        ;; Even if I write something with the ‘wrong’ case,
-        ;; provide the ‘correct’ casing.
-        company-dabbrev-ignore-case t
+   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
+   company-tooltip-limit 10
 
-        ;; Immediately activate completion.
-        company-idle-delay 0))
+   ;; Edge of the completion list cycles around.
+   company-selection-wrap-around t
 
-;; It's so fast that we don't need a key-binding!
-;; (global-set-key (kbd "C-c h") 'company-complete)
+   ;; Do not downcase completions by default.
+   company-dabbrev-downcase nil
+
+   ;; Even if I write something with the ‘wrong’ case,
+   ;; provide the ‘correct’ casing.
+   company-dabbrev-ignore-case nil
+
+   ;; Immediately activate completion.
+   company-idle-delay 0)
+
+  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
+  ;; Override all minor modes that use C-/; bind-key* is discussed below.
+  (bind-key* "C-/" #'company-manual-begin)
+
+  ;; Bindings when the company list is active.
+  :bind (:map company-active-map
+              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
+              ("<tab>" . company-complete-selection)
+              ;; Use C-n,p for navigation in addition to M-n,p
+              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
+              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
+
+;; It's so fast that we don't need a key-binding to start it!
 ;; Word Completion:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Word Completion][Word Completion:2]]
@@ -1386,10 +1409,13 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (defvar my/prettify-alist nil
   "Musa's personal prettifications.")
 
-(loop for pair in '(("<=" . ?≤) (">=" . ?≥)
-                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+(loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
                     ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                    ("#+end_example"   . ?⇐))                ;; ⇐
+                    ("#+end_example"   . ?⇐)                 ;; ⇐
+                    ;; Actuall beautifications
+                    ("<=" . ?≤) (">=" . ?≥)
+                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                    ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
 
       do (push pair my/prettify-alist))
 
@@ -1889,10 +1915,11 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Highlight defined Lisp symbols:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Eldoc for Lisp and Haskell][Eldoc for Lisp and Haskell:1]]
-(add-hook 'emacs-lisp-mode-hook       'turn-on-eldoc-mode)
-(add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
-(add-hook 'haskell-mode-hook          'turn-on-haskell-doc-mode)
-(add-hook 'haskell-mode-hook          'turn-on-haskell-indent)
+(use-package eldoc
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+        (lisp-interaction-mode . turn-on-eldoc-mode)
+        (haskell-mode . turn-on-haskell-doc-mode)
+        (haskell-mode . turn-on-haskell-indent))
 ;; Eldoc for Lisp and Haskell:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Jumping to definitions & references][Jumping to definitions & references:1]]

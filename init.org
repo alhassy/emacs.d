@@ -2,8 +2,8 @@
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 #
-# ≥ 7900 line org file, with auto-generated TOC.
-
+# ≥ 8000 line org file, with auto-generated TOC.
+#
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
 #+EMAIL: alhassy@gmail.com
@@ -4097,12 +4097,6 @@ the current heading stuck at the top of the window.
 :PROPERTIES:
 :CUSTOM_ID: Making-Block-Delimiters-Less-Intrusive
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Let us render Org-mode's ~#+begin_src~ and ~#+end_src~ less obtrusively by, e.g.,
 having the former render as a pencil marker ✎ and the latter as a tombstone □
@@ -4206,10 +4200,13 @@ have busybodied headers which his setup disguises as ‘≡’.
 (defvar my/prettify-alist nil
   "Musa's personal prettifications.")
 
-(loop for pair in '(("<=" . ?≤) (">=" . ?≥)
-                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+(loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
                     ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                    ("#+end_example"   . ?⇐))                ;; ⇐
+                    ("#+end_example"   . ?⇐)                 ;; ⇐
+                    ;; Actuall beautifications
+                    ("<=" . ?≤) (">=" . ?≥)
+                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                    ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
 
       do (push pair my/prettify-alist))
 
@@ -4239,9 +4236,7 @@ A nice sanity:
 :PROPERTIES:
 :CUSTOM_ID: Org-mode's-𝒳-Block-Expansions
 :END:
-:PROPERTIES:
 
-:END:
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for
 source blocks or ~<q~ for quote blocks.  It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode
 structure template expansion necessitate explicitly loading ~org-tempo~.

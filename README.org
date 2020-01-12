@@ -1,4 +1,4 @@
-# Created 2020-01-11 Sat 22:15
+# Created 2020-01-12 Sun 06:20
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
@@ -176,6 +176,7 @@ and variables that may accomplish my goal.
     - [[#org-mode-templates----a-reason-i-generate-templates-][Org-mode Templates ---A reason I “generate” templates ;)]]
     - [[#elisp-templates][Elisp Templates]]
     - [[#equational-templates][Equational Templates]]
+    - [[#my_-templates-to-obtain-user-information][=my_⋯= Templates to obtain User Information]]
     - [[#templates-from-other-places-in-my-init][Templates from other places in my init]]
     - [[#re-enabling-templates][Re-Enabling Templates]]
 - [[#helpful-utilities--shortcuts][Helpful Utilities & Shortcuts]]
@@ -1417,6 +1418,8 @@ Next, let's paste in some [[http://groups.google.com/group/gnu.emacs.gnus/browse
 #+end_src
 
 *** Super Terse Tutorial
+⟨ See the [[https://www.gnu.org/software/emacs/refcards/pdf/gnus-refcard.pdf][GNUS Reference Card]]! ⟩
+
 In gnus, by default items you've looked at disappear ---i.e., are archived.
 They can still be viewed in, say, your online browser if you like.
 In the ~Group~ view, ~R~ resets gnus, possibly retriving mail or alterations
@@ -1496,7 +1499,7 @@ do changes take effect on articles ---such as moves, reads, deletes, etc.
 *** Capturing Mail as Todo/Notes
 Sometime mail contains useful reference material or may be a self-contained
 task. Rather than using our inbox as a todo-list, we can copy the content of the
-mail and store it away in our todos/notes files.  [[#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing]] below, is a way to,
+mail and store it away in our todos/notes files.  [[#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing]], below, is a way to,
 well, capture ideas and notes /without/ interrupting the current workflow.  Below,
 in the section on capturing, we define ~my/org-capture-buffer~ which quickly
 captures the contents of the current buffer as notes to store away.  We use that
@@ -2292,38 +2295,64 @@ and so I need only type partial words then tab to get the full word!
   :config
   (global-company-mode 1)
   (setq ;; Only 2 letters required for completion to activate.
-        company-minimum-prefix-length 2
+   company-minimum-prefix-length 2
 
-        ;; Search other buffers for compleition candidates
-        company-dabbrev-other-buffers t
-        company-dabbrev-code-other-buffers t
+   ;; Search other buffers for compleition candidates
+   company-dabbrev-other-buffers t
+   company-dabbrev-code-other-buffers t
 
-        ;; Allow (lengthy) numbers to be eligible for completion.
-        company-complete-number t
+   ;; Show candidates according to importance, then case, then in-buffer frequency
+   company-transformers '(company-sort-by-backend-importance
+                          company-sort-prefer-same-case-prefix
+                          company-sort-by-occurrence)
 
-        ;; M-⟪num⟫ to select an option according to its number.
-        company-show-numbers t
+   ;; Flushright any annotations for a compleition;
+   ;; e.g., the description of what a snippet template word expands into.
+   company-tooltip-align-annotations t
 
-        ;; Edge of the completion list cycles around.
-        company-selection-wrap-around t
+   ;; Allow (lengthy) numbers to be eligible for completion.
+   company-complete-number t
 
-        ;; Do not downcase completions by default.
-        company-dabbrev-downcase nil
+   ;; M-⟪num⟫ to select an option according to its number.
+   company-show-numbers t
 
-        ;; Even if I write something with the ‘wrong’ case,
-        ;; provide the ‘correct’ casing.
-        company-dabbrev-ignore-case t
+   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
+   company-tooltip-limit 10
 
-        ;; Immediately activate completion.
-        company-idle-delay 0))
+   ;; Edge of the completion list cycles around.
+   company-selection-wrap-around t
 
-;; It's so fast that we don't need a key-binding!
-;; (global-set-key (kbd "C-c h") 'company-complete)
+   ;; Do not downcase completions by default.
+   company-dabbrev-downcase nil
+
+   ;; Even if I write something with the ‘wrong’ case,
+   ;; provide the ‘correct’ casing.
+   company-dabbrev-ignore-case nil
+
+   ;; Immediately activate completion.
+   company-idle-delay 0)
+
+  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
+  ;; Override all minor modes that use C-/; bind-key* is discussed below.
+  (bind-key* "C-/" #'company-manual-begin)
+
+  ;; Bindings when the company list is active.
+  :bind (:map company-active-map
+              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
+              ("<tab>" . company-complete-selection)
+              ;; Use C-n,p for navigation in addition to M-n,p
+              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
+              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
+
+;; It's so fast that we don't need a key-binding to start it!
 #+end_src
-Note that ~M-/~ goes through a sequence of completions.  Besides the
-arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to navigate the options. Note
-that [[https://github.com/company-mode/company-mode/issues/360][by default]] company mode does not support completion for phrases containing
-hyphens ---this can be altered, if desired.
+Note that ~M-/~ goes through a sequence of completions ---and ~C-/~ manually begins
+company mode at point.  Besides the arrow keys, we can also use ~M-~ with ~n, p~ to
+navigate the options /or/ use ~C-s~ to search the list of suggestions.
+
+- Company backends are available as separate packages.
+- Note that [[https://github.com/company-mode/company-mode/issues/360][by default]] company mode does not support completion for phrases
+  containing hyphens ---this can be altered, if desired.
 
 Besides boring word completion, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
 #+begin_src emacs-lisp
@@ -3216,10 +3245,13 @@ have busybodied headers which his setup disguises as ‘≡’.
 (defvar my/prettify-alist nil
   "Musa's personal prettifications.")
 
-(loop for pair in '(("<=" . ?≤) (">=" . ?≥)
-                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+(loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
                     ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                    ("#+end_example"   . ?⇐))                ;; ⇐
+                    ("#+end_example"   . ?⇐)                 ;; ⇐
+                    ;; Actuall beautifications
+                    ("<=" . ?≤) (">=" . ?≥)
+                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                    ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
 
       do (push pair my/prettify-alist))
 
@@ -4519,21 +4551,21 @@ Super helpful in making my Emacs configuration: If a name is not highlighted,
 then I've misspelled it or it doesn't exist! :smile:
 
 ** Eldoc for Lisp and Haskell
-In =emacs-lisp-mode= we can enable =eldoc-mode= to display information
-about a function or a variable in the echo area. Likewise for Haskell.
+In =emacs-lisp-mode= we can enable =eldoc-mode= ---“Elisp Live Documentation”--- to
+display information about a function or a variable in the echo area. Likewise
+for Haskell.
 
 #+begin_src emacs-lisp
-(add-hook 'emacs-lisp-mode-hook       'turn-on-eldoc-mode)
-(add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
-(add-hook 'haskell-mode-hook          'turn-on-haskell-doc-mode)
-(add-hook 'haskell-mode-hook          'turn-on-haskell-indent)
+(use-package eldoc
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+        (lisp-interaction-mode . turn-on-eldoc-mode)
+        (haskell-mode . turn-on-haskell-doc-mode)
+        (haskell-mode . turn-on-haskell-indent))
 #+end_src
 
 The less casual Haskeller would likely want to use [[https://haskell-lang.org/intero][intero]] to obtain
 more support; e.g., obtain suggestions from GHC about redundant imports
 or type signatures.
-
-The more
 
 ** Jumping to definitions & references
 Out-of-the-box Emacs has ‘xref’ utilities ~M-.~ and ~C-u M-.~ to [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html#Xref][Find Identifier
@@ -5142,6 +5174,35 @@ $0
 
 One expands ~eqn_begin~, tabs to fill in the three main locations, then
 /immediately/ types ~eqn_step~ to produce a new step in a calculational proof.
+
+*** =my_⋯= Templates to obtain User Information
+
+Let's add templates for links to common user information ^_^
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** my_name: User's name
+`user-full-name`
+
+,** my_email: User's email address
+`user-mail-address`
+
+,** my_github: User's Github repoistory link
+https://github.com/alhassy/
+
+,** my_emacsdrepo: User's version controlled Emacs init file
+https://github.com/alhassy/emacs.d
+
+,** my_blog: User's blog website
+https://alhassy.github.io/
+
+,** my_webpage: User's organisation website
+http://www.cas.mcmaster.ca/~alhassm/
+
+,** my_twitter: User's Twitter profile
+https://twitter.com/musa314
+#+end_src
+
+It may be useful to also have Org-link variants of these …
 
 *** Templates from other places in my init
 
