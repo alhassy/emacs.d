@@ -2788,9 +2788,6 @@ I use Org-mode often, so that's how I want things to appear.
 :PROPERTIES:
 :CUSTOM_ID: Prose
 :END:
-:PROPERTIES:
-
-:END:
 
 Emacs can be setup with a spellchecker and other expected features of a word processing tool
 ---however these features apply Emacs-wide since nearly everything is
@@ -2848,12 +2845,7 @@ thereby making it look better. With a prefix argument, it justifies it as well
 :PROPERTIES:
 :CUSTOM_ID: Word-Completion
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Let's enable [[https://company-mode.github.io/][“complete anything” mode]] ---it ought to start in half a second and
 only need two characters to get going, which means word suggestions are provided
 and so I need only type partial words then tab to get the full word!
@@ -2863,38 +2855,64 @@ and so I need only type partial words then tab to get the full word!
   :config
   (global-company-mode 1)
   (setq ;; Only 2 letters required for completion to activate.
-        company-minimum-prefix-length 2
+   company-minimum-prefix-length 2
 
-        ;; Search other buffers for compleition candidates
-        company-dabbrev-other-buffers t
-        company-dabbrev-code-other-buffers t
+   ;; Search other buffers for compleition candidates
+   company-dabbrev-other-buffers t
+   company-dabbrev-code-other-buffers t
 
-        ;; Allow (lengthy) numbers to be eligible for completion.
-        company-complete-number t
+   ;; Show candidates according to importance, then case, then in-buffer frequency
+   company-transformers '(company-sort-by-backend-importance
+                          company-sort-prefer-same-case-prefix
+                          company-sort-by-occurrence)
 
-        ;; M-⟪num⟫ to select an option according to its number.
-        company-show-numbers t
+   ;; Flushright any annotations for a compleition;
+   ;; e.g., the description of what a snippet template word expands into.
+   company-tooltip-align-annotations t
 
-        ;; Edge of the completion list cycles around.
-        company-selection-wrap-around t
+   ;; Allow (lengthy) numbers to be eligible for completion.
+   company-complete-number t
 
-        ;; Do not downcase completions by default.
-        company-dabbrev-downcase nil
+   ;; M-⟪num⟫ to select an option according to its number.
+   company-show-numbers t
 
-        ;; Even if I write something with the ‘wrong’ case,
-        ;; provide the ‘correct’ casing.
-        company-dabbrev-ignore-case t
+   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
+   company-tooltip-limit 10
 
-        ;; Immediately activate completion.
-        company-idle-delay 0))
+   ;; Edge of the completion list cycles around.
+   company-selection-wrap-around t
 
-;; It's so fast that we don't need a key-binding!
-;; (global-set-key (kbd "C-c h") 'company-complete)
+   ;; Do not downcase completions by default.
+   company-dabbrev-downcase nil
+
+   ;; Even if I write something with the ‘wrong’ case,
+   ;; provide the ‘correct’ casing.
+   company-dabbrev-ignore-case nil
+
+   ;; Immediately activate completion.
+   company-idle-delay 0)
+
+  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
+  ;; Override all minor modes that use C-/; bind-key* is discussed below.
+  (bind-key* "C-/" #'company-manual-begin)
+
+  ;; Bindings when the company list is active.
+  :bind (:map company-active-map
+              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
+              ("<tab>" . company-complete-selection)
+              ;; Use C-n,p for navigation in addition to M-n,p
+              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
+              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
+
+;; It's so fast that we don't need a key-binding to start it!
 #+end_src
-Note that ~M-/~ goes through a sequence of completions.  Besides the
-arrow keys, we can also use ~C-~ or ~M-~ with ~n, p~ to navigate the options. Note
-that [[https://github.com/company-mode/company-mode/issues/360][by default]] company mode does not support completion for phrases containing
-hyphens ---this can be altered, if desired.
+Note that ~M-/~ goes through a sequence of completions ---and ~C-/~ manually begins
+company mode at point.  Besides the arrow keys, we can also use ~M-~ with ~n, p~ to
+navigate the options /or/ use ~C-s~ to search the list of suggestions.
+
++ Company backends are available as separate packages.
++ Note that [[https://github.com/company-mode/company-mode/issues/360][by default]] company mode does not support completion for phrases
+  containing hyphens ---this can be altered, if desired.
 
 Besides boring word completion, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
 #+begin_src emacs-lisp
@@ -3569,12 +3587,6 @@ Also …
 ** Letter-based Navigation
 :PROPERTIES:
 :CUSTOM_ID: Letter-based-Navigation
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 At a glance of possible positions, across windows,
 and a key to jump there is a feature provided to us by [[https://github.com/winterTTr/ace-jump-mode/wiki/AceJump-FAQ][ace-jump]]
