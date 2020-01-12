@@ -5746,27 +5746,22 @@ then I've misspelled it or it doesn't exist! :smile:
 :PROPERTIES:
 :CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
-In =emacs-lisp-mode= we can enable =eldoc-mode= to display information
-about a function or a variable in the echo area. Likewise for Haskell.
+In =emacs-lisp-mode= we can enable =eldoc-mode= ---“Elisp Live Documentation”--- to
+display information about a function or a variable in the echo area. Likewise
+for Haskell.
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'emacs-lisp-mode-hook       'turn-on-eldoc-mode)
-(add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
-(add-hook 'haskell-mode-hook          'turn-on-haskell-doc-mode)
-(add-hook 'haskell-mode-hook          'turn-on-haskell-indent)
+(use-package eldoc
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+        (lisp-interaction-mode . turn-on-eldoc-mode)
+        (haskell-mode . turn-on-haskell-doc-mode)
+        (haskell-mode . turn-on-haskell-indent))
 #+END_SRC
 
 The less casual Haskeller would likely want to use [[https://haskell-lang.org/intero][intero]] to obtain
 more support; e.g., obtain suggestions from GHC about redundant imports
 or type signatures.
-
-The more
 
 ** Jumping to definitions & references
 :PROPERTIES:
