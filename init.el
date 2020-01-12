@@ -107,6 +107,15 @@
   ;; changes being made to your file live!
 ;; =use-package= ---The start of =init.el=:8 ends here
 
+;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:9]]
+(defun my/git-commit-reminder ()
+  (insert "\n\n# The commit subject line ought to finish the phrase:
+# “If applied, this commit will ⟪your subject line here⟫.” ")
+  (beginning-of-buffer))
+
+(add-hook 'git-commit-setup-hook 'my/git-commit-reminder)
+;; =use-package= ---The start of =init.el=:9 ends here
+
 ;; [[file:~/.emacs.d/init.org::enable making init and readme][enable making init and readme]]
 (defun my/make-init-el-and-README ()
   "Tangle an el and a github README from my init.org."
@@ -1028,6 +1037,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
            ("ceil"   "⌈⌉")
            ("raise"  "⌈⌉")
            ("rad"    "⌈⌉")
+           ;; Arrows
+           ("<=" "⇐")
         ;; more (key value) pairs here
         )
       do (add-to-list 'agda-input-user-translations item))
@@ -1193,8 +1204,20 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Executing code from ~src~ blocks:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Manipulating Sections][Manipulating Sections:1]]
-(setq org-use-speed-commands t)
+;; Refile anywhere 1-level deep in current file,
+;; or anywhere in my agenda files 2-levels deep
+(setq org-refile-targets '((nil . (:maxlevel . 1))))
+      ;; (org-agenda-files . (:maxlevel . 2))  ;; ← Not useful right now.
+
+; Use full outline paths for refile targets - we file directly with IDO
+;; When refiling, using Helm, show me the hierarchy paths
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-use-outline-path 'file-path)
 ;; Manipulating Sections:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Manipulating Sections][Manipulating Sections:2]]
+(setq org-use-speed-commands t)
+;; Manipulating Sections:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Seamless Navigation Between Source Blocks][Seamless Navigation Between Source Blocks:1]]
 ;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
@@ -1399,7 +1422,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (use-package biblio)
 ;; Working with Citations:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Coloured LaTeX using Minted][Coloured LaTeX using Minted:1]]
+;; [[file:~/.emacs.d/init.org::*Bibliography & Coloured LaTeX using Minted][Bibliography & Coloured LaTeX using Minted:1]]
 (setq org-latex-listings 'minted
       org-latex-packages-alist '(("" "minted"))
       org-latex-pdf-process
@@ -1407,7 +1430,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
         "biber %b"
         "pdflatex -shell-escape -output-directory %o %f"
         "pdflatex -shell-escape -output-directory %o %f"))
-;; Coloured LaTeX using Minted:1 ends here
+;; Bibliography & Coloured LaTeX using Minted:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors:1]]
 (defun my/ensure-headline-ids (&rest _)
@@ -1664,6 +1687,18 @@ C-u C-u C-c c ⇒ Goto last note stored."
               (org-agenda-overriding-header "Unscheduled TODO entries: "))))
 ;; Step 7: Archiving Tasks:4 ends here
 
+;; [[file:~/.emacs.d/init.org::*Tag! You're it!][Tag! You're it!:1]]
+ (setq org-tags-column -77) ;; the default
+;; Tag! You're it!:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Tag! You're it!][Tag! You're it!:2]]
+(use-package helm-org) ;; Helm for org headlines and keywords completion.
+(add-to-list 'helm-completing-read-handlers-alist
+             '(org-set-tags-command . helm-org-completing-read-tags))
+
+;; Also provides: helm-org-capture-templates
+;; Tag! You're it!:2 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Super Agenda][Super Agenda:1]]
 ;; List of all the files & directories where todo items can be found. Only one
 ;; for now: My default notes file.
@@ -1673,7 +1708,9 @@ C-u C-u C-c c ⇒ Goto last note stored."
 (setq org-agenda-tags-column -10)
 
 ;; How many days ahead the default agenda view should look
-(setq org-agenda-span 'week) ;; May be any number.
+(setq org-agenda-span 'day)
+;; May be any number; the larger the slower it takes to generate the view.
+;; One day is thus the fastest ^_^
 
 ;; How many days early a deadline item will begin showing up in your agenda list.
 (setq org-deadline-warning-days 14)
@@ -1702,6 +1739,11 @@ C-u C-u C-c c ⇒ Goto last note stored."
           (:name "Personal" :habit t)
           ;; For everything else, nicely display their heading hierarchy list.
           (:auto-map (lambda (e) (org-format-outline-path (org-get-outline-path)))))))
+
+;; MA: No noticable effect when using org-super-agenda :/
+;;
+;; Leave new line at the end of an entry.
+;; (setq org-blank-before-new-entry '((heading . t) (plain-list-item . t)))
 ;; Super Agenda:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Automating \[\[https://en.wikipedia.org/wiki/Pomodoro_Technique\]\[Pomodoro\]\] ---“Commit for only 25 minutes!”][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1]]
@@ -1773,7 +1815,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Tell emacs where it is.
 ;; E.g., (async-shell-command "find / -name plantuml.jar")
 (setq org-plantuml-jar-path
-      (expand-file-name "/usr/local/Cellar/plantuml/1.2019.13/libexec/plantuml.jar"))
+      "/usr/local/Cellar/plantuml/1.2019.13/libexec/plantuml.jar")
 
 ;; Enable C-c C-c to generate diagrams from plantuml src blocks.
 (add-to-list 'org-babel-load-languages '(plantuml . t) )
@@ -1819,8 +1861,13 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Clocking Work Time:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Estimates versus actual time][Estimates versus actual time:1]]
-(setq org-clock-sound "~/.emacs.d/school-bell.wav")
+ (push '("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
+       org-global-properties)
 ;; Estimates versus actual time:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Estimates versus actual time][Estimates versus actual time:2]]
+(setq org-clock-sound "~/.emacs.d/school-bell.wav")
+;; Estimates versus actual time:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Habit Formation][Habit Formation:1]]
 ;; Show habits for every day in the agenda.
@@ -1928,15 +1975,24 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
   ;; I want todo-words highlighted in prose, not just in code fragements.
-  :hook (org-mode . hl-todo-mode)
+  ;; :hook (org-mode . hl-todo-mode)
   :config
-    (global-hl-todo-mode)   ;; Enable it everywhere.
     ;; Adding new keywords
     (loop for kw in '("TEST" "MA" "WK" "JC")
-          do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
+          do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3")))
+    (global-hl-todo-mode))   ;; Enable it everywhere.
 ;; Highlighting TODO-s & Showing them in Magit:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:2]]
+(defun add-watchwords () "Add TODO: words to font-lock keywords."
+  (font-lock-add-keywords nil
+                          '(("\\(\\<TODO\\|\\<FIXME\\|\\<HACK\\|@.+\\):" 1
+                             font-lock-warning-face t))))
+
+(add-hook 'prog-mode-hook #'add-watchwords)
+;; Highlighting TODO-s & Showing them in Magit:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:3]]
 ;; MA: The todo keywords work in code too!
 (use-package magit-todos
   :after magit
@@ -1948,12 +2004,12 @@ C-u C-u C-c c ⇒ Goto last note stored."
   ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
   (setq magit-todos-exclude-globs '("*.html"))
   (magit-todos-mode))
-;; Highlighting TODO-s & Showing them in Magit:2 ends here
+;; Highlighting TODO-s & Showing them in Magit:3 ends here
 
-;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:3]]
+;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:4]]
 (defhydra hydra-version-control (global-map "C-x v")
   ("t" helm-magit-todos "Show TODOs lists for this repo."))
-;; Highlighting TODO-s & Showing them in Magit:3 ends here
+;; Highlighting TODO-s & Showing them in Magit:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*On the fly syntax checking][On the fly syntax checking:1]]
 (use-package flycheck
@@ -1979,11 +2035,13 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:1]]
-(use-package origami)
+(use-package origami
+  :hook (agda2-mode lisp-mode c-mode))
+;; In Lisp languages, by default only function definitions are folded.
 ;; Text Folding with Origami-mode:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:2]]
-(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
+(push '(agda2-mode . (origami-markers-parser "{-" "-}"))
       origami-parser-alist)
 ;; Text Folding with Origami-mode:2 ends here
 

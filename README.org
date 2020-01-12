@@ -1,4 +1,4 @@
-# Created 2020-01-11 Sat 12:57
+# Created 2020-01-11 Sat 22:15
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
@@ -134,7 +134,7 @@ and variables that may accomplish my goal.
   - [[#org-modes-𝒳-block-expansions][Org-mode's ~<𝒳~ Block Expansions]]
 - [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
   - [[#working-with-citations][Working with Citations]]
-  - [[#coloured-latex-using-minted][Coloured LaTeX using Minted]]
+  - [[#bibliography--coloured-latex-using-minted][Bibliography & Coloured LaTeX using Minted]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
@@ -680,6 +680,18 @@ Let's activate it now, after ~use-package~ has been setup.
 #+begin_src emacs-lisp :noweb yes
   <<undo-tree-setup>>
 #+end_src
+
+Finally, let's try our best to have a [[https://chris.beams.io/posts/git-commit/][useful & consistent commit log]]:
+#+begin_src emacs-lisp
+(defun my/git-commit-reminder ()
+  (insert "\n\n# The commit subject line ought to finish the phrase:
+# “If applied, this commit will ⟪your subject line here⟫.” ")
+  (beginning-of-buffer))
+
+(add-hook 'git-commit-setup-hook 'my/git-commit-reminder)
+#+end_src
+
+Super neat stuff!
 
 ** =README= ---From =init.org= to =init.el=
 Rather than manually extracting the Lisp code from this literate document each
@@ -2676,6 +2688,8 @@ Better yet, as a loop:
            ("ceil"   "⌈⌉")
            ("raise"  "⌈⌉")
            ("rad"    "⌈⌉")
+           ;; Arrows
+           ("<=" "⇐")
         ;; more (key value) pairs here
         )
       do (add-to-list 'agda-input-user-translations item))
@@ -2706,8 +2720,6 @@ Finally let's effect such translations.
 ;; activate translations
 (agda-input-setup)
 #+end_src
-
-#+results:
 
 Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs unicode input]] could be approximated using
 ~abbrev-mode~.
@@ -2994,22 +3006,40 @@ controls, such as:
 - ~I/O~ clock In/Out to the task defined by the current heading.
   - Keep track of your work times!
   - ~v~ view agenda.
-- ~u~ for jumping upwards to the parent heading.
 - ~c~ for cycling structure below current heading, or ~C~ for cycling global structure.
 - ~i~ insert a new same-level heading below current heading.
-- ~w~ refile current heading; options list pops-up to select which heading to move it to. Neato!
-- ~t~ cycle through the available TODO states.
+- ~w~ refile current heading; options list pops-up to select which heading to move
+  it to. Neato!
+  - =g= to go to another heading, without refiling anything.
+
+  #+begin_src emacs-lisp
+  ;; Refile anywhere 1-level deep in current file,
+  ;; or anywhere in my agenda files 2-levels deep
+  (setq org-refile-targets '((nil . (:maxlevel . 1))))
+        ;; (org-agenda-files . (:maxlevel . 2))  ;; ← Not useful right now.
+
+  ; Use full outline paths for refile targets - we file directly with IDO
+  ;; When refiling, using Helm, show me the hierarchy paths
+  (setq org-outline-path-complete-in-steps nil)
+  (setq org-refile-use-outline-path 'file-path)
+  #+end_src
+
+- ~t/,/:/e~ to add a TODO state, priority level, tag, or effort estimate
 - ~^~ sort children of current subtree; brings up a list of sorting options.
 - ~n/p~ for next/previous /visible/ heading.
 - ~f/b~ for jumping forward/backward to the next/previous /same-level/ heading.
+- ~u~ for going to upwards to parent heading
 - ~D/U~ move a heading down/up.
 - ~L/R~ recursively promote (move leftwards) or demote (more rightwards) a heading.
-- ~1,2,3~ to mark a heading with priority, highest to lowest.
+- ~1/2/3~ to mark a heading with priority, highest to lowest.
+- ~k/@/a~ to kill or mark or archive the current subtree
+- ~o~ to open a link mentioned in the subtree then go to the link; a pop-up of
+  links appears.
 
 We can add our own speed keys by altering the ~org-speed-commands-user~
 association list variable.
 
-Moreover, ~?~ to see a complete list of keys available.
+⇒ Moreover, ~?~ to see a complete list of keys available. ⇐
 #+begin_src emacs-lisp
 (setq org-use-speed-commands t)
 #+end_src
@@ -3078,6 +3108,7 @@ this, then refile instead of copy-pasting.
 #+end_src
 
 ** Hiding Emphasise Markers & Inlining Images
+Let's make some things prettier than they appear by default.
 #+begin_src emacs-lisp
 ;; org-mode math is now highlighted ;-)
 (setq org-highlight-latex-and-related '(latex))
@@ -3089,6 +3120,9 @@ this, then refile instead of copy-pasting.
 ;; to have \alpha, \to and others display as utf8
 ;; http://orgmode.org/manual/Special-symbols.html
 #+end_src
+Org pretty entities seems rather impressive ---=M-x org-entities-help= to see all
+possibilities, or add your own. I'm already using the Agda input method, so I
+wont use Org's ---Agda's gives me a tiny menu narrowing possibilities as I type.
 
 The following is now disabled ---it makes my system slower than I'd like.
 #+begin_src emacs-lisp :tangle no
@@ -3268,9 +3302,10 @@ Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][o
 This is an Org-mode application since the citations have tooltips and export
 nicely to LaTeX & HTML via the Org-mode exporter.
 
-** Coloured LaTeX using Minted
-Execute the following for bib ref as well as minted Org-mode uses the
-Minted package for source code highlighting in PDF/LaTeX ---which in
+** Bibliography & Coloured LaTeX using Minted
+
+Execute the following for bibliography references as well as minted Org-mode
+uses the Minted package for source code highlighting in PDF/LaTeX ---which in
 turn requires the pygmentize system tool.
 #+begin_src emacs-lisp
 (setq org-latex-listings 'minted
@@ -3515,7 +3550,8 @@ to be tackled later on.
 (define-key global-map "\C-cc" #'my/org-capture) ;; See below.
 #+end_src
 
-⇒ Org capture actually lets us add /any/ type of entry to /any/ type of file!  ⇐
+⇒ Org capture actually lets us add /any/ type of entry, ‘programmable template’,
+to /any/ type of file!  ⇐
 
 ( For now, I'm only using it to add entries to my tasks lists. )
 
@@ -3850,6 +3886,14 @@ when learning about an Emacs feature, I may tag my notes with another project's
 name to consider whether that feature could be useful there.
 
 *How to tag?*
+
+You can just add a ~:tag₁:⋯:tagₙ:~ after a heading. If you press space, before the
+tags, then they are automatically indented flushright to column 77; postive
+numbers do not flushright but use exact column number.
+#+begin_src emacs-lisp
+ (setq org-tags-column -77) ;; the default
+#+end_src
+
 Use ~C-c C-q~, or ~org-set-tags-command~, on a heading or just the speed key ~:~ on
 the asterisks of a heading to set the tags of an item ---as usual, with Helm we
 obtain a window of all existing tags to select from. Unfortunatley, this only
@@ -3887,7 +3931,9 @@ Let's setup the basics of our agenda.
 (setq org-agenda-tags-column -10)
 
 ;; How many days ahead the default agenda view should look
-(setq org-agenda-span 'week) ;; May be any number.
+(setq org-agenda-span 'day)
+;; May be any number; the larger the slower it takes to generate the view.
+;; One day is thus the fastest ^_^
 
 ;; How many days early a deadline item will begin showing up in your agenda list.
 (setq org-deadline-warning-days 14)
@@ -4217,7 +4263,7 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 ;; Tell emacs where it is.
 ;; E.g., (async-shell-command "find / -name plantuml.jar")
 (setq org-plantuml-jar-path
-      (expand-file-name "/usr/local/Cellar/plantuml/1.2019.13/libexec/plantuml.jar"))
+      "/usr/local/Cellar/plantuml/1.2019.13/libexec/plantuml.jar")
 
 ;; Enable C-c C-c to generate diagrams from plantuml src blocks.
 (add-to-list 'org-babel-load-languages '(plantuml . t) )
@@ -4393,12 +4439,23 @@ Before clocking into a task, add to the properties drawer ~:Effort: 1:25~ or ~C-
 C-x C-e~, for a task that you estimate will take an hour and twenty-five minutes,
 for example. Now the modeline will mention the time elapsed alongside the task
 name. *Woah!*
-- This is also useful when you simply want to put a time limit on a task that
+
+#+begin_src emacs-lisp
+ (push '("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
+       org-global-properties)
+#+end_src
+
+#+begin_quote
+Use speed keys ~e/E~ to insert an effort estimate, with the above being provided
+  options, or to increment the current effort to the next one in the above list.
+#+end_quote
+
+This is also useful when you simply want to put a time limit on a task that
   wont be completed anytime soon, say writing a thesis or a long article, but
   you still want to work on it for an hour a day and be warned when you exceed
   such a time constraint.
 
-  When you've gone above your estimate time, the modeline colours it red.
+When you've gone above your estimate time, the modeline colours it red.
 
 ** Habit Formation
 
@@ -4607,10 +4664,10 @@ at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
   ;; I want todo-words highlighted in prose, not just in code fragements.
   ;; :hook (org-mode . hl-todo-mode)
   :config
-    (global-hl-todo-mode)   ;; Enable it everywhere.
     ;; Adding new keywords
     (loop for kw in '("TEST" "MA" "WK" "JC")
-          do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3"))))
+          do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3")))
+    (global-hl-todo-mode))   ;; Enable it everywhere.
 #+end_src
 
 Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become
@@ -4759,12 +4816,14 @@ folded up.  Let's describe how to accomplish this goal.
 
 We use a feature-full folding mode,  [[https://github.com/gregsexton/origami.el][Origami-mode]].
 #+begin_src emacs-lisp
-(use-package origami)
+(use-package origami
+  :hook (agda2-mode lisp-mode c-mode))
+;; In Lisp languages, by default only function definitions are folded.
 #+end_src
 
 With basic support for one of my languages.
 #+begin_src emacs-lisp
-(push (cons 'agda2-mode (origami-markers-parser "{-" "-}"))
+(push '(agda2-mode . (origami-markers-parser "{-" "-}"))
       origami-parser-alist)
 #+end_src
 
