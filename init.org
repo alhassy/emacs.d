@@ -59,6 +59,12 @@ and variables that may accomplish my goal.
 :CUSTOM_ID: Table-of-Contents
 :END:
 - [[#why-emacs][Why Emacs?]]
+  - [[#emacs-is-a-flexible-platform-for-developing-end-user-applications][/Emacs is a flexible platform for developing end-user applications/]]
+  - [[#the-power-of-text-manipulation][The Power of Text Manipulation]]
+  - [[#keyboard-navigation-and-alteration][Keyboard Navigation and Alteration]]
+  - [[#possibly-interesting-reads][Possibly Interesting Reads]]
+  - [[#fun-commands-to-try-out][Fun commands to try out]]
+  - [[#why-a-monolithic-configuration][Why a monolithic configuration?]]
 - [[#booting-up][Booting Up]]
   - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
     - [[#adventure-time-honey-wheres-my-init][/Adventure time!/ “Honey, where's my init?”]]
@@ -199,7 +205,7 @@ and variables that may accomplish my goal.
 :CUSTOM_ID: Why-Emacs
 :END:
 
-/Emacs is a flexible platform for developing end-user applications/ --unfortunately it is generally perceived as
+/Emacs is a flexible platform for developing end-user applications/ ---unfortunately it is generally perceived as
 merely a text editor. Some people use it specifically for one or two applications.
 
 For example, [[https://www.youtube.com/watch?v=FtieBc3KptU][writers]] use it as an interface for Org-mode and others use it as an interface for version
@@ -215,6 +221,28 @@ in approximately the same way that the noonday sun does the stars.
 It is not just bigger and brighter; it simply makes everything else vanish.
 —[[http://project.cyberpunk.ru/lib/in_the_beginning_was_the_command_line/][Neal Stephenson]], /In the beginning was the command line/
 #+end_quote
+
+  + Extensible ⇒ IDEs are generally optimised for one framework, unlike Emacs!
+      # Emacs is a live interpreter for ELisp.
+    - You can /program/ Emacs to /automate/ anything you want.
+      # Even arrow keys and characters can be customised, via self-insert-command!
+    - Hence, it's an /environment/, not just an editor.
+    - ⇒ Unified keybinding across all tools in your environment.
+
+    Users are given a high-level full-featured programming language,
+    not just a small configuration language. For the non-programmers,
+    there is Custom, a friendly point-and-click customisation interface.
+    # with support for a large portion of Common Lisp
+  + Self Documented ⇒ Simply ~M-x info-apropos~ or ~C-h d~ to search all manuals or
+    look up any function provided by Emacs!
+  + [[https://en.wikipedia.org/wiki/Emacs#History][Mature]] ⇒ tool with over 40 years of user created features
+    - Plugins for nearly everything!
+    - No distinction between built-ins and user-defined features! (Lisp!)
+    - You can alter others' code [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Advising-Functions.html][without even touching the source]].
+      * Advising functions and ‘hooking’ functionality onto events.
+  + [[https://www.gnu.org/philosophy/free-sw.html][Free software]] ⇒ It will never die!
+    - Emacs is one of the oldest open source projects still under developement.
+    # - Unlike other certain editors, Emacs' source is completely open.
 
 Of course Emacs comes with the basic features of a text editor, but it is much more;
 for example, it comes with a powerful notion of ‘undo’: Basic text editors have a single stream of undo,
@@ -273,9 +301,70 @@ be seen by me.
 #+end_quote
 # Comparing Emacs to an editor is like comparing GNU/Linux to a word processor. -- [[https://karl-voit.at/2015/10/23/Emacs-is-not-just-an-editor/][Karl Voit]]
 
-Possibly interesting reads:
+** /Emacs is a flexible platform for developing end-user applications/
+Just as a web browser is utilised as a platform for deploying applications,
+   or ‘extensions’, written in JavaScript that act on HTML documents, Emacs is a
+   platform for deploying applications written in Emacs Lisp that act on buffers
+   of text.  In the same vein, people who say Emacs having Tetris is bloat are
+   akin to non-coders who think their browser has bloat since it has a “view
+   page source” feature ---which nearly all browsers have, yet it's only useful
+   to web developers. Unlike a web browser in which the user must get accustomed
+   to its features, Emacs is customised to meet the needs of its user.  (
+   Incidentally, Emacs comes bundled with a web browser. )
+
+   #+begin_quote
+   In the case of Emacs the boundary between user and programmer is blurred as
+   adapting the environment to one’s needs is [[https://www.gnu.org/software/emacs/emacs-paper.html][already an act of programming with
+   a very low barrier to entry.]]    ---[[https://elephly.net/posts/2016-02-14-ilovefs-emacs.html][rekado]]
+   #+END_quote
+
+   + Don't just get used to your tool, make it get used to you!
+
+   Emacs is not just an editor, but a host for running Lisp applications!
+
+   For example, Emacs is shipped as a language-specific IDE to a number of
+   communities ---e.g., Oz, Common Lisp, and, most notably, Agda.  Emacs is a
+   great IDE for a language ---one just needs to provide a ‘major mode’ and will
+   then have syntax highlighting, code compleition, jumping to definitions, etc.
+   There is no need to make an IDE from scratch.
+
+** The Power of Text Manipulation
+ Emacs has ways to represent all kinds of information as text.
+
+ E.g., if want to make a regular expression rename of files in a directory,
+ there's no need to learn about a batch renaming tool: ~M-x dired <RET> M-x wdired-change-to-wdired-mode~ now simply perform a /usual/ find-and-replace, then
+ save with the /usual/ ~C-x C-s~ to effect the changes!
+
+ Likewise for other system utilities and services (•̀ᴗ•́)و
+
+Moreover, as will be shown below, you can literally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
+for textually input in your operating system --no copy-paste required.
+
+** Keyboard Navigation and Alteration
+
+Suppose you wrote a paragraph of text, and
+wanted to ‘border’ it up for emphasies in hypens. Using the mouse to navigate
+along with a copy-paste of the hypens is vastely inferior to the incantation ~M-{
+C-u 80 - RET M-} C-u 80 - RET~.  If we want to border up the previous 𝓃-many
+paragraphs, we simply prefix ~M-{,}~ above with ~C-u 𝓃~ ---a manual approach would
+have us count 𝓃 and slowly scroll.  ( Exercise: What incantation of keys
+‘underlines’ the current line with /only/ the necessary amount of dashes?
+---Solution in the source file. )
+# =C-a C-k C-y RET C-y C-SPC C-a C-M-% . RET - RET !=
+
+⇒ [[https://support.apple.com/en-ca/HT201236][MacOS supports]] many Emacs shortcuts, system-wide, such as ~C-a/e, C-d, C-k/y,
+ C-o, C-p/n~ and even ~C-t~ for transposing two characters.  ⇐
+
+** Possibly Interesting Reads
++ [[https://www.gnu.org/software/emacs/tour/][The Emacs Tour]]
 + [[https://sachachua.com/blog/series/a-visual-guide-to-emacs/][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
 + [[http://emacsrocks.com/][Video Series on Why Emacs Rocks]] ---catch the enthusiasm!
++ [[https://www.gnu.org/software/emacs/emacs-paper.html][EMACS: The Extensible, Customizable Display Editor]]
+     # - This paper was written by Richard Stallman in 1981 and delivered in the
+     #  ACM Conference on Text Processing.
+     “The programmable editor is an outstanding opportunity to learn to program!”
++ [[https://www.gnu.org/philosophy/free-sw.html][What is free software?]]
+   # + Link to emacs main site, [[https://www.gnu.org/software/emacs/][Emacs]] .
 + [[http://ehneilsen.net/notebook/orgExamples/org-examples.html#sec-18][Emacs org-mode examples and cookbook]]
 + [[https://m00natic.github.io/emacs/emacs-wiki.html][An Opinionated Emacs guide for newbies and beyond]]
 + [[https://tuhdo.github.io/emacs-tutor.html][Emacs Mini-Manual, Part I of III]]
@@ -307,38 +396,20 @@ computer languages that hinder your ability to craft code, but you put up with
 editors that bind your fingers to someone else’s accepted practice. ---[[http://www.howardism.org/Technical/Emacs/why-emacs.html][Howard
 Abrams]]
 #+end_quote
-
- *The Power of Text Manipulation:*
- Emacs has ways to represent all kinds of information as text.
-
- E.g., if want to make a regular expression rename of files in a directory,
- there's no need to learn about a batch renaming tool: ~M-x dired <RET> M-x wdired-change-to-wdired-mode~ now simply perform a /usual/ find-and-replace, then
- save with the /usual/ ~C-x C-s~ to effect the changes!
-
- Likewise for other system utilities and services (•̀ᴗ•́)و
-
-Moreover, as will be shown below, you can literally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
-for textually input in your operating system --no copy-paste required.
-
-*Keyboard Navigation and Alteration* Suppose you wrote a paragraph of text, and
-wanted to ‘border’ it up for emphasies in hypens. Using the mouse to navigate
-along with a copy-paste of the hypens is vastely inferior to the incantation ~M-{
-C-u 80 - RET M-} C-u 80 - RET~.  If we want to border up the previous 𝓃-many
-paragraphs, we simply prefix ~M-{,}~ above with ~C-u 𝓃~ ---a manual approach would
-have us count 𝓃 and slowly scroll.  ( Exercise: What incantation of keys
-‘underlines’ the current line with /only/ the necessary amount of dashes?
----Solution in the source file. )
-# =C-a C-k C-y RET C-y C-SPC C-a C-M-% . RET - RET !=
-
+** Fun commands to try out
 Finally, here's some fun commands to try out:
 + ~M-x doctor~ ---generalising the idea of rubber ducks
 + ~M-x tetris~  or ~M-x gomoku~ or ~M-x snake~---a break with a classic
   - ~C-u 𝓃 M-x hanoi~ for the 𝓃-towers of Hanoi
 + ~M-x butterfly~ ---in reference to [[https://xkcd.com/378/][“real programmers”]]
 
-Before we get started…
+# Then, ~M-x help-with-tutorial~ or ~C-h t~ to start the ~30 min tutorial.
 
-*Why a monolithic configuration?*
+A neat way to get started with Emacs is to solve a problem you have, such
+as taking notes or maintaining an agenda ---both with Org-mode.
+
+Before we get started…
+** Why a monolithic configuration?
 
 Why am I keeping my entire configuration ---from those involving cosmetics &
 prose to those of agendas & programming--- in one file?  Being monolithic ---“a
@@ -404,6 +475,12 @@ center footer  ♥‿♥ Write once, generate many (•̀ᴗ•́)و
 ⟨ This image was created in org-mode; details [[#Workflow-States][below]]. ⟩
 #+html: </p>
 
+For now, it suffices to know that literate programming in Emacs allows us to
+evaluate source code within our text files, then using the results as values in
+other source blocks. When presenting an algorithm, we can talk it out, with a
+full commentary thereby providing ‘reproducible research’: Explorations and
+resulting algorithms are presented together in a natural style.
+
 The [[#Conclusion---Why-Configuration-Files-Should-be-Literate][concluding]] section of this read further argues the benefits of maintaining
 literate, and monolithic, configuration files. As a convention, I will try to
 motivate the features I set up and I will prefix my local functions with, well,
@@ -419,9 +496,6 @@ one. ( Upon an initial startup using this configuration, it takes a total of
 * Booting Up
 :PROPERTIES:
 :CUSTOM_ID: Booting-Up
-:END:
-:PROPERTIES:
-
 :END:
 
 Let's decide on where we want to setup our declarations for personalising Emacs
@@ -4985,11 +5059,13 @@ categorised.
 *What to tag?* Common tags are =:@laptop:, :@work:, :@home:= to identify the
 location where tasks take place ---Use: When I'm at a particular place, I need
 only consider tasks that apply to that place ;-) Other tags I use are =:𝑭𝑳:= to
-identify remarks or email or request from person 𝑭irstname 𝑳astname. Finally, I
-also use =:project_name:= to identify notes that may be of interest to a
-particular project, but are more appropriately categorised elsewhere ---e.g.,
-when learning about an Emacs feature, I may tag my notes with another project's
-name to consider whether that feature could be useful there.
+identify remarks or email or request from person 𝑭irstname 𝑳astname; or
+something that might be interesting to that person.  I also use ~:video:, :book:,
+:paper:~; which let me quickly find all videos!  Finally, I also use
+=:project_name:= to identify notes that may be of interest to a particular
+project, but are more appropriately categorised elsewhere ---e.g., when learning
+about an Emacs feature, I may tag my notes with another project's name to
+consider whether that feature could be useful there.
 
 *How to tag?*
 
