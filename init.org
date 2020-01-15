@@ -93,7 +93,7 @@ and variables that may accomplish my goal.
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
   - [[#automatic-backups][Automatic Backups]]
-  - [[#capturing-the-current-emacs-frame][Capturing the Current Emacs Frame]]
+  - [[#screencapturing-the-current-emacs-frame][Screencapturing the Current Emacs Frame]]
   - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
 - [[#cosmetics][Cosmetics]]
   - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
@@ -2193,42 +2193,44 @@ timestamp.
 +          =diff-backup= compares a file with its backup or vice versa.
   # But there is no function to restore backup files.
 
-** Capturing the Current Emacs Frame
+** Screencapturing the Current Emacs Frame
 
 Sometimes an image can be tremendously convincing, or at least sufficiently
 inviting. The following incantation is written for MacOS and uses it's native
 =screencapture= utility, as well as =magick=.
 #+BEGIN_SRC emacs-lisp
-(defun my/capture-emacs-frame (&optional output)
+(defun my/capture-emacs-frame (&optional prefix output)
 "Insert a link to a screenshot of the current Emacs frame.
 
 Unless the name of the OUTPUT file is provided, read it from the
-user."
-(interactive)
+user. If PREFIX is provided, let the user select a portion of the screen."
+(interactive "p")
 (defvar my/emacs-window-id
    (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
    "The window ID of the current Emacs frame.
 
     Takes a second to compute, whence a defvar.")
 
-(let* ((temp (format "emacs_temp_%s.png" (random)))
+(let* ((screen  (if prefix "-i" (concat "-l" my/emacs-window-id)))
+       (temp    (format "emacs_temp_%s.png" (random)))
        (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
 ;; Get output file name
   (unless output
     (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
     (when (s-blank-p output) (setq output default)))
-;; Clear minibuffer before capturing screen
-(message "♥‿♥")
+;; Clear minibuffer before capturing screen or prompt user
+(message (if prefix "Please select region for capture …" "♥‿♥"))
 ;; Capture current screen and resize
 (thread-first
-    (format "screencapture -T 2 -l%s %s" my/emacs-window-id temp)
+    (format "screencapture -T 2 %s %s" screen temp)
     (concat "; magick convert -resize 60% " temp " " output)
     (shell-command))
+(f-delete temp)
 ;; Insert a link to the image and reload inline images.
 (insert (concat "[[file:" output "]]")))
 (org-display-inline-images nil t))
 
-(bind-key* "C-c M-s M-s" #'my/capture-emacs-frame)
+(bind-key* "C-c M-s" #'my/capture-emacs-frame)
 #+END_SRC
 
 Why this way? On MacOS, ImageMagick's =import= doesn't seem to work ---not at all
@@ -5684,12 +5686,20 @@ there and do =M-x magit-status= to get the expected porcelain git interface  ^_^
 #+end_src
 
 In the magit buffer, we may now use the ~N~ key which wraps the =git svn=
-subcommands =fetch, rebase, dcommit, branch, tag=.
+subcommands =fetch, rebase, dcommit, branch, tag=. For example:
 
-+ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git
+1. Make changes to a file.
+2. ‘Stage’ them with ~s~ and ‘commit’ them with ~c~.
+3. ‘Push’ changes with ~N c~.
+
+We get to pretend we're using ~git~ even though the underlying mechanism is ~svn~!
+# Indeed, in a terminal ~git svn log~ will show an ~svn~ log with single pushed commits.
+
+For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git
   with Subversion]].
-+ If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
-  utility above to account for them.
+
+⟨ If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
+  utility above to account for them. ⟩
 
 ** What's changed & who's to blame?
 :PROPERTIES:
