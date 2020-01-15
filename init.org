@@ -2,7 +2,7 @@
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 #
-# ≥ 8300 line org file, with auto-generated TOC.
+# ≥ 7700 line org file, with auto-generated TOC.
 #
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -510,12 +510,6 @@ we are and use that to setup Emacs email service.
 :PROPERTIES:
 :CUSTOM_ID: emacs-vs-init-org
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 /Emacs is extenible/: When Emacs is started, it tried to load a user's Lisp
 program known as a initialisation file which specfies how Emacs should look and
@@ -644,12 +638,6 @@ Speaking of local variables, let's always ones we've already marked as safe
 ** =use-package= ---The start of =init.el=
 :PROPERTIES:
 :CUSTOM_ID: use-package-The-start-of-init-el
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 There are a few ways to install packages ---run ~C-h C-e~ for a short overview.
@@ -1094,9 +1082,6 @@ file with =M-x org-md-export-to-markdown=.
 :PROPERTIES:
 :CUSTOM_ID: Installing-Emacs-packages-directly-from-source
 :END:
-:PROPERTIES:
-
-:END:
 
 [[https://github.com/quelpa/quelpa-use-package][Quelpa]] allows us to build Emacs packages directly from source repositories.  It
 derives its name from the German word /Quelle/, for /souce/ [code], adjoined to
@@ -1128,9 +1113,6 @@ now]
 ** =magit= ---Emacs' porcelain interface to gitq
 :PROPERTIES:
 :CUSTOM_ID: magit-Emacs'-porcelain-interface-to-gitq
-:END:
-:PROPERTIES:
-
 :END:
 
 Let's setup an Emacs ‘porcelain’ interface to git ---it makes working with
@@ -1328,12 +1310,6 @@ usual! The power of text!
 :PROPERTIES:
 :CUSTOM_ID: Syncing-to-the-System's-PATH
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 For one reason or another, on OS X it seems that an Emacs instance
 begun from the terminal may not inherit the terminal's environment
@@ -1442,12 +1418,6 @@ Neato! Now I can live in Emacs even more ^_^
 ** “Being at the Helm” ---Completion & Narrowing Framework
 :PROPERTIES:
 :CUSTOM_ID: Being-at-the-Helm-Completion-Narrowing-Framework
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Whenever we have a choice to make from a list, [[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible
@@ -1615,12 +1585,6 @@ dash library works via examples ;-)
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 I've loved using XMonad as a window tiling manager.  I've enjoyed the ability to
 segregate my tasks according to what ‘project’ I'm working on; such as research,
@@ -1652,12 +1616,7 @@ at the resulting menu 😃
 :PROPERTIES:
 :CUSTOM_ID: Excellent-PDF-Viewer
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library for viewing PDFs in Emacs.
 #+BEGIN_SRC emacs-lisp
 (use-package pdf-tools
@@ -2047,12 +2006,7 @@ default but it's unreasonably powerful.
 :PROPERTIES:
 :CUSTOM_ID: Hydra-Supply-a-prefix-only-once
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Sometimes we have keybindings that share a common prefix, say ~C-c j~ and ~C-c k~,
 and we invoke them in an arbitrary sequence, it would be nice to invoke the
 shared prefix /only once/ thereby having:
@@ -2087,12 +2041,6 @@ See [[#Taking-a-tour-of-one's-edits][Taking a tour of one's edits]] below for a 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 :PROPERTIES:
 :CUSTOM_ID: Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 /Pop up a terminal, do some work, then close it using the same command./
@@ -2147,9 +2095,6 @@ via Emacs ;-)
 :PROPERTIES:
 :CUSTOM_ID: Restarting-Emacs-Keeping-buffers-open-across-sessions
 :END:
-:PROPERTIES:
-
-:END:
 
 Sometimes I wish to close then reopen Emacs; unsurprisingly someone's
 thought of implementing that.
@@ -2180,12 +2125,7 @@ place where it was when you previously visited the same file.
 :PROPERTIES:
 :CUSTOM_ID: Automatic-Backups
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 By default, Emacs saves backup files ---those ending in =~=--- in the current
 directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in
 case we need to look for a backup; moreover, let's keep old versions since
@@ -2303,12 +2243,6 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 :PROPERTIES:
 :CUSTOM_ID: Editor-Documentation-with-Contextual-Information
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 /Emacs is an extensible self-documenting editor!/
 
@@ -2361,9 +2295,6 @@ appears. Using a universal argument lets us drop to the built-in help command.
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
 :END:
-:PROPERTIES:
-
-:END:
 
 Upon startup, we want to be greeted with a useful, yet unobtrusive, message
 briefly detailing major system details. Moreover, the bottom-most area of
@@ -2374,12 +2305,6 @@ functionality is found with ~M-x dired~.
 ** Startup message: Emacs & Org versions
 :PROPERTIES:
 :CUSTOM_ID: Startup-message-Emacs-Org-versions
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Let's always welcome ourselves when Emacs begins with a helpful message.  For
@@ -2420,12 +2345,7 @@ as well as a nice ‘motto’:
 :PROPERTIES:
 :CUSTOM_ID: My-to-do-list-The-initial-buffer-when-Emacs-opens-up
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 I almost always have Emacs open; I don't need a dashboard, but would like to see
 my to-do list and my init file, side-by-side.
 #+BEGIN_SRC emacs-lisp
@@ -2443,12 +2363,6 @@ yet minimalist splash screen showing recent files, projects, and bookmarks.
 ** Exquisite Themes
 :PROPERTIES:
 :CUSTOM_ID: Exquisite-Themes
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Emacs' default theme leaves much to be desired:
@@ -2506,12 +2420,6 @@ want.
 :PROPERTIES:
 :CUSTOM_ID: A-sleek-informative-mode-line
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 The ‘modeline’ is a part near the bottom of Emacs that gives information about
 the current mode, as well as other matters ---such as time & date, for example.
@@ -2567,12 +2475,7 @@ like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
 :PROPERTIES:
 :CUSTOM_ID: Never-lose-the-cursor
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Let's have the entire line containing the cursour be slightly highlighted.
 #+BEGIN_SRC emacs-lisp
 ;; Make it very easy to see the line with the cursor.
@@ -2592,12 +2495,7 @@ When we switch windows or scroll, for example, we get a wave of light near the c
 :PROPERTIES:
 :CUSTOM_ID: Dimming-Unused-Windows
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Let's dim windows, and even the whole Emacs frame, when not in use.
 #+BEGIN_SRC emacs-lisp
 (use-package dimmer
@@ -2611,12 +2509,7 @@ on. It's nifty, but not for me.
 :PROPERTIES:
 :CUSTOM_ID: Buffer-names-are-necessarily-injective
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 By default when multiple files sharing the same name are opened, say for
 comparison from different directories, their buffers are named uniquely by
 having the format “⟨file-name⟩ <𝓃>”, for numbers 𝓃. It'd be more helpful
@@ -2641,12 +2534,7 @@ to have the buffer names reflect their location.
 :PROPERTIES:
 :CUSTOM_ID: Flashing-when-something-goes-wrong-no-blinking
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Make top and bottom of screen flash when something unexpected happens thereby
 observing a warning message in the minibuffer. E.g., C-g, or calling an unbound
 key sequence, or misspelling a word.
@@ -2666,12 +2554,7 @@ upwards and onwards.
 :PROPERTIES:
 :CUSTOM_ID: Hiding-Scrollbar-tool-bar-and-menu
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 As a laptop user, screen space is important, so let's remove rarely used visual
 items.
 #+BEGIN_SRC emacs-lisp
@@ -2683,12 +2566,6 @@ items.
 ** Highlight & complete parenthesis pair when cursor is near ;-)
 :PROPERTIES:
 :CUSTOM_ID: Highlight-complete-parenthesis-pair-when-cursor-is-near
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Highlight matching ‘parenthesis’ when near one of them.
@@ -2768,12 +2645,7 @@ Org headers, for which the ‘completed closing pair’ must tiresomely be delet
 :PROPERTIES:
 :CUSTOM_ID: Neotree-Directory-Tree-Listing
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp
 ;; Sidebar for project file navigation
@@ -2808,12 +2680,7 @@ an automatic replacement for nearly all of my uses.
 :PROPERTIES:
 :CUSTOM_ID: Tabs
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 I really like my Helm-supported ~C-x b~, but the visial appeal of a [[https://github.com/manateelazycat/awesome-tab][tab bar]] for Emacs
 is interesting. Let's try it out and see how long this lasts ---it may be like Neotree:
 Something cute to show to others, but not as fast as the keyboard.
@@ -2837,12 +2704,6 @@ An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
 :PROPERTIES:
 :CUSTOM_ID: Window-resizing-using-the-golden-ratio
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Let's load the following package, which automatically resizes windows so that
 the window containing the cursor is the largest, according to the golden ratio.
@@ -2861,12 +2722,6 @@ After some time this got a bit annoying and I'm no longer  using this.
 ** Persistent Scratch Buffer
 :PROPERTIES:
 :CUSTOM_ID: Persistent-Scratch-Buffer
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 The ~*scratch*~ buffer is a nice playground for temporary data or experiments.
@@ -2928,12 +2783,7 @@ places upon save.
 :PROPERTIES:
 :CUSTOM_ID: Fill-mode-Word-Wrapping
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 In fill mode, when you type past the end of a line, Emacs automatically starts a
 new line, cleverly formatting paragraphs. This is a powerful form of “word
 wrap”.
@@ -3078,9 +2928,7 @@ for completion of emoji names.
 :PROPERTIES:
 :CUSTOM_ID: Fix-spelling-as-you-type-thesaurus-dictionary-too
 :END:
-:PROPERTIES:
 
-:END:
 I would like to check spelling on the fly.
  + ~C-;~ :: Cycle through corrections for word at point.
  + ~M-$~ :: Check and correct spelling of the word at point
@@ -3190,9 +3038,7 @@ think is not ideal since it provides way less information.
 :PROPERTIES:
 :CUSTOM_ID: Touch-Typing
 :END:
-:PROPERTIES:
 
-:END:
 Use this game to help you learn to spell words that you're having trouble with;
 e.g., I have a file ~~/Dropbox/spelling.txt~ with words I have trouble spelling,
 which I open then run ~M-x typing-of-emacs~ in order to improve spelling said
@@ -3241,12 +3087,6 @@ Neato 😲
 ** Using a Grammar & Style Checker
 :PROPERTIES:
 :CUSTOM_ID: Using-a-Grammar-Style-Checker
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Let's install [[https://github.com/mhayashi1120/Emacs-langtool][a grammar and style checker]].
@@ -3298,12 +3138,7 @@ The checking command is silent, we added a bit of comforting acknowledgement to 
 :PROPERTIES:
 :CUSTOM_ID: Lightweight-Prose-Proofchecking
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Let's [[https://github.com/bnbeckwith/writegood-mode][write good]]!
 
 #+BEGIN_SRC emacs-lisp
@@ -3365,12 +3200,6 @@ Sentences that cut out the following problems may become stronger
 :PROPERTIES:
 :CUSTOM_ID: Placeholder-Text-For-Learning-Experimenting
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 When learning about Emacs formatting commands, such as zap-to-char ~M-z~
 or transpose ~M-t~, it's best to have filler text ---even better when
@@ -3392,12 +3221,6 @@ bindings on lorem ipsum, gibberish text.
 ** Some text to make us smile
 :PROPERTIES:
 :CUSTOM_ID: Some-text-to-make-us-smile
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 The  [[https://github.com/davep/dad-joke.el][dad-joke]] queries [[https://icanhazdadjoke.com][https://icanhazdadjoke.com]] to bring us some funny.
@@ -3596,12 +3419,6 @@ cua-mode~ to enable [[https://www.gnu.org/software/emacs/manual/html_node/emacs/
 :PROPERTIES:
 :CUSTOM_ID: Moving-Text-Around
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
 #+BEGIN_SRC emacs-lisp
@@ -3614,12 +3431,7 @@ This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
 :PROPERTIES:
 :CUSTOM_ID: Enabling-CamelCase-Aware-Editing-Operations
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 [[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][Subword]] movement lets us treat “EmacsIsAwesome” as three words
 ─“Emacs”, “Is”, and “Awesome”─ which is desirable since such naming
 is common among coders. Now, for example, ~M-f~ moves along each subword.
@@ -3633,12 +3445,7 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 :PROPERTIES:
 :CUSTOM_ID: Mouse-Editing-Support
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Text selected with the mouse is automatically copied to clipboard.
 #+begin_src emacs-lisp
 (setq mouse-drag-copy-region t)
@@ -3647,12 +3454,6 @@ Text selected with the mouse is automatically copied to clipboard.
 ** Delete Selection Mode
 :PROPERTIES:
 :CUSTOM_ID: Delete-Selection-Mode
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Delete Selection mode lets you treat an Emacs region much like a typical text
@@ -3665,12 +3466,6 @@ selected text just by hitting the backspace key.
 ** ~M-n,p~: Word-at-Point Navigation
 :PROPERTIES:
 :CUSTOM_ID: M-n-p-Word-at-Point-Navigation
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Let's mimic the ~C-n,p~ constructs from line to word, so that unoccupied ~M-n,p~ now
@@ -3763,12 +3558,7 @@ work of [[https://emacs.stackexchange.com/a/358/10352][doing it ourselves]].
 :PROPERTIES:
 :CUSTOM_ID: C-c-e-n-p-Taking-a-tour-of-one's-edits
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 This package allows us to move around the edit points of a buffer
 /without/ actually undoing anything. We even obtain a brief description
 of what happend at each edit point.
@@ -3821,9 +3611,6 @@ sharing my screen with others.
 ** Getting Started                                                  :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Getting-Started
-:END:
-:PROPERTIES:
-
 :END:
 Let's obtain Org-mode along with the extras that allow us to ignore
 heading names, but still utilise their contents ---e.g., such as a heading
@@ -3881,9 +3668,6 @@ default mode.
 ** Executing code from ~src~ blocks
 :PROPERTIES:
 :CUSTOM_ID: Executing-code-from-src-blocks
-:END:
-:PROPERTIES:
-
 :END:
 
 For example, to execute a shell command in Emacs, write a ~src~ with a shell
@@ -3990,12 +3774,6 @@ association list variable.
 :PROPERTIES:
 :CUSTOM_ID: Seamless-Navigation-Between-Source-Blocks
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 The “super key” ---aka the command or windows key--- can be used to jump to the
 previous, next, or toggle editing org-mode source blocks.
@@ -4016,12 +3794,6 @@ previous, next, or toggle editing org-mode source blocks.
 *** Modifying ~<return>~
 :PROPERTIES:
 :CUSTOM_ID: Modifying-return
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 + ~C-RET, C-S-RET~ make a new heading where the latter marks it as a ~TODO~.
@@ -4051,12 +3823,6 @@ In summary:
 *** ~C-a,e,k~ and Yanking of sections
 :PROPERTIES:
 :CUSTOM_ID: C-a-e-k-and-Yanking-of-sections
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 On an org-heading, =C-a= goes to after the star, heading markers.
@@ -4122,12 +3888,6 @@ $e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
 :PROPERTIES:
 :CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 From [[https://stackoverflow.com/a/24540651/3550444][stackoverflow]], the following incantation allows us to have
 parts of works emphasied with org-mode; e.g.,
@@ -4146,12 +3906,6 @@ lengthy phrase being emphasised.
 :PROPERTIES:
 :CUSTOM_ID: Show-off-screen-heading-at-the-top-of-the-window
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 In case we forgot which heading we're under, let's keep
 the current heading stuck at the top of the window.
@@ -4168,12 +3922,6 @@ the current heading stuck at the top of the window.
 ** Jumping without hassle
 :PROPERTIES:
 :CUSTOM_ID: Jumping-without-hassle
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 #+BEGIN_SRC emacs-lisp
@@ -4194,12 +3942,6 @@ the current heading stuck at the top of the window.
 ** Folding within a subtree
 :PROPERTIES:
 :CUSTOM_ID: Folding-within-a-subtree
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 #+BEGIN_SRC emacs-lisp
@@ -4387,12 +4129,7 @@ language.  This saves us a few key strokes.
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-TODO-Demoing-Dot-Graphs
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 # Graphviz: Press <g-TAB to obtain a minimal editable example.
  #+BEGIN_SRC dot :file simple_markov.png :cmdline -Kdot -Tpng :results replace
  digraph {
@@ -4700,7 +4437,7 @@ It does not work as I'd like, but may prove useful to have around.
   edit the text, say for notes or deletions, as you read! No need to copy-paste.
 
 * Life within Org-mode
-:Propertiese:
+:PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
 
@@ -5844,12 +5581,6 @@ and template expansion for inescapably repetitive scenarios.
 :PROPERTIES:
 :CUSTOM_ID: Highlight-defined-Lisp-symbols
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes it
 highlight all defined names ---as long as we're in Lisp mode, whence in org-src
@@ -5888,12 +5619,6 @@ or type signatures.
 :PROPERTIES:
 :CUSTOM_ID: Jumping-to-definitions-references
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Out-of-the-box Emacs has ‘xref’ utilities ~M-.~ and ~C-u M-.~ to [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html#Xref][Find Identifier
 References]]; however, tags to source definitions need to be generated using the
@@ -5929,12 +5654,6 @@ extension of a file.
 :PROPERTIES:
 :CUSTOM_ID: Aggressive-Indentation
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 With a single space or tab, my code should always remain indented.
 #+BEGIN_SRC emacs-lisp
@@ -5967,7 +5686,8 @@ there and do =M-x magit-status= to get the expected porcelain git interface  ^_^
 In the magit buffer, we may now use the ~N~ key which wraps the =git svn=
 subcommands =fetch, rebase, dcommit, branch, tag=.
 
-+ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]].
++ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git
+  with Subversion]].
 + If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
   utility above to account for them.
 
@@ -5975,12 +5695,7 @@ subcommands =fetch, rebase, dcommit, branch, tag=.
 :PROPERTIES:
 :CUSTOM_ID: What's-changed-who's-to-blame
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Let's have, in a fringe, an indicator for altered regions in a version
 controlled file.  The symbols “+, =” appear in a fringe by default for
 alterations ---we may change these if we like.
@@ -6128,12 +5843,6 @@ Add these to the version control hydra.
 :PROPERTIES:
 :CUSTOM_ID: On-the-fly-syntax-checking
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 [[https://www.flycheck.org/en/latest/][Flycheck]] is a on-the-fly syntax checker that relies on external programs to
 check buffers; which must be installed separately.
@@ -6192,12 +5901,6 @@ Try it out:
 ** Coding with a Fruit Salad: Semantic Highlighting
 :PROPERTIES:
 :CUSTOM_ID: Coding-with-a-Fruit-Salad-Semantic-Highlighting
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 What should be highlighted when we write code? Static keywords with fixed uses,
@@ -6472,12 +6175,6 @@ concluding with actually loading this snippet mechanism globally.
 :PROPERTIES:
 :CUSTOM_ID: Org-mode-Templates-A-reason-I-generate-templates
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 This produces a pop-up list of org-mode block types, if ~src~ is selected, then a
 list of my commonly used languages pops-up.  Alternatively, ignore the pop-up
@@ -6584,12 +6281,7 @@ levels, then uses each level to produce a list of type names ;-)
 :PROPERTIES:
 :CUSTOM_ID: Elisp-Templates
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 The following snippets were rather useful as I began learning Lisp to construct
 my editor of choice ---I love Emacs so much. Admittedly, I still need the first
 one below and usually beat around the bush by using ~(loop for ⋯ do ⋯)~, which is
@@ -6648,12 +6340,7 @@ One expands ~eqn_begin~, tabs to fill in the three main locations, then
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Misc-Templates
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** remark: top-level literate comment
 
@@ -6708,12 +6395,7 @@ Let's activate all such templates, now after template expansion has been setup.
 :PROPERTIES:
 :CUSTOM_ID: Re-Enabling-Templates
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 After our yankpad templates are generated, we need to load it.
 #+BEGIN_SRC emacs-lisp
 ;; After init hook; see above near use-package install.
@@ -6722,9 +6404,6 @@ After our yankpad templates are generated, we need to load it.
 * Helpful Utilities & Shortcuts
 :PROPERTIES:
 :CUSTOM_ID: Helpful-Utilities-Shortcuts
-:END:
-:PROPERTIES:
-
 :END:
 
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
@@ -6746,12 +6425,7 @@ Let's save a few precious seconds,
 :PROPERTIES:
 :CUSTOM_ID: Documentation-Pop-Ups
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
 This is very useful when editing in a particular coding language, say via
 ~C-c '~ for org-src blocks.
@@ -6765,12 +6439,7 @@ This is very useful when editing in a particular coding language, say via
 :PROPERTIES:
 :CUSTOM_ID: Emacs-keybindings-for-my-browser
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+begin_center
 ⟨ I was a bit too Emacs-happy at one-point; this' cool, but I rarely use it;
 except ~C-x b~: A buffer approach is far superior to a tab-based one. ⟩
@@ -6784,12 +6453,6 @@ can be used to navigate my browser ^_^
 ** Using Emacs in any text area on my OS                          :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Using-Emacs-in-any-text-area-on-my-OS
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 #+begin_center
@@ -6833,12 +6496,7 @@ I always want to be in Org-mode and input unicode:
 :PROPERTIES:
 :CUSTOM_ID: Reload-buffer-with-f5
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 I do this so often it's not even funny.
 #+BEGIN_SRC emacs-lisp
 (global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
@@ -6864,12 +6522,6 @@ were regenerated --Emacs should also prompt me if I make any changes!
 :PROPERTIES:
 :CUSTOM_ID: Kill-to-start-of-line
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 Dual to ~C-k~,
 #+BEGIN_SRC emacs-lisp
 ;; M-k kills to the left
@@ -6878,12 +6530,6 @@ Dual to ~C-k~,
 ** Killing buffers & windows: ~C-x k~ has a family
 :PROPERTIES:
 :CUSTOM_ID: Killing-buffers-windows-C-x-k-has-a-family
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Let's extend the standard ~C-x k~ with prefix support, so that we can invoke
@@ -6922,12 +6568,7 @@ I tend to consult.
 :PROPERTIES:
 :CUSTOM_ID: Switching-from-2-horizontal-windows-to-2-vertical-windows
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 I often find myself switching from a horizontal view of two windows in Emacs to a
 vertical view. This requires a variation of ~C-x 1 RET C-x 3 RET C-x o C-x b RET~.
 Instead I now only need to type ~C-|~ to make this switch.
@@ -6951,12 +6592,6 @@ window contains the buffer with the cursour in it."
 ** Obtaining Values of ~#+KEYWORD~ Annotations
 :PROPERTIES:
 :CUSTOM_ID: Obtaining-Values-of-KEYWORD-Annotations
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Org-mode settings are, for the most part, in the form ~#+KEYWORD: VALUE~. Of notable interest
@@ -6986,12 +6621,6 @@ and how to manipulate it.
 ** Publishing articles to my personal blog
 :PROPERTIES:
 :CUSTOM_ID: Publishing-articles-to-my-personal-blog
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 I try to [[https://alhassy.github.io/][blog]] occasionally, so here's a helpful function to quickly
@@ -7036,9 +6665,6 @@ publish the current article to my blog.
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate
-:END:
-:PROPERTIES:
-
 :END:
 
 A configuration file sets up various features for a tool ---and serves as an
@@ -7162,9 +6788,6 @@ Bye!
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Approaches-Before-Reading-Documentation
 :END:
-:PROPERTIES:
-
-:END:
 
 ;; Nice soft yellow, pleasing ---try background colour for html export ;-)
 (add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
@@ -7173,12 +6796,6 @@ Bye!
 ** Elementary Version Control
 :PROPERTIES:
 :CUSTOM_ID: Elementary-Version-Control
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 [[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
@@ -7245,12 +6862,7 @@ Finally, since I've symlinked my ~.emacs~:
 :PROPERTIES:
 :CUSTOM_ID: What's-in-or-at-the-top-of-my-emacs
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+BEGIN_SRC emacs-lisp :tangle no
 (org-babel-load-file "~/.emacs.d/init.org")
 ;;
@@ -7277,12 +6889,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 :PROPERTIES:
 :CUSTOM_ID: README-md
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+BEGIN_SRC emacs-lisp :tangle no :export_never t
 (with-temp-buffer
     (insert (concat
@@ -7330,12 +6937,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 :PROPERTIES:
 :CUSTOM_ID: List-recently-accessed-files-upon-startup
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+BEGIN_SRC emacs-lisp :tangle no
 (recentf-mode 1)                   ;; Part of Emacs
 (setq recentf-max-menu-items 25)
@@ -7350,12 +6952,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 :PROPERTIES:
 :CUSTOM_ID: Homemade-attempt-before-learning-about-shell-pop
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+begin_src emacs-lisp :tangle no
 (cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
    "Pop up a terminal, do some work, then close it using the same command.
@@ -7380,12 +6977,6 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 :PROPERTIES:
 :CUSTOM_ID: Exporting-Tables-to-CSV
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Org-mode can export tables as TAB or comma delimited formats. I set the default format to CSV with:
 
@@ -7397,12 +6988,7 @@ To export the following table I put the cursor inside the table and hit M-x org-
 :PROPERTIES:
 :CUSTOM_ID: Interpret-the-Haskell-source-blocks-in-a-file
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+BEGIN_SRC emacs-lisp
 (defvar *current-module* "NoModuleNameSpecified"
   "The name of the module, file, that source blocks are
@@ -7467,12 +7053,6 @@ To export the following table I put the cursor inside the table and hit M-x org-
 :PROPERTIES:
 :CUSTOM_ID: Makeshift-HTML-Folded-Drawers-Folding-mode-Org-Macros
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 My =my/prettify-alist= has the following:
 
@@ -7523,12 +7103,7 @@ with show/hide with ~C-<tab>~ key.
 :PROPERTIES:
 :CUSTOM_ID: Default-Compilation-Commands-Local-Variables
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 
 Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
 when ~M-x recompile~ is invoked. One of my habits is to append
@@ -7574,12 +7149,7 @@ Let's remove repeated matter.
 :PROPERTIES:
 :CUSTOM_ID: Keeping-my-system-up-to-date
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Let's ensure our system is always up to date.
 #+BEGIN_SRC emacs-lisp
 (defun my/stay-up-to-date ()
@@ -7613,20 +7183,12 @@ May need to actually reboot the system as well.
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Improvements
 :END:
-:PROPERTIES:
-
-:END:
 
 ** Learn about TRAMP & Edit as Root
 :PROPERTIES:
 :CUSTOM_ID: Learn-about-TRAMP-Edit-as-Root
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]].
 #+BEGIN_SRC emacs-lisp
 (defun find-file-as-root ()
@@ -7646,12 +7208,6 @@ Incidentally, TRAMP allows us to do the same thing.
 ** Easy tasks
 :PROPERTIES:
 :CUSTOM_ID: Easy-tasks
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 # TODO: MA: ⇨ Add unit tests for the init file.
@@ -7685,12 +7241,6 @@ Incidentally, TRAMP allows us to do the same thing.
 ** Smartparens
 :PROPERTIES:
 :CUSTOM_ID: Smartparens
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 :PROPERTIES:
@@ -7771,12 +7321,6 @@ a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
 :PROPERTIES:
 :CUSTOM_ID: Macros
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Here's a neat macro I made, but I /may/ avoid using it in the init in order to
 avoid scaring anyone. I may use it in my personal stuff.
@@ -7820,33 +7364,14 @@ avoid scaring anyone. I may use it in my personal stuff.
 :PROPERTIES:
 :CUSTOM_ID: Summary-of-Utilities-Provided
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 | _Command_                                | _Action_                                                |
-| ~C-c C-m~                                | recompile file                                          |
 | ~<f5>~                                   | revert buffer                                           |
-| ~M-x k~                                  | kill to start of line                                   |
 | ~C-∣~                                    | toggle 2 windows from horizontal to vertical view       |
-| ~(file-as-list   pathHere)~              | construe a file as a list of lines                      |
-| ~(file-as-string pathHere)~              | construe a file as a string                             |
-| (~re-replace-in-file file regex whatDo)~ | perform an in-file regular expression rewrite           |
-| ~(mapsto this that)~                     | regex rewrite in current buffer: this ↦ that            |
 | ~M-x create-scratch-buffer~              | --self evident--                                        |
-| ~M-x kill-other-buffers~                 | --self evident--                                        |
 | ~M-$~                                    | check spelling of word at point                         |
 | ~M-#~                                    | thesaurus look-up word at point                         |
-| ~(my/org-run-haskell &optional file)~    | Interpret the Haskell org-blocks from a file into ghci. |
 | ~C-+/-~                                  | increase/decrease text size                             |
-| ~M-x my-org-html-export-to-html~         | make then open html from an org file                    |
-| ~C-c C-c~                                | execute code in an org ~src~ block                      |
-| ~<E~                                     | produce an emacs-lisp ~src~ block                       |
-| ~<g~                                     | produce a graph template ~src~ block                    |
-| ~C-x t~                                  | open a new untitled org template file                   |
 | ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file          |
 | ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~             |
 
@@ -7872,22 +7397,11 @@ Finally, we can observe which features are active in our current Emacs with,
 :PROPERTIES:
 :CUSTOM_ID: Stuff-I-don't-really-use-but-may-want-to-look-at-later
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 *** hooks and things for literate agda with org-agda
 :PROPERTIES:
 :CUSTOM_ID: hooks-and-things-for-literate-agda-with-org-agda
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+BEGIN_SRC emacs-lisp  :tangle no
 ;; not needed
 (defun lagda-extension-whatdo ()
@@ -7908,12 +7422,6 @@ Finally, we can observe which features are active in our current Emacs with,
 :PROPERTIES:
 :CUSTOM_ID: floating-toc-material
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Add the following to a web-page if you'd like it to have a floating table of contents.
 + Perhaps consider making this a default for all org-files?
@@ -7933,12 +7441,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 :PROPERTIES:
 :CUSTOM_ID: org-html-postamble-format
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
  Look at the super short doc to know how to manipulate this variable.
  (describe-symbol 'org-html-postamble-format)
 
@@ -7959,12 +7462,6 @@ Add the following to a web-page if you'd like it to have a floating table of con
 *** to-consider-for-magit-list-repositories
 :PROPERTIES:
 :CUSTOM_ID: to-consider-for-magit-list-repositories
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 The above mechanism suffices, the following needn't be followed with ... unless desired
@@ -8017,22 +7514,12 @@ The above mechanism suffices, the following needn't be followed with ... unless 
 :PROPERTIES:
 :CUSTOM_ID: Programming-Language-Support
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 ***** Haskell :tangle no
 :PROPERTIES:
 :CUSTOM_ID: Haskell-tangle-no
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+BEGIN_SRC emacs-lisp
 ;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
  (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
@@ -8042,50 +7529,16 @@ The above mechanism suffices, the following needn't be followed with ... unless 
 :PROPERTIES:
 :CUSTOM_ID: Lambda-Prolog
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 #+BEGIN_SRC emacs-lisp  :tangle no
 (load "/usr/local/packages/teyjus/emacs/teyjus.el")
 (setq tjcc "/usr/local/packages/teyjus/tjcc")
 #+END_SRC
-***** intero and haskell
-:PROPERTIES:
-:CUSTOM_ID: intero-and-haskell
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
-
-  ;; ;;; To get completions in the REPL
-  ;; (add-hook 'haskell-interactive-mode-hook 'company-mode)
-
-  (require 'intero)
-  (add-hook 'haskell-mode-hook 'intero-mode)
-  (add-hook 'literate-haskell-mode-hook 'intero-mode)
-  ;; needed to fix bug when loading stack ghci for > 8.2
-  (setq haskell-process-args-ghci
-        '("-ferror-spans" "-fshow-loaded-modules"))
-
-  (setq haskell-process-args-cabal-repl
-        '("--ghc-options=-ferror-spans -fshow-loaded-modules"))
-
-**** Coq Support
+***** Coq Support
 :PROPERTIES:
 :CUSTOM_ID: Coq-Support
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 Sometimes I use Coq,
 #+begin_src emacs-lisp
 ;; Open .v files with Proof General's Coq mode
@@ -8095,12 +7548,6 @@ Sometimes I use Coq,
 *** Column Marker
 :PROPERTIES:
 :CUSTOM_ID: Column-Marker
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 (  Maybe a hook would be better? Much better...? )
@@ -8120,15 +7567,7 @@ thereby prompting ~my-org-html-export-to-html~ below to
 take care of this.
 
 *** theme magic
-:PROPERTIES:
-:CUSTOM_ID: theme-magic
-:END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 [[https://github.com/jcaw/theme-magic][Theme-magic]] looks nice, in theory, but I've not found it to be useful, for me.
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; Automatically propagate Emacs theme changes to OS
@@ -8140,12 +7579,6 @@ take care of this.
 ** Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
 :PROPERTIES:
 :CUSTOM_ID: Referencing-Text-From-Code-Blocks-Attaching-prose-as-doc-strings
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 Sources:
@@ -8232,12 +7665,7 @@ We use the XXX function add to calculate the sum of two numbers.
 :PROPERTIES:
 :CUSTOM_ID: Tangeling-to-multiple-files
 :END:
-:PROPERTIES:
 
-:END:
-:PROPERTIES:
-
-:END:
 From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
 
 #+begin_src emacs-lisp :tangle no
@@ -8306,12 +7734,6 @@ If the :tangle header arg is a list of files. Handle all files"
 ** Parallel
 :PROPERTIES:
 :CUSTOM_ID: Parallel
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
 :END:
 
 #+BEGIN_SRC emacs-lisp :tangle no
