@@ -2,7 +2,7 @@
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 #
-# ≥ 8000 line org file, with auto-generated TOC.
+# ≥ 8300 line org file, with auto-generated TOC.
 #
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -93,6 +93,7 @@ and variables that may accomplish my goal.
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
   - [[#automatic-backups][Automatic Backups]]
+  - [[#capturing-the-current-emacs-frame][Capturing the Current Emacs Frame]]
   - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
 - [[#cosmetics][Cosmetics]]
   - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
@@ -175,6 +176,7 @@ and variables that may accomplish my goal.
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
   - [[#jumping-to-definitions--references][Jumping to definitions & references]]
   - [[#aggressive-indentation][Aggressive Indentation]]
+  - [[#version-control-with-svn----using-magit][Version Control with SVN ---Using Magit!]]
   - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
   - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
   - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
@@ -2250,6 +2252,52 @@ timestamp.
 #
 +          =diff-backup= compares a file with its backup or vice versa.
   # But there is no function to restore backup files.
+
+** Capturing the Current Emacs Frame
+
+Sometimes an image can be tremendously convincing, or at least sufficiently
+inviting. The following incantation is written for MacOS and uses it's native
+=screencapture= utility, as well as =magick=.
+#+BEGIN_SRC emacs-lisp
+(defun my/capture-emacs-frame (&optional output)
+"Insert a link to a screenshot of the current Emacs frame.
+
+Unless the name of the OUTPUT file is provided, read it from the
+user."
+(interactive)
+(defvar my/emacs-window-id
+   (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
+   "The window ID of the current Emacs frame.
+
+    Takes a second to compute, whence a defvar.")
+
+(let* ((temp (format "emacs_temp_%s.png" (random)))
+       (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
+;; Get output file name
+  (unless output
+    (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
+    (when (s-blank-p output) (setq output default)))
+;; Clear minibuffer before capturing screen
+(message "♥‿♥")
+;; Capture current screen and resize
+(thread-first
+    (format "screencapture -T 2 -l%s %s" my/emacs-window-id temp)
+    (concat "; magick convert -resize 60% " temp " " output)
+    (shell-command))
+;; Insert a link to the image and reload inline images.
+(insert (concat "[[file:" output "]]")))
+(org-display-inline-images nil t))
+
+(bind-key* "C-c M-s M-s" #'my/capture-emacs-frame)
+#+END_SRC
+
+Why this way? On MacOS, ImageMagick's =import= doesn't seem to work ---not at all
+for me! Also, I dislike how large the resulting image is. As such, I'm using
+MacOS's =screencapture= utility, which in-turn requires me to somehow obtain frame
+IDs. Hence, the amount of work needed to make this happen on my system was most
+simple if I just wrote it out myself rather than tweaking an existing system.
+
++ ~C-c C-x C-v~ ⇒ Toggle inline images!
 
 ** Editor Documentation with Contextual Information
 :PROPERTIES:
@@ -4713,7 +4761,7 @@ to /any/ type of file!  ⇐
 By default we only get a ‘tasks’ form of capture, let's add some more.
 #+begin_src emacs-lisp
 (cl-defun my/make/org-capture-template
-   (shortcut heading &optional (no-todo nil) (description heading) (scheduled t))
+   (shortcut heading &optional (no-todo nil) (description heading) (scheduled nil))
   "Quickly produce an org-capture-template.
 
   After adding the result of this function to ‘org-capture-templates’,
@@ -4758,12 +4806,14 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
                                "p" "Personal Matters"))
             collect  (my/make/org-capture-template shortcut heading)))
 
+;; Update: Let's schedule tasks during the GTD processing phase.
+;;
 ;; For now, let's automatically schedule items a week in advance.
 ;; TODO: FIXME: This overwrites any scheduling I may have performed.
-(defun my/org-capture-schedule ()
-  (org-schedule nil "+7d"))
-
-(add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
+;; (defun my/org-capture-schedule ()
+;;   (org-schedule nil "+7d"))
+;;
+;; (add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
 #+end_src
 
 For now I capture everything into a single file.  One would ideally keep
@@ -5896,6 +5946,30 @@ With a single space or tab, my code should always remain indented.
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
 #+END_SRC
+
+** Version Control with SVN ---Using Magit!
+
+Let's use git as an interface to subversion repositories so that we can continue
+to use =magit= as our version control interface.  The utility to do so is called
+=git svn= ---note =git 𝒳= on a MacOS is the same as =git-𝒳= on other systems.
+
+#+begin_src emacs-lisp
+(use-package magit-svn
+  :hook (magit-mode . magit-svn-mode))
+#+end_src
+
+Here's an example. The following command checksout an SVN repo; afterwhich we may open a file
+there and do =M-x magit-status= to get the expected porcelain git interface  ^_^
+#+begin_src emacs-lisp :tangle no
+(async-shell-command "mkdir ~/2fa3; git svn clone --username alhassm https://websvn.mcmaster.ca/csse2fa3/2019-2020_Term2 ~/2fa3/")
+#+end_src
+
+In the magit buffer, we may now use the ~N~ key which wraps the =git svn=
+subcommands =fetch, rebase, dcommit, branch, tag=.
+
++ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]].
++ If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
+  utility above to account for them.
 
 ** What's changed & who's to blame?
 :PROPERTIES:
