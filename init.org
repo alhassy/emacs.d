@@ -1518,7 +1518,10 @@ changes with ~C-c C-e~ and apply them by ~C-x C-s~.
   :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
           ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
           ;; Go back to last position where ‘helm-swoop’ was called
-          ("C-S-s" . 'helm-swoop-back-to-last-point))
+          ("C-S-s" . 'helm-swoop-back-to-last-point)
+          ;; swoop doesn't work with PDFs, use Emacs' default isearch instead.
+          :map pdf-view-mode-map
+          ("C-s" . isearch-forward))
   :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
           (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
 #+END_SRC
