@@ -175,10 +175,11 @@ and variables that may accomplish my goal.
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
   - [[#jumping-to-definitions--references][Jumping to definitions & references]]
-  - [[#aggressive-indentation][Aggressive Indentation]]
   - [[#version-control-with-svn----using-magit][Version Control with SVN ---Using Magit!]]
   - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
   - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
+  - [[#aggressive-indentation][Aggressive Indentation]]
+  - [[#being-generous-with-whitespace][Being Generous with Whitespace]]
   - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
   - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
   - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
@@ -5652,22 +5653,6 @@ variable ---the first is likely what is desired.  Alternatively, one could just
 add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
 works fine even for locally bound definitions.  It works depending on the
 extension of a file.
-** Aggressive Indentation
-:PROPERTIES:
-:CUSTOM_ID: Aggressive-Indentation
-:END:
-
-With a single space or tab, my code should always remain indented.
-#+BEGIN_SRC emacs-lisp
-;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-  :config (global-aggressive-indent-mode t))
-
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-#+END_SRC
-
 ** Version Control with SVN ---Using Magit!
 
 Let's use git as an interface to subversion repositories so that we can continue
@@ -5848,6 +5833,34 @@ Add these to the version control hydra.
 (defhydra hydra-version-control (global-map "C-x v")
   ("t" helm-magit-todos "Show TODOs lists for this repo."))
 #+END_SRC
+
+** Aggressive Indentation
+:PROPERTIES:
+:CUSTOM_ID: Aggressive-Indentation
+:END:
+
+With a single space or tab, my code should always remain indented.
+#+BEGIN_SRC emacs-lisp
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent
+  :config (global-aggressive-indent-mode t))
+
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+#+END_SRC
+
+** Being Generous with Whitespace
+The following minor mode automatically adds spacing around operators.
+#+begin_src emacs-lisp
+(use-package electric-operator
+  :diminish
+  :hook (c-mode . electric-operator-mode))
+#+end_src
+
+I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Also,
+languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
+an identifier, not an expression! ⟩
 
 ** On the fly syntax checking
 :PROPERTIES:
