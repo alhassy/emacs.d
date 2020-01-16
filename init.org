@@ -2037,7 +2037,25 @@ original purpose, calling his proper command. This makes the Hydra very
 seamless, it's like a minor mode that disables itself auto-magically.
 #+end_quote
 
-See [[#Taking-a-tour-of-one's-edits][Taking a tour of one's edits]] below for a small and useful example.
+For example, it can be difficult to remember the incantations to adjust
+windows, so we can make a hydra to alleviate the trouble.
+#+begin_src emacs-lisp
+;; Use ijkl to denote ↑←↓→ arrows.
+(defhydra hydra-windows (global-map    "C-c w"   )
+  ("b" balance-windows                 "balance" )
+  ("i" enlarge-window                  "heighten")
+  ("j" shrink-window-horizontally      "narrow"  )
+  ("k" shrink-window                   "lower"   )
+  ("l" enlarge-window-horizontally     "widen"   )
+  ("s" switch-window-then-swap-buffer  "swap" :color teal))
+
+;; Provides a *visual* way to choose a window to switch to.
+(use-package switch-window)
+;; :bind (("C-x o" . switch-window)
+;;        ("C-x w" . switch-window-then-swap-buffer))
+#+end_src
+
+See [[#Taking-a-tour-of-one's-edits][Taking a tour of one's edits]] below for another small and useful example.
 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 :PROPERTIES:
