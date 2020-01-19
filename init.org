@@ -2111,6 +2111,13 @@ Out of the box, zsh comes with
 The defaults have been good enough for me, for now ---as all else is achieved
 via Emacs ;-)
 
+Also, there's [[https://tldr.sh/][tldr]] tool which aims to be like terse manuals for commandline-tools
+in the style of practical example uses cases: ~tldr 𝒳~ yields a number of ways
+you'd actually use 𝒳.
+#+BEGIN_SRC emacs-lisp :tangle no
+(system-packages-ensure "tldr")
+#+END_SRC
+
 ** Restarting Emacs ---Keeping buffers open across sessions?
 :PROPERTIES:
 :CUSTOM_ID: Restarting-Emacs-Keeping-buffers-open-across-sessions
