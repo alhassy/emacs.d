@@ -3,7 +3,8 @@
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 #
 # ≥ 7700 line org file, with auto-generated TOC.
-# ≥ 220 code blocks
+# ≥ 200 code blocks
+# (emacs-init-time) ⇒ 17.0 seconds
 #
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -669,8 +670,7 @@ reposistories of developers]], rather than having all packages in one repository
 ;; Internet repositories for new packages.
 (setq package-archives '(("org"       . "http://orgmode.org/elpa/")
                          ("gnu"       . "http://elpa.gnu.org/packages/")
-                         ("melpa"     . "http://melpa.org/packages/")
-                         ("melpa-stable" . "http://stable.melpa.org/packages/")))
+                         ("melpa"     . "http://melpa.org/packages/")))
 
 ;; Actually get “package” to work.
 (package-initialize)
@@ -733,8 +733,7 @@ We now bootstrap ~use-package~.
 #+BEGIN_SRC emacs-lisp
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
-
-(eval-when-compile (require 'use-package))
+(require 'use-package)
 #+END_SRC
 
 We can now invoke ~(use-package XYZ :ensure t)~ which should check for the ~XYZ~
@@ -750,6 +749,7 @@ The use of ~:ensure t~ only installs absent modules, but it does no updating.
 Let's set up [[https://github.com/rranelli/auto-package-update.el][an auto-update mechanism]].
 #+BEGIN_SRC emacs-lisp
 (use-package auto-package-update
+  :defer 10
   :config
   ;; Delete residual old versions
   (setq auto-package-update-delete-old-versions t)
@@ -767,6 +767,7 @@ commands I did not know about! Neato :-)
 ;; Making it easier to discover Emacs key presses.
 (use-package which-key
   :diminish
+  :defer 5
   :config (which-key-mode)
           (which-key-setup-side-window-bottom)
           (setq which-key-idle-delay 0.05))
@@ -779,7 +780,7 @@ shown to us in the modeline ---the area near the bottom of Emacs.  It does so by
 using the ~diminish~ package, so let's install that.
 #+begin_src emacs-lisp
 (use-package diminish
-  :demand t
+  :defer 5
   :config ;; Let's hide some markers.
     (diminish  'org-indent-mode))
 #+end_src
@@ -793,7 +794,7 @@ Here are other packages that I want to be installed onto my machine.
 (use-package magit
   :config (global-set-key (kbd "C-x g") 'magit-status))
 
-(use-package htmlize)
+(use-package htmlize :defer t)
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 
@@ -803,7 +804,7 @@ Here are other packages that I want to be installed onto my machine.
   :hook (org-mode . org-bullets-mode))
 
 ;; Haskell's cool
-(use-package haskell-mode)
+(use-package haskell-mode :defer t)
 
 ;; Lisp libraries with Haskell-like naming.
 (use-package dash)    ;; “A modern list library for Emacs”
@@ -965,11 +966,11 @@ heading, and other TOC features. Unlike toc-org, org-make-toc uses property draw
 to designate TOC matter.
 #+BEGIN_SRC emacs-lisp
 (use-package toc-org
+  ;; Automatically update toc when saving an Org file.
+  :hook (org-mode . toc-org-mode)
   ;; Use both “:ignore_N:” and ":export_N:” to exlude headings from the TOC.
   :custom (toc-org-noexport-regexp
-           "\\(^*+\\)\s+.*:\\(ignore\\|noexport\\)\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)")
-  ;; Automatically update toc when saving an Org file.
-  :hook (org-mode . toc-org-mode))
+           "\\(^*+\\)\s+.*:\\(ignore\\|noexport\\)\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)"))
 #+END_SRC
 
 However, [[https://github.com/snosov1/toc-org/issues/54#issuecomment-363710561][toc-org produces broken links for numbered sections]].
@@ -1090,6 +1091,7 @@ when we want to install a file from souce we use the keyword ~:quelpa~.
 # (quelpa '(discover-my-major :fetcher git :url "https://framagit.org/steckerhalter/discover-my-major.git"))
 #+BEGIN_SRC emacs-lisp
 (use-package quelpa
+  :defer t
   :custom (quelpa-upgrade-p t "Always try to update packages")
   :config
   ;; Get ‘quelpa-use-package’ via ‘quelpa’
@@ -1191,10 +1193,10 @@ but this approach makes /discovering/ other commands easier.
 Below are the git repos I'd like to clone ---along with a function to do so
 quickly.
 #+begin_src emacs-lisp
-(use-package magit)
-
-;; Do not ask about this variable when cloning.
-(setq magit-clone-set-remote.pushDefault t)
+(use-package magit
+  :defer t
+  :custom ;; Do not ask about this variable when cloning.
+          (magit-clone-set-remote.pushDefault t))
 
 (cl-defun maybe-clone (remote &optional (local (concat "~/" (file-name-base remote))))
   "Clone a REMOTE repository if the LOCAL directory does not exist.
@@ -1299,7 +1301,7 @@ historic versions of a file. The following utility allows us to ~M-x
 git-timemachine~ on a file and use ~p/n/g/q~ to look at previous, next, goto
 arbitrary historic versions, or quit.
 #+BEGIN_SRC emacs-lisp
-(use-package git-timemachine)
+(use-package git-timemachine :defer t)
 #+END_SRC
 If we want to roll back to a previous version, we just ~write-file~ or ~C-x C-s~ as
 usual! The power of text!
@@ -1354,12 +1356,15 @@ us ensure these exist using the ~:ensure-system-package~ keyword extension.
 Let's obtain the extension.
 #+BEGIN_SRC emacs-lisp
 ;; Auto installing OS system packages
-(use-package use-package-ensure-system-package)
+(use-package use-package-ensure-system-package
+  :defer 5
+  :config (system-packages-update))
 
 ;; Ensure our operating system is always up to date.
 ;; This is run whenever we open Emacs & so wont take long if we're up to date.
 ;; It happens in the background ^_^
-(system-packages-update)
+;;
+;; After 5 seconds of being idle, after starting up.
 #+END_SRC
 
 After an update to Mac OS, one may need to [[https://emacs.stackexchange.com/questions/53026/how-to-restore-file-system-access-in-macos-catalina][restore file system access privileges
@@ -1388,7 +1393,7 @@ package's description, or ~TAB~ for the other features!
 
 #+BEGIN_SRC emacs-lisp
 ;; An Emacs-based interface to the package manager of your operating system.
-(use-package helm-system-packages)
+(use-package helm-system-packages :defer t)
 #+END_SRC
 
 The Helm counterpart is great for /discovarability/, whereas
@@ -1598,6 +1603,7 @@ achieve the same thing by ‘grouping buffers together’. )
 
 #+BEGIN_SRC emacs-lisp
 (use-package perspective
+  :defer t
   :config ;; Activate it.
           (persp-mode)
           ;; In the modeline, tell me which workspace I'm in.
@@ -1621,6 +1627,7 @@ at the resulting menu 😃
 Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library for viewing PDFs in Emacs.
 #+BEGIN_SRC emacs-lisp
 (use-package pdf-tools
+  :defer t
   ; :init   (system-packages-ensure "pdf-tools")
   :custom (pdf-tools-handle-upgrades nil)
           (pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
@@ -1710,9 +1717,9 @@ I don't know what's your Gnus setup. To be honest, your question lacks the essen
        read the [[https://www.gnus.org/manual/message.pdf][Message Manual]].
 
 #+BEGIN_SRC emacs-lisp
-;; After startup, if Emacs is idle for 5seconds, then start Gnus.
+;; After startup, if Emacs is idle for 10 seconds, then start Gnus.
 ;; Gnus is slow upon startup since it fetches all mails upon startup.
-;; (run-with-idle-timer 5 nil #'gnus)
+(run-with-idle-timer 10 nil #'gnus)
 #+END_SRC
 
 Learn more by reading [[https://www.gnu.org/software/emacs/manual/html_mono/gnus.html#Top][The Gnus Newsreader Manual]]; also available within Emacs by
@@ -1724,12 +1731,7 @@ Learn more by reading [[https://www.gnu.org/software/emacs/manual/html_mono/gnus
 [[https://www.emacswiki.org/emacs/GnusTutorial][EmacsWiki]] has a less technical and more user friendly tutorial.
 
 *** Prettifications
-:PROPERTIES:
-:CUSTOM_ID: Prettifications
-:END:
-:PROPERTIES:
 
-:END:
 :PROPERTIES:
 
 :END:
@@ -1737,11 +1739,12 @@ Let's add the icon  near my mail groups ^_^
 #+BEGIN_SRC emacs-lisp
 ;; Fancy icons for Emacs
 ;; Only do this once:
-(use-package all-the-icons)
+(use-package all-the-icons :defer t)
   ; :config (all-the-icons-install-fonts 'install-without-asking)
 
 ;; Make mail look pretty
 (use-package all-the-icons-gnus
+  :defer t
   :config (all-the-icons-gnus-setup))
 
 ;; While we're at it: Make dired, ‘dir’ectory ‘ed’itor, look pretty
@@ -1823,9 +1826,10 @@ do changes take effect on articles ---such as moves, reads, deletes, etc.
 
     Anyhow, ~B m Trash~ is too verbose, let's just use ~t~ for “trash”:
     #+BEGIN_SRC emacs-lisp
-(bind-key "t"
+(with-eval-after-load 'gnus
+  (bind-key "t"
           (lambda (N) (interactive "P") (gnus-summary-move-article N "[Gmail]/Trash"))
-          gnus-summary-mode-map)
+          gnus-summary-mode-map))
 
 ;; Orginally: t ⇒ gnus-summary-toggle-header
 #+END_SRC
@@ -1866,13 +1870,15 @@ option to provide additional remarks, and ~C~ to silently do so without addition
 remarks.
 
 #+BEGIN_SRC emacs-lisp
+(with-eval-after-load 'gnus
+
 (bind-key "c" #'my/org-capture-buffer gnus-article-mode-map)
 ;; Orginally: c ⇒ gnus-summary-catchup-and-exit
 
 (bind-key "C"
           (lambda (&optional keys)
             (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
-          gnus-article-mode-map)
+          gnus-article-mode-map))
 ;; Orginally: C ⇒ gnus-summary-cancel-article
 #+END_SRC
 
@@ -1904,10 +1910,10 @@ interface.
 
 #+begin_src emacs-lisp
 (use-package gmail2bbdb
+  :defer t
   :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
 
 (use-package bbdb
- :demand t
  :after company ;; The “com”plete “any”thig mode is set below in §Prose
  :hook   (message-mode . bbdb-insinuate-gnus)
          (gnus-startup-hook . bbdb-insinuate-gnus)
@@ -1919,12 +1925,6 @@ interface.
 Here is an [[http://emacs-fu.blogspot.com/2009/08/managing-e-mail-addresses-with-bbdb.html][emacs-fu]] article on managing e-mail addressed with bbdb.
 
 *** Feeds to Blogs                                               :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Feeds-to-Blogs
-:END:
-:PROPERTIES:
-
-:END:
 :PROPERTIES:
 
 :END:
@@ -2050,7 +2050,7 @@ windows, so we can make a hydra to alleviate the trouble.
   ("s" switch-window-then-swap-buffer  "swap" :color teal))
 
 ;; Provides a *visual* way to choose a window to switch to.
-(use-package switch-window)
+(use-package switch-window :defer t)
 ;; :bind (("C-x o" . switch-window)
 ;;        ("C-x w" . switch-window-then-swap-buffer))
 #+end_src
@@ -2071,6 +2071,7 @@ universal arguments to pop those shells up, but ~C-t~ to pop them away.
 
 #+BEGIN_SRC emacs-lisp
 (use-package shell-pop
+  :defer t
   :custom
     ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
     (shell-pop-universal-key "C-t")
@@ -2120,7 +2121,7 @@ thought of implementing that.
 #+BEGIN_SRC emacs-lisp
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :demand t
+  :defer t
   ;; Let's define an alias so there's no need to remember the order.
   :config (defalias 'emacs-restart #'restart-emacs))
 #+END_SRC
@@ -2271,7 +2272,7 @@ Let's use a helpful Emacs /documentation/ system that cleanly shows a lot of
 contextual information ---then let's /extend/ that to work as we want it to:
 ~C-h o~ to describe the symbol at point.
 #+BEGIN_SRC emacs-lisp
-(use-package helpful)
+(use-package helpful :defer t)
 
 (defun my/describe-symbol (symbol)
   "A “C-h o” replacement using “helpful”:
@@ -2403,9 +2404,10 @@ We cycle between the chosen themes with ~C-x t~.
 (setf custom-safe-themes t)
 
 ;; Nice looking themes ^_^
-(use-package solarized-theme)
-(use-package doom-themes)
+(use-package solarized-theme :defer t)
+(use-package doom-themes :defer t)
 (use-package spacemacs-common
+  :defer t
   :ensure spacemacs-theme)
 #+END_SRC
 
@@ -2671,6 +2673,7 @@ We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp
 ;; Sidebar for project file navigation
 (use-package neotree
+  :defer t
   :config (global-set-key "\C-x\ d" 'neotree-toggle)
           (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
 
@@ -2706,7 +2709,7 @@ I really like my Helm-supported ~C-x b~, but the visial appeal of a [[https://gi
 is interesting. Let's try it out and see how long this lasts ---it may be like Neotree:
 Something cute to show to others, but not as fast as the keyboard.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package awesome-tab
   :disabled
   :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
@@ -2731,7 +2734,7 @@ the window containing the cursor is the largest, according to the golden ratio.
 Consequently, the window we're working with is nice and large yet the other windows
 are still readable.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package golden-ratio
   :disabled
   :diminish golden-ratio-mode
@@ -2752,6 +2755,7 @@ have not relocated our playthings to their appropriate files. Whence let's save
 & restore the scratch buffer by default.
 #+BEGIN_SRC emacs-lisp
 (use-package persistent-scratch
+  :defer t
   ;; In this mode, the usual save key saves to the underlying persistent file.
   :bind (:map persistent-scratch-mode-map
               ("C-x C-s" . persistent-scratch-save)))
@@ -3066,13 +3070,13 @@ which I open then run ~M-x typing-of-emacs~ in order to improve spelling said
 words.
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; The Typing Of Emacs, a game.
-(use-package typing-of-emacs
+(use-package typing-of-emacs :defer t
   :quelpa (typing :fetcher wiki :url "https://www.emacswiki.org/emacs/typing.el"))
 #+END_SRC
 
 Practice touch typing using [[https://github.com/hagleitn/speed-type][speed-type]].
 #+begin_src emacs-lisp
-(use-package speed-type)
+(use-package speed-type :defer t)
 #+end_src
 Running ~M-x speed-type-region~ on a region of text, or ~M-x speed-type-buffer~ on a
 whole buffer, or just ~M-x speed-type-text~ will produce the selected region, buffer,
@@ -3091,6 +3095,7 @@ To assist in language learning, it may be nice to have an Emacs
 [[https://github.com/atykhonov/google-translate][interface]] to Google translate ---e.g., invoke ~google-translate-at-point~.
 #+BEGIN_SRC emacs-lisp
 (use-package google-translate
+ :defer t
  :config
    (global-set-key "\C-ct" 'google-translate-at-point))
 #+END_SRC
@@ -3115,10 +3120,10 @@ We get the offline tool from the bottom of the [[https://languagetool.org/][Lang
 as follows.
 #+BEGIN_SRC emacs-lisp
 (use-package langtool
- :config
-  (setq langtool-language-tool-jar
-     "~/Applications/LanguageTool-4.5/languagetool-commandline.jar")
-)
+ :defer t
+ :custom
+  (langtool-language-tool-jar
+   "~/Applications/LanguageTool-4.5/languagetool-commandline.jar"))
 #+END_SRC
 
 Now we can run ~langtool-check~ on the subsequent grammatically incorrect
@@ -3140,7 +3145,8 @@ It's 5 P.M. in the afternoon. The weather was nice on Thursday, 27 June 2017
 By looking around the source code, I can do all three stages smoothly (•̀ᴗ•́)و
 #+BEGIN_SRC emacs-lisp
 ;; Quickly check, correct, then clean up /region/ with M-^
-
+(eval-after-load 'langtool
+(progn
 (add-hook 'langtool-error-exists-hook
   (lambda ()
      (langtool-correct-buffer)
@@ -3150,7 +3156,7 @@ By looking around the source code, I can do all three stages smoothly (•̀ᴗ�
                 (lambda ()
                   (interactive)
                   (message "Grammar checking begun ...")
-                  (langtool-check)))
+                  (langtool-check)))))
 #+END_SRC
 
 The checking command is silent, we added a bit of comforting acknowledgement to the user.
@@ -3230,7 +3236,7 @@ inserting lists, sentences, paragraphs and using a prefix argument,
 with ~C-u~, we can request to generate any number of them.
 
 #+BEGIN_SRC emacs-lisp
-(use-package lorem-ipsum)
+(use-package lorem-ipsum :defer t)
 #+END_SRC
 
 ‘Lorem’ is not a word itself, but it comes from the Latin ‘Dolorem Ipsum’
@@ -3247,6 +3253,7 @@ bindings on lorem ipsum, gibberish text.
 The  [[https://github.com/davep/dad-joke.el][dad-joke]] queries [[https://icanhazdadjoke.com][https://icanhazdadjoke.com]] to bring us some funny.
 #+begin_src emacs-lisp
 (use-package dad-joke
+  :defer t
   :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
 #+end_src
 
@@ -3285,6 +3292,7 @@ I almost always want the ~agda-mode~ input method ---it's like the TeX method, b
 #+BEGIN_SRC emacs-lisp
 (use-package agda-input
   :ensure nil ;; I have it locally.
+  :demand t
   :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
   :custom (default-input-method "Agda"))
   ;; Now C-\ or M-x toggle-input-method turn it on and offers
@@ -3446,8 +3454,8 @@ cua-mode~ to enable [[https://www.gnu.org/software/emacs/manual/html_node/emacs/
 This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
 #+BEGIN_SRC emacs-lisp
 ;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(use-package move-text)
-(move-text-default-bindings)
+(use-package move-text
+  :config (move-text-default-bindings))
 #+END_SRC
 
 ** Enabling CamelCase Aware Editing Operations
@@ -3497,6 +3505,7 @@ cursor. This is less intrusive than searching ~C-s~ or listing all occurrences ~
 o~.
 #+BEGIN_SRC emacs-lisp
 (use-package smartscan
+  :defer t
   :config
     (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
     (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
@@ -3544,6 +3553,7 @@ me jump to any character or to any visible line.
 
 #+begin_src emacs-lisp
 (use-package ace-jump-mode
+  :defer t
   :config (bind-key* "C-c SPC" 'ace-jump-mode))
 
 ;; See ace-jump issues to configure for use of home row keys.
@@ -3592,7 +3602,8 @@ thought: Just press ~C-c e p~ to see what I did recently and where
 #+BEGIN_SRC emacs-lisp
 ;; Give me a description of the change made at a particular stop.
 (use-package goto-chg
-  :init (setq glc-default-span 0))
+  :defer t
+  :custom (glc-default-span 0))
 
 (defhydra hydra-edits (global-map "C-c e")
   ("p" goto-last-change "Goto nᵗʰ last change")
@@ -4201,17 +4212,16 @@ anchors.
 cite:agda_overview
 
     #+BEGIN_SRC emacs-lisp
-;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
-;; Most useful for non-LaTeX files.
-(setq reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
-(setq bibtex-completion-bibliography (car reftex-default-bibliography))
-
-(use-package org-ref
-  :config (setq org-ref-default-bibliography reftex-default-bibliography))
+(use-package org-ref :defer t
+  :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
+          ;; Most useful for non-LaTeX files.
+        (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
+        (bibtex-completion-bibliography (car reftex-default-bibliography))
+        (org-ref-default-bibliography reftex-default-bibliography))
 
 ;; Quick BibTeX references, sometimes.
-(use-package helm-bibtex)
-(use-package biblio)
+(use-package helm-bibtex :defer t)
+(use-package biblio :defer t)
 #+END_SRC
 
   Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter =emacs= and you will be
@@ -4404,8 +4414,8 @@ Org-mode documents can be transformed into beautiful slide decks
 with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] with the following two simple lines.
 
 #+BEGIN_SRC emacs-lisp
-(use-package ox-reveal
-  :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
+(use-package ox-reveal :defer t
+  :custom (org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
 #+END_SRC
 # MA: ??? It looks like ox-reveal is being abandoned in favor of org-re-reveal,
 # a fork compatible with org-mode 9.2?
@@ -4824,7 +4834,8 @@ file too, if we enable it so.
 #+begin_src emacs-lisp
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
-(org-agenda "a" "a") ;; ➩ Show my agenda upon Emacs startup.
+;; ➩ Show my agenda upon Emacs startup.
+(with-eval-after-load 'org-super-agenda (org-agenda "a" "a"))
 #+end_src
 
 Let's install some helpful views for our agenda.
@@ -5753,14 +5764,14 @@ A few more helpful version control features:
 #+BEGIN_SRC emacs-lisp
 ;; Popup for who's to blame for alterations.
 (use-package git-messenger
-  :config ;; Always show who authored the commit and when.
-          (setq git-messenger:show-detail t)
+  :custom ;; Always show who authored the commit and when.
+          (git-messenger:show-detail t)
           ;; Message menu let's us use magit diff to see the commit change.
-          (setq git-messenger:use-magit-popup t))
+          (git-messenger:use-magit-popup t))
 
 ;; View current file in browser on github.
 ;; More generic is “browse-at-remote”.
-(use-package github-browse-file)
+(use-package github-browse-file :defer t)
 
 ;; Add these to the version control hydra.
 ;;
@@ -5778,7 +5789,7 @@ Obtaining URL links to the current location of a file
 Usefully, if [[https://gitlab.com/pidu/git-timemachine][git-timemachine-mode]] is active, the generated link
 points to the version of the file being visited.
 #+BEGIN_SRC emacs-lisp
-(use-package git-link)
+(use-package git-link :defer t)
 
 (defhydra hydra-version-control (global-map "C-x v")
   ("l" git-link "Git URL for current location"))
@@ -5825,6 +5836,7 @@ mentioned]] in a magit status buffer ---which uses the keywords from ~hl-todo~.
 (use-package magit-todos
   :after magit
   :after hl-todo
+  :hook (org-mode . magit-todos-mode)
   :config
   ;; For some reason cannot use :custom with this package.
   (custom-set-variables
@@ -5974,6 +5986,8 @@ For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifi
 #+begin_src emacs-lisp
 (use-package color-identifiers-mode
   :config (global-color-identifiers-mode))
+
+;; Sometimes just invoke: M-x color-identifiers:refresh
 #+END_SRC
 
 When writing a new name, after about ~5 seconds it obtains a colour which is then
@@ -6613,7 +6627,7 @@ I often find myself switching from a horizontal view of two windows in Emacs to 
 vertical view. This requires a variation of ~C-x 1 RET C-x 3 RET C-x o C-x b RET~.
 Instead I now only need to type ~C-|~ to make this switch.
 #+BEGIN_SRC emacs-lisp
-(defun ensure-two-vertical-windows ()
+(defun my/ensure-two-vertical-windows ()
   "I used this method often when programming in Coq.
 
 When there are two vertical windows, this method ensures the left-most
@@ -6627,7 +6641,7 @@ window contains the buffer with the cursour in it."
     (switch-to-buffer otherBuffer)	;; C-x b RET
     (other-window 1)))
 
-(global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
+(global-set-key (kbd "C-|") 'my/ensure-two-vertical-windows)
 #+END_SRC
 ** Obtaining Values of ~#+KEYWORD~ Annotations
 :PROPERTIES:

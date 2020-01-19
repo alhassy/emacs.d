@@ -14,8 +14,7 @@
 ;; Internet repositories for new packages.
 (setq package-archives '(("org"       . "http://orgmode.org/elpa/")
                          ("gnu"       . "http://elpa.gnu.org/packages/")
-                         ("melpa"     . "http://melpa.org/packages/")
-                         ("melpa-stable" . "http://stable.melpa.org/packages/")))
+                         ("melpa"     . "http://melpa.org/packages/")))
 
 ;; Actually get “package” to work.
 (package-initialize)
@@ -26,7 +25,7 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-(eval-when-compile (require 'use-package))
+(require 'use-package)
 ;; =use-package= ---The start of =init.el=:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:3]]
@@ -35,6 +34,7 @@
 
 ;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:4]]
 (use-package auto-package-update
+  :defer 5
   :config
   ;; Delete residual old versions
   (setq auto-package-update-delete-old-versions t)
@@ -48,6 +48,7 @@
 ;; Making it easier to discover Emacs key presses.
 (use-package which-key
   :diminish
+  :defer 5
   :config (which-key-mode)
           (which-key-setup-side-window-bottom)
           (setq which-key-idle-delay 0.05))
@@ -55,7 +56,7 @@
 
 ;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:6]]
 (use-package diminish
-  :demand t
+  :defer 5
   :config ;; Let's hide some markers.
     (diminish  'org-indent-mode))
 ;; =use-package= ---The start of =init.el=:6 ends here
@@ -68,7 +69,7 @@
 (use-package magit
   :config (global-set-key (kbd "C-x g") 'magit-status))
 
-(use-package htmlize)
+(use-package htmlize :defer t)
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 
@@ -78,7 +79,7 @@
   :hook (org-mode . org-bullets-mode))
 
 ;; Haskell's cool
-(use-package haskell-mode)
+(use-package haskell-mode :defer t)
 
 ;; Lisp libraries with Haskell-like naming.
 (use-package dash)    ;; “A modern list library for Emacs”
@@ -96,13 +97,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; =use-package= ---The start of =init.el=:8 ends here
@@ -149,11 +150,11 @@
 
 ;; [[file:~/.emacs.d/init.org::*‘Table of Contents’ for Org vs. Github][‘Table of Contents’ for Org vs. Github:1]]
 (use-package toc-org
+  ;; Automatically update toc when saving an Org file.
+  :hook (org-mode . toc-org-mode)
   ;; Use both “:ignore_N:” and ":export_N:” to exlude headings from the TOC.
   :custom (toc-org-noexport-regexp
-           "\\(^*+\\)\s+.*:\\(ignore\\|noexport\\)\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)")
-  ;; Automatically update toc when saving an Org file.
-  :hook (org-mode . toc-org-mode))
+           "\\(^*+\\)\s+.*:\\(ignore\\|noexport\\)\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)"))
 ;; ‘Table of Contents’ for Org vs. Github:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*‘Table of Contents’ for Org vs. Github][‘Table of Contents’ for Org vs. Github:2]]
@@ -184,6 +185,7 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 
 ;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:1]]
 (use-package quelpa
+  :defer t
   :custom (quelpa-upgrade-p t "Always try to update packages")
   :config
   ;; Get ‘quelpa-use-package’ via ‘quelpa’
@@ -204,10 +206,10 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 ;; =magit= ---Emacs' porcelain interface to gitq:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to gitq][=magit= ---Emacs' porcelain interface to gitq:2]]
-(use-package magit)
-
-;; Do not ask about this variable when cloning.
-(setq magit-clone-set-remote.pushDefault t)
+(use-package magit
+  :defer t
+  :custom ;; Do not ask about this variable when cloning.
+          (magit-clone-set-remote.pushDefault t))
 
 (cl-defun maybe-clone (remote &optional (local (concat "~/" (file-name-base remote))))
   "Clone a REMOTE repository if the LOCAL directory does not exist.
@@ -298,7 +300,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; =magit= ---Emacs' porcelain interface to gitq:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*=magit= ---Emacs' porcelain interface to gitq][=magit= ---Emacs' porcelain interface to gitq:5]]
-(use-package git-timemachine)
+(use-package git-timemachine :defer t)
 ;; =magit= ---Emacs' porcelain interface to gitq:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Syncing to the System's =$PATH=][Syncing to the System's =$PATH=:1]]
@@ -310,17 +312,20 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:1]]
 ;; Auto installing OS system packages
-(use-package use-package-ensure-system-package)
+(use-package use-package-ensure-system-package
+  :defer 5
+  :config (system-packages-update))
 
 ;; Ensure our operating system is always up to date.
 ;; This is run whenever we open Emacs & so wont take long if we're up to date.
 ;; It happens in the background ^_^
-(system-packages-update)
+;;
+;; After 5 seconds of being idle, after starting up.
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:3]]
 ;; An Emacs-based interface to the package manager of your operating system.
-(use-package helm-system-packages)
+(use-package helm-system-packages :defer t)
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:4]]
@@ -378,6 +383,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Having a workspace manager in Emacs][Having a workspace manager in Emacs:1]]
 (use-package perspective
+  :defer t
   :config ;; Activate it.
           (persp-mode)
           ;; In the modeline, tell me which workspace I'm in.
@@ -386,6 +392,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Excellent PDF Viewer][Excellent PDF Viewer:1]]
 (use-package pdf-tools
+  :defer t
   ; :init   (system-packages-ensure "pdf-tools")
   :custom (pdf-tools-handle-upgrades nil)
           (pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
@@ -404,19 +411,20 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Who am I? ---Using Gnus for Gmail:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Who am I? ---Using Gnus for Gmail][Who am I? ---Using Gnus for Gmail:6]]
-;; After startup, if Emacs is idle for 5seconds, then start Gnus.
+;; After startup, if Emacs is idle for 10 seconds, then start Gnus.
 ;; Gnus is slow upon startup since it fetches all mails upon startup.
-;; (run-with-idle-timer 5 nil #'gnus)
+(run-with-idle-timer 10 nil #'gnus)
 ;; Who am I? ---Using Gnus for Gmail:6 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Prettifications][Prettifications:1]]
 ;; Fancy icons for Emacs
 ;; Only do this once:
-(use-package all-the-icons)
+(use-package all-the-icons :defer t)
   ; :config (all-the-icons-install-fonts 'install-without-asking)
 
 ;; Make mail look pretty
 (use-package all-the-icons-gnus
+  :defer t
   :config (all-the-icons-gnus-setup))
 
 ;; While we're at it: Make dired, ‘dir’ectory ‘ed’itor, look pretty
@@ -442,30 +450,33 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Prettifications:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Super Terse Tutorial][Super Terse Tutorial:2]]
-(bind-key "t"
+(with-eval-after-load 'gnus
+  (bind-key "t"
           (lambda (N) (interactive "P") (gnus-summary-move-article N "[Gmail]/Trash"))
-          gnus-summary-mode-map)
+          gnus-summary-mode-map))
 
 ;; Orginally: t ⇒ gnus-summary-toggle-header
 ;; Super Terse Tutorial:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Capturing Mail as Todo/Notes][Capturing Mail as Todo/Notes:1]]
+(with-eval-after-load 'gnus
+
 (bind-key "c" #'my/org-capture-buffer gnus-article-mode-map)
 ;; Orginally: c ⇒ gnus-summary-catchup-and-exit
 
 (bind-key "C"
           (lambda (&optional keys)
             (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
-          gnus-article-mode-map)
+          gnus-article-mode-map))
 ;; Orginally: C ⇒ gnus-summary-cancel-article
 ;; Capturing Mail as Todo/Notes:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Auto-completing mail addresses][Auto-completing mail addresses:1]]
 (use-package gmail2bbdb
+  :defer t
   :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
 
 (use-package bbdb
- :demand t
  :after company ;; The “com”plete “any”thig mode is set below in §Prose
  :hook   (message-mode . bbdb-insinuate-gnus)
          (gnus-startup-hook . bbdb-insinuate-gnus)
@@ -495,13 +506,14 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   ("s" switch-window-then-swap-buffer  "swap" :color teal))
 
 ;; Provides a *visual* way to choose a window to switch to.
-(use-package switch-window)
+(use-package switch-window :defer t)
 ;; :bind (("C-x o" . switch-window)
 ;;        ("C-x w" . switch-window-then-swap-buffer))
 ;; Hydra: Supply a prefix only once:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
 (use-package shell-pop
+  :defer t
   :custom
     ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
     (shell-pop-universal-key "C-t")
@@ -525,7 +537,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; [[file:~/.emacs.d/init.org::*Restarting Emacs ---Keeping buffers open across sessions?][Restarting Emacs ---Keeping buffers open across sessions?:1]]
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :demand t
+  :defer t
   ;; Let's define an alias so there's no need to remember the order.
   :config (defalias 'emacs-restart #'restart-emacs))
 ;; Restarting Emacs ---Keeping buffers open across sessions?:1 ends here
@@ -603,7 +615,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; Screencapturing the Current Emacs Frame:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Editor Documentation with Contextual Information][Editor Documentation with Contextual Information:1]]
-(use-package helpful)
+(use-package helpful :defer t)
 
 (defun my/describe-symbol (symbol)
   "A “C-h o” replacement using “helpful”:
@@ -676,9 +688,10 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 (setf custom-safe-themes t)
 
 ;; Nice looking themes ^_^
-(use-package solarized-theme)
-(use-package doom-themes)
+(use-package solarized-theme :defer t)
+(use-package doom-themes :defer t)
 (use-package spacemacs-common
+  :defer t
   :ensure spacemacs-theme)
 ;; Exquisite Themes:1 ends here
 
@@ -801,6 +814,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; [[file:~/.emacs.d/init.org::*Neotree: Directory Tree Listing][Neotree: Directory Tree Listing:1]]
 ;; Sidebar for project file navigation
 (use-package neotree
+  :defer t
   :config (global-set-key "\C-x\ d" 'neotree-toggle)
           (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
 
@@ -808,26 +822,9 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; (neotree-toggle)
 ;; Neotree: Directory Tree Listing:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Tabs][Tabs:1]]
-(use-package awesome-tab
-  :disabled
-  :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
-  :config (awesome-tab-mode t))
-
-;; Show me /all/ the tabs at once, in one group.
-(defun awesome-tab-buffer-groups ()
-  (list (awesome-tab-get-group-name (current-buffer))))
-;; Tabs:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Window resizing using the golden ratio][Window resizing using the golden ratio:1]]
-(use-package golden-ratio
-  :disabled
-  :diminish golden-ratio-mode
-  :init (golden-ratio-mode 1))
-;; Window resizing using the golden ratio:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:1]]
 (use-package persistent-scratch
+  :defer t
   ;; In this mode, the usual save key saves to the underlying persistent file.
   :bind (:map persistent-scratch-mode-map
               ("C-x C-s" . persistent-scratch-save)))
@@ -1002,26 +999,28 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Touch Typing][Touch Typing:2]]
-(use-package speed-type)
+(use-package speed-type :defer t)
 ;; Touch Typing:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Touch Typing][Touch Typing:3]]
 (use-package google-translate
+ :defer t
  :config
    (global-set-key "\C-ct" 'google-translate-at-point))
 ;; Touch Typing:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Using a Grammar & Style Checker][Using a Grammar & Style Checker:1]]
 (use-package langtool
- :config
-  (setq langtool-language-tool-jar
-     "~/Applications/LanguageTool-4.5/languagetool-commandline.jar")
-)
+ :defer t
+ :custom
+  (langtool-language-tool-jar
+   "~/Applications/LanguageTool-4.5/languagetool-commandline.jar"))
 ;; Using a Grammar & Style Checker:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Using a Grammar & Style Checker][Using a Grammar & Style Checker:2]]
 ;; Quickly check, correct, then clean up /region/ with M-^
-
+(eval-after-load 'langtool
+(progn
 (add-hook 'langtool-error-exists-hook
   (lambda ()
      (langtool-correct-buffer)
@@ -1031,7 +1030,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
                 (lambda ()
                   (interactive)
                   (message "Grammar checking begun ...")
-                  (langtool-check)))
+                  (langtool-check)))))
 ;; Using a Grammar & Style Checker:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Lightweight Prose Proofchecking][Lightweight Prose Proofchecking:1]]
@@ -1052,11 +1051,12 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; Lightweight Prose Proofchecking:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Placeholder Text ---For Learning & Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
-(use-package lorem-ipsum)
+(use-package lorem-ipsum :defer t)
 ;; Placeholder Text ---For Learning & Experimenting:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Some text to make us smile][Some text to make us smile:1]]
 (use-package dad-joke
+  :defer t
   :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
 ;; Some text to make us smile:1 ends here
 
@@ -1075,6 +1075,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:3]]
 (use-package agda-input
   :ensure nil ;; I have it locally.
+  :demand t
   :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
   :custom (default-input-method "Agda"))
   ;; Now C-\ or M-x toggle-input-method turn it on and offers
@@ -1156,8 +1157,8 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 
 ;; [[file:~/.emacs.d/init.org::*Moving Text Around][Moving Text Around:1]]
 ;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(use-package move-text)
-(move-text-default-bindings)
+(use-package move-text
+  :config (move-text-default-bindings))
 ;; Moving Text Around:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations:1]]
@@ -1175,6 +1176,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 
 ;; [[file:~/.emacs.d/init.org::*~M-n,p~: Word-at-Point Navigation][~M-n,p~: Word-at-Point Navigation:1]]
 (use-package smartscan
+  :defer t
   :config
     (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
     (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
@@ -1199,6 +1201,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 
 ;; [[file:~/.emacs.d/init.org::*Letter-based Navigation][Letter-based Navigation:1]]
 (use-package ace-jump-mode
+  :defer t
   :config (bind-key* "C-c SPC" 'ace-jump-mode))
 
 ;; See ace-jump issues to configure for use of home row keys.
@@ -1207,7 +1210,8 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; [[file:~/.emacs.d/init.org::*~C-c e n,p~: Taking a tour of one's edits][~C-c e n,p~: Taking a tour of one's edits:1]]
 ;; Give me a description of the change made at a particular stop.
 (use-package goto-chg
-  :init (setq glc-default-span 0))
+  :defer t
+  :custom (glc-default-span 0))
 
 (defhydra hydra-edits (global-map "C-c e")
   ("p" goto-last-change "Goto nᵗʰ last change")
@@ -1491,17 +1495,16 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; Org-mode's ~<𝒳~ Block Expansions:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
-;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
-;; Most useful for non-LaTeX files.
-(setq reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
-(setq bibtex-completion-bibliography (car reftex-default-bibliography))
-
-(use-package org-ref
-  :config (setq org-ref-default-bibliography reftex-default-bibliography))
+(use-package org-ref :defer t
+  :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
+          ;; Most useful for non-LaTeX files.
+        (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
+        (bibtex-completion-bibliography (car reftex-default-bibliography))
+        (org-ref-default-bibliography reftex-default-bibliography))
 
 ;; Quick BibTeX references, sometimes.
-(use-package helm-bibtex)
-(use-package biblio)
+(use-package helm-bibtex :defer t)
+(use-package biblio :defer t)
 ;; Working with Citations:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Bibliography & Coloured LaTeX using Minted][Bibliography & Coloured LaTeX using Minted:1]]
@@ -1596,8 +1599,8 @@ by spaces.
 ;; HTML “Folded Drawers”:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*\[\[https://revealjs.com/?transition=zoom#/\]\[Reveal.JS\]\] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
-(use-package ox-reveal
-  :config (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
+(use-package ox-reveal :defer t
+  :custom (org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
 ;; [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*\[\[https://revealjs.com/?transition=zoom#/\]\[Reveal.JS\]\] -- The HTML Presentation Framework][[[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3]]
@@ -1752,7 +1755,8 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; [[file:~/.emacs.d/init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:2]]
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
-(org-agenda "a" "a") ;; ➩ Show my agenda upon Emacs startup.
+;; ➩ Show my agenda upon Emacs startup.
+(org-agenda "a" "a")
 ;; Step 7: Archiving Tasks:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:3]]
@@ -2025,14 +2029,14 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:4]]
 ;; Popup for who's to blame for alterations.
 (use-package git-messenger
-  :config ;; Always show who authored the commit and when.
-          (setq git-messenger:show-detail t)
+  :custom ;; Always show who authored the commit and when.
+          (git-messenger:show-detail t)
           ;; Message menu let's us use magit diff to see the commit change.
-          (setq git-messenger:use-magit-popup t))
+          (git-messenger:use-magit-popup t))
 
 ;; View current file in browser on github.
 ;; More generic is “browse-at-remote”.
-(use-package github-browse-file)
+(use-package github-browse-file :defer t)
 
 ;; Add these to the version control hydra.
 ;;
@@ -2044,7 +2048,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; What's changed & who's to blame?:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:5]]
-(use-package git-link)
+(use-package git-link :defer t)
 
 (defhydra hydra-version-control (global-map "C-x v")
   ("l" git-link "Git URL for current location"))
@@ -2076,6 +2080,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 (use-package magit-todos
   :after magit
   :after hl-todo
+  :hook (org-mode . magit-todos-mode)
   :config
   ;; For some reason cannot use :custom with this package.
   (custom-set-variables
@@ -2127,6 +2132,8 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; [[file:~/.emacs.d/init.org::*Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
 (use-package color-identifiers-mode
   :config (global-color-identifiers-mode))
+
+;; Sometimes just invoke: M-x color-identifiers:refresh
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:1]]
@@ -2301,7 +2308,7 @@ Prompt only if there are unsaved changes."
 ;; Killing buffers & windows: ~C-x k~ has a family:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Switching from 2 horizontal windows to 2 vertical windows][Switching from 2 horizontal windows to 2 vertical windows:1]]
-(defun ensure-two-vertical-windows ()
+(defun my/ensure-two-vertical-windows ()
   "I used this method often when programming in Coq.
 
 When there are two vertical windows, this method ensures the left-most
@@ -2315,7 +2322,7 @@ window contains the buffer with the cursour in it."
     (switch-to-buffer otherBuffer)	;; C-x b RET
     (other-window 1)))
 
-(global-set-key (kbd "C-|") 'ensure-two-vertical-windows)
+(global-set-key (kbd "C-|") 'my/ensure-two-vertical-windows)
 ;; Switching from 2 horizontal windows to 2 vertical windows:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Obtaining Values of ~#+KEYWORD~ Annotations][Obtaining Values of ~#+KEYWORD~ Annotations:1]]
