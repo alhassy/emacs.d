@@ -1,6 +1,6 @@
 ;; [[file:~/.emacs.d/init.org::*Support for ‘Custom’][Support for ‘Custom’:1]]
 (setq custom-file "~/.emacs.d/custom.el")
-(load custom-file)
+(ignore-errors (load custom-file)) ;; It may not yet exist.
 ;; Support for ‘Custom’:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Support for ‘Custom’][Support for ‘Custom’:2]]
@@ -117,32 +117,32 @@
 ;; =use-package= ---The start of =init.el=:9 ends here
 
 ;; [[file:~/.emacs.d/init.org::enable making init and readme][enable making init and readme]]
-(defun my/make-init-el-and-README ()
-  "Tangle an el and a github README from my init.org."
-  (interactive "P") ;; Places value of universal argument into: current-prefix-arg
-  (when current-prefix-arg
-    (let* ((time      (current-time))
-           (_date     (format-time-string "_%Y-%m-%d"))
-           (.emacs    "~/.emacs")
-           (.emacs.el "~/.emacs.el"))
-      ;; Make README.org
-      (save-excursion
-        (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
-        (org-babel-execute-src-block))
+  (defun my/make-init-el-and-README ()
+    "Tangle an el and a github README from my init.org."
+    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
+    (when current-prefix-arg
+      (let* ((time      (current-time))
+             (_date     (format-time-string "_%Y-%m-%d"))
+             (.emacs    "~/.emacs")
+             (.emacs.el "~/.emacs.el"))
+        ;; Make README.org
+        (save-excursion
+          (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
+          (org-babel-execute-src-block))
 
-      ;; remove any other initialisation file candidates
-      (ignore-errors
-        (f-move .emacs    (concat .emacs _date))
-        (f-move .emacs.el (concat .emacs.el _date)))
+        ;; remove any other initialisation file candidates
+        (ignore-errors
+          (f-move .emacs    (concat .emacs _date))
+          (f-move .emacs.el (concat .emacs.el _date)))
 
-      ;; Make init.el
-      (org-babel-tangle)
-      (byte-compile-file "~/.emacs.d/init.el")
-      (load-file "~/.emacs.d/init.el")
+        ;; Make init.el
+        (org-babel-tangle)
+        ;; (byte-compile-file "~/.emacs.d/init.el")
+        (load-file "~/.emacs.d/init.el")
 
-      ;; Acknowledgement
-      (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
-               (float-time (time-since time))))))
+        ;; Acknowledgement
+        (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
+                 (float-time (time-since time))))))
 
 (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 ;; enable making init and readme ends here
@@ -368,7 +368,10 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
   :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
           ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
           ;; Go back to last position where ‘helm-swoop’ was called
-          ("C-S-s" . 'helm-swoop-back-to-last-point))
+          ("C-S-s" . 'helm-swoop-back-to-last-point)
+          ;; swoop doesn't work with PDFs, use Emacs' default isearch instead.
+          :map pdf-view-mode-map
+          ("C-s" . isearch-forward))
   :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
           (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
 ;; “Being at the Helm” ---Completion & Narrowing Framework:4 ends here
@@ -481,6 +484,22 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;;   ;; List of triples (extension method description) )
 ;; Hydra: Supply a prefix only once:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:2]]
+;; Use ijkl to denote ↑←↓→ arrows.
+(defhydra hydra-windows (global-map    "C-c w"   )
+  ("b" balance-windows                 "balance" )
+  ("i" enlarge-window                  "heighten")
+  ("j" shrink-window-horizontally      "narrow"  )
+  ("k" shrink-window                   "lower"   )
+  ("l" enlarge-window-horizontally     "widen"   )
+  ("s" switch-window-then-swap-buffer  "swap" :color teal))
+
+;; Provides a *visual* way to choose a window to switch to.
+(use-package switch-window)
+;; :bind (("C-x o" . switch-window)
+;;        ("C-x w" . switch-window-then-swap-buffer))
+;; Hydra: Supply a prefix only once:2 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
 (use-package shell-pop
   :custom
@@ -547,6 +566,41 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 (add-hook 'before-save-hook  'my/force-backup-of-buffer)
 ;; Automatic Backups:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Screencapturing the Current Emacs Frame][Screencapturing the Current Emacs Frame:1]]
+(defun my/capture-emacs-frame (&optional prefix output)
+"Insert a link to a screenshot of the current Emacs frame.
+
+Unless the name of the OUTPUT file is provided, read it from the
+user. If PREFIX is provided, let the user select a portion of the screen."
+(interactive "p")
+(defvar my/emacs-window-id
+   (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
+   "The window ID of the current Emacs frame.
+
+    Takes a second to compute, whence a defvar.")
+
+(let* ((screen  (if prefix "-i" (concat "-l" my/emacs-window-id)))
+       (temp    (format "emacs_temp_%s.png" (random)))
+       (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
+;; Get output file name
+  (unless output
+    (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
+    (when (s-blank-p output) (setq output default)))
+;; Clear minibuffer before capturing screen or prompt user
+(message (if prefix "Please select region for capture …" "♥‿♥"))
+;; Capture current screen and resize
+(thread-first
+    (format "screencapture -T 2 %s %s" screen temp)
+    (concat "; magick convert -resize 60% " temp " " output)
+    (shell-command))
+(f-delete temp)
+;; Insert a link to the image and reload inline images.
+(insert (concat "[[file:" output "]]")))
+(org-display-inline-images nil t))
+
+(bind-key* "C-c M-s" #'my/capture-emacs-frame)
+;; Screencapturing the Current Emacs Frame:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Editor Documentation with Contextual Information][Editor Documentation with Contextual Information:1]]
 (use-package helpful)
@@ -894,7 +948,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (use-package flyspell
   :diminish
   :hook ((prog-mode . flyspell-prog-mode)
-         (org-mode text-mode . flyspell-mode)))
+         ((org-mode text-mode) . flyspell-mode)))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:2]]
@@ -1019,9 +1073,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; Unicode Input via Agda Input:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:3]]
-(require 'agda-input)
-(setq default-input-method "Agda")
-(toggle-input-method)  ;; C-\
+(use-package agda-input
+  :ensure nil ;; I have it locally.
+  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
+  :custom (default-input-method "Agda"))
+  ;; Now C-\ or M-x toggle-input-method turn it on and offers
 ;; Unicode Input via Agda Input:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:4]]
@@ -1563,7 +1619,7 @@ by spaces.
 
 ;; [[file:~/.emacs.d/init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:2]]
 (cl-defun my/make/org-capture-template
-   (shortcut heading &optional (no-todo nil) (description heading) (scheduled t))
+   (shortcut heading &optional (no-todo nil) (description heading) (scheduled nil))
   "Quickly produce an org-capture-template.
 
   After adding the result of this function to ‘org-capture-templates’,
@@ -1608,12 +1664,14 @@ by spaces.
                                "p" "Personal Matters"))
             collect  (my/make/org-capture-template shortcut heading)))
 
+;; Update: Let's schedule tasks during the GTD processing phase.
+;;
 ;; For now, let's automatically schedule items a week in advance.
 ;; TODO: FIXME: This overwrites any scheduling I may have performed.
-(defun my/org-capture-schedule ()
-  (org-schedule nil "+7d"))
-
-(add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
+;; (defun my/org-capture-schedule ()
+;;   (org-schedule nil "+7d"))
+;;
+;; (add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
 ;; Capturing ideas & notes without interrupting the current workflow:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:3]]
@@ -1755,7 +1813,6 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; [[file:~/.emacs.d/init.org::*Super Agenda][Super Agenda:3]]
 (use-package org-super-agenda
-  :after origami-mode
   :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
   :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
   :config
@@ -1905,7 +1962,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; In order to see the habit graphs, which I've placed rightwards, let's
 ;; always open org-agenda in ‘full screen’.
-(setq org-agenda-window-setup 'only-window)
+;; (setq org-agenda-window-setup 'only-window)
 ;; Habit Formation:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlight defined Lisp symbols][Highlight defined Lisp symbols:1]]
@@ -1934,15 +1991,10 @@ C-u C-u C-c c ⇒ Goto last note stored."
   (setq dumb-jump-use-visible-window t))
 ;; Jumping to definitions & references:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Aggressive Indentation][Aggressive Indentation:1]]
-;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-  :config (global-aggressive-indent-mode t))
-
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-;; Aggressive Indentation:1 ends here
+;; [[file:~/.emacs.d/init.org::*Version Control with SVN ---Using Magit!][Version Control with SVN ---Using Magit!:1]]
+(use-package magit-svn
+  :hook (magit-mode . magit-svn-mode))
+;; Version Control with SVN ---Using Magit!:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:1]]
 ;; Hunk navigation and commiting.
@@ -2038,6 +2090,22 @@ C-u C-u C-c c ⇒ Goto last note stored."
   ("t" helm-magit-todos "Show TODOs lists for this repo."))
 ;; Highlighting TODO-s & Showing them in Magit:4 ends here
 
+;; [[file:~/.emacs.d/init.org::*Aggressive Indentation][Aggressive Indentation:1]]
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent
+  :config (global-aggressive-indent-mode t))
+
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+;; Aggressive Indentation:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Being Generous with Whitespace][Being Generous with Whitespace:1]]
+(use-package electric-operator
+  :diminish
+  :hook (c-mode . electric-operator-mode))
+;; Being Generous with Whitespace:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*On the fly syntax checking][On the fly syntax checking:1]]
 (use-package flycheck
   :diminish
@@ -2063,16 +2131,15 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:1]]
 (use-package origami
-  :hook (agda2-mode lisp-mode c-mode))
-;; In Lisp languages, by default only function definitions are folded.
+  ;; In Lisp languages, by default only function definitions are folded.
+  :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+  :config
+  ;; With basic support for one of my languages.
+  (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
+         origami-parser-alist))
 ;; Text Folding with Origami-mode:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:2]]
-(push '(agda2-mode . (origami-markers-parser "{-" "-}"))
-      origami-parser-alist)
-;; Text Folding with Origami-mode:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:3]]
 (defun my/search-hook-function ()
   (when origami-mode (origami-toggle-node (current-buffer) (point))))
 
@@ -2081,16 +2148,16 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;;
 ;; Likewise for incremental search, isearch, users.
 ;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
-;; Text Folding with Origami-mode:3 ends here
+;; Text Folding with Origami-mode:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:4]]
+;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:3]]
 (defhydra folding-with-origami-mode (global-map "C-c f")
   ("h" origami-close-node-recursively "Hide")
   ("o" origami-open-node-recursively  "Open")
   ("t" origami-toggle-all-nodes  "Toggle buffer")
   ("n" origami-next-fold "Next")
   ("p" origami-previous-fold "Previous"))
-;; Text Folding with Origami-mode:4 ends here
+;; Text Folding with Origami-mode:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove

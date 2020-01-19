@@ -3,6 +3,7 @@
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 #
 # ≥ 7700 line org file, with auto-generated TOC.
+# ≥ 220 code blocks
 #
 #+TITLE: A Life Configuring Emacs
 #+AUTHOR: Musa Al-hassy
@@ -12,6 +13,8 @@
 #+STARTUP: indent lognoteclock-out
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+PROPERTY: header-args :tangle init.el :comments link :results none
+
+# (require 'org-id)
 
 # ─AlBasmala keywords─
 # DRAFT: yes
@@ -613,12 +616,6 @@ Execute the following to see additions to the ~~/.emacs~ have been added by
 :PROPERTIES:
 :CUSTOM_ID: Support-for-Custom
 :END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
 
 Let the Emacs customisation GUI insert configurations into its own file, not
 touching or altering my initialisation file.  For example, I tend to have local
@@ -626,7 +623,7 @@ variables to produce ~README.org~'s and other matters, so Emacs' Custom utility
 will remember to not prompt me each time for the safety of such local variables.
 #+begin_src emacs-lisp
 (setq custom-file "~/.emacs.d/custom.el")
-(load custom-file)
+(ignore-errors (load custom-file)) ;; It may not yet exist.
 #+end_src
 
 Speaking of local variables, let's always ones we've already marked as safe
@@ -862,32 +859,32 @@ that is associated with this file only.
 
 #+name: enable making init and readme
 #+begin_src emacs-lisp :eval never-export
-(defun my/make-init-el-and-README ()
-  "Tangle an el and a github README from my init.org."
-  (interactive "P") ;; Places value of universal argument into: current-prefix-arg
-  (when current-prefix-arg
-    (let* ((time      (current-time))
-           (_date     (format-time-string "_%Y-%m-%d"))
-           (.emacs    "~/.emacs")
-           (.emacs.el "~/.emacs.el"))
-      ;; Make README.org
-      (save-excursion
-        (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
-        (org-babel-execute-src-block))
+  (defun my/make-init-el-and-README ()
+    "Tangle an el and a github README from my init.org."
+    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
+    (when current-prefix-arg
+      (let* ((time      (current-time))
+             (_date     (format-time-string "_%Y-%m-%d"))
+             (.emacs    "~/.emacs")
+             (.emacs.el "~/.emacs.el"))
+        ;; Make README.org
+        (save-excursion
+          (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
+          (org-babel-execute-src-block))
 
-      ;; remove any other initialisation file candidates
-      (ignore-errors
-        (f-move .emacs    (concat .emacs _date))
-        (f-move .emacs.el (concat .emacs.el _date)))
+        ;; remove any other initialisation file candidates
+        (ignore-errors
+          (f-move .emacs    (concat .emacs _date))
+          (f-move .emacs.el (concat .emacs.el _date)))
 
-      ;; Make init.el
-      (org-babel-tangle)
-      (byte-compile-file "~/.emacs.d/init.el")
-      (load-file "~/.emacs.d/init.el")
+        ;; Make init.el
+        (org-babel-tangle)
+        ;; (byte-compile-file "~/.emacs.d/init.el")
+        (load-file "~/.emacs.d/init.el")
 
-      ;; Acknowledgement
-      (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
-               (float-time (time-since time))))))
+        ;; Acknowledgement
+        (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
+                 (float-time (time-since time))))))
 
 (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+end_src
@@ -2965,7 +2962,7 @@ comments and strings.
 (use-package flyspell
   :diminish
   :hook ((prog-mode . flyspell-prog-mode)
-         (org-mode text-mode . flyspell-mode)))
+         ((org-mode text-mode) . flyspell-mode)))
 #+END_SRC
 
 Enabling fly-spell for text-mode enables it for org and latex modes since they
@@ -3286,9 +3283,11 @@ Let's put it here ourselves.
 
 I almost always want the ~agda-mode~ input method ---it's like the TeX method, but better.
 #+BEGIN_SRC emacs-lisp
-(require 'agda-input)
-(setq default-input-method "Agda")
-(toggle-input-method)  ;; C-\
+(use-package agda-input
+  :ensure nil ;; I have it locally.
+  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
+  :custom (default-input-method "Agda"))
+  ;; Now C-\ or M-x toggle-input-method turn it on and offers
 #+END_SRC
 
 :agda_Command_line_arguments:
@@ -4985,7 +4984,6 @@ parent heading. Of-course, the top-most grouping, the important tasks, should be
 pulled out of their group and placed at the top.
 #+BEGIN_SRC emacs-lisp
 (use-package org-super-agenda
-  :after origami-mode
   :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
   :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
   :config
@@ -5568,7 +5566,7 @@ Use =C-c C-x p= to set the =STYLE= property to =habit= on a task to set it as a 
 
 ;; In order to see the habit graphs, which I've placed rightwards, let's
 ;; always open org-agenda in ‘full screen’.
-(setq org-agenda-window-setup 'only-window)
+;; (setq org-agenda-window-setup 'only-window)
 #+END_SRC
 
 | /inch by inch anything's a cinch!/ |
@@ -6003,14 +6001,12 @@ folded up.  Let's describe how to accomplish this goal.
 We use a feature-full folding mode,  [[https://github.com/gregsexton/origami.el][Origami-mode]].
 #+BEGIN_SRC emacs-lisp
 (use-package origami
-  :hook (agda2-mode lisp-mode c-mode))
-;; In Lisp languages, by default only function definitions are folded.
-#+END_SRC
-
-With basic support for one of my languages.
-#+BEGIN_SRC emacs-lisp
-(push '(agda2-mode . (origami-markers-parser "{-" "-}"))
-      origami-parser-alist)
+  ;; In Lisp languages, by default only function definitions are folded.
+  :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+  :config
+  ;; With basic support for one of my languages.
+  (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
+         origami-parser-alist))
 #+END_SRC
 
 With expected support for searching.

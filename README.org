@@ -1,4 +1,4 @@
-# Created 2020-01-14 Tue 22:37
+# Created 2020-01-18 Sat 20:52
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
@@ -90,7 +90,7 @@ and variables that may accomplish my goal.
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
   - [[#automatic-backups][Automatic Backups]]
-  - [[#capturing-the-current-emacs-frame][Capturing the Current Emacs Frame]]
+  - [[#screencapturing-the-current-emacs-frame][Screencapturing the Current Emacs Frame]]
   - [[#editor-documentation-with-contextual-information][Editor Documentation with Contextual Information]]
 - [[#cosmetics][Cosmetics]]
   - [[#startup-message-emacs--org-versions][Startup message: Emacs & Org versions]]
@@ -172,10 +172,11 @@ and variables that may accomplish my goal.
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
   - [[#jumping-to-definitions--references][Jumping to definitions & references]]
-  - [[#aggressive-indentation][Aggressive Indentation]]
   - [[#version-control-with-svn----using-magit][Version Control with SVN ---Using Magit!]]
   - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
   - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
+  - [[#aggressive-indentation][Aggressive Indentation]]
+  - [[#being-generous-with-whitespace][Being Generous with Whitespace]]
   - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
   - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
   - [[#text-folding-with-origami-mode][Text Folding with Origami-mode]]
@@ -563,7 +564,7 @@ variables to produce ~README.org~'s and other matters, so Emacs' Custom utility
 will remember to not prompt me each time for the safety of such local variables.
 #+begin_src emacs-lisp
 (setq custom-file "~/.emacs.d/custom.el")
-(load custom-file)
+(ignore-errors (load custom-file)) ;; It may not yet exist.
 #+end_src
 
 Speaking of local variables, let's always ones we've already marked as safe
@@ -779,32 +780,32 @@ that is associated with this file only.
 
 #+name: enable making init and readme
 #+begin_src emacs-lisp :eval never-export
-(defun my/make-init-el-and-README ()
-  "Tangle an el and a github README from my init.org."
-  (interactive "P") ;; Places value of universal argument into: current-prefix-arg
-  (when current-prefix-arg
-    (let* ((time      (current-time))
-           (_date     (format-time-string "_%Y-%m-%d"))
-           (.emacs    "~/.emacs")
-           (.emacs.el "~/.emacs.el"))
-      ;; Make README.org
-      (save-excursion
-        (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
-        (org-babel-execute-src-block))
+  (defun my/make-init-el-and-README ()
+    "Tangle an el and a github README from my init.org."
+    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
+    (when current-prefix-arg
+      (let* ((time      (current-time))
+             (_date     (format-time-string "_%Y-%m-%d"))
+             (.emacs    "~/.emacs")
+             (.emacs.el "~/.emacs.el"))
+        ;; Make README.org
+        (save-excursion
+          (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
+          (org-babel-execute-src-block))
 
-      ;; remove any other initialisation file candidates
-      (ignore-errors
-        (f-move .emacs    (concat .emacs _date))
-        (f-move .emacs.el (concat .emacs.el _date)))
+        ;; remove any other initialisation file candidates
+        (ignore-errors
+          (f-move .emacs    (concat .emacs _date))
+          (f-move .emacs.el (concat .emacs.el _date)))
 
-      ;; Make init.el
-      (org-babel-tangle)
-      (byte-compile-file "~/.emacs.d/init.el")
-      (load-file "~/.emacs.d/init.el")
+        ;; Make init.el
+        (org-babel-tangle)
+        ;; (byte-compile-file "~/.emacs.d/init.el")
+        (load-file "~/.emacs.d/init.el")
 
-      ;; Acknowledgement
-      (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
-               (float-time (time-since time))))))
+        ;; Acknowledgement
+        (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
+                 (float-time (time-since time))))))
 
 (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
 #+end_src
@@ -859,6 +860,11 @@ generates the ~README~ for the associated Github repository.
       (org-mode)
       (org-org-export-to-org)))
 #+end_src
+
+#+results: make-readme
+: README.org
+
+
 Alternatively, evaluate the above source block with ~C-c C-c~ to produce a ~README~
 file.
 
@@ -1327,7 +1333,10 @@ changes with ~C-c C-e~ and apply them by ~C-x C-s~.
   :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
           ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
           ;; Go back to last position where ‘helm-swoop’ was called
-          ("C-S-s" . 'helm-swoop-back-to-last-point))
+          ("C-S-s" . 'helm-swoop-back-to-last-point)
+          ;; swoop doesn't work with PDFs, use Emacs' default isearch instead.
+          :map pdf-view-mode-map
+          ("C-s" . isearch-forward))
   :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
           (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
 #+end_src
@@ -1734,7 +1743,25 @@ original purpose, calling his proper command. This makes the Hydra very
 seamless, it's like a minor mode that disables itself auto-magically.
 #+end_quote
 
-See [[#Taking-a-tour-of-one's-edits][Taking a tour of one's edits]] below for a small and useful example.
+For example, it can be difficult to remember the incantations to adjust
+windows, so we can make a hydra to alleviate the trouble.
+#+begin_src emacs-lisp
+;; Use ijkl to denote ↑←↓→ arrows.
+(defhydra hydra-windows (global-map    "C-c w"   )
+  ("b" balance-windows                 "balance" )
+  ("i" enlarge-window                  "heighten")
+  ("j" shrink-window-horizontally      "narrow"  )
+  ("k" shrink-window                   "lower"   )
+  ("l" enlarge-window-horizontally     "widen"   )
+  ("s" switch-window-then-swap-buffer  "swap" :color teal))
+
+;; Provides a *visual* way to choose a window to switch to.
+(use-package switch-window)
+;; :bind (("C-x o" . switch-window)
+;;        ("C-x w" . switch-window-then-swap-buffer))
+#+end_src
+
+See [[#Taking-a-tour-of-one's-edits][Taking a tour of one's edits]] below for another small and useful example.
 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 /Pop up a terminal, do some work, then close it using the same command./
@@ -1873,42 +1900,44 @@ timestamp.
 
 - =diff-backup= compares a file with its backup or vice versa.
 
-** Capturing the Current Emacs Frame
+** Screencapturing the Current Emacs Frame
 
 Sometimes an image can be tremendously convincing, or at least sufficiently
 inviting. The following incantation is written for MacOS and uses it's native
 =screencapture= utility, as well as =magick=.
 #+begin_src emacs-lisp
-(defun my/capture-emacs-frame (&optional output)
+(defun my/capture-emacs-frame (&optional prefix output)
 "Insert a link to a screenshot of the current Emacs frame.
 
 Unless the name of the OUTPUT file is provided, read it from the
-user."
-(interactive)
+user. If PREFIX is provided, let the user select a portion of the screen."
+(interactive "p")
 (defvar my/emacs-window-id
    (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
    "The window ID of the current Emacs frame.
 
     Takes a second to compute, whence a defvar.")
 
-(let* ((temp (format "emacs_temp_%s.png" (random)))
+(let* ((screen  (if prefix "-i" (concat "-l" my/emacs-window-id)))
+       (temp    (format "emacs_temp_%s.png" (random)))
        (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
 ;; Get output file name
   (unless output
     (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
     (when (s-blank-p output) (setq output default)))
-;; Clear minibuffer before capturing screen
-(message "♥‿♥")
+;; Clear minibuffer before capturing screen or prompt user
+(message (if prefix "Please select region for capture …" "♥‿♥"))
 ;; Capture current screen and resize
 (thread-first
-    (format "screencapture -T 2 -l%s %s" my/emacs-window-id temp)
+    (format "screencapture -T 2 %s %s" screen temp)
     (concat "; magick convert -resize 60% " temp " " output)
     (shell-command))
+(f-delete temp)
 ;; Insert a link to the image and reload inline images.
 (insert (concat "[[file:" output "]]")))
 (org-display-inline-images nil t))
 
-(bind-key* "C-c M-s M-s" #'my/capture-emacs-frame)
+(bind-key* "C-c M-s" #'my/capture-emacs-frame)
 #+end_src
 
 Why this way? On MacOS, ImageMagick's =import= doesn't seem to work ---not at all
@@ -2500,7 +2529,7 @@ comments and strings.
 (use-package flyspell
   :diminish
   :hook ((prog-mode . flyspell-prog-mode)
-         (org-mode text-mode . flyspell-mode)))
+         ((org-mode text-mode) . flyspell-mode)))
 #+end_src
 
 Enabling fly-spell for text-mode enables it for org and latex modes since they
@@ -2779,9 +2808,11 @@ Let's put it here ourselves.
 
 I almost always want the ~agda-mode~ input method ---it's like the TeX method, but better.
 #+begin_src emacs-lisp
-(require 'agda-input)
-(setq default-input-method "Agda")
-(toggle-input-method)  ;; C-\
+(use-package agda-input
+  :ensure nil ;; I have it locally.
+  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
+  :custom (default-input-method "Agda"))
+  ;; Now C-\ or M-x toggle-input-method turn it on and offers
 #+end_src
 
 #+begin_quote
@@ -4137,7 +4168,6 @@ parent heading. Of-course, the top-most grouping, the important tasks, should be
 pulled out of their group and placed at the top.
 #+begin_src emacs-lisp
 (use-package org-super-agenda
-  :after origami-mode
   :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
   :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
   :config
@@ -4630,7 +4660,7 @@ Use =C-c C-x p= to set the =STYLE= property to =habit= on a task to set it as a 
 
 ;; In order to see the habit graphs, which I've placed rightwards, let's
 ;; always open org-agenda in ‘full screen’.
-(setq org-agenda-window-setup 'only-window)
+;; (setq org-agenda-window-setup 'only-window)
 #+end_src
 
 | /inch by inch anything's a cinch!/ |
@@ -4720,18 +4750,6 @@ variable ---the first is likely what is desired.  Alternatively, one could just
 add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
 works fine even for locally bound definitions.  It works depending on the
 extension of a file.
-** Aggressive Indentation
-With a single space or tab, my code should always remain indented.
-#+begin_src emacs-lisp
-;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-  :config (global-aggressive-indent-mode t))
-
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-#+end_src
-
 ** Version Control with SVN ---Using Magit!
 
 Let's use git as an interface to subversion repositories so that we can continue
@@ -4750,11 +4768,19 @@ there and do =M-x magit-status= to get the expected porcelain git interface  ^_^
 #+end_src
 
 In the magit buffer, we may now use the ~N~ key which wraps the =git svn=
-subcommands =fetch, rebase, dcommit, branch, tag=.
+subcommands =fetch, rebase, dcommit, branch, tag=. For example:
 
-- For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]].
-- If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
-  utility above to account for them.
+1. Make changes to a file.
+2. ‘Stage’ them with ~s~ and ‘commit’ them with ~c~.
+3. ‘Push’ changes with ~N c~.
+
+We get to pretend we're using ~git~ even though the underlying mechanism is ~svn~!
+
+For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git
+  with Subversion]].
+
+⟨ If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
+  utility above to account for them. ⟩
 
 ** What's changed & who's to blame?
 Let's have, in a fringe, an indicator for altered regions in a version
@@ -4883,6 +4909,30 @@ Add these to the version control hydra.
   ("t" helm-magit-todos "Show TODOs lists for this repo."))
 #+end_src
 
+** Aggressive Indentation
+With a single space or tab, my code should always remain indented.
+#+begin_src emacs-lisp
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent
+  :config (global-aggressive-indent-mode t))
+
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+#+end_src
+
+** Being Generous with Whitespace
+The following minor mode automatically adds spacing around operators.
+#+begin_src emacs-lisp
+(use-package electric-operator
+  :diminish
+  :hook (c-mode . electric-operator-mode))
+#+end_src
+
+I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Also,
+languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
+an identifier, not an expression! ⟩
+
 ** On the fly syntax checking
 [[https://www.flycheck.org/en/latest/][Flycheck]] is a on-the-fly syntax checker that relies on external programs to
 check buffers; which must be installed separately.
@@ -4995,14 +5045,12 @@ folded up.  Let's describe how to accomplish this goal.
 We use a feature-full folding mode,  [[https://github.com/gregsexton/origami.el][Origami-mode]].
 #+begin_src emacs-lisp
 (use-package origami
-  :hook (agda2-mode lisp-mode c-mode))
-;; In Lisp languages, by default only function definitions are folded.
-#+end_src
-
-With basic support for one of my languages.
-#+begin_src emacs-lisp
-(push '(agda2-mode . (origami-markers-parser "{-" "-}"))
-      origami-parser-alist)
+  ;; In Lisp languages, by default only function definitions are folded.
+  :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+  :config
+  ;; With basic support for one of my languages.
+  (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
+         origami-parser-alist))
 #+end_src
 
 With expected support for searching.
