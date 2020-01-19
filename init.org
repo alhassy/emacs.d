@@ -104,13 +104,14 @@ and variables that may accomplish my goal.
   - [[#my-to-do-list-the-initial-buffer-when-emacs-opens-up][My to-do list: The initial buffer when Emacs opens up]]
   - [[#exquisite-themes][Exquisite Themes]]
   - [[#a-sleek--informative-mode-line][A sleek & informative mode line]]
+  - [[#powerful-directory-editing-with-dired][Powerful Directory Editing with ~dired~]]
+    - [[#neotree-traditional-directory-tree-navigation][Neotree: Traditional Directory Tree Navigation]]
   - [[#never-lose-the-cursor][Never lose the cursor]]
   - [[#dimming-unused-windows][Dimming Unused Windows]]
   - [[#buffer-names-are-necessarily-injective][Buffer names are necessarily injective]]
   - [[#flashing-when-something-goes-wrong----no-blinking][Flashing when something goes wrong ---no blinking]]
   - [[#hiding-scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu]]
   - [[#highlight--complete-parenthesis-pair-when-cursor-is-near--][Highlight & complete parenthesis pair when cursor is near ;-)]]
-  - [[#neotree-directory-tree-listing][Neotree: Directory Tree Listing]]
   - [[#tabs][Tabs]]
   - [[#window-resizing-using-the-golden-ratio][Window resizing using the golden ratio]]
   - [[#persistent-scratch-buffer][Persistent Scratch Buffer]]
@@ -2501,6 +2502,103 @@ dark themes, and its modified powerline setup.
 Other separators ---of modeline information--- that I've considered include
 ~'brace~ instead of an arrow, and ~'contour, 'chamfer, 'wave, 'zigzag~ which look
 like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
+** Powerful Directory Editing with ~dired~
+
+⟨ ~C-x C-v~ to open a file or directory in dired, using the current buffer. ⟩
+
+As mentioned earlier, ~dired~ is Emacs' built-in directory editor; it's opened
+with ~C-x d~.  /Dired let's us treat directories as textual objects!/ In dired,
+press ~h~ to see the many actions available. Here's a few:
+
++ ~(~ toggles hiding entry details, such as modification date and ownership
++ ~s~ sort entries; modeline will display “Dired by date” or “Dired by name”.
++ ~o~ to open entry in anOther window; or ~RET~ to open in place.
++ ~+~ to create a new directory; or ~M-x make-directory~.
++ ~/~ to filter entries; with ~which-key~, possible completions pop-up.
+  - E.g., ~/ f~ shows only files or ~/ . png~ to obtain all entries with extension
+    ~png~.
+  - ~/ i g~ to hide git-ignored items ^_^
+  - ~/ /~ to remove all filters.
++ ~TAB~ to navigate between different groupings of entries.
+  - ~RET~ on a drawer heading toggles folding it ^_^
+
+The [[https://github.com/Fuco1/dired-hacks#dired-hacks-utils][dired-hacks]] family of packages lets us, say, get a dired buffer out of a shell
+incantation that lists files, or use dired to open files with external tools.
+Below we use three of its packages.
+
+Pressing ~i~ inserts a directory's children under it, indented, in the current
+buffer. Useful to see what's there.
+#+BEGIN_SRC emacs-lisp
+(use-package dired-subtree
+  :bind (:map dired-mode-map
+              ("i" . dired-subtree-toggle)))
+#+END_SRC
+
+When directory ~𝒳~ has only one child ~𝒴~, then in dired, instead of ~𝒳~, show me ~𝒳/𝒴~
+with ~𝒳~ greyed out.
+#+BEGIN_SRC emacs-lisp
+(use-package dired-collapse
+  :hook (dired-mode . dired-collapse-mode))
+#+END_SRC
+
+Begin dired with certain entries grouped together, according to some filtering
+requirement; and with “garbage” files not shown ---i.e., those ending in
+~.aux, .out~, etc.
+#+BEGIN_SRC emacs-lisp
+(use-package dired-filter
+  :hook (dired-mode . (lambda () (dired-filter-group-mode)
+                                 (dired-filter-by-garbage)))
+  :custom
+    (dired-garbage-files-regexp
+      "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
+    (dired-filter-group-saved-groups
+      '(("default"
+         ("Org"    (extension "org"))
+         ("Executables" (exexutable))
+         ("Directories" (directory))
+         ("PDF"    (extension "pdf"))
+         ("LaTeX"  (extension "tex" "bib"))
+         ("Images" (extension "png"))
+         ("Code"   (extension "hs" "agda" "lagda"))
+         ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
+#+END_SRC
+
+*** Neotree: Traditional Directory Tree Navigation :Disabled:
+
+                                  ⟨ Disabled ⟩
+
+We open a nifty file manager upon startup.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Sidebar for project file navigation
+(use-package neotree
+  :defer t
+  :disabled
+  :config (global-set-key "\C-x\ d" 'neotree-toggle)
+          (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
+
+;; Open it up upon startup.
+;; (neotree-toggle)
+#+END_SRC
+By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file
+management.
+
+  ⟨ Edit: As a naive user, this is what I thought; yet a year later,
+                  I've almost never used neotree. ⟩
+
+Useful navigational commands include
++ ~U~ to go up a directory.
++ ~C-c C-c~ to change directory focus; ~C-C c~ to type the directory out.
++ ~?~ or ~h~ to get help and ~q~ to quit.
+
+As always, to go to the neotree pane when it's the only other window,
+execute ~C-x o~.
+
+I /rarely/ make use of this feature; company mode & Helm together quickly provide
+an automatic replacement for nearly all of my uses.
+
++ Reminiscent of GUI file managers is [[https://github.com/ralesi/ranger.el#features][ranger]]; e.g., it has multi-column
+  display of parent directories along with a file preview mechanism.
+
 ** Never lose the cursor
 :PROPERTIES:
 :CUSTOM_ID: Never-lose-the-cursor
@@ -2671,42 +2769,6 @@ becomes bold; likewise for ~/~ for emphasise.
 
 I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
 Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
-** Neotree: Directory Tree Listing
-:PROPERTIES:
-:CUSTOM_ID: Neotree-Directory-Tree-Listing
-:END:
-
-We open a nifty file manager upon startup.
-#+BEGIN_SRC emacs-lisp
-;; Sidebar for project file navigation
-(use-package neotree
-  :defer t
-  :config (global-set-key "\C-x\ d" 'neotree-toggle)
-          (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
-
-;; Open it up upon startup.
-;; (neotree-toggle)
-#+END_SRC
-By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file
-management.
-
-  ⟨ Edit: As a naive user, this is what I thought; yet a year later,
-                  I've almost never used neotree. ⟩
-
-Useful navigational commands include
-+ ~U~ to go up a directory.
-+ ~C-c C-c~ to change directory focus; ~C-C c~ to type the directory out.
-+ ~?~ or ~h~ to get help and ~q~ to quit.
-
-As always, to go to the neotree pane when it's the only other window,
-execute ~C-x o~.
-
-I /rarely/ make use of this feature; company mode & Helm together quickly provide
-an automatic replacement for nearly all of my uses.
-
-+ Reminiscent of GUI file managers is [[https://github.com/ralesi/ranger.el#features][ranger]]; e.g., it has multi-column
-  display of parent directories along with a file preview mechanism.
-
 ** Tabs                                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Tabs
