@@ -24,7 +24,6 @@
 ;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:2]]
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
-
 (require 'use-package)
 ;; =use-package= ---The start of =init.el=:2 ends here
 
@@ -34,7 +33,7 @@
 
 ;; [[file:~/.emacs.d/init.org::*=use-package= ---The start of =init.el=][=use-package= ---The start of =init.el=:4]]
 (use-package auto-package-update
-  :defer 5
+  :defer 10
   :config
   ;; Delete residual old versions
   (setq auto-package-update-delete-old-versions t)
@@ -97,13 +96,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; =use-package= ---The start of =init.el=:8 ends here
@@ -746,6 +745,36 @@ user. If PREFIX is provided, let the user select a portion of the screen."
           (spaceline-emacs-theme))
 ;; A sleek & informative mode line:3 ends here
 
+;; [[file:~/.emacs.d/init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:1]]
+(use-package dired-subtree
+  :bind (:map dired-mode-map
+              ("i" . dired-subtree-toggle)))
+;; Powerful Directory Editing with ~dired~:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:2]]
+(use-package dired-collapse
+  :hook (dired-mode . dired-collapse-mode))
+;; Powerful Directory Editing with ~dired~:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:3]]
+(use-package dired-filter
+  :hook (dired-mode . (lambda () (dired-filter-group-mode)
+                                 (dired-filter-by-garbage)))
+  :custom
+    (dired-garbage-files-regexp
+      "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
+    (dired-filter-group-saved-groups
+      '(("default"
+         ("Org"    (extension "org"))
+         ("Executables" (exexutable))
+         ("Directories" (directory))
+         ("PDF"    (extension "pdf"))
+         ("LaTeX"  (extension "tex" "bib"))
+         ("Images" (extension "png"))
+         ("Code"   (extension "hs" "agda" "lagda"))
+         ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
+;; Powerful Directory Editing with ~dired~:3 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Never lose the cursor][Never lose the cursor:1]]
 ;; Make it very easy to see the line with the cursor.
 (global-hl-line-mode t)
@@ -810,17 +839,6 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 (modify-syntax-entry ?< "w<")
 (modify-syntax-entry ?> "w>")
 ;; Highlight & complete parenthesis pair when cursor is near ;-):5 ends here
-
-;; [[file:~/.emacs.d/init.org::*Neotree: Directory Tree Listing][Neotree: Directory Tree Listing:1]]
-;; Sidebar for project file navigation
-(use-package neotree
-  :defer t
-  :config (global-set-key "\C-x\ d" 'neotree-toggle)
-          (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
-
-;; Open it up upon startup.
-;; (neotree-toggle)
-;; Neotree: Directory Tree Listing:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:1]]
 (use-package persistent-scratch
@@ -1756,7 +1774,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
 ;; ➩ Show my agenda upon Emacs startup.
-(org-agenda "a" "a")
+(with-eval-after-load 'org-super-agenda (org-agenda "a" "a"))
 ;; Step 7: Archiving Tasks:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:3]]

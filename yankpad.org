@@ -2,88 +2,6 @@
 
 * Default                                           :global:
 
-** my_name: User's name
-`user-full-name`
-
-** my_email: User's email address
-`user-mail-address`
-
-** my_github: User's Github repoistory link
-https://github.com/alhassy/
-
-** my_emacsdrepo: User's version controlled Emacs init file
-https://github.com/alhassy/emacs.d
-
-** my_blog: User's blog website
-https://alhassy.github.io/
-
-** my_webpage: User's organisation website
-http://www.cas.mcmaster.ca/~alhassm/
-** my_twitter: User's Twitter profile
-https://twitter.com/musa314
-** journal_guided: Introspection & Growth
-  I'm writing from ${1:location}.
-
-  Gut answer, today I feel ${2:scale}/10.
-  ⇒ ${3:Few words or paragraphs to explain what's on your mind.}
-
-  ${4: All things which cause us to groan or recoil are part of the tax of
-  life. These things you should never hope or seek to escape.  Life is a battle,
-  and to live is to fight.
-
-  ⟨ Press TAB once you've read this mantra. ⟩
-  $(when yas-moving-away-p "")
-  }
-  `(progn
-    (eww "https://www.dailyinspirationalquotes.in/")
-    (sit-for 2) (when nil let eww load)
-    (read-only-mode -1)
-    (goto-line 52)
-    (kill-line)
-    (kill-buffer)
-    (yank))`
-  ${7:
-  Self Beliefs:
-  + I am working on a healthier lifestyle, including a low-carb diet.
-
-    - I’m also investing in a healthy, long-lasting relationship.
-
-    ➩ These are what I want and are important to me. ⇦
-
-  + I will not use any substances to avoid real issues in my life. I must own them.
-
-  + Everything I’m searching for is already inside of me.
-
-  + Progress is more important than perfection.
-
-  ⟨ Press TAB once you've read these beliefs. ⟩
-  $(when yas-moving-away-p "")
-  }
-
-  *Three things I'm grateful for:*
-  1. ${8:??? … e.g., old relationship, something great yesterday, an opportunity I
-     have today, something simple near me within sight}
-  2. ${9:??? … e.g., old relationship, something great yesterday, an opportunity I
-     have today, something simple near me within sight}
-  3. ${10:??? … e.g., old relationship, something great yesterday, an opportunity I
-     have today, something simple near me within sight}
-
-  *Three things that would make today great:*
-  1. ${11:???}
-  2. ${12:???}
-  3. ${13:???}
-
-  *What one thing is top of mind today?*
-  ${14:???}
-
-  *What’s one opportunity I want to go after?*
-  ${15:???}
-
-  *What’s one thing I’m really proud of OR I’m amazed and in awe of?*
-  ${16:???}
-
-  $0
-
 ** my_org_insert_link: cleverly insert a link copied to clipboard
  [[${1:`(clipboard-yank)`}][$2]] $0
 
@@ -578,3 +496,87 @@ $0≡⟨ ${3:reason-for-the-equality} ⟩
 ≡⟨ ${2:reason-for-the-equality} ⟩
   ${1:new-expression}
 $0
+
+** my_name: User's name
+`user-full-name`
+
+** my_email: User's email address
+`user-mail-address`
+
+** my_github: User's Github repoistory link
+https://github.com/alhassy/
+
+** my_emacsdrepo: User's version controlled Emacs init file
+https://github.com/alhassy/emacs.d
+
+** my_blog: User's blog website
+https://alhassy.github.io/
+
+** my_webpage: User's organisation website
+http://www.cas.mcmaster.ca/~alhassm/
+
+** my_twitter: User's Twitter profile
+https://twitter.com/musa314
+
+** journal_guided: Introspection & Growth
+  I'm writing from ${1:location}.
+
+  Gut answer, today I feel ${2:scale}/10.
+  ⇒ ${3:Few words or paragraphs to explain what's on your mind.}
+
+  ${4: All things which cause us to groan or recoil are part of the tax of
+  life. These things you should never hope or seek to escape.  Life is a battle,
+  and to live is to fight.
+
+  ⟨ Press TAB once you've read this mantra. ⟩
+  $(when yas-moving-away-p "")
+  }
+  `(progn
+    (eww "https://www.dailyinspirationalquotes.in/")
+    (sit-for 2) (when nil let eww load)
+    (read-only-mode -1)
+    (goto-line 52)
+    (kill-line)
+    (kill-buffer)
+    (yank))`
+  ${7:
+  Self Beliefs:
+  + I am working on a healthier lifestyle, including a low-carb diet.
+
+    - I’m also investing in a healthy, long-lasting relationship.
+
+    ➩ These are what I want and are important to me. ⇦
+
+  + I will not use any substances to avoid real issues in my life. I must own them.
+
+  + Everything I’m searching for is already inside of me.
+
+  + Progress is more important than perfection.
+
+  ⟨ Press TAB once you've read these beliefs. ⟩
+  $(when yas-moving-away-p "")
+  }
+
+  *Three things I'm grateful for:*
+  1. ${8:??? … e.g., old relationship, something great yesterday, an opportunity I
+     have today, something simple near me within sight}
+  2. ${9:??? … e.g., old relationship, something great yesterday, an opportunity I
+     have today, something simple near me within sight}
+  3. ${10:??? … e.g., old relationship, something great yesterday, an opportunity I
+     have today, something simple near me within sight}
+
+  *Three things that would make today great:*
+  1. ${11:???}
+  2. ${12:???}
+  3. ${13:???}
+
+  *What one thing is top of mind today?*
+  ${14:???}
+
+  *What’s one opportunity I want to go after?*
+  ${15:???}
+
+  *What’s one thing I’m really proud of OR I’m amazed and in awe of?*
+  ${16:???}
+
+  $0
