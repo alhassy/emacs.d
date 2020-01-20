@@ -92,6 +92,7 @@ and variables that may accomplish my goal.
     - [[#capturing-mail-as-todonotes][Capturing Mail as Todo/Notes]]
     - [[#auto-completing-mail-addresses][Auto-completing mail addresses]]
     - [[#feeds-to-blogs][Feeds to Blogs]]
+  - [[#jumping-to-extreme-semantic-units][Jumping to extreme semantic units]]
   - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
@@ -2060,6 +2061,21 @@ like seeing the colours, fonts, and math symbols that the authours have labored
 over to producing quality content. Apparently, I'm shallow and I'm okay with it
 ---but not that shallow, since I'm constantly pushing Emacs which looks ugly by
 default but it's unreasonably powerful.
+** Jumping to extreme semantic units
+[[https://github.com/DamienCassou/beginend][Sometimes it's unreasonable]] for ~M-<~ to take us to the actual start of a buffer;
+instead it'd be preferable to go to the first “semantic unit” in the buffer. For
+example, when directory editing with ~dired~ we should jump to the first file,
+with version control with ~magit~ we should jump to the first section, when
+composing mail we should jump to the first body line, and in the agenda we
+should jump to the first entry.
+#+BEGIN_SRC emacs-lisp
+;; M-< and M-> jump to first and final semantic units.
+;; If pressed twice, they go to physical first and last positions.
+(use-package beginend
+  :diminish
+  :config (beginend-global-mode))
+#+END_SRC
+
 ** Hydra: Supply a prefix only once
 :PROPERTIES:
 :CUSTOM_ID: Hydra-Supply-a-prefix-only-once
