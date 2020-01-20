@@ -2,8 +2,8 @@
 #      ~C-x C-s~ is a normal save; whereas
 #  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
 #
-# ≥ 7700 line org file, with auto-generated TOC.
-# ≥ 200 code blocks
+# ≥ 7900 line org file, with auto-generated TOC.
+# ≥ 219 code blocks
 # (emacs-init-time) ⇒ 17.0 seconds
 #
 #+TITLE: A Life Configuring Emacs
@@ -14,8 +14,6 @@
 #+STARTUP: indent lognoteclock-out
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+PROPERTY: header-args :tangle init.el :comments link :results none
-
-# (require 'org-id)
 
 # ─AlBasmala keywords─
 # DRAFT: yes
@@ -68,6 +66,7 @@ and variables that may accomplish my goal.
   - [[#keyboard-navigation-and-alteration][Keyboard Navigation and Alteration]]
   - [[#possibly-interesting-reads][Possibly Interesting Reads]]
   - [[#fun-commands-to-try-out][Fun commands to try out]]
+  - [[#what-does-literate-programming-look-like][What Does Literate Programming Look Like?]]
   - [[#why-a-monolithic-configuration][Why a monolithic configuration?]]
 - [[#booting-up][Booting Up]]
   - [[#emacs-vs-initorg][=~/.emacs= vs. =init.org=]]
@@ -417,25 +416,13 @@ A neat way to get started with Emacs is to solve a problem you have, such
 as taking notes or maintaining an agenda ---both with Org-mode.
 
 Before we get started…
-** Why a monolithic configuration?
+** What Does Literate Programming Look Like?
 
-Why am I keeping my entire configuration ---from those involving cosmetics &
-prose to those of agendas & programming--- in one file?  Being monolithic ---“a
-large, mountain-sized, indivisible block of stone”--- is generally not ideal in
-nearly any project: E.g., a book is split into chapters and a piece of software
-is partitioned into modules. Using Org-mode, we can still partition our setup
-while remaining in one file. An Emacs configuration is a personal, leisurely
-project, and one file is a simple architecture: I don't have to worry about many
-files and the troubles of moving content between them; instead, I have headings
-and move content almost instantaneously ---org-refile by pressing ~w~ at the start
-of the reader. Moreover, being one file, it is easy to distribute and to extract
-artefacts from it ---such as the README for Github, the HTML for my blog, the
-colourful PDF rendition, and the all-important Emacs Lisp raw code
-file. Moreover, with a single ~#~ I can quickly comment out whole sections,
-thereby momentarily disabling features.
-
-There's no point in being modular if there's nothing explaining what's going on,
-so I document.
+Briefly put, literate programming in Emacs allows us to evaluate source code
+within our text files, then using the results as values in other source
+blocks. When presenting an algorithm, we can talk it out, with a full commentary
+thereby providing ‘reproducible research’: Explorations and resulting algorithms
+are presented together in a natural style.
 
 #+html: <p style="text-align:center">
 #+begin_src plantuml :file images/literate-programming.png :tangle no :exports results :eval never-export :results (progn (org-display-inline-images t t) "replace")
@@ -480,14 +467,74 @@ center footer  ♥‿♥ Write once, generate many (•̀ᴗ•́)و
 [[file:images/literate-programming.png]]
 #
 # (org-display-inline-images t t)
-⟨ This image was created in org-mode; details [[#Workflow-States][below]]. ⟩
+⟨ This image was created in org-mode; details [[#Workflow-States][below]] or by looking at the source file 😉 ⟩
 #+html: </p>
 
-For now, it suffices to know that literate programming in Emacs allows us to
-evaluate source code within our text files, then using the results as values in
-other source blocks. When presenting an algorithm, we can talk it out, with a
-full commentary thereby providing ‘reproducible research’: Explorations and
-resulting algorithms are presented together in a natural style.
+Here's an example of showing code in a natural style, but having the resulting
+code appear in a style amicable to a machine. *Here's what you type:*
+#+BEGIN_example org :tangle no
+It's natural to decompose large problems,
+#+begin_src haskell :noweb-ref defn-of-f :tangle no
+f = h ∘ g
+#+end_src
+But we need to define $g$ and $h$ /beforehand/ before we can use them. Yet it's
+natural to “motivate” their definitions ---rather than pull a rabbit out of
+hat. Org-let's us do that!  Here's one,
+#+begin_src haskell :noweb-ref code-from-other-places :tangle no
+g = ⋯
+#+end_src
+then the other.
+#+begin_src haskell :noweb-ref code-from-other-places :tangle no
+h = ⋯
+#+end_src
+Of-course, we might also want a preamble:
+#+BEGIN_SRC haskell :tangle myprogram.hs
+import ⋯
+#+END_SRC
+We can now weave in the tagged code blocks in the order we want.
+#+BEGIN_SRC haskell :tangle myprogram.hs :comments none :noweb yes
+<<code-from-other-places>>
+<<defn-of-f>>
+#+END_SRC
+#+END_example
+
+Now ~C-c C-v C-t~ yields a file named ~myprogram.hs~ with contents in an order
+amicable to a machine.
+#+BEGIN_SRC haskell :tangle no
+import ⋯
+
+g = ⋯
+h = ⋯
+f = h ∘ g
+#+END_SRC
+Interestingly, unlike certain languages, Haskell doesn't care too much about
+declaration order.
+
+*Warning!* If we have different language blocks tangled to the same file, then
+they are tangled alphabetically ---e.g., if one of the blocks is marked
+~emacs-lisp~ then its contents will be the very first one in the resulting source
+file, since ~emacs-lisp~ begins with ~e~ which is alphabetically before ~h~ of
+~haskell~.
+
+** Why a monolithic configuration?
+
+Why am I keeping my entire configuration ---from those involving cosmetics &
+prose to those of agendas & programming--- in one file?  Being monolithic ---“a
+large, mountain-sized, indivisible block of stone”--- is generally not ideal in
+nearly any project: E.g., a book is split into chapters and a piece of software
+is partitioned into modules. Using Org-mode, we can still partition our setup
+while remaining in one file. An Emacs configuration is a personal, leisurely
+project, and one file is a simple architecture: I don't have to worry about many
+files and the troubles of moving content between them; instead, I have headings
+and move content almost instantaneously ---org-refile by pressing ~w~ at the start
+of the reader. Moreover, being one file, it is easy to distribute and to extract
+artefacts from it ---such as the README for Github, the HTML for my blog, the
+colourful PDF rendition, and the all-important Emacs Lisp raw code
+file. Moreover, with a single ~#~ I can quickly comment out whole sections,
+thereby momentarily disabling features.
+
+There's no point in being modular if there's nothing explaining what's going on,
+so I document.
 
 The [[#Conclusion---Why-Configuration-Files-Should-be-Literate][concluding]] section of this read further argues the benefits of maintaining
 literate, and monolithic, configuration files. As a convention, I will try to
@@ -6510,9 +6557,12 @@ org-mode, we are able to /present/ code in any order and /tangle/ it to the orde
 the compilers need it to be!
 
 Let's activate all such templates, now after template expansion has been setup.
-#+BEGIN_SRC emacs-lisp :tangle "~/.emacs.d/yankpad.org" :comments none :noweb yes
-  <<templates-from-other-places-in-my-init>>
+#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org" :comments none :noweb yes
+<<templates-from-other-places-in-my-init>>
 #+END_SRC
+
+Note: Since I've insisted that Org blocks are space sensative, any whitespace
+before the ~<<⋯>>~ will propogate to the resulting extracted code.
 
 *** Re-Enabling Templates
 :PROPERTIES:
