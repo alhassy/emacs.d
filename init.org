@@ -212,6 +212,8 @@ and variables that may accomplish my goal.
 :CUSTOM_ID: Why-Emacs
 :END:
 
+** Intro :ignore:
+
 /Emacs is a flexible platform for developing end-user applications/ ---unfortunately it is generally perceived as
 merely a text editor. Some people use it specifically for one or two applications.
 
@@ -477,21 +479,27 @@ It's natural to decompose large problems,
 #+begin_src haskell :noweb-ref defn-of-f :tangle no
 f = h ∘ g
 #+end_src
+
 But we need to define $g$ and $h$ /beforehand/ before we can use them. Yet it's
 natural to “motivate” their definitions ---rather than pull a rabbit out of
-hat. Org-let's us do that!  Here's one,
+hat. Org-let's us do that!
+
+Here's one,
 #+begin_src haskell :noweb-ref code-from-other-places :tangle no
 g = ⋯
 #+end_src
+
 then the other.
 #+begin_src haskell :noweb-ref code-from-other-places :tangle no
 h = ⋯
 #+end_src
+
 Of-course, we might also want a preamble:
 #+BEGIN_SRC haskell :tangle myprogram.hs
 import ⋯
 #+END_SRC
-We can now weave in the tagged code blocks in the order we want.
+
+We can now tangle together the tagged code blocks in the order we want.
 #+BEGIN_SRC haskell :tangle myprogram.hs :comments none :noweb yes
 <<code-from-other-places>>
 <<defn-of-f>>
