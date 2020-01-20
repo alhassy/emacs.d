@@ -5738,13 +5738,14 @@ and template expansion for inescapably repetitive scenarios.
 ** Which function are we writing?
 In the modeline, show the name of the function we're currently writing.
 #+BEGIN_SRC emacs-lisp
-(add-to-hook 'prog-mode #'which-function-mode)
-(add-to-hook 'org-mode #'which-function-mode)
+(add-hook 'prog-mode-hook #'which-function-mode)
+(add-hook 'org-mode-hook  #'which-function-mode)
 #+END_SRC
+In Org-mode, this places the current heading in the modeline.
 
 In Lisp mode, ensure we always have matching parens.
 #+BEGIN_SRC emacs-lisp
-(add-to-hook 'emacs-lisp-mode #'check-parens)
+(add-hook 'emacs-lisp-mode-hook #'check-parens)
 #+END_SRC
 
 ** Highlight defined Lisp symbols
