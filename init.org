@@ -176,6 +176,7 @@ and variables that may accomplish my goal.
     - [[#estimates-versus-actual-time][Estimates versus actual time]]
   - [[#habit-formation][Habit Formation]]
 - [[#programming][Programming]]
+  - [[#which-function-are-we-writing][Which function are we writing?]]
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
   - [[#jumping-to-definitions--references][Jumping to definitions & references]]
@@ -5733,6 +5734,18 @@ any ~g~ will revert the change in the agenda buffer.
 
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
+
+** Which function are we writing?
+In the modeline, show the name of the function we're currently writing.
+#+BEGIN_SRC emacs-lisp
+(add-to-hook 'prog-mode #'which-function-mode)
+(add-to-hook 'org-mode #'which-function-mode)
+#+END_SRC
+
+In Lisp mode, ensure we always have matching parens.
+#+BEGIN_SRC emacs-lisp
+(add-to-hook 'emacs-lisp-mode #'check-parens)
+#+END_SRC
 
 ** Highlight defined Lisp symbols
 :PROPERTIES:
