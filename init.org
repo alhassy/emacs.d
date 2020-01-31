@@ -64,6 +64,7 @@ and variables that may accomplish my goal.
   - [[#emacs-is-a-flexible-platform-for-developing-end-user-applications][/Emacs is a flexible platform for developing end-user applications/]]
   - [[#the-power-of-text-manipulation][The Power of Text Manipulation]]
   - [[#keyboard-navigation-and-alteration][Keyboard Navigation and Alteration]]
+  - [[#emacs-proverbs-as-koan][Emacs Proverbs as Koan]]
   - [[#possibly-interesting-reads][Possibly Interesting Reads]]
   - [[#fun-commands-to-try-out][Fun commands to try out]]
   - [[#what-does-literate-programming-look-like][What Does Literate Programming Look Like?]]
@@ -365,6 +366,33 @@ have us count 𝓃 and slowly scroll.  ( Exercise: What incantation of keys
 
 ⇒ [[https://support.apple.com/en-ca/HT201236][MacOS supports]] many Emacs shortcuts, system-wide, such as ~C-a/e, C-d, C-k/y,
  C-o, C-p/n~ and even ~C-t~ for transposing two characters.  ⇐
+
+** Emacs Proverbs as Koan
+
+Below is an extract from William Cobb's “Reflections on the Game of Go”, with
+minor personalised adjustements for Emacs. Enjoy!
+
+The Japanese term /satori/ refers to the experience of enlightenment, the
+realisation of how things really are that is the primary aim of practice and
+meditation. However, the Zen tradition is famous for claiming that one cannot
+say what it is that one realises, that is, one cannot articulate the content of
+the enlightenment experience. Although it makes everything clear, it is an experience
+beyond words. Instead of being given an explanation of how things are, the student of
+Zen hears sayings called /koan/, often somewhat paradoxical in character, that come
+from those who are enlightened:
+
++ “There are no CTRL and META.”
++ “If you meet an Emacs you dislike, kill it.”
++ “No one knows Emacs.”
++ “One can only learn Emacs by living within it.”
++ “To know Org mode is to know oneself.”
+
+It is important to realise that /koan/ are intended to move you off of one path
+and onto another. They are not just attempts to mystify you. For example,
+the first proverb is in regards to newcomers complaining about too many
+keybinings ---eventually it's muscle memory---, whereas the second is about
+using the right tool for the right task ---Emacs is not for everyone. The fourth
+is, well, Emacs is an operating system.
 
 ** Possibly Interesting Reads
 + [[https://www.gnu.org/software/emacs/tour/][The Emacs Tour]]
@@ -2128,7 +2156,11 @@ windows, so we can make a hydra to alleviate the trouble.
 ;;        ("C-x w" . switch-window-then-swap-buffer))
 #+end_src
 
-See [[#Taking-a-tour-of-one's-edits][Taking a tour of one's edits]] below for another small and useful example.
+Yet another possible hydra would be to avoid remembering word operations, such
+as copying a word, upcasing it, killing a word from anywhere within it ---in
+contrast ~kill-word~ kills /to the end/ of the word---, etc. Likewise for line
+operations, such as copying a line from anywhere in it.  See [[#Taking-a-tour-of-one's-edits][Taking a tour of
+one's edits]] below for another small and useful example.
 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 :PROPERTIES:
@@ -4976,7 +5008,7 @@ file too, if we enable it so.
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
 ;; ➩ Show my agenda upon Emacs startup.
-(with-eval-after-load 'org-super-agenda (org-agenda "a" "a"))
+(org-agenda "a" "a") ;; Need this to have “org-agenda-custom-commands” defined.
 #+end_src
 
 Let's install some helpful views for our agenda.

@@ -1,4 +1,4 @@
-personal_ws-1.1 en 160 
+personal_ws-1.1 en 165 
 ACSII
 Administrivia
 Antitonicity
@@ -14,6 +14,7 @@ Executables
 Genericity
 Goju
 Invariance
+Knowns
 Lvalues
 Löf's
 Marwan
@@ -43,6 +44,7 @@ agda
 algorithmically
 applicative
 associator
+asymptotics
 axiomatised
 bifunctor
 bijective
@@ -71,6 +73,7 @@ endofunctors
 equalities
 equational
 esotericity
+existentials
 expressivity
 extensibility
 extensionality
@@ -127,6 +130,7 @@ poset
 preprocessor
 programmability
 prophethood
+pushout
 reduct
 reusability
 runtime
@@ -155,6 +159,7 @@ unitors
 unmarking
 unparenthesised
 unquotation
+upcasing
 variational
 variationals
 webscraping
