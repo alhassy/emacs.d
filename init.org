@@ -554,6 +554,10 @@ they are tangled alphabetically ---e.g., if one of the blocks is marked
 file, since ~emacs-lisp~ begins with ~e~ which is alphabetically before ~h~ of
 ~haskell~.
 
++ [[http://www.howardism.org/Technical/Emacs/literate-programming-tutorial.html][Introduction to Literate Programming with Org-mode]]
++ [[http://ehneilsen.net/notebook/orgExamples/org-examples.html][Emacs org-mode examples and cookbook]]
++ [[https://leanpub.com/lit-config/read][Literate Config]] ---Online booklet
+
 ** Why a monolithic configuration?
 
 Why am I keeping my entire configuration ---from those involving cosmetics &
