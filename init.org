@@ -177,6 +177,7 @@ and variables that may accomplish my goal.
     - [[#finding-tasks-to-clock-in][Finding tasks to clock in]]
     - [[#estimates-versus-actual-time][Estimates versus actual time]]
   - [[#habit-formation][Habit Formation]]
+  - [[#actually-doing-things][Actually Doing Things]]
 - [[#programming][Programming]]
   - [[#which-function-are-we-writing][Which function are we writing?]]
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
@@ -5778,6 +5779,40 @@ gotta shave!/
 Remember that in the agenda view if you alter a task, say with ~t~ to mark it
 done, then you need to use ~s~ to save the underlying todo/notes files; otherwise,
 any ~g~ will revert the change in the agenda buffer.
+
+** Actually Doing Things
+
+Let's setup a little audio-visual reminder to regularly check my agenda
+and ensure I'm not narrowing on a single task and ignoring others.
+#+begin_src emacs-lisp
+;; Obtain a notifications and text-to-speech utilities
+(system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
+(system-packages-ensure "terminal-notifier") ;; MacOS specific
+
+(run-at-time
+ "09:00am"
+ (* 2 60 60) ;; Every two hours
+ (lambda ()
+   (shell-command
+    (format "%s"
+            '(terminal-notifier
+              -title    \"Check your agenda!\"
+              -subtitle \"Is what you\'re doing …\"
+              -message  \"… in alignment with your goals?\"
+              -sound t -appIcon ~/.emacs.d/images/emacs-logo.png
+              ;; Speak at a speed of 125 words per minute; ie slowed down.
+              & espeak -s 125 \"Maybe it\'s time to do another task?\")))))
+#+end_src
+
+By default, notifications are in banner style ---they go away automatically---
+we can use alert style ---in which they stay until dismissed--- in MacOS as
+follows: =System Preferences → Notifications → terminal-notifier → Alerts=.
+
++ [[https://emacs.stackexchange.com/questions/3844/good-methods-for-setting-up-alarms-audio-visual-triggered-by-org-mode-events][Here]] is an approach to triggering audio-visual alarms from Org-mode events
+  ---using ~org-agenda-to-appt~.
+
++ Emacs's built in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Appointments.html][appointment notification facility]] can also be used as a alarm
+  clock via ~M-x appt-add~.
 
 * Programming
 :PROPERTIES:
