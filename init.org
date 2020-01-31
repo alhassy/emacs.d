@@ -166,6 +166,7 @@ and variables that may accomplish my goal.
     - [[#step-6-moving-a-task-toward-completion][Step 6: Moving a task toward completion]]
     - [[#step-7-archiving-tasks][Step 7: Archiving Tasks]]
   - [[#tag-youre-it][Tag! You're it!]]
+  - [[#pretty-prioritisation-markers][Pretty Prioritisation Markers]]
   - [[#super-agenda][Super Agenda]]
   - [[#automating-pomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
   - [[#journaling][Journaling]]
@@ -5092,6 +5093,31 @@ Now ~:~ or ~C-c C-q~ will show existing tags for the current heading, press ~TAB
 obtain a list of all exisiting tags, press ~C-SPC~ to select the desired tags,
 then =TAB= or =RET= to confirm the resulting tag list, and ~RET~ to finish or ~TAB~ to
 select more tags.
+
+** Pretty Prioritisation Markers
+
+Let's set four priority levels and their colours: The more intense colours
+are for more urgent tasks.
+#+begin_src emacs-lisp
+(setq org-lowest-priority ?D) ;; Now org-speed-eky ‘,’ gives 4 options
+(setq org-priority-faces
+'((?A :foreground "red" :weight bold)
+  (?B . "orange")
+  (?C . "yellow")
+  (?D . "green")))
+#+end_src
+
++ ~C-c ,~ anywhere to set the priority of the current heading.
+  - We may press ~A-D~ or ~SPC~ to an remove existing priority.
+
+Priority markers are of the form ~[#𝒳]~, the [[https://github.com/harrybournis/org-fancy-priorities][fancy priorities]] package visually
+renders them as words or icons.
+#+begin_src emacs-lisp
+(use-package org-fancy-priorities
+  :diminish t
+  :hook   (org-mode . org-fancy-priorities-mode)
+  :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
+#+end_src
 
 ** Super Agenda
 :PROPERTIES:
