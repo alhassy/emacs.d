@@ -6276,6 +6276,8 @@ Such a ‘snippet’ could be written once then provided by a simple
 Lisp insert command with the parameters being queried. Luckily, others
 have written such pleasant utilities.
 
+*** Intro :ignore:
+
 [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet]] is a pleasant utility for template expansion with the alluring
 feature to allow arbitrary Lisp code to be executed during expansion.
 The declaration of templates is verbose, requiring a particular file
@@ -6614,6 +6616,10 @@ http://www.cas.mcmaster.ca/~alhassm/
 
 ,** my_twitter: User's Twitter profile
 https://twitter.com/musa314
+
+,** my_masters_thesis
+A Mechanisation of Internal Galois Connections In Order Theory Formalised Without Meets
+https://macsphere.mcmaster.ca/bitstream/11375/17276/2/thesis.pdf
 #+end_src
 
 It may be useful to also have Org-link variants of these …
