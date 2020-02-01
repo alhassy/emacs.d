@@ -3142,9 +3142,13 @@ For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
 ➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
 All emoji names are lowercase. ◀
 
-The libraries ~emojify~ and ~emojify-logos~ provides cool items like =:haskell: :emacs:
-:org: :ruby: :python:=.
-Unfortunately they do not easily export to html with org-mode, so I'm not using them.
++ On MacOS, ~C-⌘-SPC~ brings up an emoji picker, where one drags desired emojis to
+  textual areas.
++ [[https://gist.github.com/rxaviers/7360908][Here]] is a list of emoji ---all supported by Github.
+
+The libraries ~emojify~ and ~emojify-logos~ provides cool items like =:haskell:
+:emacs: :org: :ruby: :python:=.  Unfortunately they do not easily export to html
+with org-mode, so I'm not using them.
 :Alternatives:
 #+BEGIN_SRC emacs-lisp
 (use-package emojify
@@ -5151,6 +5155,30 @@ Now ~:~ or ~C-c C-q~ will show existing tags for the current heading, press ~TAB
 obtain a list of all exisiting tags, press ~C-SPC~ to select the desired tags,
 then =TAB= or =RET= to confirm the resulting tag list, and ~RET~ to finish or ~TAB~ to
 select more tags.
+
+Let's render tags by Unicode symbols.
+#+begin_src emacs-lisp
+(use-package org-pretty-tags
+  :diminish t
+  :demand t
+  :config
+   (setq org-pretty-tags-surrogate-strings
+         '(("Neato"    . "💡")
+           ("Blog"     . "✍")
+           ("Audio"    . "♬")
+           ("Video"    . "📺")
+           ("Book"     . "📚")
+           ("Running"  . "🏃")
+           ("Question" . "❓")
+           ("Wife"     . "💕")
+           ("Text"     . "💬") ; 📨 📧
+           ("Friends"  . "👪")
+           ("Self"     . "🍂")
+           ("Finances" . "💰")
+           ("Car"      . "🚗") ; 🚙 🚗 🚘
+           ("Urgent"   . "🔥"))) ;; 📥 📤 📬
+   (org-pretty-tags-global-mode 1))
+#+end_src
 
 ** Pretty Prioritisation Markers
 
