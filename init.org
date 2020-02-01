@@ -6,10 +6,10 @@
 # ≥ 219 code blocks
 # (emacs-init-time) ⇒ 17.0 seconds
 #
-#+TITLE: A Life Configuring Emacs
-#+AUTHOR: Musa Al-hassy
-#+EMAIL: alhassy@gmail.com
-#+DATE: 2018-07-25
+#+title: A Life Configuring Emacs
+#+author: Musa Al-hassy
+#+email: alhassy@gmail.com
+#+date: 2018-07-25
 #+DESCRIPTION: My Emacs Initialisation File, Written in Org-mode.
 #+STARTUP: indent lognoteclock-out
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
@@ -144,6 +144,7 @@ and variables that may accomplish my goal.
     - [[#c-aek-and-yanking-of-sections][~C-a,e,k~ and Yanking of sections]]
   - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
   - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
+  - [[#proportional-fonts-for-headlines][Proportional fonts for Headlines]]
   - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
   - [[#jumping-without-hassle][Jumping without hassle]]
   - [[#folding-within-a-subtree][Folding within a subtree]]
@@ -4131,6 +4132,23 @@ parts of works emphasied with org-mode; e.g.,
 I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
+
+** Proportional fonts for Headlines
+
+Let's have headings stick out a bit.
++ The larger headings are cute and reminicint of word processors, but having
+  headings coloured is enough ---the larger size is too much.
+#+BEGIN_SRC emacs-lisp
+(set-face-attribute 'org-document-title nil :height 2.0)
+;; (set-face-attribute 'org-level-1 nil :height 1.0)
+;; Remaining org-level-𝒾 have default height 1.0, for 𝒾 : 1..8.
+;;
+;; E.g., reset org-level-1 to default.
+;; (custom-set-faces '(org-level-1 nil))
+#+END_SRC
+
+Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
+---See notes on Custom above.
 
 ** Show off-screen heading at the top of the window
 :PROPERTIES:
