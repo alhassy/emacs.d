@@ -3028,6 +3028,20 @@ thereby making it look better. With a prefix argument, it justifies it as well
 
             Note that ~M-o M-s~ centres a line of text ;-) Fun stuff!
 
+Fill-mode is also known as “hard word wrapping”, which has the counterpart
+“soft word wrapping” …
+
+Visual line mode is built-in and provides support for editing by visual lines:
+Lines off the screen are visually word wrapped, but logically remain one line.
+Moreover =C-a,e,k= operate on visual lines rather than logical lines.
+#+begin_src emacs-lisp
+;; Bent arrows at the end and start of long lines.
+(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(global-visual-line-mode 1)
+#+end_src
+Visual line mode is useful when I have way too many windows open or when
+using smaller frames.
+
 ** Pretty Lists Markers
 
 When writing, it's common to use ~+,-,*~ to enumerate unordered lists
