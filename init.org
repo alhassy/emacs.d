@@ -3056,7 +3056,7 @@ them visually as Unicode bullets.
 (loop for (x y z) in '(("+" "◦" *)
                        ("-" "•" *)
                        ("*" "⋆" +))
-      do (font-lock-add-keywords 'text-mode
+      do (font-lock-add-keywords 'org-mode
                                  `((,(format "^ %s\\([%s]\\) " z x)
                                     (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
 #+end_src
