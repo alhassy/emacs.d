@@ -2162,6 +2162,9 @@ windows, so we can make a hydra to alleviate the trouble.
 (use-package switch-window :defer t)
 ;; :bind (("C-x o" . switch-window)
 ;;        ("C-x w" . switch-window-then-swap-buffer))
+
+;; Have a thick ruler between vertical windows
+(window-divider-mode)
 #+end_src
 
 Yet another possible hydra would be to avoid remembering word operations, such
