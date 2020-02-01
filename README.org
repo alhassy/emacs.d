@@ -1,4 +1,4 @@
-# Created 2020-01-19 Sun 22:05
+# Created 2020-01-31 Fri 21:27
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
@@ -59,6 +59,7 @@ and variables that may accomplish my goal.
   - [[#emacs-is-a-flexible-platform-for-developing-end-user-applications][/Emacs is a flexible platform for developing end-user applications/]]
   - [[#the-power-of-text-manipulation][The Power of Text Manipulation]]
   - [[#keyboard-navigation-and-alteration][Keyboard Navigation and Alteration]]
+  - [[#emacs-proverbs-as-koan][Emacs Proverbs as Koan]]
   - [[#possibly-interesting-reads][Possibly Interesting Reads]]
   - [[#fun-commands-to-try-out][Fun commands to try out]]
   - [[#what-does-literate-programming-look-like][What Does Literate Programming Look Like?]]
@@ -87,6 +88,7 @@ and variables that may accomplish my goal.
     - [[#capturing-mail-as-todonotes][Capturing Mail as Todo/Notes]]
     - [[#auto-completing-mail-addresses][Auto-completing mail addresses]]
     - [[#feeds-to-blogs][Feeds to Blogs]]
+  - [[#jumping-to-extreme-semantic-units][Jumping to extreme semantic units]]
   - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
@@ -111,6 +113,7 @@ and variables that may accomplish my goal.
   - [[#persistent-scratch-buffer][Persistent Scratch Buffer]]
 - [[#prose][Prose]]
   - [[#fill-mode----word-wrapping][Fill-mode ---Word Wrapping]]
+  - [[#pretty-lists-markers][Pretty Lists Markers]]
   - [[#word-completion][Word Completion]]
   - [[#fix-spelling-as-you-type----thesaurus--dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!]]
   - [[#touch-typing][Touch Typing]]
@@ -136,6 +139,7 @@ and variables that may accomplish my goal.
     - [[#c-aek-and-yanking-of-sections][~C-a,e,k~ and Yanking of sections]]
   - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
   - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
+  - [[#proportional-fonts-for-headlines][Proportional fonts for Headlines]]
   - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
   - [[#jumping-without-hassle][Jumping without hassle]]
   - [[#folding-within-a-subtree][Folding within a subtree]]
@@ -159,6 +163,7 @@ and variables that may accomplish my goal.
     - [[#step-6-moving-a-task-toward-completion][Step 6: Moving a task toward completion]]
     - [[#step-7-archiving-tasks][Step 7: Archiving Tasks]]
   - [[#tag-youre-it][Tag! You're it!]]
+  - [[#pretty-prioritisation-markers][Pretty Prioritisation Markers]]
   - [[#super-agenda][Super Agenda]]
   - [[#automating-pomodoro----commit-for-only-25-minutes][Automating Pomodoro ---“Commit for only 25 minutes!”]]
   - [[#journaling][Journaling]]
@@ -170,7 +175,9 @@ and variables that may accomplish my goal.
     - [[#finding-tasks-to-clock-in][Finding tasks to clock in]]
     - [[#estimates-versus-actual-time][Estimates versus actual time]]
   - [[#habit-formation][Habit Formation]]
+  - [[#actually-doing-things][Actually Doing Things]]
 - [[#programming][Programming]]
+  - [[#which-function-are-we-writing][Which function are we writing?]]
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
   - [[#eldoc-for-lisp-and-haskell][Eldoc for Lisp and Haskell]]
   - [[#jumping-to-definitions--references][Jumping to definitions & references]]
@@ -348,6 +355,33 @@ have us count 𝓃 and slowly scroll.  ( Exercise: What incantation of keys
 ⇒ [[https://support.apple.com/en-ca/HT201236][MacOS supports]] many Emacs shortcuts, system-wide, such as ~C-a/e, C-d, C-k/y,
  C-o, C-p/n~ and even ~C-t~ for transposing two characters.  ⇐
 
+** Emacs Proverbs as Koan
+
+Below is an extract from William Cobb's “Reflections on the Game of Go”, with
+minor personalised adjustements for Emacs. Enjoy!
+
+The Japanese term /satori/ refers to the experience of enlightenment, the
+realisation of how things really are that is the primary aim of practice and
+meditation. However, the Zen tradition is famous for claiming that one cannot
+say what it is that one realises, that is, one cannot articulate the content of
+the enlightenment experience. Although it makes everything clear, it is an experience
+beyond words. Instead of being given an explanation of how things are, the student of
+Zen hears sayings called /koan/, often somewhat paradoxical in character, that come
+from those who are enlightened:
+
+- “There are no CTRL and META.”
+- “If you meet an Emacs you dislike, kill it.”
+- “No one knows Emacs.”
+- “One can only learn Emacs by living within it.”
+- “To know Org mode is to know oneself.”
+
+It is important to realise that /koan/ are intended to move you off of one path
+and onto another. They are not just attempts to mystify you. For example,
+the first proverb is in regards to newcomers complaining about too many
+keybinings ---eventually it's muscle memory---, whereas the second is about
+using the right tool for the right task ---Emacs is not for everyone. The fourth
+is, well, Emacs is an operating system.
+
 ** Possibly Interesting Reads
 - [[https://www.gnu.org/software/emacs/tour/][The Emacs Tour]]
 - [[https://sachachua.com/blog/series/a-visual-guide-to-emacs/][How to Learn Emacs: A Hand-drawn One-pager for Beginners / A visual tutorial]]
@@ -455,21 +489,27 @@ It's natural to decompose large problems,
 ,#+begin_src haskell :noweb-ref defn-of-f :tangle no
 f = h ∘ g
 ,#+end_src
+
 But we need to define $g$ and $h$ /beforehand/ before we can use them. Yet it's
 natural to “motivate” their definitions ---rather than pull a rabbit out of
-hat. Org-let's us do that!  Here's one,
+hat. Org-let's us do that!
+
+Here's one,
 ,#+begin_src haskell :noweb-ref code-from-other-places :tangle no
 g = ⋯
 ,#+end_src
+
 then the other.
 ,#+begin_src haskell :noweb-ref code-from-other-places :tangle no
 h = ⋯
 ,#+end_src
+
 Of-course, we might also want a preamble:
 ,#+BEGIN_SRC haskell :tangle myprogram.hs
 import ⋯
 ,#+END_SRC
-We can now weave in the tagged code blocks in the order we want.
+
+We can now tangle together the tagged code blocks in the order we want.
 ,#+BEGIN_SRC haskell :tangle myprogram.hs :comments none :noweb yes
 <<code-from-other-places>>
 <<defn-of-f>>
@@ -493,6 +533,10 @@ they are tangled alphabetically ---e.g., if one of the blocks is marked
 ~emacs-lisp~ then its contents will be the very first one in the resulting source
 file, since ~emacs-lisp~ begins with ~e~ which is alphabetically before ~h~ of
 ~haskell~.
+
+- [[http://www.howardism.org/Technical/Emacs/literate-programming-tutorial.html][Introduction to Literate Programming with Org-mode]]
+- [[http://ehneilsen.net/notebook/orgExamples/org-examples.html][Emacs org-mode examples and cookbook]]
+- [[https://leanpub.com/lit-config/read][Literate Config]] ---Online booklet
 
 ** Why a monolithic configuration?
 
@@ -1769,6 +1813,21 @@ like seeing the colours, fonts, and math symbols that the authours have labored
 over to producing quality content. Apparently, I'm shallow and I'm okay with it
 ---but not that shallow, since I'm constantly pushing Emacs which looks ugly by
 default but it's unreasonably powerful.
+** Jumping to extreme semantic units
+[[https://github.com/DamienCassou/beginend][Sometimes it's unreasonable]] for ~M-<~ to take us to the actual start of a buffer;
+instead it'd be preferable to go to the first “semantic unit” in the buffer. For
+example, when directory editing with ~dired~ we should jump to the first file,
+with version control with ~magit~ we should jump to the first section, when
+composing mail we should jump to the first body line, and in the agenda we
+should jump to the first entry.
+#+begin_src emacs-lisp
+;; M-< and M-> jump to first and final semantic units.
+;; If pressed twice, they go to physical first and last positions.
+(use-package beginend
+  :diminish
+  :config (beginend-global-mode))
+#+end_src
+
 ** Hydra: Supply a prefix only once
 Sometimes we have keybindings that share a common prefix, say ~C-c j~ and ~C-c k~,
 and we invoke them in an arbitrary sequence, it would be nice to invoke the
@@ -1815,9 +1874,16 @@ windows, so we can make a hydra to alleviate the trouble.
 (use-package switch-window :defer t)
 ;; :bind (("C-x o" . switch-window)
 ;;        ("C-x w" . switch-window-then-swap-buffer))
+
+;; Have a thick ruler between vertical windows
+(window-divider-mode)
 #+end_src
 
-See [[#Taking-a-tour-of-one's-edits][Taking a tour of one's edits]] below for another small and useful example.
+Yet another possible hydra would be to avoid remembering word operations, such
+as copying a word, upcasing it, killing a word from anywhere within it ---in
+contrast ~kill-word~ kills /to the end/ of the word---, etc. Likewise for line
+operations, such as copying a line from anywhere in it.  See [[#Taking-a-tour-of-one's-edits][Taking a tour of
+one's edits]] below for another small and useful example.
 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 /Pop up a terminal, do some work, then close it using the same command./
@@ -2203,9 +2269,15 @@ dark themes, and its modified powerline setup.
 ;; When using helm & info & default, mode line looks prettier.
 (use-package spaceline
   :custom (spaceline-buffer-encoding-abbrev-p nil)
-          (spaceline-line-column-p t) ;; Show “line-number : column-number” in modeline.
+          ;; Use an arrow to seperate modeline information
           (powerline-default-separator 'arrow)
-  :config (require 'spaceline-config)
+          ;; Show “line-number : column-number” in modeline.
+          (spaceline-line-column-p t)
+          ;; Use two colours to indicate whether a buffer is modified or not.
+          (spaceline-highlight-face-func 'spaceline-highlight-face-modified)
+  :config (custom-set-faces '(spaceline-unmodified ((t (:foreground "black" :background "gold")))))
+          (custom-set-faces '(spaceline-modified   ((t (:foreground "black" :background "cyan")))))
+          (require 'spaceline-config)
           (spaceline-helm-mode)
           (spaceline-info-mode)
           (spaceline-emacs-theme))
@@ -2564,6 +2636,36 @@ thereby making it look better. With a prefix argument, it justifies it as well
 
 Note that ~M-o M-s~ centres a line of text ;-) Fun stuff!
 
+Fill-mode is also known as “hard word wrapping”, which has the counterpart
+“soft word wrapping” …
+
+Visual line mode is built-in and provides support for editing by visual lines:
+Lines off the screen are visually word wrapped, but logically remain one line.
+Moreover =C-a,e,k= operate on visual lines rather than logical lines.
+#+begin_src emacs-lisp
+;; Bent arrows at the end and start of long lines.
+(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(global-visual-line-mode 1)
+#+end_src
+Visual line mode is useful when I have way too many windows open or when
+using smaller frames.
+
+** Pretty Lists Markers
+
+When writing, it's common to use ~+,-,*~ to enumerate unordered lists
+---especially so in Org-mode wherein they denote structured text.  Let's render
+them visually as Unicode bullets.
+
+#+begin_src emacs-lisp
+;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
+(loop for (x y z) in '(("+" "◦" *)
+                       ("-" "•" *)
+                       ("*" "⋆" +))
+      do (font-lock-add-keywords 'text-mode
+                                 `((,(format "^ %s\\([%s]\\) " z x)
+                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
+#+end_src
+
 ** Word Completion
 Let's enable [[https://company-mode.github.io/][“complete anything” mode]] ---it ought to start in half a second and
 only need two characters to get going, which means word suggestions are provided
@@ -2644,9 +2746,13 @@ For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
 ➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
 All emoji names are lowercase. ◀
 
-The libraries ~emojify~ and ~emojify-logos~ provides cool items like =:haskell: :emacs:
-:org: :ruby: :python:=.
-Unfortunately they do not easily export to html with org-mode, so I'm not using them.
+- On MacOS, ~C-⌘-SPC~ brings up an emoji picker, where one drags desired emojis to
+  textual areas.
+- [[https://gist.github.com/rxaviers/7360908][Here]] is a list of emoji ---all supported by Github.
+
+The libraries ~emojify~ and ~emojify-logos~ provides cool items like =:haskell:
+:emacs: :org: :ruby: :python:=.  Unfortunately they do not easily export to html
+with org-mode, so I'm not using them.
 
 ** Fix spelling as you type ---thesaurus & dictionary too!
 I would like to check spelling on the fly.
@@ -3466,6 +3572,23 @@ I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
 
+** Proportional fonts for Headlines
+
+Let's have headings stick out a bit.
+- The larger headings are cute and reminicint of word processors, but having
+  headings coloured is enough ---the larger size is too much.
+#+begin_src emacs-lisp
+(set-face-attribute 'org-document-title nil :height 2.0)
+;; (set-face-attribute 'org-level-1 nil :height 1.0)
+;; Remaining org-level-𝒾 have default height 1.0, for 𝒾 : 1..8.
+;;
+;; E.g., reset org-level-1 to default.
+;; (custom-set-faces '(org-level-1 nil))
+#+end_src
+
+Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
+---See notes on Custom above.
+
 ** Show off-screen heading at the top of the window
 In case we forgot which heading we're under, let's keep
 the current heading stuck at the top of the window.
@@ -4156,7 +4279,7 @@ file too, if we enable it so.
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
 ;; ➩ Show my agenda upon Emacs startup.
-(with-eval-after-load 'org-super-agenda (org-agenda "a" "a"))
+(org-agenda "a" "a") ;; Need this to have “org-agenda-custom-commands” defined.
 #+end_src
 
 Let's install some helpful views for our agenda.
@@ -4235,6 +4358,55 @@ Now ~:~ or ~C-c C-q~ will show existing tags for the current heading, press ~TAB
 obtain a list of all exisiting tags, press ~C-SPC~ to select the desired tags,
 then =TAB= or =RET= to confirm the resulting tag list, and ~RET~ to finish or ~TAB~ to
 select more tags.
+
+Let's render tags by Unicode symbols.
+#+begin_src emacs-lisp
+(use-package org-pretty-tags
+  :diminish t
+  :demand t
+  :config
+   (setq org-pretty-tags-surrogate-strings
+         '(("Neato"    . "💡")
+           ("Blog"     . "✍")
+           ("Audio"    . "♬")
+           ("Video"    . "📺")
+           ("Book"     . "📚")
+           ("Running"  . "🏃")
+           ("Question" . "❓")
+           ("Wife"     . "💕")
+           ("Text"     . "💬") ; 📨 📧
+           ("Friends"  . "👪")
+           ("Self"     . "🍂")
+           ("Finances" . "💰")
+           ("Car"      . "🚗") ; 🚙 🚗 🚘
+           ("Urgent"   . "🔥"))) ;; 📥 📤 📬
+   (org-pretty-tags-global-mode 1))
+#+end_src
+
+** Pretty Prioritisation Markers
+
+Let's set four priority levels and their colours: The more intense colours
+are for more urgent tasks.
+#+begin_src emacs-lisp
+(setq org-lowest-priority ?D) ;; Now org-speed-eky ‘,’ gives 4 options
+(setq org-priority-faces
+'((?A :foreground "red" :weight bold)
+  (?B . "orange")
+  (?C . "yellow")
+  (?D . "green")))
+#+end_src
+
+- ~C-c ,~ anywhere to set the priority of the current heading.
+  - We may press ~A-D~ or ~SPC~ to an remove existing priority.
+
+Priority markers are of the form ~[#𝒳]~, the [[https://github.com/harrybournis/org-fancy-priorities][fancy priorities]] package visually
+renders them as words or icons.
+#+begin_src emacs-lisp
+(use-package org-fancy-priorities
+  :diminish t
+  :hook   (org-mode . org-fancy-priorities-mode)
+  :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
+#+end_src
 
 ** Super Agenda
 Org agenda is an interactive tool for generating summary reports from Org data
@@ -4824,9 +4996,56 @@ Remember that in the agenda view if you alter a task, say with ~t~ to mark it
 done, then you need to use ~s~ to save the underlying todo/notes files; otherwise,
 any ~g~ will revert the change in the agenda buffer.
 
+** Actually Doing Things
+
+Let's setup a little audio-visual reminder to regularly check my agenda
+and ensure I'm not narrowing on a single task and ignoring others.
+#+begin_src emacs-lisp
+;; Obtain a notifications and text-to-speech utilities
+(system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
+(system-packages-ensure "terminal-notifier") ;; MacOS specific
+
+(run-at-time
+ "09:00am"
+ (* 2 60 60) ;; Every two hours
+ (lambda ()
+   (shell-command
+    (format "%s"
+            '(terminal-notifier
+              -title    \"Check your agenda!\"
+              -subtitle \"Is what you\'re doing …\"
+              -message  \"… in alignment with your goals?\"
+              -sound t -appIcon ~/.emacs.d/images/emacs-logo.png
+              ;; Speak at a speed of 125 words per minute; ie slowed down.
+              & espeak -s 125 \"Maybe it\'s time to do another task?\")))))
+#+end_src
+
+By default, notifications are in banner style ---they go away automatically---
+we can use alert style ---in which they stay until dismissed--- in MacOS as
+follows: =System Preferences → Notifications → terminal-notifier → Alerts=.
+
+- [[https://emacs.stackexchange.com/questions/3844/good-methods-for-setting-up-alarms-audio-visual-triggered-by-org-mode-events][Here]] is an approach to triggering audio-visual alarms from Org-mode events
+  ---using ~org-agenda-to-appt~.
+
+- Emacs's built in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Appointments.html][appointment notification facility]] can also be used as a alarm
+  clock via ~M-x appt-add~.
+
 * Programming
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
+
+** Which function are we writing?
+In the modeline, show the name of the function we're currently writing.
+#+begin_src emacs-lisp
+(add-hook 'prog-mode-hook #'which-function-mode)
+(add-hook 'org-mode-hook  #'which-function-mode)
+#+end_src
+In Org-mode, this places the current heading in the modeline.
+
+In Lisp mode, ensure we always have matching parens.
+#+begin_src emacs-lisp
+(add-hook 'emacs-lisp-mode-hook #'check-parens)
+#+end_src
 
 ** Highlight defined Lisp symbols
 Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes it
@@ -5254,7 +5473,6 @@ often, possibly with a name or some other parameter altered.
 Such a ‘snippet’ could be written once then provided by a simple
 Lisp insert command with the parameters being queried. Luckily, others
 have written such pleasant utilities.
-
 [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet]] is a pleasant utility for template expansion with the alluring
 feature to allow arbitrary Lisp code to be executed during expansion.
 The declaration of templates is verbose, requiring a particular file
@@ -5536,6 +5754,10 @@ http://www.cas.mcmaster.ca/~alhassm/
 
 ,** my_twitter: User's Twitter profile
 https://twitter.com/musa314
+
+,** my_masters_thesis
+A Mechanisation of Internal Galois Connections In Order Theory Formalised Without Meets
+https://macsphere.mcmaster.ca/bitstream/11375/17276/2/thesis.pdf
 #+end_src
 
 It may be useful to also have Org-link variants of these …

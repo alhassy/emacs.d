@@ -2108,8 +2108,9 @@ should jump to the first entry.
 ;; M-< and M-> jump to first and final semantic units.
 ;; If pressed twice, they go to physical first and last positions.
 (use-package beginend
-  :diminish
-  :config (beginend-global-mode))
+  :diminish 'beginend-global-mode
+  :config (beginend-global-mode)
+    (loop for (_ . m) in beginend-modes do (diminish m)))
 #+END_SRC
 
 ** Hydra: Supply a prefix only once
@@ -3037,6 +3038,7 @@ Moreover =C-a,e,k= operate on visual lines rather than logical lines.
 #+begin_src emacs-lisp
 ;; Bent arrows at the end and start of long lines.
 (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(diminish 'visual-line-mode)
 (global-visual-line-mode 1)
 #+end_src
 Visual line mode is useful when I have way too many windows open or when
@@ -3050,6 +3052,7 @@ them visually as Unicode bullets.
 
 #+begin_src emacs-lisp
 ;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
+(require 'cl)
 (loop for (x y z) in '(("+" "◦" *)
                        ("-" "•" *)
                        ("*" "⋆" +))
@@ -3693,7 +3696,7 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 
 #+begin_src emacs-lisp
 (global-subword-mode 1)
-(diminish  'subword-mode)
+(diminish 'subword-mode)
 #+end_src
 
 ** Mouse Editing Support
@@ -3876,9 +3879,8 @@ named ‘preamble’ that contains org-mode setup for a file.
 #+begin_src emacs-lisp
 (use-package org
   :ensure org-plus-contrib
-  :config
-  (require 'ox-extra)
-  (ox-extras-activate '(ignore-headlines)))
+  :config (require 'ox-extra)
+          (ox-extras-activate '(ignore-headlines)))
 #+end_src
 
 ~org-plus-contrib~ contain the files that are included with Emacs plus all
@@ -5159,7 +5161,7 @@ select more tags.
 Let's render tags by Unicode symbols.
 #+begin_src emacs-lisp
 (use-package org-pretty-tags
-  :diminish t
+  :diminish org-pretty-tags-mode
   :demand t
   :config
    (setq org-pretty-tags-surrogate-strings
@@ -5975,6 +5977,7 @@ for Haskell.
 
 #+BEGIN_SRC emacs-lisp
 (use-package eldoc
+  :diminish eldoc-mode
   :hook (emacs-lisp-mode . turn-on-eldoc-mode)
         (lisp-interaction-mode . turn-on-eldoc-mode)
         (haskell-mode . turn-on-haskell-doc-mode)
