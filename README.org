@@ -1,11 +1,11 @@
-# Created 2020-01-31 Fri 21:27
+# Created 2020-02-02 Sun 13:57
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
 #+export_file_name: README.org
 
-#+html: <p align="center"> <img src="images/emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3.1-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="images/emacs-birthday-present.png" width=250 height=250/> </p>
+#+html: <p align="center"> <img src="images/emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3.2-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="images/emacs-birthday-present.png" width=250 height=250/> </p>
 
 I enjoy reading others' /literate/ configuration files and
 incorporating what I learn into my own. The result is a
@@ -90,6 +90,8 @@ and variables that may accomplish my goal.
     - [[#feeds-to-blogs][Feeds to Blogs]]
   - [[#jumping-to-extreme-semantic-units][Jumping to extreme semantic units]]
   - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
+    - [[#textual-navigation----look-ma-no-ctrl-key][Textual Navigation ---“Look Ma, no CTRL key!”]]
+    - [[#window-navigation][Window Navigation]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
   - [[#automatic-backups][Automatic Backups]]
@@ -1086,7 +1088,7 @@ when we want to install a file from souce we use the keyword ~:quelpa~.
 
 #+begin_src emacs-lisp
 (use-package quelpa
-  :defer t
+  :defer 5
   :custom (quelpa-upgrade-p t "Always try to update packages")
   :config
   ;; Get ‘quelpa-use-package’ via ‘quelpa’
@@ -1824,8 +1826,9 @@ should jump to the first entry.
 ;; M-< and M-> jump to first and final semantic units.
 ;; If pressed twice, they go to physical first and last positions.
 (use-package beginend
-  :diminish
-  :config (beginend-global-mode))
+  :diminish 'beginend-global-mode
+  :config (beginend-global-mode)
+    (loop for (_ . m) in beginend-modes do (diminish m)))
 #+end_src
 
 ** Hydra: Supply a prefix only once
@@ -1847,6 +1850,8 @@ shared prefix /only once/ thereby having:
 ;;   ;; List of triples (extension method description) )
 #+end_src
 
+[[file:~/.emacs.d/images/hydra.png]]
+
 From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
 #+begin_quote
 Once you summon the Hydra through the prefixed binding (the body + any one
@@ -1858,7 +1863,79 @@ original purpose, calling his proper command. This makes the Hydra very
 seamless, it's like a minor mode that disables itself auto-magically.
 #+end_quote
 
-For example, it can be difficult to remember the incantations to adjust
+⇒ The [[https://github.com/abo-abo/hydra/wiki][Hydra Wiki]] has many example hydras for common uses cases ⇐
+
+Below are two examples; one to simplify textual navigation and another for
+window navigation.
+Yet another possible hydra would be to avoid remembering word operations, such
+as copying a word, upcasing it, killing a word from anywhere within it ---in
+contrast ~kill-word~ kills /to the end/ of the word---, etc. Likewise for line
+operations, such as copying a line from anywhere in it.  See [[#Taking-a-tour-of-one's-edits][Taking a tour of
+one's edits]] below for another small and useful example.
+
+When there are multiple actions, it's nice to see such a menu displayed in the
+middle of the frame; so we use [[https://github.com/Ladicle/hydra-posframe#hydra-posframe][hydra-posframe]]. Moreover, it can be useful to
+group related actions under a common heading ---e.g., textual navigation may
+occur at the line level or word level or screen level--- we obtain a nice
+interface by declaraing hydras using [[https://github.com/jerrypnz/major-mode-hydra.el#get-started][pretty-hydra-define]] ---this saves us the
+trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][formating docstrings using classic hydra]].
+
+#+begin_src emacs-lisp
+;; Show hydras overlyaed in the middle of the frame
+(use-package hydra-posframe
+  :quelpa (hydra-posframe :fetcher git :url
+                          "https://github.com/Ladicle/hydra-posframe.git")
+  :hook (after-init . hydra-posframe-mode)
+  :custom (hydra-posframe-border-width 5))
+
+;; Neato doc strings for hydras
+(use-package pretty-hydra)
+#+end_src
+
+Template declaration:
+#+begin_example emacs-lisp
+ (pretty-hydra-define 𝓃𝒶𝓂ℯ (:title ⋯ :quit-key ⋯)
+   (title₀
+    (⋯(key₀ᵢ command₀ᵢ optional-doc₀ᵢ)⋯)
+    ⋮
+    titleₙ
+    (⋯(keyₙᵢ commandₙᵢ optional-docₙᵢ)⋯)))
+#+end_example
+
+*** Textual Navigation ---“Look Ma, no CTRL key!”
+
+Basic movement commands ---without having to hold the control key!
+
+=C-n= moves us to the next line, as it should; but it now /also/ let's us press
+=n,p,f,…= for other movement commands. Unlisted keys close the pop-up menu.
+#+begin_src emacs-lisp
+(global-set-key
+ (kbd "C-n")
+ (pretty-hydra-define hydra-move
+   (:body-pre (next-line) :title "\t\t\t\t\tTextual Navigation" :quit-key "q")
+   ("Line"
+    (("n" next-line)
+     ("p" previous-line)
+     ("a" beginning-of-line)
+     ("e" move-end-of-line)
+     ("g" goto-line))
+
+   "Word"
+   (("f" forward-word "Next")
+    ("b" backward-word "Previous")
+    ("{" org-backward-element "Next Element")
+    ("}" org-forward-element "Previous Element"))
+
+   "Screen"
+   (("v" scroll-up-command "Scroll Down")
+    ("V" scroll-down-command "Scroll Up")
+    ("l" recenter-top-bottom "Center Page")
+    ("r" move-to-window-line-top-bottom "Relocate Point")
+    ("m" helm-imenu "Textual Menu")))))
+#+end_src
+
+*** Window Navigation
+It can be difficult to remember the incantations to adjust
 windows, so we can make a hydra to alleviate the trouble.
 #+begin_src emacs-lisp
 ;; Use ijkl to denote ↑←↓→ arrows.
@@ -1879,11 +1956,6 @@ windows, so we can make a hydra to alleviate the trouble.
 (window-divider-mode)
 #+end_src
 
-Yet another possible hydra would be to avoid remembering word operations, such
-as copying a word, upcasing it, killing a word from anywhere within it ---in
-contrast ~kill-word~ kills /to the end/ of the word---, etc. Likewise for line
-operations, such as copying a line from anywhere in it.  See [[#Taking-a-tour-of-one's-edits][Taking a tour of
-one's edits]] below for another small and useful example.
 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 /Pop up a terminal, do some work, then close it using the same command./
@@ -2645,6 +2717,7 @@ Moreover =C-a,e,k= operate on visual lines rather than logical lines.
 #+begin_src emacs-lisp
 ;; Bent arrows at the end and start of long lines.
 (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(diminish 'visual-line-mode)
 (global-visual-line-mode 1)
 #+end_src
 Visual line mode is useful when I have way too many windows open or when
@@ -2658,10 +2731,11 @@ them visually as Unicode bullets.
 
 #+begin_src emacs-lisp
 ;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
+(require 'cl)
 (loop for (x y z) in '(("+" "◦" *)
                        ("-" "•" *)
                        ("*" "⋆" +))
-      do (font-lock-add-keywords 'text-mode
+      do (font-lock-add-keywords 'org-mode
                                  `((,(format "^ %s\\([%s]\\) " z x)
                                     (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
 #+end_src
@@ -3186,7 +3260,7 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 
 #+begin_src emacs-lisp
 (global-subword-mode 1)
-(diminish  'subword-mode)
+(diminish 'subword-mode)
 #+end_src
 
 ** Mouse Editing Support
@@ -3327,9 +3401,8 @@ named ‘preamble’ that contains org-mode setup for a file.
 #+begin_src emacs-lisp
 (use-package org
   :ensure org-plus-contrib
-  :config
-  (require 'ox-extra)
-  (ox-extras-activate '(ignore-headlines)))
+  :config (require 'ox-extra)
+          (ox-extras-activate '(ignore-headlines)))
 #+end_src
 
 ~org-plus-contrib~ contain the files that are included with Emacs plus all
@@ -4362,7 +4435,7 @@ select more tags.
 Let's render tags by Unicode symbols.
 #+begin_src emacs-lisp
 (use-package org-pretty-tags
-  :diminish t
+  :diminish org-pretty-tags-mode
   :demand t
   :config
    (setq org-pretty-tags-surrogate-strings
@@ -5067,6 +5140,7 @@ for Haskell.
 
 #+begin_src emacs-lisp
 (use-package eldoc
+  :diminish eldoc-mode
   :hook (emacs-lisp-mode . turn-on-eldoc-mode)
         (lisp-interaction-mode . turn-on-eldoc-mode)
         (haskell-mode . turn-on-haskell-doc-mode)
