@@ -2140,7 +2140,7 @@ shared prefix /only once/ thereby having:
 
 # Center image
 #+ATTR_HTML: :style margin-left: auto; margin-right: auto;
-[[file:~/.emacs.d/images/hydra.png]]
+[[file:images/hydra.png]]
 
 From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
 #+begin_quote
@@ -2245,7 +2245,6 @@ windows, so we can make a hydra to alleviate the trouble.
 ;; Have a thick ruler between vertical windows
 (window-divider-mode)
 #+end_src
-
 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 :PROPERTIES:

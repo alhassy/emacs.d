@@ -1,4 +1,4 @@
-# Created 2020-02-02 Sun 13:57
+# Created 2020-02-02 Sun 14:00
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
@@ -1850,7 +1850,7 @@ shared prefix /only once/ thereby having:
 ;;   ;; List of triples (extension method description) )
 #+end_src
 
-[[file:~/.emacs.d/images/hydra.png]]
+[[file:images/hydra.png]]
 
 From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
 #+begin_quote
@@ -1955,7 +1955,6 @@ windows, so we can make a hydra to alleviate the trouble.
 ;; Have a thick ruler between vertical windows
 (window-divider-mode)
 #+end_src
-
 
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 /Pop up a terminal, do some work, then close it using the same command./
