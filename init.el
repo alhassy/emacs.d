@@ -1,3 +1,4 @@
+;; (eval-buffer)
 ;; [[file:~/.emacs.d/init.org::*Support for ‘Custom’][Support for ‘Custom’:1]]
 (setq custom-file "~/.emacs.d/custom.el")
 (ignore-errors (load custom-file)) ;; It may not yet exist.
@@ -96,13 +97,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; =use-package= ---The start of =init.el=:8 ends here
@@ -484,11 +485,17 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
  :config (add-to-list 'company-backends 'company-bbdb))
 ;; Auto-completing mail addresses:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Jumping to extreme semantic units][Jumping to extreme semantic units:1]]
+;; M-< and M-> jump to first and final semantic units.
+;; If pressed twice, they go to physical first and last positions.
+(use-package beginend
+  :diminish
+  :config (beginend-global-mode))
+;; Jumping to extreme semantic units:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
-(use-package hydra)
-
 ;; The standard syntax:
 ;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
 ;;   ;; List of triples (extension method description) )
@@ -496,18 +503,15 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:2]]
 ;; Use ijkl to denote ↑←↓→ arrows.
-(defhydra hydra-windows (global-map    "C-c w"   )
-  ("b" balance-windows                 "balance" )
-  ("i" enlarge-window                  "heighten")
-  ("j" shrink-window-horizontally      "narrow"  )
-  ("k" shrink-window                   "lower"   )
-  ("l" enlarge-window-horizontally     "widen"   )
-  ("s" switch-window-then-swap-buffer  "swap" :color teal))
+
 
 ;; Provides a *visual* way to choose a window to switch to.
 (use-package switch-window :defer t)
 ;; :bind (("C-x o" . switch-window)
 ;;        ("C-x w" . switch-window-then-swap-buffer))
+
+;; Have a thick ruler between vertical windows
+(window-divider-mode)
 ;; Hydra: Supply a prefix only once:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
@@ -737,9 +741,15 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; When using helm & info & default, mode line looks prettier.
 (use-package spaceline
   :custom (spaceline-buffer-encoding-abbrev-p nil)
-          (spaceline-line-column-p t) ;; Show “line-number : column-number” in modeline.
+          ;; Use an arrow to seperate modeline information
           (powerline-default-separator 'arrow)
-  :config (require 'spaceline-config)
+          ;; Show “line-number : column-number” in modeline.
+          (spaceline-line-column-p t)
+          ;; Use two colours to indicate whether a buffer is modified or not.
+          (spaceline-highlight-face-func 'spaceline-highlight-face-modified)
+  :config (custom-set-faces '(spaceline-unmodified ((t (:foreground "black" :background "gold")))))
+          (custom-set-faces '(spaceline-modified   ((t (:foreground "black" :background "cyan")))))
+          (require 'spaceline-config)
           (spaceline-helm-mode)
           (spaceline-info-mode)
           (spaceline-emacs-theme))
@@ -889,6 +899,23 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; Do not show the “Fill” indicator in the mode line.
 (diminish 'auto-fill-function)
 ;; Fill-mode ---Word Wrapping:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:3]]
+;; Bent arrows at the end and start of long lines.
+(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(global-visual-line-mode 1)
+;; Fill-mode ---Word Wrapping:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Pretty Lists Markers][Pretty Lists Markers:1]]
+;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
+(require 'cl)
+(loop for (x y z) in '(("+" "◦" *)
+                       ("-" "•" *)
+                       ("*" "⋆" +))
+      do (font-lock-add-keywords 'org-mode
+                                 `((,(format "^ %s\\([%s]\\) " z x)
+                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
+;; Pretty Lists Markers:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Word Completion][Word Completion:1]]
 (use-package company
@@ -1231,10 +1258,6 @@ user. If PREFIX is provided, let the user select a portion of the screen."
   :defer t
   :custom (glc-default-span 0))
 
-(defhydra hydra-edits (global-map "C-c e")
-  ("p" goto-last-change "Goto nᵗʰ last change")
-  ("n" goto-last-change-reverse "Goto more recent change"))
-;; ~C-c e n,p~: Taking a tour of one's edits:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Getting Started][Getting Started:1]]
 (use-package org
@@ -1361,6 +1384,15 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; to have \alpha, \to and others display as utf8
 ;; http://orgmode.org/manual/Special-symbols.html
 ;; Hiding Emphasise Markers & Inlining Images:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Proportional fonts for Headlines][Proportional fonts for Headlines:1]]
+(set-face-attribute 'org-document-title nil :height 2.0)
+;; (set-face-attribute 'org-level-1 nil :height 1.0)
+;; Remaining org-level-𝒾 have default height 1.0, for 𝒾 : 1..8.
+;;
+;; E.g., reset org-level-1 to default.
+;; (custom-set-faces '(org-level-1 nil))
+;; Proportional fonts for Headlines:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Show off-screen heading at the top of the window][Show off-screen heading at the top of the window:1]]
  (use-package org-sticky-header
@@ -1774,7 +1806,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
 ;; ➩ Show my agenda upon Emacs startup.
-(with-eval-after-load 'org-super-agenda (org-agenda "a" "a"))
+(org-agenda "a" "a") ;; Need this to have “org-agenda-custom-commands” defined.
 ;; Step 7: Archiving Tasks:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:3]]
@@ -1804,6 +1836,45 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; Also provides: helm-org-capture-templates
 ;; Tag! You're it!:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Tag! You're it!][Tag! You're it!:3]]
+(use-package org-pretty-tags
+  :diminish t
+  :demand t
+  :config
+   (setq org-pretty-tags-surrogate-strings
+         '(("Neato"    . "💡")
+           ("Blog"     . "✍")
+           ("Audio"    . "♬")
+           ("Video"    . "📺")
+           ("Book"     . "📚")
+           ("Running"  . "🏃")
+           ("Question" . "❓")
+           ("Wife"     . "💕")
+           ("Text"     . "💬") ; 📨 📧
+           ("Friends"  . "👪")
+           ("Self"     . "🍂")
+           ("Finances" . "💰")
+           ("Car"      . "🚗") ; 🚙 🚗 🚘
+           ("Urgent"   . "🔥"))) ;; 📥 📤 📬
+   (org-pretty-tags-global-mode 1))
+;; Tag! You're it!:3 ends here
+
+;; [[file:~/.emacs.d/init.org::*Pretty Prioritisation Markers][Pretty Prioritisation Markers:1]]
+(setq org-lowest-priority ?D) ;; Now org-speed-eky ‘,’ gives 4 options
+(setq org-priority-faces
+'((?A :foreground "red" :weight bold)
+  (?B . "orange")
+  (?C . "yellow")
+  (?D . "green")))
+;; Pretty Prioritisation Markers:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Pretty Prioritisation Markers][Pretty Prioritisation Markers:2]]
+(use-package org-fancy-priorities
+  :diminish t
+  :hook   (org-mode . org-fancy-priorities-mode)
+  :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
+;; Pretty Prioritisation Markers:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Super Agenda][Super Agenda:1]]
 ;; List of all the files & directories where todo items can be found. Only one
@@ -1987,6 +2058,35 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; (setq org-agenda-window-setup 'only-window)
 ;; Habit Formation:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Actually Doing Things][Actually Doing Things:1]]
+;; Obtain a notifications and text-to-speech utilities
+(system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
+(system-packages-ensure "terminal-notifier") ;; MacOS specific
+
+(run-at-time
+ "09:00am"
+ (* 2 60 60) ;; Every two hours
+ (lambda ()
+   (shell-command
+    (format "%s"
+            '(terminal-notifier
+              -title    \"Check your agenda!\"
+              -subtitle \"Is what you\'re doing …\"
+              -message  \"… in alignment with your goals?\"
+              -sound t -appIcon ~/.emacs.d/images/emacs-logo.png
+              ;; Speak at a speed of 125 words per minute; ie slowed down.
+              & espeak -s 125 \"Maybe it\'s time to do another task?\")))))
+;; Actually Doing Things:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Which function are we writing?][Which function are we writing?:1]]
+(add-hook 'prog-mode-hook #'which-function-mode)
+(add-hook 'org-mode-hook  #'which-function-mode)
+;; Which function are we writing?:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Which function are we writing?][Which function are we writing?:2]]
+(add-hook 'emacs-lisp-mode-hook #'check-parens)
+;; Which function are we writing?:2 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Highlight defined Lisp symbols][Highlight defined Lisp symbols:1]]
 ;; Emacs Lisp specific
 (use-package highlight-defined
@@ -2027,15 +2127,6 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; What's changed & who's to blame?:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:2]]
-(defhydra hydra-version-control (global-map "C-x v")
-  "Version control"
-  ;; Syntax: (extension method description)
-  ("n" git-gutter:next-hunk      "Next hunk")
-  ("p" git-gutter:previous-hunk  "Previous hunk")
-  ("d" git-gutter:popup-hunk     "Show hunk diff")
-  ("r" git-gutter:revert-hunk    "Revert hunk\n")
-  ("c" git-gutter:stage-hunk     "Stage hunk")
-  ("s" git-gutter:statistic      "How many added & deleted lines"))
 ;; What's changed & who's to blame?:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:3]]
@@ -2058,19 +2149,11 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; Add these to the version control hydra.
 ;;
-(defhydra hydra-version-control (global-map "C-x v")
-  ("b" git-messenger:popup-message "Who's to blame?")
-  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
-  ("g" github-browse-file-blame "Show file in browser in github")
-  ("s" magit-status "Git status of current buffer"))
 ;; What's changed & who's to blame?:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:5]]
 (use-package git-link :defer t)
 
-(defhydra hydra-version-control (global-map "C-x v")
-  ("l" git-link "Git URL for current location"))
-;; What's changed & who's to blame?:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:1]]
 ;; NOTE that the highlighting works even in comments.
@@ -2109,9 +2192,6 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Highlighting TODO-s & Showing them in Magit:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:4]]
-(defhydra hydra-version-control (global-map "C-x v")
-  ("t" helm-magit-todos "Show TODOs lists for this repo."))
-;; Highlighting TODO-s & Showing them in Magit:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Aggressive Indentation][Aggressive Indentation:1]]
 ;; Always stay indented: Automatically have blocks reindented after every change.
@@ -2176,12 +2256,6 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Text Folding with Origami-mode:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:3]]
-(defhydra folding-with-origami-mode (global-map "C-c f")
-  ("h" origami-close-node-recursively "Hide")
-  ("o" origami-open-node-recursively  "Open")
-  ("t" origami-toggle-all-nodes  "Toggle buffer")
-  ("n" origami-next-fold "Next")
-  ("p" origami-previous-fold "Previous"))
 ;; Text Folding with Origami-mode:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
@@ -2206,7 +2280,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Snippets ---Template Expansion][Snippets ---Template Expansion:1]]
+;; [[file:~/.emacs.d/init.org::*Intro][Intro:1]]
 ;; Add yasnippet support for all company backends
 ;;
 (cl-defun my/company-backend-with-yankpad (backend)
@@ -2220,9 +2294,9 @@ C-u C-u C-c c ⇒ Goto last note stored."
       backend
     (append (if (consp backend) backend (list backend))
             '(:with company-yankpad))))
-;; Snippets ---Template Expansion:1 ends here
+;; Intro:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Snippets ---Template Expansion][Snippets ---Template Expansion:2]]
+;; [[file:~/.emacs.d/init.org::*Intro][Intro:2]]
 ;; Yet another snippet extension program
 (use-package yasnippet
   :diminish yas-minor-mode
@@ -2247,9 +2321,9 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
     ;; Set company-backend as a secondary completion backend to all existing backends.
     (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
-;; Snippets ---Template Expansion:2 ends here
+;; Intro:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Snippets ---Template Expansion][Snippets ---Template Expansion:5]]
+;; [[file:~/.emacs.d/init.org::*Intro][Intro:5]]
 (cl-defun org-insert-link ()
   "Makes an org link by inserting the URL copied to clipboard and
   prompting for the link description only.
@@ -2262,7 +2336,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
   (interactive)
   (insert "my_org_insert_link")
   (yankpad-expand))
-;; Snippets ---Template Expansion:5 ends here
+;; Intro:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Re-Enabling Templates][Re-Enabling Templates:1]]
 ;; After init hook; see above near use-package install.

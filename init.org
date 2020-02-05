@@ -2182,7 +2182,7 @@ trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][format
 (use-package pretty-hydra)
 #+end_src
 
-Template declaration:
+Declaration template:
 #+begin_example emacs-lisp
  (pretty-hydra-define 𝓃𝒶𝓂ℯ (:title ⋯ :quit-key ⋯)
    (title₀
@@ -2197,7 +2197,8 @@ Template declaration:
 Basic movement commands ---without having to hold the control key!
 
 =C-n= moves us to the next line, as it should; but it now /also/ let's us press
-=n,p,f,…= for other movement commands. Unlisted keys close the pop-up menu.
+=n,p,f,…= for other movement commands. Unlisted keys insert themselves, whereas ~q~
+close the pop-up menu.
 #+begin_src emacs-lisp
 (global-set-key
  (kbd "C-n")
