@@ -609,7 +609,7 @@ Emacs related files live in the /same/ directory: =~/.emacs.d/=.
 
 A raw code file is difficult to maintain, especially for a /large/ system such as
 Emacs. Instead, we're going with a ‘literate programming’ approach: The
-intialisation configuration is presented in an essay fromat, along with headings
+intialisation configuration is presented in an essay format, along with headings
 and subheadings, intended for consumption by humans such as myself, that,
 incidentally, can be ‘tangled’ into a raw code file that is comprehensible by a
 machine. We achieve this goal using [[#Life-within-Org-mode][org-mode]] ---/Emacs' killer app/--- which is
