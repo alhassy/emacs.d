@@ -14,455 +14,236 @@
  $0
 #+end_${1:$(car (split-string yas-text))}
 
-** s_org: src block for org
+** s_org: src for org
 #+begin_src org
 $0
 #+end_src
 
-** s_agda2: src block for agda2
+** s_agda2: src for agda2
 #+begin_src agda2
 $0
 #+end_src
 
-** s_any: src block for any
+** s_any: src for any
 #+begin_src any
 $0
 #+end_src
 
-** s_plantuml: src block for plantuml
+** s_plantuml: src for plantuml
 #+begin_src plantuml
 $0
 #+end_src
 
-** s_emacs-lisp: src block for emacs-lisp
+** s_emacs-lisp: src for emacs-lisp
 #+begin_src emacs-lisp
 $0
 #+end_src
 
-** s_shell: src block for shell
+** s_shell: src for shell
 #+begin_src shell
 $0
 #+end_src
 
-** s_python: src block for python
+** s_python: src for python
 #+begin_src python
 $0
 #+end_src
 
-** s_haskell: src block for haskell
+** s_haskell: src for haskell
 #+begin_src haskell
 $0
 #+end_src
 
-** s_ruby: src block for ruby
+** s_ruby: src for ruby
 #+begin_src ruby
 $0
 #+end_src
 
-** s_ocaml: src block for ocaml
+** s_ocaml: src for ocaml
 #+begin_src ocaml
 $0
 #+end_src
 
-** s_C: src block for C
+** s_C: src for C
 #+begin_src C
 $0
 #+end_src
 
-** s_dot: src block for dot
+** s_dot: src for dot
 #+begin_src dot
 $0
 #+end_src
 
-** s_latex: src block for latex
+** s_latex: src for latex
 #+begin_src latex
 $0
 #+end_src
 
-** s_org: src block for org
+** s_org: src for org
 #+begin_src org
 $0
 #+end_src
 
-** s_makefile: src block for makefile
+** s_makefile: src for makefile
 #+begin_src makefile
 $0
 #+end_src
 
-** e_org: example block for org
+** is_org: inline source for org
+src_org[:exports code]{$1} $0
+** is_agda2: inline source for agda2
+src_agda2[:exports code]{$1} $0
+** is_any: inline source for any
+src_any[:exports code]{$1} $0
+** is_plantuml: inline source for plantuml
+src_plantuml[:exports code]{$1} $0
+** is_emacs-lisp: inline source for emacs-lisp
+src_emacs-lisp[:exports code]{$1} $0
+** is_shell: inline source for shell
+src_shell[:exports code]{$1} $0
+** is_python: inline source for python
+src_python[:exports code]{$1} $0
+** is_haskell: inline source for haskell
+src_haskell[:exports code]{$1} $0
+** is_ruby: inline source for ruby
+src_ruby[:exports code]{$1} $0
+** is_ocaml: inline source for ocaml
+src_ocaml[:exports code]{$1} $0
+** is_C: inline source for C
+src_C[:exports code]{$1} $0
+** is_dot: inline source for dot
+src_dot[:exports code]{$1} $0
+** is_latex: inline source for latex
+src_latex[:exports code]{$1} $0
+** is_org: inline source for org
+src_org[:exports code]{$1} $0
+** is_makefile: inline source for makefile
+src_makefile[:exports code]{$1} $0
+** e_org: example for org
 #+begin_example org
 $0
 #+end_example
 
-** e_agda2: example block for agda2
+** e_agda2: example for agda2
 #+begin_example agda2
 $0
 #+end_example
 
-** e_any: example block for any
+** e_any: example for any
 #+begin_example any
 $0
 #+end_example
 
-** e_plantuml: example block for plantuml
+** e_plantuml: example for plantuml
 #+begin_example plantuml
 $0
 #+end_example
 
-** e_emacs-lisp: example block for emacs-lisp
+** e_emacs-lisp: example for emacs-lisp
 #+begin_example emacs-lisp
 $0
 #+end_example
 
-** e_shell: example block for shell
+** e_shell: example for shell
 #+begin_example shell
 $0
 #+end_example
 
-** e_python: example block for python
+** e_python: example for python
 #+begin_example python
 $0
 #+end_example
 
-** e_haskell: example block for haskell
+** e_haskell: example for haskell
 #+begin_example haskell
 $0
 #+end_example
 
-** e_ruby: example block for ruby
+** e_ruby: example for ruby
 #+begin_example ruby
 $0
 #+end_example
 
-** e_ocaml: example block for ocaml
+** e_ocaml: example for ocaml
 #+begin_example ocaml
 $0
 #+end_example
 
-** e_C: example block for C
+** e_C: example for C
 #+begin_example C
 $0
 #+end_example
 
-** e_dot: example block for dot
+** e_dot: example for dot
 #+begin_example dot
 $0
 #+end_example
 
-** e_latex: example block for latex
+** e_latex: example for latex
 #+begin_example latex
 $0
 #+end_example
 
-** e_org: example block for org
+** e_org: example for org
 #+begin_example org
 $0
 #+end_example
 
-** e_makefile: example block for makefile
+** e_makefile: example for makefile
 #+begin_example makefile
 $0
 #+end_example
 
-** q_org: quote block for org
-#+begin_quote org
+** q_quote: quote
+#+begin_quote 
 $0
 #+end_quote
 
-** q_agda2: quote block for agda2
-#+begin_quote agda2
-$0
-#+end_quote
-
-** q_any: quote block for any
-#+begin_quote any
-$0
-#+end_quote
-
-** q_plantuml: quote block for plantuml
-#+begin_quote plantuml
-$0
-#+end_quote
-
-** q_emacs-lisp: quote block for emacs-lisp
-#+begin_quote emacs-lisp
-$0
-#+end_quote
-
-** q_shell: quote block for shell
-#+begin_quote shell
-$0
-#+end_quote
-
-** q_python: quote block for python
-#+begin_quote python
-$0
-#+end_quote
-
-** q_haskell: quote block for haskell
-#+begin_quote haskell
-$0
-#+end_quote
-
-** q_ruby: quote block for ruby
-#+begin_quote ruby
-$0
-#+end_quote
-
-** q_ocaml: quote block for ocaml
-#+begin_quote ocaml
-$0
-#+end_quote
-
-** q_C: quote block for C
-#+begin_quote C
-$0
-#+end_quote
-
-** q_dot: quote block for dot
-#+begin_quote dot
-$0
-#+end_quote
-
-** q_latex: quote block for latex
-#+begin_quote latex
-$0
-#+end_quote
-
-** q_org: quote block for org
-#+begin_quote org
-$0
-#+end_quote
-
-** q_makefile: quote block for makefile
-#+begin_quote makefile
-$0
-#+end_quote
-
-** v_org: verse block for org
-#+begin_verse org
+** v_verse: verse
+#+begin_verse 
 $0
 #+end_verse
 
-** v_agda2: verse block for agda2
-#+begin_verse agda2
-$0
-#+end_verse
-
-** v_any: verse block for any
-#+begin_verse any
-$0
-#+end_verse
-
-** v_plantuml: verse block for plantuml
-#+begin_verse plantuml
-$0
-#+end_verse
-
-** v_emacs-lisp: verse block for emacs-lisp
-#+begin_verse emacs-lisp
-$0
-#+end_verse
-
-** v_shell: verse block for shell
-#+begin_verse shell
-$0
-#+end_verse
-
-** v_python: verse block for python
-#+begin_verse python
-$0
-#+end_verse
-
-** v_haskell: verse block for haskell
-#+begin_verse haskell
-$0
-#+end_verse
-
-** v_ruby: verse block for ruby
-#+begin_verse ruby
-$0
-#+end_verse
-
-** v_ocaml: verse block for ocaml
-#+begin_verse ocaml
-$0
-#+end_verse
-
-** v_C: verse block for C
-#+begin_verse C
-$0
-#+end_verse
-
-** v_dot: verse block for dot
-#+begin_verse dot
-$0
-#+end_verse
-
-** v_latex: verse block for latex
-#+begin_verse latex
-$0
-#+end_verse
-
-** v_org: verse block for org
-#+begin_verse org
-$0
-#+end_verse
-
-** v_makefile: verse block for makefile
-#+begin_verse makefile
-$0
-#+end_verse
-
-** c_org: center block for org
-#+begin_center org
+** c_center: center
+#+begin_center 
 $0
 #+end_center
 
-** c_agda2: center block for agda2
-#+begin_center agda2
-$0
-#+end_center
-
-** c_any: center block for any
-#+begin_center any
-$0
-#+end_center
-
-** c_plantuml: center block for plantuml
-#+begin_center plantuml
-$0
-#+end_center
-
-** c_emacs-lisp: center block for emacs-lisp
-#+begin_center emacs-lisp
-$0
-#+end_center
-
-** c_shell: center block for shell
-#+begin_center shell
-$0
-#+end_center
-
-** c_python: center block for python
-#+begin_center python
-$0
-#+end_center
-
-** c_haskell: center block for haskell
-#+begin_center haskell
-$0
-#+end_center
-
-** c_ruby: center block for ruby
-#+begin_center ruby
-$0
-#+end_center
-
-** c_ocaml: center block for ocaml
-#+begin_center ocaml
-$0
-#+end_center
-
-** c_C: center block for C
-#+begin_center C
-$0
-#+end_center
-
-** c_dot: center block for dot
-#+begin_center dot
-$0
-#+end_center
-
-** c_latex: center block for latex
-#+begin_center latex
-$0
-#+end_center
-
-** c_org: center block for org
-#+begin_center org
-$0
-#+end_center
-
-** c_makefile: center block for makefile
-#+begin_center makefile
-$0
-#+end_center
-
-** ex_org: export block for org
-#+begin_export org
+** ex_export: export
+#+begin_export 
 $0
 #+end_export
 
-** ex_agda2: export block for agda2
-#+begin_export agda2
+** p_parallel: parallel
+#+begin_parallel 
 $0
-#+end_export
+:columnbreak:
 
-** ex_any: export block for any
-#+begin_export any
-$0
-#+end_export
+#+end_parallel
 
-** ex_plantuml: export block for plantuml
-#+begin_export plantuml
+** d_details: details
+#+begin_details 
+:title: ${1:Details}
 $0
-#+end_export
+#+end_details
 
-** ex_emacs-lisp: export block for emacs-lisp
-#+begin_export emacs-lisp
+** ed_edcomm: edcomm
+#+begin_edcomm 
+:ed: ${1:Editor Remark}
 $0
-#+end_export
+#+end_edcomm
 
-** ex_shell: export block for shell
-#+begin_export shell
+** doc_documentation: documentation
+#+begin_documentation 
+:name: ${1:Some word}
+:label: $2
 $0
-#+end_export
+#+end_documentation
 
-** ex_python: export block for python
-#+begin_export python
+** def_latex-definitions: latex-definitions
+#+begin_latex-definitions 
 $0
-#+end_export
-
-** ex_haskell: export block for haskell
-#+begin_export haskell
-$0
-#+end_export
-
-** ex_ruby: export block for ruby
-#+begin_export ruby
-$0
-#+end_export
-
-** ex_ocaml: export block for ocaml
-#+begin_export ocaml
-$0
-#+end_export
-
-** ex_C: export block for C
-#+begin_export C
-$0
-#+end_export
-
-** ex_dot: export block for dot
-#+begin_export dot
-$0
-#+end_export
-
-** ex_latex: export block for latex
-#+begin_export latex
-$0
-#+end_export
-
-** ex_org: export block for org
-#+begin_export org
-$0
-#+end_export
-
-** ex_makefile: export block for makefile
-#+begin_export makefile
-$0
-#+end_export
+#+end_latex-definitions
 
 ** loop:  Elisp's for each loop
 (dolist (${1:var} ${2:list-form})

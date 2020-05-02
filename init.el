@@ -1,4 +1,3 @@
-;; (eval-buffer)
 ;; [[file:~/.emacs.d/init.org::*Support for ‘Custom’][Support for ‘Custom’:1]]
 (setq custom-file "~/.emacs.d/custom.el")
 (ignore-errors (load custom-file)) ;; It may not yet exist.
@@ -97,13 +96,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; =use-package= ---The start of =init.el=:8 ends here
@@ -117,7 +116,7 @@
 (add-hook 'git-commit-setup-hook 'my/git-commit-reminder)
 ;; =use-package= ---The start of =init.el=:9 ends here
 
-;; [[file:~/.emacs.d/init.org::enable making init and readme][enable making init and readme]]
+;; [[file:~/.emacs.d/init.org::startup-code][startup-code]]
   (defun my/make-init-el-and-README ()
     "Tangle an el and a github README from my init.org."
     (interactive "P") ;; Places value of universal argument into: current-prefix-arg
@@ -146,7 +145,7 @@
                  (float-time (time-since time))))))
 
 (add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
-;; enable making init and readme ends here
+;; startup-code ends here
 
 ;; [[file:~/.emacs.d/init.org::*‘Table of Contents’ for Org vs. Github][‘Table of Contents’ for Org vs. Github:1]]
 (use-package toc-org
@@ -185,7 +184,7 @@ Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
 
 ;; [[file:~/.emacs.d/init.org::*Installing Emacs packages directly from source][Installing Emacs packages directly from source:1]]
 (use-package quelpa
-  :defer t
+  :defer 5
   :custom (quelpa-upgrade-p t "Always try to update packages")
   :config
   ;; Get ‘quelpa-use-package’ via ‘quelpa’
@@ -489,21 +488,68 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; M-< and M-> jump to first and final semantic units.
 ;; If pressed twice, they go to physical first and last positions.
 (use-package beginend
-  :diminish
-  :config (beginend-global-mode))
+  :diminish 'beginend-global-mode
+  :config (beginend-global-mode)
+    (loop for (_ . m) in beginend-modes do (diminish m)))
 ;; Jumping to extreme semantic units:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
+(use-package hydra)
+
 ;; The standard syntax:
 ;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
 ;;   ;; List of triples (extension method description) )
 ;; Hydra: Supply a prefix only once:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:2]]
-;; Use ijkl to denote ↑←↓→ arrows.
+;; Show hydras overlyaed in the middle of the frame
+(use-package hydra-posframe
+  :quelpa (hydra-posframe :fetcher git :url
+                          "https://github.com/Ladicle/hydra-posframe.git")
+  :hook (after-init . hydra-posframe-mode)
+  :custom (hydra-posframe-border-width 5))
 
+;; Neato doc strings for hydras
+(use-package pretty-hydra)
+;; Hydra: Supply a prefix only once:2 ends here
+
+;; [[file:~/.emacs.d/init.org::*Textual Navigation ---“Look Ma, no CTRL key!”][Textual Navigation ---“Look Ma, no CTRL key!”:1]]
+(global-set-key
+ (kbd "C-n")
+ (pretty-hydra-define hydra-move
+   (:body-pre (next-line) :title "\t\t\t\t\tTextual Navigation" :quit-key "q")
+   ("Line"
+    (("n" next-line)
+     ("p" previous-line)
+     ("a" beginning-of-line)
+     ("e" move-end-of-line)
+     ("g" goto-line))
+
+   "Word"
+   (("f" forward-word "Next")
+    ("b" backward-word "Previous")
+    ("{" org-backward-element "Next Element")
+    ("}" org-forward-element "Previous Element"))
+
+   "Screen"
+   (("v" scroll-up-command "Scroll Down")
+    ("V" scroll-down-command "Scroll Up")
+    ("l" recenter-top-bottom "Center Page")
+    ("r" move-to-window-line-top-bottom "Relocate Point")
+    ("m" helm-imenu "Textual Menu")))))
+;; Textual Navigation ---“Look Ma, no CTRL key!”:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Window Navigation][Window Navigation:1]]
+;; Use ijkl to denote ↑←↓→ arrows.
+(defhydra hydra-windows (global-map    "C-c w"   )
+  ("b" balance-windows                 "balance" )
+  ("i" enlarge-window                  "heighten")
+  ("j" shrink-window-horizontally      "narrow"  )
+  ("k" shrink-window                   "lower"   )
+  ("l" enlarge-window-horizontally     "widen"   )
+  ("s" switch-window-then-swap-buffer  "swap" :color teal))
 
 ;; Provides a *visual* way to choose a window to switch to.
 (use-package switch-window :defer t)
@@ -512,7 +558,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; Have a thick ruler between vertical windows
 (window-divider-mode)
-;; Hydra: Supply a prefix only once:2 ends here
+;; Window Navigation:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
 (use-package shell-pop
@@ -552,7 +598,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Automatic Backups][Automatic Backups:1]]
 ;; New location for backups.
-(setq backup-directory-alist '(("." . "~/Dropbox/backups")))
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
 
 ;; Silently delete execess backup versions
 (setq delete-old-versions t)
@@ -664,7 +710,8 @@ user. If PREFIX is provided, let the user select a portion of the screen."
       (concat "Welcome "      user-full-name
               "! Emacs "      emacs-version
               "; Org-mode "   org-version
-              "; System "     (system-name)
+              "; System "     (symbol-name system-type)
+              "/"             (system-name)
               "; Time "       (emacs-init-time))))
 ;; Startup message: Emacs & Org versions:1 ends here
 
@@ -903,6 +950,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; [[file:~/.emacs.d/init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:3]]
 ;; Bent arrows at the end and start of long lines.
 (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(diminish 'visual-line-mode)
 (global-visual-line-mode 1)
 ;; Fill-mode ---Word Wrapping:3 ends here
 
@@ -1208,7 +1256,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 
 ;; [[file:~/.emacs.d/init.org::*Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations:1]]
 (global-subword-mode 1)
-(diminish  'subword-mode)
+(diminish 'subword-mode)
 ;; Enabling CamelCase Aware Editing Operations:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Mouse Editing Support][Mouse Editing Support:1]]
@@ -1258,13 +1306,16 @@ user. If PREFIX is provided, let the user select a portion of the screen."
   :defer t
   :custom (glc-default-span 0))
 
+(defhydra hydra-edits (global-map "C-c e")
+  ("p" goto-last-change "Goto nᵗʰ last change")
+  ("n" goto-last-change-reverse "Goto more recent change"))
+;; ~C-c e n,p~: Taking a tour of one's edits:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Getting Started][Getting Started:1]]
 (use-package org
   :ensure org-plus-contrib
-  :config
-  (require 'ox-extra)
-  (ox-extras-activate '(ignore-headlines)))
+  :config (require 'ox-extra)
+          (ox-extras-activate '(ignore-headlines)))
 ;; Getting Started:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Getting Started][Getting Started:2]]
@@ -1544,17 +1595,38 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 (require 'org-tempo)
 ;; Org-mode's ~<𝒳~ Block Expansions:1 ends here
 
+;; [[file:~/.emacs.d/init.org::*Executing all =#+name: startup-code= for local configurations][Executing all =#+name: startup-code= for local configurations:1]]
+(defun my/execute-startup-blocks ()
+  "Execute all startup blocks, those named ‘startup-code’.
+
+I could not use ORG-BABEL-GOTO-NAMED-SRC-BLOCK since it only goes
+to the first source block with the given name, whereas I'd like to
+visit all blocks with such a name."
+  (interactive)
+  (save-excursion
+    (goto-char 0)
+    (while (ignore-errors (re-search-forward "^\\#\\+name: startup-code"))
+      (org-babel-execute-src-block))))
+;; Executing all =#+name: startup-code= for local configurations:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Executing all =#+name: startup-code= for local configurations][Executing all =#+name: startup-code= for local configurations:2]]
+;; Please ask me on a file by file basis whether its local variables are ‘safe’
+;; or not. Use ‘!’ to mark them as permanently ‘safe’ to avoid being queried
+;; again for the same file.
+(setq enable-local-variables t)
+;; Executing all =#+name: startup-code= for local configurations:2 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
 (use-package org-ref
   :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
-  ;; Most useful for non-LaTeX files.
-  (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
-  (bibtex-completion-bibliography (car reftex-default-bibliography))
-  (org-ref-default-bibliography reftex-default-bibliography))
+          ;; Most useful for non-LaTeX files.
+        (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
+        (bibtex-completion-bibliography (car reftex-default-bibliography))
+        (org-ref-default-bibliography reftex-default-bibliography))
 
 ;; Quick BibTeX references, sometimes.
-(use-package helm-bibtex :defer t)
-(use-package biblio :defer t)
+(use-package helm-bibtex)
+(use-package biblio)
 ;; Working with Citations:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Bibliography & Coloured LaTeX using Minted][Bibliography & Coloured LaTeX using Minted:1]]
@@ -1603,6 +1675,21 @@ E.g., ↯ We'll go on a ∀∃⇅ adventure
 (advice-add 'org-html-export-to-html   :before 'my/ensure-headline-ids)
 (advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
 ;; Ensuring Useful HTML Anchors:1 ends here
+
+;; [[file:~/.emacs.d/init.org::*Clickable Headlines][Clickable Headlines:1]]
+;; Src: https://writepermission.com/org-blogging-clickable-headlines.html
+(setq org-html-format-headline-function
+(lambda (todo todo-type priority text tags info)
+  "Format a headline with a link to itself."
+  (let* ((headline (get-text-property 0 :parent text))
+         (id (or (org-element-property :CUSTOM_ID headline)
+                 (org-export-get-reference headline info)
+                 (org-element-property :ID headline)))
+         (link (if id
+                   (format "<a href=\"#%s\">%s</a>" id text)
+                 text)))
+     (org-html-format-headline-default-function todo todo-type priority link tags info))))
+;; Clickable Headlines:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*HTML “Folded Drawers”][HTML “Folded Drawers”:1]]
 (defun my/org-drawer-format (name contents)
@@ -1839,7 +1926,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; [[file:~/.emacs.d/init.org::*Tag! You're it!][Tag! You're it!:3]]
 (use-package org-pretty-tags
-  :diminish t
+  :diminish org-pretty-tags-mode
   :demand t
   :config
    (setq org-pretty-tags-surrogate-strings
@@ -2075,6 +2162,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; [[file:~/.emacs.d/init.org::*Eldoc for Lisp and Haskell][Eldoc for Lisp and Haskell:1]]
 (use-package eldoc
+  :diminish eldoc-mode
   :hook (emacs-lisp-mode . turn-on-eldoc-mode)
         (lisp-interaction-mode . turn-on-eldoc-mode)
         (haskell-mode . turn-on-haskell-doc-mode)
@@ -2107,6 +2195,15 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; What's changed & who's to blame?:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:2]]
+(defhydra hydra-version-control (global-map "C-x v")
+  "Version control"
+  ;; Syntax: (extension method description)
+  ("n" git-gutter:next-hunk      "Next hunk")
+  ("p" git-gutter:previous-hunk  "Previous hunk")
+  ("d" git-gutter:popup-hunk     "Show hunk diff")
+  ("r" git-gutter:revert-hunk    "Revert hunk\n")
+  ("c" git-gutter:stage-hunk     "Stage hunk")
+  ("s" git-gutter:statistic      "How many added & deleted lines"))
 ;; What's changed & who's to blame?:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:3]]
@@ -2129,11 +2226,19 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; Add these to the version control hydra.
 ;;
+(defhydra hydra-version-control (global-map "C-x v")
+  ("b" git-messenger:popup-message "Who's to blame?")
+  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+  ("g" github-browse-file-blame "Show file in browser in github")
+  ("s" magit-status "Git status of current buffer"))
 ;; What's changed & who's to blame?:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*What's changed & who's to blame?][What's changed & who's to blame?:5]]
 (use-package git-link :defer t)
 
+(defhydra hydra-version-control (global-map "C-x v")
+  ("l" git-link "Git URL for current location"))
+;; What's changed & who's to blame?:5 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:1]]
 ;; NOTE that the highlighting works even in comments.
@@ -2165,21 +2270,16 @@ C-u C-u C-c c ⇒ Goto last note stored."
   :config
   ;; For some reason cannot use :custom with this package.
   (custom-set-variables
-   '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
   ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
   (setq magit-todos-exclude-globs '("*.html"))
   (magit-todos-mode))
 ;; Highlighting TODO-s & Showing them in Magit:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:4]]
-
-;; [[file:~/.emacs.d/init.org::*Aggressive Indentation][Aggressive Indentation:1]]
-;; Always stay indented: Automatically have blocks reindented after every change.
-
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-;; Aggressive Indentation:1 ends here
+(defhydra hydra-version-control (global-map "C-x v")
+  ("t" helm-magit-todos "Show TODOs lists for this repo."))
+;; Highlighting TODO-s & Showing them in Magit:4 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Being Generous with Whitespace][Being Generous with Whitespace:1]]
 (use-package electric-operator
@@ -2234,6 +2334,12 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Text Folding with Origami-mode:2 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:3]]
+(defhydra folding-with-origami-mode (global-map "C-c f")
+  ("h" origami-close-node-recursively "Hide")
+  ("o" origami-open-node-recursively  "Open")
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("n" origami-next-fold "Next")
+  ("p" origami-previous-fold "Previous"))
 ;; Text Folding with Origami-mode:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
@@ -2442,37 +2548,5 @@ window contains the buffer with the cursour in it."
   (unless draft (publish))
   (let ((server (if local "http://localhost:4000/" "https://alhassy.github.io/")))
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
-  )
-
-(defun my/execute-startup-blocks ()
-  "Execute all startup blocks, those named ‘startup-code’."
-  (interactive)
-  (save-excursion
-    (goto-char 0)
-    (while (ignore-errors (re-search-forward "^\\#\\+name: startup-code"))
-      (org-babel-execute-src-block))))
-
-;; Please ask me on a file by file basis whether its local variables are ‘safe’
-;; or not. Use ‘!’ to mark them as permanently ‘safe’ to avoid being queried
-;; again for the same file.
-(setq enable-local-variables t)
-
-
-
-(setq org-html-format-headline-function
-      (lambda (todo todo-type priority text tags info)
-        "Format a headline with a link to itself."
-        (let* ((headline (get-text-property 0 :parent text))
-               (id (or (org-element-property :CUSTOM_ID headline)
-                       (org-export-get-reference headline info)
-                       (org-element-property :ID headline)))
-               (link (if id
-                         (format "<a href=\"#%s\">%s</a>" id text)
-                       text)))
-          (org-html-format-headline-default-function todo todo-type priority link tags info))))
-
-(use-package org-special-block-extras
-  :ensure t
-  :hook (org-mode . org-special-block-extras-mode))
-
+)
 ;; Publishing articles to my personal blog:1 ends here
