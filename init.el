@@ -552,7 +552,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 
 ;; [[file:~/.emacs.d/init.org::*Automatic Backups][Automatic Backups:1]]
 ;; New location for backups.
-(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+(setq backup-directory-alist '(("." . "~/Dropbox/backups")))
 
 ;; Silently delete execess backup versions
 (setq delete-old-versions t)
@@ -1545,12 +1545,12 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; Org-mode's ~<𝒳~ Block Expansions:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
-(use-package org-ref :defer t
+(use-package org-ref
   :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
-          ;; Most useful for non-LaTeX files.
-        (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
-        (bibtex-completion-bibliography (car reftex-default-bibliography))
-        (org-ref-default-bibliography reftex-default-bibliography))
+  ;; Most useful for non-LaTeX files.
+  (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
+  (bibtex-completion-bibliography (car reftex-default-bibliography))
+  (org-ref-default-bibliography reftex-default-bibliography))
 
 ;; Quick BibTeX references, sometimes.
 (use-package helm-bibtex :defer t)
@@ -2058,26 +2058,6 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; (setq org-agenda-window-setup 'only-window)
 ;; Habit Formation:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Actually Doing Things][Actually Doing Things:1]]
-;; Obtain a notifications and text-to-speech utilities
-(system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
-(system-packages-ensure "terminal-notifier") ;; MacOS specific
-
-(run-at-time
- "09:00am"
- (* 2 60 60) ;; Every two hours
- (lambda ()
-   (shell-command
-    (format "%s"
-            '(terminal-notifier
-              -title    \"Check your agenda!\"
-              -subtitle \"Is what you\'re doing …\"
-              -message  \"… in alignment with your goals?\"
-              -sound t -appIcon ~/.emacs.d/images/emacs-logo.png
-              ;; Speak at a speed of 125 words per minute; ie slowed down.
-              & espeak -s 125 \"Maybe it\'s time to do another task?\")))))
-;; Actually Doing Things:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Which function are we writing?][Which function are we writing?:1]]
 (add-hook 'prog-mode-hook #'which-function-mode)
 (add-hook 'org-mode-hook  #'which-function-mode)
@@ -2185,7 +2165,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
   :config
   ;; For some reason cannot use :custom with this package.
   (custom-set-variables
-    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+   '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
   ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
   (setq magit-todos-exclude-globs '("*.html"))
   (magit-todos-mode))
@@ -2195,8 +2175,6 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; [[file:~/.emacs.d/init.org::*Aggressive Indentation][Aggressive Indentation:1]]
 ;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-  :config (global-aggressive-indent-mode t))
 
 ;; Use 4 spaces in places of tabs when indenting.
 (setq-default indent-tabs-mode nil)
@@ -2464,5 +2442,37 @@ window contains the buffer with the cursour in it."
   (unless draft (publish))
   (let ((server (if local "http://localhost:4000/" "https://alhassy.github.io/")))
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
-)
+  )
+
+(defun my/execute-startup-blocks ()
+  "Execute all startup blocks, those named ‘startup-code’."
+  (interactive)
+  (save-excursion
+    (goto-char 0)
+    (while (ignore-errors (re-search-forward "^\\#\\+name: startup-code"))
+      (org-babel-execute-src-block))))
+
+;; Please ask me on a file by file basis whether its local variables are ‘safe’
+;; or not. Use ‘!’ to mark them as permanently ‘safe’ to avoid being queried
+;; again for the same file.
+(setq enable-local-variables t)
+
+
+
+(setq org-html-format-headline-function
+      (lambda (todo todo-type priority text tags info)
+        "Format a headline with a link to itself."
+        (let* ((headline (get-text-property 0 :parent text))
+               (id (or (org-element-property :CUSTOM_ID headline)
+                       (org-export-get-reference headline info)
+                       (org-element-property :ID headline)))
+               (link (if id
+                         (format "<a href=\"#%s\">%s</a>" id text)
+                       text)))
+          (org-html-format-headline-default-function todo todo-type priority link tags info))))
+
+(use-package org-special-block-extras
+  :ensure t
+  :hook (org-mode . org-special-block-extras-mode))
+
 ;; Publishing articles to my personal blog:1 ends here

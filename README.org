@@ -1,11 +1,11 @@
-# Created 2020-02-02 Sun 14:00
+# Created 2020-05-02 Sat 05:14
 #+OPTIONS: html-postamble:nil toc:nil d:nil num:nil :results nil
 #+TITLE: A Life Configuring Emacs
 #+DATE: 2018-07-25
 #+AUTHOR: Musa Al-hassy
 #+export_file_name: README.org
 
-#+html: <p align="center"> <img src="images/emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-26.1-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3.2-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="images/emacs-birthday-present.png" width=250 height=250/> </p>
+#+html: <p align="center"> <img src="images/emacs-logo.png" width=150 height=150/> </p> <p align="center"> <a href="https://www.gnu.org/software/emacs/"> <img src="https://img.shields.io/badge/GNU%20Emacs-28.0.50-b48ead.svg?style=plastic"/></a> <a href="https://orgmode.org/"><img src="https://img.shields.io/badge/org--mode-9.3.6-489a9f.svg?style=plastic"/></a> </p> <p align="center"> <img src="images/emacs-birthday-present.png" width=250 height=250/> </p>
 
 I enjoy reading others' /literate/ configuration files and
 incorporating what I learn into my own. The result is a
@@ -147,10 +147,12 @@ and variables that may accomplish my goal.
   - [[#folding-within-a-subtree][Folding within a subtree]]
   - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
   - [[#org-modes-𝒳-block-expansions][Org-mode's ~<𝒳~ Block Expansions]]
+  - [[#executing-all-name-startup-code-for-local-configurations][Executing all =#+name: startup-code= for local configurations]]
 - [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
   - [[#working-with-citations][Working with Citations]]
   - [[#bibliography--coloured-latex-using-minted][Bibliography & Coloured LaTeX using Minted]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
+  - [[#clickable-headlines][Clickable Headlines]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
   - [[#org-mode--html][Org-mode ⇐ HTML]]
@@ -177,7 +179,6 @@ and variables that may accomplish my goal.
     - [[#finding-tasks-to-clock-in][Finding tasks to clock in]]
     - [[#estimates-versus-actual-time][Estimates versus actual time]]
   - [[#habit-formation][Habit Formation]]
-  - [[#actually-doing-things][Actually Doing Things]]
 - [[#programming][Programming]]
   - [[#which-function-are-we-writing][Which function are we writing?]]
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
@@ -186,7 +187,6 @@ and variables that may accomplish my goal.
   - [[#version-control-with-svn----using-magit][Version Control with SVN ---Using Magit!]]
   - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
   - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
-  - [[#aggressive-indentation][Aggressive Indentation]]
   - [[#being-generous-with-whitespace][Being Generous with Whitespace]]
   - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
   - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
@@ -609,7 +609,7 @@ Emacs related files live in the /same/ directory: =~/.emacs.d/=.
 
 A raw code file is difficult to maintain, especially for a /large/ system such as
 Emacs. Instead, we're going with a ‘literate programming’ approach: The
-intialisation configuration is presented in an essay fromat, along with headings
+intialisation configuration is presented in an essay format, along with headings
 and subheadings, intended for consumption by humans such as myself, that,
 incidentally, can be ‘tangled’ into a raw code file that is comprehensible by a
 machine. We achieve this goal using [[#Life-within-Org-mode][org-mode]] ---/Emacs' killer app/--- which is
@@ -1892,7 +1892,7 @@ trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][format
 (use-package pretty-hydra)
 #+end_src
 
-Template declaration:
+Declaration template:
 #+begin_example emacs-lisp
  (pretty-hydra-define 𝓃𝒶𝓂ℯ (:title ⋯ :quit-key ⋯)
    (title₀
@@ -1907,7 +1907,8 @@ Template declaration:
 Basic movement commands ---without having to hold the control key!
 
 =C-n= moves us to the next line, as it should; but it now /also/ let's us press
-=n,p,f,…= for other movement commands. Unlisted keys close the pop-up menu.
+=n,p,f,…= for other movement commands. Unlisted keys insert themselves, whereas ~q~
+close the pop-up menu.
 #+begin_src emacs-lisp
 (global-set-key
  (kbd "C-n")
@@ -2219,7 +2220,8 @@ primary tools.
       (concat "Welcome "      user-full-name
               "! Emacs "      emacs-version
               "; Org-mode "   org-version
-              "; System "     (system-name)
+              "; System "     (symbol-name system-type)
+              "/"             (system-name)
               "; Time "       (emacs-init-time))))
 #+end_src
 Now my startup message is,
@@ -3779,11 +3781,47 @@ into a new code block! Wow!
 E.g., ~s_em TAB~ to obtain an org-src block marked with ~emacs-lisp~ as the
 language.  This saves us a few key strokes.
 
+** Executing all =#+name: startup-code= for local configurations
+
+Sometimes my Org-files contain configurations that are local to the file,
+so I name all such =src= blocks =#+name: startup-code= and place =#-*- eval: (my/execute-startup-blocks) -*-= at the top of the file so that such
+blocks are evaluated when the file opens up.
+- The =-*- ... -*-= notation is for making local configurations.
+- Use =M-x add-file-local-variable-prop-line= to have them inserted interactively.
+#+begin_src emacs-lisp
+(defun my/execute-startup-blocks ()
+  "Execute all startup blocks, those named ‘startup-code’."
+  (interactive)
+  (save-excursion
+    (goto-char 0)
+    (while (ignore-errors (re-search-forward "^\\#\\+name: startup-code"))
+      (org-babel-execute-src-block))))
+#+end_src
+
+The following setup enables this feature in a safe fashion ---e.g., we do not
+want to avoid evaluating a random person's potentially dangerous code when we
+only want to look at it.
+#+begin_src emacs-lisp
+;; Please ask me on a file by file basis whether its local variables are ‘safe’
+;; or not. Use ‘!’ to mark them as permanently ‘safe’ to avoid being queried
+;; again for the same file.
+(setq enable-local-variables t)
+#+end_src
+
+I have been using a combination of =(org-babel-goto-named-src-block ⋯)= in
+multi-line local-variable declarations ---=M-x add-file-local-variable-prop=---
+for a while in many files using a dedicated =* footer :noexport:= section, but
+this new approach frees from having such sections and instead to having a single
+line at the top of the file. Moreover, being at the top of the file, such a line
+is a nice ‘in your face’ reminder that there is local configuration that should
+have been loaded.
+- E.g., this init file has local configuration for making the corresponding
+  =init.el= file and generating the =README.org= file.
+
 * Org-Mode ⇒ PDF & HTML
 In this section we consider the Org-mode exporters for PDFs and
 HTMLs. For example, we account for LaTeX citations and reliable HTML
 anchors.
-
 ** Working with Citations
 [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
 
@@ -3794,7 +3832,7 @@ in for a lot of super neat stuff, such as searching for the pdf online!
 cite:agda_overview
 
 #+begin_src emacs-lisp
-(use-package org-ref :defer t
+(use-package org-ref
   :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
           ;; Most useful for non-LaTeX files.
         (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
@@ -3802,11 +3840,11 @@ cite:agda_overview
         (org-ref-default-bibliography reftex-default-bibliography))
 
 ;; Quick BibTeX references, sometimes.
-(use-package helm-bibtex :defer t)
-(use-package biblio :defer t)
+(use-package helm-bibtex)
+(use-package biblio)
 #+end_src
 
-Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter =emacs= and you will be
+Execute ~M-x helm-bibtex~ or =C-c ]= and, say, enter =emacs= and you will be
 presented with all the entries in the bib database that mention ‘emacs’. Super
 cool stuff. Moreover, if no such entries exist, then we can look some up
 using the interface!
@@ -3891,6 +3929,28 @@ Interestingly, ~org-set-property~, ~C-c C-x p~, lets us insert a property
 from a selection of available ones, then we'll be prompted for a value
 for it from a list of values you've used elsewhere. This is useful for
 remaining consistent for when trees share similar properties.
+
+** Clickable Headlines
+
+By default, HTML export generates ID's to headlines so they may be referenced
+to, but there is no convenient way to get at them to refer to a particular
+heading. The following spell fixes this issue: Headlines are now clickable,
+resulting in a link to the headline itself.
+
+#+begin_src emacs-lisp
+;; Src: https://writepermission.com/org-blogging-clickable-headlines.html
+(setq org-html-format-headline-function
+(lambda (todo todo-type priority text tags info)
+  "Format a headline with a link to itself."
+  (let* ((headline (get-text-property 0 :parent text))
+         (id (or (org-element-property :CUSTOM_ID headline)
+                 (org-export-get-reference headline info)
+                 (org-element-property :ID headline)))
+         (link (if id
+                   (format "<a href=\"#%s\">%s</a>" id text)
+                 text)))
+     (org-html-format-headline-default-function todo todo-type priority link tags info))))
+#+end_src
 
 ** HTML “Folded Drawers”
 #+begin_src emacs-lisp
@@ -5068,40 +5128,6 @@ Remember that in the agenda view if you alter a task, say with ~t~ to mark it
 done, then you need to use ~s~ to save the underlying todo/notes files; otherwise,
 any ~g~ will revert the change in the agenda buffer.
 
-** Actually Doing Things
-
-Let's setup a little audio-visual reminder to regularly check my agenda
-and ensure I'm not narrowing on a single task and ignoring others.
-#+begin_src emacs-lisp
-;; Obtain a notifications and text-to-speech utilities
-(system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
-(system-packages-ensure "terminal-notifier") ;; MacOS specific
-
-(run-at-time
- "09:00am"
- (* 2 60 60) ;; Every two hours
- (lambda ()
-   (shell-command
-    (format "%s"
-            '(terminal-notifier
-              -title    \"Check your agenda!\"
-              -subtitle \"Is what you\'re doing …\"
-              -message  \"… in alignment with your goals?\"
-              -sound t -appIcon ~/.emacs.d/images/emacs-logo.png
-              ;; Speak at a speed of 125 words per minute; ie slowed down.
-              & espeak -s 125 \"Maybe it\'s time to do another task?\")))))
-#+end_src
-
-By default, notifications are in banner style ---they go away automatically---
-we can use alert style ---in which they stay until dismissed--- in MacOS as
-follows: =System Preferences → Notifications → terminal-notifier → Alerts=.
-
-- [[https://emacs.stackexchange.com/questions/3844/good-methods-for-setting-up-alarms-audio-visual-triggered-by-org-mode-events][Here]] is an approach to triggering audio-visual alarms from Org-mode events
-  ---using ~org-agenda-to-appt~.
-
-- Emacs's built in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Appointments.html][appointment notification facility]] can also be used as a alarm
-  clock via ~M-x appt-add~.
-
 * Programming
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
@@ -5339,18 +5365,6 @@ Add these to the version control hydra.
 #+begin_src emacs-lisp
 (defhydra hydra-version-control (global-map "C-x v")
   ("t" helm-magit-todos "Show TODOs lists for this repo."))
-#+end_src
-
-** Aggressive Indentation
-With a single space or tab, my code should always remain indented.
-#+begin_src emacs-lisp
-;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-  :config (global-aggressive-indent-mode t))
-
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
 #+end_src
 
 ** Being Generous with Whitespace

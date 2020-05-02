@@ -1,10 +1,10 @@
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
-#      ~C-x C-s~ is a normal save; whereas
-#  ~C-u C-x C-s~ is a save after forming ~init.elc~ and ~README.md~.
+#      C-x C-s  is a normal save; whereas
+#  C-u C-x C-s  is a save after forming ~init.elc~ and ~README.md~.
 #
 # ≥ 7900 line org file, with auto-generated TOC.
 # ≥ 219 code blocks
-# (emacs-init-time) ⇒ 17.0 seconds
+# (emacs-init-time) ⇒ 15.5 seconds (•̀ᴗ•́)و
 #
 #+title: A Life Configuring Emacs
 #+author: Musa Al-hassy
@@ -152,10 +152,12 @@ and variables that may accomplish my goal.
   - [[#folding-within-a-subtree][Folding within a subtree]]
   - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
   - [[#org-modes-𝒳-block-expansions][Org-mode's ~<𝒳~ Block Expansions]]
+  - [[#executing-all-name-startup-code-for-local-configurations][Executing all =#+name: startup-code= for local configurations]]
 - [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
   - [[#working-with-citations][Working with Citations]]
   - [[#bibliography--coloured-latex-using-minted][Bibliography & Coloured LaTeX using Minted]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
+  - [[#clickable-headlines][Clickable Headlines]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
   - [[#org-mode--html][Org-mode ⇐ HTML]]
@@ -182,7 +184,6 @@ and variables that may accomplish my goal.
     - [[#finding-tasks-to-clock-in][Finding tasks to clock in]]
     - [[#estimates-versus-actual-time][Estimates versus actual time]]
   - [[#habit-formation][Habit Formation]]
-  - [[#actually-doing-things][Actually Doing Things]]
 - [[#programming][Programming]]
   - [[#which-function-are-we-writing][Which function are we writing?]]
   - [[#highlight-defined-lisp-symbols][Highlight defined Lisp symbols]]
@@ -191,7 +192,6 @@ and variables that may accomplish my goal.
   - [[#version-control-with-svn----using-magit][Version Control with SVN ---Using Magit!]]
   - [[#whats-changed--whos-to-blame][What's changed & who's to blame?]]
   - [[#highlighting-todo-s--showing-them-in-magit][Highlighting TODO-s & Showing them in Magit]]
-  - [[#aggressive-indentation][Aggressive Indentation]]
   - [[#being-generous-with-whitespace][Being Generous with Whitespace]]
   - [[#on-the-fly-syntax-checking][On the fly syntax checking]]
   - [[#coding-with-a-fruit-salad-semantic-highlighting][Coding with a Fruit Salad: Semantic Highlighting]]
@@ -645,7 +645,7 @@ Emacs related files live in the /same/ directory: =~/.emacs.d/=.
 
 A raw code file is difficult to maintain, especially for a /large/ system such as
 Emacs. Instead, we're going with a ‘literate programming’ approach: The
-intialisation configuration is presented in an essay fromat, along with headings
+intialisation configuration is presented in an essay format, along with headings
 and subheadings, intended for consumption by humans such as myself, that,
 incidentally, can be ‘tangled’ into a raw code file that is comprehensible by a
 machine. We achieve this goal using [[#Life-within-Org-mode][org-mode]] ---/Emacs' killer app/--- which is
@@ -2540,7 +2540,8 @@ primary tools.
       (concat "Welcome "      user-full-name
               "! Emacs "      emacs-version
               "; Org-mode "   org-version
-              "; System "     (system-name)
+              "; System "     (symbol-name system-type)
+              "/"             (system-name)
               "; Time "       (emacs-init-time))))
 #+end_src
 Now my startup message is,
@@ -3917,6 +3918,7 @@ Notice, as a hydra, I can use ~C-c e~ followed by any combination of
 each time.
 
 * Org-Mode Administrivia
+CLOSED: [2020-03-14 Sat 23:53]
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-Administrivia
 :END:
@@ -4496,6 +4498,47 @@ language.  This saves us a few key strokes.
  #+RESULTS:
  [[file:simple_markov.png]]
 
+** Executing all =#+name: startup-code= for local configurations
+
+Sometimes my Org-files contain configurations that are local to the file,
+so I name all such =src= blocks =#+name: startup-code= and place =#-*- eval: (my/execute-startup-blocks) -*-= at the top of the file so that such
+blocks are evaluated when the file opens up.
+- The =-*- ... -*-= notation is for making local configurations.
+- Use =M-x add-file-local-variable-prop-line= to have them inserted interactively.
+#+begin_src emacs-lisp
+(defun my/execute-startup-blocks ()
+  "Execute all startup blocks, those named ‘startup-code’.
+
+I could not use ORG-BABEL-GOTO-NAMED-SRC-BLOCK since it only goes
+to the first source block with the given name, whereas I'd like to
+visit all blocks with such a name."
+  (interactive)
+  (save-excursion
+    (goto-char 0)
+    (while (ignore-errors (re-search-forward "^\\#\\+name: startup-code"))
+      (org-babel-execute-src-block))))
+#+end_src
+
+The following setup enables this feature in a safe fashion ---e.g., we do not
+want to avoid evaluating a random person's potentially dangerous code when we
+only want to look at it.
+#+BEGIN_SRC emacs-lisp
+;; Please ask me on a file by file basis whether its local variables are ‘safe’
+;; or not. Use ‘!’ to mark them as permanently ‘safe’ to avoid being queried
+;; again for the same file.
+(setq enable-local-variables t)
+#+END_SRC
+
+I have been using a combination of =(org-babel-goto-named-src-block ⋯)= in
+multi-line local-variable declarations ---=M-x add-file-local-variable-prop=---
+for a while in many files using a dedicated =* footer :noexport:= section, but
+this new approach frees from having such sections and instead to having a single
+line at the top of the file. Moreover, being at the top of the file, such a line
+is a nice ‘in your face’ reminder that there is local configuration that should
+have been loaded.
+- E.g., this init file has local configuration for making the corresponding
+  =init.el= file and generating the =README.org= file.
+
 * Org-Mode ⇒ PDF & HTML
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
@@ -4513,6 +4556,12 @@ anchors.
 (setq org-export-with-section-numbers nil)
 #+END_SRC
 :End:
+** COMMENT org-special-block-extras
+#+BEGIN_SRC emacs-lisp
+(use-package org-special-block-extras
+  :ensure t
+  :hook (org-mode . org-special-block-extras-mode))
+#+END_SRC
 
 ** Working with Citations
 :PROPERTIES:
@@ -4528,7 +4577,7 @@ anchors.
 cite:agda_overview
 
     #+BEGIN_SRC emacs-lisp
-(use-package org-ref :defer t
+(use-package org-ref
   :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
           ;; Most useful for non-LaTeX files.
         (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
@@ -4536,11 +4585,11 @@ cite:agda_overview
         (org-ref-default-bibliography reftex-default-bibliography))
 
 ;; Quick BibTeX references, sometimes.
-(use-package helm-bibtex :defer t)
-(use-package biblio :defer t)
+(use-package helm-bibtex)
+(use-package biblio)
 #+END_SRC
 
-  Execute ~M-x helm-bibtex~ or ~C-c ] and, say, enter =emacs= and you will be
+  Execute ~M-x helm-bibtex~ or =C-c ]= and, say, enter =emacs= and you will be
   presented with all the entries in the bib database that mention ‘emacs’. Super
   cool stuff. Moreover, if no such entries exist, then we can look some up
   using the interface!
@@ -4629,6 +4678,28 @@ Interestingly, ~org-set-property~, ~C-c C-x p~, lets us insert a property
 from a selection of available ones, then we'll be prompted for a value
 for it from a list of values you've used elsewhere. This is useful for
 remaining consistent for when trees share similar properties.
+
+** Clickable Headlines
+
+By default, HTML export generates ID's to headlines so they may be referenced
+to, but there is no convenient way to get at them to refer to a particular
+heading. The following spell fixes this issue: Headlines are now clickable,
+resulting in a link to the headline itself.
+
+#+begin_src emacs-lisp
+;; Src: https://writepermission.com/org-blogging-clickable-headlines.html
+(setq org-html-format-headline-function
+(lambda (todo todo-type priority text tags info)
+  "Format a headline with a link to itself."
+  (let* ((headline (get-text-property 0 :parent text))
+         (id (or (org-element-property :CUSTOM_ID headline)
+                 (org-export-get-reference headline info)
+                 (org-element-property :ID headline)))
+         (link (if id
+                   (format "<a href=\"#%s\">%s</a>" id text)
+                 text)))
+     (org-html-format-headline-default-function todo todo-type priority link tags info))))
+#+end_src
 
 ** HTML “Folded Drawers”
 :PROPERTIES:
@@ -5967,7 +6038,7 @@ Remember that in the agenda view if you alter a task, say with ~t~ to mark it
 done, then you need to use ~s~ to save the underlying todo/notes files; otherwise,
 any ~g~ will revert the change in the agenda buffer.
 
-** Actually Doing Things
+** COMMENT Actually Doing Things  ---hangs my systems too much!
 
 Let's setup a little audio-visual reminder to regularly check my agenda
 and ensure I'm not narrowing on a single task and ignoring others.
@@ -6278,7 +6349,7 @@ Add these to the version control hydra.
   ("t" helm-magit-todos "Show TODOs lists for this repo."))
 #+END_SRC
 
-** Aggressive Indentation
+** COMMENT Aggressive Indentation
 :PROPERTIES:
 :CUSTOM_ID: Aggressive-Indentation
 :END:
@@ -7655,7 +7726,7 @@ In a terminal execute: xcode-select --install
 
 May need to actually reboot the system as well.
 :End:
-* TODO COMMENT Improvements                                                :noexport:
+* COMMENT Improvements                                             :noexport:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Improvements
 :END:
