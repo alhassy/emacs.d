@@ -1,3 +1,7 @@
+;; [[file:~/.emacs.d/init.org][No heading:1]]
+(require 'cl-lib)
+;; No heading:1 ends here
+
 ;; [[file:~/.emacs.d/init.org::*Support for ‘Custom’][Support for ‘Custom’:1]]
 (setq custom-file "~/.emacs.d/custom.el")
 (ignore-errors (load custom-file)) ;; It may not yet exist.
@@ -490,75 +494,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 (use-package beginend
   :diminish 'beginend-global-mode
   :config (beginend-global-mode)
-    (loop for (_ . m) in beginend-modes do (diminish m)))
+    (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 ;; Jumping to extreme semantic units:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
-;; Invoke all possible key extensions having a common prefix by
-;; supplying the prefix only once.
-(use-package hydra)
-
-;; The standard syntax:
-;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
-;;   ;; List of triples (extension method description) )
-;; Hydra: Supply a prefix only once:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:2]]
-;; Show hydras overlyaed in the middle of the frame
-(use-package hydra-posframe
-  :quelpa (hydra-posframe :fetcher git :url
-                          "https://github.com/Ladicle/hydra-posframe.git")
-  :hook (after-init . hydra-posframe-mode)
-  :custom (hydra-posframe-border-width 5))
-
-;; Neato doc strings for hydras
-(use-package pretty-hydra)
-;; Hydra: Supply a prefix only once:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Textual Navigation ---“Look Ma, no CTRL key!”][Textual Navigation ---“Look Ma, no CTRL key!”:1]]
-(global-set-key
- (kbd "C-n")
- (pretty-hydra-define hydra-move
-   (:body-pre (next-line) :title "\t\t\t\t\tTextual Navigation" :quit-key "q")
-   ("Line"
-    (("n" next-line)
-     ("p" previous-line)
-     ("a" beginning-of-line)
-     ("e" move-end-of-line)
-     ("g" goto-line))
-
-   "Word"
-   (("f" forward-word "Next")
-    ("b" backward-word "Previous")
-    ("{" org-backward-element "Next Element")
-    ("}" org-forward-element "Previous Element"))
-
-   "Screen"
-   (("v" scroll-up-command "Scroll Down")
-    ("V" scroll-down-command "Scroll Up")
-    ("l" recenter-top-bottom "Center Page")
-    ("r" move-to-window-line-top-bottom "Relocate Point")
-    ("m" helm-imenu "Textual Menu")))))
-;; Textual Navigation ---“Look Ma, no CTRL key!”:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Window Navigation][Window Navigation:1]]
-;; Use ijkl to denote ↑←↓→ arrows.
-(defhydra hydra-windows (global-map    "C-c w"   )
-  ("b" balance-windows                 "balance" )
-  ("i" enlarge-window                  "heighten")
-  ("j" shrink-window-horizontally      "narrow"  )
-  ("k" shrink-window                   "lower"   )
-  ("l" enlarge-window-horizontally     "widen"   )
-  ("s" switch-window-then-swap-buffer  "swap" :color teal))
-
-;; Provides a *visual* way to choose a window to switch to.
-(use-package switch-window :defer t)
-;; :bind (("C-x o" . switch-window)
-;;        ("C-x w" . switch-window-then-swap-buffer))
-
-;; Have a thick ruler between vertical windows
-(window-divider-mode)
-;; Window Navigation:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Quickly pop-up a terminal, run a command, close it ---and zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
 (use-package shell-pop
@@ -586,7 +523,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ~/Y."
 ;; [[file:~/.emacs.d/init.org::*Restarting Emacs ---Keeping buffers open across sessions?][Restarting Emacs ---Keeping buffers open across sessions?:1]]
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :defer t
+  ;; If I ever close Emacs, it's likely because I want to restart it.
+  :bind ("C-x C-c" . restart-emacs)
   ;; Let's define an alias so there's no need to remember the order.
   :config (defalias 'emacs-restart #'restart-emacs))
 ;; Restarting Emacs ---Keeping buffers open across sessions?:1 ends here
@@ -730,7 +668,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 (other-window 1)                              ;; C-x 0
 (let ((enable-local-variables :all)           ;; Load *all* locals.
       (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
-  (find-file "~/.emacs.d/init.org"))
+  (ignore-errors (find-file "~/.emacs.d/init.org")))
 ;; My to-do list: The initial buffer when Emacs opens up:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Exquisite Themes][Exquisite Themes:1]]
@@ -956,8 +894,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 
 ;; [[file:~/.emacs.d/init.org::*Pretty Lists Markers][Pretty Lists Markers:1]]
 ;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
-(require 'cl)
-(loop for (x y z) in '(("+" "◦" *)
+(cl-loop for (x y z) in '(("+" "◦" *)
                        ("-" "•" *)
                        ("*" "⋆" +))
       do (font-lock-add-keywords 'org-mode
@@ -1091,17 +1028,6 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; Use M-& for async shell commands.
 ;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
 
-;; [[file:~/.emacs.d/init.org::*Touch Typing][Touch Typing:2]]
-(use-package speed-type :defer t)
-;; Touch Typing:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Touch Typing][Touch Typing:3]]
-(use-package google-translate
- :defer t
- :config
-   (global-set-key "\C-ct" 'google-translate-at-point))
-;; Touch Typing:3 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Using a Grammar & Style Checker][Using a Grammar & Style Checker:1]]
 (use-package langtool
  :defer t
@@ -1165,82 +1091,9 @@ user. If PREFIX is provided, let the user select a portion of the screen."
                 (shell-command-to-string "/usr/local/bin/agda-mode locate")))
 ;; Unicode Input via Agda Input:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:3]]
-(use-package agda-input
-  :ensure nil ;; I have it locally.
-  :demand t
-  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-  :custom (default-input-method "Agda"))
-  ;; Now C-\ or M-x toggle-input-method turn it on and offers
-;; Unicode Input via Agda Input:3 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:4]]
 ;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
 ;; Unicode Input via Agda Input:4 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:5]]
-(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
-;; Unicode Input via Agda Input:5 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:6]]
-(loop for item
-      in '(;; categorial ;;
-           ("alg" "𝒜𝓁ℊ")
-           ("split" "▵")
-           ("join" "▿")
-           ("adj" "⊣")
-           (";;" "﹔")
-           (";;" "⨾")
-           (";;" "∘")
-           ;; lattices ;;
-           ("meet" "⊓")
-           ("join" "⊔")
-           ;; residuals
-           ("syq"  "╳")
-           ("over" "╱")
-           ("under" "╲")
-           ;; Z-quantification range notation ;;
-           ;; e.g., “∀ x ❙ R • P” ;;
-           ("|"    "❙")
-           ("with" "❙")
-           ;; adjunction isomorphism pair ;;
-           ("floor"  "⌊⌋")
-           ("lower"  "⌊⌋")
-           ("lad"    "⌊⌋")
-           ("ceil"   "⌈⌉")
-           ("raise"  "⌈⌉")
-           ("rad"    "⌈⌉")
-           ;; Arrows
-           ("<=" "⇐")
-        ;; more (key value) pairs here
-        )
-      do (add-to-list 'agda-input-user-translations item))
-;; Unicode Input via Agda Input:6 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:7]]
-;; Add to the list of translations using “emot” and the given, more specfic, name.
-;; Whence, \emot shows all possible emotions.
-(loop for emot
-      in `(;; angry, cry, why-you-no
-           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")
-           ;; confused, disapprove, dead, shrug
-           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯")
-           ;; dance, csi
-           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
-            ,(s-collapse-whitespace "•_•)
-                                      ( •_•)>⌐■-■
-                                      (⌐■_■)"))
-           ;; love, pleased, success, yesss
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
-      do
-      (add-to-list 'agda-input-user-translations emot)
-      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
-;; Unicode Input via Agda Input:7 ends here
-
-;; [[file:~/.emacs.d/init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:8]]
-;; activate translations
-(agda-input-setup)
-;; Unicode Input via Agda Input:8 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Increase/decrease text size][Increase/decrease text size:1]]
 (global-set-key (kbd "C-+") 'text-scale-increase)
@@ -1258,10 +1111,6 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 (global-subword-mode 1)
 (diminish 'subword-mode)
 ;; Enabling CamelCase Aware Editing Operations:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Mouse Editing Support][Mouse Editing Support:1]]
-(setq mouse-drag-copy-region t)
-;; Mouse Editing Support:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Delete Selection Mode][Delete Selection Mode:1]]
 (delete-selection-mode 1)
@@ -1445,16 +1294,6 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; (custom-set-faces '(org-level-1 nil))
 ;; Proportional fonts for Headlines:1 ends here
 
-;; [[file:~/.emacs.d/init.org::*Show off-screen heading at the top of the window][Show off-screen heading at the top of the window:1]]
- (use-package org-sticky-header
-  :hook (org-mode . org-sticky-header-mode)
-  :config
-  (setq-default
-   org-sticky-header-full-path 'full
-   ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " / "))
-;; Show off-screen heading at the top of the window:1 ends here
-
 ;; [[file:~/.emacs.d/init.org::*Jumping without hassle][Jumping without hassle:1]]
 (defun my/org-goto-line (line)
   "Go to the indicated line, unfolding the parent Org header.
@@ -1570,7 +1409,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 (defvar my/prettify-alist nil
   "Musa's personal prettifications.")
 
-(loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
+(cl-loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
                     ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
                     ("#+end_example"   . ?⇐)                 ;; ⇐
                     ;; Actuall beautifications
@@ -1580,7 +1419,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 
       do (push pair my/prettify-alist))
 
-(loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
+(cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
       do (add-hook hk (lambda ()
                         (setq prettify-symbols-alist
                               (append my/prettify-alist prettify-symbols-alist)))))
@@ -1616,28 +1455,11 @@ visit all blocks with such a name."
 (setq enable-local-variables t)
 ;; Executing all =#+name: startup-code= for local configurations:2 ends here
 
-;; [[file:~/.emacs.d/init.org::*Working with Citations][Working with Citations:1]]
-(use-package org-ref
-  :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
-          ;; Most useful for non-LaTeX files.
-        (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
-        (bibtex-completion-bibliography (car reftex-default-bibliography))
-        (org-ref-default-bibliography reftex-default-bibliography))
-
-;; Quick BibTeX references, sometimes.
-(use-package helm-bibtex)
-(use-package biblio)
-;; Working with Citations:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Bibliography & Coloured LaTeX using Minted][Bibliography & Coloured LaTeX using Minted:1]]
-(setq org-latex-listings 'minted
-      org-latex-packages-alist '(("" "minted"))
-      org-latex-pdf-process
-      '("pdflatex -shell-escape -output-directory %o %f"
-        "biber %b"
-        "pdflatex -shell-escape -output-directory %o %f"
-        "pdflatex -shell-escape -output-directory %o %f"))
-;; Bibliography & Coloured LaTeX using Minted:1 ends here
+;; [[file:~/.emacs.d/init.org::*org-special-block-extras][org-special-block-extras:1]]
+(use-package org-special-block-extras
+  :ensure t
+  :hook (org-mode . org-special-block-extras-mode))
+;; org-special-block-extras:1 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors:1]]
 (defun my/ensure-headline-ids (&rest _)
@@ -1791,7 +1613,7 @@ by spaces.
       :empty-lines 1 :time-prompt t))
 
 (setq org-capture-templates
-      (loop for (shortcut heading)
+      (cl-loop for (shortcut heading)
             in (-partition 2 '("t" "Tasks, Getting Things Done"
                                "r" "Research"
                                "2" "2FA3"
@@ -2247,7 +2069,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
   ;; :hook (org-mode . hl-todo-mode)
   :config
     ;; Adding new keywords
-    (loop for kw in '("TEST" "MA" "WK" "JC")
+    (cl-loop for kw in '("TEST" "MA" "WK" "JC")
           do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3")))
     (global-hl-todo-mode))   ;; Enable it everywhere.
 ;; Highlighting TODO-s & Showing them in Magit:1 ends here
@@ -2321,26 +2143,6 @@ C-u C-u C-c c ⇒ Goto last note stored."
   (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
          origami-parser-alist))
 ;; Text Folding with Origami-mode:1 ends here
-
-;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:2]]
-(defun my/search-hook-function ()
-  (when origami-mode (origami-toggle-node (current-buffer) (point))))
-
-;; Open folded nodes if a search stops there.
-(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-;;
-;; Likewise for incremental search, isearch, users.
-;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
-;; Text Folding with Origami-mode:2 ends here
-
-;; [[file:~/.emacs.d/init.org::*Text Folding with Origami-mode][Text Folding with Origami-mode:3]]
-(defhydra folding-with-origami-mode (global-map "C-c f")
-  ("h" origami-close-node-recursively "Hide")
-  ("o" origami-open-node-recursively  "Open")
-  ("t" origami-toggle-all-nodes  "Toggle buffer")
-  ("n" origami-next-fold "Next")
-  ("p" origami-previous-fold "Previous"))
-;; Text Folding with Origami-mode:3 ends here
 
 ;; [[file:~/.emacs.d/init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove

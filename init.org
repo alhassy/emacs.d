@@ -1,11 +1,12 @@
-# -*- eval: (my/execute-startup-blocks) -*-
+# (my/execute-startup-blocks)
+#
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #      C-x C-s  is a normal save; whereas
 #  C-u C-x C-s  is a save after forming ~init.elc~ and ~README.md~.
 #
 # ≥ 7900 line org file, with auto-generated TOC.
 # ≥ 219 code blocks
-# (emacs-init-time) ⇒ 15.5 seconds (•̀ᴗ•́)و
+# (emacs-init-time) ⇒ 19.927 seconds (•̀ᴗ•́)و
 #
 #+title: A Life Configuring Emacs
 #+author: Musa Al-hassy
@@ -21,6 +22,10 @@
 #+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
+
+#+BEGIN_SRC emacs-lisp
+(require 'cl-lib)
+#+END_SRC
 
 * Abstract                                                           :ignore:
 :PROPERTIES:
@@ -95,9 +100,6 @@ and variables that may accomplish my goal.
     - [[#auto-completing-mail-addresses][Auto-completing mail addresses]]
     - [[#feeds-to-blogs][Feeds to Blogs]]
   - [[#jumping-to-extreme-semantic-units][Jumping to extreme semantic units]]
-  - [[#hydra-supply-a-prefix-only-once][Hydra: Supply a prefix only once]]
-    - [[#textual-navigation----look-ma-no-ctrl-key][Textual Navigation ---“Look Ma, no CTRL key!”]]
-    - [[#window-navigation][Window Navigation]]
   - [[#quickly-pop-up-a-terminal-run-a-command-close-it----and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh]]
   - [[#restarting-emacs----keeping-buffers-open-across-sessions][Restarting Emacs ---Keeping buffers open across sessions?]]
   - [[#automatic-backups][Automatic Backups]]
@@ -124,7 +126,6 @@ and variables that may accomplish my goal.
   - [[#pretty-lists-markers][Pretty Lists Markers]]
   - [[#word-completion][Word Completion]]
   - [[#fix-spelling-as-you-type----thesaurus--dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!]]
-  - [[#touch-typing][Touch Typing]]
   - [[#using-a-grammar--style-checker][Using a Grammar & Style Checker]]
   - [[#lightweight-prose-proofchecking][Lightweight Prose Proofchecking]]
   - [[#placeholder-text----for-learning--experimenting][Placeholder Text ---For Learning & Experimenting]]
@@ -133,7 +134,6 @@ and variables that may accomplish my goal.
   - [[#increasedecrease-text-size][Increase/decrease text size]]
   - [[#moving-text-around][Moving Text Around]]
   - [[#enabling-camelcase-aware-editing-operations][Enabling CamelCase Aware Editing Operations]]
-  - [[#mouse-editing-support][Mouse Editing Support]]
   - [[#delete-selection-mode][Delete Selection Mode]]
   - [[#m-np-word-at-point-navigation][~M-n,p~: Word-at-Point Navigation]]
   - [[#letter-based-navigation][Letter-based Navigation]]
@@ -148,15 +148,13 @@ and variables that may accomplish my goal.
   - [[#hiding-emphasise-markers--inlining-images][Hiding Emphasise Markers & Inlining Images]]
   - [[#org-emphasise-for-parts-of-words][Org-Emphasise for Parts of Words]]
   - [[#proportional-fonts-for-headlines][Proportional fonts for Headlines]]
-  - [[#show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window]]
   - [[#jumping-without-hassle][Jumping without hassle]]
   - [[#folding-within-a-subtree][Folding within a subtree]]
   - [[#making-block-delimiters-less-intrusive][Making Block Delimiters Less Intrusive]]
   - [[#org-modes-𝒳-block-expansions][Org-mode's ~<𝒳~ Block Expansions]]
   - [[#executing-all-name-startup-code-for-local-configurations][Executing all =#+name: startup-code= for local configurations]]
 - [[#org-mode--pdf--html][Org-Mode ⇒ PDF & HTML]]
-  - [[#working-with-citations][Working with Citations]]
-  - [[#bibliography--coloured-latex-using-minted][Bibliography & Coloured LaTeX using Minted]]
+  - [[#org-special-block-extras][org-special-block-extras]]
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#clickable-headlines][Clickable Headlines]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
@@ -2064,7 +2062,7 @@ My homemade hack to getting tagged feeds programmatically into Gnus.
 ;; Execute this after a Gnus buffer has been opened.
 (progn
 (use-package with-simulated-input)
-(loop for (topic title url)
+(cl-loop for (topic title url)
       in (-partition 3 my/gnus-feeds)
       ;; url & topic are symbols, make them strings.
       for url′   = (symbol-name url)
@@ -2114,10 +2112,10 @@ should jump to the first entry.
 (use-package beginend
   :diminish 'beginend-global-mode
   :config (beginend-global-mode)
-    (loop for (_ . m) in beginend-modes do (diminish m)))
+    (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 #+END_SRC
 
-** Hydra: Supply a prefix only once
+** COMMENT Hydra: Supply a prefix only once
 :PROPERTIES:
 :CUSTOM_ID: Hydra-Supply-a-prefix-only-once
 :END:
@@ -2320,7 +2318,8 @@ thought of implementing that.
 #+BEGIN_SRC emacs-lisp
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :defer t
+  ;; If I ever close Emacs, it's likely because I want to restart it.
+  :bind ("C-x C-c" . restart-emacs)
   ;; Let's define an alias so there's no need to remember the order.
   :config (defalias 'emacs-restart #'restart-emacs))
 #+END_SRC
@@ -2576,7 +2575,7 @@ my to-do list and my init file, side-by-side.
 (other-window 1)                              ;; C-x 0
 (let ((enable-local-variables :all)           ;; Load *all* locals.
       (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
-  (find-file "~/.emacs.d/init.org"))
+  (ignore-errors (find-file "~/.emacs.d/init.org")))
 #+END_SRC
 
 There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile
@@ -3128,8 +3127,7 @@ them visually as Unicode bullets.
 
 #+begin_src emacs-lisp
 ;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
-(require 'cl)
-(loop for (x y z) in '(("+" "◦" *)
+(cl-loop for (x y z) in '(("+" "◦" *)
                        ("-" "•" *)
                        ("*" "⋆" +))
       do (font-lock-add-keywords 'org-mode
@@ -3362,7 +3360,7 @@ think is not ideal since it provides way less information.
 ;; Website currently down ... https://github.com/SavchenkoValeriy/emacs-powerthesaurus/issues/6
 #+END_SRC
 :End:
-** Touch Typing
+** COMMENT Touch Typing
 :PROPERTIES:
 :CUSTOM_ID: Touch-Typing
 :END:
@@ -3566,7 +3564,7 @@ What are the strongest days of the week? Saturday and Sunday...the rest are
 weekdays.
 #+end_quote
 
-** Unicode Input via Agda Input
+** TODO Unicode Input via Agda Input
 :PROPERTIES:
 :CUSTOM_ID: Unicode-Input-via-Agda-Input
 :END:
@@ -3591,8 +3589,10 @@ Let's put it here ourselves.
                 (shell-command-to-string "/usr/local/bin/agda-mode locate")))
 #+end_src
 
-I almost always want the ~agda-mode~ input method ---it's like the TeX method, but better.
-#+BEGIN_SRC emacs-lisp
+I almost always want the ~agda-mode~ input method ---it's like the TeX method, but
+better.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; MA: This results in "Package cl is deprecated" !?
 (use-package agda-input
   :ensure nil ;; I have it locally.
   :demand t
@@ -3643,12 +3643,12 @@ Below are my personal Agda input symbol translations;
 e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX binding
 interactively: ~M-x customize-variable agda-input-user-translations~ then
 ~INS~ then for key sequence type ~set~ then ~INS~ and for string paste ~𝒮ℯ𝓉~.
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp  :tangle no
 (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
 #+END_SRC
 Better yet, as a loop:
-#+BEGIN_SRC emacs-lisp
-(loop for item
+#+BEGIN_SRC emacs-lisp :tangle no
+(cl-loop for item
       in '(;; categorial ;;
            ("alg" "𝒜𝓁ℊ")
            ("split" "▵")
@@ -3682,10 +3682,10 @@ Better yet, as a loop:
       do (add-to-list 'agda-input-user-translations item))
 #+END_SRC
 Also some silly stuff:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp  :tangle no
 ;; Add to the list of translations using “emot” and the given, more specfic, name.
 ;; Whence, \emot shows all possible emotions.
-(loop for emot
+(cl-loop for emot
       in `(;; angry, cry, why-you-no
            ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")
            ;; confused, disapprove, dead, shrug
@@ -3706,7 +3706,7 @@ Also some silly stuff:
 # customization buffer, you need to call (agda-input-setup) in
 # order for the change to take effect.
 Finally let's effect such translations.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp  :tangle no
 ;; activate translations
 (agda-input-setup)
 #+end_src
@@ -3775,7 +3775,7 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 (diminish 'subword-mode)
 #+end_src
 
-** Mouse Editing Support
+** COMMENT Mouse Editing Support :Strange:This_Seems_To_Require_Deprecated_CL:Message_show_at_startup:
 :PROPERTIES:
 :CUSTOM_ID: Mouse-Editing-Support
 :END:
@@ -4256,7 +4256,7 @@ Let's have headings stick out a bit.
 Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
 ---See notes on Custom above.
 
-** Show off-screen heading at the top of the window
+** COMMENT Show off-screen heading at the top of the window
 :PROPERTIES:
 :CUSTOM_ID: Show-off-screen-heading-at-the-top-of-the-window
 :END:
@@ -4418,7 +4418,7 @@ have busybodied headers which his setup disguises as ‘≡’.
 (defvar my/prettify-alist nil
   "Musa's personal prettifications.")
 
-(loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
+(cl-loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
                     ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
                     ("#+end_example"   . ?⇐)                 ;; ⇐
                     ;; Actuall beautifications
@@ -4428,7 +4428,7 @@ have busybodied headers which his setup disguises as ‘≡’.
 
       do (push pair my/prettify-alist))
 
-(loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
+(cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
       do (add-hook hk (lambda ()
                         (setq prettify-symbols-alist
                               (append my/prettify-alist prettify-symbols-alist)))))
@@ -4552,20 +4552,22 @@ anchors.
 :Possibly_breaking_toc-org:
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; Use 3 headlines of export, which is the default
-(setq org-export-headline-levels 4)
+;; (setq org-export-headline-levels 4)
 
 ;; no numbers by default at export
-(setq org-export-with-section-numbers nil)
+;; (setq org-export-with-section-numbers nil)
 #+END_SRC
 :End:
-** COMMENT org-special-block-extras
+** TODO org-special-block-extras :Undocumented:
 #+BEGIN_SRC emacs-lisp
 (use-package org-special-block-extras
   :ensure t
   :hook (org-mode . org-special-block-extras-mode))
 #+END_SRC
 
-** Working with Citations
+Documentations and screenshots at: https://alhassy.github.io/org-special-block-extras/
+
+** COMMENT Working with Citations
 :PROPERTIES:
 :CUSTOM_ID: Working-with-Citations
 :END:
@@ -4601,7 +4603,7 @@ cite:agda_overview
   This is an Org-mode application since the citations have tooltips and export
   nicely to LaTeX & HTML via the Org-mode exporter.
 
-** Bibliography & Coloured LaTeX using Minted
+** COMMENT Bibliography & Coloured LaTeX using Minted
 
 Execute the following for bibliography references as well as minted Org-mode
 uses the Minted package for source code highlighting in PDF/LaTeX ---which in
@@ -4702,6 +4704,12 @@ resulting in a link to the headline itself.
                  text)))
      (org-html-format-headline-default-function todo todo-type priority link tags info))))
 #+end_src
+
+*Warning:* The header cannot already be a link!  Otherwise you get cyrptic and
+unhelpful error =(wrong-type-argument plistp :section-number)=; which then
+pollutes the current Emacs session resulting in stange =nil= errors after =C-x C-s=,
+thereby forcing a full Emacs restart.  Instead, you need at least one portion of
+each heading to be not a link.
 
 ** HTML “Folded Drawers”
 :PROPERTIES:
@@ -4952,7 +4960,7 @@ By default we only get a ‘tasks’ form of capture, let's add some more.
       :empty-lines 1 :time-prompt t))
 
 (setq org-capture-templates
-      (loop for (shortcut heading)
+      (cl-loop for (shortcut heading)
             in (-partition 2 '("t" "Tasks, Getting Things Done"
                                "r" "Research"
                                "2" "2FA3"
@@ -6298,7 +6306,7 @@ at least 3: XXX, XXXX, XXXXX, …, ???, ????, ????, ….
   ;; :hook (org-mode . hl-todo-mode)
   :config
     ;; Adding new keywords
-    (loop for kw in '("TEST" "MA" "WK" "JC")
+    (cl-loop for kw in '("TEST" "MA" "WK" "JC")
           do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3")))
     (global-hl-todo-mode))   ;; Enable it everywhere.
 #+END_SRC
@@ -6350,6 +6358,7 @@ Add these to the version control hydra.
 (defhydra hydra-version-control (global-map "C-x v")
   ("t" helm-magit-todos "Show TODOs lists for this repo."))
 #+END_SRC
+
 
 ** COMMENT Aggressive Indentation
 :PROPERTIES:
@@ -6493,7 +6502,11 @@ Here are further reads:
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-** Text Folding with Origami-mode
+
+** Text Folding with Origami-mode :Disabled:
+
+#     :Causes_weird_nil_after_save:
+
 Literate programming within Org-mode is not always ideal, so we use a
 programming mode directly and then may want to have arbitrary ‘sections’ of text
 folded up.  Let's describe how to accomplish this goal.
@@ -6510,7 +6523,7 @@ We use a feature-full folding mode,  [[https://github.com/gregsexton/origami.el]
 #+END_SRC
 
 With expected support for searching.
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (defun my/search-hook-function ()
   (when origami-mode (origami-toggle-node (current-buffer) (point))))
 
@@ -6523,7 +6536,7 @@ With expected support for searching.
 
 Along with a hydra for super quick navigation and easily folding, unfolding
 blocks! Love this one ^_^
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (defhydra folding-with-origami-mode (global-map "C-c f")
   ("h" origami-close-node-recursively "Hide")
   ("o" origami-open-node-recursively  "Open")
@@ -6531,6 +6544,9 @@ blocks! Love this one ^_^
   ("n" origami-next-fold "Next")
   ("p" origami-previous-fold "Previous"))
 #+END_SRC
+
+*Disabled:* I've looked at a few folding modes, and I like this one.
+However, I seldom need it.
 
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 :PROPERTIES:
@@ -6753,7 +6769,7 @@ generated by the following basic loop ---whose source block is named
 #+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
 ;; We make an org BLOCK snippet template for each LANG the user has declared.
 ;;
-(loop for (shortcut block takes-language-argument? default-text)
+(cl-loop for (shortcut block takes-language-argument? default-text)
       in '(("s_" "src" t)
            ("is_" "inline source" t)  ;; Treated specially below
            ("e_" "example" t)
@@ -6772,7 +6788,7 @@ generated by the following basic loop ---whose source block is named
                                   ;; Also include whatever languages we've loaded for literate programming.
                                   (--map (symbol-name (car it)) org-babel-load-languages))
                         '("")) ;; The “empty language”
-      concat (loop for lang in languages
+      concat (cl-loop for lang in languages
                    for key         = (concat shortcut
                                        (if (s-blank? lang) block lang))
                    for description =  (if (s-blank? lang)
@@ -6844,7 +6860,7 @@ levels, then uses each level to produce a list of type names ;-)
 
 The following snippets were rather useful as I began learning Lisp to construct
 my editor of choice ---I love Emacs so much. Admittedly, I still need the first
-one below and usually beat around the bush by using ~(loop for ⋯ do ⋯)~, which is
+one below and usually beat around the bush by using ~(cl-loop for ⋯ do ⋯)~, which is
 ‘noisier’ but easier to remember and to read for non-Lispers.
 #+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** loop:  Elisp's for each loop
@@ -8172,7 +8188,7 @@ I want both ~get-named-text~ and ~docs~ ^_^
                              el)))))
     (concat "\n"
             (s-join sep
-                    (loop for e in el
+                    (cl-loop for e in el
                           for s = (buffer-substring (org-element-property :contents-begin e)
                                                     (org-element-property :contents-end e))
                           collect
@@ -8306,20 +8322,3 @@ If the :tangle header arg is a list of files. Handle all files"
 #+BEGIN_SRC emacs-lisp :tangle no
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
-* COMMENT footer & pushing to blog                                         :noexport:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-footer-pushing-to-blog
-:END:
-
-(emacs-restart)
-
-C-c C-c this snippet to export to blog.
-#+NAME: publish-to-blog
-#+BEGIN_SRC emacs-lisp :results none
-;; Different Emacs logos for blog and github.
-;; No to-github? and No code execution on export.
-;; (my/publish-to-blog 'yes 'local)
-(let (org-export-use-babel to-github?) (my/publish-to-blog))
-#+END_SRC
-
-compile-command:  (progn (org-babel-tangle) (byte-compile-file "~/.emacs.d/init.el") (load-file "~/.emacs.d/init.el"))
