@@ -1,4 +1,4 @@
-personal_ws-1.1 en 234 
+personal_ws-1.1 en 236 
 ACSII
 Administrivia
 Agda's
@@ -93,6 +93,7 @@ combinatorics
 combinators
 compositional
 computability
+computable
 connectedness
 datatypes
 deallocate
@@ -222,6 +223,7 @@ unbundled
 unbundling
 uncurrying
 unhighlight
+uninstantiated
 unital
 unitors
 unmarking

@@ -158,6 +158,7 @@ and variables that may accomplish my goal.
   - [[#ensuring-useful-html-anchors][Ensuring Useful HTML Anchors]]
   - [[#clickable-headlines][Clickable Headlines]]
   - [[#html-folded-drawers][HTML “Folded Drawers”]]
+  - [[#diagrams-with-mermaid----not-reccommended][Diagrams with Mermaid ---Not Reccommended]]
   - [[#revealjs----the-html-presentation-framework][Reveal.JS -- The HTML Presentation Framework]]
   - [[#org-mode--html][Org-mode ⇐ HTML]]
 - [[#life-within-org-mode][Life within Org-mode]]
@@ -4711,6 +4712,17 @@ pollutes the current Emacs session resulting in stange =nil= errors after =C-x C
 thereby forcing a full Emacs restart.  Instead, you need at least one portion of
 each heading to be not a link.
 
+1. Need to have a custom id declared.
+   #+BEGIN_SRC org :tangle no
+  :PROPERTIES:
+  :CUSTOM_ID: my-header
+  :END:
+#+END_SRC
+2. Failing headers: =* [[link]]= nor =* ~code~= nor =* $math$=.
+   - Any non-link text /before/ it will work:  =ok [[link]]=.
+     * Using Unicode non-breaking space ‘ ’ is is ok.
+   - Text /only after/ the link is insufficient.
+
 ** HTML “Folded Drawers”
 :PROPERTIES:
 :CUSTOM_ID: HTML-Folded-Drawers
@@ -4801,6 +4813,68 @@ Hey bud, hope you're enjoying this read ^_^
 :End:
 
 Now that I've written this, I'm thinking it may have been preferably to use an org-block…?
+
+** Diagrams with Mermaid ---Not Reccommended
+
+Let's try out an alternative to PlantUML ---covered below in §[[Workflow States]].
+
+First, let's get the tool.
+#+BEGIN_SRC shell :tangle no
+npm install mermaid.cli
+sudo git clone git@github.com:arnm/mermaid-layer.git ~/.emacs.d/private/mermaid
+#+END_SRC
+
+Then, let's get the associated ~mermaid~ package.
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package ob-mermaid
+  :custom ob-mermaid-cli-path "~/node_modules/.bin/mmdc")
+#+END_SRC
+
+Then, =C-c C-c= on the following:
+#+BEGIN_SRC mermaid :file test.png :theme neutral :background-color green  :tangle no :results replace
+sequenceDiagram
+A-->B: Works!
+#+END_SRC
+
+#+RESULTS:
+[[file:test.png]]
+
++ =C-c C-x C-v= ⇒ Show images inline
++ Mermaid supported headers:
+  - ~file~ to name the svg/png/pdf output
+  - ~width~ or ~height~ or the resulting image
+  - ~theme~ used, such as ~default, forest, dark, neutral~, for foreground entities
+  - ~background-color~ such as ~transparent, red, #F0F0F0~
+    * The transparent option is nice ^_^
++ You can insert new lines using ~<br>~ and horizontal rules via ~<hr>~.
+  Similarly you can use other HTML tags such as ~<center>~; if you have too many
+  you can make  CSS file then use the header argument ~:css-file~.
++ Add “non-breaking space” with ~&nbsp;~. This is a forced extra space and it prevents
+  a line break at its location. You can insert it repeatedly, but for two spaces
+  use ~&ensp;~ and for four spaces use ~&emsp;~.
+
+If link text cuts off prematurely, use extra space /with/ a newline: ~A-- text
+&ensp;<br> -->B~.
+
+*Warning*: JavaScript has some issues when working with Unicode and so, being a
+JavaScript utility, ~mermaid~ hangs when Unicode is used. On the upside, being a
+JavaScript utility, ~mermaid~ entities can have [[https://mermaid-js.github.io/mermaid/#/flowchart?id=interaction][arbitrary code attached]] to them to
+be executed upon clicks ---for use in browsers.
+- However, the Greek letters are supported; e.g., γ and Σ.
+
+See [[https://mermaid-js.github.io/mermaid/#/flowchart?id=nodes-amp-shapes][here]] for possible node shapes.
+
+#+begin_quote
+After forming an intricate diagram of related design patterns, I had to use a
+number of HTML notions, such as =<i>, <strong>, <em>, <h1>, &ensp;, <br>, <pre>,
+<center>= and it was a bit more than I would have liked. In particular, the only
+way to change font size was to use the deprecated HTML tag =<big>= or heading tags
+like =<h1>=; even worse, the resulting PDF image did not look nice ---I had to
+stretch it out.
+
+The command line tool is *lacking functionality* and so the docs are not helpful.
+E.g., I cannot produce pie charts using the command line tool.
+#+end_quote
 
 ** [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework
 :PROPERTIES:
