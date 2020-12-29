@@ -1,4 +1,4 @@
-Updated, /pretty/, version: https://alhassy.github.io/emacs.d/
+Updated, /pretty/, version: https://alhassy.github.io/emacs.d/index.html
 
 --------------------------------------------------------------------------------
 
