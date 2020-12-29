@@ -1,3 +1,5 @@
+# -*- org-export-babel-evaluate: nil -*-
+
 # (my/execute-startup-blocks)
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #      C-x C-s  is a normal save; whereas
@@ -16,6 +18,7 @@
 #+STARTUP: indent lognoteclock-out
 #+OPTIONS: html-postamble:nil toc:2 d:nil num:t :results nil
 #+PROPERTY: header-args :tangle init.el :comments link :results none
+#+EXPORT_FILE_NAME: index
 
 # ─AlBasmala keywords─
 # DRAFT: yes
@@ -30,6 +33,7 @@
 #+HTML_HEAD: <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
 # The last one has the styling for lists.
 
+:CL_TODO:
 #+begin_src emacs-lisp :exports none
 (require 'cl) ;; to get loop instead of cl-loop, etc.
 
@@ -38,6 +42,7 @@
 ; (setq gc-cons-threshold 50000000) ;; orginaly 800,000
 ;; reduce number of times GC occurs.
 #+end_src
+:END:
 
 * Abstract                                                           :ignore:
 :PROPERTIES:
