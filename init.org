@@ -608,6 +608,8 @@ thereby providing ‘reproducible research’: Explorations and resulting algori
 are presented together in a natural style.
 
 #+html: <p style="text-align:center">
+
+:Src:
 #+begin_src plantuml :file images/literate-programming.png :tangle no :exports results :eval never-export :results (progn (org-display-inline-images t t) "replace")
 skinparam defaultTextAlignment center  /' Text alignment '/
 
@@ -646,7 +648,7 @@ cloud People {
 
 center footer  ♥‿♥ Write once, generate many (•̀ᴗ•́)و
 #+end_src
-#+RESULTS:
+:End:
 [[file:images/literate-programming.png]]
 #
 # (org-display-inline-images t t)
