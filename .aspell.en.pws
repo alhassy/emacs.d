@@ -1,4 +1,4 @@
-personal_ws-1.1 en 236 
+personal_ws-1.1 en 265 
 ACSII
 Administrivia
 Agda's
@@ -9,6 +9,7 @@ Booleans
 Bruijn
 Carette
 Componentwise
+Contrapositive
 Coq
 DeMorgan's
 Declaratively
@@ -16,11 +17,14 @@ Denotational
 Dereference
 Destructuring
 Discovarability
+Distributivity
 Dualise
+Equipollence
 Excerption
 Executables
 Genericity
 Goju
+Hoare
 Invariance
 Kahl
 Knowns
@@ -33,10 +37,12 @@ Marwan
 McMaster
 Meijing
 Metaprograms
+Metatheorem
 Metavariable
 Mixins
 Monoid
 Monoids
+Monotonicity
 Muawiyah
 Musa
 Neato
@@ -57,6 +63,7 @@ Unbundling
 Uncomment
 Yoneda
 Yoneda's
+Yusuf
 absoprtion
 adaptively
 additively
@@ -67,6 +74,8 @@ adjunctions
 administrivia
 agda
 algorithmically
+anaphoric
+antisymmetry
 applicative
 architecturing
 associator
@@ -102,6 +111,7 @@ deallocates
 deallocation
 declaratively
 deconstructor
+decrementing
 definitional
 deliverables
 dereferencing
@@ -111,10 +121,12 @@ desugars
 dinatural
 disjunction
 disjunctions
+distributivity
 dualised
 endofunctors
 equalities
 equational
+equivales
 esotericity
 existentials
 expressivity
@@ -136,9 +148,11 @@ homomorphisms
 homomrphism
 imamah
 implementers
+incentivize
 incentivizes
 incrementing
 indistinguishability
+infimum
 injective
 inlining
 instantiation
@@ -146,6 +160,7 @@ instantiations
 intuitionistic
 invariants
 invertible
+irreflexive
 isomorphisms
 iterable
 iterables
@@ -153,6 +168,7 @@ journaling
 lexemes
 lexicographically
 logics
+macOS
 magit
 matchings
 meaningfuls
@@ -160,6 +176,8 @@ memorables
 metaprogramming
 metasymbol
 metasymbols
+metatheorem
+metatheorems
 metavariables
 mixfix
 modularisation
@@ -177,22 +195,29 @@ naturality
 nullary
 observationally
 parameterisation
+parenthesisation
 pointfree
 pointwise
 polymorphism
 ponens
 poset
 positivity
+postcondition
+prepending
 preprocessor
 programmability
 prophethood
 propositionally
 pseudocode
+pseudocomplement
 pushout
 pushouts
+quantifications
 reduct
+representable
 reusability
 runtime
+satisfiable
 satisfication
 scalability
 scalable
@@ -216,6 +241,8 @@ termtypes
 tooltip
 tooltips
 truthified
+truthifies
+truthify
 typechecked
 typechecking
 unbundle
@@ -229,6 +256,8 @@ unitors
 unmarking
 unparenthesised
 unquotation
+unsymmetric
+unvisited
 upcasing
 usepackage
 variational
