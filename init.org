@@ -650,39 +650,39 @@ center footer  ♥‿♥ Write once, generate many (•̀ᴗ•́)و
 
 Here's an example of showing code in a natural style, but having the resulting
 code appear in a style amicable to a machine. *Here's what you type:*
-#+BEGIN_example org :tangle no
+#+BEGIN_src org :tangle no
 It's natural to decompose large problems,
-#+begin_src haskell :noweb-ref defn-of-f :tangle no
+,#+begin_src haskell :noweb-ref defn-of-f :tangle no
 f = h ∘ g
-#+end_src
+,#+end_src
 
 But we need to define $g$ and $h$ /beforehand/ before we can use them. Yet it's
 natural to “motivate” their definitions ---rather than pull a rabbit out of
-hat. Org-let's us do that!
+hat. Org lets us do that!
 
-Here's one,
-#+begin_src haskell :noweb-ref code-from-other-places :tangle no
+Here's one definition,
+,#+begin_src haskell :noweb-ref code-from-other-places :tangle no
 g = ⋯
-#+end_src
+,#+end_src
 
 then the other.
-#+begin_src haskell :noweb-ref code-from-other-places :tangle no
+,#+begin_src haskell :noweb-ref code-from-other-places :tangle no
 h = ⋯
-#+end_src
+,#+end_src
 
 Of-course, we might also want a preamble:
-#+BEGIN_SRC haskell :tangle myprogram.hs
+,#+BEGIN_SRC haskell :tangle myprogram.hs
 import ⋯
-#+END_SRC
+,#+END_SRC
 
 We can now tangle together the tagged code blocks in the order we want.
-#+BEGIN_SRC haskell :tangle myprogram.hs :comments none :noweb yes
+,#+BEGIN_SRC haskell :tangle myprogram.hs :comments none :noweb yes
 <<code-from-other-places>>
 <<defn-of-f>>
-#+END_SRC
-#+END_example
+,#+END_SRC
+#+END_src
 
-Now kbd:C-c_C-v_C-t yields a file named ~myprogram.hs~ with contents in an order
+Now kbd:C-c_C-v_C-t (doc:org-babel-tangle) yields a file named ~myprogram.hs~ with contents in an order
 amicable to a machine.
 #+BEGIN_SRC haskell :tangle no
 import ⋯
