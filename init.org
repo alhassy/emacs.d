@@ -62,7 +62,7 @@ badge:A_Life_Configuring|Emacs|success||gnu
 #+end_center
 #+html: </p>
 
-Herein I document the configurations I utilise with [[https://gnu.org/s/emacs][Emacs]].
+[[doc:Hello][Hello!]] Herein I document the configurations I utilise with [[https://gnu.org/s/emacs][Emacs]].
 # After cloning the file, many packages are automatically installed; usually with
 # little or no trouble.
 
