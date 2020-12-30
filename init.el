@@ -278,6 +278,11 @@
   (setq buffer-backed-up nil))
 
 (add-hook 'before-save-hook  'my/force-backup-of-buffer)
+
+;; [Default settings]
+;; Autosave when idle for 30sec or 300 input events performed
+(setq auto-save-timeout 30
+      auto-save-interval 300)
 ;; Save ≈ Backup:1 ends here
 
 ;; [[file:init.org::*  =magit= ---Emacs' porcelain interface to git][  =magit= ---Emacs' porcelain interface to git:1]]
@@ -446,16 +451,24 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Manipulating Sections:1 ends here
 
 ;; [[file:init.org::*Manipulating Sections][Manipulating Sections:2]]
-  ;; Refile anywhere 1-level deep in current file,
-  ;; or anywhere in my agenda files 2-levels deep
-  (setq org-refile-targets '((nil . (:maxlevel . 1))))
-        ;; (org-agenda-files . (:maxlevel . 2))  ;; ← Not useful right now.
+;; [Default]
+;; When refiling, only show me top level headings
+(setq org-refile-targets
+      '((nil :maxlevel . 1))) ;; Sometimes 2 is useful.
 
-  ; Use full outline paths for refile targets - we file directly with IDO
-  ;; When refiling, using Helm, show me the hierarchy paths
-  (setq org-outline-path-complete-in-steps nil)
-  (setq org-refile-use-outline-path 'file-path)
+;; Maybe I want to refile into a new heading; confirm with me.
+(setq org-refile-allow-creating-parent-nodes 'confirm)
+
+;; Use full outline paths for refile targets
+;; When refiling, using Helm, show me the hierarchy paths
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-use-outline-path 'file-path)
 ;; Manipulating Sections:2 ends here
+
+;; [[file:init.org::*Manipulating Sections][Manipulating Sections:3]]
+(add-to-list 'org-speed-commands-user (cons "P" #'org-set-property))
+;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
+;; Manipulating Sections:3 ends here
 
 ;; [[file:init.org::*Seamless Navigation Between Source Blocks][Seamless Navigation Between Source Blocks:1]]
 ;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
@@ -479,6 +492,18 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Seamless use of babel: No confirmation upon execution.
 ;; Downside: Could accidentally evaluate harmful code.
 (setq org-confirm-babel-evaluate nil)
+
+;; Never evaluate code blocks upon export and replace results when evaluation does occur.
+;; For a particular language 𝑳, alter ‘org-babel-default-header-args:𝑳’.
+(setq org-babel-default-header-args
+      '((:results . "replace")
+        (:session . "none")
+        (:exports . "both")
+        (:cache .   "no")
+        (:noweb . "no")
+        (:hlines . "no")
+        (:tangle . "no")
+        (:eval . "never-export")))
 ;; Executing code from ~src~ blocks:1 ends here
 
 ;; [[file:init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:2]]
@@ -1410,7 +1435,7 @@ themes (•̀ᴗ•́)و"
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 ;; Making Block Delimiters Less Intrusive:4 ends here
 
-;; [[file:init.org::*Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images:1]]
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:1]]
 ;; org-mode math is now highlighted ;-)
 (setq org-highlight-latex-and-related '(latex))
 
@@ -1420,7 +1445,54 @@ themes (•̀ᴗ•́)و"
 ;; (setq org-pretty-entities t)
 ;; to have \alpha, \to and others display as utf8
 ;; http://orgmode.org/manual/Special-symbols.html
-;; Hiding Emphasise Markers & Inlining Images:1 ends here
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:1 ends here
+
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:2]]
+;; Show inline images when loading a new Org file.
+(setq org-startup-with-inline-images t)
+
+;; Whenever a src block is run, redisplay images so they're up-to-date.
+;; Very useful when using ‘ob-latex-as-png’, below.
+(add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images)
+
+;; Automatically convert LaTeX fragments to inline images.
+(setq org-startup-with-latex-preview t)
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:2 ends here
+
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:3]]
+;; Automatically toggle LaTeX previews when cursour enters/leaves them
+(use-package org-fragtog
+  :hook (org-mode . org-fragtog-mode))
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:3 ends here
+
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:4]]
+;; Make previews a bit larger
+(setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+
+;; I use a lot of Unicode, so let's always include a unicode header.
+(maybe-clone "https://armkeh.github.io/unicode-sty/")
+(setq org-format-latex-header
+      (concat org-format-latex-header
+              "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}"))
+;;
+;; Now this looks nice too!
+;; $\substack{𝔹 \\ ↓ \\ 𝒜}$ and $\mathbb{B}$.
+
+;; Always support unicode upon LaTeX export
+;; No need to explicitly import armkeh's unicode-sty in each org file.
+(add-to-list 'org-latex-packages-alist
+  "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}")
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:4 ends here
+
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:6]]
+;; Support “latex-as-png” src blocks, which show LaTeX as PNGs
+(use-package ob-latex-as-png)
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:6 ends here
+
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:7]]
+;; Use the “#+name” the user provides, instead of generating label identifiers.
+(setq org-latex-prefer-user-labels t)
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:7 ends here
 
 ;; [[file:init.org::*Show off-screen heading at the top of the window][Show off-screen heading at the top of the window:1]]
  (use-package org-sticky-header
@@ -1941,6 +2013,14 @@ by spaces.
 </a>
 </font>")
 ;;   [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3 ends here
+
+;; [[file:init.org::*Org-mode ⇐ HTML][Org-mode ⇐ HTML:2]]
+(use-package org-web-tools
+  :config
+  ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
+  ;; the page to get the HTML title.
+  (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url))
+;; Org-mode ⇐ HTML:2 ends here
 
 ;; [[file:init.org::*Which function are we writing?][Which function are we writing?:1]]
 (add-hook 'prog-mode-hook #'which-function-mode)
