@@ -748,7 +748,7 @@ one. ( Upon an initial startup using this configuration, it takes a total of
 :END:
 
 Let's decide on where we want to setup our declarations for personalising Emacs
-to our needs. Then, let's bootstrap Emacs' primitive packaging mechanism with a
+to our needs. Then, let's bootstrap Emacs' primintive packaging mechanism with a
 slick interface ---which not only installs Emacs packages but also programs at
 the operating system level, all from inside Emacs!  Finally, let's declare who
 we are and use that to setup Emacs email service.
@@ -1522,22 +1522,6 @@ https://alhassy.github.io/org-special-block-extras/
   ;; Use short names like ‘defblock’ instead of the fully qualified name
   ;; ‘org-special-block-extras--defblock’
     (org-special-block-extras-short-names))
-#+END_SRC
-
-** TODO Here are other packages that I want to be installed onto my machine. :Lisp:VC:Org:
-:PROPERTIES:
-:CUSTOM_ID: Here-are-other-packages-that-I-want-to-be-installed-onto-my-machine
-:END:
-
-#+BEGIN_SRC emacs-lisp
-(use-package htmlize :defer t)
-;; Main use: Org produced htmls are coloured.
-;; Can be used to export a file into a coloured html.
-
-;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
-;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets
-  :hook (org-mode . org-bullets-mode))
 #+END_SRC
 
 
@@ -4799,6 +4783,13 @@ screen should display battery life, data, & time. Likewise, we may have a casual
 file explorer ---primarily to show-off to newcomers, since great functionality
 is found with ~M-x dired~ ---doc:dired.
 
+#+BEGIN_SRC emacs-lisp
+;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
+;; https://github.com/emacsorphanage/org-bullets
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode))
+#+END_SRC
+
 ** Startup message: Emacs & Org versions
 :PROPERTIES:
 :CUSTOM_ID: Startup-message-Emacs-Org-versions
@@ -6546,6 +6537,12 @@ easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/
 In this section we consider the Org-mode exporters for PDFs and
 HTMLs. For example, we account for LaTeX citations and reliable HTML
 anchors.
+
+#+BEGIN_SRC emacs-lisp
+(use-package htmlize :defer t)
+;; Main use: Org produced htmls are coloured.
+;; Can be used to export a file into a coloured html.
+#+END_SRC
 
 ** Ensuring Useful HTML Anchors
 :PROPERTIES:
