@@ -4,6 +4,7 @@
 # ≥ 219 code blocks
 # (emacs-init-time) ⇒ 10.3 seconds (•̀ᴗ•́)و
 #
+
 #+title: A Life Configuring Emacs
 #+author: Musa Al-hassy
 #+email: alhassy@gmail.com
@@ -3057,30 +3058,6 @@ the specified ~:noweb-ref~, not on ~:CUSTOM_ID:~ incidentally having the same
 name.
 #+end_box
 
-*** Email contacts
-:PROPERTIES:
-:CUSTOM_ID: Email-contacts
-:END:
-
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
-,** contacts: Get the email of one of my personal contacts
-
-${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.org"))
-(yas-choose-value (--map (format "%s <%s>" (getf it :name) (getf it :email))
-my/contacts)))`} $0
-#+end_src
-
-*** Re-Enabling Templates
-:PROPERTIES:
-:CUSTOM_ID: Re-Enabling-Templates
-:END:
-
-After our yankpad templates are generated, we need to load it.
-#+BEGIN_SRC emacs-lisp
-;; After init hook; see above near use-package install.
-;; (yankpad-reload)
-#+END_SRC
-
 * Life within Org-mode
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
@@ -4770,6 +4747,27 @@ with a ‘c’apturing mechanism that captures the current message as a todo or 
 for further processing. Likewise, the default =C= is to cancel posting an article;
 we replace it to be a /silent capture: Squirrel away informative mail content
 without adding additional remarks./
+*** Email contacts
+:PROPERTIES:
+:CUSTOM_ID: Email-contacts
+:END:
+
+I have a personal file, ~contacts.org~, with Emacs Lisp src blocks contributing to
+a list variable ~my/contacts~. This list consists of entries of the shape:
+#+begin_src emacs-lisp :tangle no
+(:name "Jasim Jasonsama" :phone 123-455-4321 :email bobert_billiam@emacsmail.com)
+#+end_src
+
+With the following snippet, I can write ~contacts~ then kbd:TAB to select a
+personal contact.
+#+begin_src org :noweb-ref templates-from-other-places-in-my-init :tangle no :comments none
+,** contacts: Get the email of one of my personal contacts
+
+${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.org"))
+(yas-choose-value (--map (format "%s <%s>" (getf it :name) (getf it :email))
+my/contacts)))`} $0
+#+end_src
+
 * Cosmetics
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
