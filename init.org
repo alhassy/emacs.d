@@ -1,12 +1,6 @@
-# -*- org-export-babel-evaluate: nil -*-
-
-# (my/execute-startup-blocks)
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
-#      C-x C-s  is a normal save; whereas
-#  C-u C-x C-s  is a save after forming ~init.elc~ and ~README.md~.
-# C-c C-v C-t   ⇒  get init.el
 #
-#    ≥ 7900 line org file, with auto-generated TOC.
+# ≥ 8600 line org file, with auto-generated TOC.
 # ≥ 219 code blocks
 # (emacs-init-time) ⇒ 10.3 seconds (•̀ᴗ•́)و
 #
@@ -1488,6 +1482,46 @@ https://alhassy.github.io/org-special-block-extras/
     (org-special-block-extras-short-names))
 #+END_SRC
 
+** TODO Here are other packages that I want to be installed onto my machine. :Lisp:VC:Org:
+:PROPERTIES:
+:CUSTOM_ID: Here-are-other-packages-that-I-want-to-be-installed-onto-my-machine
+:END:
+
+
+#+BEGIN_SRC emacs-lisp
+(use-package htmlize :defer t)
+;; Main use: Org produced htmls are coloured.
+;; Can be used to export a file into a coloured html.
+
+;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
+;; https://github.com/emacsorphanage/org-bullets
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode))
+
+;; Haskell's cool
+(use-package haskell-mode :defer t)
+
+;; Lisp libraries with Haskell-like naming.
+(use-package dash)    ;; “A modern list library for Emacs”
+(use-package s   )    ;; “The long lost Emacs string manipulation library”.
+
+;; Library for working with system files;
+;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
+(use-package f)
+#+END_SRC
+
+Note:
++ [[https://github.com/magnars/dash.el][dash]]: “A modern list library for Emacs”
+  - E.g., ~(--filter (> it 10) (list 8 9 10 11 12))~
++ [[https://github.com/magnars/s.el][s]]: “The long lost Emacs string manipulation library”.
+  - E.g., ~s-trim, s-replace, s-join~.
+
+Remember that snippet for ~undo-tree~ in the introductory section?
+Let's activate it now, after ~use-package~ has been setup.
+#+BEGIN_SRC emacs-lisp :noweb yes
+  <<undo-tree-setup>>
+#+END_SRC
+
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -2879,7 +2913,7 @@ Using org-mode, we are able to /present/ code in any order and /tangle/ it to
 the order the compilers need it to be!
 
 Let's activate all such templates, now after template expansion has been setup.
-#+begin_src org
+#+begin_src org :tangle no
 ,#+begin_src org :noweb yes :tangle "~/.emacs.d/yankpad.org" :comments none
 <<templates-from-other-places-in-my-init>>
 ,#+end_src
@@ -2899,7 +2933,7 @@ before the ~<<⋯>>~ will propogate to the resulting extracted code.
 
 #+begin_box Warning! :background-color red
 This section had
-#+begin_src org
+#+begin_src org :tangle no
 :PROPERTIES:
 :CUSTOM_ID: Templates-from-other-places-in-my-init
 :END:
@@ -8128,46 +8162,6 @@ publish the current article to my blog.
 
 (add-hook 'org-mode-hook '(lambda ()
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
-#+END_SRC
-
-* TODO COMMENT Here are other packages that I want to be installed onto my machine. :Lisp:VC:Org:
-:PROPERTIES:
-:CUSTOM_ID: Here-are-other-packages-that-I-want-to-be-installed-onto-my-machine
-:END:
-
-
-#+BEGIN_SRC emacs-lisp
-(use-package htmlize :defer t)
-;; Main use: Org produced htmls are coloured.
-;; Can be used to export a file into a coloured html.
-
-;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
-;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets
-  :hook (org-mode . org-bullets-mode))
-
-;; Haskell's cool
-(use-package haskell-mode :defer t)
-
-;; Lisp libraries with Haskell-like naming.
-(use-package dash)    ;; “A modern list library for Emacs”
-(use-package s   )    ;; “The long lost Emacs string manipulation library”.
-
-;; Library for working with system files;
-;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
-(use-package f)
-#+END_SRC
-
-Note:
-+ [[https://github.com/magnars/dash.el][dash]]: “A modern list library for Emacs”
-  - E.g., ~(--filter (> it 10) (list 8 9 10 11 12))~
-+ [[https://github.com/magnars/s.el][s]]: “The long lost Emacs string manipulation library”.
-  - E.g., ~s-trim, s-replace, s-join~.
-
-Remember that snippet for ~undo-tree~ in the introductory section?
-Let's activate it now, after ~use-package~ has been setup.
-#+BEGIN_SRC emacs-lisp :noweb yes
-  <<undo-tree-setup>>
 #+END_SRC
 
 * Conclusion ---Why Configuration Files Should be Literate
