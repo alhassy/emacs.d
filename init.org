@@ -1865,6 +1865,11 @@ goto arbitrary historic versions, or quit.
 If we want to roll back to a previous version, we just doc:write-file or
 kbd:C-x_C-s as usual! The power of text!
 
+--------------------------------------------------------------------------------
+
+doc:vc-annotate is also very useful to go through history and work out when
+things went wrong.
+
 ** Version Control with SVN ---Using Magit!
 :PROPERTIES:
 :CUSTOM_ID: Version-Control-with-SVN-Using-Magit
