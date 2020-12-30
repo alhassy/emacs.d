@@ -44,6 +44,7 @@
 #+end_src
 :END:
 
+
 * Abstract                                                           :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -2054,7 +2055,11 @@ movement controls, such as:
   links appears.
 
 We can add our own speed keys by altering the ~org-speed-commands-user~
-association list variable.
+association list variable; e.g.,
+#+begin_src emacs-lisp
+(add-to-list 'org-speed-commands-user (cons "P" #'org-set-property))
+;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
+#+end_src
 
 #  To see the commands available, execute  ~M-x org-speed-command-help~.
 | ⇒ Moreover, [[kbd:?]] to see a complete list of keys available. ⇐ |
