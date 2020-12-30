@@ -1595,6 +1595,11 @@ important checkpoint, so please check what I have so far as a backup!
   (setq buffer-backed-up nil))
 
 (add-hook 'before-save-hook  'my/force-backup-of-buffer)
+
+;; [Default settings]
+;; Autosave when idle for 30sec or 300 input events performed
+(setq auto-save-timeout 30
+      auto-save-interval 300)
 #+END_SRC
 # See the name of the latest backup, which is appeneded by a number for each save ;-)
 # (file-newest-backup "~/.emacs.d/init.org")
