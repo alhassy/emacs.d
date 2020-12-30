@@ -68,6 +68,37 @@
 ;; Emacs Package Manager:6 ends here
 
 ;; [[file:init.org::*Emacs Package Manager][Emacs Package Manager:7]]
+;; Haskell's cool
+(use-package haskell-mode :defer t)
+
+;; Lisp libraries with Haskell-like naming.
+(use-package dash)    ;; “A modern list library for Emacs”
+(use-package s   )    ;; “The long lost Emacs string manipulation library”.
+
+;; Library for working with system files;
+;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
+(use-package f)
+;; Emacs Package Manager:7 ends here
+
+;; [[file:init.org::*Emacs Package Manager][Emacs Package Manager:8]]
+  ;; Allow tree-semantics for undo operations.
+  (use-package undo-tree
+    :diminish                       ;; Don't show an icon in the modeline
+    :config
+      ;; Always have it on
+      (global-undo-tree-mode)
+  
+      ;; Each node in the undo tree should have a timestamp.
+      (setq undo-tree-visualizer-timestamps t)
+  
+      ;; Show a diff window displaying changes between undo nodes.
+      (setq undo-tree-visualizer-diff t))
+  
+  ;; Execute (undo-tree-visualize) then navigate along the tree to witness
+  ;; changes being made to your file live!
+;; Emacs Package Manager:8 ends here
+
+;; [[file:init.org::*Emacs Package Manager][Emacs Package Manager:10]]
 (use-package quelpa
   :defer 5
   :custom (quelpa-upgrade-p t "Always try to update packages")
@@ -78,7 +109,7 @@
      :fetcher git
      :url "https://github.com/quelpa/quelpa-use-package.git"))
   (require 'quelpa-use-package))
-;; Emacs Package Manager:7 ends here
+;; Emacs Package Manager:10 ends here
 
 ;; [[file:init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:1]]
 ;; Auto installing OS system packages
@@ -220,7 +251,7 @@
     ;; Disable the in-Emacs fancy-links feature?
     ;; (org-special-block-extras-fancy-links nil)
     ;; Details heading “flash pink” whenever the user hovers over them?
-    (org-html-head "<style>  summary:hover {background:pink;} </style>")
+    (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
     ;; The message prefixing a ‘tweet:url’ badge
     (org-special-block-extras-link-twitter-excitement
      "This looks super neat (•̀ᴗ•́)و:")
@@ -229,64 +260,6 @@
   ;; ‘org-special-block-extras--defblock’
     (org-special-block-extras-short-names))
 ;; Org-Mode Administrivia:5 ends here
-
-;; [[file:init.org::*Here are other packages that I want to be installed onto my machine.][Here are other packages that I want to be installed onto my machine.:1]]
-(use-package htmlize :defer t)
-;; Main use: Org produced htmls are coloured.
-;; Can be used to export a file into a coloured html.
-
-;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
-;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets
-  :hook (org-mode . org-bullets-mode))
-
-;; Haskell's cool
-(use-package haskell-mode :defer t)
-
-;; Lisp libraries with Haskell-like naming.
-(use-package dash)    ;; “A modern list library for Emacs”
-(use-package s   )    ;; “The long lost Emacs string manipulation library”.
-
-;; Library for working with system files;
-;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
-(use-package f)
-;; Here are other packages that I want to be installed onto my machine.:1 ends here
-
-;; [[file:init.org::*Here are other packages that I want to be installed onto my machine.][Here are other packages that I want to be installed onto my machine.:2]]
-  ;; Allow tree-semantics for undo operations.
-  (use-package undo-tree
-    :diminish                       ;; Don't show an icon in the modeline
-    :config
-      ;; Always have it on
-      (global-undo-tree-mode)
-  
-      ;; Each node in the undo tree should have a timestamp.
-      (setq undo-tree-visualizer-timestamps t)
-  
-      ;; Show a diff window displaying changes between undo nodes.
-      (setq undo-tree-visualizer-diff t))
-  
-  ;; Execute (undo-tree-visualize) then navigate along the tree to witness
-  ;; changes being made to your file live!
-;; Here are other packages that I want to be installed onto my machine.:2 ends here
-
-;; [[file:init.org::*Undo-tree: Very Local Version Control][Undo-tree: Very Local Version Control:1]]
-;; Allow tree-semantics for undo operations.
-(use-package undo-tree
-  :diminish                       ;; Don't show an icon in the modeline
-  :config
-    ;; Always have it on
-    (global-undo-tree-mode)
-
-    ;; Each node in the undo tree should have a timestamp.
-    (setq undo-tree-visualizer-timestamps t)
-
-    ;; Show a diff window displaying changes between undo nodes.
-    (setq undo-tree-visualizer-diff t))
-
-;; Execute (undo-tree-visualize) then navigate along the tree to witness
-;; changes being made to your file live!
-;; Undo-tree: Very Local Version Control:1 ends here
 
 ;; [[file:init.org::*Automatic Backups][Automatic Backups:1]]
 ;; New location for backups.
@@ -694,7 +667,7 @@ visit all blocks with such a name."
  :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
 ;; Word Completion:3 ends here
 
-;; [[file:init.org::*Intro to snippets][Intro to snippets:1]]
+;; [[file:init.org::*Intro to Snippets][Intro to Snippets:1]]
 ;; Add yasnippet support for all company backends
 ;;
 (cl-defun my/company-backend-with-yankpad (backend)
@@ -708,9 +681,9 @@ visit all blocks with such a name."
       backend
     (append (if (consp backend) backend (list backend))
             '(:with company-yankpad))))
-;; Intro to snippets:1 ends here
+;; Intro to Snippets:1 ends here
 
-;; [[file:init.org::*Intro to snippets][Intro to snippets:2]]
+;; [[file:init.org::*Intro to Snippets][Intro to Snippets:2]]
 ;; Yet another snippet extension program
 (use-package yasnippet
   :diminish yas-minor-mode
@@ -735,9 +708,9 @@ visit all blocks with such a name."
 
     ;; Set company-backend as a secondary completion backend to all existing backends.
     (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
-;; Intro to snippets:2 ends here
+;; Intro to Snippets:2 ends here
 
-;; [[file:init.org::*Intro to snippets][Intro to snippets:5]]
+;; [[file:init.org::*Intro to Snippets][Intro to Snippets:5]]
 (cl-defun org-insert-link ()
   "Makes an org link by inserting the URL copied to clipboard and
   prompting for the link description only.
@@ -750,7 +723,7 @@ visit all blocks with such a name."
   (interactive)
   (insert "my_org_insert_link")
   (yankpad-expand))
-;; Intro to snippets:5 ends here
+;; Intro to Snippets:5 ends here
 
 ;; [[file:init.org::*Emojis][Emojis:2]]
 ;; Get all unicode emojis to appear within Emacs
@@ -1259,6 +1232,13 @@ C-u C-u C-c c ⇒ Goto last note stored."
               (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
             gnus-article-mode-map))
 ;; Capturing Mail as Todo/Notes:1 ends here
+
+;; [[file:init.org::*Cosmetics][Cosmetics:1]]
+;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
+;; https://github.com/emacsorphanage/org-bullets
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode))
+;; Cosmetics:1 ends here
 
 ;; [[file:init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:1]]
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
@@ -2007,6 +1987,12 @@ themes (•̀ᴗ•́)و"
         "pdflatex -shell-escape -output-directory %o %f"
         "pdflatex -shell-escape -output-directory %o %f"))
 ;; Bibliography & Coloured LaTeX using Minted:1 ends here
+
+;; [[file:init.org::*HTML ⇐ Org-mode][HTML ⇐ Org-mode:1]]
+(use-package htmlize :defer t)
+;; Main use: Org produced htmls are coloured.
+;; Can be used to export a file into a coloured html.
+;; HTML ⇐ Org-mode:1 ends here
 
 ;; [[file:init.org::*Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors:1]]
 (defun my/ensure-headline-ids (&rest _)
