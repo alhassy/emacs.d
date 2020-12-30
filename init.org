@@ -6097,6 +6097,12 @@ It does not work as I'd like, but may prove useful to have around.
 
 + Possibly useful: Open a webpage with ~M-x eww~ then toggle ~M-x read-only-mode~ to
   edit the text, say for notes or deletions, as you read! No need to copy-paste.
+
+--------------------------------------------------------------------------------
+
+[[https://github.com/alphapapa/org-web-tools][org-web-tools]] claims to /view, capture, and archive Web pages in Org-mode/; this
+may be a very useful tool.
+
 * Programming
 :PROPERTIES:
 :CUSTOM_ID: Programming
