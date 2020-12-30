@@ -1514,7 +1514,7 @@ https://alhassy.github.io/org-special-block-extras/
     ;; Disable the in-Emacs fancy-links feature?
     ;; (org-special-block-extras-fancy-links nil)
     ;; Details heading “flash pink” whenever the user hovers over them?
-    (org-html-head "<style>  summary:hover {background:pink;} </style>")
+    (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
     ;; The message prefixing a ‘tweet:url’ badge
     (org-special-block-extras-link-twitter-excitement
      "This looks super neat (•̀ᴗ•́)و:")
@@ -1523,8 +1523,6 @@ https://alhassy.github.io/org-special-block-extras/
   ;; ‘org-special-block-extras--defblock’
     (org-special-block-extras-short-names))
 #+END_SRC
-
-
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
