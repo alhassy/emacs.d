@@ -44,7 +44,6 @@
 #+end_src
 :END:
 
-
 * Abstract                                                           :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -3093,18 +3092,18 @@ Anyhow, the setup:
         org-journal-file-format "Personal-%Y-%m-%d"))
 #+end_src
 
-
-
-Convenient org-journal Snippet Extensions
-Kill journal buffer after saving buffer (By @dhruvparamhans)
-(defun org-journal-save-entry-and-exit()
-  "Simple convenience function.
-  Saves the buffer of the current day's entry and kills the window
-  Similar to org-capture like behavior"
-  (interactive)
-  (save-buffer)
-  (kill-buffer-and-window))
-(define-key org-journal-mode-map (kbd "C-x C-s") 'org-journal-save-entry-and-exit)
+# Convenient org-journal Snippet Extensions
+# Kill journal buffer after saving buffer (By @dhruvparamhans)
+# (defun org-journal-save-entry-and-exit()
+#   "Simple convenience function.
+#   Saves the buffer of the current day's entry and kills the window
+#   Similar to org-capture like behavior"
+#   (interactive)
+#   (save-buffer)
+#   (kill-buffer-and-window))
+# (define-key org-journal-mode-map (kbd "C-x C-s")
+# 'org-journal-save-entry-and-exit)
+#
 
 *** Super Terse Tutorial
 :PROPERTIES:
@@ -3153,8 +3152,7 @@ All journal entries are registered in the Emacs Calendar. To see available journ
 
 --------------------------------------------------------------------------------
 
-
-*** TODO Guided Journaling
+*** Guided Journaling
 :PROPERTIES:
 :CUSTOM_ID: Guided-Journaling
 :END:
