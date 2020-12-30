@@ -2151,6 +2151,18 @@ let's stop that:
 ;; Seamless use of babel: No confirmation upon execution.
 ;; Downside: Could accidentally evaluate harmful code.
 (setq org-confirm-babel-evaluate nil)
+
+;; Never evaluate code blocks upon export and replace results when evaluation does occur.
+;; For a particular language 𝑳, alter ‘org-babel-default-header-args:𝑳’.
+(setq org-babel-default-header-args
+      '((:results . "replace")
+        (:session . "none")
+        (:exports . "both")
+        (:cache .   "no")
+        (:noweb . "no")
+        (:hlines . "no")
+        (:tangle . "no")
+        (:eval . "never-export")))
 #+END_SRC
 
 # A worked out example can be obtained as follows: ~<g TAB~ then ~C-c C-C~ to make a nice
