@@ -1,9 +1,10 @@
 ;; [[file:init.org::+begin_src emacs-lisp :exports none][No heading:1]]
 (require 'cl) ;; to get loop instead of cl-loop, etc.
 
-;; before this: init time: 19.174192 seconds
+;; before this: init time: 13
 ;; after: 12 seconds.
 ; (setq gc-cons-threshold 50000000) ;; orginaly 800,000
+;; reduce number of times GC occurs.
 ;; No heading:1 ends here
 
 ;; [[file:init.org::*  =~/.emacs= vs. =init.org=][  =~/.emacs= vs. =init.org=:4]]
@@ -559,628 +560,6 @@ visit all blocks with such a name."
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 ;; Jumping to extreme semantic units:1 ends here
 
-;; [[file:init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:1]]
-;; Silence the usual message: Get more info using the about page via C-h C-a.
-(setq inhibit-startup-message t)
-
-(defun display-startup-echo-area-message ()
-  "The message that is shown after ‘user-init-file’ is loaded."
-  (message
-      (concat "Welcome "      user-full-name
-              "! Emacs "      emacs-version
-              "; Org-mode "   org-version
-              "; System "     (symbol-name system-type)
-              "/"             (system-name)
-              "; Time "       (emacs-init-time))))
-;; Startup message: Emacs & Org versions:1 ends here
-
-;; [[file:init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:3]]
-;; Keep self motivated!
-(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
-;; Startup message: Emacs & Org versions:3 ends here
-
-;; [[file:init.org::*My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up:1]]
-(find-file "~/Dropbox/todo.org")
-(split-window-right)			  ;; C-x 3
-(other-window 1)                              ;; C-x 0
-(let ((enable-local-variables :all)           ;; Load *all* locals.
-      (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
-  (ignore-errors (find-file "~/.emacs.d/init.org")))
-;; My to-do list: The initial buffer when Emacs opens up:1 ends here
-
-;; [[file:init.org::*Exquisite Themes][Exquisite Themes:1]]
-;; Treat all themes as safe; no query before use.
-(setf custom-safe-themes t)
-
-;; Nice looking themes ^_^
-(use-package solarized-theme :defer t)
-(use-package doom-themes :defer t)
-(use-package spacemacs-common
-  :defer t
-  :ensure spacemacs-theme)
-;; Exquisite Themes:1 ends here
-
-;; [[file:init.org::*Exquisite Themes][Exquisite Themes:2]]
-;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
-(setcdr (last my/themes) my/themes)
-;; Exquisite Themes:2 ends here
-
-;; [[file:init.org::*Exquisite Themes][Exquisite Themes:3]]
-(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
-  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
-
-When a universal prefix is given, we load a random theme from all possible themes.
-Nice way to learn about more themes (•̀ᴗ•́)و
-"
-  (interactive)
-  (dolist (τ custom-enabled-themes)
-    (disable-theme τ))
-  (-let [theme (if current-prefix-arg (nth (random (length (custom-available-themes))) (custom-available-themes)) new-theme)]
-    (when theme
-      (load-theme theme)
-      (message "Theme %s" theme))))
-
-(defalias 'my/toggle-theme #' my/disable-all-themes)
-(global-set-key "\C-x\ t" 'my/toggle-theme)
-(my/toggle-theme)
-;; Exquisite Themes:3 ends here
-
-;; [[file:init.org::*A sleek & informative mode line][A sleek & informative mode line:1]]
-(setq display-time-day-and-date t)
-(display-time)
-;; (display-battery-mode -1)
-;; Nope; let's use a fancy indicator …
-(use-package fancy-battery
-  :diminish
-  :custom (fancy-battery-show-percentage  t)
-          (battery-update-interval       15)
-  :config (fancy-battery-mode))
-;; A sleek & informative mode line:1 ends here
-
-;; [[file:init.org::*A sleek & informative mode line][A sleek & informative mode line:2]]
-;; Following two taken care of in the spaceline package, below.
-;; (column-number-mode                 t)
-;; (line-number-mode                   t)
-(setq display-line-numbers-width-start t)
-(global-display-line-numbers-mode      t)
-;; A sleek & informative mode line:2 ends here
-
-;; [[file:init.org::*A sleek & informative mode line][A sleek & informative mode line:3]]
-;; When using helm & info & default, mode line looks prettier.
-(use-package spaceline
-  :custom (spaceline-buffer-encoding-abbrev-p nil)
-          ;; Use an arrow to seperate modeline information
-          (powerline-default-separator 'arrow)
-          ;; Show “line-number : column-number” in modeline.
-          (spaceline-line-column-p t)
-          ;; Use two colours to indicate whether a buffer is modified or not.
-          (spaceline-highlight-face-func 'spaceline-highlight-face-modified)
-  :config (custom-set-faces '(spaceline-unmodified ((t (:foreground "black" :background "gold")))))
-          (custom-set-faces '(spaceline-modified   ((t (:foreground "black" :background "cyan")))))
-          (require 'spaceline-config)
-          (spaceline-helm-mode)
-          (spaceline-info-mode)
-          (spaceline-emacs-theme))
-;; A sleek & informative mode line:3 ends here
-
-;; [[file:init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:1]]
-(use-package dired-subtree
-  :bind (:map dired-mode-map
-              ("i" . dired-subtree-toggle)))
-;; Powerful Directory Editing with ~dired~:1 ends here
-
-;; [[file:init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:2]]
-(use-package dired-collapse
-  :hook (dired-mode . dired-collapse-mode))
-;; Powerful Directory Editing with ~dired~:2 ends here
-
-;; [[file:init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:3]]
-(use-package dired-filter
-  :hook (dired-mode . (lambda () (dired-filter-group-mode)
-                                 (dired-filter-by-garbage)))
-  :custom
-    (dired-garbage-files-regexp
-      "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
-    (dired-filter-group-saved-groups
-      '(("default"
-         ("Org"    (extension "org"))
-         ("Executables" (exexutable))
-         ("Directories" (directory))
-         ("PDF"    (extension "pdf"))
-         ("LaTeX"  (extension "tex" "bib"))
-         ("Images" (extension "png"))
-         ("Code"   (extension "hs" "agda" "lagda"))
-         ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
-;; Powerful Directory Editing with ~dired~:3 ends here
-
-;; [[file:init.org::*Never lose the cursor][Never lose the cursor:1]]
-;; Make it very easy to see the line with the cursor.
-(global-hl-line-mode t)
-;; Never lose the cursor:1 ends here
-
-;; [[file:init.org::*Never lose the cursor][Never lose the cursor:2]]
-(use-package beacon
-  :diminish
-  :config (setq beacon-color "#666600")
-  :hook   ((org-mode text-mode) . beacon-mode))
-;; Never lose the cursor:2 ends here
-
-;; [[file:init.org::*Dimming Unused Windows][Dimming Unused Windows:1]]
-(use-package dimmer
-  :config (dimmer-mode))
-;; Dimming Unused Windows:1 ends here
-
-;; [[file:init.org::*Buffer names are necessarily injective][Buffer names are necessarily injective:1]]
-;; Note that ‘uniquify’ is builtin.
-(require 'uniquify)
-(setq uniquify-separator "/"               ;; The separator in buffer names.
-      uniquify-buffer-name-style 'forward) ;; names/in/this/style
-;; Buffer names are necessarily injective:1 ends here
-
-;; [[file:init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:1]]
-(setq visible-bell 1)
-;; Flashing when something goes wrong ---no blinking:1 ends here
-
-;; [[file:init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:2]]
-(blink-cursor-mode 1)
-;; Flashing when something goes wrong ---no blinking:2 ends here
-
-;; [[file:init.org::*Hiding Scrollbar, tool bar, and menu][Hiding Scrollbar, tool bar, and menu:1]]
-(tool-bar-mode   -1)  ;; No large icons please
-(scroll-bar-mode -1)  ;; No visual indicator please
-(menu-bar-mode   -1)  ;; The Mac OS top pane has menu options
-;; Hiding Scrollbar, tool bar, and menu:1 ends here
-
-;; [[file:init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):1]]
-(setq show-paren-delay  0)
-(setq show-paren-style 'mixed)
-(show-paren-mode)
-;; Highlight & complete parenthesis pair when cursor is near ;-):1 ends here
-
-;; [[file:init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):2]]
-(use-package rainbow-delimiters
-  :disabled
-  :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
-;; Highlight & complete parenthesis pair when cursor is near ;-):2 ends here
-
-;; [[file:init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):4]]
-(electric-pair-mode 1)
-;; Highlight & complete parenthesis pair when cursor is near ;-):4 ends here
-
-;; [[file:init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):5]]
-;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
-(setq electric-pair-inhibit-predicate
-      (lambda (c)
-        (or (member c '(?< ?> ?~)) (electric-pair-default-inhibit c))))
-
-;; Treat ‘<’ and ‘>’ as if they were words, instead of ‘parenthesis’.
-(modify-syntax-entry ?< "w<")
-(modify-syntax-entry ?> "w>")
-;; Highlight & complete parenthesis pair when cursor is near ;-):5 ends here
-
-;; [[file:init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:1]]
-(use-package persistent-scratch
-  :defer t
-  ;; In this mode, the usual save key saves to the underlying persistent file.
-  :bind (:map persistent-scratch-mode-map
-              ("C-x C-s" . persistent-scratch-save)))
-;; Persistent Scratch Buffer:1 ends here
-
-;; [[file:init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:2]]
-(defun scratch ()
-   "Recreate the scratch buffer, loading any persistent state."
-   (interactive)
-   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
-   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
-   (org-mode)
-   (persistent-scratch-mode)
-   (persistent-scratch-autosave-mode 1))
-
-;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
-
-;; Upon startup, close the default scratch buffer and open one as specfied above
-(ignore-errors (kill-buffer "*scratch*") (scratch))
-;; Persistent Scratch Buffer:2 ends here
-
-;; [[file:init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:3]]
-(setq initial-scratch-message (concat
-  "#+Title: Persistent Scratch Buffer"
-  "\n#\n# Welcome! This’ a place for trying things out."
-  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
-;; Persistent Scratch Buffer:3 ends here
-
-;; [[file:init.org::*Proportional fonts for Headlines][Proportional fonts for Headlines:1]]
-(set-face-attribute 'org-document-title nil :height 2.0)
-;; (set-face-attribute 'org-level-1 nil :height 1.0)
-;; Remaining org-level-𝒾 have default height 1.0, for 𝒾 : 1..8.
-;;
-;; E.g., reset org-level-1 to default.
-;; (custom-set-faces '(org-level-1 nil))
-;; Proportional fonts for Headlines:1 ends here
-
-;; [[file:init.org::*Show off-screen heading at the top of the window][Show off-screen heading at the top of the window:1]]
- (use-package org-sticky-header
-  :hook (org-mode . org-sticky-header-mode)
-  :config
-  (setq-default
-   org-sticky-header-full-path 'full
-   ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " / "))
-;; Show off-screen heading at the top of the window:1 ends here
-
-;; [[file:init.org::*Prose][Prose:1]]
-(add-hook 'before-save-hook 'whitespace-cleanup)
-;; Prose:1 ends here
-
-;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:1]]
-(setq-default fill-column 80          ;; Let's avoid going over 80 columns
-              truncate-lines nil      ;; I never want to scroll horizontally
-              indent-tabs-mode nil)   ;; Use spaces instead of tabs
-;; Fill-mode ---Word Wrapping:1 ends here
-
-;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:2]]
-;; Wrap long lines when editing text
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
-(add-hook 'org-mode-hook 'turn-on-auto-fill)
-
-;; Do not show the “Fill” indicator in the mode line.
-(diminish 'auto-fill-function)
-;; Fill-mode ---Word Wrapping:2 ends here
-
-;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:3]]
-;; Bent arrows at the end and start of long lines.
-(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
-(diminish 'visual-line-mode)
-(global-visual-line-mode 1)
-;; Fill-mode ---Word Wrapping:3 ends here
-
-;; [[file:init.org::*Pretty Lists Markers][Pretty Lists Markers:1]]
-;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
-(cl-loop for (x y z) in '(("+" "◦" *)
-                       ("-" "•" *)
-                       ("*" "⋆" +))
-      do (font-lock-add-keywords 'org-mode
-                                 `((,(format "^ %s\\([%s]\\) " z x)
-                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
-;; Pretty Lists Markers:1 ends here
-
-;; [[file:init.org::*Word Completion][Word Completion:1]]
-(use-package company
-  :diminish
-  :config
-  (global-company-mode 1)
-  (setq ;; Only 2 letters required for completion to activate.
-   company-minimum-prefix-length 2
-
-   ;; Search other buffers for compleition candidates
-   company-dabbrev-other-buffers t
-   company-dabbrev-code-other-buffers t
-
-   ;; Show candidates according to importance, then case, then in-buffer frequency
-   company-transformers '(company-sort-by-backend-importance
-                          company-sort-prefer-same-case-prefix
-                          company-sort-by-occurrence)
-
-   ;; Flushright any annotations for a compleition;
-   ;; e.g., the description of what a snippet template word expands into.
-   company-tooltip-align-annotations t
-
-   ;; Allow (lengthy) numbers to be eligible for completion.
-   company-complete-number t
-
-   ;; M-⟪num⟫ to select an option according to its number.
-   company-show-numbers t
-
-   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
-   company-tooltip-limit 10
-
-   ;; Edge of the completion list cycles around.
-   company-selection-wrap-around t
-
-   ;; Do not downcase completions by default.
-   company-dabbrev-downcase nil
-
-   ;; Even if I write something with the ‘wrong’ case,
-   ;; provide the ‘correct’ casing.
-   company-dabbrev-ignore-case nil
-
-   ;; Immediately activate completion.
-   company-idle-delay 0)
-
-  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
-  ;; Override all minor modes that use C-/; bind-key* is discussed below.
-  (bind-key* "C-/" #'company-manual-begin)
-
-  ;; Bindings when the company list is active.
-  :bind (:map company-active-map
-              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
-              ("<tab>" . company-complete-selection)
-              ;; Use C-n,p for navigation in addition to M-n,p
-              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
-              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
-
-;; It's so fast that we don't need a key-binding to start it!
-;; Word Completion:1 ends here
-
-;; [[file:init.org::*Word Completion][Word Completion:2]]
-(use-package company-emoji
-  :config (add-to-list 'company-backends 'company-emoji))
-;; Word Completion:2 ends here
-
-;; [[file:init.org::*Word Completion][Word Completion:3]]
-(use-package emojify
- :config (setq emojify-display-style 'image)
- :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
-;; Word Completion:3 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:1]]
-(use-package flyspell
-  :diminish
-  :hook ((prog-mode . flyspell-prog-mode)
-         ((org-mode text-mode) . flyspell-mode)))
-;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:2]]
-(setq ispell-program-name "/usr/local/bin/aspell")
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
-;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:4]]
-(eval-after-load "flyspell"
-  ' (progn
-     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
-;; Fix spelling as you type ---thesaurus & dictionary too!:4 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:5]]
-(global-font-lock-mode t)
-(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
-;; Fix spelling as you type ---thesaurus & dictionary too!:5 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:6]]
-(setq ispell-silently-savep t)
-;; Fix spelling as you type ---thesaurus & dictionary too!:6 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:7]]
-(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
-;; Fix spelling as you type ---thesaurus & dictionary too!:7 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:8]]
-(add-hook          'c-mode-hook 'flyspell-prog-mode)
-(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
-;; Fix spelling as you type ---thesaurus & dictionary too!:8 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:9]]
-(use-package synosaurus
-  :diminish synosaurus-mode
-  :init    (synosaurus-mode)
-  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
-;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:10]]
-;; (shell-command "brew cask install xquartz &") ;; Dependency
-;; (shell-command "brew install wordnet &")
-;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:11]]
-(use-package wordnut
- :bind ("M-!" . wordnut-lookup-current-word))
-
-;; Use M-& for async shell commands.
-;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
-
-;; [[file:init.org::*Using a Grammar & Style Checker][Using a Grammar & Style Checker:1]]
-(use-package langtool
- :defer t
- :custom
-  (langtool-language-tool-jar
-   "~/Applications/LanguageTool-4.5/languagetool-commandline.jar"))
-;; Using a Grammar & Style Checker:1 ends here
-
-;; [[file:init.org::*Using a Grammar & Style Checker][Using a Grammar & Style Checker:2]]
-;; Quickly check, correct, then clean up /region/ with M-^
-(eval-after-load 'langtool
-(progn
-(add-hook 'langtool-error-exists-hook
-  (lambda ()
-     (langtool-correct-buffer)
-     (langtool-check-done)))
-
-(global-set-key "\M-^"
-                (lambda ()
-                  (interactive)
-                  (message "Grammar checking begun ...")
-                  (langtool-check)))))
-;; Using a Grammar & Style Checker:2 ends here
-
-;; [[file:init.org::*Lightweight Prose Proofchecking][Lightweight Prose Proofchecking:1]]
-(use-package writegood-mode
-  ;; Load this whenver I'm composing prose.
-  :hook (text-mode org-mode)
-  ;; Don't show me the “Wg” marker in the mode line
-  :diminish
-  ;; Some additional weasel words.
-  :config
-  (--map (push it writegood-weasel-words)
-         '("some" "simple" "simply" "easy" "often" "easily" "probably"
-           "clearly"               ;; Is the premise undeniably true?
-           "experience shows"      ;; Whose? What kind? How does it do so?
-           "may have"              ;; It may also have not!
-           "it turns out that")))  ;; How does it turn out so?
-           ;; ↯ What is the evidence of highighted phrase? ↯
-;; Lightweight Prose Proofchecking:1 ends here
-
-;; [[file:init.org::*Placeholder Text ---For Learning & Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
-(use-package lorem-ipsum :defer t)
-;; Placeholder Text ---For Learning & Experimenting:1 ends here
-
-;; [[file:init.org::*Some text to make us smile][Some text to make us smile:1]]
-(use-package dad-joke
-  :defer t
-  :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
-;; Some text to make us smile:1 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:1]]
-; (load (shell-command-to-string "agda-mode locate"))
-;;
-;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
-; (makunbound 'agda2-include-dirs)
-;; Unicode Input via Agda Input:1 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:2]]
-(load-file (let ((coding-system-for-read 'utf-8))
-                (shell-command-to-string "/usr/local/bin/agda-mode locate")))
-;; Unicode Input via Agda Input:2 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:3]]
-;; MA: This results in "Package cl is deprecated" !?
-(use-package agda-input
-  :ensure nil ;; I have it locally.
-  :demand t
-  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-  :custom (default-input-method "Agda"))
-  ;; Now C-\ or M-x toggle-input-method turn it on and offers
-;; Unicode Input via Agda Input:3 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:4]]
-;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
-;; Unicode Input via Agda Input:4 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:5]]
-(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
-;; Unicode Input via Agda Input:5 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:6]]
-(cl-loop for item
-      in '(;; categorial ;;
-           ("alg" "𝒜𝓁ℊ")
-           ("split" "▵")
-           ("join" "▿")
-           ("adj" "⊣")
-           (";;" "﹔")
-           (";;" "⨾")
-           (";;" "∘")
-           ;; logic
-           ("if" "⇐")
-           ("onlyif" "⇒")
-           ;; lattices ;;
-           ("meet" "⊓")
-           ("join" "⊔")
-           ;; tortoise brackets, infix relations
-           ("((" "〔")
-           ("))" "〕")
-           ;; residuals
-           ("syq"  "╳")
-           ("over" "╱")
-           ("under" "╲")
-           ;; Z-quantification range notation ;;
-           ;; e.g., “∀ x ❙ R • P” ;;
-           ("|"    "❙")
-           ("with" "❙")
-           ;; Z relational operators
-           ("domainrestriction" "◁")
-           ("domr" "◁")
-           ("domainantirestriction" "⩤")
-           ("doma" "⩤")
-           ("rangerestriction" "▷")
-           ("ranr" "▷")
-           ("rangeantirestriction" "⩥")
-           ("rana" "⩥")
-           ;; adjunction isomorphism pair ;;
-           ("floor"  "⌊⌋")
-           ("lower"  "⌊⌋")
-           ("lad"    "⌊⌋")
-           ("ceil"   "⌈⌉")
-           ("raise"  "⌈⌉")
-           ("rad"    "⌈⌉")
-           ;; Arrows
-           ("<=" "⇐")
-        ;; more (key value) pairs here
-        )
-      do (add-to-list 'agda-input-user-translations item))
-;; Unicode Input via Agda Input:6 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:7]]
-;; Add to the list of translations using “emot” and the given, more specfic, name.
-;; Whence, \emot shows all possible emotions.
-(cl-loop for emot
-      in `(;; angry, cry, why-you-no
-           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")
-           ;; confused, disapprove, dead, shrug
-           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯")
-           ;; dance, csi
-           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
-            ,(s-collapse-whitespace "•_•)
-                                      ( •_•)>⌐■-■
-                                      (⌐■_■)"))
-           ;; love, pleased, success, yesss
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
-      do
-      (add-to-list 'agda-input-user-translations emot)
-      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
-;; Unicode Input via Agda Input:7 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:8]]
-;; activate translations
-(agda-input-setup)
-;; Unicode Input via Agda Input:8 ends here
-
-;; [[file:init.org::*Increase/decrease text size][Increase/decrease text size:1]]
-(global-set-key (kbd "C-+") 'text-scale-increase)
-(global-set-key (kbd "C--") 'text-scale-decrease)
-;; C-x C-0 restores the default font size
-;; Increase/decrease text size:1 ends here
-
-;; [[file:init.org::*Moving Text Around][Moving Text Around:1]]
-;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(use-package move-text
-  :config (move-text-default-bindings))
-;; Moving Text Around:1 ends here
-
-;; [[file:init.org::*Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations:1]]
-(global-subword-mode 1)
-(diminish 'subword-mode)
-;; Enabling CamelCase Aware Editing Operations:1 ends here
-
-;; [[file:init.org::*Delete Selection Mode][Delete Selection Mode:1]]
-(delete-selection-mode 1)
-;; Delete Selection Mode:1 ends here
-
-;; [[file:init.org::*  ~M-n,p~: Word-at-Point Navigation][  ~M-n,p~: Word-at-Point Navigation:1]]
-(use-package smartscan
-  :defer t
-  :config
-    (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
-    (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
-    (global-set-key (kbd "M-'") 'my/symbol-replace))
-;;   ~M-n,p~: Word-at-Point Navigation:1 ends here
-
-;; [[file:init.org::*  ~M-n,p~: Word-at-Point Navigation][  ~M-n,p~: Word-at-Point Navigation:2]]
-(defun my/symbol-replace (replacement)
-  "Replace all standalone symbols in the buffer matching the one at point."
-  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
-  (save-excursion
-    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
-      (beginning-of-buffer)
-      ;; (query-replace-regexp symbol replacement)
-      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
-;;   ~M-n,p~: Word-at-Point Navigation:2 ends here
-
-;; [[file:init.org::*  ~M-n,p~: Word-at-Point Navigation][  ~M-n,p~: Word-at-Point Navigation:3]]
-;; C-n, next line, inserts newlines when at the end of the buffer
-(setq next-line-add-newlines t)
-;;   ~M-n,p~: Word-at-Point Navigation:3 ends here
-
-;; [[file:init.org::*Letter-based Navigation][Letter-based Navigation:1]]
-(use-package ace-jump-mode
-  :defer t
-  :config (bind-key* "C-c SPC" 'ace-jump-mode))
-
-;; See ace-jump issues to configure for use of home row keys.
-;; Letter-based Navigation:1 ends here
-
 ;; [[file:init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:1]]
 (cl-defun my/org-capture-buffer (&optional keys no-additional-remarks
                                            (heading-regexp "Subject: \\(.*\\)"))
@@ -1678,6 +1057,753 @@ C-u C-u C-c c ⇒ Goto last note stored."
             gnus-article-mode-map))
 ;; Capturing Mail as Todo/Notes:1 ends here
 
+;; [[file:init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:1]]
+;; Silence the usual message: Get more info using the about page via C-h C-a.
+(setq inhibit-startup-message t)
+
+(defun display-startup-echo-area-message ()
+  "The message that is shown after ‘user-init-file’ is loaded."
+  (message
+      (concat "Welcome "      user-full-name
+              "! Emacs "      emacs-version
+              "; Org-mode "   org-version
+              "; System "     (symbol-name system-type)
+              "/"             (system-name)
+              "; Time "       (emacs-init-time))))
+;; Startup message: Emacs & Org versions:1 ends here
+
+;; [[file:init.org::*Startup message: Emacs & Org versions][Startup message: Emacs & Org versions:3]]
+;; Keep self motivated!
+(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+;; Startup message: Emacs & Org versions:3 ends here
+
+;; [[file:init.org::*My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up:1]]
+(find-file "~/Dropbox/todo.org")
+(split-window-right)			  ;; C-x 3
+(other-window 1)                              ;; C-x 0
+(let ((enable-local-variables :all)           ;; Load *all* locals.
+      (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
+  (ignore-errors (find-file "~/.emacs.d/init.org")))
+;; My to-do list: The initial buffer when Emacs opens up:1 ends here
+
+;; [[file:init.org::*Exquisite Themes][Exquisite Themes:1]]
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
+
+;; Nice looking themes ^_^
+(use-package solarized-theme :defer t)
+(use-package doom-themes :defer t)
+(use-package spacemacs-common
+  :defer t
+  :ensure spacemacs-theme)
+;; Exquisite Themes:1 ends here
+
+;; [[file:init.org::*Exquisite Themes][Exquisite Themes:2]]
+;; Infinite list of my commonly used themes.
+(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
+(setcdr (last my/themes) my/themes)
+;; Exquisite Themes:2 ends here
+
+;; [[file:init.org::*Exquisite Themes][Exquisite Themes:3]]
+(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
+  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
+
+When a universal prefix is given, “C-u C-x t”, we load a random
+theme from all possible themes.  Nice way to learn about more
+themes (•̀ᴗ•́)و"
+  (interactive)
+  (dolist (τ custom-enabled-themes)
+    (disable-theme τ))
+  (-let [theme (if current-prefix-arg
+                   (nth (random (length (custom-available-themes)))
+                        (custom-available-themes))
+                 new-theme)]
+    (when theme
+      (load-theme theme)
+      (message "Theme %s" theme))))
+
+(defalias 'my/toggle-theme #' my/disable-all-themes)
+
+(global-set-key "\C-x\ t" 'my/toggle-theme)
+
+(my/toggle-theme)
+;; Exquisite Themes:3 ends here
+
+;; [[file:init.org::*A sleek & informative mode line][A sleek & informative mode line:1]]
+(setq display-time-day-and-date t)
+(display-time)
+;; (display-battery-mode -1)
+;; Nope; let's use a fancy indicator …
+(use-package fancy-battery
+  :diminish
+  :custom (fancy-battery-show-percentage  t)
+          (battery-update-interval       15)
+  :config (fancy-battery-mode))
+;; A sleek & informative mode line:1 ends here
+
+;; [[file:init.org::*A sleek & informative mode line][A sleek & informative mode line:2]]
+;; Following two taken care of in the spaceline package, below.
+;; (column-number-mode                 t)
+;; (line-number-mode                   t)
+(setq display-line-numbers-width-start t)
+(global-display-line-numbers-mode      t)
+;; A sleek & informative mode line:2 ends here
+
+;; [[file:init.org::*A sleek & informative mode line][A sleek & informative mode line:3]]
+;; When using helm & info & default, mode line looks prettier.
+(use-package spaceline
+  :custom (spaceline-buffer-encoding-abbrev-p nil)
+          ;; Use an arrow to seperate modeline information
+          (powerline-default-separator 'arrow)
+          ;; Show “line-number : column-number” in modeline.
+          (spaceline-line-column-p t)
+          ;; Use two colours to indicate whether a buffer is modified or not.
+          (spaceline-highlight-face-func 'spaceline-highlight-face-modified)
+  :config (custom-set-faces '(spaceline-unmodified ((t (:foreground "black" :background "gold")))))
+          (custom-set-faces '(spaceline-modified   ((t (:foreground "black" :background "cyan")))))
+          (require 'spaceline-config)
+          (spaceline-helm-mode)
+          (spaceline-info-mode)
+          (spaceline-emacs-theme))
+;; A sleek & informative mode line:3 ends here
+
+;; [[file:init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:1]]
+(use-package dired-subtree
+  :bind (:map dired-mode-map
+              ("i" . dired-subtree-toggle)))
+;; Powerful Directory Editing with ~dired~:1 ends here
+
+;; [[file:init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:2]]
+(use-package dired-collapse
+  :hook (dired-mode . dired-collapse-mode))
+;; Powerful Directory Editing with ~dired~:2 ends here
+
+;; [[file:init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:3]]
+(use-package dired-filter
+  :hook (dired-mode . (lambda () (dired-filter-group-mode)
+                                 (dired-filter-by-garbage)))
+  :custom
+    (dired-garbage-files-regexp
+      "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
+    (dired-filter-group-saved-groups
+      '(("default"
+         ("Org"    (extension "org"))
+         ("Executables" (exexutable))
+         ("Directories" (directory))
+         ("PDF"    (extension "pdf"))
+         ("LaTeX"  (extension "tex" "bib"))
+         ("Images" (extension "png"))
+         ("Code"   (extension "hs" "agda" "lagda"))
+         ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
+;; Powerful Directory Editing with ~dired~:3 ends here
+
+;; [[file:init.org::*Never lose the cursor][Never lose the cursor:1]]
+;; Make it very easy to see the line with the cursor.
+(global-hl-line-mode t)
+;; Never lose the cursor:1 ends here
+
+;; [[file:init.org::*Never lose the cursor][Never lose the cursor:2]]
+(use-package beacon
+  :diminish
+  :config (setq beacon-color "#666600")
+  :hook   ((org-mode text-mode) . beacon-mode))
+;; Never lose the cursor:2 ends here
+
+;; [[file:init.org::*Dimming Unused Windows][Dimming Unused Windows:1]]
+(use-package dimmer
+  :config (dimmer-mode))
+;; Dimming Unused Windows:1 ends here
+
+;; [[file:init.org::*Buffer names are necessarily injective][Buffer names are necessarily injective:1]]
+;; Note that ‘uniquify’ is builtin.
+(require 'uniquify)
+(setq uniquify-separator "/"               ;; The separator in buffer names.
+      uniquify-buffer-name-style 'forward) ;; names/in/this/style
+;; Buffer names are necessarily injective:1 ends here
+
+;; [[file:init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:1]]
+(setq visible-bell 1)
+;; Flashing when something goes wrong ---no blinking:1 ends here
+
+;; [[file:init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:2]]
+(blink-cursor-mode 1)
+;; Flashing when something goes wrong ---no blinking:2 ends here
+
+;; [[file:init.org::*Hiding Scrollbar, tool bar, and menu][Hiding Scrollbar, tool bar, and menu:1]]
+(tool-bar-mode   -1)  ;; No large icons please
+(scroll-bar-mode -1)  ;; No visual indicator please
+(menu-bar-mode   -1)  ;; The Mac OS top pane has menu options
+;; Hiding Scrollbar, tool bar, and menu:1 ends here
+
+;; [[file:init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):1]]
+(setq show-paren-delay  0)
+(setq show-paren-style 'mixed)
+(show-paren-mode)
+;; Highlight & complete parenthesis pair when cursor is near ;-):1 ends here
+
+;; [[file:init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):2]]
+(use-package rainbow-delimiters
+  :disabled
+  :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
+;; Highlight & complete parenthesis pair when cursor is near ;-):2 ends here
+
+;; [[file:init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):4]]
+(electric-pair-mode 1)
+;; Highlight & complete parenthesis pair when cursor is near ;-):4 ends here
+
+;; [[file:init.org::*Highlight & complete parenthesis pair when cursor is near ;-)][Highlight & complete parenthesis pair when cursor is near ;-):5]]
+;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
+(setq electric-pair-inhibit-predicate
+      (lambda (c)
+        (or (member c '(?< ?> ?~)) (electric-pair-default-inhibit c))))
+
+;; Treat ‘<’ and ‘>’ as if they were words, instead of ‘parenthesis’.
+(modify-syntax-entry ?< "w<")
+(modify-syntax-entry ?> "w>")
+;; Highlight & complete parenthesis pair when cursor is near ;-):5 ends here
+
+;; [[file:init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:1]]
+(use-package persistent-scratch
+  :defer t
+  ;; In this mode, the usual save key saves to the underlying persistent file.
+  :bind (:map persistent-scratch-mode-map
+              ("C-x C-s" . persistent-scratch-save)))
+;; Persistent Scratch Buffer:1 ends here
+
+;; [[file:init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:2]]
+(defun scratch ()
+   "Recreate the scratch buffer, loading any persistent state."
+   (interactive)
+   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
+   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
+   (org-mode)
+   (persistent-scratch-mode)
+   (persistent-scratch-autosave-mode 1))
+
+;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
+
+;; Upon startup, close the default scratch buffer and open one as specfied above
+(ignore-errors (kill-buffer "*scratch*") (scratch))
+;; Persistent Scratch Buffer:2 ends here
+
+;; [[file:init.org::*Persistent Scratch Buffer][Persistent Scratch Buffer:3]]
+(setq initial-scratch-message (concat
+  "#+Title: Persistent Scratch Buffer"
+  "\n#\n# Welcome! This’ a place for trying things out."
+  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
+;; Persistent Scratch Buffer:3 ends here
+
+;; [[file:init.org::*Proportional fonts for Headlines][Proportional fonts for Headlines:1]]
+(set-face-attribute 'org-document-title nil :height 2.0)
+;; (set-face-attribute 'org-level-1 nil :height 1.0)
+;; Remaining org-level-𝒾 have default height 1.0, for 𝒾 : 1..8.
+;;
+;; E.g., reset org-level-1 to default.
+;; (custom-set-faces '(org-level-1 nil))
+;; Proportional fonts for Headlines:1 ends here
+
+;; [[file:init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:1]]
+  (defvar-local rasmus/org-at-src-begin -1
+    "Variable that holds whether last position was a ")
+
+  (defvar rasmus/ob-header-symbol ?☰
+    "Symbol used for babel headers")
+
+  (defun rasmus/org-prettify-src--update ()
+    (let ((case-fold-search t)
+          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+          found)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward re nil t)
+          (goto-char (match-end 0))
+          (let ((args (org-trim
+                       (buffer-substring-no-properties (point)
+                                                       (line-end-position)))))
+            (when (org-string-nw-p args)
+              (let ((new-cell (cons args rasmus/ob-header-symbol)))
+                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+                (cl-pushnew new-cell found :test #'equal)))))
+        (setq prettify-symbols-alist
+              (cl-set-difference prettify-symbols-alist
+                                 (cl-set-difference
+                                  (cl-remove-if-not
+                                   (lambda (elm)
+                                     (eq (cdr elm) rasmus/ob-header-symbol))
+                                   prettify-symbols-alist)
+                                  found :test #'equal)))
+        ;; Clean up old font-lock-keywords.
+        (font-lock-remove-keywords nil prettify-symbols--keywords)
+        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+        (font-lock-add-keywords nil prettify-symbols--keywords)
+        (while (re-search-forward re nil t)
+          (font-lock-flush (line-beginning-position) (line-end-position))))))
+
+  (defun rasmus/org-prettify-src ()
+    "Hide src options via `prettify-symbols-mode'.
+
+  `prettify-symbols-mode' is used because it has uncollpasing. It's
+  may not be efficient."
+    (let* ((case-fold-search t)
+           (at-src-block (save-excursion
+                           (beginning-of-line)
+                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+      ;; Test if we moved out of a block.
+      (when (or (and rasmus/org-at-src-begin
+                     (not at-src-block))
+                ;; File was just opened.
+                (eq rasmus/org-at-src-begin -1))
+        (rasmus/org-prettify-src--update))
+      ;; Remove composition if at line; doesn't work properly.
+      ;; (when at-src-block
+      ;;   (with-silent-modifications
+      ;;     (remove-text-properties (match-end 0)
+      ;;                             (1+ (line-end-position))
+      ;;                             '(composition))))
+      (setq rasmus/org-at-src-begin at-src-block)))
+
+  (defun rasmus/org-prettify-symbols ()
+    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+          (cl-reduce 'append
+                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
+                               ("#+end_src"   . ?□) ;; ⏹
+                               ("#+header:" . ,rasmus/ob-header-symbol)
+                               ("#+begin_quote" . ?»)
+                               ("#+end_quote" . ?«)))))
+    (turn-on-prettify-symbols-mode)
+    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
+
+
+;; Last up­dated: 2019-06-09
+;; Making Block Delimiters Less Intrusive:1 ends here
+
+;; [[file:init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:2]]
+(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+(org-mode-restart)
+;; Making Block Delimiters Less Intrusive:2 ends here
+
+;; [[file:init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:3]]
+(global-prettify-symbols-mode)
+
+(defvar my/prettify-alist nil
+  "Musa's personal prettifications.")
+
+(cl-loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
+                    ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
+                    ("#+end_example"   . ?⇐)                 ;; ⇐
+                    ;; Actuall beautifications
+                    ("<=" . ?≤) (">=" . ?≥)
+                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                    ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
+
+      do (push pair my/prettify-alist))
+
+(cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
+      do (add-hook hk (lambda ()
+                        (setq prettify-symbols-alist
+                              (append my/prettify-alist prettify-symbols-alist)))))
+;; Making Block Delimiters Less Intrusive:3 ends here
+
+;; [[file:init.org::*Making Block Delimiters Less Intrusive][Making Block Delimiters Less Intrusive:4]]
+;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
+(setq prettify-symbols-unprettify-at-point 'right-edge)
+;; Making Block Delimiters Less Intrusive:4 ends here
+
+;; [[file:init.org::*Hiding Emphasise Markers & Inlining Images][Hiding Emphasise Markers & Inlining Images:1]]
+;; org-mode math is now highlighted ;-)
+(setq org-highlight-latex-and-related '(latex))
+
+;; Hide the *,=,/ markers
+(setq org-hide-emphasis-markers t)
+
+;; (setq org-pretty-entities t)
+;; to have \alpha, \to and others display as utf8
+;; http://orgmode.org/manual/Special-symbols.html
+;; Hiding Emphasise Markers & Inlining Images:1 ends here
+
+;; [[file:init.org::*Show off-screen heading at the top of the window][Show off-screen heading at the top of the window:1]]
+ (use-package org-sticky-header
+  :hook (org-mode . org-sticky-header-mode)
+  :config
+  (setq-default
+   org-sticky-header-full-path 'full
+   ;; Child and parent headings are seperated by a /.
+   org-sticky-header-outline-path-separator " / "))
+;; Show off-screen heading at the top of the window:1 ends here
+
+;; [[file:init.org::*Prose][Prose:1]]
+(add-hook 'before-save-hook 'whitespace-cleanup)
+;; Prose:1 ends here
+
+;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:1]]
+(setq-default fill-column 80          ;; Let's avoid going over 80 columns
+              truncate-lines nil      ;; I never want to scroll horizontally
+              indent-tabs-mode nil)   ;; Use spaces instead of tabs
+;; Fill-mode ---Word Wrapping:1 ends here
+
+;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:2]]
+;; Wrap long lines when editing text
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+(add-hook 'org-mode-hook 'turn-on-auto-fill)
+
+;; Do not show the “Fill” indicator in the mode line.
+(diminish 'auto-fill-function)
+;; Fill-mode ---Word Wrapping:2 ends here
+
+;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:3]]
+;; Bent arrows at the end and start of long lines.
+(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(diminish 'visual-line-mode)
+(global-visual-line-mode 1)
+;; Fill-mode ---Word Wrapping:3 ends here
+
+;; [[file:init.org::*Pretty Lists Markers][Pretty Lists Markers:1]]
+;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
+(cl-loop for (x y z) in '(("+" "◦" *)
+                       ("-" "•" *)
+                       ("*" "⋆" +))
+      do (font-lock-add-keywords 'org-mode
+                                 `((,(format "^ %s\\([%s]\\) " z x)
+                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
+;; Pretty Lists Markers:1 ends here
+
+;; [[file:init.org::*Word Completion][Word Completion:1]]
+(use-package company
+  :diminish
+  :config
+  (global-company-mode 1)
+  (setq ;; Only 2 letters required for completion to activate.
+   company-minimum-prefix-length 2
+
+   ;; Search other buffers for compleition candidates
+   company-dabbrev-other-buffers t
+   company-dabbrev-code-other-buffers t
+
+   ;; Show candidates according to importance, then case, then in-buffer frequency
+   company-transformers '(company-sort-by-backend-importance
+                          company-sort-prefer-same-case-prefix
+                          company-sort-by-occurrence)
+
+   ;; Flushright any annotations for a compleition;
+   ;; e.g., the description of what a snippet template word expands into.
+   company-tooltip-align-annotations t
+
+   ;; Allow (lengthy) numbers to be eligible for completion.
+   company-complete-number t
+
+   ;; M-⟪num⟫ to select an option according to its number.
+   company-show-numbers t
+
+   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
+   company-tooltip-limit 10
+
+   ;; Edge of the completion list cycles around.
+   company-selection-wrap-around t
+
+   ;; Do not downcase completions by default.
+   company-dabbrev-downcase nil
+
+   ;; Even if I write something with the ‘wrong’ case,
+   ;; provide the ‘correct’ casing.
+   company-dabbrev-ignore-case nil
+
+   ;; Immediately activate completion.
+   company-idle-delay 0)
+
+  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
+  ;; Override all minor modes that use C-/; bind-key* is discussed below.
+  (bind-key* "C-/" #'company-manual-begin)
+
+  ;; Bindings when the company list is active.
+  :bind (:map company-active-map
+              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
+              ("<tab>" . company-complete-selection)
+              ;; Use C-n,p for navigation in addition to M-n,p
+              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
+              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
+
+;; It's so fast that we don't need a key-binding to start it!
+;; Word Completion:1 ends here
+
+;; [[file:init.org::*Word Completion][Word Completion:2]]
+(use-package company-emoji
+  :config (add-to-list 'company-backends 'company-emoji))
+;; Word Completion:2 ends here
+
+;; [[file:init.org::*Word Completion][Word Completion:3]]
+(use-package emojify
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
+;; Word Completion:3 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:1]]
+(use-package flyspell
+  :diminish
+  :hook ((prog-mode . flyspell-prog-mode)
+         ((org-mode text-mode) . flyspell-mode)))
+;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:2]]
+(setq ispell-program-name "/usr/local/bin/aspell")
+(setq ispell-dictionary "en_GB") ;; set the default dictionary
+;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:4]]
+(eval-after-load "flyspell"
+  ' (progn
+     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
+;; Fix spelling as you type ---thesaurus & dictionary too!:4 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:5]]
+(global-font-lock-mode t)
+(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
+;; Fix spelling as you type ---thesaurus & dictionary too!:5 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:6]]
+(setq ispell-silently-savep t)
+;; Fix spelling as you type ---thesaurus & dictionary too!:6 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:7]]
+(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
+;; Fix spelling as you type ---thesaurus & dictionary too!:7 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:8]]
+(add-hook          'c-mode-hook 'flyspell-prog-mode)
+(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
+;; Fix spelling as you type ---thesaurus & dictionary too!:8 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:9]]
+(use-package synosaurus
+  :diminish synosaurus-mode
+  :init    (synosaurus-mode)
+  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
+           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
+;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:10]]
+;; (shell-command "brew cask install xquartz &") ;; Dependency
+;; (shell-command "brew install wordnet &")
+;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:11]]
+(use-package wordnut
+ :bind ("M-!" . wordnut-lookup-current-word))
+
+;; Use M-& for async shell commands.
+;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
+
+;; [[file:init.org::*Using a Grammar & Style Checker][Using a Grammar & Style Checker:1]]
+(use-package langtool
+ :defer t
+ :custom
+  (langtool-language-tool-jar
+   "~/Applications/LanguageTool-4.5/languagetool-commandline.jar"))
+;; Using a Grammar & Style Checker:1 ends here
+
+;; [[file:init.org::*Using a Grammar & Style Checker][Using a Grammar & Style Checker:2]]
+;; Quickly check, correct, then clean up /region/ with M-^
+(eval-after-load 'langtool
+(progn
+(add-hook 'langtool-error-exists-hook
+  (lambda ()
+     (langtool-correct-buffer)
+     (langtool-check-done)))
+
+(global-set-key "\M-^"
+                (lambda ()
+                  (interactive)
+                  (message "Grammar checking begun ...")
+                  (langtool-check)))))
+;; Using a Grammar & Style Checker:2 ends here
+
+;; [[file:init.org::*Lightweight Prose Proofchecking][Lightweight Prose Proofchecking:1]]
+(use-package writegood-mode
+  ;; Load this whenver I'm composing prose.
+  :hook (text-mode org-mode)
+  ;; Don't show me the “Wg” marker in the mode line
+  :diminish
+  ;; Some additional weasel words.
+  :config
+  (--map (push it writegood-weasel-words)
+         '("some" "simple" "simply" "easy" "often" "easily" "probably"
+           "clearly"               ;; Is the premise undeniably true?
+           "experience shows"      ;; Whose? What kind? How does it do so?
+           "may have"              ;; It may also have not!
+           "it turns out that")))  ;; How does it turn out so?
+           ;; ↯ What is the evidence of highighted phrase? ↯
+;; Lightweight Prose Proofchecking:1 ends here
+
+;; [[file:init.org::*Placeholder Text ---For Learning & Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
+(use-package lorem-ipsum :defer t)
+;; Placeholder Text ---For Learning & Experimenting:1 ends here
+
+;; [[file:init.org::*Some text to make us smile][Some text to make us smile:1]]
+(use-package dad-joke
+  :defer t
+  :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
+;; Some text to make us smile:1 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:1]]
+; (load (shell-command-to-string "agda-mode locate"))
+;;
+;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
+; (makunbound 'agda2-include-dirs)
+;; Unicode Input via Agda Input:1 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:2]]
+(load-file (let ((coding-system-for-read 'utf-8))
+                (shell-command-to-string "/usr/local/bin/agda-mode locate")))
+;; Unicode Input via Agda Input:2 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:3]]
+;; MA: This results in "Package cl is deprecated" !?
+(use-package agda-input
+  :ensure nil ;; I have it locally.
+  :demand t
+  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
+  :custom (default-input-method "Agda"))
+  ;; Now C-\ or M-x toggle-input-method turn it on and offers
+;; Unicode Input via Agda Input:3 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:4]]
+;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
+;; Unicode Input via Agda Input:4 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:5]]
+(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
+;; Unicode Input via Agda Input:5 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:6]]
+(cl-loop for item
+      in '(;; categorial ;;
+           ("alg" "𝒜𝓁ℊ")
+           ("split" "▵")
+           ("join" "▿")
+           ("adj" "⊣")
+           (";;" "﹔")
+           (";;" "⨾")
+           (";;" "∘")
+           ;; logic
+           ("if" "⇐")
+           ("onlyif" "⇒")
+           ;; lattices ;;
+           ("meet" "⊓")
+           ("join" "⊔")
+           ;; tortoise brackets, infix relations
+           ("((" "〔")
+           ("))" "〕")
+           ;; residuals
+           ("syq"  "╳")
+           ("over" "╱")
+           ("under" "╲")
+           ;; Z-quantification range notation ;;
+           ;; e.g., “∀ x ❙ R • P” ;;
+           ("|"    "❙")
+           ("with" "❙")
+           ;; Z relational operators
+           ("domainrestriction" "◁")
+           ("domr" "◁")
+           ("domainantirestriction" "⩤")
+           ("doma" "⩤")
+           ("rangerestriction" "▷")
+           ("ranr" "▷")
+           ("rangeantirestriction" "⩥")
+           ("rana" "⩥")
+           ;; adjunction isomorphism pair ;;
+           ("floor"  "⌊⌋")
+           ("lower"  "⌊⌋")
+           ("lad"    "⌊⌋")
+           ("ceil"   "⌈⌉")
+           ("raise"  "⌈⌉")
+           ("rad"    "⌈⌉")
+           ;; Arrows
+           ("<=" "⇐")
+        ;; more (key value) pairs here
+        )
+      do (add-to-list 'agda-input-user-translations item))
+;; Unicode Input via Agda Input:6 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:7]]
+;; Add to the list of translations using “emot” and the given, more specfic, name.
+;; Whence, \emot shows all possible emotions.
+(cl-loop for emot
+      in `(;; angry, cry, why-you-no
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")
+           ;; confused, disapprove, dead, shrug
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯")
+           ;; dance, csi
+           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
+            ,(s-collapse-whitespace "•_•)
+                                      ( •_•)>⌐■-■
+                                      (⌐■_■)"))
+           ;; love, pleased, success, yesss
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
+      do
+      (add-to-list 'agda-input-user-translations emot)
+      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
+;; Unicode Input via Agda Input:7 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:8]]
+;; activate translations
+(agda-input-setup)
+;; Unicode Input via Agda Input:8 ends here
+
+;; [[file:init.org::*Increase/decrease text size][Increase/decrease text size:1]]
+(global-set-key (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
+;; C-x C-0 restores the default font size
+;; Increase/decrease text size:1 ends here
+
+;; [[file:init.org::*Moving Text Around][Moving Text Around:1]]
+;; M-↑,↓ moves line, or marked region; prefix is how many lines.
+(use-package move-text
+  :config (move-text-default-bindings))
+;; Moving Text Around:1 ends here
+
+;; [[file:init.org::*Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations:1]]
+(global-subword-mode 1)
+(diminish 'subword-mode)
+;; Enabling CamelCase Aware Editing Operations:1 ends here
+
+;; [[file:init.org::*Delete Selection Mode][Delete Selection Mode:1]]
+(delete-selection-mode 1)
+;; Delete Selection Mode:1 ends here
+
+;; [[file:init.org::*  ~M-n,p~: Word-at-Point Navigation][  ~M-n,p~: Word-at-Point Navigation:1]]
+(use-package smartscan
+  :defer t
+  :config
+    (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
+    (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
+    (global-set-key (kbd "M-'") 'my/symbol-replace))
+;;   ~M-n,p~: Word-at-Point Navigation:1 ends here
+
+;; [[file:init.org::*  ~M-n,p~: Word-at-Point Navigation][  ~M-n,p~: Word-at-Point Navigation:2]]
+(defun my/symbol-replace (replacement)
+  "Replace all standalone symbols in the buffer matching the one at point."
+  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
+  (save-excursion
+    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
+      (beginning-of-buffer)
+      ;; (query-replace-regexp symbol replacement)
+      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
+;;   ~M-n,p~: Word-at-Point Navigation:2 ends here
+
+;; [[file:init.org::*  ~M-n,p~: Word-at-Point Navigation][  ~M-n,p~: Word-at-Point Navigation:3]]
+;; C-n, next line, inserts newlines when at the end of the buffer
+(setq next-line-add-newlines t)
+;;   ~M-n,p~: Word-at-Point Navigation:3 ends here
+
+;; [[file:init.org::*Letter-based Navigation][Letter-based Navigation:1]]
+(use-package ace-jump-mode
+  :defer t
+  :config (bind-key* "C-c SPC" 'ace-jump-mode))
+
+;; See ace-jump issues to configure for use of home row keys.
+;; Letter-based Navigation:1 ends here
+
 ;; [[file:init.org::*Working with Citations][Working with Citations:1]]
 (use-package org-ref
   :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
@@ -1700,10 +1826,6 @@ C-u C-u C-c c ⇒ Goto last note stored."
         "pdflatex -shell-escape -output-directory %o %f"
         "pdflatex -shell-escape -output-directory %o %f"))
 ;; Bibliography & Coloured LaTeX using Minted:1 ends here
-
-;; [[file:init.org::*Excellent PDF Viewer][Excellent PDF Viewer:1]]
-;; Now PDFs opened in Emacs are in pdfview-mode.
-;; Excellent PDF Viewer:1 ends here
 
 ;; [[file:init.org::*Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors:1]]
 (defun my/ensure-headline-ids (&rest _)

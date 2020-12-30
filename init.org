@@ -3992,7 +3992,7 @@ Upon startup, we want to be greeted with a useful, yet unobtrusive, message
 briefly detailing major system details. Moreover, the bottom-most area of the
 screen should display battery life, data, & time. Likewise, we may have a casual
 file explorer ---primarily to show-off to newcomers, since great functionality
-is found with ~M-x dired~.
+is found with ~M-x dired~ ---doc:dired.
 
 ** Startup message: Emacs & Org versions
 :PROPERTIES:
@@ -4063,12 +4063,14 @@ It does not look sleek and shiny, which usually
 leaves first-timers with a poor, shallow, impression of the system.
 
 Below we install a few themes that make Emacs look exquisite.
-We cycle between the chosen themes with ~C-x t~.
+We cycle between the chosen themes with kbd:C-x_t, doc:my/toggle-theme.
 
 + ~M-x load-theme RET TAB~ shows all themes, including built-in ones,
   that may be loaded.
 + Loading multiple themes results in their pallets mixed.
   - ~M-x disable-theme~ to remove a theme from the current pallet.
+
+--------------------------------------------------------------------------------
 
 #+BEGIN_SRC emacs-lisp
 ;; Treat all themes as safe; no query before use.
@@ -4085,30 +4087,37 @@ We cycle between the chosen themes with ~C-x t~.
 + The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
 + A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 
+--------------------------------------------------------------------------------
+
 #+BEGIN_SRC emacs-lisp
 ;; Infinite list of my commonly used themes.
 (setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
 (setcdr (last my/themes) my/themes)
 #+END_SRC
 
-“C-x t” to toggle between the personal themes.
+kbd:C-x_t to toggle between the personal themes.
 #+BEGIN_SRC emacs-lisp
 (cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
   "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
 
-When a universal prefix is given, we load a random theme from all possible themes.
-Nice way to learn about more themes (•̀ᴗ•́)و
-"
+When a universal prefix is given, “C-u C-x t”, we load a random
+theme from all possible themes.  Nice way to learn about more
+themes (•̀ᴗ•́)و"
   (interactive)
   (dolist (τ custom-enabled-themes)
     (disable-theme τ))
-  (-let [theme (if current-prefix-arg (nth (random (length (custom-available-themes))) (custom-available-themes)) new-theme)]
+  (-let [theme (if current-prefix-arg
+                   (nth (random (length (custom-available-themes)))
+                        (custom-available-themes))
+                 new-theme)]
     (when theme
       (load-theme theme)
       (message "Theme %s" theme))))
 
 (defalias 'my/toggle-theme #' my/disable-all-themes)
+
 (global-set-key "\C-x\ t" 'my/toggle-theme)
+
 (my/toggle-theme)
 #+END_SRC
 
@@ -4187,7 +4196,9 @@ like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
 
 As mentioned earlier, ~dired~ is Emacs' built-in directory editor; it's opened
 with ~C-x d~.  /Dired let's us treat directories as textual objects!/ In dired,
-press ~h~ to see the many actions available. Here's a few:
+press ~h~ to see the many actions available. Here's a few...
+
+#+begin_details Super Terse ‘dired’ Tutorial
 
 + ~(~ toggles hiding entry details, such as modification date and ownership
 + ~s~ sort entries; modeline will display “Dired by date” or “Dired by name”.
@@ -4200,6 +4211,7 @@ press ~h~ to see the many actions available. Here's a few:
   - ~/ /~ to remove all filters.
 + ~TAB~ to navigate between different groupings of entries.
   - ~RET~ on a drawer heading toggles folding it ^_^
+#+end_details
 
 The [[https://github.com/Fuco1/dired-hacks#dired-hacks-utils][dired-hacks]] family of packages lets us, say, get a dired buffer out of a shell
 incantation that lists files, or use dired to open files with external tools.
@@ -4242,12 +4254,8 @@ requirement; and with “garbage” files not shown ---i.e., those ending in
          ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
 #+END_SRC
 
-*** Neotree: Traditional Directory Tree Navigation :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Neotree-Traditional-Directory-Tree-Navigation
-:END:
-
-                                  ⟨ Disabled ⟩
+#+begin_details [Disabled] Neotree: Traditional Directory Tree Navigation
+link-here:Neotree-Traditional-Directory-Tree-Navigation
 
 We open a nifty file manager upon startup.
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -4280,6 +4288,7 @@ an automatic replacement for nearly all of my uses.
 
 + Reminiscent of GUI file managers is [[https://github.com/ralesi/ranger.el#features][ranger]]; e.g., it has multi-column
   display of parent directories along with a file preview mechanism.
+#+end_details
 
 ** Never lose the cursor
 :PROPERTIES:
@@ -4575,18 +4584,18 @@ Let's have headings stick out a bit.
 Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
 ---See notes on Custom above.
 
-** COMMENT Making Block Delimiters Less Intrusive
+** Making Block Delimiters Less Intrusive
 :PROPERTIES:
 :CUSTOM_ID: Making-Block-Delimiters-Less-Intrusive
 :END:
 
-Let us render Org-mode's ~#+begin_src~ and ~#+end_src~ less obtrusively by, e.g.,
-having the former render as a pencil marker ✎ and the latter as a tombstone □
----reminiscent of Halmos' QED end-of-proof marker.  His setup also accounts for
-quotes.
+Let us render Org-mode's ~#+begin_src~ and ~#+end_src~ less obtrusively by,
+e.g., having the former render as a pencil marker ~✎~ and the latter as a
+tombstone ~□~ ---reminiscent of Halmos' QED end-of-proof marker.
+# His setup also accounts for quotes.
 
-⟪ Incantation Omitted ---Visit [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]]'s site & copy-paste it, if you wish ⟫
-:Hide:
+#+begin_details Rasmus’ Incantation
+This is from [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]].
 #+begin_src emacs-lisp
   (defvar-local rasmus/org-at-src-begin -1
     "Variable that holds whether last position was a ")
@@ -4662,8 +4671,7 @@ quotes.
 
 ;; Last up­dated: 2019-06-09
 #+end_src
-
-:End:
+#+end_details
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
@@ -4714,7 +4722,7 @@ A nice sanity:
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 #+END_SRC
 
-** COMMENT Hiding Emphasise Markers & Inlining Images
+** Hiding Emphasise Markers & Inlining Images
 :PROPERTIES:
 :CUSTOM_ID: Hiding-Emphasise-Markers-Inlining-Images
 :END:
