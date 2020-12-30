@@ -6103,6 +6103,17 @@ It does not work as I'd like, but may prove useful to have around.
 [[https://github.com/alphapapa/org-web-tools][org-web-tools]] claims to /view, capture, and archive Web pages in Org-mode/; this
 may be a very useful tool.
 
+#+begin_src emacs-lisp
+(use-package org-web-tools
+  :config
+  ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
+  ;; the page to get the HTML title.
+  (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url))
+#+end_src
+Other useful functions, needing pandoc:
+doc:https://github.com/alphapapa/org-web-tools and
+doc:org-web-tools-convert-links-to-page-entries.
+
 * Programming
 :PROPERTIES:
 :CUSTOM_ID: Programming
