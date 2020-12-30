@@ -2025,18 +2025,20 @@ movement controls, such as:
 + [[kbd:w]] refile current heading; options list pops-up to select which heading to move
   it to. Neato!
   - [[kbd:g]] to go to another heading, without refiling anything.
+    #+begin_src emacs-lisp
+;; [Default]
+;; When refiling, only show me top level headings
+(setq org-refile-targets
+      '((nil :maxlevel . 1))) ;; Sometimes 2 is useful.
 
-    #+BEGIN_SRC emacs-lisp
-  ;; Refile anywhere 1-level deep in current file,
-  ;; or anywhere in my agenda files 2-levels deep
-  (setq org-refile-targets '((nil . (:maxlevel . 1))))
-        ;; (org-agenda-files . (:maxlevel . 2))  ;; ← Not useful right now.
+;; Maybe I want to refile into a new heading; confirm with me.
+(setq org-refile-allow-creating-parent-nodes 'confirm)
 
-  ; Use full outline paths for refile targets - we file directly with IDO
-  ;; When refiling, using Helm, show me the hierarchy paths
-  (setq org-outline-path-complete-in-steps nil)
-  (setq org-refile-use-outline-path 'file-path)
-  #+END_SRC
+;; Use full outline paths for refile targets
+;; When refiling, using Helm, show me the hierarchy paths
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-use-outline-path 'file-path)
+  #+end_src
 + kbd:n/p for next/previous /visible/ heading.
 + kbd:f/b for jumping forward/backward to the next/previous /same-level/ heading.
 + kbd:D/U move a heading down/up.
