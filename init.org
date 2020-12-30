@@ -2366,6 +2366,133 @@ Such a ‘snippet’ could be written once then provided by a simple
 Lisp insert command with the parameters being queried. Luckily, others
 have written such pleasant utilities.
 
+Besides snippets, there are words that we may want to repeat often but it can be
+tedious to write them out in full. As such, we employ *[[green: word completion]]*;
+which we also use to expand our snippets.
+# For instance, I knew someone who writes ‘U’ all over the place
+# since the word “universe” is too long to write
+# and Emacs doesn't come with word completion.
+
+*** Word Completion
+:PROPERTIES:
+:CUSTOM_ID: Word-Completion
+:END:
+
+Let's enable [[https://company-mode.github.io/][“complete anything” mode]] ---it ought to start in half a second and
+only need two characters to get going, which means word suggestions are provided
+and so I need only type partial words then tab to get the full word!
+#+begin_src emacs-lisp
+(use-package company
+  :diminish
+  :config
+  (global-company-mode 1)
+  (setq ;; Only 2 letters required for completion to activate.
+   company-minimum-prefix-length 2
+
+   ;; Search other buffers for compleition candidates
+   company-dabbrev-other-buffers t
+   company-dabbrev-code-other-buffers t
+
+   ;; Show candidates according to importance, then case, then in-buffer frequency
+   company-transformers '(company-sort-by-backend-importance
+                          company-sort-prefer-same-case-prefix
+                          company-sort-by-occurrence)
+
+   ;; Flushright any annotations for a compleition;
+   ;; e.g., the description of what a snippet template word expands into.
+   company-tooltip-align-annotations t
+
+   ;; Allow (lengthy) numbers to be eligible for completion.
+   company-complete-number t
+
+   ;; M-⟪num⟫ to select an option according to its number.
+   company-show-numbers t
+
+   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
+   company-tooltip-limit 10
+
+   ;; Edge of the completion list cycles around.
+   company-selection-wrap-around t
+
+   ;; Do not downcase completions by default.
+   company-dabbrev-downcase nil
+
+   ;; Even if I write something with the ‘wrong’ case,
+   ;; provide the ‘correct’ casing.
+   company-dabbrev-ignore-case nil
+
+   ;; Immediately activate completion.
+   company-idle-delay 0)
+
+  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
+  ;; Override all minor modes that use C-/; bind-key* is discussed below.
+  (bind-key* "C-/" #'company-manual-begin)
+
+  ;; Bindings when the company list is active.
+  :bind (:map company-active-map
+              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
+              ("<tab>" . company-complete-selection)
+              ;; Use C-n,p for navigation in addition to M-n,p
+              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
+              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
+
+;; It's so fast that we don't need a key-binding to start it!
+#+end_src
+Note that ~M-/~ goes through a sequence of completions ---and ~C-/~ manually begins
+company mode at point.  Besides the arrow keys, we can also use ~M-~ with ~n, p~ to
+navigate the options /or/ use ~C-s~ to search the list of suggestions.
+
++ Company backends are available as separate packages.
++ Note that [[https://github.com/company-mode/company-mode/issues/360][by default]] company mode does not support completion for phrases
+  containing hyphens ---this can be altered, if desired.
+
+Besides boring word completion, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
+#+begin_src emacs-lisp
+(use-package company-emoji
+  :config (add-to-list 'company-backends 'company-emoji))
+#+end_src
+
+For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
+
+➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
+All emoji names are lowercase. ◀
+
++ On MacOS, ~C-⌘-SPC~ brings up an emoji picker, where one drags desired emojis to
+  textual areas.
++ [[https://gist.github.com/rxaviers/7360908][Here]] is a list of emoji ---all supported by Github.
+
+The libraries ~emojify~ and ~emojify-logos~ provides cool items like =:haskell:
+:emacs: :org: :ruby: :python:=.  Unfortunately they do not easily export to html
+with org-mode, so I'm not using them.
+:Alternatives:
+#+BEGIN_SRC emacs-lisp
+(use-package emojify
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
+#+END_SRC
+
+(use-package emojify-logos
+:after emojify)
+
+For example,
+#+begin_src emacs-lisp :tangle no
+ :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:
+#+end_src
+Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emojify-insert-emoji)~ to see more.
+
+Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
+for completion of emoji names.
+
+(use-package ac-emoji
+  :init (ac-emoji-setup)
+)
+:End:
+
+*** Intro to Snippets
+:PROPERTIES:
+:CUSTOM_ID: Intro-to-Snippets
+:END:
+
 A *snippet, template, mechanism* is a tool that when you press some keystrokes
 inserts some text, possibly with some fields (‘blanks’) to fill in.  Possibly
 interesting read:
@@ -2376,11 +2503,6 @@ interesting read:
   without macros).
 
 --------------------------------------------------------------------------------
-
-*** Intro to snippets                                              :ignore:
-:PROPERTIES:
-:CUSTOM_ID: Intro-to-snippets
-:END:
 
 [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet]] is a pleasant utility for template expansion with the alluring
 feature to allow arbitrary Lisp code to be executed during expansion.
@@ -2965,7 +3087,7 @@ my/contacts)))`} $0
 After our yankpad templates are generated, we need to load it.
 #+BEGIN_SRC emacs-lisp
 ;; After init hook; see above near use-package install.
-(yankpad-reload)
+;; (yankpad-reload)
 #+END_SRC
 
 * Life within Org-mode
@@ -5618,121 +5740,6 @@ them visually as Unicode bullets.
                                  `((,(format "^ %s\\([%s]\\) " z x)
                                     (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
 #+end_src
-
-** Word Completion
-:PROPERTIES:
-:CUSTOM_ID: Word-Completion
-:END:
-
-Let's enable [[https://company-mode.github.io/][“complete anything” mode]] ---it ought to start in half a second and
-only need two characters to get going, which means word suggestions are provided
-and so I need only type partial words then tab to get the full word!
-#+begin_src emacs-lisp
-(use-package company
-  :diminish
-  :config
-  (global-company-mode 1)
-  (setq ;; Only 2 letters required for completion to activate.
-   company-minimum-prefix-length 2
-
-   ;; Search other buffers for compleition candidates
-   company-dabbrev-other-buffers t
-   company-dabbrev-code-other-buffers t
-
-   ;; Show candidates according to importance, then case, then in-buffer frequency
-   company-transformers '(company-sort-by-backend-importance
-                          company-sort-prefer-same-case-prefix
-                          company-sort-by-occurrence)
-
-   ;; Flushright any annotations for a compleition;
-   ;; e.g., the description of what a snippet template word expands into.
-   company-tooltip-align-annotations t
-
-   ;; Allow (lengthy) numbers to be eligible for completion.
-   company-complete-number t
-
-   ;; M-⟪num⟫ to select an option according to its number.
-   company-show-numbers t
-
-   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
-   company-tooltip-limit 10
-
-   ;; Edge of the completion list cycles around.
-   company-selection-wrap-around t
-
-   ;; Do not downcase completions by default.
-   company-dabbrev-downcase nil
-
-   ;; Even if I write something with the ‘wrong’ case,
-   ;; provide the ‘correct’ casing.
-   company-dabbrev-ignore-case nil
-
-   ;; Immediately activate completion.
-   company-idle-delay 0)
-
-  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
-  ;; Override all minor modes that use C-/; bind-key* is discussed below.
-  (bind-key* "C-/" #'company-manual-begin)
-
-  ;; Bindings when the company list is active.
-  :bind (:map company-active-map
-              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
-              ("<tab>" . company-complete-selection)
-              ;; Use C-n,p for navigation in addition to M-n,p
-              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
-              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
-
-;; It's so fast that we don't need a key-binding to start it!
-#+end_src
-Note that ~M-/~ goes through a sequence of completions ---and ~C-/~ manually begins
-company mode at point.  Besides the arrow keys, we can also use ~M-~ with ~n, p~ to
-navigate the options /or/ use ~C-s~ to search the list of suggestions.
-
-+ Company backends are available as separate packages.
-+ Note that [[https://github.com/company-mode/company-mode/issues/360][by default]] company mode does not support completion for phrases
-  containing hyphens ---this can be altered, if desired.
-
-Besides boring word completion, let's add support for [[https://github.com/dunn/company-emoji][emojis]].
-#+begin_src emacs-lisp
-(use-package company-emoji
-  :config (add-to-list 'company-backends 'company-emoji))
-#+end_src
-
-For example: 🥞 💻 🐵 ✉️😉 🐬 🌵.
-
-➡️On a new line, write ~:~ then any letter to have a tool-tip appear.
-All emoji names are lowercase. ◀
-
-+ On MacOS, ~C-⌘-SPC~ brings up an emoji picker, where one drags desired emojis to
-  textual areas.
-+ [[https://gist.github.com/rxaviers/7360908][Here]] is a list of emoji ---all supported by Github.
-
-The libraries ~emojify~ and ~emojify-logos~ provides cool items like =:haskell:
-:emacs: :org: :ruby: :python:=.  Unfortunately they do not easily export to html
-with org-mode, so I'm not using them.
-:Alternatives:
-#+BEGIN_SRC emacs-lisp
-(use-package emojify
- :config (setq emojify-display-style 'image)
- :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
-#+END_SRC
-
-(use-package emojify-logos
-:after emojify)
-
-For example,
-#+begin_src emacs-lisp :tangle no
- :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:
-#+end_src
-Yields :emacs: :haskell: :org: :c: :wink: :ruby: :python: :c: :html5:. Run ~(emojify-insert-emoji)~ to see more.
-
-Rather than remember all of these, let's install [[https://github.com/syohex/emacs-ac-emoji][ac-emoji]]
-for completion of emoji names.
-
-(use-package ac-emoji
-  :init (ac-emoji-setup)
-)
-:End:
 
 ** Fix spelling as you type ---thesaurus & dictionary too!
 :PROPERTIES:

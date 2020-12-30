@@ -625,6 +625,75 @@ visit all blocks with such a name."
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 ;; Jumping to extreme semantic units:1 ends here
 
+;; [[file:init.org::*Word Completion][Word Completion:1]]
+(use-package company
+  :diminish
+  :config
+  (global-company-mode 1)
+  (setq ;; Only 2 letters required for completion to activate.
+   company-minimum-prefix-length 2
+
+   ;; Search other buffers for compleition candidates
+   company-dabbrev-other-buffers t
+   company-dabbrev-code-other-buffers t
+
+   ;; Show candidates according to importance, then case, then in-buffer frequency
+   company-transformers '(company-sort-by-backend-importance
+                          company-sort-prefer-same-case-prefix
+                          company-sort-by-occurrence)
+
+   ;; Flushright any annotations for a compleition;
+   ;; e.g., the description of what a snippet template word expands into.
+   company-tooltip-align-annotations t
+
+   ;; Allow (lengthy) numbers to be eligible for completion.
+   company-complete-number t
+
+   ;; M-⟪num⟫ to select an option according to its number.
+   company-show-numbers t
+
+   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
+   company-tooltip-limit 10
+
+   ;; Edge of the completion list cycles around.
+   company-selection-wrap-around t
+
+   ;; Do not downcase completions by default.
+   company-dabbrev-downcase nil
+
+   ;; Even if I write something with the ‘wrong’ case,
+   ;; provide the ‘correct’ casing.
+   company-dabbrev-ignore-case nil
+
+   ;; Immediately activate completion.
+   company-idle-delay 0)
+
+  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
+  ;; Override all minor modes that use C-/; bind-key* is discussed below.
+  (bind-key* "C-/" #'company-manual-begin)
+
+  ;; Bindings when the company list is active.
+  :bind (:map company-active-map
+              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
+              ("<tab>" . company-complete-selection)
+              ;; Use C-n,p for navigation in addition to M-n,p
+              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
+              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
+
+;; It's so fast that we don't need a key-binding to start it!
+;; Word Completion:1 ends here
+
+;; [[file:init.org::*Word Completion][Word Completion:2]]
+(use-package company-emoji
+  :config (add-to-list 'company-backends 'company-emoji))
+;; Word Completion:2 ends here
+
+;; [[file:init.org::*Word Completion][Word Completion:3]]
+(use-package emojify
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
+;; Word Completion:3 ends here
+
 ;; [[file:init.org::*Intro to snippets][Intro to snippets:1]]
 ;; Add yasnippet support for all company backends
 ;;
@@ -691,7 +760,7 @@ visit all blocks with such a name."
 
 ;; [[file:init.org::*Re-Enabling Templates][Re-Enabling Templates:1]]
 ;; After init hook; see above near use-package install.
-(yankpad-reload)
+;; (yankpad-reload)
 ;; Re-Enabling Templates:1 ends here
 
 ;; [[file:init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:1]]
@@ -1648,75 +1717,6 @@ themes (•̀ᴗ•́)و"
                                  `((,(format "^ %s\\([%s]\\) " z x)
                                     (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
 ;; Pretty Lists Markers:1 ends here
-
-;; [[file:init.org::*Word Completion][Word Completion:1]]
-(use-package company
-  :diminish
-  :config
-  (global-company-mode 1)
-  (setq ;; Only 2 letters required for completion to activate.
-   company-minimum-prefix-length 2
-
-   ;; Search other buffers for compleition candidates
-   company-dabbrev-other-buffers t
-   company-dabbrev-code-other-buffers t
-
-   ;; Show candidates according to importance, then case, then in-buffer frequency
-   company-transformers '(company-sort-by-backend-importance
-                          company-sort-prefer-same-case-prefix
-                          company-sort-by-occurrence)
-
-   ;; Flushright any annotations for a compleition;
-   ;; e.g., the description of what a snippet template word expands into.
-   company-tooltip-align-annotations t
-
-   ;; Allow (lengthy) numbers to be eligible for completion.
-   company-complete-number t
-
-   ;; M-⟪num⟫ to select an option according to its number.
-   company-show-numbers t
-
-   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
-   company-tooltip-limit 10
-
-   ;; Edge of the completion list cycles around.
-   company-selection-wrap-around t
-
-   ;; Do not downcase completions by default.
-   company-dabbrev-downcase nil
-
-   ;; Even if I write something with the ‘wrong’ case,
-   ;; provide the ‘correct’ casing.
-   company-dabbrev-ignore-case nil
-
-   ;; Immediately activate completion.
-   company-idle-delay 0)
-
-  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
-  ;; Override all minor modes that use C-/; bind-key* is discussed below.
-  (bind-key* "C-/" #'company-manual-begin)
-
-  ;; Bindings when the company list is active.
-  :bind (:map company-active-map
-              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
-              ("<tab>" . company-complete-selection)
-              ;; Use C-n,p for navigation in addition to M-n,p
-              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
-              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
-
-;; It's so fast that we don't need a key-binding to start it!
-;; Word Completion:1 ends here
-
-;; [[file:init.org::*Word Completion][Word Completion:2]]
-(use-package company-emoji
-  :config (add-to-list 'company-backends 'company-emoji))
-;; Word Completion:2 ends here
-
-;; [[file:init.org::*Word Completion][Word Completion:3]]
-(use-package emojify
- :config (setq emojify-display-style 'image)
- :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
-;; Word Completion:3 ends here
 
 ;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:1]]
 (use-package flyspell
