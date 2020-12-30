@@ -681,6 +681,7 @@ We can now tangle together the tagged code blocks in the order we want.
 <<code-from-other-places>>
 <<defn-of-f>>
 ,#+END_SRC
+( You can press “C-c C-v C-v” to see what this block expands into! )
 #+END_src
 
 Now kbd:C-c_C-v_C-t (doc:org-babel-tangle) yields a file named ~myprogram.hs~ with contents in an order
@@ -692,6 +693,7 @@ g = ⋯
 h = ⋯
 f = h ∘ g
 #+END_SRC
+
 Interestingly, unlike certain languages, Haskell doesn't care too much about
 declaration order.
 
@@ -1033,6 +1035,46 @@ using the ~diminish~ package, so let's install that.
   :config ;; Let's hide some markers.
     (diminish  'org-indent-mode))
 #+end_src
+
+Here are other packages that I want to be installed onto my machine.
+#+BEGIN_SRC emacs-lisp
+;; Haskell's cool
+(use-package haskell-mode :defer t)
+
+;; Lisp libraries with Haskell-like naming.
+(use-package dash)    ;; “A modern list library for Emacs”
+(use-package s   )    ;; “The long lost Emacs string manipulation library”.
+
+;; Library for working with system files;
+;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
+(use-package f)
+#+END_SRC
+
+Note:
++ [[https://github.com/magnars/dash.el][dash]]: “A modern list library for Emacs”
+  - E.g., ~(--filter (> it 10) (list 8 9 10 11 12))~
++ [[https://github.com/magnars/s.el][s]]: “The long lost Emacs string manipulation library”.
+  - E.g., ~s-trim, s-replace, s-join~.
+
+Remember that snippet for ~undo-tree~ in the introductory section?
+Let's activate it now, after ~use-package~ has been setup.
+#+BEGIN_SRC emacs-lisp :noweb yes
+  <<undo-tree-setup>>
+#+END_SRC
+
+#+begin_box DRY: Don't Repeat Yourself!
+In the HTML export, above it /looks/ like I just copy-pasted the undo tree setup
+from earlier, but that is not the case! All I did was *pink:declare* to Org that
+I'd like that /named snippet/ to be tangled now, here in the resulting code file.
+#+begin_src org :tangle no
+,#+begin_src emacs-lisp :noweb yes
+  <<undo-tree-setup>>
+,#+end_src
+#+end_src
+
+You can press kbd:C-c_C-v_C-v, doc:org-babel-expand-src-block, to see what this
+block expands into ---which is what was shown above.
+#+end_box
 
 --------------------------------------------------------------------------------
 
@@ -1487,7 +1529,6 @@ https://alhassy.github.io/org-special-block-extras/
 :CUSTOM_ID: Here-are-other-packages-that-I-want-to-be-installed-onto-my-machine
 :END:
 
-
 #+BEGIN_SRC emacs-lisp
 (use-package htmlize :defer t)
 ;; Main use: Org produced htmls are coloured.
@@ -1497,30 +1538,8 @@ https://alhassy.github.io/org-special-block-extras/
 ;; https://github.com/emacsorphanage/org-bullets
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode))
-
-;; Haskell's cool
-(use-package haskell-mode :defer t)
-
-;; Lisp libraries with Haskell-like naming.
-(use-package dash)    ;; “A modern list library for Emacs”
-(use-package s   )    ;; “The long lost Emacs string manipulation library”.
-
-;; Library for working with system files;
-;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
-(use-package f)
 #+END_SRC
 
-Note:
-+ [[https://github.com/magnars/dash.el][dash]]: “A modern list library for Emacs”
-  - E.g., ~(--filter (> it 10) (list 8 9 10 11 12))~
-+ [[https://github.com/magnars/s.el][s]]: “The long lost Emacs string manipulation library”.
-  - E.g., ~s-trim, s-replace, s-join~.
-
-Remember that snippet for ~undo-tree~ in the introductory section?
-Let's activate it now, after ~use-package~ has been setup.
-#+BEGIN_SRC emacs-lisp :noweb yes
-  <<undo-tree-setup>>
-#+END_SRC
 
 * Staying Sane
 :PROPERTIES:
@@ -1536,23 +1555,13 @@ Let's activate it now, after ~use-package~ has been setup.
 
 doc:undo-tree-visualize, kbd:C-x_u, gives a /visual/ representation
 of the current buffer's edit history.
-#+begin_src emacs-lisp
-;; Allow tree-semantics for undo operations.
-(use-package undo-tree
-  :diminish                       ;; Don't show an icon in the modeline
-  :config
-    ;; Always have it on
-    (global-undo-tree-mode)
+#+BEGIN_SRC emacs-lisp :noweb yes :tangle no
+  <<undo-tree-setup>>
+#+END_SRC
 
-    ;; Each node in the undo tree should have a timestamp.
-    (setq undo-tree-visualizer-timestamps t)
-
-    ;; Show a diff window displaying changes between undo nodes.
-    (setq undo-tree-visualizer-diff t))
-
-;; Execute (undo-tree-visualize) then navigate along the tree to witness
-;; changes being made to your file live!
-#+end_src
+( We're just showing the ~<<undo-tree-setup>>~ from earlier since this is a good
+place for such a setup. More importantly, we are /not/ copy-pasting the setup: /It
+is written only once; in a single source of truth!/ )
 
 ** Automatic Backups
 :PROPERTIES:
