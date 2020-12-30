@@ -668,19 +668,68 @@ https://twitter.com/musa314
 A Mechanisation of Internal Galois Connections In Order Theory Formalised Without Meets
 https://macsphere.mcmaster.ca/bitstream/11375/17276/2/thesis.pdf
 
-In this setup, I have some templates appear elsewhere, tagged with =:noweb-ref
-templates-from-other-places-in-my-init=. They are presented in natural positions,
-but can only occur to the machine after template expansion is setup.  Using
-org-mode, we are able to /present/ code in any order and /tangle/ it to the order
-the compilers need it to be!
+** journal_guided: Introspection & Growth
+I'm writing from ${1:location}.
 
-Let's activate all such templates, now after template expansion has been setup.
-#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org" :comments none :noweb yes
-<<templates-from-other-places-in-my-init>>
-#+END_SRC
+Gut answer, today I feel ${2:scale}/10.
+⇒ ${3:Few words or paragraphs to explain what's on your mind.}
 
-Note: Since I've insisted that Org blocks are space sensative, any whitespace
-before the ~<<⋯>>~ will propogate to the resulting extracted code.
+${4: All things which cause us to groan or recoil are part of the tax of
+life. These things you should never hope or seek to escape.  Life is a battle,
+and to live is to fight.
+
+⟨ Press TAB once you've read this mantra. ⟩
+$(when yas-moving-away-p "")
+}
+`(progn
+  (eww "https://www.dailyinspirationalquotes.in/")
+  (sit-for 2) (when nil let eww load)
+  (read-only-mode -1)
+  (goto-line 52)
+  (kill-line)
+  (kill-buffer)
+  (yank))`
+${7:
+Self Beliefs:
++ I am working on a healthier lifestyle, including a low-carb diet.
+
+  - I’m also investing in a healthy, long-lasting relationship.
+
+  ➩ These are what I want and are important to me. ⇦
+
++ I will not use any substances to avoid real issues in my life. I must own them.
+
++ Everything I’m searching for is already inside of me.
+
++ Progress is more important than perfection.
+
+⟨ Press TAB once you've read these beliefs. ⟩
+$(when yas-moving-away-p "")
+}
+
+*Three things I'm grateful for:*
+1. ${8:??? … e.g., old relationship, something great yesterday, an opportunity I
+   have today, something simple near me within sight}
+2. ${9:??? … e.g., old relationship, something great yesterday, an opportunity I
+   have today, something simple near me within sight}
+3. ${10:??? … e.g., old relationship, something great yesterday, an opportunity I
+   have today, something simple near me within sight}
+
+*Three things that would make today great:*
+1. ${11:???}
+2. ${12:???}
+3. ${13:???}
+
+*What one thing is top of mind today?*
+${14:???}
+
+*What’s one opportunity I want to go after?*
+${15:???}
+
+*What’s one thing I’m really proud of OR I’m amazed and in awe of?*
+${16:???}
+
+$0
 
 ** contacts: Get the email of one of my personal contacts
 

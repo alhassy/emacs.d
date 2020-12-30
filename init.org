@@ -2321,6 +2321,619 @@ should jump to the first entry.
   :config (beginend-global-mode)
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 #+END_SRC
+** Snippets ---Template Expansion
+:PROPERTIES:
+:CUSTOM_ID: Snippets-Template-Expansion
+:END:
+
+It is common that there is a sequence of text that we tend to repeat
+often, possibly with a name or some other parameter altered.
+Such a ‘snippet’ could be written once then provided by a simple
+Lisp insert command with the parameters being queried. Luckily, others
+have written such pleasant utilities.
+
+A *snippet, template, mechanism* is a tool that when you press some keystrokes
+inserts some text, possibly with some fields (‘blanks’) to fill in.  Possibly
+interesting read:
++ [[https://cupfullofcode.com/blog/2013/02/26/snippet-expansion-with-yasnippet/index.html][Snippet Expansion With Yasnippet: Save Yourself Keystrokes and Headaches]]
+  ---a nice before introduction to Yasnippet (“Yet another snippet”)
++ [[https://jpace.wordpress.com/2012/10/20/tweaking-emacs-snippets/][Tweaking Emacs: Snippets]] ---a brief article on using snippets for uniformity
+  across languages and to mitigate verbosity of weak languages (i.e., those
+  without macros).
+
+--------------------------------------------------------------------------------
+
+*** Intro to snippets                                              :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Intro-to-snippets
+:END:
+
+[[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet]] is a pleasant utility for template expansion with the alluring
+feature to allow arbitrary Lisp code to be executed during expansion.
+The declaration of templates is verbose, requiring a particular file
+hierarchy, as such I utilise [[https://github.com/Kungsgeten/yankpad][Yankpad]] which allows me to employ
+an Org-mode approach: Each template corresponds to an org heading of
+the form ~Key:Words:For:Expansion:Here: name of snippet here~ and the
+template body is then the body of the org heading.
+Any of ~Key, Words, For, Expansion, Here~ will rewrite into the body
+of the org tree. This is much more terse, and I even don't bother
+with that; instead preferring to tangle my templates using yankpad
+as a mere interface. It is important to note that Yankpad also provides
+features that are not in Yassnippet, such as allowing arbitrary language
+code to be executed ---one simply uses an org-src block!
+
+There can only be one major completion backend for any mode, but
+other backends can serve as secondary ones. Here's a function to
+make ~company-yankpad~ a secondary of all existing backends.
+#+begin_src emacs-lisp
+;; Add yasnippet support for all company backends
+;;
+(cl-defun my/company-backend-with-yankpad (backend)
+  "There can only be one main completition backend, so let's
+   enable yasnippet/yankpad as a secondary for all completion
+   backends.
+
+   Src: https://emacs.stackexchange.com/a/10520/10352"
+
+  (if (and (listp backend) (member 'company-yankpad backend))
+      backend
+    (append (if (consp backend) backend (list backend))
+            '(:with company-yankpad))))
+#+end_src
+
+#+begin_src emacs-lisp
+;; Yet another snippet extension program
+(use-package yasnippet
+  :diminish yas-minor-mode
+  :config
+    (yas-global-mode 1) ;; Always have this on for when using yasnippet syntax within yankpad
+    ;; respect the spacing in my snippet declarations
+    (setq yas-indent-line 'fixed))
+
+;; Alternative, Org-based extension program
+(use-package yankpad
+  :diminish
+  :config
+    ;; Location of templates
+    (setq yankpad-file "~/.emacs.d/yankpad.org")
+
+    ;; Ignore major mode, always use defaults.
+    ;; Yankpad will freeze if no org heading has the name of the given category.
+    (setq yankpad-category "Default")
+
+    ;; Load the snippet templates ---useful after yankpad is altered
+    (yankpad-reload)
+
+    ;; Set company-backend as a secondary completion backend to all existing backends.
+    (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
+#+end_src
+
+With these settings, along with the ~company~ backend, I may type a keyword then
+kbd:TAB it into expansion.
+
+Yankpad requires we have an org file that contains our templates, so we /tangle/
+such a file ~~/.emacs.d/yankpad.org~, and have all of our templates be globally
+accessible. Here is the start of my file:
+#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,#+Description: This is file is generated from my init.org; do not edit.
+
+,* Default                                           :global:
+#+end_src
+
+#+begin_details Fully discussed example: Using the clipboard for Org-links
+Here's an example of a common template I perform by hand ---no more!  I have the
+expected habit of /copying (to clipboard)/ a URL from someplace then forming a
+link to it by writing ~[[URL] [description]]~, since the URL & syntax are already
+known, let's expand those and place the cursour at the only unknown ---the
+description.
+#+begin_src org :tangle "~/.emacs.d/yankpad.org" :comments none
+,** my_org_insert_link: cleverly insert a link copied to clipboard
+ [[${1:`(clipboard-yank)`}][$2]] $0
+#+end_src
+
+What's going on here? ( The above, verbatim: ~[[${1:`(clipboard-yank)`}][$2]] $0~. )
+0. This template is expanded with the keyword ~my-org-insert-link~, then kbd:TAB.
+1. The cursour lands at position ~$1~, which has default text being the result
+  of evaluating ~(clipboard-yank)~.
+  # I've ‘documented’ this default as being the url.
+
+  # If I leave out the ~$(clipboard-yank)~ part, the default would simply be ~url~ pasted in.
+
+  We may evaluate Lisp code anywhere by enclosing it in backticks.
+
+  # `(file-name-nondirectory (file-name-sans-extension (buffer-file-name)))`
+
+2. If we're satisfied with the current field, we simply tab to the next field.
+   Otherwise, we simply write text ---which overwrites the default text.
+
+3. After enough tabbing we complete the template and the cursour lands
+   at position ~$0~.
+
+⟪ Having default or mirrored text for ~$2~ would not allow me to see the URL
+field, lest I wish to change it or at least confirm it's what I want.
+Hence, the ~$2~ field has no default. ⟫
+
+Let's overwrite the usual way to insert such links, via ~C-c C-l~.
+#+BEGIN_SRC emacs-lisp
+(cl-defun org-insert-link ()
+  "Makes an org link by inserting the URL copied to clipboard and
+  prompting for the link description only.
+
+  Type over the shown link to change it, or tab to move to the
+  description field.
+
+  This overrides Org-mode's built-in ‘org-insert-link’ utility;
+  whence C-c C-l uses the snippet."
+  (interactive)
+  (insert "my_org_insert_link")
+  (yankpad-expand))
+#+END_SRC
+#+end_details
+
+/Warning!/ Snippet names cannot have hypens in them ---in this setup at least.
+
+The [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet manual]] is an accessible read, as is the [[https://github.com/Kungsgeten/yankpad][Yankpad manual]], and
+ showcases many other utilities; such as having certain snippets being
+ enabled only in particular modes or on demand. Of note is that field ~$n~ can be
+ accessed in code with the invocation ~(yas-field-value n)~.
+
+Incidentally, I used this snippet setup to [[https://www.youtube.com/watch?v=NYOOF9xKBz8&feature=youtu.be][demo]] the idea of repetitious code in
+grouping constructs within dependently-typed languages, which was accepted and
+led to my doctoral research on a [[https://alhassy.github.io/next-700-module-systems/][‘do it yourself module system’]].
+
+The rest of this section is other templates, not much for now,
+concluding with actually loading this snippet mechanism globally.
+
+         The remaining subsections discuss contents of my yankpad file.
+
+*** Org-mode Templates ---A reason I “generate” templates ;)
+:PROPERTIES:
+:CUSTOM_ID: Org-mode-Templates-A-reason-I-generate-templates
+:END:
+
+This produces a pop-up list of org-mode block types, if ~src~ is selected, then a
+list of my commonly used languages pops-up.  Alternatively, ignore the pop-up
+menu and write any block or language name.
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** begin: produce an org-mode block
+,#+begin_${1:environment$(let*
+    ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
+     (langs '("c" "emacs-lisp" "lisp" "latex" "python" "sh" "haskell" "plantuml" "prolog"))
+     (type (yas-choose-value block)))
+     (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
+ $0
+,#+end_${1:$(car (split-string yas-text))}
+#+END_SRC
+In this case, ~yas-text~ is equivalent to (~yas-field-value 1)~;
+it generally refers to the value of the field being mirrored with ~${n: ⋯yas-text⋯}~.
+
+However, going through pop-ups takes precious time ---besides being slightly annyoing.
+Let's introduce a template for my most utilised kind of language blocks.
+#+begin_example
+,** s_org: src block for org
+,#+begin_src org
+$0
+,#+end_src
+#+end_example
+
+However, doing this for each language I want is a waste of time and textual
+space. Why? *The purpose of templates is to reduce repetition,* yet the above
+block would be repeated with only 3 parts ‘unknown’: The expansion keyword, the
+description, and the org-mode source block name.  Whence, the template /text/ is
+generated by the following basic loop ---whose source block is named
+~my-org-lang-templates~.
+#+name: my-org-lang-templates
+#+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
+;; We make an org BLOCK snippet template for each LANG the user has declared.
+;;
+(cl-loop for (shortcut block takes-language-argument? default-text)
+      in '(("s_" "src" t)
+           ("is_" "inline source" t)  ;; Treated specially below
+           ("e_" "example" t)
+           ("q_" "quote")
+           ("v_" "verse")
+           ("c_" "center")
+           ("ex_" "export") ;; only HTML and LATEX
+           ;; https://alhassy.github.io/org-special-block-extras/#Summary
+           ("p_"  "parallel" nil "\n$0\n#+columnbreak:\n")
+           ("d_"  "details"  nil "${1:title}\n$0")
+           ("ed_" "edcomm"   nil  "${1:editor}\n$0")
+           ("doc_" "documentation" nil "${1: mandatory entry name}\n$0")
+           ("def_" "latex-definitions"))
+      for languages = (if takes-language-argument?
+                          (-cons* "org" "agda2" "any" ;; Extra ‘languages’
+                                  ;; Also include whatever languages we've loaded for literate programming.
+                                  (--map (symbol-name (car it)) org-babel-load-languages))
+                        '("")) ;; The “empty language”
+      concat (cl-loop for lang in languages
+                   for key         = (concat shortcut
+                                       (if (s-blank? lang) block lang))
+                   for description =  (if (s-blank? lang)
+                                          block
+                                        (concat
+                                         block " for " lang))
+                   concat (if (equal "is_" shortcut)
+                              (concat "\n** " key ": " description
+                                      "\nsrc_" lang "[:exports code]{$1} $0")
+                            (concat "\n** " key ": " description
+                                    "\n#+begin_" block " " lang
+                                    (or default-text "\n$0")
+                                    "\n#+end_" block "\n"))))
+#+end_src
+
+The /resulting text/ of this block, generated below, is tangled to our yankpad by
+utilising a [[https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-reference-syntax.html][noweb]] source block invocation. An example of the resulting text is
+the above ~s_org~ block. The result is (last I checked) *83* template expansions
+---that would have been a bit much to write by hand.
+#+begin_example org
+,#+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes
+<<my-org-lang-templates()>>
+,#+end_src
+#+end_example
+# ActuallyDoIt
+#+begin_src org  :tangle "~/.emacs.d/yankpad.org" :noweb yes :comments none
+<<my-org-lang-templates()>>
+#+end_src
+
+# The “:eval never-export” means that this block is never tangled on document
+# export, C-c C-e.
+
+#+begin_box
+Now ~s_~, due to company mode, brings up a list of languages that I can then
+scroll down through, then “enter” upon to expand. Moreover, the prefix ~s_~ means
+that the key is mostly irrelevant, since I needn't remember it because
+company-mode immediately lists possible completions /along/ with the /descriptions/
+for the snippets. Likewise for examples with ~e_~ or quotes with ~q_~.  Super neat
+stuff :-)
+
+                 Ain't this reminiscent of meta-programming ;-)
+#+end_box
+Using =noweb= invocations, any time the tangling is performed, the yankpad
+is kept up to date ---no personal intervention from myself.
+
+# Neat, but not what I want.
+# https://github.com/abo-abo/auto-yasnippet
+
+:Fun_albeit_useless_exercise:
+
+Let's push this frontier a bit more …
+
+In expressive languages like Agda, one can not only be type polymorphic but also
+‘level polymorphic’ ---since types constitute a hierarchy where a ‘type’ is
+uninterestingly an ‘element’ of a higher ‘type’, ad infinitum.  For example, the
+type of a level polymorphic ′choice’ function would be ~{a : Level} (A : Set a) → A~
+---note that such a choice function cannot exist since for any type ~A~ it returns
+an element of ~A~, then what of the empty type. Anyhow, the template ~{${1:a} :
+Level} → (${2:A} : Set $1) → $0~ would suffice to make this happen. Yet, what if
+we wanted /n/-many sets?
+
+Make a function that takes /n ≤ 26/ as input, produces a list of
+levels, then uses each level to produce a list of type names ;-)
+:End:
+
+*** Elisp Templates
+:PROPERTIES:
+:CUSTOM_ID: Elisp-Templates
+:END:
+
+The following snippets were rather useful as I began learning Lisp to construct
+my editor of choice ---I love Emacs so much. Admittedly, I still need the first
+one below and usually beat around the bush by using ~(cl-loop for ⋯ do ⋯)~, (doc:cl-loop), which is
+‘noisier’ but easier to remember and to read for non-Lispers.
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** loop:  Elisp's for each loop
+(dolist (${1:var} ${2:list-form})
+        ${3:body})
+
+,** defun: Lisp functions
+(cl-defun ${1:fun-name} (${2:arguments})
+  "${3:documentation}"
+  $0)
+
+,** cond: Elisp conditionals
+(cond (${1:scenario₁} ${2:response₁})
+      (${3:scenario₂} ${4:response₂}))
+#+end_src
+
+*** Equational Templates
+:PROPERTIES:
+:CUSTOM_ID: Equational-Templates
+:END:
+
+To show ~ℒ = ℛ~, one starts at the complicated side, say /ℒ/, then, with the aim of
+simplification, tries to end at the simpler side, /𝓡/.  Along the way, one
+justifies each step of the calculation. This approach is popular in the proof
+assistant Agda; [[https://alhassy.github.io/PathCat/][Examples]]. Read more about [[http://www.mathmeth.com/][informal calculational proofs]].
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** fun: Function declaration with type signature
+
+${1:fun-name} : ${2:arguments}
+$1 ${3:args} = ?$0
+
+,** eqn_begin: Start a ≡-Reasoning block in Agda
+
+begin
+  ${1:complicated-side}
+$0≡⟨ ${3:reason-for-the-equality} ⟩
+ ${2:simpler-side}
+∎
+
+,** eqn_step: Insert a step in a ≡-Reasoning block in Agda
+≡⟨ ${2:reason-for-the-equality} ⟩
+  ${1:new-expression}
+$0
+#+end_src
+
+One expands ~eqn_begin~, tabs to fill in the three main locations, then
+/immediately/ types ~eqn_step~ to produce a new step in a calculational proof.
+
+*** COMMENT Misc Templates
+:PROPERTIES:
+:CUSTOM_ID: Misc-Templates
+:END:
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** remark: top-level literate comment
+
+{{{remark(${1:thoughts})}}} $0
+#+end_src
+
+Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1 }}@@~.
+
+*** Emojis
+:PROPERTIES:
+:CUSTOM_ID:
+:END:
+
+#+NAME: my-emoji-templates
+#+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
+;;
+;; https://emojipedia.org/people/
+(cl-loop for (emoji name description)
+         in '((😀 "Grinning Face"
+                  "Often conveys general pleasure and good cheer or humor.")
+
+              (😃 "Grinning Face with Big Eyes"
+                  "Often conveys general happiness and good-natured amusement.
+                   Similar to 😀 Grinning Face but with taller,
+                   more excited eyes.")
+
+              (😄 "Grinning Face with Smiling Eyes"
+                  "Often conveys general happiness and good-natured amusement.
+                   Similar to 😀 Grinning Face and 😃 Grinning
+                   Face With Big Eyes, but with warmer, less
+                   excited eyes.")
+
+              (😁 "Beaming Face with Smiling Eyes"
+                  "Often expresses a radiant, gratified
+                  happiness. Tone varies, including warm, silly,
+                  amused, or proud.")
+
+              (😆 "Grinning Squinting Face"
+                  "Often conveys excitement or hearty laughter.
+                   Similar to 😀 Grinning Face but with eyes that
+                   might say ‘Squee!’ or ‘Awesome!’ An emoji form of
+                   the >< or xD emoticons.")
+
+              (😅 "Grinning Face with Sweat"
+                  "Intended to depict nerves or discomfort but
+                  commonly used to express a close call, as if
+                  saying ‘Whew!’ and wiping sweat from the
+                  forehead. ")
+
+              (🤣 "Rolling on the Floor Laughing"
+                  "Often conveys hysterical laughter more intense
+                  than 😂 Face With Tears of Joy.")
+
+              (😂 "Face with Tears of Joy")
+              (🙂 "Slightly Smiling Face")
+              (🙃 "Upside-Down Face")
+              (😉 "Winking Face")
+              (😊 "Smiling Face with Smiling Eyes")
+              (😇 "Smiling Face with Halo")
+              (🥰 "Smiling Face with Hearts")
+              (😍 "Smiling Face with Heart-Eyes")
+              (🤩 "Star-Struck")
+              (😘 "Face Blowing a Kiss")
+              (😗 "Kissing Face")
+              (☺️ "Smiling Face")
+              (😚 "Kissing Face with Closed Eyes")
+              (😙 "Kissing Face with Smiling Eyes")
+              (🥲 "Smiling Face with Tear")
+              (😋 "Face Savoring Food")
+              (😛 "Face with Tongue")
+              (😜 "Winking Face with Tongue")
+              (🤪 "Zany Face")
+              (😝 "Squinting Face with Tongue")
+              (🤑 "Money-Mouth Face")
+              (🤗 "Hugging Face")
+              (🤭 "Face with Hand Over Mouth")
+              (🤫 "Shushing Face")
+              (🤔 "Thinking Face")
+              (🤐 "Zipper-Mouth Face")
+              (🤨 "Face with Raised Eyebrow")
+              (😐 "Neutral Face")
+              (😑 "Expressionless Face")
+              (😶 "Face Without Mouth")
+              (😏 "Smirking Face")
+              (😒 "Unamused Face")
+              (🙄 "Face with Rolling Eyes")
+              (😬 "Grimacing Face")
+              (🤥 "Lying Face")
+              (😌 "Relieved Face")
+              (😔 "Pensive Face")
+              (😪 "Sleepy Face")
+              (🤤 "Drooling Face")
+              (😴 "Sleeping Face")
+              (😷 "Face with Medical Mask")
+              (🤒 "Face with Thermometer")
+              (🤕 "Face with Head-Bandage")
+              (🤢 "Nauseated Face")
+              (🤮 "Face Vomiting")
+              (🤧 "Sneezing Face")
+              (🥵 "Hot Face")
+              (🥶 "Cold Face")
+              (🥴 "Woozy Face")
+              (😵 "Dizzy Face")
+              (🤯 "Exploding Head")
+              (🤠 "Cowboy Hat Face")
+              (🥳 "Partying Face")
+              (🥸 "Disguised Face")
+              (😎 "Smiling Face with Sunglasses")
+              (🤓 "Nerd Face")
+              (🧐 "Face with Monocle")
+              (😕 "Confused Face")
+              (😟 "Worried Face")
+              (🙁 "Slightly Frowning Face")
+              (☹️ "Frowning Face")
+              (😮 "Face with Open Mouth")
+              (😯 "Hushed Face")
+              (😲 "Astonished Face")
+              (😳 "Flushed Face")
+              (🥺 "Pleading Face")
+              (😦 "Frowning Face with Open Mouth")
+              (😧 "Anguished Face")
+              (😨 "Fearful Face")
+              (😰 "Anxious Face with Sweat")
+              (😥 "Sad but Relieved Face")
+              (😢 "Crying Face")
+              (😭 "Loudly Crying Face")
+              (😱 "Face Screaming in Fear")
+              (😖 "Confounded Face")
+              (😣 "Persevering Face")
+              (😞 "Disappointed Face")
+              (😓 "Downcast Face with Sweat")
+              (😩 "Weary Face")
+              (😫 "Tired Face")
+              (🥱 "Yawning Face")
+              (😤 "Face with Steam From Nose")
+              (😡 "Pouting Face")
+              (😠 "Angry Face")
+              (🤬 "Face with Symbols on Mouth")
+              )
+         for nom  = (s-replace " " "_" name)
+         for desc = (s-collapse-whitespace (or description ""))
+         concat (concat
+                 ;; f_… ⇒ get emoji from company menu showing only name & emoji
+                 (format "\n** f_%s: %s %s \n%s" nom emoji "" emoji)
+                 ;; fd_… ⇒ get emoji from company menu showing name, emoji, & ‘d’escription
+                 (format "\n** fd_%s: %s %s \n%s" nom emoji desc emoji)))
+#+end_src
+
+#+begin_src emacs-lisp
+;; Get all unicode emojis to appear within Emacs
+;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
+(set-fontset-font t nil "Apple Color Emoji")
+#+end_src
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes :exports none
+<<my-emoji-templates()>>
+#+end_src
+
+***   =my_⋯= Templates to obtain User Information
+:PROPERTIES:
+:CUSTOM_ID: my-Templates-to-obtain-User-Information
+:END:
+
+Let's add templates for links to common user information ^_^
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** my_name: User's name
+`user-full-name`
+
+,** my_email: User's email address
+`user-mail-address`
+
+,** my_github: User's Github repoistory link
+https://github.com/alhassy/
+
+,** my_emacsdrepo: User's version controlled Emacs init file
+https://github.com/alhassy/emacs.d
+
+,** my_blog: User's blog website
+https://alhassy.github.io/
+
+,** my_webpage: User's organisation website
+http://www.cas.mcmaster.ca/~alhassm/
+
+,** my_twitter: User's Twitter profile
+https://twitter.com/musa314
+
+,** my_masters_thesis
+A Mechanisation of Internal Galois Connections In Order Theory Formalised Without Meets
+https://macsphere.mcmaster.ca/bitstream/11375/17276/2/thesis.pdf
+#+end_src
+
+It may be useful to also have Org-link variants of these …
+
+*** Templates from other places in my init
+:PROPERTIES:
+:CUSTOM_ID: Activate-templates-from-other-places-in-my-init
+:END:
+
+In this setup, I have some templates appear elsewhere, tagged with =:noweb-ref
+templates-from-other-places-in-my-init=. They are presented in natural
+positions, but can only occur to the machine after template expansion is setup.
+Using org-mode, we are able to /present/ code in any order and /tangle/ it to
+the order the compilers need it to be!
+
+Let's activate all such templates, now after template expansion has been setup.
+#+begin_src org
+,#+begin_src org :noweb yes :tangle "~/.emacs.d/yankpad.org" :comments none
+<<templates-from-other-places-in-my-init>>
+,#+end_src
+#+end_src
+
+You can press kbd:C-c_C-v_C-v, doc:org-babel-expand-src-block, to see what this
+block expands into...
+#+begin_details Expansion
+# This is also live.
+#+begin_src org :noweb yes :tangle "~/.emacs.d/yankpad.org" :comments none
+<<templates-from-other-places-in-my-init>>
+#+end_src
+#+end_details
+
+Note: Since I've insisted that Org blocks are space sensative, any whitespace
+before the ~<<⋯>>~ will propogate to the resulting extracted code.
+
+#+begin_box Warning! :background-color red
+This section had
+#+begin_src org
+:PROPERTIES:
+:CUSTOM_ID: Templates-from-other-places-in-my-init
+:END:
+#+end_src
+Which, as of Org 9.4, led to the entire section being tangled: This is what the
+above incantation requested, but I thought it only worked on src blocks, having
+the specified ~:noweb-ref~, not on ~:CUSTOM_ID:~ incidentally having the same
+name.
+#+end_box
+
+*** Email contacts
+:PROPERTIES:
+:CUSTOM_ID: Email-contacts
+:END:
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** contacts: Get the email of one of my personal contacts
+
+${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.org"))
+(yas-choose-value (--map (format "%s <%s>" (getf it :name) (getf it :email))
+my/contacts)))`} $0
+#+end_src
+
+*** Re-Enabling Templates
+:PROPERTIES:
+:CUSTOM_ID: Re-Enabling-Templates
+:END:
+
+After our yankpad templates are generated, we need to load it.
+#+BEGIN_SRC emacs-lisp
+;; After init hook; see above near use-package install.
+(yankpad-reload)
+#+END_SRC
+
 * Life within Org-mode
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
@@ -6541,594 +7154,6 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, ha
 See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
 into new configurations.
 
-* Snippets ---Template Expansion
-:PROPERTIES:
-:CUSTOM_ID: Snippets-Template-Expansion
-:END:
-
-It is common that there is a sequence of text that we tend to repeat
-often, possibly with a name or some other parameter altered.
-Such a ‘snippet’ could be written once then provided by a simple
-Lisp insert command with the parameters being queried. Luckily, others
-have written such pleasant utilities.
-
-A *snippet, template, mechanism* is a tool that when you press some keystrokes
-inserts some text, possibly with some fields (‘blanks’) to fill in.  Possibly
-interesting read:
-+ [[https://cupfullofcode.com/blog/2013/02/26/snippet-expansion-with-yasnippet/index.html][Snippet Expansion With Yasnippet: Save Yourself Keystrokes and Headaches]]
-  ---a nice before introduction to Yasnippet (“Yet another snippet”)
-+ [[https://jpace.wordpress.com/2012/10/20/tweaking-emacs-snippets/][Tweaking Emacs: Snippets]] ---a brief article on using snippets for uniformity
-  across languages and to mitigate verbosity of weak languages (i.e., those
-  without macros).
-
---------------------------------------------------------------------------------
-
-** Intro to snippets                                                :ignore:
-:PROPERTIES:
-:CUSTOM_ID: Intro-to-snippets
-:END:
-
-[[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet]] is a pleasant utility for template expansion with the alluring
-feature to allow arbitrary Lisp code to be executed during expansion.
-The declaration of templates is verbose, requiring a particular file
-hierarchy, as such I utilise [[https://github.com/Kungsgeten/yankpad][Yankpad]] which allows me to employ
-an Org-mode approach: Each template corresponds to an org heading of
-the form ~Key:Words:For:Expansion:Here: name of snippet here~ and the
-template body is then the body of the org heading.
-Any of ~Key, Words, For, Expansion, Here~ will rewrite into the body
-of the org tree. This is much more terse, and I even don't bother
-with that; instead preferring to tangle my templates using yankpad
-as a mere interface. It is important to note that Yankpad also provides
-features that are not in Yassnippet, such as allowing arbitrary language
-code to be executed ---one simply uses an org-src block!
-
-There can only be one major completion backend for any mode, but
-other backends can serve as secondary ones. Here's a function to
-make ~company-yankpad~ a secondary of all existing backends.
-#+begin_src emacs-lisp
-;; Add yasnippet support for all company backends
-;;
-(cl-defun my/company-backend-with-yankpad (backend)
-  "There can only be one main completition backend, so let's
-   enable yasnippet/yankpad as a secondary for all completion
-   backends.
-
-   Src: https://emacs.stackexchange.com/a/10520/10352"
-
-  (if (and (listp backend) (member 'company-yankpad backend))
-      backend
-    (append (if (consp backend) backend (list backend))
-            '(:with company-yankpad))))
-#+end_src
-
-#+begin_src emacs-lisp
-;; Yet another snippet extension program
-(use-package yasnippet
-  :diminish yas-minor-mode
-  :config
-    (yas-global-mode 1) ;; Always have this on for when using yasnippet syntax within yankpad
-    ;; respect the spacing in my snippet declarations
-    (setq yas-indent-line 'fixed))
-
-;; Alternative, Org-based extension program
-(use-package yankpad
-  :diminish
-  :config
-    ;; Location of templates
-    (setq yankpad-file "~/.emacs.d/yankpad.org")
-
-    ;; Ignore major mode, always use defaults.
-    ;; Yankpad will freeze if no org heading has the name of the given category.
-    (setq yankpad-category "Default")
-
-    ;; Load the snippet templates ---useful after yankpad is altered
-    (yankpad-reload)
-
-    ;; Set company-backend as a secondary completion backend to all existing backends.
-    (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
-#+end_src
-
-With these settings, along with the ~company~ backend, I may type a keyword then
-kbd:TAB it into expansion.
-
-Yankpad requires we have an org file that contains our templates, so we /tangle/
-such a file ~~/.emacs.d/yankpad.org~, and have all of our templates be globally
-accessible. Here is the start of my file:
-#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org"  :comments none
-,#+Description: This is file is generated from my init.org; do not edit.
-
-,* Default                                           :global:
-#+end_src
-
-#+begin_details Fully discussed example: Using the clipboard for Org-links
-Here's an example of a common template I perform by hand ---no more!  I have the
-expected habit of /copying (to clipboard)/ a URL from someplace then forming a
-link to it by writing ~[[URL] [description]]~, since the URL & syntax are already
-known, let's expand those and place the cursour at the only unknown ---the
-description.
-#+begin_src org :tangle "~/.emacs.d/yankpad.org" :comments none
-,** my_org_insert_link: cleverly insert a link copied to clipboard
- [[${1:`(clipboard-yank)`}][$2]] $0
-#+end_src
-
-What's going on here? ( The above, verbatim: ~[[${1:`(clipboard-yank)`}][$2]] $0~. )
-0. This template is expanded with the keyword ~my-org-insert-link~, then kbd:TAB.
-1. The cursour lands at position ~$1~, which has default text being the result
-  of evaluating ~(clipboard-yank)~.
-  # I've ‘documented’ this default as being the url.
-
-  # If I leave out the ~$(clipboard-yank)~ part, the default would simply be ~url~ pasted in.
-
-  We may evaluate Lisp code anywhere by enclosing it in backticks.
-
-  # `(file-name-nondirectory (file-name-sans-extension (buffer-file-name)))`
-
-2. If we're satisfied with the current field, we simply tab to the next field.
-   Otherwise, we simply write text ---which overwrites the default text.
-
-3. After enough tabbing we complete the template and the cursour lands
-   at position ~$0~.
-
-⟪ Having default or mirrored text for ~$2~ would not allow me to see the URL
-field, lest I wish to change it or at least confirm it's what I want.
-Hence, the ~$2~ field has no default. ⟫
-
-Let's overwrite the usual way to insert such links, via ~C-c C-l~.
-#+BEGIN_SRC emacs-lisp
-(cl-defun org-insert-link ()
-  "Makes an org link by inserting the URL copied to clipboard and
-  prompting for the link description only.
-
-  Type over the shown link to change it, or tab to move to the
-  description field.
-
-  This overrides Org-mode's built-in ‘org-insert-link’ utility;
-  whence C-c C-l uses the snippet."
-  (interactive)
-  (insert "my_org_insert_link")
-  (yankpad-expand))
-#+END_SRC
-#+end_details
-
-/Warning!/ Snippet names cannot have hypens in them ---in this setup at least.
-
-The [[http://joaotavora.github.io/yasnippet/snippet-development.html][Yasnippet manual]] is an accessible read, as is the [[https://github.com/Kungsgeten/yankpad][Yankpad manual]], and
- showcases many other utilities; such as having certain snippets being
- enabled only in particular modes or on demand. Of note is that field ~$n~ can be
- accessed in code with the invocation ~(yas-field-value n)~.
-
-Incidentally, I used this snippet setup to [[https://www.youtube.com/watch?v=NYOOF9xKBz8&feature=youtu.be][demo]] the idea of repetitious code in
-grouping constructs within dependently-typed languages, which was accepted and
-led to my doctoral research on a [[https://alhassy.github.io/next-700-module-systems/][‘do it yourself module system’]].
-
-The rest of this section is other templates, not much for now,
-concluding with actually loading this snippet mechanism globally.
-
-         The remaining subsections discuss contents of my yankpad file.
-
-** Org-mode Templates ---A reason I “generate” templates ;)
-:PROPERTIES:
-:CUSTOM_ID: Org-mode-Templates-A-reason-I-generate-templates
-:END:
-
-This produces a pop-up list of org-mode block types, if ~src~ is selected, then a
-list of my commonly used languages pops-up.  Alternatively, ignore the pop-up
-menu and write any block or language name.
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
-,** begin: produce an org-mode block
-,#+begin_${1:environment$(let*
-    ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
-     (langs '("c" "emacs-lisp" "lisp" "latex" "python" "sh" "haskell" "plantuml" "prolog"))
-     (type (yas-choose-value block)))
-     (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
- $0
-,#+end_${1:$(car (split-string yas-text))}
-#+END_SRC
-In this case, ~yas-text~ is equivalent to (~yas-field-value 1)~;
-it generally refers to the value of the field being mirrored with ~${n: ⋯yas-text⋯}~.
-
-However, going through pop-ups takes precious time ---besides being slightly annyoing.
-Let's introduce a template for my most utilised kind of language blocks.
-#+begin_example
-,** s_org: src block for org
-,#+begin_src org
-$0
-,#+end_src
-#+end_example
-
-However, doing this for each language I want is a waste of time and textual
-space. Why? *The purpose of templates is to reduce repetition,* yet the above
-block would be repeated with only 3 parts ‘unknown’: The expansion keyword, the
-description, and the org-mode source block name.  Whence, the template /text/ is
-generated by the following basic loop ---whose source block is named
-~my-org-lang-templates~.
-#+NAME: my-org-lang-templates
-#+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
-;; We make an org BLOCK snippet template for each LANG the user has declared.
-;;
-(cl-loop for (shortcut block takes-language-argument? default-text)
-      in '(("s_" "src" t)
-           ("is_" "inline source" t)  ;; Treated specially below
-           ("e_" "example" t)
-           ("q_" "quote")
-           ("v_" "verse")
-           ("c_" "center")
-           ("ex_" "export") ;; only HTML and LATEX
-           ;; https://alhassy.github.io/org-special-block-extras/#Summary
-           ("p_"  "parallel" nil "\n$0\n#+columnbreak:\n")
-           ("d_"  "details"  nil "${1:title}\n$0")
-           ("ed_" "edcomm"   nil  "${1:editor}\n$0")
-           ("doc_" "documentation" nil "${1: mandatory entry name}\n$0")
-           ("def_" "latex-definitions"))
-      for languages = (if takes-language-argument?
-                          (-cons* "org" "agda2" "any" ;; Extra ‘languages’
-                                  ;; Also include whatever languages we've loaded for literate programming.
-                                  (--map (symbol-name (car it)) org-babel-load-languages))
-                        '("")) ;; The “empty language”
-      concat (cl-loop for lang in languages
-                   for key         = (concat shortcut
-                                       (if (s-blank? lang) block lang))
-                   for description =  (if (s-blank? lang)
-                                          block
-                                        (concat
-                                         block " for " lang))
-                   concat (if (equal "is_" shortcut)
-                              (concat "\n** " key ": " description
-                                      "\nsrc_" lang "[:exports code]{$1} $0")
-                            (concat "\n** " key ": " description
-                                    "\n#+begin_" block " " lang
-                                    (or default-text "\n$0")
-                                    "\n#+end_" block "\n"))))
-#+end_src
-
-The /resulting text/ of this block, generated below, is tangled to our yankpad by
-utilising a [[https://www.gnu.org/software/emacs/manual/html_node/org/Noweb-reference-syntax.html][noweb]] source block invocation. An example of the resulting text is
-the above ~s_org~ block. The result is (last I checked) *83* template expansions
----that would have been a bit much to write by hand.
-#+begin_example org
-,#+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes
-<<my-org-lang-templates()>>
-,#+end_src
-#+end_example
-:ActuallyDoIt:
-#+begin_src org  :tangle "~/.emacs.d/yankpad.org" :noweb yes :comments none
-<<my-org-lang-templates()>>
-#+end_src
-:End:
-# The “:eval never-export” means that this block is never tangled on document
-# export, C-c C-e.
-
-#+begin_box
-Now ~s_~, due to company mode, brings up a list of languages that I can then
-scroll down through, then “enter” upon to expand. Moreover, the prefix ~s_~ means
-that the key is mostly irrelevant, since I needn't remember it because
-company-mode immediately lists possible completions /along/ with the /descriptions/
-for the snippets. Likewise for examples with ~e_~ or quotes with ~q_~.  Super neat
-stuff :-)
-
-                 Ain't this reminiscent of meta-programming ;-)
-#+end_box
-Using =noweb= invocations, any time the tangling is performed, the yankpad
-is kept up to date ---no personal intervention from myself.
-
-# Neat, but not what I want.
-# https://github.com/abo-abo/auto-yasnippet
-
-:Fun_albeit_useless_exercise:
-
-Let's push this frontier a bit more …
-
-In expressive languages like Agda, one can not only be type polymorphic but also
-‘level polymorphic’ ---since types constitute a hierarchy where a ‘type’ is
-uninterestingly an ‘element’ of a higher ‘type’, ad infinitum.  For example, the
-type of a level polymorphic ′choice’ function would be ~{a : Level} (A : Set a) → A~
----note that such a choice function cannot exist since for any type ~A~ it returns
-an element of ~A~, then what of the empty type. Anyhow, the template ~{${1:a} :
-Level} → (${2:A} : Set $1) → $0~ would suffice to make this happen. Yet, what if
-we wanted /n/-many sets?
-
-Make a function that takes /n ≤ 26/ as input, produces a list of
-levels, then uses each level to produce a list of type names ;-)
-:End:
-
-** Elisp Templates
-:PROPERTIES:
-:CUSTOM_ID: Elisp-Templates
-:END:
-
-The following snippets were rather useful as I began learning Lisp to construct
-my editor of choice ---I love Emacs so much. Admittedly, I still need the first
-one below and usually beat around the bush by using ~(cl-loop for ⋯ do ⋯)~, (doc:cl-loop), which is
-‘noisier’ but easier to remember and to read for non-Lispers.
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
-,** loop:  Elisp's for each loop
-(dolist (${1:var} ${2:list-form})
-        ${3:body})
-
-,** defun: Lisp functions
-(cl-defun ${1:fun-name} (${2:arguments})
-  "${3:documentation}"
-  $0)
-
-,** cond: Elisp conditionals
-(cond (${1:scenario₁} ${2:response₁})
-      (${3:scenario₂} ${4:response₂}))
-#+end_src
-
-** Equational Templates
-:PROPERTIES:
-:CUSTOM_ID: Equational-Templates
-:END:
-
-To show ~ℒ = ℛ~, one starts at the complicated side, say /ℒ/, then, with the aim of
-simplification, tries to end at the simpler side, /𝓡/.  Along the way, one
-justifies each step of the calculation. This approach is popular in the proof
-assistant Agda; [[https://alhassy.github.io/PathCat/][Examples]]. Read more about [[http://www.mathmeth.com/][informal calculational proofs]].
-
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
-,** fun: Function declaration with type signature
-
-${1:fun-name} : ${2:arguments}
-$1 ${3:args} = ?$0
-
-,** eqn_begin: Start a ≡-Reasoning block in Agda
-
-begin
-  ${1:complicated-side}
-$0≡⟨ ${3:reason-for-the-equality} ⟩
- ${2:simpler-side}
-∎
-
-,** eqn_step: Insert a step in a ≡-Reasoning block in Agda
-≡⟨ ${2:reason-for-the-equality} ⟩
-  ${1:new-expression}
-$0
-#+end_src
-
-One expands ~eqn_begin~, tabs to fill in the three main locations, then
-/immediately/ types ~eqn_step~ to produce a new step in a calculational proof.
-
-** COMMENT Misc Templates
-:PROPERTIES:
-:CUSTOM_ID: Misc-Templates
-:END:
-
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
-,** remark: top-level literate comment
-
-{{{remark(${1:thoughts})}}} $0
-#+end_src
-
-Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1 }}@@~.
-
-** Emojis
-:PROPERTIES:
-:CUSTOM_ID:
-:END:
-
-#+NAME: my-emoji-templates
-#+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
-;;
-;; https://emojipedia.org/people/
-(cl-loop for (emoji name description)
-         in '((😀 "Grinning Face"
-                  "Often conveys general pleasure and good cheer or humor.")
-
-              (😃 "Grinning Face with Big Eyes"
-                  "Often conveys general happiness and good-natured amusement.
-                   Similar to 😀 Grinning Face but with taller,
-                   more excited eyes.")
-
-              (😄 "Grinning Face with Smiling Eyes"
-                  "Often conveys general happiness and good-natured amusement.
-                   Similar to 😀 Grinning Face and 😃 Grinning
-                   Face With Big Eyes, but with warmer, less
-                   excited eyes.")
-
-              (😁 "Beaming Face with Smiling Eyes"
-                  "Often expresses a radiant, gratified
-                  happiness. Tone varies, including warm, silly,
-                  amused, or proud.")
-
-              (😆 "Grinning Squinting Face"
-                  "Often conveys excitement or hearty laughter.
-                   Similar to 😀 Grinning Face but with eyes that
-                   might say ‘Squee!’ or ‘Awesome!’ An emoji form of
-                   the >< or xD emoticons.")
-
-              (😅 "Grinning Face with Sweat"
-                  "Intended to depict nerves or discomfort but
-                  commonly used to express a close call, as if
-                  saying ‘Whew!’ and wiping sweat from the
-                  forehead. ")
-
-              (🤣 "Rolling on the Floor Laughing"
-                  "Often conveys hysterical laughter more intense
-                  than 😂 Face With Tears of Joy.")
-
-              (😂 "Face with Tears of Joy")
-              (🙂 "Slightly Smiling Face")
-              (🙃 "Upside-Down Face")
-              (😉 "Winking Face")
-              (😊 "Smiling Face with Smiling Eyes")
-              (😇 "Smiling Face with Halo")
-              (🥰 "Smiling Face with Hearts")
-              (😍 "Smiling Face with Heart-Eyes")
-              (🤩 "Star-Struck")
-              (😘 "Face Blowing a Kiss")
-              (😗 "Kissing Face")
-              (☺️ "Smiling Face")
-              (😚 "Kissing Face with Closed Eyes")
-              (😙 "Kissing Face with Smiling Eyes")
-              (🥲 "Smiling Face with Tear")
-              (😋 "Face Savoring Food")
-              (😛 "Face with Tongue")
-              (😜 "Winking Face with Tongue")
-              (🤪 "Zany Face")
-              (😝 "Squinting Face with Tongue")
-              (🤑 "Money-Mouth Face")
-              (🤗 "Hugging Face")
-              (🤭 "Face with Hand Over Mouth")
-              (🤫 "Shushing Face")
-              (🤔 "Thinking Face")
-              (🤐 "Zipper-Mouth Face")
-              (🤨 "Face with Raised Eyebrow")
-              (😐 "Neutral Face")
-              (😑 "Expressionless Face")
-              (😶 "Face Without Mouth")
-              (😏 "Smirking Face")
-              (😒 "Unamused Face")
-              (🙄 "Face with Rolling Eyes")
-              (😬 "Grimacing Face")
-              (🤥 "Lying Face")
-              (😌 "Relieved Face")
-              (😔 "Pensive Face")
-              (😪 "Sleepy Face")
-              (🤤 "Drooling Face")
-              (😴 "Sleeping Face")
-              (😷 "Face with Medical Mask")
-              (🤒 "Face with Thermometer")
-              (🤕 "Face with Head-Bandage")
-              (🤢 "Nauseated Face")
-              (🤮 "Face Vomiting")
-              (🤧 "Sneezing Face")
-              (🥵 "Hot Face")
-              (🥶 "Cold Face")
-              (🥴 "Woozy Face")
-              (😵 "Dizzy Face")
-              (🤯 "Exploding Head")
-              (🤠 "Cowboy Hat Face")
-              (🥳 "Partying Face")
-              (🥸 "Disguised Face")
-              (😎 "Smiling Face with Sunglasses")
-              (🤓 "Nerd Face")
-              (🧐 "Face with Monocle")
-              (😕 "Confused Face")
-              (😟 "Worried Face")
-              (🙁 "Slightly Frowning Face")
-              (☹️ "Frowning Face")
-              (😮 "Face with Open Mouth")
-              (😯 "Hushed Face")
-              (😲 "Astonished Face")
-              (😳 "Flushed Face")
-              (🥺 "Pleading Face")
-              (😦 "Frowning Face with Open Mouth")
-              (😧 "Anguished Face")
-              (😨 "Fearful Face")
-              (😰 "Anxious Face with Sweat")
-              (😥 "Sad but Relieved Face")
-              (😢 "Crying Face")
-              (😭 "Loudly Crying Face")
-              (😱 "Face Screaming in Fear")
-              (😖 "Confounded Face")
-              (😣 "Persevering Face")
-              (😞 "Disappointed Face")
-              (😓 "Downcast Face with Sweat")
-              (😩 "Weary Face")
-              (😫 "Tired Face")
-              (🥱 "Yawning Face")
-              (😤 "Face with Steam From Nose")
-              (😡 "Pouting Face")
-              (😠 "Angry Face")
-              (🤬 "Face with Symbols on Mouth")
-              )
-         for nom  = (s-replace " " "_" name)
-         for desc = (s-collapse-whitespace (or description ""))
-         concat (concat
-                 ;; f_… ⇒ get emoji from company menu showing only name & emoji
-                 (format "\n** f_%s: %s %s \n%s" nom emoji "" emoji)
-                 ;; fd_… ⇒ get emoji from company menu showing name, emoji, & ‘d’escription
-                 (format "\n** fd_%s: %s %s \n%s" nom emoji desc emoji)))
-#+end_src
-
-#+begin_src emacs-lisp
-;; Get all unicode emojis to appear within Emacs
-;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
-(set-fontset-font t nil "Apple Color Emoji")
-#+end_src
-
-#+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes :exports none
-<<my-emoji-templates()>>
-#+end_src
-
-**   =my_⋯= Templates to obtain User Information
-:PROPERTIES:
-:CUSTOM_ID: my-Templates-to-obtain-User-Information
-:END:
-
-Let's add templates for links to common user information ^_^
-
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
-,** my_name: User's name
-`user-full-name`
-
-,** my_email: User's email address
-`user-mail-address`
-
-,** my_github: User's Github repoistory link
-https://github.com/alhassy/
-
-,** my_emacsdrepo: User's version controlled Emacs init file
-https://github.com/alhassy/emacs.d
-
-,** my_blog: User's blog website
-https://alhassy.github.io/
-
-,** my_webpage: User's organisation website
-http://www.cas.mcmaster.ca/~alhassm/
-
-,** my_twitter: User's Twitter profile
-https://twitter.com/musa314
-
-,** my_masters_thesis
-A Mechanisation of Internal Galois Connections In Order Theory Formalised Without Meets
-https://macsphere.mcmaster.ca/bitstream/11375/17276/2/thesis.pdf
-#+end_src
-
-It may be useful to also have Org-link variants of these …
-
-** Templates from other places in my init
-:PROPERTIES:
-:CUSTOM_ID: Templates-from-other-places-in-my-init
-:END:
-
-In this setup, I have some templates appear elsewhere, tagged with =:noweb-ref
-templates-from-other-places-in-my-init=. They are presented in natural positions,
-but can only occur to the machine after template expansion is setup.  Using
-org-mode, we are able to /present/ code in any order and /tangle/ it to the order
-the compilers need it to be!
-
-Let's activate all such templates, now after template expansion has been setup.
-#+BEGIN_SRC org :tangle "~/.emacs.d/yankpad.org" :comments none :noweb yes
-<<templates-from-other-places-in-my-init>>
-#+END_SRC
-
-Note: Since I've insisted that Org blocks are space sensative, any whitespace
-before the ~<<⋯>>~ will propogate to the resulting extracted code.
-
-** Email contacts
-:PROPERTIES:
-:CUSTOM_ID: Email-contacts
-:END:
-
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
-,** contacts: Get the email of one of my personal contacts
-
-${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.org"))
-(yas-choose-value (--map (format "%s <%s>" (getf it :name) (getf it :email))
-my/contacts)))`} $0
-#+end_src
-
-** Re-Enabling Templates
-:PROPERTIES:
-:CUSTOM_ID: Re-Enabling-Templates
-:END:
-
-After our yankpad templates are generated, we need to load it.
-#+BEGIN_SRC emacs-lisp
-;; After init hook; see above near use-package install.
-(yankpad-reload)
-#+END_SRC
 * COMMENT Experiments
 :PROPERTIES:
 :CUSTOM_ID: Experiments
