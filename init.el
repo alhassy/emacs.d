@@ -1,11 +1,11 @@
-;; [[file:init.org::+begin_src emacs-lisp :exports none][No heading:1]]
+;; [[file:init.org::*title][title:1]]
 (require 'cl) ;; to get loop instead of cl-loop, etc.
 
 ;; before this: init time: 13
 ;; after: 12 seconds.
 ; (setq gc-cons-threshold 50000000) ;; orginaly 800,000
 ;; reduce number of times GC occurs.
-;; No heading:1 ends here
+;; title:1 ends here
 
 ;; [[file:init.org::*  =~/.emacs= vs. =init.org=][  =~/.emacs= vs. =init.org=:4]]
 (setq custom-file "~/.emacs.d/custom.el")
@@ -84,6 +84,7 @@
   ;; Allow tree-semantics for undo operations.
   (use-package undo-tree
     :diminish                       ;; Don't show an icon in the modeline
+    :bind ("C-x u" . undo-tree-visualize)
     :config
       ;; Always have it on
       (global-undo-tree-mode)
@@ -261,6 +262,15 @@
     (org-special-block-extras-short-names))
 ;; Org-Mode Administrivia:5 ends here
 
+;; [[file:init.org::*Password-locking files ---“encryption”][Password-locking files  ---“encryption”:1]]
+(system-packages-ensure "gnupg") ;; i.e.,  brew install gnupg
+
+;; “epa” ≈ EasyPG Assistant
+(require 'epa-file)
+(epa-file-enable)
+(setf epa-pinentry-mode 'loopback)
+;; Password-locking files  ---“encryption”:1 ends here
+
 ;; [[file:init.org::*Automatic Backups][Automatic Backups:1]]
 ;; New location for backups.
 (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
@@ -307,27 +317,6 @@
     (magit-clone-set-remote.pushDefault t))
 ;;   =magit= ---Emacs' porcelain interface to git:1 ends here
 
-;; [[file:init.org::*  =magit= ---Emacs' porcelain interface to git][  =magit= ---Emacs' porcelain interface to git:2]]
-(require 'magit-git)
-
-(defun my/magit-check-file-and-popup ()
-  "If the file is version controlled with git
-  and has uncommitted changes, open the magit status popup."
-  (let ((file (buffer-file-name)))
-    (when (and file (magit-anything-modified-p t file))
-      (message "This file has uncommited changes!")
-      (when nil ;; Became annyoying after some time.
-      (split-window-below)
-      (other-window 1)
-      (magit-status)))))
-
-;; I usually have local variables, so I want the message to show
-;; after the locals have been loaded.
-(add-hook 'find-file-hook
-  '(lambda ()
-      (add-hook 'hack-local-variables-hook 'my/magit-check-file-and-popup)))
-;;   =magit= ---Emacs' porcelain interface to git:2 ends here
-
 ;; [[file:init.org::*Credentials: I am who I am][Credentials: I am who I am:1]]
 ;; See here for a short & useful tutorial:
 ;; https://alvinalexander.com/git/git-show-change-username-email-address
@@ -361,7 +350,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
     'cloned-repo))
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
-(maybe-clone "https://github.com/alhassy/alhassy.github.io")
+(maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
 ;; Maybe clone ... everything?:1 ends here
 
 ;; [[file:init.org::*Maybe clone ... everything?][Maybe clone ... everything?:2]]
@@ -730,11 +719,6 @@ visit all blocks with such a name."
 ;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
 (set-fontset-font t nil "Apple Color Emoji")
 ;; Emojis:2 ends here
-
-;; [[file:init.org::*Re-Enabling Templates][Re-Enabling Templates:1]]
-;; After init hook; see above near use-package install.
-;; (yankpad-reload)
-;; Re-Enabling Templates:1 ends here
 
 ;; [[file:init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:1]]
 (cl-defun my/org-capture-buffer (&optional keys no-additional-remarks
@@ -1605,18 +1589,6 @@ themes (•̀ᴗ•́)و"
 ;; http://orgmode.org/manual/Special-symbols.html
 ;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:1 ends here
 
-;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:2]]
-;; Show inline images when loading a new Org file.
-(setq org-startup-with-inline-images t)
-
-;; Whenever a src block is run, redisplay images so they're up-to-date.
-;; Very useful when using ‘ob-latex-as-png’, below.
-(add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images)
-
-;; Automatically convert LaTeX fragments to inline images.
-(setq org-startup-with-latex-preview t)
-;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:2 ends here
-
 ;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:3]]
 ;; Automatically toggle LaTeX previews when cursour enters/leaves them
 (use-package org-fragtog
@@ -1838,7 +1810,10 @@ themes (•̀ᴗ•́)و"
 
 ;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:6]]
 (cl-loop for item
-      in '(;; categorial ;;
+      in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
+          ("(" "﴾")
+          (")" "﴿")
+           ;; categorial ;;
            ("alg" "𝒜𝓁ℊ")
            ("split" "▵")
            ("join" "▿")
@@ -1964,6 +1939,12 @@ themes (•̀ᴗ•́)و"
 
 ;; See ace-jump issues to configure for use of home row keys.
 ;; Letter-based Navigation:1 ends here
+
+;; [[file:init.org::*Letter-based Navigation][Letter-based Navigation:2]]
+;; C-x o ⇒ Switch to the other window
+;; C-x O ⇒ Switch back to the previous window
+(bind-key "C-x O" (lambda () (interactive) (other-window -1)))
+;; Letter-based Navigation:2 ends here
 
 ;; [[file:init.org::*Working with Citations][Working with Citations:1]]
 (use-package org-ref
@@ -2559,3 +2540,58 @@ window contains the buffer with the cursour in it."
   (org-cycle)
   (goto-line line))
 ;; Jumping without hassle:1 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:1]]
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# Personal instructions for a new machine:1 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:2]]
+brew install --cask emacs
+# Personal instructions for a new machine:2 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:3]]
+brew tap daviderestivo/emacs-head
+brew install emacs-head
+# Personal instructions for a new machine:3 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:4]]
+ln -s /usr/local/opt/emacs-head@27/Emacs.app /Applications
+
+sudo ln -s /usr/local/opt/emacs-head@27/Emacs.app/Contents/MacOS/Emacs /usr/local/bin/emacs
+# Personal instructions for a new machine:4 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:5]]
+brew install aspell
+brew install wordnet
+# Personal instructions for a new machine:5 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:6]]
+time brew cask install mactex-no-gui
+# Personal instructions for a new machine:6 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:7]]
+brew install pygments
+# Personal instructions for a new machine:7 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:8]]
+brew install --cask dropbox
+brew install --cask megasync
+# Personal instructions for a new machine:8 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:9]]
+   brew install ag ## used for helm-do-grep-ag
+# Personal instructions for a new machine:9 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:10]]
+brew install --cask amethyst
+# Personal instructions for a new machine:10 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:11]]
+brew install agda
+# Personal instructions for a new machine:11 ends here
+
+# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:12]]
+   mkdir -p ~/.agda
+   echo /usr/local/lib/agda/standard-library.agda-lib >>~/.agda/libraries
+   echo standard-library >>~/.agda/defaults
+# Personal instructions for a new machine:12 ends here

@@ -7,6 +7,9 @@
 #+OPTIONS: broken-links:auto
 
 * title :ignore:
+:PROPERTIES:
+:CUSTOM_ID: title
+:END:
 #+title: A Life Configuring Emacs
 #+author: Musa Al-hassy
 #+email: alhassy@gmail.com
@@ -122,6 +125,142 @@ person you are arguing against. It is painful to lose your reality, so be kind,/
 
 - [[#weather-app][Weather App]]
 - [[#new_27][NEW_27]]
+* Personal instructions for a new machine :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Personal-instructions-for-a-new-machine
+:END:
+#+begin_details "“Personal instructions for a new machine”"
+# MA: Add “§𝒳” links to refer to where the terse installs below
+# are actually discussed in init.org.
+
+The first 5 steps must be performed at the terminal /since/ they are required to
+get /my/ Emacs.
+
+1. Install a package manager: https://brew.sh/ :
+
+  #+begin_src shell
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  #+end_src
+
+   Also: Change to the conventional scrolling direction:
+   /If I pull my scroll down, I want to go down./
+   - Apple menu → System Preferences → Mouse → Tick the scroll direction option.
+
+2. [[https://www.emacswiki.org/emacs/EmacsForMacOS#h5o-14][Use brew to get Emacs]]:
+   #+begin_src shell
+brew install --cask emacs
+   #+end_src
+   If that fails, try this to [[https://github.com/daviderestivo/homebrew-emacs-head#gnu-emacs-27-bottle-or-head][install Emacs:]]
+   #+BEGIN_SRC shell
+brew tap daviderestivo/emacs-head
+brew install emacs-head
+#+END_SRC
+
+3. [[https://emacs.stackexchange.com/a/50405/10352][Then]]    [[https://www.emacswiki.org/emacs/EmacsForMacOS#h5o-14][make]]   the command ~emacs~ available via the terminal ---required if
+   doing any melpa development.
+   #+begin_src shell
+ln -s /usr/local/opt/emacs-head@27/Emacs.app /Applications
+
+sudo ln -s /usr/local/opt/emacs-head@27/Emacs.app/Contents/MacOS/Emacs /usr/local/bin/emacs
+   #+end_src
+
+4. Install git: =brew install git=
+
+5. Get my Emacs setup: =rm -rf ~/.emacs.d; git clone
+   https://github.com/alhassy/emacs.d.git ~/.emacs.d=
+
+   Open Emacs and watch download and set up many other things ... ^_^
+
+--------------------------------------------------------------------------------
+
+For the next set of instructions, which are in this here ~init.org~ file: Open the
+file, then kbd:C-c_C-c each snippet and complete any other required setup.
+
+6. [@6] Install spell-checking application
+   as well as a reliable English dictionary, [[https://wordnet.princeton.edu/][WordNet]].
+   #  =brew install aspell=
+   #+begin_src shell
+brew install aspell
+brew install wordnet
+   #+end_src
+
+7. Get LaTeX:
+   #+begin_src shell
+time brew cask install mactex-no-gui
+#+end_src
+   - This is a redistribution of TeX Live specifically for macOS.
+   - We get the 4GB version since it has [[https://tex.stackexchange.com/a/1041/69371][everything]] and so
+     do not need to worry about missing style files.
+   - This took about 12 minutes on my machine.
+
+   Restart Emacs, enter =$e^{i \cdot \pi} + 1 = 0$= then press kbd:C-c_C-x_C-l to
+   have it rendered inline.
+
+   + *Minted:* Get tool for colourful code snippets for LaTeX ---see “minted” in
+     the main article.
+
+    #+begin_src shell
+brew install pygments
+  #+end_src
+
+   + *Not anymore:* Get a neato PDF presentation console: =brew install pdfpc=
+     - With =pdfpc myfile.pdf= you get a nice timer and multiple views
+       of the current slide and upcoming slides ---with support for multiple monitors.
+     - Install ScreenBrush, from the Apple Store, for easily drawing/annotating my
+       screen ---e.g., when I'm giving a virtual lecture to my students.
+     - An alternative is =brew install mupdf= then =mupdf-gl myfile.pdf= and press
+       =f= for fullscreen then =a= for adding/adorning drawings ---it was too
+       rough to use live.
+
+     Finally, within Emacs: =M-x pdf-tools-install=
+
+8. Install quick file sharing utility ---[[https://www.dropbox.com/install][Dropbox]]--- as well as a backup service,
+   [[https://mega.nz/fm][Mega]] ---I use this for my =backups= directory: Keep reading.
+   #+begin_src shell
+brew install --cask dropbox
+brew install --cask megasync
+   #+end_src
+9. doc:helm-do-grep-ag ([[kbd:C-x c M-g a]]) *search all files in the current
+   directory for a particular (regexp) string*
+   - Shows matches live as you type
+   - Very helpful when looking for a definition of something
+
+    #+begin_src shell
+   brew install ag ## used for helm-do-grep-ag
+   #+end_src
+
+--------------------------------------------------------------------------------
+
+10. [@10] Install a tiling window manager: https://ianyh.com/amethyst/
+    #+begin_src shell
+brew install --cask amethyst
+    #+end_src
+    - Then select: =Mouse: Focus follows mouse=.
+    - Also: =Shortcuts=, then disable ‘increase/decrease main pane count’ bindings
+      since they override the beloved Emacs =M-<,>= keys.
+11. Add the home (=~/=) directory to the default file navigator:
+    Finder -> Preferences > Sidebar, then select home.
+12. Install an Agda
+    #+begin_src shell
+brew install agda
+    #+end_src
+    To use the Agda standard library by default:
+    #+BEGIN_SRC shell
+   mkdir -p ~/.agda
+   echo /usr/local/lib/agda/standard-library.agda-lib >>~/.agda/libraries
+   echo standard-library >>~/.agda/defaults
+ #+END_SRC
+    Invoke ~brew info agda~ to get these instructions and the version of Agda just
+    installed.
+
+13. Get font support for subscripts, if need be:
+    - Download and unzip the [[https://fontlibrary.org/en/font/symbola][symbola]] font
+    - kbd:CMD_+_SPC ⇒ =font book= ⇒ =+= ⇒ select the symbola directory you just
+      unzipped
+
+    (Note: In the before time, you could brew install this font.)
+#+end_details
+
 * Why Emacs?
 :PROPERTIES:
 :CUSTOM_ID: Why-Emacs
