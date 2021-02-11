@@ -75,6 +75,11 @@
 (use-package dash)    ;; “A modern list library for Emacs”
 (use-package s   )    ;; “The long lost Emacs string manipulation library”.
 
+;; Let's use the “s” library.
+(defvar my/personal-machine?
+  (not (s-contains? "weever" (shell-command-to-string "uname -a")))
+  "Is this my personal machine, or my work machine?")
+
 ;; Library for working with system files;
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 (use-package f)
@@ -118,6 +123,20 @@
   :defer 5
   :config (system-packages-update))
 
+;; Please don't bother me when shell buffer names are in use, just make a new
+;; buffer.
+(setq async-shell-command-buffer 'new-buffer)
+
+;; Display the output buffer for asynchronous shell commands only when the
+;; command generates output.
+(setq async-shell-command-display-buffer nil)
+
+;; Don't ask me if I want to kill a buffer with a live process attached to it;
+;; just kill it please.
+(setq kill-buffer-query-functions
+  (remq 'process-kill-buffer-query-function
+         kill-buffer-query-functions))
+
 ;; Ensure our operating system is always up to date.
 ;; This is run whenever we open Emacs & so wont take long if we're up to date.
 ;; It happens in the background ^_^
@@ -133,6 +152,9 @@
 ;; [[file:init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:4]]
 ;; Unlike the Helm variant, we need to specify our OS pacman.
 (setq system-packages-package-manager 'brew)
+
+;; If the given system package doesn't exist; install it.
+(system-packages-ensure "amethyst")
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
 
 ;; [[file:init.org::*Syncing to the System's =$PATH=][Syncing to the System's =$PATH=:1]]
@@ -204,6 +226,10 @@
           (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:4 ends here
 
+;; [[file:init.org::* “Being at the Helm” ---Completion & Narrowing Framework][ “Being at the Helm” ---Completion & Narrowing Framework:7]]
+(system-packages-ensure "ag")
+;;  “Being at the Helm” ---Completion & Narrowing Framework:7 ends here
+
 ;; [[file:init.org::*Org-Mode Administrivia][Org-Mode Administrivia:2]]
 (use-package org
   :ensure org-plus-contrib
@@ -266,10 +292,22 @@
 (system-packages-ensure "gnupg") ;; i.e.,  brew install gnupg
 
 ;; “epa” ≈ EasyPG Assistant
-(require 'epa-file)
-(epa-file-enable)
-(setf epa-pinentry-mode 'loopback)
+
+;; Need the following in init to have gpg working fine:
+;; force Emacs to use its own internal password prompt instead of an external pin entry program.
+(setq epa-pinentry-mode 'loopback)
+
+;; https://emacs.stackexchange.com/questions/12212/how-to-type-the-password-of-a-gpg-file-only-when-opening-it
+(setq epa-file-cache-passphrase-for-symmetric-encryption t)
+;; No more needing to enter passphrase at each save ^_^
+;;
+;; Caches passphrase for the current emacs session?
 ;; Password-locking files  ---“encryption”:1 ends here
+
+;; [[file:init.org::*Staying Sane][Staying Sane:1]]
+(system-packages-ensure "dropbox")
+(system-packages-ensure "megasync")
+;; Staying Sane:1 ends here
 
 ;; [[file:init.org::*Automatic Backups][Automatic Backups:1]]
 ;; New location for backups.
@@ -323,6 +361,11 @@
 (when (equal "" (shell-command-to-string "git config user.name"))
   (shell-command "git config --global user.name \"Musa Al-hassy\"")
   (shell-command "git config --global user.email \"alhassy@gmail.com\""))
+
+;; Also need to customise email routes per organization
+;; https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/configuring-notifications#customizing-email-routes-per-organization
+(unless my/personal-machine?
+  (shell-command "git config --global user.email \"musa@weeverapps.com\""))
 ;; Credentials: I am who I am:1 ends here
 
 ;; [[file:init.org::*Encouraging useful commit messages][Encouraging useful commit messages:1]]
@@ -346,7 +389,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (if (file-directory-p local)
       'repo-already-exists
     (async-shell-command (concat "git clone " remote " " local))
-    (add-to-list 'magit-repository-directories `(,local   . 0))
+    ; (add-to-list 'magit-repository-directories `(,local   . 0))
     'cloned-repo))
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
@@ -934,7 +977,8 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
 ;; ➩ Show my agenda upon Emacs startup.
-(org-agenda "a" "a") ;; Need this to have “org-agenda-custom-commands” defined.
+(when my/personal-machine?
+  (org-agenda "a" "a")) ;; Need this to have “org-agenda-custom-commands” defined.
 ;; Step 7: Archiving Tasks:2 ends here
 
 ;; [[file:init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:3]]
@@ -1136,7 +1180,8 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:6]]
 ;; After startup, if Emacs is idle for 10 seconds, then start Gnus.
 ;; Gnus is slow upon startup since it fetches all mails upon startup.
-(run-with-idle-timer 10 nil #'gnus)
+(when my/personal-machine?
+  (run-with-idle-timer 10 nil #'gnus))
 ;; Using Gnus for Gmail:6 ends here
 
 ;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:8]]
@@ -1245,7 +1290,9 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Startup message: Emacs & Org versions:3 ends here
 
 ;; [[file:init.org::*My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up:1]]
-(find-file "~/Dropbox/todo.org")
+(if my/personal-machine?
+    (find-file "~/Dropbox/todo.org")
+  (find-file "~/Desktop/work.org.gpg"))
 (split-window-right)			  ;; C-x 3
 (other-window 1)                              ;; C-x 0
 (let ((enable-local-variables :all)           ;; Load *all* locals.
@@ -1671,61 +1718,66 @@ themes (•̀ᴗ•́)و"
 ;; Pretty Lists Markers:1 ends here
 
 ;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:1]]
+(system-packages-ensure "aspell")
+(system-packages-ensure "wordnet")
+;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:2]]
 (use-package flyspell
   :diminish
   :hook ((prog-mode . flyspell-prog-mode)
          ((org-mode text-mode) . flyspell-mode)))
-;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:2]]
-(setq ispell-program-name "/usr/local/bin/aspell")
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
 ;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:4]]
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:3]]
+(setq ispell-program-name "/usr/local/bin/aspell")
+(setq ispell-dictionary "en_GB") ;; set the default dictionary
+;; Fix spelling as you type ---thesaurus & dictionary too!:3 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:5]]
 (eval-after-load "flyspell"
   ' (progn
      (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
      (define-key flyspell-mouse-map [mouse-3] #'undefined)))
-;; Fix spelling as you type ---thesaurus & dictionary too!:4 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:5]]
-(global-font-lock-mode t)
-(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:5 ends here
 
 ;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:6]]
-(setq ispell-silently-savep t)
+(global-font-lock-mode t)
+(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:6 ends here
 
 ;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:7]]
-(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
+(setq ispell-silently-savep t)
 ;; Fix spelling as you type ---thesaurus & dictionary too!:7 ends here
 
 ;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:8]]
-(add-hook          'c-mode-hook 'flyspell-prog-mode)
-(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
+(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
 ;; Fix spelling as you type ---thesaurus & dictionary too!:8 ends here
 
 ;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:9]]
+(add-hook          'c-mode-hook 'flyspell-prog-mode)
+(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
+;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:10]]
 (use-package synosaurus
   :diminish synosaurus-mode
   :init    (synosaurus-mode)
   :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
            (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
-;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
-
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:10]]
-;; (shell-command "brew cask install xquartz &") ;; Dependency
-;; (shell-command "brew install wordnet &")
 ;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
 
 ;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:11]]
+;; (shell-command "brew cask install xquartz &") ;; Dependency
+;; (shell-command "brew install wordnet &")
+;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
+
+;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:12]]
 (use-package wordnut
  :bind ("M-!" . wordnut-lookup-current-word))
 
 ;; Use M-& for async shell commands.
-;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
+;; Fix spelling as you type ---thesaurus & dictionary too!:12 ends here
 
 ;; [[file:init.org::*Using a Grammar & Style Checker][Using a Grammar & Style Checker:1]]
 (use-package langtool
@@ -1786,11 +1838,15 @@ themes (•̀ᴗ•́)و"
 ;; Unicode Input via Agda Input:1 ends here
 
 ;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:2]]
-(load-file (let ((coding-system-for-read 'utf-8))
-                (shell-command-to-string "/usr/local/bin/agda-mode locate")))
+(system-packages-ensure "agda")
 ;; Unicode Input via Agda Input:2 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:3]]
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:4]]
+(load-file (let ((coding-system-for-read 'utf-8))
+                (shell-command-to-string "/usr/local/bin/agda-mode locate")))
+;; Unicode Input via Agda Input:4 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:5]]
 ;; MA: This results in "Package cl is deprecated" !?
 (use-package agda-input
   :ensure nil ;; I have it locally.
@@ -1798,17 +1854,17 @@ themes (•̀ᴗ•́)و"
   :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
   :custom (default-input-method "Agda"))
   ;; Now C-\ or M-x toggle-input-method turn it on and offers
-;; Unicode Input via Agda Input:3 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:4]]
-;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
-;; Unicode Input via Agda Input:4 ends here
-
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:5]]
-(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
 ;; Unicode Input via Agda Input:5 ends here
 
 ;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:6]]
+;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
+;; Unicode Input via Agda Input:6 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:7]]
+(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
+;; Unicode Input via Agda Input:7 ends here
+
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:8]]
 (cl-loop for item
       in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
           ("(" "﴾")
@@ -1859,9 +1915,9 @@ themes (•̀ᴗ•́)و"
         ;; more (key value) pairs here
         )
       do (add-to-list 'agda-input-user-translations item))
-;; Unicode Input via Agda Input:6 ends here
+;; Unicode Input via Agda Input:8 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:7]]
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:9]]
 ;; Add to the list of translations using “emot” and the given, more specfic, name.
 ;; Whence, \emot shows all possible emotions.
 (cl-loop for emot
@@ -1879,12 +1935,12 @@ themes (•̀ᴗ•́)و"
       do
       (add-to-list 'agda-input-user-translations emot)
       (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
-;; Unicode Input via Agda Input:7 ends here
+;; Unicode Input via Agda Input:9 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:8]]
+;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:10]]
 ;; activate translations
 (agda-input-setup)
-;; Unicode Input via Agda Input:8 ends here
+;; Unicode Input via Agda Input:10 ends here
 
 ;; [[file:init.org::*Increase/decrease text size][Increase/decrease text size:1]]
 (global-set-key (kbd "C-+") 'text-scale-increase)
@@ -1945,6 +2001,14 @@ themes (•̀ᴗ•́)و"
 ;; C-x O ⇒ Switch back to the previous window
 (bind-key "C-x O" (lambda () (interactive) (other-window -1)))
 ;; Letter-based Navigation:2 ends here
+
+;; [[file:init.org::*Get LaTeX:][Get LaTeX::1]]
+(system-packages-ensure "mactex-no-gui")
+;; Get LaTeX::1 ends here
+
+;; [[file:init.org::*Get LaTeX:][Get LaTeX::2]]
+(system-packages-ensure "pygments")
+;; Get LaTeX::2 ends here
 
 ;; [[file:init.org::*Working with Citations][Working with Citations:1]]
 (use-package org-ref
@@ -2540,58 +2604,3 @@ window contains the buffer with the cursour in it."
   (org-cycle)
   (goto-line line))
 ;; Jumping without hassle:1 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:1]]
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-# Personal instructions for a new machine:1 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:2]]
-brew install --cask emacs
-# Personal instructions for a new machine:2 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:3]]
-brew tap daviderestivo/emacs-head
-brew install emacs-head
-# Personal instructions for a new machine:3 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:4]]
-ln -s /usr/local/opt/emacs-head@27/Emacs.app /Applications
-
-sudo ln -s /usr/local/opt/emacs-head@27/Emacs.app/Contents/MacOS/Emacs /usr/local/bin/emacs
-# Personal instructions for a new machine:4 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:5]]
-brew install aspell
-brew install wordnet
-# Personal instructions for a new machine:5 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:6]]
-time brew cask install mactex-no-gui
-# Personal instructions for a new machine:6 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:7]]
-brew install pygments
-# Personal instructions for a new machine:7 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:8]]
-brew install --cask dropbox
-brew install --cask megasync
-# Personal instructions for a new machine:8 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:9]]
-   brew install ag ## used for helm-do-grep-ag
-# Personal instructions for a new machine:9 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:10]]
-brew install --cask amethyst
-# Personal instructions for a new machine:10 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:11]]
-brew install agda
-# Personal instructions for a new machine:11 ends here
-
-# [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:12]]
-   mkdir -p ~/.agda
-   echo /usr/local/lib/agda/standard-library.agda-lib >>~/.agda/libraries
-   echo standard-library >>~/.agda/defaults
-# Personal instructions for a new machine:12 ends here
