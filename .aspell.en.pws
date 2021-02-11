@@ -1,4 +1,4 @@
-personal_ws-1.1 en 265 
+personal_ws-1.1 en 279 
 ACSII
 Administrivia
 Agda's
@@ -11,6 +11,7 @@ Carette
 Componentwise
 Contrapositive
 Coq
+DeBrujin
 DeMorgan's
 Declaratively
 Denotational
@@ -53,6 +54,7 @@ Procedurally
 Prolog
 Pseudocode
 Pushout
+Quran
 Reducts
 SRC
 Sessional
@@ -65,6 +67,7 @@ Yoneda
 Yoneda's
 Yusuf
 absoprtion
+accessor
 adaptively
 additively
 adjoint
@@ -104,6 +107,7 @@ compositional
 computability
 computable
 connectedness
+contrapositive
 datatypes
 deallocate
 deallocated
@@ -112,11 +116,14 @@ deallocation
 declaratively
 deconstructor
 decrementing
+decrypting
 definitional
+definitionaly
 deliverables
 dereferencing
 destructor
 destructure
+destructuring
 desugars
 dinatural
 disjunction
@@ -133,6 +140,7 @@ expressivity
 extensibility
 extensionality
 extensionally
+falsy
 fixpoint
 formalisations
 formedness
@@ -151,6 +159,7 @@ implementers
 incentivize
 incentivizes
 incrementing
+indiscernibles
 indistinguishability
 infimum
 injective
@@ -203,6 +212,7 @@ ponens
 poset
 positivity
 postcondition
+precedences
 prepending
 preprocessor
 programmability
@@ -213,6 +223,7 @@ pseudocomplement
 pushout
 pushouts
 quantifications
+redistributable
 reduct
 representable
 reusability
@@ -227,6 +238,7 @@ semilattice
 sessional
 stepwise
 subalgebras
+subclasses
 subexpression
 subexpressions
 subsequence
@@ -243,8 +255,10 @@ tooltips
 truthified
 truthifies
 truthify
+truthy
 typechecked
 typechecking
+unary
 unbundle
 unbundled
 unbundling

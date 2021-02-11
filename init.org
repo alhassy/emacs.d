@@ -3,8 +3,10 @@
 # ≥ 8600 line org file, with auto-generated TOC.
 # ≥ 219 code blocks
 # (emacs-init-time) ⇒ 10.3 seconds (•̀ᴗ•́)و
-#
 
+#+OPTIONS: broken-links:auto
+
+* title :ignore:
 #+title: A Life Configuring Emacs
 #+author: Musa Al-hassy
 #+email: alhassy@gmail.com
@@ -28,7 +30,6 @@
 #+HTML_HEAD: <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
 # The last one has the styling for lists.
 
-:CL_TODO:
 #+begin_src emacs-lisp :exports none
 (require 'cl) ;; to get loop instead of cl-loop, etc.
 
@@ -37,7 +38,8 @@
 ; (setq gc-cons-threshold 50000000) ;; orginaly 800,000
 ;; reduce number of times GC occurs.
 #+end_src
-:END:
+
+# The ~minted~ environment can't appear as an argument to another command; a [[https://tex.stackexchange.com/questions/102416/error-when-compiling-a-minted-listings-inside-a-memoir-subfloat][work-around]] is to use a ‘box’.  Learn more about LaTeX boxes [[https://latexref.xyz/Boxes.html][here]].
 
 * Abstract                                                           :ignore:
 :PROPERTIES:
@@ -49,6 +51,8 @@
 badge:A_Life|Configuring_Emacs|success||gnu-emacs
 
 badge:A_Life_Configuring|Emacs|success||gnu
+
+badge:Currently_Reorganising|Not_Polished|yellow
 #+end_center
 
 #+html: <p align="center">
@@ -328,6 +332,10 @@ essay:
 *Single source of truth:* This mini-tutorial can be included into other Org files
 by declaring
 | ~#+include: ~/.emacs.d/init.org::#Mini-tutorial-on-Org-mode~ |
+
+--------------------------------------------------------------------------------
+
+For more, see https://orgmode.org/features.html.
 #+end_details
 
 ** Intro to why Emacs                                               :ignore:
@@ -387,6 +395,7 @@ as if our text was being version controlled as we type! --We can even switch bet
 ;; Allow tree-semantics for undo operations.
 (use-package undo-tree
   :diminish                       ;; Don't show an icon in the modeline
+  :bind ("C-x u" . undo-tree-visualize)
   :config
     ;; Always have it on
     (global-undo-tree-mode)
@@ -1524,6 +1533,44 @@ https://alhassy.github.io/org-special-block-extras/
   ;; ‘org-special-block-extras--defblock’
     (org-special-block-extras-short-names))
 #+END_SRC
+** Password-locking files  ---“encryption”
+:PROPERTIES:
+:CUSTOM_ID: Password-locking-files-encryption
+:END:
+
+With the following incantation, we name our files ~𝒳.𝒴.gpg~ where 𝒳 is the file
+name and 𝒴 is the usual extension, then upon save we will be prompted for an
+encryption method, we can press kbd:Enter on ~OK~ to just provide a password for
+that file. You can open that file /without/ the passphrase for a limited amount of
+time ---i.e., it's cached, saved, for your current computing session until
+logout--- or force authentication by invoking ~gpgconf --kill gpg-agent~.
+
+#+begin_src emacs-lisp
+(system-packages-ensure "gnupg") ;; i.e.,  brew install gnupg
+
+;; “epa” ≈ EasyPG Assistant
+(require 'epa-file)
+(epa-file-enable)
+(setf epa-pinentry-mode 'loopback)
+#+end_src
+
+/The purpose of encrypting a file is so that an adversary/ ---e.g., an immoral
+computer administrator or a thief who stole your computer--- /will have to spend
+so much decrypting the data than the data is actually worth./ As such, one uses
+GPG keys...!
+
+#+begin_details GPG Details
+Trivia: “gpg” stands for GnuPG, which abbreviates GNU Privacy Guard.
+
+To obtain encrypted messages from others, you will need a “GPG key”: They use
+/your/ “public key” (which others can see) to encrypt a file, which only /you/ can
+open since you have the /associated/ “private key” (which only you see).
+
+Possibly interesting reads:
++ [[https://www.bytedude.com/gpg-in-emacs/][GPG In Emacs | Bytedude]]
++ [[https://softwareengineering.stackexchange.com/questions/212192/what-are-the-advantages-and-disadvantages-of-cryptographically-signing-commits-a][What are the advantages and disadvantages of cryptographically signing commits and tags in Git? | Software Engineering Stack Exchange]]
+#+end_details
+
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -1735,7 +1782,7 @@ but this approach makes /discovering/ other commands easier.
 #+begin_details [Disabled] Homemade ‘uncomitted changes’ Notification
 Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/check-uncommitted/][uncommited changes]]
 ---we might have had to step away from the computer and forgotten to commit.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (require 'magit-git)
 
 (defun my/magit-check-file-and-popup ()
@@ -1816,7 +1863,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
     'cloned-repo))
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
-(maybe-clone "https://github.com/alhassy/alhassy.github.io")
+(maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
 #+end_src
 
 #+begin_details Many more repos to clone
@@ -5545,8 +5592,8 @@ wont use Org's ---Agda's gives me a tiny menu narrowing possibilities as I type.
 
 --------------------------------------------------------------------------------
 
-# The following is now disabled ---it makes my system slower than I'd like.
-#+BEGIN_SRC emacs-lisp
+The following is now disabled (yet again, as of Dec/31/2020) ---it makes my system slower than I'd like.
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; Show inline images when loading a new Org file.
 (setq org-startup-with-inline-images t)
 
@@ -6136,7 +6183,10 @@ interactively: ~M-x customize-variable agda-input-user-translations~ then
 Better yet, as a loop:
 #+BEGIN_SRC emacs-lisp :tangle yes
 (cl-loop for item
-      in '(;; categorial ;;
+      in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
+          ("(" "﴾")
+          (")" "﴿")
+           ;; categorial ;;
            ("alg" "𝒜𝓁ℊ")
            ("split" "▵")
            ("join" "▿")
@@ -6392,6 +6442,13 @@ work of [[https://emacs.stackexchange.com/a/358/10352][doing it ourselves]].
 |   | ~(bind-keys* (k₁ . f₁) … (kₙ . fₙ))~                           |
 | ≈ | These keybindings override all minor modes that use keys =kᵢ=. |
 
+Of course we can also use it without the asterisk; e.g.:
+#+begin_src emacs-lisp
+;; C-x o ⇒ Switch to the other window
+;; C-x O ⇒ Switch back to the previous window
+(bind-key "C-x O" (lambda () (interactive) (other-window -1)))
+#+end_src
+
 ** COMMENT ~C-c e n,p~: Taking a tour of one's edits :defhydra_required:
 :PROPERTIES:
 :CUSTOM_ID: C-c-e-n-p-Taking-a-tour-of-one's-edits
@@ -6425,6 +6482,7 @@ each time.
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
 :END:
+
 In this section we consider the Org-mode export for PDFs (LaTeX).
 For example, we account for LaTeX citations.
 

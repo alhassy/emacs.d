@@ -64,11 +64,13 @@ $0
 $0
 #+end_src
 
-** s_C: src for C
-#+begin_src C
+** s_clojure: src for clojure
+#+begin_src clojure
 $0
 #+end_src
 
+** is_clojure: inline source for clojure
+src_clojure[:exports code]{$1} $0
 ** s_dot: src for dot
 #+begin_src dot
 $0
@@ -93,8 +95,6 @@ $0
 src_org[:exports code]{$1} $0
 ** is_agda2: inline source for agda2
 src_agda2[:exports code]{$1} $0
-** is_any: inline source for any
-src_any[:exports code]{$1} $0
 ** is_plantuml: inline source for plantuml
 src_plantuml[:exports code]{$1} $0
 ** is_emacs-lisp: inline source for emacs-lisp
@@ -195,27 +195,27 @@ $0
 #+end_example
 
 ** q_quote: quote
-#+begin_quote 
+#+begin_quote
 $0
 #+end_quote
 
 ** v_verse: verse
-#+begin_verse 
+#+begin_verse
 $0
 #+end_verse
 
 ** c_center: center
-#+begin_center 
+#+begin_center
 $0
 #+end_center
 
 ** ex_export: export
-#+begin_export 
+#+begin_export
 $0
 #+end_export
 
 ** p_parallel: parallel
-#+begin_parallel 
+#+begin_parallel
 $0
 #+columnbreak:
 
@@ -237,7 +237,7 @@ $0
 #+end_documentation
 
 ** def_latex-definitions: latex-definitions
-#+begin_latex-definitions 
+#+begin_latex-definitions
 $0
 #+end_latex-definitions
 
@@ -273,373 +273,373 @@ $0≡⟨ ${3:reason-for-the-equality} ⟩
 $0
 
 # [[file:init.org::*Emojis][Emojis:3]]
-** f_Grinning_Face: 😀  
+** f_Grinning_Face: 😀
 😀
-** fd_Grinning_Face: 😀 Often conveys general pleasure and good cheer or humor. 
+** fd_Grinning_Face: 😀 Often conveys general pleasure and good cheer or humor.
 😀
-** f_Grinning_Face_with_Big_Eyes: 😃  
+** f_Grinning_Face_with_Big_Eyes: 😃
 😃
-** fd_Grinning_Face_with_Big_Eyes: 😃 Often conveys general happiness and good-natured amusement. Similar to 😀 Grinning Face but with taller, more excited eyes. 
+** fd_Grinning_Face_with_Big_Eyes: 😃 Often conveys general happiness and good-natured amusement. Similar to 😀 Grinning Face but with taller, more excited eyes.
 😃
-** f_Grinning_Face_with_Smiling_Eyes: 😄  
+** f_Grinning_Face_with_Smiling_Eyes: 😄
 😄
-** fd_Grinning_Face_with_Smiling_Eyes: 😄 Often conveys general happiness and good-natured amusement. Similar to 😀 Grinning Face and 😃 Grinning Face With Big Eyes, but with warmer, less excited eyes. 
+** fd_Grinning_Face_with_Smiling_Eyes: 😄 Often conveys general happiness and good-natured amusement. Similar to 😀 Grinning Face and 😃 Grinning Face With Big Eyes, but with warmer, less excited eyes.
 😄
-** f_Beaming_Face_with_Smiling_Eyes: 😁  
+** f_Beaming_Face_with_Smiling_Eyes: 😁
 😁
-** fd_Beaming_Face_with_Smiling_Eyes: 😁 Often expresses a radiant, gratified happiness. Tone varies, including warm, silly, amused, or proud. 
+** fd_Beaming_Face_with_Smiling_Eyes: 😁 Often expresses a radiant, gratified happiness. Tone varies, including warm, silly, amused, or proud.
 😁
-** f_Grinning_Squinting_Face: 😆  
+** f_Grinning_Squinting_Face: 😆
 😆
-** fd_Grinning_Squinting_Face: 😆 Often conveys excitement or hearty laughter. Similar to 😀 Grinning Face but with eyes that might say ‘Squee!’ or ‘Awesome!’ An emoji form of the >< or xD emoticons. 
+** fd_Grinning_Squinting_Face: 😆 Often conveys excitement or hearty laughter. Similar to 😀 Grinning Face but with eyes that might say ‘Squee!’ or ‘Awesome!’ An emoji form of the >< or xD emoticons.
 😆
-** f_Grinning_Face_with_Sweat: 😅  
+** f_Grinning_Face_with_Sweat: 😅
 😅
-** fd_Grinning_Face_with_Sweat: 😅 Intended to depict nerves or discomfort but commonly used to express a close call, as if saying ‘Whew!’ and wiping sweat from the forehead.  
+** fd_Grinning_Face_with_Sweat: 😅 Intended to depict nerves or discomfort but commonly used to express a close call, as if saying ‘Whew!’ and wiping sweat from the forehead.
 😅
-** f_Rolling_on_the_Floor_Laughing: 🤣  
+** f_Rolling_on_the_Floor_Laughing: 🤣
 🤣
-** fd_Rolling_on_the_Floor_Laughing: 🤣 Often conveys hysterical laughter more intense than 😂 Face With Tears of Joy. 
+** fd_Rolling_on_the_Floor_Laughing: 🤣 Often conveys hysterical laughter more intense than 😂 Face With Tears of Joy.
 🤣
-** f_Face_with_Tears_of_Joy: 😂  
+** f_Face_with_Tears_of_Joy: 😂
 😂
-** fd_Face_with_Tears_of_Joy: 😂  
+** fd_Face_with_Tears_of_Joy: 😂
 😂
-** f_Slightly_Smiling_Face: 🙂  
+** f_Slightly_Smiling_Face: 🙂
 🙂
-** fd_Slightly_Smiling_Face: 🙂  
+** fd_Slightly_Smiling_Face: 🙂
 🙂
-** f_Upside-Down_Face: 🙃  
+** f_Upside-Down_Face: 🙃
 🙃
-** fd_Upside-Down_Face: 🙃  
+** fd_Upside-Down_Face: 🙃
 🙃
-** f_Winking_Face: 😉  
+** f_Winking_Face: 😉
 😉
-** fd_Winking_Face: 😉  
+** fd_Winking_Face: 😉
 😉
-** f_Smiling_Face_with_Smiling_Eyes: 😊  
+** f_Smiling_Face_with_Smiling_Eyes: 😊
 😊
-** fd_Smiling_Face_with_Smiling_Eyes: 😊  
+** fd_Smiling_Face_with_Smiling_Eyes: 😊
 😊
-** f_Smiling_Face_with_Halo: 😇  
+** f_Smiling_Face_with_Halo: 😇
 😇
-** fd_Smiling_Face_with_Halo: 😇  
+** fd_Smiling_Face_with_Halo: 😇
 😇
-** f_Smiling_Face_with_Hearts: 🥰  
+** f_Smiling_Face_with_Hearts: 🥰
 🥰
-** fd_Smiling_Face_with_Hearts: 🥰  
+** fd_Smiling_Face_with_Hearts: 🥰
 🥰
-** f_Smiling_Face_with_Heart-Eyes: 😍  
+** f_Smiling_Face_with_Heart-Eyes: 😍
 😍
-** fd_Smiling_Face_with_Heart-Eyes: 😍  
+** fd_Smiling_Face_with_Heart-Eyes: 😍
 😍
-** f_Star-Struck: 🤩  
+** f_Star-Struck: 🤩
 🤩
-** fd_Star-Struck: 🤩  
+** fd_Star-Struck: 🤩
 🤩
-** f_Face_Blowing_a_Kiss: 😘  
+** f_Face_Blowing_a_Kiss: 😘
 😘
-** fd_Face_Blowing_a_Kiss: 😘  
+** fd_Face_Blowing_a_Kiss: 😘
 😘
-** f_Kissing_Face: 😗  
+** f_Kissing_Face: 😗
 😗
-** fd_Kissing_Face: 😗  
+** fd_Kissing_Face: 😗
 😗
-** f_Smiling_Face: ☺️  
+** f_Smiling_Face: ☺️
 ☺️
-** fd_Smiling_Face: ☺️  
+** fd_Smiling_Face: ☺️
 ☺️
-** f_Kissing_Face_with_Closed_Eyes: 😚  
+** f_Kissing_Face_with_Closed_Eyes: 😚
 😚
-** fd_Kissing_Face_with_Closed_Eyes: 😚  
+** fd_Kissing_Face_with_Closed_Eyes: 😚
 😚
-** f_Kissing_Face_with_Smiling_Eyes: 😙  
+** f_Kissing_Face_with_Smiling_Eyes: 😙
 😙
-** fd_Kissing_Face_with_Smiling_Eyes: 😙  
+** fd_Kissing_Face_with_Smiling_Eyes: 😙
 😙
-** f_Smiling_Face_with_Tear: 🥲  
+** f_Smiling_Face_with_Tear: 🥲
 🥲
-** fd_Smiling_Face_with_Tear: 🥲  
+** fd_Smiling_Face_with_Tear: 🥲
 🥲
-** f_Face_Savoring_Food: 😋  
+** f_Face_Savoring_Food: 😋
 😋
-** fd_Face_Savoring_Food: 😋  
+** fd_Face_Savoring_Food: 😋
 😋
-** f_Face_with_Tongue: 😛  
+** f_Face_with_Tongue: 😛
 😛
-** fd_Face_with_Tongue: 😛  
+** fd_Face_with_Tongue: 😛
 😛
-** f_Winking_Face_with_Tongue: 😜  
+** f_Winking_Face_with_Tongue: 😜
 😜
-** fd_Winking_Face_with_Tongue: 😜  
+** fd_Winking_Face_with_Tongue: 😜
 😜
-** f_Zany_Face: 🤪  
+** f_Zany_Face: 🤪
 🤪
-** fd_Zany_Face: 🤪  
+** fd_Zany_Face: 🤪
 🤪
-** f_Squinting_Face_with_Tongue: 😝  
+** f_Squinting_Face_with_Tongue: 😝
 😝
-** fd_Squinting_Face_with_Tongue: 😝  
+** fd_Squinting_Face_with_Tongue: 😝
 😝
-** f_Money-Mouth_Face: 🤑  
+** f_Money-Mouth_Face: 🤑
 🤑
-** fd_Money-Mouth_Face: 🤑  
+** fd_Money-Mouth_Face: 🤑
 🤑
-** f_Hugging_Face: 🤗  
+** f_Hugging_Face: 🤗
 🤗
-** fd_Hugging_Face: 🤗  
+** fd_Hugging_Face: 🤗
 🤗
-** f_Face_with_Hand_Over_Mouth: 🤭  
+** f_Face_with_Hand_Over_Mouth: 🤭
 🤭
-** fd_Face_with_Hand_Over_Mouth: 🤭  
+** fd_Face_with_Hand_Over_Mouth: 🤭
 🤭
-** f_Shushing_Face: 🤫  
+** f_Shushing_Face: 🤫
 🤫
-** fd_Shushing_Face: 🤫  
+** fd_Shushing_Face: 🤫
 🤫
-** f_Thinking_Face: 🤔  
+** f_Thinking_Face: 🤔
 🤔
-** fd_Thinking_Face: 🤔  
+** fd_Thinking_Face: 🤔
 🤔
-** f_Zipper-Mouth_Face: 🤐  
+** f_Zipper-Mouth_Face: 🤐
 🤐
-** fd_Zipper-Mouth_Face: 🤐  
+** fd_Zipper-Mouth_Face: 🤐
 🤐
-** f_Face_with_Raised_Eyebrow: 🤨  
+** f_Face_with_Raised_Eyebrow: 🤨
 🤨
-** fd_Face_with_Raised_Eyebrow: 🤨  
+** fd_Face_with_Raised_Eyebrow: 🤨
 🤨
-** f_Neutral_Face: 😐  
+** f_Neutral_Face: 😐
 😐
-** fd_Neutral_Face: 😐  
+** fd_Neutral_Face: 😐
 😐
-** f_Expressionless_Face: 😑  
+** f_Expressionless_Face: 😑
 😑
-** fd_Expressionless_Face: 😑  
+** fd_Expressionless_Face: 😑
 😑
-** f_Face_Without_Mouth: 😶  
+** f_Face_Without_Mouth: 😶
 😶
-** fd_Face_Without_Mouth: 😶  
+** fd_Face_Without_Mouth: 😶
 😶
-** f_Smirking_Face: 😏  
+** f_Smirking_Face: 😏
 😏
-** fd_Smirking_Face: 😏  
+** fd_Smirking_Face: 😏
 😏
-** f_Unamused_Face: 😒  
+** f_Unamused_Face: 😒
 😒
-** fd_Unamused_Face: 😒  
+** fd_Unamused_Face: 😒
 😒
-** f_Face_with_Rolling_Eyes: 🙄  
+** f_Face_with_Rolling_Eyes: 🙄
 🙄
-** fd_Face_with_Rolling_Eyes: 🙄  
+** fd_Face_with_Rolling_Eyes: 🙄
 🙄
-** f_Grimacing_Face: 😬  
+** f_Grimacing_Face: 😬
 😬
-** fd_Grimacing_Face: 😬  
+** fd_Grimacing_Face: 😬
 😬
-** f_Lying_Face: 🤥  
+** f_Lying_Face: 🤥
 🤥
-** fd_Lying_Face: 🤥  
+** fd_Lying_Face: 🤥
 🤥
-** f_Relieved_Face: 😌  
+** f_Relieved_Face: 😌
 😌
-** fd_Relieved_Face: 😌  
+** fd_Relieved_Face: 😌
 😌
-** f_Pensive_Face: 😔  
+** f_Pensive_Face: 😔
 😔
-** fd_Pensive_Face: 😔  
+** fd_Pensive_Face: 😔
 😔
-** f_Sleepy_Face: 😪  
+** f_Sleepy_Face: 😪
 😪
-** fd_Sleepy_Face: 😪  
+** fd_Sleepy_Face: 😪
 😪
-** f_Drooling_Face: 🤤  
+** f_Drooling_Face: 🤤
 🤤
-** fd_Drooling_Face: 🤤  
+** fd_Drooling_Face: 🤤
 🤤
-** f_Sleeping_Face: 😴  
+** f_Sleeping_Face: 😴
 😴
-** fd_Sleeping_Face: 😴  
+** fd_Sleeping_Face: 😴
 😴
-** f_Face_with_Medical_Mask: 😷  
+** f_Face_with_Medical_Mask: 😷
 😷
-** fd_Face_with_Medical_Mask: 😷  
+** fd_Face_with_Medical_Mask: 😷
 😷
-** f_Face_with_Thermometer: 🤒  
+** f_Face_with_Thermometer: 🤒
 🤒
-** fd_Face_with_Thermometer: 🤒  
+** fd_Face_with_Thermometer: 🤒
 🤒
-** f_Face_with_Head-Bandage: 🤕  
+** f_Face_with_Head-Bandage: 🤕
 🤕
-** fd_Face_with_Head-Bandage: 🤕  
+** fd_Face_with_Head-Bandage: 🤕
 🤕
-** f_Nauseated_Face: 🤢  
+** f_Nauseated_Face: 🤢
 🤢
-** fd_Nauseated_Face: 🤢  
+** fd_Nauseated_Face: 🤢
 🤢
-** f_Face_Vomiting: 🤮  
+** f_Face_Vomiting: 🤮
 🤮
-** fd_Face_Vomiting: 🤮  
+** fd_Face_Vomiting: 🤮
 🤮
-** f_Sneezing_Face: 🤧  
+** f_Sneezing_Face: 🤧
 🤧
-** fd_Sneezing_Face: 🤧  
+** fd_Sneezing_Face: 🤧
 🤧
-** f_Hot_Face: 🥵  
+** f_Hot_Face: 🥵
 🥵
-** fd_Hot_Face: 🥵  
+** fd_Hot_Face: 🥵
 🥵
-** f_Cold_Face: 🥶  
+** f_Cold_Face: 🥶
 🥶
-** fd_Cold_Face: 🥶  
+** fd_Cold_Face: 🥶
 🥶
-** f_Woozy_Face: 🥴  
+** f_Woozy_Face: 🥴
 🥴
-** fd_Woozy_Face: 🥴  
+** fd_Woozy_Face: 🥴
 🥴
-** f_Dizzy_Face: 😵  
+** f_Dizzy_Face: 😵
 😵
-** fd_Dizzy_Face: 😵  
+** fd_Dizzy_Face: 😵
 😵
-** f_Exploding_Head: 🤯  
+** f_Exploding_Head: 🤯
 🤯
-** fd_Exploding_Head: 🤯  
+** fd_Exploding_Head: 🤯
 🤯
-** f_Cowboy_Hat_Face: 🤠  
+** f_Cowboy_Hat_Face: 🤠
 🤠
-** fd_Cowboy_Hat_Face: 🤠  
+** fd_Cowboy_Hat_Face: 🤠
 🤠
-** f_Partying_Face: 🥳  
+** f_Partying_Face: 🥳
 🥳
-** fd_Partying_Face: 🥳  
+** fd_Partying_Face: 🥳
 🥳
-** f_Disguised_Face: 🥸  
+** f_Disguised_Face: 🥸
 🥸
-** fd_Disguised_Face: 🥸  
+** fd_Disguised_Face: 🥸
 🥸
-** f_Smiling_Face_with_Sunglasses: 😎  
+** f_Smiling_Face_with_Sunglasses: 😎
 😎
-** fd_Smiling_Face_with_Sunglasses: 😎  
+** fd_Smiling_Face_with_Sunglasses: 😎
 😎
-** f_Nerd_Face: 🤓  
+** f_Nerd_Face: 🤓
 🤓
-** fd_Nerd_Face: 🤓  
+** fd_Nerd_Face: 🤓
 🤓
-** f_Face_with_Monocle: 🧐  
+** f_Face_with_Monocle: 🧐
 🧐
-** fd_Face_with_Monocle: 🧐  
+** fd_Face_with_Monocle: 🧐
 🧐
-** f_Confused_Face: 😕  
+** f_Confused_Face: 😕
 😕
-** fd_Confused_Face: 😕  
+** fd_Confused_Face: 😕
 😕
-** f_Worried_Face: 😟  
+** f_Worried_Face: 😟
 😟
-** fd_Worried_Face: 😟  
+** fd_Worried_Face: 😟
 😟
-** f_Slightly_Frowning_Face: 🙁  
+** f_Slightly_Frowning_Face: 🙁
 🙁
-** fd_Slightly_Frowning_Face: 🙁  
+** fd_Slightly_Frowning_Face: 🙁
 🙁
-** f_Frowning_Face: ☹️  
+** f_Frowning_Face: ☹️
 ☹️
-** fd_Frowning_Face: ☹️  
+** fd_Frowning_Face: ☹️
 ☹️
-** f_Face_with_Open_Mouth: 😮  
+** f_Face_with_Open_Mouth: 😮
 😮
-** fd_Face_with_Open_Mouth: 😮  
+** fd_Face_with_Open_Mouth: 😮
 😮
-** f_Hushed_Face: 😯  
+** f_Hushed_Face: 😯
 😯
-** fd_Hushed_Face: 😯  
+** fd_Hushed_Face: 😯
 😯
-** f_Astonished_Face: 😲  
+** f_Astonished_Face: 😲
 😲
-** fd_Astonished_Face: 😲  
+** fd_Astonished_Face: 😲
 😲
-** f_Flushed_Face: 😳  
+** f_Flushed_Face: 😳
 😳
-** fd_Flushed_Face: 😳  
+** fd_Flushed_Face: 😳
 😳
-** f_Pleading_Face: 🥺  
+** f_Pleading_Face: 🥺
 🥺
-** fd_Pleading_Face: 🥺  
+** fd_Pleading_Face: 🥺
 🥺
-** f_Frowning_Face_with_Open_Mouth: 😦  
+** f_Frowning_Face_with_Open_Mouth: 😦
 😦
-** fd_Frowning_Face_with_Open_Mouth: 😦  
+** fd_Frowning_Face_with_Open_Mouth: 😦
 😦
-** f_Anguished_Face: 😧  
+** f_Anguished_Face: 😧
 😧
-** fd_Anguished_Face: 😧  
+** fd_Anguished_Face: 😧
 😧
-** f_Fearful_Face: 😨  
+** f_Fearful_Face: 😨
 😨
-** fd_Fearful_Face: 😨  
+** fd_Fearful_Face: 😨
 😨
-** f_Anxious_Face_with_Sweat: 😰  
+** f_Anxious_Face_with_Sweat: 😰
 😰
-** fd_Anxious_Face_with_Sweat: 😰  
+** fd_Anxious_Face_with_Sweat: 😰
 😰
-** f_Sad_but_Relieved_Face: 😥  
+** f_Sad_but_Relieved_Face: 😥
 😥
-** fd_Sad_but_Relieved_Face: 😥  
+** fd_Sad_but_Relieved_Face: 😥
 😥
-** f_Crying_Face: 😢  
+** f_Crying_Face: 😢
 😢
-** fd_Crying_Face: 😢  
+** fd_Crying_Face: 😢
 😢
-** f_Loudly_Crying_Face: 😭  
+** f_Loudly_Crying_Face: 😭
 😭
-** fd_Loudly_Crying_Face: 😭  
+** fd_Loudly_Crying_Face: 😭
 😭
-** f_Face_Screaming_in_Fear: 😱  
+** f_Face_Screaming_in_Fear: 😱
 😱
-** fd_Face_Screaming_in_Fear: 😱  
+** fd_Face_Screaming_in_Fear: 😱
 😱
-** f_Confounded_Face: 😖  
+** f_Confounded_Face: 😖
 😖
-** fd_Confounded_Face: 😖  
+** fd_Confounded_Face: 😖
 😖
-** f_Persevering_Face: 😣  
+** f_Persevering_Face: 😣
 😣
-** fd_Persevering_Face: 😣  
+** fd_Persevering_Face: 😣
 😣
-** f_Disappointed_Face: 😞  
+** f_Disappointed_Face: 😞
 😞
-** fd_Disappointed_Face: 😞  
+** fd_Disappointed_Face: 😞
 😞
-** f_Downcast_Face_with_Sweat: 😓  
+** f_Downcast_Face_with_Sweat: 😓
 😓
-** fd_Downcast_Face_with_Sweat: 😓  
+** fd_Downcast_Face_with_Sweat: 😓
 😓
-** f_Weary_Face: 😩  
+** f_Weary_Face: 😩
 😩
-** fd_Weary_Face: 😩  
+** fd_Weary_Face: 😩
 😩
-** f_Tired_Face: 😫  
+** f_Tired_Face: 😫
 😫
-** fd_Tired_Face: 😫  
+** fd_Tired_Face: 😫
 😫
-** f_Yawning_Face: 🥱  
+** f_Yawning_Face: 🥱
 🥱
-** fd_Yawning_Face: 🥱  
+** fd_Yawning_Face: 🥱
 🥱
-** f_Face_with_Steam_From_Nose: 😤  
+** f_Face_with_Steam_From_Nose: 😤
 😤
-** fd_Face_with_Steam_From_Nose: 😤  
+** fd_Face_with_Steam_From_Nose: 😤
 😤
-** f_Pouting_Face: 😡  
+** f_Pouting_Face: 😡
 😡
-** fd_Pouting_Face: 😡  
+** fd_Pouting_Face: 😡
 😡
-** f_Angry_Face: 😠  
+** f_Angry_Face: 😠
 😠
-** fd_Angry_Face: 😠  
+** fd_Angry_Face: 😠
 😠
-** f_Face_with_Symbols_on_Mouth: 🤬  
+** f_Face_with_Symbols_on_Mouth: 🤬
 🤬
-** fd_Face_with_Symbols_on_Mouth: 🤬  
+** fd_Face_with_Symbols_on_Mouth: 🤬
 🤬
 # Emojis:3 ends here
 
