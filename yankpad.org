@@ -272,6 +272,38 @@ $0≡⟨ ${3:reason-for-the-equality} ⟩
   ${1:new-expression}
 $0
 
+** reply_opinionated_pantomath: What to say to, e.g., an arrogant academic
+
+Your certainty inspires me to continuing exploring, and I may arrive at your
+point of view, but I'm going to need more evidence first.
+
+** reply_em_dashes: Why use em dashes for parenthetical remarks?
+
+According to the “Canadian Style Guide” (CSG):
+
+   The em is an expansive, attention-seeking dash. It supplies much stronger
+   emphasis than the comma, colon or semicolon it often replaces. Positioned
+   around interrupting elements, em dashes have the opposite effect of
+   parentheses—em dashes emphasize; parentheses minimize.
+
+From “A Logical Approach to Discrete Math” (LADM), page ix:
+
+   We place a space on one side of an em dash ---here are examples--- in
+   order to help the reader determine whether the em dash begins or ends
+   a parenthetical remark. In effect, we are creating two symbols from one.
+   In longer sentences---and we do write long sentences from time to time---the
+   lack of space can make it difficult to see the sentence structure---especially
+   if the em dash is used too often in one sentence. Parenthetical remarks
+   delimited by parentheses (like this one) have a space on one side of each
+   parenthesis, so why not parenthetical remarks delimited by em dashes?
+
+Interestingly, according to the CSG, there should be no space before or after an
+em dash.  As such, it appears that the spacing is mostly stylistic; e.g., some
+people surround em-s with spaces on both sides.  In particular, when em-s are
+unmatched, I make no use of additional space ---indeed this form of one-sided
+parentheses without a space is how LADM is written, as can be seen at the top of
+page 3.
+
 # [[file:init.org::*Emojis][Emojis:3]]
 ** f_Grinning_Face: 😀  
 😀

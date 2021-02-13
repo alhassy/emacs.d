@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2021-02-10 Wed 22:12 -->
+<!-- 2021-02-12 Fri 22:08 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>A Life Configuring Emacs</title>
@@ -198,7 +198,7 @@
 <link href="https://alhassy.github.io/org-notes-style.css" rel="stylesheet" type="text/css" />
 <link href="https://alhassy.github.io/floating-toc.css" rel="stylesheet" type="text/css" />
 <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
-
+<style>  summary:hover {background:pink;} </style>
         <style>
         /* From: https://endlessparentheses.com/public/css/endless.css */
         /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
@@ -265,6 +265,7 @@
                       color:red;
                       text-decoration: none;}
         </style>
+        <style>  summary:hover {background:pink;} </style>
 <script type="text/javascript">
 // @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
 <!--/*--><![CDATA[/*><!--*/
@@ -340,6 +341,7 @@
 <li><a href="#Being-at-the-Helm-Completion-Narrowing-Framework">2.7. <a href="#Being-at-the-Helm-Completion-Narrowing-Framework"> “Being at the Helm” &#x2014;Completion &amp; Narrowing Framework</a></a></li>
 <li><a href="#Org-Mode-Administrivia">2.8. <a href="#Org-Mode-Administrivia">Org-Mode Administrivia</a></a></li>
 <li><a href="#Password-locking-files-encryption">2.9. <a href="#Password-locking-files-encryption">Password-locking files  &#x2014;“encryption”</a></a></li>
+<li><a href="#Hydra-Supply-a-prefix-only-once">2.10. <a href="#Hydra-Supply-a-prefix-only-once">Hydra: Supply a prefix only once</a></a></li>
 </ul>
 </li>
 <li><a href="#Staying-Safe">3. <a href="#Staying-Safe">Staying Sane</a></a>
@@ -412,12 +414,14 @@
 <li><a href="#Delete-Selection-Mode">7.12. <a href="#Delete-Selection-Mode">Delete Selection Mode</a></a></li>
 <li><a href="#M-n-p-Word-at-Point-Navigation">7.13. <a href="#M-n-p-Word-at-Point-Navigation">  <code>M-n,p</code>: Word-at-Point Navigation</a></a></li>
 <li><a href="#Letter-based-Navigation">7.14. <a href="#Letter-based-Navigation">Letter-based Navigation</a></a></li>
+<li><a href="#C-c-e-n-p-Taking-a-tour-of-one's-edits">7.15. <a href="#C-c-e-n-p-Taking-a-tour-of-one's-edits">  <code>C-c e n,p</code>: Taking a tour of one's edits</a></a></li>
 </ul>
 </li>
 <li><a href="#Org-Mode-PDF-HTML">8. <a href="#Org-Mode-PDF-HTML">LaTeX ⇐ Org-Mode</a></a>
 <ul>
-<li><a href="#Working-with-Citations">8.1. <a href="#Working-with-Citations">Working with Citations</a></a></li>
-<li><a href="#Bibliography-Coloured-LaTeX-using-Minted">8.2. <a href="#Bibliography-Coloured-LaTeX-using-Minted">Bibliography &amp; Coloured LaTeX using Minted</a></a></li>
+<li><a href="#Get-LaTeX">8.1. <a href="#Get-LaTeX">Get LaTeX:</a></a></li>
+<li><a href="#Working-with-Citations">8.2. <a href="#Working-with-Citations">Working with Citations</a></a></li>
+<li><a href="#Bibliography-Coloured-LaTeX-using-Minted">8.3. <a href="#Bibliography-Coloured-LaTeX-using-Minted">Bibliography &amp; Coloured LaTeX using Minted</a></a></li>
 </ul>
 </li>
 <li><a href="#HTML-Org-mode">9. <a href="#HTML-Org-mode">HTML ⇐ Org-mode</a></a>
@@ -443,28 +447,33 @@
 <li><a href="#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab">10.9. <a href="#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab">Jump between windows using Cmd+Arrow &amp; between recent buffers with Meta-Tab</a></a></li>
 </ul>
 </li>
-<li><a href="#Lost-Souls">11. <a href="#Lost-Souls">Lost Souls</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Outdated_Documentation">Outdated_Documentation</span></span></a>
+<li><a href="#Experiments">11. <a href="#Experiments">Experiments</a></a>
 <ul>
-<li><a href="#Having-a-workspace-manager-in-Emacs">11.1. <a href="#Having-a-workspace-manager-in-Emacs">Having a workspace manager in Emacs</a></a></li>
-<li><a href="#Editor-Documentation-with-Contextual-Information">11.2. <a href="#Editor-Documentation-with-Contextual-Information">Editor Documentation with Contextual Information</a></a></li>
-<li><a href="#README-From-init-org-to-init-el">11.3. <a href="#README-From-init-org-to-init-el">  <code>README</code> &#x2014;From <code>init.org</code> to <code>init.el</code></a></a></li>
-<li><a href="#Screencapturing-the-Current-Emacs-Frame">11.4. <a href="#Screencapturing-the-Current-Emacs-Frame">Screencapturing the Current Emacs Frame</a></a></li>
-<li><a href="#Org-mode's-𝒳-Block-Expansions">11.5. <a href="#Org-mode's-𝒳-Block-Expansions">Org-mode's <code>&lt;𝒳</code> Block Expansions</a></a></li>
-<li><a href="#What's-changed-who's-to-blame">11.6. <a href="#What's-changed-who's-to-blame">What's changed &amp; who's to blame?</a></a></li>
-<li><a href="#Helpful-Utilities-Shortcuts">11.7. <a href="#Helpful-Utilities-Shortcuts">Helpful Utilities &amp; Shortcuts</a></a></li>
-<li><a href="#Documentation-Pop-Ups">11.8. <a href="#Documentation-Pop-Ups">Documentation Pop-Ups</a></a></li>
-<li><a href="#Emacs-keybindings-for-my-browser">11.9. <a href="#Emacs-keybindings-for-my-browser">Emacs keybindings for my browser</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
-<li><a href="#Using-Emacs-in-any-text-area-on-my-OS">11.10. <a href="#Using-Emacs-in-any-text-area-on-my-OS">Using Emacs in any text area on my OS</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
-<li><a href="#Reload-buffer-with-f5">11.11. <a href="#Reload-buffer-with-f5">Reload buffer with <code>f5</code></a></a></li>
-<li><a href="#Kill-to-start-of-line">11.12. <a href="#Kill-to-start-of-line">Kill to start of line</a></a></li>
-<li><a href="#Killing-buffers-windows-C-x-k-has-a-family">11.13. <a href="#Killing-buffers-windows-C-x-k-has-a-family">Killing buffers &amp; windows: <code>C-x k</code> has a family</a></a></li>
-<li><a href="#Switching-from-2-horizontal-windows-to-2-vertical-windows">11.14. <a href="#Switching-from-2-horizontal-windows-to-2-vertical-windows">Switching from 2 horizontal windows to 2 vertical windows</a></a></li>
-<li><a href="#Obtaining-Values-of-KEYWORD-Annotations">11.15. <a href="#Obtaining-Values-of-KEYWORD-Annotations">Obtaining Values of <code>#+KEYWORD</code> Annotations</a></a></li>
-<li><a href="#Publishing-articles-to-my-personal-blog">11.16. <a href="#Publishing-articles-to-my-personal-blog">Publishing articles to my personal blog</a></a></li>
-<li><a href="#Jumping-without-hassle">11.17. <a href="#Jumping-without-hassle">Jumping without hassle</a></a></li>
+<li><a href="#Draw-pretty-unicode-tables-in-org-mode">11.1. <a href="#Draw-pretty-unicode-tables-in-org-mode">Draw pretty unicode tables in org-mode</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="to_include">to_include</span></span></a></li>
 </ul>
 </li>
-<li><a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">12. <a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">Conclusion &#x2014;Why Configuration Files Should be Literate</a></a></li>
+<li><a href="#Lost-Souls">12. <a href="#Lost-Souls">Lost Souls</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Outdated_Documentation">Outdated_Documentation</span></span></a>
+<ul>
+<li><a href="#Having-a-workspace-manager-in-Emacs">12.1. <a href="#Having-a-workspace-manager-in-Emacs">Having a workspace manager in Emacs</a></a></li>
+<li><a href="#Editor-Documentation-with-Contextual-Information">12.2. <a href="#Editor-Documentation-with-Contextual-Information">Editor Documentation with Contextual Information</a></a></li>
+<li><a href="#README-From-init-org-to-init-el">12.3. <a href="#README-From-init-org-to-init-el">  <code>README</code> &#x2014;From <code>init.org</code> to <code>init.el</code></a></a></li>
+<li><a href="#Screencapturing-the-Current-Emacs-Frame">12.4. <a href="#Screencapturing-the-Current-Emacs-Frame">Screencapturing the Current Emacs Frame</a></a></li>
+<li><a href="#Org-mode's-𝒳-Block-Expansions">12.5. <a href="#Org-mode's-𝒳-Block-Expansions">Org-mode's <code>&lt;𝒳</code> Block Expansions</a></a></li>
+<li><a href="#What's-changed-who's-to-blame">12.6. <a href="#What's-changed-who's-to-blame">What's changed &amp; who's to blame?</a></a></li>
+<li><a href="#Helpful-Utilities-Shortcuts">12.7. <a href="#Helpful-Utilities-Shortcuts">Helpful Utilities &amp; Shortcuts</a></a></li>
+<li><a href="#Documentation-Pop-Ups">12.8. <a href="#Documentation-Pop-Ups">Documentation Pop-Ups</a></a></li>
+<li><a href="#Emacs-keybindings-for-my-browser">12.9. <a href="#Emacs-keybindings-for-my-browser">Emacs keybindings for my browser</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
+<li><a href="#Using-Emacs-in-any-text-area-on-my-OS">12.10. <a href="#Using-Emacs-in-any-text-area-on-my-OS">Using Emacs in any text area on my OS</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
+<li><a href="#Reload-buffer-with-f5">12.11. <a href="#Reload-buffer-with-f5">Reload buffer with <code>f5</code></a></a></li>
+<li><a href="#Kill-to-start-of-line">12.12. <a href="#Kill-to-start-of-line">Kill to start of line</a></a></li>
+<li><a href="#Killing-buffers-windows-C-x-k-has-a-family">12.13. <a href="#Killing-buffers-windows-C-x-k-has-a-family">Killing buffers &amp; windows: <code>C-x k</code> has a family</a></a></li>
+<li><a href="#Switching-from-2-horizontal-windows-to-2-vertical-windows">12.14. <a href="#Switching-from-2-horizontal-windows-to-2-vertical-windows">Switching from 2 horizontal windows to 2 vertical windows</a></a></li>
+<li><a href="#Obtaining-Values-of-KEYWORD-Annotations">12.15. <a href="#Obtaining-Values-of-KEYWORD-Annotations">Obtaining Values of <code>#+KEYWORD</code> Annotations</a></a></li>
+<li><a href="#Publishing-articles-to-my-personal-blog">12.16. <a href="#Publishing-articles-to-my-personal-blog">Publishing articles to my personal blog</a></a></li>
+<li><a href="#Jumping-without-hassle">12.17. <a href="#Jumping-without-hassle">Jumping without hassle</a></a></li>
+</ul>
+</li>
+<li><a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">13. <a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">Conclusion &#x2014;Why Configuration Files Should be Literate</a></a></li>
 </ul>
 </div>
 </div>
@@ -587,10 +596,10 @@ person you are arguing against. It is painful to lose your reality, so be kind,<
                       </font>
                     </strong>
                   </summary>
-
 <p>
-The first 5 steps must be performed at the terminal <i>since</i> they are required to
-get <i>my</i> Emacs.
+These steps must be performed at the terminal <i>since</i> they are
+required to get <i>my</i> Emacs, which then installs everything else <i>when
+it's first opened</i>.
 </p>
 
 <ol class="org-ol">
@@ -647,151 +656,34 @@ Get my Emacs setup: <code>rm -rf ~/.emacs.d; git clone
 
 <p>
 Open Emacs and watch download and set up many other things &#x2026; ^_^
+</p>
+
+<p>
+<b>This may take ~15 minutes &#x2014;we install a massive LaTeX setup.</b>
 </p></li>
 </ol>
 
-<hr />
+<p>
+We get: Spell checker, dictionary, LaTeX + pygements, Dropbox, AG (for fast system-wide searching
+of a string with <abbr class="tooltip" title="Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.<br><br>(fn ARG)">helm-do-grep-ag</abbr>, useful for finding definitions),
+Amethyst window manager.
+</p>
 
 <p>
-For the next set of instructions, which are in this here <code>init.org</code> file: Open the
-file, then <kbd> C-c C-c </kbd> each snippet and complete any other required setup.
+Amethyst requires some more setup: Open its preferences, then&#x2026;
 </p>
-
-<ol class="org-ol">
-<li value="6"><p>
-Install spell-checking application
-as well as a reliable English dictionary, <a href="https://wordnet.princeton.edu/">WordNet</a>.
-</p>
-
-<div class="org-src-container">
-<pre class="src src-shell">brew install aspell
-brew install wordnet
-</pre>
-</div></li>
-
-<li><p>
-Get LaTeX:
-</p>
-<div class="org-src-container">
-<pre class="src src-shell"><span style="color: #d33682; font-style: italic;">time</span> brew cask install mactex-no-gui
-</pre>
-</div>
-<ul class="org-ul">
-<li>This is a redistribution of TeX Live specifically for macOS.</li>
-<li>We get the 4GB version since it has <a href="https://tex.stackexchange.com/a/1041/69371">everything</a> and so
-do not need to worry about missing style files.</li>
-<li>This took about 12 minutes on my machine.</li>
-</ul>
-
-<p>
-Restart Emacs, enter <code>$e^{i \cdot \pi} + 1 = 0$</code> then press <kbd> C-c C-x C-l </kbd> to
-have it rendered inline.
-</p>
-
-<ul class="org-ul">
-<li><p>
-<b>Minted:</b> Get tool for colourful code snippets for LaTeX &#x2014;see “minted” in
-the main article.
-</p>
-
-<div class="org-src-container">
-<pre class="src src-shell">brew install pygments
-</pre>
-</div></li>
-
-<li><p>
-<b>Not anymore:</b> Get a neato PDF presentation console: <code>brew install pdfpc</code>
-</p>
-<ul class="org-ul">
-<li>With <code>pdfpc myfile.pdf</code> you get a nice timer and multiple views
-of the current slide and upcoming slides &#x2014;with support for multiple monitors.</li>
-<li>Install ScreenBrush, from the Apple Store, for easily drawing/annotating my
-screen &#x2014;e.g., when I'm giving a virtual lecture to my students.</li>
-<li>An alternative is <code>brew install mupdf</code> then <code>mupdf-gl myfile.pdf</code> and press
-<code>f</code> for fullscreen then <code>a</code> for adding/adorning drawings &#x2014;it was too
-rough to use live.</li>
-</ul>
-
-<p>
-Finally, within Emacs: <code>M-x pdf-tools-install</code>
-</p></li>
-</ul></li>
-
-<li><p>
-Install quick file sharing utility ---<a href="https://www.dropbox.com/install">Dropbox</a>&#x2014; as well as a backup service,
-<a href="https://mega.nz/fm">Mega</a> &#x2014;I use this for my <code>backups</code> directory: Keep reading.
-</p>
-<div class="org-src-container">
-<pre class="src src-shell">brew install --cask dropbox
-brew install --cask megasync
-</pre>
-</div></li>
-<li><abbr class="tooltip" title="Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.<br><br>(fn ARG)">helm-do-grep-ag</abbr> (<kbd> C-x c M-g a </kbd>) <b>search all files in the current
-directory for a particular (regexp) string</b>
-<ul class="org-ul">
-<li>Shows matches live as you type</li>
-<li><p>
-Very helpful when looking for a definition of something
-</p>
-
-<div class="org-src-container">
-<pre class="src src-shell">   brew install ag <span style="color: #96A7A9; font-style: italic;">## </span><span style="color: #96A7A9; font-style: italic;">used for helm-do-grep-ag</span>
-</pre>
-</div></li>
-</ul></li>
-</ol>
-
-<hr />
-
-<ol class="org-ol">
-<li value="10"><p>
-Install a tiling window manager: <a href="https://ianyh.com/amethyst/">https://ianyh.com/amethyst/</a>
-</p>
-<div class="org-src-container">
-<pre class="src src-shell">brew install --cask amethyst
-</pre>
-</div>
 <ul class="org-ul">
 <li>Then select: <code>Mouse: Focus follows mouse</code>.</li>
 <li>Also: <code>Shortcuts</code>, then disable ‘increase/decrease main pane count’ bindings
 since they override the beloved Emacs <code>M-&lt;,&gt;</code> keys.</li>
-</ul></li>
-<li>Add the home (<code>~/</code>) directory to the default file navigator:
-Finder -&gt; Preferences &gt; Sidebar, then select home.</li>
-<li><p>
-Install an Agda
-</p>
-<div class="org-src-container">
-<pre class="src src-shell">brew install agda
-</pre>
-</div>
-<p>
-To use the Agda standard library by default:
-</p>
-<div class="org-src-container">
-<pre class="src src-shell">   mkdir -p ~/.agda
-   <span style="color: #d33682; font-style: italic;">echo</span> /usr/local/lib/agda/standard-library.agda-lib &gt;&gt;~/.agda/libraries
-   <span style="color: #d33682; font-style: italic;">echo</span> standard-library &gt;&gt;~/.agda/defaults
-</pre>
-</div>
-<p>
-Invoke <code>brew info agda</code> to get these instructions and the version of Agda just
-installed.
-</p></li>
-
-<li><p>
-Get font support for subscripts, if need be:
-</p>
-<ul class="org-ul">
-<li>Download and unzip the <a href="https://fontlibrary.org/en/font/symbola">symbola</a> font</li>
-<li><kbd> CMD + SPC </kbd> ⇒ <code>font book</code> ⇒ <code>+</code> ⇒ select the symbola directory you just
-unzipped</li>
 </ul>
 
+
 <p>
-(Note: In the before time, you could brew install this font.)
-</p></li>
-</ol>
+For convenience, on a Mac, add the home (<code>~/</code>) directory to the
+default file navigator: Finder -&gt; Preferences &gt; Sidebar, then select
+home.
+</p>
 
 
 </details>
@@ -1044,12 +936,12 @@ See equation [[euler]].
 </div>
 <div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Result</h3>
 \begin{equation}
-\label{orgc19f902}
+\label{orgd9eb0ef}
 e ^ {i \pi} + 1 = 0
 \end{equation}
 
 <p>
-See equation \eqref{orgc19f902}.
+See equation \eqref{orgd9eb0ef}.
 </p>
 
 </div>
@@ -1132,7 +1024,7 @@ essay:
 </p>
 
 
-<div id="orgd988bc5" class="figure">
+<div id="org7579280" class="figure">
 <p><img src="https://alhassy.github.io/emacs.d/images/literate-programming.png" alt="literate-programming.png" />
 </p>
 </div>
@@ -1522,7 +1414,7 @@ are presented together in a natural style.
 <p style="text-align:center">
 
 
-<div id="org688355e" class="figure">
+<div id="org8db3a31" class="figure">
 <p><img src="images/literate-programming.png" alt="literate-programming.png" />
 </p>
 </div>
@@ -2099,7 +1991,7 @@ using the <code>diminish</code> package, so let's install that.
 <pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">use-package</span> <span style="color: #6c71c4; font-weight: bold;">diminish</span>
   <span style="color: #d33682; font-style: italic;">:defer</span> 5
   <span style="color: #d33682; font-style: italic;">:config</span> <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Let's hide some markers.</span>
-    (<span style="color: #b58900;">diminish</span>  '<span style="color: #b58900;">org-indent-mode</span>))
+    (<span style="color: #b58900;">diminish</span> <span style="color: #b58900;">org-indent-mode</span>))
 </pre>
 </div>
 
@@ -2113,6 +2005,11 @@ Here are other packages that I want to be installed onto my machine.
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Lisp libraries with Haskell-like naming.</span>
 (<span style="color: #859900; font-weight: bold;">use-package</span> <span style="color: #6c71c4; font-weight: bold;">dash</span>)    <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#8220;A modern list library for Emacs&#8221;</span>
 (<span style="color: #859900; font-weight: bold;">use-package</span> <span style="color: #6c71c4; font-weight: bold;">s</span>   )    <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#8220;The long lost Emacs string manipulation library&#8221;.</span>
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Let's use the &#8220;s&#8221; library.</span>
+(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">my/personal-machine?</span>
+  (<span style="color: #b58900;">not</span> (<span style="color: #b58900;">s-contains?</span> <span style="color: #2aa198;">"weever"</span> (<span style="color: #b58900;">shell-command-to-string</span> <span style="color: #2aa198;">"uname -a"</span>)))
+  <span style="color: #35a69c; font-style: italic;">"Is this my personal machine, or my work machine?"</span>)
 
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Library for working with system files;</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?</span>
@@ -2244,6 +2141,20 @@ Let's obtain the extension.
   <span style="color: #d33682; font-style: italic;">:defer</span> 5
   <span style="color: #d33682; font-style: italic;">:config</span> (<span style="color: #b58900;">system-packages-update</span>))
 
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Please don't bother me when shell buffer names are in use, just make a new</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">buffer.</span>
+(<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">async-shell-command-buffer</span> 'new-buffer)
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Display the output buffer for asynchronous shell commands only when the</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">command generates output.</span>
+(<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">async-shell-command-display-buffer</span> nil)
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Don't ask me if I want to kill a buffer with a live process attached to it;</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">just kill it please.</span>
+(<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">kill-buffer-query-functions</span>
+  (<span style="color: #b58900;">remq</span> '<span style="color: #b58900;">process-kill-buffer-query-function</span>
+         <span style="color: #268bd2;">kill-buffer-query-functions</span>))
+
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Ensure our operating system is always up to date.</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">This is run whenever we open Emacs &amp; so wont take long if we're up to date.</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">It happens in the background ^_^</span>
@@ -2308,17 +2219,25 @@ window manager for macOS along the lines of xmonad.”
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Unlike the Helm variant, we need to specify our OS pacman.</span>
 (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">system-packages-package-manager</span> 'brew)
-</pre>
-</div>
-<div class="org-src-container">
-<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Use &#8220;brew cask install&#8221; instead of &#8220;brew install&#8221; for installing programs.</span>
-(<span style="color: #859900; font-weight: bold;">setf</span> (<span style="color: #b58900;">nth</span> 2 (<span style="color: #b58900;">assoc</span> 'brew <span style="color: #268bd2;">system-packages-supported-package-managers</span>))
-      '(install . <span style="color: #2aa198;">"brew cask install"</span>))
 
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">If the given system package doesn't exist; install it.</span>
 (<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"amethyst"</span>)
 </pre>
 </div>
+
+<p>
+#+END<sub>SRC</sub>
+</p>
+
+<p>
+Amethyst requires some more setup: Open its preferences, then&#x2026;
+</p>
+<ul class="org-ul">
+<li>Then select: <code>Mouse: Focus follows mouse</code>.</li>
+<li>Also: <code>Shortcuts</code>, then disable ‘increase/decrease main pane count’ bindings
+since they override the beloved Emacs <code>M-&lt;,&gt;</code> keys.</li>
+</ul>
+
 <p>
 Neato! Now I can live in Emacs even more ^_^
 </p>
@@ -2369,7 +2288,7 @@ thought of implementing that.
 The following is disabled. I found it a nuisance to have my files
 open across sessions &#x2014;If I'm closing Emacs, it's for a good reason.
 </p>
-<pre class="example" id="org40de594">
+<pre class="example" id="org9e798c0">
 ;; Keep open files open across sessions.
 (desktop-save-mode 1)
 (setq desktop-restore-eager 10)
@@ -2544,6 +2463,19 @@ changes with <code>C-c C-e</code> and apply them by <code>C-x C-s</code>.
 </ul>
 
 <p>
+Lets also use <abbr class="tooltip" title="Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.<br><br>(fn ARG)">helm-do-grep-ag</abbr> (<kbd> C-x c M-g a </kbd>) <b>search all files in the current
+   directory for a particular (regexp) string</b>
+</p>
+<ul class="org-ul">
+<li>Shows matches live as you type</li>
+<li>Very helpful when looking for a definition of something</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"ag"</span>)
+</pre>
+</div>
+
+<p>
 Finally, note that there is now a <code>M-x helm-info</code> command to show documentation,
 possibly with examples, of the packages installed. For example,
 <code>M-x helm-info RET dash RET -parition RET</code> to see how the parition function from the
@@ -2664,9 +2596,16 @@ logout&#x2014; or force authentication by invoking <code>gpgconf --kill gpg-agen
 <pre class="src src-emacs-lisp">(<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"gnupg"</span>) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">i.e.,  brew install gnupg</span>
 
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#8220;epa&#8221; &#8776; EasyPG Assistant</span>
-(<span style="color: #859900; font-weight: bold;">require</span> '<span style="color: #6c71c4; font-weight: bold;">epa-file</span>)
-(<span style="color: #b58900;">epa-file-enable</span>)
-(<span style="color: #859900; font-weight: bold;">setf</span> <span style="color: #268bd2;">epa-pinentry-mode</span> 'loopback)
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Need the following in init to have gpg working fine:</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">force Emacs to use its own internal password prompt instead of an external pin entry program.</span>
+(<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">epa-pinentry-mode</span> 'loopback)
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">https://emacs.stackexchange.com/questions/12212/how-to-type-the-password-of-a-gpg-file-only-when-opening-it</span>
+(<span style="color: #859900; font-weight: bold;">setq</span> epa-file-cache-passphrase-for-symmetric-encryption <span style="color: #268bd2;">t</span>)
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">No more needing to enter passphrase at each save ^_^</span>
+<span style="color: #96A7A9; font-style: italic;">;;</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Caches passphrase for the current emacs session?</span>
 </pre>
 </div>
 
@@ -2714,19 +2653,286 @@ Possibly interesting reads:
 </details>
 </div>
 </div>
+
+<div id="outline-container-Hydra-Supply-a-prefix-only-once" class="outline-3">
+<h3 id="Hydra-Supply-a-prefix-only-once"><span class="section-number-3">2.10</span> <a href="#Hydra-Supply-a-prefix-only-once">Hydra: Supply a prefix only once</a></h3>
+<div class="outline-text-3" id="text-Hydra-Supply-a-prefix-only-once">
+<p>
+Sometimes we have keybindings that share a common prefix, say <code>C-c j</code> and <code>C-c k</code>,
+and we invoke them in an arbitrary sequence, it would be nice to invoke the
+shared prefix <i>only once</i> thereby having:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><code>C-c j C-c j C-c k C-c k M-3 C-c j M-5 C-c k</code></td>
+<td class="org-left">≈</td>
+<td class="org-left"><code>C-c jjkk3j5k</code></td>
+</tr>
+</tbody>
+</table>
+
+<ul class="org-ul">
+<li>The <a href="https://github.com/abo-abo/hydra#the-one-with-the-least-amount-of-code">“hydra-zoom”</a> example from the documentation really showcases this utility.</li>
+<li>After the prefix is supplied, all extensions are shown in a minibuffer.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Invoke all possible key extensions having a common prefix by</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">supplying the prefix only once.</span>
+(<span style="color: #859900; font-weight: bold;">use-package</span> <span style="color: #6c71c4; font-weight: bold;">hydra</span>)
+</pre>
 </div>
 
+<p>
+From the <a href="https://github.com/abo-abo/hydra">Hydra</a> repository is a ‘description for poets’:
+</p>
+<blockquote>
+<p>
+Once you summon the Hydra through the prefixed binding (the body + any one
+head), all heads can be called in succession with only a short extension.
+</p>
+
+<p>
+The Hydra is vanquished once Hercules, any binding that isn't the Hydra's head,
+arrives. Note that Hercules, besides vanquishing the Hydra, will still serve his
+original purpose, calling his proper command. This makes the Hydra very
+seamless, it's like a minor mode that disables itself auto-magically.
+</p>
+</blockquote>
+
+<p>
+⇒ The <a href="https://github.com/abo-abo/hydra/wiki">Hydra Wiki</a> has many example hydras for common uses cases ⇐
+</p>
+
+<p>
+Below are two examples; one to simplify textual navigation and another for
+window navigation.
+Yet another possible hydra would be to avoid remembering word operations, such
+as copying a word, upcasing it, killing a word from anywhere within it &#x2014;in
+contrast <code>kill-word</code> kills <i>to the end</i> of the word&#x2014;, etc. Likewise for line
+operations, such as copying a line from anywhere in it.  See below for another small and useful example.
+</p>
+
+<p>
+When there are multiple actions, it's nice to see such a menu displayed in the
+middle of the frame; so we use <a href="https://github.com/Ladicle/hydra-posframe#hydra-posframe">hydra-posframe</a>. Moreover, it can be useful to
+group related actions under a common heading &#x2014;e.g., textual navigation may
+occur at the line level or word level or screen level&#x2014; we obtain a nice
+interface by declaraing hydras using <a href="https://github.com/jerrypnz/major-mode-hydra.el#get-started">pretty-hydra-define</a> &#x2014;this saves us the
+trouble of <a href="https://github.com/abo-abo/hydra#the-impressive-looking-one">formating docstrings using classic hydra</a>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Show hydras overlyaed in the middle of the frame</span>
+(<span style="color: #859900; font-weight: bold;">use-package</span> <span style="color: #6c71c4; font-weight: bold;">hydra-posframe</span>
+  <span style="color: #d33682; font-style: italic;">:quelpa</span> (hydra-posframe <span style="color: #d33682; font-style: italic;">:fetcher</span> git <span style="color: #d33682; font-style: italic;">:url</span>
+                          <span style="color: #2aa198;">"https://github.com/Ladicle/hydra-posframe.git"</span>)
+  <span style="color: #d33682; font-style: italic;">:hook</span> (after-init . <span style="color: #b58900;">hydra-posframe-mode</span>)
+  <span style="color: #d33682; font-style: italic;">:custom</span> (hydra-posframe-border-width 5))
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Neato doc strings for hydras</span>
+(<span style="color: #859900; font-weight: bold;">use-package</span> <span style="color: #6c71c4; font-weight: bold;">pretty-hydra</span>)
+</pre>
+</div>
+
+<p>
+To <i>actually</i> define hydras, we make a helper function: <abbr class="tooltip" title="Make a hydra whose heads appear in a pretty pop-up window.<br><br>KEY: Global keybinding for the new hydra.<br><br>TITLE: Either a string or a plist, as specified for pretty-hydra-define.<br>&emsp;&emsp;&emsp; The underlying Lisp function’s name is derived from the TITLE;<br>&emsp;&emsp;&emsp; which is intentional since hydra’s are for interactive, pretty, use.<br><br>&emsp;&emsp;&emsp; One uses a plist TITLE to specify what a hydra should do <strong>before</strong><br>&emsp;&emsp;&emsp; any options, or to specify an alternate quit key (:q by default).<br><br>BODY: A list of columns and entries. Keywords indicate the title<br>&emsp;&emsp;&emsp;of a column; 3-lists (triples) indicate an entry key and<br>&emsp;&emsp;&emsp;the associated operation to perform and, optionally, a name<br>&emsp;&emsp;&emsp;to be shown in the pop-up. See DEFHYDRA for more details.<br><br>For instance, the verbose mess:<br><br>&emsp;&emsp;;; Use ijkl to denote ↑←↓→ arrows.<br>&emsp;&emsp;(global-set-key<br>&emsp;&emsp; (kbd ''C-c w'')<br>&emsp;&emsp; (pretty-hydra-define my/hydra/\t\tWindow\ Adjustment<br>&emsp;&emsp;&emsp; (:title ''		Window Adjustment'' :quit-key ''q'')<br>&emsp;&emsp;&emsp; (''Both''<br>&emsp;&emsp;&emsp;&emsp;((''b'' balance-windows&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ''balance'')<br>&emsp;&emsp;&emsp;&emsp; (''s'' switch-window-then-swap-buffer&emsp;''swap''))<br>&emsp;&emsp;&emsp;&emsp;''Vertical adjustment''<br>&emsp;&emsp;&emsp;&emsp;((''h'' enlarge-window&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;''heighten'')<br>&emsp;&emsp;&emsp;&emsp; (''l'' shrink-window&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ''lower''))<br>&emsp;&emsp;&emsp;&emsp;''Horizontal adjustment''<br>&emsp;&emsp;&emsp;&emsp;((''n'' shrink-window-horizontally&emsp;&emsp;&emsp;''narrow'')<br>&emsp;&emsp;&emsp;&emsp; (''w'' enlarge-window-horizontally ''widen'' )))))<br><br>Is replaced by:<br><br>&emsp;&emsp;;; Use ijkl to denote ↑←↓→ arrows.<br>&emsp;&emsp;(my/pretty-defhydra ''C-c w'' ''		Window Adjustment''<br>&emsp;&emsp;&emsp; :Both<br>&emsp;&emsp;&emsp; (''b'' balance-windows&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ''balance'')<br>&emsp;&emsp;&emsp; (''s'' switch-window-then-swap-buffer&emsp;''swap'')<br>&emsp;&emsp;&emsp; :Vertical_adjustment<br>&emsp;&emsp;&emsp; (''h'' enlarge-window&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;''heighten'')<br>&emsp;&emsp;&emsp; (''l'' shrink-window&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ''lower'')<br>&emsp;&emsp;&emsp; :Horizontal_adjustment<br>&emsp;&emsp;&emsp; (''n'' shrink-window-horizontally&emsp;&emsp;&emsp;''narrow'')<br>&emsp;&emsp;&emsp; (''w'' enlarge-window-horizontally&emsp;&emsp; ''widen''))">my/pretty-defhydra</abbr>
+&#x2014;which combines <abbr class="tooltip" title="Create a Hydra - a family of functions with prefix NAME.<br><br>NAME should be a symbol, it will be the prefix of all functions<br>defined here.<br><br>BODY has the format:<br><br>&emsp;&emsp;(BODY-MAP BODY-KEY &rest BODY-PLIST)<br><br>DOCSTRING will be displayed in the echo area to identify the<br>Hydra.&emsp;When DOCSTRING starts with a newline, special Ruby-style<br>substitution will be performed by ‘hydra--format’.<br><br>Functions are created on basis of HEADS, each of which has the<br>format:<br><br>&emsp;&emsp;(KEY CMD &optional HINT &rest PLIST)<br><br>BODY-MAP is a keymap; ‘global-map’ is used quite often.&emsp;Each<br>function generated from HEADS will be bound in BODY-MAP to<br>BODY-KEY + KEY (both are strings passed to ‘kbd’), and will set<br>the transient map so that all following heads can be called<br>though KEY only.&emsp;BODY-KEY can be an empty string.<br><br>CMD is a callable expression: either an interactive function<br>name, or an interactive lambda, or a single sexp (it will be<br>wrapped in an interactive lambda).<br><br>HINT is a short string that identifies its head.&emsp;It will be<br>printed beside KEY in the echo erea if ‘hydra-is-helpful’ is not<br>nil.&emsp;If you don’t even want the KEY to be printed, set HINT<br>explicitly to nil.<br><br>The heads inherit their PLIST from BODY-PLIST and are allowed to<br>override some keys.&emsp;The keys recognized are :exit, :bind, and :column.<br>:exit can be:<br><br>- nil (default): this head will continue the Hydra state.<br>- t: this head will stop the Hydra state.<br><br>:bind can be:<br>- nil: this head will not be bound in BODY-MAP.<br>- a lambda taking KEY and CMD used to bind a head.<br><br>:column is a string that sets the column for all subsequent heads.<br><br>It is possible to omit both BODY-MAP and BODY-KEY if you don’t<br>want to bind anything.&emsp;In that case, typically you will bind the<br>generated NAME/body command.&emsp;This command is also the return<br>result of ‘defhydra’.<br><br>(fn NAME BODY &optional DOCSTRING &rest HEADS)">defhydra</abbr> and <abbr class="tooltip" title="Define a pretty hydra with given NAME, BODY options and HEADS-PLIST.<br>The generated hydra has a nice-looking docstring which is a table<br>with columns of command keys and hints.<br><br>NAME should be a symbol and is passed to ‘defhydra’ as is.<br><br>BODY is the same as that in ‘defhydra’, withe the following<br>pretty hydra specific ones:<br><br>&emsp;- ‘:separator’ a single char used to generate the separator<br>&emsp;&emsp;line.<br><br>&emsp;- ‘:title’ a string that’s added to the beginning of the<br>&emsp;&emsp;docstring as a title of the hydra.<br><br>&emsp;- ‘:formatter’ a function that takes the generated docstring<br>&emsp;&emsp;and return a decorated one.&emsp;It can be used to further<br>&emsp;&emsp;customize the hydra docstring.<br><br>&emsp;- ‘:quit-key’ a key of list of keys for quitting the hydra.<br>&emsp;&emsp;When specified, invisible head(s) are created with the<br>&emsp;&emsp;specified keys for quitting the hydra.<br><br>HEADS-PLIST is a plist of columns of hydra heads.&emsp;The keys of<br>the plist should be column names.&emsp;The values should be lists of<br>hydra heads.&emsp;Each head has exactly the same syntax as that of<br>‘defhydra’, except hint is required for the head to appear in the<br>docstring.&emsp;The following additional options are supported:<br><br>&emsp;- ‘:width’ the max width of a dynamic hint, used to calculate<br>&emsp;&emsp;the final width of the entire column.&emsp;It is ignored when the<br>&emsp;&emsp;hint is a string.<br><br>&emsp;- ‘:toggle’ when specified, it makes the head a toggle and adds<br>&emsp;&emsp;an indicator to the end of the hint for the status of the<br>&emsp;&emsp;toggle.&emsp;The value of this option can be a symbol, an s-exp<br>&emsp;&emsp;or t.&emsp;The toggle status is read from the given variable, by<br>&emsp;&emsp;evaluating the given expression or checking the ‘cmd’ as if<br>&emsp;&emsp;it’s a variable.&emsp;The latter is especially useful for minior<br>&emsp;&emsp;modes, e.g.<br><br>&emsp;&emsp;&emsp; (''n'' ‘linum-mode’ ''line number'' :toggle t)<br><br>(fn NAME BODY HEADS-PLIST)">pretty-hydra-define</abbr>.
+</p>
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="green">
+                         Implementation
+                      </font>
+                    </strong>
+                  </summary>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defmacro</span> <span style="color: #b58900;">my/pretty-defhydra</span> (key title <span style="color: #b58900; font-style: italic;">&amp;rest</span> body)
+<span style="color: #35a69c; font-style: italic;">"Make a hydra whose heads appear in a pretty pop-up window.</span>
+
+<span style="color: #35a69c; font-style: italic;">KEY: Global keybinding for the new hydra.</span>
+
+<span style="color: #35a69c; font-style: italic;">TITLE: Either a string or a plist, as specified for pretty-hydra-define.</span>
+<span style="color: #35a69c; font-style: italic;">       The underlying Lisp function's name is derived from the TITLE;</span>
+<span style="color: #35a69c; font-style: italic;">       which is intentional since hydra's are for interactive, pretty, use.</span>
+
+<span style="color: #35a69c; font-style: italic;">       One uses a plist TITLE to specify what a hydra should do *before*</span>
+<span style="color: #35a69c; font-style: italic;">       any options, or to specify an alternate quit key (:q by default).</span>
+
+<span style="color: #35a69c; font-style: italic;">BODY: A list of columns and entries. Keywords indicate the title</span>
+<span style="color: #35a69c; font-style: italic;">      of a column; 3-lists (triples) indicate an entry key and</span>
+<span style="color: #35a69c; font-style: italic;">      the associated operation to perform and, optionally, a name</span>
+<span style="color: #35a69c; font-style: italic;">      to be shown in the pop-up. See DEFHYDRA for more details.</span>
+
+<span style="color: #35a69c; font-style: italic;">For instance, the verbose mess:</span>
+
+<span style="color: #35a69c; font-style: italic;">    ;; Use ijkl to denote &#8593;&#8592;&#8595;&#8594; arrows.</span>
+<span style="color: #35a69c; font-style: italic;">    (global-set-key</span>
+<span style="color: #35a69c; font-style: italic;">     (kbd \"C-c w\")</span>
+<span style="color: #35a69c; font-style: italic;">     (pretty-hydra-define my/hydra/\\t\\tWindow\\ Adjustment</span>
+<span style="color: #35a69c; font-style: italic;">       (:title \"\t\tWindow Adjustment\" :quit-key \"q\")</span>
+<span style="color: #35a69c; font-style: italic;">       (\"Both\"</span>
+<span style="color: #35a69c; font-style: italic;">        ((\"b\" balance-windows                 \"balance\")</span>
+<span style="color: #35a69c; font-style: italic;">         (\"s\" switch-window-then-swap-buffer  \"swap\"))</span>
+<span style="color: #35a69c; font-style: italic;">        \"Vertical adjustment\"</span>
+<span style="color: #35a69c; font-style: italic;">        ((\"h\" enlarge-window                  \"heighten\")</span>
+<span style="color: #35a69c; font-style: italic;">         (\"l\" shrink-window                   \"lower\"))</span>
+<span style="color: #35a69c; font-style: italic;">        \"Horizontal adjustment\"</span>
+<span style="color: #35a69c; font-style: italic;">        ((\"n\" shrink-window-horizontally      \"narrow\")</span>
+<span style="color: #35a69c; font-style: italic;">         (\"w\" enlarge-window-horizontally \"widen\" )))))</span>
+
+<span style="color: #35a69c; font-style: italic;">Is replaced by:</span>
+
+<span style="color: #35a69c; font-style: italic;">    ;; Use ijkl to denote &#8593;&#8592;&#8595;&#8594; arrows.</span>
+<span style="color: #35a69c; font-style: italic;">    (my/pretty-defhydra \"C-c w\" \"\t\tWindow Adjustment\"</span>
+<span style="color: #35a69c; font-style: italic;">       :Both</span>
+<span style="color: #35a69c; font-style: italic;">       (\"b\" balance-windows                 \"balance\")</span>
+<span style="color: #35a69c; font-style: italic;">       (\"s\" switch-window-then-swap-buffer  \"swap\")</span>
+<span style="color: #35a69c; font-style: italic;">       :Vertical_adjustment</span>
+<span style="color: #35a69c; font-style: italic;">       (\"h\" enlarge-window                  \"heighten\")</span>
+<span style="color: #35a69c; font-style: italic;">       (\"l\" shrink-window                   \"lower\")</span>
+<span style="color: #35a69c; font-style: italic;">       :Horizontal_adjustment</span>
+<span style="color: #35a69c; font-style: italic;">       (\"n\" shrink-window-horizontally      \"narrow\")</span>
+<span style="color: #35a69c; font-style: italic;">       (\"w\" enlarge-window-horizontally     \"widen\"))"</span>
+  (<span style="color: #859900; font-weight: bold;">let</span> ((name (<span style="color: #b58900;">intern</span> (<span style="color: #b58900;">concat</span> <span style="color: #2aa198;">"my/hydra/"</span>
+                              (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">stringp</span> title)
+                                  title
+                                (<span style="color: #b58900;">plist-get</span> title <span style="color: #d33682; font-style: italic;">:title</span>))))))
+    `(<span style="color: #b58900;">global-set-key</span>
+      (<span style="color: #b58900;">kbd</span> ,key)
+      (<span style="color: #859900; font-weight: bold;">pretty-hydra-define</span> ,name
+        ,(<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">stringp</span> title)
+             (<span style="color: #b58900;">list</span> <span style="color: #d33682; font-style: italic;">:title</span> title <span style="color: #d33682; font-style: italic;">:quit-key</span> <span style="color: #2aa198;">"q"</span>)
+           title)
+        ,(<span style="color: #859900; font-weight: bold;">thread-last</span> body
+           (<span style="color: #b58900;">-partition-by-header</span> #'<span style="color: #b58900;">keywordp</span>)
+           (<span style="color: #859900; font-weight: bold;">--map</span> (<span style="color: #b58900;">cons</span> (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"_"</span> <span style="color: #2aa198;">" "</span> (<span style="color: #b58900;">s-chop-prefix</span> <span style="color: #2aa198;">":"</span> (<span style="color: #b58900;">symbol-name</span> (<span style="color: #b58900;">car</span> it)))) (<span style="color: #b58900;">list</span> (<span style="color: #b58900;">cdr</span> it))))
+           (<span style="color: #b58900;">-flatten-n</span> 1))))))
+</pre>
+</div>
+
+
+</details>
+</div>
+<div id="outline-container-Textual-Navigation-Look-Ma-no-CTRL-key" class="outline-4">
+<h4 id="Textual-Navigation-Look-Ma-no-CTRL-key"><span class="section-number-4">2.10.1</span> <a href="#Textual-Navigation-Look-Ma-no-CTRL-key">Textual Navigation &#x2014;“Look Ma, no CTRL key!”</a></h4>
+<div class="outline-text-4" id="text-Textual-Navigation-Look-Ma-no-CTRL-key">
+<p>
+Basic movement commands &#x2014;without having to hold the control key!
+</p>
+
+<p>
+<code>C-n</code> moves us to the next line, as it should; but it now <i>also</i> let's us press
+<code>n,p,f,…</code> for other movement commands. Unlisted keys insert themselves, whereas <code>q</code>
+close the pop-up menu.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">my/pretty-defhydra</span> <span style="color: #2aa198;">"C-n"</span>
+   (<span style="color: #d33682; font-style: italic;">:body-pre</span> (<span style="color: #b58900;">next-line</span>) <span style="color: #d33682; font-style: italic;">:title</span> <span style="color: #2aa198;">"\t\t\t\t\tTextual Navigation"</span> <span style="color: #d33682; font-style: italic;">:quit-key</span> <span style="color: #2aa198;">"q"</span>)
+   <span style="color: #d33682; font-style: italic;">:Line</span>
+   (<span style="color: #2aa198;">"n"</span> <span style="color: #b58900;">next-line</span>)
+   (<span style="color: #2aa198;">"p"</span> <span style="color: #b58900;">previous-line</span>)
+   (<span style="color: #2aa198;">"a"</span> <span style="color: #b58900;">beginning-of-line</span>)
+   (<span style="color: #2aa198;">"e"</span> <span style="color: #b58900;">move-end-of-line</span>)
+   (<span style="color: #2aa198;">"g"</span> <span style="color: #b58900;">goto-line</span>)
+   <span style="color: #d33682; font-style: italic;">:Word</span>
+   (<span style="color: #2aa198;">"f"</span> <span style="color: #b58900;">forward-word</span> <span style="color: #2aa198;">"Next"</span>)
+   (<span style="color: #2aa198;">"b"</span> <span style="color: #b58900;">backward-word</span> <span style="color: #2aa198;">"Previous"</span>)
+   (<span style="color: #2aa198;">"{"</span> <span style="color: #b58900;">org-backward-element</span> <span style="color: #2aa198;">"Next Element"</span>)
+   (<span style="color: #2aa198;">"}"</span> <span style="color: #b58900;">org-forward-element</span> <span style="color: #2aa198;">"Previous Element"</span>)
+   <span style="color: #d33682; font-style: italic;">:Screen</span>
+   (<span style="color: #2aa198;">"v"</span> <span style="color: #b58900;">scroll-up-command</span> <span style="color: #2aa198;">"Scroll Down"</span>)
+   (<span style="color: #2aa198;">"V"</span> <span style="color: #b58900;">scroll-down-command</span> <span style="color: #2aa198;">"Scroll Up"</span>)
+   (<span style="color: #2aa198;">"l"</span> <span style="color: #b58900;">recenter-top-bottom</span> <span style="color: #2aa198;">"Center Page"</span>)
+   (<span style="color: #2aa198;">"r"</span> <span style="color: #b58900;">move-to-window-line-top-bottom</span> <span style="color: #2aa198;">"Relocate Point"</span>)
+   (<span style="color: #2aa198;">"m"</span> <span style="color: #b58900;">helm-imenu</span> <span style="color: #2aa198;">"Textual Menu"</span>))
+</pre>
+</div>
+
+<p>
+<i>Along with the “pop-up window”, this is a useful way to (re)learn about Emacs' features.</i>
+</p>
+
+<p>
+For “key-based navigation”, consider ‘EVIL-mode’ or ‘Spacemacs’, or
+<a href="#Letter-based-Navigation">ace-jump-mode</a> (below).
+</p>
+</div>
+</div>
+
+<div id="outline-container-Window-Navigation" class="outline-4">
+<h4 id="Window-Navigation"><span class="section-number-4">2.10.2</span> <a href="#Window-Navigation">Window Navigation</a></h4>
+<div class="outline-text-4" id="text-Window-Navigation">
+<p>
+It can be difficult to remember the incantations to adjust
+windows, so we can make a hydra to alleviate the trouble.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Use ijkl to denote &#8593;&#8592;&#8595;&#8594; arrows.</span>
+(<span style="color: #859900; font-weight: bold;">my/pretty-defhydra</span> <span style="color: #2aa198;">"C-c w"</span> <span style="color: #2aa198;">"\t\tWindow Adjustment"</span>
+   <span style="color: #d33682; font-style: italic;">:Both</span>
+   (<span style="color: #2aa198;">"b"</span> <span style="color: #b58900;">balance-windows</span>                 <span style="color: #2aa198;">"balance"</span>)
+   (<span style="color: #2aa198;">"s"</span> <span style="color: #b58900;">switch-window-then-swap-buffer</span>  <span style="color: #2aa198;">"swap"</span>)
+   <span style="color: #d33682; font-style: italic;">:Vertical_adjustment</span>
+   (<span style="color: #2aa198;">"h"</span> <span style="color: #b58900;">enlarge-window</span>                  <span style="color: #2aa198;">"heighten"</span>)
+   (<span style="color: #2aa198;">"l"</span> <span style="color: #b58900;">shrink-window</span>                   <span style="color: #2aa198;">"lower"</span>)
+   <span style="color: #d33682; font-style: italic;">:Horizontal_adjustment</span>
+   (<span style="color: #2aa198;">"n"</span> <span style="color: #b58900;">shrink-window-horizontally</span>      <span style="color: #2aa198;">"narrow"</span>)
+   (<span style="color: #2aa198;">"w"</span> <span style="color: #b58900;">enlarge-window-horizontally</span>     <span style="color: #2aa198;">"widen"</span>))
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Provides a *visual* way to choose a window to switch to.</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">(use-package switch-window :defer t)</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">:bind (("C-x o" . switch-window)</span>
+<span style="color: #96A7A9; font-style: italic;">;;        </span><span style="color: #96A7A9; font-style: italic;">("C-x w" . switch-window-then-swap-buffer))</span>
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Have a thick ruler between vertical windows</span>
+(<span style="color: #b58900;">window-divider-mode</span>)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div id="outline-container-Staying-Safe" class="outline-2">
 <h2 id="Staying-Safe"><span class="section-number-2">3</span> <a href="#Staying-Safe">Staying Sane</a></h2>
 <div class="outline-text-2" id="text-Staying-Safe">
+<p>
+Install quick file sharing utility ---<a href="https://www.dropbox.com/install">Dropbox</a>&#x2014; as well as a backup
+service, <a href="https://mega.nz/fm">Mega</a> &#x2014;I use this for my <code>backups</code> directory: Keep reading.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"dropbox"</span>)
+(<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"megasync"</span>)
+</pre>
+</div>
 </div>
 
 <div id="outline-container-Undo-tree-Very-Local-Version-Control" class="outline-3">
 <h3 id="Undo-tree-Very-Local-Version-Control"><span class="section-number-3">3.1</span> <a href="#Undo-tree-Very-Local-Version-Control">Undo-tree: Very Local Version Control</a></h3>
 <div class="outline-text-3" id="text-Undo-tree-Very-Local-Version-Control">
 <p>
-<abbr class="tooltip" title="Visualize the current buffer’s undo tree.">undo-tree-visualize</abbr>, <kbd> C-x u </kbd>, gives a <i>visual</i> representation
-of the current buffer's edit history.
+<abbr class="tooltip" title="Visualize the current buffer’s undo tree.">undo-tree-visualize</abbr>, <kbd> C-x u </kbd>, gives a <i>visual</i> representation of the
+current buffer's edit history.
 </p>
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">  <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Allow tree-semantics for undo operations.</span>
@@ -3040,7 +3246,7 @@ Let's always notify ourselves of a file that has <a href="https://tpapp.github.i
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">after the locals have been loaded.</span>
 (<span style="color: #b58900;">add-hook</span> '<span style="color: #268bd2;">find-file-hook</span>
   '(<span style="color: #b58900;">lambda</span> ()
-      (<span style="color: #b58900;">add-hook</span> '<span style="color: #268bd2;">hack-local-variables-hook</span> '<span style="color: #b58900;">my/magit-check-file-and-popup</span>)))
+      (<span style="color: #b58900;">add-hook</span> '<span style="color: #268bd2;">hack-local-variables-hook</span> 'my/magit-check-file-and-popup)))
 </pre>
 </div>
 
@@ -3060,6 +3266,11 @@ First, let's setup our git credentials.
 (<span style="color: #859900; font-weight: bold;">when</span> (<span style="color: #b58900;">equal</span> <span style="color: #2aa198;">""</span> (<span style="color: #b58900;">shell-command-to-string</span> <span style="color: #2aa198;">"git config user.name"</span>))
   (<span style="color: #b58900;">shell-command</span> <span style="color: #2aa198;">"git config --global user.name \"Musa Al-hassy\""</span>)
   (<span style="color: #b58900;">shell-command</span> <span style="color: #2aa198;">"git config --global user.email \"alhassy@gmail.com\""</span>))
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Also need to customise email routes per organization</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/configuring-notifications#customizing-email-routes-per-organization</span>
+(<span style="color: #859900; font-weight: bold;">unless</span> <span style="color: #268bd2;">my/personal-machine?</span>
+  (<span style="color: #b58900;">shell-command</span> <span style="color: #2aa198;">"git config --global user.email \"musa@weeverapps.com\""</span>))
 </pre>
 </div>
 </div>
@@ -3106,11 +3317,12 @@ quickly.
   (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">file-directory-p</span> local)
       'repo-already-exists
     (<span style="color: #b58900;">async-shell-command</span> (<span style="color: #b58900;">concat</span> <span style="color: #2aa198;">"git clone "</span> remote <span style="color: #2aa198;">" "</span> local))
-    (<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">magit-repository-directories</span> `(,local   . 0))
+    <span style="color: #96A7A9; font-style: italic;">; </span><span style="color: #96A7A9; font-style: italic;">(add-to-list 'magit-repository-directories `(,local   . 0))</span>
     'cloned-repo))
 
 (<span style="color: #b58900;">maybe-clone</span> <span style="color: #2aa198;">"https://github.com/alhassy/emacs.d"</span> <span style="color: #2aa198;">"~/.emacs.d"</span>)
 (<span style="color: #b58900;">maybe-clone</span> <span style="color: #2aa198;">"https://github.com/alhassy/alhassy.github.io"</span> <span style="color: #2aa198;">"~/blog"</span>)
+(<span style="color: #b58900;">maybe-clone</span> <span style="color: #2aa198;">"https://github.com/alhassy/holy-books"</span>)
 </pre>
 </div>
 
@@ -4161,7 +4373,7 @@ it generally refers to the value of the field being mirrored with <code>${n: ⋯
 However, going through pop-ups takes precious time &#x2014;besides being slightly annyoing.
 Let's introduce a template for my most utilised kind of language blocks.
 </p>
-<pre class="example" id="org28c525c">
+<pre class="example" id="org3b95ec3">
 ** s_org: src block for org
 #+begin_src org
 $0
@@ -4177,7 +4389,7 @@ generated by the following basic loop &#x2014;whose source block is named
 <code>my-org-lang-templates</code>.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="orgc110c7f"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">We make an org BLOCK snippet template for each LANG the user has declared.</span>
+<pre class="src src-emacs-lisp" id="org0a83fd1"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">We make an org BLOCK snippet template for each LANG the user has declared.</span>
 <span style="color: #96A7A9; font-style: italic;">;;</span>
 (<span style="color: #859900; font-weight: bold;">cl-loop</span> for (shortcut <span style="color: #b58900;">block</span> takes-language-argument? default-text)
       in '((<span style="color: #2aa198;">"s_"</span> <span style="color: #2aa198;">"src"</span> <span style="color: #268bd2;">t</span>)
@@ -4221,7 +4433,7 @@ utilising a <a href="https://www.gnu.org/software/emacs/manual/html_node/org/Now
 the above <code>s_org</code> block. The result is (last I checked) <b>83</b> template expansions
 &#x2014;that would have been a bit much to write by hand.
 </p>
-<pre class="example" id="org92cb527">
+<pre class="example" id="org933c79c">
 #+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes
 &lt;&lt;my-org-lang-templates()&gt;&gt;
 #+end_src
@@ -4319,11 +4531,56 @@ One expands <code>eqn_begin</code>, tabs to fill in the three main locations, th
 </div>
 </div>
 
+<div id="outline-container-Fixed-replies" class="outline-4">
+<h4 id="Fixed-replies"><span class="section-number-4">4.6.6</span> <a href="#Fixed-replies">Fixed replies</a></h4>
+<div class="outline-text-4" id="text-Fixed-replies">
+<p>
+Here are some replies that I sometimes need to produce; e.g., to people who
+insist their way is the right way.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-org">** reply_opinionated_pantomath: What to say to, e.g., an arrogant academic
+
+Your certainty inspires me to continuing exploring, and I may arrive at your
+point of view, but I'm going to need more evidence first.
+
+** reply_em_dashes: Why use em dashes for parenthetical remarks?
+
+According to the &#8220;Canadian Style Guide&#8221; (CSG):
+
+   The em is an expansive, attention-seeking dash. It supplies much stronger
+   emphasis than the comma, colon or semicolon it often replaces. Positioned
+   around interrupting elements, em dashes have the opposite effect of
+   parentheses&#8212;em dashes emphasize; parentheses minimize.
+
+From &#8220;A Logical Approach to Discrete Math&#8221; (LADM), page ix:
+
+   We place a space on one side of an em dash ---here are examples--- in
+   order to help the reader determine whether the em dash begins or ends
+   a parenthetical remark. In effect, we are creating two symbols from one.
+   In longer sentences---and we do write long sentences from time to time---the
+   lack of space can make it difficult to see the sentence structure---especially
+   if the em dash is used too often in one sentence. Parenthetical remarks
+   delimited by parentheses (like this one) have a space on one side of each
+   parenthesis, so why not parenthetical remarks delimited by em dashes?
+
+Interestingly, according to the CSG, there should be no space before or after an
+em dash.  As such, it appears that the spacing is mostly stylistic; e.g., some
+people surround em-s with spaces on both sides.  In particular, when em-s are
+unmatched, I make no use of additional space ---indeed this form of one-sided
+parentheses without a space is how LADM is written, as can be seen at the top of
+page 3.
+</pre>
+</div>
+</div>
+</div>
+
 <div id="outline-container-" class="outline-4">
-<h4 id=""><span class="section-number-4">4.6.6</span> <a href="#">Emojis</a></h4>
+<h4 id=""><span class="section-number-4">4.6.7</span> <a href="#">Emojis</a></h4>
 <div class="outline-text-4" id="text-">
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="org022f997"><span style="color: #96A7A9; font-style: italic;">;;</span>
+<pre class="src src-emacs-lisp" id="org89059c7"><span style="color: #96A7A9; font-style: italic;">;;</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">https://emojipedia.org/people/</span>
 (<span style="color: #859900; font-weight: bold;">cl-loop</span> for (emoji name description)
          in '((&#128512; <span style="color: #2aa198;">"Grinning Face"</span>
@@ -4467,7 +4724,7 @@ One expands <code>eqn_begin</code>, tabs to fill in the three main locations, th
 </div>
 
 <div id="outline-container-my-Templates-to-obtain-User-Information" class="outline-4">
-<h4 id="my-Templates-to-obtain-User-Information"><span class="section-number-4">4.6.7</span> <a href="#my-Templates-to-obtain-User-Information">  <code>my_⋯</code> Templates to obtain User Information</a></h4>
+<h4 id="my-Templates-to-obtain-User-Information"><span class="section-number-4">4.6.8</span> <a href="#my-Templates-to-obtain-User-Information">  <code>my_⋯</code> Templates to obtain User Information</a></h4>
 <div class="outline-text-4" id="text-my-Templates-to-obtain-User-Information">
 <p>
 Let's add templates for links to common user information ^_^
@@ -4508,7 +4765,7 @@ It may be useful to also have Org-link variants of these …
 </div>
 
 <div id="outline-container-Activate-templates-from-other-places-in-my-init" class="outline-4">
-<h4 id="Activate-templates-from-other-places-in-my-init"><span class="section-number-4">4.6.8</span> <a href="#Activate-templates-from-other-places-in-my-init">Templates from other places in my init</a></h4>
+<h4 id="Activate-templates-from-other-places-in-my-init"><span class="section-number-4">4.6.9</span> <a href="#Activate-templates-from-other-places-in-my-init">Templates from other places in my init</a></h4>
 <div class="outline-text-4" id="text-Activate-templates-from-other-places-in-my-init">
 <p>
 In this setup, I have some templates appear elsewhere, tagged with <code>:noweb-ref
@@ -5334,8 +5591,8 @@ Priority markers are of the form <code>[#𝒳]</code>, the <a href="https://gith
 renders them as words or icons.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">use-package</span> <span style="color: #6c71c4; font-weight: bold;">org-fancy-priorities</span>
-  <span style="color: #d33682; font-style: italic;">:diminish</span> <span style="color: #268bd2;">t</span>
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">use-package</span> <span style="color: #6c71c4; font-weight: bold;">org-fancy-priorities-mode</span>
+  <span style="color: #d33682; font-style: italic;">:diminish</span> <span style="color: #b58900;">org-fancy-priorities-mode</span>
   <span style="color: #d33682; font-style: italic;">:hook</span>   (<span style="color: #b58900;">org-mode</span> . <span style="color: #b58900;">org-fancy-priorities-mode</span>)
   <span style="color: #d33682; font-style: italic;">:custom</span> (<span style="color: #268bd2;">org-fancy-priorities-list</span> '(<span style="color: #2aa198;">"HIGH"</span> <span style="color: #2aa198;">"MID"</span> <span style="color: #2aa198;">"LOW"</span> <span style="color: #2aa198;">"OPTIONAL"</span>)))
 </pre>
@@ -5432,7 +5689,8 @@ archive file too, if we enable it so.
 <pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Invoking the agenda command shows the agenda and enables</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">the org-agenda variables.</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#10153; Show my agenda upon Emacs startup.</span>
-(<span style="color: #b58900;">org-agenda</span> <span style="color: #2aa198;">"a"</span> <span style="color: #2aa198;">"a"</span>) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Need this to have &#8220;org-agenda-custom-commands&#8221; defined.</span>
+(<span style="color: #859900; font-weight: bold;">when</span> <span style="color: #268bd2;">my/personal-machine?</span>
+  (<span style="color: #b58900;">org-agenda</span> <span style="color: #2aa198;">"a"</span> <span style="color: #2aa198;">"a"</span>)) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Need this to have &#8220;org-agenda-custom-commands&#8221; defined.</span>
 </pre>
 </div>
 
@@ -6016,7 +6274,7 @@ center footer  &#9829;&#8255;&#9829; Org-mode is so cool (&#8226;&#768;&#7447;&#
 </div>
 
 
-<div id="orga09951d" class="figure">
+<div id="org668e3de" class="figure">
 <p><img src="images/workflow.png" alt="workflow.png" />
 </p>
 </div>
@@ -6263,7 +6521,7 @@ red is overdue, and blue is an acceptable break day.
 Here's an example habit from the <a href="https://orgmode.org/manual/Tracking-your-habits.html">Org-mode manual</a>, where <code>.+𝒳d/𝒴d</code> reads
 <i>perform the habit once every 𝒳 days, but never let me go 𝒴 days without doing it.</i>
 </p>
-<pre class="example" id="orgc2cf752">
+<pre class="example" id="orgf6b716c">
 ** TODO Shave
    SCHEDULED: &lt;2020-01-08 Wed .+2d/4d&gt;
    :PROPERTIES:
@@ -6377,7 +6635,8 @@ mail groups, automatically or fancily filing them away.
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">After startup, if Emacs is idle for 10 seconds, then start Gnus.</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Gnus is slow upon startup since it fetches all mails upon startup.</span>
-(<span style="color: #b58900;">run-with-idle-timer</span> 10 nil #'<span style="color: #b58900;">gnus</span>)
+(<span style="color: #859900; font-weight: bold;">when</span> <span style="color: #268bd2;">my/personal-machine?</span>
+  (<span style="color: #b58900;">run-with-idle-timer</span> 10 nil #'<span style="color: #b58900;">gnus</span>))
 </pre>
 </div>
 
@@ -6652,7 +6911,7 @@ Next, let's paste in some <a href="http://groups.google.com/group/gnu.emacs.gnus
 
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Example</span>
-(my/email (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"%s &lt;%s&gt;"</span> <span style="color: #b58900;">user-full-name</span> <span style="color: #268bd2;">user-mail-address</span>) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">To</span>
+(<span style="color: #b58900;">my/email</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"%s &lt;%s&gt;"</span> <span style="color: #b58900;">user-full-name</span> <span style="color: #268bd2;">user-mail-address</span>) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">To</span>
           <span style="color: #2aa198;">"Test"</span>                                              <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Subject</span>
           <span style="color: #2aa198;">"Why hello there!"</span>)                                 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Email body</span>
 </pre>
@@ -6941,7 +7200,7 @@ primary tools.
 <p>
 Now my startup message is,
 </p>
-<pre class="example" id="orgb3c0c92">
+<pre class="example" id="org39dc3d5">
 Welcome Musa Al-hassy! Emacs 27.1; Org-mode 9.4.4; System darwin/Musas-MacBook-Air.local; Time 13.331914 seconds
 </pre>
 <p>
@@ -6963,7 +7222,9 @@ I almost always have Emacs open; I don't need a dashboard, but would like to see
 my to-do list and my init file, side-by-side.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #b58900;">find-file</span> <span style="color: #2aa198;">"~/Dropbox/todo.org"</span>)
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">if</span> <span style="color: #268bd2;">my/personal-machine?</span>
+    (<span style="color: #b58900;">find-file</span> <span style="color: #2aa198;">"~/Dropbox/todo.org"</span>)
+  (<span style="color: #b58900;">find-file</span> <span style="color: #2aa198;">"~/Desktop/work.org.gpg"</span>))
 (<span style="color: #b58900;">split-window-right</span>)                      <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">C-x 3</span>
 (<span style="color: #b58900;">other-window</span> 1)                              <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">C-x 0</span>
 (<span style="color: #859900; font-weight: bold;">let</span> ((<span style="color: #268bd2;">enable-local-variables</span> <span style="color: #d33682; font-style: italic;">:all</span>)           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Load *all* locals.</span>
@@ -8118,6 +8379,16 @@ I would like to check spelling on the fly.
 </dl>
 
 <p>
+Install spell-checking application as well as a reliable English
+dictionary, <a href="https://wordnet.princeton.edu/">WordNet</a>.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"aspell"</span>)
+(<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"wordnet"</span>)
+</pre>
+</div>
+
+<p>
 <code>flyspell-prog-mode</code> enables spell checking for programming by only considering
 comments and strings.
 </p>
@@ -8273,7 +8544,7 @@ when we click on them we get the reason why; then we may invoke
 and finally invoke <code>langtool-check-done</code> to stop any remaining red colouring.
 </p>
 
-<pre class="example" id="orgcfa58e4">
+<pre class="example" id="orgfed5a51">
 LanguageTool offers spell and grammar checking. Just paste your text here
 and click the 'Check Text' button. Click the colored phrases for details
 on potential errors. or use this text too see an few of of the problems
@@ -8462,6 +8733,68 @@ input.  ( <a href="https://www.joelonsoftware.com/2003/10/08/the-absolute-minimu
 Must Know About Unicode and Character Sets (No Excuses!)</a> )
 </p>
 
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"agda"</span>)
+</pre>
+</div>
+
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="green">
+                         To use the Agda standard library by default
+                      </font>
+                    </strong>
+                  </summary>
+<div class="org-src-container">
+<pre class="src src-shell">   mkdir -p ~/.agda
+   <span style="color: #d33682; font-style: italic;">echo</span> /usr/local/lib/agda/standard-library.agda-lib &gt;&gt;~/.agda/libraries
+   <span style="color: #d33682; font-style: italic;">echo</span> standard-library &gt;&gt;~/.agda/defaults
+</pre>
+</div>
+<p>
+Invoke <code>brew info agda</code> to get these instructions and the version of Agda just
+   installed.
+</p>
+
+
+</details>
+
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="green">
+                         Get font support for subscripts (, if) need be
+                      </font>
+                    </strong>
+                  </summary>
+<ul class="org-ul">
+<li>Download and unzip the <a href="https://fontlibrary.org/en/font/symbola">symbola</a> font</li>
+<li><kbd> CMD + SPC </kbd> ⇒ <code>font book</code> ⇒ <code>+</code> ⇒ select the symbola directory you just
+unzipped</li>
+</ul>
+
+<p>
+(Note: In the before time, you could brew install this font.)
+</p>
+
+
+</details>
+
 <p>
 Executing <code>agda-mode setup</code> appends the following text to the <code>.emacs</code> file.
 Let's put it here ourselves.
@@ -8582,16 +8915,16 @@ Also some silly stuff:
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Whence, \emot shows all possible emotions.</span>
 (<span style="color: #859900; font-weight: bold;">cl-loop</span> for emot
       in `(<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">angry, cry, why-you-no</span>
-           (<span style="color: #2aa198;">"whyme"</span> <span style="color: #2aa198;">"&#4314;(&#3232;&#30410;&#3232;)&#4314;"</span> <span style="color: #2aa198;">"&#12541;&#3900;&#3234;_&#3234;&#3901;&#65417;&#9730;"</span> <span style="color: #2aa198;">"&#1097;(&#12444;&#12525;&#12444;&#1097;)"</span>)
+           (<span style="color: #2aa198;">"whyme"</span> <span style="color: #2aa198;">"&#4314;(&#3232;&#30410;&#3232;)&#4314;"</span> <span style="color: #2aa198;">"&#12541;&#3900;&#3234;_&#3234;&#3901;&#65417;&#9730;"</span> <span style="color: #2aa198;">"&#1097;(&#12444;&#12525;&#12444;&#1097;)"</span> <span style="color: #2aa198;">"&#8255;&#65077;(&#3237;&#65103;&#3237;)&#8255;&#65077;"</span> <span style="color: #2aa198;">"&#65381;&#65439;(*&#10086;&#969;&#10086;)*&#65381;&#65439;"</span>)
            <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">confused, disapprove, dead, shrug</span>
-           (<span style="color: #2aa198;">"what"</span> <span style="color: #2aa198;">"&#12300;(&#176;&#12504;&#176;)"</span> <span style="color: #2aa198;">"(&#3232;_&#3232;)"</span> <span style="color: #2aa198;">"(&#10006;&#9581;&#9582;&#10006;)"</span> <span style="color: #2aa198;">"&#175;\\_(&#12484;)_/&#175;"</span>)
+           (<span style="color: #2aa198;">"what"</span> <span style="color: #2aa198;">"&#12300;(&#176;&#12504;&#176;)"</span> <span style="color: #2aa198;">"(&#3232;_&#3232;)"</span> <span style="color: #2aa198;">"(&#10006;&#9581;&#9582;&#10006;)"</span> <span style="color: #2aa198;">"&#175;\\_(&#12484;)_/&#175;"</span> <span style="color: #2aa198;">"&#65381;&#10023;_&#10023;&#65381;"</span>)
            <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">dance, csi</span>
            (<span style="color: #2aa198;">"cool"</span> <span style="color: #2aa198;">"&#9487;(-_-)&#9491;&#9487;(-_-)&#9499;&#9495;(-_-&#65279; )&#9491;"</span>
             ,(<span style="color: #b58900;">s-collapse-whitespace</span> <span style="color: #2aa198;">"&#8226;_&#8226;)</span>
 <span style="color: #2aa198;">                                      ( &#8226;_&#8226;)&gt;&#8976;&#9632;-&#9632;</span>
 <span style="color: #2aa198;">                                      (&#8976;&#9632;_&#9632;)"</span>))
            <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">love, pleased, success, yesss</span>
-           (<span style="color: #2aa198;">"smile"</span> <span style="color: #2aa198;">"&#9829;&#8255;&#9829;"</span> <span style="color: #2aa198;">"(&#9472;&#8255;&#8255;&#9472;)"</span> <span style="color: #2aa198;">"(&#8226;&#768;&#7447;&#8226;&#769;)&#1608;"</span> <span style="color: #2aa198;">"(&#3591;&#3232;_&#3232;)&#3591;"</span>))
+           (<span style="color: #2aa198;">"smile"</span> <span style="color: #2aa198;">"&#9829;&#8255;&#9829;"</span> <span style="color: #2aa198;">"(&#9472;&#8255;&#8255;&#9472;)"</span> <span style="color: #2aa198;">"(&#8226;&#768;&#7447;&#8226;&#769;)&#1608;"</span> <span style="color: #2aa198;">"(&#3591;&#3232;_&#3232;)&#3591;"</span> <span style="color: #2aa198;">"&#7477;&#8217;&#7504; &#7495;&#7497;&#7491;&#7512;&#7511;&#8305;&#7584;&#7512;&#737;"</span>))
       <span style="color: #b58900;">do</span>
       (<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">agda-input-user-translations</span> emot)
       (<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">agda-input-user-translations</span> (<span style="color: #b58900;">cons</span> <span style="color: #2aa198;">"emot"</span> (<span style="color: #b58900;">cdr</span> emot))))
@@ -8854,6 +9187,40 @@ Of course we can also use it without the asterisk; e.g.:
 </div>
 </div>
 </div>
+
+<div id="outline-container-C-c-e-n-p-Taking-a-tour-of-one's-edits" class="outline-3">
+<h3 id="C-c-e-n-p-Taking-a-tour-of-one's-edits"><span class="section-number-3">7.15</span> <a href="#C-c-e-n-p-Taking-a-tour-of-one's-edits">  <code>C-c e n,p</code>: Taking a tour of one's edits</a></h3>
+<div class="outline-text-3" id="text-C-c-e-n-p-Taking-a-tour-of-one's-edits">
+<p>
+This package allows us to move around the edit points of a buffer <i>without</i>
+actually undoing anything. We even obtain a brief description of what happend at
+each edit point.  This seems useful for when I get interrupted or lose my train
+of thought: Just press <kbd> C-c e p </kbd> to see what I did recently and where &#x2014;the
+“e” is for “e”dit.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Give me a description of the change made at a particular stop.</span>
+(<span style="color: #859900; font-weight: bold;">use-package</span> <span style="color: #6c71c4; font-weight: bold;">goto-chg</span>
+  <span style="color: #d33682; font-style: italic;">:defer</span> <span style="color: #268bd2;">t</span>
+  <span style="color: #d33682; font-style: italic;">:custom</span> (glc-default-span 0))
+
+(<span style="color: #859900; font-weight: bold;">my/pretty-defhydra</span> <span style="color: #2aa198;">"C-c e"</span> <span style="color: #2aa198;">"Look at them edits!"</span>
+  :\  (<span style="color: #2aa198;">"p"</span> <span style="color: #b58900;">goto-last-change</span> <span style="color: #2aa198;">"Goto n&#7511;&#688; last change"</span>)
+      (<span style="color: #2aa198;">"n"</span> <span style="color: #b58900;">goto-last-change-reverse</span> <span style="color: #2aa198;">"Goto more recent change"</span>))
+</pre>
+</div>
+
+<p>
+Compare this with <code>C-x u</code>, or <code>undo-tree-visualise</code>, wherein undos are actually performed.
+</p>
+
+<p>
+Notice, as a hydra, I can use <code>C-c e</code> followed by any combination of <code>p</code> and <code>n</code> to
+navigate my recent edits <i>without</i> having to supply the prefix each time.
+</p>
+</div>
+</div>
 </div>
 
 <div id="outline-container-Org-Mode-PDF-HTML" class="outline-2">
@@ -8864,8 +9231,59 @@ In this section we consider the Org-mode export for PDFs (LaTeX).
 For example, we account for LaTeX citations.
 </p>
 </div>
+
+<div id="outline-container-Get-LaTeX" class="outline-3">
+<h3 id="Get-LaTeX"><span class="section-number-3">8.1</span> <a href="#Get-LaTeX">Get LaTeX:</a></h3>
+<div class="outline-text-3" id="text-Get-LaTeX">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"mactex-no-gui"</span>)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>This is a redistribution of TeX Live specifically for macOS.</li>
+<li>We get the 4GB version since it has <a href="https://tex.stackexchange.com/a/1041/69371">everything</a> and so
+do not need to worry about missing style files.</li>
+<li>This took about 12 minutes on my machine.</li>
+</ul>
+
+<p>
+Restart Emacs, enter <code>$e^{i \cdot \pi} + 1 = 0$</code> then press <kbd> C-c C-x C-l </kbd> to
+have it rendered inline.
+</p>
+
+<ul class="org-ul">
+<li><p>
+<b>Minted:</b> Get tool for colourful code snippets for LaTeX &#x2014;see “minted” in
+the main article.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #b58900;">system-packages-ensure</span> <span style="color: #2aa198;">"pygments"</span>)
+</pre>
+</div></li>
+
+<li><p>
+<b>Not anymore:</b> Get a neato PDF presentation console: <code>brew install pdfpc</code>
+</p>
+<ul class="org-ul">
+<li>With <code>pdfpc myfile.pdf</code> you get a nice timer and multiple views
+of the current slide and upcoming slides &#x2014;with support for multiple monitors.</li>
+<li>Install ScreenBrush, from the Apple Store, for easily drawing/annotating my
+screen &#x2014;e.g., when I'm giving a virtual lecture to my students.</li>
+<li>An alternative is <code>brew install mupdf</code> then <code>mupdf-gl myfile.pdf</code> and press
+<code>f</code> for fullscreen then <code>a</code> for adding/adorning drawings &#x2014;it was too
+rough to use live.</li>
+</ul>
+
+<p>
+Finally, within Emacs: <code>M-x pdf-tools-install</code>
+</p></li>
+</ul>
+</div>
+</div>
 <div id="outline-container-Working-with-Citations" class="outline-3">
-<h3 id="Working-with-Citations"><span class="section-number-3">8.1</span> <a href="#Working-with-Citations">Working with Citations</a></h3>
+<h3 id="Working-with-Citations"><span class="section-number-3">8.2</span> <a href="#Working-with-Citations">Working with Citations</a></h3>
 <div class="outline-text-3" id="text-Working-with-Citations">
 <p>
 <a href="https://github.com/jkitchin/org-ref">An exquisite system</a> for handling references.
@@ -8914,7 +9332,7 @@ nicely to LaTeX &amp; HTML via the Org-mode exporter.
 </div>
 
 <div id="outline-container-Bibliography-Coloured-LaTeX-using-Minted" class="outline-3">
-<h3 id="Bibliography-Coloured-LaTeX-using-Minted"><span class="section-number-3">8.2</span> <a href="#Bibliography-Coloured-LaTeX-using-Minted">Bibliography &amp; Coloured LaTeX using Minted</a></h3>
+<h3 id="Bibliography-Coloured-LaTeX-using-Minted"><span class="section-number-3">8.3</span> <a href="#Bibliography-Coloured-LaTeX-using-Minted">Bibliography &amp; Coloured LaTeX using Minted</a></h3>
 <div class="outline-text-3" id="text-Bibliography-Coloured-LaTeX-using-Minted">
 <p>
 Execute the following for bibliography references as well as minted Org-mode
@@ -8935,7 +9353,7 @@ turn requires the pygmentize system tool.
 <p>
 For faster pdf generation, possibly with errors, consider invoking:
 </p>
-<pre class="example" id="org05d6ae4">
+<pre class="example" id="orgc28d3e9">
 (setq org-latex-pdf-process
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 </pre>
@@ -9206,7 +9624,7 @@ Then, let's get the associated <code>mermaid</code> package.
 Then, <code>C-c C-c</code> on the following:
 </p>
 
-<div id="org036411a" class="figure">
+<div id="org5785196" class="figure">
 <p><img src="test.png" alt="test.png" />
 </p>
 </div>
@@ -9798,12 +10216,78 @@ into new configurations.
 </div>
 </div>
 
+<div id="outline-container-Experiments" class="outline-2">
+<h2 id="Experiments"><span class="section-number-2">11</span> <a href="#Experiments">Experiments</a></h2>
+<div class="outline-text-2" id="text-Experiments">
+</div>
+<div id="outline-container-Draw-pretty-unicode-tables-in-org-mode" class="outline-3">
+<h3 id="Draw-pretty-unicode-tables-in-org-mode"><span class="section-number-3">11.1</span> <a href="#Draw-pretty-unicode-tables-in-org-mode">Draw pretty unicode tables in org-mode</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="to_include">to_include</span></span></h3>
+<div class="outline-text-3" id="text-Draw-pretty-unicode-tables-in-org-mode">
+<p>
+This turns the “&#x2014;” and other ASCII for tables into ‘smooth’ lines ^_^
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">a</th>
+<th scope="col" class="org-right">b</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">1</td>
+<td class="org-right">2</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-right">&#xa0;</td>
+<td class="org-right">&#xa0;</td>
+</tr>
+</tbody>
+</table>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #b58900;">quelpa</span> '(org-pretty-table
+         <span style="color: #d33682; font-style: italic;">:repo</span> <span style="color: #2aa198;">"Fuco1/org-pretty-table"</span>
+         <span style="color: #d33682; font-style: italic;">:fetcher</span> github))
+
+(<span style="color: #b58900;">add-hook</span> '<span style="color: #268bd2;">org-mode-hook</span> '<span style="color: #b58900;">org-pretty-table-mode</span>)
+</pre>
+</div>
+
+<p>
+Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
+in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
+vertical line.
+</p>
+</div>
+</div>
+</div>
 <div id="outline-container-Lost-Souls" class="outline-2">
-<h2 id="Lost-Souls"><span class="section-number-2">11</span> <a href="#Lost-Souls">Lost Souls</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Outdated_Documentation">Outdated_Documentation</span></span></h2>
+<h2 id="Lost-Souls"><span class="section-number-2">12</span> <a href="#Lost-Souls">Lost Souls</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Outdated_Documentation">Outdated_Documentation</span></span></h2>
 <div class="outline-text-2" id="text-Lost-Souls">
 </div>
 <div id="outline-container-Having-a-workspace-manager-in-Emacs" class="outline-3">
-<h3 id="Having-a-workspace-manager-in-Emacs"><span class="section-number-3">11.1</span> <a href="#Having-a-workspace-manager-in-Emacs">Having a workspace manager in Emacs</a></h3>
+<h3 id="Having-a-workspace-manager-in-Emacs"><span class="section-number-3">12.1</span> <a href="#Having-a-workspace-manager-in-Emacs">Having a workspace manager in Emacs</a></h3>
 <div class="outline-text-3" id="text-Having-a-workspace-manager-in-Emacs">
 <p>
 I've loved using XMonad as a window tiling manager.  I've enjoyed the ability to
@@ -9847,7 +10331,7 @@ at the resulting menu 😃
 </div>
 
 <div id="outline-container-Editor-Documentation-with-Contextual-Information" class="outline-3">
-<h3 id="Editor-Documentation-with-Contextual-Information"><span class="section-number-3">11.2</span> <a href="#Editor-Documentation-with-Contextual-Information">Editor Documentation with Contextual Information</a></h3>
+<h3 id="Editor-Documentation-with-Contextual-Information"><span class="section-number-3">12.2</span> <a href="#Editor-Documentation-with-Contextual-Information">Editor Documentation with Contextual Information</a></h3>
 <div class="outline-text-3" id="text-Editor-Documentation-with-Contextual-Information">
 <p>
 <i>Emacs is an extensible self-documenting editor!</i>
@@ -9906,7 +10390,7 @@ appears. Using a universal argument lets us drop to the built-in help command.
 </div>
 </div>
 <div id="outline-container-README-From-init-org-to-init-el" class="outline-3">
-<h3 id="README-From-init-org-to-init-el"><span class="section-number-3">11.3</span> <a href="#README-From-init-org-to-init-el">  <code>README</code> &#x2014;From <code>init.org</code> to <code>init.el</code></a></h3>
+<h3 id="README-From-init-org-to-init-el"><span class="section-number-3">12.3</span> <a href="#README-From-init-org-to-init-el">  <code>README</code> &#x2014;From <code>init.org</code> to <code>init.el</code></a></h3>
 <div class="outline-text-3" id="text-README-From-init-org-to-init-el">
 <p>
 Rather than manually extracting the Lisp code from this literate document each
@@ -9926,7 +10410,7 @@ that is associated with this file only.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="org166218f">  (<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">my/make-init-el-and-README</span> ()
+<pre class="src src-emacs-lisp" id="org4c44218">  (<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">my/make-init-el-and-README</span> ()
     <span style="color: #35a69c; font-style: italic;">"Tangle an el and a github README from my init.org."</span>
     (<span style="color: #859900; font-weight: bold;">interactive</span> <span style="color: #2aa198;">"P"</span>) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Places value of universal argument into: current-prefix-arg</span>
     (<span style="color: #859900; font-weight: bold;">when</span> <span style="color: #268bd2;">current-prefix-arg</span>
@@ -9966,7 +10450,7 @@ Where the following block has <code>#+NAME: make-readme</code> before it.  This 
 generates the <code>README</code> for the associated Github repository.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="orgd37c6ec">(<span style="color: #b58900;">save-buffer</span>)
+<pre class="src src-emacs-lisp" id="orgc0e3b9b">(<span style="color: #b58900;">save-buffer</span>)
 (<span style="color: #859900; font-weight: bold;">with-temp-buffer</span>
     (<span style="color: #b58900;">insert</span>
     <span style="color: #2aa198;">"#+EXPORT_FILE_NAME: README.org</span>
@@ -10020,7 +10504,7 @@ file.
 <p>
 For the ‘badges’, see <a href="https://shields.io/">https://shields.io/</a>.  The syntax above is structured:
 </p>
-<pre class="example" id="org44df473">
+<pre class="example" id="org675d9a0">
 https://img.shields.io/badge/&lt;LABEL&gt;-&lt;MESSAGE&gt;-&lt;COLOR&gt;.svg
 </pre>
 </div>
@@ -10123,7 +10607,7 @@ Github supports several markup languages, one of which is Org-mode.
 <p>
 It seems coloured HTML does not render well:
 </p>
-<pre class="example" id="org3727f20">
+<pre class="example" id="org3432e07">
 (org-html-export-to-html)
 (shell-command "mv README.html README.md")
 </pre>
@@ -10131,7 +10615,7 @@ It seems coloured HTML does not render well:
 <p>
 <a href="https://orgmode.org/manual/JavaScript-support.html">JavaScript supported display of web pages</a> with:
 </p>
-<pre class="example" id="org7bf4426">
+<pre class="example" id="orgbebf0c5">
 #+INFOJS_OPT: view:info toc:t buttons:t
 </pre>
 <p>
@@ -10183,7 +10667,7 @@ markdown links, since they don't refer to any markdown labels.</li>
 </ol>
 </div>
 <div id="outline-container-Screencapturing-the-Current-Emacs-Frame" class="outline-3">
-<h3 id="Screencapturing-the-Current-Emacs-Frame"><span class="section-number-3">11.4</span> <a href="#Screencapturing-the-Current-Emacs-Frame">Screencapturing the Current Emacs Frame</a></h3>
+<h3 id="Screencapturing-the-Current-Emacs-Frame"><span class="section-number-3">12.4</span> <a href="#Screencapturing-the-Current-Emacs-Frame">Screencapturing the Current Emacs Frame</a></h3>
 <div class="outline-text-3" id="text-Screencapturing-the-Current-Emacs-Frame">
 <p>
 Sometimes an image can be tremendously convincing, or at least sufficiently
@@ -10241,7 +10725,7 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 </div>
 
 <div id="outline-container-Org-mode's-𝒳-Block-Expansions" class="outline-3">
-<h3 id="Org-mode's-𝒳-Block-Expansions"><span class="section-number-3">11.5</span> <a href="#Org-mode's-𝒳-Block-Expansions">Org-mode's <code>&lt;𝒳</code> Block Expansions</a></h3>
+<h3 id="Org-mode's-𝒳-Block-Expansions"><span class="section-number-3">12.5</span> <a href="#Org-mode's-𝒳-Block-Expansions">Org-mode's <code>&lt;𝒳</code> Block Expansions</a></h3>
 <div class="outline-text-3" id="text-Org-mode's-𝒳-Block-Expansions">
 <p>
 In org-mode we type <code>&lt;X TAB</code> to obtain environment templates, such as <code>&lt;s</code> for
@@ -10292,7 +10776,7 @@ language.  This saves us a few key strokes.
 </div>
 
 <div id="outline-container-What's-changed-who's-to-blame" class="outline-3">
-<h3 id="What's-changed-who's-to-blame"><span class="section-number-3">11.6</span> <a href="#What's-changed-who's-to-blame">What's changed &amp; who's to blame?</a></h3>
+<h3 id="What's-changed-who's-to-blame"><span class="section-number-3">12.6</span> <a href="#What's-changed-who's-to-blame">What's changed &amp; who's to blame?</a></h3>
 <div class="outline-text-3" id="text-What's-changed-who's-to-blame">
 <p>
 Let's have, in a fringe, an indicator for altered regions in a version
@@ -10393,7 +10877,7 @@ Read <a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-
 </div>
 
 <div id="outline-container-Helpful-Utilities-Shortcuts" class="outline-3">
-<h3 id="Helpful-Utilities-Shortcuts"><span class="section-number-3">11.7</span> <a href="#Helpful-Utilities-Shortcuts">Helpful Utilities &amp; Shortcuts</a></h3>
+<h3 id="Helpful-Utilities-Shortcuts"><span class="section-number-3">12.7</span> <a href="#Helpful-Utilities-Shortcuts">Helpful Utilities &amp; Shortcuts</a></h3>
 <div class="outline-text-3" id="text-Helpful-Utilities-Shortcuts">
 <p>
 Here is a collection of Emacs-lisp functions that I have come to use in other files.
@@ -10419,7 +10903,7 @@ Let's save a few precious seconds,
 </div>
 
 <div id="outline-container-Documentation-Pop-Ups" class="outline-3">
-<h3 id="Documentation-Pop-Ups"><span class="section-number-3">11.8</span> <a href="#Documentation-Pop-Ups">Documentation Pop-Ups</a></h3>
+<h3 id="Documentation-Pop-Ups"><span class="section-number-3">12.8</span> <a href="#Documentation-Pop-Ups">Documentation Pop-Ups</a></h3>
 <div class="outline-text-3" id="text-Documentation-Pop-Ups">
 <p>
 Let <a href="https://github.com/expez/company-quickhelp">documentation pop-up</a> when we pause on a completion.
@@ -10436,7 +10920,7 @@ This is very useful when editing in a particular coding language, say via
 </div>
 </div>
 <div id="outline-container-Emacs-keybindings-for-my-browser" class="outline-3">
-<h3 id="Emacs-keybindings-for-my-browser"><span class="section-number-3">11.9</span> <a href="#Emacs-keybindings-for-my-browser">Emacs keybindings for my browser</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
+<h3 id="Emacs-keybindings-for-my-browser"><span class="section-number-3">12.9</span> <a href="#Emacs-keybindings-for-my-browser">Emacs keybindings for my browser</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
 <div class="outline-text-3" id="text-Emacs-keybindings-for-my-browser">
 <div class="org-center">
 <p>
@@ -10455,7 +10939,7 @@ can be used to navigate my browser ^_^
 </div>
 
 <div id="outline-container-Using-Emacs-in-any-text-area-on-my-OS" class="outline-3">
-<h3 id="Using-Emacs-in-any-text-area-on-my-OS"><span class="section-number-3">11.10</span> <a href="#Using-Emacs-in-any-text-area-on-my-OS">Using Emacs in any text area on my OS</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
+<h3 id="Using-Emacs-in-any-text-area-on-my-OS"><span class="section-number-3">12.10</span> <a href="#Using-Emacs-in-any-text-area-on-my-OS">Using Emacs in any text area on my OS</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
 <div class="outline-text-3" id="text-Using-Emacs-in-any-text-area-on-my-OS">
 <div class="org-center">
 <p>
@@ -10487,13 +10971,13 @@ For my Mac OSX:
 The tools that use emacs-anywhere &#x2014;such as my web browser&#x2014; and emacs-anywhere
 itself need to be given sufficient OS permissions:
 </p>
-<pre class="example" id="org2d42672">
+<pre class="example" id="orge149a29">
 System Preferences → Security &amp; Privacy → Accessibility
 </pre>
 <p>
 Then check the emacs-anywhere box from the following gui and provide a keyboard shortcut:
 </p>
-<pre class="example" id="org433f4ea">
+<pre class="example" id="org67d1520">
 System Preferences → Keyboard → Shortcuts → Services
 </pre>
 
@@ -10515,7 +10999,7 @@ I always want to be in Org-mode and input unicode:
 </div>
 
 <div id="outline-container-Reload-buffer-with-f5" class="outline-3">
-<h3 id="Reload-buffer-with-f5"><span class="section-number-3">11.11</span> <a href="#Reload-buffer-with-f5">Reload buffer with <code>f5</code></a></h3>
+<h3 id="Reload-buffer-with-f5"><span class="section-number-3">12.11</span> <a href="#Reload-buffer-with-f5">Reload buffer with <code>f5</code></a></h3>
 <div class="outline-text-3" id="text-Reload-buffer-with-f5">
 <p>
 I do this so often it's not even funny.
@@ -10549,7 +11033,7 @@ were regenerated &#x2013;Emacs should also prompt me if I make any changes!
 </div>
 
 <div id="outline-container-Kill-to-start-of-line" class="outline-3">
-<h3 id="Kill-to-start-of-line"><span class="section-number-3">11.12</span> <a href="#Kill-to-start-of-line">Kill to start of line</a></h3>
+<h3 id="Kill-to-start-of-line"><span class="section-number-3">12.12</span> <a href="#Kill-to-start-of-line">Kill to start of line</a></h3>
 <div class="outline-text-3" id="text-Kill-to-start-of-line">
 <p>
 Dual to <code>C-k</code>,
@@ -10562,7 +11046,7 @@ Dual to <code>C-k</code>,
 </div>
 </div>
 <div id="outline-container-Killing-buffers-windows-C-x-k-has-a-family" class="outline-3">
-<h3 id="Killing-buffers-windows-C-x-k-has-a-family"><span class="section-number-3">11.13</span> <a href="#Killing-buffers-windows-C-x-k-has-a-family">Killing buffers &amp; windows: <code>C-x k</code> has a family</a></h3>
+<h3 id="Killing-buffers-windows-C-x-k-has-a-family"><span class="section-number-3">12.13</span> <a href="#Killing-buffers-windows-C-x-k-has-a-family">Killing buffers &amp; windows: <code>C-x k</code> has a family</a></h3>
 <div class="outline-text-3" id="text-Killing-buffers-windows-C-x-k-has-a-family">
 <p>
 Let's extend the standard <code>C-x k</code> with prefix support, so that we can invoke
@@ -10606,7 +11090,7 @@ I tend to consult.
 </div>
 
 <div id="outline-container-Switching-from-2-horizontal-windows-to-2-vertical-windows" class="outline-3">
-<h3 id="Switching-from-2-horizontal-windows-to-2-vertical-windows"><span class="section-number-3">11.14</span> <a href="#Switching-from-2-horizontal-windows-to-2-vertical-windows">Switching from 2 horizontal windows to 2 vertical windows</a></h3>
+<h3 id="Switching-from-2-horizontal-windows-to-2-vertical-windows"><span class="section-number-3">12.14</span> <a href="#Switching-from-2-horizontal-windows-to-2-vertical-windows">Switching from 2 horizontal windows to 2 vertical windows</a></h3>
 <div class="outline-text-3" id="text-Switching-from-2-horizontal-windows-to-2-vertical-windows">
 <p>
 I often find myself switching from a horizontal view of two windows in Emacs to a
@@ -10634,7 +11118,7 @@ Instead I now only need to type <code>C-|</code> to make this switch.
 </div>
 </div>
 <div id="outline-container-Obtaining-Values-of-KEYWORD-Annotations" class="outline-3">
-<h3 id="Obtaining-Values-of-KEYWORD-Annotations"><span class="section-number-3">11.15</span> <a href="#Obtaining-Values-of-KEYWORD-Annotations">Obtaining Values of <code>#+KEYWORD</code> Annotations</a></h3>
+<h3 id="Obtaining-Values-of-KEYWORD-Annotations"><span class="section-number-3">12.15</span> <a href="#Obtaining-Values-of-KEYWORD-Annotations">Obtaining Values of <code>#+KEYWORD</code> Annotations</a></h3>
 <div class="outline-text-3" id="text-Obtaining-Values-of-KEYWORD-Annotations">
 <p>
 Org-mode settings are, for the most part, in the form <code>#+KEYWORD: VALUE</code>. Of notable interest
@@ -10669,7 +11153,7 @@ and how to manipulate it.
 </div>
 
 <div id="outline-container-Publishing-articles-to-my-personal-blog" class="outline-3">
-<h3 id="Publishing-articles-to-my-personal-blog"><span class="section-number-3">11.16</span> <a href="#Publishing-articles-to-my-personal-blog">Publishing articles to my personal blog</a></h3>
+<h3 id="Publishing-articles-to-my-personal-blog"><span class="section-number-3">12.16</span> <a href="#Publishing-articles-to-my-personal-blog">Publishing articles to my personal blog</a></h3>
 <div class="outline-text-3" id="text-Publishing-articles-to-my-personal-blog">
 <p>
 I try to <a href="https://alhassy.github.io/">blog</a> occasionally, so here's a helpful function to quickly
@@ -10716,7 +11200,7 @@ publish the current article to my blog.
 </div>
 
 <div id="outline-container-Jumping-without-hassle" class="outline-3">
-<h3 id="Jumping-without-hassle"><span class="section-number-3">11.17</span> <a href="#Jumping-without-hassle">Jumping without hassle</a></h3>
+<h3 id="Jumping-without-hassle"><span class="section-number-3">12.17</span> <a href="#Jumping-without-hassle">Jumping without hassle</a></h3>
 <div class="outline-text-3" id="text-Jumping-without-hassle">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">my/org-goto-line</span> (line)
@@ -10738,7 +11222,7 @@ publish the current article to my blog.
 </div>
 
 <div id="outline-container-Conclusion-Why-Configuration-Files-Should-be-Literate" class="outline-2">
-<h2 id="Conclusion-Why-Configuration-Files-Should-be-Literate"><span class="section-number-2">12</span> <a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">Conclusion &#x2014;Why Configuration Files Should be Literate</a></h2>
+<h2 id="Conclusion-Why-Configuration-Files-Should-be-Literate"><span class="section-number-2">13</span> <a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">Conclusion &#x2014;Why Configuration Files Should be Literate</a></h2>
 <div class="outline-text-2" id="text-Conclusion-Why-Configuration-Files-Should-be-Literate">
 <p>
 A configuration file sets up various features for a tool &#x2014;and serves as an

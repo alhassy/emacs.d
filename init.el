@@ -64,7 +64,7 @@
 (use-package diminish
   :defer 5
   :config ;; Let's hide some markers.
-    (diminish  'org-indent-mode))
+    (diminish org-indent-mode))
 ;; Emacs Package Manager:6 ends here
 
 ;; [[file:init.org::*Emacs Package Manager][Emacs Package Manager:7]]
@@ -304,6 +304,132 @@
 ;; Caches passphrase for the current emacs session?
 ;; Password-locking files  ---“encryption”:1 ends here
 
+;; [[file:init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
+;; Invoke all possible key extensions having a common prefix by
+;; supplying the prefix only once.
+(use-package hydra)
+;; Hydra: Supply a prefix only once:1 ends here
+
+;; [[file:init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:2]]
+;; Show hydras overlyaed in the middle of the frame
+(use-package hydra-posframe
+  :quelpa (hydra-posframe :fetcher git :url
+                          "https://github.com/Ladicle/hydra-posframe.git")
+  :hook (after-init . hydra-posframe-mode)
+  :custom (hydra-posframe-border-width 5))
+
+;; Neato doc strings for hydras
+(use-package pretty-hydra)
+;; Hydra: Supply a prefix only once:2 ends here
+
+;; [[file:init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:3]]
+(defmacro my/pretty-defhydra (key title &rest body)
+"Make a hydra whose heads appear in a pretty pop-up window.
+
+KEY: Global keybinding for the new hydra.
+
+TITLE: Either a string or a plist, as specified for pretty-hydra-define.
+       The underlying Lisp function's name is derived from the TITLE;
+       which is intentional since hydra's are for interactive, pretty, use.
+
+       One uses a plist TITLE to specify what a hydra should do *before*
+       any options, or to specify an alternate quit key (:q by default).
+
+BODY: A list of columns and entries. Keywords indicate the title
+      of a column; 3-lists (triples) indicate an entry key and
+      the associated operation to perform and, optionally, a name
+      to be shown in the pop-up. See DEFHYDRA for more details.
+
+For instance, the verbose mess:
+
+    ;; Use ijkl to denote ↑←↓→ arrows.
+    (global-set-key
+     (kbd \"C-c w\")
+     (pretty-hydra-define my/hydra/\\t\\tWindow\\ Adjustment
+       (:title \"\t\tWindow Adjustment\" :quit-key \"q\")
+       (\"Both\"
+        ((\"b\" balance-windows                 \"balance\")
+         (\"s\" switch-window-then-swap-buffer  \"swap\"))
+        \"Vertical adjustment\"
+        ((\"h\" enlarge-window                  \"heighten\")
+         (\"l\" shrink-window                   \"lower\"))
+        \"Horizontal adjustment\"
+        ((\"n\" shrink-window-horizontally      \"narrow\")
+         (\"w\" enlarge-window-horizontally \"widen\" )))))
+
+Is replaced by:
+
+    ;; Use ijkl to denote ↑←↓→ arrows.
+    (my/pretty-defhydra \"C-c w\" \"\t\tWindow Adjustment\"
+       :Both
+       (\"b\" balance-windows                 \"balance\")
+       (\"s\" switch-window-then-swap-buffer  \"swap\")
+       :Vertical_adjustment
+       (\"h\" enlarge-window                  \"heighten\")
+       (\"l\" shrink-window                   \"lower\")
+       :Horizontal_adjustment
+       (\"n\" shrink-window-horizontally      \"narrow\")
+       (\"w\" enlarge-window-horizontally     \"widen\"))"
+  (let ((name (intern (concat "my/hydra/"
+                              (if (stringp title)
+                                  title
+                                (plist-get title :title))))))
+    `(global-set-key
+      (kbd ,key)
+      (pretty-hydra-define ,name
+        ,(if (stringp title)
+             (list :title title :quit-key "q")
+           title)
+        ,(thread-last body
+           (-partition-by-header #'keywordp)
+           (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
+           (-flatten-n 1))))))
+;; Hydra: Supply a prefix only once:3 ends here
+
+;; [[file:init.org::*Textual Navigation ---“Look Ma, no CTRL key!”][Textual Navigation ---“Look Ma, no CTRL key!”:1]]
+(my/pretty-defhydra "C-n"
+   (:body-pre (next-line) :title "\t\t\t\t\tTextual Navigation" :quit-key "q")
+   :Line
+   ("n" next-line)
+   ("p" previous-line)
+   ("a" beginning-of-line)
+   ("e" move-end-of-line)
+   ("g" goto-line)
+   :Word
+   ("f" forward-word "Next")
+   ("b" backward-word "Previous")
+   ("{" org-backward-element "Next Element")
+   ("}" org-forward-element "Previous Element")
+   :Screen
+   ("v" scroll-up-command "Scroll Down")
+   ("V" scroll-down-command "Scroll Up")
+   ("l" recenter-top-bottom "Center Page")
+   ("r" move-to-window-line-top-bottom "Relocate Point")
+   ("m" helm-imenu "Textual Menu"))
+;; Textual Navigation ---“Look Ma, no CTRL key!”:1 ends here
+
+;; [[file:init.org::*Window Navigation][Window Navigation:1]]
+;; Use ijkl to denote ↑←↓→ arrows.
+(my/pretty-defhydra "C-c w" "\t\tWindow Adjustment"
+   :Both
+   ("b" balance-windows                 "balance")
+   ("s" switch-window-then-swap-buffer  "swap")
+   :Vertical_adjustment
+   ("h" enlarge-window                  "heighten")
+   ("l" shrink-window                   "lower")
+   :Horizontal_adjustment
+   ("n" shrink-window-horizontally      "narrow")
+   ("w" enlarge-window-horizontally     "widen"))
+
+;; Provides a *visual* way to choose a window to switch to.
+;; (use-package switch-window :defer t)
+;; :bind (("C-x o" . switch-window)
+;;        ("C-x w" . switch-window-then-swap-buffer))
+
+;; Have a thick ruler between vertical windows
+(window-divider-mode)
+;; Window Navigation:1 ends here
+
 ;; [[file:init.org::*Staying Sane][Staying Sane:1]]
 (system-packages-ensure "dropbox")
 (system-packages-ensure "megasync")
@@ -394,6 +520,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
+(maybe-clone "https://github.com/alhassy/holy-books")
 ;; Maybe clone ... everything?:1 ends here
 
 ;; [[file:init.org::*Maybe clone ... everything?][Maybe clone ... everything?:2]]
@@ -961,8 +1088,8 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Step 4: Getting ready for the day:1 ends here
 
 ;; [[file:init.org::*Step 4: Getting ready for the day][Step 4: Getting ready for the day:2]]
-(use-package org-fancy-priorities
-  :diminish t
+(use-package org-fancy-priorities-mode
+  :diminish org-fancy-priorities-mode
   :hook   (org-mode . org-fancy-priorities-mode)
   :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
 ;; Step 4: Getting ready for the day:2 ends here
@@ -1922,16 +2049,16 @@ themes (•̀ᴗ•́)و"
 ;; Whence, \emot shows all possible emotions.
 (cl-loop for emot
       in `(;; angry, cry, why-you-no
-           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "･ﾟ(*❦ω❦)*･ﾟ")
            ;; confused, disapprove, dead, shrug
-           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯")
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯" "･✧_✧･")
            ;; dance, csi
            ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
             ,(s-collapse-whitespace "•_•)
                                       ( •_•)>⌐■-■
                                       (⌐■_■)"))
            ;; love, pleased, success, yesss
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ"))
       do
       (add-to-list 'agda-input-user-translations emot)
       (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
@@ -2001,6 +2128,17 @@ themes (•̀ᴗ•́)و"
 ;; C-x O ⇒ Switch back to the previous window
 (bind-key "C-x O" (lambda () (interactive) (other-window -1)))
 ;; Letter-based Navigation:2 ends here
+
+;; [[file:init.org::*~C-c e n,p~: Taking a tour of one's edits][~C-c e n,p~: Taking a tour of one's edits:1]]
+;; Give me a description of the change made at a particular stop.
+(use-package goto-chg
+  :defer t
+  :custom (glc-default-span 0))
+
+(my/pretty-defhydra "C-c e" "Look at them edits!"
+  :\  ("p" goto-last-change "Goto nᵗʰ last change")
+      ("n" goto-last-change-reverse "Goto more recent change"))
+;; ~C-c e n,p~: Taking a tour of one's edits:1 ends here
 
 ;; [[file:init.org::*Get LaTeX:][Get LaTeX::1]]
 (system-packages-ensure "mactex-no-gui")

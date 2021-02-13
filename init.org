@@ -99,7 +99,7 @@ tweet:https://github.com/alhassy/org-special-block-extras
 badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
 badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
 
-badge:Hire|me|success|https://alhassy.github.io/about
+# badge:Hire|me|success|https://alhassy.github.io/about
 #+end_center
 
 This article is about /how I like/ to do things
@@ -1107,7 +1107,7 @@ using the ~diminish~ package, so let's install that.
 (use-package diminish
   :defer 5
   :config ;; Let's hide some markers.
-    (diminish  'org-indent-mode))
+    (diminish org-indent-mode))
 #+end_src
 
 Here are other packages that I want to be installed onto my machine.
@@ -1677,6 +1677,202 @@ Possibly interesting reads:
 + [[https://softwareengineering.stackexchange.com/questions/212192/what-are-the-advantages-and-disadvantages-of-cryptographically-signing-commits-a][What are the advantages and disadvantages of cryptographically signing commits and tags in Git? | Software Engineering Stack Exchange]]
 #+end_details
 
+** Hydra: Supply a prefix only once
+:PROPERTIES:
+:CUSTOM_ID: Hydra-Supply-a-prefix-only-once
+:END:
+
+Sometimes we have keybindings that share a common prefix, say ~C-c j~ and ~C-c k~,
+and we invoke them in an arbitrary sequence, it would be nice to invoke the
+shared prefix /only once/ thereby having:
+| ~C-c j C-c j C-c k C-c k M-3 C-c j M-5 C-c k~ | ≈ | ~C-c jjkk3j5k~ |
+
+- The [[https://github.com/abo-abo/hydra#the-one-with-the-least-amount-of-code][“hydra-zoom”]] example from the documentation really showcases this utility.
+- After the prefix is supplied, all extensions are shown in a minibuffer.
+
+#+BEGIN_SRC emacs-lisp
+;; Invoke all possible key extensions having a common prefix by
+;; supplying the prefix only once.
+(use-package hydra)
+#+END_SRC
+
+# Outdated image.
+# Center image
+# +ATTR_HTML: :style margin-left: auto; margin-right: auto;
+# [[file:images/hydra.png]]
+
+From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
+#+begin_quote
+Once you summon the Hydra through the prefixed binding (the body + any one
+head), all heads can be called in succession with only a short extension.
+
+The Hydra is vanquished once Hercules, any binding that isn't the Hydra's head,
+arrives. Note that Hercules, besides vanquishing the Hydra, will still serve his
+original purpose, calling his proper command. This makes the Hydra very
+seamless, it's like a minor mode that disables itself auto-magically.
+#+end_quote
+
+⇒ The [[https://github.com/abo-abo/hydra/wiki][Hydra Wiki]] has many example hydras for common uses cases ⇐
+
+Below are two examples; one to simplify textual navigation and another for
+window navigation.
+Yet another possible hydra would be to avoid remembering word operations, such
+as copying a word, upcasing it, killing a word from anywhere within it ---in
+contrast ~kill-word~ kills /to the end/ of the word---, etc. Likewise for line
+operations, such as copying a line from anywhere in it.  See [[#Taking-a-tour-of-one's-edits][Taking a tour of
+one's edits]] below for another small and useful example.
+
+When there are multiple actions, it's nice to see such a menu displayed in the
+middle of the frame; so we use [[https://github.com/Ladicle/hydra-posframe#hydra-posframe][hydra-posframe]]. Moreover, it can be useful to
+group related actions under a common heading ---e.g., textual navigation may
+occur at the line level or word level or screen level--- we obtain a nice
+interface by declaraing hydras using [[https://github.com/jerrypnz/major-mode-hydra.el#get-started][pretty-hydra-define]] ---this saves us the
+trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][formating docstrings using classic hydra]].
+
+#+begin_src emacs-lisp
+;; Show hydras overlyaed in the middle of the frame
+(use-package hydra-posframe
+  :quelpa (hydra-posframe :fetcher git :url
+                          "https://github.com/Ladicle/hydra-posframe.git")
+  :hook (after-init . hydra-posframe-mode)
+  :custom (hydra-posframe-border-width 5))
+
+;; Neato doc strings for hydras
+(use-package pretty-hydra)
+#+end_src
+
+To /actually/ define hydras, we make a helper function: doc:my/pretty-defhydra
+---which combines doc:defhydra and doc:pretty-hydra-define.
+#+begin_details Implementation
+#+begin_src emacs-lisp
+(defmacro my/pretty-defhydra (key title &rest body)
+"Make a hydra whose heads appear in a pretty pop-up window.
+
+KEY: Global keybinding for the new hydra.
+
+TITLE: Either a string or a plist, as specified for pretty-hydra-define.
+       The underlying Lisp function's name is derived from the TITLE;
+       which is intentional since hydra's are for interactive, pretty, use.
+
+       One uses a plist TITLE to specify what a hydra should do *before*
+       any options, or to specify an alternate quit key (:q by default).
+
+BODY: A list of columns and entries. Keywords indicate the title
+      of a column; 3-lists (triples) indicate an entry key and
+      the associated operation to perform and, optionally, a name
+      to be shown in the pop-up. See DEFHYDRA for more details.
+
+For instance, the verbose mess:
+
+    ;; Use ijkl to denote ↑←↓→ arrows.
+    (global-set-key
+     (kbd \"C-c w\")
+     (pretty-hydra-define my/hydra/\\t\\tWindow\\ Adjustment
+       (:title \"\t\tWindow Adjustment\" :quit-key \"q\")
+       (\"Both\"
+        ((\"b\" balance-windows                 \"balance\")
+         (\"s\" switch-window-then-swap-buffer  \"swap\"))
+        \"Vertical adjustment\"
+        ((\"h\" enlarge-window                  \"heighten\")
+         (\"l\" shrink-window                   \"lower\"))
+        \"Horizontal adjustment\"
+        ((\"n\" shrink-window-horizontally      \"narrow\")
+         (\"w\" enlarge-window-horizontally \"widen\" )))))
+
+Is replaced by:
+
+    ;; Use ijkl to denote ↑←↓→ arrows.
+    (my/pretty-defhydra \"C-c w\" \"\t\tWindow Adjustment\"
+       :Both
+       (\"b\" balance-windows                 \"balance\")
+       (\"s\" switch-window-then-swap-buffer  \"swap\")
+       :Vertical_adjustment
+       (\"h\" enlarge-window                  \"heighten\")
+       (\"l\" shrink-window                   \"lower\")
+       :Horizontal_adjustment
+       (\"n\" shrink-window-horizontally      \"narrow\")
+       (\"w\" enlarge-window-horizontally     \"widen\"))"
+  (let ((name (intern (concat "my/hydra/"
+                              (if (stringp title)
+                                  title
+                                (plist-get title :title))))))
+    `(global-set-key
+      (kbd ,key)
+      (pretty-hydra-define ,name
+        ,(if (stringp title)
+             (list :title title :quit-key "q")
+           title)
+        ,(thread-last body
+           (-partition-by-header #'keywordp)
+           (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
+           (-flatten-n 1))))))
+#+end_src
+#+end_details
+*** Textual Navigation ---“Look Ma, no CTRL key!”
+:PROPERTIES:
+:CUSTOM_ID: Textual-Navigation-Look-Ma-no-CTRL-key
+:END:
+
+Basic movement commands ---without having to hold the control key!
+
+=C-n= moves us to the next line, as it should; but it now /also/ let's us press
+=n,p,f,…= for other movement commands. Unlisted keys insert themselves, whereas ~q~
+close the pop-up menu.
+
+#+begin_src emacs-lisp
+(my/pretty-defhydra "C-n" "\t\t\t\t\tTextual Navigation"
+   :Line
+   ("n" next-line)
+   ("p" previous-line)
+   ("a" beginning-of-line)
+   ("e" move-end-of-line)
+   ("g" goto-line)
+   :Word
+   ("f" forward-word "Next")
+   ("b" backward-word "Previous")
+   ("{" org-backward-element "Next Element")
+   ("}" org-forward-element "Previous Element")
+   :Screen
+   ("v" scroll-up-command "Scroll Down")
+   ("V" scroll-down-command "Scroll Up")
+   ("l" recenter-top-bottom "Center Page")
+   ("r" move-to-window-line-top-bottom "Relocate Point")
+   ("m" helm-imenu "Textual Menu"))
+#+end_src
+#  (:body-pre (next-line) :title "\t\t\t\t\tTextual Navigation" :quit-key "q")
+
+/Along with the “pop-up window”, this is a useful way to (re)learn about Emacs' features./
+
+For “key-based navigation”, consider ‘EVIL-mode’ or ‘Spacemacs’, or
+[[#Letter-based-Navigation][ace-jump-mode]] (below).
+
+*** Window Navigation
+:PROPERTIES:
+:CUSTOM_ID: Window-Navigation
+:END:
+It can be difficult to remember the incantations to adjust
+windows, so we can make a hydra to alleviate the trouble.
+#+begin_src emacs-lisp
+;; Use ijkl to denote ↑←↓→ arrows.
+(my/pretty-defhydra "C-c w" "\t\tWindow Adjustment"
+   :Both
+   ("b" balance-windows                 "balance")
+   ("s" switch-window-then-swap-buffer  "swap")
+   :Vertical_adjustment
+   ("h" enlarge-window                  "heighten")
+   ("l" shrink-window                   "lower")
+   :Horizontal_adjustment
+   ("n" shrink-window-horizontally      "narrow")
+   ("w" enlarge-window-horizontally     "widen"))
+
+;; Provides a *visual* way to choose a window to switch to.
+;; (use-package switch-window :defer t)
+;; :bind (("C-x o" . switch-window)
+;;        ("C-x w" . switch-window-then-swap-buffer))
+
+;; Have a thick ruler between vertical windows
+(window-divider-mode)
+#+end_src
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -1695,14 +1891,12 @@ service, [[https://mega.nz/fm][Mega]] ---I use this for my =backups= directory: 
 (system-packages-ensure "megasync")
 #+end_src
 
-
 ** Undo-tree: Very Local Version Control
 :PROPERTIES:
 :CUSTOM_ID: Undo-tree-Very-Local-Version-Control
 :END:
-
-doc:undo-tree-visualize, kbd:C-x_u, gives a /visual/ representation
-of the current buffer's edit history.
+ doc:undo-tree-visualize, kbd:C-x_u, gives a /visual/ representation of the
+ current buffer's edit history.
 #+BEGIN_SRC emacs-lisp :noweb yes :tangle no
   <<undo-tree-setup>>
 #+END_SRC
@@ -1987,6 +2181,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
+(maybe-clone "https://github.com/alhassy/holy-books")
 #+end_src
 
 #+begin_details Many more repos to clone
@@ -2986,6 +3181,48 @@ $0
 One expands ~eqn_begin~, tabs to fill in the three main locations, then
 /immediately/ types ~eqn_step~ to produce a new step in a calculational proof.
 
+*** Fixed replies
+:PROPERTIES:
+:CUSTOM_ID: Fixed-replies
+:END:
+
+Here are some replies that I sometimes need to produce; e.g., to people who
+insist their way is the right way.
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** reply_opinionated_pantomath: What to say to, e.g., an arrogant academic
+
+Your certainty inspires me to continuing exploring, and I may arrive at your
+point of view, but I'm going to need more evidence first.
+
+,** reply_em_dashes: Why use em dashes for parenthetical remarks?
+
+According to the “Canadian Style Guide” (CSG):
+
+   The em is an expansive, attention-seeking dash. It supplies much stronger
+   emphasis than the comma, colon or semicolon it often replaces. Positioned
+   around interrupting elements, em dashes have the opposite effect of
+   parentheses—em dashes emphasize; parentheses minimize.
+
+From “A Logical Approach to Discrete Math” (LADM), page ix:
+
+   We place a space on one side of an em dash ---here are examples--- in
+   order to help the reader determine whether the em dash begins or ends
+   a parenthetical remark. In effect, we are creating two symbols from one.
+   In longer sentences---and we do write long sentences from time to time---the
+   lack of space can make it difficult to see the sentence structure---especially
+   if the em dash is used too often in one sentence. Parenthetical remarks
+   delimited by parentheses (like this one) have a space on one side of each
+   parenthesis, so why not parenthetical remarks delimited by em dashes?
+
+Interestingly, according to the CSG, there should be no space before or after an
+em dash.  As such, it appears that the spacing is mostly stylistic; e.g., some
+people surround em-s with spaces on both sides.  In particular, when em-s are
+unmatched, I make no use of additional space ---indeed this form of one-sided
+parentheses without a space is how LADM is written, as can be seen at the top of
+page 3.
+#+end_src
+
 *** COMMENT Misc Templates
 :PROPERTIES:
 :CUSTOM_ID: Misc-Templates
@@ -3709,8 +3946,8 @@ are for more urgent tasks.
 Priority markers are of the form ~[#𝒳]~, the [[https://github.com/harrybournis/org-fancy-priorities][fancy priorities]] package visually
 renders them as words or icons.
 #+begin_src emacs-lisp
-(use-package org-fancy-priorities
-  :diminish t
+(use-package org-fancy-priorities-mode
+  :diminish org-fancy-priorities-mode
   :hook   (org-mode . org-fancy-priorities-mode)
   :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
 #+end_src
@@ -6395,16 +6632,16 @@ Also some silly stuff:
 ;; Whence, \emot shows all possible emotions.
 (cl-loop for emot
       in `(;; angry, cry, why-you-no
-           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)")
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "･ﾟ(*❦ω❦)*･ﾟ")
            ;; confused, disapprove, dead, shrug
-           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯")
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯" "･✧_✧･")
            ;; dance, csi
            ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
             ,(s-collapse-whitespace "•_•)
                                       ( •_•)>⌐■-■
                                       (⌐■_■)"))
            ;; love, pleased, success, yesss
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง"))
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ"))
       do
       (add-to-list 'agda-input-user-translations emot)
       (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
@@ -6483,10 +6720,12 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 (diminish 'subword-mode)
 #+end_src
 
-** COMMENT Mouse Editing Support :Strange:This_Seems_To_Require_Deprecated_CL:Message_show_at_startup:
+** COMMENT Mouse Editing Support
 :PROPERTIES:
 :CUSTOM_ID: Mouse-Editing-Support
 :END:
+
+# :Strange:This_Seems_To_Require_Deprecated_CL:Message_show_at_startup:
 
 Text selected with the mouse is automatically copied to clipboard.
 #+begin_src emacs-lisp
@@ -6605,17 +6844,15 @@ Of course we can also use it without the asterisk; e.g.:
 (bind-key "C-x O" (lambda () (interactive) (other-window -1)))
 #+end_src
 
-** COMMENT ~C-c e n,p~: Taking a tour of one's edits :defhydra_required:
+**   =C-c e n,p=: Taking a tour of one's edits
 :PROPERTIES:
 :CUSTOM_ID: C-c-e-n-p-Taking-a-tour-of-one's-edits
 :END:
-
-This package allows us to move around the edit points of a buffer
-/without/ actually undoing anything. We even obtain a brief description
-of what happend at each edit point.
-This seems useful for when I get interrupted or lose my train of
-thought: Just press ~C-c e p~ to see what I did recently and where
----the “e” is for “e”dit.
+This package allows us to move around the edit points of a buffer /without/
+actually undoing anything. We even obtain a brief description of what happend at
+each edit point.  This seems useful for when I get interrupted or lose my train
+of thought: Just press [[kbd:C-c e p]] to see what I did recently and where ---the
+“e” is for “e”dit.
 
 #+BEGIN_SRC emacs-lisp
 ;; Give me a description of the change made at a particular stop.
@@ -6623,16 +6860,15 @@ thought: Just press ~C-c e p~ to see what I did recently and where
   :defer t
   :custom (glc-default-span 0))
 
-(defhydra hydra-edits (global-map "C-c e")
-  ("p" goto-last-change "Goto nᵗʰ last change")
-  ("n" goto-last-change-reverse "Goto more recent change"))
+(my/pretty-defhydra "C-c e" "Look at them edits!"
+  :\  ("p" goto-last-change "Goto nᵗʰ last change")
+      ("n" goto-last-change-reverse "Goto more recent change"))
 #+END_SRC
 
 Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually performed.
 
-Notice, as a hydra, I can use ~C-c e~ followed by any combination of
-~p~ and ~n~ to navigate my recent edits /without/ having to supply the prefix
-each time.
+Notice, as a hydra, I can use ~C-c e~ followed by any combination of ~p~ and ~n~ to
+navigate my recent edits /without/ having to supply the prefix each time.
 
 * LaTeX ⇐ Org-Mode
 :PROPERTIES:
@@ -7450,7 +7686,7 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, ha
 See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
 into new configurations.
 
-* COMMENT Experiments
+* Experiments
 :PROPERTIES:
 :CUSTOM_ID: Experiments
 :END:
@@ -7485,143 +7721,6 @@ vertical line.
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
-** COMMENT Hydra: Supply a prefix only once
-:PROPERTIES:
-:CUSTOM_ID: Hydra-Supply-a-prefix-only-once
-:END:
-
-Sometimes we have keybindings that share a common prefix, say ~C-c j~ and ~C-c k~,
-and we invoke them in an arbitrary sequence, it would be nice to invoke the
-shared prefix /only once/ thereby having:
-| ~C-c j C-c j C-c k C-c k M-3 C-c j M-5 C-c k~ | ≈ | ~C-c jjkk3j5k~ |
-
-- The [[https://github.com/abo-abo/hydra#the-one-with-the-least-amount-of-code][“hydra-zoom”]] example from the documentation really showcases this utility.
-- After the prefix is supplied, all extensions are shown in a minibuffer.
-
-#+BEGIN_SRC emacs-lisp
-;; Invoke all possible key extensions having a common prefix by
-;; supplying the prefix only once.
-(use-package hydra)
-
-;; The standard syntax:
-;; (defhydra hydra-example (global-map "C-c v") ;; Prefix
-;;   ;; List of triples (extension method description) )
-#+END_SRC
-
-# Center image
-#+ATTR_HTML: :style margin-left: auto; margin-right: auto;
-[[file:images/hydra.png]]
-
-From the [[https://github.com/abo-abo/hydra][Hydra]] repository is a ‘description for poets’:
-#+begin_quote
-Once you summon the Hydra through the prefixed binding (the body + any one
-head), all heads can be called in succession with only a short extension.
-
-The Hydra is vanquished once Hercules, any binding that isn't the Hydra's head,
-arrives. Note that Hercules, besides vanquishing the Hydra, will still serve his
-original purpose, calling his proper command. This makes the Hydra very
-seamless, it's like a minor mode that disables itself auto-magically.
-#+end_quote
-
-⇒ The [[https://github.com/abo-abo/hydra/wiki][Hydra Wiki]] has many example hydras for common uses cases ⇐
-
-Below are two examples; one to simplify textual navigation and another for
-window navigation.
-Yet another possible hydra would be to avoid remembering word operations, such
-as copying a word, upcasing it, killing a word from anywhere within it ---in
-contrast ~kill-word~ kills /to the end/ of the word---, etc. Likewise for line
-operations, such as copying a line from anywhere in it.  See [[#Taking-a-tour-of-one's-edits][Taking a tour of
-one's edits]] below for another small and useful example.
-
-When there are multiple actions, it's nice to see such a menu displayed in the
-middle of the frame; so we use [[https://github.com/Ladicle/hydra-posframe#hydra-posframe][hydra-posframe]]. Moreover, it can be useful to
-group related actions under a common heading ---e.g., textual navigation may
-occur at the line level or word level or screen level--- we obtain a nice
-interface by declaraing hydras using [[https://github.com/jerrypnz/major-mode-hydra.el#get-started][pretty-hydra-define]] ---this saves us the
-trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][formating docstrings using classic hydra]].
-
-#+begin_src emacs-lisp
-;; Show hydras overlyaed in the middle of the frame
-(use-package hydra-posframe
-  :quelpa (hydra-posframe :fetcher git :url
-                          "https://github.com/Ladicle/hydra-posframe.git")
-  :hook (after-init . hydra-posframe-mode)
-  :custom (hydra-posframe-border-width 5))
-
-;; Neato doc strings for hydras
-(use-package pretty-hydra)
-#+end_src
-
-Declaration template:
-#+begin_example emacs-lisp
- (pretty-hydra-define 𝓃𝒶𝓂ℯ (:title ⋯ :quit-key ⋯)
-   (title₀
-    (⋯(key₀ᵢ command₀ᵢ optional-doc₀ᵢ)⋯)
-    ⋮
-    titleₙ
-    (⋯(keyₙᵢ commandₙᵢ optional-docₙᵢ)⋯)))
-#+end_example
-
-**** Textual Navigation ---“Look Ma, no CTRL key!”
-:PROPERTIES:
-:CUSTOM_ID: Textual-Navigation-Look-Ma-no-CTRL-key
-:END:
-
-Basic movement commands ---without having to hold the control key!
-
-=C-n= moves us to the next line, as it should; but it now /also/ let's us press
-=n,p,f,…= for other movement commands. Unlisted keys insert themselves, whereas ~q~
-close the pop-up menu.
-#+begin_src emacs-lisp
-(global-set-key
- (kbd "C-n")
- (pretty-hydra-define hydra-move
-   (:body-pre (next-line) :title "\t\t\t\t\tTextual Navigation" :quit-key "q")
-   ("Line"
-    (("n" next-line)
-     ("p" previous-line)
-     ("a" beginning-of-line)
-     ("e" move-end-of-line)
-     ("g" goto-line))
-
-   "Word"
-   (("f" forward-word "Next")
-    ("b" backward-word "Previous")
-    ("{" org-backward-element "Next Element")
-    ("}" org-forward-element "Previous Element"))
-
-   "Screen"
-   (("v" scroll-up-command "Scroll Down")
-    ("V" scroll-down-command "Scroll Up")
-    ("l" recenter-top-bottom "Center Page")
-    ("r" move-to-window-line-top-bottom "Relocate Point")
-    ("m" helm-imenu "Textual Menu")))))
-#+end_src
-
-**** Window Navigation
-:PROPERTIES:
-:CUSTOM_ID: Window-Navigation
-:END:
-It can be difficult to remember the incantations to adjust
-windows, so we can make a hydra to alleviate the trouble.
-#+begin_src emacs-lisp
-;; Use ijkl to denote ↑←↓→ arrows.
-(defhydra hydra-windows (global-map    "C-c w"   )
-  ("b" balance-windows                 "balance" )
-  ("i" enlarge-window                  "heighten")
-  ("j" shrink-window-horizontally      "narrow"  )
-  ("k" shrink-window                   "lower"   )
-  ("l" enlarge-window-horizontally     "widen"   )
-  ("s" switch-window-then-swap-buffer  "swap" :color teal))
-
-;; Provides a *visual* way to choose a window to switch to.
-(use-package switch-window :defer t)
-;; :bind (("C-x o" . switch-window)
-;;        ("C-x w" . switch-window-then-swap-buffer))
-
-;; Have a thick ruler between vertical windows
-(window-divider-mode)
-#+end_src
 ** Having a workspace manager in Emacs
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
@@ -8539,14 +8638,19 @@ The only reason I would use multiple files or raw code for setting up a tool
 would be if I did not have a literate programming environment; i.e., Org-mode.
 
 --------------------------------------------------------------------------------
-
-                         Emacs   is   fun ^_^
-
-Bye!
-
 --------------------------------------------------------------------------------
 
+#+begin_center
+                            Emacs   is   fun  (•̀ᴗ•́)و
+
+                                      Bye!
+#+end_center
+
 #+HTML: <p align="center"><img src="https://i.redd.it/g6yi40gbivv31.jpg"  alt="Being replaced at the office"/></p>
+
+#+begin_center
+/Thanks to friends for “replacing me” while I was away ♥‿♥ ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ/
+#+end_center
 
 * COMMENT Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 :PROPERTIES:
