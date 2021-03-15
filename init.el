@@ -80,6 +80,8 @@
   (not (s-contains? "weever" (shell-command-to-string "uname -a")))
   "Is this my personal machine, or my work machine?")
 
+(ignore-errors (load-file "~/Desktop/work_secrets.el"))
+
 ;; Library for working with system files;
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 (use-package f)
@@ -90,16 +92,17 @@
   (use-package undo-tree
     :diminish                       ;; Don't show an icon in the modeline
     :bind ("C-x u" . undo-tree-visualize)
+    :hook (org-mode . undo-tree-mode) ;; For some reason, I need this. FIXME.
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -151,10 +154,12 @@
 
 ;; [[file:init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:4]]
 ;; Unlike the Helm variant, we need to specify our OS pacman.
-(setq system-packages-package-manager 'brew)
+(when (eq system-type 'darwin)
+  (setq system-packages-package-manager 'brew))
 
 ;; If the given system package doesn't exist; install it.
-(system-packages-ensure "amethyst")
+(when (eq system-type 'darwin)
+  (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
 
 ;; [[file:init.org::*Syncing to the System's =$PATH=][Syncing to the System's =$PATH=:1]]
@@ -276,7 +281,8 @@
     (org-special-block-extras--docs-libraries
      '("~/org-special-block-extras/documentation.org"))
     ;; Disable the in-Emacs fancy-links feature?
-    ;; (org-special-block-extras-fancy-links nil)
+    (org-special-block-extras-fancy-links
+     '(elisp badge kbd link-here doc tweet))
     ;; Details heading “flash pink” whenever the user hovers over them?
     (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
     ;; The message prefixing a ‘tweet:url’ badge
@@ -286,6 +292,9 @@
   ;; Use short names like ‘defblock’ instead of the fully qualified name
   ;; ‘org-special-block-extras--defblock’
     (org-special-block-extras-short-names))
+
+;; Let's execute Lisp code with links, as in “elisp:view-hello-file”.
+(setq org-confirm-elisp-link-function nil)
 ;; Org-Mode Administrivia:5 ends here
 
 ;; [[file:init.org::*Password-locking files ---“encryption”][Password-locking files  ---“encryption”:1]]
@@ -387,8 +396,7 @@ Is replaced by:
 ;; Hydra: Supply a prefix only once:3 ends here
 
 ;; [[file:init.org::*Textual Navigation ---“Look Ma, no CTRL key!”][Textual Navigation ---“Look Ma, no CTRL key!”:1]]
-(my/pretty-defhydra "C-n"
-   (:body-pre (next-line) :title "\t\t\t\t\tTextual Navigation" :quit-key "q")
+(my/pretty-defhydra "C-n" "\t\t\t\t\tTextual Navigation"
    :Line
    ("n" next-line)
    ("p" previous-line)
@@ -434,6 +442,14 @@ Is replaced by:
 (system-packages-ensure "dropbox")
 (system-packages-ensure "megasync")
 ;; Staying Sane:1 ends here
+
+;; [[file:init.org::*Undo-tree: Very Local Version Control][Undo-tree: Very Local Version Control:2]]
+;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
+(global-set-key (kbd "C-z")
+  (lambda () (interactive)
+   (undo-tree-mode) ;; Ensure the mode is on
+   (undo-tree-visualize)))
+;; Undo-tree: Very Local Version Control:2 ends here
 
 ;; [[file:init.org::*Automatic Backups][Automatic Backups:1]]
 ;; New location for backups.
@@ -1427,7 +1443,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
   (ignore-errors (find-file "~/.emacs.d/init.org")))
 ;; My to-do list: The initial buffer when Emacs opens up:1 ends here
 
-;; [[file:init.org::*Exquisite Themes][Exquisite Themes:1]]
+;; [[file:init.org::*Exquisite Fonts and Themes][Exquisite Fonts and Themes:1]]
 ;; Treat all themes as safe; no query before use.
 (setf custom-safe-themes t)
 
@@ -1437,15 +1453,15 @@ C-u C-u C-c c ⇒ Goto last note stored."
 (use-package spacemacs-common
   :defer t
   :ensure spacemacs-theme)
-;; Exquisite Themes:1 ends here
+;; Exquisite Fonts and Themes:1 ends here
 
-;; [[file:init.org::*Exquisite Themes][Exquisite Themes:2]]
+;; [[file:init.org::*Exquisite Fonts and Themes][Exquisite Fonts and Themes:2]]
 ;; Infinite list of my commonly used themes.
 (setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
 (setcdr (last my/themes) my/themes)
-;; Exquisite Themes:2 ends here
+;; Exquisite Fonts and Themes:2 ends here
 
-;; [[file:init.org::*Exquisite Themes][Exquisite Themes:3]]
+;; [[file:init.org::*Exquisite Fonts and Themes][Exquisite Fonts and Themes:3]]
 (cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
   "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
 
@@ -1465,10 +1481,61 @@ themes (•̀ᴗ•́)و"
 
 (defalias 'my/toggle-theme #' my/disable-all-themes)
 
-(global-set-key "\C-x\ t" 'my/toggle-theme)
+(global-set-key "\C-c\ t" 'my/toggle-theme)
 
 (my/toggle-theme)
-;; Exquisite Themes:3 ends here
+;; Exquisite Fonts and Themes:3 ends here
+
+;; [[file:init.org::*Exquisite Fonts and Themes][Exquisite Fonts and Themes:4]]
+;; Infinite list of my commonly used fonts
+(setq my/fonts
+      '("Roboto Mono Light 14" ;; Sleek
+        "Input Mono 14"
+        "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
+        "Papyrus 14"
+        "Bradley Hand Light 12"
+        "Chalkduster 14" ;; Laggy?
+        "Courier Light 12"
+        "Noteworthy 9"
+        "Savoye LET 14"
+        ))
+(setcdr (last my/fonts) my/fonts)
+
+;; Let's ensure they're on our system
+;; brew search "/font-/"   # List all fonts
+(system-packages-ensure "font-roboto-mono")
+(system-packages-ensure "font-input")
+(system-packages-ensure "font-source-code-pro")
+(system-packages-ensure "font-fira-mono")
+(system-packages-ensure "font-mononoki")
+(system-packages-ensure "font-monoid")
+(system-packages-ensure "font-menlo-for-powerline")
+
+
+;; Use “M-x set-face-font RET default RET”, or...
+;; (set-face-font 'default "Source Code Pro Light14")
+
+;; See ~2232 fonts
+;; (append (fontset-list) (x-list-fonts "*" nil))
+
+(cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
+  "Load NEW-FONT, which defaults from ‘my/fonts’.
+
+When a universal prefix is given, “C-u C-c f”, we load a random
+font from all possible themes.  Nice way to learn about more
+fonts (•̀ᴗ•́)و"
+  (interactive)
+  (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
+         (font (if current-prefix-arg
+                   (nth (random (length all-fonts)) all-fonts)
+                 new-font)))
+    (set-face-font 'default font)
+    (message "Font: %s" font)))
+
+(global-set-key "\C-c\ f" 'my/toggle-font)
+
+(my/toggle-font)
+;; Exquisite Fonts and Themes:4 ends here
 
 ;; [[file:init.org::*A sleek & informative mode line][A sleek & informative mode line:1]]
 (setq display-time-day-and-date t)
@@ -1755,6 +1822,9 @@ themes (•̀ᴗ•́)و"
 ;; org-mode math is now highlighted ;-)
 (setq org-highlight-latex-and-related '(latex))
 
+;; Extra space between text and underline line
+(setq x-underline-at-descent-line t)
+
 ;; Hide the *,=,/ markers
 (setq org-hide-emphasis-markers t)
 
@@ -1996,6 +2066,7 @@ themes (•̀ᴗ•́)و"
       in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
           ("(" "﴾")
           (")" "﴿")
+          ("cmd" "⌘")
            ;; categorial ;;
            ("alg" "𝒜𝓁ℊ")
            ("split" "▵")
@@ -2129,7 +2200,7 @@ themes (•̀ᴗ•́)و"
 (bind-key "C-x O" (lambda () (interactive) (other-window -1)))
 ;; Letter-based Navigation:2 ends here
 
-;; [[file:init.org::*~C-c e n,p~: Taking a tour of one's edits][~C-c e n,p~: Taking a tour of one's edits:1]]
+;; [[file:init.org::*  =C-c e n,p=: Taking a tour of one's edits][  =C-c e n,p=: Taking a tour of one's edits:1]]
 ;; Give me a description of the change made at a particular stop.
 (use-package goto-chg
   :defer t
@@ -2138,7 +2209,7 @@ themes (•̀ᴗ•́)و"
 (my/pretty-defhydra "C-c e" "Look at them edits!"
   :\  ("p" goto-last-change "Goto nᵗʰ last change")
       ("n" goto-last-change-reverse "Goto more recent change"))
-;; ~C-c e n,p~: Taking a tour of one's edits:1 ends here
+;;   =C-c e n,p=: Taking a tour of one's edits:1 ends here
 
 ;; [[file:init.org::*Get LaTeX:][Get LaTeX::1]]
 (system-packages-ensure "mactex-no-gui")
@@ -2398,6 +2469,69 @@ by spaces.
 ;; key to begin cycling buffers.
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
+
+;; [[file:init.org::*Draw pretty unicode tables in org-mode][Draw pretty unicode tables in org-mode:1]]
+(quelpa '(org-pretty-table
+         :repo "Fuco1/org-pretty-table"
+         :fetcher github))
+
+(add-hook 'org-mode-hook 'org-pretty-table-mode)
+;; Draw pretty unicode tables in org-mode:1 ends here
+
+;; [[file:init.org::*Sleek Semantic Selection][Sleek Semantic Selection:1]]
+(use-package expand-region
+  :diminish
+  :bind (("s-r" . #'er/expand-region)))
+;; Sleek Semantic Selection:1 ends here
+
+;; [[file:init.org::*Semantic Change][Semantic Change:1]]
+(use-package change-inner
+  :diminish
+  :bind (("s-i" . #'change-inner)
+         ("s-o" . #'change-outer)))
+;; Semantic Change:1 ends here
+
+;; [[file:init.org::*Drag Stuff][Drag Stuff:1]]
+;; Move current word ←/→, or current line ↑/↓.
+;; Todo: Compare with org-metaup and org-metadown...
+(use-package drag-stuff
+  :diminish
+  :config (loop for (key . action) in '(("<M-down>" . drag-stuff-down)
+                                      ("<M-up>" . drag-stuff-up)
+                                      ("<M-right>" . drag-stuff-right)
+                                      ("<M-left>" . drag-stuff-left))
+                do (bind-key key action org-mode-map))
+      (drag-stuff-global-mode 1))
+;; Drag Stuff:1 ends here
+
+;; [[file:init.org::*Indentation Guide][Indentation Guide:1]]
+;; Add a visual indent guide
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-character ?|)
+  (highlight-indent-guides-responsive 'stack))
+;; Indentation Guide:1 ends here
+
+;; [[file:init.org::*JS][JS:1]]
+(use-package ob-js
+  :config
+  (add-to-list 'org-babel-load-languages '(js . t))
+  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
+  (add-to-list 'org-babel-tangle-lang-exts '("js" . "js"))
+  (system-packages-ensure "node"))
+  ;; use “:results output” for js blocks!
+  (maybe-clone "https://github.com/alhassy/JavaScriptCheatSheet")
+;; JS:1 ends here
+
+;; [[file:init.org::*Commenting][Commenting:1]]
+(use-package comment-dwim-2
+  :bind ("M-;" . comment-dwim-2))
+
+ ;; Not ideal: M-; comments a parent Org heading and not the current line.
+ ;; (define-key org-mode-map (kbd "M-;") 'org-comment-dwim-2)
+;; Commenting:1 ends here
 
 ;; [[file:init.org::*Having a workspace manager in Emacs][Having a workspace manager in Emacs:1]]
 (use-package perspective

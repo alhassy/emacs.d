@@ -460,6 +460,7 @@ as if our text was being version controlled as we type! --We can even switch bet
 (use-package undo-tree
   :diminish                       ;; Don't show an icon in the modeline
   :bind ("C-x u" . undo-tree-visualize)
+  :hook (org-mode . undo-tree-mode) ;; For some reason, I need this. FIXME.
   :config
     ;; Always have it on
     (global-undo-tree-mode)
@@ -1124,6 +1125,8 @@ Here are other packages that I want to be installed onto my machine.
   (not (s-contains? "weever" (shell-command-to-string "uname -a")))
   "Is this my personal machine, or my work machine?")
 
+(ignore-errors (load-file "~/Desktop/work_secrets.el"))
+
 ;; Library for working with system files;
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 (use-package f)
@@ -1264,10 +1267,12 @@ window manager for macOS along the lines of xmonad.”
 
 #+BEGIN_SRC emacs-lisp
 ;; Unlike the Helm variant, we need to specify our OS pacman.
-(setq system-packages-package-manager 'brew)
+(when (eq system-type 'darwin)
+  (setq system-packages-package-manager 'brew))
 
 ;; If the given system package doesn't exist; install it.
-(system-packages-ensure "amethyst")
+(when (eq system-type 'darwin)
+  (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
 #+END_SRC
 # +BEGIN_SRC emacs-lisp :tangle no
 # ;; Use “brew cask install” instead of “brew install” for installing programs.
@@ -1621,7 +1626,8 @@ https://alhassy.github.io/org-special-block-extras/
     (org-special-block-extras--docs-libraries
      '("~/org-special-block-extras/documentation.org"))
     ;; Disable the in-Emacs fancy-links feature?
-    ;; (org-special-block-extras-fancy-links nil)
+    (org-special-block-extras-fancy-links
+     '(elisp badge kbd link-here doc tweet))
     ;; Details heading “flash pink” whenever the user hovers over them?
     (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
     ;; The message prefixing a ‘tweet:url’ badge
@@ -1631,7 +1637,11 @@ https://alhassy.github.io/org-special-block-extras/
   ;; Use short names like ‘defblock’ instead of the fully qualified name
   ;; ‘org-special-block-extras--defblock’
     (org-special-block-extras-short-names))
+
+;; Let's execute Lisp code with links, as in “elisp:view-hello-file”.
+(setq org-confirm-elisp-link-function nil)
 #+END_SRC
+
 ** Password-locking files  ---“encryption”
 :PROPERTIES:
 :CUSTOM_ID: Password-locking-files-encryption
@@ -1904,6 +1914,14 @@ service, [[https://mega.nz/fm][Mega]] ---I use this for my =backups= directory: 
 ( We're just showing the ~<<undo-tree-setup>>~ from earlier since this is a good
 place for such a setup. More importantly, we are /not/ copy-pasting the setup: /It
 is written only once; in a single source of truth!/ )
+
+#+begin_src emacs-lisp
+;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
+(global-set-key (kbd "C-z")
+  (lambda () (interactive)
+   (undo-tree-mode) ;; Ensure the mode is on
+   (undo-tree-visualize)))
+#+end_src
 
 ** Automatic Backups
 :PROPERTIES:
@@ -3016,7 +3034,7 @@ menu and write any block or language name.
      (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
  $0
 ,#+end_${1:$(car (split-string yas-text))}
-#+END_SRC
+#+end_src
 In this case, ~yas-text~ is equivalent to (~yas-field-value 1)~;
 it generally refers to the value of the field being mirrored with ~${n: ⋯yas-text⋯}~.
 
@@ -3123,6 +3141,17 @@ we wanted /n/-many sets?
 Make a function that takes /n ≤ 26/ as input, produces a list of
 levels, then uses each level to produce a list of type names ;-)
 :End:
+
+With the advent of org-special-block-extras, I've made increased usage of links
+--such as ~green:hello~ which yields green:hello and ~[[kbd:][green]]~ which yields
+[[kbd:][green]].
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** ll_make_a_link: insert a link template
+${1:`(let* ((τ (read-string "Link type: "))
+            (δ (read-string "Link Description: "))
+            (⊤ (if (s-contains? ":" τ) τ (s-concat τ ":"))))
+       (format "[[%s][%s]]" ⊤ δ))`} $0
+#+END_SRC
 
 *** Elisp Templates
 :PROPERTIES:
@@ -5256,18 +5285,17 @@ my to-do list and my init file, side-by-side.
 There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile
 yet minimalist splash screen showing recent files, projects, and bookmarks.
 
-** Exquisite Themes
+** Exquisite Fonts and Themes
 :PROPERTIES:
-:CUSTOM_ID: Exquisite-Themes
+:CUSTOM_ID: Exquisite-Fonts-and-Themes
 :END:
 
-Emacs' default theme leaves much to be desired:
-It does not look sleek and shiny, which usually
-leaves first-timers with a poor, shallow, impression of the system.
+Emacs' default theme leaves much to be desired: It does not look sleek and
+shiny, which usually leaves first-timers with a poor, shallow, impression of the
+system. Below we install a few themes that make Emacs look exquisite.  We cycle
+between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 
-Below we install a few themes that make Emacs look exquisite.
-We cycle between the chosen themes with kbd:C-x_t, doc:my/toggle-theme.
-
+#+begin_details “my/toggle-theme” Implementation
 + ~M-x load-theme RET TAB~ shows all themes, including built-in ones,
   that may be loaded.
 + Loading multiple themes results in their pallets mixed.
@@ -5298,12 +5326,12 @@ We cycle between the chosen themes with kbd:C-x_t, doc:my/toggle-theme.
 (setcdr (last my/themes) my/themes)
 #+END_SRC
 
-kbd:C-x_t to toggle between the personal themes.
+kbd:C-c_t to toggle between the personal themes.
 #+BEGIN_SRC emacs-lisp
 (cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
   "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
 
-When a universal prefix is given, “C-u C-x t”, we load a random
+When a universal prefix is given, “C-u C-c t”, we load a random
 theme from all possible themes.  Nice way to learn about more
 themes (•̀ᴗ•́)و"
   (interactive)
@@ -5319,7 +5347,7 @@ themes (•̀ᴗ•́)و"
 
 (defalias 'my/toggle-theme #' my/disable-all-themes)
 
-(global-set-key "\C-x\ t" 'my/toggle-theme)
+(global-set-key "\C-c\ t" 'my/toggle-theme)
 
 (my/toggle-theme)
 #+END_SRC
@@ -5329,6 +5357,69 @@ Apparently, there's already a package that accomplishes these goals and more:
 slightly informative, to me at least, about how themes work and it does what I
 want.
 
+...Actually, the above learning adventure has made it easy to provide a similar setup
+for fonts 😁
+#+end_details
+
+Likewise, kbd:C-c_f, doc:my/toggle-font, to quickly change fonts (according to
+mood 😸).
+#+begin_details “my/toggle-font” Implementation
+
+#+begin_src emacs-lisp
+;; Infinite list of my commonly used fonts
+(setq my/fonts
+      '("Roboto Mono Light 14" ;; Sleek
+        "Input Mono 14"
+        "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
+        "Papyrus 14"
+        "Bradley Hand Light 12"
+        "Chalkduster 14" ;; Laggy?
+        "Courier Light 12"
+        "Noteworthy 9"
+        "Savoye LET 14"
+        ))
+(setcdr (last my/fonts) my/fonts)
+
+;; Let's ensure they're on our system
+;; brew search "/font-/"   # List all fonts
+(system-packages-ensure "font-roboto-mono")
+(system-packages-ensure "font-input")
+(system-packages-ensure "font-source-code-pro")
+(system-packages-ensure "font-fira-mono")
+(system-packages-ensure "font-mononoki")
+(system-packages-ensure "font-monoid")
+(system-packages-ensure "font-menlo-for-powerline")
+
+
+;; Use “M-x set-face-font RET default RET”, or...
+;; (set-face-font 'default "Source Code Pro Light14")
+
+;; See ~2232 fonts
+;; (append (fontset-list) (x-list-fonts "*" nil))
+
+(cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
+  "Load NEW-FONT, which defaults from ‘my/fonts’.
+
+When a universal prefix is given, “C-u C-c f”, we load a random
+font from all possible themes.  Nice way to learn about more
+fonts (•̀ᴗ•́)و"
+  (interactive)
+  (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
+         (font (if current-prefix-arg
+                   (nth (random (length all-fonts)) all-fonts)
+                 new-font)))
+    (set-face-font 'default font)
+    (message "Font: %s" font)))
+
+(global-set-key "\C-c\ f" 'my/toggle-font)
+
+(my/toggle-font)
+#+end_src
+
+#+end_details
+
+In any Org file, type ~elisp:menu-set-font~; then you can click on this link to
+get a nice font selection menu ---this can be useful for your own ‘personal startup buffer’.
 ** A sleek & informative mode line
 :PROPERTIES:
 :CUSTOM_ID: A-sleek-informative-mode-line
@@ -5942,6 +6033,9 @@ Let's make some things prettier than they appear by default.
 #+BEGIN_SRC emacs-lisp
 ;; org-mode math is now highlighted ;-)
 (setq org-highlight-latex-and-related '(latex))
+
+;; Extra space between text and underline line
+(setq x-underline-at-descent-line t)
 
 ;; Hide the *,=,/ markers
 (setq org-hide-emphasis-markers t)
@@ -6579,6 +6673,7 @@ Better yet, as a loop:
       in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
           ("(" "﴾")
           (")" "﴿")
+          ("cmd" "⌘")
            ;; categorial ;;
            ("alg" "𝒜𝓁ℊ")
            ("split" "▵")
@@ -7721,6 +7816,93 @@ vertical line.
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
+
+** Sleek Semantic Selection
+
+Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
+work, press it again to select sentence, then again for the current paragraph,
+then more to get the current section.
+
+#+begin_src emacs-lisp
+(use-package expand-region
+  :diminish
+  :bind (("s-r" . #'er/expand-region)))
+#+end_src
+
+** Semantic Change
+
+Using kbd:⌘-i and kbd:⌘-o we can quickly, for example, delete a string or its
+contents; or delete a {}-block or just its contents; or delete a ()-argument
+list or just its contents, etc.
+
+ ~change-inner~ gives you vim's ~ci~ command:
+- ~change-inner {~ ⇒ Delete all text starting from the first ‘{’ delimiter to the next one; but /keep the delimiters/.
+- ~change-outer {~ ⇒ As above, but also delete the delimiters.
+
+#+begin_src emacs-lisp
+(use-package change-inner
+  :diminish
+  :bind (("s-i" . #'change-inner)
+         ("s-o" . #'change-outer)))
+#+end_src
+
+** Drag Stuff
+#+begin_src emacs-lisp
+;; Move current word ←/→, or current line ↑/↓.
+;; Todo: Compare with org-metaup and org-metadown...
+(use-package drag-stuff
+  :diminish
+  :config (loop for (key . action) in '(("<M-down>" . drag-stuff-down)
+                                      ("<M-up>" . drag-stuff-up)
+                                      ("<M-right>" . drag-stuff-right)
+                                      ("<M-left>" . drag-stuff-left))
+                do (bind-key key action org-mode-map))
+      (drag-stuff-global-mode 1))
+#+end_src
+
+** Indentation Guide
+
+The following is also “OK” in Org-mode ;-)
+#+begin_src emacs-lisp
+;; Add a visual indent guide
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-character ?|)
+  (highlight-indent-guides-responsive 'stack))
+#+end_src
+
+** JS
+#+begin_src emacs-lisp
+(use-package ob-js
+  :config
+  (add-to-list 'org-babel-load-languages '(js . t))
+  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
+  (add-to-list 'org-babel-tangle-lang-exts '("js" . "js"))
+  (system-packages-ensure "node"))
+  ;; use “:results output” for js blocks!
+  (maybe-clone "https://github.com/alhassy/JavaScriptCheatSheet")
+ #+end_src
+** Commenting
+
+Let's get some nifty [[https://github.com/remyferre/comment-dwim-2][commenting]] features ---the link has nice usage gifs.
++ [[kbd:][M-;]]
+  repeatedly does (1) comments current line, (2) inserts a comment at the end
+  of the current line, and (3) deletes an existing end-of-line comment.
+
+   [[kbd:][C-u_M-;]] indents the current enf-of-line comment with any above it.
+
+   For use with Org-mode, it's best to use doc:org-edit-src-code ---which I've
+   bound to [[kbd:][⌘ e]].
+   #+begin_src emacs-lisp
+(use-package comment-dwim-2
+  :bind ("M-;" . comment-dwim-2))
+
+ ;; Not ideal: M-; comments a parent Org heading and not the current line.
+ ;; (define-key org-mode-map (kbd "M-;") 'org-comment-dwim-2)
+   #+end_src
+
 ** Having a workspace manager in Emacs
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs

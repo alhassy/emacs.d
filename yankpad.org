@@ -241,6 +241,12 @@ $0
 $0
 #+end_latex-definitions
 
+** ll_make_a_link: insert a link template
+${1:`(let* ((τ (read-string "Link type: "))
+            (δ (read-string "Link Description: "))
+            (⊤ (if (s-contains? ":" τ) τ (s-concat τ ":"))))
+       (format "[[%s][%s]]" ⊤ δ))`} $0
+
 ** loop:  Elisp's for each loop
 (dolist (${1:var} ${2:list-form})
         ${3:body})
