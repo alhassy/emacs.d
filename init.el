@@ -96,13 +96,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -161,6 +161,29 @@
 (when (eq system-type 'darwin)
   (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
+
+;; [[file:init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:5]]
+(defun ⌘-quit (app)
+  "Kill application APP; e.g., “amethyst” or “Safari”"
+  (shell-command (format "osascript -e 'quit app \"%s\"'" app)))
+
+(defun ⌘-open (app)
+ "Open application APP; e.g., “amethyst” or “Safari”"
+  (async-shell-command (format "osascript -e 'launch app \"%s\"'" app)))
+
+(bind-key "s-a r" #'my/relaunch-amethyst)
+(defun my/relaunch-amethyst () (interactive)
+       (⌘-quit "amethyst")
+       (⌘-open "amethyst"))
+;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:5 ends here
+
+;; [[file:init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:6]]
+(defun amethyst/cycle-layout ()
+  (interactive)
+  (shell-command "osascript -e 'tell application \"System Events\" to keystroke space using {shift down, option down}'"))
+
+(bind-key "s-a c" #'amethyst/cycle-layout)
+;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:6 ends here
 
 ;; [[file:init.org::*Syncing to the System's =$PATH=][Syncing to the System's =$PATH=:1]]
 (use-package exec-path-from-shell
@@ -528,10 +551,10 @@ otherwise yields ‘cloned-repo’.
 
 LOCAL is optional and defaults to the base name; e.g.,
 if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
+  (add-to-list 'magit-repository-directories `(,local . 0))
   (if (file-directory-p local)
       'repo-already-exists
     (async-shell-command (concat "git clone " remote " " local))
-    ; (add-to-list 'magit-repository-directories `(,local   . 0))
     'cloned-repo))
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
@@ -581,11 +604,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/anderj12.git" "~/3ea3/jacob")
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/3EA3.git" "~/3ea3/_2018")
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/2DM3/LectureNotes.git" "~/2dm3")
-
-;; Likely want to put a hook when closing emacs, or at some given time,
-;; to show me this buffer so that I can ‘push’ if I haven't already!
-;
-; (magit-list-repositories)
 ;; Maybe clone ... everything?:2 ends here
 
 ;; [[file:init.org::*Gotta love that time machine][Gotta love that time machine:1]]
@@ -665,7 +683,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   :bind (:map org-mode-map
               ("s-p" . org-babel-previous-src-block)
               ("s-n" . org-babel-next-src-block)
-              ("s-e" . org-edit-src-code)
+              ("s-e" . org-edit-special)
          :map org-src-mode-map
               ("s-e" . org-edit-src-exit)))
 ;; Seamless Navigation Between Source Blocks:1 ends here
@@ -1457,20 +1475,19 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; [[file:init.org::*Exquisite Fonts and Themes][Exquisite Fonts and Themes:2]]
 ;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
+(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
 (setcdr (last my/themes) my/themes)
 ;; Exquisite Fonts and Themes:2 ends here
 
 ;; [[file:init.org::*Exquisite Fonts and Themes][Exquisite Fonts and Themes:3]]
-(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
+(cl-defun my/disable-all-themes (&optional (new-theme (pop my/themes)))
   "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
 
-When a universal prefix is given, “C-u C-x t”, we load a random
+When a universal prefix is given, “C-u C-c t”, we load a random
 theme from all possible themes.  Nice way to learn about more
 themes (•̀ᴗ•́)و"
   (interactive)
-  (dolist (τ custom-enabled-themes)
-    (disable-theme τ))
+  (mapc #'disable-theme custom-enabled-themes)
   (-let [theme (if current-prefix-arg
                    (nth (random (length (custom-available-themes)))
                         (custom-available-themes))
@@ -1479,11 +1496,14 @@ themes (•̀ᴗ•́)و"
       (load-theme theme)
       (message "Theme %s" theme))))
 
-(defalias 'my/toggle-theme #' my/disable-all-themes)
 
+(defalias 'my/toggle-theme #' my/disable-all-themes)
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-(my/toggle-theme)
+
+;; (my/toggle-theme)
+(use-package solarized-theme)
+(my/toggle-theme 'solarized-gruvbox-light)
 ;; Exquisite Fonts and Themes:3 ends here
 
 ;; [[file:init.org::*Exquisite Fonts and Themes][Exquisite Fonts and Themes:4]]
@@ -1498,6 +1518,7 @@ themes (•̀ᴗ•́)و"
         "Courier Light 12"
         "Noteworthy 9"
         "Savoye LET 14"
+        "Fantasque Sans Mono 16"
         ))
 (setcdr (last my/fonts) my/fonts)
 
@@ -1510,7 +1531,7 @@ themes (•̀ᴗ•́)و"
 (system-packages-ensure "font-mononoki")
 (system-packages-ensure "font-monoid")
 (system-packages-ensure "font-menlo-for-powerline")
-
+(system-packages-ensure "font-fantasque-sans-mono")
 
 ;; Use “M-x set-face-font RET default RET”, or...
 ;; (set-face-font 'default "Source Code Pro Light14")
@@ -1521,7 +1542,7 @@ themes (•̀ᴗ•́)و"
 (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
   "Load NEW-FONT, which defaults from ‘my/fonts’.
 
-When a universal prefix is given, “C-u C-c f”, we load a random
+When a universal prefix is given, “C-u C-c F”, we load a random
 font from all possible themes.  Nice way to learn about more
 fonts (•̀ᴗ•́)و"
   (interactive)
@@ -1532,9 +1553,11 @@ fonts (•̀ᴗ•́)و"
     (set-face-font 'default font)
     (message "Font: %s" font)))
 
-(global-set-key "\C-c\ f" 'my/toggle-font)
+(global-set-key "\C-c\ F" 'my/toggle-font)
 
-(my/toggle-font)
+;; Default font; the “ignore-⋯” is for users who may not have the font.
+(ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
+(ignore-errors (my/toggle-font "Source Code Pro Light 14"))
 ;; Exquisite Fonts and Themes:4 ends here
 
 ;; [[file:init.org::*A sleek & informative mode line][A sleek & informative mode line:1]]
@@ -1833,13 +1856,21 @@ fonts (•̀ᴗ•́)و"
 ;; http://orgmode.org/manual/Special-symbols.html
 ;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:1 ends here
 
-;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:3]]
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:2]]
+(use-package org-appear
+  :hook (org-mode . org-appear-mode)
+  :init (setq org-appear-autoemphasis  t
+              org-appear-autolinks t
+              org-appear-autosubmarkers t))
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:2 ends here
+
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:4]]
 ;; Automatically toggle LaTeX previews when cursour enters/leaves them
 (use-package org-fragtog
   :hook (org-mode . org-fragtog-mode))
-;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:3 ends here
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:4 ends here
 
-;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:4]]
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:5]]
 ;; Make previews a bit larger
 (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
 
@@ -1856,17 +1887,17 @@ fonts (•̀ᴗ•́)و"
 ;; No need to explicitly import armkeh's unicode-sty in each org file.
 (add-to-list 'org-latex-packages-alist
   "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}")
-;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:4 ends here
-
-;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:6]]
-;; Support “latex-as-png” src blocks, which show LaTeX as PNGs
-(use-package ob-latex-as-png)
-;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:6 ends here
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:5 ends here
 
 ;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:7]]
+;; Support “latex-as-png” src blocks, which show LaTeX as PNGs
+(use-package ob-latex-as-png)
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:7 ends here
+
+;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:8]]
 ;; Use the “#+name” the user provides, instead of generating label identifiers.
 (setq org-latex-prefer-user-labels t)
-;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:7 ends here
+;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:8 ends here
 
 ;; [[file:init.org::*Show off-screen heading at the top of the window][Show off-screen heading at the top of the window:1]]
  (use-package org-sticky-header
@@ -1878,9 +1909,34 @@ fonts (•̀ᴗ•́)و"
    org-sticky-header-outline-path-separator " / "))
 ;; Show off-screen heading at the top of the window:1 ends here
 
-;; [[file:init.org::*Prose][Prose:1]]
+;; [[file:init.org::*Whitespace][Whitespace:1]]
 (add-hook 'before-save-hook 'whitespace-cleanup)
-;; Prose:1 ends here
+;; Whitespace:1 ends here
+
+;; [[file:init.org::*Formatting Text][Formatting Text:1]]
+(local-set-key (kbd "C-c f") #'my/org-mode-format)
+(defun my/org-mode-format (&optional text)
+"Surround selected region with the given Org emphasises marker.
+
+E.g., if this command is bound to “C-c f” then the sequence
+“C-c f b” would make the currenly selected text be bold.
+Likewise, “C-c f *” would achieve the same goal.
+
+When you press “C-c f”, a message is shown with a list of
+useful single-character completions.
+
+Note: “C-c f 𝓍”, for an unrecognised marker 𝓍, just inserts
+the character 𝓍 before and after the selected text."
+  (interactive "P") ;; Works on a region
+  ; (message "b,* ⟨Bold⟩; i,/ ⟨Italics⟩; u,_ ⟨Underline⟩; c,~ ⟨Monotype⟩")
+  (message "⟨Bold b,*⟩ ⟨Italics i,/⟩ ⟨Underline u,_⟩ ⟨Monotype c,~⟩")
+  (let ((kind (read-char)))
+    ;; Map letters to Org formatting symbols
+    (setq kind (or (plist-get '(b ?\*   i ?\/   u ?\_   c ?\~)
+                              (intern (string kind)))
+                   kind))
+    (insert-pair text kind kind)))
+;; Formatting Text:1 ends here
 
 ;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:1]]
 (setq-default fill-column 80          ;; Let's avoid going over 80 columns
@@ -2478,6 +2534,46 @@ by spaces.
 (add-hook 'org-mode-hook 'org-pretty-table-mode)
 ;; Draw pretty unicode tables in org-mode:1 ends here
 
+;; [[file:init.org::*Lost Souls][Lost Souls:1]]
+;; Move to OS’ trash can when deleting stuff
+;; instead of deleting things outright!
+(setq delete-by-moving-to-trash t
+      trash-directory "~/.Trash/")
+
+;; An automatic window-resizing mechanism.
+;; A “calmer” alternative to golden-ratio.
+;; https://github.com/cyrus-and/zoom
+(use-package zoom
+  :diminish
+  :config (zoom-mode t))
+
+;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
+;; https://github.com/bbatsov/projectile
+(use-package projectile
+:config (projectile-global-mode))
+(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+
+;; Let's use an improved buffer list.
+(use-package ibuffer ;; This is built-into Emacs.
+  :bind ("C-x C-b" . ibuffer))
+;; It uses similar commands as does dired; e.g.,
+;; / . org
+;; This filters (“/”) the list with extensions (“.”) being “org”.
+
+(use-package ibuffer-vc
+  :hook (ibuffer . (lambda ()
+                     (ibuffer-vc-set-filter-groups-by-vc-root)
+                     (unless (eq ibuffer-sorting-mode 'alphabetic)
+                       (ibuffer-do-sort-by-alphabetic))))
+  :custom
+  (ibuffer-formats '((mark modified read-only " "
+                           (name 18 18 :left :elide) " "
+                           (size 9 -1 :right) " "
+                           (mode 16 16 :left :elide) " "
+                           (vc-status 16 16 :left) " "
+                           (vc-relative-file)))))
+;; Lost Souls:1 ends here
+
 ;; [[file:init.org::*Sleek Semantic Selection][Sleek Semantic Selection:1]]
 (use-package expand-region
   :diminish
@@ -2490,19 +2586,6 @@ by spaces.
   :bind (("s-i" . #'change-inner)
          ("s-o" . #'change-outer)))
 ;; Semantic Change:1 ends here
-
-;; [[file:init.org::*Drag Stuff][Drag Stuff:1]]
-;; Move current word ←/→, or current line ↑/↓.
-;; Todo: Compare with org-metaup and org-metadown...
-(use-package drag-stuff
-  :diminish
-  :config (loop for (key . action) in '(("<M-down>" . drag-stuff-down)
-                                      ("<M-up>" . drag-stuff-up)
-                                      ("<M-right>" . drag-stuff-right)
-                                      ("<M-left>" . drag-stuff-left))
-                do (bind-key key action org-mode-map))
-      (drag-stuff-global-mode 1))
-;; Drag Stuff:1 ends here
 
 ;; [[file:init.org::*Indentation Guide][Indentation Guide:1]]
 ;; Add a visual indent guide
@@ -2523,6 +2606,7 @@ by spaces.
   (system-packages-ensure "node"))
   ;; use “:results output” for js blocks!
   (maybe-clone "https://github.com/alhassy/JavaScriptCheatSheet")
+  (maybe-clone "https://github.com/alhassy/AngularJSCheatSheet")
 ;; JS:1 ends here
 
 ;; [[file:init.org::*Commenting][Commenting:1]]
@@ -2876,3 +2960,7 @@ window contains the buffer with the cursour in it."
   (org-cycle)
   (goto-line line))
 ;; Jumping without hassle:1 ends here
+
+# [[file:init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:7]]
+36:51: execution error: System Events got an error: osascript is not allowed to send keystrokes. (1002)
+# Installing OS packages, and automatically keeping my system up to data, from within Emacs:7 ends here

@@ -1289,6 +1289,55 @@ Amethyst requires some more setup: Open its preferences, then...
 
 Neato! Now I can live in Emacs even more ^_^
 
+--------------------------------------------------------------------------------
+
+(*Open Scripting Architecture (OSA) Scripts*) Amethyst is great, but it has a
+problem of randomly not working.  Unfortunatley it has no command line
+interface, so let's make one in Emacs: Now kbd:⌘-a_r relaunches Amethyst.
+#+begin_details
+#+begin_src emacs-lisp
+(defun ⌘-quit (app)
+  "Kill application APP; e.g., “amethyst” or “Safari”"
+  (shell-command (format "osascript -e 'quit app \"%s\"'" app)))
+
+(defun ⌘-open (app)
+ "Open application APP; e.g., “amethyst” or “Safari”"
+  (async-shell-command (format "osascript -e 'launch app \"%s\"'" app)))
+
+(bind-key "s-a r" #'my/relaunch-amethyst)
+(defun my/relaunch-amethyst () (interactive)
+       (⌘-quit "amethyst")
+       (⌘-open "amethyst"))
+#+end_src
+
+We use the ~osascript~ command to ~tell~ the [[https://en.wikibooks.org/wiki/AppleScript_Programming/System_Events][System Events]] ~application~ to issue
+keystrokes to other applications. I found out about by Googling “How to send
+keystrokes from terminal”.
+
+#+begin_src emacs-lisp
+(defun amethyst/cycle-layout ()
+  (interactive)
+  (shell-command "osascript -e 'tell application \"System Events\" to keystroke space using {shift down, option down}'"))
+
+(bind-key "s-a c" #'amethyst/cycle-layout)
+#+end_src
+
+If you get:
+#+begin_src shell
+36:51: execution error: System Events got an error: osascript is not allowed to send keystrokes. (1002)
+#+end_src
+
+Then: Go to Security & Privacy -> Privacy tab -> Accessibility -> Add osascript (/usr/bin/osascript)
+
+You may need to restart Emacs.
+
+Reads:
++ [[https://eastmanreference.com/complete-list-of-applescript-key-codes][Complete list of AppleScript key codes]]
++ [[https://eastmanreference.com/how-to-automate-your-keyboard-in-mac-os-x-with-applescript][How to automate your keyboard in Mac OS X with AppleScript]]
+#+end_details
+
+I enter “⌘” using a TeX input method setup below (called “Agda”).
+
 ** Syncing to the System's =$PATH=
 :PROPERTIES:
 :CUSTOM_ID: Syncing-to-the-System's-PATH
@@ -2191,10 +2240,10 @@ otherwise yields ‘cloned-repo’.
 
 LOCAL is optional and defaults to the base name; e.g.,
 if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
+  (add-to-list 'magit-repository-directories `(,local . 0))
   (if (file-directory-p local)
       'repo-already-exists
     (async-shell-command (concat "git clone " remote " " local))
-    ; (add-to-list 'magit-repository-directories `(,local   . 0))
     'cloned-repo))
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
@@ -2246,11 +2295,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/anderj12.git" "~/3ea3/jacob")
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/3EA3.git" "~/3ea3/_2018")
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/2DM3/LectureNotes.git" "~/2dm3")
-
-;; Likely want to put a hook when closing emacs, or at some given time,
-;; to show me this buffer so that I can ‘push’ if I haven't already!
-;
-; (magit-list-repositories)
 #+end_src
 #+end_details
 
@@ -2258,6 +2302,16 @@ This doc:maybe-clone utility has genuinely
 made it easier for me to learn about new projects and codebases from Github:
 I type it in with the repo's address, then kbd:C-x_C-e ---doc:eval-last-sexp---
 and then I can view it in my beloved Emacs ~(─‿‿─)~.
+
+Moreover, this handy tool makes it so that you can
+list your Git repositories with doc:magit-list-repositories:
+It marks modified repos as “red:dirty”.
+
+It may be useful to know that ~(magit-anything-modified-p t file)~ can be used to
+check if ~file~ has been modified (doc:magit-anything-modified-p), whereas
+~(magit-status repo)~ checks the status of a repository (doc:magit-status).
+# (magit-anything-modified-p t "~/ElispCheatSheet/CheatSheet.org")
+# (magit-status "~/ElispCheatSheet")
 
 *** Gotta love that time machine
 :PROPERTIES:
@@ -2491,12 +2545,18 @@ previous, next, or toggle editing org-mode source blocks.
   :bind (:map org-mode-map
               ("s-p" . org-babel-previous-src-block)
               ("s-n" . org-babel-next-src-block)
-              ("s-e" . org-edit-src-code)
+              ("s-e" . org-edit-special)
          :map org-src-mode-map
               ("s-e" . org-edit-src-exit)))
 #+end_src
 
 #                       Interestingly, ~s-l~ is “goto line”.
+
+Note that we could have bound kbd:⌘+e to doc:org-edit-src-code /
+doc:org-edit-src-exit, but instead chose the more general doc:org-edit-special
+since, well, look at the tooltip documentation: This allows us to use kbd:⌘+e to
+‘e’dit all kinds of Org entities ---including footnotes and export blocks.  (
+Footnotes can be quickly produced with doc:org-footnote-new. )
 
 *** Modifying [[kbd:⟨return⟩]]
 :PROPERTIES:
@@ -5322,21 +5382,20 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 
 #+BEGIN_SRC emacs-lisp
 ;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light))
+(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
 (setcdr (last my/themes) my/themes)
 #+END_SRC
 
 kbd:C-c_t to toggle between the personal themes.
 #+BEGIN_SRC emacs-lisp
-(cl-defun my/disable-all-themes (&key (new-theme (pop my/themes)))
+(cl-defun my/disable-all-themes (&optional (new-theme (pop my/themes)))
   "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
 
 When a universal prefix is given, “C-u C-c t”, we load a random
 theme from all possible themes.  Nice way to learn about more
 themes (•̀ᴗ•́)و"
   (interactive)
-  (dolist (τ custom-enabled-themes)
-    (disable-theme τ))
+  (mapc #'disable-theme custom-enabled-themes)
   (-let [theme (if current-prefix-arg
                    (nth (random (length (custom-available-themes)))
                         (custom-available-themes))
@@ -5345,11 +5404,14 @@ themes (•̀ᴗ•́)و"
       (load-theme theme)
       (message "Theme %s" theme))))
 
-(defalias 'my/toggle-theme #' my/disable-all-themes)
 
+(defalias 'my/toggle-theme #' my/disable-all-themes)
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-(my/toggle-theme)
+
+;; (my/toggle-theme)
+(use-package solarized-theme)
+(my/toggle-theme 'solarized-gruvbox-light)
 #+END_SRC
 
 Apparently, there's already a package that accomplishes these goals and more:
@@ -5361,8 +5423,9 @@ want.
 for fonts 😁
 #+end_details
 
-Likewise, kbd:C-c_f, doc:my/toggle-font, to quickly change fonts (according to
-mood 😸).
+Likewise, kbd:C-c_F, doc:my/toggle-font, to quickly change fonts (according to
+mood 😸). [I already use kbd:C-c_f, doc:my/org-mode-format, for the more likely
+operation of formatting text.]
 #+begin_details “my/toggle-font” Implementation
 
 #+begin_src emacs-lisp
@@ -5377,6 +5440,7 @@ mood 😸).
         "Courier Light 12"
         "Noteworthy 9"
         "Savoye LET 14"
+        "Fantasque Sans Mono 16"
         ))
 (setcdr (last my/fonts) my/fonts)
 
@@ -5389,7 +5453,7 @@ mood 😸).
 (system-packages-ensure "font-mononoki")
 (system-packages-ensure "font-monoid")
 (system-packages-ensure "font-menlo-for-powerline")
-
+(system-packages-ensure "font-fantasque-sans-mono")
 
 ;; Use “M-x set-face-font RET default RET”, or...
 ;; (set-face-font 'default "Source Code Pro Light14")
@@ -5400,7 +5464,7 @@ mood 😸).
 (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
   "Load NEW-FONT, which defaults from ‘my/fonts’.
 
-When a universal prefix is given, “C-u C-c f”, we load a random
+When a universal prefix is given, “C-u C-c F”, we load a random
 font from all possible themes.  Nice way to learn about more
 fonts (•̀ᴗ•́)و"
   (interactive)
@@ -5411,15 +5475,23 @@ fonts (•̀ᴗ•́)و"
     (set-face-font 'default font)
     (message "Font: %s" font)))
 
-(global-set-key "\C-c\ f" 'my/toggle-font)
+(global-set-key "\C-c\ F" 'my/toggle-font)
 
-(my/toggle-font)
+;; Default font; the “ignore-⋯” is for users who may not have the font.
+(ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
+(ignore-errors (my/toggle-font "Source Code Pro Light 14"))
 #+end_src
 
 #+end_details
 
 In any Org file, type ~elisp:menu-set-font~; then you can click on this link to
 get a nice font selection menu ---this can be useful for your own ‘personal startup buffer’.
+
+# Finally, for fun, let's colour all source blocks, in Org mode, by the background colour pink.
+# (set-face-attribute 'org-block nil :background "pink")
+# MA: This does not work well with dark themes; should use a theme-based setting.
+
+#+end_src
 ** A sleek & informative mode line
 :PROPERTIES:
 :CUSTOM_ID: A-sleek-informative-mode-line
@@ -6050,6 +6122,18 @@ wont use Org's ---Agda's gives me a tiny menu narrowing possibilities as I type.
 
 --------------------------------------------------------------------------------
 
+Automatically display emphasis markers and links when the cursor is on them.
+(c.f. ~fragtog~ below)
+#+begin_src emacs-lisp
+(use-package org-appear
+  :hook (org-mode . org-appear-mode)
+  :init (setq org-appear-autoemphasis  t
+              org-appear-autolinks t
+              org-appear-autosubmarkers t))
+#+end_src
+
+--------------------------------------------------------------------------------
+
 The following is now disabled (yet again, as of Dec/31/2020) ---it makes my system slower than I'd like.
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; Show inline images when loading a new Org file.
@@ -6165,14 +6249,50 @@ Emacs can be setup with a spellchecker and other expected features of a word pro
 ---however these features apply Emacs-wide since nearly everything is
 essentially text (•̀ᴗ•́)و
 
+- Org-mode is a writer's best friend; it's large enough to deserve its own sections.
+
+
+** Whitespace
 Let's start off by cleaning-up any accidental trailing whitespace and in other
 places upon save.
 #+begin_src emacs-lisp
 (add-hook 'before-save-hook 'whitespace-cleanup)
 #+end_src
 
-- Org-mode is a writer's best friend; it's large enough to deserve its own sections.
-- See [[http://ergoemacs.org/emacs/whitespace-mode.html][here]] for making whitespace visible; including spaces, tabs, and newlines
+See [[http://ergoemacs.org/emacs/whitespace-mode.html][here]] for making whitespace visible; including spaces, tabs, and newlines
+
+** Formatting Text
+
+The following incantation, doc:my/org-mode-format, makes it so that we can
+select some text then press kbd:C-c_f (to get a list of possible character
+completions) then press the symbol we want our text to be surrounded with.
+
+#+begin_details
+#+begin_src emacs-lisp
+(local-set-key (kbd "C-c f") #'my/org-mode-format)
+(defun my/org-mode-format (&optional text)
+"Surround selected region with the given Org emphasises marker.
+
+E.g., if this command is bound to “C-c f” then the sequence
+“C-c f b” would make the currenly selected text be bold.
+Likewise, “C-c f *” would achieve the same goal.
+
+When you press “C-c f”, a message is shown with a list of
+useful single-character completions.
+
+Note: “C-c f 𝓍”, for an unrecognised marker 𝓍, just inserts
+the character 𝓍 before and after the selected text."
+  (interactive "P") ;; Works on a region
+  ; (message "b,* ⟨Bold⟩; i,/ ⟨Italics⟩; u,_ ⟨Underline⟩; c,~ ⟨Monotype⟩")
+  (message "⟨Bold b,*⟩ ⟨Italics i,/⟩ ⟨Underline u,_⟩ ⟨Monotype c,~⟩")
+  (let ((kind (read-char)))
+    ;; Map letters to Org formatting symbols
+    (setq kind (or (plist-get '(b ?\*   i ?\/   u ?\_   c ?\~)
+                              (intern (string kind)))
+                   kind))
+    (insert-pair text kind kind)))
+#+end_src
+#+end_details
 
 ** Fill-mode ---Word Wrapping
 :PROPERTIES:
@@ -7817,6 +7937,49 @@ vertical line.
 :CUSTOM_ID: Lost-Souls
 :END:
 
+#+begin_src emacs-lisp
+;; Move to OS’ trash can when deleting stuff
+;; instead of deleting things outright!
+(setq delete-by-moving-to-trash t
+      trash-directory "~/.Trash/")
+
+;; An automatic window-resizing mechanism.
+;; A “calmer” alternative to golden-ratio.
+;; https://github.com/cyrus-and/zoom
+(use-package zoom
+  :diminish
+  :config (zoom-mode t))
+
+;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
+;; https://github.com/bbatsov/projectile
+(use-package projectile
+:config (projectile-global-mode))
+(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+
+;; Let's use an improved buffer list.
+(use-package ibuffer ;; This is built-into Emacs.
+  :bind ("C-x C-b" . ibuffer))
+;; It uses similar commands as does dired; e.g.,
+;; / . org
+;; This filters (“/”) the list with extensions (“.”) being “org”.
+
+(use-package ibuffer-vc
+  :hook (ibuffer . (lambda ()
+                     (ibuffer-vc-set-filter-groups-by-vc-root)
+                     (unless (eq ibuffer-sorting-mode 'alphabetic)
+                       (ibuffer-do-sort-by-alphabetic))))
+  :custom
+  (ibuffer-formats '((mark modified read-only " "
+                           (name 18 18 :left :elide) " "
+                           (size 9 -1 :right) " "
+                           (mode 16 16 :left :elide) " "
+                           (vc-status 16 16 :left) " "
+                           (vc-relative-file)))))
+ #+end_src
++ [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
++ (~10 minute video) [[https://cestlaz.github.io/posts/using-emacs-34-ibuffer-emmet/][Using Emacs - 34 - ibuffer and emmet - C'est la Z]]
++ (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
+
 ** Sleek Semantic Selection
 
 Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
@@ -7828,6 +7991,12 @@ then more to get the current section.
   :diminish
   :bind (("s-r" . #'er/expand-region)))
 #+end_src
+
+You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
+
+That is, /repeated ⌘+r expands the selection to the next logical segment of text:/
+In writing this means “Word, sentence, paragraph”, and in programming this means
+“identifier, then incrementally larger scopes”.
 
 ** Semantic Change
 
@@ -7846,8 +8015,8 @@ list or just its contents, etc.
          ("s-o" . #'change-outer)))
 #+end_src
 
-** Drag Stuff
-#+begin_src emacs-lisp
+** Drag Stuff :Disabled:
+#+begin_src emacs-lisp :tangle no
 ;; Move current word ←/→, or current line ↑/↓.
 ;; Todo: Compare with org-metaup and org-metadown...
 (use-package drag-stuff
@@ -7859,6 +8028,8 @@ list or just its contents, etc.
                 do (bind-key key action org-mode-map))
       (drag-stuff-global-mode 1))
 #+end_src
+
+Ruins Org-mode's M-↑/↓ for moving entire sections around.
 
 ** Indentation Guide
 
@@ -7883,6 +8054,7 @@ The following is also “OK” in Org-mode ;-)
   (system-packages-ensure "node"))
   ;; use “:results output” for js blocks!
   (maybe-clone "https://github.com/alhassy/JavaScriptCheatSheet")
+  (maybe-clone "https://github.com/alhassy/AngularJSCheatSheet")
  #+end_src
 ** Commenting
 
@@ -9509,56 +9681,6 @@ Add the following to a web-page if you'd like it to have a floating table of con
 `(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
 )
  #+END_SRC
-*** to-consider-for-magit-list-repositories
-:PROPERTIES:
-:CUSTOM_ID: to-consider-for-magit-list-repositories
-:END:
-
-The above mechanism suffices, the following needn't be followed with ... unless desired
-
-#+begin_src emacs-lisp :tangle no
-(add-to-list 'magit-repository-directories '("~/dotfiles"          . 0))
-(add-to-list 'magit-repository-directories '("~/alhassy.github.io" . 0))
-(add-to-list 'magit-repository-directories '("~/MyUnicodeSymbols"  . 0))
-(add-to-list 'magit-repository-directories '("~/CheatSheet"        . 0))
-(add-to-list 'magit-repository-directories '("~/ElispCheatSheet"   . 0))
-
-;; Likely want to put a hook when closing emacs, or at some given time,
-;; to show me this buffer so that I can ‘push’ if I haven't already!
-;
-; (magit-list-repositories)
-
-(progn (eshell-command "echo change-here >> ~/ElispCheatSheet/CheatSheet.org")
-       (magit-anything-modified-p t "~/ElispCheatSheet")
-       (magit-status "~/ElispCheatSheet/CheatSheet.org")
-)
-
-(dolist (file (directory-files "~/ElispCheatSheet") nil)
-     (magit-refresh)
-     (when (magit-anything-modified-p t file)
-       (message-box (format "%s" file)) )
-)
-
-(describe-symbol 'magit-list-repositories)
-
-(magit-repo-list-mode
-
-(catch 'break
-  (dolist (repo magit-repository-directories nil)
-
-  )))
-
-(defun tangle-commit-load ()
-  (interactive)
-  (save-excursion
-    (widen)
-    (save-buffer)
-    (org-babel-tangle)
-    (magit-stage-modified)
-    (magit-commit-create)
-    (load-file user-init-file)
-    (delete-other-windows)))
-#+end_src
 
 *** Programming Language Support                                     :TODO:
 :PROPERTIES:
