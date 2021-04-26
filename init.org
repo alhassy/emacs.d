@@ -6128,8 +6128,8 @@ Automatically display emphasis markers and links when the cursor is on them.
 (use-package org-appear
   :hook (org-mode . org-appear-mode)
   :init (setq org-appear-autoemphasis  t
-              org-appear-autolinks t
-              org-appear-autosubmarkers t))
+              org-appear-autolinks nil
+              org-appear-autosubmarkers nil))
 #+end_src
 
 --------------------------------------------------------------------------------
@@ -7316,7 +7316,7 @@ resulting in a link to the headline itself.
         "Format a headline with a link to itself."
         (let* ((headline (get-text-property 0 :parent text))
                (id (or (org-element-property :CUSTOM_ID headline)
-                       (org-export-get-reference headline info)
+                       (ignore-errors (org-export-get-reference headline info))
                        (org-element-property :ID headline)))
                (link (if id
                          (format "<a href=\"#%s\">%s</a>" id text)

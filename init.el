@@ -64,7 +64,7 @@
 (use-package diminish
   :defer 5
   :config ;; Let's hide some markers.
-    (diminish org-indent-mode))
+    )
 ;; Emacs Package Manager:6 ends here
 
 ;; [[file:init.org::*Emacs Package Manager][Emacs Package Manager:7]]
@@ -96,13 +96,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -171,7 +171,6 @@
  "Open application APP; e.g., “amethyst” or “Safari”"
   (async-shell-command (format "osascript -e 'launch app \"%s\"'" app)))
 
-(bind-key "s-a r" #'my/relaunch-amethyst)
 (defun my/relaunch-amethyst () (interactive)
        (⌘-quit "amethyst")
        (⌘-open "amethyst"))
@@ -182,7 +181,6 @@
   (interactive)
   (shell-command "osascript -e 'tell application \"System Events\" to keystroke space using {shift down, option down}'"))
 
-(bind-key "s-a c" #'amethyst/cycle-layout)
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:6 ends here
 
 ;; [[file:init.org::*Syncing to the System's =$PATH=][Syncing to the System's =$PATH=:1]]
@@ -2348,7 +2346,7 @@ E.g., ↯ We'll go on a ∀∃⇅ adventure
         "Format a headline with a link to itself."
         (let* ((headline (get-text-property 0 :parent text))
                (id (or (org-element-property :CUSTOM_ID headline)
-                       (org-export-get-reference headline info)
+                       (ignore-errors (org-export-get-reference headline info))
                        (org-element-property :ID headline)))
                (link (if id
                          (format "<a href=\"#%s\">%s</a>" id text)
