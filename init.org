@@ -5436,7 +5436,7 @@ operation of formatting text.]
         "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
         "Papyrus 14"
         "Bradley Hand Light 12"
-        "Chalkduster 14" ;; Laggy?
+        ;; "Chalkduster 14" ;; Laggy!
         "Courier Light 12"
         "Noteworthy 9"
         "Savoye LET 14"

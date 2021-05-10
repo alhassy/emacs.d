@@ -1512,7 +1512,7 @@ themes (•̀ᴗ•́)و"
         "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
         "Papyrus 14"
         "Bradley Hand Light 12"
-        "Chalkduster 14" ;; Laggy?
+        ;; "Chalkduster 14" ;; Laggy!
         "Courier Light 12"
         "Noteworthy 9"
         "Savoye LET 14"
@@ -2082,7 +2082,7 @@ the character 𝓍 before and after the selected text."
 ;; Some text to make us smile:1 ends here
 
 ;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:1]]
-; (load (shell-command-to-string "agda-mode locate"))
+ (load (shell-command-to-string "agda-mode locate"))
 ;;
 ;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
 ; (makunbound 'agda2-include-dirs)
@@ -2348,7 +2348,7 @@ E.g., ↯ We'll go on a ∀∃⇅ adventure
                (id (or (org-element-property :CUSTOM_ID headline)
                        (ignore-errors (org-export-get-reference headline info))
                        (org-element-property :ID headline)))
-               (link (if id
+               (link (if nil ; id
                          (format "<a href=\"#%s\">%s</a>" id text)
                        text)))
           (org-html-format-headline-default-function todo todo-type priority link tags info))))
