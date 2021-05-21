@@ -1273,6 +1273,20 @@ window manager for macOS along the lines of xmonad.”
 ;; If the given system package doesn't exist; install it.
 (when (eq system-type 'darwin)
   (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
+
+(system-packages-ensure "google-chrome") ;; My choice of web browser
+(system-packages-ensure "microsoft-teams") ;; For remote work meetings
+;; Pack, ship and run any application as a lightweight container
+(system-packages-ensure "docker")
+;; Free universal database tool and SQL client
+(system-packages-ensure "dbeaver-community")
+;; Kubernetes IDE
+(system-packages-ensure "lens")
+;; Platform built on V8 to build network applications
+;; Also known as: node.js, node@16, nodejs, npm
+(system-packages-ensure "node") ;; https://nodejs.org/
+;; Manage multiple Node.js versions
+(system-packages-ensure "nvm") ;; https://github.com/nvm-sh/nvm
 #+END_SRC
 # +BEGIN_SRC emacs-lisp :tangle no
 # ;; Use “brew cask install” instead of “brew install” for installing programs.

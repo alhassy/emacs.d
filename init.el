@@ -64,7 +64,7 @@
 (use-package diminish
   :defer 5
   :config ;; Let's hide some markers.
-    )
+    (diminish org-indent-mode))
 ;; Emacs Package Manager:6 ends here
 
 ;; [[file:init.org::*Emacs Package Manager][Emacs Package Manager:7]]
@@ -96,13 +96,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -160,6 +160,20 @@
 ;; If the given system package doesn't exist; install it.
 (when (eq system-type 'darwin)
   (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
+
+(system-packages-ensure "google-chrome") ;; My choice of web browser
+(system-packages-ensure "microsoft-teams") ;; For remote work meetings
+;; Pack, ship and run any application as a lightweight container
+(system-packages-ensure "docker")
+;; Free universal database tool and SQL client
+(system-packages-ensure "dbeaver-community")
+;; Kubernetes IDE
+(system-packages-ensure "lens")
+;; Platform built on V8 to build network applications
+;; Also known as: node.js, node@16, nodejs, npm
+(system-packages-ensure "node") ;; https://nodejs.org/
+;; Manage multiple Node.js versions
+(system-packages-ensure "nvm") ;; https://github.com/nvm-sh/nvm
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
 
 ;; [[file:init.org::*Installing OS packages, and automatically keeping my system up to data, from within Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:5]]
@@ -171,6 +185,7 @@
  "Open application APP; e.g., “amethyst” or “Safari”"
   (async-shell-command (format "osascript -e 'launch app \"%s\"'" app)))
 
+(bind-key "s-a r" #'my/relaunch-amethyst)
 (defun my/relaunch-amethyst () (interactive)
        (⌘-quit "amethyst")
        (⌘-open "amethyst"))
@@ -181,6 +196,7 @@
   (interactive)
   (shell-command "osascript -e 'tell application \"System Events\" to keystroke space using {shift down, option down}'"))
 
+(bind-key "s-a c" #'amethyst/cycle-layout)
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:6 ends here
 
 ;; [[file:init.org::*Syncing to the System's =$PATH=][Syncing to the System's =$PATH=:1]]
@@ -1858,8 +1874,8 @@ fonts (•̀ᴗ•́)و"
 (use-package org-appear
   :hook (org-mode . org-appear-mode)
   :init (setq org-appear-autoemphasis  t
-              org-appear-autolinks t
-              org-appear-autosubmarkers t))
+              org-appear-autolinks nil
+              org-appear-autosubmarkers nil))
 ;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:2 ends here
 
 ;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:4]]
@@ -2082,7 +2098,7 @@ the character 𝓍 before and after the selected text."
 ;; Some text to make us smile:1 ends here
 
 ;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:1]]
- (load (shell-command-to-string "agda-mode locate"))
+; (load (shell-command-to-string "agda-mode locate"))
 ;;
 ;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
 ; (makunbound 'agda2-include-dirs)
