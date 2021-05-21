@@ -2272,41 +2272,35 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (maybe-clone "https://github.com/alhassy/org-special-block-extras")
 
 
-(maybe-clone "https://github.com/alhassy/next-700-module-systems-proposal.git" "~/thesis-proposal")
-(maybe-clone "https://github.com/JacquesCarette/MathScheme")
-(maybe-clone "https://github.com/alhassy/gentle-intro-to-reflection" "~/reflection/")
-(maybe-clone "https://github.com/alhassy/org-agda-mode")
-(maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
+;; (maybe-clone "https://github.com/alhassy/next-700-module-systems-proposal.git" "~/thesis-proposal")
+;; (maybe-clone "https://github.com/JacquesCarette/MathScheme")
+;; (maybe-clone "https://github.com/alhassy/gentle-intro-to-reflection" "~/reflection/")
+;; (maybe-clone "https://github.com/alhassy/org-agda-mode")
+;; (maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/RATH/RATH-Agda"     "~/RATH-Agda")
 ;; (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols") ;; Deleted?
-
 
 (maybe-clone "https://github.com/alhassy/islam")
 (maybe-clone "https://github.com/alhassy/CheatSheet")
 (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
-(maybe-clone "https://github.com/alhassy/CatsCheatSheet")
-(maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
-(maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
 (maybe-clone "https://github.com/alhassy/RubyCheatSheet")
-(maybe-clone "https://github.com/alhassy/PrologCheatSheet")
-(maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/PrologCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
 
 
-(maybe-clone "https://gitlab.cas.mcmaster.ca/schaapal/metaocaml-kwic.git" "~/alex") ;; metaprogramming, ocaml, phd
-(maybe-clone "https://gitlab.cas.mcmaster.ca/MathScheme/TheoryPresentations.git" "~/yasmine") ;; theory presentations, scala, phd
-(maybe-clone "https://gitlab.cas.mcmaster.ca/MathScheme/Differentiating-Programs.git" "~/noel") ;; calculus for datatypes, phd
-
-
-(maybe-clone "https://gitlab.cas.mcmaster.ca/armstmp/cs3mi3.git" "~/3mi3")
-(maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/CAS781" "~/cas781") ;; cat adventures
-(maybe-clone "https://gitlab.cas.mcmaster.ca/carette/cs3fp3.git" "~/3fp3")
-(maybe-clone "https://github.com/alhassy/interactive-way-to-c")
-(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-distribution.git" "~/3ea3/assignment-distribution")
-(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/notes.git" "~/3ea3/notes")
-(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-development.git" "~/3ea3/assignment-development")
-(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/kandeeps.git" "~/3ea3/sujan")
-(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/horsmane.git" "~/3ea3/emily")
-(maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/anderj12.git" "~/3ea3/jacob")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/armstmp/cs3mi3.git" "~/3mi3")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/CAS781" "~/cas781") ;; cat adventures
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/carette/cs3fp3.git" "~/3fp3")
+;; (maybe-clone "https://github.com/alhassy/interactive-way-to-c")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-distribution.git" "~/3ea3/assignment-distribution")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/notes.git" "~/3ea3/notes")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-development.git" "~/3ea3/assignment-development")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/kandeeps.git" "~/3ea3/sujan")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/horsmane.git" "~/3ea3/emily")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/anderj12.git" "~/3ea3/jacob")
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/3EA3.git" "~/3ea3/_2018")
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/2DM3/LectureNotes.git" "~/2dm3")
 #+end_src
