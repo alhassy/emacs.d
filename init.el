@@ -98,13 +98,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -2976,6 +2976,38 @@ window contains the buffer with the cursour in it."
   (goto-line line))
 ;; Jumping without hassle:1 ends here
 
-# [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:7]]
-36:51: execution error: System Events got an error: osascript is not allowed to send keystrokes. (1002)
-# Installing OS packages, and automatically keeping my system up to data, from within Emacs:7 ends here
+;; Project management & navigation
+;;
+;; Version controlled repositories are considered “projects” ---no setup
+;; needed---, but you can declare your own too.
+;;
+;; Videos:
+;; ~5mins: https://youtu.be/bFS0V_4YfhY
+;; ~1hr:  https://www.youtube.com/watch?v=INTu30BHZGk
+;;
+;; This is so sweet at work (and possibly at home!): From anywhere,
+;; C-x p p ⟨select your project⟩ RET ⟨start typing to see any file anywhere in the project⟩
+;;
+;; C-x p b ⇒ Switch to buffers only in the current “stream of thought” (project).
+;; C-x p f ⇒ Find files only in the current “stream of thought” (project).
+;; C-x p s g ⇒ Search the project using grep; TAB in the resulting buffer to open files.
+;; C-x p S ⇒ Save all project buffers
+;; C-x p k ⇒ Kill all buffers relating to the parent project
+;;
+;; C-x p & ⇒ Runs an async-shell-command in the project's root directory
+;; C-x p x s ⇒ Start or visit a shell for the project
+;; C-x p r ⇒ Runs interactive query-replace on all files in the projects
+;; C-x p e ⇒ Show a list of recently visited files, in the current project
+;; C-x p V ⇒ Open a project that has been modified, but not pushed with version control.
+;;
+;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
+(use-package projectile
+  :config
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
+  (define-key projectile-mode-map (kbd "C-x p s")
+    ;; I prefer helm-do-grep-ag since it shows me a live search
+    (lambda () (interactive)
+       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
+         ;; (shell-command-to-string "echo $PWD")
+         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch

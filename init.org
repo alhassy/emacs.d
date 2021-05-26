@@ -1342,7 +1342,7 @@ keystrokes from terminal”.
 #+end_src
 
 If you get:
-#+begin_src shell
+#+begin_src shell :tangle no
 36:51: execution error: System Events got an error: osascript is not allowed to send keystrokes. (1002)
 #+end_src
 
@@ -7607,6 +7607,45 @@ doc:org-web-tools-convert-links-to-page-entries.
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
 
+** Project management & navigation
+
+Version controlled repositories are considered “projects” ---no setup needed---,
+but you can declare your own too.
+
+Videos:
++ ~5mins: https://youtu.be/bFS0V_4YfhY
++ ~1hr:  https://www.youtube.com/watch?v=INTu30BHZGk
+
+This is so sweet at work (and possibly at home!): From anywhere,
++ [[kbd:C-x p p]] ⟨select your project⟩ RET ⟨start typing to see any file anywhere in the project⟩
+
++ [[kbd:C-x p b ]] ⇒ Switch to buffers only in the current “stream of thought” (project).
++ [[kbd:C-x p f ]] ⇒ Find files only in the current “stream of thought” (project).
++ [[kbd:C-x p s g ]] ⇒ Search the project using grep; TAB in the resulting buffer to
+  open files.
++ [[kbd:C-x p S ]] ⇒ Save all project buffers
++ [[kbd:C-x p k ]] ⇒ Kill all buffers relating to the parent project
+
++ [[kbd:C-x p & ]] ⇒ Runs an async-shell-command in the project's root directory
++ [[kbd:C-x p x s ]] ⇒ Start or visit a shell for the project
++ [[kbd:C-x p r ]] ⇒ Runs interactive query-replace on all files in the projects
++ [[kbd:C-x p e ]] ⇒ Show a list of recently visited files, in the current project
++ [[kbd:C-x p V ]] ⇒ Open a project that has been modified, but not pushed with version control.
+
+#+begin_src emacs-lisp
+;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
+(use-package projectile
+  :config
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
+  (define-key projectile-mode-map (kbd "C-x p s")
+    ;; I prefer helm-do-grep-ag since it shows me a live search
+    (lambda () (interactive)
+       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
+         ;; (shell-command-to-string "echo $PWD")
+         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
+#+end_src
+
 ** Which function are we writing?
 :PROPERTIES:
 :CUSTOM_ID: Which-function-are-we-writing
@@ -7841,7 +7880,6 @@ Here are further reads:
     + /Ideally, the smaller the lexical difference, the greater the color difference should be./
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
-
 
 ** Text Folding with Origami-mode :Disabled:
 :PROPERTIES:
