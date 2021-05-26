@@ -2089,6 +2089,10 @@ Let's setup an Emacs ‘porcelain’ interface to git ---it makes working with
 version control tremendously convenient.
 # Moreover, I add a little pop-up so that I don't forget to commit often!
 
+(Personal reminder: If using 2FA [two factor authentication], then when you do
+git operations, such as ~git push~, [[https://webkul.com/blog/github-push-with-two-factor-authentication/][you must use your PAT]] [personal access token]
+/instead/ of your password!)
+
 #+BEGIN_SRC emacs-lisp
 ;; Bottom of Emacs will show what branch you're on
 ;; and whether the local file is modified or not.
