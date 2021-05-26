@@ -181,9 +181,13 @@ Amethyst requires some more setup: Open its preferences, then...
       since they override the beloved Emacs =M-<,>= keys.
 
 
-For convenience, on a Mac, add the home (=~/=) directory to the
-default file navigator: Finder -> Preferences > Sidebar, then select
-home.
+For convenience, on a Mac, add the home (=~/=) directory to the default file
+navigator: Finder → Preferences → Sidebar, then select home 🏠.
+
+If you notice any “file system access” concerns, give Emacs permissions to read
+your files: General Settings → Security & Privacy → Full Disk Access → ~⌘-M-g~ (to
+search) then enter =/usr/bin/ruby= ---Emacs is launched via a Ruby script in
+MacOS.
 #+end_details
 
 * Why Emacs?
@@ -994,7 +998,9 @@ repositories of developers rather than having all packages in one repository.
                          ("gnu"       . "http://elpa.gnu.org/packages/")
                          ("melpa"     . "http://melpa.org/packages/")))
 
-;; Update local list of available packages
+;; Update local list of available packages:
+;; Get descriptions of all configured ELPA packages,
+;; and make them available for download.
 (package-refresh-contents)
 #+END_SRC
 
@@ -1122,7 +1128,7 @@ Here are other packages that I want to be installed onto my machine.
 
 ;; Let's use the “s” library.
 (defvar my/personal-machine?
-  (not (s-contains? "weever" (shell-command-to-string "uname -a")))
+  (not (s-contains? "MacBook-Pro" (shell-command-to-string "uname -a")))
   "Is this my personal machine, or my work machine?")
 
 (ignore-errors (load-file "~/Desktop/work_secrets.el"))
@@ -1274,7 +1280,7 @@ window manager for macOS along the lines of xmonad.”
 (when (eq system-type 'darwin)
   (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
 
-(system-packages-ensure "google-chrome") ;; My choice of web browser
+(ignore-errors (system-packages-ensure "google-chrome")) ;; My choice of web browser
 (system-packages-ensure "microsoft-teams") ;; For remote work meetings
 ;; Pack, ship and run any application as a lightweight container
 (system-packages-ensure "docker")
@@ -1318,7 +1324,7 @@ interface, so let's make one in Emacs: Now kbd:⌘-a_r relaunches Amethyst.
  "Open application APP; e.g., “amethyst” or “Safari”"
   (async-shell-command (format "osascript -e 'launch app \"%s\"'" app)))
 
-(bind-key "s-a r" #'my/relaunch-amethyst)
+;; (bind-key "???-a r" #'my/relaunch-amethyst)
 (defun my/relaunch-amethyst () (interactive)
        (⌘-quit "amethyst")
        (⌘-open "amethyst"))
@@ -1329,11 +1335,10 @@ keystrokes to other applications. I found out about by Googling “How to send
 keystrokes from terminal”.
 
 #+begin_src emacs-lisp
+;; (bind-key "???-a c" #'amethyst/cycle-layout)
 (defun amethyst/cycle-layout ()
   (interactive)
   (shell-command "osascript -e 'tell application \"System Events\" to keystroke space using {shift down, option down}'"))
-
-(bind-key "s-a c" #'amethyst/cycle-layout)
 #+end_src
 
 If you get:
@@ -2212,14 +2217,18 @@ First, let's setup our git credentials.
 #+BEGIN_SRC emacs-lisp
 ;; See here for a short & useful tutorial:
 ;; https://alvinalexander.com/git/git-show-change-username-email-address
-(when (equal "" (shell-command-to-string "git config user.name"))
-  (shell-command "git config --global user.name \"Musa Al-hassy\"")
-  (shell-command "git config --global user.email \"alhassy@gmail.com\""))
+(when (equal "" (shell-command-to-string "git config user.email "))
+  (shell-command (format "git config --global user.name \"%s\"" user-full-name))
+  (shell-command (format "git config --global user.email \"%s\"" user-mail-address)))
 
 ;; Also need to customise email routes per organization
 ;; https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/configuring-notifications#customizing-email-routes-per-organization
 (unless my/personal-machine?
   (shell-command "git config --global user.email \"musa@weeverapps.com\""))
+
+;; If we ever need to use Git in the terminal, it should be done with Emacs as
+;; the underlying editor
+(shell-command "git config --global core.editor emacs")
 #+END_SRC
 
 *** Encouraging useful commit messages
@@ -4043,7 +4052,7 @@ are for more urgent tasks.
 Priority markers are of the form ~[#𝒳]~, the [[https://github.com/harrybournis/org-fancy-priorities][fancy priorities]] package visually
 renders them as words or icons.
 #+begin_src emacs-lisp
-(use-package org-fancy-priorities-mode
+(use-package org-fancy-priorities
   :diminish org-fancy-priorities-mode
   :hook   (org-mode . org-fancy-priorities-mode)
   :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
@@ -5454,6 +5463,8 @@ operation of formatting text.]
 
 ;; Let's ensure they're on our system
 ;; brew search "/font-/"   # List all fonts
+(shell-command "brew tap homebrew/cask-fonts")
+(system-packages-ensure "svn") ;; Required for the following font installs
 (system-packages-ensure "font-roboto-mono")
 (system-packages-ensure "font-input")
 (system-packages-ensure "font-source-code-pro")
