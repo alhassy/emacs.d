@@ -66,6 +66,7 @@
 (use-package diminish
   :defer 5
   :config ;; Let's hide some markers.
+    (require 'org-indent)
     (diminish org-indent-mode))
 ;; Emacs Package Manager:6 ends here
 
@@ -118,8 +119,9 @@
   (quelpa
    '(quelpa-use-package
      :fetcher git
-     :url "https://github.com/quelpa/quelpa-use-package.git"))
-  (require 'quelpa-use-package))
+     :url "https://github.com/quelpa/quelpa-use-package.git")))
+
+  (require 'quelpa-use-package)
 ;; Emacs Package Manager:10 ends here
 
 ;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:1]]
@@ -570,6 +572,7 @@ otherwise yields ‘cloned-repo’.
 
 LOCAL is optional and defaults to the base name; e.g.,
 if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
+  (require 'magit-repos)
   (add-to-list 'magit-repository-directories `(,local . 0))
   (if (file-directory-p local)
       'repo-already-exists
@@ -2344,12 +2347,14 @@ E.g., ↯ We'll go on a ∀∃⇅ adventure
                (s-chop-prefix "-")
                (s-chop-suffix "-")
                (setq id))
-             (if (not (member id ids))
+             (if nil ; (not (member id ids))
                  (push id ids)
                (message-box "Oh no, a repeated id!\n\n\t%s" id)
                (undo)
                (setq quit-flag t))
              (org-entry-put nil "CUSTOM_ID" id))))))))
+
+(defun my/ensure-headline-ids (&rest _) ) ;; for How-Do-I.org
 
 ;; Whenever html & md export happens, ensure we have headline ids.
 (advice-add 'org-html-export-to-html   :before 'my/ensure-headline-ids)
@@ -3011,3 +3016,47 @@ window contains the buffer with the cursour in it."
        (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
          ;; (shell-command-to-string "echo $PWD")
          (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
+
+
+(use-package lsp-mode
+  :init
+  ;; Set prefix for lsp commands
+  ;; (setq lsp-keymap-prefix "s-l") ;; default
+  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
+  ;; (setq lsp-idle-delay 0.500) ;; default
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (prog-mode . lsp-mode) ;; Enter LSP mode
+         (prog-mode . lsp)      ;; Start LSP server
+         (lsp-mode . lsp-enable-which-key-integration)
+  :commands lsp)
+
+;; https://emacs-lsp.github.io/lsp-mode/page/languages/
+;; M-x lsp-install-server ⟨return⟩ jsts-ls
+;; M-x lsp-install-server ⟨return⟩ json-ls
+;; M-x lsp-install-server ⟨return⟩ eslint
+;; M-x lsp-install-server ⟨return⟩ css-ls
+;; M-x lsp-install-server ⟨return⟩ html-ls
+
+;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
+;; https://emacs-lsp.github.io/lsp-ui/#intro
+;;
+;; You only have to put (use-package lsp-ui) in your config and the package will
+;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
+(use-package lsp-ui)
+
+;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
+;; call hierarchy, etc.)
+(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
+;; M-x lsp-treemacs-errors-list
+
+;; helm-lsp provides “on type completion” alternative of cross-referencing.
+;; https://github.com/emacs-lsp/helm-lsp
+(use-package helm-lsp)
+(define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
+;; a” (The 'a' stands for apropos, which means appropriate nature)
+
+;; Set the amount of data which Emacs reads from a process.
+;; Some LSP responses are in the 8k-3MB range.
+(setq read-process-output-max (* 1024 1024)) ;; 1mb; [default 4k]
+(setq gc-cons-threshold 100000000) ;; default is: 800 000

@@ -1291,8 +1291,10 @@ window manager for macOS along the lines of xmonad.”
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
 (system-packages-ensure "node") ;; https://nodejs.org/
+;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
-(system-packages-ensure "nvm") ;; https://github.com/nvm-sh/nvm
+(shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
+;; According to https://github.com/nvm-sh/nvm, nvm shouldn't be installed via brew.
 #+END_SRC
 # +BEGIN_SRC emacs-lisp :tangle no
 # ;; Use “brew cask install” instead of “brew install” for installing programs.
@@ -2091,7 +2093,8 @@ version control tremendously convenient.
 
 (Personal reminder: If using 2FA [two factor authentication], then when you do
 git operations, such as ~git push~, [[https://webkul.com/blog/github-push-with-two-factor-authentication/][you must use your PAT]] [personal access token]
-/instead/ of your password!)
+/instead/ of your password! Also: Install [[https://github.com/sindresorhus/refined-github][refined-github: Browser extension that
+simplifies the GitHub interface and adds useful features]]!)
 
 #+BEGIN_SRC emacs-lisp
 ;; Bottom of Emacs will show what branch you're on
@@ -7645,6 +7648,101 @@ This is so sweet at work (and possibly at home!): From anywhere,
          ;; (shell-command-to-string "echo $PWD")
          (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
 #+end_src
+
+** LSP: Making Emacs into a generic full-featured programming IDE
+
+[[https://microsoft.github.io/language-server-protocol/][Language Server Protocol (LSP)]] was created by Microsoft to define a common
+standard for providing editor-agnostic code intelligence support. It has become
+widely popular since its creation. Emacs support for lsp comes with the [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] package.
+
+Essentially how it works is that LSP defines a bunch of useful requests
+---such as code completion, types, etc--- and our editor (Emacs) makes these
+requests to a server (a process that knows how to handle them) then we get the
+results and show them nicely in our editor (Emacs).
+
+Further reading:
++ [[https://emacs-lsp.github.io/lsp-mode/page/main-features/][Main features - LSP Mode - LSP support for Emacs]] ⇒ Reasons (with gifs) to use
+  lsp-mode ;-)
++ [[https://emacsconf.org/2019/talks/19/][How Emacs became my awesome Java editing environment [EmacsConf2019]]]
+  is an excellent ~10min video demoing prime features of LSP.
++ [[https://www.toptal.com/javascript/language-server-protocol-tutorial][Using Text Editors for Programming with LSP | Toptal]]
++ [[https://microsoft.github.io//language-server-protocol/overviews/lsp/overview/][LSP overview]]
++ :flame: [[https://emacs-lsp.github.io/lsp-mode/tutorials/reactjs-tutorial/][React JavaScript Tutorial in Emacs - LSP Mode]] - Nice walkthrough on
+  setting-up LSP for JavaScript (along with ESlint) and trying it out.
+
+*Super simple setup for lsp-mode*: Install lsp-mode with [[kbd:][M-x package-install
+⟨return⟩ lsp-mode]] then open, say, a JavaScript file and press <kbd:M-x lsp>. It
+will ask you to download a server, such as ~jsts-ls~ for “JavaScript-TypeScript
+Language Server”. /[You may need to restart Emacs; when you open a file, LSP
+needs to know what ‘workspace’ it belongs to!]/ Now you can, for example, perform
+<kbd:s-l g r> to see all references of the name under the cursour, or <kbd:s-l g
+d> to go to its definition, or <kbd:s-l g t> to see its type (which already
+shows in the mode line).  In your JS file, write the errenous line ~let a == 1;~
+then with your cursour on that line you'll see some info to the side about the
+error (thanks to doc:lsp-ui-mode) and if you invoke doc:lsp-treemacs-errors-list
+then you get a nice hierarchical, ⟨tab⟩-ful, list of errors.  To find symbol
+names, with autocompletion of all names in your workspace, use <kbd:s-l g a>
+(thanks to ~helm-lsp~), for the current file doc:lsp-ui-imenu (or more simply,
+<kbd:C-c i>) is nice.  As the LSP server runs it can even detect JSON objects
+and show their values in the mode line when the cursour is above them; which can
+also be requested with <kbd:s-l h h>.  (doc:lsp-describe-thing-at-point).  /That
+is all!/
+
+| [[kbd:][s-l g g]] | Find definitions of the symbol under point                         |
+| [[kbd:][s-l g r]] | Find references of the symbol under point                          |
+| [[kbd:][s-l g t]] | Find type definitions of the symbol under point                    |
+| [[kbd:][s-l g a]] | Find all meaningful symbols that match pattern (project wide)      |
+| [[kbd:][s-l h h]] | :fire: Display the type signature and documentation of the thing at point |
+| [[kbd:][s-l h g]] | Trigger display hover information popup and hide it on next typing |
+| [[kbd:][s-l r r]] | Rename the symbol (and all references to it)                       |
+
+#+begin_src emacs-lisp :tangle work_secrets.el
+(use-package lsp-mode
+  :init
+  ;; Set prefix for lsp commands
+  ;; (setq lsp-keymap-prefix "s-l") ;; default
+  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
+  ;; (setq lsp-idle-delay 0.500) ;; default
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (prog-mode . lsp-mode) ;; Enter LSP mode
+         (prog-mode . lsp)      ;; Start LSP server
+         (lsp-mode . lsp-enable-which-key-integration)
+  :commands lsp)
+
+;; https://emacs-lsp.github.io/lsp-mode/page/languages/
+;; M-x lsp-install-server ⟨return⟩ jsts-ls
+;; M-x lsp-install-server ⟨return⟩ json-ls
+;; M-x lsp-install-server ⟨return⟩ eslint
+;; M-x lsp-install-server ⟨return⟩ css-ls
+;; M-x lsp-install-server ⟨return⟩ html-ls
+
+;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
+;; https://emacs-lsp.github.io/lsp-ui/#intro
+;;
+;; You only have to put (use-package lsp-ui) in your config and the package will
+;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
+(use-package lsp-ui)
+
+;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
+;; call hierarchy, etc.)
+(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
+;; M-x lsp-treemacs-errors-list
+
+;; helm-lsp provides “on type completion” alternative of cross-referencing.
+;; https://github.com/emacs-lsp/helm-lsp
+(use-package helm-lsp)
+(define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
+;; a” (The 'a' stands for apropos, which means appropriate nature)
+
+;; Set the amount of data which Emacs reads from a process.
+;; Some LSP responses are in the 8k-3MB range.
+(setq read-process-output-max (* 1024 1024)) ;; 1mb; [default 4k]
+(setq gc-cons-threshold 100000000) ;; default is: 800 000
+#+end_src
+
+:flame: If you leave your cursour on a name, all other occurances are
+highlighted /and/ you get to see its (type) description in the mode line.
 
 ** Which function are we writing?
 :PROPERTIES:
