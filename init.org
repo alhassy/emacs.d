@@ -1266,6 +1266,15 @@ package's description, or ~TAB~ for the other features!
 The Helm counterpart is great for /discovarability/, whereas
 the plain ~system-packages~ is great for /programmability/.
 
+#+begin_src emacs-lisp
+(setq system-packages-noconfirm :do-not-prompt-me-about-confirms)
+
+;; After 1 minute after startup, kill all buffers created by ensuring system
+;; packages are present.
+(run-with-timer 60 nil
+ (lambda () (kill-matching-buffers ".*system-packages.*" t :kill-without-confirmation))))
+#+end_src
+
 It is tedious to arrange my program windows manually, and as such I love tiling
 window managers, which automatically arrange them.  I had been using [[https://xmonad.org][xmonad]]
 until recently when I obtained a Mac machine and now use [[https://ianyh.com/amethyst/][Amethyst]] ---“Tiling
@@ -3236,6 +3245,21 @@ ${1:`(let* ((τ (read-string "Link type: "))
             (⊤ (if (s-contains? ":" τ) τ (s-concat τ ":"))))
        (format "[[%s][%s]]" ⊤ δ))`} $0
 #+END_SRC
+
+*** Work Templates
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** ll_console_log: Log some JS variables
+
+console.log("%c ******* LOOK HERE *******", "color: green; font-weight: bold;");
+console.log({ ${1:List the variables here whose values you want to log} });
+$0
+
+,** uuidgen: Insert the result of “uuidgen” and copy it to the clipboard
+
+${1:`(-let [it (shell-command-to-string "uuidgen | tr '[:upper:]' '[:lower:]' |
+pbcopy; pbpaste")] (message "Copied to clipboard, uuid: %s" it) it)`}
+#+end_src
 
 *** Elisp Templates
 :PROPERTIES:

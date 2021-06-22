@@ -161,6 +161,11 @@
 (when (eq system-type 'darwin)
   (setq system-packages-package-manager 'brew))
 
+
+
+(setq system-packages-noconfirm :do-not-prompt-me-about-confirms)
+
+
 ;; If the given system package doesn't exist; install it.
 (when (eq system-type 'darwin)
   (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
@@ -3058,5 +3063,7 @@ window contains the buffer with the cursour in it."
 
 ;; Set the amount of data which Emacs reads from a process.
 ;; Some LSP responses are in the 8k-3MB range.
-(setq read-process-output-max (* 1024 1024)) ;; 1mb; [default 4k]
-(setq gc-cons-threshold 100000000) ;; default is: 800 000
+
+;; After 1 minute after startup, kill all buffers created by ensuring system packages are present.
+(run-with-timer 60 nil
+  (lambda () (kill-matching-buffers ".*system-packages.*" :ignore-spaces :kill-without-confirmation))))

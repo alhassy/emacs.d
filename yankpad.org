@@ -8,6 +8,11 @@ console.log("%c ******* LOOK HERE *******", "color: orange; font-weight: bold;")
 console.log({ ${1:List the variables here whose values you want to log} });
 $0
 
+** uuidgen: Insert the result of “uuidgen” and copy it to the clipboard
+
+${1:`(-let [it (shell-command-to-string "uuidgen | tr '[:upper:]' '[:lower:]' |
+pbcopy; pbpaste")] (message "Copied to clipboard, uuid: %s" it) it)`}
+
 ** my_org_insert_link: cleverly insert a link copied to clipboard
  [[${1:`(clipboard-yank)`}][$2]] $0
 
