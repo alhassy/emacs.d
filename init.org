@@ -1272,7 +1272,7 @@ the plain ~system-packages~ is great for /programmability/.
 ;; After 1 minute after startup, kill all buffers created by ensuring system
 ;; packages are present.
 (run-with-timer 60 nil
- (lambda () (kill-matching-buffers ".*system-packages.*" t :kill-without-confirmation))))
+ (lambda () (kill-matching-buffers ".*system-packages.*" t :kill-without-confirmation)))
 #+end_src
 
 It is tedious to arrange my program windows manually, and as such I love tiling
@@ -1646,10 +1646,11 @@ their contents ---e.g., such as a heading named ‘preamble’ that contains
 org-mode setup for a file.
 
 #+begin_src emacs-lisp
-(use-package org
-  :ensure org-plus-contrib
-  :config (require 'ox-extra)
-          (ox-extras-activate '(ignore-headlines)))
+  (use-package org
+    :ensure org-plus-contrib
+    :diminish org-indent-mode
+    :config (require 'ox-extra)
+            (ox-extras-activate '(ignore-headlines)))
 #+end_src
 
 ~org-plus-contrib~ contain the files that are included with Emacs plus all
@@ -5430,7 +5431,7 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 
 #+BEGIN_SRC emacs-lisp
 ;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
+(setq my/themes '(doom-laserwave doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
 (setcdr (last my/themes) my/themes)
 #+END_SRC
 
@@ -7677,7 +7678,10 @@ This is so sweet at work (and possibly at home!): From anywhere,
 
 [[https://microsoft.github.io/language-server-protocol/][Language Server Protocol (LSP)]] was created by Microsoft to define a common
 standard for providing editor-agnostic code intelligence support. It has become
-widely popular since its creation. Emacs support for lsp comes with the [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] package.
+widely popular since its creation. Emacs support for lsp comes with the [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]]
+and the [[https://github.com/joaotavora/eglot][eglot]] (‘E’macs poly‘glot’) packages; let's use the first one since it
+comes with all features enabled by default (which increases discoverability).
+[ See also: [[https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/][A guide on disabling/enabling lsp-mode features - LSP Mode - LSP support for Emacs]]. ]
 
 Essentially how it works is that LSP defines a bunch of useful requests
 ---such as code completion, types, etc--- and our editor (Emacs) makes these
@@ -7731,6 +7735,8 @@ is all!/
          (prog-mode . lsp-mode) ;; Enter LSP mode
          (prog-mode . lsp)      ;; Start LSP server
          (lsp-mode . lsp-enable-which-key-integration)
+  ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
+  :bind ("C-x y" . #'yankpad-insert)
   :commands lsp)
 
 ;; https://emacs-lsp.github.io/lsp-mode/page/languages/
@@ -7761,12 +7767,22 @@ is all!/
 
 ;; Set the amount of data which Emacs reads from a process.
 ;; Some LSP responses are in the 8k-3MB range.
-(setq read-process-output-max (* 1024 1024)) ;; 1mb; [default 4k]
-(setq gc-cons-threshold 100000000) ;; default is: 800 000
+;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
+(setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
+(setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
+;; A large gc-cons-threshold will cause freezing and stuttering during long-term
+;; interactive use. This one seems to be a good default.
 #+end_src
 
 :flame: If you leave your cursour on a name, all other occurances are
 highlighted /and/ you get to see its (type) description in the mode line.
+
+🔥 As you begin to type, all variable/function names /loosely/ matching what you
+type will be shown, along with their (type) descriptions.
+
+🚁 If you see an error ~“LSP :: Could not connect to 𝒳 server”~, then run
+doc:lsp-doctor and look at the buffer ~𝒳::stderr~ for hints on what the cause
+could have been; [[https://emacs-lsp.github.io/lsp-mode/page/faq/][FAQ]].
 
 ** Which function are we writing?
 :PROPERTIES:
@@ -8003,7 +8019,7 @@ Here are further reads:
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-** Text Folding with Origami-mode :Disabled:
+** Text Folding with Origami-mode
 :PROPERTIES:
 :CUSTOM_ID: Text-Folding-with-Origami-mode
 :END:
@@ -8018,17 +8034,28 @@ We use a feature-full folding mode,  [[https://github.com/gregsexton/origami.el]
 #+BEGIN_SRC emacs-lisp
 (use-package origami
   ;; In Lisp languages, by default only function definitions are folded.
-  :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+  ;; :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+
+  ;; Please open any code with top level items folded away.
+  :hook (prog-mode .  (lambda () (interactive)
+                       (origami-close-all-nodes (current-buffer))))
+  ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
+
   :config
+
+  ;; For any major-mode that doesn't have explicit support, origami will use the
+  ;; indentation of the buffer to determine folds.
+  (global-origami-mode)
+
   ;; With basic support for one of my languages.
   (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
          origami-parser-alist))
 #+END_SRC
 
 With expected support for searching.
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (defun my/search-hook-function ()
-  (when origami-mode (origami-toggle-node (current-buffer) (point))))
+  (when origami-mode (origami-open-node-recursively (current-buffer) (point))))
 
 ;; Open folded nodes if a search stops there.
 (add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
@@ -8039,17 +8066,89 @@ With expected support for searching.
 
 Along with a hydra for super quick navigation and easily folding, unfolding
 blocks! Love this one ^_^
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (defhydra folding-with-origami-mode (global-map "C-c f")
   ("h" origami-close-node-recursively "Hide")
-  ("o" origami-open-node-recursively  "Open")
+  ("s" origami-open-node-recursively  "Show")
+  ;; ("H" origami-close-all-nodes "Hide All")
+  ;; ("S" origami-open-all-nodes "Show All")
   ("t" origami-toggle-all-nodes  "Toggle buffer")
   ("n" origami-next-fold "Next")
   ("p" origami-previous-fold "Previous"))
 #+END_SRC
 
-*Disabled:* I've looked at a few folding modes, and I like this one.
-However, I seldom need it.
+# *Disabled:* I've looked at a few folding modes, and I like this one.
+# However, I seldom need it.
+
+#+begin_box "There's a built-in, less featureful, alternative based on indentation!"
+Quickly fold-away code with doc:set-selective-display; e.g., <kbd:C-u C-x $>
+folds away all code indented 4 spaces, whereas <kbd:C-u 8 C-x $> is for 8
+spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
+#+end_box
+
+*** COMMENT yaffolding :Posterity:Way_too_slow:
+
+#+begin_src emacs-lisp :tangle work_secrets.el
+;; “Yet Another Folding” just works: Indented elements are folded away; no setup required.
+;; (use-package discover)
+(use-package yafolding
+    ;; Please open any code with top level items folded away:
+    ;; Open the file super quick, but when I'm inactive for 5 seconds,
+    ;; then I'm probably doing other stuff so do the folding then.
+    ;; :hook prog-mode .  (lambda () (interactive)
+   ;; (run-with-idle-timer 5 nil #'yafolding-hide-all))
+   ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
+  )
+(defhydra yafolding-hydra (:color pink :columns 3)
+  "Fold code based on indentation levels"
+  ;; First row
+  ("s" yafolding-show-element "show element")
+  ("S" yafolding-show-all "show all")
+  ("<right>" (lambda () (interactive)
+     (let ((next (car (yafolding-get-overlays (point) (point-max)))) pos)
+       (if (not next) (message "No more folded regions")
+         (setq pos (overlay-start next))
+               (yafolding-hide-element)
+               (goto-char pos)
+               (yafolding-show-element))))
+   "forward element")
+  ;; Second row
+  ("h" yafolding-hide-element "hide element")
+  ("H" yafolding-hide-all "hide all")
+  ("<left>" (lambda () (interactive)
+     (let ((previous (car (yafolding-get-overlays (point-min) (point)))) pos)
+       (if (not previous) (message "No more folded regions")
+         (setq pos (overlay-start previous))
+               (yafolding-hide-element)
+               (goto-char pos)
+               (yafolding-show-element))))
+        "backward element")
+  ;; Third row
+  ("SPC" yafolding-toggle-element "toggle element")
+  ("T" yafolding-toggle-all "toggle all")
+  ("q" nil "quit" :color red)
+  ("p" yafolding-hide-parent-element "hide parent")
+  ("<up>" (lambda () (interactive) (or (ignore-errors (yafolding-go-parent-element))
+    (message "Already at the top level.")))
+   "go to parent")
+  ("r" (lambda () (interactive) (yafolding-hide-region (region-beginning) (region-end)))
+   "hide region"
+  ))
+
+  (global-set-key (kbd "s-f") 'yafolding-hydra/body)
+#+end_src
+
+** Toggling System :RelocateMe:
+
+#+begin_src emacs-lisp
+(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
+  "Emacs, please toggle my [t]heme | [f]ont"
+  ;; First row
+  ("t" my/toggle-theme)
+  ("f" my/toggle-font)
+  ("c" column-number-mode)
+)
+#+end_src
 
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 :PROPERTIES:
@@ -8227,7 +8326,7 @@ The following is also “OK” in Org-mode ;-)
   (highlight-indent-guides-responsive 'stack))
 #+end_src
 
-** JS
+** JavaScript
 #+begin_src emacs-lisp
 (use-package ob-js
   :config
@@ -9188,6 +9287,49 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 #+begin_center
 /Thanks to friends for “replacing me” while I was away ♥‿♥ ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ/
 #+end_center
+
+* COMMENT JavaScript :Does_not_work_with_flow:
+
+Let's get a JavaScript refactoring library for emacs:
+
+#+begin_src emacs-lisp :tangle work_secrets.el
+;; (use-package js2-mode)
+
+(use-package js2-refactor ;; Does not work with flow.js :'(
+  :hook (js-mode . js2-refactor-mode)
+  :config (js2r-add-keybindings-with-prefix "s-j"))
+
+;; To be aware of https://github.com/azer/npm.el
+;; Create and rule NPM packages from Emacs
+#+end_src
+
+Using ~⌘ j~ then one of the following...
+
+| ~lt~ | Adds a console.log() statement for what is at point (or region).               |
+|    | With a prefix argument, use JSON pretty-printing.                              |
+| ~dt~ | Adds a debug() statement for what is at point (or region).                     |
+| ~k~  | is kill: Kills to the end of the line, but does not cross semantic boundaries. |
+|----+--------------------------------------------------------------------------------|
+| ~ee~ | Make an inline list/object/function/funcall be on multiple lines               |
+| ~cc~ | Opposite of ee                                                                 |
+|----+--------------------------------------------------------------------------------|
+| ~tf~ | Toggle between ~function name() {}~ and ~var name = function () {}~                |
+| ~ta~ | Toggle between function expression to arrow function                           |
+| ~ts~ | Toggle between an async and a regular function.                                |
+|----+--------------------------------------------------------------------------------|
+| ~ef~ | Extract the currently selected expression into a top level function            |
+| ~em~ | Like ef, but it's a method in the parent/ambient class                         |
+| ~ev~ | Takes a marked expression and replaces it with a var                           |
+| ~el~ | Similar to extract-var but uses a let-statement                                |
+| ~ec~ | Similar to extract-var but uses a const-statement                              |
+| ~iv~ | Opposite of iv: Replaces all instances of a variable with its initial value    |
+| ~vt~ | Changes local var a to be this.a instead, and all lexical uses.                |
+| ~rv~ | Renames the variable on point and all occurrences in its lexical scope         |
+|----+--------------------------------------------------------------------------------|
+| ~wi~ | Wraps the entire buffer in an immediately invoked function expression          |
+| ~3i~ | Converts ternary operator to if-statement; nice!                               |
+| ~ss~ | Split a string, at point, into a catenation of strings                         |
+| ~st~ | Convert a string into a `template`.                                            |
 
 * COMMENT Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 :PROPERTIES:
