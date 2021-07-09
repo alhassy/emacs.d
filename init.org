@@ -1459,7 +1459,8 @@ what you've typed are suddenly listed!
         ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
         ("C-x r b" . helm-filtered-bookmarks)
         ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
-        ("C-c i"   . helm-imenu)
+        ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
+        ("C-u C-c i" . imenu-list)
         ("C-h a"   . helm-apropos)
         ;; Look at what was cut recently & paste it in.
         ("M-y" . helm-show-kill-ring)
@@ -2280,6 +2281,7 @@ otherwise yields ‘cloned-repo’.
 
 LOCAL is optional and defaults to the base name; e.g.,
 if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
+  (defvar magit-repository-directories nil) ;; Define it, if it's not yet loaded
   (add-to-list 'magit-repository-directories `(,local . 0))
   (if (file-directory-p local)
       'repo-already-exists
@@ -7724,7 +7726,7 @@ is all!/
 | [[kbd:][s-l h g]] | Trigger display hover information popup and hide it on next typing |
 | [[kbd:][s-l r r]] | Rename the symbol (and all references to it)                       |
 
-#+begin_src emacs-lisp :tangle work_secrets.el
+#+begin_src emacs-lisp
 (use-package lsp-mode
   :init
   ;; Set prefix for lsp commands
@@ -7732,12 +7734,16 @@ is all!/
   ;; Set how often highlights, lenses, links, etc will be refreshed while you type
   ;; (setq lsp-idle-delay 0.500) ;; default
   :hook  ;; Every programming mode should enter & start LSP, with which-key support
-         (prog-mode . lsp-mode) ;; Enter LSP mode
-         (prog-mode . lsp)      ;; Start LSP server
+         (js-mode . lsp-mode) ;; Enter LSP mode
+         (js-mode . lsp)      ;; Start LSP server
          (lsp-mode . lsp-enable-which-key-integration)
   ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
   :bind ("C-x y" . #'yankpad-insert)
   :commands lsp)
+
+;; If a server crashes, restart it without asking me.
+(setq lsp-restart 'auto-restart)
+
 
 ;; https://emacs-lsp.github.io/lsp-mode/page/languages/
 ;; M-x lsp-install-server ⟨return⟩ jsts-ls
@@ -7784,6 +7790,90 @@ type will be shown, along with their (type) descriptions.
 doc:lsp-doctor and look at the buffer ~𝒳::stderr~ for hints on what the cause
 could have been; [[https://emacs-lsp.github.io/lsp-mode/page/faq/][FAQ]].
 
+The Language Server protocol is used between a tool (the client) and a language
+smartness provider (the server) to integrate features like auto complete, go to
+definition, find all references and alike into the tool.
+
+LSP, more or less, reduces the linear problem of language-specific-IDE into a
+constant problem: Each language implements an LSP program which is then used by
+an LSP-enabled editor to provide an IDE experience.
+
+LSP mode supports the following Features:
+
++ As you type reporting of parsing and compilation errors (via flycheck/lsp-ui)
++ Code completion - using company-mode
++ doc hovers - using lsp-ui
++ Code actions - using lsp-ui
++ Code outline - using builtin [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Imenu.html][imenu]]
++ Code navigation - using builtin xref
++ Code lens (references/implementations) - using builtin [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html][xref]]
++ Highlights
++ Code formatting
++ Visual debugger - [[https://github.com/emacs-lsp/dap-mode][dap-mode]]
++ Test runner - dap-mode
++ Project explorer integration - treemacs
+
+#+begin_src emacs-lisp
+;; Load the various useful utils
+(require 'lsp-ui-peek)
+(require 'lsp-ui-sideline)
+(require 'lsp-ui-doc)
+(require 'lsp-ui-imenu)
+
+; (setq lsp-mode-hook nil)
+(add-hook 'lsp-mode-hook
+          (lambda ()
+            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
+            (shell-command "rm ~/wxPortal/.flowconfig")
+            ;; Load the various useful utils
+            (require 'lsp-ui)
+            (lsp-ui-peek-enable t)
+            (lsp-ui-doc-enable t)
+            (lsp-ui-sideline-enable t)
+            (lsp-ui-imenu-buffer--enable)
+            ;; Set ⌘-l as the main mini-menu for LSP commands
+            (bind-key* "s-l" #'my/lsp-hydra/body)))
+
+(defun my/helm-lsp-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-workspace-symbol)))
+
+  (defun my/helm-lsp-global-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-global-workspace-symbol)))
+
+;; TODO: Add other cool features discussed/loaded above into this hydra!
+(defhydra my/lsp-hydra (:color blue :hint nil)
+  ;; Xref
+  ("d" xref-find-definitions "Definitions" :column "Xref")
+  ("D" xref-find-definitions-other-window "-> other win")
+  ("r" xref-find-references "References")
+  ("s" my/helm-lsp-workspace-symbol-at-point "Helm search")
+  ("S" my/helm-lsp-global-workspace-symbol-at-point "Helm global search")
+
+  ;; Peek
+  ("C-d" lsp-ui-peek-find-definitions "Definitions" :column "Peek")
+  ("C-r" lsp-ui-peek-find-references "References")
+  ("C-i" lsp-ui-peek-find-implementation "Implementation")
+
+  ;; LSP
+  ("p" lsp-describe-thing-at-point "Describe at point" :column "LSP")
+  ("C-a" lsp-execute-code-action "Execute code action")
+  ("R" lsp-rename "Rename")
+  ("t" lsp-goto-type-definition "Type definition")
+  ("i" lsp-goto-implementation "Implementation")
+  ("f" helm-imenu "Filter funcs/classes (Helm)")
+  ("C-c" lsp-describe-session "Describe session")
+
+  ;; Flycheck
+  ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+
+  ;; Misc
+  ("q" nil "Cancel" :column "Misc")
+  ("b" pop-tag-mark "Back"))
+#+end_src
 ** Which function are we writing?
 :PROPERTIES:
 :CUSTOM_ID: Which-function-are-we-writing
@@ -8142,12 +8232,16 @@ spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
 
 #+begin_src emacs-lisp
 (defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
-  "Emacs, please toggle my [t]heme | [f]ont"
+  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
   ;; First row
   ("t" my/toggle-theme)
   ("f" my/toggle-font)
+  ("m" imenu-list-smart-toggle)
   ("c" column-number-mode)
 )
+
+ ;; Shows a nice sidebar menu of the buffer's contents
+(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
