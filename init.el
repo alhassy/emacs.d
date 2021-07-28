@@ -66,7 +66,6 @@
 (use-package diminish
   :defer 5
   :config ;; Let's hide some markers.
-    (require 'org-indent)
     (diminish org-indent-mode))
 ;; Emacs Package Manager:6 ends here
 
@@ -119,9 +118,8 @@
   (quelpa
    '(quelpa-use-package
      :fetcher git
-     :url "https://github.com/quelpa/quelpa-use-package.git")))
-
-  (require 'quelpa-use-package)
+     :url "https://github.com/quelpa/quelpa-use-package.git"))
+  (require 'quelpa-use-package))
 ;; Emacs Package Manager:10 ends here
 
 ;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:1]]
@@ -157,14 +155,18 @@
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:3 ends here
 
 ;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:4]]
+(setq system-packages-noconfirm :do-not-prompt-me-about-confirms)
+
+;; After 1 minute after startup, kill all buffers created by ensuring system
+;; packages are present.
+(run-with-timer 60 nil
+ (lambda () (kill-matching-buffers ".*system-packages.*" t :kill-without-confirmation)))
+;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
+
+;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:5]]
 ;; Unlike the Helm variant, we need to specify our OS pacman.
 (when (eq system-type 'darwin)
   (setq system-packages-package-manager 'brew))
-
-
-
-(setq system-packages-noconfirm :do-not-prompt-me-about-confirms)
-
 
 ;; If the given system package doesn't exist; install it.
 (when (eq system-type 'darwin)
@@ -181,11 +183,13 @@
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
 (system-packages-ensure "node") ;; https://nodejs.org/
+;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
-(system-packages-ensure "nvm") ;; https://github.com/nvm-sh/nvm
-;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
+(shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
+;; According to https://github.com/nvm-sh/nvm, nvm shouldn't be installed via brew.
+;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:5 ends here
 
-;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:5]]
+;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:6]]
 (defun ⌘-quit (app)
   "Kill application APP; e.g., “amethyst” or “Safari”"
   (shell-command (format "osascript -e 'quit app \"%s\"'" app)))
@@ -198,14 +202,14 @@
 (defun my/relaunch-amethyst () (interactive)
        (⌘-quit "amethyst")
        (⌘-open "amethyst"))
-;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:5 ends here
+;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:6 ends here
 
-;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:6]]
+;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:7]]
 ;; (bind-key "???-a c" #'amethyst/cycle-layout)
 (defun amethyst/cycle-layout ()
   (interactive)
   (shell-command "osascript -e 'tell application \"System Events\" to keystroke space using {shift down, option down}'"))
-;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:6 ends here
+;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:7 ends here
 
 ;; [[file:init.org::#Syncing-to-the-System's-PATH][Syncing to the System's =$PATH=:1]]
 (use-package exec-path-from-shell
@@ -237,7 +241,8 @@
         ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
         ("C-x r b" . helm-filtered-bookmarks)
         ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
-        ("C-c i"   . helm-imenu)
+        ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
+        ("C-u C-c i" . imenu-list)
         ("C-h a"   . helm-apropos)
         ;; Look at what was cut recently & paste it in.
         ("M-y" . helm-show-kill-ring)
@@ -281,10 +286,11 @@
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:7 ends here
 
 ;; [[file:init.org::#Org-Mode-Administrivia][Org-Mode Administrivia:2]]
-(use-package org
-  :ensure org-plus-contrib
-  :config (require 'ox-extra)
-          (ox-extras-activate '(ignore-headlines)))
+  (use-package org
+    :ensure org-plus-contrib
+    :diminish org-indent-mode
+    :config (require 'ox-extra)
+            (ox-extras-activate '(ignore-headlines)))
 ;; Org-Mode Administrivia:2 ends here
 
 ;; [[file:init.org::#Org-Mode-Administrivia][Org-Mode Administrivia:3]]
@@ -577,7 +583,7 @@ otherwise yields ‘cloned-repo’.
 
 LOCAL is optional and defaults to the base name; e.g.,
 if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
-  (require 'magit-repos)
+  (defvar magit-repository-directories nil) ;; Define it, if it's not yet loaded
   (add-to-list 'magit-repository-directories `(,local . 0))
   (if (file-directory-p local)
       'repo-already-exists
@@ -1496,7 +1502,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; [[file:init.org::#Exquisite-Fonts-and-Themes][Exquisite Fonts and Themes:2]]
 ;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
+(setq my/themes '(doom-laserwave doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
 (setcdr (last my/themes) my/themes)
 ;; Exquisite Fonts and Themes:2 ends here
 
@@ -2352,14 +2358,12 @@ E.g., ↯ We'll go on a ∀∃⇅ adventure
                (s-chop-prefix "-")
                (s-chop-suffix "-")
                (setq id))
-             (if nil ; (not (member id ids))
+             (if (not (member id ids))
                  (push id ids)
                (message-box "Oh no, a repeated id!\n\n\t%s" id)
                (undo)
                (setq quit-flag t))
              (org-entry-put nil "CUSTOM_ID" id))))))))
-
-(defun my/ensure-headline-ids (&rest _) ) ;; for How-Do-I.org
 
 ;; Whenever html & md export happens, ensure we have headline ids.
 (advice-add 'org-html-export-to-html   :before 'my/ensure-headline-ids)
@@ -2452,6 +2456,131 @@ by spaces.
   (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url))
 ;; Org-mode ⇐ HTML:2 ends here
 
+;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
+;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
+(use-package projectile
+  :config
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
+  (define-key projectile-mode-map (kbd "C-x p s")
+    ;; I prefer helm-do-grep-ag since it shows me a live search
+    (lambda () (interactive)
+       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
+         ;; (shell-command-to-string "echo $PWD")
+         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
+;; Project management & navigation:1 ends here
+
+;; [[file:init.org::*LSP: Making Emacs into a generic full-featured programming IDE][LSP: Making Emacs into a generic full-featured programming IDE:1]]
+(use-package lsp-mode
+  :init
+  ;; Set prefix for lsp commands
+  ;; (setq lsp-keymap-prefix "s-l") ;; default
+  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
+  ;; (setq lsp-idle-delay 0.500) ;; default
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (prog-mode . lsp-mode) ;; Enter LSP mode
+         (prog-mode . lsp)      ;; Start LSP server
+         (lsp-mode . lsp-enable-which-key-integration)
+  ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
+  :bind ("C-x y" . #'yankpad-insert)
+  :commands lsp)
+
+;; https://emacs-lsp.github.io/lsp-mode/page/languages/
+;; M-x lsp-install-server ⟨return⟩ jsts-ls
+;; M-x lsp-install-server ⟨return⟩ json-ls
+;; M-x lsp-install-server ⟨return⟩ eslint
+;; M-x lsp-install-server ⟨return⟩ css-ls
+;; M-x lsp-install-server ⟨return⟩ html-ls
+
+;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
+;; https://emacs-lsp.github.io/lsp-ui/#intro
+;;
+;; You only have to put (use-package lsp-ui) in your config and the package will
+;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
+(use-package lsp-ui)
+
+;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
+;; call hierarchy, etc.)
+(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
+;; M-x lsp-treemacs-errors-list
+
+;; helm-lsp provides “on type completion” alternative of cross-referencing.
+;; https://github.com/emacs-lsp/helm-lsp
+(use-package helm-lsp)
+(define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
+;; a” (The 'a' stands for apropos, which means appropriate nature)
+
+;; Set the amount of data which Emacs reads from a process.
+;; Some LSP responses are in the 8k-3MB range.
+;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
+(setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
+(setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
+;; A large gc-cons-threshold will cause freezing and stuttering during long-term
+;; interactive use. This one seems to be a good default.
+;; LSP: Making Emacs into a generic full-featured programming IDE:1 ends here
+
+;; [[file:init.org::*LSP: Making Emacs into a generic full-featured programming IDE][LSP: Making Emacs into a generic full-featured programming IDE:2]]
+;; Load the various useful utils
+(require 'lsp-ui-peek)
+(require 'lsp-ui-sideline)
+(require 'lsp-ui-doc)
+(require 'lsp-ui-imenu)
+
+(add-hook 'lsp-mode-hook
+          (lambda ()
+            ;; Load the various useful utils
+            (require 'lsp-ui)
+            (lsp-ui-peek-enable t)
+            (lsp-ui-doc-enable t)
+            (lsp-ui-sideline-enable t)
+            (lsp-ui-imenu-buffer--enable)
+            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
+            (ignore-error (f-delete "~/wxPortal/.flowconfig"))
+            ;; Set ⌘-l as the main mini-menu for LSP commands
+            (bind-key* "s-l" #'my/lsp-hydra/body)))
+
+(defun my/helm-lsp-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-workspace-symbol)))
+
+  (defun my/helm-lsp-global-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-global-workspace-symbol)))
+
+;; TODO: Add other cool features discussed/loaded above into this hydra!
+(defhydra my/lsp-hydra (:color blue :hint nil)
+  ;; Xref
+  ("d" xref-find-definitions "Definitions" :column "Xref")
+  ("D" xref-find-definitions-other-window "-> other win")
+  ("r" xref-find-references "References")
+  ("s" my/helm-lsp-workspace-symbol-at-point "Helm search")
+  ("S" my/helm-lsp-global-workspace-symbol-at-point "Helm global search")
+
+  ;; Peek
+  ("C-d" lsp-ui-peek-find-definitions "Definitions" :column "Peek")
+  ("C-r" lsp-ui-peek-find-references "References")
+  ("C-i" lsp-ui-peek-find-implementation "Implementation")
+
+  ;; LSP
+  ("p" lsp-describe-thing-at-point "Describe at point" :column "LSP")
+  ("C-a" lsp-execute-code-action "Execute code action")
+  ("R" lsp-rename "Rename")
+  ("t" lsp-goto-type-definition "Type definition")
+  ("i" lsp-goto-implementation "Implementation")
+  ("f" helm-imenu "Filter funcs/classes (Helm)")
+  ("C-c" lsp-describe-session "Describe session")
+
+  ;; Flycheck
+  ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+
+  ;; Misc
+  ("q" nil "Cancel" :column "Misc")
+  ("b" pop-tag-mark "Back"))
+;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
+
 ;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:1]]
 (add-hook 'prog-mode-hook #'which-function-mode)
 (add-hook 'org-mode-hook  #'which-function-mode)
@@ -2522,12 +2651,59 @@ by spaces.
 ;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:1]]
 (use-package origami
   ;; In Lisp languages, by default only function definitions are folded.
-  :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+  ;; :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+
+  ;; Please open any code with top level items folded away.
+  :hook (prog-mode .  (lambda () (interactive)
+                       (origami-close-all-nodes (current-buffer))))
+  ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
+
   :config
+
+  ;; For any major-mode that doesn't have explicit support, origami will use the
+  ;; indentation of the buffer to determine folds.
+  (global-origami-mode)
+
   ;; With basic support for one of my languages.
   (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
          origami-parser-alist))
 ;; Text Folding with Origami-mode:1 ends here
+
+;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:2]]
+(defun my/search-hook-function ()
+  (when origami-mode (origami-open-node-recursively (current-buffer) (point))))
+
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+;;
+;; Likewise for incremental search, isearch, users.
+;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
+;; Text Folding with Origami-mode:2 ends here
+
+;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:3]]
+(defhydra folding-with-origami-mode (global-map "C-c f")
+  ("h" origami-close-node-recursively "Hide")
+  ("s" origami-open-node-recursively  "Show")
+  ;; ("H" origami-close-all-nodes "Hide All")
+  ;; ("S" origami-open-all-nodes "Show All")
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("n" origami-next-fold "Next")
+  ("p" origami-previous-fold "Previous"))
+;; Text Folding with Origami-mode:3 ends here
+
+;; [[file:init.org::*Toggling System][Toggling System:1]]
+(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
+  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
+  ;; First row
+  ("t" my/toggle-theme)
+  ("f" my/toggle-font)
+  ("m" imenu-list-smart-toggle)
+  ("c" column-number-mode)
+)
+
+ ;; Shows a nice sidebar menu of the buffer's contents
+(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
+;; Toggling System:1 ends here
 
 ;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove
@@ -2622,7 +2798,7 @@ by spaces.
   (highlight-indent-guides-responsive 'stack))
 ;; Indentation Guide:1 ends here
 
-;; [[file:init.org::*JS][JS:1]]
+;; [[file:init.org::*JavaScript][JavaScript:1]]
 (use-package ob-js
   :config
   (add-to-list 'org-babel-load-languages '(js . t))
@@ -2632,7 +2808,7 @@ by spaces.
   ;; use “:results output” for js blocks!
   (maybe-clone "https://github.com/alhassy/JavaScriptCheatSheet")
   (maybe-clone "https://github.com/alhassy/AngularJSCheatSheet")
-;; JS:1 ends here
+;; JavaScript:1 ends here
 
 ;; [[file:init.org::*Commenting][Commenting:1]]
 (use-package comment-dwim-2
@@ -2986,84 +3162,11 @@ window contains the buffer with the cursour in it."
   (goto-line line))
 ;; Jumping without hassle:1 ends here
 
-;; Project management & navigation
-;;
-;; Version controlled repositories are considered “projects” ---no setup
-;; needed---, but you can declare your own too.
-;;
-;; Videos:
-;; ~5mins: https://youtu.be/bFS0V_4YfhY
-;; ~1hr:  https://www.youtube.com/watch?v=INTu30BHZGk
-;;
-;; This is so sweet at work (and possibly at home!): From anywhere,
-;; C-x p p ⟨select your project⟩ RET ⟨start typing to see any file anywhere in the project⟩
-;;
-;; C-x p b ⇒ Switch to buffers only in the current “stream of thought” (project).
-;; C-x p f ⇒ Find files only in the current “stream of thought” (project).
-;; C-x p s g ⇒ Search the project using grep; TAB in the resulting buffer to open files.
-;; C-x p S ⇒ Save all project buffers
-;; C-x p k ⇒ Kill all buffers relating to the parent project
-;;
-;; C-x p & ⇒ Runs an async-shell-command in the project's root directory
-;; C-x p x s ⇒ Start or visit a shell for the project
-;; C-x p r ⇒ Runs interactive query-replace on all files in the projects
-;; C-x p e ⇒ Show a list of recently visited files, in the current project
-;; C-x p V ⇒ Open a project that has been modified, but not pushed with version control.
-;;
-;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
-(use-package projectile
-  :config
-  (projectile-mode +1)
-  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
-  (define-key projectile-mode-map (kbd "C-x p s")
-    ;; I prefer helm-do-grep-ag since it shows me a live search
-    (lambda () (interactive)
-       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
-         ;; (shell-command-to-string "echo $PWD")
-         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
 
+  ;; Replace usual find-file with a project-wide version :-)
+  (global-set-key (kbd "C-x f") #'projectile-find-file)
 
-(use-package lsp-mode
-  :init
-  ;; Set prefix for lsp commands
-  ;; (setq lsp-keymap-prefix "s-l") ;; default
-  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
-  ;; (setq lsp-idle-delay 0.500) ;; default
-  :hook  ;; Every programming mode should enter & start LSP, with which-key support
-         (prog-mode . lsp-mode) ;; Enter LSP mode
-         (prog-mode . lsp)      ;; Start LSP server
-         (lsp-mode . lsp-enable-which-key-integration)
-  :commands lsp)
-
-;; https://emacs-lsp.github.io/lsp-mode/page/languages/
-;; M-x lsp-install-server ⟨return⟩ jsts-ls
-;; M-x lsp-install-server ⟨return⟩ json-ls
-;; M-x lsp-install-server ⟨return⟩ eslint
-;; M-x lsp-install-server ⟨return⟩ css-ls
-;; M-x lsp-install-server ⟨return⟩ html-ls
-
-;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
-;; https://emacs-lsp.github.io/lsp-ui/#intro
-;;
-;; You only have to put (use-package lsp-ui) in your config and the package will
-;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
-(use-package lsp-ui)
-
-;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
-;; call hierarchy, etc.)
-(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
-;; M-x lsp-treemacs-errors-list
-
-;; helm-lsp provides “on type completion” alternative of cross-referencing.
-;; https://github.com/emacs-lsp/helm-lsp
-(use-package helm-lsp)
-(define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
-;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
-;; a” (The 'a' stands for apropos, which means appropriate nature)
-
-;; Set the amount of data which Emacs reads from a process.
-;; Some LSP responses are in the 8k-3MB range.
-
-;; After 1 minute after startup, kill all buffers created by ensuring system packages are present.
-(run-with-timer 60 nil
-  (lambda () (kill-matching-buffers ".*system-packages.*" :ignore-spaces :kill-without-confirmation))))
+  ;; Makes indexing large projects much faster, after first time.
+  ;; Since its caching, some files may be out of sync; you can delete the cache
+  ;; with: C-u C-x f
+  (setq projectile-enable-caching t)

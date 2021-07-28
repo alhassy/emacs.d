@@ -222,6 +222,7 @@ use Emacs (•̀ᴗ•́)و
 # badge:Org|9.4|blue|https://orgmode.org|gnu
 
 Org-mode syntax is very /natural/; e.g., the following is Org-mode!
+( [[https://karl-voit.at/2017/09/23/orgmode-as-markup-only/][Org Mode Is One of the Most Reasonable Markup Languages to Use for Text]] )
 
 #+begin_src org :noeval
 + Numbered and bulleted lists are as expected.
@@ -7668,6 +7669,15 @@ This is so sweet at work (and possibly at home!): From anywhere,
   :config
   (projectile-mode +1)
   (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
+
+  ;; Replace usual find-file with a project-wide version :-)
+  (global-set-key (kbd "C-x f") #'projectile-find-file)
+
+  ;; Makes indexing large projects much faster, after first time.
+  ;; Since its caching, some files may be out of sync; you can delete the cache
+  ;; with: C-u C-x f
+  (setq projectile-enable-caching t)
+
   (define-key projectile-mode-map (kbd "C-x p s")
     ;; I prefer helm-do-grep-ag since it shows me a live search
     (lambda () (interactive)
