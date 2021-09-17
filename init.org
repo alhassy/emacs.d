@@ -8287,6 +8287,22 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, ha
 See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
 into new configurations.
 
+* Shell / Terminal
+
+** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]
+
+When working in the terminal, at least in my day job, it can be helpful to
+visually segregate large chunks of output. With the ~hr~ command, I can run ~hr
+'output5`~, for example, to have the same the string /output5/ repeated horizontal
+across one line of my terminal.  We can also just run ~hr~ which is the same as ~hr
+'#'~. Finally, you can also run =hr '-#-' '-' '-#-'= to have 3 horizontal lines and
+more generally =hr p₁ p₂ … pₙ= will produce /n/-many horizontal lines with the
+$i^{th}$-line having pattern =pᵢ=.
+
+#+begin_src emacs-lisp
+(system-packages-install "hr") ;; ≈ brew install hr
+#+end_src
+
 * Experiments
 :PROPERTIES:
 :CUSTOM_ID: Experiments

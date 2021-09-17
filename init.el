@@ -33,9 +33,9 @@
 ;; Emacs Package Manager:1 ends here
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:2]]
-(unless (package-installed-p 'use-package)
+(ignore-errors (unless (package-installed-p 'use-package)
   (package-install 'use-package))
-(require 'use-package)
+(require 'use-package) )
 ;; Emacs Package Manager:2 ends here
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:3]]
@@ -2462,6 +2462,15 @@ by spaces.
   :config
   (projectile-mode +1)
   (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
+
+  ;; Replace usual find-file with a project-wide version :-)
+  (global-set-key (kbd "C-x f") #'projectile-find-file)
+
+  ;; Makes indexing large projects much faster, after first time.
+  ;; Since its caching, some files may be out of sync; you can delete the cache
+  ;; with: C-u C-x f
+  (setq projectile-enable-caching t)
+
   (define-key projectile-mode-map (kbd "C-x p s")
     ;; I prefer helm-do-grep-ag since it shows me a live search
     (lambda () (interactive)
@@ -2478,12 +2487,16 @@ by spaces.
   ;; Set how often highlights, lenses, links, etc will be refreshed while you type
   ;; (setq lsp-idle-delay 0.500) ;; default
   :hook  ;; Every programming mode should enter & start LSP, with which-key support
-         (prog-mode . lsp-mode) ;; Enter LSP mode
-         (prog-mode . lsp)      ;; Start LSP server
+         (js-mode . lsp-mode) ;; Enter LSP mode
+         (js-mode . lsp)      ;; Start LSP server
          (lsp-mode . lsp-enable-which-key-integration)
   ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
   :bind ("C-x y" . #'yankpad-insert)
   :commands lsp)
+
+;; If a server crashes, restart it without asking me.
+(setq lsp-restart 'auto-restart)
+
 
 ;; https://emacs-lsp.github.io/lsp-mode/page/languages/
 ;; M-x lsp-install-server ⟨return⟩ jsts-ls
@@ -2527,16 +2540,17 @@ by spaces.
 (require 'lsp-ui-doc)
 (require 'lsp-ui-imenu)
 
+; (setq lsp-mode-hook nil)
 (add-hook 'lsp-mode-hook
           (lambda ()
+            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
+            (shell-command "rm ~/wxPortal/.flowconfig")
             ;; Load the various useful utils
             (require 'lsp-ui)
             (lsp-ui-peek-enable t)
             (lsp-ui-doc-enable t)
             (lsp-ui-sideline-enable t)
             (lsp-ui-imenu-buffer--enable)
-            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
-            (ignore-error (f-delete "~/wxPortal/.flowconfig"))
             ;; Set ⌘-l as the main mini-menu for LSP commands
             (bind-key* "s-l" #'my/lsp-hydra/body)))
 
@@ -3147,6 +3161,9 @@ window contains the buffer with the cursour in it."
 )
 ;; Publishing articles to my personal blog:1 ends here
 
+
+(system-packages-install "hr") ;; ≈ brew install hr
+
 ;; [[file:init.org::#Jumping-without-hassle][Jumping without hassle:1]]
 (defun my/org-goto-line (line)
   "Go to the indicated line, unfolding the parent Org header.
@@ -3161,12 +3178,3 @@ window contains the buffer with the cursour in it."
   (org-cycle)
   (goto-line line))
 ;; Jumping without hassle:1 ends here
-
-
-  ;; Replace usual find-file with a project-wide version :-)
-  (global-set-key (kbd "C-x f") #'projectile-find-file)
-
-  ;; Makes indexing large projects much faster, after first time.
-  ;; Since its caching, some files may be out of sync; you can delete the cache
-  ;; with: C-u C-x f
-  (setq projectile-enable-caching t)
