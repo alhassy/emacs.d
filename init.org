@@ -1112,10 +1112,7 @@ Above, the ~:diminish~ keyword indicates that we do not want the mode's name to 
 shown to us in the modeline ---the area near the bottom of Emacs.  It does so by
 using the ~diminish~ package, so let's install that.
 #+begin_src emacs-lisp
-(use-package diminish
-  :defer 5
-  :config ;; Let's hide some markers.
-    (diminish org-indent-mode))
+(use-package diminish)
 #+end_src
 
 Here are other packages that I want to be installed onto my machine.
@@ -1129,7 +1126,7 @@ Here are other packages that I want to be installed onto my machine.
 
 ;; Let's use the “s” library.
 (defvar my/personal-machine?
-  (not (s-contains? "MacBook-Pro" (shell-command-to-string "uname -a")))
+  (not (s-contains? "-MBP" (shell-command-to-string "uname -a")))
   "Is this my personal machine, or my work machine?")
 
 (ignore-errors (load-file "~/Desktop/work_secrets.el"))
@@ -1461,7 +1458,7 @@ what you've typed are suddenly listed!
         ("C-x r b" . helm-filtered-bookmarks)
         ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
         ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
-        ("C-u C-c i" . imenu-list)
+        ;; ("C-u C-c i" . imenu-list)  ;; TODO FIXME  Key sequence C-u C-c i starts with non-prefix key C-u
         ("C-h a"   . helm-apropos)
         ;; Look at what was cut recently & paste it in.
         ("M-y" . helm-show-kill-ring)
@@ -1773,6 +1770,8 @@ Possibly interesting reads:
 :PROPERTIES:
 :CUSTOM_ID: Hydra-Supply-a-prefix-only-once
 :END:
+
+| /[[http://rski.github.io/emacs/hydra/2017/04/08/a-case-for-hydra.html][Hydras let us do “super temporary modal editing”]]/ |
 
 Sometimes we have keybindings that share a common prefix, say ~C-c j~ and ~C-c k~,
 and we invoke them in an arbitrary sequence, it would be nice to invoke the
@@ -7686,6 +7685,39 @@ This is so sweet at work (and possibly at home!): From anywhere,
          (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
 #+end_src
 
+** Are there any errors in my code?
+
+[[https://www.flycheck.org/en/latest/][Flycheck]] gives us syntax checking and linting tools to automatically check the
+contents of buffers while you type, and reports warnings and errors directly in
+the buffer, or in an optional error list. Sadly, the default reporting of errors
+looks like ~FlyC 3~ in the modeline, but with [[https://github.com/liblit/flycheck-status-emoji][flycheck-status-emoji]] we can see the
+status using cute & compact emoji such as ~😱3~.
+
+#+begin_src emacs-lisp
+(use-package flycheck-status-emoji
+  :config
+  (flycheck-status-emoji-mode))
+#+end_src
+
+Let's also have a nifty modal menu to quickly navigate between errors.
+#+begin_src emacs-lisp
+(bind-key*
+ "C-c !"
+ (defhydra my/flycheck-hydra (:color blue :hint nil)
+   "Move around flycheck errors and get info about them"
+   ("n" flycheck-next-error "next" :column "Navigation")
+   ("p" flycheck-previous-error "previous")
+   ("f" flycheck-first-error "first")
+   ("l" flycheck-list-errors "list")
+
+   ("e" flycheck-explain-error-at-point "explain"  :column "Current errror")
+   ("c" flycheck-copy-errors-as-kill "copy")
+
+   ("d" flycheck-describe-checker "Describe checker"  :column "More")
+   ("s" flycheck-select-checker "Select checker")
+   ("S" flycheck-verify-setup "Suggest setup")
+   ("m" flycheck-manual "manual")))
+#+end_src
 ** LSP: Making Emacs into a generic full-featured programming IDE
 
 [[https://microsoft.github.io/language-server-protocol/][Language Server Protocol (LSP)]] was created by Microsoft to define a common
@@ -7877,13 +7909,81 @@ LSP mode supports the following Features:
   ("f" helm-imenu "Filter funcs/classes (Helm)")
   ("C-c" lsp-describe-session "Describe session")
 
-  ;; Flycheck
-  ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+  ;; Flycheck ---my “C-c !” flycheck hydra is much better than this simple lsp one.
+  ;; ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+  ("l" my/flycheck-hydra/body "List errs/warns/notes" :column "Flycheck")
 
   ;; Misc
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
+
+** Turbolog: What's the value of this expression? :JavaScript:
+With [[https://github.com/Artawower/turbo-log][turbo-log]], I can select an expression then press [[kbd:C-x l l]] to have
+that expression be part of a console log message, in the next line, that also
+mentions the line number and buffer's name. I can toggle all these inserted
+messages to be comments with kbd:C-x_l_c and kbd:C-x_l_u, and when I'm done
+debugging I can quickly get rid of all of them with kbd:C-x_l_d.
+
+( Before TurboLog, I used a snippet bound to kbd:l_l that inserted
+#+begin_src js
+console.log("%c ******* LOOK HERE *******", "color: green; font-weight: bold;");
+console.log({ List the variables here whose values you want to log });
+#+end_src
+)
+
+TODO: Move some of the stuff below to the TurboLog Github repo.
+
+#+begin_src emacs-lisp
+(setq turbo-log--prefix "%c ******* LOOK HERE *******")
+(defun length> (x y) (> (length x) y))
+(defun length= (x y) (= (length x) y))
+(use-package turbo-log
+  :quelpa (turbo-log :fetcher github :repo "artawower/turbo-log.el")
+  :config (setq turbo-console--prefix "✰"))
+(bind-key* "C-x l" #'my/turbo-log-hydra/body)
+(defhydra my/turbo-log-hydra (:color blue :hint nil)
+  ("l" turbo-log-print "Log selected expression" :column "TurboLog: Insert meaningful log message for selected expressions")
+  ("c" turbo-log-comment-all-logs "Comment out all logs")
+  ("u" turbo-log-uncomment-all-logs "Uncomment out all logs")
+  ("d" turbo-log-delete-all-logs "Delete all TurboLog logs")
+  ("q" nil "Cancel"))
+
+
+(defun turbo-log--ecmascript-print (current-line-number formatted-selected-text prev-line-text multiple-logger-p)
+  "Console log for ecmascript, js/ts modes.
+CURRENT-LINE-NUMBER - line number under cursor
+FORMATTED-SELECTED-TEXT - formatted text without space at start position
+PREV-LINE-TEXT - text from previous line
+MULTIPLE-LOGGER-P - should guess list of available loggers?"
+
+  (let* ((is-empty-body (turbo-log--ecmascript-empty-body-p (turbo-log--get-line-text current-line-number)))
+         (insert-line-number (turbo-log--ecmascript-find-insert-pos current-line-number prev-line-text))
+         (meta-info (turbo-log--format-meta-info insert-line-number))
+         (normalized-code (turbo-log--ecmascript-normilize-code formatted-selected-text))
+         (turbo-log--message
+          (concat
+           (turbo-log--choose-logger turbo-log--ecmascript-loggers multiple-logger-p)
+           "('"
+           meta-info
+           formatted-selected-text ": ', "
+           ;; HACK this is my change: Does the TurboLog prefix have a %c console styling marker? If so, use it.
+           (if (s-contains? "%c" meta-info) "'color: green; font-weight: bold;', " "")
+           normalized-code ")"
+           (if (plist-get turbo-log--ecmascript-configs :include-semicolon) ";"))))
+
+    (if is-empty-body
+        (progn
+          (turbo-log--goto-line (- current-line-number 1))
+          (beginning-of-line)
+          (search-forward-regexp "}[[:blank:]]*")
+          (replace-match "")
+          (turbo-log--insert-with-indent current-line-number turbo-log--message)
+          (turbo-log--insert-with-indent (+ current-line-number 1) "}")
+          (indent-according-to-mode))
+      (turbo-log--insert-with-indent insert-line-number turbo-log--message))))
+#+end_src
+
 ** Which function are we writing?
 :PROPERTIES:
 :CUSTOM_ID: Which-function-are-we-writing
@@ -8446,7 +8546,10 @@ The following is also “OK” in Org-mode ;-)
   (highlight-indent-guides-responsive 'stack))
 #+end_src
 
-** JavaScript
+** TODO COMMENT JavaScript
+
++  ;; FIXME Error (use-package): Failed to install ob-js: Package ‘ob-js-’ is unavailable
+
 #+begin_src emacs-lisp
 (use-package ob-js
   :config
