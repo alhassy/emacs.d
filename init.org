@@ -2488,6 +2488,32 @@ items there (•̀ᴗ•́)و
 # #+END_SRC
 #
 
+
+** Silently show me when a line was modified and by whom
+ Quickly & /automatically/ glimpse who, why, and when a line or code block was
+ changed, using [[https://github.com/Artawower/blamer.el][blamer.el]]. Jump back through history to gain further insights
+ as to how and why the code evolved with kbd:C-x_g_l_l (doc:magit-log-head) or
+ doc:git-timemachine.
+
+#+begin_src emacs-lisp
+(use-package blamer
+  :quelpa (blamer :fetcher github :repo "artawower/blamer.el")
+  :custom
+  (blamer-idle-time 0.3)
+  (blamer-min-offset 70)
+  :custom-face
+  (blamer-face ((t :foreground "#7a88cf"
+                    :background nil
+                    :height 140
+                    :italic t)))
+  :config
+  (global-blamer-mode 1))
+#+end_src
+
+This is /so nice!/. I've enabled it once and then it just “works in the
+background, silently”.
+
+
 * Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
