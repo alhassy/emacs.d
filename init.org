@@ -2488,7 +2488,6 @@ items there (•̀ᴗ•́)و
 # #+END_SRC
 #
 
-
 ** Silently show me when a line was modified and by whom
  Quickly & /automatically/ glimpse who, why, and when a line or code block was
  changed, using [[https://github.com/Artawower/blamer.el][blamer.el]]. Jump back through history to gain further insights
@@ -2501,6 +2500,7 @@ items there (•̀ᴗ•́)و
   :custom
   (blamer-idle-time 0.3)
   (blamer-min-offset 70)
+  (blamer-max-commit-message-length 80) ;; Show me a lot of the commit title
   :custom-face
   (blamer-face ((t :foreground "#7a88cf"
                     :background nil
@@ -2512,6 +2512,23 @@ items there (•̀ᴗ•́)و
 
 This is /so nice!/. I've enabled it once and then it just “works in the
 background, silently”.
+
+--------------------------------------------------------------------------------
+
+When reading a line and wondering “who changed/wrote this and why”, blamer.el
+answers that seamlessly ---almost as if a transient comment 😁
+
++ The “why” is answered by commit messages; which may lead to improved messages:
+  /“Hey, I was just browsing through the code, and landed on this commit, but the
+  message does not tell me why the change was/ /introduced. Would you please write
+  more detailed commit messages.”/
++ The “when” gives a useful context in time about the change.  For example, when
+  looking for a regression/recent-bug, we can immediately see /“Did this line
+  even change in the past week? No? That must not be it then”/ and we move on.
+
+If we want to see commit messages alongside /all/ code, then we can invoke
+doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
+then we use doc:git-timemachine.
 
 
 * Literate Programming
