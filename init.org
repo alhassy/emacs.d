@@ -7744,7 +7744,8 @@ status using cute & compact emoji such as ~😱3~.
 
 Let's also have a nifty modal menu to quickly navigate between errors.
 #+begin_src emacs-lisp
-(bind-key*
+(use-package helm-flycheck)
+ (bind-key*
  "C-c !"
  (defhydra my/flycheck-hydra (:color blue :hint nil)
    "Move around flycheck errors and get info about them"
@@ -7752,6 +7753,7 @@ Let's also have a nifty modal menu to quickly navigate between errors.
    ("p" flycheck-previous-error "previous")
    ("f" flycheck-first-error "first")
    ("l" flycheck-list-errors "list")
+   ("h" helm-flycheck "helm") ;; Jump to an error / see-errors from a nice interactive menu
 
    ("e" flycheck-explain-error-at-point "explain"  :column "Current errror")
    ("c" flycheck-copy-errors-as-kill "copy")
