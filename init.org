@@ -1469,6 +1469,11 @@ what you've typed are suddenly listed!
         ;; Let's keep tab-completetion anyhow.
         ("TAB"   . helm-execute-persistent-action)
         ("<tab>" . helm-execute-persistent-action)))
+
+;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
+(use-package helm-icons
+  :custom (helm-icons-provider 'all-the-icons)
+  :config (helm-icons-enable))
 #+END_SRC
 
 Helm provides generic functions for completions to replace
