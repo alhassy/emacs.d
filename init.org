@@ -1942,6 +1942,12 @@ close the pop-up menu.
 For “key-based navigation”, consider ‘EVIL-mode’ or ‘Spacemacs’, or
 [[#Letter-based-Navigation][ace-jump-mode]] (below).
 
+Also …
+#+BEGIN_SRC emacs-lisp
+;; C-n, next line, inserts newlines when at the end of the buffer
+(setq next-line-add-newlines t)
+#+END_SRC
+
 *** Window Navigation
 :PROPERTIES:
 :CUSTOM_ID: Window-Navigation
@@ -2534,7 +2540,6 @@ answers that seamlessly ---almost as if a transient comment 😁
 If we want to see commit messages alongside /all/ code, then we can invoke
 doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
 then we use doc:git-timemachine.
-
 
 * Literate Programming
 :PROPERTIES:
@@ -7060,7 +7065,7 @@ selected text just by hitting the backspace key.
 #+BEGIN_SRC emacs-lisp
 (delete-selection-mode 1)
 #+END_SRC
-**   ~M-n,p~: Word-at-Point Navigation
+**   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word
 :PROPERTIES:
 :CUSTOM_ID: M-n-p-Word-at-Point-Navigation
 :END:
@@ -7068,22 +7073,20 @@ selected text just by hitting the backspace key.
 Let's mimic the ~C-n,p~ constructs from line to word, so that unoccupied ~M-n,p~ now
 serve to take us to the next or previous instance of the word under the
 cursor. This is less intrusive than searching ~C-s~ or listing all occurrences ~M-s
-o~.
+o~. Moreover, let's automaticly highlight current symbols, words under the cursour, and cycle
+quickly between highlkighted locations with
+doc:ahs-forward / [[kbd:M-→]] and
+doc:ahs-backward / [[kbd:M-←]].
+
 #+BEGIN_SRC emacs-lisp
-(use-package smartscan
-  :defer t
-  :config
-    (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
-    (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
-    (global-set-key (kbd "M-'") 'my/symbol-replace))
+;; Default: M-→/← moves to the next/previous instance of the currently highlighted word
+;; These are already meaningful commands in Org-mode, so we avoid these key re-bindings in Org-mode; TODO.
+(use-package auto-highlight-symbol
+  :hook ((text-mode . auto-highlight-symbol-mode)
+         (prog-mode . auto-highlight-symbol-mode)))
 #+END_SRC
 
-Unfortunately, as it currently is, there is no universal argument support:
-~C-u 2 M-p~ does /not/ take you to the second previous instance of a word
----the prefix is instead ignored.
-
-The default symbol replacement is [[https://github.com/mickeynp/smart-scan/issues/23][over-zealous]] in that it replaces sub-terms
-occurring as parts of larger words. Let's do something about that.
+Let's also quickly replace the word at point:
 #+BEGIN_SRC emacs-lisp
 (defun my/symbol-replace (replacement)
   "Replace all standalone symbols in the buffer matching the one at point."
@@ -7094,11 +7097,35 @@ occurring as parts of larger words. Let's do something about that.
       ;; (query-replace-regexp symbol replacement)
       (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
 #+END_SRC
-Also …
+
+
+(Unfortunately, as it currently is, there is no universal argument support: ~C-u
+2 M-p~ does /not/ take you to the second previous instance of a word ---the prefix
+is instead ignored. We can quickly form a work-around with doc:defhydra ---which
+gives us temoporary modal modes.)
+
+Finally, let's use [[kbd:M-n ╱ M-p ╱ M-']] to move to the next, previous, and
+replace the word at point /but also/ to give us a meanu to repeat any of these
+actions.
 #+BEGIN_SRC emacs-lisp
-;; C-n, next line, inserts newlines when at the end of the buffer
-(setq next-line-add-newlines t)
+(defmacro my/make-navigation-hydra (initial-action)
+  `(defhydra word-navigation
+    (:body-pre (,initial-action)) "Word-at-point Navigation"
+    ("n" ahs-forward "Next instance")
+    ("p" smartscan-symbol-go-backward "Previous instance")
+    ("r" my/symbol-replace "Replace all occurances")
+    ("s" ahs-display-stat "Stats")))
+
+;; (bind-key* str func) ≈ (global-set-key (kbd str) func)
+(bind-key* "M-n" (my/make-navigation-hydra ahs-forward))
+(bind-key* "M-p" (my/make-navigation-hydra ahs-backward))
+(bind-key* "M-'" (my/make-navigation-hydra my/symbol-replace))
 #+END_SRC
+
+An alternative is the [[https://github.com/mickeynp/smart-scan][smart-scan]] library ---which does the same thing, but does
+not provide the highlighting occurances at point.
+# The default symbol replacement is [[https://github.com/mickeynp/smart-scan/issues/23][over-zealous]] in that it replaces sub-terms
+# occurring as parts of larger words. Let's do something about that.
 ** Letter-based Navigation
 :PROPERTIES:
 :CUSTOM_ID: Letter-based-Navigation
