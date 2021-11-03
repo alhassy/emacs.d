@@ -5458,7 +5458,8 @@ ${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.o
 my/contacts)))`} $0
 #+end_src
 
-* Cosmetics
+* DONE COMMENT Cosmetics
+CLOSED: [2021-11-02 Tue 22:30]
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
 :END:
@@ -6923,8 +6924,9 @@ Must Know About Unicode and Character Sets (No Excuses!)]] )
 Executing ~agda-mode setup~ appends the following text to the ~.emacs~ file.
 Let's put it here ourselves.
 #+begin_src emacs-lisp
-(load-file (let ((coding-system-for-read 'utf-8))
-                (shell-command-to-string "/usr/local/bin/agda-mode locate")))
+(unless noninteractive
+  (load-file (let ((coding-system-for-read 'utf-8))
+               (shell-command-to-string "/usr/local/bin/agda-mode locate"))))
 #+end_src
 
 I almost always want the ~agda-mode~ input method ---it's like the TeX method, but
