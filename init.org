@@ -186,10 +186,8 @@ jobs:
 
       - name: Attempting startup...
         run: emacs -nw --batch --eval='(let
-                                ((debug-on-error (>=  emacs-major-version 26))
-                                 (initial-buffer-choice "*scratch*")
-                                 (user-emacs-directory default-directory)
-                                 (user-init-file (expand-file-name "init.el")))
+                                (
+                                 (user-emacs-directory default-directory))
                               (message "Default directory" )
                               (message default-directory)
                               (setq url-show-status nil)
