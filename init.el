@@ -1406,11 +1406,12 @@ the character 𝓍 before and after the selected text."
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:5]]
 ;; MA: This results in "Package cl is deprecated" !?
-(use-package agda-input
+(unless noninteractive
+  (use-package agda-input
   :ensure nil ;; I have it locally.
   :demand t
   :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-  :custom (default-input-method "Agda"))
+  :custom (default-input-method "Agda")))
   ;; Now C-\ or M-x toggle-input-method turn it on and offers
 ;; Unicode Input via Agda Input:5 ends here
 
@@ -1419,10 +1420,11 @@ the character 𝓍 before and after the selected text."
 ;; Unicode Input via Agda Input:6 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:7]]
-(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
+(unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
 ;; Unicode Input via Agda Input:7 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:8]]
+(unless noninteractive
 (cl-loop for item
       in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
           ("(" "﴾")
@@ -1473,10 +1475,11 @@ the character 𝓍 before and after the selected text."
            ("<=" "⇐")
         ;; more (key value) pairs here
         )
-      do (add-to-list 'agda-input-user-translations item))
+      do (add-to-list 'agda-input-user-translations item)))
 ;; Unicode Input via Agda Input:8 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:9]]
+(unless noninteractive
 ;; Add to the list of translations using “emot” and the given, more specfic, name.
 ;; Whence, \emot shows all possible emotions.
 (cl-loop for emot
@@ -1493,12 +1496,12 @@ the character 𝓍 before and after the selected text."
            ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ"))
       do
       (add-to-list 'agda-input-user-translations emot)
-      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
+      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
 ;; Unicode Input via Agda Input:9 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:10]]
 ;; activate translations
-(agda-input-setup)
+(unless noninteractive (agda-input-setup))
 ;; Unicode Input via Agda Input:10 ends here
 
 ;; [[file:init.org::#Increase-decrease-text-size][Increase/decrease text size:1]]

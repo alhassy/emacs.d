@@ -6933,11 +6933,12 @@ I almost always want the ~agda-mode~ input method ---it's like the TeX method, b
 better.
 #+BEGIN_SRC emacs-lisp :tangle yes
 ;; MA: This results in "Package cl is deprecated" !?
-(use-package agda-input
+(unless noninteractive
+  (use-package agda-input
   :ensure nil ;; I have it locally.
   :demand t
   :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-  :custom (default-input-method "Agda"))
+  :custom (default-input-method "Agda")))
   ;; Now C-\ or M-x toggle-input-method turn it on and offers
 #+END_SRC
 
@@ -6984,10 +6985,11 @@ e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX bind
 interactively: ~M-x customize-variable agda-input-user-translations~ then
 ~INS~ then for key sequence type ~set~ then ~INS~ and for string paste ~𝒮ℯ𝓉~.
 #+BEGIN_SRC emacs-lisp  :tangle yes
-(add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉"))
+(unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
 #+END_SRC
 Better yet, as a loop:
 #+BEGIN_SRC emacs-lisp :tangle yes
+(unless noninteractive
 (cl-loop for item
       in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
           ("(" "﴾")
@@ -7038,10 +7040,11 @@ Better yet, as a loop:
            ("<=" "⇐")
         ;; more (key value) pairs here
         )
-      do (add-to-list 'agda-input-user-translations item))
+      do (add-to-list 'agda-input-user-translations item)))
 #+END_SRC
 Also some silly stuff:
 #+begin_src emacs-lisp  :tangle yes
+(unless noninteractive
 ;; Add to the list of translations using “emot” and the given, more specfic, name.
 ;; Whence, \emot shows all possible emotions.
 (cl-loop for emot
@@ -7058,7 +7061,7 @@ Also some silly stuff:
            ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ"))
       do
       (add-to-list 'agda-input-user-translations emot)
-      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot))))
+      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
 #+end_src
 
 # If you change this setting manually, without using the
@@ -7067,7 +7070,7 @@ Also some silly stuff:
 Finally let's effect such translations.
 #+begin_src emacs-lisp  :tangle yes
 ;; activate translations
-(agda-input-setup)
+(unless noninteractive (agda-input-setup))
 #+end_src
 
 Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs unicode input]] could be approximated using
