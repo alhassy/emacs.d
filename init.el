@@ -836,7 +836,7 @@ visit all blocks with such a name."
 ;; [[file:init.org::#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:2]]
 ;; Be default, Emacs please use zsh
 ;; E.g., M-x shell
-(setq shell-file-name "/bin/zsh")
+(unless noninteractive (setq shell-file-name "/bin/zsh"))
 ;; Quickly pop-up a terminal, run a command, close it ---and zsh:2 ends here
 
 ;; [[file:init.org::#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:3]]
