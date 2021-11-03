@@ -2627,7 +2627,7 @@ If we want to see commit messages alongside /all/ code, then we can invoke
 doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
 then we use doc:git-timemachine.
 
-* Literate Programming
+* TODO Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
 :END:
@@ -2965,7 +2965,7 @@ should jump to the first entry.
   :config (beginend-global-mode)
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 #+END_SRC
-** Snippets ---Template Expansion
+** TODO COMMENT Snippets ---Template Expansion :Breaks_Github:
 :PROPERTIES:
 :CUSTOM_ID: Snippets-Template-Expansion
 :END:
@@ -3744,7 +3744,7 @@ the specified ~:noweb-ref~, not on ~:CUSTOM_ID:~ incidentally having the same
 name.
 #+end_box
 
-* Life within Org-mode
+* COMMENT Life within Org-mode
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
@@ -5456,7 +5456,7 @@ ${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.o
 my/contacts)))`} $0
 #+end_src
 
-* Cosmetics
+* COMMENT Cosmetics
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
 :END:
@@ -6434,7 +6434,7 @@ the current heading stuck at the top of the window.
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / "))
 #+END_SRC
-* Prose
+* COMMENT Prose
 :PROPERTIES:
 :CUSTOM_ID: Prose
 :END:
@@ -7301,7 +7301,7 @@ Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually 
 Notice, as a hydra, I can use ~C-c e~ followed by any combination of ~p~ and ~n~ to
 navigate my recent edits /without/ having to supply the prefix each time.
 
-* LaTeX ⇐ Org-Mode
+* COMMENT LaTeX ⇐ Org-Mode
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
 :END:
@@ -7449,7 +7449,7 @@ Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library fo
 Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
 with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
 easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
-* HTML ⇐ Org-mode
+* COMMENT HTML ⇐ Org-mode
 :PROPERTIES:
 :CUSTOM_ID: HTML-Org-mode
 :END:
@@ -7796,7 +7796,7 @@ Other useful functions, needing pandoc:
 doc:org-web-tools-insert-web-page-as-entry and
 doc:org-web-tools-convert-links-to-page-entries.
 
-* Programming
+* COMMENT Programming
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
@@ -8562,7 +8562,7 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, ha
 See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
 into new configurations.
 
-* Shell / Terminal
+* COMMENT Shell / Terminal
 
 ** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]
 
@@ -8578,7 +8578,7 @@ $i^{th}$-line having pattern =pᵢ=.
 (system-packages-install "hr") ;; ≈ brew install hr
 #+end_src
 
-* Experiments
+* COMMENT Experiments
 :PROPERTIES:
 :CUSTOM_ID: Experiments
 :END:
@@ -8609,6 +8609,14 @@ This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
 Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
 in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
 vertical line.
+* Here :noexport:Github_Actions_hunting:
+
+#+begin_src emacs-lisp
+(message "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+(message " Look here ")
+(message ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n")
+#+end_src
+
 * Lost Souls :Outdated_Documentation:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
