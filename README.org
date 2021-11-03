@@ -1,5 +1,10 @@
 Updated, /pretty/, version: https://alhassy.github.io/emacs.d/index.html
 
+#+html: <p align="center">
+#+html:  <a href="https://github.com/alhassy/emacs.d/actions?query=workflow%3A%22Lifemacs%20Loads%20Successfully%22">
+#+html:    <img src="https://github.com/alhassy/emacs.d/workflows/Lifemacs%20Loads%20Successfully/badge.svg" alt="LifeMacs CI Status Badge">
+#+html:  </a> </p>
+
 --------------------------------------------------------------------------------
 
 # Created 2020-09-16 Wed 10:04
