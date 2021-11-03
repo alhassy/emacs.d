@@ -2627,7 +2627,7 @@ If we want to see commit messages alongside /all/ code, then we can invoke
 doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
 then we use doc:git-timemachine.
 
-* TODO Literate Programming
+* TODO COMMENT Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
 :END:
@@ -5458,7 +5458,7 @@ ${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.o
 my/contacts)))`} $0
 #+end_src
 
-* COMMENT Cosmetics
+* Cosmetics
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
 :END:
@@ -6436,7 +6436,7 @@ the current heading stuck at the top of the window.
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / "))
 #+END_SRC
-* COMMENT Prose
+* Prose
 :PROPERTIES:
 :CUSTOM_ID: Prose
 :END:
@@ -7303,7 +7303,8 @@ Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually 
 Notice, as a hydra, I can use ~C-c e~ followed by any combination of ~p~ and ~n~ to
 navigate my recent edits /without/ having to supply the prefix each time.
 
-* LaTeX ⇐ Org-Mode
+* DONE COMMENT LaTeX ⇐ Org-Mode
+CLOSED: [2021-11-02 Tue 22:18]
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
 :END:
@@ -7451,7 +7452,8 @@ Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library fo
 Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
 with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
 easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
-* HTML ⇐ Org-mode
+* DONE COMMENT HTML ⇐ Org-mode
+CLOSED: [2021-11-02 Tue 22:18]
 :PROPERTIES:
 :CUSTOM_ID: HTML-Org-mode
 :END:
