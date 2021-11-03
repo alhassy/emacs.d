@@ -103,13 +103,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -982,7 +982,7 @@ visit all blocks with such a name."
 ;; [[file:init.org::#][Emojis:2]]
 ;; Get all unicode emojis to appear within Emacs
 ;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
-(set-fontset-font t nil "Apple Color Emoji")
+(unless noninteractive (set-fontset-font t nil "Apple Color Emoji"))
 ;; Emojis:2 ends here
 
 ;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:1]]
