@@ -854,9 +854,390 @@ visit all blocks with such a name."
 
 ;; [[file:init.org::*Here][Here:1]]
 (message "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
-(message " Look here ")
+(message " Look here; 500+ lines ")
 (message ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n")
 ;; Here:1 ends here
+
+;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
+;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
+(use-package projectile
+  :config
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
+
+  ;; Replace usual find-file with a project-wide version :-)
+  (global-set-key (kbd "C-x f") #'projectile-find-file)
+
+  ;; Makes indexing large projects much faster, after first time.
+  ;; Since its caching, some files may be out of sync; you can delete the cache
+  ;; with: C-u C-x f
+  (setq projectile-enable-caching t)
+
+  (define-key projectile-mode-map (kbd "C-x p s")
+    ;; I prefer helm-do-grep-ag since it shows me a live search
+    (lambda () (interactive)
+       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
+         ;; (shell-command-to-string "echo $PWD")
+         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
+;; Project management & navigation:1 ends here
+
+;; [[file:init.org::*Are there any errors in my code?][Are there any errors in my code?:1]]
+(use-package flycheck-status-emoji
+  :config
+  (load-library "flycheck-status-emoji")
+  (diminish-undo 'flycheck-mode)
+  (flycheck-status-emoji-mode))
+;; Are there any errors in my code?:1 ends here
+
+;; [[file:init.org::*Are there any errors in my code?][Are there any errors in my code?:2]]
+(use-package helm-flycheck)
+ (bind-key*
+ "C-c !"
+ (defhydra my/flycheck-hydra (:color blue :hint nil)
+   "Move around flycheck errors and get info about them"
+   ("n" flycheck-next-error "next" :column "Navigation")
+   ("p" flycheck-previous-error "previous")
+   ("f" flycheck-first-error "first")
+   ("l" flycheck-list-errors "list")
+   ("h" helm-flycheck "helm") ;; Jump to an error / see-errors from a nice interactive menu
+
+   ("e" flycheck-explain-error-at-point "explain"  :column "Current errror")
+   ("c" flycheck-copy-errors-as-kill "copy")
+
+   ("d" flycheck-describe-checker "Describe checker"  :column "More")
+   ("s" flycheck-select-checker "Select checker")
+   ("S" flycheck-verify-setup "Suggest setup")
+   ("m" flycheck-manual "manual")))
+;; Are there any errors in my code?:2 ends here
+
+;; [[file:init.org::*LSP: Making Emacs into a generic full-featured programming IDE][LSP: Making Emacs into a generic full-featured programming IDE:1]]
+(use-package lsp-mode
+  :init
+  ;; Set prefix for lsp commands
+  ;; (setq lsp-keymap-prefix "s-l") ;; default
+  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
+  ;; (setq lsp-idle-delay 0.500) ;; default
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (js-mode . lsp-mode) ;; Enter LSP mode
+         (js-mode . lsp)      ;; Start LSP server
+         (lsp-mode . lsp-enable-which-key-integration)
+  ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
+  :bind ("C-x y" . #'yankpad-insert)
+  :commands lsp)
+
+;; If a server crashes, restart it without asking me.
+(setq lsp-restart 'auto-restart)
+
+
+;; https://emacs-lsp.github.io/lsp-mode/page/languages/
+;; M-x lsp-install-server ⟨return⟩ jsts-ls
+;; M-x lsp-install-server ⟨return⟩ json-ls
+;; M-x lsp-install-server ⟨return⟩ eslint
+;; M-x lsp-install-server ⟨return⟩ css-ls
+;; M-x lsp-install-server ⟨return⟩ html-ls
+
+;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
+;; https://emacs-lsp.github.io/lsp-ui/#intro
+;;
+;; You only have to put (use-package lsp-ui) in your config and the package will
+;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
+(use-package lsp-ui)
+
+;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
+;; call hierarchy, etc.)
+(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
+;; M-x lsp-treemacs-errors-list
+
+;; helm-lsp provides “on type completion” alternative of cross-referencing.
+;; https://github.com/emacs-lsp/helm-lsp
+(use-package helm-lsp)
+(define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
+;; a” (The 'a' stands for apropos, which means appropriate nature)
+
+;; Set the amount of data which Emacs reads from a process.
+;; Some LSP responses are in the 8k-3MB range.
+;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
+(setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
+(setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
+;; A large gc-cons-threshold will cause freezing and stuttering during long-term
+;; interactive use. This one seems to be a good default.
+;; LSP: Making Emacs into a generic full-featured programming IDE:1 ends here
+
+;; [[file:init.org::*LSP: Making Emacs into a generic full-featured programming IDE][LSP: Making Emacs into a generic full-featured programming IDE:2]]
+;; Load the various useful utils
+(require 'lsp-ui-peek)
+(require 'lsp-ui-sideline)
+(require 'lsp-ui-doc)
+(require 'lsp-ui-imenu)
+
+; (setq lsp-mode-hook nil)
+(add-hook 'lsp-mode-hook
+          (lambda ()
+            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
+            (shell-command "rm ~/wxPortal/.flowconfig")
+            ;; Load the various useful utils
+            (require 'lsp-ui)
+            (lsp-ui-peek-enable t)
+            (lsp-ui-doc-enable t)
+            (lsp-ui-sideline-enable t)
+            (lsp-ui-imenu-buffer--enable)
+            ;; Set ⌘-l as the main mini-menu for LSP commands
+            (bind-key* "s-l" #'my/lsp-hydra/body)))
+
+(defun my/helm-lsp-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-workspace-symbol)))
+
+  (defun my/helm-lsp-global-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-global-workspace-symbol)))
+
+;; TODO: Add other cool features discussed/loaded above into this hydra!
+(defhydra my/lsp-hydra (:color blue :hint nil)
+  ;; Xref
+  ("d" xref-find-definitions "Definitions" :column "Xref")
+  ("D" xref-find-definitions-other-window "-> other win")
+  ("r" xref-find-references "References")
+  ("s" my/helm-lsp-workspace-symbol-at-point "Helm search")
+  ("S" my/helm-lsp-global-workspace-symbol-at-point "Helm global search")
+
+  ;; Peek
+  ("C-d" lsp-ui-peek-find-definitions "Definitions" :column "Peek")
+  ("C-r" lsp-ui-peek-find-references "References")
+  ("C-i" lsp-ui-peek-find-implementation "Implementation")
+
+  ;; LSP
+  ("p" lsp-describe-thing-at-point "Describe at point" :column "LSP")
+  ("C-a" lsp-execute-code-action "Execute code action")
+  ("R" lsp-rename "Rename")
+  ("t" lsp-goto-type-definition "Type definition")
+  ("i" lsp-goto-implementation "Implementation")
+  ("f" helm-imenu "Filter funcs/classes (Helm)")
+  ("C-c" lsp-describe-session "Describe session")
+
+  ;; Flycheck ---my “C-c !” flycheck hydra is much better than this simple lsp one.
+  ;; ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+  ("l" my/flycheck-hydra/body "List errs/warns/notes" :column "Flycheck")
+
+  ;; Misc
+  ("q" nil "Cancel" :column "Misc")
+  ("b" pop-tag-mark "Back"))
+;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
+
+;; [[file:init.org::*Turbolog: What's the value of this expression? :JavaScript][Turbolog: What's the value of this expression? :JavaScript:2]]
+(unless noninteractive
+
+(setq turbo-log--prefix "%c ******* LOOK HERE *******")
+(defun length> (x y) (> (length x) y))
+(defun length= (x y) (= (length x) y))
+(use-package turbo-log
+  :quelpa (turbo-log :fetcher github :repo "artawower/turbo-log.el")
+  :config (setq turbo-console--prefix "✰"))
+(bind-key* "C-x l" #'my/turbo-log-hydra/body)
+(defhydra my/turbo-log-hydra (:color blue :hint nil)
+  ("l" turbo-log-print "Log selected expression" :column "TurboLog: Insert meaningful log message for selected expressions")
+  ("c" turbo-log-comment-all-logs "Comment out all logs")
+  ("u" turbo-log-uncomment-all-logs "Uncomment out all logs")
+  ("d" turbo-log-delete-all-logs "Delete all TurboLog logs")
+  ("q" nil "Cancel"))
+
+
+(defun turbo-log--ecmascript-print (current-line-number formatted-selected-text prev-line-text multiple-logger-p)
+  "Console log for ecmascript, js/ts modes.
+CURRENT-LINE-NUMBER - line number under cursor
+FORMATTED-SELECTED-TEXT - formatted text without space at start position
+PREV-LINE-TEXT - text from previous line
+MULTIPLE-LOGGER-P - should guess list of available loggers?"
+
+  (let* ((is-empty-body (turbo-log--ecmascript-empty-body-p (turbo-log--get-line-text current-line-number)))
+         (insert-line-number (turbo-log--ecmascript-find-insert-pos current-line-number prev-line-text))
+         (meta-info (turbo-log--format-meta-info insert-line-number))
+         (normalized-code (turbo-log--ecmascript-normilize-code formatted-selected-text))
+         (turbo-log--message
+          (concat
+           (turbo-log--choose-logger turbo-log--ecmascript-loggers multiple-logger-p)
+           "('"
+           meta-info
+           formatted-selected-text ": ', "
+           ;; HACK this is my change: Does the TurboLog prefix have a %c console styling marker? If so, use it.
+           (if (s-contains? "%c" meta-info) "'color: green; font-weight: bold;', " "")
+           normalized-code ")"
+           (if (plist-get turbo-log--ecmascript-configs :include-semicolon) ";"))))
+
+    (if is-empty-body
+        (progn
+          (turbo-log--goto-line (- current-line-number 1))
+          (beginning-of-line)
+          (search-forward-regexp "}[[:blank:]]*")
+          (replace-match "")
+          (turbo-log--insert-with-indent current-line-number turbo-log--message)
+          (turbo-log--insert-with-indent (+ current-line-number 1) "}")
+          (indent-according-to-mode))
+      (turbo-log--insert-with-indent insert-line-number turbo-log--message))))
+
+)
+;; Turbolog: What's the value of this expression? :JavaScript:2 ends here
+
+;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:1]]
+(add-hook 'prog-mode-hook #'which-function-mode)
+(add-hook 'org-mode-hook  #'which-function-mode)
+;; Which function are we writing?:1 ends here
+
+;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:2]]
+(add-hook 'emacs-lisp-mode-hook #'check-parens)
+;; Which function are we writing?:2 ends here
+
+;; [[file:init.org::#Highlight-defined-Lisp-symbols][Highlight defined Lisp symbols:1]]
+;; Emacs Lisp specific
+(use-package highlight-defined
+  :hook (emacs-lisp-mode . highlight-defined-mode))
+;; Highlight defined Lisp symbols:1 ends here
+
+;; [[file:init.org::#Eldoc-for-Lisp-and-Haskell][Eldoc for Lisp and Haskell:1]]
+(use-package eldoc
+  :diminish eldoc-mode
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+        (lisp-interaction-mode . turn-on-eldoc-mode)
+        (haskell-mode . turn-on-haskell-doc-mode)
+        (haskell-mode . turn-on-haskell-indent))
+;; Eldoc for Lisp and Haskell:1 ends here
+
+;; [[file:init.org::#Jumping-to-definitions-references][Jumping to definitions & references:1]]
+(use-package dumb-jump
+  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
+         ("M-g ."     . dumb-jump-go-other-window)
+         ("M-g b"     . dumb-jump-back)
+         ("M-g p"     . dumb-jump-go-prompt)
+         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
+  :config
+  ;; If source file is visible, just shift focus to it.
+  (setq dumb-jump-use-visible-window t))
+;; Jumping to definitions & references:1 ends here
+
+;; [[file:init.org::#Being-Generous-with-Whitespace][Being Generous with Whitespace:1]]
+(use-package electric-operator
+  :diminish
+  :hook (c-mode . electric-operator-mode))
+;; Being Generous with Whitespace:1 ends here
+
+;; [[file:init.org::#On-the-fly-syntax-checking][On the fly syntax checking:1]]
+(use-package flycheck
+  :diminish
+  :init (global-flycheck-mode)
+  :config ;; There may be multiple tools; I have GHC not Stack, so let's avoid that.
+  (setq-default flycheck-disabled-checkers '(haskell-stack-ghc emacs-lisp-checkdoc))
+  :custom (flycheck-display-errors-delay .3))
+;; On the fly syntax checking:1 ends here
+
+;; [[file:init.org::#On-the-fly-syntax-checking][On the fly syntax checking:3]]
+(use-package flymake
+  :hook ((emacs-lisp-mode . (lambda () (flycheck-mode -1)))
+         (emacs-lisp-mode . flymake-mode))
+  :bind (:map flymake-mode-map
+              ("C-c ! n" . flymake-goto-next-error)
+              ("C-c ! p" . flymake-goto-prev-error)))
+;; On the fly syntax checking:3 ends here
+
+;; [[file:init.org::#Coding-with-a-Fruit-Salad-Semantic-Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
+(use-package color-identifiers-mode
+  :config (global-color-identifiers-mode))
+
+;; Sometimes just invoke: M-x color-identifiers:refresh
+;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
+
+;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:1]]
+(use-package origami
+  ;; In Lisp languages, by default only function definitions are folded.
+  ;; :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+
+  ;; Please open any code with top level items folded away.
+  :hook (prog-mode .  (lambda () (interactive)
+                       (origami-close-all-nodes (current-buffer))))
+  ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
+
+  :config
+
+  ;; For any major-mode that doesn't have explicit support, origami will use the
+  ;; indentation of the buffer to determine folds.
+  (global-origami-mode)
+
+  ;; With basic support for one of my languages.
+  (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
+         origami-parser-alist))
+;; Text Folding with Origami-mode:1 ends here
+
+;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:2]]
+(defun my/search-hook-function ()
+  (when origami-mode (origami-open-node-recursively (current-buffer) (point))))
+
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+;;
+;; Likewise for incremental search, isearch, users.
+;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
+;; Text Folding with Origami-mode:2 ends here
+
+;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:3]]
+(defhydra folding-with-origami-mode (global-map "C-c f")
+  ("h" origami-close-node-recursively "Hide")
+  ("s" origami-open-node-recursively  "Show")
+  ;; ("H" origami-close-all-nodes "Hide All")
+  ;; ("S" origami-open-all-nodes "Show All")
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("n" origami-next-fold "Next")
+  ("p" origami-previous-fold "Previous"))
+;; Text Folding with Origami-mode:3 ends here
+
+;; [[file:init.org::*Toggling System][Toggling System:1]]
+(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
+  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
+  ;; First row
+  ("t" my/toggle-theme)
+  ("f" my/toggle-font)
+  ("m" imenu-list-smart-toggle)
+  ("c" column-number-mode)
+)
+
+ ;; Shows a nice sidebar menu of the buffer's contents
+(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
+;; Toggling System:1 ends here
+
+;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
+(use-package windmove
+  :config ;; use command key on Mac
+          (windmove-default-keybindings 'super)
+          ;; wrap around at edges
+          (setq windmove-wrap-around t))
+;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
+
+;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2]]
+(use-package buffer-flip
+  :bind
+   (:map buffer-flip-map
+    ("M-<tab>"   . buffer-flip-forward)
+    ("M-S-<tab>" . buffer-flip-backward)
+    ("C-g"       . buffer-flip-abort))
+  :config
+    (setq buffer-flip-skip-patterns
+        '("^\\*helm\\b")))
+;; key to begin cycling buffers.
+(global-set-key (kbd "M-<tab>") 'buffer-flip)
+;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
+
+;; [[file:init.org::*hr: \[\[https:/github.com/LuRsT/hr\]\[A horizontal for your terminal\]\]][hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1]]
+(system-packages-install "hr") ;; ≈ brew install hr
+;; hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1 ends here
+
+;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
+(quelpa '(org-pretty-table
+         :repo "Fuco1/org-pretty-table"
+         :fetcher github))
+
+(add-hook 'org-mode-hook 'org-pretty-table-mode)
+;; Draw pretty unicode tables in org-mode:1 ends here
 
 ;; [[file:init.org::#Lost-Souls][Lost Souls:1]]
 ;; Move to OS’ trash can when deleting stuff

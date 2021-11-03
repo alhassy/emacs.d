@@ -7796,7 +7796,15 @@ Other useful functions, needing pandoc:
 doc:org-web-tools-insert-web-page-as-entry and
 doc:org-web-tools-convert-links-to-page-entries.
 
-* COMMENT Programming
+* Here :noexport:Github_Actions_hunting:
+
+#+begin_src emacs-lisp
+(message "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
+(message " Look here; 500+ lines ")
+(message ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n")
+#+end_src
+
+* Programming
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
@@ -8562,9 +8570,9 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, ha
 See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
 into new configurations.
 
-* COMMENT Shell / Terminal
+** Shell / Terminal
 
-** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]
+*** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]
 
 When working in the terminal, at least in my day job, it can be helpful to
 visually segregate large chunks of output. With the ~hr~ command, I can run ~hr
@@ -8578,7 +8586,7 @@ $i^{th}$-line having pattern =pᵢ=.
 (system-packages-install "hr") ;; ≈ brew install hr
 #+end_src
 
-* COMMENT Experiments
+* Experiments
 :PROPERTIES:
 :CUSTOM_ID: Experiments
 :END:
@@ -8609,14 +8617,6 @@ This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
 Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
 in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
 vertical line.
-* Here :noexport:Github_Actions_hunting:
-
-#+begin_src emacs-lisp
-(message "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
-(message " Look here ")
-(message ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n")
-#+end_src
-
 * Lost Souls :Outdated_Documentation:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
