@@ -190,6 +190,7 @@ jobs:
                                  (initial-buffer-choice "*scratch*")
                                  (user-emacs-directory default-directory)
                                  (user-init-file (expand-file-name "init.el")))
+                              (message "Default directory: %s" default-directory)
                               (setq url-show-status nil)
                               (package-initialize)
                               (load-file "init.el")
