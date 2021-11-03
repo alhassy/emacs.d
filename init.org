@@ -3744,7 +3744,7 @@ the specified ~:noweb-ref~, not on ~:CUSTOM_ID:~ incidentally having the same
 name.
 #+end_box
 
-* COMMENT Life within Org-mode
+* Life within Org-mode
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
@@ -7796,15 +7796,8 @@ Other useful functions, needing pandoc:
 doc:org-web-tools-insert-web-page-as-entry and
 doc:org-web-tools-convert-links-to-page-entries.
 
-* Here :noexport:Github_Actions_hunting:
-
-#+begin_src emacs-lisp
-(message "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
-(message " Look here; 500+ lines ")
-(message ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n")
-#+end_src
-
-* Programming
+* DONE COMMENT Programming
+CLOSED: [2021-11-02 Tue 22:01]
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
@@ -8586,7 +8579,8 @@ $i^{th}$-line having pattern =pᵢ=.
 (system-packages-install "hr") ;; ≈ brew install hr
 #+end_src
 
-* Experiments
+* DONE COMMENT Experiments
+CLOSED: [2021-11-02 Tue 22:01]
 :PROPERTIES:
 :CUSTOM_ID: Experiments
 :END:
@@ -8617,7 +8611,7 @@ This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
 Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
 in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
 vertical line.
-* Lost Souls :Outdated_Documentation:
+* DONE COMMENT Lost Souls                                    :Outdated_Documentation:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:

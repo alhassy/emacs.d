@@ -852,804 +852,501 @@ visit all blocks with such a name."
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 ;; Jumping to extreme semantic units:1 ends here
 
-;; [[file:init.org::*Here][Here:1]]
-(message "\n;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
-(message " Look here; 500+ lines ")
-(message ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n")
-;; Here:1 ends here
-
-;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
-;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
-(use-package projectile
-  :config
-  (projectile-mode +1)
-  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
-
-  ;; Replace usual find-file with a project-wide version :-)
-  (global-set-key (kbd "C-x f") #'projectile-find-file)
-
-  ;; Makes indexing large projects much faster, after first time.
-  ;; Since its caching, some files may be out of sync; you can delete the cache
-  ;; with: C-u C-x f
-  (setq projectile-enable-caching t)
-
-  (define-key projectile-mode-map (kbd "C-x p s")
-    ;; I prefer helm-do-grep-ag since it shows me a live search
-    (lambda () (interactive)
-       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
-         ;; (shell-command-to-string "echo $PWD")
-         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
-;; Project management & navigation:1 ends here
-
-;; [[file:init.org::*Are there any errors in my code?][Are there any errors in my code?:1]]
-(use-package flycheck-status-emoji
-  :config
-  (load-library "flycheck-status-emoji")
-  (diminish-undo 'flycheck-mode)
-  (flycheck-status-emoji-mode))
-;; Are there any errors in my code?:1 ends here
-
-;; [[file:init.org::*Are there any errors in my code?][Are there any errors in my code?:2]]
-(use-package helm-flycheck)
- (bind-key*
- "C-c !"
- (defhydra my/flycheck-hydra (:color blue :hint nil)
-   "Move around flycheck errors and get info about them"
-   ("n" flycheck-next-error "next" :column "Navigation")
-   ("p" flycheck-previous-error "previous")
-   ("f" flycheck-first-error "first")
-   ("l" flycheck-list-errors "list")
-   ("h" helm-flycheck "helm") ;; Jump to an error / see-errors from a nice interactive menu
-
-   ("e" flycheck-explain-error-at-point "explain"  :column "Current errror")
-   ("c" flycheck-copy-errors-as-kill "copy")
-
-   ("d" flycheck-describe-checker "Describe checker"  :column "More")
-   ("s" flycheck-select-checker "Select checker")
-   ("S" flycheck-verify-setup "Suggest setup")
-   ("m" flycheck-manual "manual")))
-;; Are there any errors in my code?:2 ends here
-
-;; [[file:init.org::*LSP: Making Emacs into a generic full-featured programming IDE][LSP: Making Emacs into a generic full-featured programming IDE:1]]
-(use-package lsp-mode
-  :init
-  ;; Set prefix for lsp commands
-  ;; (setq lsp-keymap-prefix "s-l") ;; default
-  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
-  ;; (setq lsp-idle-delay 0.500) ;; default
-  :hook  ;; Every programming mode should enter & start LSP, with which-key support
-         (js-mode . lsp-mode) ;; Enter LSP mode
-         (js-mode . lsp)      ;; Start LSP server
-         (lsp-mode . lsp-enable-which-key-integration)
-  ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
-  :bind ("C-x y" . #'yankpad-insert)
-  :commands lsp)
-
-;; If a server crashes, restart it without asking me.
-(setq lsp-restart 'auto-restart)
-
-
-;; https://emacs-lsp.github.io/lsp-mode/page/languages/
-;; M-x lsp-install-server ⟨return⟩ jsts-ls
-;; M-x lsp-install-server ⟨return⟩ json-ls
-;; M-x lsp-install-server ⟨return⟩ eslint
-;; M-x lsp-install-server ⟨return⟩ css-ls
-;; M-x lsp-install-server ⟨return⟩ html-ls
-
-;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
-;; https://emacs-lsp.github.io/lsp-ui/#intro
-;;
-;; You only have to put (use-package lsp-ui) in your config and the package will
-;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
-(use-package lsp-ui)
-
-;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
-;; call hierarchy, etc.)
-(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
-;; M-x lsp-treemacs-errors-list
-
-;; helm-lsp provides “on type completion” alternative of cross-referencing.
-;; https://github.com/emacs-lsp/helm-lsp
-(use-package helm-lsp)
-(define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
-;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
-;; a” (The 'a' stands for apropos, which means appropriate nature)
-
-;; Set the amount of data which Emacs reads from a process.
-;; Some LSP responses are in the 8k-3MB range.
-;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
-(setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
-(setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
-;; A large gc-cons-threshold will cause freezing and stuttering during long-term
-;; interactive use. This one seems to be a good default.
-;; LSP: Making Emacs into a generic full-featured programming IDE:1 ends here
-
-;; [[file:init.org::*LSP: Making Emacs into a generic full-featured programming IDE][LSP: Making Emacs into a generic full-featured programming IDE:2]]
-;; Load the various useful utils
-(require 'lsp-ui-peek)
-(require 'lsp-ui-sideline)
-(require 'lsp-ui-doc)
-(require 'lsp-ui-imenu)
-
-; (setq lsp-mode-hook nil)
-(add-hook 'lsp-mode-hook
-          (lambda ()
-            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
-            (shell-command "rm ~/wxPortal/.flowconfig")
-            ;; Load the various useful utils
-            (require 'lsp-ui)
-            (lsp-ui-peek-enable t)
-            (lsp-ui-doc-enable t)
-            (lsp-ui-sideline-enable t)
-            (lsp-ui-imenu-buffer--enable)
-            ;; Set ⌘-l as the main mini-menu for LSP commands
-            (bind-key* "s-l" #'my/lsp-hydra/body)))
-
-(defun my/helm-lsp-workspace-symbol-at-point ()
-    (interactive)
-    (let ((current-prefix-arg t))
-      (call-interactively #'helm-lsp-workspace-symbol)))
-
-  (defun my/helm-lsp-global-workspace-symbol-at-point ()
-    (interactive)
-    (let ((current-prefix-arg t))
-      (call-interactively #'helm-lsp-global-workspace-symbol)))
-
-;; TODO: Add other cool features discussed/loaded above into this hydra!
-(defhydra my/lsp-hydra (:color blue :hint nil)
-  ;; Xref
-  ("d" xref-find-definitions "Definitions" :column "Xref")
-  ("D" xref-find-definitions-other-window "-> other win")
-  ("r" xref-find-references "References")
-  ("s" my/helm-lsp-workspace-symbol-at-point "Helm search")
-  ("S" my/helm-lsp-global-workspace-symbol-at-point "Helm global search")
-
-  ;; Peek
-  ("C-d" lsp-ui-peek-find-definitions "Definitions" :column "Peek")
-  ("C-r" lsp-ui-peek-find-references "References")
-  ("C-i" lsp-ui-peek-find-implementation "Implementation")
-
-  ;; LSP
-  ("p" lsp-describe-thing-at-point "Describe at point" :column "LSP")
-  ("C-a" lsp-execute-code-action "Execute code action")
-  ("R" lsp-rename "Rename")
-  ("t" lsp-goto-type-definition "Type definition")
-  ("i" lsp-goto-implementation "Implementation")
-  ("f" helm-imenu "Filter funcs/classes (Helm)")
-  ("C-c" lsp-describe-session "Describe session")
-
-  ;; Flycheck ---my “C-c !” flycheck hydra is much better than this simple lsp one.
-  ;; ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
-  ("l" my/flycheck-hydra/body "List errs/warns/notes" :column "Flycheck")
-
-  ;; Misc
-  ("q" nil "Cancel" :column "Misc")
-  ("b" pop-tag-mark "Back"))
-;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
-
-;; [[file:init.org::*Turbolog: What's the value of this expression? :JavaScript][Turbolog: What's the value of this expression? :JavaScript:2]]
-(unless noninteractive
-
-(setq turbo-log--prefix "%c ******* LOOK HERE *******")
-(defun length> (x y) (> (length x) y))
-(defun length= (x y) (= (length x) y))
-(use-package turbo-log
-  :quelpa (turbo-log :fetcher github :repo "artawower/turbo-log.el")
-  :config (setq turbo-console--prefix "✰"))
-(bind-key* "C-x l" #'my/turbo-log-hydra/body)
-(defhydra my/turbo-log-hydra (:color blue :hint nil)
-  ("l" turbo-log-print "Log selected expression" :column "TurboLog: Insert meaningful log message for selected expressions")
-  ("c" turbo-log-comment-all-logs "Comment out all logs")
-  ("u" turbo-log-uncomment-all-logs "Uncomment out all logs")
-  ("d" turbo-log-delete-all-logs "Delete all TurboLog logs")
-  ("q" nil "Cancel"))
-
-
-(defun turbo-log--ecmascript-print (current-line-number formatted-selected-text prev-line-text multiple-logger-p)
-  "Console log for ecmascript, js/ts modes.
-CURRENT-LINE-NUMBER - line number under cursor
-FORMATTED-SELECTED-TEXT - formatted text without space at start position
-PREV-LINE-TEXT - text from previous line
-MULTIPLE-LOGGER-P - should guess list of available loggers?"
-
-  (let* ((is-empty-body (turbo-log--ecmascript-empty-body-p (turbo-log--get-line-text current-line-number)))
-         (insert-line-number (turbo-log--ecmascript-find-insert-pos current-line-number prev-line-text))
-         (meta-info (turbo-log--format-meta-info insert-line-number))
-         (normalized-code (turbo-log--ecmascript-normilize-code formatted-selected-text))
-         (turbo-log--message
-          (concat
-           (turbo-log--choose-logger turbo-log--ecmascript-loggers multiple-logger-p)
-           "('"
-           meta-info
-           formatted-selected-text ": ', "
-           ;; HACK this is my change: Does the TurboLog prefix have a %c console styling marker? If so, use it.
-           (if (s-contains? "%c" meta-info) "'color: green; font-weight: bold;', " "")
-           normalized-code ")"
-           (if (plist-get turbo-log--ecmascript-configs :include-semicolon) ";"))))
-
-    (if is-empty-body
-        (progn
-          (turbo-log--goto-line (- current-line-number 1))
-          (beginning-of-line)
-          (search-forward-regexp "}[[:blank:]]*")
-          (replace-match "")
-          (turbo-log--insert-with-indent current-line-number turbo-log--message)
-          (turbo-log--insert-with-indent (+ current-line-number 1) "}")
-          (indent-according-to-mode))
-      (turbo-log--insert-with-indent insert-line-number turbo-log--message))))
-
-)
-;; Turbolog: What's the value of this expression? :JavaScript:2 ends here
-
-;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:1]]
-(add-hook 'prog-mode-hook #'which-function-mode)
-(add-hook 'org-mode-hook  #'which-function-mode)
-;; Which function are we writing?:1 ends here
-
-;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:2]]
-(add-hook 'emacs-lisp-mode-hook #'check-parens)
-;; Which function are we writing?:2 ends here
-
-;; [[file:init.org::#Highlight-defined-Lisp-symbols][Highlight defined Lisp symbols:1]]
-;; Emacs Lisp specific
-(use-package highlight-defined
-  :hook (emacs-lisp-mode . highlight-defined-mode))
-;; Highlight defined Lisp symbols:1 ends here
-
-;; [[file:init.org::#Eldoc-for-Lisp-and-Haskell][Eldoc for Lisp and Haskell:1]]
-(use-package eldoc
-  :diminish eldoc-mode
-  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
-        (lisp-interaction-mode . turn-on-eldoc-mode)
-        (haskell-mode . turn-on-haskell-doc-mode)
-        (haskell-mode . turn-on-haskell-indent))
-;; Eldoc for Lisp and Haskell:1 ends here
-
-;; [[file:init.org::#Jumping-to-definitions-references][Jumping to definitions & references:1]]
-(use-package dumb-jump
-  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
-         ("M-g ."     . dumb-jump-go-other-window)
-         ("M-g b"     . dumb-jump-back)
-         ("M-g p"     . dumb-jump-go-prompt)
-         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
-  :config
-  ;; If source file is visible, just shift focus to it.
-  (setq dumb-jump-use-visible-window t))
-;; Jumping to definitions & references:1 ends here
-
-;; [[file:init.org::#Being-Generous-with-Whitespace][Being Generous with Whitespace:1]]
-(use-package electric-operator
-  :diminish
-  :hook (c-mode . electric-operator-mode))
-;; Being Generous with Whitespace:1 ends here
-
-;; [[file:init.org::#On-the-fly-syntax-checking][On the fly syntax checking:1]]
-(use-package flycheck
-  :diminish
-  :init (global-flycheck-mode)
-  :config ;; There may be multiple tools; I have GHC not Stack, so let's avoid that.
-  (setq-default flycheck-disabled-checkers '(haskell-stack-ghc emacs-lisp-checkdoc))
-  :custom (flycheck-display-errors-delay .3))
-;; On the fly syntax checking:1 ends here
-
-;; [[file:init.org::#On-the-fly-syntax-checking][On the fly syntax checking:3]]
-(use-package flymake
-  :hook ((emacs-lisp-mode . (lambda () (flycheck-mode -1)))
-         (emacs-lisp-mode . flymake-mode))
-  :bind (:map flymake-mode-map
-              ("C-c ! n" . flymake-goto-next-error)
-              ("C-c ! p" . flymake-goto-prev-error)))
-;; On the fly syntax checking:3 ends here
-
-;; [[file:init.org::#Coding-with-a-Fruit-Salad-Semantic-Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
-(use-package color-identifiers-mode
-  :config (global-color-identifiers-mode))
-
-;; Sometimes just invoke: M-x color-identifiers:refresh
-;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
-
-;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:1]]
-(use-package origami
-  ;; In Lisp languages, by default only function definitions are folded.
-  ;; :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
-
-  ;; Please open any code with top level items folded away.
-  :hook (prog-mode .  (lambda () (interactive)
-                       (origami-close-all-nodes (current-buffer))))
-  ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
-
-  :config
-
-  ;; For any major-mode that doesn't have explicit support, origami will use the
-  ;; indentation of the buffer to determine folds.
-  (global-origami-mode)
-
-  ;; With basic support for one of my languages.
-  (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
-         origami-parser-alist))
-;; Text Folding with Origami-mode:1 ends here
-
-;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:2]]
-(defun my/search-hook-function ()
-  (when origami-mode (origami-open-node-recursively (current-buffer) (point))))
-
-;; Open folded nodes if a search stops there.
-(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-;;
-;; Likewise for incremental search, isearch, users.
-;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
-;; Text Folding with Origami-mode:2 ends here
-
-;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:3]]
-(defhydra folding-with-origami-mode (global-map "C-c f")
-  ("h" origami-close-node-recursively "Hide")
-  ("s" origami-open-node-recursively  "Show")
-  ;; ("H" origami-close-all-nodes "Hide All")
-  ;; ("S" origami-open-all-nodes "Show All")
-  ("t" origami-toggle-all-nodes  "Toggle buffer")
-  ("n" origami-next-fold "Next")
-  ("p" origami-previous-fold "Previous"))
-;; Text Folding with Origami-mode:3 ends here
-
-;; [[file:init.org::*Toggling System][Toggling System:1]]
-(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
-  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
-  ;; First row
-  ("t" my/toggle-theme)
-  ("f" my/toggle-font)
-  ("m" imenu-list-smart-toggle)
-  ("c" column-number-mode)
-)
-
- ;; Shows a nice sidebar menu of the buffer's contents
-(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
-;; Toggling System:1 ends here
-
-;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
-(use-package windmove
-  :config ;; use command key on Mac
-          (windmove-default-keybindings 'super)
-          ;; wrap around at edges
-          (setq windmove-wrap-around t))
-;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
-
-;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2]]
-(use-package buffer-flip
-  :bind
-   (:map buffer-flip-map
-    ("M-<tab>"   . buffer-flip-forward)
-    ("M-S-<tab>" . buffer-flip-backward)
-    ("C-g"       . buffer-flip-abort))
-  :config
-    (setq buffer-flip-skip-patterns
-        '("^\\*helm\\b")))
-;; key to begin cycling buffers.
-(global-set-key (kbd "M-<tab>") 'buffer-flip)
-;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
-
-;; [[file:init.org::*hr: \[\[https:/github.com/LuRsT/hr\]\[A horizontal for your terminal\]\]][hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1]]
-(system-packages-install "hr") ;; ≈ brew install hr
-;; hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1 ends here
-
-;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
-(quelpa '(org-pretty-table
-         :repo "Fuco1/org-pretty-table"
-         :fetcher github))
-
-(add-hook 'org-mode-hook 'org-pretty-table-mode)
-;; Draw pretty unicode tables in org-mode:1 ends here
-
-;; [[file:init.org::#Lost-Souls][Lost Souls:1]]
-;; Move to OS’ trash can when deleting stuff
-;; instead of deleting things outright!
-(setq delete-by-moving-to-trash t
-      trash-directory "~/.Trash/")
-
-;; An automatic window-resizing mechanism.
-;; A “calmer” alternative to golden-ratio.
-;; https://github.com/cyrus-and/zoom
-(use-package zoom
-  :diminish
-  :config (zoom-mode t))
-
-;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
-;; https://github.com/bbatsov/projectile
-(use-package projectile
-:config (projectile-global-mode))
-(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
-
-;; Let's use an improved buffer list.
-(use-package ibuffer ;; This is built-into Emacs.
-  :bind ("C-x C-b" . ibuffer))
-;; It uses similar commands as does dired; e.g.,
-;; / . org
-;; This filters (“/”) the list with extensions (“.”) being “org”.
-
-(use-package ibuffer-vc
-  :hook (ibuffer . (lambda ()
-                     (ibuffer-vc-set-filter-groups-by-vc-root)
-                     (unless (eq ibuffer-sorting-mode 'alphabetic)
-                       (ibuffer-do-sort-by-alphabetic))))
-  :custom
-  (ibuffer-formats '((mark modified read-only " "
-                           (name 18 18 :left :elide) " "
-                           (size 9 -1 :right) " "
-                           (mode 16 16 :left :elide) " "
-                           (vc-status 16 16 :left) " "
-                           (vc-relative-file)))))
-;; Lost Souls:1 ends here
-
-;; [[file:init.org::*Sleek Semantic Selection][Sleek Semantic Selection:1]]
-(use-package expand-region
-  :diminish
-  :bind (("s-r" . #'er/expand-region)))
-;; Sleek Semantic Selection:1 ends here
-
-;; [[file:init.org::*Semantic Change][Semantic Change:1]]
-(use-package change-inner
-  :diminish
-  :bind (("s-i" . #'change-inner)
-         ("s-o" . #'change-outer)))
-;; Semantic Change:1 ends here
-
-;; [[file:init.org::*Indentation Guide][Indentation Guide:1]]
-;; Add a visual indent guide
-(use-package highlight-indent-guides
-  :hook (prog-mode . highlight-indent-guides-mode)
-  :custom
-  (highlight-indent-guides-method 'character)
-  (highlight-indent-guides-character ?|)
-  (highlight-indent-guides-responsive 'stack))
-;; Indentation Guide:1 ends here
-
-;; [[file:init.org::*Commenting][Commenting:1]]
-(use-package comment-dwim-2
-  :bind ("M-;" . comment-dwim-2))
-
- ;; Not ideal: M-; comments a parent Org heading and not the current line.
- ;; (define-key org-mode-map (kbd "M-;") 'org-comment-dwim-2)
-;; Commenting:1 ends here
-
-;; [[file:init.org::#Having-a-workspace-manager-in-Emacs][Having a workspace manager in Emacs:1]]
-(use-package perspective
-  :defer t
-  :config ;; Activate it.
-          (persp-mode)
-          ;; In the modeline, tell me which workspace I'm in.
-          (persp-turn-on-modestring))
-;; Having a workspace manager in Emacs:1 ends here
-
-;; [[file:init.org::#Editor-Documentation-with-Contextual-Information][Editor Documentation with Contextual Information:1]]
-(use-package helpful :defer t)
-
-(defun my/describe-symbol (symbol)
-  "A “C-h o” replacement using “helpful”:
-   If there's a thing at point, offer that as default search item.
-
-   If a prefix is provided, i.e., “C-u C-h o” then the built-in
-   “describe-symbol” command is used.
-
-   ⇨ Pretty docstrings, with links and highlighting.
-   ⇨ Source code of symbol.
-   ⇨ Callers of function symbol.
-   ⇨ Key bindings for function symbol.
-   ⇨ Aliases.
-   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
-  "
-  (interactive "p")
-  (let* ((thing (symbol-at-point))
-         (val (completing-read
-               (format "Describe symbol (default %s): " thing)
-               (vconcat (list thing) obarray)
-               (lambda (vv)
-                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
-                          describe-symbol-backends))
-               t nil nil))
-         (it (intern val)))
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:1]]
+(cl-defun my/org-capture-buffer (&optional keys no-additional-remarks
+                                           (heading-regexp "Subject: \\(.*\\)"))
+  "Capture the current [narrowed] buffer as a todo/note.
+
+This is mostly intended for capturing mail as todo tasks ^_^
+
+When NO-ADDITIONAL-REMARKS is provided, and a heading is found,
+then make and store the note without showing a pop-up.
+This is useful for when we capture self-contained mail.
+
+The HEADING-REGEXP must have a regexp parenthesis construction
+which is used to obtain a suitable heading for the resulting todo/note."
+  (interactive "P")
+  (let* ((current-content (substring-no-properties (buffer-string)))
+         (heading         (progn (string-match heading-regexp current-content)
+                                 (or (match-string 1 current-content) ""))))
+    (org-capture keys)
+    (insert heading "\n\n\n\n" (s-repeat 80 "-") "\n\n\n" current-content)
+
+    ;; The overtly verbose conditions are for the sake of clarity.
+    ;; Moreover, even though the final could have “t”, being explicit
+    ;; communicates exactly the necessary conditions.
+    ;; Being so verbose leads to mutual exclusive clauses, whence order is irrelevant.
     (cond
-     (current-prefix-arg (funcall #'describe-symbol it))
-     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
-     (t (helpful-symbol it)))))
+     ((s-blank? heading)
+        (beginning-of-buffer) (end-of-line))
+     ((and no-additional-remarks (not (s-blank? heading)))
+        (org-capture-finalize))
+     ((not (or no-additional-remarks (s-blank? heading)))
+        (beginning-of-buffer) (forward-line 2) (indent-for-tab-command)))))
+;; Capturing ideas & notes without interrupting the current workflow:1 ends here
 
-;; Keybindings.
-(global-set-key (kbd "C-h o") #'my/describe-symbol)
-(global-set-key (kbd "C-h k") #'helpful-key)
-;; Editor Documentation with Contextual Information:1 ends here
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:2]]
+(defun my/org-capture (&optional prefix keys)
+  "Capture something!
 
-;; [[file:init.org::#The-my-make-init-el-and-README-function][startup-code]]
-  (defun my/make-init-el-and-README ()
-    "Tangle an el and a github README from my init.org."
-    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
-    (when current-prefix-arg
-      (let* ((time      (current-time))
-             (_date     (format-time-string "_%Y-%m-%d"))
-             (.emacs    "~/.emacs")
-             (.emacs.el "~/.emacs.el"))
-        ;; Make README.org
-        (save-excursion
-          (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
-          (org-babel-execute-src-block))
+      C-c c   ⇒ Capture something; likewise for “C-uⁿ C-c c” where n ≥ 3.
+C-u   C-c c   ⇒ Capture current [narrowed] buffer.
+C-u 5 C-c c   ⇒ Capture current [narrowed] buffer without adding additional remarks.
+C-u C-u C-c c ⇒ Goto last note stored."
+  (interactive "p")
+  (case prefix
+    (4     (my/org-capture-buffer keys))
+    (5     (my/org-capture-buffer keys :no-additional-remarks))
+    (t     (org-capture prefix keys))))
+;; Capturing ideas & notes without interrupting the current workflow:2 ends here
 
-        ;; remove any other initialisation file candidates
-        (ignore-errors
-          (f-move .emacs    (concat .emacs _date))
-          (f-move .emacs.el (concat .emacs.el _date)))
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:3]]
+(s-join "\n" (--map (concat "+  [[kbd:" (s-replace "⇒" "]]" it))  (cddr (s-split "\n" (documentation #'my/org-capture)))))
+;; Capturing ideas & notes without interrupting the current workflow:3 ends here
 
-        ;; Make init.el
-        (org-babel-tangle)
-        ;; (byte-compile-file "~/.emacs.d/init.el")
-        (load-file "~/.emacs.d/init.el")
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:4]]
+;; Location of my todos/notes file
+(unless noninteractive (setq org-default-notes-file "~/Dropbox/todo.org"))
 
-        ;; Acknowledgement
-        (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
-                 (float-time (time-since time))))))
+;; “C-c c” to quickly capture a task/note
+(define-key global-map "\C-cc" #'my/org-capture) ;; See below.
+;; Capturing ideas & notes without interrupting the current workflow:4 ends here
 
-(add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
-;; startup-code ends here
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:5]]
+(cl-defun my/make/org-capture-template
+   (shortcut heading &optional (no-todo nil) (description heading) (scheduled nil))
+  "Quickly produce an org-capture-template.
 
-;; [[file:init.org::#Table-of-Contents-for-Org-vs-Github][‘Table of Contents’ for Org vs. Github:1]]
-(use-package toc-org
-  ;; Automatically update toc when saving an Org file.
-  :hook (org-mode . toc-org-mode)
-  ;; Use both “:ignore_N:” and ":export_N:” to exlude headings from the TOC.
-  :custom (toc-org-noexport-regexp
-           "\\(^*+\\)\s+.*:\\(ignore\\|noexport\\)\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)"))
-;; ‘Table of Contents’ for Org vs. Github:1 ends here
+  After adding the result of this function to ‘org-capture-templates’,
+  we will be able perform a capture with “C-c c ‘shortcut’”
+  which will have description ‘description’.
+  It will be added to the tasks file under heading ‘heading’.
 
-;; [[file:init.org::#Table-of-Contents-for-Org-vs-Github][‘Table of Contents’ for Org vs. Github:2]]
-(cl-defun my/org-replace-tree-contents (heading &key (with "") (offset 0))
-  "Replace the contents of org tree HEADING with WITH, starting at OFFSET.
+  ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
+  when it's merely an interesting note that needn't be acted upon.
 
-Clear a subtree leaving first 3 lines untouched  ⇐  :offset 3
-Deleting a tree & its contents                   ⇐  :offset -1, or any negative number.
-Do nothing to a tree of 123456789 lines          ⇐  :offset 123456789
+  Default for ‘description’ is ‘heading’. Default for ‘no-todo’ is ‘nil’.
 
-Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
-  (interactive)
-  (save-excursion
-    (beginning-of-buffer)
-    (re-search-forward (format "^\\*+ %s" (regexp-quote heading)))
-    ;; To avoid ‘forward-line’ from spilling onto other trees.
-    (org-narrow-to-subtree)
-    (org-mark-subtree)
-    ;; The 1+ is to avoid the heading.
-    (dotimes (_ (1+ offset)) (forward-line))
-    (delete-region (region-beginning) (region-end))
-    (insert with)
-    (widen)))
+  Scheduled items appear in the agenda; true by default.
 
-;; Erase :TOC: body ---provided we're using toc-org.
-;; (my/org-replace-tree-contents "Table of Contents")
-;; ‘Table of Contents’ for Org vs. Github:2 ends here
+  The target is ‘file+headline’ and the type is ‘entry’; to see
+  other possibilities invoke: C-h o RET org-capture-templates.
+  The “%?” indicates the location of the Cursor, in the template,
+  when forming the entry.
+  "
+  `(,shortcut ,description entry
+      (file+headline org-default-notes-file ,heading)
+         ,(concat "*" (unless no-todo " TODO") " %?\n"
+                (when nil ;; this turned out to be a teribble idea.
+                  ":PROPERTIES:\n:"
+                (if scheduled
+                    "SCHEDULED: %^{Any time ≈ no time! Please schedule this task!}t"
+                  "CREATED: %U")
+                "\n:END:") "\n\n ")
+      :empty-lines 1 :time-prompt t))
+;; Capturing ideas & notes without interrupting the current workflow:5 ends here
 
-;; [[file:init.org::#Screencapturing-the-Current-Emacs-Frame][Screencapturing the Current Emacs Frame:1]]
-(defun my/capture-emacs-frame (&optional prefix output)
-"Insert a link to a screenshot of the current Emacs frame.
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:6]]
+(setq org-capture-templates
+      (cl-loop for (shortcut heading)
+            in (-partition 2 '("t" "Tasks, Getting Things Done"
+                               "r" "Research"
+                               "2" "2FA3"
+                               "m" "Email"
+                               "e" "Emacs (•̀ᴗ•́)و"
+                               "i" "Islam"
+                               "b" "Blog"
+                               "a" "Arbitrary Reading and Learning"
+                               "l" "Programming Languages"
+                               "p" "Personal Matters"))
+            collect  (my/make/org-capture-template shortcut heading)))
+;; Capturing ideas & notes without interrupting the current workflow:6 ends here
 
-Unless the name of the OUTPUT file is provided, read it from the
-user. If PREFIX is provided, let the user select a portion of the screen."
-(interactive "p")
-(defvar my/emacs-window-id
-   (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
-   "The window ID of the current Emacs frame.
-
-    Takes a second to compute, whence a defvar.")
-
-(let* ((screen  (if prefix "-i" (concat "-l" my/emacs-window-id)))
-       (temp    (format "emacs_temp_%s.png" (random)))
-       (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
-;; Get output file name
-  (unless output
-    (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
-    (when (s-blank-p output) (setq output default)))
-;; Clear minibuffer before capturing screen or prompt user
-(message (if prefix "Please select region for capture …" "♥‿♥"))
-;; Capture current screen and resize
-(thread-first
-    (format "screencapture -T 2 %s %s" screen temp)
-    (concat "; magick convert -resize 60% " temp " " output)
-    (shell-command))
-(f-delete temp)
-;; Insert a link to the image and reload inline images.
-(insert (concat "[[file:" output "]]")))
-(org-display-inline-images nil t))
-
-(bind-key* "C-c M-s" #'my/capture-emacs-frame)
-;; Screencapturing the Current Emacs Frame:1 ends here
-
-;; [[file:init.org::#Org-mode's-𝒳-Block-Expansions][Org-mode's ~<𝒳~ Block Expansions:1]]
-(require 'org-tempo)
-;; Org-mode's ~<𝒳~ Block Expansions:1 ends here
-
-;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:1]]
-;; Hunk navigation and commiting.
-(use-package git-gutter
-  :diminish
-  :config (global-git-gutter-mode))
-;; Diff updates happen in real time according when user is idle.
-;; What's changed & who's to blame?:1 ends here
-
-;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:2]]
-(defhydra hydra-version-control (global-map "C-x v")
-  "Version control"
-  ;; Syntax: (extension method description)
-  ("n" git-gutter:next-hunk      "Next hunk")
-  ("p" git-gutter:previous-hunk  "Previous hunk")
-  ("d" git-gutter:popup-hunk     "Show hunk diff")
-  ("r" git-gutter:revert-hunk    "Revert hunk\n")
-  ("c" git-gutter:stage-hunk     "Stage hunk")
-  ("s" git-gutter:statistic      "How many added & deleted lines"))
-;; What's changed & who's to blame?:2 ends here
-
-;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:3]]
-;; Colour fringe to indicate alterations.
-;; (use-package diff-hl)
-;; (global-diff-hl-mode)
-;; What's changed & who's to blame?:3 ends here
-
-;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:4]]
-;; Popup for who's to blame for alterations.
-(use-package git-messenger
-  :custom ;; Always show who authored the commit and when.
-          (git-messenger:show-detail t)
-          ;; Message menu let's us use magit diff to see the commit change.
-          (git-messenger:use-magit-popup t))
-
-;; View current file in browser on github.
-;; More generic is “browse-at-remote”.
-(use-package github-browse-file :defer t)
-
-;; Add these to the version control hydra.
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:7]]
+;; Update: Let's schedule tasks during the GTD processing phase.
 ;;
-(defhydra hydra-version-control (global-map "C-x v")
-  ("b" git-messenger:popup-message "Who's to blame?")
-  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
-  ("g" github-browse-file-blame "Show file in browser in github")
-  ("s" magit-status "Git status of current buffer"))
-;; What's changed & who's to blame?:4 ends here
+;; For now, let's automatically schedule items a week in advance.
+;; TODO: FIXME: This overwrites any scheduling I may have performed.
+;; (defun my/org-capture-schedule ()
+;;   (org-schedule nil "+7d"))
+;;
+;; (add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
+;; Capturing ideas & notes without interrupting the current workflow:7 ends here
 
-;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:5]]
-(use-package git-link :defer t)
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:8]]
+;; Cannot mark an item DONE if it has a  TODO child.
+;; Conversely, all children must be DONE in-order for a parent to be DONE.
+(setq org-enforce-todo-dependencies t)
+;; Capturing ideas & notes without interrupting the current workflow:8 ends here
 
-(defhydra hydra-version-control (global-map "C-x v")
-  ("l" git-link "Git URL for current location"))
-;; What's changed & who's to blame?:5 ends here
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:9]]
+  ;; Ensure notes are stored at the top of a tree.
+  (setq org-reverse-note-order nil)
+;; Capturing ideas & notes without interrupting the current workflow:9 ends here
 
-;; [[file:init.org::#Helpful-Utilities-Shortcuts][Helpful Utilities & Shortcuts:1]]
-;; change all prompts to y or n
-(fset 'yes-or-no-p 'y-or-n-p)
+;; [[file:init.org::#Step-2-Filing-your-tasks][Step 2: Filing your tasks:1]]
+;; Add a note whenever a task's deadline or scheduled date is changed.
+(setq org-log-redeadline 'time)
+(setq org-log-reschedule 'time)
+;; Step 2: Filing your tasks:1 ends here
 
-;; Enable all ‘possibly confusing commands’ such as helpful but
-;; initially-worrisome “narrow-to-region”, C-x n n.
-(setq-default disabled-command-function nil)
-;; Helpful Utilities & Shortcuts:1 ends here
+;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:1]]
+(define-key global-map "\C-ca" 'org-agenda)
+;; Step 3: Quickly review the upcoming week:1 ends here
 
-;; [[file:init.org::#Documentation-Pop-Ups][Documentation Pop-Ups:1]]
-(use-package company-quickhelp
- :config
-   (setq company-quickhelp-delay 0.1)
-   (company-quickhelp-mode))
-;; Documentation Pop-Ups:1 ends here
+;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:2]]
+;; List of all the files & directories where todo items can be found. Only one
+;; for now: My default notes file.
+(setq org-agenda-files (list org-default-notes-file))
 
-;; [[file:init.org::#Reload-buffer-with-f5][Reload buffer with ~f5~:1]]
-(global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
-;; Reload buffer with ~f5~:1 ends here
+;; Display tags really close to their tasks.
+(setq org-agenda-tags-column -10)
 
-;; [[file:init.org::#Reload-buffer-with-f5][Reload buffer with ~f5~:2]]
-;; Auto update buffers that change on disk.
-;; Will be prompted if there are changes that could be lost.
-(global-auto-revert-mode 1)
+;; How many days ahead the default agenda view should look
+(setq org-agenda-span 'day)
+;; May be any number; the larger the slower it takes to generate the view.
+;; One day is thus the fastest ^_^
 
-;; Don't show me the “ARev” marker in the mode line
-(diminish 'auto-revert-mode)
-;; Reload buffer with ~f5~:2 ends here
+;; How many days early a deadline item will begin showing up in your agenda list.
+(setq org-deadline-warning-days 14)
 
-;; [[file:init.org::#Kill-to-start-of-line][Kill to start of line:1]]
-;; M-k kills to the left
-(global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
-;; Kill to start of line:1 ends here
+;; In the agenda view, days that have no associated tasks will still have a line showing the date.
+(setq org-agenda-show-all-dates t)
 
-;; [[file:init.org::#Killing-buffers-windows-C-x-k-has-a-family][Killing buffers & windows: ~C-x k~ has a family:1]]
-(global-set-key (kbd "C-x k")
-  (lambda (&optional prefix)
-"C-x k     ⇒ Kill current buffer & window
-C-u C-x k ⇒ Kill OTHER window and its buffer
-C-u C-u C-x C-k ⇒ Kill all other buffers and windows
+;; Scheduled items marked as complete will not show up in your agenda view.
+(setq org-agenda-skip-scheduled-if-done t)
+(setq org-agenda-skip-deadline-if-done  t)
+;; Step 3: Quickly review the upcoming week:2 ends here
 
-Prompt only if there are unsaved changes."
-     (interactive "P")
-     (pcase (or (car prefix) 0)
-       ;; C-x k     ⇒ Kill current buffer & window
-       (0  (kill-this-buffer)
-           (unless (one-window-p) (delete-window)))
-       ;; C-u C-x k ⇒ Kill OTHER window and its buffer
-       (4  (other-window 1)
-           (kill-this-buffer)
-           (unless (one-window-p) (delete-window)))
-       ;; C-u C-u C-x C-k ⇒ Kill all other buffers and windows
-       (16   (mapc 'kill-buffer (delq (current-buffer) (buffer-list)))
-             (delete-other-windows)))))
-;; Killing buffers & windows: ~C-x k~ has a family:1 ends here
+;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:3]]
+(setq org-agenda-start-on-weekday nil)
+;; Step 3: Quickly review the upcoming week:3 ends here
 
-;; [[file:init.org::#Switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows:1]]
-(defun my/ensure-two-vertical-windows ()
-  "I used this method often when programming in Coq.
+;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:4]]
+(use-package org-super-agenda
+  ;; :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
+  ;; :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
+  :config
+  (org-super-agenda-mode)
+  (setq org-super-agenda-groups
+        '((:name "Important" :priority "A")
+          (:name "Personal" :habit t)
+          ;; For everything else, nicely display their heading hierarchy list.
+          (:auto-map (lambda (e) (org-format-outline-path (org-get-outline-path)))))))
 
-When there are two vertical windows, this method ensures the left-most
-window contains the buffer with the cursour in it."
-  (interactive)
-  (let ((otherBuffer (buffer-name)))
-    (other-window 1)                ;; C-x 0
-    (delete-window)                 ;; C-x 0
-    (split-window-right)			;; C-x 3
-    (other-window 1)                ;; C-x 0
-    (switch-to-buffer otherBuffer)	;; C-x b RET
-    (other-window 1)))
+;; MA: No noticable effect when using org-super-agenda :/
+;;
+;; Leave new line at the end of an entry.
+;; (setq org-blank-before-new-entry '((heading . t) (plain-list-item . t)))
+;; Step 3: Quickly review the upcoming week:4 ends here
 
-(global-set-key (kbd "C-|") 'my/ensure-two-vertical-windows)
-;; Switching from 2 horizontal windows to 2 vertical windows:1 ends here
+;; [[file:init.org::#Step-4-Getting-ready-for-the-day][Step 4: Getting ready for the day:1]]
+(setq org-lowest-priority ?D) ;; Now org-speed-eky ‘,’ gives 4 options
+(setq org-priority-faces
+'((?A :foreground "red" :weight bold)
+  (?B . "orange")
+  (?C . "yellow")
+  (?D . "green")))
+;; Step 4: Getting ready for the day:1 ends here
 
-;; [[file:init.org::#Obtaining-Values-of-KEYWORD-Annotations][Obtaining Values of ~#+KEYWORD~ Annotations:1]]
-;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
-(defun org-keywords ()
-  "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
-  (org-element-map (org-element-parse-buffer 'element) 'keyword
-                   (lambda (keyword) (cons (org-element-property :key keyword)
-                                           (org-element-property :value keyword)))))
+;; [[file:init.org::#Step-4-Getting-ready-for-the-day][Step 4: Getting ready for the day:2]]
+(use-package org-fancy-priorities
+  :diminish org-fancy-priorities-mode
+  :hook   (org-mode . org-fancy-priorities-mode)
+  :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
+;; Step 4: Getting ready for the day:2 ends here
 
-(defun org-keyword (KEYWORD)
-  "Get the value of a KEYWORD in the form of #+KEYWORD: value"
-  (cdr (assoc KEYWORD (org-keywords))))
-;; Obtaining Values of ~#+KEYWORD~ Annotations:1 ends here
+;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:1]]
+;; C-c a s ➩ Search feature also looks into archived files.
+;; Helpful when need to dig stuff up from the past.
+(setq org-agenda-text-search-extra-files '(agenda-archives))
+;; Step 7: Archiving Tasks:1 ends here
 
-;; [[file:init.org::#Publishing-articles-to-my-personal-blog][Publishing articles to my personal blog:1]]
-(define-key global-map "\C-cb" 'my/publish-to-blog)
+;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:2]]
+;; Invoking the agenda command shows the agenda and enables
+;; the org-agenda variables.
+;; ➩ Show my agenda upon Emacs startup.
+(when my/personal-machine?
+  (org-agenda "a" "a")) ;; Need this to have “org-agenda-custom-commands” defined.
+;; Step 7: Archiving Tasks:2 ends here
 
-(cl-defun my/publish-to-blog (&optional (draft nil) (local nil))
-  "
-  Using ‘AlBasmala’ setup to publish current article to my blog.
-  Details of AlBasmala can be found here:
-  https://alhassy.github.io/AlBasmala/
+;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:3]]
+;; Pressing ‘c’ in the org-agenda view shows all completed tasks,
+;; which should be archived.
+(add-to-list 'org-agenda-custom-commands
+  '("c" todo "DONE|ON_HOLD|CANCELLED" nil))
+;; Step 7: Archiving Tasks:3 ends here
 
-  Locally: ~/alhassy.github.io/content/AlBasmala.org
+;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:4]]
+(add-to-list 'org-agenda-custom-commands
+  '("u" alltodo ""
+     ((org-agenda-skip-function
+        (lambda ()
+              (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
+              (org-agenda-overriding-header "Unscheduled TODO entries: "))))
+;; Step 7: Archiving Tasks:4 ends here
 
-  A ‘draft’ will be produced in about ~7 seconds, but does not re-produce
-  a PDF and the article has a draft marker near the top. Otherwise,
-  it will generally take ~30 seconds due to PDF production, which is normal.
-  The default is not a draft and it takes ~20 seconds for the live
-  github.io page to update.
+;; [[file:init.org::#Tag-You're-it][Tag! You're it!:1]]
+ (setq org-tags-column -77) ;; the default
+;; Tag! You're it!:1 ends here
 
-  The ‘local’ optiona indicates whether the resulting article should be
-  viewed using the local server or the live webpage. Live page is default.
+;; [[file:init.org::#Tag-You're-it][Tag! You're it!:2]]
+(use-package helm-org) ;; Helm for org headlines and keywords completion.
+(add-to-list 'helm-completing-read-handlers-alist
+             '(org-set-tags-command . helm-org-completing-read-tags))
 
-  When ‘draft’ and ‘local’ are both set, the resulting page may momentarily
-  show a page-not-found error, simply refresh.
-  "
+;; Also provides: helm-org-capture-templates
+;; Tag! You're it!:2 ends here
 
-  (load-file "~/alhassy.github.io/content/AlBasmala.el")
+;; [[file:init.org::#Tag-You're-it][Tag! You're it!:3]]
+(use-package org-pretty-tags
+  :diminish org-pretty-tags-mode
+  :demand t
+  :config
+   (setq org-pretty-tags-surrogate-strings
+         '(("Neato"    . "💡")
+           ("Blog"     . "✍")
+           ("Audio"    . "♬")
+           ("Video"    . "📺")
+           ("Book"     . "📚")
+           ("Running"  . "🏃")
+           ("Question" . "❓")
+           ("Wife"     . "💕")
+           ("Text"     . "💬") ; 📨 📧
+           ("Friends"  . "👪")
+           ("Self"     . "🍂")
+           ("Finances" . "💰")
+           ("Car"      . "🚗") ; 🚙 🚗 🚘
+           ("Urgent"   . "🔥"))) ;; 📥 📤 📬
+   (org-pretty-tags-global-mode 1))
+;; Tag! You're it!:3 ends here
 
-  ;; --MOVE ME TO ALBASMALA--
-  ;; Sometimes the file I'm working with is not a .org file, so:
-  (setq file.org (buffer-name))
+;; [[file:init.org::#Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1]]
+;; Tasks get a 25 minute count down timer
+(setq org-timer-default-timer 25)
 
-  (preview-article :draft draft)
-  (unless draft (publish))
-  (let ((server (if local "http://localhost:4000/" "https://alhassy.github.io/")))
-    (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
-)
-;; Publishing articles to my personal blog:1 ends here
+;; Use the timer we set when clocking in happens.
+(add-hook 'org-clock-in-hook
+  (lambda () (org-timer-set-timer '(16))))
 
-;; [[file:init.org::#Jumping-without-hassle][Jumping without hassle:1]]
-(defun my/org-goto-line (line)
-  "Go to the indicated line, unfolding the parent Org header.
+;; unless we clocked-out with less than a minute left,
+;; show disappointment message.
+(add-hook 'org-clock-out-hook
+  (lambda ()
+  (unless (s-prefix? "0:00" (org-timer-value-string))
+     (message-box "The basic 25 minutes on this difficult task are not up; it's a shame to see you leave."))
+     (org-timer-stop)))
+;; Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1 ends here
 
-   Implementation: Go to the line, then look at the 1st previous
-   org header, now we can unfold it whence we do so, then we go
-   back to the line we want to be at.
-  "
-  (interactive "nEnter line: ")
-  (goto-line line)
-  (org-previous-visible-heading 1)
-  (org-cycle)
-  (goto-line line))
-;; Jumping without hassle:1 ends here
+;; [[file:init.org::#The-Setup][The Setup:1]]
+(defun my/org-journal-new-entry (prefix)
+  "Open today’s journal file and start a new entry.
+
+  With a prefix, we use the work journal; otherwise the personal journal."
+  (interactive "P")
+  (-let [org-journal-file-format (if prefix "Work-%Y-%m-%d" org-journal-file-format)]
+    (org-journal-new-entry nil)
+    (org-mode)
+    (org-show-all)))
+
+(use-package org-journal
+  ;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
+  :bind (("C-c j" . my/org-journal-new-entry))
+  :config
+  (setq org-journal-dir         "~/Dropbox/journal/"
+        org-journal-file-type   'yearly
+        org-journal-file-format "Personal-%Y-%m-%d"))
+;; The Setup:1 ends here
+
+;; [[file:init.org::#Workflow-States][Workflow States:1]]
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
+        (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)")))
+
+;; Since DONE is a terminal state, it has no exit-action.
+;; Let's explicitly indicate time should be noted.
+(setq org-log-done 'time)
+;; Workflow States:1 ends here
+
+;; [[file:init.org::#Workflow-States][Workflow States:2]]
+(setq org-todo-keyword-faces
+      '(("TODO"      :foreground "red"          :weight bold)
+        ("STARTED"   :foreground "blue"         :weight bold)
+        ("DONE"      :foreground "forest green" :weight bold)
+        ("WAITING"   :foreground "orange"       :weight bold)
+        ("ON_HOLD"   :foreground "magenta"      :weight bold)
+        ("CANCELLED" :foreground "forest green" :weight bold)))
+;; Workflow States:2 ends here
+
+;; [[file:init.org::#Workflow-States][Workflow States:3]]
+(setq org-use-fast-todo-selection t)
+;; Workflow States:3 ends here
+
+;; [[file:init.org::#Workflow-States][Workflow States:4]]
+;; Install the tool
+; (async-shell-command "brew tap adoptopenjdk/openjdk; brew cask install adoptopenjdk13") ;; Dependency
+; (async-shell-command "brew install plantuml")
+
+;; Tell emacs where it is.
+;; E.g., (async-shell-command "find / -name plantuml.jar")
+(setq org-plantuml-jar-path
+      "/usr/local/Cellar/plantuml/1.2020.19/libexec/plantuml.jar")
+
+;; Enable C-c C-c to generate diagrams from plantuml src blocks.
+(add-to-list 'org-babel-load-languages '(plantuml . t) )
+(require 'ob-plantuml)
+
+; Use fundamental mode when editing plantuml blocks with C-c '
+(add-to-list 'org-src-lang-modes '("plantuml" . fundamental))
+;; Workflow States:4 ends here
+
+;; [[file:init.org::#Clocking-Work-Time][Clocking Work Time:1]]
+;; Record a note on what was accomplished when clocking out of an item.
+(setq org-log-note-clock-out t)
+;; Clocking Work Time:1 ends here
+
+;; [[file:init.org::#Clocking-Work-Time][Clocking Work Time:2]]
+(setq confirm-kill-emacs 'yes-or-no-p)
+;; Clocking Work Time:2 ends here
+
+;; [[file:init.org::#Clocking-Work-Time][Clocking Work Time:3]]
+;; Resume clocking task when emacs is restarted
+(org-clock-persistence-insinuate)
+
+;; Show lot of clocking history
+(setq org-clock-history-length 23)
+
+;; Resume clocking task on clock-in if the clock is open
+(setq org-clock-in-resume t)
+
+;; Sometimes I change tasks I'm clocking quickly ---this removes clocked tasks with 0:00 duration
+(setq org-clock-out-remove-zero-time-clocks t)
+
+;; Clock out when moving task to a done state
+(setq org-clock-out-when-done t)
+
+;; Save the running clock and all clock history when exiting Emacs, load it on startup
+(setq org-clock-persist t)
+
+;; Do not prompt to resume an active clock
+(setq org-clock-persist-query-resume nil)
+
+;; Include current clocking task in clock reports
+(setq org-clock-report-include-clocking-task t)
+;; Clocking Work Time:3 ends here
+
+;; [[file:init.org::#Estimates-versus-actual-time][Estimates versus actual time:1]]
+ (push '("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
+       org-global-properties)
+;; Estimates versus actual time:1 ends here
+
+;; [[file:init.org::#Estimates-versus-actual-time][Estimates versus actual time:2]]
+(setq org-clock-sound "~/.emacs.d/school-bell.wav")
+;; Estimates versus actual time:2 ends here
+
+;; [[file:init.org::#Habit-Formation][Habit Formation:1]]
+;; Show habits for every day in the agenda.
+(setq org-habit-show-habits t)
+(setq org-habit-show-habits-only-for-today nil)
+
+;; This shows the ‘Seinfeld consistency’ graph closer to the habit heading.
+(setq org-habit-graph-column 90)
+
+;; In order to see the habit graphs, which I've placed rightwards, let's
+;; always open org-agenda in ‘full screen’.
+;; (setq org-agenda-window-setup 'only-window)
+;; Habit Formation:1 ends here
+
+;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:1]]
+(setq user-full-name    "Musa Al-hassy"
+      user-mail-address "alhassy@gmail.com")
+;; Using Gnus for Gmail:1 ends here
+
+;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:3]]
+     (setq message-send-mail-function 'smtpmail-send-it)
+;; Using Gnus for Gmail:3 ends here
+
+;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:6]]
+;; After startup, if Emacs is idle for 10 seconds, then start Gnus.
+;; Gnus is slow upon startup since it fetches all mails upon startup.
+(when my/personal-machine?
+  (run-with-idle-timer 10 nil #'gnus))
+;; Using Gnus for Gmail:6 ends here
+
+;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:8]]
+(with-eval-after-load 'gnus
+  (bind-key "t"
+          (lambda (N) (interactive "P") (gnus-summary-move-article N "[Gmail]/Trash"))
+          gnus-summary-mode-map))
+
+;; Orginally: t ⇒ gnus-summary-toggle-header
+;; Using Gnus for Gmail:8 ends here
+
+;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:9]]
+;; Fancy icons for Emacs
+;; Only do this once:
+(use-package all-the-icons :defer t)
+  ; :config (all-the-icons-install-fonts 'install-without-asking)
+
+;; Make mail look pretty
+(use-package all-the-icons-gnus
+  :defer t
+  :config (all-the-icons-gnus-setup))
+
+;; While we're at it: Make dired, ‘dir’ectory ‘ed’itor, look pretty
+(use-package all-the-icons-dired
+  :hook (dired-mode . all-the-icons-dired-mode))
+;; Using Gnus for Gmail:9 ends here
+
+;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:10]]
+(setq gnus-sum-thread-tree-vertical        "│"
+      gnus-sum-thread-tree-leaf-with-other "├─► "
+      gnus-sum-thread-tree-single-leaf     "╰─► "
+      gnus-summary-line-format
+      (concat
+       "%0{%U%R%z%}"
+       "%3{│%}" "%1{%d%}" "%3{│%}"
+       "  "
+       "%4{%-20,20f%}"
+       "  "
+       "%3{│%}"
+       " "
+       "%1{%B%}"
+       "%s\n"))
+;; Using Gnus for Gmail:10 ends here
+
+;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:11]]
+(defun my/email (to subject body)
+  (compose-mail to subject)
+  (insert body)
+  (message-send-mail)     ;; Appends info to the message buffer
+  ; (let ((kill-buffer-query-functions nil)) (kill-this-buffer))
+  (ignore-errors (undo))                  ;; Undo that addition
+  (message-kill-buffer)
+  (message "Send email to %s" to)) ;; Close that message buffer
+;; Using Gnus for Gmail:11 ends here
+
+;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:13]]
+(use-package gmail2bbdb
+  :defer t
+  :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
+
+(use-package bbdb
+ :after company ;; The “com”plete “any”thig mode is set below in §Prose
+ :hook   (message-mode . bbdb-insinuate-gnus)
+         (gnus-startup-hook . bbdb-insinuate-gnus)
+ :custom (bbdb-file gmail2bbdb-bbdb-file)
+         (bbdb-use-pop-up t)                        ;; allow popups for addresses
+ :config (add-to-list 'company-backends 'company-bbdb))
+;; Using Gnus for Gmail:13 ends here
+
+;; [[file:init.org::#Capturing-Mail-as-Todo-Notes][Capturing Mail as Todo/Notes:1]]
+(with-eval-after-load 'gnus
+  ;; Orginally: c ⇒ gnus-summary-catchup-and-exit
+  (bind-key "c" #'my/org-capture-buffer gnus-article-mode-map)
+  ;; Orginally: C ⇒ gnus-summary-cancel-article
+  (bind-key "C"
+            (lambda (&optional keys)
+              (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
+            gnus-article-mode-map))
+;; Capturing Mail as Todo/Notes:1 ends here
