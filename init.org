@@ -3744,7 +3744,7 @@ the specified ~:noweb-ref~, not on ~:CUSTOM_ID:~ incidentally having the same
 name.
 #+end_box
 
-* Life within Org-mode
+* TODO Life within Org-mode  :Breaks_Github_Actions:
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
@@ -4298,8 +4298,9 @@ archive file too, if we enable it so.
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
 ;; ➩ Show my agenda upon Emacs startup.
-(when my/personal-machine?
-  (org-agenda "a" "a")) ;; Need this to have “org-agenda-custom-commands” defined.
+(unless noninteractive
+  (when my/personal-machine?
+    (org-agenda "a" "a"))) ;; Need this to have “org-agenda-custom-commands” defined.
 #+end_src
 
 Let's install some helpful views for our agenda.

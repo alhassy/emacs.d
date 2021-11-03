@@ -1066,8 +1066,9 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Invoking the agenda command shows the agenda and enables
 ;; the org-agenda variables.
 ;; ➩ Show my agenda upon Emacs startup.
-(when my/personal-machine?
-  (org-agenda "a" "a")) ;; Need this to have “org-agenda-custom-commands” defined.
+(unless noninteractive
+  (when my/personal-machine?
+    (org-agenda "a" "a"))) ;; Need this to have “org-agenda-custom-commands” defined.
 ;; Step 7: Archiving Tasks:2 ends here
 
 ;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:3]]
