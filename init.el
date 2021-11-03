@@ -1351,3 +1351,150 @@ C-u C-u C-c c ⇒ Goto last note stored."
               (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
             gnus-article-mode-map))
 ;; Capturing Mail as Todo/Notes:1 ends here
+
+;; [[file:init.org::#Get-LaTeX][Get LaTeX::1]]
+(system-packages-ensure "mactex-no-gui")
+;; Get LaTeX::1 ends here
+
+;; [[file:init.org::#Get-LaTeX][Get LaTeX::2]]
+(system-packages-ensure "pygments")
+;; Get LaTeX::2 ends here
+
+;; [[file:init.org::#Bibliography-Coloured-LaTeX-using-Minted][Bibliography & Coloured LaTeX using Minted:1]]
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -output-directory %o %f"
+        "biber %b"
+        "pdflatex -shell-escape -output-directory %o %f"
+        "pdflatex -shell-escape -output-directory %o %f"))
+;; Bibliography & Coloured LaTeX using Minted:1 ends here
+
+;; [[file:init.org::#HTML-Org-mode][HTML ⇐ Org-mode:1]]
+(use-package htmlize :defer t)
+;; Main use: Org produced htmls are coloured.
+;; Can be used to export a file into a coloured html.
+;; HTML ⇐ Org-mode:1 ends here
+
+;; [[file:init.org::#Ensuring-Useful-HTML-Anchors][Ensuring Useful HTML Anchors:1]]
+(defun my/ensure-headline-ids (&rest _)
+  "Org trees without a
+
+All non-alphanumeric characters are cleverly replaced with ‘-’.
+
+If multiple trees end-up with the same id property, issue a
+message and undo any property insertion thus far.
+
+E.g., ↯ We'll go on a ∀∃⇅ adventure
+   ↦  We'll-go-on-a-adventure
+"
+  (interactive)
+  (let ((ids))
+    (org-map-entries
+     (lambda ()
+       (org-with-point-at (point)
+         (let ((id (org-entry-get nil "CUSTOM_ID")))
+           (unless id
+             (thread-last (nth 4 (org-heading-components))
+               (s-replace-regexp "[^[:alnum:]']" "-")
+               (s-replace-regexp "-+" "-")
+               (s-chop-prefix "-")
+               (s-chop-suffix "-")
+               (setq id))
+             (if (not (member id ids))
+                 (push id ids)
+               (message-box "Oh no, a repeated id!\n\n\t%s" id)
+               (undo)
+               (setq quit-flag t))
+             (org-entry-put nil "CUSTOM_ID" id))))))))
+
+;; Whenever html & md export happens, ensure we have headline ids.
+(advice-add 'org-html-export-to-html   :before 'my/ensure-headline-ids)
+(advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
+;; Ensuring Useful HTML Anchors:1 ends here
+
+;; [[file:init.org::#Clickable-Headlines][Clickable Headlines:1]]
+;; Src: https://writepermission.com/org-blogging-clickable-headlines.html
+(setq org-html-format-headline-function
+      (lambda (todo todo-type priority text tags info)
+        "Format a headline with a link to itself."
+        (let* ((headline (get-text-property 0 :parent text))
+               (id (or (org-element-property :CUSTOM_ID headline)
+                       (ignore-errors (org-export-get-reference headline info))
+                       (org-element-property :ID headline)))
+               (link (if id
+                         (format "<a href=\"#%s\">%s</a>" id text)
+                       text)))
+          (org-html-format-headline-default-function todo todo-type priority link tags info))))
+;; Clickable Headlines:1 ends here
+
+;; [[file:init.org::#HTML-Folded-Drawers][HTML “Folded Drawers”:1]]
+(defun my/org-drawer-format (name contents)
+  "Export to HTML the drawers named with prefix ‘fold_’, ignoring case.
+
+The resulting drawer is a ‘code-details’ and so appears folded;
+the user clicks it to see the information therein.
+Henceforth, these are called ‘fold drawers’.
+
+Drawers without such a prefix may be nonetheless exported if their
+body contains ‘:export: t’ ---this switch does not appear in the output.
+Thus, we are biased to generally not exporting non-fold drawers.
+
+One may suspend export of fold drawers by having ‘:export: nil’
+in their body definition.
+
+Fold drawers naturally come with a title.
+Either it is specfied in the drawer body by ‘:title: ⋯’,
+or otherwise the drawer's name is used with all underscores replaced
+by spaces.
+"
+  (let* ((contents′ (replace-regexp-in-string ":export:.*\n?" "" contents))
+         (fold? (s-prefix? "fold_" name 'ignore-case))
+         (export? (string-match ":export:\s+t" contents))
+         (not-export? (string-match ":export:\s+nil" contents))
+         (title′ (and (string-match ":title:\\(.*\\)\n" contents)
+                      (match-string 1 contents))))
+
+    ;; Ensure we have a title.
+    (unless title′ (setq title′ (s-join " " (cdr (s-split "_" name)))))
+
+    ;; Output
+    (cond
+     ((and export? (not fold?)) contents′)
+     (not-export? nil)
+     (fold?
+      (thread-last contents′
+        (replace-regexp-in-string ":title:.*\n" "")
+        (format "<details class=\"code-details\"> <summary> <strong>
+            <font face=\"Courier\" size=\"3\" color=\"green\"> %s
+            </font> </strong> </summary> %s </details>" title′))))))
+
+(setq org-html-format-drawer-function 'my/org-drawer-format)
+;; HTML “Folded Drawers”:1 ends here
+
+;; [[file:init.org::#Diagrams-with-Mermaid-Not-Reccommended][Diagrams with Mermaid ---Not Reccommended:2]]
+(use-package ob-mermaid
+  :custom ob-mermaid-cli-path "~/node_modules/.bin/mmdc")
+;; Diagrams with Mermaid ---Not Reccommended:2 ends here
+
+;; [[file:init.org::#https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework][  [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
+(use-package ox-reveal
+  :custom (org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
+;;   [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1 ends here
+
+;; [[file:init.org::#https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework][  [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3]]
+(setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
+<font size=\"1\">
+<a href=\"?print-pdf&showNotes=true\">
+⟪ Flattened View ; Press <code>?</code> for Help ⟫
+</a>
+</font>")
+;;   [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3 ends here
+
+;; [[file:init.org::#Org-mode-HTML][Org-mode ⇐ HTML:2]]
+(use-package org-web-tools
+  :config
+  ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
+  ;; the page to get the HTML title.
+  (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url))
+;; Org-mode ⇐ HTML:2 ends here

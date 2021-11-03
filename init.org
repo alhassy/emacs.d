@@ -3744,7 +3744,8 @@ the specified ~:noweb-ref~, not on ~:CUSTOM_ID:~ incidentally having the same
 name.
 #+end_box
 
-* TODO Life within Org-mode  :Breaks_Github_Actions:
+* DONE Life within Org-mode
+CLOSED: [2021-11-02 Tue 22:13]
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
@@ -7302,7 +7303,7 @@ Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually 
 Notice, as a hydra, I can use ~C-c e~ followed by any combination of ~p~ and ~n~ to
 navigate my recent edits /without/ having to supply the prefix each time.
 
-* COMMENT LaTeX ⇐ Org-Mode
+* LaTeX ⇐ Org-Mode
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
 :END:
@@ -7450,7 +7451,7 @@ Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library fo
 Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
 with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
 easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
-* COMMENT HTML ⇐ Org-mode
+* HTML ⇐ Org-mode
 :PROPERTIES:
 :CUSTOM_ID: HTML-Org-mode
 :END:
