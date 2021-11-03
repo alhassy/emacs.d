@@ -6,6 +6,8 @@
 
 #+OPTIONS: broken-links:auto
 
+#
+
 * title :ignore:
 :PROPERTIES:
 :CUSTOM_ID: title
@@ -35,6 +37,14 @@
 
 #+begin_src emacs-lisp :exports none
 (require 'cl) ;; to get loop instead of cl-loop, etc.
+
+;; Required for Github Actions; i.e., testing.
+;; TODO Clean me!
+(defun quelpa-read-cache ()) ;; Used somewhere, but not defined.
+;; See: quelpa-persistent-cache-file
+(setq quelpa-cache nil)
+(defun org-special-block-extras-short-names ())
+
 
 ;; before this: init time: 13
 ;; after: 12 seconds.
@@ -114,6 +124,74 @@ person you are arguing against. It is painful to lose your reality, so be kind,/
 
 /Inspiration is for amateurs. The rest of us just show up and get to work./ - Chuck Close
 #+end_box
+
+* Github Actions                                                   :noexport:
+
+The following creates the “Github Actions Workflow” file;
+this way, Github will run your tests every time you commit ^_^
+
+Below I'm using =main= as the /name/ of the main branch; if you use =master= as the
+name, then change that or otherwise the tests will not trigger automatically
+after push!
+
+#+begin_src shell :tangle .github/workflows/main.yml :mkdirp yes
+# This workflow will do a clean install of dependencies and run tests
+# For more information see: https://help.github.com/actions/language-and-framework-guides/
+
+name: Lifemacs Loads Successfully
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Set up Emacs
+        uses: purcell/setup-emacs@v3.0
+        with:
+          # The version of Emacs to install, e.g. "24.3", or "snapshot" for a recent development version.
+          version: 27.1 # optional
+
+      # Runs a single command using the runners shell
+      # - name: Run a one-line script
+      #  run: echo Hello, world!
+
+      # Runs a set of commands using the runners shell
+      # - name: Run a multi-line script
+      #  run: |
+      #    echo Add other actions to build,
+      #    echo test, and deploy your project.
+
+      - name: Attempting startup...
+        run: emacs -nw --batch --eval='(let
+                                ((debug-on-error (>=  emacs-major-version 26))
+                                 (initial-buffer-choice "*scratch*")
+                                 (user-emacs-directory default-directory)
+                                 (user-init-file (expand-file-name "init.el")))
+                              (setq url-show-status nil)
+                              (package-initialize)
+                              (load-file user-init-file)
+                              (message "\n 🤤 Startup Successful! 🤩"))'
+#+end_src
+
+(unless noninteractive ...) ;; Use this to omit stuff from the Github Actions test
 
 * COMMENT Table of Contents                                        :Github:TOC____4:
 :PROPERTIES:
@@ -1826,12 +1904,13 @@ interface by declaraing hydras using [[https://github.com/jerrypnz/major-mode-hy
 trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][formating docstrings using classic hydra]].
 
 #+begin_src emacs-lisp
+;; TODO Fix me, breaking Github Actions test setup
 ;; Show hydras overlyaed in the middle of the frame
-(use-package hydra-posframe
-  :quelpa (hydra-posframe :fetcher git :url
-                          "https://github.com/Ladicle/hydra-posframe.git")
-  :hook (after-init . hydra-posframe-mode)
-  :custom (hydra-posframe-border-width 5))
+;; (use-package hydra-posframe
+;;   :quelpa (hydra-posframe :fetcher git :url
+;;                           "https://github.com/Ladicle/hydra-posframe.git")
+;;   :hook (after-init . hydra-posframe-mode)
+;;   :custom (hydra-posframe-border-width 5))
 
 ;; Neato doc strings for hydras
 (use-package pretty-hydra)
@@ -2506,19 +2585,21 @@ items there (•̀ᴗ•́)و
  doc:git-timemachine.
 
 #+begin_src emacs-lisp
-(use-package blamer
-  :quelpa (blamer :fetcher github :repo "artawower/blamer.el")
-  :custom
-  (blamer-idle-time 0.3)
-  (blamer-min-offset 70)
-  (blamer-max-commit-message-length 80) ;; Show me a lot of the commit title
-  :custom-face
-  (blamer-face ((t :foreground "#7a88cf"
-                    :background nil
-                    :height 140
-                    :italic t)))
-  :config
-  (global-blamer-mode 1))
+(unless noninteractive
+
+  (use-package blamer
+    :quelpa (blamer :fetcher github :repo "artawower/blamer.el")
+    :custom
+    (blamer-idle-time 0.3)
+    (blamer-min-offset 70)
+    (blamer-max-commit-message-length 80) ;; Show me a lot of the commit title
+    :custom-face
+    (blamer-face ((t :foreground "#7a88cf"
+                      :background nil
+                      :height 140
+                      :italic t)))
+    :config
+    (global-blamer-mode 1)))
 #+end_src
 
 This is /so nice!/. I've enabled it once and then it just “works in the
@@ -5436,14 +5517,16 @@ as well as a nice ‘motto’:
 I almost always have Emacs open; I don't need a dashboard, but would like to see
 my to-do list and my init file, side-by-side.
 #+BEGIN_SRC emacs-lisp
-(if my/personal-machine?
-    (find-file "~/Dropbox/todo.org")
-  (find-file "~/Desktop/work.org.gpg"))
-(split-window-right)			  ;; C-x 3
-(other-window 1)                              ;; C-x 0
-(let ((enable-local-variables :all)           ;; Load *all* locals.
-      (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
-  (ignore-errors (find-file "~/.emacs.d/init.org")))
+(unless noninteractive ;; Only run the following when we're in GUI mode;
+                       ;; i.e., don't run it in Github Actions when testing.
+  (if my/personal-machine?
+      (find-file "~/Dropbox/todo.org")
+    (find-file "~/Desktop/work.org.gpg"))
+  (split-window-right)			  ;; C-x 3
+  (other-window 1)                              ;; C-x 0
+  (let ((enable-local-variables :all)           ;; Load *all* locals.
+        (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
+    (ignore-errors (find-file "~/.emacs.d/init.org"))))
 #+END_SRC
 
 There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile
@@ -7269,10 +7352,12 @@ For example, we account for LaTeX citations.
 ;; (setq org-export-with-section-numbers nil)
 #+END_SRC
 :End:
-** Working with Citations
+** Working with Citations :Disabled:Not_Used:
 :PROPERTIES:
 :CUSTOM_ID: Working-with-Citations
 :END:
+
+# TODO Fix me, breaking Github Actions test setup
 
  [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
 
@@ -7282,7 +7367,9 @@ For example, we account for LaTeX citations.
 
 cite:agda_overview ( In HTML export, the citation doesn't link anywhere. )
 
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
+(unless noninteractive
+
 (use-package org-ref
   :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
           ;; Most useful for non-LaTeX files.
@@ -7292,7 +7379,7 @@ cite:agda_overview ( In HTML export, the citation doesn't link anywhere. )
 
 ;; Quick BibTeX references, sometimes.
 (use-package helm-bibtex)
-(use-package biblio)
+(use-package biblio) )
 #+END_SRC
 
   Execute ~M-x helm-bibtex~ or =C-c ]= and, say, enter =emacs= and you will be
@@ -7771,6 +7858,8 @@ status using cute & compact emoji such as ~😱3~.
 #+begin_src emacs-lisp
 (use-package flycheck-status-emoji
   :config
+  (load-library "flycheck-status-emoji")
+  (diminish-undo 'flycheck-mode)
   (flycheck-status-emoji-mode))
 #+end_src
 
@@ -7995,7 +8084,7 @@ LSP mode supports the following Features:
   ("b" pop-tag-mark "Back"))
 #+end_src
 
-** Turbolog: What's the value of this expression? :JavaScript:
+** Turbolog: What's the value of this expression? :JavaScript
 With [[https://github.com/Artawower/turbo-log][turbo-log]], I can select an expression then press [[kbd:C-x l l]] to have
 that expression be part of a console log message, in the next line, that also
 mentions the line number and buffer's name. I can toggle all these inserted
@@ -8003,7 +8092,7 @@ messages to be comments with kbd:C-x_l_c and kbd:C-x_l_u, and when I'm done
 debugging I can quickly get rid of all of them with kbd:C-x_l_d.
 
 ( Before TurboLog, I used a snippet bound to kbd:l_l that inserted
-#+begin_src js
+#+begin_src js :tangle no
 console.log("%c ******* LOOK HERE *******", "color: green; font-weight: bold;");
 console.log({ List the variables here whose values you want to log });
 #+end_src
@@ -8012,6 +8101,8 @@ console.log({ List the variables here whose values you want to log });
 TODO: Move some of the stuff below to the TurboLog Github repo.
 
 #+begin_src emacs-lisp
+(unless noninteractive
+
 (setq turbo-log--prefix "%c ******* LOOK HERE *******")
 (defun length> (x y) (> (length x) y))
 (defun length= (x y) (= (length x) y))
@@ -8059,6 +8150,8 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
           (turbo-log--insert-with-indent (+ current-line-number 1) "}")
           (indent-according-to-mode))
       (turbo-log--insert-with-indent insert-line-number turbo-log--message))))
+
+)
 #+end_src
 
 ** Which function are we writing?

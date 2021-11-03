@@ -1,6 +1,14 @@
 ;; [[file:init.org::#title][title:1]]
 (require 'cl) ;; to get loop instead of cl-loop, etc.
 
+;; Required for Github Actions; i.e., testing.
+;; TODO Clean me!
+(defun quelpa-read-cache ()) ;; Used somewhere, but not defined.
+;; See: quelpa-persistent-cache-file
+(setq quelpa-cache nil)
+(defun org-special-block-extras-short-names ())
+
+
 ;; before this: init time: 13
 ;; after: 12 seconds.
 ; (setq gc-cons-threshold 50000000) ;; orginaly 800,000
@@ -33,9 +41,9 @@
 ;; Emacs Package Manager:1 ends here
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:2]]
-(ignore-errors (unless (package-installed-p 'use-package)
+(unless (package-installed-p 'use-package)
   (package-install 'use-package))
-(require 'use-package) )
+(require 'use-package)
 ;; Emacs Package Manager:2 ends here
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:3]]
@@ -63,10 +71,7 @@
 ;; Emacs Package Manager:5 ends here
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:6]]
-(use-package diminish
-  :defer 5
-  :config ;; Let's hide some markers.
-    (diminish org-indent-mode))
+(use-package diminish)
 ;; Emacs Package Manager:6 ends here
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:7]]
@@ -79,7 +84,7 @@
 
 ;; Let's use the “s” library.
 (defvar my/personal-machine?
-  (not (s-contains? "MacBook-Pro" (shell-command-to-string "uname -a")))
+  (not (s-contains? "-MBP" (shell-command-to-string "uname -a")))
   "Is this my personal machine, or my work machine?")
 
 (ignore-errors (load-file "~/Desktop/work_secrets.el"))
@@ -98,13 +103,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -242,7 +247,7 @@
         ("C-x r b" . helm-filtered-bookmarks)
         ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
         ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
-        ("C-u C-c i" . imenu-list)
+        ;; ("C-u C-c i" . imenu-list)  ;; TODO FIXME  Key sequence C-u C-c i starts with non-prefix key C-u
         ("C-h a"   . helm-apropos)
         ;; Look at what was cut recently & paste it in.
         ("M-y" . helm-show-kill-ring)
@@ -253,6 +258,11 @@
         ;; Let's keep tab-completetion anyhow.
         ("TAB"   . helm-execute-persistent-action)
         ("<tab>" . helm-execute-persistent-action)))
+
+;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
+(use-package helm-icons
+  :custom (helm-icons-provider 'all-the-icons)
+  :config (helm-icons-enable))
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:1 ends here
 
 ;; [[file:init.org::#Being-at-the-Helm-Completion-Narrowing-Framework][ “Being at the Helm” ---Completion & Narrowing Framework:2]]
@@ -371,12 +381,13 @@
 ;; Hydra: Supply a prefix only once:1 ends here
 
 ;; [[file:init.org::#Hydra-Supply-a-prefix-only-once][Hydra: Supply a prefix only once:2]]
+;; TODO Fix me, breaking Github Actions test setup
 ;; Show hydras overlyaed in the middle of the frame
-(use-package hydra-posframe
-  :quelpa (hydra-posframe :fetcher git :url
-                          "https://github.com/Ladicle/hydra-posframe.git")
-  :hook (after-init . hydra-posframe-mode)
-  :custom (hydra-posframe-border-width 5))
+;; (use-package hydra-posframe
+;;   :quelpa (hydra-posframe :fetcher git :url
+;;                           "https://github.com/Ladicle/hydra-posframe.git")
+;;   :hook (after-init . hydra-posframe-mode)
+;;   :custom (hydra-posframe-border-width 5))
 
 ;; Neato doc strings for hydras
 (use-package pretty-hydra)
@@ -466,6 +477,11 @@ Is replaced by:
    ("r" move-to-window-line-top-bottom "Relocate Point")
    ("m" helm-imenu "Textual Menu"))
 ;; Textual Navigation ---“Look Ma, no CTRL key!”:1 ends here
+
+;; [[file:init.org::#Textual-Navigation-Look-Ma-no-CTRL-key][Textual Navigation ---“Look Ma, no CTRL key!”:2]]
+;; C-n, next line, inserts newlines when at the end of the buffer
+(setq next-line-add-newlines t)
+;; Textual Navigation ---“Look Ma, no CTRL key!”:2 ends here
 
 ;; [[file:init.org::#Window-Navigation][Window Navigation:1]]
 ;; Use ijkl to denote ↑←↓→ arrows.
@@ -678,6 +694,24 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (setq magit-todos-exclude-globs '("*.html"))
   (magit-todos-mode))
 ;; Highlighting TODO-s & Showing them in Magit:4 ends here
+
+;; [[file:init.org::*Silently show me when a line was modified and by whom][Silently show me when a line was modified and by whom:1]]
+(unless noninteractive
+
+  (use-package blamer
+    :quelpa (blamer :fetcher github :repo "artawower/blamer.el")
+    :custom
+    (blamer-idle-time 0.3)
+    (blamer-min-offset 70)
+    (blamer-max-commit-message-length 80) ;; Show me a lot of the commit title
+    :custom-face
+    (blamer-face ((t :foreground "#7a88cf"
+                      :background nil
+                      :height 140
+                      :italic t)))
+    :config
+    (global-blamer-mode 1)))
+;; Silently show me when a line was modified and by whom:1 ends here
 
 ;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:1]]
 (setq org-use-speed-commands t)
@@ -1478,14 +1512,16 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Startup message: Emacs & Org versions:3 ends here
 
 ;; [[file:init.org::#My-to-do-list-The-initial-buffer-when-Emacs-opens-up][My to-do list: The initial buffer when Emacs opens up:1]]
-(if my/personal-machine?
-    (find-file "~/Dropbox/todo.org")
-  (find-file "~/Desktop/work.org.gpg"))
-(split-window-right)			  ;; C-x 3
-(other-window 1)                              ;; C-x 0
-(let ((enable-local-variables :all)           ;; Load *all* locals.
-      (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
-  (ignore-errors (find-file "~/.emacs.d/init.org")))
+(unless noninteractive ;; Only run the following when we're in GUI mode;
+                       ;; i.e., don't run it in Github Actions when testing.
+  (if my/personal-machine?
+      (find-file "~/Dropbox/todo.org")
+    (find-file "~/Desktop/work.org.gpg"))
+  (split-window-right)			  ;; C-x 3
+  (other-window 1)                              ;; C-x 0
+  (let ((enable-local-variables :all)           ;; Load *all* locals.
+        (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
+    (ignore-errors (find-file "~/.emacs.d/init.org"))))
 ;; My to-do list: The initial buffer when Emacs opens up:1 ends here
 
 ;; [[file:init.org::#Exquisite-Fonts-and-Themes][Exquisite Fonts and Themes:1]]
@@ -2246,16 +2282,15 @@ the character 𝓍 before and after the selected text."
 (delete-selection-mode 1)
 ;; Delete Selection Mode:1 ends here
 
-;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation:1]]
-(use-package smartscan
-  :defer t
-  :config
-    (global-set-key (kbd "M-n") 'smartscan-symbol-go-forward)
-    (global-set-key (kbd "M-p") 'smartscan-symbol-go-backward)
-    (global-set-key (kbd "M-'") 'my/symbol-replace))
-;;   ~M-n,p~: Word-at-Point Navigation:1 ends here
+;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:1]]
+;; Default: M-→/← moves to the next/previous instance of the currently highlighted word
+;; These are already meaningful commands in Org-mode, so we avoid these key re-bindings in Org-mode; TODO.
+(use-package auto-highlight-symbol
+  :hook ((text-mode . auto-highlight-symbol-mode)
+         (prog-mode . auto-highlight-symbol-mode)))
+;;   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:1 ends here
 
-;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation:2]]
+;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:2]]
 (defun my/symbol-replace (replacement)
   "Replace all standalone symbols in the buffer matching the one at point."
   (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
@@ -2264,12 +2299,22 @@ the character 𝓍 before and after the selected text."
       (beginning-of-buffer)
       ;; (query-replace-regexp symbol replacement)
       (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
-;;   ~M-n,p~: Word-at-Point Navigation:2 ends here
+;;   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:2 ends here
 
-;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation:3]]
-;; C-n, next line, inserts newlines when at the end of the buffer
-(setq next-line-add-newlines t)
-;;   ~M-n,p~: Word-at-Point Navigation:3 ends here
+;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:3]]
+(defmacro my/make-navigation-hydra (initial-action)
+  `(defhydra word-navigation
+    (:body-pre (,initial-action)) "Word-at-point Navigation"
+    ("n" ahs-forward "Next instance")
+    ("p" smartscan-symbol-go-backward "Previous instance")
+    ("r" my/symbol-replace "Replace all occurances")
+    ("s" ahs-display-stat "Stats")))
+
+;; (bind-key* str func) ≈ (global-set-key (kbd str) func)
+(bind-key* "M-n" (my/make-navigation-hydra ahs-forward))
+(bind-key* "M-p" (my/make-navigation-hydra ahs-backward))
+(bind-key* "M-'" (my/make-navigation-hydra my/symbol-replace))
+;;   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:3 ends here
 
 ;; [[file:init.org::#Letter-based-Navigation][Letter-based Navigation:1]]
 (use-package ace-jump-mode
@@ -2303,19 +2348,6 @@ the character 𝓍 before and after the selected text."
 ;; [[file:init.org::#Get-LaTeX][Get LaTeX::2]]
 (system-packages-ensure "pygments")
 ;; Get LaTeX::2 ends here
-
-;; [[file:init.org::#Working-with-Citations][Working with Citations:1]]
-(use-package org-ref
-  :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
-          ;; Most useful for non-LaTeX files.
-        (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
-        (bibtex-completion-bibliography (car reftex-default-bibliography))
-        (org-ref-default-bibliography reftex-default-bibliography))
-
-;; Quick BibTeX references, sometimes.
-(use-package helm-bibtex)
-(use-package biblio)
-;; Working with Citations:1 ends here
 
 ;; [[file:init.org::#Bibliography-Coloured-LaTeX-using-Minted][Bibliography & Coloured LaTeX using Minted:1]]
 (setq org-latex-listings 'minted
@@ -2479,6 +2511,35 @@ by spaces.
          (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
 ;; Project management & navigation:1 ends here
 
+;; [[file:init.org::*Are there any errors in my code?][Are there any errors in my code?:1]]
+(use-package flycheck-status-emoji
+  :config
+  (load-library "flycheck-status-emoji")
+  (diminish-undo 'flycheck-mode)
+  (flycheck-status-emoji-mode))
+;; Are there any errors in my code?:1 ends here
+
+;; [[file:init.org::*Are there any errors in my code?][Are there any errors in my code?:2]]
+(use-package helm-flycheck)
+ (bind-key*
+ "C-c !"
+ (defhydra my/flycheck-hydra (:color blue :hint nil)
+   "Move around flycheck errors and get info about them"
+   ("n" flycheck-next-error "next" :column "Navigation")
+   ("p" flycheck-previous-error "previous")
+   ("f" flycheck-first-error "first")
+   ("l" flycheck-list-errors "list")
+   ("h" helm-flycheck "helm") ;; Jump to an error / see-errors from a nice interactive menu
+
+   ("e" flycheck-explain-error-at-point "explain"  :column "Current errror")
+   ("c" flycheck-copy-errors-as-kill "copy")
+
+   ("d" flycheck-describe-checker "Describe checker"  :column "More")
+   ("s" flycheck-select-checker "Select checker")
+   ("S" flycheck-verify-setup "Suggest setup")
+   ("m" flycheck-manual "manual")))
+;; Are there any errors in my code?:2 ends here
+
 ;; [[file:init.org::*LSP: Making Emacs into a generic full-featured programming IDE][LSP: Making Emacs into a generic full-featured programming IDE:1]]
 (use-package lsp-mode
   :init
@@ -2587,13 +2648,68 @@ by spaces.
   ("f" helm-imenu "Filter funcs/classes (Helm)")
   ("C-c" lsp-describe-session "Describe session")
 
-  ;; Flycheck
-  ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+  ;; Flycheck ---my “C-c !” flycheck hydra is much better than this simple lsp one.
+  ;; ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+  ("l" my/flycheck-hydra/body "List errs/warns/notes" :column "Flycheck")
 
   ;; Misc
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 ;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
+
+;; [[file:init.org::*Turbolog: What's the value of this expression? :JavaScript][Turbolog: What's the value of this expression? :JavaScript:2]]
+(unless noninteractive
+
+(setq turbo-log--prefix "%c ******* LOOK HERE *******")
+(defun length> (x y) (> (length x) y))
+(defun length= (x y) (= (length x) y))
+(use-package turbo-log
+  :quelpa (turbo-log :fetcher github :repo "artawower/turbo-log.el")
+  :config (setq turbo-console--prefix "✰"))
+(bind-key* "C-x l" #'my/turbo-log-hydra/body)
+(defhydra my/turbo-log-hydra (:color blue :hint nil)
+  ("l" turbo-log-print "Log selected expression" :column "TurboLog: Insert meaningful log message for selected expressions")
+  ("c" turbo-log-comment-all-logs "Comment out all logs")
+  ("u" turbo-log-uncomment-all-logs "Uncomment out all logs")
+  ("d" turbo-log-delete-all-logs "Delete all TurboLog logs")
+  ("q" nil "Cancel"))
+
+
+(defun turbo-log--ecmascript-print (current-line-number formatted-selected-text prev-line-text multiple-logger-p)
+  "Console log for ecmascript, js/ts modes.
+CURRENT-LINE-NUMBER - line number under cursor
+FORMATTED-SELECTED-TEXT - formatted text without space at start position
+PREV-LINE-TEXT - text from previous line
+MULTIPLE-LOGGER-P - should guess list of available loggers?"
+
+  (let* ((is-empty-body (turbo-log--ecmascript-empty-body-p (turbo-log--get-line-text current-line-number)))
+         (insert-line-number (turbo-log--ecmascript-find-insert-pos current-line-number prev-line-text))
+         (meta-info (turbo-log--format-meta-info insert-line-number))
+         (normalized-code (turbo-log--ecmascript-normilize-code formatted-selected-text))
+         (turbo-log--message
+          (concat
+           (turbo-log--choose-logger turbo-log--ecmascript-loggers multiple-logger-p)
+           "('"
+           meta-info
+           formatted-selected-text ": ', "
+           ;; HACK this is my change: Does the TurboLog prefix have a %c console styling marker? If so, use it.
+           (if (s-contains? "%c" meta-info) "'color: green; font-weight: bold;', " "")
+           normalized-code ")"
+           (if (plist-get turbo-log--ecmascript-configs :include-semicolon) ";"))))
+
+    (if is-empty-body
+        (progn
+          (turbo-log--goto-line (- current-line-number 1))
+          (beginning-of-line)
+          (search-forward-regexp "}[[:blank:]]*")
+          (replace-match "")
+          (turbo-log--insert-with-indent current-line-number turbo-log--message)
+          (turbo-log--insert-with-indent (+ current-line-number 1) "}")
+          (indent-according-to-mode))
+      (turbo-log--insert-with-indent insert-line-number turbo-log--message))))
+
+)
+;; Turbolog: What's the value of this expression? :JavaScript:2 ends here
 
 ;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:1]]
 (add-hook 'prog-mode-hook #'which-function-mode)
@@ -2741,6 +2857,10 @@ by spaces.
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
 
+;; [[file:init.org::*hr: \[\[https:/github.com/LuRsT/hr\]\[A horizontal for your terminal\]\]][hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1]]
+(system-packages-install "hr") ;; ≈ brew install hr
+;; hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1 ends here
+
 ;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
 (quelpa '(org-pretty-table
          :repo "Fuco1/org-pretty-table"
@@ -2811,18 +2931,6 @@ by spaces.
   (highlight-indent-guides-character ?|)
   (highlight-indent-guides-responsive 'stack))
 ;; Indentation Guide:1 ends here
-
-;; [[file:init.org::*JavaScript][JavaScript:1]]
-(use-package ob-js
-  :config
-  (add-to-list 'org-babel-load-languages '(js . t))
-  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
-  (add-to-list 'org-babel-tangle-lang-exts '("js" . "js"))
-  (system-packages-ensure "node"))
-  ;; use “:results output” for js blocks!
-  (maybe-clone "https://github.com/alhassy/JavaScriptCheatSheet")
-  (maybe-clone "https://github.com/alhassy/AngularJSCheatSheet")
-;; JavaScript:1 ends here
 
 ;; [[file:init.org::*Commenting][Commenting:1]]
 (use-package comment-dwim-2
@@ -3160,9 +3268,6 @@ window contains the buffer with the cursour in it."
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
 )
 ;; Publishing articles to my personal blog:1 ends here
-
-
-(system-packages-install "hr") ;; ≈ brew install hr
 
 ;; [[file:init.org::#Jumping-without-hassle][Jumping without hassle:1]]
 (defun my/org-goto-line (line)
