@@ -1455,9 +1455,10 @@ fonts (•̀ᴗ•́)و"
 ;; Flashing when something goes wrong ---no blinking:2 ends here
 
 ;; [[file:init.org::#Hiding-Scrollbar-tool-bar-and-menu][Hiding Scrollbar, tool bar, and menu:1]]
-(tool-bar-mode   -1)  ;; No large icons please
-(scroll-bar-mode -1)  ;; No visual indicator please
-(menu-bar-mode   -1)  ;; The Mac OS top pane has menu options
+(unless noninteractive
+  (tool-bar-mode   -1)  ;; No large icons please
+  (scroll-bar-mode -1)  ;; No visual indicator please
+  (menu-bar-mode   -1))  ;; The Mac OS top pane has menu options
 ;; Hiding Scrollbar, tool bar, and menu:1 ends here
 
 ;; [[file:init.org::#Highlight-complete-parenthesis-pair-when-cursor-is-near][Highlight & complete parenthesis pair when cursor is near ;-):1]]

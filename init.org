@@ -5939,9 +5939,10 @@ upwards and onwards.
 As a laptop user, screen space is important, so let's remove rarely used visual
 items.
 #+BEGIN_SRC emacs-lisp
-(tool-bar-mode   -1)  ;; No large icons please
-(scroll-bar-mode -1)  ;; No visual indicator please
-(menu-bar-mode   -1)  ;; The Mac OS top pane has menu options
+(unless noninteractive
+  (tool-bar-mode   -1)  ;; No large icons please
+  (scroll-bar-mode -1)  ;; No visual indicator please
+  (menu-bar-mode   -1))  ;; The Mac OS top pane has menu options
 #+END_SRC
 
 ** Highlight & complete parenthesis pair when cursor is near ;-)
