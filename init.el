@@ -1039,7 +1039,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:4]]
 ;; Location of my todos/notes file
-(setq org-default-notes-file "~/Dropbox/todo.org")
+(unless noninteractive (setq org-default-notes-file "~/Dropbox/todo.org"))
 
 ;; “C-c c” to quickly capture a task/note
 (define-key global-map "\C-cc" #'my/org-capture) ;; See below.
