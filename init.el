@@ -713,873 +713,274 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
     (global-blamer-mode 1)))
 ;; Silently show me when a line was modified and by whom:1 ends here
 
-;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:1]]
-(cl-defun my/org-capture-buffer (&optional keys no-additional-remarks
-                                           (heading-regexp "Subject: \\(.*\\)"))
-  "Capture the current [narrowed] buffer as a todo/note.
+;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:1]]
+(setq org-use-speed-commands t)
+;; Manipulating Sections:1 ends here
 
-This is mostly intended for capturing mail as todo tasks ^_^
+;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:2]]
+;; [Default]
+;; When refiling, only show me top level headings
+(setq org-refile-targets
+      '((nil :maxlevel . 1))) ;; Sometimes 2 is useful.
 
-When NO-ADDITIONAL-REMARKS is provided, and a heading is found,
-then make and store the note without showing a pop-up.
-This is useful for when we capture self-contained mail.
+;; Maybe I want to refile into a new heading; confirm with me.
+(setq org-refile-allow-creating-parent-nodes 'confirm)
 
-The HEADING-REGEXP must have a regexp parenthesis construction
-which is used to obtain a suitable heading for the resulting todo/note."
-  (interactive "P")
-  (let* ((current-content (substring-no-properties (buffer-string)))
-         (heading         (progn (string-match heading-regexp current-content)
-                                 (or (match-string 1 current-content) ""))))
-    (org-capture keys)
-    (insert heading "\n\n\n\n" (s-repeat 80 "-") "\n\n\n" current-content)
+;; Use full outline paths for refile targets
+;; When refiling, using Helm, show me the hierarchy paths
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-use-outline-path 'file-path)
+;; Manipulating Sections:2 ends here
 
-    ;; The overtly verbose conditions are for the sake of clarity.
-    ;; Moreover, even though the final could have “t”, being explicit
-    ;; communicates exactly the necessary conditions.
-    ;; Being so verbose leads to mutual exclusive clauses, whence order is irrelevant.
-    (cond
-     ((s-blank? heading)
-        (beginning-of-buffer) (end-of-line))
-     ((and no-additional-remarks (not (s-blank? heading)))
-        (org-capture-finalize))
-     ((not (or no-additional-remarks (s-blank? heading)))
-        (beginning-of-buffer) (forward-line 2) (indent-for-tab-command)))))
-;; Capturing ideas & notes without interrupting the current workflow:1 ends here
+;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:3]]
+(add-to-list 'org-speed-commands-user (cons "P" #'org-set-property))
+;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
+;; Manipulating Sections:3 ends here
 
-;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:2]]
-(defun my/org-capture (&optional prefix keys)
-  "Capture something!
-
-      C-c c   ⇒ Capture something; likewise for “C-uⁿ C-c c” where n ≥ 3.
-C-u   C-c c   ⇒ Capture current [narrowed] buffer.
-C-u 5 C-c c   ⇒ Capture current [narrowed] buffer without adding additional remarks.
-C-u C-u C-c c ⇒ Goto last note stored."
-  (interactive "p")
-  (case prefix
-    (4     (my/org-capture-buffer keys))
-    (5     (my/org-capture-buffer keys :no-additional-remarks))
-    (t     (org-capture prefix keys))))
-;; Capturing ideas & notes without interrupting the current workflow:2 ends here
-
-;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:3]]
-(s-join "\n" (--map (concat "+  [[kbd:" (s-replace "⇒" "]]" it))  (cddr (s-split "\n" (documentation #'my/org-capture)))))
-;; Capturing ideas & notes without interrupting the current workflow:3 ends here
-
-;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:4]]
-;; Location of my todos/notes file
-(unless noninteractive (setq org-default-notes-file "~/Dropbox/todo.org"))
-
-;; “C-c c” to quickly capture a task/note
-(define-key global-map "\C-cc" #'my/org-capture) ;; See below.
-;; Capturing ideas & notes without interrupting the current workflow:4 ends here
-
-;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:5]]
-(cl-defun my/make/org-capture-template
-   (shortcut heading &optional (no-todo nil) (description heading) (scheduled nil))
-  "Quickly produce an org-capture-template.
-
-  After adding the result of this function to ‘org-capture-templates’,
-  we will be able perform a capture with “C-c c ‘shortcut’”
-  which will have description ‘description’.
-  It will be added to the tasks file under heading ‘heading’.
-
-  ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
-  when it's merely an interesting note that needn't be acted upon.
-
-  Default for ‘description’ is ‘heading’. Default for ‘no-todo’ is ‘nil’.
-
-  Scheduled items appear in the agenda; true by default.
-
-  The target is ‘file+headline’ and the type is ‘entry’; to see
-  other possibilities invoke: C-h o RET org-capture-templates.
-  The “%?” indicates the location of the Cursor, in the template,
-  when forming the entry.
-  "
-  `(,shortcut ,description entry
-      (file+headline org-default-notes-file ,heading)
-         ,(concat "*" (unless no-todo " TODO") " %?\n"
-                (when nil ;; this turned out to be a teribble idea.
-                  ":PROPERTIES:\n:"
-                (if scheduled
-                    "SCHEDULED: %^{Any time ≈ no time! Please schedule this task!}t"
-                  "CREATED: %U")
-                "\n:END:") "\n\n ")
-      :empty-lines 1 :time-prompt t))
-;; Capturing ideas & notes without interrupting the current workflow:5 ends here
-
-;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:6]]
-(setq org-capture-templates
-      (cl-loop for (shortcut heading)
-            in (-partition 2 '("t" "Tasks, Getting Things Done"
-                               "r" "Research"
-                               "2" "2FA3"
-                               "m" "Email"
-                               "e" "Emacs (•̀ᴗ•́)و"
-                               "i" "Islam"
-                               "b" "Blog"
-                               "a" "Arbitrary Reading and Learning"
-                               "l" "Programming Languages"
-                               "p" "Personal Matters"))
-            collect  (my/make/org-capture-template shortcut heading)))
-;; Capturing ideas & notes without interrupting the current workflow:6 ends here
-
-;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:7]]
-;; Update: Let's schedule tasks during the GTD processing phase.
+;; [[file:init.org::#Seamless-Navigation-Between-Source-Blocks][Seamless Navigation Between Source Blocks:1]]
+;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
 ;;
-;; For now, let's automatically schedule items a week in advance.
-;; TODO: FIXME: This overwrites any scheduling I may have performed.
-;; (defun my/org-capture-schedule ()
-;;   (org-schedule nil "+7d"))
-;;
-;; (add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
-;; Capturing ideas & notes without interrupting the current workflow:7 ends here
-
-;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:8]]
-;; Cannot mark an item DONE if it has a  TODO child.
-;; Conversely, all children must be DONE in-order for a parent to be DONE.
-(setq org-enforce-todo-dependencies t)
-;; Capturing ideas & notes without interrupting the current workflow:8 ends here
-
-;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:9]]
-  ;; Ensure notes are stored at the top of a tree.
-  (setq org-reverse-note-order nil)
-;; Capturing ideas & notes without interrupting the current workflow:9 ends here
-
-;; [[file:init.org::#Step-2-Filing-your-tasks][Step 2: Filing your tasks:1]]
-;; Add a note whenever a task's deadline or scheduled date is changed.
-(setq org-log-redeadline 'time)
-(setq org-log-reschedule 'time)
-;; Step 2: Filing your tasks:1 ends here
-
-;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:1]]
-(define-key global-map "\C-ca" 'org-agenda)
-;; Step 3: Quickly review the upcoming week:1 ends here
-
-;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:2]]
-;; List of all the files & directories where todo items can be found. Only one
-;; for now: My default notes file.
-(setq org-agenda-files (list org-default-notes-file))
-
-;; Display tags really close to their tasks.
-(setq org-agenda-tags-column -10)
-
-;; How many days ahead the default agenda view should look
-(setq org-agenda-span 'day)
-;; May be any number; the larger the slower it takes to generate the view.
-;; One day is thus the fastest ^_^
-
-;; How many days early a deadline item will begin showing up in your agenda list.
-(setq org-deadline-warning-days 14)
-
-;; In the agenda view, days that have no associated tasks will still have a line showing the date.
-(setq org-agenda-show-all-dates t)
-
-;; Scheduled items marked as complete will not show up in your agenda view.
-(setq org-agenda-skip-scheduled-if-done t)
-(setq org-agenda-skip-deadline-if-done  t)
-;; Step 3: Quickly review the upcoming week:2 ends here
-
-;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:3]]
-(setq org-agenda-start-on-weekday nil)
-;; Step 3: Quickly review the upcoming week:3 ends here
-
-;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:4]]
-(use-package org-super-agenda
-  ;; :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
-  ;; :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
-  :config
-  (org-super-agenda-mode)
-  (setq org-super-agenda-groups
-        '((:name "Important" :priority "A")
-          (:name "Personal" :habit t)
-          ;; For everything else, nicely display their heading hierarchy list.
-          (:auto-map (lambda (e) (org-format-outline-path (org-get-outline-path)))))))
-
-;; MA: No noticable effect when using org-super-agenda :/
-;;
-;; Leave new line at the end of an entry.
-;; (setq org-blank-before-new-entry '((heading . t) (plain-list-item . t)))
-;; Step 3: Quickly review the upcoming week:4 ends here
-
-;; [[file:init.org::#Step-4-Getting-ready-for-the-day][Step 4: Getting ready for the day:1]]
-(setq org-lowest-priority ?D) ;; Now org-speed-eky ‘,’ gives 4 options
-(setq org-priority-faces
-'((?A :foreground "red" :weight bold)
-  (?B . "orange")
-  (?C . "yellow")
-  (?D . "green")))
-;; Step 4: Getting ready for the day:1 ends here
-
-;; [[file:init.org::#Step-4-Getting-ready-for-the-day][Step 4: Getting ready for the day:2]]
-(use-package org-fancy-priorities
-  :diminish org-fancy-priorities-mode
-  :hook   (org-mode . org-fancy-priorities-mode)
-  :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
-;; Step 4: Getting ready for the day:2 ends here
-
-;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:1]]
-;; C-c a s ➩ Search feature also looks into archived files.
-;; Helpful when need to dig stuff up from the past.
-(setq org-agenda-text-search-extra-files '(agenda-archives))
-;; Step 7: Archiving Tasks:1 ends here
-
-;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:2]]
-;; Invoking the agenda command shows the agenda and enables
-;; the org-agenda variables.
-;; ➩ Show my agenda upon Emacs startup.
-(unless noninteractive
-  (when my/personal-machine?
-    (org-agenda "a" "a"))) ;; Need this to have “org-agenda-custom-commands” defined.
-;; Step 7: Archiving Tasks:2 ends here
-
-;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:3]]
-;; Pressing ‘c’ in the org-agenda view shows all completed tasks,
-;; which should be archived.
-(add-to-list 'org-agenda-custom-commands
-  '("c" todo "DONE|ON_HOLD|CANCELLED" nil))
-;; Step 7: Archiving Tasks:3 ends here
-
-;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:4]]
-(add-to-list 'org-agenda-custom-commands
-  '("u" alltodo ""
-     ((org-agenda-skip-function
-        (lambda ()
-              (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
-              (org-agenda-overriding-header "Unscheduled TODO entries: "))))
-;; Step 7: Archiving Tasks:4 ends here
-
-;; [[file:init.org::#Tag-You're-it][Tag! You're it!:1]]
- (setq org-tags-column -77) ;; the default
-;; Tag! You're it!:1 ends here
-
-;; [[file:init.org::#Tag-You're-it][Tag! You're it!:2]]
-(use-package helm-org) ;; Helm for org headlines and keywords completion.
-(add-to-list 'helm-completing-read-handlers-alist
-             '(org-set-tags-command . helm-org-completing-read-tags))
-
-;; Also provides: helm-org-capture-templates
-;; Tag! You're it!:2 ends here
-
-;; [[file:init.org::#Tag-You're-it][Tag! You're it!:3]]
-(use-package org-pretty-tags
-  :diminish org-pretty-tags-mode
-  :demand t
-  :config
-   (setq org-pretty-tags-surrogate-strings
-         '(("Neato"    . "💡")
-           ("Blog"     . "✍")
-           ("Audio"    . "♬")
-           ("Video"    . "📺")
-           ("Book"     . "📚")
-           ("Running"  . "🏃")
-           ("Question" . "❓")
-           ("Wife"     . "💕")
-           ("Text"     . "💬") ; 📨 📧
-           ("Friends"  . "👪")
-           ("Self"     . "🍂")
-           ("Finances" . "💰")
-           ("Car"      . "🚗") ; 🚙 🚗 🚘
-           ("Urgent"   . "🔥"))) ;; 📥 📤 📬
-   (org-pretty-tags-global-mode 1))
-;; Tag! You're it!:3 ends here
-
-;; [[file:init.org::#Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1]]
-;; Tasks get a 25 minute count down timer
-(setq org-timer-default-timer 25)
-
-;; Use the timer we set when clocking in happens.
-(add-hook 'org-clock-in-hook
-  (lambda () (org-timer-set-timer '(16))))
-
-;; unless we clocked-out with less than a minute left,
-;; show disappointment message.
-(add-hook 'org-clock-out-hook
-  (lambda ()
-  (unless (s-prefix? "0:00" (org-timer-value-string))
-     (message-box "The basic 25 minutes on this difficult task are not up; it's a shame to see you leave."))
-     (org-timer-stop)))
-;; Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1 ends here
-
-;; [[file:init.org::#The-Setup][The Setup:1]]
-(defun my/org-journal-new-entry (prefix)
-  "Open today’s journal file and start a new entry.
-
-  With a prefix, we use the work journal; otherwise the personal journal."
-  (interactive "P")
-  (-let [org-journal-file-format (if prefix "Work-%Y-%m-%d" org-journal-file-format)]
-    (org-journal-new-entry nil)
-    (org-mode)
-    (org-show-all)))
-
-(use-package org-journal
-  ;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
-  :bind (("C-c j" . my/org-journal-new-entry))
-  :config
-  (setq org-journal-dir         "~/Dropbox/journal/"
-        org-journal-file-type   'yearly
-        org-journal-file-format "Personal-%Y-%m-%d"))
-;; The Setup:1 ends here
-
-;; [[file:init.org::#Workflow-States][Workflow States:1]]
-(setq org-todo-keywords
-      '((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
-        (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)")))
-
-;; Since DONE is a terminal state, it has no exit-action.
-;; Let's explicitly indicate time should be noted.
-(setq org-log-done 'time)
-;; Workflow States:1 ends here
-
-;; [[file:init.org::#Workflow-States][Workflow States:2]]
-(setq org-todo-keyword-faces
-      '(("TODO"      :foreground "red"          :weight bold)
-        ("STARTED"   :foreground "blue"         :weight bold)
-        ("DONE"      :foreground "forest green" :weight bold)
-        ("WAITING"   :foreground "orange"       :weight bold)
-        ("ON_HOLD"   :foreground "magenta"      :weight bold)
-        ("CANCELLED" :foreground "forest green" :weight bold)))
-;; Workflow States:2 ends here
-
-;; [[file:init.org::#Workflow-States][Workflow States:3]]
-(setq org-use-fast-todo-selection t)
-;; Workflow States:3 ends here
-
-;; [[file:init.org::#Workflow-States][Workflow States:4]]
-;; Install the tool
-; (async-shell-command "brew tap adoptopenjdk/openjdk; brew cask install adoptopenjdk13") ;; Dependency
-; (async-shell-command "brew install plantuml")
-
-;; Tell emacs where it is.
-;; E.g., (async-shell-command "find / -name plantuml.jar")
-(setq org-plantuml-jar-path
-      "/usr/local/Cellar/plantuml/1.2020.19/libexec/plantuml.jar")
-
-;; Enable C-c C-c to generate diagrams from plantuml src blocks.
-(add-to-list 'org-babel-load-languages '(plantuml . t) )
-(require 'ob-plantuml)
-
-; Use fundamental mode when editing plantuml blocks with C-c '
-(add-to-list 'org-src-lang-modes '("plantuml" . fundamental))
-;; Workflow States:4 ends here
-
-;; [[file:init.org::#Clocking-Work-Time][Clocking Work Time:1]]
-;; Record a note on what was accomplished when clocking out of an item.
-(setq org-log-note-clock-out t)
-;; Clocking Work Time:1 ends here
-
-;; [[file:init.org::#Clocking-Work-Time][Clocking Work Time:2]]
-(setq confirm-kill-emacs 'yes-or-no-p)
-;; Clocking Work Time:2 ends here
-
-;; [[file:init.org::#Clocking-Work-Time][Clocking Work Time:3]]
-;; Resume clocking task when emacs is restarted
-(org-clock-persistence-insinuate)
-
-;; Show lot of clocking history
-(setq org-clock-history-length 23)
-
-;; Resume clocking task on clock-in if the clock is open
-(setq org-clock-in-resume t)
-
-;; Sometimes I change tasks I'm clocking quickly ---this removes clocked tasks with 0:00 duration
-(setq org-clock-out-remove-zero-time-clocks t)
-
-;; Clock out when moving task to a done state
-(setq org-clock-out-when-done t)
-
-;; Save the running clock and all clock history when exiting Emacs, load it on startup
-(setq org-clock-persist t)
-
-;; Do not prompt to resume an active clock
-(setq org-clock-persist-query-resume nil)
-
-;; Include current clocking task in clock reports
-(setq org-clock-report-include-clocking-task t)
-;; Clocking Work Time:3 ends here
-
-;; [[file:init.org::#Estimates-versus-actual-time][Estimates versus actual time:1]]
- (push '("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
-       org-global-properties)
-;; Estimates versus actual time:1 ends here
-
-;; [[file:init.org::#Estimates-versus-actual-time][Estimates versus actual time:2]]
-(setq org-clock-sound "~/.emacs.d/school-bell.wav")
-;; Estimates versus actual time:2 ends here
-
-;; [[file:init.org::#Habit-Formation][Habit Formation:1]]
-;; Show habits for every day in the agenda.
-(setq org-habit-show-habits t)
-(setq org-habit-show-habits-only-for-today nil)
-
-;; This shows the ‘Seinfeld consistency’ graph closer to the habit heading.
-(setq org-habit-graph-column 90)
-
-;; In order to see the habit graphs, which I've placed rightwards, let's
-;; always open org-agenda in ‘full screen’.
-;; (setq org-agenda-window-setup 'only-window)
-;; Habit Formation:1 ends here
-
-;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:1]]
-(setq user-full-name    "Musa Al-hassy"
-      user-mail-address "alhassy@gmail.com")
-;; Using Gnus for Gmail:1 ends here
-
-;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:3]]
-     (setq message-send-mail-function 'smtpmail-send-it)
-;; Using Gnus for Gmail:3 ends here
-
-;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:6]]
-;; After startup, if Emacs is idle for 10 seconds, then start Gnus.
-;; Gnus is slow upon startup since it fetches all mails upon startup.
-(when my/personal-machine?
-  (run-with-idle-timer 10 nil #'gnus))
-;; Using Gnus for Gmail:6 ends here
-
-;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:8]]
-(with-eval-after-load 'gnus
-  (bind-key "t"
-          (lambda (N) (interactive "P") (gnus-summary-move-article N "[Gmail]/Trash"))
-          gnus-summary-mode-map))
-
-;; Orginally: t ⇒ gnus-summary-toggle-header
-;; Using Gnus for Gmail:8 ends here
-
-;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:9]]
-;; Fancy icons for Emacs
-;; Only do this once:
-(use-package all-the-icons :defer t)
-  ; :config (all-the-icons-install-fonts 'install-without-asking)
-
-;; Make mail look pretty
-(use-package all-the-icons-gnus
-  :defer t
-  :config (all-the-icons-gnus-setup))
-
-;; While we're at it: Make dired, ‘dir’ectory ‘ed’itor, look pretty
-(use-package all-the-icons-dired
-  :hook (dired-mode . all-the-icons-dired-mode))
-;; Using Gnus for Gmail:9 ends here
-
-;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:10]]
-(setq gnus-sum-thread-tree-vertical        "│"
-      gnus-sum-thread-tree-leaf-with-other "├─► "
-      gnus-sum-thread-tree-single-leaf     "╰─► "
-      gnus-summary-line-format
-      (concat
-       "%0{%U%R%z%}"
-       "%3{│%}" "%1{%d%}" "%3{│%}"
-       "  "
-       "%4{%-20,20f%}"
-       "  "
-       "%3{│%}"
-       " "
-       "%1{%B%}"
-       "%s\n"))
-;; Using Gnus for Gmail:10 ends here
-
-;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:11]]
-(defun my/email (to subject body)
-  (compose-mail to subject)
-  (insert body)
-  (message-send-mail)     ;; Appends info to the message buffer
-  ; (let ((kill-buffer-query-functions nil)) (kill-this-buffer))
-  (ignore-errors (undo))                  ;; Undo that addition
-  (message-kill-buffer)
-  (message "Send email to %s" to)) ;; Close that message buffer
-;; Using Gnus for Gmail:11 ends here
-
-;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:13]]
-(use-package gmail2bbdb
-  :defer t
-  :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
-
-(use-package bbdb
- :after company ;; The “com”plete “any”thig mode is set below in §Prose
- :hook   (message-mode . bbdb-insinuate-gnus)
-         (gnus-startup-hook . bbdb-insinuate-gnus)
- :custom (bbdb-file gmail2bbdb-bbdb-file)
-         (bbdb-use-pop-up t)                        ;; allow popups for addresses
- :config (add-to-list 'company-backends 'company-bbdb))
-;; Using Gnus for Gmail:13 ends here
-
-;; [[file:init.org::#Capturing-Mail-as-Todo-Notes][Capturing Mail as Todo/Notes:1]]
-(with-eval-after-load 'gnus
-  ;; Orginally: c ⇒ gnus-summary-catchup-and-exit
-  (bind-key "c" #'my/org-capture-buffer gnus-article-mode-map)
-  ;; Orginally: C ⇒ gnus-summary-cancel-article
-  (bind-key "C"
-            (lambda (&optional keys)
-              (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
-            gnus-article-mode-map))
-;; Capturing Mail as Todo/Notes:1 ends here
-
-;; [[file:init.org::*Whitespace][Whitespace:1]]
-(add-hook 'before-save-hook 'whitespace-cleanup)
-;; Whitespace:1 ends here
-
-;; [[file:init.org::*Formatting Text][Formatting Text:1]]
-(local-set-key (kbd "C-c f") #'my/org-mode-format)
-(defun my/org-mode-format (&optional text)
-"Surround selected region with the given Org emphasises marker.
-
-E.g., if this command is bound to “C-c f” then the sequence
-“C-c f b” would make the currenly selected text be bold.
-Likewise, “C-c f *” would achieve the same goal.
-
-When you press “C-c f”, a message is shown with a list of
-useful single-character completions.
-
-Note: “C-c f 𝓍”, for an unrecognised marker 𝓍, just inserts
-the character 𝓍 before and after the selected text."
-  (interactive "P") ;; Works on a region
-  ; (message "b,* ⟨Bold⟩; i,/ ⟨Italics⟩; u,_ ⟨Underline⟩; c,~ ⟨Monotype⟩")
-  (message "⟨Bold b,*⟩ ⟨Italics i,/⟩ ⟨Underline u,_⟩ ⟨Monotype c,~⟩")
-  (let ((kind (read-char)))
-    ;; Map letters to Org formatting symbols
-    (setq kind (or (plist-get '(b ?\*   i ?\/   u ?\_   c ?\~)
-                              (intern (string kind)))
-                   kind))
-    (insert-pair text kind kind)))
-;; Formatting Text:1 ends here
-
-;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:1]]
-(setq-default fill-column 80          ;; Let's avoid going over 80 columns
-              truncate-lines nil      ;; I never want to scroll horizontally
-              indent-tabs-mode nil)   ;; Use spaces instead of tabs
-;; Fill-mode ---Word Wrapping:1 ends here
-
-;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:2]]
-;; Wrap long lines when editing text
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
-(add-hook 'org-mode-hook 'turn-on-auto-fill)
-
-;; Do not show the “Fill” indicator in the mode line.
-(diminish 'auto-fill-function)
-;; Fill-mode ---Word Wrapping:2 ends here
-
-;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:3]]
-;; Bent arrows at the end and start of long lines.
-(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
-(diminish 'visual-line-mode)
-(global-visual-line-mode 1)
-;; Fill-mode ---Word Wrapping:3 ends here
-
-;; [[file:init.org::#Pretty-Lists-Markers][Pretty Lists Markers:1]]
-;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
-(cl-loop for (x y z) in '(("+" "◦" *)
-                       ("-" "•" *)
-                       ("*" "⋆" +))
-      do (font-lock-add-keywords 'org-mode
-                                 `((,(format "^ %s\\([%s]\\) " z x)
-                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
-;; Pretty Lists Markers:1 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:1]]
-(system-packages-ensure "aspell")
-(system-packages-ensure "wordnet")
-;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:2]]
-(use-package flyspell
-  :diminish
-  :hook ((prog-mode . flyspell-prog-mode)
-         ((org-mode text-mode) . flyspell-mode)))
-;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:3]]
-(setq ispell-program-name "/usr/local/bin/aspell")
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
-;; Fix spelling as you type ---thesaurus & dictionary too!:3 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:5]]
-(eval-after-load "flyspell"
-  ' (progn
-     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
-;; Fix spelling as you type ---thesaurus & dictionary too!:5 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:6]]
-(global-font-lock-mode t)
-(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
-;; Fix spelling as you type ---thesaurus & dictionary too!:6 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:7]]
-(setq ispell-silently-savep t)
-;; Fix spelling as you type ---thesaurus & dictionary too!:7 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:8]]
-(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
-;; Fix spelling as you type ---thesaurus & dictionary too!:8 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:9]]
-(add-hook          'c-mode-hook 'flyspell-prog-mode)
-(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
-;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:10]]
-(use-package synosaurus
-  :diminish synosaurus-mode
-  :init    (synosaurus-mode)
-  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
-;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:11]]
-;; (shell-command "brew cask install xquartz &") ;; Dependency
-;; (shell-command "brew install wordnet &")
-;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:12]]
-(use-package wordnut
- :bind ("M-!" . wordnut-lookup-current-word))
-
-;; Use M-& for async shell commands.
-;; Fix spelling as you type ---thesaurus & dictionary too!:12 ends here
-
-;; [[file:init.org::#Using-a-Grammar-Style-Checker][Using a Grammar & Style Checker:1]]
-(use-package langtool
- :defer t
- :custom
-  (langtool-language-tool-jar
-   "~/Applications/LanguageTool-4.5/languagetool-commandline.jar"))
-;; Using a Grammar & Style Checker:1 ends here
-
-;; [[file:init.org::#Using-a-Grammar-Style-Checker][Using a Grammar & Style Checker:2]]
-;; Quickly check, correct, then clean up /region/ with M-^
-(eval-after-load 'langtool
-(progn
-(add-hook 'langtool-error-exists-hook
-  (lambda ()
-     (langtool-correct-buffer)
-     (langtool-check-done)))
-
-(global-set-key "\M-^"
-                (lambda ()
-                  (interactive)
-                  (message "Grammar checking begun ...")
-                  (langtool-check)))))
-;; Using a Grammar & Style Checker:2 ends here
-
-;; [[file:init.org::#Lightweight-Prose-Proofchecking][Lightweight Prose Proofchecking:1]]
-(use-package writegood-mode
-  ;; Load this whenver I'm composing prose.
-  :hook (text-mode org-mode)
-  ;; Don't show me the “Wg” marker in the mode line
-  :diminish
-  ;; Some additional weasel words.
-  :config
-  (--map (push it writegood-weasel-words)
-         '("some" "simple" "simply" "easy" "often" "easily" "probably"
-           "clearly"               ;; Is the premise undeniably true?
-           "experience shows"      ;; Whose? What kind? How does it do so?
-           "may have"              ;; It may also have not!
-           "it turns out that")))  ;; How does it turn out so?
-           ;; ↯ What is the evidence of highighted phrase? ↯
-;; Lightweight Prose Proofchecking:1 ends here
-
-;; [[file:init.org::#Placeholder-Text-For-Learning-Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
-(use-package lorem-ipsum :defer t)
-;; Placeholder Text ---For Learning & Experimenting:1 ends here
-
-;; [[file:init.org::#Some-text-to-make-us-smile][Some text to make us smile:1]]
-(use-package dad-joke
-  :defer t
-  :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
-;; Some text to make us smile:1 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:1]]
-; (load (shell-command-to-string "agda-mode locate"))
-;;
-;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
-; (makunbound 'agda2-include-dirs)
-;; Unicode Input via Agda Input:1 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:2]]
-(system-packages-ensure "agda")
-;; Unicode Input via Agda Input:2 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:4]]
-(unless noninteractive
-  (load-file (let ((coding-system-for-read 'utf-8))
-               (shell-command-to-string "/usr/local/bin/agda-mode locate"))))
-;; Unicode Input via Agda Input:4 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:5]]
-;; MA: This results in "Package cl is deprecated" !?
-(unless noninteractive
-  (use-package agda-input
-  :ensure nil ;; I have it locally.
-  :demand t
-  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-  :custom (default-input-method "Agda")))
-  ;; Now C-\ or M-x toggle-input-method turn it on and offers
-;; Unicode Input via Agda Input:5 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:6]]
-;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
-;; Unicode Input via Agda Input:6 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:7]]
-(unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
-;; Unicode Input via Agda Input:7 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:8]]
-(unless noninteractive
-(cl-loop for item
-      in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
-          ("(" "﴾")
-          (")" "﴿")
-          ("cmd" "⌘")
-           ;; categorial ;;
-           ("alg" "𝒜𝓁ℊ")
-           ("split" "▵")
-           ("join" "▿")
-           ("adj" "⊣")
-           (";;" "﹔")
-           (";;" "⨾")
-           (";;" "∘")
-           ;; logic
-           ("if" "⇐")
-           ("onlyif" "⇒")
-           ;; lattices ;;
-           ("meet" "⊓")
-           ("join" "⊔")
-           ;; tortoise brackets, infix relations
-           ("((" "〔")
-           ("))" "〕")
-           ;; residuals
-           ("syq"  "╳")
-           ("over" "╱")
-           ("under" "╲")
-           ;; Z-quantification range notation ;;
-           ;; e.g., “∀ x ❙ R • P” ;;
-           ("|"    "❙")
-           ("with" "❙")
-           ;; Z relational operators
-           ("domainrestriction" "◁")
-           ("domr" "◁")
-           ("domainantirestriction" "⩤")
-           ("doma" "⩤")
-           ("rangerestriction" "▷")
-           ("ranr" "▷")
-           ("rangeantirestriction" "⩥")
-           ("rana" "⩥")
-           ;; adjunction isomorphism pair ;;
-           ("floor"  "⌊⌋")
-           ("lower"  "⌊⌋")
-           ("lad"    "⌊⌋")
-           ("ceil"   "⌈⌉")
-           ("raise"  "⌈⌉")
-           ("rad"    "⌈⌉")
-           ;; Arrows
-           ("<=" "⇐")
-        ;; more (key value) pairs here
-        )
-      do (add-to-list 'agda-input-user-translations item)))
-;; Unicode Input via Agda Input:8 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:9]]
-(unless noninteractive
-;; Add to the list of translations using “emot” and the given, more specfic, name.
-;; Whence, \emot shows all possible emotions.
-(cl-loop for emot
-      in `(;; angry, cry, why-you-no
-           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "･ﾟ(*❦ω❦)*･ﾟ")
-           ;; confused, disapprove, dead, shrug
-           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯" "･✧_✧･")
-           ;; dance, csi
-           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
-            ,(s-collapse-whitespace "•_•)
-                                      ( •_•)>⌐■-■
-                                      (⌐■_■)"))
-           ;; love, pleased, success, yesss
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ"))
-      do
-      (add-to-list 'agda-input-user-translations emot)
-      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
-;; Unicode Input via Agda Input:9 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:10]]
-;; activate translations
-(unless noninteractive (agda-input-setup))
-;; Unicode Input via Agda Input:10 ends here
-
-;; [[file:init.org::#Increase-decrease-text-size][Increase/decrease text size:1]]
-(global-set-key (kbd "C-+") 'text-scale-increase)
-(global-set-key (kbd "C--") 'text-scale-decrease)
-;; C-x C-0 restores the default font size
-;; Increase/decrease text size:1 ends here
-
-;; [[file:init.org::#Moving-Text-Around][Moving Text Around:1]]
-;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(use-package move-text
-  :config (move-text-default-bindings))
-;; Moving Text Around:1 ends here
-
-;; [[file:init.org::#Enabling-CamelCase-Aware-Editing-Operations][Enabling CamelCase Aware Editing Operations:1]]
-(global-subword-mode 1)
-(diminish 'subword-mode)
-;; Enabling CamelCase Aware Editing Operations:1 ends here
-
-;; [[file:init.org::#Delete-Selection-Mode][Delete Selection Mode:1]]
-(delete-selection-mode 1)
-;; Delete Selection Mode:1 ends here
-
-;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:1]]
-;; Default: M-→/← moves to the next/previous instance of the currently highlighted word
-;; These are already meaningful commands in Org-mode, so we avoid these key re-bindings in Org-mode; TODO.
-(use-package auto-highlight-symbol
-  :hook ((text-mode . auto-highlight-symbol-mode)
-         (prog-mode . auto-highlight-symbol-mode)))
-;;   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:1 ends here
-
-;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:2]]
-(defun my/symbol-replace (replacement)
-  "Replace all standalone symbols in the buffer matching the one at point."
-  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
+(use-package org
+  :bind (:map org-mode-map
+              ("s-p" . org-babel-previous-src-block)
+              ("s-n" . org-babel-next-src-block)
+              ("s-e" . org-edit-special)
+         :map org-src-mode-map
+              ("s-e" . org-edit-src-exit)))
+;; Seamless Navigation Between Source Blocks:1 ends here
+
+;; [[file:init.org::#Modifying-return][Modifying [[kbd:⟨return⟩]]:1]]
+(add-hook 'org-mode-hook '(lambda ()
+   (local-set-key (kbd "<return>") 'org-return-indent))
+   (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline))
+;; Modifying [[kbd:⟨return⟩]]:1 ends here
+
+;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:1]]
+;; Seamless use of babel: No confirmation upon execution.
+;; Downside: Could accidentally evaluate harmful code.
+(setq org-confirm-babel-evaluate nil)
+
+;; Never evaluate code blocks upon export and replace results when evaluation does occur.
+;; For a particular language 𝑳, alter ‘org-babel-default-header-args:𝑳’.
+(setq org-babel-default-header-args
+      '((:results . "replace")
+        (:session . "none")
+        (:exports . "both")
+        (:cache .   "no")
+        (:noweb . "no")
+        (:hlines . "no")
+        (:tangle . "no")
+        (:eval . "never-export")))
+;; Executing code from ~src~ blocks:1 ends here
+
+;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
+ (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (shell      . t)
+     (python     . t)
+     (haskell    . t)
+     (ruby       . t)
+     (ocaml      . t)
+     (C          . t)  ;; Captial “C” gives access to C, C++, D
+     (dot        . t)
+     (latex      . t)
+     (org        . t)
+     (makefile   . t)))
+
+;; Preserve my indentation for source code during export.
+(setq org-src-preserve-indentation t)
+
+;; The export process hangs Emacs, let's avoid this.
+;; MA: For one reason or another, this crashes more than I'd like.
+;; (setq org-export-in-background t)
+;; Executing code from ~src~ blocks:2 ends here
+
+;; [[file:init.org::#Executing-all-name-startup-code-for-local-configurations][Executing all =#+name: startup-code= for local configurations:1]]
+(defun my/execute-startup-blocks ()
+  "Execute all startup blocks, those named ‘startup-code’.
+
+I could not use ORG-BABEL-GOTO-NAMED-SRC-BLOCK since it only goes
+to the first source block with the given name, whereas I'd like to
+visit all blocks with such a name."
+  (interactive)
   (save-excursion
-    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
-      (beginning-of-buffer)
-      ;; (query-replace-regexp symbol replacement)
-      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
-;;   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:2 ends here
+    (goto-char 0)
+    (while (ignore-errors (re-search-forward "^\\#\\+name: startup-code"))
+      (org-babel-execute-src-block))))
+;; Executing all =#+name: startup-code= for local configurations:1 ends here
 
-;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:3]]
-(defmacro my/make-navigation-hydra (initial-action)
-  `(defhydra word-navigation
-    (:body-pre (,initial-action)) "Word-at-point Navigation"
-    ("n" ahs-forward "Next instance")
-    ("p" smartscan-symbol-go-backward "Previous instance")
-    ("r" my/symbol-replace "Replace all occurances")
-    ("s" ahs-display-stat "Stats")))
+;; [[file:init.org::#Executing-all-name-startup-code-for-local-configurations][Executing all =#+name: startup-code= for local configurations:2]]
+;; Please ask me on a file by file basis whether its local variables are ‘safe’
+;; or not. Use ‘!’ to mark them as permanently ‘safe’ to avoid being queried
+;; again for the same file.
+(setq enable-local-variables t)
+;; Executing all =#+name: startup-code= for local configurations:2 ends here
 
-;; (bind-key* str func) ≈ (global-set-key (kbd str) func)
-(bind-key* "M-n" (my/make-navigation-hydra ahs-forward))
-(bind-key* "M-p" (my/make-navigation-hydra ahs-backward))
-(bind-key* "M-'" (my/make-navigation-hydra my/symbol-replace))
-;;   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:3 ends here
+;; [[file:init.org::#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
+(use-package shell-pop
+  :custom
+    ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
+    (shell-pop-universal-key "C-t")
 
-;; [[file:init.org::#Letter-based-Navigation][Letter-based Navigation:1]]
-(use-package ace-jump-mode
-  :defer t
-  :config (bind-key* "C-c SPC" 'ace-jump-mode))
+    ;; Percentage for shell-buffer window size.
+    (shell-pop-window-size 30)
 
-;; See ace-jump issues to configure for use of home row keys.
-;; Letter-based Navigation:1 ends here
+    ;; Position of the popped buffer: top, bottom, left, right, full.
+    (shell-pop-window-position "bottom")
 
-;; [[file:init.org::#Letter-based-Navigation][Letter-based Navigation:2]]
-;; C-x o ⇒ Switch to the other window
-;; C-x O ⇒ Switch back to the previous window
-(bind-key "C-x O" (lambda () (interactive) (other-window -1)))
-;; Letter-based Navigation:2 ends here
+    ;; Please use an awesome shell.
+    (shell-pop-term-shell "/bin/zsh"))
+;; Quickly pop-up a terminal, run a command, close it ---and zsh:1 ends here
 
-;; [[file:init.org::#C-c-e-n-p-Taking-a-tour-of-one's-edits][  =C-c e n,p=: Taking a tour of one's edits:1]]
-;; Give me a description of the change made at a particular stop.
-(use-package goto-chg
-  :defer t
-  :custom (glc-default-span 0))
+;; [[file:init.org::#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:2]]
+;; Be default, Emacs please use zsh
+;; E.g., M-x shell
+(unless noninteractive (setq shell-file-name "/bin/zsh"))
+;; Quickly pop-up a terminal, run a command, close it ---and zsh:2 ends here
 
-(my/pretty-defhydra "C-c e" "Look at them edits!"
-  :\  ("p" goto-last-change "Goto nᵗʰ last change")
-      ("n" goto-last-change-reverse "Goto more recent change"))
-;;   =C-c e n,p=: Taking a tour of one's edits:1 ends here
+;; [[file:init.org::#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:3]]
+(system-packages-ensure "tldr")
+;; Quickly pop-up a terminal, run a command, close it ---and zsh:3 ends here
+
+;; [[file:init.org::#Jumping-to-extreme-semantic-units][Jumping to extreme semantic units:1]]
+;; M-< and M-> jump to first and final semantic units.
+;; If pressed twice, they go to physical first and last positions.
+(use-package beginend
+  :diminish 'beginend-global-mode
+  :config (beginend-global-mode)
+    (cl-loop for (_ . m) in beginend-modes do (diminish m)))
+;; Jumping to extreme semantic units:1 ends here
+
+;; [[file:init.org::#Word-Completion][Word Completion:1]]
+(use-package company
+  :diminish
+  :config
+  (global-company-mode 1)
+  (setq ;; Only 2 letters required for completion to activate.
+   company-minimum-prefix-length 2
+
+   ;; Search other buffers for compleition candidates
+   company-dabbrev-other-buffers t
+   company-dabbrev-code-other-buffers t
+
+   ;; Show candidates according to importance, then case, then in-buffer frequency
+   company-transformers '(company-sort-by-backend-importance
+                          company-sort-prefer-same-case-prefix
+                          company-sort-by-occurrence)
+
+   ;; Flushright any annotations for a compleition;
+   ;; e.g., the description of what a snippet template word expands into.
+   company-tooltip-align-annotations t
+
+   ;; Allow (lengthy) numbers to be eligible for completion.
+   company-complete-number t
+
+   ;; M-⟪num⟫ to select an option according to its number.
+   company-show-numbers t
+
+   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
+   company-tooltip-limit 10
+
+   ;; Edge of the completion list cycles around.
+   company-selection-wrap-around t
+
+   ;; Do not downcase completions by default.
+   company-dabbrev-downcase nil
+
+   ;; Even if I write something with the ‘wrong’ case,
+   ;; provide the ‘correct’ casing.
+   company-dabbrev-ignore-case nil
+
+   ;; Immediately activate completion.
+   company-idle-delay 0)
+
+  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
+  ;; Override all minor modes that use C-/; bind-key* is discussed below.
+  (bind-key* "C-/" #'company-manual-begin)
+
+  ;; Bindings when the company list is active.
+  :bind (:map company-active-map
+              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
+              ("<tab>" . company-complete-selection)
+              ;; Use C-n,p for navigation in addition to M-n,p
+              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
+              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
+
+;; It's so fast that we don't need a key-binding to start it!
+;; Word Completion:1 ends here
+
+;; [[file:init.org::#Word-Completion][Word Completion:2]]
+(use-package company-emoji
+  :config (add-to-list 'company-backends 'company-emoji))
+;; Word Completion:2 ends here
+
+;; [[file:init.org::#Word-Completion][Word Completion:3]]
+(use-package emojify
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
+;; Word Completion:3 ends here
+
+;; [[file:init.org::#Intro-to-Snippets][Intro to Snippets:1]]
+;; Add yasnippet support for all company backends
+;;
+(cl-defun my/company-backend-with-yankpad (backend)
+  "There can only be one main completition backend, so let's
+   enable yasnippet/yankpad as a secondary for all completion
+   backends.
+
+   Src: https://emacs.stackexchange.com/a/10520/10352"
+
+  (if (and (listp backend) (member 'company-yankpad backend))
+      backend
+    (append (if (consp backend) backend (list backend))
+            '(:with company-yankpad))))
+;; Intro to Snippets:1 ends here
+
+;; [[file:init.org::#Intro-to-Snippets][Intro to Snippets:2]]
+;; Yet another snippet extension program
+(use-package yasnippet
+  :diminish yas-minor-mode
+  :config
+    (yas-global-mode 1) ;; Always have this on for when using yasnippet syntax within yankpad
+    ;; respect the spacing in my snippet declarations
+    (setq yas-indent-line 'fixed))
+
+;; Alternative, Org-based extension program
+(use-package yankpad
+  :diminish
+  :config
+    ;; Location of templates
+    (setq yankpad-file "~/.emacs.d/yankpad.org")
+
+    ;; Ignore major mode, always use defaults.
+    ;; Yankpad will freeze if no org heading has the name of the given category.
+    (setq yankpad-category "Default")
+
+    ;; Load the snippet templates ---useful after yankpad is altered
+    (yankpad-reload)
+
+    ;; Set company-backend as a secondary completion backend to all existing backends.
+    (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
+;; Intro to Snippets:2 ends here
+
+;; [[file:init.org::#Intro-to-Snippets][Intro to Snippets:5]]
+(cl-defun org-insert-link ()
+  "Makes an org link by inserting the URL copied to clipboard and
+  prompting for the link description only.
+
+  Type over the shown link to change it, or tab to move to the
+  description field.
+
+  This overrides Org-mode's built-in ‘org-insert-link’ utility;
+  whence C-c C-l uses the snippet."
+  (interactive)
+  (insert "my_org_insert_link")
+  (yankpad-expand))
+;; Intro to Snippets:5 ends here
+
+;; [[file:init.org::#][Emojis:2]]
+;; Get all unicode emojis to appear within Emacs
+;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
+(unless noninteractive (set-fontset-font t nil "Apple Color Emoji"))
+;; Emojis:2 ends here
