@@ -185,7 +185,7 @@ jobs:
           ls
 
       - name: Attempting startup...
-        run: emacs -nw --batch --eval='(let
+        run: time emacs -nw --batch --eval='(let
                                 (
                                  (user-emacs-directory default-directory))
                               (message "Default directory" )
