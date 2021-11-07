@@ -5689,21 +5689,117 @@ get a nice font selection menu ---this can be useful for your own ‘personal st
 # MA: This does not work well with dark themes; should use a theme-based setting.
 
 #+end_src
-** A sleek & informative mode line
+** A sleek, informative, & fancy mode line
 :PROPERTIES:
-:CUSTOM_ID: A-sleek-informative-mode-line
+:CUSTOM_ID: A-sleek-informative-and-fancy-mode-line
 :END:
 
 The ‘modeline’ is a part near the bottom of Emacs that gives information about
-the current mode, as well as other matters ---such as time & date, for example.
+the current buffer, such as its file-type/‘major-mode’ and enabled
+extensions/‘minor-modes’.  Let's use the [[https://github.com/seagle0128/doom-modeline][doom-modeline]], which is a /sleek &
+minimalistic, yet fancy/ setup with the following notable perks:
 
-Let's have it also show remaining battery life, coloured green if charging
-and coloured yellow otherwise. It is important to note that
-this package is no longer maintained. It works on my machine.
-#+BEGIN_SRC emacs-lisp
++ Gives each buffer a nice icon in the modeline (denoting its major mode; e.g.,
+  Lisp/JavaScript/Org/etc each get a cool icon).
+
++ Name of file becomes red when unsaved/modified.
+
++ Nice version control icon, with branch name.
+
++ Name of file is of the shape is shown as “project/file.ext”, when a project
+ is detected using ~projectile.el~.
+
++ Flycheck error reporting is ugly by default, and one would consider using
+  flycheck-status-emojis to make things look better in a simple modeline, but
+  Doom-modeline gives a nice status indicators for Flycheck.
+
++ Shows “+2” when the text scale is two above usual.
+
+#+begin_src emacs-lisp
+;; This package requires the fonts included with all-the-icons to be installed. Run M-x all-the-icons-install-fonts to do so.
+;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
+(use-package doom-modeline
+  :hook (after-init . doom-modeline-mode)
+  :config
+
+  ;; Use minimal height so icons still fit; modeline gets slightly larger when
+  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
+  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
+  (setq doom-modeline-height 1)
+  (setq doom-modeline-buffer-state-icon nil)
+  (setq doom-modeline-hud t)
+  (setq doom-modeline-bar-width 0.0001)
+
+  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
+  ;; we can click to see a listing.
+  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
+  (setq doom-modeline-checker-simple-format nil)
+
+  ;; Don't display the buffer encoding, E.g., “UTF-8”.
+  (setq doom-modeline-buffer-encoding nil)
+
+  ;; Inactive buffers' modeline is greyed out.
+  ;; (let ((it "Source Code Pro Light" ))
+  ;;   (set-face-attribute 'mode-line nil :family it :height 100)
+  ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
+
+  ;; Whether display the minor modes in the mode-line.  Enabled minor modes
+  ;; clutter up the modeline with their names, albeit some have useful status
+  ;; information shown. We can either selectively pick which names/status are
+  ;; shown using diminish.el, possibly forgetting which minor modes are enabled
+  ;; or we can use minions.el to “gather up” all enabled minor modes, and
+  ;; recently enabled ones, under a single menu which doom-modeline shows as a
+  ;; simple configurations gear icon.
+  (setq doom-modeline-minor-modes t)
+  (use-package minions
+    :init (minions-mode))
+  ;;
+  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
+  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
+  ;; We likely want to add this locally, to hooks on major modes.
+
+  ;; Makes Org/Markdown previewabvle as we type!!! ♥
+  ;; Shows up as a magnifying glass in doom-modeline.
+  (use-package grip-mode
+    :hook ((markdown-mode org-mode) . grip-mode)))
+
+;; Nice battery icon alongside with percentage, in doom-modeline.
+;; If not for doom-modeline, we'd need to use fancy-batter-mode.el.
+(display-battery-mode +1)
+
+;; Show date and time as well.
 (setq display-time-day-and-date t)
 (display-time)
-;; (display-battery-mode -1)
+#+end_src
+
+#+begin_src emacs-lisp
+;; I don't need the system load average in the modeline.
+;; (setq display-time-default-load-average nil)
+;; (setq display-time-load-average nil)
+#+end_src
+
+Likewise, let's have the modeline display column numbers, but not line numbers.
+Instead, let's have line numbers on the side of the buffer; moreover let's have
+a uniform width for displaying line numbers, rather than having the width grow
+as necessary.
+#+BEGIN_SRC emacs-lisp
+;; (column-number-mode                 t) ;; Enabled in doom-modeline by default
+;; (line-number-mode                   t) ;; Not sure I want line numbers in modeline, since I have them in the left margin.
+(setq display-line-numbers-width-start t)
+(global-display-line-numbers-mode      t)
+#+END_SRC
+
+# I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I find spacemacs to “hide things”
+# from me ---whereas Emacs “encourages” me to learn more---, however it is a
+# configuration and I enjoy reading Emacs configs in order to improve my own
+# setup. From Spacemacs I've adopted Helm for list completion, its sleek light &
+# dark themes, and its modified powerline setup.
+
+:Disabled__fancy-battery_setup:
+Let's have it also show remaining battery life, coloured green if charging and
+coloured yellow otherwise.  It is important to note that this package is no
+longer maintained. It works on my machine.
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; Nope; let's use a fancy indicator …
 (use-package fancy-battery
   :diminish
@@ -5711,25 +5807,12 @@ this package is no longer maintained. It works on my machine.
           (battery-update-interval       15)
   :config (fancy-battery-mode))
 #+END_SRC
+:End:
+:Disabled__spaceline_modeline:
 
-Likewise, let's have the modeline display column numbers, but not line numbers.
-Instead, let's have line numbers on the side of the buffer; moreover let's have
-a uniform width for displaying line numbers, rather than having the width grow
-as necessary.
-#+BEGIN_SRC emacs-lisp
-;; Following two taken care of in the spaceline package, below.
-;; (column-number-mode                 t)
-;; (line-number-mode                   t)
-(setq display-line-numbers-width-start t)
-(global-display-line-numbers-mode      t)
-#+END_SRC
+[[https://github.com/TheBB/spaceline][Spaceline]]
 
-I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I find spacemacs to “hide things”
-from me ---whereas Emacs “encourages” me to learn more---, however it is a
-configuration and I enjoy reading Emacs configs in order to improve my own
-setup. From Spacemacs I've adopted Helm for list completion, its sleek light &
-dark themes, and its modified powerline setup.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; When using helm & info & default, mode line looks prettier.
 (use-package spaceline
   :custom (spaceline-buffer-encoding-abbrev-p nil)
@@ -5745,11 +5828,25 @@ dark themes, and its modified powerline setup.
           (spaceline-helm-mode)
           (spaceline-info-mode)
           (spaceline-emacs-theme))
-#+END_SRC
+
+(spaceline-toggle-buffer-size-off) ;; Not interested in how large a buffer is.
+(spaceline-toggle-input-method-off) ;; Usually a “Π” symbol in the modeline, since I use Unicode input with Agda, denoting the current language environment, buffer coding system, and current input method.
+(spaceline-toggle-buffer-encoding-abbrev-off) ;; buffer-encoding-abbrev: the line ending convention used in the current buffer (unix, dos or mac).
+(spaceline-toggle-hud-off) ;; A tiny “progress bar”; shows the currently visible part of the buffer.
+(spaceline-toggle-helm-buffer-id-off) ;; I don't need to see “Helm M-x” whenever I press “M-x” or other Helm-powered commands.
+;;
+(diminish-undo 'flycheck-mode)
+(diminish 'drag-stuff-mode)
+(diminish 'flymake-mode)
+(diminish 'color-identifiers-mode)
+(diminish 'highlight-indent-guides-mode)
+(diminish 'auto-highlight-symbol-mode)
+#+end_src
 
 Other separators ---of modeline information--- that I've considered include
 ~'brace~ instead of an arrow, and ~'contour, 'chamfer, 'wave, 'zigzag~ which look
 like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
+:End:
 ** Powerful Directory Editing with ~dired~
 :PROPERTIES:
 :CUSTOM_ID: Powerful-Directory-Editing-with-dired
@@ -6941,6 +7038,16 @@ better.
   :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
   :custom (default-input-method "Agda")))
   ;; Now C-\ or M-x toggle-input-method turn it on and offers
+
+
+;; TODO add a hook that when the input method becomes Agda, just don't bother showing me in the modeline.
+;; E.g., "Π" when using unicode input with Agda
+;; Useful to have in the modeline, say when typing in Arabic.
+;; (add-variable-watcher
+;;  'current-input-method
+;;  (lambda (_ newvalue 'set _)
+;;    (setq current-input-method-title
+;;          (if (equal newvalue "Agda") nil newvalue))))
 #+END_SRC
 
 :agda_Command_line_arguments:

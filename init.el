@@ -1626,43 +1626,75 @@ fonts (•̀ᴗ•́)و"
 (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
 ;; Exquisite Fonts and Themes:4 ends here
 
-;; [[file:init.org::#A-sleek-informative-mode-line][A sleek & informative mode line:1]]
+;; [[file:init.org::#A-sleek-informative-and-fancy-mode-line][A sleek, informative, & fancy mode line:1]]
+;; This package requires the fonts included with all-the-icons to be installed. Run M-x all-the-icons-install-fonts to do so.
+;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
+(use-package doom-modeline
+  :hook (after-init . doom-modeline-mode)
+  :config
+
+  ;; Use minimal height so icons still fit; modeline gets slightly larger when
+  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
+  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
+  (setq doom-modeline-height 1)
+  (setq doom-modeline-buffer-state-icon nil)
+  (setq doom-modeline-hud t)
+  (setq doom-modeline-bar-width 0.0001)
+
+  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
+  ;; we can click to see a listing.
+  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
+  (setq doom-modeline-checker-simple-format nil)
+
+  ;; Don't display the buffer encoding, E.g., “UTF-8”.
+  (setq doom-modeline-buffer-encoding nil)
+
+  ;; Inactive buffers' modeline is greyed out.
+  ;; (let ((it "Source Code Pro Light" ))
+  ;;   (set-face-attribute 'mode-line nil :family it :height 100)
+  ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
+
+  ;; Whether display the minor modes in the mode-line.  Enabled minor modes
+  ;; clutter up the modeline with their names, albeit some have useful status
+  ;; information shown. We can either selectively pick which names/status are
+  ;; shown using diminish.el, possibly forgetting which minor modes are enabled
+  ;; or we can use minions.el to “gather up” all enabled minor modes, and
+  ;; recently enabled ones, under a single menu which doom-modeline shows as a
+  ;; simple configurations gear icon.
+  (setq doom-modeline-minor-modes t)
+  (use-package minions
+    :init (minions-mode))
+  ;;
+  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
+  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
+  ;; We likely want to add this locally, to hooks on major modes.
+
+  ;; Makes Org/Markdown previewabvle as we type!!! ♥
+  ;; Shows up as a magnifying glass in doom-modeline.
+  (use-package grip-mode
+    :hook ((markdown-mode org-mode) . grip-mode)))
+
+;; Nice battery icon alongside with percentage, in doom-modeline.
+;; If not for doom-modeline, we'd need to use fancy-batter-mode.el.
+(display-battery-mode +1)
+
+;; Show date and time as well.
 (setq display-time-day-and-date t)
 (display-time)
-;; (display-battery-mode -1)
-;; Nope; let's use a fancy indicator …
-(use-package fancy-battery
-  :diminish
-  :custom (fancy-battery-show-percentage  t)
-          (battery-update-interval       15)
-  :config (fancy-battery-mode))
-;; A sleek & informative mode line:1 ends here
+;; A sleek, informative, & fancy mode line:1 ends here
 
-;; [[file:init.org::#A-sleek-informative-mode-line][A sleek & informative mode line:2]]
-;; Following two taken care of in the spaceline package, below.
-;; (column-number-mode                 t)
-;; (line-number-mode                   t)
+;; [[file:init.org::#A-sleek-informative-and-fancy-mode-line][A sleek, informative, & fancy mode line:2]]
+;; I don't need the system load average in the modeline.
+;; (setq display-time-default-load-average nil)
+;; (setq display-time-load-average nil)
+;; A sleek, informative, & fancy mode line:2 ends here
+
+;; [[file:init.org::#A-sleek-informative-and-fancy-mode-line][A sleek, informative, & fancy mode line:3]]
+;; (column-number-mode                 t) ;; Enabled in doom-modeline by default
+;; (line-number-mode                   t) ;; Not sure I want line numbers in modeline, since I have them in the left margin.
 (setq display-line-numbers-width-start t)
 (global-display-line-numbers-mode      t)
-;; A sleek & informative mode line:2 ends here
-
-;; [[file:init.org::#A-sleek-informative-mode-line][A sleek & informative mode line:3]]
-;; When using helm & info & default, mode line looks prettier.
-(use-package spaceline
-  :custom (spaceline-buffer-encoding-abbrev-p nil)
-          ;; Use an arrow to seperate modeline information
-          (powerline-default-separator 'arrow)
-          ;; Show “line-number : column-number” in modeline.
-          (spaceline-line-column-p t)
-          ;; Use two colours to indicate whether a buffer is modified or not.
-          (spaceline-highlight-face-func 'spaceline-highlight-face-modified)
-  :config (custom-set-faces '(spaceline-unmodified ((t (:foreground "black" :background "gold")))))
-          (custom-set-faces '(spaceline-modified   ((t (:foreground "black" :background "cyan")))))
-          (require 'spaceline-config)
-          (spaceline-helm-mode)
-          (spaceline-info-mode)
-          (spaceline-emacs-theme))
-;; A sleek & informative mode line:3 ends here
+;; A sleek, informative, & fancy mode line:3 ends here
 
 ;; [[file:init.org::#Powerful-Directory-Editing-with-dired][Powerful Directory Editing with ~dired~:1]]
 (use-package dired-subtree
@@ -2176,6 +2208,16 @@ the character 𝓍 before and after the selected text."
   :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
   :custom (default-input-method "Agda")))
   ;; Now C-\ or M-x toggle-input-method turn it on and offers
+
+
+;; TODO add a hook that when the input method becomes Agda, just don't bother showing me in the modeline.
+;; E.g., "Π" when using unicode input with Agda
+;; Useful to have in the modeline, say when typing in Arabic.
+;; (add-variable-watcher
+;;  'current-input-method
+;;  (lambda (_ newvalue 'set _)
+;;    (setq current-input-method-title
+;;          (if (equal newvalue "Agda") nil newvalue))))
 ;; Unicode Input via Agda Input:5 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:6]]
