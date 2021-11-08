@@ -394,22 +394,27 @@
 ;; Hydra: Supply a prefix only once:2 ends here
 
 ;; [[file:init.org::#Hydra-Supply-a-prefix-only-once][Hydra: Supply a prefix only once:3]]
-(defmacro my/pretty-defhydra (key title &rest body)
+;; TODO convert my existing defhydras to my/defhydra.
+(defmacro my/defhydra (key title icon-name &rest body)
 "Make a hydra whose heads appear in a pretty pop-up window.
+Heads are signalled by keywords and the hydra has an icon in its title.
 
-KEY: Global keybinding for the new hydra.
+KEY [String]: Global keybinding for the new hydra.
 
-TITLE: Either a string or a plist, as specified for pretty-hydra-define.
+TITLE [String]: Either a string or a plist, as specified for pretty-hydra-define.
        The underlying Lisp function's name is derived from the TITLE;
        which is intentional since hydra's are for interactive, pretty, use.
 
        One uses a plist TITLE to specify what a hydra should do *before*
        any options, or to specify an alternate quit key (:q by default).
 
+ICON-NAME [Symbol]: Possible FontAwesome icon-types: C-h v `all-the-icons-data/fa-icon-alist'.
+
 BODY: A list of columns and entries. Keywords indicate the title
       of a column; 3-lists (triples) indicate an entry key and
       the associated operation to perform and, optionally, a name
       to be shown in the pop-up. See DEFHYDRA for more details.
+
 
 For instance, the verbose mess:
 
@@ -417,6 +422,7 @@ For instance, the verbose mess:
     (global-set-key
      (kbd \"C-c w\")
      (pretty-hydra-define my/hydra/\\t\\tWindow\\ Adjustment
+       ;; Omitting extra work to get an icon into the title.
        (:title \"\t\tWindow Adjustment\" :quit-key \"q\")
        (\"Both\"
         ((\"b\" balance-windows                 \"balance\")
@@ -431,7 +437,7 @@ For instance, the verbose mess:
 Is replaced by:
 
     ;; Use ijkl to denote ↑←↓→ arrows.
-    (my/pretty-defhydra \"C-c w\" \"\t\tWindow Adjustment\"
+    (my/defhydra \"C-c w\" \"\t\tWindow Adjustment\" windows
        :Both
        (\"b\" balance-windows                 \"balance\")
        (\"s\" switch-window-then-swap-buffer  \"swap\")
@@ -441,15 +447,24 @@ Is replaced by:
        :Horizontal_adjustment
        (\"n\" shrink-window-horizontally      \"narrow\")
        (\"w\" enlarge-window-horizontally     \"widen\"))"
-  (let ((name (intern (concat "my/hydra/"
+  (let* ((name (intern (concat "my/hydra/"
                               (if (stringp title)
                                   title
-                                (plist-get title :title))))))
+                                (plist-get title :title)))))
+         (icon-face `(:foreground ,(face-background 'highlight)))
+         (iconised-title
+          (concat
+           (when icon-name
+             (concat
+              (all-the-icons-faicon (format "%s" icon-name) :face icon-face :height 1.0 :v-adjust -0.1)
+              " "))
+           (propertize title 'face icon-face))))
     `(global-set-key
       (kbd ,key)
       (pretty-hydra-define ,name
         ,(if (stringp title)
-             (list :title title :quit-key "q")
+             (list :title iconised-title
+                   :quit-key "q")
            title)
         ,(thread-last body
            (-partition-by-header #'keywordp)
@@ -458,7 +473,7 @@ Is replaced by:
 ;; Hydra: Supply a prefix only once:3 ends here
 
 ;; [[file:init.org::#Textual-Navigation-Look-Ma-no-CTRL-key][Textual Navigation ---“Look Ma, no CTRL key!”:1]]
-(my/pretty-defhydra "C-n" "\t\t\t\t\tTextual Navigation"
+(my/defhydra "C-n" "\t\t\t\t\tTextual Navigation" arrows
    :Line
    ("n" next-line)
    ("p" previous-line)
@@ -485,7 +500,7 @@ Is replaced by:
 
 ;; [[file:init.org::#Window-Navigation][Window Navigation:1]]
 ;; Use ijkl to denote ↑←↓→ arrows.
-(my/pretty-defhydra "C-c w" "\t\tWindow Adjustment"
+(my/defhydra "C-c w" "\t\tWindow Adjustment" windows
    :Both
    ("b" balance-windows                 "balance")
    ("s" switch-window-then-swap-buffer  "swap")
@@ -2352,7 +2367,7 @@ the character 𝓍 before and after the selected text."
 ;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:3]]
 (defmacro my/make-navigation-hydra (initial-action)
   `(defhydra word-navigation
-    (:body-pre (,initial-action)) "Word-at-point Navigation"
+    (:body-pre (,initial-action) :title "HOLA Word-at-point Navigation")
     ("n" ahs-forward "Next instance")
     ("p" smartscan-symbol-go-backward "Previous instance")
     ("r" my/symbol-replace "Replace all occurances")
@@ -2384,7 +2399,7 @@ the character 𝓍 before and after the selected text."
   :defer t
   :custom (glc-default-span 0))
 
-(my/pretty-defhydra "C-c e" "Look at them edits!"
+(my/defhydra "C-c e" "Look at them edits!" bus
   :\  ("p" goto-last-change "Goto nᵗʰ last change")
       ("n" goto-last-change-reverse "Goto more recent change"))
 ;;   =C-c e n,p=: Taking a tour of one's edits:1 ends here
