@@ -9592,6 +9592,11 @@ were regenerated --Emacs should also prompt me if I make any changes!
 ;; Auto update buffers that change on disk.
 ;; Will be prompted if there are changes that could be lost.
 (global-auto-revert-mode 1)
+;; Auto refreshes every 2 seconds. Don’t forget to refresh the version control status as well.
+(setq auto-revert-interval 2
+      auto-revert-check-vc-info t
+      global-auto-revert-non-file-buffers t
+      auto-revert-verbose nil)
 
 ;; Don't show me the “ARev” marker in the mode line
 (diminish 'auto-revert-mode)
