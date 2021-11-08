@@ -2367,7 +2367,7 @@ the character 𝓍 before and after the selected text."
 ;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:3]]
 (defmacro my/make-navigation-hydra (initial-action)
   `(defhydra word-navigation
-    (:body-pre (,initial-action) :title "HOLA Word-at-point Navigation")
+    (:body-pre (,initial-action)) "Word-at-point Navigation"
     ("n" ahs-forward "Next instance")
     ("p" smartscan-symbol-go-backward "Previous instance")
     ("r" my/symbol-replace "Replace all occurances")
@@ -2931,6 +2931,68 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
 
 (add-hook 'org-mode-hook 'org-pretty-table-mode)
 ;; Draw pretty unicode tables in org-mode:1 ends here
+
+;; [[file:init.org::*Toggles Hydra][Toggles Hydra:1]]
+(my/defhydra "C-c t" "Toggles" toggle-on
+   :Theme
+   ("t t" my/toggle-theme "Theme")
+   ("t s" (thread-last (all-completions "doom" (custom-available-themes))
+            (completing-read "Load custom theme: ")
+            intern
+            load-theme)
+    "Select Theme")
+
+   :UI
+   ("i" display-fill-column-indicator-mode :toggle t)
+   ("f" my/toggle-font "font")
+   ("d" treemacs "directory finder" :toggle t)
+   ("n" global-linum-mode "line number" :toggle t)
+
+   :Possibly_in_the_way
+   ("e" electric-pair-mode "electric pair" :toggle t)
+   ("c" flyspell-mode "spell check" :toggle t)
+   ("s" prettify-symbols-mode "pretty symbol" :toggle t)
+   ("w" whitespace-cleanup "whitespace cleanup")
+   ;; ("a" global-aggressive-indent-mode "aggressive indent" :toggle t)
+   ;; ("d" global-hungry-delete-mode "hungry delete" :toggle t)
+
+   :Modeline
+   ("m d" doom-modeline-mode "modern mode-line" :toggle t)
+   ("m b" display-battery-mode "battery" :toggle t)
+   ("m t" display-time-mode "time" :toggle t)
+   ("m w" which-function-mode "which function" :toggle t)
+
+   :Highlight
+   ("h l" global-hl-line-mode "line" :toggle t)
+   ("h p" show-paren-mode "paren" :toggle t)
+   ;; ("h s" symbol-overlay-mode "symbol" :toggle t)
+   ;; ("h r" rainbow-mode "rainbow" :toggle t)
+   ;; ("h w" (setq-default show-trailing-whitespace (not show-trailing-whitespace))
+   ;; "whitespace" :toggle show-trailing-whitespace)
+   ;; ("h d" rainbow-delimiters-mode "delimiter" :toggle t)
+   ("h i" highlight-indent-guides-mode "indent" :toggle t)
+   ("h t" global-hl-todo-mode "todo" :toggle t)
+   ;; ("x" highlight-sexp-mode "sexp" :toggle t)
+   ;; ("t" hl-todo-mode "todo" :toggle t)
+
+   :Program
+   ("f" flycheck-mode "flycheck" :toggle t)
+   ;; ("F" flymake-mode "flymake" :toggle t)
+   ("o" origami-mode "folding" :toggle t)
+   ;; ("O" hs-minor-mode "hideshow" :toggle t)
+   ("u" subword-mode "subword" :toggle t)
+   ("E" toggle-debug-on-error "debug on error" :toggle (default-value 'debug-on-error))
+   ("Q" toggle-debug-on-quit "debug on quit" :toggle (default-value 'debug-on-quit))
+   ;; ("v" global-diff-hl-mode "gutter" :toggle t)
+   ;; ("V" diff-hl-flydiff-mode "live gutter" :toggle t)
+   ;; ("M" diff-hl-margin-mode "margin gutter" :toggle t)
+   ;; ("D" diff-hl-dired-mode "dired gutter" :toggle t)
+
+   ("P" (if (profiler-running-p)
+            (progn (profiler-report) (profiler-stop))
+          (profiler-start 'cpu+mem))
+    "Profiler start / report" :exit (profiler-running-p)))
+;; Toggles Hydra:1 ends here
 
 ;; [[file:init.org::#Lost-Souls][Lost Souls:1]]
 ;; Move to OS’ trash can when deleting stuff
