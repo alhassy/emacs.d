@@ -8649,22 +8649,6 @@ spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
   (global-set-key (kbd "s-f") 'yafolding-hydra/body)
 #+end_src
 
-** Toggling System :RelocateMe:
-
-#+begin_src emacs-lisp
-(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
-  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
-  ;; First row
-  ("t" my/toggle-theme)
-  ("f" my/toggle-font)
-  ("m" imenu-list-smart-toggle)
-  ("c" column-number-mode)
-)
-
- ;; Shows a nice sidebar menu of the buffer's contents
-(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
-#+end_src
-
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 :PROPERTIES:
 :CUSTOM_ID: Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab
@@ -8763,6 +8747,7 @@ vertical line.
    ("f" my/toggle-font "font")
    ("d" treemacs "directory finder" :toggle t)
    ("n" global-linum-mode "line number" :toggle t)
+   ("u f" (setq frame-title-format (completing-read "New frame title: " nil)) "New frame title") ;; Useful for random screenshots
 
    :Possibly_in_the_way
    ("e" electric-pair-mode "electric pair" :toggle t)
@@ -8796,7 +8781,7 @@ vertical line.
    ;; ("F" flymake-mode "flymake" :toggle t)
    ("o" origami-mode "folding" :toggle t)
    ;; ("O" hs-minor-mode "hideshow" :toggle t)
-   ("u" subword-mode "subword" :toggle t)
+   ("W" subword-mode "subword" :toggle t)
    ("E" toggle-debug-on-error "debug on error" :toggle (default-value 'debug-on-error))
    ("Q" toggle-debug-on-quit "debug on quit" :toggle (default-value 'debug-on-quit))
    ;; ("v" global-diff-hl-mode "gutter" :toggle t)
@@ -8809,6 +8794,22 @@ vertical line.
           (profiler-start 'cpu+mem))
     "Profiler start / report" :exit (profiler-running-p)))
 
+#+end_src
+
+** Toggling System :RelocateMe:
+
+#+begin_src emacs-lisp
+(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
+  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
+  ;; First row
+  ("t" my/toggle-theme)
+  ("f" my/toggle-font)
+  ("m" imenu-list-smart-toggle)
+  ("c" column-number-mode)
+)
+
+ ;; Shows a nice sidebar menu of the buffer's contents
+(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
 ** Syntax highlighting ---numbers and escape characters
