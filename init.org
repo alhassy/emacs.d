@@ -8334,7 +8334,7 @@ blocks we use ~C-c '~.
 Super helpful in making my Emacs configuration: If a name is not highlighted,
 then I've misspelled it or it doesn't exist! :smile:
 
-** Eldoc for Lisp and Haskell
+** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
 :PROPERTIES:
 :CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
 :END:
@@ -8350,6 +8350,9 @@ for Haskell.
         (lisp-interaction-mode . turn-on-eldoc-mode)
         (haskell-mode . turn-on-haskell-doc-mode)
         (haskell-mode . turn-on-haskell-indent))
+
+;; Slightly shorten eldoc display delay.
+(setq eldoc-idle-delay 0.4) ;; Default 0.5
 #+END_SRC
 
 The less casual Haskeller would likely want to use [[https://haskell-lang.org/intero][intero]] to obtain
