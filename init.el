@@ -2994,6 +2994,14 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
     "Profiler start / report" :exit (profiler-running-p)))
 ;; Toggles Hydra:1 ends here
 
+;; [[file:init.org::*Syntax highlighting ---numbers and escape characters][Syntax highlighting ---numbers and escape characters:1]]
+(use-package highlight-numbers
+  :hook ((text-mode prog-mode) . highlight-numbers-mode))
+
+(use-package highlight-escape-sequences
+  :hook (prog-mode . hes-mode))
+;; Syntax highlighting ---numbers and escape characters:1 ends here
+
 ;; [[file:init.org::#Lost-Souls][Lost Souls:1]]
 ;; Move to OS’ trash can when deleting stuff
 ;; instead of deleting things outright!

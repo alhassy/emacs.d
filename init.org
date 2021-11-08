@@ -8809,6 +8809,17 @@ vertical line.
 
 #+end_src
 
+** Syntax highlighting ---numbers and escape characters
+Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
+
+#+begin_src emacs-lisp
+(use-package highlight-numbers
+  :hook ((text-mode prog-mode) . highlight-numbers-mode))
+
+(use-package highlight-escape-sequences
+  :hook (prog-mode . hes-mode))
+#+end_src
+
 * Lost Souls                                    :Outdated_Documentation:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
