@@ -103,13 +103,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -549,6 +549,11 @@ Is replaced by:
 ;; Use version numbers for backup files.
 (setq version-control t)
 ;; Automatic Backups:1 ends here
+
+;; [[file:init.org::#Automatic-Backups][Automatic Backups:2]]
+(setq confirm-kill-processes nil
+      create-lockfiles nil)
+;; Automatic Backups:2 ends here
 
 ;; [[file:init.org::#What-changed][What changed?:1]]
 (use-package backup-walker
@@ -1686,7 +1691,10 @@ fonts (•̀ᴗ•́)و"
 
   ;; Makes Org/Markdown previewabvle as we type!!! ♥
   ;; Shows up as a magnifying glass in doom-modeline.
-  (use-package grip-mode))
+  (use-package grip-mode)
+  ;;  :hook ((markdown-mode org-mode) . grip-mode)
+  ;; Pretty annyoning actually; instead we should call it as needed.
+  )
 
 ;; Nice battery icon alongside with percentage, in doom-modeline.
 ;; If not for doom-modeline, we'd need to use fancy-batter-mode.el.
@@ -2788,14 +2796,17 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
   :hook (emacs-lisp-mode . highlight-defined-mode))
 ;; Highlight defined Lisp symbols:1 ends here
 
-;; [[file:init.org::#Eldoc-for-Lisp-and-Haskell][Eldoc for Lisp and Haskell:1]]
+;; [[file:init.org::#Eldoc-for-Lisp-and-Haskell][Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1]]
 (use-package eldoc
   :diminish eldoc-mode
   :hook (emacs-lisp-mode . turn-on-eldoc-mode)
         (lisp-interaction-mode . turn-on-eldoc-mode)
         (haskell-mode . turn-on-haskell-doc-mode)
         (haskell-mode . turn-on-haskell-indent))
-;; Eldoc for Lisp and Haskell:1 ends here
+
+;; Slightly shorten eldoc display delay.
+(setq eldoc-idle-delay 0.4) ;; Default 0.5
+;; Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1 ends here
 
 ;; [[file:init.org::#Jumping-to-definitions-references][Jumping to definitions & references:1]]
 (use-package dumb-jump
@@ -2883,20 +2894,6 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
   ("p" origami-previous-fold "Previous"))
 ;; Text Folding with Origami-mode:3 ends here
 
-;; [[file:init.org::*Toggling System][Toggling System:1]]
-(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
-  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
-  ;; First row
-  ("t" my/toggle-theme)
-  ("f" my/toggle-font)
-  ("m" imenu-list-smart-toggle)
-  ("c" column-number-mode)
-)
-
- ;; Shows a nice sidebar menu of the buffer's contents
-(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
-;; Toggling System:1 ends here
-
 ;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove
   :config ;; use command key on Mac
@@ -2946,6 +2943,7 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
    ("f" my/toggle-font "font")
    ("d" treemacs "directory finder" :toggle t)
    ("n" global-linum-mode "line number" :toggle t)
+   ("u f" (setq frame-title-format (completing-read "New frame title: " nil)) "New frame title") ;; Useful for random screenshots
 
    :Possibly_in_the_way
    ("e" electric-pair-mode "electric pair" :toggle t)
@@ -2979,7 +2977,7 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
    ;; ("F" flymake-mode "flymake" :toggle t)
    ("o" origami-mode "folding" :toggle t)
    ;; ("O" hs-minor-mode "hideshow" :toggle t)
-   ("u" subword-mode "subword" :toggle t)
+   ("W" subword-mode "subword" :toggle t)
    ("E" toggle-debug-on-error "debug on error" :toggle (default-value 'debug-on-error))
    ("Q" toggle-debug-on-quit "debug on quit" :toggle (default-value 'debug-on-quit))
    ;; ("v" global-diff-hl-mode "gutter" :toggle t)
@@ -2992,6 +2990,20 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
           (profiler-start 'cpu+mem))
     "Profiler start / report" :exit (profiler-running-p)))
 ;; Toggles Hydra:1 ends here
+
+;; [[file:init.org::*Toggling System][Toggling System:1]]
+(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
+  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
+  ;; First row
+  ("t" my/toggle-theme)
+  ("f" my/toggle-font)
+  ("m" imenu-list-smart-toggle)
+  ("c" column-number-mode)
+)
+
+ ;; Shows a nice sidebar menu of the buffer's contents
+(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
+;; Toggling System:1 ends here
 
 ;; [[file:init.org::*Syntax highlighting ---numbers and escape characters][Syntax highlighting ---numbers and escape characters:1]]
 (use-package highlight-numbers
@@ -3301,6 +3313,11 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; Auto update buffers that change on disk.
 ;; Will be prompted if there are changes that could be lost.
 (global-auto-revert-mode 1)
+;; Auto refreshes every 2 seconds. Don’t forget to refresh the version control status as well.
+(setq auto-revert-interval 2
+      auto-revert-check-vc-info t
+      global-auto-revert-non-file-buffers t
+      auto-revert-verbose nil)
 
 ;; Don't show me the “ARev” marker in the mode line
 (diminish 'auto-revert-mode)
