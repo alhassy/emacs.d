@@ -5775,8 +5775,10 @@ minimalistic, yet fancy/ setup with the following notable perks:
 
   ;; Makes Org/Markdown previewabvle as we type!!! ♥
   ;; Shows up as a magnifying glass in doom-modeline.
-  (use-package grip-mode
-    :hook ((markdown-mode org-mode) . grip-mode)))
+  (use-package grip-mode)
+  ;;  :hook ((markdown-mode org-mode) . grip-mode)
+  ;; Pretty annyoning actually; instead we should call it as needed.
+  )
 
 ;; Nice battery icon alongside with percentage, in doom-modeline.
 ;; If not for doom-modeline, we'd need to use fancy-batter-mode.el.

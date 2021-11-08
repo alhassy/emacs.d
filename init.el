@@ -103,13 +103,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -1686,8 +1686,7 @@ fonts (•̀ᴗ•́)و"
 
   ;; Makes Org/Markdown previewabvle as we type!!! ♥
   ;; Shows up as a magnifying glass in doom-modeline.
-  (use-package grip-mode
-    :hook ((markdown-mode org-mode) . grip-mode)))
+  (use-package grip-mode))
 
 ;; Nice battery icon alongside with percentage, in doom-modeline.
 ;; If not for doom-modeline, we'd need to use fancy-batter-mode.el.
