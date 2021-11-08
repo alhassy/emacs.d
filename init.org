@@ -5797,8 +5797,8 @@ minimalistic, yet fancy/ setup with the following notable perks:
 
 #+begin_src emacs-lisp
 ;; I don't need the system load average in the modeline.
-;; (setq display-time-default-load-average nil)
-;; (setq display-time-load-average nil)
+(setq display-time-default-load-average nil)
+(setq display-time-load-average nil)
 #+end_src
 
 Likewise, let's have the modeline display column numbers, but not line numbers.
