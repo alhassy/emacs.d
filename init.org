@@ -8762,7 +8762,7 @@ vertical line.
    ("e" electric-pair-mode "electric pair" :toggle t)
    ("c" flyspell-mode "spell check" :toggle t)
    ("s" prettify-symbols-mode "pretty symbol" :toggle t)
-   ("w" whitespace-cleanup "whitespace cleanup")
+   ("w" whitespace-cleanup "Clean up whitespace on save" :toggle t)
    ;; ("a" global-aggressive-indent-mode "aggressive indent" :toggle t)
    ;; ("d" global-hungry-delete-mode "hungry delete" :toggle t)
 
