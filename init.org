@@ -2150,6 +2150,12 @@ the backup directory, if ever. That the backups are numbered is so sweet ^_^
 Like package installations, my backups are not kept in any version control
 system, like git; only locally.
 
+Finally, let's not create ~.#~ files (crashes 'npm') nor bother confirming killing processes.
+#+begin_src emacs-lisp
+(setq confirm-kill-processes nil
+      create-lockfiles nil)
+#+end_src
+
 *** What changed?
 :PROPERTIES:
 :CUSTOM_ID: What-changed
