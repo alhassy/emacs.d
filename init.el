@@ -1707,8 +1707,8 @@ fonts (•̀ᴗ•́)و"
 
 ;; [[file:init.org::#A-sleek-informative-and-fancy-mode-line][A sleek, informative, & fancy mode line:2]]
 ;; I don't need the system load average in the modeline.
-;; (setq display-time-default-load-average nil)
-;; (setq display-time-load-average nil)
+(setq display-time-default-load-average nil)
+(setq display-time-load-average nil)
 ;; A sleek, informative, & fancy mode line:2 ends here
 
 ;; [[file:init.org::#A-sleek-informative-and-fancy-mode-line][A sleek, informative, & fancy mode line:3]]
@@ -2851,48 +2851,100 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
 ;; Sometimes just invoke: M-x color-identifiers:refresh
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
-;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:1]]
-(use-package origami
-  ;; In Lisp languages, by default only function definitions are folded.
-  ;; :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:1]]
+(use-package hideshow
+  :init
+  ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
+  (quelpa '(hideshowvis :fetcher wiki))
 
-  ;; Please open any code with top level items folded away.
-  :hook (prog-mode .  (lambda () (interactive)
-                       (origami-close-all-nodes (current-buffer))))
-  ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
+  ;; https://github.com/shanecelis/hideshow-org/tree/master
+  ;; This extension bring Org-mode tab behaviour to folding, at the block level
+  ;; and buffer level ---but not cycling visiblity.
+  (use-package hideshow-org)
 
-  :config
+  :hook ((prog-mode . (lambda () (hs-minor-mode +1)
+                        (hideshowvis-minor-mode t)
+                        (hideshowvis-symbols)
+                        (hs-org/minor-mode t)
+                        (hs-hide-all)))))
+;; Text Folding ---Selectively displaying portions of a program:1 ends here
 
-  ;; For any major-mode that doesn't have explicit support, origami will use the
-  ;; indentation of the buffer to determine folds.
-  (global-origami-mode)
+;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:2]]
+(my/defhydra "C-c f" "Folding text" archive
+  :Current
+  ("h" hs-hide-block "Hide")
+  ("s" hs-show-block "Show")
+  ("t" hs-toggle-hiding "Toggle")
+  :Buffer
+  ("H" hs-hide-all "Hide")
+  ("S" hs-show-all "Show")
+  ("T" my/hs-toggle-buffer "Toggle")
+  :Style
+  ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
+  ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
+  :...
+  ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
+  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
+  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
+  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset")) ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
 
-  ;; With basic support for one of my languages.
-  (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
-         origami-parser-alist))
-;; Text Folding with Origami-mode:1 ends here
+;; Features from origami/yafolding that maybe I'd like to implement include:
+;; folding region, narrowing to block or folding everything except block, navigating back and forth between folded blocks.
+;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
+;; Text Folding ---Selectively displaying portions of a program:2 ends here
 
-;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:2]]
-(defun my/search-hook-function ()
-  (when origami-mode (origami-open-node-recursively (current-buffer) (point))))
+;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:3]]
+(defvar my/hs-hide nil "Current state of hideshow for toggling all.")
+(defun my/hs-toggle-buffer () "Toggle hideshow all."
+       (interactive)
+       (setq my/hs-hide (not my/hs-hide))
+       (if my/hs-hide
+           (hs-hide-all)
+         (hs-show-all)))
+;; Text Folding ---Selectively displaying portions of a program:3 ends here
 
+;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:4]]
+(defun my/clever-selective-display (&optional level)
+"Fold text indented same of more than the cursor.
+
+This function toggles folding according to the level of
+indentation at point. It's convenient not having to specify a
+number nor move point to the desired column.
+"
+  (interactive "P")
+  (if (eq selective-display (1+ (current-column)))
+      (set-selective-display 0)
+    (set-selective-display (or level (1+ (current-column))))))
+;; Text Folding ---Selectively displaying portions of a program:4 ends here
+
+;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:5]]
+;; Src: https://emacs.stackexchange.com/questions/52588/dynamically-hide-lines-indented-more-than-current-line
+(define-minor-mode auto-set-selective-display-mode
+  "Automatically apply `set-selective-display' at all times based on current indentation."
+  nil "$" nil
+  (if auto-set-selective-display-mode
+      (add-hook 'post-command-hook #'auto-set-selective-display nil t)
+    (remove-hook 'post-command-hook #'auto-set-selective-display t)
+    (with-temp-message ""
+      (set-selective-display nil))))
+;;
+(defun auto-set-selective-display ()
+  "Apply `set-selective-display' such that current and next line are visible.
+
+Scroll events are excluded in order to prevent wild flickering while navigating."
+  (unless (eq last-command #'mwheel-scroll)
+    (let*((this-line-indent (current-indentation))
+          (next-line-indent (save-excursion (forward-line) (current-indentation))))
+      (with-temp-message "" ; Suppress messages.
+        (set-selective-display (1+ (max this-line-indent next-line-indent)))))))
+;; Text Folding ---Selectively displaying portions of a program:5 ends here
+
+;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:6]]
 ;; Open folded nodes if a search stops there.
 (add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-;;
-;; Likewise for incremental search, isearch, users.
-;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
-;; Text Folding with Origami-mode:2 ends here
-
-;; [[file:init.org::#Text-Folding-with-Origami-mode][Text Folding with Origami-mode:3]]
-(defhydra folding-with-origami-mode (global-map "C-c f")
-  ("h" origami-close-node-recursively "Hide")
-  ("s" origami-open-node-recursively  "Show")
-  ;; ("H" origami-close-all-nodes "Hide All")
-  ;; ("S" origami-open-all-nodes "Show All")
-  ("t" origami-toggle-all-nodes  "Toggle buffer")
-  ("n" origami-next-fold "Next")
-  ("p" origami-previous-fold "Previous"))
-;; Text Folding with Origami-mode:3 ends here
+(defun my/search-hook-function ()
+  (when hs-minor-mode (set-mark-command nil) (hs-show-block) (pop-to-mark-command)))
+;; Text Folding ---Selectively displaying portions of a program:6 ends here
 
 ;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove
@@ -2949,7 +3001,7 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
    ("e" electric-pair-mode "electric pair" :toggle t)
    ("c" flyspell-mode "spell check" :toggle t)
    ("s" prettify-symbols-mode "pretty symbol" :toggle t)
-   ("w" whitespace-cleanup "whitespace cleanup")
+   ("w" whitespace-cleanup "Clean up whitespace on save" :toggle t)
    ;; ("a" global-aggressive-indent-mode "aggressive indent" :toggle t)
    ;; ("d" global-hungry-delete-mode "hungry delete" :toggle t)
 

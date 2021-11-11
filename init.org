@@ -8539,19 +8539,160 @@ Here are further reads:
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-** Text Folding with Origami-mode
+** TODO Text Folding ---Selectively displaying portions of a program
 :PROPERTIES:
-:CUSTOM_ID: Text-Folding-with-Origami-mode
+:CUSTOM_ID: Text-Folding
 :END:
 
-#     :Causes_weird_nil_after_save:
+⟦‼ TODO: hideshowvis shows ="*hideshowvis*"= literally in src code blocks upon
+export; as such we need to hook to exports so as to temporarily disable it. ⟧
 
-Literate programming within Org-mode is not always ideal, so we use a
-programming mode directly and then may want to have arbitrary ‘sections’ of text
-folded up.  Let's describe how to accomplish this goal.
+Literate programming within Org-mode is not always ideal or possible, so we use
+a programming mode directly and then may want to have arbitrary ‘sections’ of
+text folded up.  Let's describe how to accomplish this goal. I've tried the
+feature-full folding modes [[https://github.com/gregsexton/origami.el][Origami-mode]] and ~yafolding-mode~, but it seems the
+/built-in/ doc:hs-minor-mode is the best: (0) It folds comments, (1) it's the
+fastest, and (2) it Just Worksᵀᴹ out-of-the-box.
 
-We use a feature-full folding mode,  [[https://github.com/gregsexton/origami.el][Origami-mode]].
+On two JavaScript files, I found the following timings (using doc:elp-instrument-function
+and doc:elp-results):
+| Folding function        | ~500 lines | ~2300 lines |
+|-------------------------+------------+-------------|
+| hs-hide-all             |    0.00277 |    0.004358 |
+| origami-close-all-nodes |    0.00304 |    0.025569 |
+| yafolding-hide-all      |   7.051795 |   74.252598 |
+(TODO: Maybe these timings are due to my config, I should try to reproduce these
+with ~emacs -Q~.)
+
+#+begin_box "There's a built-in, less featureful, alternative based on indentation!"
+Quickly fold-away code with doc:set-selective-display; e.g., <kbd:C-u C-x $>
+folds away all code indented 4 spaces, whereas <kbd:C-u 8 C-x $> is for 8
+spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
+
+I've incorporated this into my folding hydra, below.
+#+end_box
+
+--------------------------------------------------------------------------------
+
+Below I setup hideshow along with [[doc:hideshowvis-symbols][hideshowvis]] which gives us a nice clickable
+“+/-” marker for foldable blocks as well as an overlay that indicates how many
+lines are folded away.  For more on hideshow-mode, see the [[https://writequit.org/denver-emacs/presentations/2017-11-02-hidden-gems.html][Hidden Gem Packages]]
+presentation which contains a small self-contained introduction, or [[https://github.com/emacs-mirror/emacs/blob/master/lisp/progmodes/hideshow.el#L127][these super useful source comments]]
+which discuss hooks and support for special modes ([[https://superuser.com/questions/576447/enable-hideshow-for-more-modes-e-g-ruby][like this one]]).
 #+BEGIN_SRC emacs-lisp
+(use-package hideshow
+  :init
+  ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
+  (quelpa '(hideshowvis :fetcher wiki))
+
+  ;; https://github.com/shanecelis/hideshow-org/tree/master
+  ;; This extension bring Org-mode tab behaviour to folding, at the block level
+  ;; and buffer level ---but not cycling visiblity.
+  (use-package hideshow-org)
+
+  :hook ((prog-mode . (lambda () (hs-minor-mode +1)
+                        (hideshowvis-minor-mode t)
+                        (hideshowvis-symbols)
+                        (hs-org/minor-mode t)
+                        (hs-hide-all)))))
+#+END_SRC
+
+Along with a hydra for super quick navigation and easily folding, unfolding
+blocks! Love this one (•̀ᴗ•́)و
+#+BEGIN_SRC emacs-lisp
+(my/defhydra "C-c f" "Folding text" archive
+  :Current
+  ("h" hs-hide-block "Hide")
+  ("s" hs-show-block "Show")
+  ("t" hs-toggle-hiding "Toggle")
+  :Buffer
+  ("H" hs-hide-all "Hide")
+  ("S" hs-show-all "Show")
+  ("T" my/hs-toggle-buffer "Toggle")
+  :Style
+  ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
+  ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
+  :...
+  ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
+  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
+  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
+  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset")) ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
+
+;; Features from origami/yafolding that maybe I'd like to implement include:
+;; folding region, narrowing to block or folding everything except block, navigating back and forth between folded blocks.
+;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
+#+END_SRC
+#+begin_details "Folding Hydra Helpers"
+#+BEGIN_SRC emacs-lisp
+(defvar my/hs-hide nil "Current state of hideshow for toggling all.")
+(defun my/hs-toggle-buffer () "Toggle hideshow all."
+       (interactive)
+       (setq my/hs-hide (not my/hs-hide))
+       (if my/hs-hide
+           (hs-hide-all)
+         (hs-show-all)))
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+(defun my/clever-selective-display (&optional level)
+"Fold text indented same of more than the cursor.
+
+This function toggles folding according to the level of
+indentation at point. It's convenient not having to specify a
+number nor move point to the desired column.
+"
+  (interactive "P")
+  (if (eq selective-display (1+ (current-column)))
+      (set-selective-display 0)
+    (set-selective-display (or level (1+ (current-column))))))
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+;; Src: https://emacs.stackexchange.com/questions/52588/dynamically-hide-lines-indented-more-than-current-line
+(define-minor-mode auto-set-selective-display-mode
+  "Automatically apply `set-selective-display' at all times based on current indentation."
+  nil "$" nil
+  (if auto-set-selective-display-mode
+      (add-hook 'post-command-hook #'auto-set-selective-display nil t)
+    (remove-hook 'post-command-hook #'auto-set-selective-display t)
+    (with-temp-message ""
+      (set-selective-display nil))))
+;;
+(defun auto-set-selective-display ()
+  "Apply `set-selective-display' such that current and next line are visible.
+
+Scroll events are excluded in order to prevent wild flickering while navigating."
+  (unless (eq last-command #'mwheel-scroll)
+    (let*((this-line-indent (current-indentation))
+          (next-line-indent (save-excursion (forward-line) (current-indentation))))
+      (with-temp-message "" ; Suppress messages.
+        (set-selective-display (1+ (max this-line-indent next-line-indent)))))))
+#+END_SRC
+#+end_details
+
+With expected support for searching.
+#+BEGIN_SRC emacs-lisp
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+(defun my/search-hook-function ()
+  (when hs-minor-mode (set-mark-command nil) (hs-show-block) (pop-to-mark-command)))
+#+END_SRC
+
+#+begin_details "What if I want my own hideshow overlays, instead of hideshowvis?"
+#+BEGIN_SRC emacs-lisp :tangle no
+ ;; Add an overlay to display the number of hidden lines 😁;; https://github.com/shanecelis/hideshow-org/tree/master
+ (setq hs-set-up-overlay
+       (defun my-display-code-line-counts (ov)
+         (when (eq 'code (overlay-get ov 'hs))
+           (overlay-put ov 'display
+                        (propertize
+                         (format " ... ﴾%d﴿"
+                                 (count-lines (overlay-start ov)
+                                              (overlay-end ov)))
+                         'face 'font-lock-type-face)))))
+#+END_SRC
+#+end_details
+#+begin_details  "[Disabled / Alternative] origami"
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package origami
   ;; In Lisp languages, by default only function definitions are folded.
   ;; :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
@@ -8573,7 +8714,7 @@ We use a feature-full folding mode,  [[https://github.com/gregsexton/origami.el]
 #+END_SRC
 
 With expected support for searching.
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (defun my/search-hook-function ()
   (when origami-mode (origami-open-node-recursively (current-buffer) (point))))
 
@@ -8584,31 +8725,32 @@ With expected support for searching.
 ;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
 #+END_SRC
 
-Along with a hydra for super quick navigation and easily folding, unfolding
-blocks! Love this one ^_^
-#+BEGIN_SRC emacs-lisp
-(defhydra folding-with-origami-mode (global-map "C-c f")
+And hydra...
+#+BEGIN_SRC emacs-lisp :tangle no
+(my/defhydra "C-c f" "Folding text" archive
+  :Current
   ("h" origami-close-node-recursively "Hide")
   ("s" origami-open-node-recursively  "Show")
+  ("c" origami-recursively-toggle-node "Cycle") ;; Acts like org-mode header collapsing. Cycle a fold between open, recursively open, closed.
+  ("f" origami-show-only-node "Focus") ;; Close everything but the folds necessary to see the point. Very useful for concentrating on an area of code.
   ;; ("H" origami-close-all-nodes "Hide All")
   ;; ("S" origami-open-all-nodes "Show All")
-  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  :Navigate
   ("n" origami-next-fold "Next")
-  ("p" origami-previous-fold "Previous"))
+  ("p" origami-previous-fold "Previous")
+  :...
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
+  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
+  ("r" origami-reset)) ;; Remove all folds from the buffer and reset all origami state. Useful if origami messes up!
 #+END_SRC
 
 # *Disabled:* I've looked at a few folding modes, and I like this one.
 # However, I seldom need it.
-
-#+begin_box "There's a built-in, less featureful, alternative based on indentation!"
-Quickly fold-away code with doc:set-selective-display; e.g., <kbd:C-u C-x $>
-folds away all code indented 4 spaces, whereas <kbd:C-u 8 C-x $> is for 8
-spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
-#+end_box
-
-*** COMMENT yaffolding :Posterity:Way_too_slow:
-
-#+begin_src emacs-lisp :tangle work_secrets.el
+#+end_details
+#+begin_details "[Disabled / Alternative] yafolding"
+I found using yafolding-mode to be way too slow.
+#+begin_src emacs-lisp :tangle no
 ;; “Yet Another Folding” just works: Indented elements are folded away; no setup required.
 ;; (use-package discover)
 (use-package yafolding
@@ -8657,7 +8799,7 @@ spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
 
   (global-set-key (kbd "s-f") 'yafolding-hydra/body)
 #+end_src
-
+#+end_details
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
 :PROPERTIES:
 :CUSTOM_ID: Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab
