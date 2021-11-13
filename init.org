@@ -6,7 +6,8 @@
 
 #+OPTIONS: broken-links:auto
 
-#
+# TODO Pieces of (disparate) software can generally be replaced by (applications written on the) Emacs (text processing Lisp platform).
+# Examples: Word Processing ~ Org-mode⨾  Git ~ Magit⨾  Terminal ~ EShell⨾  File Manager ~ Dired⨾  IDE ~ LSP⨾ RSS Newsreader ~ ElFeed⨾  Email ~ Gnus/Mu4e⨾ Agenda/Calendar/Habit-Tracker ~ Org-mode⨾ Scripting Language ~ Emacs Lisp⨾ Debugger ~ dap-mode
 
 * title :ignore:
 :PROPERTIES:
@@ -7946,6 +7947,38 @@ CLOSED: [2021-11-02 Tue 22:01]
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
 
+** Managing Processes/Servers from within Emacs
+
+#+begin_src emacs-lisp
+(use-package prodigy
+  :defer t
+  :config
+  ;; C-h v prodigy-services ⇒ See possible properties.
+
+  (prodigy-define-service
+    :name "Orchestrator"
+    :cwd "~/orchestrator/"
+    :command "npm"
+    :args '("run" "dev")
+    :tags '(orchestrator)
+    :port 9000)
+
+  (prodigy-define-service
+    :name "Orc/Inspections"
+    :cwd "~/inspections/webui"
+    :init (lambda () (shell-command "git checkout main; git pull"))
+    :command "npm"
+    :args '("run" "dev")
+    :tags '(orchestrator))
+
+  (prodigy-define-service
+    :name "Orc/WxPortal"
+    :cwd "~/wxPortal/"
+    :init (lambda () (shell-command "git checkout orc-main; git pull"))
+    :command "npm"
+    :args '("run" "dev")
+    :tags '(orchestrator)))
+#+end_src
 ** Project management & navigation
 
 Version controlled repositories are considered “projects” ---no setup needed---,
