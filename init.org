@@ -9007,6 +9007,38 @@ Lightweight syntax highlighting improvement for numbers and escape sequences (e.
   :hook (prog-mode . hes-mode))
 #+end_src
 
+** shell-command-and-run
+#+begin_src emacs-lisp
+(defun shell-command-and-run (cmd name &rest more-commands)
+  "Run shell command CMD (possibly opening a new repl/terminal) and then MORE-COMMANDS.
+
+CMD and NAME are strings; MORE-COMMANDS is an arbitrary number of strings.
+
+The name of this function does not contain my personal prefix ‘my’,
+since I'd like it to show up as a possible completion when I type
+‘shell-command’.
+
+For example,
+
+   (shell-command-and-run
+    \"ghci\" \"Playing with Haskell\"
+    \"let x = 4\"
+    \":t x\")
+
+This results in an interactive shell buffer named “*Playing with Haskell*” with contents:
+
+   GHCi, version 8.10.7: https://www.haskell.org/ghc/  :? for help
+   Prelude> let x = 4
+   Prelude> :t x
+   x :: Num p => p
+   Prelude> ❙"
+  (interactive)
+  (let* ((default-directory "~/")
+         (proc (get-buffer-process
+                (ansi-term cmd name))))
+    (term-send-string
+     proc (concat (s-join "\n" more-commands) "\n"))))
+#+end_src
 * Lost Souls                                    :Outdated_Documentation:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
