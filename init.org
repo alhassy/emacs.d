@@ -9012,6 +9012,10 @@ Lightweight syntax highlighting improvement for numbers and escape sequences (e.
 (defun shell-command-and-run (cmd name &rest more-commands)
   "Run shell command CMD (possibly opening a new repl/terminal) and then MORE-COMMANDS.
 
+When to use this function? Whenever you're finding yourself in the situation:
+(1) Open a terminal, (2) start an interactive repl, (3) rename the buffer name to be informative,
+(4) run some default/initial commands. See also the `term' function.
+
 CMD and NAME are strings; MORE-COMMANDS is an arbitrary number of strings.
 
 The name of this function does not contain my personal prefix ‘my’,
