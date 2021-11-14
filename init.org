@@ -9709,6 +9709,10 @@ Let's save a few precious seconds,
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
 
+;; Make RETURN key act the same way as “y” key for “y-or-n” prompts.
+;; E.g., (y-or-n-p "Happy?") accepts RETURN as “yes”.
+(define-key y-or-n-p-map [return] 'act)
+
 ;; Enable all ‘possibly confusing commands’ such as helpful but
 ;; initially-worrisome “narrow-to-region”, C-x n n.
 (setq-default disabled-command-function nil)
