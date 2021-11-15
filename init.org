@@ -20,7 +20,7 @@
     ("d" org-clock-display "display")
     ("e" org-clock-modify-effort-estimate "effort")
     ("i" org-clock-in "in")
-    ("j" org-clock-goto "jump")
+    ("j" org-clock-goto "Jump to the headline of the currently clocked in task") ;;With a C-u prefix argument, select the target task from a list of recently clocked tasks.
     ("o" org-clock-out "out")
     ("r" org-clock-report "report"))
 #+end_src
