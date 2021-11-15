@@ -12,17 +12,24 @@
 # I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
 
 
-#+begin_src emacs-lisp
-(defhydra hydra-clock (:color blue)
-    "    Org-Clock ---must be on an Org header"
-    ("q" nil "quit" :column "Clock")
-    ("c" org-clock-cancel "cancel" :color pink :column "Do")
-    ("d" org-clock-display "display")
-    ("e" org-clock-modify-effort-estimate "effort")
-    ("i" org-clock-in "in")
-    ("j" org-clock-goto "Jump to the headline of the currently clocked in task") ;;With a C-u prefix argument, select the target task from a list of recently clocked tasks.
-    ("o" org-clock-out "out")
-    ("r" org-clock-report "report"))
+#+begin_src emacs-lisp :tangle no :exports none
+(setq org-clock-sound t) ;; Standard Emacs beep
+(my/defhydra "C-c x" "Time Tracking" clock-o
+  ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
+  :Timer
+  ("s" org-timer-start "Start Timer")
+  ("S" org-timer-stop "Stop Timer")
+  ("x" org-timer-set-timer "Set Timer")
+  ("p" org-timer "Print Timer")
+  :Org-Clock
+  ("c" org-clock-cancel "cancel" :color pink :column "Do")
+  ("d" org-clock-display "display")
+  ("e" org-clock-modify-effort-estimate "effort")
+  ("i" org-clock-in "in")
+  ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
+  ("o" org-clock-out "out")
+  ("r" org-clock-report "report"))
+
 #+end_src
 
 
