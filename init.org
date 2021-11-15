@@ -7,7 +7,24 @@
 #+OPTIONS: broken-links:auto
 
 # TODO Pieces of (disparate) software can generally be replaced by (applications written on the) Emacs (text processing Lisp platform).
-# Examples: Word Processing ~ Org-mode⨾  Git ~ Magit⨾  Terminal ~ EShell⨾  File Manager ~ Dired⨾  IDE ~ LSP⨾ RSS Newsreader ~ ElFeed⨾  Email ~ Gnus/Mu4e⨾ Agenda/Calendar/Habit-Tracker ~ Org-mode⨾ Scripting Language ~ Emacs Lisp⨾ Debugger ~ dap-mode
+# [A list of programs Emacs can replace] Examples: Word Processing ~ Org-mode⨾  Git/version-control ~ Magit⨾  Terminal ~ EShell⨾  File Manager ~ Dired⨾  IDE/debugger ~ LSP/Dap⨾ RSS Newsreader ~ ElFeed⨾  Email ~ Gnus/Mu4e⨾ Agenda/Calendar/Habit-Tracker/TODO-list ~ Org-mode⨾ Scripting Language ~ Emacs Lisp⨾ Debugger ~ dap-mode⨾  reference and citation manager ~ org-ref⨾  Vim ~ Evil-mode⨾  pdf viewer ~ pdf-view-mode⨾ Spell checker & dictionary & grammar checker⨾ automatic file backups; seemless GPG tool; time tracker ~ org-mode⨾ Literate Programming (like Jupyter) ~ Org-mode⨾ psychologist ~ doctor-mode; Games ~ tetris/pacman/mario/etc⨾ Lisp interpreter ~ Emacs (anywhere press C-x C-e to run a Lisp expression)⨾ Documentation viewer ~ e.g. tldr-mode / C-h o ⨾  Diff/Merge tool⨾  Package Manager ~ helm-system-packages⨾ Typing tutor; TODO List / Blogging Software ~ Org-mode; Moden Internet Browser ~ xwidget-webkit-browse-url; everything else ~ https://github.com/emacs-eaf/emacs-application-framework
+#
+# I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
+
+
+#+begin_src emacs-lisp
+(defhydra hydra-clock (:color blue)
+    "    Org-Clock ---must be on an Org header"
+    ("q" nil "quit" :column "Clock")
+    ("c" org-clock-cancel "cancel" :color pink :column "Do")
+    ("d" org-clock-display "display")
+    ("e" org-clock-modify-effort-estimate "effort")
+    ("i" org-clock-in "in")
+    ("j" org-clock-goto "jump")
+    ("o" org-clock-out "out")
+    ("r" org-clock-report "report"))
+#+end_src
+
 
 * title :ignore:
 :PROPERTIES:
@@ -9042,6 +9059,34 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
                 (ansi-term cmd name))))
     (term-send-string
      proc (concat (s-join "\n" more-commands) "\n"))))
+#+end_src
+** COMMENT Modern Browsing within Emacs                           :Disabled:
+
+#+begin_src shell
+# https://github.com/d12frosted/homebrew-emacs-plus
+$ brew tap d12frosted/emacs-plus
+$ brew install emacs-plus@29 --with-xwidgets
+$ /usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50 &
+#+end_src
+
+--------------------------------------------------------------------------------
+
+I like using Chrome ---I like the integration of all things Google.
+
+#+begin_src emacs-lisp
+(defun internet (url)
+  "Browse to URL using `xwidget-webkit-browse-url'; see also `browse-url'."
+  (interactive)
+  (delete-other-windows)
+  (split-window-right)
+  (xwidget-webkit-browse-url url))
+
+(my/defhydra "C-c p" "Program Manager" gamepad
+  :Internet
+  ("m" (internet "https://mail.google.com/mail/u/0/#inbox") "gMail"  :exit t)
+  ("c" (internet "https://calendar.google.com/calendar/u/0/r") "gCalendar"  :exit t)
+  ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
+  ("b" (internet (concat "https://www." (read-string "https://www."))) "Browse"  :exit t))
 #+end_src
 * Lost Souls                                    :Outdated_Documentation:
 :PROPERTIES:
