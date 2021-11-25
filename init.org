@@ -8321,6 +8321,28 @@ LSP mode supports the following Features:
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
+**   ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode
+
+Let's make use of JSDocs for functions ---since then LSP will show us the types
+and function description in a neato pop-up to the side.  [[https://github.com/isamert/jsdoc.el][jsdoc.el]] inserts JSDoc
+function comments/typedefs easily; it also tries to infer types by itself while
+doing that.
+#+begin_src emacs-lisp
+;; [Minimal Type Inference] When default values are provided, then we can infer
+;; the type of the arguments.
+;;
+;; Use: Run “M-x jsdoc” on a JS function.
+;;
+(use-package jsdoc
+  :ensure t
+  :quelpa (jsdoc
+           :fetcher github
+           :repo "isamert/jsdoc.el")
+  :config
+   (use-package tree-sitter)        ;; Required dependencies
+   (use-package tree-sitter-langs)
+  :hook (js-mode . tree-sitter-mode))
+#+end_src
 
 ** Turbolog: What's the value of this expression? :JavaScript
 With [[https://github.com/Artawower/turbo-log][turbo-log]], I can select an expression then press [[kbd:C-x l l]] to have

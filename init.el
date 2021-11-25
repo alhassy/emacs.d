@@ -1510,19 +1510,23 @@ C-u C-u C-c c ⇒ Goto last note stored."
 (setq org-clock-sound t) ;; Standard Emacs beep
 (my/defhydra "C-c x" "Time Tracking" clock-o
   ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
+  :Tasks
+  ("n" (my/org-journal-new-entry :work) "New")
+  ("v" (progn (my/org-journal-new-entry :work) (revert-buffer t t) (org-journal-mode)) "View all")
   :Timer
-  ("s" org-timer-start "Start Timer")
-  ("S" org-timer-stop "Stop Timer")
-  ("x" org-timer-set-timer "Set Timer")
-  ("p" org-timer "Print Timer")
+  ("s" org-timer-start "Start")
+  ("S" org-timer-stop "Stop")
+  ("x" org-timer-set-timer "Set")
+  ("p" org-timer "Print")
   :Org-Clock
+  ("i" org-clock-in "in")
+  ("o" org-clock-out "out")
   ("c" org-clock-cancel "cancel" :color pink :column "Do")
   ("d" org-clock-display "display")
   ("e" org-clock-modify-effort-estimate "effort")
-  ("i" org-clock-in "in")
+
   ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
-  ("o" org-clock-out "out")
-  ("r" org-clock-report "report"))
+  ("r" org-clock-report "Insert clocktable"))
 ;; Hydra Timer:1 ends here
 
 ;; [[file:init.org::#Cosmetics][Cosmetics:1]]
@@ -2802,6 +2806,23 @@ by spaces.
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 ;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
+
+;; [[file:init.org::*  ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode][  ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode:1]]
+;; [Minimal Type Inference] When default values are provided, then we can infer
+;; the type of the arguments.
+;;
+;; Use: Run “M-x jsdoc” on a JS function.
+;;
+(use-package jsdoc
+  :ensure t
+  :quelpa (jsdoc
+           :fetcher github
+           :repo "isamert/jsdoc.el")
+  :config
+   (use-package tree-sitter)        ;; Required dependencies
+   (use-package tree-sitter-langs)
+  :hook (js-mode . tree-sitter-mode))
+;;   ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode:1 ends here
 
 ;; [[file:init.org::*Turbolog: What's the value of this expression? :JavaScript][Turbolog: What's the value of this expression? :JavaScript:2]]
 (unless noninteractive
