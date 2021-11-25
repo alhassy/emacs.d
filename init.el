@@ -1293,23 +1293,24 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1 ends here
 
 ;; [[file:init.org::#The-Setup][The Setup:1]]
-(defun my/org-journal-new-entry (prefix)
-  "Open today’s journal file and start a new entry.
-
-  With a prefix, we use the work journal; otherwise the personal journal."
-  (interactive "P")
-  (-let [org-journal-file-format (if prefix "Work-%Y-%m-%d" org-journal-file-format)]
-    (org-journal-new-entry nil)
-    (org-mode)
-    (org-show-all)))
-
 (use-package org-journal
   ;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
   :bind (("C-c j" . my/org-journal-new-entry))
   :config
-  (setq org-journal-dir         "~/Dropbox/journal/"
-        org-journal-file-type   'yearly
-        org-journal-file-format "Personal-%Y-%m-%d"))
+    (setq org-journal-dir         "~/Desktop/" ;; "~/Dropbox/journal/"
+          org-journal-file-type   'yearly
+          org-journal-file-format "Personal-%Y-%m-%d")
+
+    (defun my/org-journal-new-entry (prefix)
+      "Open today’s journal file and start a new entry.
+
+  With a prefix, we use the work journal; otherwise the personal journal."
+      (interactive "P")
+      (let ((org-journal-dir (if prefix "~/Desktop/" org-journal-dir))
+            (org-journal-file-format (if prefix "Work-%Y-%m-%d" org-journal-file-format)))
+        (org-journal-new-entry nil)
+        (org-mode)
+        (org-show-all))))
 ;; The Setup:1 ends here
 
 ;; [[file:init.org::#Workflow-States][Workflow States:1]]
@@ -1504,6 +1505,25 @@ C-u C-u C-c c ⇒ Goto last note stored."
               (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
             gnus-article-mode-map))
 ;; Capturing Mail as Todo/Notes:1 ends here
+
+;; [[file:init.org::*Hydra Timer][Hydra Timer:1]]
+(setq org-clock-sound t) ;; Standard Emacs beep
+(my/defhydra "C-c x" "Time Tracking" clock-o
+  ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
+  :Timer
+  ("s" org-timer-start "Start Timer")
+  ("S" org-timer-stop "Stop Timer")
+  ("x" org-timer-set-timer "Set Timer")
+  ("p" org-timer "Print Timer")
+  :Org-Clock
+  ("c" org-clock-cancel "cancel" :color pink :column "Do")
+  ("d" org-clock-display "display")
+  ("e" org-clock-modify-effort-estimate "effort")
+  ("i" org-clock-in "in")
+  ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
+  ("o" org-clock-out "out")
+  ("r" org-clock-report "report"))
+;; Hydra Timer:1 ends here
 
 ;; [[file:init.org::#Cosmetics][Cosmetics:1]]
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
@@ -2558,6 +2578,62 @@ by spaces.
   (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url))
 ;; Org-mode ⇐ HTML:2 ends here
 
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:1]]
+(use-package prodigy
+  :defer t
+  :config
+  ;; C-h v prodigy-services ⇒ See possible properties.
+
+  (prodigy-define-service
+    :name "Orchestrator"
+    :cwd "~/orchestrator/"
+    :command "npm"
+    :args '("run" "dev")
+    :tags '(orchestrator))
+
+  (prodigy-define-service
+    :name "Orc/Inspections"
+    :cwd "~/inspections/webui"
+    :init (lambda () (shell-command "git checkout main; git pull"))
+    :command "npm"
+    :args '("run" "dev")
+    :tags '(orchestrator))
+
+  (prodigy-define-service
+    :name "Orc/WxPortal"
+    :cwd "~/wxPortal/"
+    :init (lambda () (shell-command "git checkout orc-main; git pull"))
+    :command "npm"
+    :args '("run" "dev")
+    :tags '(orchestrator RUN-BEFORE-ORC-REPO))
+
+
+  (prodigy-define-service
+    :name "platform"
+    :cwd "~/api-platform-server"
+    :init (lambda () (shell-command "git checkout main; git pull"))
+    :command "npm"
+    :args '("run" "dev")
+    :tags '())
+
+  (prodigy-define-service
+    :name "WxPortal"
+    :cwd "~/wxPortal/"
+    :init (lambda () (shell-command "git checkout main; git pull"))
+    :command "npm"
+    :args '("run" "dev")
+    :tags '())
+
+  (prodigy-define-service
+    :name "Setup Users"
+    :cwd "~/ops-helm-deployment/"
+    ;; :init (lambda () (shell-command "git checkout main; git pull"))
+    :command "bash"
+    :args '("login.sh")
+    :tags '())
+  )
+;; Managing Processes/Servers from within Emacs:1 ends here
+
 ;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
 ;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
 (use-package projectile
@@ -3065,6 +3141,42 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
   :hook (prog-mode . hes-mode))
 ;; Syntax highlighting ---numbers and escape characters:1 ends here
 
+;; [[file:init.org::*shell-command-and-run][shell-command-and-run:1]]
+(defun shell-command-and-run (cmd name &rest more-commands)
+  "Run shell command CMD (possibly opening a new repl/terminal) and then MORE-COMMANDS.
+
+When to use this function? Whenever you're finding yourself in the situation:
+(1) Open a terminal, (2) start an interactive repl, (3) rename the buffer name to be informative,
+(4) run some default/initial commands. See also the `term' function.
+
+CMD and NAME are strings; MORE-COMMANDS is an arbitrary number of strings.
+
+The name of this function does not contain my personal prefix ‘my’,
+since I'd like it to show up as a possible completion when I type
+‘shell-command’.
+
+For example,
+
+   (shell-command-and-run
+    \"ghci\" \"Playing with Haskell\"
+    \"let x = 4\"
+    \":t x\")
+
+This results in an interactive shell buffer named “*Playing with Haskell*” with contents:
+
+   GHCi, version 8.10.7: https://www.haskell.org/ghc/  :? for help
+   Prelude> let x = 4
+   Prelude> :t x
+   x :: Num p => p
+   Prelude> ❙"
+  (interactive)
+  (let* ((default-directory "~/")
+         (proc (get-buffer-process
+                (ansi-term cmd name))))
+    (term-send-string
+     proc (concat (s-join "\n" more-commands) "\n"))))
+;; shell-command-and-run:1 ends here
+
 ;; [[file:init.org::#Lost-Souls][Lost Souls:1]]
 ;; Move to OS’ trash can when deleting stuff
 ;; instead of deleting things outright!
@@ -3344,6 +3456,10 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 ;; [[file:init.org::#Helpful-Utilities-Shortcuts][Helpful Utilities & Shortcuts:1]]
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
+
+;; Make RETURN key act the same way as “y” key for “y-or-n” prompts.
+;; E.g., (y-or-n-p "Happy?") accepts RETURN as “yes”.
+(define-key y-or-n-p-map [return] 'act)
 
 ;; Enable all ‘possibly confusing commands’ such as helpful but
 ;; initially-worrisome “narrow-to-region”, C-x n n.

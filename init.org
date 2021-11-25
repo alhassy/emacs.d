@@ -12,25 +12,7 @@
 # I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
 
 
-#+begin_src emacs-lisp :tangle no :exports none
-(setq org-clock-sound t) ;; Standard Emacs beep
-(my/defhydra "C-c x" "Time Tracking" clock-o
-  ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
-  :Timer
-  ("s" org-timer-start "Start Timer")
-  ("S" org-timer-stop "Stop Timer")
-  ("x" org-timer-set-timer "Set Timer")
-  ("p" org-timer "Print Timer")
-  :Org-Clock
-  ("c" org-clock-cancel "cancel" :color pink :column "Do")
-  ("d" org-clock-display "display")
-  ("e" org-clock-modify-effort-estimate "effort")
-  ("i" org-clock-in "in")
-  ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
-  ("o" org-clock-out "out")
-  ("r" org-clock-report "report"))
 
-#+end_src
 
 
 * title :ignore:
@@ -4550,23 +4532,24 @@ utilise a prefix argument to obtain my work specific entries.
 
 Anyhow, the setup:
 #+begin_src emacs-lisp
-(defun my/org-journal-new-entry (prefix)
-  "Open today’s journal file and start a new entry.
-
-  With a prefix, we use the work journal; otherwise the personal journal."
-  (interactive "P")
-  (-let [org-journal-file-format (if prefix "Work-%Y-%m-%d" org-journal-file-format)]
-    (org-journal-new-entry nil)
-    (org-mode)
-    (org-show-all)))
-
 (use-package org-journal
   ;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
   :bind (("C-c j" . my/org-journal-new-entry))
   :config
-  (setq org-journal-dir         "~/Dropbox/journal/"
-        org-journal-file-type   'yearly
-        org-journal-file-format "Personal-%Y-%m-%d"))
+    (setq org-journal-dir         "~/Desktop/" ;; "~/Dropbox/journal/"
+          org-journal-file-type   'yearly
+          org-journal-file-format "Personal-%Y-%m-%d")
+
+    (defun my/org-journal-new-entry (prefix)
+      "Open today’s journal file and start a new entry.
+
+  With a prefix, we use the work journal; otherwise the personal journal."
+      (interactive "P")
+      (let ((org-journal-dir (if prefix "~/Desktop/" org-journal-dir))
+            (org-journal-file-format (if prefix "Work-%Y-%m-%d" org-journal-file-format)))
+        (org-journal-new-entry nil)
+        (org-mode)
+        (org-show-all))))
 #+end_src
 
 # Convenient org-journal Snippet Extensions
@@ -5502,6 +5485,31 @@ personal contact.
 ${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.org"))
 (yas-choose-value (--map (format "%s <%s>" (getf it :name) (getf it :email))
 my/contacts)))`} $0
+#+end_src
+
+* TODO Hydra Timer
+
+#+begin_src emacs-lisp
+(setq org-clock-sound t) ;; Standard Emacs beep
+(my/defhydra "C-c x" "Time Tracking" clock-o
+  ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
+  :Tasks
+  ("n" (my/org-journal-new-entry :work) "New")
+  ("v" (progn (my/org-journal-new-entry :work) (revert-buffer t t) (org-journal-mode)) "View all")
+  :Timer
+  ("s" org-timer-start "Start")
+  ("S" org-timer-stop "Stop")
+  ("x" org-timer-set-timer "Set")
+  ("p" org-timer "Print")
+  :Org-Clock
+  ("i" org-clock-in "in")
+  ("o" org-clock-out "out")
+  ("c" org-clock-cancel "cancel" :color pink :column "Do")
+  ("d" org-clock-display "display")
+  ("e" org-clock-modify-effort-estimate "effort")
+
+  ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
+  ("r" org-clock-report "Insert clocktable"))
 #+end_src
 
 * Cosmetics
@@ -7971,6 +7979,7 @@ CLOSED: [2021-11-02 Tue 22:01]
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
 
+
 ** Managing Processes/Servers from within Emacs
 
 #+begin_src emacs-lisp
@@ -7984,8 +7993,7 @@ and template expansion for inescapably repetitive scenarios.
     :cwd "~/orchestrator/"
     :command "npm"
     :args '("run" "dev")
-    :tags '(orchestrator)
-    :port 9000)
+    :tags '(orchestrator))
 
   (prodigy-define-service
     :name "Orc/Inspections"
@@ -8001,7 +8009,33 @@ and template expansion for inescapably repetitive scenarios.
     :init (lambda () (shell-command "git checkout orc-main; git pull"))
     :command "npm"
     :args '("run" "dev")
-    :tags '(orchestrator)))
+    :tags '(orchestrator RUN-BEFORE-ORC-REPO))
+
+
+  (prodigy-define-service
+    :name "platform"
+    :cwd "~/api-platform-server"
+    :init (lambda () (shell-command "git checkout main; git pull"))
+    :command "npm"
+    :args '("run" "dev")
+    :tags '())
+
+  (prodigy-define-service
+    :name "WxPortal"
+    :cwd "~/wxPortal/"
+    :init (lambda () (shell-command "git checkout main; git pull"))
+    :command "npm"
+    :args '("run" "dev")
+    :tags '())
+
+  (prodigy-define-service
+    :name "Setup Users"
+    :cwd "~/ops-helm-deployment/"
+    ;; :init (lambda () (shell-command "git checkout main; git pull"))
+    :command "bash"
+    :args '("login.sh")
+    :tags '())
+  )
 #+end_src
 ** Project management & navigation
 
