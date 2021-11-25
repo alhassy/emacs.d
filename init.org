@@ -7971,7 +7971,6 @@ doc:org-web-tools-insert-web-page-as-entry and
 doc:org-web-tools-convert-links-to-page-entries.
 
 * Programming
-CLOSED: [2021-11-02 Tue 22:01]
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
@@ -7979,6 +7978,33 @@ CLOSED: [2021-11-02 Tue 22:01]
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
 
+** Quickly Run Code Snippets
+
+Sometimes we want to quickly run some code /without making a dedicated file/ or
+with a file but /without remembering the terminal incantation to do so/, enter
+~quickrun~. Anywhere, we can select a snippet of code and run doc:quickrun-region
+to execute that snippet after selecting the associated programming language, or
+doc:quickrun-replace-region if we want the results in-line. If our language of
+choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-defined-command][easily add support for it]].
+
+#+begin_src emacs-lisp
+;; In any programming buffer, “M-x quickrun” to execute that program.
+;; Super useful when wanting to quickly test things out, in a playground.
+;;
+;; E.g., Make a new file named “hello.py” containing “print "hi"”, then “M-x quickrun”.
+;;
+;; Enable “quickrun-autorun-mode” to run code after every save.
+(use-package quickrun
+  ;; ⇒ “C-c C-r” to see output, “q” to close output
+  ;; ⇒ “C-u C-c C-r” prompts for a language (Useful when testing snippets different from current programming mode)
+  ;; ⇒ In a non-programming buffer, “C-c C-r” runs selected region.
+  :config (bind-key* "C-c C-r"
+                     (lambda (&optional start end)
+                       (interactive "r")
+                       (if (use-region-p)
+                           (quickrun-region start end)
+                         (quickrun current-prefix-arg)))))
+#+end_src
 
 ** Managing Processes/Servers from within Emacs
 

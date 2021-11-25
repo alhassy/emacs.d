@@ -2582,6 +2582,25 @@ by spaces.
   (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url))
 ;; Org-mode ⇐ HTML:2 ends here
 
+;; [[file:init.org::*Quickly Run Code Snippets][Quickly Run Code Snippets:1]]
+;; In any programming buffer, “M-x quickrun” to execute that program.
+;; Super useful when wanting to quickly test things out, in a playground.
+;;
+;; E.g., Make a new file named “hello.py” containing “print "hi"”, then “M-x quickrun”.
+;;
+;; Enable “quickrun-autorun-mode” to run code after every save.
+(use-package quickrun
+  ;; ⇒ “C-c C-r” to see output, “q” to close output
+  ;; ⇒ “C-u C-c C-r” prompts for a language (Useful when testing snippets different from current programming mode)
+  ;; ⇒ In a non-programming buffer, “C-c C-r” runs selected region.
+  :config (bind-key* "C-c C-r"
+                     (lambda (&optional start end)
+                       (interactive "r")
+                       (if (use-region-p)
+                           (quickrun-region start end)
+                         (quickrun current-prefix-arg)))))
+;; Quickly Run Code Snippets:1 ends here
+
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:1]]
 (use-package prodigy
   :defer t
