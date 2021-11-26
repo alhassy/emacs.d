@@ -32,7 +32,10 @@
 ;; Internet repositories for new packages.
 (setq package-archives '(("org"       . "http://orgmode.org/elpa/")
                          ("gnu"       . "http://elpa.gnu.org/packages/")
+			 ("nongnu" . "https://elpa.nongnu.org/nongnu/")			 
                          ("melpa"     . "http://melpa.org/packages/")))
+
+(use-package org)
 
 ;; Update local list of available packages:
 ;; Get descriptions of all configured ELPA packages,
@@ -753,7 +756,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Manipulating Sections:2 ends here
 
 ;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:3]]
-(add-to-list 'org-speed-commands-user (cons "P" #'org-set-property))
 ;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
 ;; Manipulating Sections:3 ends here
 

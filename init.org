@@ -11,10 +11,6 @@
 #
 # I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
 
-
-
-
-
 * title :ignore:
 :PROPERTIES:
 :CUSTOM_ID: title
@@ -1085,7 +1081,8 @@ repositories of developers rather than having all packages in one repository.
 (require 'package)
 
 ;; Internet repositories for new packages.
-(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
+(setq package-archives '(("nongnu" . "https://elpa.nongnu.org/nongnu/")
+                         ("org"       . "http://orgmode.org/elpa/")
                          ("gnu"       . "http://elpa.gnu.org/packages/")
                          ("melpa"     . "http://melpa.org/packages/")))
 
@@ -2492,6 +2489,36 @@ kbd:C-x_C-s as usual! The power of text!
 doc:vc-annotate is also very useful to go through history and work out when
 things went wrong.
 
+*** Jump to a (ma)git repository with ~C-u C-x g~
+
+#+begin_src emacs-lisp
+;; Jump to a (ma)git repository with C-u C-x g.
+;;
+;; To get a selection of repositories (that have been visited at least once),
+;; call with “C-u M-x magit-status” or “C-u C-x g”; use “C-u C-u C-x g” to
+;; manually enter a path to a repository.
+;;
+;; We use projectile's record of known projects, and keep only projects with
+;; .git directory.
+(with-eval-after-load 'projectile
+  (setq magit-repository-directories
+        (thread-last (projectile-relevant-known-projects)
+          (--filter (unless (file-remote-p it)
+                      (file-directory-p (concat it "/.git/"))))
+          (--map (list (substring it 0 -1) 0)))))
+
+;; Follow-up utility
+(defun my/update-repos ()
+  "Update (git checkout main & pull) recently visited repositories."
+  (interactive)
+  (loop for (repo _depth) in magit-repository-directories
+        ;; Is it “main” or “master”
+        for trunk = (s-trim (shell-command-to-string (format "cd %s; git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" repo)))
+        do (message (format "🤖 %s ∷ Checking out & pulling main" repo))
+           (shell-command (format "cd %s; git checkout %s; git pull" repo trunk)))
+  (message "🥳 Happy coding!"))
+#+end_src
+
 ** Version Control with SVN ---Using Magit!
 :PROPERTIES:
 :CUSTOM_ID: Version-Control-with-SVN-Using-Magit
@@ -2724,10 +2751,10 @@ movement controls, such as:
 + [[kbd:o]] to open a link mentioned in the subtree then go to the link; a pop-up of
   links appears.
 
-We can add our own speed keys by altering the ~org-speed-commands-user~
-association list variable; e.g.,
+We can add our own speed keys by altering the doc:rg-speed-commands association
+list variable; e.g.,
 #+begin_src emacs-lisp
-(add-to-list 'org-speed-commands-user (cons "P" #'org-set-property))
+(add-to-list 'org-speed-commands (cons "P" #'org-set-property))
 ;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
 #+end_src
 
