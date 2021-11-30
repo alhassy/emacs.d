@@ -1,5 +1,10 @@
+
 ;; [[file:init.org::#title][title:1]]
-(require 'cl) ;; to get loop instead of cl-loop, etc.
+
+;; cl-lib was published as a better alternative to cl, which has a deprecation warning in Emacs27.
+;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
+(setq byte-compile-warnings '(cl-functions))
+(require 'cl-lib) ;; to get loop instead of cl-loop, etc.
 
 ;; Required for Github Actions; i.e., testing.
 ;; TODO Clean me!
@@ -7,7 +12,9 @@
 ;; See: quelpa-persistent-cache-file
 (setq quelpa-cache nil)
 (defun org-special-block-extras-short-names ())
-
+;;
+;; org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
+(setq o--supported-blocks nil)
 
 ;; before this: init time: 13
 ;; after: 12 seconds.
@@ -30,12 +37,10 @@
 (require 'package)
 
 ;; Internet repositories for new packages.
-(setq package-archives '(("org"       . "http://orgmode.org/elpa/")
-                         ("gnu"       . "http://elpa.gnu.org/packages/")
+(setq package-archives '(("gnu"       . "http://elpa.gnu.org/packages/")
 			 ("nongnu" . "https://elpa.nongnu.org/nongnu/")			 
-                         ("melpa"     . "http://melpa.org/packages/")))
-
-(use-package org)
+                         ("melpa"     . "http://melpa.org/packages/")
+			 ("org"       . "http://orgmode.org/elpa/")))
 
 ;; Update local list of available packages:
 ;; Get descriptions of all configured ELPA packages,
@@ -48,6 +53,8 @@
   (package-install 'use-package))
 (require 'use-package)
 ;; Emacs Package Manager:2 ends here
+
+(use-package org)
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:3]]
 (setq use-package-always-ensure t)
@@ -119,7 +126,6 @@
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:10]]
 (use-package quelpa
-  :defer 5
   :custom (quelpa-upgrade-p t "Always try to update packages")
   :config
   ;; Get ‘quelpa-use-package’ via ‘quelpa’
@@ -172,6 +178,24 @@
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
 
 ;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:5]]
+
+
+
+(defvar my/installed-packages
+  (shell-command-to-string "brew list")
+   "What is on my machine already?
+
+Sometimes when I install a GUI based application and do not have access to it everywhere in my path,
+it may seem that I do not have that application installed. For instance, 
+   (system-packages-package-installed-p \"google-chrome\")
+returns nil, even though Google Chrome is on my machine.
+
+As such, we advise the `system-packages-ensure' installtion method to only do
+installs of pacakges that are not in our `my/installed-packages' listing.
+")
+(advice-add 'system-packages-ensure   :before-until (lambda (pkg) (s-contains-p pkg my/installed-packages)))
+
+
 ;; Unlike the Helm variant, we need to specify our OS pacman.
 (when (eq system-type 'darwin)
   (setq system-packages-package-manager 'brew))
@@ -180,6 +204,7 @@
 (when (eq system-type 'darwin)
   (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
 
+	      
 (ignore-errors (system-packages-ensure "google-chrome")) ;; My choice of web browser
 (system-packages-ensure "microsoft-teams") ;; For remote work meetings
 ;; Pack, ship and run any application as a lightweight container
@@ -1442,7 +1467,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; [[file:init.org::#Using-Gnus-for-Gmail][Using Gnus for Gmail:9]]
 ;; Fancy icons for Emacs
 ;; Only do this once:
-(use-package all-the-icons :defer t)
+(use-package all-the-icons)
   ; :config (all-the-icons-install-fonts 'install-without-asking)
 
 ;; Make mail look pretty
@@ -1563,7 +1588,9 @@ C-u C-u C-c c ⇒ Goto last note stored."
                        ;; i.e., don't run it in Github Actions when testing.
   (if my/personal-machine?
       (find-file "~/Dropbox/todo.org")
-    (find-file "~/Desktop/work.org.gpg"))
+    ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
+    ;; which is a GPG file and so requires passphrase before other things can load.
+    (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg"))))
   (split-window-right)			  ;; C-x 3
   (other-window 1)                              ;; C-x 0
   (let ((enable-local-variables :all)           ;; Load *all* locals.
@@ -2438,7 +2465,7 @@ the character 𝓍 before and after the selected text."
 ;;   =C-c e n,p=: Taking a tour of one's edits:1 ends here
 
 ;; [[file:init.org::#Get-LaTeX][Get LaTeX::1]]
-(system-packages-ensure "mactex-no-gui")
+(system-packages-ensure "mactex")
 ;; Get LaTeX::1 ends here
 
 ;; [[file:init.org::#Get-LaTeX][Get LaTeX::2]]
@@ -2851,9 +2878,9 @@ by spaces.
 (setq turbo-log--prefix "%c ******* LOOK HERE *******")
 (defun length> (x y) (> (length x) y))
 (defun length= (x y) (= (length x) y))
-(use-package turbo-log
+(ignore-error (use-package turbo-log
   :quelpa (turbo-log :fetcher github :repo "artawower/turbo-log.el")
-  :config (setq turbo-console--prefix "✰"))
+  :config (setq turbo-console--prefix "✰")))
 (bind-key* "C-x l" #'my/turbo-log-hydra/body)
 (defhydra my/turbo-log-hydra (:color blue :hint nil)
   ("l" turbo-log-print "Log selected expression" :column "TurboLog: Insert meaningful log message for selected expressions")
@@ -3087,7 +3114,7 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
 
 ;; [[file:init.org::*hr: \[\[https:/github.com/LuRsT/hr\]\[A horizontal for your terminal\]\]][hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1]]
-(system-packages-install "hr") ;; ≈ brew install hr
+(system-packages-ensure "hr") ;; ≈ brew install hr
 ;; hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1 ends here
 
 ;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]

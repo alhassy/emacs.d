@@ -11,6 +11,11 @@
 #
 # I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
 
+# Installing LaTex
+# $ brew install --cask mactex
+# $ eval "$(/usr/libexec/path_helper)"
+# $ type pdflatex  # => pdflatex is /Library/TeX/texbin/pdflatex
+
 * title :ignore:
 :PROPERTIES:
 :CUSTOM_ID: title
@@ -39,7 +44,10 @@
 # The last one has the styling for lists.
 
 #+begin_src emacs-lisp :exports none
-(require 'cl) ;; to get loop instead of cl-loop, etc.
+;; cl-lib was published as a better alternative to cl, which has a deprecation warning in Emacs27.
+;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
+(setq byte-compile-warnings '(cl-functions))
+(require 'cl-lib) ;; to get loop instead of cl-loop, etc.
 
 ;; Required for Github Actions; i.e., testing.
 ;; TODO Clean me!
@@ -47,7 +55,9 @@
 ;; See: quelpa-persistent-cache-file
 (setq quelpa-cache nil)
 (defun org-special-block-extras-short-names ())
-
+;;
+;; org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
+(setq o--supported-blocks nil)
 
 ;; before this: init time: 13
 ;; after: 12 seconds.
@@ -1081,10 +1091,10 @@ repositories of developers rather than having all packages in one repository.
 (require 'package)
 
 ;; Internet repositories for new packages.
-(setq package-archives '(("nongnu" . "https://elpa.nongnu.org/nongnu/")
-                         ("org"       . "http://orgmode.org/elpa/")
-                         ("gnu"       . "http://elpa.gnu.org/packages/")
-                         ("melpa"     . "http://melpa.org/packages/")))
+(setq package-archives '(("gnu"    . "http://elpa.gnu.org/packages/")
+   			     ("nongnu" . "https://elpa.nongnu.org/nongnu/")			 
+                         ("melpa"  . "http://melpa.org/packages/")
+			     ("org"    . "http://orgmode.org/elpa/")))
 
 ;; Update local list of available packages:
 ;; Get descriptions of all configured ELPA packages,
@@ -1261,7 +1271,6 @@ when we want to install a file from souce we use the keyword ~:quelpa~.
 # (quelpa '(discover-my-major :fetcher git :url "https://framagit.org/steckerhalter/discover-my-major.git"))
 #+BEGIN_SRC emacs-lisp
 (use-package quelpa
-  :defer 5
   :custom (quelpa-upgrade-p t "Always try to update packages")
   :config
   ;; Get ‘quelpa-use-package’ via ‘quelpa’
@@ -1295,7 +1304,6 @@ Let's obtain the extension.
 #+BEGIN_SRC emacs-lisp
 ;; Auto installing OS system packages
 (use-package use-package-ensure-system-package
-  :defer 5
   :config (system-packages-update))
 
 ;; Please don't bother me when shell buffer names are in use, just make a new
@@ -1317,6 +1325,21 @@ Let's obtain the extension.
 ;; It happens in the background ^_^
 ;;
 ;; After 5 seconds of being idle, after starting up.
+
+
+(defvar my/installed-packages
+  (shell-command-to-string "brew list")
+   "What is on my machine already?
+
+Sometimes when I install a GUI based application and do not have access to it everywhere in my path,
+it may seem that I do not have that application installed. For instance, 
+   (system-packages-package-installed-p \"google-chrome\")
+returns nil, even though Google Chrome is on my machine.
+
+As such, we advise the `system-packages-ensure' installtion method to only do
+installs of pacakges that are not in our `my/installed-packages' listing.
+")
+(advice-add 'system-packages-ensure   :before-until (lambda (pkg) (s-contains-p pkg my/installed-packages)))
 #+END_SRC
 
 After an update to Mac OS, one may need to [[https://emacs.stackexchange.com/questions/53026/how-to-restore-file-system-access-in-macos-catalina][restore file system access privileges
@@ -1345,7 +1368,7 @@ package's description, or ~TAB~ for the other features!
 
 #+BEGIN_SRC emacs-lisp
 ;; An Emacs-based interface to the package manager of your operating system.
-(use-package helm-system-packages :defer t)
+(use-package helm-system-packages)
 #+END_SRC
 
 The Helm counterpart is great for /discovarability/, whereas
@@ -5295,8 +5318,8 @@ Let's add the icon  near my mail groups ^_^
 #+BEGIN_SRC emacs-lisp
 ;; Fancy icons for Emacs
 ;; Only do this once:
-(use-package all-the-icons :defer t)
-  ; :config (all-the-icons-install-fonts 'install-without-asking)
+(use-package all-the-icons
+   :config (all-the-icons-install-fonts 'install-without-asking))
 
 ;; Make mail look pretty
 (use-package all-the-icons-gnus
@@ -5610,7 +5633,9 @@ my to-do list and my init file, side-by-side.
                        ;; i.e., don't run it in Github Actions when testing.
   (if my/personal-machine?
       (find-file "~/Dropbox/todo.org")
-    (find-file "~/Desktop/work.org.gpg"))
+    ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
+    ;; which is a GPG file and so requires passphrase before other things can load.
+    (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg"))))
   (split-window-right)			  ;; C-x 3
   (other-window 1)                              ;; C-x 0
   (let ((enable-local-variables :all)           ;; Load *all* locals.
@@ -7519,7 +7544,7 @@ For example, we account for LaTeX citations.
 # +end_src
 
 #+begin_src emacs-lisp
-(system-packages-ensure "mactex-no-gui")
+(system-packages-ensure "mactex")
 #+end_src
 
    - This is a redistribution of TeX Live specifically for macOS.
@@ -7529,7 +7554,7 @@ For example, we account for LaTeX citations.
 
    Restart Emacs, enter =$e^{i \cdot \pi} + 1 = 0$= then press kbd:C-c_C-x_C-l to
    have it rendered inline.
-
+   
    + *Minted:* Get tool for colourful code snippets for LaTeX ---see “minted” in
      the main article.
 
@@ -8033,63 +8058,193 @@ choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-
                          (quickrun current-prefix-arg)))))
 #+end_src
 
+
 ** Managing Processes/Servers from within Emacs
 
+Not using this, a bit too verbose to setup for each service but, more
+accurately, does not Just Workᵀᴹ for my needs.
 #+begin_src emacs-lisp
-(use-package prodigy
-  :defer t
-  :config
+;; “M-x prodigy”, then press “s” to start a service; “S” to stop it; “$” to see it; “r”estart
+(use-package prodigy :disabled t)
   ;; C-h v prodigy-services ⇒ See possible properties.
-
-  (prodigy-define-service
-    :name "Orchestrator"
-    :cwd "~/orchestrator/"
-    :command "npm"
-    :args '("run" "dev")
-    :tags '(orchestrator))
-
-  (prodigy-define-service
-    :name "Orc/Inspections"
-    :cwd "~/inspections/webui"
-    :init (lambda () (shell-command "git checkout main; git pull"))
-    :command "npm"
-    :args '("run" "dev")
-    :tags '(orchestrator))
-
-  (prodigy-define-service
-    :name "Orc/WxPortal"
-    :cwd "~/wxPortal/"
-    :init (lambda () (shell-command "git checkout orc-main; git pull"))
-    :command "npm"
-    :args '("run" "dev")
-    :tags '(orchestrator RUN-BEFORE-ORC-REPO))
-
-
-  (prodigy-define-service
-    :name "platform"
-    :cwd "~/api-platform-server"
-    :init (lambda () (shell-command "git checkout main; git pull"))
-    :command "npm"
-    :args '("run" "dev")
-    :tags '())
-
-  (prodigy-define-service
-    :name "WxPortal"
-    :cwd "~/wxPortal/"
-    :init (lambda () (shell-command "git checkout main; git pull"))
-    :command "npm"
-    :args '("run" "dev")
-    :tags '())
-
-  (prodigy-define-service
-    :name "Setup Users"
-    :cwd "~/ops-helm-deployment/"
-    ;; :init (lambda () (shell-command "git checkout main; git pull"))
-    :command "bash"
-    :args '("login.sh")
-    :tags '())
-  )
 #+end_src
+
+#+begin_details "Making unkillable buffers & shells"
+#+begin_src emacs-lisp
+(defun my/declare-unkillable-buffer (name)
+  (add-hook 'kill-buffer-query-functions
+            `(lambda () (or (not (equal (buffer-name) ,name))
+                       (progn (message "Not allowed to kill %s, burying instead; otherwise use “M-x force-kill”" (buffer-name))
+                              (bury-buffer))))))
+
+
+(defalias 'force-kill 'my/force-kill)
+(defalias 'w-force-kill 'my/force-kill)
+(defun my/force-kill ()
+  (interactive)
+  (-let [kill-buffer-query-functions nil]
+    (kill-current-buffer)
+    (ignore-errors (delete-window))))
+
+
+(cl-defun my/run-unkillable-shell (command &optional (buffer-name command))
+  "Example use: (my/run-unkillable-shell \"cd ~/wxPortal; npm run dev\" \"wxPortal\")"
+  (-let [it (get-buffer buffer-name)]
+    (if it
+        (switch-to-buffer-other-window it)
+      (async-shell-command command buffer-name)
+      (my/declare-unkillable-buffer buffer-name))))
+#+end_src
+#+end_details
+
+#+begin_src emacs-lisp
+(defalias 'w-checkout 'my/checkout)
+(defalias 'checkout 'my/checkout)
+(cl-defun my/checkout ()
+  "Select a repo, select a latest branch, get it on the latest branch."
+  (interactive)
+  (-let [default-directory (completing-read "Repo: " (mapcar #'car magit-repository-directories))]
+    (magit-pull-from-pushremote nil)
+    (call-interactively #'magit-branch-checkout)
+    (magit-pull-from-pushremote nil)))
+#+end_src
+
+Prefix ~“w-”~ for work stuff.
+#+begin_src emacs-lisp
+(cl-defun my/application-running? (app)
+  "Check if application APP is currently running, in use."
+  (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
+#+end_src
+
+Process Manager
+#+begin_src emacs-lisp
+(cl-defun w-open-pm () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
+(cl-defun w-start-pm ()
+  "Starts up the local server to see Process Manager in your browser.
+
+First requires a branch (e.g., for a PR), then sets up env for it.
+
+Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-pm."
+  (interactive)
+  (-let [default-directory "~/process-builder"]
+    (if (my/application-running? "dbeaver")
+        (error "Close DBeaver; it is connected to the “pm” database. Then retry")
+      (ignore-errors (magit-pull-from-pushremote nil)
+                     (call-interactively #'magit-branch-checkout)
+                     (magit-pull-from-pushremote nil)
+                     (-let [kill-buffer-query-functions nil] (kill-buffer "*ProcessManager*")))
+      (message (shell-command-to-string "brew services stop postgresql"))
+      (my/run-unkillable-shell
+       (s-join ";" '("cd ~/process-builder"
+                     "export GEM_HOME=\"$HOME/.gem\""
+                     "gem install bundler"
+                     "bundle update --bundler"
+                     "bundle install"
+                     "source ~/.nvm/nvm.sh"
+                     "nvm use"
+                     "yarn install"
+                     "rails db:drop && rails db:create && rails db:migrate && rails db:seed app=test && rails db:seed promotion=test && yarn clean-test-db"
+                     "gem install foreman"
+                     "foreman start"))
+       "*ProcessManager*")
+      (message (shell-command-to-string "brew services start postgresql"))
+      (magit-status))))
+#+end_src
+
+#+begin_src emacs-lisp
+(defalias 'my/open-in-terminal '⌘)
+(cl-defun ⌘ (&rest cmds)
+  "Run terminal commands CMDS in a new MacOS Terminal instance, and bring it to focus.
+
+Example: (⌘ \"echo hello\" \"echo world\")
+
+Useful for those cases where I have to interact with non-trivial ‘interactive terminal menus’."
+  (shell-command (format "osascript -e 'tell app \"Terminal\" to activate do script %s'"
+                         (pp-to-string (s-join ";" cmds)))))
+
+;; (⌘ "echo hello" "echo world")
+#+end_src
+
+#+begin_src emacs-lisp
+(defun w-show-docker-containers ()
+  (interactive)
+  (display-message-or-buffer (concat (shell-command-to-string "docker ps --format 'table {{.Image}}\\t{{.RunningFor}} ago\\t{{.Status}}'")
+                           "🚀 Images ending in “_root” are the result of dev-env tool; dockerised not local. 🚀")))
+
+(defun w-stop&remove-docker-containers ()
+  (interactive)
+  (shell-command "docker stop $(docker ps -a -q)")
+  (shell-command "docker rm $(docker ps -a -q)"))
+#+end_src
+
+#+begin_src emacs-lisp
+(defalias 'w-dev-env-start 'w-blue-screen)
+(defun w-blue-screen ()
+  "Open menu to start servers from interactive menu, etc."
+  (interactive)
+  (shell-command
+   "osascript -e 'tell application \"Terminal\"
+      set currentTab to do script (\"cd ~/ops-helm-deployment; git checkout master; git pull; bash login.sh\")
+      activate currentTab
+      do script (\"dev-env start\") in currentTab
+      end tell'"))
+
+(defun w-login ()
+  "Open nix shell"
+  (interactive) (⌘ "cd ~/ops-helm-deployment; git checkout master; git pull; bash login.sh"))
+
+(cl-defun w-inject-users ()
+  (interactive)
+  (display-message-or-buffer (shell-command-to-string "cd ~/ops-helm-deployment/docker/wx-dev-env/root/; docker cp ../helpers/userInjector.js platform:/usr/src/userInjector.js; docker exec -t platform sh -c \"npx babel-node userInjector.js\"")))
+#+end_src
+
+
+WxPortal
+#+begin_src emacs-lisp
+;; (cl-defun w-open-portal () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
+(cl-defun w-start-portal ()
+  "Starts up the local server to see wxPortal in your browser.
+
+First requires a branch (e.g., for a PR), then sets up env for it.
+
+Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-portal."
+  (interactive)
+  (-let [default-directory "~/wxPortal"]
+      (ignore-errors (magit-pull-from-pushremote nil)
+                     (call-interactively #'magit-branch-checkout)
+                     (magit-pull-from-pushremote nil)
+                     (-let [kill-buffer-query-functions nil] (kill-buffer "*wxPortal*")))
+      (my/run-unkillable-shell
+       (s-join ";" '("cd ~/wxPortal"
+                     "npm ci"
+                     "npm run dev"))
+       "*wxPortal*")
+      (magit-status)))
+#+end_src
+  (my/run-unkillable-shell "cd ~/wxPortal; git checkout main; git pull; npm ci; npm run dev" "*wxPortal*")
+
+#+begin_src emacs-lisp
+(cl-defun wx-orchestrator-start ()
+  "
+Orchestrator will be ready almost immediately.
+
+Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
+
+wxPortal may take even longer to build: ~4 mins.
+"
+  (interactive)
+  (my/run-unkillable-shell "cd ~/orchestrator; git checkout main; git pull; npm ci; npm run dev" "*Orchestrator*")
+  (my/run-unkillable-shell "cd ~/inspections/webui; git checkout main; git pull; npm ci; npm run dev --quiet --no-progress" "*Inspections/WebUI*")
+  (my/run-unkillable-shell "cd ~/wxPortal; git checkout orc-main; git pull; npm ci; npm run dev" "*wxPortal*"))
+
+(cl-defun wx-orchestrator-ready? ()
+  (interactive)
+  (browse-url "http://localhost:3320/inspections/") ;; Is Inspections up?
+  (browse-url "http://mars-bur-inspections.weeverdev.com:9000/") ;; Is wxportal up?
+  (browse-url "http://team.weeverdev.com:9000") ;; Everything is up?
+  (message "If any of these URLs is busted, then one of the repos is not up correctly!"))
+#+end_src
+
 ** Project management & navigation
 
 Version controlled repositories are considered “projects” ---no setup needed---,
@@ -8419,9 +8574,9 @@ TODO: Move some of the stuff below to the TurboLog Github repo.
 (setq turbo-log--prefix "%c ******* LOOK HERE *******")
 (defun length> (x y) (> (length x) y))
 (defun length= (x y) (= (length x) y))
-(use-package turbo-log
+(ignore-error (use-package turbo-log
   :quelpa (turbo-log :fetcher github :repo "artawower/turbo-log.el")
-  :config (setq turbo-console--prefix "✰"))
+  :config (setq turbo-console--prefix "✰")))
 (bind-key* "C-x l" #'my/turbo-log-hydra/body)
 (defhydra my/turbo-log-hydra (:color blue :hint nil)
   ("l" turbo-log-print "Log selected expression" :column "TurboLog: Insert meaningful log message for selected expressions")
@@ -9012,7 +9167,7 @@ more generally =hr p₁ p₂ … pₙ= will produce /n/-many horizontal lines wi
 $i^{th}$-line having pattern =pᵢ=.
 
 #+begin_src emacs-lisp
-(system-packages-install "hr") ;; ≈ brew install hr
+(system-packages-ensure "hr") ;; ≈ brew install hr
 #+end_src
 
 * Experiments
@@ -9142,6 +9297,7 @@ Lightweight syntax highlighting improvement for numbers and escape sequences (e.
 
 ** shell-command-and-run
 #+begin_src emacs-lisp
+(defalias 'my/shell-command-and-run 'shell-command-and-run)
 (defun shell-command-and-run (cmd name &rest more-commands)
   "Run shell command CMD (possibly opening a new repl/terminal) and then MORE-COMMANDS.
 
