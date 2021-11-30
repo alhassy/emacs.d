@@ -1,4 +1,3 @@
-
 ;; [[file:init.org::#title][title:1]]
 
 ;; cl-lib was published as a better alternative to cl, which has a deprecation warning in Emacs27.
@@ -15,6 +14,11 @@
 ;;
 ;; org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
 (setq o--supported-blocks nil)
+;;
+;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
+;; Symbol’s function definition is void: all-the-icons-faicon
+(defun all-the-icons-faicon (icon)
+  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
 
 ;; before this: init time: 13
 ;; after: 12 seconds.
@@ -38,9 +42,9 @@
 
 ;; Internet repositories for new packages.
 (setq package-archives '(("gnu"       . "http://elpa.gnu.org/packages/")
-			 ("nongnu" . "https://elpa.nongnu.org/nongnu/")			 
+                         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
                          ("melpa"     . "http://melpa.org/packages/")
-			 ("org"       . "http://orgmode.org/elpa/")))
+                         ("org"       . "http://orgmode.org/elpa/")))
 
 ;; Update local list of available packages:
 ;; Get descriptions of all configured ELPA packages,
@@ -113,13 +117,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -186,7 +190,7 @@
    "What is on my machine already?
 
 Sometimes when I install a GUI based application and do not have access to it everywhere in my path,
-it may seem that I do not have that application installed. For instance, 
+it may seem that I do not have that application installed. For instance,
    (system-packages-package-installed-p \"google-chrome\")
 returns nil, even though Google Chrome is on my machine.
 
@@ -204,7 +208,7 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 (when (eq system-type 'darwin)
   (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
 
-	      
+
 (ignore-errors (system-packages-ensure "google-chrome")) ;; My choice of web browser
 (system-packages-ensure "microsoft-teams") ;; For remote work meetings
 ;; Pack, ship and run any application as a lightweight container
@@ -423,6 +427,7 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 
 ;; [[file:init.org::#Hydra-Supply-a-prefix-only-once][Hydra: Supply a prefix only once:3]]
 ;; TODO convert my existing defhydras to my/defhydra.
+
 (defmacro my/defhydra (key title icon-name &rest body)
 "Make a hydra whose heads appear in a pretty pop-up window.
 Heads are signalled by keywords and the hydra has an icon in its title.

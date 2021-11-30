@@ -58,6 +58,10 @@
 ;;
 ;; org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
 (setq o--supported-blocks nil)
+;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
+;; Symbol’s function definition is void: all-the-icons-faicon
+(defun all-the-icons-faicon (icon)
+  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
 
 ;; before this: init time: 13
 ;; after: 12 seconds.
@@ -1092,9 +1096,9 @@ repositories of developers rather than having all packages in one repository.
 
 ;; Internet repositories for new packages.
 (setq package-archives '(("gnu"    . "http://elpa.gnu.org/packages/")
-   			     ("nongnu" . "https://elpa.nongnu.org/nongnu/")			 
+                             ("nongnu" . "https://elpa.nongnu.org/nongnu/")
                          ("melpa"  . "http://melpa.org/packages/")
-			     ("org"    . "http://orgmode.org/elpa/")))
+                             ("org"    . "http://orgmode.org/elpa/")))
 
 ;; Update local list of available packages:
 ;; Get descriptions of all configured ELPA packages,
@@ -1332,7 +1336,7 @@ Let's obtain the extension.
    "What is on my machine already?
 
 Sometimes when I install a GUI based application and do not have access to it everywhere in my path,
-it may seem that I do not have that application installed. For instance, 
+it may seem that I do not have that application installed. For instance,
    (system-packages-package-installed-p \"google-chrome\")
 returns nil, even though Google Chrome is on my machine.
 
@@ -7554,7 +7558,7 @@ For example, we account for LaTeX citations.
 
    Restart Emacs, enter =$e^{i \cdot \pi} + 1 = 0$= then press kbd:C-c_C-x_C-l to
    have it rendered inline.
-   
+
    + *Minted:* Get tool for colourful code snippets for LaTeX ---see “minted” in
      the main article.
 
