@@ -19,6 +19,9 @@
 ;; Symbol’s function definition is void: all-the-icons-faicon
 (cl-defun all-the-icons-faicon (icon &rest _)
   #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
+;;
+;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
+(cl-defun org-clocking-buffer (&rest _))
 
 ;; before this: init time: 13
 ;; after: 12 seconds.
