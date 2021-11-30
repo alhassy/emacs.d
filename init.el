@@ -17,7 +17,7 @@
 ;;
 ;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
 ;; Symbol’s function definition is void: all-the-icons-faicon
-(defun all-the-icons-faicon (icon)
+(cl-defun all-the-icons-faicon (icon &rest _)
   #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
 
 ;; before this: init time: 13
@@ -1645,7 +1645,7 @@ themes (•̀ᴗ•́)و"
 
 ;; (my/toggle-theme)
 (use-package solarized-theme)
-(my/toggle-theme 'solarized-gruvbox-light)
+(my/toggle-theme 'doom-laserwave)
 ;; Exquisite Fonts and Themes:3 ends here
 
 ;; [[file:init.org::#Exquisite-Fonts-and-Themes][Exquisite Fonts and Themes:4]]
