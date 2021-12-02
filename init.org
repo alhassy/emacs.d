@@ -145,11 +145,7 @@ person you are arguing against. It is painful to lose your reality, so be kind,/
 /Inspiration is for amateurs. The rest of us just show up and get to work./ - Chuck Close
 #+end_box
 
-* TODO Github Actions                                                   :noexport:
-
-Add a new job that attempts to export this init.org into an HTML file.
-
---------------------------------------------------------------------------------
+* Github Actions                                                   :noexport:
 
 The following creates the “Github Actions Workflow” file;
 this way, Github will run your tests every time you commit ^_^
@@ -217,7 +213,10 @@ jobs:
                               (setq url-show-status nil)
                               (package-initialize)
                               (load-file "init.el")
-                              (message "\n 🤤 Startup Successful! 🤩"))'
+                              (message "\n 🤤 Startup Successful! 🤩")
+                              (find-file "init.org")
+                              (org-html-export-to-html)
+                              (message "\n 🤤 HTML Export Successful! 🤩"))'
 #+end_src
 
 (unless noninteractive ...) ;; Use this to omit stuff from the Github Actions test
@@ -929,7 +928,7 @@ one. ( Upon an initial startup using this configuration, it takes a total of
 
                                      Enjoy!
 
-* TODO Booting Up :Breaks_HTML_Export:
+* Booting Up
 :PROPERTIES:
 :CUSTOM_ID: Booting-Up
 :END:
@@ -1737,7 +1736,7 @@ Finally, note that there is now a ~M-x helm-info~ command to show documentation,
 possibly with examples, of the packages installed. For example,
 ~M-x helm-info RET dash RET -parition RET~ to see how the parition function from the
 dash library works via examples ;-)
-** TODO Org-Mode Administrivia :Breaks_HTML_Export:
+** Org-Mode Administrivia
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-Administrivia
 :END:
@@ -1770,7 +1769,6 @@ along with the extras that allow us to ignore heading names, but still utilise
 their contents ---e.g., such as a heading named ‘preamble’ that contains
 org-mode setup for a file.
 
-TODO breaks HTML export.
 #+begin_src emacs-lisp
   (use-package org
     :ensure org-plus-contrib
@@ -7405,9 +7403,12 @@ doc:ahs-backward / [[kbd:M-←]].
 #+BEGIN_SRC emacs-lisp
 ;; Default: M-→/← moves to the next/previous instance of the currently highlighted word
 ;; These are already meaningful commands in Org-mode, so we avoid these key re-bindings in Org-mode; TODO.
-(use-package auto-highlight-symbol
-  :hook ((text-mode . auto-highlight-symbol-mode)
-         (prog-mode . auto-highlight-symbol-mode)))
+;; (use-package auto-highlight-symbol
+;;   :hook ((text-mode . auto-highlight-symbol-mode)
+;;          (prog-mode . auto-highlight-symbol-mode)))
+;;
+;; This breaks Org Exports; e.g.,
+;; C-c C-e h o  ⇒  Match data clobbered by buffer modification hooks
 #+END_SRC
 
 Let's also quickly replace the word at point:
@@ -8089,7 +8090,6 @@ accurately, does not Just Workᵀᴹ for my needs.
                        (progn (message "Not allowed to kill %s, burying instead; otherwise use “M-x force-kill”" (buffer-name))
                               (bury-buffer))))))
 
-
 (defalias 'force-kill 'my/force-kill)
 (defalias 'w-force-kill 'my/force-kill)
 (defun my/force-kill ()
@@ -8097,7 +8097,6 @@ accurately, does not Just Workᵀᴹ for my needs.
   (-let [kill-buffer-query-functions nil]
     (kill-current-buffer)
     (ignore-errors (delete-window))))
-
 
 (cl-defun my/run-unkillable-shell (command &optional (buffer-name command))
   "Example use: (my/run-unkillable-shell \"cd ~/wxPortal; npm run dev\" \"wxPortal\")"
@@ -8118,7 +8117,8 @@ accurately, does not Just Workᵀᴹ for my needs.
   (-let [default-directory (completing-read "Repo: " (mapcar #'car magit-repository-directories))]
     (magit-pull-from-pushremote nil)
     (call-interactively #'magit-branch-checkout)
-    (magit-pull-from-pushremote nil)))
+    (magit-pull-from-pushremote nil)
+    (magit-status)))
 #+end_src
 
 Prefix ~“w-”~ for work stuff.
@@ -8213,7 +8213,7 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 
 WxPortal
 #+begin_src emacs-lisp
-;; (cl-defun w-open-portal () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
+(cl-defun w-open-portal () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
 (cl-defun w-start-portal ()
   "Starts up the local server to see wxPortal in your browser.
 
@@ -8236,7 +8236,7 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
   (my/run-unkillable-shell "cd ~/wxPortal; git checkout main; git pull; npm ci; npm run dev" "*wxPortal*")
 
 #+begin_src emacs-lisp
-(cl-defun wx-orchestrator-start ()
+(cl-defun w-orchestrator-start ()
   "
 Orchestrator will be ready almost immediately.
 
@@ -8249,7 +8249,7 @@ wxPortal may take even longer to build: ~4 mins.
   (my/run-unkillable-shell "cd ~/inspections/webui; git checkout main; git pull; npm ci; npm run dev --quiet --no-progress" "*Inspections/WebUI*")
   (my/run-unkillable-shell "cd ~/wxPortal; git checkout orc-main; git pull; npm ci; npm run dev" "*wxPortal*"))
 
-(cl-defun wx-orchestrator-ready? ()
+(cl-defun w-orchestrator-ready? ()
   (interactive)
   (browse-url "http://localhost:3320/inspections/") ;; Is Inspections up?
   (browse-url "http://mars-bur-inspections.weeverdev.com:9000/") ;; Is wxportal up?
@@ -8257,6 +8257,66 @@ wxPortal may take even longer to build: ~4 mins.
   (message "If any of these URLs is busted, then one of the repos is not up correctly!"))
 #+end_src
 
+--------------------------------------------------------------------------------
+
+#+begin_src emacs-lisp
+(cl-defun w-router-setup ()
+  (interactive)
+  (browse-url "https://router.weeverdev.com/")
+  (browse-url "https://mars-bur.weeverdev.com/"))
+
+(cl-defun w-do-migrations ()
+  (interactive)
+  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:migrate")))
+
+(cl-defun w-do-rollbacks ()
+  (interactive)
+  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:rollback")))
+
+(cl-defun w-start-odata ()
+ (interactive)
+ (my/run-unkillable-shell "cd ~/api-odata/; git checkout main; git pull; docker-compose up --build" "*oData*"))
+ ;; Alternatively: cd $ODATA_DIR; cargo watch -x run
+
+(cl-defun w-start-data-agent ()
+ (interactive)
+ (my/run-unkillable-shell "cd ~/wx-data-agent/; git checkout main; git pull; cargo watch -x run" "*wxDataAgent*"))
+
+(cl-defun w-start-platform ()
+ (interactive)
+ (my/run-unkillable-shell "cd ~/api-platform-server/; git checkout main; git pull; npm run docker:start" "*Platform*"))
+
+(cl-defun w-start-portal ()
+ (interactive)
+ (my/run-unkillable-shell "cd ~/wxPortal/; git checkout main; git pull; npm run docker:dev" "*wxPortal*"))
+;;   (my/run-unkillable-shell "cd ~/wxPortal; git checkout main; git pull; npm ci; npm run dev" "*wxPortal*")
+
+(cl-defun w-handbook-view ()
+  "Open the HTML handbook in your local browser"
+   (interactive)
+   (shell-command "open ~/handbook/How-Do-I.html"))
+
+(cl-defun w-handbook-generate ()
+  "Make a colourful HTML version of the handbook."
+   (interactive)
+   (shell-command "emacs ~/handbook/How-Do-I.org --batch -Q --load ~/handbook/lisp/export-org-to-html.el -f org-html-export-to-html --kill")
+    (w-handbook-view))
+
+(defvar w-app-slugs
+   (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
+
+(cl-defun w-browse-app (&optional (app (completing-read "Appslug: " w-app-slugs)))
+ (interactive)
+  (browse-url (format "https://%s.weeverdev.com/" app)))
+
+(cl-defun w-disable-sso ()
+  "Turn off SSO, locally; app is selected from a menu."
+ (interactive)
+ (-let [app (completing-read "Appslug: " w-app-slugs)]
+  (shell-command (format "false > ~/wxPortal/client/assets/config/apps/%s/authorization.allowSsoLogin.json" app))
+  (w-browse-app app)
+  (message "SSO for %s disabled; don't commit the “authorization.allowSsoLogin.json” file!" app)))
+#+end_src
 ** Project management & navigation
 
 Version controlled repositories are considered “projects” ---no setup needed---,
