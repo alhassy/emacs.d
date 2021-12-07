@@ -9,6 +9,8 @@
 # TODO Pieces of (disparate) software can generally be replaced by (applications written on the) Emacs (text processing Lisp platform).
 # [A list of programs Emacs can replace] Examples: Word Processing ~ Org-mode⨾  Git/version-control ~ Magit⨾  Terminal ~ EShell⨾  File Manager ~ Dired⨾  IDE/debugger ~ LSP/Dap⨾ RSS Newsreader ~ ElFeed⨾  Email ~ Gnus/Mu4e⨾ Agenda/Calendar/Habit-Tracker/TODO-list ~ Org-mode⨾ Scripting Language ~ Emacs Lisp⨾ Debugger ~ dap-mode⨾  reference and citation manager ~ org-ref⨾  Vim ~ Evil-mode⨾  pdf viewer ~ pdf-view-mode⨾ Spell checker & dictionary & grammar checker⨾ automatic file backups; seemless GPG tool; time tracker ~ org-mode⨾ Literate Programming (like Jupyter) ~ Org-mode⨾ psychologist ~ doctor-mode; Games ~ tetris/pacman/mario/etc⨾ Lisp interpreter ~ Emacs (anywhere press C-x C-e to run a Lisp expression)⨾ Documentation viewer ~ e.g. tldr-mode / C-h o ⨾  Diff/Merge tool⨾  Package Manager ~ helm-system-packages⨾ Typing tutor; TODO List / Blogging Software ~ Org-mode; Moden Internet Browser ~ xwidget-webkit-browse-url; everything else ~ https://github.com/emacs-eaf/emacs-application-framework
 #
+# Emacs as a reference platform: Instead of manually finding files, looking for info, then closing them; we can press a key combination to see some reference matter _quickly_ then press _q_ to dismiss it just as quickly. We can do this with a combination of (local-set-key (kbd "q") 'kill-buffer-and-window) and (read-only-mode); but better would be to open a file and put it in special-mode which has this _q_ behaviour [see simple.el special-mode-map for other bindinfs] or to use the built-in with-electric-help macro, or make-help-screen & (require 'help-macro).. Moreover, for lots of reference matter, a hydra can be used to obtain a nice menu.
+#
 # I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
 
 # Installing LaTex
@@ -213,11 +215,13 @@ jobs:
                               (setq url-show-status nil)
                               (package-initialize)
                               (load-file "init.el")
-                              (message "\n 🤤 Startup Successful! 🤩")
+                              (message "\n 🤤 Startup Successful! 🤩"))'
+#+end_src
+
+
                               (find-file "init.org")
                               (org-html-export-to-html)
-                              (message "\n 🤤 HTML Export Successful! 🤩"))'
-#+end_src
+                              (message "\n 🤤 HTML Export Successful! 🤩")
 
 (unless noninteractive ...) ;; Use this to omit stuff from the Github Actions test
 

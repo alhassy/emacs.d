@@ -57,8 +57,5 @@ jobs:
                               (setq url-show-status nil)
                               (package-initialize)
                               (load-file "init.el")
-                              (message "\n 🤤 Startup Successful! 🤩")
-                              (find-file "init.org")
-                              (org-html-export-to-html)
-                              (message "\n 🤤 HTML Export Successful! 🤩"))'
+                              (message "\n 🤤 Startup Successful! 🤩"))'
 # Github Actions:1 ends here
