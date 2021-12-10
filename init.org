@@ -12,6 +12,9 @@
 # Emacs as a reference platform: Instead of manually finding files, looking for info, then closing them; we can press a key combination to see some reference matter _quickly_ then press _q_ to dismiss it just as quickly. We can do this with a combination of (local-set-key (kbd "q") 'kill-buffer-and-window) and (read-only-mode); but better would be to open a file and put it in special-mode which has this _q_ behaviour [see simple.el special-mode-map for other bindinfs] or to use the built-in with-electric-help macro, or make-help-screen & (require 'help-macro).. Moreover, for lots of reference matter, a hydra can be used to obtain a nice menu.
 #
 # I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
+# https://nyxt.atlas.engineer/  ---An eerily Emacs-like browser
+
+# Emacs and Nyxt treat Vim as a subset. And there is no reason to be angry about this affirmative. It is a technical fact :)
 
 # Installing LaTex
 # $ brew install --cask mactex
@@ -218,6 +221,7 @@ jobs:
                               (message "\n 🤤 Startup Successful! 🤩"))'
 #+end_src
 
+TODO: Build HTML export as a minimal test that things work as expected.
 
                               (find-file "init.org")
                               (org-html-export-to-html)
@@ -1413,6 +1417,14 @@ window manager for macOS along the lines of xmonad.”
 
 (ignore-errors (system-packages-ensure "google-chrome")) ;; My choice of web browser
 (system-packages-ensure "microsoft-teams") ;; For remote work meetings
+
+;; Gif maker; needs privileges to capture screen.
+;;
+;; ⇒ Move the screen capture frame while recording.
+;; ⇒ Pause and restart recording, with optional inserted text messages.
+;; ⇒ Global hotkey (shift+space) to toggle pausing while recording
+(system-packages-ensure "licecap") ;; Use: ⌘-SPACE licecap
+
 ;; Pack, ship and run any application as a lightweight container
 (system-packages-ensure "docker")
 ;; Free universal database tool and SQL client
@@ -1774,7 +1786,7 @@ their contents ---e.g., such as a heading named ‘preamble’ that contains
 org-mode setup for a file.
 
 #+begin_src emacs-lisp
-  (use-package org
+  (when nil use-package emacs
     :ensure org-plus-contrib
     :diminish org-indent-mode
     :config (require 'ox-extra)
@@ -1827,7 +1839,10 @@ Finally, let's get some extra Org-mode mark-up goodies, such as ~kbd:C-c_C-e~
 which renders as kbd:C-c_C-e.  Documentations and screenshots at:
 https://alhassy.github.io/org-special-block-extras/
 #+BEGIN_SRC emacs-lisp
-(use-package org-special-block-extras
+
+;; TODO org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
+;;
+(when nil use-package org-special-block-extras
   :hook (org-mode . org-special-block-extras-mode)
   :custom
     ;; The places where I keep my ‘#+documentation’
@@ -2791,7 +2806,8 @@ movement controls, such as:
 We can add our own speed keys by altering the doc:rg-speed-commands association
 list variable; e.g.,
 #+begin_src emacs-lisp
-(add-to-list 'org-speed-commands (cons "P" #'org-set-property))
+;; TODO FIXME Crashes upon startup.
+(when nil (add-to-list 'org-speed-commands (cons "P" #'org-set-property)))
 ;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
 #+end_src
 
@@ -2808,7 +2824,10 @@ previous, next, or toggle editing org-mode source blocks.
 #+begin_src emacs-lisp
 ;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
 ;;
-(use-package org
+;;
+;; FIXME Error (use-package): emacs/:catch: Symbol’s value as variable is void: org-mode-map
+;;
+(when nil use-package org
   :bind (:map org-mode-map
               ("s-p" . org-babel-previous-src-block)
               ("s-n" . org-babel-next-src-block)
@@ -8181,6 +8200,7 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; (⌘ "echo hello" "echo world")
 #+end_src
 
+Docker
 #+begin_src emacs-lisp
 (defun w-show-docker-containers ()
   (interactive)
@@ -8193,6 +8213,7 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   (shell-command "docker rm $(docker ps -a -q)"))
 #+end_src
 
+Blue Screen
 #+begin_src emacs-lisp
 (defalias 'w-dev-env-start 'w-blue-screen)
 (defun w-blue-screen ()
@@ -8213,7 +8234,6 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   (interactive)
   (display-message-or-buffer (shell-command-to-string "cd ~/ops-helm-deployment/docker/wx-dev-env/root/; docker cp ../helpers/userInjector.js platform:/usr/src/userInjector.js; docker exec -t platform sh -c \"npx babel-node userInjector.js\"")))
 #+end_src
-
 
 WxPortal
 #+begin_src emacs-lisp
@@ -8240,71 +8260,46 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
   (my/run-unkillable-shell "cd ~/wxPortal; git checkout main; git pull; npm ci; npm run dev" "*wxPortal*")
 
 #+begin_src emacs-lisp
-(cl-defun w-orchestrator-start ()
-  "
-Orchestrator will be ready almost immediately.
+;; Make a bunch of “w-start-𝓢” commands, where 𝒮 is a server name. Also “w-is-up-𝒮?” to check if they're running correctly.
+(cl-loop for (name cmd example)
+         in '((portal "cd ~/wxPortal/; git checkout main; git pull; npm run docker:dev" "http://mars-bur.weeverdev.com") ;; Takes ~10 mins to load
+              ;; Alternatively: "cd ~/wxPortal; git checkout main; git pull; npm ci; npm run dev"
+              (orchestrator "cd ~/orchestrator; git checkout main; git pull; npm ci; npm run dev" "http://team.weeverdev.com:9000")
+              (inspections "cd ~/inspections/webui; git checkout main; git pull; npm ci; npm run dev --quiet --no-progress" "http://localhost:3320/inspections/")
+              ;; Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
+              (platform "cd ~/api-platform-server/; git checkout main; git pull; npm run docker:start")
+              (data-agent "cd ~/wx-data-agent/; git checkout main; git pull; cargo watch -x run")
+              (odata "cd ~/api-odata/; git checkout main; git pull; docker-compose up --build")
+              ;; Alternatively: cd $ODATA_DIR; cargo watch -x run
+              )
+         do (eval `(progn
+                     (cl-defun ,(intern (format "w-start-%s" name)) ()
+                       (interactive)
+                       (my/run-unkillable-shell ,cmd ,(format "*%s*" name)))
+                     (if ,example
+                         (cl-defun ,(intern (format "w-is-up-%s?" name)) ()
+                           (interactive)
+                           (browse-url ,example)
+                           (message "If the URL is busted, then the repo is not up correctly or the server has an error!"))))))
 
-Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
 
-wxPortal may take even longer to build: ~4 mins.
-"
-  (interactive)
-  (my/run-unkillable-shell "cd ~/orchestrator; git checkout main; git pull; npm ci; npm run dev" "*Orchestrator*")
-  (my/run-unkillable-shell "cd ~/inspections/webui; git checkout main; git pull; npm ci; npm run dev --quiet --no-progress" "*Inspections/WebUI*")
-  (my/run-unkillable-shell "cd ~/wxPortal; git checkout orc-main; git pull; npm ci; npm run dev" "*wxPortal*"))
-
-(cl-defun w-orchestrator-ready? ()
-  (interactive)
-  (browse-url "http://localhost:3320/inspections/") ;; Is Inspections up?
-  (browse-url "http://mars-bur-inspections.weeverdev.com:9000/") ;; Is wxportal up?
-  (browse-url "http://team.weeverdev.com:9000") ;; Everything is up?
-  (message "If any of these URLs is busted, then one of the repos is not up correctly!"))
-#+end_src
-
---------------------------------------------------------------------------------
-
-#+begin_src emacs-lisp
 (cl-defun w-router-setup ()
   (interactive)
   (browse-url "https://router.weeverdev.com/")
   (browse-url "https://mars-bur.weeverdev.com/"))
 
-(cl-defun w-do-migrations ()
+(cl-defun w-start-servers ()
+  "Start all non-PM servers."
   (interactive)
-  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:migrate")))
+  (w-start-data-agent)
+  (w-start-odata)
+  (w-start-platform)
+  (w-start-portal)
+  (w-start-inspections)
+  (w-start-orchestrator)
+  (w-router-setup))
 
-(cl-defun w-do-rollbacks ()
-  (interactive)
-  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:rollback")))
-
-(cl-defun w-start-odata ()
- (interactive)
- (my/run-unkillable-shell "cd ~/api-odata/; git checkout main; git pull; docker-compose up --build" "*oData*"))
- ;; Alternatively: cd $ODATA_DIR; cargo watch -x run
-
-(cl-defun w-start-data-agent ()
- (interactive)
- (my/run-unkillable-shell "cd ~/wx-data-agent/; git checkout main; git pull; cargo watch -x run" "*wxDataAgent*"))
-
-(cl-defun w-start-platform ()
- (interactive)
- (my/run-unkillable-shell "cd ~/api-platform-server/; git checkout main; git pull; npm run docker:start" "*Platform*"))
-
-(cl-defun w-start-portal ()
- (interactive)
- (my/run-unkillable-shell "cd ~/wxPortal/; git checkout main; git pull; npm run docker:dev" "*wxPortal*"))
-;;   (my/run-unkillable-shell "cd ~/wxPortal; git checkout main; git pull; npm ci; npm run dev" "*wxPortal*")
-
-(cl-defun w-handbook-view ()
-  "Open the HTML handbook in your local browser"
-   (interactive)
-   (shell-command "open ~/handbook/How-Do-I.html"))
-
-(cl-defun w-handbook-generate ()
-  "Make a colourful HTML version of the handbook."
-   (interactive)
-   (shell-command "emacs ~/handbook/How-Do-I.org --batch -Q --load ~/handbook/lisp/export-org-to-html.el -f org-html-export-to-html --kill")
-    (w-handbook-view))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar w-app-slugs
    (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
@@ -8317,9 +8312,33 @@ wxPortal may take even longer to build: ~4 mins.
   "Turn off SSO, locally; app is selected from a menu."
  (interactive)
  (-let [app (completing-read "Appslug: " w-app-slugs)]
-  (shell-command (format "false > ~/wxPortal/client/assets/config/apps/%s/authorization.allowSsoLogin.json" app))
+  (shell-command (format "echo \"false\" > ~/wxPortal/client/assets/config/apps/%s/authorization.allowSsoLogin.json" app))
   (w-browse-app app)
   (message "SSO for %s disabled; don't commit the “authorization.allowSsoLogin.json” file!" app)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Databases
+
+(cl-defun w-db-migrations ()
+  (interactive)
+  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:migrate")))
+
+(cl-defun w-db-rollbacks ()
+  (interactive)
+  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:rollback")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(cl-defun w-handbook-view ()
+  "Open the HTML handbook in your local browser"
+   (interactive)
+   (shell-command "open ~/handbook/How-Do-I.html"))
+
+(cl-defun w-handbook-generate ()
+  "Make a colourful HTML version of the handbook."
+   (interactive)
+   (shell-command "emacs ~/handbook/How-Do-I.org --batch -Q --load ~/handbook/lisp/export-org-to-html.el -f org-html-export-to-html --kill")
+    (w-handbook-view))
 #+end_src
 ** Project management & navigation
 
