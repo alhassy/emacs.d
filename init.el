@@ -330,7 +330,7 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:7 ends here
 
 ;; [[file:init.org::*Org-Mode Administrivia][Org-Mode Administrivia:2]]
-  (when nil use-package org
+  (when nil use-package emacs
     :ensure org-plus-contrib
     :diminish org-indent-mode
     :config (require 'ox-extra)
@@ -369,6 +369,8 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; Org-Mode Administrivia:4 ends here
 
 ;; [[file:init.org::*Org-Mode Administrivia][Org-Mode Administrivia:5]]
+;; TODO org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
+;;
 (when nil use-package org-special-block-extras
   :hook (org-mode . org-special-block-extras-mode)
   :custom
@@ -815,6 +817,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Manipulating Sections:2 ends here
 
 ;; [[file:init.org::*Manipulating Sections][Manipulating Sections:3]]
+;; TODO FIXME Crashes upon startup.
 (when nil (add-to-list 'org-speed-commands (cons "P" #'org-set-property)))
 ;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
 ;; Manipulating Sections:3 ends here
@@ -822,13 +825,14 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; [[file:init.org::*Seamless Navigation Between Source Blocks][Seamless Navigation Between Source Blocks:1]]
 ;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
 ;;
-(when nil use-package emacs
-  :bind (:map org-mode-map
-              ("s-p" . org-babel-previous-src-block)
-              ("s-n" . org-babel-next-src-block)
-              ("s-e" . org-edit-special)
-         :map org-src-mode-map
-              ("s-e" . org-edit-src-exit)))
+(eval-after-load 'org-mode
+  (use-package emacs
+    :bind (:map org-mode-map
+                ("s-p" . org-babel-previous-src-block)
+                ("s-n" . org-babel-next-src-block)
+                ("s-e" . org-edit-special)
+                :map org-src-mode-map
+                ("s-e" . org-edit-src-exit))))
 ;; Seamless Navigation Between Source Blocks:1 ends here
 
 ;; [[file:init.org::*Modifying \[\[kbd:⟨return⟩\]\]][Modifying [[kbd:⟨return⟩]]:1]]
@@ -2699,16 +2703,7 @@ by spaces.
 ;; Managing Processes/Servers from within Emacs:2 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:3]]
-(defalias 'w-checkout 'my/checkout)
-(defalias 'checkout 'my/checkout)
-(cl-defun my/checkout ()
-  "Select a repo, select a latest branch, get it on the latest branch."
-  (interactive)
-  (-let [default-directory (completing-read "Repo: " (mapcar #'car magit-repository-directories))]
-    (magit-pull-from-pushremote nil)
-    (call-interactively #'magit-branch-checkout)
-    (magit-pull-from-pushremote nil)
-    (magit-status)))
+
 ;; Managing Processes/Servers from within Emacs:3 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:4]]
@@ -2843,7 +2838,6 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
                            (browse-url ,example)
                            (message "If the URL is busted, then the repo is not up correctly or the server has an error!"))))))
 
-
 (cl-defun w-router-setup ()
   (interactive)
   (browse-url "https://router.weeverdev.com/")
@@ -2859,6 +2853,47 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
   (w-start-inspections)
   (w-start-orchestrator)
   (w-router-setup))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; PRs
+
+(cl-defun w-PRs (&rest query-options)
+  "See all company related PRs"
+  (interactive)
+  (thread-last `("is:open" "is:pr" "archived:false" "user:WeeverApps" "draft:false" ,@query-options)
+    (mapcar #'url-hexify-string)
+    (s-join "+")
+    (concat "https://github.com/pulls?q=")
+    browse-url))
+
+(cl-loop for (name . query-options) in `((month ,(format-time-string "updated:>=%Y-%m-01"))
+                                         (today ,(format-time-string "updated:>=%Y-%m-%d"))
+                                         (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
+                                         (involves-me "involves:alhassy")
+                                         (inspections "label:Inspections")
+                                         (newts "label:\"Newts Priority Review\",Newts"))
+         do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
+
+;; A nice Emacs interface for the a portion of the “gh” CLI.
+(defalias 'gh-checkout 'w-pr-checkout)
+(defalias 'w-branch-checkout 'w-pr-checkout)
+(defun w-pr-checkout ()
+  "With prefix, select a branch name; otherwise a Pull Request name."
+  (interactive)
+  (let* ((repo (completing-read "Repo: " (projectile-relevant-known-projects)))
+         (default-directory repo) ;; temporarily override this global variable, used with magit
+         (current-branch (magit-get-current-branch))
+         (all-branches (magit-list-local-branch-names))
+         (status (format "cd %s; gh pr status" repo)))
+    (if current-prefix-arg
+        (-let [branch (completing-read (format "New branch (Currently “%s”): " current-branch) all-branches)]
+          (shell-command-to-string (format "cd %s; git checkout %s" repo branch)))
+      (let* ((PR-list (s-split "\n" (shell-command-to-string (format "cd %s; gh pr list" repo))))
+             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list)))))
+        (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯))))
+    (async-shell-command status)
+    (magit-status repo)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -2899,7 +2934,10 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
   "Make a colourful HTML version of the handbook."
    (interactive)
    (shell-command "emacs ~/handbook/How-Do-I.org --batch -Q --load ~/handbook/lisp/export-org-to-html.el -f org-html-export-to-html --kill")
-    (w-handbook-view))
+   (w-handbook-view))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; Managing Processes/Servers from within Emacs:10 ends here
 
 ;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
