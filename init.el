@@ -2828,7 +2828,7 @@ Menu can be closed when servers are started; can also stop them."
   (push 'ejc-company-backend company-backends)
   (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
   ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
-  (bind-key "C-c C-c"
+  (bind-key "C-<return>"
              (lambda () (interactive)
                (setq ejc-sql-complete-query-hook
                      (if current-prefix-arg
