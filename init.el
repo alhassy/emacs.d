@@ -2691,14 +2691,27 @@ by spaces.
 ;; Managing Processes/Servers from within Emacs:1 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:2]]
+(defalias 'defaliases 'my/defaliases)
+(defmacro my/defaliases (src &rest tgts)
+  "Provide names TGTS as synonymous aliases for SRC, for discovarability.
+
+Often a function SRC can be construed from different perspectives, names, purposes TGTS.
+Another example is when I define things with the ‘my/’ prefix, but also want to use them without.
+
+Example use: (my/defaliases view-hello-file greet-others learn-about-the-world)
+
+In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
+  `(--map (eval (quote (defalias `,it (quote ,src)))) (quote ,tgts)))
+;; Managing Processes/Servers from within Emacs:2 ends here
+
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:3]]
 (defun my/declare-unkillable-buffer (name)
   (add-hook 'kill-buffer-query-functions
             `(lambda () (or (not (equal (buffer-name) ,name))
                        (progn (message "Not allowed to kill %s, burying instead; otherwise use “M-x force-kill”" (buffer-name))
                               (bury-buffer))))))
 
-(defalias 'force-kill 'my/force-kill)
-(defalias 'w-force-kill 'my/force-kill)
+(my/defaliases my/force-kill force-kill w-force-kill)
 (cl-defun my/force-kill (&optional buffer-name)
   (interactive)
   (-let [kill-buffer-query-functions nil]
@@ -2714,18 +2727,6 @@ by spaces.
         (switch-to-buffer-other-window it)
       (async-shell-command command buffer-name)
       (my/declare-unkillable-buffer buffer-name))))
-;; Managing Processes/Servers from within Emacs:2 ends here
-
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:3]]
-(defalias 'defaliases 'my/defaliases)
-(defmacro my/defaliases (src &rest tgts)
-  "Provide names TGTS as synonymous aliases for SRC, for discovarability.
-
-Often a function SRC can be construed from different perspectives, names, purposes TGTS.
-Another example is when I define things with the ‘my/’ prefix, but also want to use them without.
-
-Example use: (my/defaliases view-hello-file greet-others learn-about-the-world)"
-  `(--map (eval (quote (defalias `,it (quote ,src)))) (quote ,tgts)))
 ;; Managing Processes/Servers from within Emacs:3 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:4]]
@@ -2827,7 +2828,7 @@ Menu can be closed when servers are started; can also stop them."
   (push 'ejc-company-backend company-backends)
   (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
   ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
-  (bind-key* "C-c C-c"
+  (bind-key "C-c C-c"
              (lambda () (interactive)
                (setq ejc-sql-complete-query-hook
                      (if current-prefix-arg
@@ -2928,23 +2929,21 @@ other connections call with a prefix argument."
   (cl-loop for 𝑺 in my/services
            do (funcall (intern (format "w-stop-%s" 𝑺)))))
 
-(cl-defmacro my/defservice (repo
-                            &key (main-setup "git checkout main; git pull")
-                            (cmd "echo hi")
-                            (example "")
-                            )
-  "
-
-Example use:
+(cl-defmacro my/defservice
+    (repo &key (main-setup "git checkout main; git pull")
+          (cmd "npm run docker:dev")
+          (example ""))
+  "Example use:
 
    (my/defservice 𝒟 :cmd 𝒞 :example ℰ)
   ⇒
     (w-start-𝒟)    ≈ Unkillable shell: cd 𝒟; 𝒞
     (w-is-up-𝒟?)   ≈ Open browser at ℰ
     (w-stop-𝒟)     ≈ Kill all emacs-buffers & docker-images containing 𝒟 in their name
-"
+
+  (w-[start|stop]-services)  ⇒ Starts/stops all defined services."
   (add-to-list 'my/services repo)
-  `(progn
+  `(list
      (cl-defun ,(intern (format "w-start-%s" repo)) ()
        "Start server off of ‘main’, with prefix just start server off of current branch."
        (interactive)
@@ -2981,7 +2980,6 @@ Example use:
 
 (my/defservice wxPortal ;; Takes ~18 mins Front end app
                :main-setup "git checkout main; git pull; npm ci"
-               :cmd "npm run docker:dev"
                :example "http://mars-bur.weeverdev.com")
 
 (my/defservice orchestrator
@@ -2996,20 +2994,21 @@ Example use:
 ;; Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
 
 ;; Do we need to upload files? E.g., images.
-(my/defservice api-file-server :cmd "npm run docker:dev")
+(my/defservice api-file-server)
 
 ;; Send PDFs
-(my/defservice api-pdf-server :cmd "npm run docker:dev")
+(my/defservice api-pdf-server)
+
 ;; (iota  "cd ~/api-iota-server; git checkout main; git pull; npm ci; npm run docker:start") ;; deprecated
 
 ;; Redis stuff
-(my/defservice wx-job-worker :cmd "npm run docker:dev")
+(my/defservice wx-job-worker)
 
 ;; Database backend
 (my/defservice api-platform-server :cmd "npm run docker:start")
 
 ;; Handles routes; should see “Access Denied” when visiting the url below, if things work correctly
-(my/defservice api-router-server :cmd "npm run docker:dev" :example "https://router.weeverdev.com/")
+(my/defservice api-router-server :example "https://router.weeverdev.com/")
 
 ;; (sso "cd ~/single-sign-on/; git checkout main; git pull; export GEM_HOME=\"$HOME/.gem\"; gem install bundler:2.1.4;  source ~/.rvm/scripts/rvm; rvm use 2.7.4; bundle install; rails db:create; rails db:migrate; rails db:seed; rails server"
 ;; "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
@@ -3432,6 +3431,107 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
 
 ;; Sometimes just invoke: M-x color-identifiers:refresh
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
+
+;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:1]]
+(use-package hideshow
+  :init
+  ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
+  (quelpa '(hideshowvis :fetcher wiki))
+
+  ;; Press “C-c TAB” to toggle a block's visibility or “C-c f” for my folding hydra.
+  :bind (("C-c TAB" . hs-toggle-hiding))
+
+  ;; https://github.com/shanecelis/hideshow-org/tree/master
+  ;; This extension bring Org-mode tab behaviour to folding, at the block level
+  ;; and buffer level ---but not cycling visibility.
+  ;; (use-package hideshow-org) ;; Disabled as commented below.
+
+  :hook ((prog-mode . (lambda () (hs-minor-mode +1)
+                        (hideshowvis-minor-mode t)
+                        (hideshowvis-symbols)
+                        ;; This hook along with hs-org mode breaks editing of src blocks in Org files.
+                        ;; That's OK, since my folding hydra does a better job for my needs.
+                        ;; (hs-org/minor-mode t)
+                        (hs-hide-all)))))
+;; Text Folding ---Selectively displaying portions of a program:1 ends here
+
+;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:2]]
+(my/defhydra "C-c f" "Folding text" archive
+  :Current
+  ("h" hs-hide-block "Hide")
+  ("s" hs-show-block "Show")
+  ("t" hs-toggle-hiding "Toggle")
+  ;; "l" hs-hide-level "Hide blocks n levels below this block"; TODO: Enable folding feature
+  :Buffer
+  ("H" hs-hide-all "Hide")
+  ("S" hs-show-all "Show")
+  ("T" my/hs-toggle-buffer "Toggle")
+  :Style
+  ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
+  ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
+  :...
+  ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
+  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
+  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
+  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset")) ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
+
+;; Features from origami/yafolding that maybe I'd like to implement include:
+;; folding region, narrowing to block or folding everything except block, navigating back and forth between folded blocks.
+;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
+;; Text Folding ---Selectively displaying portions of a program:2 ends here
+
+;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:3]]
+(defvar my/hs-hide nil "Current state of hideshow for toggling all.")
+(defun my/hs-toggle-buffer () "Toggle hideshow all."
+       (interactive)
+       (setq my/hs-hide (not my/hs-hide))
+       (if my/hs-hide
+           (hs-hide-all)
+         (hs-show-all)))
+;; Text Folding ---Selectively displaying portions of a program:3 ends here
+
+;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:4]]
+(defun my/clever-selective-display (&optional level)
+"Fold text indented same of more than the cursor.
+
+This function toggles folding according to the level of
+indentation at point. It's convenient not having to specify a
+number nor move point to the desired column.
+"
+  (interactive "P")
+  (if (eq selective-display (1+ (current-column)))
+      (set-selective-display 0)
+    (set-selective-display (or level (1+ (current-column))))))
+;; Text Folding ---Selectively displaying portions of a program:4 ends here
+
+;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:5]]
+;; Src: https://emacs.stackexchange.com/questions/52588/dynamically-hide-lines-indented-more-than-current-line
+(define-minor-mode auto-set-selective-display-mode
+  "Automatically apply `set-selective-display' at all times based on current indentation."
+  nil "$" nil
+  (if auto-set-selective-display-mode
+      (add-hook 'post-command-hook #'auto-set-selective-display nil t)
+    (remove-hook 'post-command-hook #'auto-set-selective-display t)
+    (with-temp-message ""
+      (set-selective-display nil))))
+;;
+(defun auto-set-selective-display ()
+  "Apply `set-selective-display' such that current and next line are visible.
+
+Scroll events are excluded in order to prevent wild flickering while navigating."
+  (unless (eq last-command #'mwheel-scroll)
+    (let*((this-line-indent (current-indentation))
+          (next-line-indent (save-excursion (forward-line) (current-indentation))))
+      (with-temp-message "" ; Suppress messages.
+        (set-selective-display (1+ (max this-line-indent next-line-indent)))))))
+;; Text Folding ---Selectively displaying portions of a program:5 ends here
+
+;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:6]]
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+(defun my/search-hook-function ()
+  (when hs-minor-mode (set-mark-command nil) (hs-show-block) (pop-to-mark-command)))
+;; Text Folding ---Selectively displaying portions of a program:6 ends here
 
 ;; [[file:init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove

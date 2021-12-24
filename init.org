@@ -8104,7 +8104,6 @@ choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-
                          (quickrun current-prefix-arg)))))
 #+end_src
 
-
 ** Managing Processes/Servers from within Emacs
 
 Not using this, a bit too verbose to setup for each service but, more
@@ -8115,6 +8114,21 @@ accurately, does not Just Workᵀᴹ for my needs.
   ;; C-h v prodigy-services ⇒ See possible properties.
 #+end_src
 
+my/defaliases
+#+begin_src emacs-lisp
+(defalias 'defaliases 'my/defaliases)
+(defmacro my/defaliases (src &rest tgts)
+  "Provide names TGTS as synonymous aliases for SRC, for discovarability.
+
+Often a function SRC can be construed from different perspectives, names, purposes TGTS.
+Another example is when I define things with the ‘my/’ prefix, but also want to use them without.
+
+Example use: (my/defaliases view-hello-file greet-others learn-about-the-world)
+
+In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
+  `(--map (eval (quote (defalias `,it (quote ,src)))) (quote ,tgts)))
+#+end_src
+
 #+begin_details "Making unkillable buffers & shells"
 #+begin_src emacs-lisp
 (defun my/declare-unkillable-buffer (name)
@@ -8123,8 +8137,7 @@ accurately, does not Just Workᵀᴹ for my needs.
                        (progn (message "Not allowed to kill %s, burying instead; otherwise use “M-x force-kill”" (buffer-name))
                               (bury-buffer))))))
 
-(defalias 'force-kill 'my/force-kill)
-(defalias 'w-force-kill 'my/force-kill)
+(my/defaliases my/force-kill force-kill w-force-kill)
 (cl-defun my/force-kill (&optional buffer-name)
   (interactive)
   (-let [kill-buffer-query-functions nil]
@@ -8142,19 +8155,6 @@ accurately, does not Just Workᵀᴹ for my needs.
       (my/declare-unkillable-buffer buffer-name))))
 #+end_src
 #+end_details
-
-my/defaliases
-#+begin_src emacs-lisp
-(defalias 'defaliases 'my/defaliases)
-(defmacro my/defaliases (src &rest tgts)
-  "Provide names TGTS as synonymous aliases for SRC, for discovarability.
-
-Often a function SRC can be construed from different perspectives, names, purposes TGTS.
-Another example is when I define things with the ‘my/’ prefix, but also want to use them without.
-
-Example use: (my/defaliases view-hello-file greet-others learn-about-the-world)"
-  `(--map (eval (quote (defalias `,it (quote ,src)))) (quote ,tgts)))
-#+end_src
 
 Prefix ~“w-”~ for work stuff.
 #+begin_src emacs-lisp
@@ -8264,7 +8264,7 @@ switching applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-s
   (push 'ejc-company-backend company-backends)
   (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
   ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
-  (bind-key* "C-c C-c"
+  (bind-key "C-c C-c"
              (lambda () (interactive)
                (setq ejc-sql-complete-query-hook
                      (if current-prefix-arg
@@ -8366,23 +8366,21 @@ other connections call with a prefix argument."
   (cl-loop for 𝑺 in my/services
            do (funcall (intern (format "w-stop-%s" 𝑺)))))
 
-(cl-defmacro my/defservice (repo
-                            &key (main-setup "git checkout main; git pull")
-                            (cmd "echo hi")
-                            (example "")
-                            )
-  "
-
-Example use:
+(cl-defmacro my/defservice
+    (repo &key (main-setup "git checkout main; git pull")
+          (cmd "npm run docker:dev")
+          (example ""))
+  "Example use:
 
    (my/defservice 𝒟 :cmd 𝒞 :example ℰ)
   ⇒
     (w-start-𝒟)    ≈ Unkillable shell: cd 𝒟; 𝒞
     (w-is-up-𝒟?)   ≈ Open browser at ℰ
     (w-stop-𝒟)     ≈ Kill all emacs-buffers & docker-images containing 𝒟 in their name
-"
+
+  (w-[start|stop]-services)  ⇒ Starts/stops all defined services."
   (add-to-list 'my/services repo)
-  `(progn
+  `(list
      (cl-defun ,(intern (format "w-start-%s" repo)) ()
        "Start server off of ‘main’, with prefix just start server off of current branch."
        (interactive)
@@ -8419,7 +8417,6 @@ Example use:
 
 (my/defservice wxPortal ;; Takes ~18 mins Front end app
                :main-setup "git checkout main; git pull; npm ci"
-               :cmd "npm run docker:dev"
                :example "http://mars-bur.weeverdev.com")
 
 (my/defservice orchestrator
@@ -8434,20 +8431,21 @@ Example use:
 ;; Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
 
 ;; Do we need to upload files? E.g., images.
-(my/defservice api-file-server :cmd "npm run docker:dev")
+(my/defservice api-file-server)
 
 ;; Send PDFs
-(my/defservice api-pdf-server :cmd "npm run docker:dev")
+(my/defservice api-pdf-server)
+
 ;; (iota  "cd ~/api-iota-server; git checkout main; git pull; npm ci; npm run docker:start") ;; deprecated
 
 ;; Redis stuff
-(my/defservice wx-job-worker :cmd "npm run docker:dev")
+(my/defservice wx-job-worker)
 
 ;; Database backend
 (my/defservice api-platform-server :cmd "npm run docker:start")
 
 ;; Handles routes; should see “Access Denied” when visiting the url below, if things work correctly
-(my/defservice api-router-server :cmd "npm run docker:dev" :example "https://router.weeverdev.com/")
+(my/defservice api-router-server :example "https://router.weeverdev.com/")
 
 ;; (sso "cd ~/single-sign-on/; git checkout main; git pull; export GEM_HOME=\"$HOME/.gem\"; gem install bundler:2.1.4;  source ~/.rvm/scripts/rvm; rvm use 2.7.4; bundle install; rails db:create; rails db:migrate; rails db:seed; rails server"
 ;; "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
