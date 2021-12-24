@@ -2301,6 +2301,17 @@ details and =tab= to see children items, usually.
 
   For ease, above, we have also bound this to kbd:C-c_g ---reminiscent of kbd:C-x_g :smile:
 
+  #+begin_src emacs-lisp
+;; When we invoke magit-status, show green/red the altered lines, with extra
+;; green/red on the subparts of a line that got alerted.
+(system-packages-ensure "git-delta")
+(use-package magit-delta
+  :hook (magit-mode . magit-delta-mode))
+
+;; Don't forget to copy/paste the delta config into the global ~/.gitconfig file.
+;; Copy/paste this: https://github.com/dandavison/delta#get-started
+  #+end_src
+
 + Blame, doc:magit-blame, is super nice: The buffer gets annotations for each chunk
   of text, regarding who authoured it, when, and their commit title.
   Then [[kbd:q]] to quit the blame.
@@ -2826,6 +2837,7 @@ previous, next, or toggle editing org-mode source blocks.
 ;;
 (eval-after-load 'org-mode
   (use-package emacs
+
     :bind (:map org-mode-map
                 ("s-p" . org-babel-previous-src-block)
                 ("s-n" . org-babel-next-src-block)
@@ -8113,10 +8125,12 @@ accurately, does not Just Workᵀᴹ for my needs.
 
 (defalias 'force-kill 'my/force-kill)
 (defalias 'w-force-kill 'my/force-kill)
-(defun my/force-kill ()
+(cl-defun my/force-kill (&optional buffer-name)
   (interactive)
   (-let [kill-buffer-query-functions nil]
-    (kill-current-buffer)
+    (if buffer-name
+        (kill-buffer buffer-name)
+      (kill-current-buffer))
     (ignore-errors (delete-window))))
 
 (cl-defun my/run-unkillable-shell (command &optional (buffer-name command))
@@ -8129,8 +8143,17 @@ accurately, does not Just Workᵀᴹ for my needs.
 #+end_src
 #+end_details
 
+my/defaliases
 #+begin_src emacs-lisp
+(defalias 'defaliases 'my/defaliases)
+(defmacro my/defaliases (src &rest tgts)
+  "Provide names TGTS as synonymous aliases for SRC, for discovarability.
 
+Often a function SRC can be construed from different perspectives, names, purposes TGTS.
+Another example is when I define things with the ‘my/’ prefix, but also want to use them without.
+
+Example use: (my/defaliases view-hello-file greet-others learn-about-the-world)"
+  `(--map (eval (quote (defalias `,it (quote ,src)))) (quote ,tgts)))
 #+end_src
 
 Prefix ~“w-”~ for work stuff.
@@ -8191,10 +8214,10 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 
 Docker
 #+begin_src emacs-lisp
-(defun w-show-docker-containers ()
-  (interactive)
-  (display-message-or-buffer (concat (shell-command-to-string "docker ps --format 'table {{.Image}}\\t{{.RunningFor}} ago\\t{{.Status}}'")
-                           "🚀 Images ending in “_root” are the result of dev-env tool; dockerised not local. 🚀")))
+;; Usage: M-x docker [RET ?]
+(use-package docker
+  :config
+  (my/defaliases docker-containers w-show-docker-containers))
 
 (defun w-stop&remove-docker-containers ()
   (interactive)
@@ -8204,10 +8227,14 @@ Docker
 
 Blue Screen
 #+begin_src emacs-lisp
-(defalias 'w-dev-env-start 'w-blue-screen)
-(defun w-blue-screen ()
-  "Open menu to start servers from interactive menu, etc."
+(my/defaliases w-dev-env-start w-blue-screen w-db-start-servers w-start-db-servers)
+;;
+(defun w-dev-env-start ()
+  "Open menu to start servers from interactive menu, etc.
+Menu can be closed when servers are started; can also stop them."
   (interactive)
+  (shell-command "open --background -a Docker") ;; Open Docker daemon in the background, duh.
+  (shell-command "docker system prune") ;; Remove all stopped containers, dangling images/cache.
   (shell-command
    "osascript -e 'tell application \"Terminal\"
       set currentTab to do script (\"cd ~/ops-helm-deployment; git checkout master; git pull; bash login.sh\")
@@ -8224,74 +8251,216 @@ Blue Screen
   (display-message-or-buffer (shell-command-to-string "cd ~/ops-helm-deployment/docker/wx-dev-env/root/; docker cp ../helpers/userInjector.js platform:/usr/src/userInjector.js; docker exec -t platform sh -c \"npx babel-node userInjector.js\"")))
 #+end_src
 
-WxPortal
+SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only
+want to /quickly/ run a query, to check something, *without the fricition of
+switching applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-sql
+]]to produce a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.
+(This also serves as a nice *reference mechanism* for useful queries.)
 #+begin_src emacs-lisp
-(cl-defun w-open-portal () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
-(cl-defun w-start-portal ()
-  "Starts up the local server to see wxPortal in your browser.
+;; (system-packages-ensure "leiningen")
+(use-package ejc-sql
+  :config
+  (require 'ejc-company)
+  (push 'ejc-company-backend company-backends)
+  (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
+  ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
+  (bind-key* "C-c C-c"
+             (lambda () (interactive)
+               (setq ejc-sql-complete-query-hook
+                     (if current-prefix-arg
+                         '(w-ejc-result-pp-json)  ;; Defined below
+                       '((lambda () ;; Give each line of text just one screen line.
+                           (switch-to-buffer-other-window "*ejc-sql-output*")
+                           (visual-line-mode -1)
+                           (toggle-truncate-lines)
+                           (other-window -1)))))
+               (ejc-eval-user-sql-at-point))
+             'sql-mode-map))
 
-First requires a branch (e.g., for a PR), then sets up env for it.
+(defun w-sql ()
+  "Quickly run a SQL query, then dispose of the buffer when done.
 
-Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-portal."
+By default uses a connection named “platform”, to see a list of
+other connections call with a prefix argument."
   (interactive)
-  (-let [default-directory "~/wxPortal"]
-      (ignore-errors (magit-pull-from-pushremote nil)
-                     (call-interactively #'magit-branch-checkout)
-                     (magit-pull-from-pushremote nil)
-                     (-let [kill-buffer-query-functions nil] (kill-buffer "*wxPortal*")))
-      (my/run-unkillable-shell
-       (s-join ";" '("cd ~/wxPortal"
-                     "npm ci"
-                     "npm run dev"))
-       "*wxPortal*")
-      (magit-status)))
+
+  ;; Get DB credentials. One does “M-x ejc-connect-interactive” once, then
+  ;;  “M-x ejc-insert-connection-data” and paste that into your init; then
+  ;; “M-x ejc-connect” provides a compleition of possible DBs to connect to.
+  (load-file "~/Desktop/work.el")
+  ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
+  ;; which temporarily adds to this hook, then calls
+  (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
+
+  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "platform")]
+    (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
+    (thread-last
+        '("\n\n/\n-- DOCS & EXAMPLES\n--"
+          "-- SQL queries should be seperated by “/”"
+          "-- [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP]"
+          "-- In result window, TAB/RET to navigate the columns/rows."
+          "-- C-c e t ⇒ List all tables"
+          "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
+          "\nselect 1 + 2 as \"Numerical, yeah!\""
+          "\n/\n"
+          "SELECT data #> '{details, properties}'\nfrom submissions"
+          "-- The submissions that have at least a ‘number’ or an ‘MCS’, but NOT a ‘time’."
+          "where data::text similar to '%\"wxType\": \"(number|wx-multiple-choice-score)\"%'"
+          "and not data #> '{details, properties, formdata}' @> '[{\"wxType\": \"time\"}]'"
+          "limit 1;"
+          "\n-- The short arrow -> keeps the type as JSON, and the long arrow ->> returns text."
+          "-- Likewise #> yields JSON whereas #>> yields text."
+          "-- a -> 'b' -> 'c' -> 3 -> 'd'  ==  a #> '{b, c, 3, d}' "
+          "-- (Use integers to access elements of JSON arrays)"
+          "\n/\n"
+          "-- Here are the triggers that are run when an UPDATE is performed against ‘submissions’"
+          "select * from information_schema.triggers"
+          "where event_object_table = 'submissions'"
+          "and event_manipulation = 'UPDATE'"
+          "\n/\n"
+          "-- See most recently updated/altered “In Progress” ticket"
+          "select * from tickets\norder by updated_at desc\nlimit 1")
+      (s-join "\n")
+      insert)
+    (sql-mode)
+    (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
+    (ejc-connect connection-name)
+    (beginning-of-buffer)))
+
+(defun w-ejc-result-pp-json ()
+  "Pretty print JSON ejc-result buffer."
+  (interactive)
+  (ignore-errors
+    (switch-to-buffer-other-window "*ejc-sql-output*")
+    (beginning-of-buffer)
+    (re-search-forward "{")
+    (backward-char 1)
+    (delete-region (point-min) (point))
+    (end-of-buffer)
+    (re-search-backward "|")
+    (kill-line)
+    (json-mode)
+    (json-pretty-print-buffer)
+    (other-window -1)))
 #+end_src
-  (my/run-unkillable-shell "cd ~/wxPortal; git checkout main; git pull; npm ci; npm run dev" "*wxPortal*")
 
-
+ w-start-servers
 #+begin_src emacs-lisp
-;; Make a bunch of “w-start-𝓢” commands, where 𝒮 is a server name. Also “w-is-up-𝒮?” to check if they're running correctly.
-(cl-loop for (name cmd example)
-         in '((portal "cd ~/wxPortal/; git checkout main; git pull; npm run docker:dev" "http://mars-bur.weeverdev.com") ;; Takes ~10 mins to load
-              ;; Alternatively: "cd ~/wxPortal; git checkout main; git pull; npm ci; npm run dev"
-              (orchestrator "cd ~/orchestrator; git checkout main; git pull; npm ci; npm run dev" "http://team.weeverdev.com:9000")
-              (inspections "cd ~/inspections/webui; git checkout main; git pull; npm ci; npm run dev --quiet --no-progress" "http://localhost:3320/inspections/")
-              ;; Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
-              (platform "cd ~/api-platform-server/; git checkout main; git pull; npm run docker:start")
-              (data-agent "cd ~/wx-data-agent/; git checkout main; git pull; cargo watch -x run")
-              (odata "cd ~/api-odata/; git checkout main; git pull; docker-compose up --build")
-              ;; Alternatively: cd $ODATA_DIR; cargo watch -x run
-              )
-         do (eval `(progn
-                     (cl-defun ,(intern (format "w-start-%s" name)) ()
-                       (interactive)
-                       (my/run-unkillable-shell ,cmd ,(format "*%s*" name)))
-                     (if ,example
-                         (cl-defun ,(intern (format "w-is-up-%s?" name)) ()
-                           (interactive)
-                           (browse-url ,example)
-                           (message "If the URL is busted, then the repo is not up correctly or the server has an error!"))))))
+(defun my/docker-stop (ctr)
+  "Stop all containers that mention CTR in their name, image, command, or container id"
+  (thread-last (shell-command-to-string "docker ps -a")
+    (s-split "\n")
+    (--filter (s-contains-p ctr it))
+    (--map (car (s-split " " it))) ;; Get docker container ids
+    (--map (shell-command (concat "docker stop " it)))))
 
-(cl-defun w-router-setup ()
-  (interactive)
-  (browse-url "https://router.weeverdev.com/")
-  (browse-url "https://mars-bur.weeverdev.com/"))
+(defvar my/services nil "List of all services defined; used with `w-start-services' and `w-stop-services'.")
 
-(cl-defun w-start-servers ()
-  "Start all non-PM servers."
+(defun w-start-services ()
   (interactive)
-  (w-start-data-agent)
-  (w-start-odata)
-  (w-start-platform)
-  (w-start-portal)
-  (w-start-inspections)
-  (w-start-orchestrator)
-  (w-router-setup))
+  (cl-loop for 𝑺 in my/services
+           do (funcall (intern (format "w-start-%s" 𝑺)))))
+
+(defun w-stop-services ()
+  (interactive)
+  (cl-loop for 𝑺 in my/services
+           do (funcall (intern (format "w-stop-%s" 𝑺)))))
+
+(cl-defmacro my/defservice (repo
+                            &key (main-setup "git checkout main; git pull")
+                            (cmd "echo hi")
+                            (example "")
+                            )
+  "
+
+Example use:
+
+   (my/defservice 𝒟 :cmd 𝒞 :example ℰ)
+  ⇒
+    (w-start-𝒟)    ≈ Unkillable shell: cd 𝒟; 𝒞
+    (w-is-up-𝒟?)   ≈ Open browser at ℰ
+    (w-stop-𝒟)     ≈ Kill all emacs-buffers & docker-images containing 𝒟 in their name
+"
+  (add-to-list 'my/services repo)
+  `(progn
+     (cl-defun ,(intern (format "w-start-%s" repo)) ()
+       "Start server off of ‘main’, with prefix just start server off of current branch."
+       (interactive)
+       (let ((command (format "cd ~/%s; pwd; hr; %s; git status; hr; %s"
+                              (quote ,repo)
+                              (if current-prefix-arg "" ,main-setup)
+                              ,cmd))
+             (buf-name (format "%s/%s" (quote ,repo)
+                               (if current-prefix-arg "main"
+                                 (-let [default-directory ,(format "~/%s" repo)]
+                                   (magit-get-current-branch))))))
+         (my/run-unkillable-shell
+          (format "echo %s; hr; %s" (pp-to-string command) command) ;; Show command being run in output buffer, then run that command
+          buf-name)
+         (with-current-buffer buf-name (read-only-mode))))
+
+     (cl-defun ,(intern (format "w-stop-%s" repo)) ()
+       "Force-kill all unkillable buffers that mention REPO in their name. Also stop any docker services mentioning REPO in their name."
+       (interactive)
+       (my/docker-stop ,(pp-to-string repo))
+       (thread-last (buffer-list)
+         (mapcar 'buffer-name)
+         (--filter (s-contains-p (f-base ,(pp-to-string repo)) it))
+         (mapcar #'my/force-kill)))
+
+     (if ,example
+         (cl-defun ,(intern (format "w-is-up-%s?" repo)) ()
+           (interactive)
+           (browse-url ,example)
+           (message "If the URL is busted, then the repo is not up correctly or the server has an error!")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; PRs
 
+(my/defservice wxPortal ;; Takes ~18 mins Front end app
+               :main-setup "git checkout main; git pull; npm ci"
+               :cmd "npm run docker:dev"
+               :example "http://mars-bur.weeverdev.com")
+
+(my/defservice orchestrator
+               :main-setup "git checkout main; git pull; npm ci"
+               :cmd "npm run dev"
+               :example "http://team.weeverdev.com:9000") ;; Microapp wrapper
+
+(my/defservice inspections/webui
+               :main-setup "git checkout main; git pull; npm ci"
+               :cmd "npm run dev --quiet --no-progress"
+               :example "http://localhost:3320/inspections/") ;; V2 app
+;; Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
+
+;; Do we need to upload files? E.g., images.
+(my/defservice api-file-server :cmd "npm run docker:dev")
+
+;; Send PDFs
+(my/defservice api-pdf-server :cmd "npm run docker:dev")
+;; (iota  "cd ~/api-iota-server; git checkout main; git pull; npm ci; npm run docker:start") ;; deprecated
+
+;; Redis stuff
+(my/defservice wx-job-worker :cmd "npm run docker:dev")
+
+;; Database backend
+(my/defservice api-platform-server :cmd "npm run docker:start")
+
+;; Handles routes; should see “Access Denied” when visiting the url below, if things work correctly
+(my/defservice api-router-server :cmd "npm run docker:dev" :example "https://router.weeverdev.com/")
+
+;; (sso "cd ~/single-sign-on/; git checkout main; git pull; export GEM_HOME=\"$HOME/.gem\"; gem install bundler:2.1.4;  source ~/.rvm/scripts/rvm; rvm use 2.7.4; bundle install; rails db:create; rails db:migrate; rails db:seed; rails server"
+;; "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
+
+;; Event store stuff, emails, V2, lagoon, powerbi
+;; Getting Rust ∷ brew install rustup-init; rustup-init
+;; FAQ, ensure we use our rust-toolchain file, run:   rustup override unset
+(my/defservice wx-data-agent :cmd "cargo watch -x run")
+(my/defservice api-odata :cmd "docker-compose up --build")
+#+end_src
+
+PRs
+#+begin_src emacs-lisp
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
   (interactive)
@@ -8300,19 +8469,36 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
     (s-join "+")
     (concat "https://github.com/pulls?q=")
     browse-url))
-
-(cl-loop for (name . query-options) in `((month ,(format-time-string "updated:>=%Y-%m-01"))
-                                         (today ,(format-time-string "updated:>=%Y-%m-%d"))
-                                         (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
-                                         (involves-me "involves:alhassy")
-                                         (inspections "label:Inspections")
-                                         (newts "label:\"Newts Priority Review\",Newts"))
+;;
+(cl-loop for (name . query-options)
+         in `((month ,(format-time-string "updated:>=%Y-%m-01"))
+              (today ,(format-time-string "updated:>=%Y-%m-%d"))
+              (created-this-week ,(format "created:>=%s"
+                                          (org-read-date nil nil "++1" nil (org-read-date nil t "-sun")))) ;; Date of most recent Monday
+              (stale!! ,(format "updated:<=%s" (org-read-date nil nil "-1w"))) ;; Items not touched in over a week
+              (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
+              (involves-me "involves:alhassy")
+              (inspections "label:Inspections")
+              (process-manager "label:\"quick and easy\"" "repo:process-builder")
+              (newts "label:\"Newts Priority Review\",Newts"))
          do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
+#+end_src
 
+[[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.
+#+begin_src emacs-lisp
+;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
+;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
+;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
+;; With a prefix argument prompt for the format style 𝒮.
+;; Easy to add more formats.
+(use-package copy-as-format)
+#+end_src
+
+A nice Emacs interface for the a portion of the “gh” CLI.
+#+begin_src emacs-lisp
 ;; A nice Emacs interface for the a portion of the “gh” CLI.
-(defalias 'gh-checkout 'w-pr-checkout)
-(defalias 'w-branch-checkout 'w-pr-checkout)
-(defun w-pr-checkout ()
+(my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
+(defun my/gh-checkout ()
   "With prefix, select a branch name; otherwise a Pull Request name."
   (interactive)
   (let* ((repo (completing-read "Repo: " (projectile-relevant-known-projects)))
@@ -8324,13 +8510,22 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
         (-let [branch (completing-read (format "New branch (Currently “%s”): " current-branch) all-branches)]
           (shell-command-to-string (format "cd %s; git checkout %s" repo branch)))
       (let* ((PR-list (s-split "\n" (shell-command-to-string (format "cd %s; gh pr list" repo))))
-             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list)))))
-        (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯))))
-    (async-shell-command status)
-    (magit-status repo)))
+             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list))))
+             (_ (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯)))
+             (new-branch (magit-get-current-branch)))
+        ;; Update any buffer names that mention the current repo to now also mention
+        ;; the current branch.
+        (thread-last (buffer-list)
+          (mapcar 'buffer-name)
+          (--filter (s-contains-p (f-base repo) it))
+          (--map (with-current-buffer it (rename-buffer (format "%s/%s" (car (s-split "/" it)) new-branch)))))
+        ;; Show nice status
+        (async-shell-command status)
+        (magit-status repo)))))
+#+end_src
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+w-app-slugs
+#+begin_src emacs-lisp
 (defvar w-app-slugs
    (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
 
@@ -8345,20 +8540,21 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
   (shell-command (format "echo \"false\" > ~/wxPortal/client/assets/config/apps/%s/authorization.allowSsoLogin.json" app))
   (w-browse-app app)
   (message "SSO for %s disabled; don't commit the “authorization.allowSsoLogin.json” file!" app)))
+#+end_src
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Databases
-
+Databases
+#+begin_src emacs-lisp
 (cl-defun w-db-migrations ()
   (interactive)
-  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:migrate")))
+  (async-shell-command "cd ~/api-platform-server; git status; npm run docker:migrate" "*DB/Migrations*"))
 
 (cl-defun w-db-rollbacks ()
   (interactive)
-  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:rollback")))
+  (async-shell-command "cd ~/api-platform-server; git status; npm run docker:rollback" "*DB/Rollback*"))
+#+end_src
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+Handbook
+#+begin_src emacs-lisp
 (cl-defun w-handbook-view ()
   "Open the HTML handbook in your local browser"
    (interactive)
@@ -9031,15 +9227,20 @@ which discuss hooks and support for special modes ([[https://superuser.com/quest
   ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
   (quelpa '(hideshowvis :fetcher wiki))
 
+  ;; Press “C-c TAB” to toggle a block's visibility or “C-c f” for my folding hydra.
+  :bind (("C-c TAB" . hs-toggle-hiding))
+
   ;; https://github.com/shanecelis/hideshow-org/tree/master
   ;; This extension bring Org-mode tab behaviour to folding, at the block level
-  ;; and buffer level ---but not cycling visiblity.
-  (use-package hideshow-org)
+  ;; and buffer level ---but not cycling visibility.
+  ;; (use-package hideshow-org) ;; Disabled as commented below.
 
   :hook ((prog-mode . (lambda () (hs-minor-mode +1)
                         (hideshowvis-minor-mode t)
                         (hideshowvis-symbols)
-                        (hs-org/minor-mode t)
+                        ;; This hook along with hs-org mode breaks editing of src blocks in Org files.
+                        ;; That's OK, since my folding hydra does a better job for my needs.
+                        ;; (hs-org/minor-mode t)
                         (hs-hide-all)))))
 #+END_SRC
 
@@ -9051,6 +9252,7 @@ blocks! Love this one (•̀ᴗ•́)و
   ("h" hs-hide-block "Hide")
   ("s" hs-show-block "Show")
   ("t" hs-toggle-hiding "Toggle")
+  ;; "l" hs-hide-level "Hide blocks n levels below this block"; TODO: Enable folding feature
   :Buffer
   ("H" hs-hide-all "Hide")
   ("S" hs-show-all "Show")
@@ -9342,8 +9544,9 @@ vertical line.
    :UI
    ("i" display-fill-column-indicator-mode :toggle t)
    ("f" my/toggle-font "font")
+   ("F" writeroom-mode "Focused Work!" :toggle t)
    ("d" treemacs "directory finder" :toggle t)
-   ("n" global-linum-mode "line number" :toggle t)
+   ("n" display-line-numbers-mode "line number" :toggle t)
    ("u f" (setq frame-title-format (completing-read "New frame title: " nil)) "New frame title") ;; Useful for random screenshots
 
    :Possibly_in_the_way
@@ -9391,6 +9594,9 @@ vertical line.
           (profiler-start 'cpu+mem))
     "Profiler start / report" :exit (profiler-running-p)))
 
+;; Places single frame in centre of screen; hides many UI things.
+;; Nice for focused / immersive work.
+(use-package writeroom-mode)
 #+end_src
 
 ** Toggling System :RelocateMe:

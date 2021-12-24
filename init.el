@@ -116,13 +116,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -620,6 +620,17 @@ Is replaced by:
     (magit-clone-set-remote.pushDefault t))
 ;;   =magit= ---Emacs' porcelain interface to git:1 ends here
 
+;; [[file:init.org::*  =magit= ---Emacs' porcelain interface to git][  =magit= ---Emacs' porcelain interface to git:2]]
+;; When we invoke magit-status, show green/red the altered lines, with extra
+;; green/red on the subparts of a line that got alerted.
+(system-packages-ensure "git-delta")
+(use-package magit-delta
+  :hook (magit-mode . magit-delta-mode))
+
+;; Don't forget to copy/paste the delta config into the global ~/.gitconfig file.
+;; Copy/paste this: https://github.com/dandavison/delta#get-started
+;;   =magit= ---Emacs' porcelain interface to git:2 ends here
+
 ;; [[file:init.org::*Credentials: I am who I am][Credentials: I am who I am:1]]
 ;; See here for a short & useful tutorial:
 ;; https://alvinalexander.com/git/git-show-change-username-email-address
@@ -827,6 +838,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;;
 (eval-after-load 'org-mode
   (use-package emacs
+
     :bind (:map org-mode-map
                 ("s-p" . org-babel-previous-src-block)
                 ("s-n" . org-babel-next-src-block)
@@ -2687,10 +2699,12 @@ by spaces.
 
 (defalias 'force-kill 'my/force-kill)
 (defalias 'w-force-kill 'my/force-kill)
-(defun my/force-kill ()
+(cl-defun my/force-kill (&optional buffer-name)
   (interactive)
   (-let [kill-buffer-query-functions nil]
-    (kill-current-buffer)
+    (if buffer-name
+        (kill-buffer buffer-name)
+      (kill-current-buffer))
     (ignore-errors (delete-window))))
 
 (cl-defun my/run-unkillable-shell (command &optional (buffer-name command))
@@ -2703,7 +2717,15 @@ by spaces.
 ;; Managing Processes/Servers from within Emacs:2 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:3]]
+(defalias 'defaliases 'my/defaliases)
+(defmacro my/defaliases (src &rest tgts)
+  "Provide names TGTS as synonymous aliases for SRC, for discovarability.
 
+Often a function SRC can be construed from different perspectives, names, purposes TGTS.
+Another example is when I define things with the ‘my/’ prefix, but also want to use them without.
+
+Example use: (my/defaliases view-hello-file greet-others learn-about-the-world)"
+  `(--map (eval (quote (defalias `,it (quote ,src)))) (quote ,tgts)))
 ;; Managing Processes/Servers from within Emacs:3 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:4]]
@@ -2761,10 +2783,10 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; Managing Processes/Servers from within Emacs:6 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:7]]
-(defun w-show-docker-containers ()
-  (interactive)
-  (display-message-or-buffer (concat (shell-command-to-string "docker ps --format 'table {{.Image}}\\t{{.RunningFor}} ago\\t{{.Status}}'")
-                           "🚀 Images ending in “_root” are the result of dev-env tool; dockerised not local. 🚀")))
+;; Usage: M-x docker [RET ?]
+(use-package docker
+  :config
+  (my/defaliases docker-containers w-show-docker-containers))
 
 (defun w-stop&remove-docker-containers ()
   (interactive)
@@ -2773,10 +2795,14 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; Managing Processes/Servers from within Emacs:7 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:8]]
-(defalias 'w-dev-env-start 'w-blue-screen)
-(defun w-blue-screen ()
-  "Open menu to start servers from interactive menu, etc."
+(my/defaliases w-dev-env-start w-blue-screen w-db-start-servers w-start-db-servers)
+;;
+(defun w-dev-env-start ()
+  "Open menu to start servers from interactive menu, etc.
+Menu can be closed when servers are started; can also stop them."
   (interactive)
+  (shell-command "open --background -a Docker") ;; Open Docker daemon in the background, duh.
+  (shell-command "docker system prune") ;; Remove all stopped containers, dangling images/cache.
   (shell-command
    "osascript -e 'tell application \"Terminal\"
       set currentTab to do script (\"cd ~/ops-helm-deployment; git checkout master; git pull; bash login.sh\")
@@ -2794,70 +2820,208 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; Managing Processes/Servers from within Emacs:8 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:9]]
-(cl-defun w-open-portal () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
-(cl-defun w-start-portal ()
-  "Starts up the local server to see wxPortal in your browser.
+;; (system-packages-ensure "leiningen")
+(use-package ejc-sql
+  :config
+  (require 'ejc-company)
+  (push 'ejc-company-backend company-backends)
+  (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
+  ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
+  (bind-key* "C-c C-c"
+             (lambda () (interactive)
+               (setq ejc-sql-complete-query-hook
+                     (if current-prefix-arg
+                         '(w-ejc-result-pp-json)  ;; Defined below
+                       '((lambda () ;; Give each line of text just one screen line.
+                           (switch-to-buffer-other-window "*ejc-sql-output*")
+                           (visual-line-mode -1)
+                           (toggle-truncate-lines)
+                           (other-window -1)))))
+               (ejc-eval-user-sql-at-point))
+             'sql-mode-map))
 
-First requires a branch (e.g., for a PR), then sets up env for it.
+(defun w-sql ()
+  "Quickly run a SQL query, then dispose of the buffer when done.
 
-Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-portal."
+By default uses a connection named “platform”, to see a list of
+other connections call with a prefix argument."
   (interactive)
-  (-let [default-directory "~/wxPortal"]
-      (ignore-errors (magit-pull-from-pushremote nil)
-                     (call-interactively #'magit-branch-checkout)
-                     (magit-pull-from-pushremote nil)
-                     (-let [kill-buffer-query-functions nil] (kill-buffer "*wxPortal*")))
-      (my/run-unkillable-shell
-       (s-join ";" '("cd ~/wxPortal"
-                     "npm ci"
-                     "npm run dev"))
-       "*wxPortal*")
-      (magit-status)))
+
+  ;; Get DB credentials. One does “M-x ejc-connect-interactive” once, then
+  ;;  “M-x ejc-insert-connection-data” and paste that into your init; then
+  ;; “M-x ejc-connect” provides a compleition of possible DBs to connect to.
+  (load-file "~/Desktop/work.el")
+  ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
+  ;; which temporarily adds to this hook, then calls
+  (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
+
+  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "platform")]
+    (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
+    (thread-last
+        '("\n\n/\n-- DOCS & EXAMPLES\n--"
+          "-- SQL queries should be seperated by “/”"
+          "-- [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP]"
+          "-- In result window, TAB/RET to navigate the columns/rows."
+          "-- C-c e t ⇒ List all tables"
+          "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
+          "\nselect 1 + 2 as \"Numerical, yeah!\""
+          "\n/\n"
+          "SELECT data #> '{details, properties}'\nfrom submissions"
+          "-- The submissions that have at least a ‘number’ or an ‘MCS’, but NOT a ‘time’."
+          "where data::text similar to '%\"wxType\": \"(number|wx-multiple-choice-score)\"%'"
+          "and not data #> '{details, properties, formdata}' @> '[{\"wxType\": \"time\"}]'"
+          "limit 1;"
+          "\n-- The short arrow -> keeps the type as JSON, and the long arrow ->> returns text."
+          "-- Likewise #> yields JSON whereas #>> yields text."
+          "-- a -> 'b' -> 'c' -> 3 -> 'd'  ==  a #> '{b, c, 3, d}' "
+          "-- (Use integers to access elements of JSON arrays)"
+          "\n/\n"
+          "-- Here are the triggers that are run when an UPDATE is performed against ‘submissions’"
+          "select * from information_schema.triggers"
+          "where event_object_table = 'submissions'"
+          "and event_manipulation = 'UPDATE'"
+          "\n/\n"
+          "-- See most recently updated/altered “In Progress” ticket"
+          "select * from tickets\norder by updated_at desc\nlimit 1")
+      (s-join "\n")
+      insert)
+    (sql-mode)
+    (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
+    (ejc-connect connection-name)
+    (beginning-of-buffer)))
+
+(defun w-ejc-result-pp-json ()
+  "Pretty print JSON ejc-result buffer."
+  (interactive)
+  (ignore-errors
+    (switch-to-buffer-other-window "*ejc-sql-output*")
+    (beginning-of-buffer)
+    (re-search-forward "{")
+    (backward-char 1)
+    (delete-region (point-min) (point))
+    (end-of-buffer)
+    (re-search-backward "|")
+    (kill-line)
+    (json-mode)
+    (json-pretty-print-buffer)
+    (other-window -1)))
 ;; Managing Processes/Servers from within Emacs:9 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:10]]
-;; Make a bunch of “w-start-𝓢” commands, where 𝒮 is a server name. Also “w-is-up-𝒮?” to check if they're running correctly.
-(cl-loop for (name cmd example)
-         in '((portal "cd ~/wxPortal/; git checkout main; git pull; npm run docker:dev" "http://mars-bur.weeverdev.com") ;; Takes ~10 mins to load
-              ;; Alternatively: "cd ~/wxPortal; git checkout main; git pull; npm ci; npm run dev"
-              (orchestrator "cd ~/orchestrator; git checkout main; git pull; npm ci; npm run dev" "http://team.weeverdev.com:9000")
-              (inspections "cd ~/inspections/webui; git checkout main; git pull; npm ci; npm run dev --quiet --no-progress" "http://localhost:3320/inspections/")
-              ;; Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
-              (platform "cd ~/api-platform-server/; git checkout main; git pull; npm run docker:start")
-              (data-agent "cd ~/wx-data-agent/; git checkout main; git pull; cargo watch -x run")
-              (odata "cd ~/api-odata/; git checkout main; git pull; docker-compose up --build")
-              ;; Alternatively: cd $ODATA_DIR; cargo watch -x run
-              )
-         do (eval `(progn
-                     (cl-defun ,(intern (format "w-start-%s" name)) ()
-                       (interactive)
-                       (my/run-unkillable-shell ,cmd ,(format "*%s*" name)))
-                     (if ,example
-                         (cl-defun ,(intern (format "w-is-up-%s?" name)) ()
-                           (interactive)
-                           (browse-url ,example)
-                           (message "If the URL is busted, then the repo is not up correctly or the server has an error!"))))))
+(defun my/docker-stop (ctr)
+  "Stop all containers that mention CTR in their name, image, command, or container id"
+  (thread-last (shell-command-to-string "docker ps -a")
+    (s-split "\n")
+    (--filter (s-contains-p ctr it))
+    (--map (car (s-split " " it))) ;; Get docker container ids
+    (--map (shell-command (concat "docker stop " it)))))
 
-(cl-defun w-router-setup ()
-  (interactive)
-  (browse-url "https://router.weeverdev.com/")
-  (browse-url "https://mars-bur.weeverdev.com/"))
+(defvar my/services nil "List of all services defined; used with `w-start-services' and `w-stop-services'.")
 
-(cl-defun w-start-servers ()
-  "Start all non-PM servers."
+(defun w-start-services ()
   (interactive)
-  (w-start-data-agent)
-  (w-start-odata)
-  (w-start-platform)
-  (w-start-portal)
-  (w-start-inspections)
-  (w-start-orchestrator)
-  (w-router-setup))
+  (cl-loop for 𝑺 in my/services
+           do (funcall (intern (format "w-start-%s" 𝑺)))))
+
+(defun w-stop-services ()
+  (interactive)
+  (cl-loop for 𝑺 in my/services
+           do (funcall (intern (format "w-stop-%s" 𝑺)))))
+
+(cl-defmacro my/defservice (repo
+                            &key (main-setup "git checkout main; git pull")
+                            (cmd "echo hi")
+                            (example "")
+                            )
+  "
+
+Example use:
+
+   (my/defservice 𝒟 :cmd 𝒞 :example ℰ)
+  ⇒
+    (w-start-𝒟)    ≈ Unkillable shell: cd 𝒟; 𝒞
+    (w-is-up-𝒟?)   ≈ Open browser at ℰ
+    (w-stop-𝒟)     ≈ Kill all emacs-buffers & docker-images containing 𝒟 in their name
+"
+  (add-to-list 'my/services repo)
+  `(progn
+     (cl-defun ,(intern (format "w-start-%s" repo)) ()
+       "Start server off of ‘main’, with prefix just start server off of current branch."
+       (interactive)
+       (let ((command (format "cd ~/%s; pwd; hr; %s; git status; hr; %s"
+                              (quote ,repo)
+                              (if current-prefix-arg "" ,main-setup)
+                              ,cmd))
+             (buf-name (format "%s/%s" (quote ,repo)
+                               (if current-prefix-arg "main"
+                                 (-let [default-directory ,(format "~/%s" repo)]
+                                   (magit-get-current-branch))))))
+         (my/run-unkillable-shell
+          (format "echo %s; hr; %s" (pp-to-string command) command) ;; Show command being run in output buffer, then run that command
+          buf-name)
+         (with-current-buffer buf-name (read-only-mode))))
+
+     (cl-defun ,(intern (format "w-stop-%s" repo)) ()
+       "Force-kill all unkillable buffers that mention REPO in their name. Also stop any docker services mentioning REPO in their name."
+       (interactive)
+       (my/docker-stop ,(pp-to-string repo))
+       (thread-last (buffer-list)
+         (mapcar 'buffer-name)
+         (--filter (s-contains-p (f-base ,(pp-to-string repo)) it))
+         (mapcar #'my/force-kill)))
+
+     (if ,example
+         (cl-defun ,(intern (format "w-is-up-%s?" repo)) ()
+           (interactive)
+           (browse-url ,example)
+           (message "If the URL is busted, then the repo is not up correctly or the server has an error!")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; PRs
 
+(my/defservice wxPortal ;; Takes ~18 mins Front end app
+               :main-setup "git checkout main; git pull; npm ci"
+               :cmd "npm run docker:dev"
+               :example "http://mars-bur.weeverdev.com")
+
+(my/defservice orchestrator
+               :main-setup "git checkout main; git pull; npm ci"
+               :cmd "npm run dev"
+               :example "http://team.weeverdev.com:9000") ;; Microapp wrapper
+
+(my/defservice inspections/webui
+               :main-setup "git checkout main; git pull; npm ci"
+               :cmd "npm run dev --quiet --no-progress"
+               :example "http://localhost:3320/inspections/") ;; V2 app
+;; Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
+
+;; Do we need to upload files? E.g., images.
+(my/defservice api-file-server :cmd "npm run docker:dev")
+
+;; Send PDFs
+(my/defservice api-pdf-server :cmd "npm run docker:dev")
+;; (iota  "cd ~/api-iota-server; git checkout main; git pull; npm ci; npm run docker:start") ;; deprecated
+
+;; Redis stuff
+(my/defservice wx-job-worker :cmd "npm run docker:dev")
+
+;; Database backend
+(my/defservice api-platform-server :cmd "npm run docker:start")
+
+;; Handles routes; should see “Access Denied” when visiting the url below, if things work correctly
+(my/defservice api-router-server :cmd "npm run docker:dev" :example "https://router.weeverdev.com/")
+
+;; (sso "cd ~/single-sign-on/; git checkout main; git pull; export GEM_HOME=\"$HOME/.gem\"; gem install bundler:2.1.4;  source ~/.rvm/scripts/rvm; rvm use 2.7.4; bundle install; rails db:create; rails db:migrate; rails db:seed; rails server"
+;; "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
+
+;; Event store stuff, emails, V2, lagoon, powerbi
+;; Getting Rust ∷ brew install rustup-init; rustup-init
+;; FAQ, ensure we use our rust-toolchain file, run:   rustup override unset
+(my/defservice wx-data-agent :cmd "cargo watch -x run")
+(my/defservice api-odata :cmd "docker-compose up --build")
+;; Managing Processes/Servers from within Emacs:10 ends here
+
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:11]]
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
   (interactive)
@@ -2866,19 +3030,34 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
     (s-join "+")
     (concat "https://github.com/pulls?q=")
     browse-url))
-
-(cl-loop for (name . query-options) in `((month ,(format-time-string "updated:>=%Y-%m-01"))
-                                         (today ,(format-time-string "updated:>=%Y-%m-%d"))
-                                         (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
-                                         (involves-me "involves:alhassy")
-                                         (inspections "label:Inspections")
-                                         (newts "label:\"Newts Priority Review\",Newts"))
+;;
+(cl-loop for (name . query-options)
+         in `((month ,(format-time-string "updated:>=%Y-%m-01"))
+              (today ,(format-time-string "updated:>=%Y-%m-%d"))
+              (created-this-week ,(format "created:>=%s"
+                                          (org-read-date nil nil "++1" nil (org-read-date nil t "-sun")))) ;; Date of most recent Monday
+              (stale!! ,(format "updated:<=%s" (org-read-date nil nil "-1w"))) ;; Items not touched in over a week
+              (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
+              (involves-me "involves:alhassy")
+              (inspections "label:Inspections")
+              (process-manager "label:\"quick and easy\"" "repo:process-builder")
+              (newts "label:\"Newts Priority Review\",Newts"))
          do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
+;; Managing Processes/Servers from within Emacs:11 ends here
 
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:12]]
+;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
+;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
+;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
+;; With a prefix argument prompt for the format style 𝒮.
+;; Easy to add more formats.
+(use-package copy-as-format)
+;; Managing Processes/Servers from within Emacs:12 ends here
+
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:13]]
 ;; A nice Emacs interface for the a portion of the “gh” CLI.
-(defalias 'gh-checkout 'w-pr-checkout)
-(defalias 'w-branch-checkout 'w-pr-checkout)
-(defun w-pr-checkout ()
+(my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
+(defun my/gh-checkout ()
   "With prefix, select a branch name; otherwise a Pull Request name."
   (interactive)
   (let* ((repo (completing-read "Repo: " (projectile-relevant-known-projects)))
@@ -2890,13 +3069,21 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
         (-let [branch (completing-read (format "New branch (Currently “%s”): " current-branch) all-branches)]
           (shell-command-to-string (format "cd %s; git checkout %s" repo branch)))
       (let* ((PR-list (s-split "\n" (shell-command-to-string (format "cd %s; gh pr list" repo))))
-             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list)))))
-        (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯))))
-    (async-shell-command status)
-    (magit-status repo)))
+             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list))))
+             (_ (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯)))
+             (new-branch (magit-get-current-branch)))
+        ;; Update any buffer names that mention the current repo to now also mention
+        ;; the current branch.
+        (thread-last (buffer-list)
+          (mapcar 'buffer-name)
+          (--filter (s-contains-p (f-base repo) it))
+          (--map (with-current-buffer it (rename-buffer (format "%s/%s" (car (s-split "/" it)) new-branch)))))
+        ;; Show nice status
+        (async-shell-command status)
+        (magit-status repo)))))
+;; Managing Processes/Servers from within Emacs:13 ends here
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:14]]
 (defvar w-app-slugs
    (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
 
@@ -2911,20 +3098,19 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
   (shell-command (format "echo \"false\" > ~/wxPortal/client/assets/config/apps/%s/authorization.allowSsoLogin.json" app))
   (w-browse-app app)
   (message "SSO for %s disabled; don't commit the “authorization.allowSsoLogin.json” file!" app)))
+;; Managing Processes/Servers from within Emacs:14 ends here
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Databases
-
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:15]]
 (cl-defun w-db-migrations ()
   (interactive)
-  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:migrate")))
+  (async-shell-command "cd ~/api-platform-server; git status; npm run docker:migrate" "*DB/Migrations*"))
 
 (cl-defun w-db-rollbacks ()
   (interactive)
-  (display-message-or-buffer (shell-command-to-string "cd ~/api-platform-server; git status; npm run docker:rollback")))
+  (async-shell-command "cd ~/api-platform-server; git status; npm run docker:rollback" "*DB/Rollback*"))
+;; Managing Processes/Servers from within Emacs:15 ends here
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:16]]
 (cl-defun w-handbook-view ()
   "Open the HTML handbook in your local browser"
    (interactive)
@@ -2935,10 +3121,7 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
    (interactive)
    (shell-command "emacs ~/handbook/How-Do-I.org --batch -Q --load ~/handbook/lisp/export-org-to-html.el -f org-html-export-to-html --kill")
    (w-handbook-view))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Managing Processes/Servers from within Emacs:10 ends here
+;; Managing Processes/Servers from within Emacs:16 ends here
 
 ;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
 ;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
@@ -3250,101 +3433,6 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
 ;; Sometimes just invoke: M-x color-identifiers:refresh
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:1]]
-(use-package hideshow
-  :init
-  ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
-  (quelpa '(hideshowvis :fetcher wiki))
-
-  ;; https://github.com/shanecelis/hideshow-org/tree/master
-  ;; This extension bring Org-mode tab behaviour to folding, at the block level
-  ;; and buffer level ---but not cycling visiblity.
-  (use-package hideshow-org)
-
-  :hook ((prog-mode . (lambda () (hs-minor-mode +1)
-                        (hideshowvis-minor-mode t)
-                        (hideshowvis-symbols)
-                        (hs-org/minor-mode t)
-                        (hs-hide-all)))))
-;; Text Folding ---Selectively displaying portions of a program:1 ends here
-
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:2]]
-(my/defhydra "C-c f" "Folding text" archive
-  :Current
-  ("h" hs-hide-block "Hide")
-  ("s" hs-show-block "Show")
-  ("t" hs-toggle-hiding "Toggle")
-  :Buffer
-  ("H" hs-hide-all "Hide")
-  ("S" hs-show-all "Show")
-  ("T" my/hs-toggle-buffer "Toggle")
-  :Style
-  ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
-  ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
-  :...
-  ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
-  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
-  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
-  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset")) ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
-
-;; Features from origami/yafolding that maybe I'd like to implement include:
-;; folding region, narrowing to block or folding everything except block, navigating back and forth between folded blocks.
-;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
-;; Text Folding ---Selectively displaying portions of a program:2 ends here
-
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:3]]
-(defvar my/hs-hide nil "Current state of hideshow for toggling all.")
-(defun my/hs-toggle-buffer () "Toggle hideshow all."
-       (interactive)
-       (setq my/hs-hide (not my/hs-hide))
-       (if my/hs-hide
-           (hs-hide-all)
-         (hs-show-all)))
-;; Text Folding ---Selectively displaying portions of a program:3 ends here
-
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:4]]
-(defun my/clever-selective-display (&optional level)
-"Fold text indented same of more than the cursor.
-
-This function toggles folding according to the level of
-indentation at point. It's convenient not having to specify a
-number nor move point to the desired column.
-"
-  (interactive "P")
-  (if (eq selective-display (1+ (current-column)))
-      (set-selective-display 0)
-    (set-selective-display (or level (1+ (current-column))))))
-;; Text Folding ---Selectively displaying portions of a program:4 ends here
-
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:5]]
-;; Src: https://emacs.stackexchange.com/questions/52588/dynamically-hide-lines-indented-more-than-current-line
-(define-minor-mode auto-set-selective-display-mode
-  "Automatically apply `set-selective-display' at all times based on current indentation."
-  nil "$" nil
-  (if auto-set-selective-display-mode
-      (add-hook 'post-command-hook #'auto-set-selective-display nil t)
-    (remove-hook 'post-command-hook #'auto-set-selective-display t)
-    (with-temp-message ""
-      (set-selective-display nil))))
-;;
-(defun auto-set-selective-display ()
-  "Apply `set-selective-display' such that current and next line are visible.
-
-Scroll events are excluded in order to prevent wild flickering while navigating."
-  (unless (eq last-command #'mwheel-scroll)
-    (let*((this-line-indent (current-indentation))
-          (next-line-indent (save-excursion (forward-line) (current-indentation))))
-      (with-temp-message "" ; Suppress messages.
-        (set-selective-display (1+ (max this-line-indent next-line-indent)))))))
-;; Text Folding ---Selectively displaying portions of a program:5 ends here
-
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:6]]
-;; Open folded nodes if a search stops there.
-(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-(defun my/search-hook-function ()
-  (when hs-minor-mode (set-mark-command nil) (hs-show-block) (pop-to-mark-command)))
-;; Text Folding ---Selectively displaying portions of a program:6 ends here
-
 ;; [[file:init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove
   :config ;; use command key on Mac
@@ -3392,8 +3480,9 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
    :UI
    ("i" display-fill-column-indicator-mode :toggle t)
    ("f" my/toggle-font "font")
+   ("F" writeroom-mode "Focused Work!" :toggle t)
    ("d" treemacs "directory finder" :toggle t)
-   ("n" global-linum-mode "line number" :toggle t)
+   ("n" display-line-numbers-mode "line number" :toggle t)
    ("u f" (setq frame-title-format (completing-read "New frame title: " nil)) "New frame title") ;; Useful for random screenshots
 
    :Possibly_in_the_way
@@ -3440,6 +3529,10 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
             (progn (profiler-report) (profiler-stop))
           (profiler-start 'cpu+mem))
     "Profiler start / report" :exit (profiler-running-p)))
+
+;; Places single frame in centre of screen; hides many UI things.
+;; Nice for focused / immersive work.
+(use-package writeroom-mode)
 ;; Toggles Hydra:1 ends here
 
 ;; [[file:init.org::*Toggling System][Toggling System:1]]
