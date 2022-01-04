@@ -1585,8 +1585,13 @@ Whenever we have a choice to make from a list, [[http://tuhdo.github.io/helm-int
 completions and narrows the list of choices as we type.  This is extremely
 helpful for when switching between buffers, =C-x b=, and discovering & learning
 about other commands!  E.g., press ~M-x~ to see recently executed commands and
-other possible commands! Press ~M-x~ and just start typing, methods mentioning
-what you've typed are suddenly listed!
+other possible commands! “Fuzzy finding”: Press ~M-x~ and just start typing,
+methods mentioning what you've typed are suddenly listed! Moreover, ~C-c i~
+(doc:helm-imenu) will show you the headers in an Org file /or/ the top-level
+variables/functions/types when programming. Finally, whenever a Helm session has
+started, toggle follow-mode with ~C-c C-f~ to obtain contextual-awareness; e.g.,
+~C-c i RET C-c C-f~ will change your screen as you scroll through the menu.
+/(A killer feature is doc:helm-do-grep-ag which will do a search in your whole project, file tree)./
 
 | Remembrance comes with time, until then /ask/ Emacs! |
 
@@ -1605,7 +1610,7 @@ what you've typed are suddenly listed!
         ("C-h a"   . helm-apropos)
         ;; Look at what was cut recently & paste it in.
         ("M-y" . helm-show-kill-ring)
-
+        ("C-x C-x" . helm-all-mark-rings)
         :map helm-map
         ;; We can list ‘actions’ on the currently selected item by C-z.
         ("C-z" . helm-select-action)
