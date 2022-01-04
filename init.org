@@ -13,15 +13,22 @@
 #
 # I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
 # https://nyxt.atlas.engineer/  ---An eerily Emacs-like browser
-
+#
+#
 # Emacs and Nyxt treat Vim as a subset. And there is no reason to be angry about this affirmative. It is a technical fact :)
+#
+# Using org-mode as my word processor of choice.
+
+
+# Were I “only coding”, then I'd use a popular Integrated Development Environment that requires minimal setup and Just Worksᵀᴹ;
+# but I blog, make cheat sheets, run background services, etc and so I need an Integrated Computing Environment: Emacs.
 
 # Installing LaTex
 # $ brew install --cask mactex
 # $ eval "$(/usr/libexec/path_helper)"
 # $ type pdflatex  # => pdflatex is /Library/TeX/texbin/pdflatex
 
-* title :ignore:
+* title :ignore:ma:
 :PROPERTIES:
 :CUSTOM_ID: title
 :END:
@@ -6686,6 +6693,26 @@ the current heading stuck at the top of the window.
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / "))
 #+END_SRC
+** Replace :KEYWORDS: with nice SVG labels
+#+begin_src emacs-lisp
+;; Replace :KEYWORDS: with nice SVG labels; for more power use the svg-lib package.
+(use-package svg-tag-mode
+  :config (global-svg-tag-mode)
+  :custom (svg-tag-tags
+           ;; Replace any occurence of :TODO: …
+           '((":TODO:" . ( ;; … with a static SVG tag displaying TODO
+                          (lambda (tag) (svg-tag-make "TODO" :face 'org-todo :inverse t :margin 0))
+                          ;; … that can be clicked to show all TODOs in buffer.
+                          (lambda () (interactive) (hl-todo-occur))
+                          ;; … with this help message displayed when the tag is hovered with the pointer.
+                          "Hola"
+                          ))
+             ;; Otherwise, replace all captialised :XXX: with a pretty tag displayed XXX.
+             ("\\(:[A-Z]+:\\)" . ((lambda (tag)
+                                    (svg-tag-make tag :beg 1 :end -1)))))))
+             ;;
+             ;; Many more useful examples at: https://github.com/rougier/svg-tag-mode/blob/main/examples/example-2.el
+#+end_src
 * Prose
 CLOSED: [2021-11-02 Tue 22:43]
 :PROPERTIES:
