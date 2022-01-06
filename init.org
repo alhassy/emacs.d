@@ -3878,7 +3878,6 @@ name.
 #+end_box
 
 * Life within Org-mode
-CLOSED: [2021-11-02 Tue 22:13]
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
@@ -3965,15 +3964,19 @@ With that in-hand, we use a wrapper to ~org-capture~ to make use of it.
 (defun my/org-capture (&optional prefix keys)
   "Capture something!
 
-      C-c c   ⇒ Capture something; likewise for “C-uⁿ C-c c” where n ≥ 3.
+      C-c c   ⇒ Capture something
 C-u   C-c c   ⇒ Capture current [narrowed] buffer.
 C-u 5 C-c c   ⇒ Capture current [narrowed] buffer without adding additional remarks.
-C-u C-u C-c c ⇒ Goto last note stored."
+C-u C-u C-c c ⇒ Goto last note stored.
+
+At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
   (interactive "p")
-  (case prefix
+  (pcase prefix
     (4     (my/org-capture-buffer keys))
     (5     (my/org-capture-buffer keys :no-additional-remarks))
-    (t     (org-capture prefix keys))))
+    (t     (if my/personal-machine?
+               (org-capture prefix keys)
+             (org-capture prefix "t")))))
 #+end_src
 #+end_details
 
@@ -3983,7 +3986,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 #+RESULTS:
 #+begin_box
-+  [[kbd:      C-c c   ]] Capture something; likewise for “C-uⁿ C-c c” where n ≥ 3.
++  [[kbd:      C-c c   ]] Capture something
 +  [[kbd:C-u   C-c c   ]] Capture current [narrowed] buffer.
 +  [[kbd:C-u 5 C-c c   ]] Capture current [narrowed] buffer without adding additional remarks.
 +  [[kbd:C-u C-u C-c c ]] Goto last note stored.
@@ -3997,16 +4000,20 @@ file location where I made the note ---helpful for tasks, tickets, to be tackled
 later on.
 
 #+begin_src emacs-lisp
-;; Location of my todos/notes file
-(unless noninteractive (setq org-default-notes-file "~/Dropbox/todo.org"))
+;; Location of my todos / captured notes file
+(unless noninteractive
+  (setq org-default-notes-file
+        (if my/personal-machine?
+            "~/Dropbox/todo.org"
+          "~/Desktop/Work-2022-01-01.org")))
 
 ;; “C-c c” to quickly capture a task/note
-(define-key global-map "\C-cc" #'my/org-capture) ;; See below.
+(define-key global-map "\C-cc" #'my/org-capture) ;; See above.
 #+end_src
 
 #+begin_details "By default we only get a ‘tasks’ form of capture, let's add some more."
 #+begin_src emacs-lisp
-(cl-defun my/make/org-capture-template
+(cl-defun my/make-org-capture-template
    (shortcut heading &optional (no-todo nil) (description heading) (scheduled nil))
   "Quickly produce an org-capture-template.
 
@@ -4043,8 +4050,7 @@ later on.
 (setq org-capture-templates
       (cl-loop for (shortcut heading)
             in (-partition 2 '("t" "Tasks, Getting Things Done"
-                               "r" "Research"
-                               "2" "2FA3"
+                               "r" "Reference Material"
                                "m" "Email"
                                "e" "Emacs (•̀ᴗ•́)و"
                                "i" "Islam"
@@ -4052,7 +4058,7 @@ later on.
                                "a" "Arbitrary Reading and Learning"
                                "l" "Programming Languages"
                                "p" "Personal Matters"))
-            collect  (my/make/org-capture-template shortcut heading)))
+            collect  (my/make-org-capture-template shortcut heading)))
 #+end_src
 
 Rather than adding notes to particular Org headings in my =todo.org= file, I could
@@ -4099,7 +4105,7 @@ Let's also ensure *[[orange:TODO]]*-s respect hierarchical structure.
   material, or self-contained tasks.
   # See [[#Capturing-Mail-as-Todo-Notes][above]] for this discussion.
 + Anywhere you simply want to make a note, for the current heading, just press
-  ~C-c C-z~. The notes are just your remarks along with a timestamp; they are
+  kbd:C-c_C-z. The notes are just your remarks along with a timestamp; they are
   collected at the top of the tree, under the heading.
 
   #+begin_src emacs-lisp
@@ -4270,9 +4276,10 @@ under appropriate parent headings, I want entries to be shown according to their
 parent heading. Of-course, the top-most grouping, the important tasks, should be
 pulled out of their group and placed at the top.
 #+BEGIN_SRC emacs-lisp
+(use-package origami)
 (use-package org-super-agenda
-  ;; :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
-  ;; :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
+  :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
+  :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
   :config
   (org-super-agenda-mode)
   (setq org-super-agenda-groups
@@ -4429,12 +4436,11 @@ archive file too, if we enable it so.
 #+END_SRC
 
 #+begin_src emacs-lisp
-;; Invoking the agenda command shows the agenda and enables
-;; the org-agenda variables.
-;; ➩ Show my agenda upon Emacs startup.
+;; Invoking the agenda command shows the agenda and enables the org-agenda
+;; variables.
 (unless noninteractive
-  (when my/personal-machine?
-    (org-agenda "a" "a"))) ;; Need this to have “org-agenda-custom-commands” defined.
+    ;; ➩ Show my agenda upon Emacs startup.
+    (org-agenda "a" "a")) ;; Need this to have “org-agenda-custom-commands” defined.
 #+end_src
 
 Let's install some helpful views for our agenda.
@@ -4638,12 +4644,12 @@ utilise a prefix argument to obtain my work specific entries.
 Anyhow, the setup:
 #+begin_src emacs-lisp
 (use-package org-journal
-  ;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
+  ;; C-u C-c j ⇒ Work journal ;; C-c j ⇒ Personal journal
   :bind (("C-c j" . my/org-journal-new-entry))
   :config
     (setq org-journal-dir         "~/Desktop/" ;; "~/Dropbox/journal/"
           org-journal-file-type   'yearly
-          org-journal-file-format "Personal-%Y-%m-%d")
+          org-journal-file-format "Personal-%Y-%m-%d.org")
 
     (defun my/org-journal-new-entry (prefix)
       "Open today’s journal file and start a new entry.
@@ -4651,7 +4657,7 @@ Anyhow, the setup:
   With a prefix, we use the work journal; otherwise the personal journal."
       (interactive "P")
       (let ((org-journal-dir (if prefix "~/Desktop/" org-journal-dir))
-            (org-journal-file-format (if prefix "Work-%Y-%m-%d" org-journal-file-format)))
+            (org-journal-file-format (if prefix "Work-%Y-%m-%d.org" org-journal-file-format)))
         (org-journal-new-entry nil)
         (org-mode)
         (org-show-all))))
@@ -5684,18 +5690,21 @@ as well as a nice ‘motto’:
 I almost always have Emacs open; I don't need a dashboard, but would like to see
 my to-do list and my init file, side-by-side.
 #+BEGIN_SRC emacs-lisp
-(unless noninteractive ;; Only run the following when we're in GUI mode;
-                       ;; i.e., don't run it in Github Actions when testing.
+(unless noninteractive
+  ;; Only run the following when we're in GUI mode;
+  ;; i.e., don't run it in Github Actions when testing.
   (if my/personal-machine?
       (find-file "~/Dropbox/todo.org")
     ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
     ;; which is a GPG file and so requires passphrase before other things can load.
-    (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg"))))
-  (split-window-right)			  ;; C-x 3
+    ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
+      (find-file "~/Desktop/Work-2022-01-01.org")) ;; Org-journal for work
+  (split-window-right)                          ;; C-x 3
   (other-window 1)                              ;; C-x 0
   (let ((enable-local-variables :all)           ;; Load *all* locals.
         (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
     (ignore-errors (find-file "~/.emacs.d/init.org"))))
+
 #+END_SRC
 
 There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile
@@ -6698,7 +6707,7 @@ the current heading stuck at the top of the window.
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / "))
 #+END_SRC
-** Replace :KEYWORDS: with nice SVG labels
+** COMMENT Replace :KEYWORDS: with nice SVG labels :Not_so_sure_about_this:
 #+begin_src emacs-lisp
 ;; Replace :KEYWORDS: with nice SVG labels; for more power use the svg-lib package.
 (use-package svg-tag-mode
@@ -8683,6 +8692,9 @@ Let's also have a nifty modal menu to quickly navigate between errors.
 #+end_src
 ** LSP: Making Emacs into a generic full-featured programming IDE
 
+(TLDR: LSP gives Emacs a uniform way to deal with programming languages, such as
+highlighting and refactoring.)
+
 [[https://microsoft.github.io/language-server-protocol/][Language Server Protocol (LSP)]] was created by Microsoft to define a common
 standard for providing editor-agnostic code intelligence support. It has become
 widely popular since its creation. Emacs support for lsp comes with the [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]]
@@ -8730,6 +8742,8 @@ is all!/
 | [[kbd:][s-l h h]] | :fire: Display the type signature and documentation of the thing at point |
 | [[kbd:][s-l h g]] | Trigger display hover information popup and hide it on next typing |
 | [[kbd:][s-l r r]] | Rename the symbol (and all references to it)                       |
+
+Also: doc:lsp-format-buffer makes the code more readable.
 
 #+begin_src emacs-lisp
 (use-package lsp-mode

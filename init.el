@@ -285,7 +285,7 @@ installs of pacakges that are not in our `my/installed-packages' listing.
         ("C-h a"   . helm-apropos)
         ;; Look at what was cut recently & paste it in.
         ("M-y" . helm-show-kill-ring)
-
+        ("C-x C-x" . helm-all-mark-rings)
         :map helm-map
         ;; We can list ‘actions’ on the currently selected item by C-z.
         ("C-z" . helm-select-action)
@@ -1120,15 +1120,19 @@ which is used to obtain a suitable heading for the resulting todo/note."
 (defun my/org-capture (&optional prefix keys)
   "Capture something!
 
-      C-c c   ⇒ Capture something; likewise for “C-uⁿ C-c c” where n ≥ 3.
+      C-c c   ⇒ Capture something
 C-u   C-c c   ⇒ Capture current [narrowed] buffer.
 C-u 5 C-c c   ⇒ Capture current [narrowed] buffer without adding additional remarks.
-C-u C-u C-c c ⇒ Goto last note stored."
+C-u C-u C-c c ⇒ Goto last note stored.
+
+At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
   (interactive "p")
-  (case prefix
+  (pcase prefix
     (4     (my/org-capture-buffer keys))
     (5     (my/org-capture-buffer keys :no-additional-remarks))
-    (t     (org-capture prefix keys))))
+    (t     (if my/personal-machine?
+               (org-capture prefix keys)
+             (org-capture prefix "t")))))
 ;; Capturing ideas & notes without interrupting the current workflow:2 ends here
 
 ;; [[file:init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:3]]
@@ -1136,15 +1140,19 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Capturing ideas & notes without interrupting the current workflow:3 ends here
 
 ;; [[file:init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:4]]
-;; Location of my todos/notes file
-(unless noninteractive (setq org-default-notes-file "~/Dropbox/todo.org"))
+;; Location of my todos / captured notes file
+(unless noninteractive
+  (setq org-default-notes-file
+        (if my/personal-machine?
+            "~/Dropbox/todo.org"
+          "~/Desktop/Work-2022-01-01.org")))
 
 ;; “C-c c” to quickly capture a task/note
-(define-key global-map "\C-cc" #'my/org-capture) ;; See below.
+(define-key global-map "\C-cc" #'my/org-capture) ;; See above.
 ;; Capturing ideas & notes without interrupting the current workflow:4 ends here
 
 ;; [[file:init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:5]]
-(cl-defun my/make/org-capture-template
+(cl-defun my/make-org-capture-template
    (shortcut heading &optional (no-todo nil) (description heading) (scheduled nil))
   "Quickly produce an org-capture-template.
 
@@ -1181,8 +1189,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
 (setq org-capture-templates
       (cl-loop for (shortcut heading)
             in (-partition 2 '("t" "Tasks, Getting Things Done"
-                               "r" "Research"
-                               "2" "2FA3"
+                               "r" "Reference Material"
                                "m" "Email"
                                "e" "Emacs (•̀ᴗ•́)و"
                                "i" "Islam"
@@ -1190,7 +1197,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
                                "a" "Arbitrary Reading and Learning"
                                "l" "Programming Languages"
                                "p" "Personal Matters"))
-            collect  (my/make/org-capture-template shortcut heading)))
+            collect  (my/make-org-capture-template shortcut heading)))
 ;; Capturing ideas & notes without interrupting the current workflow:6 ends here
 
 ;; [[file:init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:7]]
@@ -1254,9 +1261,10 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Step 3: Quickly review the upcoming week:3 ends here
 
 ;; [[file:init.org::*Step 3: Quickly review the upcoming week][Step 3: Quickly review the upcoming week:4]]
+(use-package origami)
 (use-package org-super-agenda
-  ;; :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
-  ;; :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
+  :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
+  :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
   :config
   (org-super-agenda-mode)
   (setq org-super-agenda-groups
@@ -1294,12 +1302,11 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Step 7: Archiving Tasks:1 ends here
 
 ;; [[file:init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:2]]
-;; Invoking the agenda command shows the agenda and enables
-;; the org-agenda variables.
-;; ➩ Show my agenda upon Emacs startup.
+;; Invoking the agenda command shows the agenda and enables the org-agenda
+;; variables.
 (unless noninteractive
-  (when my/personal-machine?
-    (org-agenda "a" "a"))) ;; Need this to have “org-agenda-custom-commands” defined.
+    ;; ➩ Show my agenda upon Emacs startup.
+    (org-agenda "a" "a")) ;; Need this to have “org-agenda-custom-commands” defined.
 ;; Step 7: Archiving Tasks:2 ends here
 
 ;; [[file:init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:3]]
@@ -1372,12 +1379,12 @@ C-u C-u C-c c ⇒ Goto last note stored."
 
 ;; [[file:init.org::*The Setup][The Setup:1]]
 (use-package org-journal
-  ;; C-u C-c j ⇒ Work journal ;; C-c C-j ⇒ Personal journal
+  ;; C-u C-c j ⇒ Work journal ;; C-c j ⇒ Personal journal
   :bind (("C-c j" . my/org-journal-new-entry))
   :config
     (setq org-journal-dir         "~/Desktop/" ;; "~/Dropbox/journal/"
           org-journal-file-type   'yearly
-          org-journal-file-format "Personal-%Y-%m-%d")
+          org-journal-file-format "Personal-%Y-%m-%d.org")
 
     (defun my/org-journal-new-entry (prefix)
       "Open today’s journal file and start a new entry.
@@ -1385,7 +1392,7 @@ C-u C-u C-c c ⇒ Goto last note stored."
   With a prefix, we use the work journal; otherwise the personal journal."
       (interactive "P")
       (let ((org-journal-dir (if prefix "~/Desktop/" org-journal-dir))
-            (org-journal-file-format (if prefix "Work-%Y-%m-%d" org-journal-file-format)))
+            (org-journal-file-format (if prefix "Work-%Y-%m-%d.org" org-journal-file-format)))
         (org-journal-new-entry nil)
         (org-mode)
         (org-show-all))))
@@ -1635,14 +1642,16 @@ C-u C-u C-c c ⇒ Goto last note stored."
 ;; Startup message: Emacs & Org versions:3 ends here
 
 ;; [[file:init.org::*My to-do list: The initial buffer when Emacs opens up][My to-do list: The initial buffer when Emacs opens up:1]]
-(unless noninteractive ;; Only run the following when we're in GUI mode;
-                       ;; i.e., don't run it in Github Actions when testing.
+(unless noninteractive
+  ;; Only run the following when we're in GUI mode;
+  ;; i.e., don't run it in Github Actions when testing.
   (if my/personal-machine?
       (find-file "~/Dropbox/todo.org")
     ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
     ;; which is a GPG file and so requires passphrase before other things can load.
-    (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg"))))
-  (split-window-right)			  ;; C-x 3
+    ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
+      (find-file "~/Desktop/Work-2022-01-01.org")) ;; Org-journal for work
+  (split-window-right)                          ;; C-x 3
   (other-window 1)                              ;; C-x 0
   (let ((enable-local-variables :all)           ;; Load *all* locals.
         (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
