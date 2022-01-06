@@ -4166,7 +4166,11 @@ now.
 #+end_box
 
 [[https://orgmode.org/manual/Repeated-tasks.html][Repeat tasks]] by a repeater such as ‘+1m’ or ‘+7d’ in their timestamps; e.g.,
-~DEADLINE: <2005-10-01 Sat +1m>.~
+~:SCHEDULED: <2005-10-01 Sat +1m>.~ Likewise, to schedule an event (to repeat) for
+multiple days, just use a bunch of timestamps (with repeaters): ~:SCHEDULED:
+<2022-01-04 Tues 9:00 +1w><2022-01-06 Thu +1w><2022-01-07 Fri 9:00 +1w>~.
+(Notice that we have ~:~ on each side of the keyword; and we have a time of day
+for the event.)
 
 --------------------------------------------------------------------------------
 
@@ -4266,6 +4270,10 @@ you never want to think of days gone past. That’s something you do in other
 ways, such as when reviewing completed tasks.
 #+begin_src emacs-lisp
 (setq org-agenda-start-on-weekday nil)
+
+;; Start each agenda item with ‘○’, then show me it's %timestamp and how many
+;; times it's been re-%scheduled.
+(setq org-agenda-prefix-format " ○ %t%s")
 #+end_src
 
 #+begin_details Grouping agenda entries together
