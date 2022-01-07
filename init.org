@@ -4379,9 +4379,10 @@ renders them as words or icons.
   :diminish org-fancy-priorities-mode
   :hook   (org-mode . org-fancy-priorities-mode)
   ;; :custom (org-fancy-priorities-list '("High" "MID" "LOW" "OPTIONAL"))
+  ;; Let's use the “Eisenhower map of priority”…
   :custom (org-fancy-priorities-list '("Urgent and Important"     ;; Do now!
-                                       "Not Urgent But Important" ;; Do
-                                       "Urgent But Not Important" ;; Delegate
+                                       "Not Urgent But Important" ;; Do schedule this.
+                                       "Urgent But Not Important" ;; Delegate?
                                        "Not Urgent and Not Important"))) ;; Don't do / Optional
 #+end_src
 #+end_details
@@ -9553,6 +9554,58 @@ $i^{th}$-line having pattern =pᵢ=.
 #+begin_src emacs-lisp
 (system-packages-ensure "hr") ;; ≈ brew install hr
 #+end_src
+
+** Github Browser Extensions (for Chrome)
+
++ [[https://github.com/ovity/octotree][octotree]]  :: Lets you explore the files and folders of a repository with a
+  tree and search bar. Can also quickly browse the files changed in the current
+  PR/branch.
+
++ [[https://github.com/jasonlong/isometric-contributions][isometric-contributions]] :: Renders your contribution graph on your profile in
+  a nicer way: 3D instead of the default 2D.
+
++ [[https://github.com/OctoLinker/OctoLinker][OctoLinker]] :: Turns language-specific statements like ~include~, ~require~ or
+  ~import~ into links.  Gives you the ability to go to files by clicking at their
+  paths, not only internal files it also works for imported packages!
+
++ [[https://github.com/Justineo/github-hovercard][github-hovercard]] :: Show a neat hover card when you hover over an element! No
+  need to open everything in a new page, just hover over it!
+
++ [[https://github.com/homerchen19/github-file-icons][github-file-icons]] :: Gives different filetypes different icons to GitHub 🚀
+
++ [[https://github.com/N1ck/gifs-for-github][gifs-for-github]] :: Makes it easy to search GIPHY and add a GIF into any GitHub comment box.
+
++ [[https://github.com/benbalter/github-mention-highlighter][github-mention-highlighter]] :: Any GitHub issue you've been mentioned in and your mentions should now be more easily visible.
+
++ :flame: [[https://github.com/sindresorhus/refined-github][refined-github]] :: Browser extension that simplifies the GitHub interface and adds useful features
+
+  - Makes whitespace characters visible
+  - Adds one-click merge conflict fixers
+  - Adds reaction avatars showing who reacted to a comment
+  - Linkifies issue/PR references and URLs in code and conversation titles
+  - Adds a button to revert all the changes to a file in a PR
+  - Lets you hide every event except comments or unresolved comments in issues and PRs
+  - 🔥 Adds a build/CI status icon next to the repo’s name.
+  - Adds a button to download entire folders, via download-directory.github.io.
+  - Adds a link to preview HTML files.
+  - Adds a button to copy a file’s content.
+  - Shows PRs that touch the current file.
+  - [[https://user-images.githubusercontent.com/1402241/33802977-beb8497c-ddbf-11e7-899c-698d89298de4.gif][Enables tab and shift tab for indentation in comment fields.]]
+  - [[https://user-images.githubusercontent.com/1402241/53678019-0c721280-3cf4-11e9-9c24-4d11a697f67c.png][Adds a button to insert collapsible content (via <details>)]]
+  - [[https://user-images.githubusercontent.com/1402241/65020298-1f2dfb00-d957-11e9-9a2a-1c0ceab8d9e0.gif][Wraps selected text when pressing one of Markdown symbols instead of replacing it: [ ` ' " * ~ _]]
+  - [[https://user-images.githubusercontent.com/1402241/99895146-16b50c80-2c4d-11eb-8038-210e6fd5e798.png][🔥 Highlights the most useful comment in conversations.]]
+  - [[https://user-images.githubusercontent.com/1402241/33474535-a814ee78-d6ad-11e7-8f08-a8b72799e376.png][Shows color-coded review counts in PR lists.]]
+  - [[https://user-images.githubusercontent.com/1402241/79343285-854f2080-7f2e-11ea-8d4c-a9dc163be9be.gif][Mark/unmark multiple files as “Viewed” in the PR Files tab. Click on the
+    first checkbox you want to mark/unmark and then shift-click another one; all
+    the files between the two checkboxes will be marked/unmarked as “Viewed”.]]
+  - [[https://user-images.githubusercontent.com/16872793/81943321-38ac4300-95c9-11ea-8543-0f4858174e1e.png][Shows the first Git tag a merged PR was included in.]]
+  - Automatically deletes the branch right after merging a PR, if possible.
+  - [[https://user-images.githubusercontent.com/16872793/87246205-ccf42400-c419-11ea-86d5-0e6570d99e6e.gif][Uses the first commit for a new PR’s title and description.]]
+  - [[https://user-images.githubusercontent.com/1402241/54178764-d1c96080-44d1-11e9-889c-734ffd2a602d.png][Adds one-click buttons to change diff style and to ignore the whitespace and a keyboard shortcut to ignore the whitespace: d w.]]
+    ( The toggle-whitespace-changes is very useful when there are minor linting changes that can be safely ignored in a PR. )
+  - Adds a keyboard shortcut to visit your own profile: g m.
+  - [[https://user-images.githubusercontent.com/170270/55060505-31179b00-50a4-11e9-99a9-c3691ba38d66.png][Renders `text in backticks` in issue titles, commit titles and more places.]]
+  - Shows all of Refined GitHub’s new keyboard shortcuts in the help modal ([[kbd:?]] hotkey).
 
 * Experiments
 CLOSED: [2021-11-02 Tue 22:01]
