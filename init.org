@@ -9754,6 +9754,16 @@ I like using Chrome ---I like the integration of all things Google.
 :END:
 
 #+begin_src emacs-lisp
+;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
+;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
+;;
+;; C-u M-%  do to regexp replace, without querying.
+(use-package visual-regexp
+  :config (define-key global-map (kbd "M-%")
+            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+#+end_src
+
+#+begin_src emacs-lisp
 ;; Move to OS’ trash can when deleting stuff
 ;; instead of deleting things outright!
 (setq delete-by-moving-to-trash t
