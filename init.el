@@ -116,13 +116,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -1314,9 +1314,11 @@ At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
 ;; [[file:init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:2]]
 ;; Invoking the agenda command shows the agenda and enables the org-agenda
 ;; variables.
+
+;; enables the org-agenda variables.
+(require 'org-agenda) ;; Need this to have “org-agenda-custom-commands” defined.
+
 (unless noninteractive
-    ;; ➩ Show my agenda upon Emacs startup.
-    (require 'org-agenda) ;; Need this to have “org-agenda-custom-commands” defined.
     (org-agenda "a" "a"))
 ;; Step 7: Archiving Tasks:2 ends here
 

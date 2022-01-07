@@ -4450,11 +4450,11 @@ archive file too, if we enable it so.
 #+END_SRC
 
 #+begin_src emacs-lisp
-;; Invoking the agenda command shows the agenda and enables the org-agenda
-;; variables.
+;; enables the org-agenda variables.
+(require 'org-agenda) ;; Need this to have “org-agenda-custom-commands” defined.
+
 (unless noninteractive
     ;; ➩ Show my agenda upon Emacs startup.
-    (require 'org-agenda) ;; Need this to have “org-agenda-custom-commands” defined.
     (org-agenda "a" "a"))
 #+end_src
 
