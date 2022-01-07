@@ -4454,7 +4454,8 @@ archive file too, if we enable it so.
 ;; variables.
 (unless noninteractive
     ;; ➩ Show my agenda upon Emacs startup.
-    (org-agenda "a" "a")) ;; Need this to have “org-agenda-custom-commands” defined.
+    (require 'org-agenda) ;; Need this to have “org-agenda-custom-commands” defined.
+    (org-agenda "a" "a"))
 #+end_src
 
 Let's install some helpful views for our agenda.

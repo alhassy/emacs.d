@@ -1258,6 +1258,10 @@ At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
 
 ;; [[file:init.org::*Step 3: Quickly review the upcoming week][Step 3: Quickly review the upcoming week:3]]
 (setq org-agenda-start-on-weekday nil)
+
+;; Start each agenda item with ‘○’, then show me it's %timestamp and how many
+;; times it's been re-%scheduled.
+(setq org-agenda-prefix-format " ○ %t%s")
 ;; Step 3: Quickly review the upcoming week:3 ends here
 
 ;; [[file:init.org::*Step 3: Quickly review the upcoming week][Step 3: Quickly review the upcoming week:4]]
@@ -1282,17 +1286,23 @@ At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
 ;; [[file:init.org::*Step 4: Getting ready for the day][Step 4: Getting ready for the day:1]]
 (setq org-lowest-priority ?D) ;; Now org-speed-eky ‘,’ gives 4 options
 (setq org-priority-faces
-'((?A :foreground "red" :weight bold)
-  (?B . "orange")
-  (?C . "yellow")
-  (?D . "green")))
+'((?A :foreground "red"            :weight bold :background "LightCyan1")
+  (?B :foreground "orange"         :weight bold :background "LightCyan1")
+  (?C :foreground "DarkGoldenrod3" :weight bold :background "LightCyan1")
+  (?D :foreground "green"          :weight bold :background "LightCyan1")))
+;; See all colours with: M-x list-colors-display
 ;; Step 4: Getting ready for the day:1 ends here
 
 ;; [[file:init.org::*Step 4: Getting ready for the day][Step 4: Getting ready for the day:2]]
 (use-package org-fancy-priorities
   :diminish org-fancy-priorities-mode
   :hook   (org-mode . org-fancy-priorities-mode)
-  :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
+  ;; :custom (org-fancy-priorities-list '("High" "MID" "LOW" "OPTIONAL"))
+  ;; Let's use the “Eisenhower map of priority”…
+  :custom (org-fancy-priorities-list '("Urgent and Important"     ;; Do now!
+                                       "Not Urgent But Important" ;; Do schedule this.
+                                       "Urgent But Not Important" ;; Delegate?
+                                       "Not Urgent and Not Important"))) ;; Don't do / Optional
 ;; Step 4: Getting ready for the day:2 ends here
 
 ;; [[file:init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:1]]
@@ -1306,7 +1316,8 @@ At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
 ;; variables.
 (unless noninteractive
     ;; ➩ Show my agenda upon Emacs startup.
-    (org-agenda "a" "a")) ;; Need this to have “org-agenda-custom-commands” defined.
+    (require 'org-agenda) ;; Need this to have “org-agenda-custom-commands” defined.
+    (org-agenda "a" "a"))
 ;; Step 7: Archiving Tasks:2 ends here
 
 ;; [[file:init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:3]]
@@ -3704,6 +3715,16 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
 ;; shell-command-and-run:1 ends here
 
 ;; [[file:init.org::*Lost Souls][Lost Souls:1]]
+;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
+;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
+;;
+;; C-u M-%  do to regexp replace, without querying.
+(use-package visual-regexp
+  :config (define-key global-map (kbd "M-%")
+            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+;; Lost Souls:1 ends here
+
+;; [[file:init.org::*Lost Souls][Lost Souls:2]]
 ;; Move to OS’ trash can when deleting stuff
 ;; instead of deleting things outright!
 (setq delete-by-moving-to-trash t
@@ -3741,7 +3762,7 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
                            (mode 16 16 :left :elide) " "
                            (vc-status 16 16 :left) " "
                            (vc-relative-file)))))
-;; Lost Souls:1 ends here
+;; Lost Souls:2 ends here
 
 ;; [[file:init.org::*Sleek Semantic Selection][Sleek Semantic Selection:1]]
 (use-package expand-region
