@@ -4362,10 +4362,11 @@ are for more urgent tasks.
 #+begin_src emacs-lisp
 (setq org-lowest-priority ?D) ;; Now org-speed-eky ‘,’ gives 4 options
 (setq org-priority-faces
-'((?A :foreground "red" :weight bold)
-  (?B . "orange")
-  (?C . "yellow")
-  (?D . "green")))
+'((?A :foreground "red"            :weight bold :background "LightCyan1")
+  (?B :foreground "orange"         :weight bold :background "LightCyan1")
+  (?C :foreground "DarkGoldenrod3" :weight bold :background "LightCyan1")
+  (?D :foreground "green"          :weight bold :background "LightCyan1")))
+;; See all colours with: M-x list-colors-display
 #+end_src
 
 + ~C-c ,~ anywhere to set the priority of the current heading.
@@ -4377,7 +4378,11 @@ renders them as words or icons.
 (use-package org-fancy-priorities
   :diminish org-fancy-priorities-mode
   :hook   (org-mode . org-fancy-priorities-mode)
-  :custom (org-fancy-priorities-list '("HIGH" "MID" "LOW" "OPTIONAL")))
+  ;; :custom (org-fancy-priorities-list '("High" "MID" "LOW" "OPTIONAL"))
+  :custom (org-fancy-priorities-list '("Urgent and Important"     ;; Do now!
+                                       "Not Urgent But Important" ;; Do
+                                       "Urgent But Not Important" ;; Delegate
+                                       "Not Urgent and Not Important"))) ;; Don't do / Optional
 #+end_src
 #+end_details
 
