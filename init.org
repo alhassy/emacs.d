@@ -7364,7 +7364,7 @@ Also some silly stuff:
 ;; Whence, \emot shows all possible emotions.
 (cl-loop for emot
       in `(;; angry, cry, why-you-no
-           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "･ﾟ(*❦ω❦)*･ﾟ")
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "ಠ_ಠ" "(╬ ಠ益ಠ)" "･ﾟ(*❦ω❦)*･ﾟ" "(╯°□°）╯︵ ┻━┻") ;; flip the table
            ;; confused, disapprove, dead, shrug
            ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯" "･✧_✧･")
            ;; dance, csi
@@ -7373,7 +7373,9 @@ Also some silly stuff:
                                       ( •_•)>⌐■-■
                                       (⌐■_■)"))
            ;; love, pleased, success, yesss
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ"))
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "( ˃ ヮ˂)" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ")
+           ;; flower high-5
+           ("hug" "♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡" "(づ｡◕‿◕｡)づ" "(づ｡◕‿‿‿‿◕｡)づ"))
       do
       (add-to-list 'agda-input-user-translations emot)
       (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
