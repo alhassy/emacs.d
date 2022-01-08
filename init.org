@@ -9862,6 +9862,15 @@ I like using Chrome ---I like the integration of all things Google.
 + (~10 minute video) [[https://cestlaz.github.io/posts/using-emacs-34-ibuffer-emmet/][Using Emacs - 34 - ibuffer and emmet - C'est la Z]]
 + (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
 
+** centered-cursor: Keep focus in the centre of the screen
+#+begin_src emacs-lisp
+   ;; When scrolling, move the screen and leave the cursour in the (vertical) center of the screen
+   (use-package centered-cursor-mode)
+     :config (global-centered-cursor-mode))
+#+end_src
+
+
+
 ** “C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there
  #+begin_src emacs-lisp
 ;; When we split open a new window, we usually want to jump to the new window.
