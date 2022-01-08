@@ -2826,7 +2826,7 @@ movement controls, such as:
 + [[kbd:o]] to open a link mentioned in the subtree then go to the link; a pop-up of
   links appears.
 
-We can add our own speed keys by altering the doc:rg-speed-commands association
+We can add our own speed keys by altering the doc:org-speed-commands association
 list variable; e.g.,
 #+begin_src emacs-lisp
 ;; TODO FIXME Crashes upon startup.
@@ -9708,9 +9708,14 @@ vertical line.
           (profiler-start 'cpu+mem))
     "Profiler start / report" :exit (profiler-running-p)))
 
-;; Places single frame in centre of screen; hides many UI things.
+;; Places single frame in centre of screen; hides many UI things (e.g., mode line).
 ;; Nice for focused / immersive work.
-(use-package writeroom-mode)
+;;
+;; When in writeroom, let's also dim the font color of text in surrounding
+;; paragraphs / code blocks.
+(use-package writeroom-mode
+  :config (use-package focus)
+  :hook (writeroom-mode . (lambda () (focus-mode 'toggle))))
 #+end_src
 
 ** Toggling System :RelocateMe:
