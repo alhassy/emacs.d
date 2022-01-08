@@ -7366,15 +7366,15 @@ Also some silly stuff:
 (cl-loop for emot
       in `(;; angry, cry, why-you-no
            ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "ಠ_ಠ" "(╬ ಠ益ಠ)" "･ﾟ(*❦ω❦)*･ﾟ" "(╯°□°）╯︵ ┻━┻") ;; flip the table
-           ;; confused, disapprove, dead, shrug
-           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯" "･✧_✧･")
+           ;; confused, disapprove, dead, shrug, awkward
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"  "(´°ω°`)" "･✧_✧･")
            ;; dance, csi
            ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
             ,(s-collapse-whitespace "•_•)
                                       ( •_•)>⌐■-■
                                       (⌐■_■)"))
-           ;; love, pleased, success, yesss
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "( ˃ ヮ˂)" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ")
+           ;; love, pleased, success, yesss, smile, excited, yay
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "ᕦ( ᴼ ڡ ᴼ )ᕤ" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "(◕‿◕)" "( ˃ ヮ˂)" "[ ⇀ ‿ ↼ ]" "٩(⁎❛ᴗ❛⁎)۶" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ" "(✿◠‿◠)")
            ;; flower high-5
            ("hug" "♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡" "(づ｡◕‿◕｡)づ" "(づ｡◕‿‿‿‿◕｡)づ"))
       do
