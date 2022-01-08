@@ -6594,13 +6594,14 @@ Let's make some things prettier than they appear by default.
 ;; Hide the *,=,/ markers
 (setq org-hide-emphasis-markers t)
 
-;; (setq org-pretty-entities t)
+(setq org-pretty-entities t) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
 ;; to have \alpha, \to and others display as utf8
 ;; http://orgmode.org/manual/Special-symbols.html
 #+END_SRC
 Org pretty entities seems rather impressive ---=M-x org-entities-help= to see all
 possibilities, or add your own. I'm already using the Agda input method, so I
 wont use Org's ---Agda's gives me a tiny menu narrowing possibilities as I type.
+However, it does make subscripts (x_{sub script}) and superscripts (x^{super script}) appear in Org in a WYSIWYG fashion.
 
 --------------------------------------------------------------------------------
 
