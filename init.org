@@ -8521,6 +8521,9 @@ other connections call with a prefix argument."
 
 ;; (sso "cd ~/single-sign-on/; git checkout main; git pull; export GEM_HOME=\"$HOME/.gem\"; gem install bundler:2.1.4;  source ~/.rvm/scripts/rvm; rvm use 2.7.4; bundle install; rails db:create; rails db:migrate; rails db:seed; rails server"
 ;; "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
+(my/defservice single-sign-on
+               :cmd "bash scripts.sh docker:dev"
+               :example "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
 
 ;; Event store stuff, emails, V2, lagoon, powerbi
 ;; Getting Rust ∷ brew install rustup-init; rustup-init
