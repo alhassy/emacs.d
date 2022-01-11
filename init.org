@@ -2799,10 +2799,10 @@ movement controls, such as:
   it to. Neato!
   - [[kbd:g]] to go to another heading, without refiling anything.
     #+begin_src emacs-lisp
-;; [Default]
-;; When refiling, only show me top level headings
-(setq org-refile-targets
-      '((nil :maxlevel . 1))) ;; Sometimes 2 is useful.
+;; When refiling, only show me top level headings [Default]. Sometimes 2 is useful.
+;; When I'm refiling my TODOS, then give me all the freedom.
+(setq org-refile-targets '((nil :maxlevel . 1)
+                           (org-agenda-files :maxlevel . 9)))
 
 ;; Maybe I want to refile into a new heading; confirm with me.
 (setq org-refile-allow-creating-parent-nodes 'confirm)
@@ -4413,6 +4413,35 @@ renders them as words or icons.
 #+end_src
 #+end_details
 
+At work, my tasks list is massive and constantly growing; so to avoid stressing
+myself out, I try to add /time effort estimates/ to my tasks with
+doc:org-set-effort then I open my Org agenda and run ~d~ (for day view) then
+doc:org-agenda-columns (~C-c C-x C-c~) to see a column-view of my time estimates
+/along/ with *a total time estimate for the day.* Since there are unexpected
+pair-programming calls, or meetings go longer than expected, I only schedule for
+7 hours each day (in a usual 8-hour work day); i.e., if my time estimates exceed
+7h then I reschedule or cancel some things.
+
+#+begin_src emacs-lisp
+;; How should the columns view look?
+(setq org-columns-default-format   "%60ITEM(Task) %6Effort(Estim){:} %3PRIORITY %TAGS")
+
+;; Press “c” in Org agenda to see the columns view; (default binding C-c C-x C-c is too long!)
+(org-defkey org-agenda-mode-map "c" #'org-agenda-columns)
+(org-defkey org-agenda-mode-map "C" #'org-agenda-goto-calendar)
+
+;; Press “e” in columns view to alter “e”ffort “e”stimates.
+(org-defkey org-columns-map "e"
+            ;; Refresh after making an effort estimate.
+            (lambda () (interactive) (org-agenda-set-effort) (org-agenda-columns)))
+#+end_src
+
+Near the top of my TODOS file, I have the following clickable link: It looks pretty and when I click it, takes me where I need to go.
+# ;; Show sum of efforts for a day in Org-Agenda day title
+#+begin_src org :tangle no
+[[elisp:(progn (org-agenda nil "a") (org-agenda-columns) (delete-other-windows))][Show agenda with time estimates]]
+#+end_src
+
 *** Step 5: Doing the work
 :PROPERTIES:
 :CUSTOM_ID: Step-5-Doing-the-work
@@ -5180,7 +5209,7 @@ Here's an example habit from the [[https://orgmode.org/manual/Tracking-your-habi
    :END:
 #+end_example
 /Shave every 2 days, but we can take a 3-day break; however, on the 4th day,
-gotta shave!/
+gotta shave!/ (To “ignore” a habit, just reschedule it for another day.)
 
 Remember that in the agenda view if you alter a task, say with ~t~ to mark it
 done, then you need to use ~s~ to save the underlying todo/notes files; otherwise,
