@@ -4113,6 +4113,32 @@ Let's also ensure *[[orange:TODO]]*-s respect hierarchical structure.
   (setq org-reverse-note-order nil)
   #+end_src
 
+Quickly look up some reference material...
+#+begin_src emacs-lisp
+(cl-defun my/reference (&optional (file org-default-notes-file))
+  "Look up some reference material super quick.
+
+By default we look in user's Org TODOs file.
+
+FILE should be an ORG file with a top-level heading that starts with ‘Reference’.
+We show its subheadings in a completing-read menu, then narrow to that entry."
+  (interactive)
+  (find-file file)
+  (widen)
+  (goto-char (point-min))
+  (re-search-forward "^* Reference") ;; Start of line.
+  (org-narrow-to-subtree)
+  (org-cycle) (org-cycle)
+  (let* ((headings (org-map-entries (lambda () (org-element-property :title (org-element-at-point)) ) "LEVEL=2"))
+         (topic (completing-read "What to review? " headings)))
+    (search-forward (concat "** " topic))
+    (org-narrow-to-subtree)
+    (org-cycle)))
+
+(defalias 'my/review-reference-notes 'my/reference)
+(defalias 'w-reference 'my/reference) ;; “w”ork
+#+end_src
+
 Anyhow…
 *** Step 1: When new tasks come up
 :PROPERTIES:
