@@ -9921,6 +9921,23 @@ I like using Chrome ---I like the integration of all things Google.
                        rust ruby~3 minitest "rails~7.0")
           do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
 
+
+
+(bind-key "C-c s"
+  (cl-defun w-screencapture ()
+    "Interactively capture screen and save to clipboard; then paste in Slack, etc, with ⌘-c.
+
+  After we run this command, we can swipe up on mousepad to select different desktops, then
+  click & drag to select portition of screen to capture.
+
+  Captured screen is NOT saved to disk, only copied to clipboard.
+
+See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
+    (interactive)
+    (shell-command "screencapture -i -c")))
+
+
+
   (cl-defun w-delete-all-screenshots ()
     "Delete all “Screen Shot ⋯” files in ~/Desktop."
     (interactive)
