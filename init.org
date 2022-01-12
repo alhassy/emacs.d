@@ -4423,6 +4423,8 @@ pair-programming calls, or meetings go longer than expected, I only schedule for
 7h then I reschedule or cancel some things.
 
 #+begin_src emacs-lisp
+(require 'org-agenda)
+
 ;; How should the columns view look?
 (setq org-columns-default-format   "%60ITEM(Task) %6Effort(Estim){:} %3PRIORITY %TAGS")
 
@@ -9894,6 +9896,38 @@ I like using Chrome ---I like the integration of all things Google.
 (use-package visual-regexp
   :config (define-key global-map (kbd "M-%")
             (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+#+end_src
+
+
+#+begin_src emacs-lisp
+;; 1. Get docs of a languages: M-x devdocs-install
+;; 2. Lookup docs: [C-u] M-x devdocs-lookup
+;; 𝟚. Lookup docs: [C-u] C-c d
+(use-package devdocs
+  :bind ("C-c d" . #'devdocs-lookup)
+  :config
+  (when nil ;; “C-x C-e” the following once.
+    (loop for lang in '(javascript ramda typescript html css sass
+                       vue~3 vuex~4 vue_router~4 "angularjs~1.6"
+                       nginx webpack~5 web_extensions
+                       ;;
+                       eslint  jest jq jsdoc prettier
+                       mocha chai jasmine
+                       ;;
+                       bash docker~19 git homebrew elisp
+                       ;;
+                       postgresql~14 redis sqlite
+                       ;;
+                       rust ruby~3 minitest "rails~7.0")
+          do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
+
+  (cl-defun w-delete-all-screenshots ()
+    "Delete all “Screen Shot ⋯” files in ~/Desktop."
+    (interactive)
+    (thread-last (shell-command-to-string "cd ~/Desktop; ls")
+      (s-split "\n")
+      (--filter (s-starts-with-p "Screen Shot" it))
+      (--map (f-delete (format "~/Desktop/%s" it)))))
 #+end_src
 
 #+begin_src emacs-lisp
