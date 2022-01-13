@@ -4386,12 +4386,11 @@ link-here:Pretty-Prioritisation-Markers
 Let's set four priority levels and their colours: The more intense colours
 are for more urgent tasks.
 #+begin_src emacs-lisp
-(setq org-lowest-priority ?D) ;; Now org-speed-eky ‘,’ gives 4 options
+(setq org-lowest-priority ?C) ;; Now org-speed-eky ‘,’ gives 3 options
 (setq org-priority-faces
-'((?A :foreground "red"            :weight bold :background "LightCyan1")
-  (?B :foreground "orange"         :weight bold :background "LightCyan1")
-  (?C :foreground "DarkGoldenrod3" :weight bold :background "LightCyan1")
-  (?D :foreground "green"          :weight bold :background "LightCyan1")))
+'((?A :foreground "red"            :weight bold) ;; :background "LightCyan1")
+  (?B :foreground "orange"         :weight bold)
+  (?C :foreground "green"          :weight bold)))
 ;; See all colours with: M-x list-colors-display
 #+end_src
 
@@ -4404,12 +4403,13 @@ renders them as words or icons.
 (use-package org-fancy-priorities
   :diminish org-fancy-priorities-mode
   :hook   (org-mode . org-fancy-priorities-mode)
-  ;; :custom (org-fancy-priorities-list '("High" "MID" "LOW" "OPTIONAL"))
+  :custom (org-fancy-priorities-list '("High" "MID" "LOW")) ;; "OPTIONAL"
   ;; Let's use the “Eisenhower map of priority”…
-  :custom (org-fancy-priorities-list '("Urgent and Important"     ;; Do now!
-                                       "Not Urgent But Important" ;; Do schedule this.
-                                       "Urgent But Not Important" ;; Delegate?
-                                       "Not Urgent and Not Important"))) ;; Don't do / Optional
+  ;; :custom (org-fancy-priorities-list '("Urgent and Important"     ;; Do now!
+  ;;                                      "Not Urgent But Important" ;; Do schedule this.
+  ;;                                      "Urgent But Not Important" ;; Delegate?
+  ;;                                      "Not Urgent and Not Important")) ;; Don't do / Optional
+  )
 #+end_src
 #+end_details
 
@@ -9934,7 +9934,7 @@ I like using Chrome ---I like the integration of all things Google.
 
 See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
     (interactive)
-    (shell-command "screencapture -i -c")))
+    (async-shell-command "screencapture -i -c")))
 
 
 
@@ -9997,7 +9997,7 @@ to where you originally where.
 ** centered-cursor: Keep focus in the centre of the screen
 #+begin_src emacs-lisp
    ;; When scrolling, move the screen and leave the cursour in the (vertical) center of the screen
-   (use-package centered-cursor-mode)
+   (use-package centered-cursor-mode
      :config (global-centered-cursor-mode))
 #+end_src
 
