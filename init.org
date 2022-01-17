@@ -9932,13 +9932,18 @@ I like using Chrome ---I like the integration of all things Google.
 
   Captured screen is NOT saved to disk, only copied to clipboard.
 
+In MacOs,
++ Command + Shift + 5  ⇒  Select screen record
++ Command + Shift + 4  ⇒  Selection Screenshot
++ Command + Shift + 3  ⇒  Screenshot
+
 See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
     (interactive)
     (async-shell-command "screencapture -i -c")))
 
 
 
-  (cl-defun w-delete-all-screenshots ()
+(cl-defun w-delete-all-screenshots ()
     "Delete all “Screen Shot ⋯” files in ~/Desktop."
     (interactive)
     (thread-last (shell-command-to-string "cd ~/Desktop; ls")
