@@ -8432,6 +8432,10 @@ other connections call with a prefix argument."
           "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
           "\nselect 1 + 2 as \"Numerical, yeah!\""
           "\n/\n"
+          "-- See the latest form's elements & extra props"
+          "select data #>'{details, properties, wxConfig, formElements}'"
+          "from platform.forms\norder by updated_at desc\nlimit 1;"
+          "\n/\n"
           "SELECT data #> '{details, properties}'\nfrom submissions"
           "-- The submissions that have at least a ‘number’ or an ‘MCS’, but NOT a ‘time’."
           "where data::text similar to '%\"wxType\": \"(number|wx-multiple-choice-score)\"%'"
@@ -8494,7 +8498,94 @@ other connections call with a prefix argument."
   (interactive)
   (cl-loop for 𝑺 in my/services
            do (funcall (intern (format "w-stop-%s" 𝑺)))))
+#+end_src
 
+#+begin_src emacs-lisp
+;; It takes about ~3 seconds to build the Status of Services page, so let's jump to it if it's already built, and the user/me can request a refresh, if need be.
+(global-set-key (kbd "M-S-SPC")
+  (lambda () (interactive)
+    (-let [buf (get-buffer "Status of Services")] (if buf (switch-to-buffer buf) (w-status-of-services)))))
+;;
+;; Since M-S-SPC brings up the transient menu, and most commands close the status buffer or are transient, we get the perception that the transient menu is "sticky"; i.e., stuck to the buffer, even though this is not true. I do not yet know how to make a transient menu stuck to a buffer.
+;;
+(defun w-status-of-services ()
+  "Show me status of all servers, including their current git branch, and most recent emitted output."
+  (interactive)
+  (thread-last
+      (-let [ shells (--filter (s-starts-with? "Shell" (process-name it)) (process-list)) ]
+        (loop for 𝑺 in (mapcar #'pp-to-string my/services)
+              for associated-shell = (--find (s-contains? (format "%s" 𝑺) (cl-third (process-command it))) shells)
+              for status = (or (ignore-errors (process-status associated-shell)) '💥)
+              for branch = (-let [default-directory (format "~/%s" 𝑺)]
+                             (magit-get-current-branch))
+              for saying = (let (most-recent-shell-output (here (current-buffer)))
+                             (switch-to-buffer (--find (s-starts-with-p 𝑺 (buffer-name it)) (buffer-list)))
+                             (end-of-buffer)
+                             (beginning-of-line)
+                             (setq most-recent-shell-output (or (thing-at-point 'line t) ""))
+                             (switch-to-buffer here)
+                             (s-truncate 135 (s-trim most-recent-shell-output)))
+              collect
+              ;; “%𝑾s” ⇒ Print a string with at least width 𝑾: If length(str) ≤ 𝑾, then pad with spaces on the left side.
+              ;; Use “%-𝑾s” to instead pad with spaces to the right.
+              (format "%s %-20s %-12s %s" status 𝑺 branch
+                      (-let [it (s-trim (if (s-contains? "|" saying)
+                                            (cl-second (s-split "|" saying))
+                                          saying))]
+                        (if (<= (length it) 3) "-" it)))))
+    (--map (format "%s" it))
+    (s-join "\n")
+    (s-replace "run" "✅")
+    (funcall (lambda (it) (-let [max-mini-window-height 0]
+                       (ignore-errors (kill-buffer  "Status of Services"))
+                       (display-message-or-buffer it "Status of Services")
+                       (delete-other-windows)
+                       (switch-to-buffer "Status of Services")
+                       (highlight-regexp ".*crashed.*" 'hi-red-b)
+                       (end-of-buffer)
+                       (insert "\n \n \n \n \n")
+                       (let ((register-action (lambda (key-desc-actions)
+                                                (if (stringp key-desc-actions)
+                                                    (propertize key-desc-actions 'font-lock-face '(face success))
+                                                  (-let [ [key desc &rest actions] key-desc-actions ]
+                                                    ;; For buffer-local keys, you cannot use local-set-key, unless you want to modify the keymap of the entire major-mode in question: local-set-key is local to a major-mode, not to a buffer.
+                                                    ;; (use-local-map (copy-keymap text-mode-map))
+                                                    (local-set-key key `(lambda () (interactive) ,@(seq-into actions 'list)))
+                                                    (format "%s %s"
+                                                            (propertize (format "%s" key) 'font-lock-face '(face error))
+                                                            (propertize desc 'font-lock-face '(:foreground "grey")))))))
+                             (repo-at-point (lambda () (-as-> (beginning-of-line) repo
+                                                         (thing-at-point 'line t)
+                                                         (s-split " " repo)
+                                                         cl-second))))
+                         (insert (s-join "\n"  (seq-mapn (lambda (&rest cols) (apply #'format (s-repeat (length cols) "%-40s ")
+                                                                                (--map (funcall register-action it) cols)))
+                           ["This view"
+                            ["g" "Refresh this view" (ignore-errors (kill-buffer-and-window)) (w-status-of-services)]
+                            ["q" "Quit buffer" (ignore-errors (kill-buffer-and-window))]
+                            ["" "" ""]]
+                           `["Current service"
+                             ["c" "Checkout PR" (w-pr-checkout (format "~/%s"  (funcall ,repo-at-point)))]
+                             [[return] "Visit service shell"
+                             (delete-other-windows)
+                             (split-window-below)
+                             (switch-to-buffer (--find (s-starts-with? (funcall ,repo-at-point) (buffer-name it)) (buffer-list)))
+                             (end-of-buffer)
+                             (other-window 1)]
+                            [[tab] "See service magit buffer"
+                             (magit-status (format "~/%s"  (funcall ,repo-at-point)))
+                             (delete-other-windows)]]
+                           ["Misc"
+                            ["b" "Browse an app" (w-browse-app)]
+                            ["i" "Inject users"  (w-inject-users)]
+                            ["s" "SQL buffer" (w-sql) (delete-other-windows)]]))))
+                       (beginning-of-buffer)
+                       ;; (help-mode) ;; For some reason, default fundamental-mode does not regoznise proprtised strings.
+                       ;; Also, this is read-only be default and emits a nice message for undefiend single key bindings.
+                       (help-mode))))))
+#+end_src
+
+#+begin_src emacs-lisp
 (cl-defmacro my/defservice
     (repo &key (main-setup "git checkout main; git pull")
           (cmd "npm run docker:dev")
@@ -8568,7 +8659,8 @@ other connections call with a prefix argument."
 ;; (iota  "cd ~/api-iota-server; git checkout main; git pull; npm ci; npm run docker:start") ;; deprecated
 
 ;; Redis stuff
-(my/defservice wx-job-worker)
+;; For local development, the email override is used; regardless of what email is entered into the app.
+(my/defservice wx-job-worker :cmd "EMAIL_OVERRIDE=musa+qa@weeverapps.com npm run docker:dev")
 
 ;; Database backend
 (my/defservice api-platform-server :cmd "npm run docker:start")
@@ -8628,10 +8720,14 @@ A nice Emacs interface for the a portion of the “gh” CLI.
 #+begin_src emacs-lisp
 ;; A nice Emacs interface for the a portion of the “gh” CLI.
 (my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
-(defun my/gh-checkout ()
-  "With prefix, select a branch name; otherwise a Pull Request name."
+(cl-defun my/gh-checkout (&optional repo)
+  "With prefix, select a branch name; otherwise a Pull Request name.
+
+If no REPO is provided, let the user select one from a menu.
+Example use:      (w-pr-checkout \"~/wxPortal\")
+                  (w-pr-checkout)"
   (interactive)
-  (let* ((repo (completing-read "Repo: " (projectile-relevant-known-projects)))
+  (let* ((repo (or repo (completing-read "Repo: " (projectile-relevant-known-projects))))
          (default-directory repo) ;; temporarily override this global variable, used with magit
          (current-branch (magit-get-current-branch))
          (all-branches (magit-list-local-branch-names))
@@ -8643,12 +8739,6 @@ A nice Emacs interface for the a portion of the “gh” CLI.
              (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list))))
              (_ (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯)))
              (new-branch (magit-get-current-branch)))
-        ;; Update any buffer names that mention the current repo to now also mention
-        ;; the current branch.
-        (thread-last (buffer-list)
-          (mapcar 'buffer-name)
-          (--filter (s-contains-p (f-base repo) it))
-          (--map (with-current-buffer it (rename-buffer (format "%s/%s" (car (s-split "/" it)) new-branch)))))
         ;; Show nice status
         (async-shell-command status)
         (magit-status repo)))))
@@ -9812,7 +9902,8 @@ Lightweight syntax highlighting improvement for numbers and escape sequences (e.
 
 #+begin_src emacs-lisp
 (use-package highlight-numbers
-  :hook ((text-mode prog-mode) . highlight-numbers-mode))
+  :hook ((prog-mode) . highlight-numbers-mode))
+;; Not text-mode , look Bad
 
 (use-package highlight-escape-sequences
   :hook (prog-mode . hes-mode))
@@ -9898,6 +9989,14 @@ I like using Chrome ---I like the integration of all things Google.
             (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
 #+end_src
 
+#+begin_src emacs-lisp
+;; Note: M-S-SPC is for my personal servers dashboard.
+(global-set-key (kbd "M-SPC")   (lambda () (interactive) (setq org-agenda-files (list org-default-notes-file)) (org-agenda nil "a") (delete-other-windows) (beginning-of-buffer)))
+
+(use-package ace-jump-mode ;; Already installed above, somewhere.
+  :config (bind-key* "C-c SPC" 'ace-jump-mode))
+#+end_src
+
 
 #+begin_src emacs-lisp
 ;; 1. Get docs of a languages: M-x devdocs-install
@@ -9920,6 +10019,9 @@ I like using Chrome ---I like the integration of all things Google.
                        ;;
                        rust ruby~3 minitest "rails~7.0")
           do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
+
+
+
 
 
 
@@ -9999,7 +10101,7 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
 ** find function at point
 Friendly reminder that ~M-.~ takes you to the definition, and ~M-,~ takes you back
 to where you originally where.
-** centered-cursor: Keep focus in the centre of the screen
+** COMMENT centered-cursor: Keep focus in the centre of the screen :Eeek:
 #+begin_src emacs-lisp
    ;; When scrolling, move the screen and leave the cursour in the (vertical) center of the screen
    (use-package centered-cursor-mode
