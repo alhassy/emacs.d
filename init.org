@@ -8286,6 +8286,31 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 #+end_details
 
 Prefix ~“w-”~ for work stuff.
+
+
+   #+begin_src emacs-lisp
+(cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
+  "Given a link of TYPE with a URL, produce the correct org-link.
+
+EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
+This is how the link looks upon export."
+  `(org-link-set-parameters
+   ,type
+   :follow (lambda (label) (browse-url (format ,url label)))
+   :export (lambda (label description backend)
+             (if (equal backend 'html)
+                 (format "<a href=\"%s\">%s</a>" (format ,url label) (-let [type ,type] ,export-display))
+               (format "\\href{%s}{FM-%s}" (format ,url label) label)))
+   :face '(:foreground "green" :weight bold
+           :underline "blue" :overline "blue")))
+
+(my/work-links "FM"     "https://weeverapps.atlassian.net/browse/FM-%s")                ;; FM:2898
+(my/work-links "INEW"   "https://weeverapps.atlassian.net/browse/INEW-%s")              ;; INEW:201
+(my/work-links "portal" "https://github.com/WeeverApps/wxPortal/pull/%s")               ;; portal:4905
+(my/work-links "platform" "https://github.com/WeeverApps/api-platform-server/pull/%s")  ;; platform:2489
+(my/work-links "weever" "https://github.com/WeeverApps/%s" label)                       ;; weever:wxportal
+   #+end_src
+
 #+begin_src emacs-lisp
 (cl-defun my/application-running? (app)
   "Check if application APP is currently running, in use."

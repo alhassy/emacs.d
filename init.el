@@ -116,13 +116,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -813,10 +813,10 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Manipulating Sections:1 ends here
 
 ;; [[file:init.org::*Manipulating Sections][Manipulating Sections:2]]
-;; [Default]
-;; When refiling, only show me top level headings
-(setq org-refile-targets
-      '((nil :maxlevel . 1))) ;; Sometimes 2 is useful.
+;; When refiling, only show me top level headings [Default]. Sometimes 2 is useful.
+;; When I'm refiling my TODOS, then give me all the freedom.
+(setq org-refile-targets '((nil :maxlevel . 1)
+                           (org-agenda-files :maxlevel . 9)))
 
 ;; Maybe I want to refile into a new heading; confirm with me.
 (setq org-refile-allow-creating-parent-nodes 'confirm)
@@ -1222,6 +1222,31 @@ At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
   (setq org-reverse-note-order nil)
 ;; Capturing ideas & notes without interrupting the current workflow:9 ends here
 
+;; [[file:init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:10]]
+(cl-defun my/reference (&optional (file org-default-notes-file))
+  "Look up some reference material super quick.
+
+By default we look in user's Org TODOs file.
+
+FILE should be an ORG file with a top-level heading that starts with ‘Reference’.
+We show its subheadings in a completing-read menu, then narrow to that entry."
+  (interactive)
+  (find-file file)
+  (widen)
+  (goto-char (point-min))
+  (re-search-forward "^* Reference") ;; Start of line.
+  (org-narrow-to-subtree)
+  (org-cycle) (org-cycle)
+  (let* ((headings (org-map-entries (lambda () (org-element-property :title (org-element-at-point)) ) "LEVEL=2"))
+         (topic (completing-read "What to review? " headings)))
+    (search-forward (concat "** " topic))
+    (org-narrow-to-subtree)
+    (org-cycle)))
+
+(defalias 'my/review-reference-notes 'my/reference)
+(defalias 'w-reference 'my/reference) ;; “w”ork
+;; Capturing ideas & notes without interrupting the current workflow:10 ends here
+
 ;; [[file:init.org::*Step 2: Filing your tasks][Step 2: Filing your tasks:1]]
 ;; Add a note whenever a task's deadline or scheduled date is changed.
 (setq org-log-redeadline 'time)
@@ -1284,12 +1309,11 @@ At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
 ;; Step 3: Quickly review the upcoming week:4 ends here
 
 ;; [[file:init.org::*Step 4: Getting ready for the day][Step 4: Getting ready for the day:1]]
-(setq org-lowest-priority ?D) ;; Now org-speed-eky ‘,’ gives 4 options
+(setq org-lowest-priority ?C) ;; Now org-speed-eky ‘,’ gives 3 options
 (setq org-priority-faces
-'((?A :foreground "red"            :weight bold :background "LightCyan1")
-  (?B :foreground "orange"         :weight bold :background "LightCyan1")
-  (?C :foreground "DarkGoldenrod3" :weight bold :background "LightCyan1")
-  (?D :foreground "green"          :weight bold :background "LightCyan1")))
+'((?A :foreground "red"            :weight bold) ;; :background "LightCyan1")
+  (?B :foreground "orange"         :weight bold)
+  (?C :foreground "green"          :weight bold)))
 ;; See all colours with: M-x list-colors-display
 ;; Step 4: Getting ready for the day:1 ends here
 
@@ -1297,13 +1321,30 @@ At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
 (use-package org-fancy-priorities
   :diminish org-fancy-priorities-mode
   :hook   (org-mode . org-fancy-priorities-mode)
-  ;; :custom (org-fancy-priorities-list '("High" "MID" "LOW" "OPTIONAL"))
+  :custom (org-fancy-priorities-list '("High" "MID" "LOW")) ;; "OPTIONAL"
   ;; Let's use the “Eisenhower map of priority”…
-  :custom (org-fancy-priorities-list '("Urgent and Important"     ;; Do now!
-                                       "Not Urgent But Important" ;; Do schedule this.
-                                       "Urgent But Not Important" ;; Delegate?
-                                       "Not Urgent and Not Important"))) ;; Don't do / Optional
+  ;; :custom (org-fancy-priorities-list '("Urgent and Important"     ;; Do now!
+  ;;                                      "Not Urgent But Important" ;; Do schedule this.
+  ;;                                      "Urgent But Not Important" ;; Delegate?
+  ;;                                      "Not Urgent and Not Important")) ;; Don't do / Optional
+  )
 ;; Step 4: Getting ready for the day:2 ends here
+
+;; [[file:init.org::*Step 4: Getting ready for the day][Step 4: Getting ready for the day:3]]
+(require 'org-agenda)
+
+;; How should the columns view look?
+(setq org-columns-default-format   "%60ITEM(Task) %6Effort(Estim){:} %3PRIORITY %TAGS")
+
+;; Press “c” in Org agenda to see the columns view; (default binding C-c C-x C-c is too long!)
+(org-defkey org-agenda-mode-map "c" #'org-agenda-columns)
+(org-defkey org-agenda-mode-map "C" #'org-agenda-goto-calendar)
+
+;; Press “e” in columns view to alter “e”ffort “e”stimates.
+(org-defkey org-columns-map "e"
+            ;; Refresh after making an effort estimate.
+            (lambda () (interactive) (org-agenda-set-effort) (org-agenda-columns)))
+;; Step 4: Getting ready for the day:3 ends here
 
 ;; [[file:init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:1]]
 ;; C-c a s ➩ Search feature also looks into archived files.
@@ -1312,13 +1353,11 @@ At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
 ;; Step 7: Archiving Tasks:1 ends here
 
 ;; [[file:init.org::*Step 7: Archiving Tasks][Step 7: Archiving Tasks:2]]
-;; Invoking the agenda command shows the agenda and enables the org-agenda
-;; variables.
-
 ;; enables the org-agenda variables.
 (require 'org-agenda) ;; Need this to have “org-agenda-custom-commands” defined.
 
 (unless noninteractive
+    ;; ➩ Show my agenda upon Emacs startup.
     (org-agenda "a" "a"))
 ;; Step 7: Archiving Tasks:2 ends here
 
@@ -2098,9 +2137,22 @@ fonts (•̀ᴗ•́)و"
 ;; Hide the *,=,/ markers
 (setq org-hide-emphasis-markers t)
 
-;; (setq org-pretty-entities t)
+;; Let’s limit the width of images inlined in org buffers to 400px.
+(setq org-image-actual-width 400)
+
+;; Visually, I prefer to hide the markers of macros, so let’s do that:
+;;  {{{go(here)}}} is shown in Emacs as go(here)
+(setq org-hide-macro-markers t)
+
+;; On HTML exports, Org-mode tries to include a validation link for the exported HTML. Let’s disable that since I never use it.
+;; (setq org-html-validation-link nil)
+
+(setq org-pretty-entities t) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
 ;; to have \alpha, \to and others display as utf8
 ;; http://orgmode.org/manual/Special-symbols.html
+;;
+;; Be default, any consectuive string after “_” or “^” will be shown in WYSIWYG fashion; the following requires “^{⋯}” instead.
+;; (setq org-use-sub-superscripts (quote {}))
 ;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:1 ends here
 
 ;; [[file:init.org::*Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:2]]
@@ -2437,16 +2489,18 @@ the character 𝓍 before and after the selected text."
 ;; Whence, \emot shows all possible emotions.
 (cl-loop for emot
       in `(;; angry, cry, why-you-no
-           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "･ﾟ(*❦ω❦)*･ﾟ")
-           ;; confused, disapprove, dead, shrug
-           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯" "･✧_✧･")
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "ಠ_ಠ" "(╬ ಠ益ಠ)" "･ﾟ(*❦ω❦)*･ﾟ" "(╯°□°）╯︵ ┻━┻") ;; flip the table
+           ;; confused, disapprove, dead, shrug, awkward
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"  "(´°ω°`)" "･✧_✧･")
            ;; dance, csi
            ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
             ,(s-collapse-whitespace "•_•)
                                       ( •_•)>⌐■-■
                                       (⌐■_■)"))
-           ;; love, pleased, success, yesss
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "(งಠ_ಠ)ง" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ"))
+           ;; love, pleased, success, yesss, smile, excited, yay
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "ᕦ( ᴼ ڡ ᴼ )ᕤ" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "(◕‿◕)" "( ˃ ヮ˂)" "[ ⇀ ‿ ↼ ]" "٩(⁎❛ᴗ❛⁎)۶" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ" "(✿◠‿◠)")
+           ;; flower high-5
+           ("hug" "♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡" "(づ｡◕‿◕｡)づ" "(づ｡◕‿‿‿‿◕｡)づ"))
       do
       (add-to-list 'agda-input-user-translations emot)
       (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
@@ -2889,6 +2943,10 @@ other connections call with a prefix argument."
           "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
           "\nselect 1 + 2 as \"Numerical, yeah!\""
           "\n/\n"
+          "-- See the latest form's elements & extra props"
+          "select data #>'{details, properties, wxConfig, formElements}'"
+          "from platform.forms\norder by updated_at desc\nlimit 1;"
+          "\n/\n"
           "SELECT data #> '{details, properties}'\nfrom submissions"
           "-- The submissions that have at least a ‘number’ or an ‘MCS’, but NOT a ‘time’."
           "where data::text similar to '%\"wxType\": \"(number|wx-multiple-choice-score)\"%'"
@@ -2950,7 +3008,94 @@ other connections call with a prefix argument."
   (interactive)
   (cl-loop for 𝑺 in my/services
            do (funcall (intern (format "w-stop-%s" 𝑺)))))
+;; Managing Processes/Servers from within Emacs:10 ends here
 
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:11]]
+;; It takes about ~3 seconds to build the Status of Services page, so let's jump to it if it's already built, and the user/me can request a refresh, if need be.
+(global-set-key (kbd "M-S-SPC")
+  (lambda () (interactive)
+    (-let [buf (get-buffer "Status of Services")] (if buf (switch-to-buffer buf) (w-status-of-services)))))
+;;
+;; Since M-S-SPC brings up the transient menu, and most commands close the status buffer or are transient, we get the perception that the transient menu is "sticky"; i.e., stuck to the buffer, even though this is not true. I do not yet know how to make a transient menu stuck to a buffer.
+;;
+(defun w-status-of-services ()
+  "Show me status of all servers, including their current git branch, and most recent emitted output."
+  (interactive)
+  (thread-last
+      (-let [ shells (--filter (s-starts-with? "Shell" (process-name it)) (process-list)) ]
+        (loop for 𝑺 in (mapcar #'pp-to-string my/services)
+              for associated-shell = (--find (s-contains? (format "%s" 𝑺) (cl-third (process-command it))) shells)
+              for status = (or (ignore-errors (process-status associated-shell)) '💥)
+              for branch = (-let [default-directory (format "~/%s" 𝑺)]
+                             (magit-get-current-branch))
+              for saying = (let (most-recent-shell-output (here (current-buffer)))
+                             (switch-to-buffer (--find (s-starts-with-p 𝑺 (buffer-name it)) (buffer-list)))
+                             (end-of-buffer)
+                             (beginning-of-line)
+                             (setq most-recent-shell-output (or (thing-at-point 'line t) ""))
+                             (switch-to-buffer here)
+                             (s-truncate 135 (s-trim most-recent-shell-output)))
+              collect
+              ;; “%𝑾s” ⇒ Print a string with at least width 𝑾: If length(str) ≤ 𝑾, then pad with spaces on the left side.
+              ;; Use “%-𝑾s” to instead pad with spaces to the right.
+              (format "%s %-20s %-12s %s" status 𝑺 branch
+                      (-let [it (s-trim (if (s-contains? "|" saying)
+                                            (cl-second (s-split "|" saying))
+                                          saying))]
+                        (if (<= (length it) 3) "-" it)))))
+    (--map (format "%s" it))
+    (s-join "\n")
+    (s-replace "run" "✅")
+    (funcall (lambda (it) (-let [max-mini-window-height 0]
+                       (ignore-errors (kill-buffer  "Status of Services"))
+                       (display-message-or-buffer it "Status of Services")
+                       (delete-other-windows)
+                       (switch-to-buffer "Status of Services")
+                       (highlight-regexp ".*crashed.*" 'hi-red-b)
+                       (end-of-buffer)
+                       (insert "\n \n \n \n \n")
+                       (let ((register-action (lambda (key-desc-actions)
+                                                (if (stringp key-desc-actions)
+                                                    (propertize key-desc-actions 'font-lock-face '(face success))
+                                                  (-let [ [key desc &rest actions] key-desc-actions ]
+                                                    ;; For buffer-local keys, you cannot use local-set-key, unless you want to modify the keymap of the entire major-mode in question: local-set-key is local to a major-mode, not to a buffer.
+                                                    ;; (use-local-map (copy-keymap text-mode-map))
+                                                    (local-set-key key `(lambda () (interactive) ,@(seq-into actions 'list)))
+                                                    (format "%s %s"
+                                                            (propertize (format "%s" key) 'font-lock-face '(face error))
+                                                            (propertize desc 'font-lock-face '(:foreground "grey")))))))
+                             (repo-at-point (lambda () (-as-> (beginning-of-line) repo
+                                                         (thing-at-point 'line t)
+                                                         (s-split " " repo)
+                                                         cl-second))))
+                         (insert (s-join "\n"  (seq-mapn (lambda (&rest cols) (apply #'format (s-repeat (length cols) "%-40s ")
+                                                                                (--map (funcall register-action it) cols)))
+                           ["This view"
+                            ["g" "Refresh this view" (ignore-errors (kill-buffer-and-window)) (w-status-of-services)]
+                            ["q" "Quit buffer" (ignore-errors (kill-buffer-and-window))]
+                            ["" "" ""]]
+                           `["Current service"
+                             ["c" "Checkout PR" (w-pr-checkout (format "~/%s"  (funcall ,repo-at-point)))]
+                             [[return] "Visit service shell"
+                             (delete-other-windows)
+                             (split-window-below)
+                             (switch-to-buffer (--find (s-starts-with? (funcall ,repo-at-point) (buffer-name it)) (buffer-list)))
+                             (end-of-buffer)
+                             (other-window 1)]
+                            [[tab] "See service magit buffer"
+                             (magit-status (format "~/%s"  (funcall ,repo-at-point)))
+                             (delete-other-windows)]]
+                           ["Misc"
+                            ["b" "Browse an app" (w-browse-app)]
+                            ["i" "Inject users"  (w-inject-users)]
+                            ["s" "SQL buffer" (w-sql) (delete-other-windows)]]))))
+                       (beginning-of-buffer)
+                       ;; (help-mode) ;; For some reason, default fundamental-mode does not regoznise proprtised strings.
+                       ;; Also, this is read-only be default and emits a nice message for undefiend single key bindings.
+                       (help-mode))))))
+;; Managing Processes/Servers from within Emacs:11 ends here
+
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:12]]
 (cl-defmacro my/defservice
     (repo &key (main-setup "git checkout main; git pull")
           (cmd "npm run docker:dev")
@@ -3024,7 +3169,8 @@ other connections call with a prefix argument."
 ;; (iota  "cd ~/api-iota-server; git checkout main; git pull; npm ci; npm run docker:start") ;; deprecated
 
 ;; Redis stuff
-(my/defservice wx-job-worker)
+;; For local development, the email override is used; regardless of what email is entered into the app.
+(my/defservice wx-job-worker :cmd "EMAIL_OVERRIDE=musa+qa@weeverapps.com npm run docker:dev")
 
 ;; Database backend
 (my/defservice api-platform-server :cmd "npm run docker:start")
@@ -3034,15 +3180,18 @@ other connections call with a prefix argument."
 
 ;; (sso "cd ~/single-sign-on/; git checkout main; git pull; export GEM_HOME=\"$HOME/.gem\"; gem install bundler:2.1.4;  source ~/.rvm/scripts/rvm; rvm use 2.7.4; bundle install; rails db:create; rails db:migrate; rails db:seed; rails server"
 ;; "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
+(my/defservice single-sign-on
+               :cmd "bash scripts.sh docker:dev"
+               :example "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
 
 ;; Event store stuff, emails, V2, lagoon, powerbi
 ;; Getting Rust ∷ brew install rustup-init; rustup-init
 ;; FAQ, ensure we use our rust-toolchain file, run:   rustup override unset
 (my/defservice wx-data-agent :cmd "cargo watch -x run")
 (my/defservice api-odata :cmd "docker-compose up --build")
-;; Managing Processes/Servers from within Emacs:10 ends here
+;; Managing Processes/Servers from within Emacs:12 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:11]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:13]]
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
   (interactive)
@@ -3064,24 +3213,28 @@ other connections call with a prefix argument."
               (process-manager "label:\"quick and easy\"" "repo:process-builder")
               (newts "label:\"Newts Priority Review\",Newts"))
          do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
-;; Managing Processes/Servers from within Emacs:11 ends here
+;; Managing Processes/Servers from within Emacs:13 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:12]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:14]]
 ;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
 ;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
 ;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
 ;; With a prefix argument prompt for the format style 𝒮.
 ;; Easy to add more formats.
 (use-package copy-as-format)
-;; Managing Processes/Servers from within Emacs:12 ends here
+;; Managing Processes/Servers from within Emacs:14 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:13]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:15]]
 ;; A nice Emacs interface for the a portion of the “gh” CLI.
 (my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
-(defun my/gh-checkout ()
-  "With prefix, select a branch name; otherwise a Pull Request name."
+(cl-defun my/gh-checkout (&optional repo)
+  "With prefix, select a branch name; otherwise a Pull Request name.
+
+If no REPO is provided, let the user select one from a menu.
+Example use:      (w-pr-checkout \"~/wxPortal\")
+                  (w-pr-checkout)"
   (interactive)
-  (let* ((repo (completing-read "Repo: " (projectile-relevant-known-projects)))
+  (let* ((repo (or repo (completing-read "Repo: " (projectile-relevant-known-projects))))
          (default-directory repo) ;; temporarily override this global variable, used with magit
          (current-branch (magit-get-current-branch))
          (all-branches (magit-list-local-branch-names))
@@ -3093,18 +3246,12 @@ other connections call with a prefix argument."
              (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list))))
              (_ (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯)))
              (new-branch (magit-get-current-branch)))
-        ;; Update any buffer names that mention the current repo to now also mention
-        ;; the current branch.
-        (thread-last (buffer-list)
-          (mapcar 'buffer-name)
-          (--filter (s-contains-p (f-base repo) it))
-          (--map (with-current-buffer it (rename-buffer (format "%s/%s" (car (s-split "/" it)) new-branch)))))
         ;; Show nice status
         (async-shell-command status)
         (magit-status repo)))))
-;; Managing Processes/Servers from within Emacs:13 ends here
+;; Managing Processes/Servers from within Emacs:15 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:14]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:16]]
 (defvar w-app-slugs
    (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
 
@@ -3119,9 +3266,9 @@ other connections call with a prefix argument."
   (shell-command (format "echo \"false\" > ~/wxPortal/client/assets/config/apps/%s/authorization.allowSsoLogin.json" app))
   (w-browse-app app)
   (message "SSO for %s disabled; don't commit the “authorization.allowSsoLogin.json” file!" app)))
-;; Managing Processes/Servers from within Emacs:14 ends here
+;; Managing Processes/Servers from within Emacs:16 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:15]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:17]]
 (cl-defun w-db-migrations ()
   (interactive)
   (async-shell-command "cd ~/api-platform-server; git status; npm run docker:migrate" "*DB/Migrations*"))
@@ -3129,9 +3276,9 @@ other connections call with a prefix argument."
 (cl-defun w-db-rollbacks ()
   (interactive)
   (async-shell-command "cd ~/api-platform-server; git status; npm run docker:rollback" "*DB/Rollback*"))
-;; Managing Processes/Servers from within Emacs:15 ends here
+;; Managing Processes/Servers from within Emacs:17 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:16]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:18]]
 (cl-defun w-handbook-view ()
   "Open the HTML handbook in your local browser"
    (interactive)
@@ -3142,7 +3289,7 @@ other connections call with a prefix argument."
    (interactive)
    (shell-command "emacs ~/handbook/How-Do-I.org --batch -Q --load ~/handbook/lisp/export-org-to-html.el -f org-html-export-to-html --kill")
    (w-handbook-view))
-;; Managing Processes/Servers from within Emacs:16 ends here
+;; Managing Processes/Servers from within Emacs:18 ends here
 
 ;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
 ;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
@@ -3652,9 +3799,14 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
           (profiler-start 'cpu+mem))
     "Profiler start / report" :exit (profiler-running-p)))
 
-;; Places single frame in centre of screen; hides many UI things.
+;; Places single frame in centre of screen; hides many UI things (e.g., mode line).
 ;; Nice for focused / immersive work.
-(use-package writeroom-mode)
+;;
+;; When in writeroom, let's also dim the font color of text in surrounding
+;; paragraphs / code blocks.
+(use-package writeroom-mode
+  :config (use-package focus)
+  :hook (writeroom-mode . (lambda () (focus-mode 'toggle))))
 ;; Toggles Hydra:1 ends here
 
 ;; [[file:init.org::*Toggling System][Toggling System:1]]
@@ -3673,7 +3825,8 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
 
 ;; [[file:init.org::*Syntax highlighting ---numbers and escape characters][Syntax highlighting ---numbers and escape characters:1]]
 (use-package highlight-numbers
-  :hook ((text-mode prog-mode) . highlight-numbers-mode))
+  :hook ((prog-mode) . highlight-numbers-mode))
+;; Not text-mode , look Bad
 
 (use-package highlight-escape-sequences
   :hook (prog-mode . hes-mode))
@@ -3727,6 +3880,70 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
 ;; Lost Souls:1 ends here
 
 ;; [[file:init.org::*Lost Souls][Lost Souls:2]]
+;; Note: M-S-SPC is for my personal servers dashboard.
+(global-set-key (kbd "M-SPC")   (lambda () (interactive) (setq org-agenda-files (list org-default-notes-file)) (org-agenda nil "a") (delete-other-windows) (beginning-of-buffer)))
+
+(use-package ace-jump-mode ;; Already installed above, somewhere.
+  :config (bind-key* "C-c SPC" 'ace-jump-mode))
+;; Lost Souls:2 ends here
+
+;; [[file:init.org::*Lost Souls][Lost Souls:3]]
+;; 1. Get docs of a languages: M-x devdocs-install
+;; 2. Lookup docs: [C-u] M-x devdocs-lookup
+;; 𝟚. Lookup docs: [C-u] C-c d
+(use-package devdocs
+  :bind ("C-c d" . #'devdocs-lookup)
+  :config
+  (when nil ;; “C-x C-e” the following once.
+    (loop for lang in '(javascript ramda typescript html css sass
+                       vue~3 vuex~4 vue_router~4 "angularjs~1.6"
+                       nginx webpack~5 web_extensions
+                       ;;
+                       eslint  jest jq jsdoc prettier
+                       mocha chai jasmine
+                       ;;
+                       bash docker~19 git homebrew elisp
+                       ;;
+                       postgresql~14 redis sqlite
+                       ;;
+                       rust ruby~3 minitest "rails~7.0")
+          do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
+
+
+
+
+
+
+(bind-key "C-c s"
+  (cl-defun w-screencapture ()
+    "Interactively capture screen and save to clipboard; then paste in Slack, etc, with ⌘-c.
+
+  After we run this command, we can swipe up on mousepad to select different desktops, then
+  click & drag to select portition of screen to capture.
+
+  Captured screen is NOT saved to disk, only copied to clipboard.
+
+In MacOs,
++ Command + Shift + 5  ⇒  Select screen record
++ Command + Shift + 4  ⇒  Selection Screenshot
++ Command + Shift + 3  ⇒  Screenshot
+
+See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
+    (interactive)
+    (async-shell-command "screencapture -i -c")))
+
+
+
+(cl-defun w-delete-all-screenshots ()
+    "Delete all “Screen Shot ⋯” files in ~/Desktop."
+    (interactive)
+    (thread-last (shell-command-to-string "cd ~/Desktop; ls")
+      (s-split "\n")
+      (--filter (s-starts-with-p "Screen Shot" it))
+      (--map (f-delete (format "~/Desktop/%s" it)))))
+;; Lost Souls:3 ends here
+
+;; [[file:init.org::*Lost Souls][Lost Souls:4]]
 ;; Move to OS’ trash can when deleting stuff
 ;; instead of deleting things outright!
 (setq delete-by-moving-to-trash t
@@ -3764,7 +3981,13 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
                            (mode 16 16 :left :elide) " "
                            (vc-status 16 16 :left) " "
                            (vc-relative-file)))))
-;; Lost Souls:2 ends here
+;; Lost Souls:4 ends here
+
+;; [[file:init.org::*“C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there][“C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there:1]]
+;; When we split open a new window, we usually want to jump to the new window.
+(advice-add #'split-window-below :after (lambda (&rest _) (other-window 1)))
+(advice-add #'split-window-right :after (lambda (&rest _) (other-window 1)))
+;; “C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there:1 ends here
 
 ;; [[file:init.org::*Sleek Semantic Selection][Sleek Semantic Selection:1]]
 (use-package expand-region
