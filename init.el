@@ -15,8 +15,9 @@
 (setq o--supported-blocks nil)
 ;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
 ;; Symbol’s function definition is void: all-the-icons-faicon
-(cl-defun all-the-icons-faicon (icon &rest _)
-  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
+;; title:1 ends here
+
+;; [[file:init.org::*title][title:2]]
 ;;
 ;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
 (cl-defun org-clocking-buffer (&rest _))
@@ -25,7 +26,7 @@
 ;; after: 12 seconds.
 ; (setq gc-cons-threshold 50000000) ;; orginaly 800,000
 ;; reduce number of times GC occurs.
-;; title:1 ends here
+;; title:2 ends here
 
 ;; [[file:init.org::*  =~/.emacs= vs. =init.org=][  =~/.emacs= vs. =init.org=:4]]
 (setq custom-file "~/.emacs.d/custom.el")
@@ -836,15 +837,14 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; [[file:init.org::*Seamless Navigation Between Source Blocks][Seamless Navigation Between Source Blocks:1]]
 ;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
 ;;
-(eval-after-load 'org-mode
-  (use-package emacs
-
-    :bind (:map org-mode-map
-                ("s-p" . org-babel-previous-src-block)
-                ("s-n" . org-babel-next-src-block)
-                ("s-e" . org-edit-special)
-                :map org-src-mode-map
-                ("s-e" . org-edit-src-exit))))
+(require 'org)
+(use-package emacs
+  :bind (:map org-mode-map
+              ("s-p" . org-babel-previous-src-block)
+              ("s-n" . org-babel-next-src-block)
+              ("s-e" . org-edit-special)
+              :map org-src-mode-map
+              ("s-e" . org-edit-src-exit)))
 ;; Seamless Navigation Between Source Blocks:1 ends here
 
 ;; [[file:init.org::*Modifying \[\[kbd:⟨return⟩\]\]][Modifying [[kbd:⟨return⟩]]:1]]
@@ -1341,6 +1341,7 @@ We show its subheadings in a completing-read menu, then narrow to that entry."
 (org-defkey org-agenda-mode-map "C" #'org-agenda-goto-calendar)
 
 ;; Press “e” in columns view to alter “e”ffort “e”stimates.
+(require 'org-colview)
 (org-defkey org-columns-map "e"
             ;; Refresh after making an effort estimate.
             (lambda () (interactive) (org-agenda-set-effort) (org-agenda-columns)))
@@ -1548,100 +1549,6 @@ We show its subheadings in a completing-read menu, then narrow to that entry."
 ;; always open org-agenda in ‘full screen’.
 ;; (setq org-agenda-window-setup 'only-window)
 ;; Habit Formation:1 ends here
-
-;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:1]]
-(setq user-full-name    "Musa Al-hassy"
-      user-mail-address "alhassy@gmail.com")
-;; Using Gnus for Gmail:1 ends here
-
-;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:3]]
-     (setq message-send-mail-function 'smtpmail-send-it)
-;; Using Gnus for Gmail:3 ends here
-
-;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:6]]
-;; After startup, if Emacs is idle for 10 seconds, then start Gnus.
-;; Gnus is slow upon startup since it fetches all mails upon startup.
-(when my/personal-machine?
-  (run-with-idle-timer 10 nil #'gnus))
-;; Using Gnus for Gmail:6 ends here
-
-;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:8]]
-(with-eval-after-load 'gnus
-  (bind-key "t"
-          (lambda (N) (interactive "P") (gnus-summary-move-article N "[Gmail]/Trash"))
-          gnus-summary-mode-map))
-
-;; Orginally: t ⇒ gnus-summary-toggle-header
-;; Using Gnus for Gmail:8 ends here
-
-;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:9]]
-;; Fancy icons for Emacs
-;; Only do this once:
-(use-package all-the-icons
-   :config (all-the-icons-install-fonts 'install-without-asking))
-
-;; Make mail look pretty
-(use-package all-the-icons-gnus
-  :defer t
-  :config (all-the-icons-gnus-setup))
-
-;; While we're at it: Make dired, ‘dir’ectory ‘ed’itor, look pretty
-(use-package all-the-icons-dired
-  :hook (dired-mode . all-the-icons-dired-mode))
-;; Using Gnus for Gmail:9 ends here
-
-;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:10]]
-(setq gnus-sum-thread-tree-vertical        "│"
-      gnus-sum-thread-tree-leaf-with-other "├─► "
-      gnus-sum-thread-tree-single-leaf     "╰─► "
-      gnus-summary-line-format
-      (concat
-       "%0{%U%R%z%}"
-       "%3{│%}" "%1{%d%}" "%3{│%}"
-       "  "
-       "%4{%-20,20f%}"
-       "  "
-       "%3{│%}"
-       " "
-       "%1{%B%}"
-       "%s\n"))
-;; Using Gnus for Gmail:10 ends here
-
-;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:11]]
-(defun my/email (to subject body)
-  (compose-mail to subject)
-  (insert body)
-  (message-send-mail)     ;; Appends info to the message buffer
-  ; (let ((kill-buffer-query-functions nil)) (kill-this-buffer))
-  (ignore-errors (undo))                  ;; Undo that addition
-  (message-kill-buffer)
-  (message "Send email to %s" to)) ;; Close that message buffer
-;; Using Gnus for Gmail:11 ends here
-
-;; [[file:init.org::*Using Gnus for Gmail][Using Gnus for Gmail:13]]
-(use-package gmail2bbdb
-  :defer t
-  :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
-
-(use-package bbdb
- :after company ;; The “com”plete “any”thig mode is set below in §Prose
- :hook   (message-mode . bbdb-insinuate-gnus)
-         (gnus-startup-hook . bbdb-insinuate-gnus)
- :custom (bbdb-file gmail2bbdb-bbdb-file)
-         (bbdb-use-pop-up t)                        ;; allow popups for addresses
- :config (add-to-list 'company-backends 'company-bbdb))
-;; Using Gnus for Gmail:13 ends here
-
-;; [[file:init.org::*Capturing Mail as Todo/Notes][Capturing Mail as Todo/Notes:1]]
-(with-eval-after-load 'gnus
-  ;; Orginally: c ⇒ gnus-summary-catchup-and-exit
-  (bind-key "c" #'my/org-capture-buffer gnus-article-mode-map)
-  ;; Orginally: C ⇒ gnus-summary-cancel-article
-  (bind-key "C"
-            (lambda (&optional keys)
-              (interactive "P") (my/org-capture-buffer keys 'no-additional-remarks))
-            gnus-article-mode-map))
-;; Capturing Mail as Todo/Notes:1 ends here
 
 ;; [[file:init.org::*Hydra Timer][Hydra Timer:1]]
 (setq org-clock-sound t) ;; Standard Emacs beep
@@ -2806,12 +2713,35 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 ;; Managing Processes/Servers from within Emacs:3 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:4]]
-(cl-defun my/application-running? (app)
-  "Check if application APP is currently running, in use."
-  (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
+(cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
+  "Given a link of TYPE with a URL, produce the correct org-link.
+
+EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
+This is how the link looks upon export."
+  `(org-link-set-parameters
+   ,type
+   :follow (lambda (label) (browse-url (format ,url label)))
+   :export (lambda (label description backend)
+             (if (equal backend 'html)
+                 (format "<a href=\"%s\">%s</a>" (format ,url label) (-let [type ,type] ,export-display))
+               (format "\\href{%s}{FM-%s}" (format ,url label) label)))
+   :face '(:foreground "green" :weight bold
+           :underline "blue" :overline "blue")))
+
+(my/work-links "FM"     "https://weeverapps.atlassian.net/browse/FM-%s")                ;; FM:2898
+(my/work-links "INEW"   "https://weeverapps.atlassian.net/browse/INEW-%s")              ;; INEW:201
+(my/work-links "portal" "https://github.com/WeeverApps/wxPortal/pull/%s")               ;; portal:4905
+(my/work-links "platform" "https://github.com/WeeverApps/api-platform-server/pull/%s")  ;; platform:2489
+(my/work-links "weever" "https://github.com/WeeverApps/%s" label)                       ;; weever:wxportal
 ;; Managing Processes/Servers from within Emacs:4 ends here
 
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:5]]
+(cl-defun my/application-running? (app)
+  "Check if application APP is currently running, in use."
+  (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
+;; Managing Processes/Servers from within Emacs:5 ends here
+
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:6]]
 (cl-defun w-open-pm () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
 (cl-defun w-start-pm ()
   "Starts up the local server to see Process Manager in your browser.
@@ -2843,9 +2773,9 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
        "*ProcessManager*")
       (message (shell-command-to-string "brew services start postgresql"))
       (magit-status))))
-;; Managing Processes/Servers from within Emacs:5 ends here
+;; Managing Processes/Servers from within Emacs:6 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:6]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:7]]
 (defalias 'my/open-in-terminal '⌘)
 (cl-defun ⌘ (&rest cmds)
   "Run terminal commands CMDS in a new MacOS Terminal instance, and bring it to focus.
@@ -2857,9 +2787,9 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
                          (pp-to-string (s-join ";" cmds)))))
 
 ;; (⌘ "echo hello" "echo world")
-;; Managing Processes/Servers from within Emacs:6 ends here
+;; Managing Processes/Servers from within Emacs:7 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:7]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:8]]
 ;; Usage: M-x docker [RET ?]
 (use-package docker
   :config
@@ -2869,9 +2799,9 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   (interactive)
   (shell-command "docker stop $(docker ps -a -q)")
   (shell-command "docker rm $(docker ps -a -q)"))
-;; Managing Processes/Servers from within Emacs:7 ends here
+;; Managing Processes/Servers from within Emacs:8 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:8]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:9]]
 (my/defaliases w-dev-env-start w-blue-screen w-db-start-servers w-start-db-servers)
 ;;
 (defun w-dev-env-start ()
@@ -2894,9 +2824,9 @@ Menu can be closed when servers are started; can also stop them."
 (cl-defun w-inject-users ()
   (interactive)
   (display-message-or-buffer (shell-command-to-string "cd ~/ops-helm-deployment/docker/wx-dev-env/root/; docker cp ../helpers/userInjector.js platform:/usr/src/userInjector.js; docker exec -t platform sh -c \"npx babel-node userInjector.js\"")))
-;; Managing Processes/Servers from within Emacs:8 ends here
+;; Managing Processes/Servers from within Emacs:9 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:9]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:10]]
 ;; (system-packages-ensure "leiningen")
 (use-package ejc-sql
   :config
@@ -2986,9 +2916,9 @@ other connections call with a prefix argument."
     (json-mode)
     (json-pretty-print-buffer)
     (other-window -1)))
-;; Managing Processes/Servers from within Emacs:9 ends here
+;; Managing Processes/Servers from within Emacs:10 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:10]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:11]]
 (defun my/docker-stop (ctr)
   "Stop all containers that mention CTR in their name, image, command, or container id"
   (thread-last (shell-command-to-string "docker ps -a")
@@ -3008,9 +2938,9 @@ other connections call with a prefix argument."
   (interactive)
   (cl-loop for 𝑺 in my/services
            do (funcall (intern (format "w-stop-%s" 𝑺)))))
-;; Managing Processes/Servers from within Emacs:10 ends here
+;; Managing Processes/Servers from within Emacs:11 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:11]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:12]]
 ;; It takes about ~3 seconds to build the Status of Services page, so let's jump to it if it's already built, and the user/me can request a refresh, if need be.
 (global-set-key (kbd "M-S-SPC")
   (lambda () (interactive)
@@ -3093,9 +3023,9 @@ other connections call with a prefix argument."
                        ;; (help-mode) ;; For some reason, default fundamental-mode does not regoznise proprtised strings.
                        ;; Also, this is read-only be default and emits a nice message for undefiend single key bindings.
                        (help-mode))))))
-;; Managing Processes/Servers from within Emacs:11 ends here
+;; Managing Processes/Servers from within Emacs:12 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:12]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:13]]
 (cl-defmacro my/defservice
     (repo &key (main-setup "git checkout main; git pull")
           (cmd "npm run docker:dev")
@@ -3189,9 +3119,9 @@ other connections call with a prefix argument."
 ;; FAQ, ensure we use our rust-toolchain file, run:   rustup override unset
 (my/defservice wx-data-agent :cmd "cargo watch -x run")
 (my/defservice api-odata :cmd "docker-compose up --build")
-;; Managing Processes/Servers from within Emacs:12 ends here
+;; Managing Processes/Servers from within Emacs:13 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:13]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:14]]
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
   (interactive)
@@ -3213,18 +3143,18 @@ other connections call with a prefix argument."
               (process-manager "label:\"quick and easy\"" "repo:process-builder")
               (newts "label:\"Newts Priority Review\",Newts"))
          do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
-;; Managing Processes/Servers from within Emacs:13 ends here
+;; Managing Processes/Servers from within Emacs:14 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:14]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:15]]
 ;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
 ;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
 ;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
 ;; With a prefix argument prompt for the format style 𝒮.
 ;; Easy to add more formats.
 (use-package copy-as-format)
-;; Managing Processes/Servers from within Emacs:14 ends here
+;; Managing Processes/Servers from within Emacs:15 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:15]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:16]]
 ;; A nice Emacs interface for the a portion of the “gh” CLI.
 (my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
 (cl-defun my/gh-checkout (&optional repo)
@@ -3249,9 +3179,9 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
         ;; Show nice status
         (async-shell-command status)
         (magit-status repo)))))
-;; Managing Processes/Servers from within Emacs:15 ends here
+;; Managing Processes/Servers from within Emacs:16 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:16]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:17]]
 (defvar w-app-slugs
    (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
 
@@ -3266,9 +3196,9 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
   (shell-command (format "echo \"false\" > ~/wxPortal/client/assets/config/apps/%s/authorization.allowSsoLogin.json" app))
   (w-browse-app app)
   (message "SSO for %s disabled; don't commit the “authorization.allowSsoLogin.json” file!" app)))
-;; Managing Processes/Servers from within Emacs:16 ends here
+;; Managing Processes/Servers from within Emacs:17 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:17]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:18]]
 (cl-defun w-db-migrations ()
   (interactive)
   (async-shell-command "cd ~/api-platform-server; git status; npm run docker:migrate" "*DB/Migrations*"))
@@ -3276,9 +3206,9 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
 (cl-defun w-db-rollbacks ()
   (interactive)
   (async-shell-command "cd ~/api-platform-server; git status; npm run docker:rollback" "*DB/Rollback*"))
-;; Managing Processes/Servers from within Emacs:17 ends here
+;; Managing Processes/Servers from within Emacs:18 ends here
 
-;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:18]]
+;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:19]]
 (cl-defun w-handbook-view ()
   "Open the HTML handbook in your local browser"
    (interactive)
@@ -3289,7 +3219,7 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
    (interactive)
    (shell-command "emacs ~/handbook/How-Do-I.org --batch -Q --load ~/handbook/lisp/export-org-to-html.el -f org-html-export-to-html --kill")
    (w-handbook-view))
-;; Managing Processes/Servers from within Emacs:18 ends here
+;; Managing Processes/Servers from within Emacs:19 ends here
 
 ;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
 ;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
@@ -4372,3 +4302,10 @@ window contains the buffer with the cursour in it."
   (org-cycle)
   (goto-line line))
 ;; Jumping without hassle:1 ends here
+
+;; [[file:init.org::*all-the-icons][all-the-icons:1]]
+ (use-package all-the-icons
+    :config (all-the-icons-install-fonts 'install-without-asking))
+;; (cl-defun all-the-icons-faicon (icon &rest _)
+;;  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
+;; all-the-icons:1 ends here

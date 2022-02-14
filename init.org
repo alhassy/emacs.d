@@ -72,8 +72,11 @@
 (setq o--supported-blocks nil)
 ;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
 ;; Symbol’s function definition is void: all-the-icons-faicon
-(cl-defun all-the-icons-faicon (icon &rest _)
-  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
+#+end_src
+
+
+
+#+begin_src emacs-lisp :exports none
 ;;
 ;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
 (cl-defun org-clocking-buffer (&rest _))
@@ -2847,15 +2850,14 @@ previous, next, or toggle editing org-mode source blocks.
 #+begin_src emacs-lisp
 ;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
 ;;
-(eval-after-load 'org-mode
-  (use-package emacs
-
-    :bind (:map org-mode-map
-                ("s-p" . org-babel-previous-src-block)
-                ("s-n" . org-babel-next-src-block)
-                ("s-e" . org-edit-special)
-                :map org-src-mode-map
-                ("s-e" . org-edit-src-exit))))
+(require 'org)
+(use-package emacs
+  :bind (:map org-mode-map
+              ("s-p" . org-babel-previous-src-block)
+              ("s-n" . org-babel-next-src-block)
+              ("s-e" . org-edit-special)
+              :map org-src-mode-map
+              ("s-e" . org-edit-src-exit)))
 #+end_src
 
 #                       Interestingly, ~s-l~ is “goto line”.
@@ -4433,6 +4435,7 @@ pair-programming calls, or meetings go longer than expected, I only schedule for
 (org-defkey org-agenda-mode-map "C" #'org-agenda-goto-calendar)
 
 ;; Press “e” in columns view to alter “e”ffort “e”stimates.
+(require 'org-colview)
 (org-defkey org-columns-map "e"
             ;; Refresh after making an effort estimate.
             (lambda () (interactive) (org-agenda-set-effort) (org-agenda-columns)))
@@ -5253,7 +5256,7 @@ follows: =System Preferences → Notifications → terminal-notifier → Alerts=
 
 + Emacs's built in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Appointments.html][appointment notification facility]] can also be used as a alarm
   clock via ~M-x appt-add~.
-** Using Gnus for Gmail
+** COMMENT Using Gnus for Gmail [Temporarily Disabled]
 :PROPERTIES:
 :CUSTOM_ID: Using-Gnus-for-Gmail
 :END:
@@ -5522,7 +5525,7 @@ interface.
 - Press ~C-x m~ then begin typing a contact's name and you'll be queried about
   setting up BBDB, say yes.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package gmail2bbdb
   :defer t
   :custom (gmail2bbdb-bbdb-file "~/Dropbox/bbdb"))
@@ -11052,6 +11055,14 @@ publish the current article to my blog.
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
 
+** all-the-icons
+
+#+begin_src emacs-lisp
+ (use-package all-the-icons
+    :config (all-the-icons-install-fonts 'install-without-asking))
+;; (cl-defun all-the-icons-faicon (icon &rest _)
+;;  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
+#+end_src
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate

@@ -779,8 +779,3 @@ ${15:???}
 ${16:???}
 
 $0
-** contacts: Get the email of one of my personal contacts
-
-${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.org"))
-(yas-choose-value (--map (format "%s <%s>" (getf it :name) (getf it :email))
-my/contacts)))`} $0
