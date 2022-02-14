@@ -2471,19 +2471,32 @@ Super neat stuff!
 Below are the git repos I'd like to clone ---along with a function to do so
 quickly.
 #+begin_src emacs-lisp
-(cl-defun maybe-clone (remote &optional (local (concat "~/" (file-name-base remote))))
-  "Clone a REMOTE repository if the LOCAL directory does not exist.
+(cl-defun maybe-clone (remote &optional local)
+  "Clone a REMOTE repository [from clipboard] if the LOCAL directory does not exist.
+
+If called interactively, clone URL in clipboard into ~/Downloads then open in dired.
 
 Yields ‘repo-already-exists’ when no cloning transpires,
 otherwise yields ‘cloned-repo’.
 
 LOCAL is optional and defaults to the base name; e.g.,
 if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
-  (defvar magit-repository-directories nil) ;; Define it, if it's not yet loaded
+  (interactive "P")
+
+  (when (interactive-p)
+    (setq remote (substring-no-properties (current-kill 0)))
+    (cl-assert (string-match-p "^\\(http\\|https\\|ssh\\)://" remote) nil "No URL in clipboard"))
+
+  (unless local
+    (setq local (concat "~/" (if (interactive-p) "Downloads/" "") (file-name-base remote))))
+
+  (require 'magit-repos) ;; Gets us the magit-repository-directories variable.
   (add-to-list 'magit-repository-directories `(,local . 0))
+
   (if (file-directory-p local)
       'repo-already-exists
-    (async-shell-command (concat "git clone " remote " " local))
+    (shell-command (concat "git clone " remote " " local))
+    (dired local)
     'cloned-repo))
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
