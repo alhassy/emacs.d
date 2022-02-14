@@ -1925,6 +1925,14 @@ Possibly interesting reads:
 + [[https://softwareengineering.stackexchange.com/questions/212192/what-are-the-advantages-and-disadvantages-of-cryptographically-signing-commits-a][What are the advantages and disadvantages of cryptographically signing commits and tags in Git? | Software Engineering Stack Exchange]]
 #+end_details
 
+** all-the-icons
+
+#+begin_src emacs-lisp
+ (use-package all-the-icons
+    :config (all-the-icons-install-fonts 'install-without-asking))
+;; (cl-defun all-the-icons-faicon (icon &rest _)
+;;  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
+#+end_src
 ** Hydra: Supply a prefix only once
 :PROPERTIES:
 :CUSTOM_ID: Hydra-Supply-a-prefix-only-once
@@ -2471,13 +2479,13 @@ Super neat stuff!
 Below are the git repos I'd like to clone ---along with a function to do so
 quickly.
 #+begin_src emacs-lisp
+;; Clone git repo from clipboard
 (cl-defun maybe-clone (remote &optional local)
   "Clone a REMOTE repository [from clipboard] if the LOCAL directory does not exist.
 
 If called interactively, clone URL in clipboard into ~/Downloads then open in dired.
 
-Yields ‘repo-already-exists’ when no cloning transpires,
-otherwise yields ‘cloned-repo’.
+Yields ‘repo-already-exists’ when no cloning transpires, otherwise yields ‘cloned-repo’.
 
 LOCAL is optional and defaults to the base name; e.g.,
 if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
@@ -2498,6 +2506,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
     (shell-command (concat "git clone " remote " " local))
     (dired local)
     'cloned-repo))
+
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
@@ -11068,14 +11077,6 @@ publish the current article to my blog.
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
 
-** all-the-icons
-
-#+begin_src emacs-lisp
- (use-package all-the-icons
-    :config (all-the-icons-install-fonts 'install-without-asking))
-;; (cl-defun all-the-icons-faicon (icon &rest _)
-;;  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
-#+end_src
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate

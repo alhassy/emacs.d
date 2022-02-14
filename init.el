@@ -411,6 +411,13 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; Caches passphrase for the current emacs session?
 ;; Password-locking files  ---“encryption”:1 ends here
 
+;; [[file:init.org::*all-the-icons][all-the-icons:1]]
+ (use-package all-the-icons
+    :config (all-the-icons-install-fonts 'install-without-asking))
+;; (cl-defun all-the-icons-faicon (icon &rest _)
+;;  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
+;; all-the-icons:1 ends here
+
 ;; [[file:init.org::*Hydra: Supply a prefix only once][Hydra: Supply a prefix only once:1]]
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
@@ -659,20 +666,34 @@ Is replaced by:
 ;; Encouraging useful commit messages:1 ends here
 
 ;; [[file:init.org::*Maybe clone ... everything?][Maybe clone ... everything?:1]]
-(cl-defun maybe-clone (remote &optional (local (concat "~/" (file-name-base remote))))
-  "Clone a REMOTE repository if the LOCAL directory does not exist.
+;; Clone git repo from clipboard
+(cl-defun maybe-clone (remote &optional local)
+  "Clone a REMOTE repository [from clipboard] if the LOCAL directory does not exist.
 
-Yields ‘repo-already-exists’ when no cloning transpires,
-otherwise yields ‘cloned-repo’.
+If called interactively, clone URL in clipboard into ~/Downloads then open in dired.
+
+Yields ‘repo-already-exists’ when no cloning transpires, otherwise yields ‘cloned-repo’.
 
 LOCAL is optional and defaults to the base name; e.g.,
 if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
-  (defvar magit-repository-directories nil) ;; Define it, if it's not yet loaded
+  (interactive "P")
+
+  (when (interactive-p)
+    (setq remote (substring-no-properties (current-kill 0)))
+    (cl-assert (string-match-p "^\\(http\\|https\\|ssh\\)://" remote) nil "No URL in clipboard"))
+
+  (unless local
+    (setq local (concat "~/" (if (interactive-p) "Downloads/" "") (file-name-base remote))))
+
+  (require 'magit-repos) ;; Gets us the magit-repository-directories variable.
   (add-to-list 'magit-repository-directories `(,local . 0))
+
   (if (file-directory-p local)
       'repo-already-exists
-    (async-shell-command (concat "git clone " remote " " local))
+    (shell-command (concat "git clone " remote " " local))
+    (dired local)
     'cloned-repo))
+
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
@@ -4302,10 +4323,3 @@ window contains the buffer with the cursour in it."
   (org-cycle)
   (goto-line line))
 ;; Jumping without hassle:1 ends here
-
-;; [[file:init.org::*all-the-icons][all-the-icons:1]]
- (use-package all-the-icons
-    :config (all-the-icons-install-fonts 'install-without-asking))
-;; (cl-defun all-the-icons-faicon (icon &rest _)
-;;  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
-;; all-the-icons:1 ends here
