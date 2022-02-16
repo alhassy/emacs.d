@@ -18,14 +18,8 @@
 ;; title:1 ends here
 
 ;; [[file:init.org::*title][title:2]]
-;;
 ;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
 (cl-defun org-clocking-buffer (&rest _))
-
-;; before this: init time: 13
-;; after: 12 seconds.
-; (setq gc-cons-threshold 50000000) ;; orginaly 800,000
-;; reduce number of times GC occurs.
 ;; title:2 ends here
 
 ;; [[file:init.org::*  =~/.emacs= vs. =init.org=][  =~/.emacs= vs. =init.org=:4]]
@@ -1571,6 +1565,89 @@ We show its subheadings in a completing-read menu, then narrow to that entry."
 ;; (setq org-agenda-window-setup 'only-window)
 ;; Habit Formation:1 ends here
 
+;; [[file:init.org::*Actually Doing Things ---or /Sending notifications from Emacs/][Actually Doing Things ---or /Sending notifications from Emacs/:1]]
+;; Obtain a notifications and text-to-speech utilities
+(system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
+(system-packages-ensure "terminal-notifier") ;; MacOS specific
+;; System Preferences → Notifications → Terminal Notifier → Allow “alerts”.
+;; E.g.,: (shell-command "terminal-notifier -title \"Hiya\" -message \"hello\"")
+;; Actually Doing Things ---or /Sending notifications from Emacs/:1 ends here
+
+;; [[file:init.org::*Actually Doing Things ---or /Sending notifications from Emacs/][Actually Doing Things ---or /Sending notifications from Emacs/:2]]
+(cl-defun my/notify (message &key (titled "") at repeat-every-hour open)
+  "Notify user with both an visual banner, with a beep sound, and a text-to-speech recitation.
+
+When the user clicks on the resulting notification, unless a
+given OPEN url is provided, the Emacs application is brough into
+focus.
+
+MESSAGE and TITLE are strings; AT is a time string as expected of
+`run-at-time' such as \"11.23pm\" or \"5 sec\"; REPEAT-EVERY-HOUR
+is a floating-point number of hours to continuously repeat the
+alert.  OPEN is a URL that is opened when the user clicks the
+notification. This can be a web or file URL, or any custom URL
+scheme.
+
+I initially used optional arguments, but realised that in due time
+it would be more informative to use named arguments instead.
+
+Example uses:
+
+;; In 5 minutes from now, remind me to watch this neato video!
+(my/notify \"🔔 Get things done! 📎 💻 \"
+  :open \"https://www.youtube.com/watch?v=23tusPiiNZk&ab_channel=Motiversity\"
+  :at \"5 minutes\")
+
+;; Remind me to exercise every 1.5hours; starting at 8:00am.
+(my/notify \"Take a 5min break and get your blood flowing!\"
+           :titled \"Exercise\"
+           :at \"8:00am\"
+           :repeat-every-hour 1.5)
+
+;; Actually getting things done!
+(my/notify \"Is what you're doing actually in alignment with your goals?
+           Maybe it's time to do another task?\"
+           :titled \"Check your agenda!\"
+           :at \"10:00am\"
+           :repeat-every-hour 2)
+"
+  (run-at-time at ;; the time to make the alert
+               (when repeat-every-hour (* 60 60 repeat-every-hour))
+               #'async-shell-command
+               (format "%s"
+                       `(terminal-notifier
+                         -title    ,(pp-to-string titled)
+                         -message  ,(s-replace "\\n" "\n" (pp-to-string message))
+                         ;; Play a random sound when the notification appears. See sound names with: ls /System/Library/Sounds
+                         ;; Use the special NAME “default” for the default notification sound.
+                         -sound ,(progn (require 'seq) (seq-random-elt (s-split "\n" (shell-command-to-string "ls /System/Library/Sounds"))))
+                         ;; Activate the application specified by ID when the user clicks the notification.
+                         -activate org.gnu.Emacs
+                         -open ,(pp-to-string open)
+                         ;; Run the shell command COMMAND when the user clicks the notification.
+                         ;; -execute COMMAND
+                         & ;; … and then speak! …
+                         espeak -v mb-us1 ,(s-replace "\\n" " " (pp-to-string message))))))
+;; Actually Doing Things ---or /Sending notifications from Emacs/:2 ends here
+
+;; [[file:init.org::*Actually Doing Things ---or /Sending notifications from Emacs/][Actually Doing Things ---or /Sending notifications from Emacs/:3]]
+;; (Emojis look terrible in Lisp; but much better when the alert is actually made!)
+
+;; Remind me to exercise every 1.5hours; starting at 8:00am.
+(my/notify "Take a 5min break and get your blood flowing!\n\t\t🚣 🏃‍♂️ 🧗‍♂️ 🧘‍♂️ 🏊 🏋 🚴‍♂️"
+           :titled "🤾‍♀️ Exercise  🚵‍♂️"
+           :at "8:00am"
+           :repeat-every-hour 1.5
+           :open "https://www.youtube.com/watch?v=23tusPiiNZk&ab_channel=Motiversity")
+
+;; Actually getting things done!
+(my/notify "Is what you're doing actually in alignment with your goals? ✔️📉
+           Maybe it's time to do another task? 📋"
+           :titled "📆 Check your agenda! 🔔"
+           :at "10:00am"
+           :repeat-every-hour 2)
+;; Actually Doing Things ---or /Sending notifications from Emacs/:3 ends here
+
 ;; [[file:init.org::*Hydra Timer][Hydra Timer:1]]
 (setq org-clock-sound t) ;; Standard Emacs beep
 (my/defhydra "C-c x" "Time Tracking" clock-o
@@ -1752,7 +1829,7 @@ fonts (•̀ᴗ•́)و"
   (setq doom-modeline-height 1)
   (setq doom-modeline-buffer-state-icon nil)
   (setq doom-modeline-hud t)
-  (setq doom-modeline-bar-width 0.0001)
+  (setq doom-modeline-bar-width 1)
 
   ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
   ;; we can click to see a listing.

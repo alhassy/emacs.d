@@ -27,6 +27,9 @@
 # $ brew install --cask mactex
 # $ eval "$(/usr/libexec/path_helper)"
 # $ type pdflatex  # => pdflatex is /Library/TeX/texbin/pdflatex
+#
+# The ~minted~ environment can't appear as an argument to another command; a
+# [[https://tex.stackexchange.com/questions/102416/error-when-compiling-a-minted-listings-inside-a-memoir-subfloat][work-around]] is to use a ‘box’.  Learn more about LaTeX boxes [[https://latexref.xyz/Boxes.html][here]].
 
 * title :ignore:ma:
 :PROPERTIES:
@@ -73,21 +76,10 @@
 ;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
 ;; Symbol’s function definition is void: all-the-icons-faicon
 #+end_src
-
-
-
 #+begin_src emacs-lisp :exports none
-;;
 ;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
 (cl-defun org-clocking-buffer (&rest _))
-
-;; before this: init time: 13
-;; after: 12 seconds.
-; (setq gc-cons-threshold 50000000) ;; orginaly 800,000
-;; reduce number of times GC occurs.
 #+end_src
-
-# The ~minted~ environment can't appear as an argument to another command; a [[https://tex.stackexchange.com/questions/102416/error-when-compiling-a-minted-listings-inside-a-memoir-subfloat][work-around]] is to use a ‘box’.  Learn more about LaTeX boxes [[https://latexref.xyz/Boxes.html][here]].
 
 * Abstract                                                           :ignore:
 :PROPERTIES:
@@ -5242,42 +5234,117 @@ Remember that in the agenda view if you alter a task, say with ~t~ to mark it
 done, then you need to use ~s~ to save the underlying todo/notes files; otherwise,
 any ~g~ will revert the change in the agenda buffer.
 
-** COMMENT Actually Doing Things  ---hangs my systems too much!
+** Actually Doing Things ---or /Sending notifications from Emacs/
 :PROPERTIES:
-:CUSTOM_ID: Actually-Doing-Things-hangs-my-systems-too-much
+:CUSTOM_ID: Actually-Doing-Things
 :END:
 
 Let's setup a little audio-visual reminder to regularly check my agenda
 and ensure I'm not narrowing on a single task and ignoring others.
+
++ More generally, we can use this snippet of code to let Emacs notify us of
+  other things.
+
++ For instance, the doc:message function shows text in the minibuffer, which
+  might be missed when there are multiple incoming messages or focus is on a
+  non-Emacs application (gasp!). Then, doc:my/notify could be used to produce
+  MacOS system-wide notifications.
+
 #+begin_src emacs-lisp
 ;; Obtain a notifications and text-to-speech utilities
 (system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
 (system-packages-ensure "terminal-notifier") ;; MacOS specific
-
-(run-at-time
- "09:00am"
- (* 2 60 60) ;; Every two hours
- (lambda ()
-   (shell-command
-    (format "%s"
-            '(terminal-notifier
-              -title    \"Check your agenda!\"
-              -subtitle \"Is what you\'re doing …\"
-              -message  \"… in alignment with your goals?\"
-              -sound t -appIcon ~/.emacs.d/images/emacs-logo.png
-              ;; Speak at a speed of 125 words per minute; ie slowed down.
-              & espeak -s 125 \"Maybe it\'s time to do another task?\")))))
+;; System Preferences → Notifications → Terminal Notifier → Allow “alerts”.
+;; E.g.,: (shell-command "terminal-notifier -title \"Hiya\" -message \"hello\"")
 #+end_src
 
 By default, notifications are in banner style ---they go away automatically---
 we can use alert style ---in which they stay until dismissed--- in MacOS as
 follows: =System Preferences → Notifications → terminal-notifier → Alerts=.
 
+#+begin_src emacs-lisp
+(cl-defun my/notify (message &key (titled "") at repeat-every-hour open)
+  "Notify user with both an visual banner, with a beep sound, and a text-to-speech recitation.
+
+When the user clicks on the resulting notification, unless a
+given OPEN url is provided, the Emacs application is brough into
+focus.
+
+MESSAGE and TITLE are strings; AT is a time string as expected of
+`run-at-time' such as \"11.23pm\" or \"5 sec\"; REPEAT-EVERY-HOUR
+is a floating-point number of hours to continuously repeat the
+alert.  OPEN is a URL that is opened when the user clicks the
+notification. This can be a web or file URL, or any custom URL
+scheme.
+
+I initially used optional arguments, but realised that in due time
+it would be more informative to use named arguments instead.
+
+Example uses:
+
+;; In 5 minutes from now, remind me to watch this neato video!
+(my/notify \"🔔 Get things done! 📎 💻 \"
+  :open \"https://www.youtube.com/watch?v=23tusPiiNZk&ab_channel=Motiversity\"
+  :at \"5 minutes\")
+
+;; Remind me to exercise every 1.5hours; starting at 8:00am.
+(my/notify \"Take a 5min break and get your blood flowing!\"
+           :titled \"Exercise\"
+           :at \"8:00am\"
+           :repeat-every-hour 1.5)
+
+;; Actually getting things done!
+(my/notify \"Is what you're doing actually in alignment with your goals?
+           Maybe it's time to do another task?\"
+           :titled \"Check your agenda!\"
+           :at \"10:00am\"
+           :repeat-every-hour 2)
+"
+  (run-at-time at ;; the time to make the alert
+               (when repeat-every-hour (* 60 60 repeat-every-hour))
+               #'async-shell-command
+               (format "%s"
+                       `(terminal-notifier
+                         -title    ,(pp-to-string titled)
+                         -message  ,(s-replace "\\n" "\n" (pp-to-string message))
+                         ;; Play a random sound when the notification appears. See sound names with: ls /System/Library/Sounds
+                         ;; Use the special NAME “default” for the default notification sound.
+                         -sound ,(progn (require 'seq) (seq-random-elt (s-split "\n" (shell-command-to-string "ls /System/Library/Sounds"))))
+                         ;; Activate the application specified by ID when the user clicks the notification.
+                         -activate org.gnu.Emacs
+                         -open ,(pp-to-string open)
+                         ;; Run the shell command COMMAND when the user clicks the notification.
+                         ;; -execute COMMAND
+                         & ;; … and then speak! …
+                         espeak -v mb-us1 ,(s-replace "\\n" " " (pp-to-string message))))))
+#+end_src
+
+The following two actual uses cases are also mentioned in doc:my/notify
+docstring, since I want the documentation to be self-contained.
+#+begin_src emacs-lisp
+;; (Emojis look terrible in Lisp; but much better when the alert is actually made!)
+
+;; Remind me to exercise every 1.5hours; starting at 8:00am.
+(my/notify "Take a 5min break and get your blood flowing!\n\t\t🚣 🏃‍♂️ 🧗‍♂️ 🧘‍♂️ 🏊 🏋 🚴‍♂️"
+           :titled "🤾‍♀️ Exercise  🚵‍♂️"
+           :at "8:00am"
+           :repeat-every-hour 1.5
+           :open "https://www.youtube.com/watch?v=23tusPiiNZk&ab_channel=Motiversity")
+
+;; Actually getting things done!
+(my/notify "Is what you're doing actually in alignment with your goals? ✔️📉
+           Maybe it's time to do another task? 📋"
+           :titled "📆 Check your agenda! 🔔"
+           :at "10:00am"
+           :repeat-every-hour 2)
+#+end_src
+
 + [[https://emacs.stackexchange.com/questions/3844/good-methods-for-setting-up-alarms-audio-visual-triggered-by-org-mode-events][Here]] is an approach to triggering audio-visual alarms from Org-mode events
   ---using ~org-agenda-to-appt~.
 
 + Emacs's built in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Appointments.html][appointment notification facility]] can also be used as a alarm
   clock via ~M-x appt-add~.
+
 ** COMMENT Using Gnus for Gmail [Temporarily Disabled]
 :PROPERTIES:
 :CUSTOM_ID: Using-Gnus-for-Gmail
@@ -5995,7 +6062,7 @@ minimalistic, yet fancy/ setup with the following notable perks:
   (setq doom-modeline-height 1)
   (setq doom-modeline-buffer-state-icon nil)
   (setq doom-modeline-hud t)
-  (setq doom-modeline-bar-width 0.0001)
+  (setq doom-modeline-bar-width 1)
 
   ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
   ;; we can click to see a listing.
