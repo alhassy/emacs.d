@@ -5357,6 +5357,12 @@ docstring, since I want the documentation to be self-contained.
 + Emacs's built in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Appointments.html][appointment notification facility]] can also be used as a alarm
   clock via ~M-x appt-add~.
 
+The [[https://github.com/jcs-elpa/marquee-header][marquee-header]] package let's show messages as “horizontal moving text along
+the top of the Emacs frame”, which is neat.
+- Slightly related is [[https://github.com/jcs-elpa/logms][logms]], which let's us make ~message~ calls but we can also
+  /see/ the context/source where those calls were made; as well as a clickable
+  link back to the source.
+
 ** COMMENT Using Gnus for Gmail [Temporarily Disabled]
 :PROPERTIES:
 :CUSTOM_ID: Using-Gnus-for-Gmail
@@ -11164,6 +11170,18 @@ When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
 #+begin_src emacs-lisp
 (quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
 (global-preview-it-mode)
+#+end_src
+
+This also works nicely when I'm looking to open a file; e.g., ~C-x C-f
+~/.emacs.d/.as TAB~ to preview my ~.aspell.en.pws~ (Emacs personal dictionary) file
+in a tooltip.
+# (Sadly, the preview closes my ~M-x~ session when previewing an org file.)
+# Not entirely true; but it's happened with some org files.
+
+Likewise, I'd like to preview line when executing the doc:goto-line / kbd:M-g_M-g command.
+#+begin_src emacs-lisp
+(quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
+(global-set-key [remap goto-line] 'goto-line-preview)
 #+end_src
 
 * Conclusion ---Why Configuration Files Should be Literate

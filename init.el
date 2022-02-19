@@ -1621,13 +1621,16 @@ Example uses:
                          ;; Play a random sound when the notification appears. See sound names with: ls /System/Library/Sounds
                          ;; Use the special NAME “default” for the default notification sound.
                          -sound ,(progn (require 'seq) (seq-random-elt (s-split "\n" (shell-command-to-string "ls /System/Library/Sounds"))))
+                         ;; Don't create duplicates of the notification, just one instance;
+                         ;; i.e., each notification belongs to a group and only one alert of the group may be present at any one time.
+                         -group  ,(pp-to-string titled)
                          ;; Activate the application specified by ID when the user clicks the notification.
                          -activate org.gnu.Emacs
-                         -open ,(pp-to-string open)
+                         ,@(when open `(-open ,(pp-to-string open)))
                          ;; Run the shell command COMMAND when the user clicks the notification.
                          ;; -execute COMMAND
                          & ;; … and then speak! …
-                         espeak -v mb-us1 ,(s-replace "\\n" " " (pp-to-string message))))))
+                         espeak -s 125 ,(s-replace "\\n" " " (pp-to-string message))))))
 ;; Actually Doing Things ---or /Sending notifications from Emacs/:2 ends here
 
 ;; [[file:init.org::*Actually Doing Things ---or /Sending notifications from Emacs/][Actually Doing Things ---or /Sending notifications from Emacs/:3]]
@@ -4400,3 +4403,13 @@ window contains the buffer with the cursour in it."
   (org-cycle)
   (goto-line line))
 ;; Jumping without hassle:1 ends here
+
+;; [[file:init.org::*Preview link under cursor][Preview link under cursor:1]]
+(quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
+(global-preview-it-mode)
+;; Preview link under cursor:1 ends here
+
+;; [[file:init.org::*Preview link under cursor][Preview link under cursor:2]]
+(quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
+(global-set-key [remap goto-line] 'goto-line-preview)
+;; Preview link under cursor:2 ends here
