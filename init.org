@@ -427,6 +427,13 @@ which becomes “ red:hello ”.
 
 Note the horizontal rule makes a header row and is formed by typing [[kbd:doit][| -]] then
 pressing kbd:TAB. You can kbd:TAB between cells.
++ You can make an empty table with ~C-c |~, which is just
+  doc:org-table-create-or-convert-from-region, then give it row×column
+  dimensions.
++ Any lines with comma-separated-values (CSV) can be turned into an Org table by
+   selecting the region and pressing ~C-u C-c |~.
+   (Any CSV file can thus be visualised nicely as an Org table).
++ Use ~C-u C-u C-u C-c |~ to make a table from values that are speared by a certain regular expression.
 
 --------------------------------------------------------------------------------
 
@@ -3277,6 +3284,8 @@ as a mere interface. It is important to note that Yankpad also provides
 features that are not in Yassnippet, such as allowing arbitrary language
 code to be executed ---one simply uses an org-src block!
 
+| [[https://www.philnewton.net/blog/exploring-emacs-yasnippet/][Here]] is a nice self-contained tutorial. |
+
 There can only be one major completion backend for any mode, but
 other backends can serve as secondary ones. Here's a function to
 make ~company-yankpad~ a secondary of all existing backends.
@@ -5310,13 +5319,16 @@ Example uses:
                          ;; Play a random sound when the notification appears. See sound names with: ls /System/Library/Sounds
                          ;; Use the special NAME “default” for the default notification sound.
                          -sound ,(progn (require 'seq) (seq-random-elt (s-split "\n" (shell-command-to-string "ls /System/Library/Sounds"))))
+                         ;; Don't create duplicates of the notification, just one instance;
+                         ;; i.e., each notification belongs to a group and only one alert of the group may be present at any one time.
+                         -group  ,(pp-to-string titled)
                          ;; Activate the application specified by ID when the user clicks the notification.
                          -activate org.gnu.Emacs
-                         -open ,(pp-to-string open)
+                         ,@(when open `(-open ,(pp-to-string open)))
                          ;; Run the shell command COMMAND when the user clicks the notification.
                          ;; -execute COMMAND
                          & ;; … and then speak! …
-                         espeak -v mb-us1 ,(s-replace "\\n" " " (pp-to-string message))))))
+                         espeak -s 125 ,(s-replace "\\n" " " (pp-to-string message))))))
 #+end_src
 
 The following two actual uses cases are also mentioned in doc:my/notify
@@ -11143,6 +11155,16 @@ publish the current article to my blog.
 (add-hook 'org-mode-hook '(lambda ()
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
+
+* Preview link under cursor
+When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
+- Useful to quickly preview files and images.
+- See also: https://github.com/jcs-elpa/preview-it
+
+#+begin_src emacs-lisp
+(quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
+(global-preview-it-mode)
+#+end_src
 
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
