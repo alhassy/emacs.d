@@ -2768,6 +2768,23 @@ by spaces.
                          (quickrun current-prefix-arg)))))
 ;; Quickly Run Code Snippets:1 ends here
 
+;; [[file:init.org::*Quickly Run Code Snippets][Quickly Run Code Snippets:2]]
+(system-packages-ensure "rust") ;; Rust Compiler
+;; C-c C-r on the following: fn main() { println!("Hello, World!"); }
+
+;; Actually, let's get a full Rust development environment for Emacs
+(use-package rustic)
+;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
+;; rust-analyzer, the rust LSP.
+;;
+;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
+;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
+;; super nice stuff!
+;;
+;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
+;;    let v:Vec<_> = vec![1, 2, 3];
+;; Quickly Run Code Snippets:2 ends here
+
 ;; [[file:init.org::*Managing Processes/Servers from within Emacs][Managing Processes/Servers from within Emacs:1]]
 ;; “M-x prodigy”, then press “s” to start a service; “S” to stop it; “$” to see it; “r”estart
 (use-package prodigy :disabled t)
@@ -3345,6 +3362,14 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
          (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
 ;; Project management & navigation:1 ends here
 
+;; [[file:init.org::*Project management & navigation][Project management & navigation:2]]
+(define-key projectile-mode-map (kbd "C-x p c")
+  (defun my/copy-current-file-path ()
+    "Add current file path to kill ring."
+    (interactive)
+    (message (kill-new buffer-file-name))))
+;; Project management & navigation:2 ends here
+
 ;; [[file:init.org::*Are there any errors in my code?][Are there any errors in my code?:1]]
 (use-package flycheck-status-emoji
   :config
@@ -3633,6 +3658,11 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
 ;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:1]]
+(use-package vimish-fold
+  :config (vimish-fold-global-mode 1))
+;; Text Folding ---Selectively displaying portions of a program:1 ends here
+
+;; [[file:init.org::*Actual Setup][Actual Setup:1]]
 (use-package hideshow
   :init
   ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
@@ -3653,9 +3683,9 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
                         ;; That's OK, since my folding hydra does a better job for my needs.
                         ;; (hs-org/minor-mode t)
                         (hs-hide-all)))))
-;; Text Folding ---Selectively displaying portions of a program:1 ends here
+;; Actual Setup:1 ends here
 
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:2]]
+;; [[file:init.org::*Actual Setup][Actual Setup:2]]
 (my/defhydra "C-c f" "Folding text" archive
   :Current
   ("h" hs-hide-block "Hide")
@@ -3669,18 +3699,26 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
   :Style
   ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
   ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
+  :Region
+  ("f" (lambda () (interactive) (vimish-fold-toggle) (vimish-fold (region-beginning) (region-end))) "Fold/Toggle")
+  ("d" vimish-fold-delete "Delete fold")
+  ("U" vimish-fold-unfold-all "Unfold all")
+  ("D" vimish-fold-delete-all "Delete all")
+  ("n" vimish-fold-next-fold "Next fold")
+  ("p" vimish-fold-previous-fold "Previous fold")
   :...
   ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
   ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
   ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
-  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset")) ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
+  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset Hideshow")  ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
+  ("q" nil "Quit" :color blue))
 
 ;; Features from origami/yafolding that maybe I'd like to implement include:
-;; folding region, narrowing to block or folding everything except block, navigating back and forth between folded blocks.
+;; narrowing to block or folding everything except block, navigating back and forth between folded blocks.
 ;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
-;; Text Folding ---Selectively displaying portions of a program:2 ends here
+;; Actual Setup:2 ends here
 
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:3]]
+;; [[file:init.org::*Actual Setup][Actual Setup:3]]
 (defvar my/hs-hide nil "Current state of hideshow for toggling all.")
 (defun my/hs-toggle-buffer () "Toggle hideshow all."
        (interactive)
@@ -3688,9 +3726,9 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
        (if my/hs-hide
            (hs-hide-all)
          (hs-show-all)))
-;; Text Folding ---Selectively displaying portions of a program:3 ends here
+;; Actual Setup:3 ends here
 
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:4]]
+;; [[file:init.org::*Actual Setup][Actual Setup:4]]
 (defun my/clever-selective-display (&optional level)
 "Fold text indented same of more than the cursor.
 
@@ -3702,9 +3740,9 @@ number nor move point to the desired column.
   (if (eq selective-display (1+ (current-column)))
       (set-selective-display 0)
     (set-selective-display (or level (1+ (current-column))))))
-;; Text Folding ---Selectively displaying portions of a program:4 ends here
+;; Actual Setup:4 ends here
 
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:5]]
+;; [[file:init.org::*Actual Setup][Actual Setup:5]]
 ;; Src: https://emacs.stackexchange.com/questions/52588/dynamically-hide-lines-indented-more-than-current-line
 (define-minor-mode auto-set-selective-display-mode
   "Automatically apply `set-selective-display' at all times based on current indentation."
@@ -3724,14 +3762,14 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
           (next-line-indent (save-excursion (forward-line) (current-indentation))))
       (with-temp-message "" ; Suppress messages.
         (set-selective-display (1+ (max this-line-indent next-line-indent)))))))
-;; Text Folding ---Selectively displaying portions of a program:5 ends here
+;; Actual Setup:5 ends here
 
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:6]]
+;; [[file:init.org::*Actual Setup][Actual Setup:6]]
 ;; Open folded nodes if a search stops there.
 (add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
 (defun my/search-hook-function ()
   (when hs-minor-mode (set-mark-command nil) (hs-show-block) (pop-to-mark-command)))
-;; Text Folding ---Selectively displaying portions of a program:6 ends here
+;; Actual Setup:6 ends here
 
 ;; [[file:init.org::*Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove
