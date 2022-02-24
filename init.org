@@ -8969,6 +8969,15 @@ This is so sweet at work (and possibly at home!): From anywhere,
          (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
 #+end_src
 
+Let's get the file path of the current file. We bind it and make it a top-level invokable function.
+#+begin_src emacs-lisp
+(define-key projectile-mode-map (kbd "C-x p c")
+  (defun my/copy-current-file-path ()
+    "Add current file path to kill ring."
+    (interactive)
+    (message (kill-new buffer-file-name))))
+#+end_src
+
 ** Are there any errors in my code?
 
 [[https://www.flycheck.org/en/latest/][Flycheck]] gives us syntax checking and linting tools to automatically check the
