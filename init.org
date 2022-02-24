@@ -9581,7 +9581,9 @@ a programming mode directly and then may want to have arbitrary ‘sections’ o
 text folded up.  Let's describe how to accomplish this goal. I've tried the
 feature-full folding modes [[https://github.com/gregsexton/origami.el][Origami-mode]] and ~yafolding-mode~, but it seems the
 /built-in/ doc:hs-minor-mode is the best: (0) It folds comments, (1) it's the
-fastest, and (2) it Just Worksᵀᴹ out-of-the-box.
+fastest, and (2) it Just Worksᵀᴹ out-of-the-box. Coupled with Vimish folding,
+for arbitrary region folding; and a helpful hydra, I'm rather happy with my
+setup.
 
 On two JavaScript files, I found the following timings (using doc:elp-instrument-function
 and doc:elp-results):
@@ -9601,6 +9603,28 @@ spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
 I've incorporated this into my folding hydra, below.
 #+end_box
 
+#+begin_box "Vimish fold - Fold regions based on selection, not syntax"
+Sometimes we want to fold some random piece of text ---rather than fold accoding
+to a programming language's syntactic constructions.
+
+[[https://github.com/mrkkrp/vimish-fold][Vimish-fold]] gives us just that and with many fancy features, from the README:
++ folding of active regions;
++ good visual feedback: it's obvious which part of text is folded with a ‘⋮’ in the fringe.
++ create folds from regions between ~{{{~ and ~}}}~ automatically (marks are customizable; doc:vimish-fold-from-marks);
++ persistence by default: when you kill a buffer your folds don't disappear;
++ persistence scales well, you can work on hundreds of files with lots of folds without adverse effects;
++ it does not break indentation;
++ folds can be toggled from folded state to unfolded and back very easily;
++ quick navigation between existing folds;
++ you can use mouse to unfold folds (good for beginners and not only for them).
+
+#+begin_src emacs-lisp
+(use-package vimish-fold
+  :config (vimish-fold-global-mode 1))
+#+end_src
+#+end_box
+
+*** Actual Setup :ignore:
 --------------------------------------------------------------------------------
 
 Below I setup hideshow along with [[doc:hideshowvis-symbols][hideshowvis]] which gives us a nice clickable
@@ -9647,14 +9671,22 @@ blocks! Love this one (•̀ᴗ•́)و
   :Style
   ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
   ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
+  :Region
+  ("f" (lambda () (interactive) (vimish-fold-toggle) (vimish-fold (region-beginning) (region-end))) "Fold/Toggle")
+  ("d" vimish-fold-delete "Delete fold")
+  ("U" vimish-fold-unfold-all "Unfold all")
+  ("D" vimish-fold-delete-all "Delete all")
+  ("n" vimish-fold-next-fold "Next fold")
+  ("p" vimish-fold-previous-fold "Previous fold")
   :...
   ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
   ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
   ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
-  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset")) ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
+  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset Hideshow")  ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
+  ("q" nil "Quit" :color blue))
 
 ;; Features from origami/yafolding that maybe I'd like to implement include:
-;; folding region, narrowing to block or folding everything except block, navigating back and forth between folded blocks.
+;; narrowing to block or folding everything except block, navigating back and forth between folded blocks.
 ;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
 #+END_SRC
 #+begin_details "Folding Hydra Helpers"
