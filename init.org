@@ -8343,6 +8343,24 @@ choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-
                          (quickrun current-prefix-arg)))))
 #+end_src
 
+Example...
+#+begin_src emacs-lisp
+(system-packages-ensure "rust") ;; Rust Compiler
+;; C-c C-r on the following: fn main() { println!("Hello, World!"); }
+
+;; Actually, let's get a full Rust development environment for Emacs
+(use-package rustic)
+;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
+;; rust-analyzer, the rust LSP.
+;;
+;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
+;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
+;; super nice stuff!
+;;
+;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
+;;    let v:Vec<_> = vec![1, 2, 3];
+#+end_src
+
 ** Managing Processes/Servers from within Emacs
 
 Not using this, a bit too verbose to setup for each service but, more
