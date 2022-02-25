@@ -9968,6 +9968,47 @@ $i^{th}$-line having pattern =pᵢ=.
   - [[https://user-images.githubusercontent.com/170270/55060505-31179b00-50a4-11e9-99a9-c3691ba38d66.png][Renders `text in backticks` in issue titles, commit titles and more places.]]
   - Shows all of Refined GitHub’s new keyboard shortcuts in the help modal ([[kbd:?]] hotkey).
 
+** How do I do something?
+
+  When programming, sometimes you just gotta Google “how do I do ⋯”.
+  - The usual process is (1) open a browser, (2) make a Google query, (3) look
+    at StackOverflow's most upvoted answer for your query, (4) copy-paste the
+    code solution/example to your editor; [(5) get distracted by interesting
+    things you'd like to read].
+  - Better would be to use the [[https://github.com/gleitz/howdoi][howdoi]] tool, which gives instant coding answers
+    for common questions via the command line.
+  - Below, my /Emacs Lisp/ function doc:howdoi let's me reduce the 4-step process
+    to just 2 steps: Write your query /anywhere/ then call ~M-x howdoi~ on it to
+    replace the query with the answer. (Or ~C-u M-x howdoi~ to see the full answer
+    and a link to it on StackOverflow.)
+
+    | /⚡ Never open your browser to look for help again ⚡/ |
+
+#+begin_src emacs-lisp
+(system-packages-ensure "howdoi")
+
+(cl-defun howdoi (&optional show-full-answer)
+  "Instantly insert coding answers.
+
+Replace a query with a code solution; replace it with an entire
+answer if a prefix is provided.
+
+Example usage:
+
+   On a new line, write a question such as:
+
+      search and replace buffer Emacs Lisp
+
+   Then invoke ‘M-x howdoi’ anywhere on the line
+   to get a code snippet; or ‘C-u M-x howdoi’ to get a full answer to your query.
+"
+  (interactive "P")
+  (let ((query (s-collapse-whitespace (substring-no-properties (thing-at-point 'line))))
+        (flag (if show-full-answer "-a" "")))
+    (beginning-of-line)
+    (kill-line)
+    (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
+#+end_src
 * Experiments
 CLOSED: [2021-11-02 Tue 22:01]
 :PROPERTIES:
