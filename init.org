@@ -10009,6 +10009,18 @@ Example usage:
     (kill-line)
     (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
 #+end_src
+** Browse remote files
+
+  Sometimes you want to see the current file in Github; e.g., you select a
+  region and press ~M-x browse-at-remote-kill~ to get the URL for that region in
+  Github then you can send that URL to your peers when referencing something.
+  - Or just ~M-x browse-at-remote~ to see it in Github.
+  - [[https://github.com/rmuslimov/browse-at-remote][browse-at-remote: Browse target page on github/bitbucket from emacs buffers]].
+
+#+begin_src emacs-lisp
+;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
+(use-package browse-at-remote)
+#+end_src
 * Experiments
 CLOSED: [2021-11-02 Tue 22:01]
 :PROPERTIES:
