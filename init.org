@@ -3902,6 +3902,42 @@ the specified ~:noweb-ref~, not on ~:CUSTOM_ID:~ incidentally having the same
 name.
 #+end_box
 
+** Prettify inline source code
+
+#+begin_src emacs-lisp
+;; Show “ src_emacs-lisp[:exports results]{ 𝒳 } ” as “ ℰ𝓁𝒾𝓈𝓅﴾ 𝒳 ﴿ ”.
+;;
+(font-lock-add-keywords 'org-mode
+  '(("\\(src_emacs-lisp\\[.*]{\\)\\(.*\\)\\(}\\)"
+  (1 '(face (:inherit (bold) :foreground "gray65") display "ℰ𝓁𝒾𝓈𝓅﴾"))
+  (2 '(face (:foreground "blue")))
+  (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
+    )))
+;;
+(defun my/toggle-line-fontification ()
+  "Toggle the fontification of the current line"
+  (interactive)
+  (defvar my/toggle-fontify/current-line -1)
+  (defvar my/toggle-fontify/on? nil)
+  (add-to-list 'font-lock-extra-managed-props 'display)
+  (let ((start (line-beginning-position)) (end (line-end-position)))
+    (cond
+     ;; Are we toggling the current line?
+     ((= (line-number-at-pos) my/toggle-fontify/current-line)
+      (if my/toggle-fontify/on?
+          (font-lock-fontify-region start end)
+        (font-lock-unfontify-region start end))
+      (setq my/toggle-fontify/on? (not my/toggle-fontify/on?)))
+     ;; Nope, we've moved on to another line.
+     (:otherwise
+      (setq my/toggle-fontify/current-line (line-number-at-pos)
+            my/toggle-fontify/on? :yes_please_fontify)
+      (font-lock-unfontify-region  start end)))))
+
+  ;; TODO FIXME; maybe ignore: Wasted too much time here already.
+;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
+;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
+#+end_src
 * Life within Org-mode
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
@@ -6771,7 +6807,8 @@ Let's make some things prettier than they appear by default.
 ;; On HTML exports, Org-mode tries to include a validation link for the exported HTML. Let’s disable that since I never use it.
 ;; (setq org-html-validation-link nil)
 
-(setq org-pretty-entities t) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
+;; Musa: This is super annoying, in practice.
+(setq org-pretty-entities nil) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
 ;; to have \alpha, \to and others display as utf8
 ;; http://orgmode.org/manual/Special-symbols.html
 ;;
