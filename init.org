@@ -1762,6 +1762,21 @@ Lets also use doc:helm-do-grep-ag ([[kbd:C-x c M-g a]]) *search all files in the
 (system-packages-ensure "ag")
 #+end_src
 
+*Marking my place when I jump around*
+Let's use ~M-m~ to get a nice menu of places we've been recently.
+#+begin_src emacs-lisp
+;; Save/mark a location with “C-u M-m”, jump back to it with “M-m”.
+(bind-key* "M-m"
+           (lambda ()
+             (interactive)
+             (if (not current-prefix-arg)
+                 (helm-mark-ring)
+               (push-mark)
+               (message "[To return to this location, press M-m] ∷ %s"
+                        (s-trim (substring-no-properties (thing-at-point 'line)))))))
+#+end_src
+
+
 Finally, note that there is now a ~M-x helm-info~ command to show documentation,
 possibly with examples, of the packages installed. For example,
 ~M-x helm-info RET dash RET -parition RET~ to see how the parition function from the
@@ -2793,6 +2808,9 @@ meta-(programming language).
 Importantly, this means we can write text and whenever we need the result of
 some computation, we can place it there and then and only request its result
 appear in PDF/HTML export. The result is a single document.
+
+( There is the [[https://github.com/minad/org-modern][org-modern]] package, which provides a modern look-and-feel: It
+makes Org look less like a markup and more like a word editor. Nice stuff. )
 
 ** High Speed Literate Programming
 :PROPERTIES:
@@ -5816,31 +5834,6 @@ ${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.o
 my/contacts)))`} $0
 #+end_src
 
-* TODO Hydra Timer
-
-#+begin_src emacs-lisp
-(setq org-clock-sound t) ;; Standard Emacs beep
-(my/defhydra "C-c x" "Time Tracking" clock-o
-  ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
-  :Tasks
-  ("n" (my/org-journal-new-entry :work) "New")
-  ("v" (progn (my/org-journal-new-entry :work) (revert-buffer t t) (org-journal-mode)) "View all")
-  :Timer
-  ("s" org-timer-start "Start")
-  ("S" org-timer-stop "Stop")
-  ("x" org-timer-set-timer "Set")
-  ("p" org-timer "Print")
-  :Org-Clock
-  ("i" org-clock-in "in")
-  ("o" org-clock-out "out")
-  ("c" org-clock-cancel "cancel" :color pink :column "Do")
-  ("d" org-clock-display "display")
-  ("e" org-clock-modify-effort-estimate "effort")
-
-  ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
-  ("r" org-clock-report "Insert clocktable"))
-#+end_src
-
 * Cosmetics
 CLOSED: [2021-11-02 Tue 22:30]
 :PROPERTIES:
@@ -7422,6 +7415,11 @@ it up for the main sake of its Unicode input ---you may do likewise using TeX
 input.  ( [[https://www.joelonsoftware.com/2003/10/08/the-absolute-minimum-every-software-developer-absolutely-positively-must-know-about-unicode-and-character-sets-no-excuses/][The Absolute Minimum Every Software Developer Absolutely, Positively
 Must Know About Unicode and Character Sets (No Excuses!)]] )
 
+/Agda input mode makes it extremely easy to use unicode in documents, something I/
+/strongly prefer to do. When I can use symbols directly, instead of (for/
+/instance) LaTeX commands, it makes my plaintext far more readable./ --- [[https://github.com/armkeh/dotfiles/tree/master/emacs][Armkeh
+.emacs config]]
+
 #+begin_src emacs-lisp
 (system-packages-ensure "agda")
 #+end_src
@@ -7569,6 +7567,9 @@ Better yet, as a loop:
            ("ceil"   "⌈⌉")
            ("raise"  "⌈⌉")
            ("rad"    "⌈⌉")
+           ;; Replies
+           ("yes"  "✔")
+           ("no"    "❌")
            ;; Arrows
            ("<=" "⇐")
         ;; more (key value) pairs here
@@ -11311,7 +11312,7 @@ publish the current article to my blog.
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
 
-* Preview link under cursor
+** Preview link under cursor
 When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
 - Useful to quickly preview files and images.
 - See also: https://github.com/jcs-elpa/preview-it
@@ -11333,7 +11334,7 @@ Likewise, I'd like to preview line when executing the doc:goto-line / kbd:M-g_M-
 (global-set-key [remap goto-line] 'goto-line-preview)
 #+end_src
 
-* C-x C-e / REPL-driven development for NodeJS!
+** C-x C-e / REPL-driven development for NodeJS!
 
 | /Evaluate code and see the results inline ---A feedback loop that is faster than ever!/ |
 
@@ -11388,6 +11389,40 @@ let a = "hello"
 let b = "world"
 (a + ' ' + b).toUpperCase()
 // The final line should show: HELLO WORLD
+#+end_src
+
+** The evils of this world
+#+begin_src emacs-lisp
+;; “PDF” stands for Portable Document Format, since you should be able to open
+;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
+;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
+;; them. Unfortunately, various government & insurance forms are only provided in
+;; this format.
+(system-packages-ensure "adobe-acrobat-reader")
+#+end_src
+** TODO Hydra Timer
+
+#+begin_src emacs-lisp
+(setq org-clock-sound t) ;; Standard Emacs beep
+(my/defhydra "C-c x" "Time Tracking" clock-o
+  ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
+  :Tasks
+  ("n" (my/org-journal-new-entry :work) "New")
+  ("v" (progn (my/org-journal-new-entry :work) (revert-buffer t t) (org-journal-mode)) "View all")
+  :Timer
+  ("s" org-timer-start "Start")
+  ("S" org-timer-stop "Stop")
+  ("x" org-timer-set-timer "Set")
+  ("p" org-timer "Print")
+  :Org-Clock
+  ("i" org-clock-in "in")
+  ("o" org-clock-out "out")
+  ("c" org-clock-cancel "cancel" :color pink :column "Do")
+  ("d" org-clock-display "display")
+  ("e" org-clock-modify-effort-estimate "effort")
+
+  ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
+  ("r" org-clock-report "Insert clocktable"))
 #+end_src
 
 * Conclusion ---Why Configuration Files Should be Literate
