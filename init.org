@@ -6149,18 +6149,34 @@ minimalistic, yet fancy/ setup with the following notable perks:
 ;; Nice battery icon alongside with percentage, in doom-modeline.
 ;; If not for doom-modeline, we'd need to use fancy-batter-mode.el.
 (display-battery-mode +1)
-
-;; Show date and time as well.
-(setq display-time-day-and-date t)
-(display-time)
 #+end_src
 
+*** Time & date
+Let’s display the current time, with updates every second.
+
+#+begin_src emacs-lisp
+;; Show date and time as well.
+
+;; [Simple Approach]
+;; (setq display-time-day-and-date t)
+;; (display-time)
+
+;; [More Controlled Approach: Set date&time format]
+;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
+(setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
+(setq display-time-interval 1) ;; Please update the time every second.
+(display-time-mode)
+#+end_src
+
+But doc:display-time-mode shows me a bit more info that I actually don't care
+for; so let's disable those.
 #+begin_src emacs-lisp
 ;; I don't need the system load average in the modeline.
 (setq display-time-default-load-average nil)
 (setq display-time-load-average nil)
 #+end_src
 
+*** Column Numbers
 Likewise, let's have the modeline display column numbers, but not line numbers.
 Instead, let's have line numbers on the side of the buffer; moreover let's have
 a uniform width for displaying line numbers, rather than having the width grow
@@ -6172,6 +6188,7 @@ as necessary.
 (global-display-line-numbers-mode      t)
 #+END_SRC
 
+*** Misc Remarks ~ fancy battery & spaceline :ignore:
 # I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I find spacemacs to “hide things”
 # from me ---whereas Emacs “encourages” me to learn more---, however it is a
 # configuration and I enjoy reading Emacs configs in order to improve my own
