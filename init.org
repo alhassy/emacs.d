@@ -6392,22 +6392,26 @@ to have the buffer names reflect their location.
 
 ( Why am I bringing this up? I like math and seldom get to use it; so why not! )
 
-** Flashing when something goes wrong ---no blinking
+** Flashing when something goes wrong
 :PROPERTIES:
-:CUSTOM_ID: Flashing-when-something-goes-wrong-no-blinking
+:CUSTOM_ID: Flashing-when-something-goes-wrong
 :END:
 
-Make top and bottom of screen flash when something unexpected happens thereby
-observing a warning message in the minibuffer. E.g., C-g, or calling an unbound
-key sequence, or misspelling a word.
+Enable flashing mode-line on errors. E.g., ~C-g~, or calling an unbound key
+sequence, or misspelling a word.
 #+BEGIN_SRC emacs-lisp
-(setq visible-bell 1)
-#+END_SRC
-Enable flashing mode-line on errors.  On MacOS, this shows a caution symbol ^_^
+;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
 
-A blinking cursor rushes me to type; let's slow down.
-… Recentely I'm thinking that a blinking cursours prompts me to continue
-upwards and onwards.
+;; The doom themes package comes with a function to make the mode line flash on error.
+(use-package doom-themes)
+(require 'doom-themes-ext-visual-bell)
+(doom-themes-visual-bell-config)
+#+END_SRC
+
+--------------------------------------------------------------------------------
+
++A blinking cursor rushes me to type; let's slow down.+ Recently I'm thinking that
+a blinking cursours prompts me to continue upwards and onwards.
 #+BEGIN_SRC emacs-lisp
 (blink-cursor-mode 1)
 #+END_SRC
