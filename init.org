@@ -6096,6 +6096,9 @@ minimalistic, yet fancy/ setup with the following notable perks:
 
 + Shows “+2” when the text scale is two above usual.
 
+For fine-grained control on what/how things appear, there is
+doc:doom-modeline-def-modeline and doc:doom-modeline-set-modeline.
+
 #+begin_src emacs-lisp
 ;; This package requires the fonts included with all-the-icons to be installed. Run M-x all-the-icons-install-fonts to do so.
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
@@ -6123,91 +6126,14 @@ minimalistic, yet fancy/ setup with the following notable perks:
   ;; (let ((it "Source Code Pro Light" ))
   ;;   (set-face-attribute 'mode-line nil :family it :height 100)
   ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
-
-  ;; Whether display the minor modes in the mode-line.  Enabled minor modes
-  ;; clutter up the modeline with their names, albeit some have useful status
-  ;; information shown. We can either selectively pick which names/status are
-  ;; shown using diminish.el, possibly forgetting which minor modes are enabled
-  ;; or we can use minions.el to “gather up” all enabled minor modes, and
-  ;; recently enabled ones, under a single menu which doom-modeline shows as a
-  ;; simple configurations gear icon.
-  (setq doom-modeline-minor-modes t)
-  (use-package minions
-    :init (minions-mode))
-  ;;
-  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
-  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
-  ;; We likely want to add this locally, to hooks on major modes.
-
-  ;; Makes Org/Markdown previewabvle as we type!!! ♥
-  ;; Shows up as a magnifying glass in doom-modeline.
-  (use-package grip-mode)
-  ;;  :hook ((markdown-mode org-mode) . grip-mode)
-  ;; Pretty annyoning actually; instead we should call it as needed.
-  )
-
-;; Nice battery icon alongside with percentage, in doom-modeline.
-;; If not for doom-modeline, we'd need to use fancy-batter-mode.el.
-(display-battery-mode +1)
 #+end_src
 
-*** Time & date
-Let’s display the current time, with updates every second.
-
-#+begin_src emacs-lisp
-;; Show date and time as well.
-
-;; [Simple Approach]
-;; (setq display-time-day-and-date t)
-;; (display-time)
-
-;; [More Controlled Approach: Set date&time format]
-;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
-(setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
-(setq display-time-interval 1) ;; Please update the time every second.
-(display-time-mode)
-#+end_src
-
-But doc:display-time-mode shows me a bit more info that I actually don't care
-for; so let's disable those.
-#+begin_src emacs-lisp
-;; I don't need the system load average in the modeline.
-(setq display-time-default-load-average nil)
-(setq display-time-load-average nil)
-#+end_src
-
-*** Column Numbers
-Likewise, let's have the modeline display column numbers, but not line numbers.
-Instead, let's have line numbers on the side of the buffer; moreover let's have
-a uniform width for displaying line numbers, rather than having the width grow
-as necessary.
-#+BEGIN_SRC emacs-lisp
-;; (column-number-mode                 t) ;; Enabled in doom-modeline by default
-;; (line-number-mode                   t) ;; Not sure I want line numbers in modeline, since I have them in the left margin.
-(setq display-line-numbers-width-start t)
-(global-display-line-numbers-mode      t)
-#+END_SRC
-
-*** Misc Remarks ~ fancy battery & spaceline :ignore:
 # I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I find spacemacs to “hide things”
 # from me ---whereas Emacs “encourages” me to learn more---, however it is a
 # configuration and I enjoy reading Emacs configs in order to improve my own
 # setup. From Spacemacs I've adopted Helm for list completion, its sleek light &
 # dark themes, and its modified powerline setup.
 
-:Disabled__fancy-battery_setup:
-Let's have it also show remaining battery life, coloured green if charging and
-coloured yellow otherwise.  It is important to note that this package is no
-longer maintained. It works on my machine.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Nope; let's use a fancy indicator …
-(use-package fancy-battery
-  :diminish
-  :custom (fancy-battery-show-percentage  t)
-          (battery-update-interval       15)
-  :config (fancy-battery-mode))
-#+END_SRC
-:End:
 :Disabled__spaceline_modeline:
 
 [[https://github.com/TheBB/spaceline][Spaceline]]
@@ -6247,6 +6173,82 @@ Other separators ---of modeline information--- that I've considered include
 ~'brace~ instead of an arrow, and ~'contour, 'chamfer, 'wave, 'zigzag~ which look
 like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
 :End:
+*** Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled
+
+Enabled minor modes clutter up the modeline with their names, albeit some have
+useful status information shown. We can either selectively pick which
+names/status are shown using diminish.el, possibly forgetting which minor modes
+are enabled or we can use minions.el to “gather up” all enabled minor modes, and
+recently enabled ones, under a single menu which doom-modeline shows as a simple
+configurations gear icon. ⚙. :gear:
+
+#+begin_src emacs-lisp
+  (setq doom-modeline-minor-modes t)
+  (use-package minions
+    :init (minions-mode))
+
+  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
+  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
+  ;; We likely want to add this locally, to hooks on major modes.
+#+end_src
+*** Nice battery icon alongside with percentage, in doom-modeline
+#+begin_src emacs-lisp
+;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
+(display-battery-mode +1)
+#+end_src
+
+#+begin_details [Posterity / Disabled] Fancy Battery Setup
+Let's have it also show remaining battery life, coloured green if charging and
+coloured yellow otherwise.  It is important to note that this package is no
+longer maintained. It works on my machine.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Let's use a fancy indicator …
+(use-package fancy-battery
+  :diminish
+  :custom (fancy-battery-show-percentage  t)
+          (battery-update-interval       15)
+  :config (fancy-battery-mode))
+#+END_SRC
+#+end_details
+
+*** Time & date
+Let’s display the current time, with updates every second.
+
+#+begin_src emacs-lisp
+;; Show date and time as well.
+
+;; [Simple Approach]
+;; (setq display-time-day-and-date t)
+;; (display-time)
+
+;; [More Controlled Approach: Set date&time format]
+;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
+(setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
+(setq display-time-interval 1) ;; Please update the time every second.
+(display-time-mode)
+#+end_src
+
+But doc:display-time-mode shows me a bit more info that I actually don't care
+for; so let's disable those.
+#+begin_src emacs-lisp
+;; I don't need the system load average in the modeline.
+(setq display-time-default-load-average nil)
+(setq display-time-load-average nil)
+#+end_src
+
+*** Column Numbers
+Likewise, let's have the modeline display column numbers, but not line numbers.
+Instead, let's have line numbers on the side of the buffer; moreover let's have
+a uniform width for displaying line numbers, rather than having the width grow
+as necessary.
+#+BEGIN_SRC emacs-lisp
+;; (column-number-mode                 t) ;; Enabled in doom-modeline by default
+;; (line-number-mode                   t) ;; Not sure I want line numbers in modeline, since I have them in the left margin.
+(setq display-line-numbers-width-start t)
+(global-display-line-numbers-mode      t)
+#+END_SRC
+
+
 ** Powerful Directory Editing with ~dired~
 :PROPERTIES:
 :CUSTOM_ID: Powerful-Directory-Editing-with-dired
@@ -11444,6 +11446,15 @@ let b = "world"
 
   ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
   ("r" org-clock-report "Insert clocktable"))
+#+end_src
+
+** Makes Org/Markdown previewabvle as we type!!! ♥
+#+begin_src emacs-lisp
+  ;; Shows up as a magnifying glass in doom-modeline.
+  (use-package grip-mode)
+  ;;  :hook ((markdown-mode org-mode) . grip-mode)
+  ;; Pretty annyoning actually; instead we should call it as needed.
+  )
 #+end_src
 
 * Conclusion ---Why Configuration Files Should be Literate
