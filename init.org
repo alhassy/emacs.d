@@ -1,32 +1,16 @@
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #
-# ≥ 8600 line org file, with auto-generated TOC.
-# ≥ 219 code blocks
-# (emacs-init-time) ⇒ 10.3 seconds (•̀ᴗ•́)و
+# Over 11k line org file, with over 300 source code blocks.
 
-#+OPTIONS: broken-links:auto
-
-# Installing LaTex
-# $ brew install --cask mactex
-# $ eval "$(/usr/libexec/path_helper)"
-# $ type pdflatex  # => pdflatex is /Library/TeX/texbin/pdflatex
-#
-# The ~minted~ environment can't appear as an argument to another command; a
-# [[https://tex.stackexchange.com/questions/102416/error-when-compiling-a-minted-listings-inside-a-memoir-subfloat][work-around]] is to use a ‘box’.  Learn more about LaTeX boxes [[https://latexref.xyz/Boxes.html][here]].
-
-* title :ignore:ma:
-:PROPERTIES:
-:CUSTOM_ID: title
-:END:
 #+title: A Life Configuring Emacs
 #+author: Musa Al-hassy
 #+email: alhassy@gmail.com
 #+date: 2018-07-25
-#+DESCRIPTION: My Emacs Initialisation File, Written in Org-mode.
-#+STARTUP: indent lognoteclock-out
-#+OPTIONS: html-postamble:nil toc:2 d:nil num:t :results nil
-#+PROPERTY: header-args :tangle init.el :comments link :results none
-#+EXPORT_FILE_NAME: index
+#+description: My Emacs Initialisation File, Written in Org-mode.
+#+startup: indent lognoteclock-out
+#+options: html-postamble:nil toc:2 d:nil num:t broken-links:auto
+#+property: header-args :tangle init.el :comments link :results none
+#+export_file_name: index
 
 # ─AlBasmala keywords─
 # DRAFT: yes
@@ -34,13 +18,13 @@
 #+IMAGE: ../assets/img/emacs_logo.png
 #+CATEGORIES: Emacs Lisp
 
-#+OPTIONS: broken-links:auto
-
-#+HTML_HEAD: <link href="https://alhassy.github.io/org-notes-style.css" rel="stylesheet" type="text/css" />
-#+HTML_HEAD: <link href="https://alhassy.github.io/floating-toc.css" rel="stylesheet" type="text/css" />
-#+HTML_HEAD: <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
+#+html_head: <link href="https://alhassy.github.io/org-notes-style.css" rel="stylesheet" type="text/css" />
+#+html_head: <link href="https://alhassy.github.io/floating-toc.css" rel="stylesheet" type="text/css" />
+#+html_head: <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
 # The last one has the styling for lists.
 
+
+MA: TODO: Clean this section up!
 #+begin_src emacs-lisp :exports none
 ;; cl-lib was published as a better alternative to cl, which has a deprecation warning in Emacs27.
 ;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
@@ -214,17 +198,7 @@ TODO: Build HTML export as a minimal test that things work as expected.
 
 (unless noninteractive ...) ;; Use this to omit stuff from the Github Actions test
 
-* COMMENT Table of Contents                                        :Github:TOC____4:
-:PROPERTIES:
-:CUSTOM_ID: Table-of-Contents
-:END:
-
-
-
-
-- [[#weather-app][Weather App]]
-- [[#new_27][NEW_27]]
-* Personal instructions for a new machine :ignore:
+* Personal instructions for a new machine                            :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Personal-instructions-for-a-new-machine
 :END:
@@ -6810,8 +6784,11 @@ have busybodied headers which his setup disguises as ‘≡’.
                     ("<=" . ?≤) (">=" . ?≥)
                     ("->" . ?→) ("-->". ?⟶) ;; threading operators
                     ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
-
       do (push pair my/prettify-alist))
+
+;; Replace all Org [metadata]keywords with the “▷” symbol; e.g., “#+title: Hello” looks like “▷ Hello”.
+(cl-loop for keyword in '(title author email date description options property startup export_file_name html_head)
+         do (push (cons (format "#+%s:" keyword) ?▷) my/prettify-alist))
 
 (cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
       do (add-hook hk (lambda ()
@@ -7925,6 +7902,15 @@ CLOSED: [2021-11-02 Tue 22:18]
 
 In this section we consider the Org-mode export for PDFs (LaTeX).
 For example, we account for LaTeX citations.
+
+# Installing LaTex
+# $ brew install --cask mactex
+# $ eval "$(/usr/libexec/path_helper)"
+# $ type pdflatex  # => pdflatex is /Library/TeX/texbin/pdflatex
+#
+# The ~minted~ environment can't appear as an argument to another command; a
+# [[https://tex.stackexchange.com/questions/102416/error-when-compiling-a-minted-listings-inside-a-memoir-subfloat][work-around]] is to use a ‘box’.  Learn more about LaTeX boxes [[https://latexref.xyz/Boxes.html][here]].
+
 
 ** Get LaTeX:
 :PROPERTIES:
