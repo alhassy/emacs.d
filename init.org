@@ -6,23 +6,6 @@
 
 #+OPTIONS: broken-links:auto
 
-# TODO Pieces of (disparate) software can generally be replaced by (applications written on the) Emacs (text processing Lisp platform).
-# [A list of programs Emacs can replace] Examples: Word Processing ~ Org-mode⨾  Git/version-control ~ Magit⨾  Terminal ~ EShell⨾  File Manager ~ Dired⨾  IDE/debugger ~ LSP/Dap⨾ RSS Newsreader ~ ElFeed⨾  Email ~ Gnus/Mu4e⨾ Agenda/Calendar/Habit-Tracker/TODO-list ~ Org-mode⨾ Scripting Language ~ Emacs Lisp⨾ Debugger ~ dap-mode⨾  reference and citation manager ~ org-ref⨾  Vim ~ Evil-mode⨾  pdf viewer ~ pdf-view-mode⨾ Spell checker & dictionary & grammar checker⨾ automatic file backups; seemless GPG tool; time tracker ~ org-mode⨾ Literate Programming (like Jupyter) ~ Org-mode⨾ psychologist ~ doctor-mode; Games ~ tetris/pacman/mario/etc⨾ Lisp interpreter ~ Emacs (anywhere press C-x C-e to run a Lisp expression)⨾ Documentation viewer ~ e.g. tldr-mode / C-h o ⨾  Diff/Merge tool⨾  Package Manager ~ helm-system-packages⨾ Typing tutor; TODO List / Blogging Software ~ Org-mode; Moden Internet Browser ~ xwidget-webkit-browse-url; everything else ~ https://github.com/emacs-eaf/emacs-application-framework
-#
-# Emacs as a reference platform: Instead of manually finding files, looking for info, then closing them; we can press a key combination to see some reference matter _quickly_ then press _q_ to dismiss it just as quickly. We can do this with a combination of (local-set-key (kbd "q") 'kill-buffer-and-window) and (read-only-mode); but better would be to open a file and put it in special-mode which has this _q_ behaviour [see simple.el special-mode-map for other bindinfs] or to use the built-in with-electric-help macro, or make-help-screen & (require 'help-macro).. Moreover, for lots of reference matter, a hydra can be used to obtain a nice menu.
-#
-# I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
-# https://nyxt.atlas.engineer/  ---An eerily Emacs-like browser
-#
-#
-# Emacs and Nyxt treat Vim as a subset. And there is no reason to be angry about this affirmative. It is a technical fact :)
-#
-# Using org-mode as my word processor of choice.
-
-
-# Were I “only coding”, then I'd use a popular Integrated Development Environment that requires minimal setup and Just Worksᵀᴹ;
-# but I blog, make cheat sheets, run background services, etc and so I need an Integrated Computing Environment: Emacs.
-
 # Installing LaTex
 # $ brew install --cask mactex
 # $ eval "$(/usr/libexec/path_helper)"
@@ -318,7 +301,6 @@ and subheadings, intended for consumption by humans such as myself, that,
 incidentally, can be ‘tangled’ into a raw code file that is comprehensible by a
 machine. We achieve this goal using [[#Life-within-Org-mode][org-mode]] ---which is /Emacs' killer app/.
 
-
 ** Mini-tutorial on Org-mode :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Mini-tutorial-on-Org-mode
@@ -548,6 +530,57 @@ and [[http://orgmode.org/worg/org-contrib/][much more]].  Moreover, its syntax i
 without even knowing!  For me, Org allows me to do literate programming: I can
 program and document at the same time, with no need to seperate the two tasks
 and with the ability to generate multiple formats and files from a single file.
+
+#+begin_details A list of programs that can be replaced by Emacs
+/Pieces of (disparate) software can generally be replaced by (applications
+written on the) Emacs (text processing Lisp platform)./
+
+# Examples:
+|----------------------------------------------+---+-----------------------------------------------------|
+| Application                                  | ≈ | Emacs Package                                       |
+|----------------------------------------------+---+-----------------------------------------------------|
+| Habit Tracker / TODO-list                    |   | Org mode                                            |
+| Agenda / Calendar / Time Tracker             |   | Org mode                                            |
+| Literate Programming (like Jupyter)          |   | Org mode                                            |
+| Blogging Software                            |   | Org mode                                            |
+| Reference Information Platform               |   | Org mode with doc:my/reference                      |
+|----------------------------------------------+---+-----------------------------------------------------|
+| Word Processing / PDFs / Slidedeck tool      |   | Org mode                                            |
+| Spell checker & dictionary & grammar checker |   | doc:ispell & langtool                               |
+| Reference and citation manager               |   | org-ref                                             |
+| PDF Viewer                                   |   | PDF View mode                                       |
+|----------------------------------------------+---+-----------------------------------------------------|
+| Git / Version control                        |   | Magit or doc:vc-mode                                |
+| Terminal                                     |   | doc:eshell or doc:shell                             |
+| Package Manager                              |   | doc:helm-system-packages                            |
+| File Manager                                 |   | doc:dired                                           |
+| IDE / debugger                               |   | LSP / Dap                                           |
+| Scripting Language                           |   | Emacs Lisp                                          |
+|----------------------------------------------+---+-----------------------------------------------------|
+| [Neo]Vim / Modal text editor                 |   | EVIL mode                                           |
+| RSS Newsreader                               |   | ElFeed                                              |
+| Email                                        |   | Gnus/Mu4e                                           |
+| Automatic file backups                       |   | ⟨Built-in⟩ & backup-walker                          |
+| seemless GPG tool                            |   | ⟨Built-in⟩                                          |
+| Lisp interpreter                             |   | Anywhere press kbd:C-x_C-e to run a Lisp expression |
+| Documentation viewer                         |   | tldr-mode; kbd:C-h_o / doc:describe-symbol          |
+| Diff / Merge tool                            |   | doc:ediff, doc:diff                                 |
+|----------------------------------------------+---+-----------------------------------------------------|
+| Games                                        |   | doc:tetris, pacman, mario, etc                      |
+| Psychologist                                 |   | doc:doctor                                          |
+| Typing tutor                                 |   | typing-of-emacs                                     |
+| Modern Internet Browser                      |   | doc:xwidget-webkit-browse-url                       |
+| everything else                              |   | [[https://github.com/emacs-eaf/emacs-application-framework][EAF]]                                              |
+|----------------------------------------------+---+-----------------------------------------------------|
+
+I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
+- The [[https://nyxt.atlas.engineer/][Nyxt browser]]  is an eerily Emacs-like browser ;-)
+
+Were I “only coding”, then I'd use a popular Integrated Development Environment
+that requires minimal setup and Just Worksᵀᴹ; but I blog, make cheat sheets, run
+background services, etc, and so I need an /Integrated Computing Environment:/
+Emacs.
+#+end_details
 
 #+begin_quote
 If you are a professional writer…Emacs outshines all other editing software
@@ -4219,6 +4252,17 @@ We show its subheadings in a completing-read menu, then narrow to that entry."
 (defalias 'my/review-reference-notes 'my/reference)
 (defalias 'w-reference 'my/reference) ;; “w”ork
 #+end_src
+
+**** COMMENT Emacs as a reference platform: Instead of manually finding files, looking for :Place_beside_w_reference_function:
+ info, then closing them; we can press a key combination to see some reference
+ matter _quickly_ then press _q_ to dismiss it just as quickly. We can do this with
+ a combination of (local-set-key (kbd "q") 'kill-buffer-and-window) and
+ (read-only-mode); but better would be to open a file and put it in special-mode
+ which has this _q_ behaviour [see simple.el special-mode-map for other bindinfs]
+ or to use the built-in with-electric-help macro, or make-help-screen & (require
+ 'help-macro).. Moreover, for lots of reference matter, a hydra can be used to
+ obtain a nice menu. My setup is to use doc:w-reference.
+
 
 Anyhow…
 *** Step 1: When new tasks come up
