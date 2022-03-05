@@ -2249,21 +2249,23 @@ Finally, let's not create ~.#~ files (crashes 'npm') nor bother confirming killi
       create-lockfiles nil)
 #+end_src
 
-*** What changed?
+*** What changed? ---Walking through backups
 :PROPERTIES:
 :CUSTOM_ID: What-changed
 :END:
 
-Let's use an elementary diff system for backups.
+Let's use an elementary diff system for backups: ~backup-walker~ essentially makes
+all our backups behave as if they were (implicitly) version controlled.
+
 #+BEGIN_SRC emacs-lisp
 (use-package backup-walker
   :commands backup-walker-start)
 #+END_SRC
 
-In a buffer that corresponds to a file, invoke ~backup-walker-start~ to see a
-visual diff of changes /between/ versions.  By default, you see the changes
-‘backwards’: Red means delete these things to get to the older version; i.e.,
-the red ‘-’ are newer items.
+In a buffer that corresponds to a file, invoke doc:backup-walker-start to see a
+visual diff of changes /between/ versions; then ~n~ and ~p~ to move between diffs.  By
+default, you see the changes ‘backwards’: Red means delete these things to get
+to the older version; i.e., the red ‘-’ are newer items.
 
 There is also doc:diff-backup for comparing a file with its backup.
 
