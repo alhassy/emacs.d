@@ -1,4 +1,4 @@
-;; [[file:init.org::*title][title:1]]
+;; [[file:init.org::+begin_src emacs-lisp :exports none][No heading:1]]
 ;; cl-lib was published as a better alternative to cl, which has a deprecation warning in Emacs27.
 ;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
 (setq byte-compile-warnings '(cl-functions))
@@ -15,12 +15,12 @@
 (setq o--supported-blocks nil)
 ;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
 ;; Symbol’s function definition is void: all-the-icons-faicon
-;; title:1 ends here
+;; No heading:1 ends here
 
-;; [[file:init.org::*title][title:2]]
+;; [[file:init.org::+begin_src emacs-lisp :exports none][No heading:2]]
 ;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
 (cl-defun org-clocking-buffer (&rest _))
-;; title:2 ends here
+;; No heading:2 ends here
 
 ;; [[file:init.org::*  =~/.emacs= vs. =init.org=][  =~/.emacs= vs. =init.org=:4]]
 (setq custom-file "~/.emacs.d/custom.el")
@@ -324,6 +324,18 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 (system-packages-ensure "ag")
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:7 ends here
 
+;; [[file:init.org::* “Being at the Helm” ---Completion & Narrowing Framework][ “Being at the Helm” ---Completion & Narrowing Framework:8]]
+;; Save/mark a location with “C-u M-m”, jump back to it with “M-m”.
+(bind-key* "M-m"
+           (lambda ()
+             (interactive)
+             (if (not current-prefix-arg)
+                 (helm-mark-ring)
+               (push-mark)
+               (message "[To return to this location, press M-m] ∷ %s"
+                        (s-trim (substring-no-properties (thing-at-point 'line)))))))
+;;  “Being at the Helm” ---Completion & Narrowing Framework:8 ends here
+
 ;; [[file:init.org::*Org-Mode Administrivia][Org-Mode Administrivia:2]]
   (when nil use-package emacs
     :ensure org-plus-contrib
@@ -593,10 +605,10 @@ Is replaced by:
       create-lockfiles nil)
 ;; Automatic Backups:2 ends here
 
-;; [[file:init.org::*What changed?][What changed?:1]]
+;; [[file:init.org::*What changed? ---Walking through backups][What changed? ---Walking through backups:1]]
 (use-package backup-walker
   :commands backup-walker-start)
-;; What changed?:1 ends here
+;; What changed? ---Walking through backups:1 ends here
 
 ;; [[file:init.org::*Save ≈ Backup][Save ≈ Backup:1]]
 ;; Make Emacs backup everytime I save
@@ -1097,6 +1109,41 @@ visit all blocks with such a name."
 ;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
 (unless noninteractive (set-fontset-font t nil "Apple Color Emoji"))
 ;; Emojis:2 ends here
+
+;; [[file:init.org::*Prettify inline source code][Prettify inline source code:1]]
+;; Show “ src_emacs-lisp[:exports results]{ 𝒳 } ” as “ ℰ𝓁𝒾𝓈𝓅﴾ 𝒳 ﴿ ”.
+;;
+(font-lock-add-keywords 'org-mode
+  '(("\\(src_emacs-lisp\\[.*]{\\)\\(.*\\)\\(}\\)"
+  (1 '(face (:inherit (bold) :foreground "gray65") display "ℰ𝓁𝒾𝓈𝓅﴾"))
+  (2 '(face (:foreground "blue")))
+  (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
+    )))
+;;
+(defun my/toggle-line-fontification ()
+  "Toggle the fontification of the current line"
+  (interactive)
+  (defvar my/toggle-fontify/current-line -1)
+  (defvar my/toggle-fontify/on? nil)
+  (add-to-list 'font-lock-extra-managed-props 'display)
+  (let ((start (line-beginning-position)) (end (line-end-position)))
+    (cond
+     ;; Are we toggling the current line?
+     ((= (line-number-at-pos) my/toggle-fontify/current-line)
+      (if my/toggle-fontify/on?
+          (font-lock-fontify-region start end)
+        (font-lock-unfontify-region start end))
+      (setq my/toggle-fontify/on? (not my/toggle-fontify/on?)))
+     ;; Nope, we've moved on to another line.
+     (:otherwise
+      (setq my/toggle-fontify/current-line (line-number-at-pos)
+            my/toggle-fontify/on? :yes_please_fontify)
+      (font-lock-unfontify-region  start end)))))
+
+  ;; TODO FIXME; maybe ignore: Wasted too much time here already.
+;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
+;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
+;; Prettify inline source code:1 ends here
 
 ;; [[file:init.org::*Capturing ideas & notes without interrupting the current workflow][Capturing ideas & notes without interrupting the current workflow:1]]
 (cl-defun my/org-capture-buffer (&optional keys no-additional-remarks
@@ -1651,29 +1698,6 @@ Example uses:
            :repeat-every-hour 2)
 ;; Actually Doing Things ---or /Sending notifications from Emacs/:3 ends here
 
-;; [[file:init.org::*Hydra Timer][Hydra Timer:1]]
-(setq org-clock-sound t) ;; Standard Emacs beep
-(my/defhydra "C-c x" "Time Tracking" clock-o
-  ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
-  :Tasks
-  ("n" (my/org-journal-new-entry :work) "New")
-  ("v" (progn (my/org-journal-new-entry :work) (revert-buffer t t) (org-journal-mode)) "View all")
-  :Timer
-  ("s" org-timer-start "Start")
-  ("S" org-timer-stop "Stop")
-  ("x" org-timer-set-timer "Set")
-  ("p" org-timer "Print")
-  :Org-Clock
-  ("i" org-clock-in "in")
-  ("o" org-clock-out "out")
-  ("c" org-clock-cancel "cancel" :color pink :column "Do")
-  ("d" org-clock-display "display")
-  ("e" org-clock-modify-effort-estimate "effort")
-
-  ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
-  ("r" org-clock-report "Insert clocktable"))
-;; Hydra Timer:1 ends here
-
 ;; [[file:init.org::*Cosmetics][Cosmetics:1]]
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
@@ -1846,50 +1870,49 @@ fonts (•̀ᴗ•́)و"
   ;; (let ((it "Source Code Pro Light" ))
   ;;   (set-face-attribute 'mode-line nil :family it :height 100)
   ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
+;; A sleek, informative, & fancy mode line:1 ends here
 
-  ;; Whether display the minor modes in the mode-line.  Enabled minor modes
-  ;; clutter up the modeline with their names, albeit some have useful status
-  ;; information shown. We can either selectively pick which names/status are
-  ;; shown using diminish.el, possibly forgetting which minor modes are enabled
-  ;; or we can use minions.el to “gather up” all enabled minor modes, and
-  ;; recently enabled ones, under a single menu which doom-modeline shows as a
-  ;; simple configurations gear icon.
+;; [[file:init.org::*Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled][Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled:1]]
   (setq doom-modeline-minor-modes t)
   (use-package minions
     :init (minions-mode))
-  ;;
+
   ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
   ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
   ;; We likely want to add this locally, to hooks on major modes.
+;; Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled:1 ends here
 
-  ;; Makes Org/Markdown previewabvle as we type!!! ♥
-  ;; Shows up as a magnifying glass in doom-modeline.
-  (use-package grip-mode)
-  ;;  :hook ((markdown-mode org-mode) . grip-mode)
-  ;; Pretty annyoning actually; instead we should call it as needed.
-  )
-
-;; Nice battery icon alongside with percentage, in doom-modeline.
-;; If not for doom-modeline, we'd need to use fancy-batter-mode.el.
+;; [[file:init.org::*Nice battery icon alongside with percentage, in doom-modeline][Nice battery icon alongside with percentage, in doom-modeline:1]]
+;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
 (display-battery-mode +1)
+;; Nice battery icon alongside with percentage, in doom-modeline:1 ends here
 
+;; [[file:init.org::*Time & date][Time & date:1]]
 ;; Show date and time as well.
-(setq display-time-day-and-date t)
-(display-time)
-;; A sleek, informative, & fancy mode line:1 ends here
 
-;; [[file:init.org::*A sleek, informative, & fancy mode line][A sleek, informative, & fancy mode line:2]]
+;; [Simple Approach]
+;; (setq display-time-day-and-date t)
+;; (display-time)
+
+;; [More Controlled Approach: Set date&time format]
+;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
+(setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
+(setq display-time-interval 1) ;; Please update the time every second.
+(display-time-mode)
+;; Time & date:1 ends here
+
+;; [[file:init.org::*Time & date][Time & date:2]]
 ;; I don't need the system load average in the modeline.
 (setq display-time-default-load-average nil)
 (setq display-time-load-average nil)
-;; A sleek, informative, & fancy mode line:2 ends here
+;; Time & date:2 ends here
 
-;; [[file:init.org::*A sleek, informative, & fancy mode line][A sleek, informative, & fancy mode line:3]]
+;; [[file:init.org::*Column Numbers][Column Numbers:1]]
 ;; (column-number-mode                 t) ;; Enabled in doom-modeline by default
 ;; (line-number-mode                   t) ;; Not sure I want line numbers in modeline, since I have them in the left margin.
 (setq display-line-numbers-width-start t)
 (global-display-line-numbers-mode      t)
-;; A sleek, informative, & fancy mode line:3 ends here
+;; Column Numbers:1 ends here
 
 ;; [[file:init.org::*Powerful Directory Editing with ~dired~][Powerful Directory Editing with ~dired~:1]]
 (use-package dired-subtree
@@ -1945,13 +1968,18 @@ fonts (•̀ᴗ•́)و"
       uniquify-buffer-name-style 'forward) ;; names/in/this/style
 ;; Buffer names are necessarily injective:1 ends here
 
-;; [[file:init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:1]]
-(setq visible-bell 1)
-;; Flashing when something goes wrong ---no blinking:1 ends here
+;; [[file:init.org::*Flashing when something goes wrong][Flashing when something goes wrong:1]]
+;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
 
-;; [[file:init.org::*Flashing when something goes wrong ---no blinking][Flashing when something goes wrong ---no blinking:2]]
+;; The doom themes package comes with a function to make the mode line flash on error.
+(use-package doom-themes)
+(require 'doom-themes-ext-visual-bell)
+(doom-themes-visual-bell-config)
+;; Flashing when something goes wrong:1 ends here
+
+;; [[file:init.org::*Flashing when something goes wrong][Flashing when something goes wrong:2]]
 (blink-cursor-mode 1)
-;; Flashing when something goes wrong ---no blinking:2 ends here
+;; Flashing when something goes wrong:2 ends here
 
 ;; [[file:init.org::*Hiding Scrollbar, tool bar, and menu][Hiding Scrollbar, tool bar, and menu:1]]
 (unless noninteractive
@@ -2121,8 +2149,11 @@ fonts (•̀ᴗ•́)و"
                     ("<=" . ?≤) (">=" . ?≥)
                     ("->" . ?→) ("-->". ?⟶) ;; threading operators
                     ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
-
       do (push pair my/prettify-alist))
+
+;; Replace all Org [metadata]keywords with the “▷” symbol; e.g., “#+title: Hello” looks like “▷ Hello”.
+(cl-loop for keyword in '(title author email date description options property startup export_file_name html_head)
+         do (push (cons (format "#+%s:" keyword) ?▷) my/prettify-alist))
 
 (cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
       do (add-hook hk (lambda ()
@@ -2155,7 +2186,8 @@ fonts (•̀ᴗ•́)و"
 ;; On HTML exports, Org-mode tries to include a validation link for the exported HTML. Let’s disable that since I never use it.
 ;; (setq org-html-validation-link nil)
 
-(setq org-pretty-entities t) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
+;; Musa: This is super annoying, in practice.
+(setq org-pretty-entities nil) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
 ;; to have \alpha, \to and others display as utf8
 ;; http://orgmode.org/manual/Special-symbols.html
 ;;
@@ -2484,6 +2516,9 @@ the character 𝓍 before and after the selected text."
            ("ceil"   "⌈⌉")
            ("raise"  "⌈⌉")
            ("rad"    "⌈⌉")
+           ;; Replies
+           ("yes"  "✔")
+           ("no"    "❌")
            ;; Arrows
            ("<=" "⇐")
         ;; more (key value) pairs here
@@ -3797,6 +3832,37 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
 (system-packages-ensure "hr") ;; ≈ brew install hr
 ;; hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1 ends here
 
+;; [[file:init.org::*How do I do something?][How do I do something?:1]]
+(system-packages-ensure "howdoi")
+
+(cl-defun howdoi (&optional show-full-answer)
+  "Instantly insert coding answers.
+
+Replace a query with a code solution; replace it with an entire
+answer if a prefix is provided.
+
+Example usage:
+
+   On a new line, write a question such as:
+
+      search and replace buffer Emacs Lisp
+
+   Then invoke ‘M-x howdoi’ anywhere on the line
+   to get a code snippet; or ‘C-u M-x howdoi’ to get a full answer to your query.
+"
+  (interactive "P")
+  (let ((query (s-collapse-whitespace (substring-no-properties (thing-at-point 'line))))
+        (flag (if show-full-answer "-a" "")))
+    (beginning-of-line)
+    (kill-line)
+    (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
+;; How do I do something?:1 ends here
+
+;; [[file:init.org::*Browse remote files][Browse remote files:1]]
+;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
+(use-package browse-at-remote)
+;; Browse remote files:1 ends here
+
 ;; [[file:init.org::*Draw pretty unicode tables in org-mode][Draw pretty unicode tables in org-mode:1]]
 (quelpa '(org-pretty-table
          :repo "Fuco1/org-pretty-table"
@@ -4451,3 +4517,71 @@ window contains the buffer with the cursour in it."
 (quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
 (global-set-key [remap goto-line] 'goto-line-preview)
 ;; Preview link under cursor:2 ends here
+
+;; [[file:init.org::*C-x C-e / REPL-driven development for NodeJS!][C-x C-e / REPL-driven development for NodeJS!:1]]
+(quelpa '(skerrick :repo "anonimitoraf/skerrick" :fetcher github))
+
+;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
+(unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
+  (skerrick-install-or-upgrade-server-binary))
+
+;; Should be run in a JS buffer; it is buffer specific.
+;; (skerrick-start-server)
+
+;; Now main function, entry point is:
+;; M-x skerrick-eval-region
+;;
+
+;; Evaluate a region, if any is selected; otherwise evaluate the current line.
+(bind-key
+ "C-x C-e"  (lambda ()
+              (interactive)
+              (if (use-region-p)
+                  (skerrick-eval-region)
+                (beginning-of-line)
+                (set-mark-command nil)
+                (end-of-line)
+                (skerrick-eval-region)
+                (pop-mark)))
+ 'js-mode-map)
+;; C-x C-e / REPL-driven development for NodeJS!:1 ends here
+
+;; [[file:init.org::*The evils of this world][The evils of this world:1]]
+;; “PDF” stands for Portable Document Format, since you should be able to open
+;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
+;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
+;; them. Unfortunately, various government & insurance forms are only provided in
+;; this format.
+(system-packages-ensure "adobe-acrobat-reader")
+;; The evils of this world:1 ends here
+
+;; [[file:init.org::*Hydra Timer][Hydra Timer:1]]
+(setq org-clock-sound t) ;; Standard Emacs beep
+(my/defhydra "C-c x" "Time Tracking" clock-o
+  ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
+  :Tasks
+  ("n" (my/org-journal-new-entry :work) "New")
+  ("v" (progn (my/org-journal-new-entry :work) (revert-buffer t t) (org-journal-mode)) "View all")
+  :Timer
+  ("s" org-timer-start "Start")
+  ("S" org-timer-stop "Stop")
+  ("x" org-timer-set-timer "Set")
+  ("p" org-timer "Print")
+  :Org-Clock
+  ("i" org-clock-in "in")
+  ("o" org-clock-out "out")
+  ("c" org-clock-cancel "cancel" :color pink :column "Do")
+  ("d" org-clock-display "display")
+  ("e" org-clock-modify-effort-estimate "effort")
+
+  ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
+  ("r" org-clock-report "Insert clocktable"))
+;; Hydra Timer:1 ends here
+
+;; [[file:init.org::*Makes Org/Markdown previewabvle as we type!!! ♥][Makes Org/Markdown previewabvle as we type!!! ♥:1]]
+  ;; Shows up as a magnifying glass in doom-modeline.
+  (use-package grip-mode)
+  ;;  :hook ((markdown-mode org-mode) . grip-mode)
+  ;; Pretty annyoning actually; instead we should call it as needed.
+  )
+;; Makes Org/Markdown previewabvle as we type!!! ♥:1 ends here
