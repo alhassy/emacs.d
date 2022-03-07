@@ -12,19 +12,7 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
-# ─AlBasmala keywords─
-# DRAFT: yes
-#+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
-#+IMAGE: ../assets/img/emacs_logo.png
-#+CATEGORIES: Emacs Lisp
-
-#+html_head: <link href="https://alhassy.github.io/org-notes-style.css" rel="stylesheet" type="text/css" />
-#+html_head: <link href="https://alhassy.github.io/floating-toc.css" rel="stylesheet" type="text/css" />
-#+html_head: <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
-# The last one has the styling for lists.
-
-
-MA: TODO: Clean this section up!
+* TODO MA: TODO: Clean this section up!
 #+begin_src emacs-lisp :exports none
 ;; cl-lib was published as a better alternative to cl, which has a deprecation warning in Emacs27.
 ;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
@@ -48,78 +36,20 @@ MA: TODO: Clean this section up!
 (cl-defun org-clocking-buffer (&rest _))
 #+end_src
 
-* Abstract                                                           :ignore:
-:PROPERTIES:
-:CUSTOM_ID: Abstract
-:END:
+* Meta-setup :ignore:
+** Blog/HTML Setup                                                  :ignore:
+# ─AlBasmala keywords─
+# DRAFT: yes
+#+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
+#+IMAGE: ../assets/img/emacs_logo.png
+#+CATEGORIES: Emacs Lisp
 
-#+begin_center
+#+html_head: <link href="https://alhassy.github.io/org-notes-style.css" rel="stylesheet" type="text/css" />
+#+html_head: <link href="https://alhassy.github.io/floating-toc.css" rel="stylesheet" type="text/css" />
+#+html_head: <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
+# The last one has the styling for lists.
 
-badge:A_Life|Configuring_Emacs|success||gnu-emacs
-
-badge:A_Life_Configuring|Emacs|success||gnu
-
-badge:Currently_Reorganising|Not_Polished|yellow
-#+end_center
-
-#+html: <p align="center">
-#+begin_center text
-*Abstract*
-#+end_center
-#+html: </p>
-
-[[doc:Hello][Hello!]] Herein I document the configurations I utilise with [[https://gnu.org/s/emacs][Emacs]].
-# After cloning the file, many packages are automatically installed; usually with
-# little or no trouble.
-
-As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
-through my ever growing configuration files, ease of usability and reference
-for peers, and, most importantly, better maintainability for myself!
-
-Dear reader, when encountering a foregin command ~X~ I encourage you to execute
-~(describe-symbol 'X)~, or press kbd:C-h_o with the cursor on ~X~.  An elementary
-Elisp Cheat Sheet can be found at [[badge:Elisp|CheatSheet|success|https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf|Gnu-Emacs][Elisp cheat sheet]] and
-badge:Lifemacs|CheatSheet|informational|https://alhassy.github.io/emacs.d/CheatSheet.pdf|Gnu-Emacs
-is a 2-page 3-column PDF of the bindings in /this/ configuration.
-+ kbd:C-h_e ⇒ *What'd /Emacs/ do?*
-+ kbd:C-h_o ⇒ *What's this thing?*
-+ kbd:C-h_l ⇒ *What'd /I/ do?*
-+ [[kbd:C-h_?]] ⇒ *What're the help topics?* ---gives possible completions to “C-h ⋯”.
-+ “I accidentally hit a key, which one and what did it do!?” ⇒ kbd:C-h_e and kbd:C-h_l,
-  then use kbd:C-h_o to get more details on the action.
-  ;-)
-
-Finally, kbd:C-h_d asks nicely what ‘d’ocumentation you're interested in.
-After providing a few keywords, the =apropos= tool yields possible functions
-and variables that may accomplish my goal.
-
-#+begin_center
-badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
-badge:Org|9.4|blue|https://orgmode.org|gnu
-
-[[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
-tweet:https://github.com/alhassy/org-special-block-extras
-
-badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
-badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
-
-# badge:Hire|me|success|https://alhassy.github.io/about
-#+end_center
-
-This article is about /how I like/ to do things
----/I'm not insisting others should/ do things this way.
-
-#+begin_box
-/Always remember that to argue, and win, is to break down the reality of the
-person you are arguing against. It is painful to lose your reality, so be kind,/
-/even if you are right./ - Haruki Murakami
-
-/Life is too short to not read the very best book you know of right now./ - Patrick Collison
-
-/Inspiration is for amateurs. The rest of us just show up and get to work./ - Chuck Close
-#+end_box
-
-* Github Actions                                                   :noexport:
+** Github Actions                                                 :noexport:
 
 The following creates the “Github Actions Workflow” file;
 this way, Github will run your tests every time you commit ^_^
@@ -198,7 +128,7 @@ TODO: Build HTML export as a minimal test that things work as expected.
 
 (unless noninteractive ...) ;; Use this to omit stuff from the Github Actions test
 
-* Personal instructions for a new machine                            :ignore:
+** Personal instructions for a new machine                          :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Personal-instructions-for-a-new-machine
 :END:
@@ -262,6 +192,76 @@ your files: General Settings → Security & Privacy → Full Disk Access → ~�
 search) then enter =/usr/bin/ruby= ---Emacs is launched via a Ruby script in
 MacOS.
 #+end_details
+* Abstract                                                           :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Abstract
+:END:
+
+#+begin_center
+
+badge:A_Life|Configuring_Emacs|success||gnu-emacs
+
+badge:A_Life_Configuring|Emacs|success||gnu
+
+badge:Currently_Reorganising|Not_Polished|yellow
+#+end_center
+
+#+html: <p align="center">
+#+begin_center text
+*Abstract*
+#+end_center
+#+html: </p>
+
+[[doc:Hello][Hello!]] Herein I document the configurations I utilise with [[https://gnu.org/s/emacs][Emacs]].
+# After cloning the file, many packages are automatically installed; usually with
+# little or no trouble.
+
+As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
+through my ever growing configuration files, ease of usability and reference
+for peers, and, most importantly, better maintainability for myself!
+
+Dear reader, when encountering a foregin command ~X~ I encourage you to execute
+~(describe-symbol 'X)~, or press kbd:C-h_o with the cursor on ~X~.  An elementary
+Elisp Cheat Sheet can be found at [[badge:Elisp|CheatSheet|success|https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf|Gnu-Emacs][Elisp cheat sheet]] and
+badge:Lifemacs|CheatSheet|informational|https://alhassy.github.io/emacs.d/CheatSheet.pdf|Gnu-Emacs
+is a 2-page 3-column PDF of the bindings in /this/ configuration.
++ kbd:C-h_e ⇒ *What'd /Emacs/ do?*
++ kbd:C-h_o ⇒ *What's this thing?*
++ kbd:C-h_l ⇒ *What'd /I/ do?*
++ [[kbd:C-h_?]] ⇒ *What're the help topics?* ---gives possible completions to “C-h ⋯”.
++ “I accidentally hit a key, which one and what did it do!?” ⇒ kbd:C-h_e and kbd:C-h_l,
+  then use kbd:C-h_o to get more details on the action.
+  ;-)
+
+Finally, kbd:C-h_d asks nicely what ‘d’ocumentation you're interested in.
+After providing a few keywords, the =apropos= tool yields possible functions
+and variables that may accomplish my goal.
+
+#+begin_center
+badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
+badge:Org|9.4|blue|https://orgmode.org|gnu
+
+[[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
+tweet:https://github.com/alhassy/org-special-block-extras
+
+badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+
+# badge:Hire|me|success|https://alhassy.github.io/about
+#+end_center
+
+This article is about /how I like/ to do things
+---/I'm not insisting others should/ do things this way.
+
+#+begin_box
+/Always remember that to argue, and win, is to break down the reality of the
+person you are arguing against. It is painful to lose your reality, so be kind,/
+/even if you are right./ - Haruki Murakami
+
+/Life is too short to not read the very best book you know of right now./ - Patrick Collison
+
+/Inspiration is for amateurs. The rest of us just show up and get to work./ - Chuck Close
+#+end_box
 
 * Why Emacs?
 :PROPERTIES:
@@ -509,6 +509,10 @@ and with the ability to generate multiple formats and files from a single file.
 /Pieces of (disparate) software can generally be replaced by (applications
 written on the) Emacs (text processing Lisp platform)./
 
+From the table below, of non-editing things you can do with Emacs, it's
+reasonable to think of Emacs as an operating system ---and Vim/Evil is one of
+its text editors.
+
 # Examples:
 |----------------------------------------------+---+-----------------------------------------------------|
 | Application                                  | ≈ | Emacs Package                                       |
@@ -517,7 +521,8 @@ written on the) Emacs (text processing Lisp platform)./
 | Agenda / Calendar / Time Tracker             |   | Org mode                                            |
 | Literate Programming (like Jupyter)          |   | Org mode                                            |
 | Blogging Software                            |   | Org mode                                            |
-| Reference Information Platform               |   | Org mode with doc:my/reference                      |
+| Reference Information Platform               |   | Org mode with [[https://orgmode.org/manual/Refile-and-Copy.html
+][refile]] and doc:my/reference           |
 |----------------------------------------------+---+-----------------------------------------------------|
 | Word Processing / PDFs / Slidedeck tool      |   | Org mode                                            |
 | Spell checker & dictionary & grammar checker |   | doc:ispell & langtool                               |
@@ -1333,6 +1338,7 @@ us ensure these exist using the ~:ensure-system-package~ keyword extension.
 
 - This is like ~:ensure t~ but operates at the OS level and uses your default
   OS package manager.
+- It has [[https://github.com/jwiegley/use-package#use-package-ensure-system-package][multiple features]].
 
 Let's obtain the extension.
 #+BEGIN_SRC emacs-lisp
@@ -7295,6 +7301,8 @@ Neato 😲
 :CUSTOM_ID: Using-a-Grammar-Style-Checker
 :END:
 
+[ A possibly better alternative is [[https://emacstil.com/til/2022/03/05/setting-up-vale-prose-linter-on-emacs/][Vale]]. ]
+
 Let's install [[https://github.com/mhayashi1120/Emacs-langtool][a grammar and style checker]].
 We get the offline tool from the bottom of the [[https://languagetool.org/][LanguageTool]] website, then relocate it
 as follows.
@@ -11489,6 +11497,887 @@ let b = "world"
   )
 #+end_src
 
+** COMMENT Improvements                                           :noexport:
+:PROPERTIES:
+:CUSTOM_ID: Improvements
+:END:
+
+*** Learn about TRAMP & Edit as Root
+:PROPERTIES:
+:CUSTOM_ID: Learn-about-TRAMP-Edit-as-Root
+:END:
+
+From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]].
+#+BEGIN_SRC emacs-lisp
+(defun find-file-as-root ()
+  "Like `ido-find-file, but automatically edit the file with
+root-privileges (using tramp/sudo), if the file is not writable
+by user."
+  (interactive)
+  (let ((file (ido-read-file-name "Edit as root: ")))
+    (unless (file-writable-p file)
+      (setq file (concat "/sudo:root@localhost:" file)))
+    (find-file file)))
+
+(bind-key "C-x F" 'find-file-as-root)
+#+END_SRC
+
+Incidentally, TRAMP allows us to do the same thing.
+*** Easy tasks
+:PROPERTIES:
+:CUSTOM_ID: Easy-tasks
+:END:
+
+# TODO: MA: ⇨ Add unit tests for the init file.
+
+# ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
+# (shell-command "brew install pandoc")
+# (use-package ox-pandoc)
+
+;; Omit empty lines between headings in the collapsed view
+(setq org-cycle-separator-lines 0)
+
+#+BEGIN_SRC emacs-lisp :results replace :tangle yes
+(defun show-me ()
+  "Evaluate a Lisp expression and insert its value
+   as a comment at the end of the line.
+
+   Useful for documenting values or checking values.
+  "
+  (interactive)
+  (-let [it
+         (thread-last (thing-at-point 'line)
+           read-from-string
+           car
+           eval
+           (format " ;; ⇒ %s"))]
+    (end-of-line)
+    (insert it)))
+#+END_SRC
+
++ [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
+*** Smartparens
+:PROPERTIES:
+:CUSTOM_ID: Smartparens
+:END:
+
+:PROPERTIES:
+
+:END:
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package smartparens
+  :init
+  (smartparens-global-mode 1)
+  (show-smartparens-global-mode +1)
+
+  :bind (
+
+         ("M-f" . sp-forward-sexp)  ;; Move forward one  expression.
+         ("M-b" . sp-backward-sexp) ;; Move backward one expression.
+
+         ;; Going to the start & end of current expr in pair-able character.
+         ("M-a" . sp-beginning-of-sexp)
+         ("M-e" . sp-end-of-sexp)
+
+         ;; Going forwards deep down & up current expr; treating it as a tree.
+         ("M-d" . sp-down-sexp)
+         ("M-u" . sp-up-sexp)
+         ;; Acending & descending backwards; i.e., leftwards.
+         ("M-n" . sp-backward-down-sexp)
+         ("M-p" . sp-backward-up-sexp)
+
+         ;; Unwrapping: Removing pair-able characters.
+         ("M-w" . sp-unwrap-sexp)
+         ("M-m" . sp-backward-unwrap-sexp)
+
+         ;; “Slurping”: Move closing character forward/backward to include next sexp.
+         ;; “Barfing”: Contract a sexp, or string, by pushing a its last/first item out.
+         ;; See below for examples.
+         ("M-)" . sp-forward-slurp-sexp)
+         ("M-(" . sp-backward-slurp-sexp)
+         ("M-]" . sp-forward-barf-sexp)
+         ("M-[" . sp-backward-barf-sexp)
+
+         ;; Transpose two bracketed terms; e.g., a b c ⟪Here⟫ ⟶ a c b ⟪Here⟫
+         ;; Transpose backwards by being on the token;
+         ;; transpose forwards by being after the token.
+         ("M-t" . sp-transpose-sexp)
+
+         )
+
+  :config
+  ;; Enable smartparens everywhere
+  (use-package smartparens-config)
+
+  (setq
+   ;; smartparens-strict-mode t
+   ;; sp-autoinsert-if-followed-by-word t
+   ;; sp-autoskip-closing-pair 'always
+   sp-hybrid-kill-entire-symbol nil)
+
+  ;; In Elisp & org modes, do not ‘close’ a back-tick or single quote!
+  (sp-local-pair 'emacs-lisp-mode "`" nil :when '(sp-in-string-p))
+  (sp-local-pair 'emacs-lisp-mode "'" nil :when '(sp-in-string-p))
+  (sp-local-pair 'org-mode "`" nil :when '(sp-in-string-p))
+  (sp-local-pair 'org-mode "'" nil :when '(sp-in-string-p))
+  )
+#+END_SRC
+
+*Wrapping*
+To enclose a token with a pair-able character, at the start of the expression
+press ~C-ESCAPE-SPACE~, select the region, followed by a pair-able character such as ~[, {, ", ', *,~ etc.
+To wrap a single token forwards, use ~C-M-SPACE~.
+
+Examples of slurping & barfing --i.e., sexp inclusion and contraction.
+#+begin_example
+a [x y z] b  ⟶“M-) inside [⋯]”⟶  a [x y z b]
+a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
+[a x y z b]  ⟶“M-] inside [⋯]”⟶  a [x y z b]
+[a x y z b]  ⟶“M-] inside [⋯]”⟶  [a x y z] b
+#+end_example
+*** Macros
+:PROPERTIES:
+:CUSTOM_ID: Macros
+:END:
+
+Here's a neat macro I made, but I /may/ avoid using it in the init in order to
+avoid scaring anyone. I may use it in my personal stuff.
+
+#+BEGIN_SRC emacs-lisp
+(defmacro λ (&rest body)
+  "Implementing Z-notation style, interactive, lambdas; ideally for inline use:
+
+   “λ α β … ω • body”  becomes an interactive function with arguments α, …, ω.
+
+   The args list may be empty, in which case the separator “•” may be omitted
+   entirely, if desired.
+  "
+
+  (let* ((parts (-split-on '• body)) args rest)
+
+    (if (<= 2 (length parts))
+        (progn (setq args (car parts)) (setq rest (cadr parts)))
+         ;; Otherwise, only one part was found ---no arguments were provided.
+         (setq args nil) (setq rest (car parts)))
+
+   `(lambda ,args (interactive) ,@rest)
+  ))
+
+;; Some tests
+
+(setq f (λ x y • (+ x y)))   ;; ⇒ (lambda (x y) (interactive) (+ x y))
+(setq g (λ • 'neato "woah")) ;; ⇒ (lambda (x y) (interactive) 'neato "woah")
+(setq h (λ "bye" 'bye))      ;; ⇒ (lambda (x y) (interactive) "bye" 'bye)
+(funcall f 1 2)
+(funcall g)
+(funcall h)
+
+;; intended use case
+
+(local-set-key (kbd "C-x x x") (lambda () (interactive) (message-box "Test!")))
+(local-set-key (kbd "C-x x x") (λ (message-box "Terse!")))
+#+END_SRC
+
+*** Summary of Utilities Provided
+:PROPERTIES:
+:CUSTOM_ID: Summary-of-Utilities-Provided
+:END:
+
+| _Command_                                | _Action_                                                |
+| ~<f5>~                                   | revert buffer                                           |
+| ~C-∣~                                    | toggle 2 windows from horizontal to vertical view       |
+| ~M-x create-scratch-buffer~              | --self evident--                                        |
+| ~M-$~                                    | check spelling of word at point                         |
+| ~M-#~                                    | thesaurus look-up word at point                         |
+| ~C-+/-~                                  | increase/decrease text size                             |
+| ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file          |
+| ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~             |
+
+Since I'm using ~use-package~, I can invoke ~M-x describe-personal-keybindings~ to see what key bindings I've defined.
+Since not all my bindings are via ~use-package~, it does not yet cover all of my bindings.
+
+We could run ~C-h b~ to see /all/ our bindings
+---or ~M-x describe-personal-bindings~ to see only those
+set throughout our init file.
+#+BEGIN_SRC emacs-lisp
+(use-package helm-descbinds
+  :defer t
+  :bind ("C-h b" . helm-descbinds))
+#+END_SRC
+
+Finally, we can observe which features are active in our current Emacs with,
+#+begin_src emacs-lisp :tangle no
+(message "Features: %s" features)
+#+end_src
+
+# List of installed packages: (mapcar 'car package-alist)
+*** Stuff I don't really use, but may want to look at later
+:PROPERTIES:
+:CUSTOM_ID: Stuff-I-don't-really-use-but-may-want-to-look-at-later
+:END:
+**** hooks and things for literate agda with org-agda
+:PROPERTIES:
+:CUSTOM_ID: hooks-and-things-for-literate-agda-with-org-agda
+:END:
+
+#+BEGIN_SRC emacs-lisp  :tangle no
+;; not needed
+(defun lagda-extension-whatdo ()
+       "What to do when encountering a .lagda file.
+       To be added to auto-mode-list."
+       (agda2-mode)
+       (org-babel-load-file "~/Dropbox/lagda-with-org.org")
+       (message "Musa's special Agda settings enabled."))
+
+(add-to-list 'auto-mode-alist '("\\.lagda\\'" . (lambda () (lagda-extension-whatdo))))
+; (add-to-list 'auto-mode-alist '("\\.lagda\\'" . 'lagda-extension-whatdo))
+
+(defun my-add-to-multiple-hooks (function hooks) (mapc (lambda (hook) (add-hook hook function)) hooks))
+(defun my-common-hook () (fci-mode) (orgstruct-mode) )
+(my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
+#+END_SRC
+**** floating toc material                          :no_longer_using_this:
+:PROPERTIES:
+:CUSTOM_ID: floating-toc-material
+:END:
+
+Add the following to a web-page if you'd like it to have a floating table of contents.
++ Perhaps consider making this a default for all org-files?
+ + The ~floatingTocStyle.css~ lives in my Dropbox; bring it here to be self-contained.
+
+#+BEGIN_SRC org :tangle no
+#+HTML: <small><center>
+( Please remember that you can always access a section using the floating table of contents at the upper-right corner of your screen. )
+#+HTML: </center></small>
+#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"floatingTocStyle.css\" />
+#+HTML: <div id=\"toc\"> &nbsp;Table of Contents&nbsp; <small> <div id=\"full\">
+#+TOC: headlines 2
+#+HTML: </div> </small> </div>
+#+END_SRC
+
+**** org-html-postamble-format
+:PROPERTIES:
+:CUSTOM_ID: org-html-postamble-format
+:END:
+
+ Look at the super short doc to know how to manipulate this variable.
+ (describe-symbol 'org-html-postamble-format)
+
+ #+BEGIN_SRC emacs-lisp :tangle no
+(defun make-html-link (url identifier)
+  (concat "<a href=\"" url "\">" identifier "</a>"))
+
+(setq org-html-postamble-format
+  (let* ((nomorg (buffer-name))
+         (nom    (file-name-sans-extension nomorg))
+         (src    (make-html-link nomorg "Org Source"))
+         (nompdf (concat nom ".pdf"))
+         (pdf    (make-html-link nompdf "View me as a PDF"))
+        )
+`(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
+)
+ #+END_SRC
+
+**** Programming Language Support                                   :TODO:
+:PROPERTIES:
+:CUSTOM_ID: Programming-Language-Support
+:END:
+
+****** Haskell :tangle no
+:PROPERTIES:
+:CUSTOM_ID: Haskell-tangle-no
+:END:
+
+#+BEGIN_SRC emacs-lisp
+;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
+ (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
+#+END_SRC
+
+****** Lambda Prolog
+:PROPERTIES:
+:CUSTOM_ID: Lambda-Prolog
+:END:
+
+#+BEGIN_SRC emacs-lisp  :tangle no
+(load "/usr/local/packages/teyjus/emacs/teyjus.el")
+(setq tjcc "/usr/local/packages/teyjus/tjcc")
+#+END_SRC
+****** Coq Support
+:PROPERTIES:
+:CUSTOM_ID: Coq-Support
+:END:
+
+Sometimes I use Coq,
+#+begin_src emacs-lisp
+;; Open .v files with Proof General's Coq mode
+;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
+#+end_src
+
+**** Column Marker
+:PROPERTIES:
+:CUSTOM_ID: Column-Marker
+:END:
+
+(  Maybe a hook would be better? Much better...? )
+
+Have a thin line to the right to ensure I don't write “off the page”.
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package fill-column-indicator)
+(define-globalized-minor-mode my-fci-global-mode fci-mode
+  (lambda () (set-fill-column 90) (fci-mode 't)
+))
+(my-fci-global-mode 1)
+#+END_SRC
+
+There are issues with making things global.
+In this case, exporting to html produces curious symbols
+thereby prompting ~my-org-html-export-to-html~ below to
+take care of this.
+
+**** theme magic
+:PROPERTIES:
+:CUSTOM_ID: theme-magic
+:END:
+
+[[https://github.com/jcaw/theme-magic][Theme-magic]] looks nice, in theory, but I've not found it to be useful, for me.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Automatically propagate Emacs theme changes to OS
+(use-package theme-magic)
+;; (shell-command "pip3 install pywal")
+(theme-magic-export-theme-mode)
+#+END_SRC
+
+*** Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
+:PROPERTIES:
+:CUSTOM_ID: Referencing-Text-From-Code-Blocks-Attaching-prose-as-doc-strings
+:END:
+
+Sources:
++ John Kitchin https://lists.gnu.org/archive/html/emacs-orgmode/2018-05/msg00350.html
++ https://kdr2.com/tech/emacs/1805-approach-org-ref-code-to-text.html
+
+I want both ~get-named-text~ and ~docs~ ^_^
+
+#+NAME: get-named-text
+#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
+(my/get-named-text name sep)
+#+END_SRC
+
+#+NAME: docs
+#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
+(my/get-named-text name sep)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(defun my/get-named-text (name sep)
+
+  (let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
+              (lambda (el) (when (string= (org-element-property :name el) name)
+                             el)))))
+    (concat "\n"
+            (s-join sep
+                    (cl-loop for e in el
+                          for s = (buffer-substring (org-element-property :contents-begin e)
+                                                    (org-element-property :contents-end e))
+                          collect
+                          (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))))
+#+END_SRC
+
+#+NAME: OLD-get-named-text
+#+BEGIN_SRC emacs-lisp :var name="" :results replace :tangle no
+(let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
+            (lambda (el)
+              (when (string= (org-element-property :name el) name)
+                el))
+            nil t)))
+  (let ((s (buffer-substring (org-element-property :contents-begin el)
+                             (org-element-property :contents-end el))))
+    (concat "\n" (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))
+#+END_SRC
+
+Let's make ~get-named-text~ a globally defined and callable code block:
+#+BEGIN_SRC emacs-lisp
+(org-babel-lob-ingest (expand-file-name "~/.emacs.d/init.org"))
+#+END_SRC
+
+
+****  COMMENT Example
+:PROPERTIES:
+:CUSTOM_ID: Example
+:END:
+:PROPERTIES:
+
+:END:
+:PROPERTIES:
+
+:END:
+For example:
+#+NAME: ADD
+#+BEGIN_SRC emacs-lisp -n -r :noweb yes :tangle test.el
+(defun add (x y)
+  "One line description of adding X and Y.
+<<get-named-text('DOC-OF-ADD)>> ;; code to code
+<<get-named-text('add-options)>>"
+  (+ x y)
+  )
+#+END_SRC
+
+#+NAME: DOC-OF-ADD
+We use the XXX function add to calculate the sum of two numbers.
+
+#+NAME: add-options
+- one
+- two
+- three
+- and of course "optional things"
+
++ There is a reason we only support two args
+*** Tangeling to multiple files
+:PROPERTIES:
+:CUSTOM_ID: Tangeling-to-multiple-files
+:END:
+
+From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
+
+#+begin_src emacs-lisp :tangle no
+(defun org-babel-tangle-collect-blocks-handle-tangle-list (&optional language tangle-file)
+  "Can be used as :override advice for `org-babel-tangle-collect-blocks'.
+Handles lists of :tangle files."
+  (let ((counter 0) last-heading-pos blocks)
+    (org-babel-map-src-blocks (buffer-file-name)
+      (let ((current-heading-pos
+         (org-with-wide-buffer
+          (org-with-limited-levels (outline-previous-heading)))))
+    (if (eq last-heading-pos current-heading-pos) (cl-incf counter)
+      (setq counter 1)
+      (setq last-heading-pos current-heading-pos)))
+      (unless (org-in-commented-heading-p)
+    (let* ((info (org-babel-get-src-block-info)) ;; MA: not “light”!
+                                          ;; (describe-symbol 'org-babel-get-src-block-info)
+           (src-lang (nth 0 info))
+           (src-tfiles (cdr (assq :tangle (nth 2 info))))) ; Tobias: accept list for :tangle
+      (unless (consp src-tfiles) ; Tobias: unify handling of strings and lists for :tangle
+        (setq src-tfiles (list src-tfiles))) ; Tobias: unify handling
+      (dolist (src-tfile src-tfiles) ; Tobias: iterate over list
+        (unless (or (string= src-tfile "no")
+            (and tangle-file (not (equal tangle-file src-tfile)))
+            (and language (not (string= language src-lang))))
+          ;; Add the spec for this block to blocks under its
+          ;; language.
+          (let ((by-lang (assoc src-lang blocks))
+            (block (org-babel-tangle-single-block counter)))
+        (setcdr (assoc :tangle (nth 4 block)) src-tfile) ; Tobias:
+        (if by-lang (setcdr by-lang (cons block (cdr by-lang)))
+          (push (cons src-lang (list block)) blocks)))))))) ; Tobias: just ()
+    ;; Ensure blocks are in the correct order.
+    (mapcar (lambda (b) (cons (car b) (nreverse (cdr b)))) blocks)))
+
+(defun org-babel-tangle-single-block-handle-tangle-list (oldfun block-counter &optional only-this-block)
+  "Can be used as :around advice for `org-babel-tangle-single-block'.
+If the :tangle header arg is a list of files. Handle all files"
+  (let* ((info (org-babel-get-src-block-info))
+     (params (nth 2 info))
+     (tfiles (cdr (assoc :tangle params))))
+    (if (null (and only-this-block (consp tfiles)))
+    (funcall oldfun block-counter only-this-block)
+      (cl-assert (listp tfiles) nil
+         ":tangle only allows a tangle file name or a list of tangle file names")
+      (let ((ret (mapcar
+          (lambda (tfile)
+            (let (old-get-info)
+              (cl-letf* (((symbol-function 'old-get-info) (symbol-function 'org-babel-get-src-block-info))
+                 ((symbol-function 'org-babel-get-src-block-info)
+                  `(lambda (&rest get-info-args)
+                     (let* ((info (apply 'old-get-info get-info-args))
+                        (params (nth 2 info))
+                        (tfile-cons (assoc :tangle params)))
+                       (setcdr tfile-cons ,tfile)
+                       info))))
+            (funcall oldfun block-counter only-this-block))))
+          tfiles)))
+    (if only-this-block
+        (list (cons (cl-caaar ret) (mapcar #'cadar ret)))
+      ret)))))
+
+(advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
+(advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
+#+end_src
+*** Parallel
+:PROPERTIES:
+:CUSTOM_ID: Parallel
+:END:
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
+#+END_SRC
+** COMMENT JavaScript                              :Does_not_work_with_flow:
+
+Let's get a JavaScript refactoring library for emacs:
+
+#+begin_src emacs-lisp :tangle work_secrets.el
+;; (use-package js2-mode)
+
+(use-package js2-refactor ;; Does not work with flow.js :'(
+  :hook (js-mode . js2-refactor-mode)
+  :config (js2r-add-keybindings-with-prefix "s-j"))
+
+;; To be aware of https://github.com/azer/npm.el
+;; Create and rule NPM packages from Emacs
+#+end_src
+
+Using ~⌘ j~ then one of the following...
+
+| ~lt~ | Adds a console.log() statement for what is at point (or region).               |
+|    | With a prefix argument, use JSON pretty-printing.                              |
+| ~dt~ | Adds a debug() statement for what is at point (or region).                     |
+| ~k~  | is kill: Kills to the end of the line, but does not cross semantic boundaries. |
+|----+--------------------------------------------------------------------------------|
+| ~ee~ | Make an inline list/object/function/funcall be on multiple lines               |
+| ~cc~ | Opposite of ee                                                                 |
+|----+--------------------------------------------------------------------------------|
+| ~tf~ | Toggle between ~function name() {}~ and ~var name = function () {}~                |
+| ~ta~ | Toggle between function expression to arrow function                           |
+| ~ts~ | Toggle between an async and a regular function.                                |
+|----+--------------------------------------------------------------------------------|
+| ~ef~ | Extract the currently selected expression into a top level function            |
+| ~em~ | Like ef, but it's a method in the parent/ambient class                         |
+| ~ev~ | Takes a marked expression and replaces it with a var                           |
+| ~el~ | Similar to extract-var but uses a let-statement                                |
+| ~ec~ | Similar to extract-var but uses a const-statement                              |
+| ~iv~ | Opposite of iv: Replaces all instances of a variable with its initial value    |
+| ~vt~ | Changes local var a to be this.a instead, and all lexical uses.                |
+| ~rv~ | Renames the variable on point and all occurrences in its lexical scope         |
+|----+--------------------------------------------------------------------------------|
+| ~wi~ | Wraps the entire buffer in an immediately invoked function expression          |
+| ~3i~ | Converts ternary operator to if-statement; nice!                               |
+| ~ss~ | Split a string, at point, into a catenation of strings                         |
+| ~st~ | Convert a string into a `template`.                                            |
+
+** COMMENT Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
+:PROPERTIES:
+:CUSTOM_ID: Approaches-Before-Reading-Documentation
+:END:
+
+;; Nice soft yellow, pleasing ---try background colour for html export ;-)
+(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
+;; "white"; or this darker yellow "#eae3cb"
+
+*** Elementary Version Control
+:PROPERTIES:
+:CUSTOM_ID: Elementary-Version-Control
+:END:
+
+[[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
+are pointers to memory location of a given filename!
+Soft links are preferable since they defer to the orginal filename
+and can work across servers.
+
+We can declare them as follows,
+#+BEGIN_EXAMPLE shell
+ln -s source_file myfile
+#+END_EXAMPLE
+
+If ~repo~ refers to a directory under version control
+--or Dropbox-- we move our init file and emacs directory to it,
+then make soft links to these locations so that whenever ~~/.emacs~
+is accessed it will refer to ~repo/.emacs~ and likewise for ~.emacs.d~ :-)
+
+On a new machine, copy-paste any existing emacs configs we want
+to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
+links only.
+
+#+BEGIN_EXAMPLE shell
+repo=~/Dropbox     ## or my git repository: ~/dotfiles
+
+cd ~
+
+mv .emacs $repo/
+ln -s $repo/.emacs .emacs
+
+mv .emacs.elc $repo/
+ln -s $repo/.emacs.elc .emacs.elc
+
+mv .emacs.d/ $repo/
+ln -s $repo/.emacs.d/ .emacs.d
+#+END_EXAMPLE
+Note the extra ~/~ after ~.emacs.d~!
+
+You may need to unlink soft links if you already have them;
+e.g., ~unlink .emacs.d~.
+
+To make another softlink to a file, say in a blogging directory,
+we ~cd~ to the location of interest then execute, say:
+~ln -s $repo/.emacs.d/init.org init.org~
+
+While we're at it, let's make this super-duper file (and another) easily
+accessible --since we'll be altering it often--:
+#+BEGIN_EXAMPLE shell
+cd ~
+
+ln -s dotfiles/.emacs.d/init.org init.org
+ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
+#+END_EXAMPLE
+
+Below I'll equip us with an Emacs ‘porcelain’ interface to git
+--it makes working with version control tremendously convenient.
+Moreover, I add a little pop-up so that I don't forget to commit often!
+
+Finally, since I've symlinked my ~.emacs~:
+#+begin_src emacs-lisp
+;; Don't ask for confirmation when opening symlinked files.
+(setq vc-follow-symlinks t)
+#+end_src
+*** What's in, or at the top of, my ~~/.emacs~
+:PROPERTIES:
+:CUSTOM_ID: What's-in-or-at-the-top-of-my-emacs
+:END:
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(org-babel-load-file "~/.emacs.d/init.org")
+;;
+;; My Emacs settings: (find-file "~/.emacs.d/init.org")
+#+END_SRC
+( I do not generate my ~.emacs~ file from this source code in-fear of
+   overriding functionality inserted by ~custom~. )
+
+# Whenever this ~init.org~ is loaded by org-babel it creates a ~.emacs~ file which
+Our ~.emacs~ should be byte-compiled so that when we start Emacs it will
+automatically determine if the ~init.org~ file has changed and if so it
+would tangle it producing the ~init.el~ file which will then be loaded immediately.
+
+:Maybe_bad_idea:
+#+BEGIN_SRC emacs-lisp :tangle no
+;; In-case I forget to byte-compile!
+(byte-compile-file "~/.emacs")
+
+;; Change this silly counter to visualy notice a change. When making many changes.
+;; (progn (message "Init.org contents loaded! Counter: 7") (sleep-for 3))
+#+END_SRC
+:End:
+*** README.md
+:PROPERTIES:
+:CUSTOM_ID: README-md
+:END:
+
+#+BEGIN_SRC emacs-lisp :tangle no :export_never t
+(with-temp-buffer
+    (insert (concat
+    "#+EXPORT_FILE_NAME: README.md
+     #+HTML: <h1> A Life Configuring Emacs </h1>
+     #+begin_export html
+     <p align=\"center\">
+       <img src=\"emacs-logo.png\" width=150 height=150/>
+     </p>
+
+     <p align=\"center\">
+        <a href=\"https://www.gnu.org/software/emacs/\">
+             <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
+        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
+     </p>
+
+     <p align=\"center\">
+       <img src=\"emacs-birthday-present.png\" width=200 height=250/>
+     </p>
+     #+end_export
+     #+HTML: <h3> My Literate Setup </h3>
+     #+OPTIONS: toc:nil d:nil
+     # Toc is displayed below at a strategic position.
+
+     I enjoy reading others' /literate/ configuration files and incorporating what I learn
+     into my own. The result is a sufficiently well-documented and accessible read that yields
+     a stylish and functional system (•̀ᴗ•́)و
+
+     This ~README.md~ has been automatically generated from my configuration
+     and its contents below could also be read in blog format, with /colour/, or as colourful PDF,
+     [[https://alhassy.github.io/init/][here]]. Enjoy :smile:
+
+      #+TOC: headlines 2
+      #+INCLUDE: init.org
+    "))
+    (org-mode)
+    (org-md-export-to-markdown)
+    ;; Coloured html does not work in Github, afaik.
+    ;; (org-html-export-to-html)
+    ;; (shell-command "mv README.html README.md")
+)
+#+END_SRC
+
+*** List recently accessed files upon startup
+:PROPERTIES:
+:CUSTOM_ID: List-recently-accessed-files-upon-startup
+:END:
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(recentf-mode 1)                   ;; Part of Emacs
+(setq recentf-max-menu-items 25)
+(global-set-key "\C-x\ \C-r" 'recentf-open-files)
+
+(split-window-below)			  ;; C-x 3
+(other-window 1)                              ;; C-x 0
+(recentf-open-files)
+#+END_SRC
+
+*** Homemade attempt before learning about shell-pop
+:PROPERTIES:
+:CUSTOM_ID: Homemade-attempt-before-learning-about-shell-pop
+:END:
+
+#+begin_src emacs-lisp :tangle no
+(cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
+   "Pop up a terminal, do some work, then close it using the same command.
+
+   The toggle behaviour is tied into the existence of the pop-up buffer.
+   If the buffer exists, kill it; else create it.
+   "
+   (interactive)
+   (cond
+     ;; when the terminal buffer is alive, kill it.
+     ((get-buffer name)  (kill-buffer name)
+                         (ignore-errors (delete-window)))
+     ;; otherwise, set value to refer to a new eshell buffer.
+     (t                  (split-window-right)
+                         (other-window 1)
+                         (eshell)
+                         (rename-buffer name))))
+
+(global-set-key "\C-t" 'toggle-terminal)
+#+end_src
+*** Exporting Tables to CSV                                 :Documentation:
+:PROPERTIES:
+:CUSTOM_ID: Exporting-Tables-to-CSV
+:END:
+
+Org-mode can export tables as TAB or comma delimited formats. I set the default format to CSV with:
+
+(setq org-table-export-default-format "orgtbl-to-csv")
+Exporting to CSV format is the only one I use and this provides the default so I can just hit RETURN when prompted for the format.
+
+To export the following table I put the cursor inside the table and hit M-x org-table-export which prompts for a filename and the format which defaults to orgtbl-to-csv from the setting above.
+*** Interpret the Haskell source blocks in a file :Cool_but_have_not_used_this_in_some_time:
+:PROPERTIES:
+:CUSTOM_ID: Interpret-the-Haskell-source-blocks-in-a-file
+:END:
+
+#+BEGIN_SRC emacs-lisp
+(defvar *current-module* "NoModuleNameSpecified"
+  "The name of the module, file, that source blocks are
+   currently being tangled to.
+
+   This technique is insipired by “Interactive Way to C”;
+   see https://alhassy.github.io/InteractiveWayToC/.
+  ")
+
+(defun current-module ()
+  "Returns the current module under focus."
+  *current-module*)
+
+(defun set-module (name)
+   "Set the name of the module currently under focus.
+
+    Usage: When a module is declared, i.e., a new file has begun,
+    then that source blocks header should be “:tangle (set-module ”name-here”)”.
+    succeeding source blocks now inherit this name and so are tangled
+    to the same module file. How? By placing the following line at the top
+    of your Org file: “‘#+PROPERTY: header-args :tangle (current-module))’.
+
+    This technique structures “Interactive Way to C”.
+   "
+   (setq *current-module* name)
+)
+
+(cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
+  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
+   and load the resulting ‘target’ file into a ghci buffer.
+
+   If no name is provided for the ‘target’ file that is generated from the
+   tangeling process, it is assumed to be the buffer's name with a ‘hs’ extension.
+
+   Note that this only loads the blocks tangled to ‘target’.
+
+   For example, file ‘X.org’ may have haskell blocks that tangle to files
+   ‘X.hs’, ‘Y.hs’ and ‘Z.hs’. If no target name is supplied, we tangle all blocks
+   but only load ‘X.hs’ into the ghci buffer. A helpful technique to load the
+   last, bottom most, defined haskell module, is to have the module declaration's
+   source block be ‘:tangle (setq CODE “Y.hs”)’, for example; then the following
+   code blocks will inherit this location provided our Org file has at the top
+   ‘#+PROPERTY: header-args :tangle (current-module))’.
+   Finally, our ‘compile-command’ suffices to be ‘(my/org-run-haskell CODE)’.
+   ─
+   This technique structures “Interactive Way to C”.
+  "
+   (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
+         (buf (concat "*GHCI* " it)))
+
+     (-let [kill-buffer-query-functions nil] (ignore-errors (kill-buffer buf)))
+     (org-babel-tangle it "haskell")
+     (async-shell-command (concat "ghci " it) buf)
+     (switch-to-buffer-other-window buf)
+     (end-of-buffer)
+   )
+)
+
+;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
+#+END_SRC
+*** Makeshift HTML Folded Drawers: Folding-mode & Org-Macros
+:PROPERTIES:
+:CUSTOM_ID: Makeshift-HTML-Folded-Drawers-Folding-mode-Org-Macros
+:END:
+
+My =my/prettify-alist= has the following:
+
+                    ("{{{fold("        . ?↳)
+                    (")}}}"            . ?↲)
+                    ("{{{end-fold}}}"  . ?↺)
+
+The ~↳Title Here↲ Contents ↺~ combination is for my makeshift HTML code
+folding macro ---word-wrapped for readability.
+#+BEGIN_SRC org :tangle no
+,#+MACRO: end-fold  #+HTML: </details>
+,#+MACRO: fold      #+HTML: <details class="code-details"> <summary> <strong>
+                              <font face="Courier" size="3" color="green"> $1
+                              </font> </strong> </summary>
+#+END_SRC
+
+:Example:
+# The (org-mode-restart) invocation actually enables the source block prettifications.
+
+# Empty macros to make the example go through.
+#
+#+MACRO: end-fold
+#+MACRO: fold
+
+{{{fold(nice)}}}
+
+hello
+
+{{{end-fold}}}
+
+:End:
+
+Let's have this fold-away in the source buffer as well by using [[https://www.emacswiki.org/emacs/FoldingMode][folding-mode]];
+with show/hide with ~C-<tab>~ key.
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package folding
+ :init
+ (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
+ (setq folding-top-mark "{{{fold(")
+ (setq folding-bottom-mark "{{{end-fold}}}")
+ :config
+  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
+  (add-hook 'org-mode-hook #'folding-mode))
+#+END_SRC
+#  (remove-hook 'org-mode-hook #'folding-mode)
+
+*** Default Compilation Commands ---Local Variables
+:PROPERTIES:
+:CUSTOM_ID: Default-Compilation-Commands-Local-Variables
+:END:
+
+
+Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
+when ~M-x recompile~ is invoked. One of my habits is to append
+most of my files with the following:
+#+begin_src org :tangle no
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate
@@ -11616,374 +12505,6 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 /Thanks to friends for “replacing me” while I was away ♥‿♥ ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ/
 #+end_center
 
-* COMMENT JavaScript :Does_not_work_with_flow:
-
-Let's get a JavaScript refactoring library for emacs:
-
-#+begin_src emacs-lisp :tangle work_secrets.el
-;; (use-package js2-mode)
-
-(use-package js2-refactor ;; Does not work with flow.js :'(
-  :hook (js-mode . js2-refactor-mode)
-  :config (js2r-add-keybindings-with-prefix "s-j"))
-
-;; To be aware of https://github.com/azer/npm.el
-;; Create and rule NPM packages from Emacs
-#+end_src
-
-Using ~⌘ j~ then one of the following...
-
-| ~lt~ | Adds a console.log() statement for what is at point (or region).               |
-|    | With a prefix argument, use JSON pretty-printing.                              |
-| ~dt~ | Adds a debug() statement for what is at point (or region).                     |
-| ~k~  | is kill: Kills to the end of the line, but does not cross semantic boundaries. |
-|----+--------------------------------------------------------------------------------|
-| ~ee~ | Make an inline list/object/function/funcall be on multiple lines               |
-| ~cc~ | Opposite of ee                                                                 |
-|----+--------------------------------------------------------------------------------|
-| ~tf~ | Toggle between ~function name() {}~ and ~var name = function () {}~                |
-| ~ta~ | Toggle between function expression to arrow function                           |
-| ~ts~ | Toggle between an async and a regular function.                                |
-|----+--------------------------------------------------------------------------------|
-| ~ef~ | Extract the currently selected expression into a top level function            |
-| ~em~ | Like ef, but it's a method in the parent/ambient class                         |
-| ~ev~ | Takes a marked expression and replaces it with a var                           |
-| ~el~ | Similar to extract-var but uses a let-statement                                |
-| ~ec~ | Similar to extract-var but uses a const-statement                              |
-| ~iv~ | Opposite of iv: Replaces all instances of a variable with its initial value    |
-| ~vt~ | Changes local var a to be this.a instead, and all lexical uses.                |
-| ~rv~ | Renames the variable on point and all occurrences in its lexical scope         |
-|----+--------------------------------------------------------------------------------|
-| ~wi~ | Wraps the entire buffer in an immediately invoked function expression          |
-| ~3i~ | Converts ternary operator to if-statement; nice!                               |
-| ~ss~ | Split a string, at point, into a catenation of strings                         |
-| ~st~ | Convert a string into a `template`.                                            |
-
-* COMMENT Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
-:PROPERTIES:
-:CUSTOM_ID: Approaches-Before-Reading-Documentation
-:END:
-
-;; Nice soft yellow, pleasing ---try background colour for html export ;-)
-(add-to-list 'default-frame-alist '(background-color . "#fcf4dc"))
-;; "white"; or this darker yellow "#eae3cb"
-
-** Elementary Version Control
-:PROPERTIES:
-:CUSTOM_ID: Elementary-Version-Control
-:END:
-
-[[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
-are pointers to memory location of a given filename!
-Soft links are preferable since they defer to the orginal filename
-and can work across servers.
-
-We can declare them as follows,
-#+BEGIN_EXAMPLE shell
-ln -s source_file myfile
-#+END_EXAMPLE
-
-If ~repo~ refers to a directory under version control
---or Dropbox-- we move our init file and emacs directory to it,
-then make soft links to these locations so that whenever ~~/.emacs~
-is accessed it will refer to ~repo/.emacs~ and likewise for ~.emacs.d~ :-)
-
-On a new machine, copy-paste any existing emacs configs we want
-to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
-links only.
-
-#+BEGIN_EXAMPLE shell
-repo=~/Dropbox     ## or my git repository: ~/dotfiles
-
-cd ~
-
-mv .emacs $repo/
-ln -s $repo/.emacs .emacs
-
-mv .emacs.elc $repo/
-ln -s $repo/.emacs.elc .emacs.elc
-
-mv .emacs.d/ $repo/
-ln -s $repo/.emacs.d/ .emacs.d
-#+END_EXAMPLE
-Note the extra ~/~ after ~.emacs.d~!
-
-You may need to unlink soft links if you already have them;
-e.g., ~unlink .emacs.d~.
-
-To make another softlink to a file, say in a blogging directory,
-we ~cd~ to the location of interest then execute, say:
-~ln -s $repo/.emacs.d/init.org init.org~
-
-While we're at it, let's make this super-duper file (and another) easily
-accessible --since we'll be altering it often--:
-#+BEGIN_EXAMPLE shell
-cd ~
-
-ln -s dotfiles/.emacs.d/init.org init.org
-ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
-#+END_EXAMPLE
-
-Below I'll equip us with an Emacs ‘porcelain’ interface to git
---it makes working with version control tremendously convenient.
-Moreover, I add a little pop-up so that I don't forget to commit often!
-
-Finally, since I've symlinked my ~.emacs~:
-#+begin_src emacs-lisp
-;; Don't ask for confirmation when opening symlinked files.
-(setq vc-follow-symlinks t)
-#+end_src
-** What's in, or at the top of, my ~~/.emacs~
-:PROPERTIES:
-:CUSTOM_ID: What's-in-or-at-the-top-of-my-emacs
-:END:
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(org-babel-load-file "~/.emacs.d/init.org")
-;;
-;; My Emacs settings: (find-file "~/.emacs.d/init.org")
-#+END_SRC
-( I do not generate my ~.emacs~ file from this source code in-fear of
-   overriding functionality inserted by ~custom~. )
-
-# Whenever this ~init.org~ is loaded by org-babel it creates a ~.emacs~ file which
-Our ~.emacs~ should be byte-compiled so that when we start Emacs it will
-automatically determine if the ~init.org~ file has changed and if so it
-would tangle it producing the ~init.el~ file which will then be loaded immediately.
-
-:Maybe_bad_idea:
-#+BEGIN_SRC emacs-lisp :tangle no
-;; In-case I forget to byte-compile!
-(byte-compile-file "~/.emacs")
-
-;; Change this silly counter to visualy notice a change. When making many changes.
-;; (progn (message "Init.org contents loaded! Counter: 7") (sleep-for 3))
-#+END_SRC
-:End:
-** README.md
-:PROPERTIES:
-:CUSTOM_ID: README-md
-:END:
-
-#+BEGIN_SRC emacs-lisp :tangle no :export_never t
-(with-temp-buffer
-    (insert (concat
-    "#+EXPORT_FILE_NAME: README.md
-     #+HTML: <h1> A Life Configuring Emacs </h1>
-     #+begin_export html
-     <p align=\"center\">
-       <img src=\"emacs-logo.png\" width=150 height=150/>
-     </p>
-
-     <p align=\"center\">
-        <a href=\"https://www.gnu.org/software/emacs/\">
-             <img src=\"https://img.shields.io/badge/GNU%20Emacs-" emacs-version "-b48ead.svg?style=plastic\"/></a>
-        <a href=\"https://orgmode.org/\"><img src=\"https://img.shields.io/badge/org--mode-" org-version "-489a9f.svg?style=plastic\"/></a>
-     </p>
-
-     <p align=\"center\">
-       <img src=\"emacs-birthday-present.png\" width=200 height=250/>
-     </p>
-     #+end_export
-     #+HTML: <h3> My Literate Setup </h3>
-     #+OPTIONS: toc:nil d:nil
-     # Toc is displayed below at a strategic position.
-
-     I enjoy reading others' /literate/ configuration files and incorporating what I learn
-     into my own. The result is a sufficiently well-documented and accessible read that yields
-     a stylish and functional system (•̀ᴗ•́)و
-
-     This ~README.md~ has been automatically generated from my configuration
-     and its contents below could also be read in blog format, with /colour/, or as colourful PDF,
-     [[https://alhassy.github.io/init/][here]]. Enjoy :smile:
-
-      #+TOC: headlines 2
-      #+INCLUDE: init.org
-    "))
-    (org-mode)
-    (org-md-export-to-markdown)
-    ;; Coloured html does not work in Github, afaik.
-    ;; (org-html-export-to-html)
-    ;; (shell-command "mv README.html README.md")
-)
-#+END_SRC
-
-** List recently accessed files upon startup
-:PROPERTIES:
-:CUSTOM_ID: List-recently-accessed-files-upon-startup
-:END:
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(recentf-mode 1)                   ;; Part of Emacs
-(setq recentf-max-menu-items 25)
-(global-set-key "\C-x\ \C-r" 'recentf-open-files)
-
-(split-window-below)			  ;; C-x 3
-(other-window 1)                              ;; C-x 0
-(recentf-open-files)
-#+END_SRC
-
-** Homemade attempt before learning about shell-pop
-:PROPERTIES:
-:CUSTOM_ID: Homemade-attempt-before-learning-about-shell-pop
-:END:
-
-#+begin_src emacs-lisp :tangle no
-(cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
-   "Pop up a terminal, do some work, then close it using the same command.
-
-   The toggle behaviour is tied into the existence of the pop-up buffer.
-   If the buffer exists, kill it; else create it.
-   "
-   (interactive)
-   (cond
-     ;; when the terminal buffer is alive, kill it.
-     ((get-buffer name)  (kill-buffer name)
-                         (ignore-errors (delete-window)))
-     ;; otherwise, set value to refer to a new eshell buffer.
-     (t                  (split-window-right)
-                         (other-window 1)
-                         (eshell)
-                         (rename-buffer name))))
-
-(global-set-key "\C-t" 'toggle-terminal)
-#+end_src
-** Exporting Tables to CSV :Documentation:
-:PROPERTIES:
-:CUSTOM_ID: Exporting-Tables-to-CSV
-:END:
-
-Org-mode can export tables as TAB or comma delimited formats. I set the default format to CSV with:
-
-(setq org-table-export-default-format "orgtbl-to-csv")
-Exporting to CSV format is the only one I use and this provides the default so I can just hit RETURN when prompted for the format.
-
-To export the following table I put the cursor inside the table and hit M-x org-table-export which prompts for a filename and the format which defaults to orgtbl-to-csv from the setting above.
-** Interpret the Haskell source blocks in a file :Cool_but_have_not_used_this_in_some_time:
-:PROPERTIES:
-:CUSTOM_ID: Interpret-the-Haskell-source-blocks-in-a-file
-:END:
-
-#+BEGIN_SRC emacs-lisp
-(defvar *current-module* "NoModuleNameSpecified"
-  "The name of the module, file, that source blocks are
-   currently being tangled to.
-
-   This technique is insipired by “Interactive Way to C”;
-   see https://alhassy.github.io/InteractiveWayToC/.
-  ")
-
-(defun current-module ()
-  "Returns the current module under focus."
-  *current-module*)
-
-(defun set-module (name)
-   "Set the name of the module currently under focus.
-
-    Usage: When a module is declared, i.e., a new file has begun,
-    then that source blocks header should be “:tangle (set-module ”name-here”)”.
-    succeeding source blocks now inherit this name and so are tangled
-    to the same module file. How? By placing the following line at the top
-    of your Org file: “‘#+PROPERTY: header-args :tangle (current-module))’.
-
-    This technique structures “Interactive Way to C”.
-   "
-   (setq *current-module* name)
-)
-
-(cl-defun my/org-run-haskell (&optional target (filename (buffer-name)))
-  "Tangle Haskell source blocks of given ‘filename’, or otherwise current buffer,
-   and load the resulting ‘target’ file into a ghci buffer.
-
-   If no name is provided for the ‘target’ file that is generated from the
-   tangeling process, it is assumed to be the buffer's name with a ‘hs’ extension.
-
-   Note that this only loads the blocks tangled to ‘target’.
-
-   For example, file ‘X.org’ may have haskell blocks that tangle to files
-   ‘X.hs’, ‘Y.hs’ and ‘Z.hs’. If no target name is supplied, we tangle all blocks
-   but only load ‘X.hs’ into the ghci buffer. A helpful technique to load the
-   last, bottom most, defined haskell module, is to have the module declaration's
-   source block be ‘:tangle (setq CODE “Y.hs”)’, for example; then the following
-   code blocks will inherit this location provided our Org file has at the top
-   ‘#+PROPERTY: header-args :tangle (current-module))’.
-   Finally, our ‘compile-command’ suffices to be ‘(my/org-run-haskell CODE)’.
-   ─
-   This technique structures “Interactive Way to C”.
-  "
-   (let* ((it  (if target target (concat (file-name-sans-extension filename) ".hs")))
-         (buf (concat "*GHCI* " it)))
-
-     (-let [kill-buffer-query-functions nil] (ignore-errors (kill-buffer buf)))
-     (org-babel-tangle it "haskell")
-     (async-shell-command (concat "ghci " it) buf)
-     (switch-to-buffer-other-window buf)
-     (end-of-buffer)
-   )
-)
-
-;; Set this as the ‘compile-command’ in ‘Local Variables’, for example.
-#+END_SRC
-** Makeshift HTML Folded Drawers: Folding-mode & Org-Macros
-:PROPERTIES:
-:CUSTOM_ID: Makeshift-HTML-Folded-Drawers-Folding-mode-Org-Macros
-:END:
-
-My =my/prettify-alist= has the following:
-
-                    ("{{{fold("        . ?↳)
-                    (")}}}"            . ?↲)
-                    ("{{{end-fold}}}"  . ?↺)
-
-The ~↳Title Here↲ Contents ↺~ combination is for my makeshift HTML code
-folding macro ---word-wrapped for readability.
-#+BEGIN_SRC org :tangle no
-,#+MACRO: end-fold  #+HTML: </details>
-,#+MACRO: fold      #+HTML: <details class="code-details"> <summary> <strong>
-                              <font face="Courier" size="3" color="green"> $1
-                              </font> </strong> </summary>
-#+END_SRC
-
-:Example:
-# The (org-mode-restart) invocation actually enables the source block prettifications.
-
-# Empty macros to make the example go through.
-#
-#+MACRO: end-fold
-#+MACRO: fold
-
-{{{fold(nice)}}}
-
-hello
-
-{{{end-fold}}}
-
-:End:
-
-Let's have this fold-away in the source buffer as well by using [[https://www.emacswiki.org/emacs/FoldingMode][folding-mode]];
-with show/hide with ~C-<tab>~ key.
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package folding
- :init
- (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
- (setq folding-top-mark "{{{fold(")
- (setq folding-bottom-mark "{{{end-fold}}}")
- :config
-  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
-  (add-hook 'org-mode-hook #'folding-mode))
-#+END_SRC
-#  (remove-hook 'org-mode-hook #'folding-mode)
-
-** Default Compilation Commands ---Local Variables
-:PROPERTIES:
-:CUSTOM_ID: Default-Compilation-Commands-Local-Variables
-:END:
-
-
-Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
-when ~M-x recompile~ is invoked. One of my habits is to append
-most of my files with the following:
-#+begin_src org :tangle no
 # Local Variables:
 # eval: (message "Load file specific stuffs here")
 # compile-command: (async-shell-command (concat "open " (org-latex-export-to-pdf)))
@@ -12054,516 +12575,3 @@ In a terminal execute: xcode-select --install
 
 May need to actually reboot the system as well.
 :End:
-* COMMENT Improvements                                             :noexport:
-:PROPERTIES:
-:CUSTOM_ID: Improvements
-:END:
-
-** Learn about TRAMP & Edit as Root
-:PROPERTIES:
-:CUSTOM_ID: Learn-about-TRAMP-Edit-as-Root
-:END:
-
-From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]].
-#+BEGIN_SRC emacs-lisp
-(defun find-file-as-root ()
-  "Like `ido-find-file, but automatically edit the file with
-root-privileges (using tramp/sudo), if the file is not writable
-by user."
-  (interactive)
-  (let ((file (ido-read-file-name "Edit as root: ")))
-    (unless (file-writable-p file)
-      (setq file (concat "/sudo:root@localhost:" file)))
-    (find-file file)))
-
-(bind-key "C-x F" 'find-file-as-root)
-#+END_SRC
-
-Incidentally, TRAMP allows us to do the same thing.
-** Easy tasks
-:PROPERTIES:
-:CUSTOM_ID: Easy-tasks
-:END:
-
-# TODO: MA: ⇨ Add unit tests for the init file.
-
-# ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
-# (shell-command "brew install pandoc")
-# (use-package ox-pandoc)
-
-;; Omit empty lines between headings in the collapsed view
-(setq org-cycle-separator-lines 0)
-
-#+BEGIN_SRC emacs-lisp :results replace :tangle yes
-(defun show-me ()
-  "Evaluate a Lisp expression and insert its value
-   as a comment at the end of the line.
-
-   Useful for documenting values or checking values.
-  "
-  (interactive)
-  (-let [it
-         (thread-last (thing-at-point 'line)
-           read-from-string
-           car
-           eval
-           (format " ;; ⇒ %s"))]
-    (end-of-line)
-    (insert it)))
-#+END_SRC
-
-+ [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
-** Smartparens
-:PROPERTIES:
-:CUSTOM_ID: Smartparens
-:END:
-
-:PROPERTIES:
-
-:END:
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package smartparens
-  :init
-  (smartparens-global-mode 1)
-  (show-smartparens-global-mode +1)
-
-  :bind (
-
-         ("M-f" . sp-forward-sexp)  ;; Move forward one  expression.
-         ("M-b" . sp-backward-sexp) ;; Move backward one expression.
-
-         ;; Going to the start & end of current expr in pair-able character.
-         ("M-a" . sp-beginning-of-sexp)
-         ("M-e" . sp-end-of-sexp)
-
-         ;; Going forwards deep down & up current expr; treating it as a tree.
-         ("M-d" . sp-down-sexp)
-         ("M-u" . sp-up-sexp)
-         ;; Acending & descending backwards; i.e., leftwards.
-         ("M-n" . sp-backward-down-sexp)
-         ("M-p" . sp-backward-up-sexp)
-
-         ;; Unwrapping: Removing pair-able characters.
-         ("M-w" . sp-unwrap-sexp)
-         ("M-m" . sp-backward-unwrap-sexp)
-
-         ;; “Slurping”: Move closing character forward/backward to include next sexp.
-         ;; “Barfing”: Contract a sexp, or string, by pushing a its last/first item out.
-         ;; See below for examples.
-         ("M-)" . sp-forward-slurp-sexp)
-         ("M-(" . sp-backward-slurp-sexp)
-         ("M-]" . sp-forward-barf-sexp)
-         ("M-[" . sp-backward-barf-sexp)
-
-         ;; Transpose two bracketed terms; e.g., a b c ⟪Here⟫ ⟶ a c b ⟪Here⟫
-         ;; Transpose backwards by being on the token;
-         ;; transpose forwards by being after the token.
-         ("M-t" . sp-transpose-sexp)
-
-         )
-
-  :config
-  ;; Enable smartparens everywhere
-  (use-package smartparens-config)
-
-  (setq
-   ;; smartparens-strict-mode t
-   ;; sp-autoinsert-if-followed-by-word t
-   ;; sp-autoskip-closing-pair 'always
-   sp-hybrid-kill-entire-symbol nil)
-
-  ;; In Elisp & org modes, do not ‘close’ a back-tick or single quote!
-  (sp-local-pair 'emacs-lisp-mode "`" nil :when '(sp-in-string-p))
-  (sp-local-pair 'emacs-lisp-mode "'" nil :when '(sp-in-string-p))
-  (sp-local-pair 'org-mode "`" nil :when '(sp-in-string-p))
-  (sp-local-pair 'org-mode "'" nil :when '(sp-in-string-p))
-  )
-#+END_SRC
-
-*Wrapping*
-To enclose a token with a pair-able character, at the start of the expression
-press ~C-ESCAPE-SPACE~, select the region, followed by a pair-able character such as ~[, {, ", ', *,~ etc.
-To wrap a single token forwards, use ~C-M-SPACE~.
-
-Examples of slurping & barfing --i.e., sexp inclusion and contraction.
-#+begin_example
-a [x y z] b  ⟶“M-) inside [⋯]”⟶  a [x y z b]
-a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
-[a x y z b]  ⟶“M-] inside [⋯]”⟶  a [x y z b]
-[a x y z b]  ⟶“M-] inside [⋯]”⟶  [a x y z] b
-#+end_example
-** Macros
-:PROPERTIES:
-:CUSTOM_ID: Macros
-:END:
-
-Here's a neat macro I made, but I /may/ avoid using it in the init in order to
-avoid scaring anyone. I may use it in my personal stuff.
-
-#+BEGIN_SRC emacs-lisp
-(defmacro λ (&rest body)
-  "Implementing Z-notation style, interactive, lambdas; ideally for inline use:
-
-   “λ α β … ω • body”  becomes an interactive function with arguments α, …, ω.
-
-   The args list may be empty, in which case the separator “•” may be omitted
-   entirely, if desired.
-  "
-
-  (let* ((parts (-split-on '• body)) args rest)
-
-    (if (<= 2 (length parts))
-        (progn (setq args (car parts)) (setq rest (cadr parts)))
-         ;; Otherwise, only one part was found ---no arguments were provided.
-         (setq args nil) (setq rest (car parts)))
-
-   `(lambda ,args (interactive) ,@rest)
-  ))
-
-;; Some tests
-
-(setq f (λ x y • (+ x y)))   ;; ⇒ (lambda (x y) (interactive) (+ x y))
-(setq g (λ • 'neato "woah")) ;; ⇒ (lambda (x y) (interactive) 'neato "woah")
-(setq h (λ "bye" 'bye))      ;; ⇒ (lambda (x y) (interactive) "bye" 'bye)
-(funcall f 1 2)
-(funcall g)
-(funcall h)
-
-;; intended use case
-
-(local-set-key (kbd "C-x x x") (lambda () (interactive) (message-box "Test!")))
-(local-set-key (kbd "C-x x x") (λ (message-box "Terse!")))
-#+END_SRC
-
-** Summary of Utilities Provided
-:PROPERTIES:
-:CUSTOM_ID: Summary-of-Utilities-Provided
-:END:
-
-| _Command_                                | _Action_                                                |
-| ~<f5>~                                   | revert buffer                                           |
-| ~C-∣~                                    | toggle 2 windows from horizontal to vertical view       |
-| ~M-x create-scratch-buffer~              | --self evident--                                        |
-| ~M-$~                                    | check spelling of word at point                         |
-| ~M-#~                                    | thesaurus look-up word at point                         |
-| ~C-+/-~                                  | increase/decrease text size                             |
-| ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file          |
-| ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~             |
-
-Since I'm using ~use-package~, I can invoke ~M-x describe-personal-keybindings~ to see what key bindings I've defined.
-Since not all my bindings are via ~use-package~, it does not yet cover all of my bindings.
-
-We could run ~C-h b~ to see /all/ our bindings
----or ~M-x describe-personal-bindings~ to see only those
-set throughout our init file.
-#+BEGIN_SRC emacs-lisp
-(use-package helm-descbinds
-  :defer t
-  :bind ("C-h b" . helm-descbinds))
-#+END_SRC
-
-Finally, we can observe which features are active in our current Emacs with,
-#+begin_src emacs-lisp :tangle no
-(message "Features: %s" features)
-#+end_src
-
-# List of installed packages: (mapcar 'car package-alist)
-** Stuff I don't really use, but may want to look at later
-:PROPERTIES:
-:CUSTOM_ID: Stuff-I-don't-really-use-but-may-want-to-look-at-later
-:END:
-*** hooks and things for literate agda with org-agda
-:PROPERTIES:
-:CUSTOM_ID: hooks-and-things-for-literate-agda-with-org-agda
-:END:
-
-#+BEGIN_SRC emacs-lisp  :tangle no
-;; not needed
-(defun lagda-extension-whatdo ()
-       "What to do when encountering a .lagda file.
-       To be added to auto-mode-list."
-       (agda2-mode)
-       (org-babel-load-file "~/Dropbox/lagda-with-org.org")
-       (message "Musa's special Agda settings enabled."))
-
-(add-to-list 'auto-mode-alist '("\\.lagda\\'" . (lambda () (lagda-extension-whatdo))))
-; (add-to-list 'auto-mode-alist '("\\.lagda\\'" . 'lagda-extension-whatdo))
-
-(defun my-add-to-multiple-hooks (function hooks) (mapc (lambda (hook) (add-hook hook function)) hooks))
-(defun my-common-hook () (fci-mode) (orgstruct-mode) )
-(my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
-#+END_SRC
-*** floating toc material                            :no_longer_using_this:
-:PROPERTIES:
-:CUSTOM_ID: floating-toc-material
-:END:
-
-Add the following to a web-page if you'd like it to have a floating table of contents.
-+ Perhaps consider making this a default for all org-files?
- + The ~floatingTocStyle.css~ lives in my Dropbox; bring it here to be self-contained.
-
-#+BEGIN_SRC org :tangle no
-#+HTML: <small><center>
-( Please remember that you can always access a section using the floating table of contents at the upper-right corner of your screen. )
-#+HTML: </center></small>
-#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"floatingTocStyle.css\" />
-#+HTML: <div id=\"toc\"> &nbsp;Table of Contents&nbsp; <small> <div id=\"full\">
-#+TOC: headlines 2
-#+HTML: </div> </small> </div>
-#+END_SRC
-
-*** org-html-postamble-format
-:PROPERTIES:
-:CUSTOM_ID: org-html-postamble-format
-:END:
-
- Look at the super short doc to know how to manipulate this variable.
- (describe-symbol 'org-html-postamble-format)
-
- #+BEGIN_SRC emacs-lisp :tangle no
-(defun make-html-link (url identifier)
-  (concat "<a href=\"" url "\">" identifier "</a>"))
-
-(setq org-html-postamble-format
-  (let* ((nomorg (buffer-name))
-         (nom    (file-name-sans-extension nomorg))
-         (src    (make-html-link nomorg "Org Source"))
-         (nompdf (concat nom ".pdf"))
-         (pdf    (make-html-link nompdf "View me as a PDF"))
-        )
-`(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
-)
- #+END_SRC
-
-*** Programming Language Support                                     :TODO:
-:PROPERTIES:
-:CUSTOM_ID: Programming-Language-Support
-:END:
-
-***** Haskell :tangle no
-:PROPERTIES:
-:CUSTOM_ID: Haskell-tangle-no
-:END:
-
-#+BEGIN_SRC emacs-lisp
-;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
- (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-#+END_SRC
-
-***** Lambda Prolog
-:PROPERTIES:
-:CUSTOM_ID: Lambda-Prolog
-:END:
-
-#+BEGIN_SRC emacs-lisp  :tangle no
-(load "/usr/local/packages/teyjus/emacs/teyjus.el")
-(setq tjcc "/usr/local/packages/teyjus/tjcc")
-#+END_SRC
-***** Coq Support
-:PROPERTIES:
-:CUSTOM_ID: Coq-Support
-:END:
-
-Sometimes I use Coq,
-#+begin_src emacs-lisp
-;; Open .v files with Proof General's Coq mode
-;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
-#+end_src
-
-*** Column Marker
-:PROPERTIES:
-:CUSTOM_ID: Column-Marker
-:END:
-
-(  Maybe a hook would be better? Much better...? )
-
-Have a thin line to the right to ensure I don't write “off the page”.
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package fill-column-indicator)
-(define-globalized-minor-mode my-fci-global-mode fci-mode
-  (lambda () (set-fill-column 90) (fci-mode 't)
-))
-(my-fci-global-mode 1)
-#+END_SRC
-
-There are issues with making things global.
-In this case, exporting to html produces curious symbols
-thereby prompting ~my-org-html-export-to-html~ below to
-take care of this.
-
-*** theme magic
-:PROPERTIES:
-:CUSTOM_ID: theme-magic
-:END:
-
-[[https://github.com/jcaw/theme-magic][Theme-magic]] looks nice, in theory, but I've not found it to be useful, for me.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Automatically propagate Emacs theme changes to OS
-(use-package theme-magic)
-;; (shell-command "pip3 install pywal")
-(theme-magic-export-theme-mode)
-#+END_SRC
-
-** Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
-:PROPERTIES:
-:CUSTOM_ID: Referencing-Text-From-Code-Blocks-Attaching-prose-as-doc-strings
-:END:
-
-Sources:
-+ John Kitchin https://lists.gnu.org/archive/html/emacs-orgmode/2018-05/msg00350.html
-+ https://kdr2.com/tech/emacs/1805-approach-org-ref-code-to-text.html
-
-I want both ~get-named-text~ and ~docs~ ^_^
-
-#+NAME: get-named-text
-#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
-(my/get-named-text name sep)
-#+END_SRC
-
-#+NAME: docs
-#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
-(my/get-named-text name sep)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-(defun my/get-named-text (name sep)
-
-  (let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
-              (lambda (el) (when (string= (org-element-property :name el) name)
-                             el)))))
-    (concat "\n"
-            (s-join sep
-                    (cl-loop for e in el
-                          for s = (buffer-substring (org-element-property :contents-begin e)
-                                                    (org-element-property :contents-end e))
-                          collect
-                          (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))))
-#+END_SRC
-
-#+NAME: OLD-get-named-text
-#+BEGIN_SRC emacs-lisp :var name="" :results replace :tangle no
-(let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
-            (lambda (el)
-              (when (string= (org-element-property :name el) name)
-                el))
-            nil t)))
-  (let ((s (buffer-substring (org-element-property :contents-begin el)
-                             (org-element-property :contents-end el))))
-    (concat "\n" (s-trim (replace-regexp-in-string "\\\"" "\\\\\"" s)))))
-#+END_SRC
-
-Let's make ~get-named-text~ a globally defined and callable code block:
-#+BEGIN_SRC emacs-lisp
-(org-babel-lob-ingest (expand-file-name "~/.emacs.d/init.org"))
-#+END_SRC
-
-
-***  COMMENT Example
-:PROPERTIES:
-:CUSTOM_ID: Example
-:END:
-:PROPERTIES:
-
-:END:
-:PROPERTIES:
-
-:END:
-For example:
-#+NAME: ADD
-#+BEGIN_SRC emacs-lisp -n -r :noweb yes :tangle test.el
-(defun add (x y)
-  "One line description of adding X and Y.
-<<get-named-text('DOC-OF-ADD)>> ;; code to code
-<<get-named-text('add-options)>>"
-  (+ x y)
-  )
-#+END_SRC
-
-#+NAME: DOC-OF-ADD
-We use the XXX function add to calculate the sum of two numbers.
-
-#+NAME: add-options
-- one
-- two
-- three
-- and of course "optional things"
-
-+ There is a reason we only support two args
-** Tangeling to multiple files
-:PROPERTIES:
-:CUSTOM_ID: Tangeling-to-multiple-files
-:END:
-
-From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
-
-#+begin_src emacs-lisp :tangle no
-(defun org-babel-tangle-collect-blocks-handle-tangle-list (&optional language tangle-file)
-  "Can be used as :override advice for `org-babel-tangle-collect-blocks'.
-Handles lists of :tangle files."
-  (let ((counter 0) last-heading-pos blocks)
-    (org-babel-map-src-blocks (buffer-file-name)
-      (let ((current-heading-pos
-         (org-with-wide-buffer
-          (org-with-limited-levels (outline-previous-heading)))))
-    (if (eq last-heading-pos current-heading-pos) (cl-incf counter)
-      (setq counter 1)
-      (setq last-heading-pos current-heading-pos)))
-      (unless (org-in-commented-heading-p)
-    (let* ((info (org-babel-get-src-block-info)) ;; MA: not “light”!
-                                          ;; (describe-symbol 'org-babel-get-src-block-info)
-           (src-lang (nth 0 info))
-           (src-tfiles (cdr (assq :tangle (nth 2 info))))) ; Tobias: accept list for :tangle
-      (unless (consp src-tfiles) ; Tobias: unify handling of strings and lists for :tangle
-        (setq src-tfiles (list src-tfiles))) ; Tobias: unify handling
-      (dolist (src-tfile src-tfiles) ; Tobias: iterate over list
-        (unless (or (string= src-tfile "no")
-            (and tangle-file (not (equal tangle-file src-tfile)))
-            (and language (not (string= language src-lang))))
-          ;; Add the spec for this block to blocks under its
-          ;; language.
-          (let ((by-lang (assoc src-lang blocks))
-            (block (org-babel-tangle-single-block counter)))
-        (setcdr (assoc :tangle (nth 4 block)) src-tfile) ; Tobias:
-        (if by-lang (setcdr by-lang (cons block (cdr by-lang)))
-          (push (cons src-lang (list block)) blocks)))))))) ; Tobias: just ()
-    ;; Ensure blocks are in the correct order.
-    (mapcar (lambda (b) (cons (car b) (nreverse (cdr b)))) blocks)))
-
-(defun org-babel-tangle-single-block-handle-tangle-list (oldfun block-counter &optional only-this-block)
-  "Can be used as :around advice for `org-babel-tangle-single-block'.
-If the :tangle header arg is a list of files. Handle all files"
-  (let* ((info (org-babel-get-src-block-info))
-     (params (nth 2 info))
-     (tfiles (cdr (assoc :tangle params))))
-    (if (null (and only-this-block (consp tfiles)))
-    (funcall oldfun block-counter only-this-block)
-      (cl-assert (listp tfiles) nil
-         ":tangle only allows a tangle file name or a list of tangle file names")
-      (let ((ret (mapcar
-          (lambda (tfile)
-            (let (old-get-info)
-              (cl-letf* (((symbol-function 'old-get-info) (symbol-function 'org-babel-get-src-block-info))
-                 ((symbol-function 'org-babel-get-src-block-info)
-                  `(lambda (&rest get-info-args)
-                     (let* ((info (apply 'old-get-info get-info-args))
-                        (params (nth 2 info))
-                        (tfile-cons (assoc :tangle params)))
-                       (setcdr tfile-cons ,tfile)
-                       info))))
-            (funcall oldfun block-counter only-this-block))))
-          tfiles)))
-    (if only-this-block
-        (list (cons (cl-caaar ret) (mapcar #'cadar ret)))
-      ret)))))
-
-(advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
-(advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
-#+end_src
-** Parallel
-:PROPERTIES:
-:CUSTOM_ID: Parallel
-:END:
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
-#+END_SRC
