@@ -12,7 +12,7 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
-* TODO MA: TODO: Clean this section up!
+* TODO Clean this section up!
 #+begin_src emacs-lisp :exports none
 ;; cl-lib was published as a better alternative to cl, which has a deprecation warning in Emacs27.
 ;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
@@ -2811,6 +2811,13 @@ If we want to see commit messages alongside /all/ code, then we can invoke
 doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
 then we use doc:git-timemachine.
 
+** delete-by-moving-to-trash t
+#+begin_src emacs-lisp
+;; Move to OS’ trash can when deleting stuff
+;; instead of deleting things outright!
+(setq delete-by-moving-to-trash t
+      trash-directory "~/.Trash/")
+#+end_src
 * Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
@@ -6129,8 +6136,7 @@ doc:doom-modeline-def-modeline and doc:doom-modeline-set-modeline.
 ;; This package requires the fonts included with all-the-icons to be installed. Run M-x all-the-icons-install-fonts to do so.
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
-  :hook (after-init . doom-modeline-mode)
-  :config
+  :init (doom-modeline-mode))
 
   ;; Use minimal height so icons still fit; modeline gets slightly larger when
   ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
@@ -7902,6 +7908,17 @@ Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually 
 Notice, as a hydra, I can use ~C-c e~ followed by any combination of ~p~ and ~n~ to
 navigate my recent edits /without/ having to supply the prefix each time.
 
+** visual-regexp
+#+begin_src emacs-lisp
+;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
+;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
+;;
+;; C-u M-%  do to regexp replace, without querying.
+(use-package visual-regexp
+  :config (define-key global-map (kbd "M-%")
+            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+#+end_src
+
 * LaTeX ⇐ Org-Mode
 CLOSED: [2021-11-02 Tue 22:18]
 :PROPERTIES:
@@ -9338,7 +9355,7 @@ LSP mode supports the following Features:
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
-**   ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode
+** TODO COMMENT   ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode
 
 Let's make use of JSDocs for functions ---since then LSP will show us the types
 and function description in a neato pop-up to the side.  [[https://github.com/isamert/jsdoc.el][jsdoc.el]] inserts JSDoc
@@ -10122,39 +10139,142 @@ Example usage:
 ;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
 (use-package browse-at-remote)
 #+end_src
-* Experiments
-CLOSED: [2021-11-02 Tue 22:01]
-:PROPERTIES:
-:CUSTOM_ID: Experiments
-:END:
-** Draw pretty unicode tables in org-mode :to_include:
-:PROPERTIES:
-:CUSTOM_ID: Draw-pretty-unicode-tables-in-org-mode
-:END:
-This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
+** C-x C-e / REPL-driven development for NodeJS!
 
-|---+---|
-| a | b |
-|---+---|
-| 1 | 2 |
-|---+---|
-|   |   |
-|   |   |
-|   |   |
-|---+---|
+| /Evaluate code and see the results inline ---A feedback loop that is faster than ever!/ |
 
+Within Emacs, kbd:C-x_C-e evaluates a Lisp expression; e.g.,
+at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
+- We ran some code /without/ explicitly running an interpreter/repl/compiler!
+
+- We can do the same thing for JavaScript: There'll be a NodeJS repl server
+  running, implicitly in the background, and ~C-x C-e~ will send it a line (or a
+  selected regions) of JavaScript for evaluation; we then see the result as an
+  overlay in our current JS buffer. (This is a REST api).
+  - You /choose/ which code gets (re)evaluated.
+
+- See [[https://github.com/anonimitoraf/skerrick][skerrick: REPL-driven development for Javascript]] for animated GIFs; it
+  works with modules as well.
+
+- A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
+
+#+begin_src emacs-lisp
+(quelpa '(skerrick :repo "anonimitoraf/skerrick" :fetcher github))
+
+;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
+(unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
+  (skerrick-install-or-upgrade-server-binary))
+
+;; Should be run in a JS buffer; it is buffer specific.
+;; (skerrick-start-server)
+
+;; Now main function, entry point is:
+;; M-x skerrick-eval-region
+;;
+
+;; Evaluate a region, if any is selected; otherwise evaluate the current line.
+(bind-key
+ "C-x C-e"  (lambda ()
+              (interactive)
+              (if (use-region-p)
+                  (skerrick-eval-region)
+                (beginning-of-line)
+                (set-mark-command nil)
+                (end-of-line)
+                (skerrick-eval-region)
+                (pop-mark)))
+ 'js-mode-map)
+#+end_src
+
+For instance,
+#+begin_src js :tangle no
+// Start the server... then
+// On each line and press C-x C-e
+let a = "hello"
+let b = "world"
+(a + ' ' + b).toUpperCase()
+// The final line should show: HELLO WORLD
+#+end_src
+
+** devdocs
+#+begin_src emacs-lisp
+;; 1. Get docs of a languages: M-x devdocs-install
+;; 2. Lookup docs: [C-u] M-x devdocs-lookup
+;; 𝟚. Lookup docs: [C-u] C-c d
+(use-package devdocs
+  :bind ("C-c d" . #'devdocs-lookup)
+  :config
+  (when nil ;; “C-x C-e” the following once.
+    (loop for lang in '(javascript ramda typescript html css sass
+                       vue~3 vuex~4 vue_router~4 "angularjs~1.6"
+                       nginx webpack~5 web_extensions
+                       ;;
+                       eslint  jest jq jsdoc prettier
+                       mocha chai jasmine
+                       ;;
+                       bash docker~19 git homebrew elisp
+                       ;;
+                       postgresql~14 redis sqlite
+                       ;;
+                       rust ruby~3 minitest "rails~7.0")
+          do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
+#+end_src
+
+** Sleek Semantic Selection
+
+Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
+work, press it again to select sentence, then again for the current paragraph,
+then more to get the current section.
+
+#+begin_src emacs-lisp
+(use-package expand-region
+  :diminish
+  :bind (("s-r" . #'er/expand-region)))
+#+end_src
+
+You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
+
+That is, /repeated ⌘+r expands the selection to the next logical segment of text:/
+In writing this means “Word, sentence, paragraph”, and in programming this means
+“identifier, then incrementally larger scopes”.
+
+** Documentation Pop-Ups
+:PROPERTIES:
+:CUSTOM_ID: Documentation-Pop-Ups
+:END:
+
+Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
+This is very useful when editing in a particular coding language, say via
+~C-c '~ for org-src blocks.
 #+BEGIN_SRC emacs-lisp
-(quelpa '(org-pretty-table
-         :repo "Fuco1/org-pretty-table"
-         :fetcher github))
-
-(add-hook 'org-mode-hook 'org-pretty-table-mode)
+(use-package company-quickhelp
+ :config
+   (setq company-quickhelp-delay 0.1)
+   (company-quickhelp-mode))
 #+END_SRC
+* Preview link under cursor
+When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
+- Useful to quickly preview files and images.
+- See also: https://github.com/jcs-elpa/preview-it
 
-Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
-in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
-vertical line.
-** Toggles Hydra
+#+begin_src emacs-lisp
+(quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
+(global-preview-it-mode)
+#+end_src
+
+This also works nicely when I'm looking to open a file; e.g., ~C-x C-f
+~/.emacs.d/.as TAB~ to preview my ~.aspell.en.pws~ (Emacs personal dictionary) file
+in a tooltip.
+# (Sadly, the preview closes my ~M-x~ session when previewing an org file.)
+# Not entirely true; but it's happened with some org files.
+
+Likewise, I'd like to preview line when executing the doc:goto-line / kbd:M-g_M-g command.
+#+begin_src emacs-lisp
+(quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
+(global-set-key [remap goto-line] 'goto-line-preview)
+#+end_src
+
+* Toggles Hydra
 
 #+begin_src emacs-lisp
 (my/defhydra "C-c t" "Toggles" toggle-on
@@ -10229,7 +10349,7 @@ vertical line.
   :hook (writeroom-mode . (lambda () (focus-mode 'toggle))))
 #+end_src
 
-** Toggling System :RelocateMe:
+** COMMENT Toggling System                                      :RelocateMe:
 
 #+begin_src emacs-lisp
 (defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
@@ -10245,98 +10365,11 @@ vertical line.
 (use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
-** Syntax highlighting ---numbers and escape characters
-Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
-
-#+begin_src emacs-lisp
-(use-package highlight-numbers
-  :hook ((prog-mode) . highlight-numbers-mode))
-;; Not text-mode , look Bad
-
-(use-package highlight-escape-sequences
-  :hook (prog-mode . hes-mode))
-#+end_src
-
-** shell-command-and-run
-#+begin_src emacs-lisp
-(defalias 'my/shell-command-and-run 'shell-command-and-run)
-(defun shell-command-and-run (cmd name &rest more-commands)
-  "Run shell command CMD (possibly opening a new repl/terminal) and then MORE-COMMANDS.
-
-When to use this function? Whenever you're finding yourself in the situation:
-(1) Open a terminal, (2) start an interactive repl, (3) rename the buffer name to be informative,
-(4) run some default/initial commands. See also the `term' function.
-
-CMD and NAME are strings; MORE-COMMANDS is an arbitrary number of strings.
-
-The name of this function does not contain my personal prefix ‘my’,
-since I'd like it to show up as a possible completion when I type
-‘shell-command’.
-
-For example,
-
-   (shell-command-and-run
-    \"ghci\" \"Playing with Haskell\"
-    \"let x = 4\"
-    \":t x\")
-
-This results in an interactive shell buffer named “*Playing with Haskell*” with contents:
-
-   GHCi, version 8.10.7: https://www.haskell.org/ghc/  :? for help
-   Prelude> let x = 4
-   Prelude> :t x
-   x :: Num p => p
-   Prelude> ❙"
-  (interactive)
-  (let* ((default-directory "~/")
-         (proc (get-buffer-process
-                (ansi-term cmd name))))
-    (term-send-string
-     proc (concat (s-join "\n" more-commands) "\n"))))
-#+end_src
-** COMMENT Modern Browsing within Emacs                           :Disabled:
-
-#+begin_src shell
-# https://github.com/d12frosted/homebrew-emacs-plus
-$ brew tap d12frosted/emacs-plus
-$ brew install emacs-plus@29 --with-xwidgets
-$ /usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50 &
-#+end_src
-
---------------------------------------------------------------------------------
-
-I like using Chrome ---I like the integration of all things Google.
-
-#+begin_src emacs-lisp
-(defun internet (url)
-  "Browse to URL using `xwidget-webkit-browse-url'; see also `browse-url'."
-  (interactive)
-  (delete-other-windows)
-  (split-window-right)
-  (xwidget-webkit-browse-url url))
-
-(my/defhydra "C-c p" "Program Manager" gamepad
-  :Internet
-  ("m" (internet "https://mail.google.com/mail/u/0/#inbox") "gMail"  :exit t)
-  ("c" (internet "https://calendar.google.com/calendar/u/0/r") "gCalendar"  :exit t)
-  ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
-  ("b" (internet (concat "https://www." (read-string "https://www."))) "Browse"  :exit t))
-#+end_src
-* Lost Souls                                    :Outdated_Documentation:
+* COMMENT Lost Souls                                    :Outdated_Documentation:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
-
-#+begin_src emacs-lisp
-;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
-;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
-;;
-;; C-u M-%  do to regexp replace, without querying.
-(use-package visual-regexp
-  :config (define-key global-map (kbd "M-%")
-            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
-#+end_src
-
+** Note: M-S-SPC is for my personal servers dashboard.
 #+begin_src emacs-lisp
 ;; Note: M-S-SPC is for my personal servers dashboard.
 (global-set-key (kbd "M-SPC")   (lambda () (interactive) (setq org-agenda-files (list org-default-notes-file)) (org-agenda nil "a") (delete-other-windows) (beginning-of-buffer)))
@@ -10345,34 +10378,8 @@ I like using Chrome ---I like the integration of all things Google.
   :config (bind-key* "C-c SPC" 'ace-jump-mode))
 #+end_src
 
-
+**  w-screencapture
 #+begin_src emacs-lisp
-;; 1. Get docs of a languages: M-x devdocs-install
-;; 2. Lookup docs: [C-u] M-x devdocs-lookup
-;; 𝟚. Lookup docs: [C-u] C-c d
-(use-package devdocs
-  :bind ("C-c d" . #'devdocs-lookup)
-  :config
-  (when nil ;; “C-x C-e” the following once.
-    (loop for lang in '(javascript ramda typescript html css sass
-                       vue~3 vuex~4 vue_router~4 "angularjs~1.6"
-                       nginx webpack~5 web_extensions
-                       ;;
-                       eslint  jest jq jsdoc prettier
-                       mocha chai jasmine
-                       ;;
-                       bash docker~19 git homebrew elisp
-                       ;;
-                       postgresql~14 redis sqlite
-                       ;;
-                       rust ruby~3 minitest "rails~7.0")
-          do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
-
-
-
-
-
-
 (bind-key "C-c s"
   (cl-defun w-screencapture ()
     "Interactively capture screen and save to clipboard; then paste in Slack, etc, with ⌘-c.
@@ -10391,8 +10398,6 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
     (interactive)
     (async-shell-command "screencapture -i -c")))
 
-
-
 (cl-defun w-delete-all-screenshots ()
     "Delete all “Screen Shot ⋯” files in ~/Desktop."
     (interactive)
@@ -10401,26 +10406,25 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
       (--filter (s-starts-with-p "Screen Shot" it))
       (--map (f-delete (format "~/Desktop/%s" it)))))
 #+end_src
-
+** Zoom
 #+begin_src emacs-lisp
-;; Move to OS’ trash can when deleting stuff
-;; instead of deleting things outright!
-(setq delete-by-moving-to-trash t
-      trash-directory "~/.Trash/")
-
 ;; An automatic window-resizing mechanism.
 ;; A “calmer” alternative to golden-ratio.
 ;; https://github.com/cyrus-and/zoom
 (use-package zoom
   :diminish
   :config (zoom-mode t))
-
+#+end_src
+** Projectile
+#+begin_src emacs-lisp
 ;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
 ;; https://github.com/bbatsov/projectile
 (use-package projectile
 :config (projectile-global-mode))
 (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
-
+#+end_src
+** Ibuffer
+#+begin_src emacs-lisp
 ;; Let's use an improved buffer list.
 (use-package ibuffer ;; This is built-into Emacs.
   :bind ("C-x C-b" . ibuffer))
@@ -10445,7 +10449,6 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
 + (~10 minute video) [[https://cestlaz.github.io/posts/using-emacs-34-ibuffer-emmet/][Using Emacs - 34 - ibuffer and emmet - C'est la Z]]
 + (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
 
-
 ** find function at point
 Friendly reminder that ~M-.~ takes you to the definition, and ~M-,~ takes you back
 to where you originally where.
@@ -10456,31 +10459,12 @@ to where you originally where.
      :config (global-centered-cursor-mode))
 #+end_src
 
-
 ** “C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there
  #+begin_src emacs-lisp
 ;; When we split open a new window, we usually want to jump to the new window.
 (advice-add #'split-window-below :after (lambda (&rest _) (other-window 1)))
 (advice-add #'split-window-right :after (lambda (&rest _) (other-window 1)))
  #+end_src
-
-** Sleek Semantic Selection
-
-Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
-work, press it again to select sentence, then again for the current paragraph,
-then more to get the current section.
-
-#+begin_src emacs-lisp
-(use-package expand-region
-  :diminish
-  :bind (("s-r" . #'er/expand-region)))
-#+end_src
-
-You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
-
-That is, /repeated ⌘+r expands the selection to the next logical segment of text:/
-In writing this means “Word, sentence, paragraph”, and in programming this means
-“identifier, then incrementally larger scopes”.
 
 ** Semantic Change
 
@@ -11091,20 +11075,6 @@ Let's save a few precious seconds,
 (setq-default disabled-command-function nil)
 #+end_src
 
-** Documentation Pop-Ups
-:PROPERTIES:
-:CUSTOM_ID: Documentation-Pop-Ups
-:END:
-
-Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
-This is very useful when editing in a particular coding language, say via
-~C-c '~ for org-src blocks.
-#+BEGIN_SRC emacs-lisp
-(use-package company-quickhelp
- :config
-   (setq company-quickhelp-delay 0.1)
-   (company-quickhelp-mode))
-#+END_SRC
 ** Emacs keybindings for my browser :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Emacs-keybindings-for-my-browser
@@ -11374,85 +11344,6 @@ publish the current article to my blog.
 (add-hook 'org-mode-hook '(lambda ()
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
-
-** Preview link under cursor
-When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
-- Useful to quickly preview files and images.
-- See also: https://github.com/jcs-elpa/preview-it
-
-#+begin_src emacs-lisp
-(quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
-(global-preview-it-mode)
-#+end_src
-
-This also works nicely when I'm looking to open a file; e.g., ~C-x C-f
-~/.emacs.d/.as TAB~ to preview my ~.aspell.en.pws~ (Emacs personal dictionary) file
-in a tooltip.
-# (Sadly, the preview closes my ~M-x~ session when previewing an org file.)
-# Not entirely true; but it's happened with some org files.
-
-Likewise, I'd like to preview line when executing the doc:goto-line / kbd:M-g_M-g command.
-#+begin_src emacs-lisp
-(quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
-(global-set-key [remap goto-line] 'goto-line-preview)
-#+end_src
-
-** C-x C-e / REPL-driven development for NodeJS!
-
-| /Evaluate code and see the results inline ---A feedback loop that is faster than ever!/ |
-
-Within Emacs, kbd:C-x_C-e evaluates a Lisp expression; e.g.,
-at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
-- We ran some code /without/ explicitly running an interpreter/repl/compiler!
-
-- We can do the same thing for JavaScript: There'll be a NodeJS repl server
-  running, implicitly in the background, and ~C-x C-e~ will send it a line (or a
-  selected regions) of JavaScript for evaluation; we then see the result as an
-  overlay in our current JS buffer. (This is a REST api).
-  - You /choose/ which code gets (re)evaluated.
-
-- See [[https://github.com/anonimitoraf/skerrick][skerrick: REPL-driven development for Javascript]] for animated GIFs; it
-  works with modules as well.
-
-- A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
-
-#+begin_src emacs-lisp
-(quelpa '(skerrick :repo "anonimitoraf/skerrick" :fetcher github))
-
-;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
-(unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
-  (skerrick-install-or-upgrade-server-binary))
-
-;; Should be run in a JS buffer; it is buffer specific.
-;; (skerrick-start-server)
-
-;; Now main function, entry point is:
-;; M-x skerrick-eval-region
-;;
-
-;; Evaluate a region, if any is selected; otherwise evaluate the current line.
-(bind-key
- "C-x C-e"  (lambda ()
-              (interactive)
-              (if (use-region-p)
-                  (skerrick-eval-region)
-                (beginning-of-line)
-                (set-mark-command nil)
-                (end-of-line)
-                (skerrick-eval-region)
-                (pop-mark)))
- 'js-mode-map)
-#+end_src
-
-For instance,
-#+begin_src js :tangle no
-// Start the server... then
-// On each line and press C-x C-e
-let a = "hello"
-let b = "world"
-(a + ' ' + b).toUpperCase()
-// The final line should show: HELLO WORLD
-#+end_src
 
 ** The evils of this world
 #+begin_src emacs-lisp
@@ -12378,6 +12269,111 @@ Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allow
 when ~M-x recompile~ is invoked. One of my habits is to append
 most of my files with the following:
 #+begin_src org :tangle no
+** Draw pretty unicode tables in org-mode :to_include:
+:PROPERTIES:
+:CUSTOM_ID: Draw-pretty-unicode-tables-in-org-mode
+:END:
+This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
+
+|---+---|
+| a | b |
+|---+---|
+| 1 | 2 |
+|---+---|
+|   |   |
+|   |   |
+|   |   |
+|---+---|
+
+#+BEGIN_SRC emacs-lisp
+(quelpa '(org-pretty-table
+         :repo "Fuco1/org-pretty-table"
+         :fetcher github))
+
+(add-hook 'org-mode-hook 'org-pretty-table-mode)
+#+END_SRC
+
+Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
+in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
+vertical line.
+** Syntax highlighting ---numbers and escape characters
+Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
+
+#+begin_src emacs-lisp
+(use-package highlight-numbers
+  :hook ((prog-mode) . highlight-numbers-mode))
+;; Not text-mode , look Bad
+
+(use-package highlight-escape-sequences
+  :hook (prog-mode . hes-mode))
+#+end_src
+
+** shell-command-and-run
+#+begin_src emacs-lisp
+(defalias 'my/shell-command-and-run 'shell-command-and-run)
+(defun shell-command-and-run (cmd name &rest more-commands)
+  "Run shell command CMD (possibly opening a new repl/terminal) and then MORE-COMMANDS.
+
+When to use this function? Whenever you're finding yourself in the situation:
+(1) Open a terminal, (2) start an interactive repl, (3) rename the buffer name to be informative,
+(4) run some default/initial commands. See also the `term' function.
+
+CMD and NAME are strings; MORE-COMMANDS is an arbitrary number of strings.
+
+The name of this function does not contain my personal prefix ‘my’,
+since I'd like it to show up as a possible completion when I type
+‘shell-command’.
+
+For example,
+
+   (shell-command-and-run
+    \"ghci\" \"Playing with Haskell\"
+    \"let x = 4\"
+    \":t x\")
+
+This results in an interactive shell buffer named “*Playing with Haskell*” with contents:
+
+   GHCi, version 8.10.7: https://www.haskell.org/ghc/  :? for help
+   Prelude> let x = 4
+   Prelude> :t x
+   x :: Num p => p
+   Prelude> ❙"
+  (interactive)
+  (let* ((default-directory "~/")
+         (proc (get-buffer-process
+                (ansi-term cmd name))))
+    (term-send-string
+     proc (concat (s-join "\n" more-commands) "\n"))))
+#+end_src
+** COMMENT Modern Browsing within Emacs                           :Disabled:
+
+#+begin_src shell
+# https://github.com/d12frosted/homebrew-emacs-plus
+$ brew tap d12frosted/emacs-plus
+$ brew install emacs-plus@29 --with-xwidgets
+$ /usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50 &
+#+end_src
+
+--------------------------------------------------------------------------------
+
+I like using Chrome ---I like the integration of all things Google.
+
+#+begin_src emacs-lisp
+(defun internet (url)
+  "Browse to URL using `xwidget-webkit-browse-url'; see also `browse-url'."
+  (interactive)
+  (delete-other-windows)
+  (split-window-right)
+  (xwidget-webkit-browse-url url))
+
+(my/defhydra "C-c p" "Program Manager" gamepad
+  :Internet
+  ("m" (internet "https://mail.google.com/mail/u/0/#inbox") "gMail"  :exit t)
+  ("c" (internet "https://calendar.google.com/calendar/u/0/r") "gCalendar"  :exit t)
+  ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
+  ("b" (internet (concat "https://www." (read-string "https://www."))) "Browse"  :exit t))
+#+end_src
+
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate
