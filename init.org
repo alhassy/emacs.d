@@ -14,7 +14,7 @@
 
 * TODO Clean this section up!
 #+begin_src emacs-lisp :exports none
-;; cl-lib was published as a better alternative to cl, which has a deprecation warning in Emacs27.
+;; cl-lib was published as a better (namespaced!) alternative to cl, which has a deprecation warning in Emacs27.
 ;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
 (setq byte-compile-warnings '(cl-functions))
 (require 'cl-lib) ;; to get loop instead of cl-loop, etc.
@@ -5954,155 +5954,6 @@ my to-do list and my init file, side-by-side.
 There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile
 yet minimalist splash screen showing recent files, projects, and bookmarks.
 
-** Exquisite Fonts and Themes
-:PROPERTIES:
-:CUSTOM_ID: Exquisite-Fonts-and-Themes
-:END:
-
-Emacs' default theme leaves much to be desired: It does not look sleek and
-shiny, which usually leaves first-timers with a poor, shallow, impression of the
-system. Below we install a few themes that make Emacs look exquisite.  We cycle
-between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
-
-#+begin_details “my/toggle-theme” Implementation
-+ ~M-x load-theme RET TAB~ shows all themes, including built-in ones,
-  that may be loaded.
-+ Loading multiple themes results in their pallets mixed.
-  - ~M-x disable-theme~ to remove a theme from the current pallet.
-
---------------------------------------------------------------------------------
-
-#+BEGIN_SRC emacs-lisp
-;; Treat all themes as safe; no query before use.
-(setf custom-safe-themes t)
-
-;; Nice looking themes ^_^
-(use-package solarized-theme :defer t)
-(use-package doom-themes :defer t)
-(use-package spacemacs-common
-  :defer t
-  :ensure spacemacs-theme)
-#+END_SRC
-
-+ The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
-+ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
-
---------------------------------------------------------------------------------
-
-#+BEGIN_SRC emacs-lisp
-;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-laserwave doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
-(setcdr (last my/themes) my/themes)
-#+END_SRC
-
-kbd:C-c_t to toggle between the personal themes.
-#+BEGIN_SRC emacs-lisp
-(cl-defun my/disable-all-themes (&optional (new-theme (pop my/themes)))
-  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
-
-When a universal prefix is given, “C-u C-c t”, we load a random
-theme from all possible themes.  Nice way to learn about more
-themes (•̀ᴗ•́)و"
-  (interactive)
-  (mapc #'disable-theme custom-enabled-themes)
-  (-let [theme (if current-prefix-arg
-                   (nth (random (length (custom-available-themes)))
-                        (custom-available-themes))
-                 new-theme)]
-    (when theme
-      (load-theme theme)
-      (message "Theme %s" theme))))
-
-
-(defalias 'my/toggle-theme #' my/disable-all-themes)
-(global-set-key "\C-c\ t" 'my/toggle-theme)
-
-
-;; (my/toggle-theme)
-(use-package solarized-theme)
-(my/toggle-theme 'doom-laserwave)
-#+END_SRC
-
-Apparently, there's already a package that accomplishes these goals and more:
-[[https://github.com/myTerminal/theme-looper][theme-looper]]. I may switch to it, but for now my simple function above is
-slightly informative, to me at least, about how themes work and it does what I
-want.
-
-...Actually, the above learning adventure has made it easy to provide a similar setup
-for fonts 😁
-#+end_details
-
-Likewise, kbd:C-c_F, doc:my/toggle-font, to quickly change fonts (according to
-mood 😸). [I already use kbd:C-c_f, doc:my/org-mode-format, for the more likely
-operation of formatting text.]
-#+begin_details “my/toggle-font” Implementation
-
-#+begin_src emacs-lisp
-;; Infinite list of my commonly used fonts
-(setq my/fonts
-      '("Roboto Mono Light 14" ;; Sleek
-        "Input Mono 14"
-        "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
-        "Papyrus 14"
-        "Bradley Hand Light 12"
-        ;; "Chalkduster 14" ;; Laggy!
-        "Courier Light 12"
-        "Noteworthy 9"
-        "Savoye LET 14"
-        "Fantasque Sans Mono 16"
-        ))
-(setcdr (last my/fonts) my/fonts)
-
-;; Let's ensure they're on our system
-;; brew search "/font-/"   # List all fonts
-(shell-command "brew tap homebrew/cask-fonts")
-(system-packages-ensure "svn") ;; Required for the following font installs
-(system-packages-ensure "font-roboto-mono")
-(system-packages-ensure "font-input")
-(system-packages-ensure "font-source-code-pro")
-(system-packages-ensure "font-fira-mono")
-(system-packages-ensure "font-mononoki")
-(system-packages-ensure "font-monoid")
-(system-packages-ensure "font-menlo-for-powerline")
-(system-packages-ensure "font-fantasque-sans-mono")
-
-;; Use “M-x set-face-font RET default RET”, or...
-;; (set-face-font 'default "Source Code Pro Light14")
-
-;; See ~2232 fonts
-;; (append (fontset-list) (x-list-fonts "*" nil))
-
-(cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
-  "Load NEW-FONT, which defaults from ‘my/fonts’.
-
-When a universal prefix is given, “C-u C-c F”, we load a random
-font from all possible themes.  Nice way to learn about more
-fonts (•̀ᴗ•́)و"
-  (interactive)
-  (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
-         (font (if current-prefix-arg
-                   (nth (random (length all-fonts)) all-fonts)
-                 new-font)))
-    (set-face-font 'default font)
-    (message "Font: %s" font)))
-
-(global-set-key "\C-c\ F" 'my/toggle-font)
-
-;; Default font; the “ignore-⋯” is for users who may not have the font.
-(ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
-(ignore-errors (my/toggle-font "Source Code Pro Light 14"))
-#+end_src
-
-#+end_details
-
-In any Org file, type ~elisp:menu-set-font~; then you can click on this link to
-get a nice font selection menu ---this can be useful for your own ‘personal startup buffer’.
-
-# Finally, for fun, let's colour all source blocks, in Org mode, by the background colour pink.
-# (set-face-attribute 'org-block nil :background "pink")
-# MA: This does not work well with dark themes; should use a theme-based setting.
-
-#+end_src
 ** A sleek, informative, & fancy mode line
 :PROPERTIES:
 :CUSTOM_ID: A-sleek-informative-and-fancy-mode-line
@@ -6279,111 +6130,180 @@ as necessary.
 (setq display-line-numbers-width-start t)
 (global-display-line-numbers-mode      t)
 #+END_SRC
-
-
-** Powerful Directory Editing with ~dired~
+** COMMENT Buffer names are necessarily injective :Maybe_no_longer_needed_due_to_doom:
 :PROPERTIES:
-:CUSTOM_ID: Powerful-Directory-Editing-with-dired
+:CUSTOM_ID: Buffer-names-are-necessarily-injective
 :END:
 
-⟨ ~C-x C-v~ to open a file or directory in dired, using the current buffer. ⟩
-
-As mentioned earlier, ~dired~ is Emacs' built-in directory editor; it's opened
-with ~C-x d~.  /Dired let's us treat directories as textual objects!/ In dired,
-press ~h~ to see the many actions available. Here's a few...
-
-#+begin_details Super Terse ‘dired’ Tutorial
-
-+ ~(~ toggles hiding entry details, such as modification date and ownership
-+ ~s~ sort entries; modeline will display “Dired by date” or “Dired by name”.
-+ ~o~ to open entry in anOther window; or ~RET~ to open in place.
-+ ~+~ to create a new directory; or ~M-x make-directory~.
-+ ~/~ to filter entries; with ~which-key~, possible completions pop-up.
-  - E.g., ~/ f~ shows only files or ~/ . png~ to obtain all entries with extension
-    ~png~.
-  - ~/ i g~ to hide git-ignored items ^_^
-  - ~/ /~ to remove all filters.
-+ ~TAB~ to navigate between different groupings of entries.
-  - ~RET~ on a drawer heading toggles folding it ^_^
-#+end_details
-
-The [[https://github.com/Fuco1/dired-hacks#dired-hacks-utils][dired-hacks]] family of packages lets us, say, get a dired buffer out of a shell
-incantation that lists files, or use dired to open files with external tools.
-Below we use three of its packages.
-
-Pressing ~i~ inserts a directory's children under it, indented, in the current
-buffer. Useful to see what's there.
+By default when multiple files sharing the same name are opened, say for
+comparison from different directories, their buffers are named uniquely by
+having the format “⟨file-name⟩ <𝓃>”, for numbers 𝓃. It'd be more helpful
+to have the buffer names reflect their location.
 #+BEGIN_SRC emacs-lisp
-(use-package dired-subtree
-  :bind (:map dired-mode-map
-              ("i" . dired-subtree-toggle)))
+;; Note that ‘uniquify’ is builtin.
+(require 'uniquify)
+(setq uniquify-separator "/"               ;; The separator in buffer names.
+      uniquify-buffer-name-style 'forward) ;; names/in/this/style
 #+END_SRC
 
-When directory ~𝒳~ has only one child ~𝒴~, then in dired, instead of ~𝒳~, show me ~𝒳/𝒴~
-with ~𝒳~ greyed out.
+            Note that this does not affect cloning buffers, ~C-x 4 c~.
+
+( A function /f/ is /injective/ precisely when it's /distinction-preserving/; i.e.,
+  /x ≠ y ≡ f x ≠ f y/. We can tell whether two things are the same or not, by
+  ‘zooming in’ on their particular property ‘f’, which may be easier to compare.
+  E.g., object IDs, hashcodes, unique keys in database tables. )
+
+( Why am I bringing this up? I like math and seldom get to use it; so why not! )
+
+** Exquisite Fonts and Themes
+:PROPERTIES:
+:CUSTOM_ID: Exquisite-Fonts-and-Themes
+:END:
+
+Emacs' default theme leaves much to be desired: It does not look sleek and
+shiny, which usually leaves first-timers with a poor, shallow, impression of the
+system. Below we install a few themes that make Emacs look exquisite.  We cycle
+between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
+
+#+begin_details “my/toggle-theme” Implementation
++ ~M-x load-theme RET TAB~ shows all themes, including built-in ones,
+  that may be loaded.
++ Loading multiple themes results in their pallets mixed.
+  - ~M-x disable-theme~ to remove a theme from the current pallet.
+
+--------------------------------------------------------------------------------
+
 #+BEGIN_SRC emacs-lisp
-(use-package dired-collapse
-  :hook (dired-mode . dired-collapse-mode))
-#+END_SRC
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
 
-Begin dired with certain entries grouped together, according to some filtering
-requirement; and with “garbage” files not shown ---i.e., those ending in
-~.aux, .out~, etc.
-#+BEGIN_SRC emacs-lisp
-(use-package dired-filter
-  :hook (dired-mode . (lambda () (dired-filter-group-mode)
-                                 (dired-filter-by-garbage)))
-  :custom
-    (dired-garbage-files-regexp
-      "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
-    (dired-filter-group-saved-groups
-      '(("default"
-         ("Org"    (extension "org"))
-         ("Executables" (exexutable))
-         ("Directories" (directory))
-         ("PDF"    (extension "pdf"))
-         ("LaTeX"  (extension "tex" "bib"))
-         ("Images" (extension "png"))
-         ("Code"   (extension "hs" "agda" "lagda"))
-         ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
-#+END_SRC
-
-#+begin_details [Disabled] Neotree: Traditional Directory Tree Navigation
-link-here:Neotree-Traditional-Directory-Tree-Navigation
-
-We open a nifty file manager upon startup.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Sidebar for project file navigation
-(use-package neotree
+;; Nice looking themes ^_^
+(use-package solarized-theme :defer t)
+(use-package doom-themes :defer t)
+(use-package spacemacs-common
   :defer t
-  :disabled
-  :config (global-set-key "\C-x\ d" 'neotree-toggle)
-          (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
-
-;; Open it up upon startup.
-;; (neotree-toggle)
+  :ensure spacemacs-theme)
 #+END_SRC
-By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file
-management.
 
-  ⟨ Edit: As a naive user, this is what I thought; yet a year later,
-                  I've almost never used neotree. ⟩
++ The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
++ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
 
-Useful navigational commands include
-+ ~U~ to go up a directory.
-+ ~C-c C-c~ to change directory focus; ~C-C c~ to type the directory out.
-+ ~?~ or ~h~ to get help and ~q~ to quit.
+--------------------------------------------------------------------------------
 
-As always, to go to the neotree pane when it's the only other window,
-execute ~C-x o~.
+#+BEGIN_SRC emacs-lisp
+;; Infinite list of my commonly used themes.
+(setq my/themes '(doom-laserwave doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
+(setcdr (last my/themes) my/themes)
+#+END_SRC
 
-I /rarely/ make use of this feature; company mode & Helm together quickly provide
-an automatic replacement for nearly all of my uses.
+kbd:C-c_t to toggle between the personal themes.
+#+BEGIN_SRC emacs-lisp
+(cl-defun my/disable-all-themes (&optional (new-theme (pop my/themes)))
+  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
 
-+ Reminiscent of GUI file managers is [[https://github.com/ralesi/ranger.el#features][ranger]]; e.g., it has multi-column
-  display of parent directories along with a file preview mechanism.
+When a universal prefix is given, “C-u C-c t”, we load a random
+theme from all possible themes.  Nice way to learn about more
+themes (•̀ᴗ•́)و"
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes)
+  (-let [theme (if current-prefix-arg
+                   (nth (random (length (custom-available-themes)))
+                        (custom-available-themes))
+                 new-theme)]
+    (when theme
+      (load-theme theme)
+      (message "Theme %s" theme))))
+
+
+(defalias 'my/toggle-theme #' my/disable-all-themes)
+(global-set-key "\C-c\ t" 'my/toggle-theme)
+
+
+;; (my/toggle-theme)
+(use-package solarized-theme)
+(my/toggle-theme 'doom-laserwave)
+#+END_SRC
+
+Apparently, there's already a package that accomplishes these goals and more:
+[[https://github.com/myTerminal/theme-looper][theme-looper]]. I may switch to it, but for now my simple function above is
+slightly informative, to me at least, about how themes work and it does what I
+want.
+
+...Actually, the above learning adventure has made it easy to provide a similar setup
+for fonts 😁
 #+end_details
 
+Likewise, kbd:C-c_F, doc:my/toggle-font, to quickly change fonts (according to
+mood 😸). [I already use kbd:C-c_f, doc:my/org-mode-format, for the more likely
+operation of formatting text.]
+#+begin_details “my/toggle-font” Implementation
+
+#+begin_src emacs-lisp
+;; Infinite list of my commonly used fonts
+(setq my/fonts
+      '("Roboto Mono Light 14" ;; Sleek
+        "Input Mono 14"
+        "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
+        "Papyrus 14"
+        "Bradley Hand Light 12"
+        ;; "Chalkduster 14" ;; Laggy!
+        "Courier Light 12"
+        "Noteworthy 9"
+        "Savoye LET 14"
+        "Fantasque Sans Mono 16"
+        ))
+(setcdr (last my/fonts) my/fonts)
+
+;; Let's ensure they're on our system
+;; brew search "/font-/"   # List all fonts
+(shell-command "brew tap homebrew/cask-fonts")
+(system-packages-ensure "svn") ;; Required for the following font installs
+(system-packages-ensure "font-roboto-mono")
+(system-packages-ensure "font-input")
+(system-packages-ensure "font-source-code-pro")
+(system-packages-ensure "font-fira-mono")
+(system-packages-ensure "font-mononoki")
+(system-packages-ensure "font-monoid")
+(system-packages-ensure "font-menlo-for-powerline")
+(system-packages-ensure "font-fantasque-sans-mono")
+
+;; Use “M-x set-face-font RET default RET”, or...
+;; (set-face-font 'default "Source Code Pro Light14")
+
+;; See ~2232 fonts
+;; (append (fontset-list) (x-list-fonts "*" nil))
+
+(cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
+  "Load NEW-FONT, which defaults from ‘my/fonts’.
+
+When a universal prefix is given, “C-u C-c F”, we load a random
+font from all possible themes.  Nice way to learn about more
+fonts (•̀ᴗ•́)و"
+  (interactive)
+  (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
+         (font (if current-prefix-arg
+                   (nth (random (length all-fonts)) all-fonts)
+                 new-font)))
+    (set-face-font 'default font)
+    (message "Font: %s" font)))
+
+(global-set-key "\C-c\ F" 'my/toggle-font)
+
+;; Default font; the “ignore-⋯” is for users who may not have the font.
+(ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
+(ignore-errors (my/toggle-font "Source Code Pro Light 14"))
+#+end_src
+
+#+end_details
+
+In any Org file, type ~elisp:menu-set-font~; then you can click on this link to
+get a nice font selection menu ---this can be useful for your own ‘personal startup buffer’.
+
+# Finally, for fun, let's colour all source blocks, in Org mode, by the background colour pink.
+# (set-face-attribute 'org-block nil :background "pink")
+# MA: This does not work well with dark themes; should use a theme-based setting.
+
+#+end_src
 ** Never lose the cursor
 :PROPERTIES:
 :CUSTOM_ID: Never-lose-the-cursor
@@ -6417,31 +6337,6 @@ Let's dim windows, and even the whole Emacs frame, when not in use.
 
 A more ‘fine-grained’ [[https://github.com/larstvei/Focus][tool]] dims all text except the ‘paragraph’ you're working
 on. It's nifty, but not for me.
-
-** Buffer names are necessarily injective
-:PROPERTIES:
-:CUSTOM_ID: Buffer-names-are-necessarily-injective
-:END:
-
-By default when multiple files sharing the same name are opened, say for
-comparison from different directories, their buffers are named uniquely by
-having the format “⟨file-name⟩ <𝓃>”, for numbers 𝓃. It'd be more helpful
-to have the buffer names reflect their location.
-#+BEGIN_SRC emacs-lisp
-;; Note that ‘uniquify’ is builtin.
-(require 'uniquify)
-(setq uniquify-separator "/"               ;; The separator in buffer names.
-      uniquify-buffer-name-style 'forward) ;; names/in/this/style
-#+END_SRC
-
-            Note that this does not affect cloning buffers, ~C-x 4 c~.
-
-( A function /f/ is /injective/ precisely when it's /distinction-preserving/; i.e.,
-  /x ≠ y ≡ f x ≠ f y/. We can tell whether two things are the same or not, by
-  ‘zooming in’ on their particular property ‘f’, which may be easier to compare.
-  E.g., object IDs, hashcodes, unique keys in database tables. )
-
-( Why am I bringing this up? I like math and seldom get to use it; so why not! )
 
 ** Flashing when something goes wrong
 :PROPERTIES:
@@ -6559,110 +6454,6 @@ becomes bold; likewise for ~/~ for emphasise.
 
 I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
 Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
-** Tabs                                                           :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Tabs
-:END:
-
-I really like my Helm-supported ~C-x b~, but the visial appeal of a [[https://github.com/manateelazycat/awesome-tab][tab bar]] for Emacs
-is interesting. Let's try it out and see how long this lasts ---it may be like Neotree:
-Something cute to show to others, but not as fast as the keyboard.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package awesome-tab
-  :disabled
-  :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
-  :config (awesome-tab-mode t))
-
-;; Show me /all/ the tabs at once, in one group.
-(defun awesome-tab-buffer-groups ()
-  (list (awesome-tab-get-group-name (current-buffer))))
-#+END_SRC
-
-It's been less than three days and I've found this utility to be unhelpful, to me anyhow.
-
-An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
-
-** Window resizing using the golden ratio                         :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Window-resizing-using-the-golden-ratio
-:END:
-
-Let's load the following package, which automatically resizes windows so that
-the window containing the cursor is the largest, according to the golden ratio.
-Consequently, the window we're working with is nice and large yet the other windows
-are still readable.
-
-#+begin_src emacs-lisp :tangle no
-(use-package golden-ratio
-  :disabled
-  :diminish golden-ratio-mode
-  :init (golden-ratio-mode 1))
-#+end_src
-
-After some time this got a bit annoying and I'm no longer  using this.
-
-** Persistent Scratch Buffer
-:PROPERTIES:
-:CUSTOM_ID: Persistent-Scratch-Buffer
-:END:
-
-The ~*scratch*~ buffer is a nice playground for temporary data or experiments.
-
-However, by default its contents are not saved --which may be an issue if we
-have not relocated our playthings to their appropriate files. Whence let's save
-& restore the scratch buffer by default.
-#+BEGIN_SRC emacs-lisp
-(use-package persistent-scratch
-  :defer t
-  ;; In this mode, the usual save key saves to the underlying persistent file.
-  :bind (:map persistent-scratch-mode-map
-              ("C-x C-s" . persistent-scratch-save)))
-#+END_SRC
-
-We might accidentally close this buffer, so we could utilise the following.
-#+BEGIN_SRC emacs-lisp
-(defun scratch ()
-   "Recreate the scratch buffer, loading any persistent state."
-   (interactive)
-   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
-   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
-   (org-mode)
-   (persistent-scratch-mode)
-   (persistent-scratch-autosave-mode 1))
-
-;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
-
-;; Upon startup, close the default scratch buffer and open one as specfied above
-(ignore-errors (kill-buffer "*scratch*") (scratch))
-#+END_SRC
-
-I use Org-mode often, so that's how I want things to appear.
-#+BEGIN_SRC emacs-lisp
-(setq initial-scratch-message (concat
-  "#+Title: Persistent Scratch Buffer"
-  "\n#\n# Welcome! This’ a place for trying things out."
-  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
-#+END_SRC
-
-** Org-Emphasise for Parts of Words                       :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
-:END:
-
-From [[https://stackoverflow.com/a/24540651/3550444][stackoverflow]], the following incantation allows us to have
-parts of works emphasied with org-mode; e.g.,
-/half/ed, ~half~ed, and right in the m*idd*le! Super cool stuff!
-#+BEGIN_SRC emacs-lisp :tangle no
-(setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
-(setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
-(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
-#+END_SRC
-
-I've disabled this feature since multiple occurrences
-of an emphasise marker are sometimes treated as one
-lengthy phrase being emphasised.
-
 ** Proportional fonts for Headlines
 :PROPERTIES:
 :CUSTOM_ID: Proportional-fonts-for-Headlines
@@ -6991,6 +6782,213 @@ the current heading stuck at the top of the window.
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " / "))
 #+END_SRC
+** Powerful Directory Editing with ~dired~
+:PROPERTIES:
+:CUSTOM_ID: Powerful-Directory-Editing-with-dired
+:END:
+
+⟨ ~C-x C-v~ to open a file or directory in dired, using the current buffer. ⟩
+
+As mentioned earlier, ~dired~ is Emacs' built-in directory editor; it's opened
+with ~C-x d~.  /Dired let's us treat directories as textual objects!/ In dired,
+press ~h~ to see the many actions available. Here's a few...
+
+#+begin_details Super Terse ‘dired’ Tutorial
+
++ ~(~ toggles hiding entry details, such as modification date and ownership
++ ~s~ sort entries; modeline will display “Dired by date” or “Dired by name”.
++ ~o~ to open entry in anOther window; or ~RET~ to open in place.
++ ~+~ to create a new directory; or ~M-x make-directory~.
++ ~/~ to filter entries; with ~which-key~, possible completions pop-up.
+  - E.g., ~/ f~ shows only files or ~/ . png~ to obtain all entries with extension
+    ~png~.
+  - ~/ i g~ to hide git-ignored items ^_^
+  - ~/ /~ to remove all filters.
++ ~TAB~ to navigate between different groupings of entries.
+  - ~RET~ on a drawer heading toggles folding it ^_^
+#+end_details
+
+The [[https://github.com/Fuco1/dired-hacks#dired-hacks-utils][dired-hacks]] family of packages lets us, say, get a dired buffer out of a shell
+incantation that lists files, or use dired to open files with external tools.
+Below we use three of its packages.
+
+Pressing ~i~ inserts a directory's children under it, indented, in the current
+buffer. Useful to see what's there.
+#+BEGIN_SRC emacs-lisp
+(use-package dired-subtree
+  :bind (:map dired-mode-map
+              ("i" . dired-subtree-toggle)))
+#+END_SRC
+
+When directory ~𝒳~ has only one child ~𝒴~, then in dired, instead of ~𝒳~, show me ~𝒳/𝒴~
+with ~𝒳~ greyed out.
+#+BEGIN_SRC emacs-lisp
+(use-package dired-collapse
+  :hook (dired-mode . dired-collapse-mode))
+#+END_SRC
+
+Begin dired with certain entries grouped together, according to some filtering
+requirement; and with “garbage” files not shown ---i.e., those ending in
+~.aux, .out~, etc.
+#+BEGIN_SRC emacs-lisp
+(use-package dired-filter
+  :hook (dired-mode . (lambda () (dired-filter-group-mode)
+                                 (dired-filter-by-garbage)))
+  :custom
+    (dired-garbage-files-regexp
+      "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
+    (dired-filter-group-saved-groups
+      '(("default"
+         ("Org"    (extension "org"))
+         ("Executables" (exexutable))
+         ("Directories" (directory))
+         ("PDF"    (extension "pdf"))
+         ("LaTeX"  (extension "tex" "bib"))
+         ("Images" (extension "png"))
+         ("Code"   (extension "hs" "agda" "lagda"))
+         ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
+#+END_SRC
+
+#+begin_details [Disabled] Neotree: Traditional Directory Tree Navigation
+link-here:Neotree-Traditional-Directory-Tree-Navigation
+
+We open a nifty file manager upon startup.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Sidebar for project file navigation
+(use-package neotree
+  :defer t
+  :disabled
+  :config (global-set-key "\C-x\ d" 'neotree-toggle)
+          (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
+
+;; Open it up upon startup.
+;; (neotree-toggle)
+#+END_SRC
+By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file
+management.
+
+  ⟨ Edit: As a naive user, this is what I thought; yet a year later,
+                  I've almost never used neotree. ⟩
+
+Useful navigational commands include
++ ~U~ to go up a directory.
++ ~C-c C-c~ to change directory focus; ~C-C c~ to type the directory out.
++ ~?~ or ~h~ to get help and ~q~ to quit.
+
+As always, to go to the neotree pane when it's the only other window,
+execute ~C-x o~.
+
+I /rarely/ make use of this feature; company mode & Helm together quickly provide
+an automatic replacement for nearly all of my uses.
+
++ Reminiscent of GUI file managers is [[https://github.com/ralesi/ranger.el#features][ranger]]; e.g., it has multi-column
+  display of parent directories along with a file preview mechanism.
+#+end_details
+
+** Persistent Scratch Buffer
+:PROPERTIES:
+:CUSTOM_ID: Persistent-Scratch-Buffer
+:END:
+
+The ~*scratch*~ buffer is a nice playground for temporary data or experiments.
+
+However, by default its contents are not saved --which may be an issue if we
+have not relocated our playthings to their appropriate files. Whence let's save
+& restore the scratch buffer by default.
+#+BEGIN_SRC emacs-lisp
+(use-package persistent-scratch
+  :defer t
+  ;; In this mode, the usual save key saves to the underlying persistent file.
+  :bind (:map persistent-scratch-mode-map
+              ("C-x C-s" . persistent-scratch-save)))
+#+END_SRC
+
+We might accidentally close this buffer, so we could utilise the following.
+#+BEGIN_SRC emacs-lisp
+(defun scratch ()
+   "Recreate the scratch buffer, loading any persistent state."
+   (interactive)
+   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
+   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
+   (org-mode)
+   (persistent-scratch-mode)
+   (persistent-scratch-autosave-mode 1))
+
+;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
+
+;; Upon startup, close the default scratch buffer and open one as specfied above
+(ignore-errors (kill-buffer "*scratch*") (scratch))
+#+END_SRC
+
+I use Org-mode often, so that's how I want things to appear.
+#+BEGIN_SRC emacs-lisp
+(setq initial-scratch-message (concat
+  "#+Title: Persistent Scratch Buffer"
+  "\n#\n# Welcome! This’ a place for trying things out."
+  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
+#+END_SRC
+
+** Tabs                                                           :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Tabs
+:END:
+
+I really like my Helm-supported ~C-x b~, but the visial appeal of a [[https://github.com/manateelazycat/awesome-tab][tab bar]] for Emacs
+is interesting. Let's try it out and see how long this lasts ---it may be like Neotree:
+Something cute to show to others, but not as fast as the keyboard.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package awesome-tab
+  :disabled
+  :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
+  :config (awesome-tab-mode t))
+
+;; Show me /all/ the tabs at once, in one group.
+(defun awesome-tab-buffer-groups ()
+  (list (awesome-tab-get-group-name (current-buffer))))
+#+END_SRC
+
+It's been less than three days and I've found this utility to be unhelpful, to me anyhow.
+
+An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
+
+** Window resizing using the golden ratio                         :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Window-resizing-using-the-golden-ratio
+:END:
+
+Let's load the following package, which automatically resizes windows so that
+the window containing the cursor is the largest, according to the golden ratio.
+Consequently, the window we're working with is nice and large yet the other windows
+are still readable.
+
+#+begin_src emacs-lisp :tangle no
+(use-package golden-ratio
+  :disabled
+  :diminish golden-ratio-mode
+  :init (golden-ratio-mode 1))
+#+end_src
+
+After some time this got a bit annoying and I'm no longer  using this.
+
+** Org-Emphasise for Parts of Words                       :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
+:END:
+
+From [[https://stackoverflow.com/a/24540651/3550444][stackoverflow]], the following incantation allows us to have
+parts of works emphasied with org-mode; e.g.,
+/half/ed, ~half~ed, and right in the m*idd*le! Super cool stuff!
+#+BEGIN_SRC emacs-lisp :tangle no
+(setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
+(setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
+(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
+#+END_SRC
+
+I've disabled this feature since multiple occurrences
+of an emphasise marker are sometimes treated as one
+lengthy phrase being emphasised.
+
 ** COMMENT Replace :KEYWORDS: with nice SVG labels :Not_so_sure_about_this:
 #+begin_src emacs-lisp
 ;; Replace :KEYWORDS: with nice SVG labels; for more power use the svg-lib package.
