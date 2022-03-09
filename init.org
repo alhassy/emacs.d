@@ -12,7 +12,7 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
-* TODO Clean this section up!
+* TODO Clean this section up! :ignore:
 #+begin_src emacs-lisp :exports none
 ;; cl-lib was published as a better (namespaced!) alternative to cl, which has a deprecation warning in Emacs27.
 ;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
@@ -2187,6 +2187,7 @@ windows, so we can make a hydra to alleviate the trouble.
 
 # See [[https://jeremykun.com/2020/01/14/the-communicative-value-of-using-git-well/][The Communicative Value of Using Git Well]]
 
+** COMMENT Dropbox & Mega [Not really in use]
 Install quick file sharing utility ---[[https://www.dropbox.com/install][Dropbox]]--- as well as a backup
 service, [[https://mega.nz/fm][Mega]] ---I use this for my =backups= directory: Keep reading.
 # +begin_src shell
@@ -2818,6 +2819,24 @@ then we use doc:git-timemachine.
 (setq delete-by-moving-to-trash t
       trash-directory "~/.Trash/")
 #+end_src
+** Jumping to extreme semantic units
+:PROPERTIES:
+:CUSTOM_ID: Jumping-to-extreme-semantic-units
+:END:
+[[https://github.com/DamienCassou/beginend][Sometimes it's unreasonable]] for ~M-<~ to take us to the actual start of a buffer;
+instead it'd be preferable to go to the first “semantic unit” in the buffer. For
+example, when directory editing with ~dired~ we should jump to the first file,
+with version control with ~magit~ we should jump to the first section, when
+composing mail we should jump to the first body line, and in the agenda we
+should jump to the first entry.
+#+BEGIN_SRC emacs-lisp
+;; M-< and M-> jump to first and final semantic units.
+;; If pressed twice, they go to physical first and last positions.
+(use-package beginend
+  :diminish 'beginend-global-mode
+  :config (beginend-global-mode)
+    (cl-loop for (_ . m) in beginend-modes do (diminish m)))
+#+END_SRC
 * Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
@@ -3143,24 +3162,6 @@ number of ways you'd actually use 𝒳. ( In Emacs, [[kbd:C-t tldr 𝒳 ⟨retur
 (system-packages-ensure "tldr")
 #+END_SRC
 
-** Jumping to extreme semantic units
-:PROPERTIES:
-:CUSTOM_ID: Jumping-to-extreme-semantic-units
-:END:
-[[https://github.com/DamienCassou/beginend][Sometimes it's unreasonable]] for ~M-<~ to take us to the actual start of a buffer;
-instead it'd be preferable to go to the first “semantic unit” in the buffer. For
-example, when directory editing with ~dired~ we should jump to the first file,
-with version control with ~magit~ we should jump to the first section, when
-composing mail we should jump to the first body line, and in the agenda we
-should jump to the first entry.
-#+BEGIN_SRC emacs-lisp
-;; M-< and M-> jump to first and final semantic units.
-;; If pressed twice, they go to physical first and last positions.
-(use-package beginend
-  :diminish 'beginend-global-mode
-  :config (beginend-global-mode)
-    (cl-loop for (_ . m) in beginend-modes do (diminish m)))
-#+END_SRC
 ** Snippets ---Template Expansion
 :PROPERTIES:
 :CUSTOM_ID: Snippets-Template-Expansion
@@ -7009,6 +7010,28 @@ lengthy phrase being emphasised.
              ;;
              ;; Many more useful examples at: https://github.com/rougier/svg-tag-mode/blob/main/examples/example-2.el
 #+end_src
+** Preview link under cursor
+When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
+- Useful to quickly preview files and images.
+- See also: https://github.com/jcs-elpa/preview-it
+
+#+begin_src emacs-lisp
+(quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
+(global-preview-it-mode)
+#+end_src
+
+This also works nicely when I'm looking to open a file; e.g., ~C-x C-f
+~/.emacs.d/.as TAB~ to preview my ~.aspell.en.pws~ (Emacs personal dictionary) file
+in a tooltip.
+# (Sadly, the preview closes my ~M-x~ session when previewing an org file.)
+# Not entirely true; but it's happened with some org files.
+
+Likewise, I'd like to preview line when executing the doc:goto-line / kbd:M-g_M-g command.
+#+begin_src emacs-lisp
+(quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
+(global-set-key [remap goto-line] 'goto-line-preview)
+#+end_src
+
 * Prose
 CLOSED: [2021-11-02 Tue 22:43]
 :PROPERTIES:
@@ -7917,7 +7940,7 @@ navigate my recent edits /without/ having to supply the prefix each time.
             (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
 #+end_src
 
-* LaTeX ⇐ Org-Mode
+** LaTeX ⇐ Org-Mode
 CLOSED: [2021-11-02 Tue 22:18]
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
@@ -7935,7 +7958,7 @@ For example, we account for LaTeX citations.
 # [[https://tex.stackexchange.com/questions/102416/error-when-compiling-a-minted-listings-inside-a-memoir-subfloat][work-around]] is to use a ‘box’.  Learn more about LaTeX boxes [[https://latexref.xyz/Boxes.html][here]].
 
 
-** Get LaTeX:
+*** Get LaTeX:
 :PROPERTIES:
 :CUSTOM_ID: Get-LaTeX
 :END:
@@ -7983,7 +8006,7 @@ For example, we account for LaTeX citations.
 ;; (setq org-export-with-section-numbers nil)
 #+END_SRC
 :End:
-** Working with Citations :Disabled:Not_Used:
+*** Working with Citations                              :Disabled:Not_Used:
 :PROPERTIES:
 :CUSTOM_ID: Working-with-Citations
 :END:
@@ -8023,7 +8046,7 @@ cite:agda_overview ( In HTML export, the citation doesn't link anywhere. )
   This is an Org-mode application since the citations have tooltips and export
   nicely to LaTeX & HTML via the Org-mode exporter.
 
-** Bibliography & Coloured LaTeX using Minted
+*** Bibliography & Coloured LaTeX using Minted
 :PROPERTIES:
 :CUSTOM_ID: Bibliography-Coloured-LaTeX-using-Minted
 :END:
@@ -8051,7 +8074,7 @@ By default, Org exports LaTeX using the ~nonstopmode~ option, which tries
 its best to produce a PDF ---which ignores typesetting errors altogether,
 which is not necessary ideal when using LaTeX.
 
-** COMMENT Excellent PDF Viewer
+*** COMMENT Excellent PDF Viewer
 :PROPERTIES:
 :CUSTOM_ID: Excellent-PDF-Viewer
 :END:
@@ -8075,7 +8098,7 @@ Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library fo
 Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
 with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
 easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
-* HTML ⇐ Org-mode
+** HTML ⇐ Org-mode
 CLOSED: [2021-11-02 Tue 22:18]
 :PROPERTIES:
 :CUSTOM_ID: HTML-Org-mode
@@ -8091,7 +8114,7 @@ anchors.
 ;; Can be used to export a file into a coloured html.
 #+END_SRC
 
-** Ensuring Useful HTML Anchors
+*** Ensuring Useful HTML Anchors
 :PROPERTIES:
 :CUSTOM_ID: Ensuring-Useful-HTML-Anchors
 :END:
@@ -8146,7 +8169,7 @@ from a selection of available ones, then we'll be prompted for a value
 for it from a list of values you've used elsewhere. This is useful for
 remaining consistent for when trees share similar properties.
 
-** Clickable Headlines
+*** Clickable Headlines
 :PROPERTIES:
 :CUSTOM_ID: Clickable-Headlines
 :END:
@@ -8187,7 +8210,7 @@ each heading to be not a link.
    - Any non-link text /before/ it will work:  =ok [[link]]=.
      * Using Unicode non-breaking space ‘ ’ is ok.
    - Text /only after/ the link is insufficient.
-** HTML “Folded Drawers”
+*** HTML “Folded Drawers”
 :PROPERTIES:
 :CUSTOM_ID: HTML-Folded-Drawers
 :END:
@@ -8278,7 +8301,7 @@ Hey bud, hope you're enjoying this read ^_^
 
 Now that I've written this, I'm thinking it may have been preferably to use an org-block…?
 
-** Diagrams with Mermaid ---Not Reccommended
+*** Diagrams with Mermaid ---Not Reccommended
 :PROPERTIES:
 :CUSTOM_ID: Diagrams-with-Mermaid-Not-Reccommended
 :END:
@@ -8343,7 +8366,7 @@ The command line tool is *lacking functionality* and so the docs are not helpful
 E.g., I cannot produce pie charts using the command line tool.
 #+end_quote
 
-**   [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework
+***   [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework
 :PROPERTIES:
 :CUSTOM_ID: https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework
 :END:
@@ -8390,7 +8413,7 @@ speaker notes in the flattened view.
 Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
 resulting PDF locally.
 
-** Org-mode ⇐ HTML :Disabled:
+*** Org-mode ⇐ HTML                                              :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-mode-HTML
 :END:
@@ -8471,6 +8494,10 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
 
++ Checkout branches/PRs with doc:my/gh-checkout
++ See all company related PRs with doc:w-PRs
++ Quickly look up language/library docs /within/ Emacs with kbd:C-c_d.
+
 ** Quickly Run Code Snippets
 
 Sometimes we want to quickly run some code /without making a dedicated file/ or
@@ -8517,7 +8544,155 @@ Example...
 ;;    let v:Vec<_> = vec![1, 2, 3];
 #+end_src
 
-** Managing Processes/Servers from within Emacs
+** C-x C-e / REPL-driven development for NodeJS!
+
+| /Evaluate code and see the results inline ---A feedback loop that is faster than ever!/ |
+
+Within Emacs, kbd:C-x_C-e evaluates a Lisp expression; e.g.,
+at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
+- We ran some code /without/ explicitly running an interpreter/repl/compiler!
+
+- We can do the same thing for JavaScript: There'll be a NodeJS repl server
+  running, implicitly in the background, and ~C-x C-e~ will send it a line (or a
+  selected regions) of JavaScript for evaluation; we then see the result as an
+  overlay in our current JS buffer. (This is a REST api).
+  - You /choose/ which code gets (re)evaluated.
+
+- See [[https://github.com/anonimitoraf/skerrick][skerrick: REPL-driven development for Javascript]] for animated GIFs; it
+  works with modules as well.
+
+- A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
+
+#+begin_src emacs-lisp
+(quelpa '(skerrick :repo "anonimitoraf/skerrick" :fetcher github))
+
+;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
+(unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
+  (skerrick-install-or-upgrade-server-binary))
+
+;; Should be run in a JS buffer; it is buffer specific.
+;; (skerrick-start-server)
+
+;; Now main function, entry point is:
+;; M-x skerrick-eval-region
+;;
+
+;; Evaluate a region, if any is selected; otherwise evaluate the current line.
+(bind-key
+ "C-x C-e"  (lambda ()
+              (interactive)
+              (if (use-region-p)
+                  (skerrick-eval-region)
+                (beginning-of-line)
+                (set-mark-command nil)
+                (end-of-line)
+                (skerrick-eval-region)
+                (pop-mark)))
+ 'js-mode-map)
+#+end_src
+
+For instance,
+#+begin_src js :tangle no
+// Start the server... then
+// On each line and press C-x C-e
+let a = "hello"
+let b = "world"
+(a + ' ' + b).toUpperCase()
+// The final line should show: HELLO WORLD
+#+end_src
+
+** devdocs
+#+begin_src emacs-lisp
+;; 1. Get docs of a languages: M-x devdocs-install
+;; 2. Lookup docs: [C-u] M-x devdocs-lookup
+;; 𝟚. Lookup docs: [C-u] C-c d
+(use-package devdocs
+  :bind ("C-c d" . #'devdocs-lookup)
+  :config
+  (when nil ;; “C-x C-e” the following once.
+    (loop for lang in '(javascript ramda typescript html css sass
+                       vue~3 vuex~4 vue_router~4 "angularjs~1.6"
+                       nginx webpack~5 web_extensions
+                       ;;
+                       eslint  jest jq jsdoc prettier
+                       mocha chai jasmine
+                       ;;
+                       bash docker~19 git homebrew elisp
+                       ;;
+                       postgresql~14 redis sqlite
+                       ;;
+                       rust ruby~3 minitest "rails~7.0")
+          do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
+#+end_src
+
+** How do I do something?
+
+  When programming, sometimes you just gotta Google “how do I do ⋯”.
+  - The usual process is (1) open a browser, (2) make a Google query, (3) look
+    at StackOverflow's most upvoted answer for your query, (4) copy-paste the
+    code solution/example to your editor; [(5) get distracted by interesting
+    things you'd like to read].
+  - Better would be to use the [[https://github.com/gleitz/howdoi][howdoi]] tool, which gives instant coding answers
+    for common questions via the command line.
+  - Below, my /Emacs Lisp/ function doc:howdoi let's me reduce the 4-step process
+    to just 2 steps: Write your query /anywhere/ then call ~M-x howdoi~ on it to
+    replace the query with the answer. (Or ~C-u M-x howdoi~ to see the full answer
+    and a link to it on StackOverflow.)
+
+    | /⚡ Never open your browser to look for help again ⚡/ |
+
+#+begin_src emacs-lisp
+(system-packages-ensure "howdoi")
+
+(cl-defun howdoi (&optional show-full-answer)
+  "Instantly insert coding answers.
+
+Replace a query with a code solution; replace it with an entire
+answer if a prefix is provided.
+
+Example usage:
+
+   On a new line, write a question such as:
+
+      search and replace buffer Emacs Lisp
+
+   Then invoke ‘M-x howdoi’ anywhere on the line
+   to get a code snippet; or ‘C-u M-x howdoi’ to get a full answer to your query.
+"
+  (interactive "P")
+  (let ((query (s-collapse-whitespace (substring-no-properties (thing-at-point 'line))))
+        (flag (if show-full-answer "-a" "")))
+    (beginning-of-line)
+    (kill-line)
+    (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
+#+end_src
+** Sleek Semantic Selection
+
+Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
+word, press it again to select sentence, then again for the current paragraph,
+then more to get the current section.
+
+#+begin_src emacs-lisp
+(use-package expand-region
+  :bind (("s-r" . #'er/expand-region)))
+#+end_src
+
+You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
+
+That is, /repeated ⌘+r expands the selection to the next logical segment of text:/
+In writing this means “Word, sentence, paragraph”, and in programming this means
+“identifier, then incrementally larger scopes”.
+
+** Managing Processes/Servers from within Emacs ---Work-specific functions
+
+Let's make a few interactive Emacs Lisp functions to reduce the amount of time I
+need to be in a terminal. I'll use the /prefix ~“w-”~ for work stuff/. Example
+tasks:
++ Start/stop my servers
++ Interactively select an app to be opened in the browser
++ Do database migrations/rollbacks
+
+--------------------------------------------------------------------------------
 
 Not using this, a bit too verbose to setup for each service but, more
 accurately, does not Just Workᵀᴹ for my needs.
@@ -8527,7 +8702,7 @@ accurately, does not Just Workᵀᴹ for my needs.
   ;; C-h v prodigy-services ⇒ See possible properties.
 #+end_src
 
-my/defaliases
+*** my/defaliases
 #+begin_src emacs-lisp
 (defalias 'defaliases 'my/defaliases)
 (defmacro my/defaliases (src &rest tgts)
@@ -8542,6 +8717,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
   `(--map (eval (quote (defalias `,it (quote ,src)))) (quote ,tgts)))
 #+end_src
 
+*** Making unkillable buffers & shells
 #+begin_details "Making unkillable buffers & shells"
 #+begin_src emacs-lisp
 (defun my/declare-unkillable-buffer (name)
@@ -8569,9 +8745,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 #+end_src
 #+end_details
 
-Prefix ~“w-”~ for work stuff.
-
-
+*** my/work-links
    #+begin_src emacs-lisp
 (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
   "Given a link of TYPE with a URL, produce the correct org-link.
@@ -8595,13 +8769,7 @@ This is how the link looks upon export."
 (my/work-links "weever" "https://github.com/WeeverApps/%s" label)                       ;; weever:wxportal
    #+end_src
 
-#+begin_src emacs-lisp
-(cl-defun my/application-running? (app)
-  "Check if application APP is currently running, in use."
-  (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
-#+end_src
-
-Process Manager
+*** Process Manager
 #+begin_src emacs-lisp
 (cl-defun w-open-pm () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
 (cl-defun w-start-pm ()
@@ -8636,34 +8804,7 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
       (magit-status))))
 #+end_src
 
-#+begin_src emacs-lisp
-(defalias 'my/open-in-terminal '⌘)
-(cl-defun ⌘ (&rest cmds)
-  "Run terminal commands CMDS in a new MacOS Terminal instance, and bring it to focus.
-
-Example: (⌘ \"echo hello\" \"echo world\")
-
-Useful for those cases where I have to interact with non-trivial ‘interactive terminal menus’."
-  (shell-command (format "osascript -e 'tell app \"Terminal\" to activate do script %s'"
-                         (pp-to-string (s-join ";" cmds)))))
-
-;; (⌘ "echo hello" "echo world")
-#+end_src
-
-Docker
-#+begin_src emacs-lisp
-;; Usage: M-x docker [RET ?]
-(use-package docker
-  :config
-  (my/defaliases docker-containers w-show-docker-containers))
-
-(defun w-stop&remove-docker-containers ()
-  (interactive)
-  (shell-command "docker stop $(docker ps -a -q)")
-  (shell-command "docker rm $(docker ps -a -q)"))
-#+end_src
-
-Blue Screen
+*** Blue Screen
 #+begin_src emacs-lisp
 (my/defaliases w-dev-env-start w-blue-screen w-db-start-servers w-start-db-servers)
 ;;
@@ -8689,113 +8830,8 @@ Menu can be closed when servers are started; can also stop them."
   (display-message-or-buffer (shell-command-to-string "cd ~/ops-helm-deployment/docker/wx-dev-env/root/; docker cp ../helpers/userInjector.js platform:/usr/src/userInjector.js; docker exec -t platform sh -c \"npx babel-node userInjector.js\"")))
 #+end_src
 
-SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only
-want to /quickly/ run a query, to check something, *without the fricition of
-switching applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-sql
-]]to produce a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.
-(This also serves as a nice *reference mechanism* for useful queries.)
+*** w-start/stop-services
 #+begin_src emacs-lisp
-;; (system-packages-ensure "leiningen")
-(use-package ejc-sql
-  :config
-  (require 'ejc-company)
-  (push 'ejc-company-backend company-backends)
-  (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
-  ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
-  (bind-key "C-<return>"
-             (lambda () (interactive)
-               (setq ejc-sql-complete-query-hook
-                     (if current-prefix-arg
-                         '(w-ejc-result-pp-json)  ;; Defined below
-                       '((lambda () ;; Give each line of text just one screen line.
-                           (switch-to-buffer-other-window "*ejc-sql-output*")
-                           (visual-line-mode -1)
-                           (toggle-truncate-lines)
-                           (other-window -1)))))
-               (ejc-eval-user-sql-at-point))
-             'sql-mode-map))
-
-(defun w-sql ()
-  "Quickly run a SQL query, then dispose of the buffer when done.
-
-By default uses a connection named “platform”, to see a list of
-other connections call with a prefix argument."
-  (interactive)
-
-  ;; Get DB credentials. One does “M-x ejc-connect-interactive” once, then
-  ;;  “M-x ejc-insert-connection-data” and paste that into your init; then
-  ;; “M-x ejc-connect” provides a compleition of possible DBs to connect to.
-  (load-file "~/Desktop/work.el")
-  ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
-  ;; which temporarily adds to this hook, then calls
-  (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
-
-  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "platform")]
-    (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
-    (thread-last
-        '("\n\n/\n-- DOCS & EXAMPLES\n--"
-          "-- SQL queries should be seperated by “/”"
-          "-- [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP]"
-          "-- In result window, TAB/RET to navigate the columns/rows."
-          "-- C-c e t ⇒ List all tables"
-          "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
-          "\nselect 1 + 2 as \"Numerical, yeah!\""
-          "\n/\n"
-          "-- See the latest form's elements & extra props"
-          "select data #>'{details, properties, wxConfig, formElements}'"
-          "from platform.forms\norder by updated_at desc\nlimit 1;"
-          "\n/\n"
-          "SELECT data #> '{details, properties}'\nfrom submissions"
-          "-- The submissions that have at least a ‘number’ or an ‘MCS’, but NOT a ‘time’."
-          "where data::text similar to '%\"wxType\": \"(number|wx-multiple-choice-score)\"%'"
-          "and not data #> '{details, properties, formdata}' @> '[{\"wxType\": \"time\"}]'"
-          "limit 1;"
-          "\n-- The short arrow -> keeps the type as JSON, and the long arrow ->> returns text."
-          "-- Likewise #> yields JSON whereas #>> yields text."
-          "-- a -> 'b' -> 'c' -> 3 -> 'd'  ==  a #> '{b, c, 3, d}' "
-          "-- (Use integers to access elements of JSON arrays)"
-          "\n/\n"
-          "-- Here are the triggers that are run when an UPDATE is performed against ‘submissions’"
-          "select * from information_schema.triggers"
-          "where event_object_table = 'submissions'"
-          "and event_manipulation = 'UPDATE'"
-          "\n/\n"
-          "-- See most recently updated/altered “In Progress” ticket"
-          "select * from tickets\norder by updated_at desc\nlimit 1")
-      (s-join "\n")
-      insert)
-    (sql-mode)
-    (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
-    (ejc-connect connection-name)
-    (beginning-of-buffer)))
-
-(defun w-ejc-result-pp-json ()
-  "Pretty print JSON ejc-result buffer."
-  (interactive)
-  (ignore-errors
-    (switch-to-buffer-other-window "*ejc-sql-output*")
-    (beginning-of-buffer)
-    (re-search-forward "{")
-    (backward-char 1)
-    (delete-region (point-min) (point))
-    (end-of-buffer)
-    (re-search-backward "|")
-    (kill-line)
-    (json-mode)
-    (json-pretty-print-buffer)
-    (other-window -1)))
-#+end_src
-
- w-start-servers
-#+begin_src emacs-lisp
-(defun my/docker-stop (ctr)
-  "Stop all containers that mention CTR in their name, image, command, or container id"
-  (thread-last (shell-command-to-string "docker ps -a")
-    (s-split "\n")
-    (--filter (s-contains-p ctr it))
-    (--map (car (s-split " " it))) ;; Get docker container ids
-    (--map (shell-command (concat "docker stop " it)))))
-
 (defvar my/services nil "List of all services defined; used with `w-start-services' and `w-stop-services'.")
 
 (defun w-start-services ()
@@ -8809,6 +8845,7 @@ other connections call with a prefix argument."
            do (funcall (intern (format "w-stop-%s" 𝑺)))))
 #+end_src
 
+*** w-status-of-services
 #+begin_src emacs-lisp
 ;; It takes about ~3 seconds to build the Status of Services page, so let's jump to it if it's already built, and the user/me can request a refresh, if need be.
 (global-set-key (kbd "M-S-SPC")
@@ -8894,6 +8931,7 @@ other connections call with a prefix argument."
                        (help-mode))))))
 #+end_src
 
+*** my/defservice
 #+begin_src emacs-lisp
 (cl-defmacro my/defservice
     (repo &key (main-setup "git checkout main; git pull")
@@ -8990,70 +9028,7 @@ other connections call with a prefix argument."
 (my/defservice api-odata :cmd "docker-compose up --build")
 #+end_src
 
-PRs
-#+begin_src emacs-lisp
-(cl-defun w-PRs (&rest query-options)
-  "See all company related PRs"
-  (interactive)
-  (thread-last `("is:open" "is:pr" "archived:false" "user:WeeverApps" "draft:false" ,@query-options)
-    (mapcar #'url-hexify-string)
-    (s-join "+")
-    (concat "https://github.com/pulls?q=")
-    browse-url))
-;;
-(cl-loop for (name . query-options)
-         in `((month ,(format-time-string "updated:>=%Y-%m-01"))
-              (today ,(format-time-string "updated:>=%Y-%m-%d"))
-              (created-this-week ,(format "created:>=%s"
-                                          (org-read-date nil nil "++1" nil (org-read-date nil t "-sun")))) ;; Date of most recent Monday
-              (stale!! ,(format "updated:<=%s" (org-read-date nil nil "-1w"))) ;; Items not touched in over a week
-              (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
-              (involves-me "involves:alhassy")
-              (inspections "label:Inspections")
-              (process-manager "label:\"quick and easy\"" "repo:process-builder")
-              (newts "label:\"Newts Priority Review\",Newts"))
-         do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
-#+end_src
-
-[[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.
-#+begin_src emacs-lisp
-;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
-;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
-;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
-;; With a prefix argument prompt for the format style 𝒮.
-;; Easy to add more formats.
-(use-package copy-as-format)
-#+end_src
-
-A nice Emacs interface for the a portion of the “gh” CLI.
-#+begin_src emacs-lisp
-;; A nice Emacs interface for the a portion of the “gh” CLI.
-(my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
-(cl-defun my/gh-checkout (&optional repo)
-  "With prefix, select a branch name; otherwise a Pull Request name.
-
-If no REPO is provided, let the user select one from a menu.
-Example use:      (w-pr-checkout \"~/wxPortal\")
-                  (w-pr-checkout)"
-  (interactive)
-  (let* ((repo (or repo (completing-read "Repo: " (projectile-relevant-known-projects))))
-         (default-directory repo) ;; temporarily override this global variable, used with magit
-         (current-branch (magit-get-current-branch))
-         (all-branches (magit-list-local-branch-names))
-         (status (format "cd %s; gh pr status" repo)))
-    (if current-prefix-arg
-        (-let [branch (completing-read (format "New branch (Currently “%s”): " current-branch) all-branches)]
-          (shell-command-to-string (format "cd %s; git checkout %s" repo branch)))
-      (let* ((PR-list (s-split "\n" (shell-command-to-string (format "cd %s; gh pr list" repo))))
-             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list))))
-             (_ (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯)))
-             (new-branch (magit-get-current-branch)))
-        ;; Show nice status
-        (async-shell-command status)
-        (magit-status repo)))))
-#+end_src
-
-w-app-slugs
+*** w-app-slugs
 #+begin_src emacs-lisp
 (defvar w-app-slugs
    (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
@@ -9071,7 +9046,7 @@ w-app-slugs
   (message "SSO for %s disabled; don't commit the “authorization.allowSsoLogin.json” file!" app)))
 #+end_src
 
-Databases
+*** Migrations & Rollbacks
 #+begin_src emacs-lisp
 (cl-defun w-db-migrations ()
   (interactive)
@@ -9082,7 +9057,7 @@ Databases
   (async-shell-command "cd ~/api-platform-server; git status; npm run docker:rollback" "*DB/Rollback*"))
 #+end_src
 
-Handbook
+*** COMMENT Handbook :Seldom_used:
 #+begin_src emacs-lisp
 (cl-defun w-handbook-view ()
   "Open the HTML handbook in your local browser"
@@ -9152,7 +9127,7 @@ Let's get the file path of the current file. We bind it and make it a top-level 
     (message (kill-new buffer-file-name))))
 #+end_src
 
-** Are there any errors in my code?
+** TODO Are there any errors in my code?
 
 [[https://www.flycheck.org/en/latest/][Flycheck]] gives us syntax checking and linting tools to automatically check the
 contents of buffers while you type, and reports warnings and errors directly in
@@ -9189,6 +9164,65 @@ Let's also have a nifty modal menu to quickly navigate between errors.
    ("S" flycheck-verify-setup "Suggest setup")
    ("m" flycheck-manual "manual")))
 #+end_src
+*** On the fly syntax checking
+:PROPERTIES:
+:CUSTOM_ID: On-the-fly-syntax-checking
+:END:
+
+[[https://www.flycheck.org/en/latest/][Flycheck]] is a on-the-fly syntax checker that relies on external programs to
+check buffers; which must be installed separately.
+
++ E.g., ghc is required for Haskell; whereas Emacs Lisp is checked by Emacs'
+    own byte compiler, ~emacs-lisp~.
++ Sometimes more than one checking tool applies, use ~C-c ! s~ to select a
+    different checker.
++ =C-c ! n,p,l= takes you to the ‘n’ext or ‘p’revious
+  error, or ‘l’ist all errors in another buffer.
+
+  ~C-c ! c~ to explicitly recheck the buffer.
+
+#+begin_src emacs-lisp
+(use-package flycheck
+  :diminish
+  :init (global-flycheck-mode)
+  :config ;; There may be multiple tools; I have GHC not Stack, so let's avoid that.
+  (setq-default flycheck-disabled-checkers '(haskell-stack-ghc emacs-lisp-checkdoc))
+  :custom (flycheck-display-errors-delay .3))
+#+end_src
+
+In an org-src block, we press ~C-c '~ to get into the language's mode where
+flycheck will provide warnings.
+#+begin_src haskell :tangle no
+module Main where
+
+main :: IO ()
+main = putStrLn $ "nice" ++ f 0
+
+f :: Int -> String
+f x = x -- show x
+-- type error
+#+end_src
+
+In-general, flycheck is intended for self-contained raw code ---not for source
+blocks in Org-mode. Whence, the above example is a complete Haskell program,
+with a named module and ~main~ method.
+
+I think the built-in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Flymake.html][flymake]] syntax checker is better for Emacs Lisp,
+so let's use that for ELisp.
+#+BEGIN_SRC emacs-lisp
+(use-package flymake
+  :hook ((emacs-lisp-mode . (lambda () (flycheck-mode -1)))
+         (emacs-lisp-mode . flymake-mode))
+  :bind (:map flymake-mode-map
+              ("C-c ! n" . flymake-goto-next-error)
+              ("C-c ! p" . flymake-goto-prev-error)))
+#+END_SRC
+
+Try it out:
+#+begin_src emacs-lisp :tangle no
+(setq 1 2) ;; Error: ‘1’ is not a variable.
+#+end_src
+
 ** LSP: Making Emacs into a generic full-featured programming IDE
 
 (TLDR: LSP gives Emacs a uniform way to deal with programming languages, such as
@@ -9393,6 +9427,41 @@ LSP mode supports the following Features:
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
+** Jumping to definitions & references
+:PROPERTIES:
+:CUSTOM_ID: Jumping-to-definitions-references
+:END:
+
+Out-of-the-box Emacs has ‘xref’ utilities ~M-.~ and ~C-u M-.~ to [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html#Xref][Find Identifier
+References]]; however, tags to source definitions need to be generated using the
+=etags= program. Nonetheless, the xref utilites are impressive and some just work:
+For example, ~M-?~ cleverly finds /all/ references for an identifier in ‘near by’
+files; whereas ~C-u M-. RET my/.*~, for example, uses the given regular expression
+to list all identifiers with prefix ~my/~, thereby listing my personally defined
+names ^_^
+
+| =C-M-. 𝓇𝓮ℊ𝓮𝓍= | Find all identifiers whose name matches the given pattern |
+
+Let's get [[https://github.com/jacktasia/dumb-jump][dumb-jump]], where the ‘dumb’ is possibly due to the fact
+that it works by brute-force regular-expression lookup of
+pre-defined ‘definitional template’ rules. It “just works” ^_^
+#+BEGIN_SRC emacs-lisp
+(use-package dumb-jump
+  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
+         ("M-g ."     . dumb-jump-go-other-window)
+         ("M-g b"     . dumb-jump-back)
+         ("M-g p"     . dumb-jump-go-prompt)
+         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
+  :config
+  ;; If source file is visible, just shift focus to it.
+  (setq dumb-jump-use-visible-window t))
+#+END_SRC
+
+In Lisp, for binding macros, it lists all possible mentions of the bound
+variable ---the first is likely what is desired.  Alternatively, one could just
+add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
+works fine even for locally bound definitions.  It works depending on the
+extension of a file.
 ** TODO COMMENT   ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode
 
 Let's make use of JSDocs for functions ---since then LSP will show us the types
@@ -9415,7 +9484,21 @@ doing that.
   :hook (js-mode . tree-sitter-mode))
 #+end_src
 
-** Turbolog: What's the value of this expression? :JavaScript
+** Documentation Pop-Ups
+:PROPERTIES:
+:CUSTOM_ID: Documentation-Pop-Ups
+:END:
+
+Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
+This is very useful when editing in a particular coding language, say via
+~C-c '~ for org-src blocks. Or when working in a language-specific buffer.
+#+BEGIN_SRC emacs-lisp
+(use-package company-quickhelp
+ :config
+   (setq company-quickhelp-delay 0.1)
+   (company-quickhelp-mode))
+#+END_SRC
+** Turbolog: What's the value of this expression? :JavaScript:
 With [[https://github.com/Artawower/turbo-log][turbo-log]], I can select an expression then press [[kbd:C-x l l]] to have
 that expression be part of a console log message, in the next line, that also
 mentions the line number and buffer's name. I can toggle all these inserted
@@ -9543,41 +9626,6 @@ The less casual Haskeller would likely want to use [[https://haskell-lang.org/in
 more support; e.g., obtain suggestions from GHC about redundant imports
 or type signatures.
 
-** Jumping to definitions & references
-:PROPERTIES:
-:CUSTOM_ID: Jumping-to-definitions-references
-:END:
-
-Out-of-the-box Emacs has ‘xref’ utilities ~M-.~ and ~C-u M-.~ to [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html#Xref][Find Identifier
-References]]; however, tags to source definitions need to be generated using the
-=etags= program. Nonetheless, the xref utilites are impressive and some just work:
-For example, ~M-?~ cleverly finds /all/ references for an identifier in ‘near by’
-files; whereas ~C-u M-. RET my/.*~, for example, uses the given regular expression
-to list all identifiers with prefix ~my/~, thereby listing my personally defined
-names ^_^
-
-| =C-M-. 𝓇𝓮ℊ𝓮𝓍= | Find all identifiers whose name matches the given pattern |
-
-Let's get [[https://github.com/jacktasia/dumb-jump][dumb-jump]], where the ‘dumb’ is possibly due to the fact
-that it works by brute-force regular-expression lookup of
-pre-defined ‘definitional template’ rules. It “just works” ^_^
-#+BEGIN_SRC emacs-lisp
-(use-package dumb-jump
-  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
-         ("M-g ."     . dumb-jump-go-other-window)
-         ("M-g b"     . dumb-jump-back)
-         ("M-g p"     . dumb-jump-go-prompt)
-         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
-  :config
-  ;; If source file is visible, just shift focus to it.
-  (setq dumb-jump-use-visible-window t))
-#+END_SRC
-
-In Lisp, for binding macros, it lists all possible mentions of the bound
-variable ---the first is likely what is desired.  Alternatively, one could just
-add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
-works fine even for locally bound definitions.  It works depending on the
-extension of a file.
 ** COMMENT Aggressive Indentation
 :PROPERTIES:
 :CUSTOM_ID: Aggressive-Indentation
@@ -9608,65 +9656,6 @@ The following minor mode automatically adds spacing around operators.
 I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Also,
 languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
 an identifier, not an expression! ⟩
-
-** On the fly syntax checking
-:PROPERTIES:
-:CUSTOM_ID: On-the-fly-syntax-checking
-:END:
-
-[[https://www.flycheck.org/en/latest/][Flycheck]] is a on-the-fly syntax checker that relies on external programs to
-check buffers; which must be installed separately.
-
-+ E.g., ghc is required for Haskell; whereas Emacs Lisp is checked by Emacs'
-    own byte compiler, ~emacs-lisp~.
-+ Sometimes more than one checking tool applies, use ~C-c ! s~ to select a
-    different checker.
-+ =C-c ! n,p,l= takes you to the ‘n’ext or ‘p’revious
-  error, or ‘l’ist all errors in another buffer.
-
-  ~C-c ! c~ to explicitly recheck the buffer.
-
-#+begin_src emacs-lisp
-(use-package flycheck
-  :diminish
-  :init (global-flycheck-mode)
-  :config ;; There may be multiple tools; I have GHC not Stack, so let's avoid that.
-  (setq-default flycheck-disabled-checkers '(haskell-stack-ghc emacs-lisp-checkdoc))
-  :custom (flycheck-display-errors-delay .3))
-#+end_src
-
-In an org-src block, we press ~C-c '~ to get into the language's mode where
-flycheck will provide warnings.
-#+begin_src haskell :tangle no
-module Main where
-
-main :: IO ()
-main = putStrLn $ "nice" ++ f 0
-
-f :: Int -> String
-f x = x -- show x
--- type error
-#+end_src
-
-In-general, flycheck is intended for self-contained raw code ---not for source
-blocks in Org-mode. Whence, the above example is a complete Haskell program,
-with a named module and ~main~ method.
-
-I think the built-in [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Flymake.html][flymake]] syntax checker is better for Emacs Lisp,
-so let's use that for ELisp.
-#+BEGIN_SRC emacs-lisp
-(use-package flymake
-  :hook ((emacs-lisp-mode . (lambda () (flycheck-mode -1)))
-         (emacs-lisp-mode . flymake-mode))
-  :bind (:map flymake-mode-map
-              ("C-c ! n" . flymake-goto-next-error)
-              ("C-c ! p" . flymake-goto-prev-error)))
-#+END_SRC
-
-Try it out:
-#+begin_src emacs-lisp :tangle no
-(setq 1 2) ;; Error: ‘1’ is not a variable.
-#+end_src
 
 ** Coding with a Fruit Salad: Semantic Highlighting
 :PROPERTIES:
@@ -10022,7 +10011,7 @@ I found using yafolding-mode to be way too slow.
   (global-set-key (kbd "s-f") 'yafolding-hydra/body)
 #+end_src
 #+end_details
-** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab
+** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab :relocate:
 :PROPERTIES:
 :CUSTOM_ID: Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab
 :END:
@@ -10055,7 +10044,7 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, ha
 See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
 into new configurations.
 
-** Shell / Terminal
+** Shell / Terminal :relocate:
 
 *** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]
 
@@ -10123,47 +10112,6 @@ $i^{th}$-line having pattern =pᵢ=.
   - [[https://user-images.githubusercontent.com/170270/55060505-31179b00-50a4-11e9-99a9-c3691ba38d66.png][Renders `text in backticks` in issue titles, commit titles and more places.]]
   - Shows all of Refined GitHub’s new keyboard shortcuts in the help modal ([[kbd:?]] hotkey).
 
-** How do I do something?
-
-  When programming, sometimes you just gotta Google “how do I do ⋯”.
-  - The usual process is (1) open a browser, (2) make a Google query, (3) look
-    at StackOverflow's most upvoted answer for your query, (4) copy-paste the
-    code solution/example to your editor; [(5) get distracted by interesting
-    things you'd like to read].
-  - Better would be to use the [[https://github.com/gleitz/howdoi][howdoi]] tool, which gives instant coding answers
-    for common questions via the command line.
-  - Below, my /Emacs Lisp/ function doc:howdoi let's me reduce the 4-step process
-    to just 2 steps: Write your query /anywhere/ then call ~M-x howdoi~ on it to
-    replace the query with the answer. (Or ~C-u M-x howdoi~ to see the full answer
-    and a link to it on StackOverflow.)
-
-    | /⚡ Never open your browser to look for help again ⚡/ |
-
-#+begin_src emacs-lisp
-(system-packages-ensure "howdoi")
-
-(cl-defun howdoi (&optional show-full-answer)
-  "Instantly insert coding answers.
-
-Replace a query with a code solution; replace it with an entire
-answer if a prefix is provided.
-
-Example usage:
-
-   On a new line, write a question such as:
-
-      search and replace buffer Emacs Lisp
-
-   Then invoke ‘M-x howdoi’ anywhere on the line
-   to get a code snippet; or ‘C-u M-x howdoi’ to get a full answer to your query.
-"
-  (interactive "P")
-  (let ((query (s-collapse-whitespace (substring-no-properties (thing-at-point 'line))))
-        (flag (if show-full-answer "-a" "")))
-    (beginning-of-line)
-    (kill-line)
-    (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
-#+end_src
 ** Browse remote files
 
   Sometimes you want to see the current file in Github; e.g., you select a
@@ -10176,139 +10124,210 @@ Example usage:
 ;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
 (use-package browse-at-remote)
 #+end_src
-** C-x C-e / REPL-driven development for NodeJS!
-
-| /Evaluate code and see the results inline ---A feedback loop that is faster than ever!/ |
-
-Within Emacs, kbd:C-x_C-e evaluates a Lisp expression; e.g.,
-at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
-- We ran some code /without/ explicitly running an interpreter/repl/compiler!
-
-- We can do the same thing for JavaScript: There'll be a NodeJS repl server
-  running, implicitly in the background, and ~C-x C-e~ will send it a line (or a
-  selected regions) of JavaScript for evaluation; we then see the result as an
-  overlay in our current JS buffer. (This is a REST api).
-  - You /choose/ which code gets (re)evaluated.
-
-- See [[https://github.com/anonimitoraf/skerrick][skerrick: REPL-driven development for Javascript]] for animated GIFs; it
-  works with modules as well.
-
-- A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
-
+** A nice Emacs interface for a portion of the “gh” CLI
 #+begin_src emacs-lisp
-(quelpa '(skerrick :repo "anonimitoraf/skerrick" :fetcher github))
+;; A nice Emacs interface for the a portion of the “gh” CLI.
+(my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
+(cl-defun my/gh-checkout (&optional repo)
+  "With prefix, select a branch name; otherwise a Pull Request name.
 
-;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
-(unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
-  (skerrick-install-or-upgrade-server-binary))
+If no REPO is provided, let the user select one from a menu.
+Example use:      (w-pr-checkout \"~/wxPortal\")
+                  (w-pr-checkout)"
+  (interactive)
+  (let* ((repo (or repo (completing-read "Repo: " (projectile-relevant-known-projects))))
+         (default-directory repo) ;; temporarily override this global variable, used with magit
+         (current-branch (magit-get-current-branch))
+         (all-branches (magit-list-local-branch-names))
+         (status (format "cd %s; gh pr status" repo)))
+    (if current-prefix-arg
+        (-let [branch (completing-read (format "New branch (Currently “%s”): " current-branch) all-branches)]
+          (shell-command-to-string (format "cd %s; git checkout %s" repo branch)))
+      (let* ((PR-list (s-split "\n" (shell-command-to-string (format "cd %s; gh pr list" repo))))
+             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list))))
+             (_ (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯)))
+             (new-branch (magit-get-current-branch)))
+        ;; Show nice status
+        (async-shell-command status)
+        (magit-status repo)))))
+#+end_src
 
-;; Should be run in a JS buffer; it is buffer specific.
-;; (skerrick-start-server)
+** [[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.
+#+begin_src emacs-lisp
+;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
+;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
+;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
+;; With a prefix argument prompt for the format style 𝒮.
+;; Easy to add more formats.
+(use-package copy-as-format)
+#+end_src
 
-;; Now main function, entry point is:
-;; M-x skerrick-eval-region
+** See all company related PRs
+#+begin_src emacs-lisp
+(cl-defun w-PRs (&rest query-options)
+  "See all company related PRs"
+  (interactive)
+  (thread-last `("is:open" "is:pr" "archived:false" "user:WeeverApps" "draft:false" ,@query-options)
+    (mapcar #'url-hexify-string)
+    (s-join "+")
+    (concat "https://github.com/pulls?q=")
+    browse-url))
 ;;
-
-;; Evaluate a region, if any is selected; otherwise evaluate the current line.
-(bind-key
- "C-x C-e"  (lambda ()
-              (interactive)
-              (if (use-region-p)
-                  (skerrick-eval-region)
-                (beginning-of-line)
-                (set-mark-command nil)
-                (end-of-line)
-                (skerrick-eval-region)
-                (pop-mark)))
- 'js-mode-map)
+(cl-loop for (name . query-options)
+         in `((month ,(format-time-string "updated:>=%Y-%m-01"))
+              (today ,(format-time-string "updated:>=%Y-%m-%d"))
+              (created-this-week ,(format "created:>=%s"
+                                          (org-read-date nil nil "++1" nil (org-read-date nil t "-sun")))) ;; Date of most recent Monday
+              (stale!! ,(format "updated:<=%s" (org-read-date nil nil "-1w"))) ;; Items not touched in over a week
+              (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
+              (involves-me "involves:alhassy")
+              (inspections "label:Inspections")
+              (process-manager "label:\"quick and easy\"" "repo:process-builder")
+              (newts "label:\"Newts Priority Review\",Newts"))
+         do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
 #+end_src
 
-For instance,
-#+begin_src js :tangle no
-// Start the server... then
-// On each line and press C-x C-e
-let a = "hello"
-let b = "world"
-(a + ' ' + b).toUpperCase()
-// The final line should show: HELLO WORLD
-#+end_src
-
-** devdocs
+** SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only
+want to /quickly/ run a query, to check something, *without the fricition of
+switching applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-sql
+]]to produce a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.
+(This also serves as a nice *reference mechanism* for useful queries.)
 #+begin_src emacs-lisp
-;; 1. Get docs of a languages: M-x devdocs-install
-;; 2. Lookup docs: [C-u] M-x devdocs-lookup
-;; 𝟚. Lookup docs: [C-u] C-c d
-(use-package devdocs
-  :bind ("C-c d" . #'devdocs-lookup)
+;; (system-packages-ensure "leiningen")
+(use-package ejc-sql
   :config
-  (when nil ;; “C-x C-e” the following once.
-    (loop for lang in '(javascript ramda typescript html css sass
-                       vue~3 vuex~4 vue_router~4 "angularjs~1.6"
-                       nginx webpack~5 web_extensions
-                       ;;
-                       eslint  jest jq jsdoc prettier
-                       mocha chai jasmine
-                       ;;
-                       bash docker~19 git homebrew elisp
-                       ;;
-                       postgresql~14 redis sqlite
-                       ;;
-                       rust ruby~3 minitest "rails~7.0")
-          do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
+  (require 'ejc-company)
+  (push 'ejc-company-backend company-backends)
+  (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
+  ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
+  (bind-key "C-<return>"
+             (lambda () (interactive)
+               (setq ejc-sql-complete-query-hook
+                     (if current-prefix-arg
+                         '(w-ejc-result-pp-json)  ;; Defined below
+                       '((lambda () ;; Give each line of text just one screen line.
+                           (switch-to-buffer-other-window "*ejc-sql-output*")
+                           (visual-line-mode -1)
+                           (toggle-truncate-lines)
+                           (other-window -1)))))
+               (ejc-eval-user-sql-at-point))
+             'sql-mode-map))
+
+(defun w-sql ()
+  "Quickly run a SQL query, then dispose of the buffer when done.
+
+By default uses a connection named “platform”, to see a list of
+other connections call with a prefix argument."
+  (interactive)
+
+  ;; Get DB credentials. One does “M-x ejc-connect-interactive” once, then
+  ;;  “M-x ejc-insert-connection-data” and paste that into your init; then
+  ;; “M-x ejc-connect” provides a compleition of possible DBs to connect to.
+  (load-file "~/Desktop/work.el")
+  ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
+  ;; which temporarily adds to this hook, then calls
+  (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
+
+  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "platform")]
+    (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
+    (thread-last
+        '("\n\n/\n-- DOCS & EXAMPLES\n--"
+          "-- SQL queries should be seperated by “/”"
+          "-- [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP]"
+          "-- In result window, TAB/RET to navigate the columns/rows."
+          "-- C-c e t ⇒ List all tables"
+          "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
+          "\nselect 1 + 2 as \"Numerical, yeah!\""
+          "\n/\n"
+          "-- See the latest form's elements & extra props"
+          "select data #>'{details, properties, wxConfig, formElements}'"
+          "from platform.forms\norder by updated_at desc\nlimit 1;"
+          "\n/\n"
+          "SELECT data #> '{details, properties}'\nfrom submissions"
+          "-- The submissions that have at least a ‘number’ or an ‘MCS’, but NOT a ‘time’."
+          "where data::text similar to '%\"wxType\": \"(number|wx-multiple-choice-score)\"%'"
+          "and not data #> '{details, properties, formdata}' @> '[{\"wxType\": \"time\"}]'"
+          "limit 1;"
+          "\n-- The short arrow -> keeps the type as JSON, and the long arrow ->> returns text."
+          "-- Likewise #> yields JSON whereas #>> yields text."
+          "-- a -> 'b' -> 'c' -> 3 -> 'd'  ==  a #> '{b, c, 3, d}' "
+          "-- (Use integers to access elements of JSON arrays)"
+          "\n/\n"
+          "-- Here are the triggers that are run when an UPDATE is performed against ‘submissions’"
+          "select * from information_schema.triggers"
+          "where event_object_table = 'submissions'"
+          "and event_manipulation = 'UPDATE'"
+          "\n/\n"
+          "-- See most recently updated/altered “In Progress” ticket"
+          "select * from tickets\norder by updated_at desc\nlimit 1")
+      (s-join "\n")
+      insert)
+    (sql-mode)
+    (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
+    (ejc-connect connection-name)
+    (beginning-of-buffer)))
+
+(defun w-ejc-result-pp-json ()
+  "Pretty print JSON ejc-result buffer."
+  (interactive)
+  (ignore-errors
+    (switch-to-buffer-other-window "*ejc-sql-output*")
+    (beginning-of-buffer)
+    (re-search-forward "{")
+    (backward-char 1)
+    (delete-region (point-min) (point))
+    (end-of-buffer)
+    (re-search-backward "|")
+    (kill-line)
+    (json-mode)
+    (json-pretty-print-buffer)
+    (other-window -1)))
 #+end_src
 
-** Sleek Semantic Selection
-
-Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
-work, press it again to select sentence, then again for the current paragraph,
-then more to get the current section.
-
+** Docker
 #+begin_src emacs-lisp
-(use-package expand-region
-  :diminish
-  :bind (("s-r" . #'er/expand-region)))
+;; Usage: M-x docker [RET ?]
+(use-package docker
+  :config
+  (my/defaliases docker-containers w-show-docker-containers))
+
+(defun w-stop&remove-docker-containers ()
+  (interactive)
+  (shell-command "docker stop $(docker ps -a -q)")
+  (shell-command "docker rm $(docker ps -a -q)"))
 #+end_src
 
-You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
-
-That is, /repeated ⌘+r expands the selection to the next logical segment of text:/
-In writing this means “Word, sentence, paragraph”, and in programming this means
-“identifier, then incrementally larger scopes”.
-
-** Documentation Pop-Ups
-:PROPERTIES:
-:CUSTOM_ID: Documentation-Pop-Ups
-:END:
-
-Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
-This is very useful when editing in a particular coding language, say via
-~C-c '~ for org-src blocks.
-#+BEGIN_SRC emacs-lisp
-(use-package company-quickhelp
- :config
-   (setq company-quickhelp-delay 0.1)
-   (company-quickhelp-mode))
-#+END_SRC
-* Preview link under cursor
-When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
-- Useful to quickly preview files and images.
-- See also: https://github.com/jcs-elpa/preview-it
-
+*** my/docker-stop
 #+begin_src emacs-lisp
-(quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
-(global-preview-it-mode)
+(defun my/docker-stop (ctr)
+  "Stop all containers that mention CTR in their name, image, command, or container id"
+  (thread-last (shell-command-to-string "docker ps -a")
+    (s-split "\n")
+    (--filter (s-contains-p ctr it))
+    (--map (car (s-split " " it))) ;; Get docker container ids
+    (--map (shell-command (concat "docker stop " it)))))
 #+end_src
 
-This also works nicely when I'm looking to open a file; e.g., ~C-x C-f
-~/.emacs.d/.as TAB~ to preview my ~.aspell.en.pws~ (Emacs personal dictionary) file
-in a tooltip.
-# (Sadly, the preview closes my ~M-x~ session when previewing an org file.)
-# Not entirely true; but it's happened with some org files.
-
-Likewise, I'd like to preview line when executing the doc:goto-line / kbd:M-g_M-g command.
+** my/open-in-terminal '⌘
 #+begin_src emacs-lisp
-(quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
-(global-set-key [remap goto-line] 'goto-line-preview)
+(defalias 'my/open-in-terminal '⌘)
+(cl-defun ⌘ (&rest cmds)
+  "Run terminal commands CMDS in a new MacOS Terminal instance, and bring it to focus.
+
+Example: (⌘ \"echo hello\" \"echo world\")
+
+Useful for those cases where I have to interact with non-trivial ‘interactive terminal menus’."
+  (shell-command (format "osascript -e 'tell app \"Terminal\" to activate do script %s'"
+                         (pp-to-string (s-join ";" cmds)))))
+
+;; (⌘ "echo hello" "echo world")
+#+end_src
+
+** Check if application APP is currently running, in use.
+#+begin_src emacs-lisp
+(cl-defun my/application-running? (app)
+  "Check if application APP is currently running, in use."
+  (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
 #+end_src
 
 * Toggles Hydra
