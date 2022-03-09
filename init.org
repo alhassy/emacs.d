@@ -8417,11 +8417,51 @@ may be a very useful tool.
   :config
   ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
   ;; the page to get the HTML title.
-  (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url))
+  ;; (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url) ;; Instead, see my/org-insert-link-dwim below.
+  )
 #+end_src
 Other useful functions, needing pandoc:
 doc:org-web-tools-insert-web-page-as-entry and
 doc:org-web-tools-convert-links-to-page-entries.
+
+#+begin_src emacs-lisp
+(bind-key* "C-c C-l" #'my/org-insert-link-dwim)
+;; From:
+(defun my/org-insert-link-dwim ()
+  "Like `org-insert-link' but with personal dwim preferences.
+
+- When text is selected, use that as the link description --and prompt for link type
+- When a URL is in the clipboard, use that as the link type
+- On an existing Org link, prompt to alter the link then to alter the description
+- With a ‘C-u’ prefix, prompts for a file to link to.
+  - It is relative to the current directory; use ‘C-u C-u’ to get an absolute path.
+
+It fallsback to `org-insert-link' when possible.
+
+Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
+  (interactive)
+  (let* ((point-in-link (org-in-regexp org-link-any-re 1))
+         (clipboard-url (when (string-match-p "^http" (current-kill 0))
+                          (current-kill 0)))
+         (region-content (when (region-active-p)
+                           (buffer-substring-no-properties (region-beginning)
+                                                           (region-end)))))
+    (cond ((and region-content clipboard-url (not point-in-link))
+           (delete-region (region-beginning) (region-end))
+           (insert (org-make-link-string clipboard-url region-content)))
+          ((and clipboard-url (not point-in-link))
+           (insert (org-make-link-string
+                    clipboard-url
+                    (read-string "title: "
+                                 (with-current-buffer (url-retrieve-synchronously clipboard-url)
+                                   (dom-text (car
+                                              (dom-by-tag (libxml-parse-html-region
+                                                           (point-min)
+                                                           (point-max))
+                                                          'title))))))))
+          (t
+           (call-interactively 'org-insert-link)))))
+#+end_src
 
 * Programming
 :PROPERTIES:
@@ -9366,7 +9406,6 @@ doing that.
 ;; Use: Run “M-x jsdoc” on a JS function.
 ;;
 (use-package jsdoc
-  :ensure t
   :quelpa (jsdoc
            :fetcher github
            :repo "isamert/jsdoc.el")
