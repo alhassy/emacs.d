@@ -13,6 +13,9 @@
 #+export_file_name: index
 
 * TODO Clean this section up! :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Clean-this-section-up
+:END:
 #+begin_src emacs-lisp :exports none
 ;; cl-lib was published as a better (namespaced!) alternative to cl, which has a deprecation warning in Emacs27.
 ;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
@@ -37,7 +40,13 @@
 #+end_src
 
 * Meta-setup :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Meta-setup
+:END:
 ** Blog/HTML Setup                                                  :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Blog-HTML-Setup
+:END:
 # ─AlBasmala keywords─
 # DRAFT: yes
 #+SOURCEFILE: https://github.com/alhassy/emacs.d/blob/master/init.org
@@ -50,6 +59,9 @@
 # The last one has the styling for lists.
 
 ** Github Actions                                                 :noexport:
+:PROPERTIES:
+:CUSTOM_ID: Github-Actions
+:END:
 
 The following creates the “Github Actions Workflow” file;
 this way, Github will run your tests every time you commit ^_^
@@ -539,6 +551,7 @@ its text editors.
 | [Neo]Vim / Modal text editor                 |   | EVIL mode                                           |
 | RSS Newsreader                               |   | ElFeed                                              |
 | Email                                        |   | Gnus/Mu4e                                           |
+| Spredsheet tool                              |   | [[https://orgmode.org/manual/The-Spreadsheet.html][Org Table]] / [[https://www.reddit.com/r/emacs/comments/t8k1cw/simple_emacs_spreadsheet/][Simple Emacs Spreadsheet]]                |
 | Automatic file backups                       |   | ⟨Built-in⟩ & backup-walker                          |
 | seemless GPG tool                            |   | ⟨Built-in⟩                                          |
 | Lisp interpreter                             |   | Anywhere press kbd:C-x_C-e to run a Lisp expression |
@@ -549,7 +562,7 @@ its text editors.
 | Psychologist                                 |   | doc:doctor                                          |
 | Typing tutor                                 |   | typing-of-emacs                                     |
 | Modern Internet Browser                      |   | doc:xwidget-webkit-browse-url                       |
-| everything else                              |   | [[https://github.com/emacs-eaf/emacs-application-framework][EAF]]                                              |
+| everything else                              |   | [[https://github.com/emacs-eaf/emacs-application-framework][EAF]]                                                 |
 |----------------------------------------------+---+-----------------------------------------------------|
 
 I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
@@ -1953,6 +1966,9 @@ Possibly interesting reads:
 #+end_details
 
 ** all-the-icons
+:PROPERTIES:
+:CUSTOM_ID: all-the-icons
+:END:
 
 #+begin_src emacs-lisp
  (use-package all-the-icons
@@ -2188,6 +2204,9 @@ windows, so we can make a hydra to alleviate the trouble.
 # See [[https://jeremykun.com/2020/01/14/the-communicative-value-of-using-git-well/][The Communicative Value of Using Git Well]]
 
 ** COMMENT Dropbox & Mega [Not really in use]
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Dropbox-Mega-Not-really-in-use
+:END:
 Install quick file sharing utility ---[[https://www.dropbox.com/install][Dropbox]]--- as well as a backup
 service, [[https://mega.nz/fm][Mega]] ---I use this for my =backups= directory: Keep reading.
 # +begin_src shell
@@ -2620,6 +2639,9 @@ doc:vc-annotate is also very useful to go through history and work out when
 things went wrong.
 
 *** Jump to a (ma)git repository with ~C-u C-x g~
+:PROPERTIES:
+:CUSTOM_ID: Jump-to-a-ma-git-repository-with-C-u-C-x-g
+:END:
 
 #+begin_src emacs-lisp
 ;; Jump to a (ma)git repository with C-u C-x g.
@@ -2769,6 +2791,9 @@ items there (•̀ᴗ•́)و
 #
 
 ** Silently show me when a line was modified and by whom
+:PROPERTIES:
+:CUSTOM_ID: Silently-show-me-when-a-line-was-modified-and-by-whom
+:END:
  Quickly & /automatically/ glimpse who, why, and when a line or code block was
  changed, using [[https://github.com/Artawower/blamer.el][blamer.el]]. Jump back through history to gain further insights
  as to how and why the code evolved with kbd:C-x_g_l_l (doc:magit-log-head) or
@@ -2813,6 +2838,9 @@ doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes
 then we use doc:git-timemachine.
 
 ** delete-by-moving-to-trash t
+:PROPERTIES:
+:CUSTOM_ID: delete-by-moving-to-trash-t
+:END:
 #+begin_src emacs-lisp
 ;; Move to OS’ trash can when deleting stuff
 ;; instead of deleting things outright!
@@ -3588,6 +3616,9 @@ ${1:`(let* ((τ (read-string "Link type: "))
 #+END_SRC
 
 *** Work Templates
+:PROPERTIES:
+:CUSTOM_ID: Work-Templates
+:END:
 
 #+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
 ,** ll_console_log: Log some JS variables
@@ -3944,6 +3975,9 @@ name.
 #+end_box
 
 ** Prettify inline source code
+:PROPERTIES:
+:CUSTOM_ID: Prettify-inline-source-code
+:END:
 
 #+begin_src emacs-lisp
 ;; Show “ src_emacs-lisp[:exports results]{ 𝒳 } ” as “ ℰ𝓁𝒾𝓈𝓅﴾ 𝒳 ﴿ ”.
@@ -4242,6 +4276,9 @@ We show its subheadings in a completing-read menu, then narrow to that entry."
 #+end_src
 
 **** COMMENT Emacs as a reference platform: Instead of manually finding files, looking for :Place_beside_w_reference_function:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Emacs-as-a-reference-platform-Instead-of-manually-finding-files-looking-for
+:END:
  info, then closing them; we can press a key combination to see some reference
  matter _quickly_ then press _q_ to dismiss it just as quickly. We can do this with
  a combination of (local-set-key (kbd "q") 'kill-buffer-and-window) and
@@ -6058,6 +6095,9 @@ Other separators ---of modeline information--- that I've considered include
 like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
 :End:
 *** Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled
+:PROPERTIES:
+:CUSTOM_ID: Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled
+:END:
 
 Enabled minor modes clutter up the modeline with their names, albeit some have
 useful status information shown. We can either selectively pick which
@@ -6076,6 +6116,9 @@ configurations gear icon. ⚙. :gear:
   ;; We likely want to add this locally, to hooks on major modes.
 #+end_src
 *** Nice battery icon alongside with percentage, in doom-modeline
+:PROPERTIES:
+:CUSTOM_ID: Nice-battery-icon-alongside-with-percentage-in-doom-modeline
+:END:
 #+begin_src emacs-lisp
 ;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
 (display-battery-mode +1)
@@ -6096,6 +6139,9 @@ longer maintained. It works on my machine.
 #+end_details
 
 *** Time & date
+:PROPERTIES:
+:CUSTOM_ID: Time-date
+:END:
 Let’s display the current time, with updates every second.
 
 #+begin_src emacs-lisp
@@ -6121,6 +6167,9 @@ for; so let's disable those.
 #+end_src
 
 *** Column Numbers
+:PROPERTIES:
+:CUSTOM_ID: Column-Numbers
+:END:
 Likewise, let's have the modeline display column numbers, but not line numbers.
 Instead, let's have line numbers on the side of the buffer; moreover let's have
 a uniform width for displaying line numbers, rather than having the width grow
@@ -6991,6 +7040,9 @@ of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
 
 ** COMMENT Replace :KEYWORDS: with nice SVG labels :Not_so_sure_about_this:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Replace-KEYWORDS-with-nice-SVG-labels
+:END:
 #+begin_src emacs-lisp
 ;; Replace :KEYWORDS: with nice SVG labels; for more power use the svg-lib package.
 (use-package svg-tag-mode
@@ -7011,6 +7063,9 @@ lengthy phrase being emphasised.
              ;; Many more useful examples at: https://github.com/rougier/svg-tag-mode/blob/main/examples/example-2.el
 #+end_src
 ** Preview link under cursor
+:PROPERTIES:
+:CUSTOM_ID: Preview-link-under-cursor
+:END:
 When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
 - Useful to quickly preview files and images.
 - See also: https://github.com/jcs-elpa/preview-it
@@ -7046,6 +7101,9 @@ essentially text (•̀ᴗ•́)و
 
 
 ** Whitespace
+:PROPERTIES:
+:CUSTOM_ID: Whitespace
+:END:
 Let's start off by cleaning-up any accidental trailing whitespace and in other
 places upon save.
 #+begin_src emacs-lisp
@@ -7055,6 +7113,9 @@ places upon save.
 See [[http://ergoemacs.org/emacs/whitespace-mode.html][here]] for making whitespace visible; including spaces, tabs, and newlines
 
 ** Formatting Text
+:PROPERTIES:
+:CUSTOM_ID: Formatting-Text
+:END:
 
 The following incantation, doc:my/org-mode-format, makes it so that we can
 select some text then press kbd:C-c_f (to get a list of possible character
@@ -7930,6 +7991,9 @@ Notice, as a hydra, I can use ~C-c e~ followed by any combination of ~p~ and ~n~
 navigate my recent edits /without/ having to supply the prefix each time.
 
 ** visual-regexp
+:PROPERTIES:
+:CUSTOM_ID: visual-regexp
+:END:
 #+begin_src emacs-lisp
 ;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
 ;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
@@ -8499,6 +8563,9 @@ and template expansion for inescapably repetitive scenarios.
 + Quickly look up language/library docs /within/ Emacs with kbd:C-c_d.
 
 ** Quickly Run Code Snippets
+:PROPERTIES:
+:CUSTOM_ID: Quickly-Run-Code-Snippets
+:END:
 
 Sometimes we want to quickly run some code /without making a dedicated file/ or
 with a file but /without remembering the terminal incantation to do so/, enter
@@ -8545,6 +8612,9 @@ Example...
 #+end_src
 
 ** C-x C-e / REPL-driven development for NodeJS!
+:PROPERTIES:
+:CUSTOM_ID: C-x-C-e-REPL-driven-development-for-NodeJS
+:END:
 
 | /Evaluate code and see the results inline ---A feedback loop that is faster than ever!/ |
 
@@ -8602,6 +8672,9 @@ let b = "world"
 #+end_src
 
 ** devdocs
+:PROPERTIES:
+:CUSTOM_ID: devdocs
+:END:
 #+begin_src emacs-lisp
 ;; 1. Get docs of a languages: M-x devdocs-install
 ;; 2. Lookup docs: [C-u] M-x devdocs-lookup
@@ -8626,6 +8699,9 @@ let b = "world"
 #+end_src
 
 ** How do I do something?
+:PROPERTIES:
+:CUSTOM_ID: How-do-I-do-something
+:END:
 
   When programming, sometimes you just gotta Google “how do I do ⋯”.
   - The usual process is (1) open a browser, (2) make a Google query, (3) look
@@ -8667,6 +8743,9 @@ Example usage:
     (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
 #+end_src
 ** Sleek Semantic Selection
+:PROPERTIES:
+:CUSTOM_ID: Sleek-Semantic-Selection
+:END:
 
 Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
 word, press it again to select sentence, then again for the current paragraph,
@@ -8684,6 +8763,9 @@ In writing this means “Word, sentence, paragraph”, and in programming this m
 “identifier, then incrementally larger scopes”.
 
 ** Managing Processes/Servers from within Emacs ---Work-specific functions
+:PROPERTIES:
+:CUSTOM_ID: Managing-Processes-Servers-from-within-Emacs-Work-specific-functions
+:END:
 
 Let's make a few interactive Emacs Lisp functions to reduce the amount of time I
 need to be in a terminal. I'll use the /prefix ~“w-”~ for work stuff/. Example
@@ -8703,6 +8785,9 @@ accurately, does not Just Workᵀᴹ for my needs.
 #+end_src
 
 *** my/defaliases
+:PROPERTIES:
+:CUSTOM_ID: my-defaliases
+:END:
 #+begin_src emacs-lisp
 (defalias 'defaliases 'my/defaliases)
 (defmacro my/defaliases (src &rest tgts)
@@ -8718,6 +8803,9 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 #+end_src
 
 *** Making unkillable buffers & shells
+:PROPERTIES:
+:CUSTOM_ID: Making-unkillable-buffers-shells
+:END:
 #+begin_details "Making unkillable buffers & shells"
 #+begin_src emacs-lisp
 (defun my/declare-unkillable-buffer (name)
@@ -8746,6 +8834,9 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 #+end_details
 
 *** my/work-links
+:PROPERTIES:
+:CUSTOM_ID: my-work-links
+:END:
    #+begin_src emacs-lisp
 (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
   "Given a link of TYPE with a URL, produce the correct org-link.
@@ -8770,6 +8861,9 @@ This is how the link looks upon export."
    #+end_src
 
 *** Process Manager
+:PROPERTIES:
+:CUSTOM_ID: Process-Manager
+:END:
 #+begin_src emacs-lisp
 (cl-defun w-open-pm () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
 (cl-defun w-start-pm ()
@@ -8805,6 +8899,9 @@ Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-
 #+end_src
 
 *** Blue Screen
+:PROPERTIES:
+:CUSTOM_ID: Blue-Screen
+:END:
 #+begin_src emacs-lisp
 (my/defaliases w-dev-env-start w-blue-screen w-db-start-servers w-start-db-servers)
 ;;
@@ -8831,6 +8928,9 @@ Menu can be closed when servers are started; can also stop them."
 #+end_src
 
 *** w-start/stop-services
+:PROPERTIES:
+:CUSTOM_ID: w-start-stop-services
+:END:
 #+begin_src emacs-lisp
 (defvar my/services nil "List of all services defined; used with `w-start-services' and `w-stop-services'.")
 
@@ -8846,6 +8946,9 @@ Menu can be closed when servers are started; can also stop them."
 #+end_src
 
 *** w-status-of-services
+:PROPERTIES:
+:CUSTOM_ID: w-status-of-services
+:END:
 #+begin_src emacs-lisp
 ;; It takes about ~3 seconds to build the Status of Services page, so let's jump to it if it's already built, and the user/me can request a refresh, if need be.
 (global-set-key (kbd "M-S-SPC")
@@ -8932,6 +9035,9 @@ Menu can be closed when servers are started; can also stop them."
 #+end_src
 
 *** my/defservice
+:PROPERTIES:
+:CUSTOM_ID: my-defservice
+:END:
 #+begin_src emacs-lisp
 (cl-defmacro my/defservice
     (repo &key (main-setup "git checkout main; git pull")
@@ -9029,6 +9135,9 @@ Menu can be closed when servers are started; can also stop them."
 #+end_src
 
 *** w-app-slugs
+:PROPERTIES:
+:CUSTOM_ID: w-app-slugs
+:END:
 #+begin_src emacs-lisp
 (defvar w-app-slugs
    (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
@@ -9047,6 +9156,9 @@ Menu can be closed when servers are started; can also stop them."
 #+end_src
 
 *** Migrations & Rollbacks
+:PROPERTIES:
+:CUSTOM_ID: Migrations-Rollbacks
+:END:
 #+begin_src emacs-lisp
 (cl-defun w-db-migrations ()
   (interactive)
@@ -9058,6 +9170,9 @@ Menu can be closed when servers are started; can also stop them."
 #+end_src
 
 *** COMMENT Handbook :Seldom_used:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Handbook
+:END:
 #+begin_src emacs-lisp
 (cl-defun w-handbook-view ()
   "Open the HTML handbook in your local browser"
@@ -9071,6 +9186,9 @@ Menu can be closed when servers are started; can also stop them."
    (w-handbook-view))
 #+end_src
 ** Project management & navigation
+:PROPERTIES:
+:CUSTOM_ID: Project-management-navigation
+:END:
 
 Version controlled repositories are considered “projects” ---no setup needed---,
 but you can declare your own too.
@@ -9128,6 +9246,9 @@ Let's get the file path of the current file. We bind it and make it a top-level 
 #+end_src
 
 ** TODO Are there any errors in my code?
+:PROPERTIES:
+:CUSTOM_ID: Are-there-any-errors-in-my-code
+:END:
 
 [[https://www.flycheck.org/en/latest/][Flycheck]] gives us syntax checking and linting tools to automatically check the
 contents of buffers while you type, and reports warnings and errors directly in
@@ -9224,6 +9345,9 @@ Try it out:
 #+end_src
 
 ** LSP: Making Emacs into a generic full-featured programming IDE
+:PROPERTIES:
+:CUSTOM_ID: LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE
+:END:
 
 (TLDR: LSP gives Emacs a uniform way to deal with programming languages, such as
 highlighting and refactoring.)
@@ -9463,6 +9587,9 @@ add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
 works fine even for locally bound definitions.  It works depending on the
 extension of a file.
 ** TODO COMMENT   ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-M-x-jsdoc-Insert-JSDocs-with-minimal-type-inference-useful-with-LSP-mode
+:END:
 
 Let's make use of JSDocs for functions ---since then LSP will show us the types
 and function description in a neato pop-up to the side.  [[https://github.com/isamert/jsdoc.el][jsdoc.el]] inserts JSDoc
@@ -9499,6 +9626,9 @@ This is very useful when editing in a particular coding language, say via
    (company-quickhelp-mode))
 #+END_SRC
 ** Turbolog: What's the value of this expression? :JavaScript:
+:PROPERTIES:
+:CUSTOM_ID: Turbolog-What's-the-value-of-this-expression
+:END:
 With [[https://github.com/Artawower/turbo-log][turbo-log]], I can select an expression then press [[kbd:C-x l l]] to have
 that expression be part of a console log message, in the next line, that also
 mentions the line number and buffer's name. I can toggle all these inserted
@@ -9769,6 +9899,9 @@ to a programming language's syntactic constructions.
 #+end_box
 
 *** Actual Setup :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Actual-Setup
+:END:
 --------------------------------------------------------------------------------
 
 Below I setup hideshow along with [[doc:hideshowvis-symbols][hideshowvis]] which gives us a nice clickable
@@ -10045,8 +10178,14 @@ See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're in
 into new configurations.
 
 ** Shell / Terminal :relocate:
+:PROPERTIES:
+:CUSTOM_ID: Shell-Terminal
+:END:
 
 *** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]
+:PROPERTIES:
+:CUSTOM_ID: hr-https-github-com-LuRsT-hr-A-horizontal-for-your-terminal
+:END:
 
 When working in the terminal, at least in my day job, it can be helpful to
 visually segregate large chunks of output. With the ~hr~ command, I can run ~hr
@@ -10061,6 +10200,9 @@ $i^{th}$-line having pattern =pᵢ=.
 #+end_src
 
 ** Github Browser Extensions (for Chrome)
+:PROPERTIES:
+:CUSTOM_ID: Github-Browser-Extensions-for-Chrome
+:END:
 
 + [[https://github.com/ovity/octotree][octotree]]  :: Lets you explore the files and folders of a repository with a
   tree and search bar. Can also quickly browse the files changed in the current
@@ -10113,6 +10255,9 @@ $i^{th}$-line having pattern =pᵢ=.
   - Shows all of Refined GitHub’s new keyboard shortcuts in the help modal ([[kbd:?]] hotkey).
 
 ** Browse remote files
+:PROPERTIES:
+:CUSTOM_ID: Browse-remote-files
+:END:
 
   Sometimes you want to see the current file in Github; e.g., you select a
   region and press ~M-x browse-at-remote-kill~ to get the URL for that region in
@@ -10125,6 +10270,9 @@ $i^{th}$-line having pattern =pᵢ=.
 (use-package browse-at-remote)
 #+end_src
 ** A nice Emacs interface for a portion of the “gh” CLI
+:PROPERTIES:
+:CUSTOM_ID: A-nice-Emacs-interface-for-a-portion-of-the-gh-CLI
+:END:
 #+begin_src emacs-lisp
 ;; A nice Emacs interface for the a portion of the “gh” CLI.
 (my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
@@ -10153,6 +10301,9 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
 #+end_src
 
 ** [[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.
+:PROPERTIES:
+:CUSTOM_ID: https-github-com-sshaw-copy-as-format-copy-as-format-Emacs-function-to-copy-buffer-locations-as-GitHub-Slack-JIRA-etc-formatted-code
+:END:
 #+begin_src emacs-lisp
 ;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
 ;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
@@ -10163,6 +10314,9 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
 #+end_src
 
 ** See all company related PRs
+:PROPERTIES:
+:CUSTOM_ID: See-all-company-related-PRs
+:END:
 #+begin_src emacs-lisp
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
@@ -10188,6 +10342,9 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
 #+end_src
 
 ** SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only
+:PROPERTIES:
+:CUSTOM_ID: SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only
+:END:
 want to /quickly/ run a query, to check something, *without the fricition of
 switching applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-sql
 ]]to produce a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.
@@ -10285,6 +10442,9 @@ other connections call with a prefix argument."
 #+end_src
 
 ** Docker
+:PROPERTIES:
+:CUSTOM_ID: Docker
+:END:
 #+begin_src emacs-lisp
 ;; Usage: M-x docker [RET ?]
 (use-package docker
@@ -10298,6 +10458,9 @@ other connections call with a prefix argument."
 #+end_src
 
 *** my/docker-stop
+:PROPERTIES:
+:CUSTOM_ID: my-docker-stop
+:END:
 #+begin_src emacs-lisp
 (defun my/docker-stop (ctr)
   "Stop all containers that mention CTR in their name, image, command, or container id"
@@ -10309,6 +10472,9 @@ other connections call with a prefix argument."
 #+end_src
 
 ** my/open-in-terminal '⌘
+:PROPERTIES:
+:CUSTOM_ID: my-open-in-terminal-'
+:END:
 #+begin_src emacs-lisp
 (defalias 'my/open-in-terminal '⌘)
 (cl-defun ⌘ (&rest cmds)
@@ -10324,6 +10490,9 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 #+end_src
 
 ** Check if application APP is currently running, in use.
+:PROPERTIES:
+:CUSTOM_ID: Check-if-application-APP-is-currently-running-in-use
+:END:
 #+begin_src emacs-lisp
 (cl-defun my/application-running? (app)
   "Check if application APP is currently running, in use."
@@ -10331,6 +10500,9 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 #+end_src
 
 * Toggles Hydra
+:PROPERTIES:
+:CUSTOM_ID: Toggles-Hydra
+:END:
 
 #+begin_src emacs-lisp
 (my/defhydra "C-c t" "Toggles" toggle-on
@@ -10406,6 +10578,9 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 #+end_src
 
 ** COMMENT Toggling System                                      :RelocateMe:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Toggling-System
+:END:
 
 #+begin_src emacs-lisp
 (defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
@@ -10426,6 +10601,9 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 :CUSTOM_ID: Lost-Souls
 :END:
 ** Note: M-S-SPC is for my personal servers dashboard.
+:PROPERTIES:
+:CUSTOM_ID: Note-M-S-SPC-is-for-my-personal-servers-dashboard
+:END:
 #+begin_src emacs-lisp
 ;; Note: M-S-SPC is for my personal servers dashboard.
 (global-set-key (kbd "M-SPC")   (lambda () (interactive) (setq org-agenda-files (list org-default-notes-file)) (org-agenda nil "a") (delete-other-windows) (beginning-of-buffer)))
@@ -10435,6 +10613,9 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 #+end_src
 
 **  w-screencapture
+:PROPERTIES:
+:CUSTOM_ID: w-screencapture
+:END:
 #+begin_src emacs-lisp
 (bind-key "C-c s"
   (cl-defun w-screencapture ()
@@ -10463,6 +10644,9 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
       (--map (f-delete (format "~/Desktop/%s" it)))))
 #+end_src
 ** Zoom
+:PROPERTIES:
+:CUSTOM_ID: Zoom
+:END:
 #+begin_src emacs-lisp
 ;; An automatic window-resizing mechanism.
 ;; A “calmer” alternative to golden-ratio.
@@ -10472,6 +10656,9 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
   :config (zoom-mode t))
 #+end_src
 ** Projectile
+:PROPERTIES:
+:CUSTOM_ID: Projectile
+:END:
 #+begin_src emacs-lisp
 ;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
 ;; https://github.com/bbatsov/projectile
@@ -10480,6 +10667,9 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
 (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
 #+end_src
 ** Ibuffer
+:PROPERTIES:
+:CUSTOM_ID: Ibuffer
+:END:
 #+begin_src emacs-lisp
 ;; Let's use an improved buffer list.
 (use-package ibuffer ;; This is built-into Emacs.
@@ -10506,9 +10696,15 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
 + (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
 
 ** find function at point
+:PROPERTIES:
+:CUSTOM_ID: find-function-at-point
+:END:
 Friendly reminder that ~M-.~ takes you to the definition, and ~M-,~ takes you back
 to where you originally where.
 ** COMMENT centered-cursor: Keep focus in the centre of the screen :Eeek:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-centered-cursor-Keep-focus-in-the-centre-of-the-screen
+:END:
 #+begin_src emacs-lisp
    ;; When scrolling, move the screen and leave the cursour in the (vertical) center of the screen
    (use-package centered-cursor-mode
@@ -10516,6 +10712,9 @@ to where you originally where.
 #+end_src
 
 ** “C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there
+:PROPERTIES:
+:CUSTOM_ID: C-x-2-and-C-x-3-now-create-a-new-window-horizontally-vertically-and-send-cursor-there
+:END:
  #+begin_src emacs-lisp
 ;; When we split open a new window, we usually want to jump to the new window.
 (advice-add #'split-window-below :after (lambda (&rest _) (other-window 1)))
@@ -10523,6 +10722,9 @@ to where you originally where.
  #+end_src
 
 ** Semantic Change
+:PROPERTIES:
+:CUSTOM_ID: Semantic-Change
+:END:
 
 Using kbd:⌘-i and kbd:⌘-o we can quickly, for example, delete a string or its
 contents; or delete a {}-block or just its contents; or delete a ()-argument
@@ -10540,6 +10742,9 @@ list or just its contents, etc.
 #+end_src
 
 ** Drag Stuff :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Drag-Stuff
+:END:
 #+begin_src emacs-lisp :tangle no
 ;; Move current word ←/→, or current line ↑/↓.
 ;; Todo: Compare with org-metaup and org-metadown...
@@ -10556,6 +10761,9 @@ list or just its contents, etc.
 Ruins Org-mode's M-↑/↓ for moving entire sections around.
 
 ** Indentation Guide
+:PROPERTIES:
+:CUSTOM_ID: Indentation-Guide
+:END:
 
 The following is also “OK” in Org-mode ;-)
 #+begin_src emacs-lisp
@@ -10568,7 +10776,10 @@ The following is also “OK” in Org-mode ;-)
   (highlight-indent-guides-responsive 'stack))
 #+end_src
 
-** TODO COMMENT JavaScript
+** TODO COMMENT [Nope?] JavaScript
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Nope-JavaScript
+:END:
 
 +  ;; FIXME Error (use-package): Failed to install ob-js: Package ‘ob-js-’ is unavailable
 
@@ -10584,6 +10795,9 @@ The following is also “OK” in Org-mode ;-)
   (maybe-clone "https://github.com/alhassy/AngularJSCheatSheet")
  #+end_src
 ** Commenting
+:PROPERTIES:
+:CUSTOM_ID: Commenting
+:END:
 
 Let's get some nifty [[https://github.com/remyferre/comment-dwim-2][commenting]] features ---the link has nice usage gifs.
 + [[kbd:][M-;]]
@@ -11402,6 +11616,9 @@ publish the current article to my blog.
 #+END_SRC
 
 ** The evils of this world
+:PROPERTIES:
+:CUSTOM_ID: The-evils-of-this-world
+:END:
 #+begin_src emacs-lisp
 ;; “PDF” stands for Portable Document Format, since you should be able to open
 ;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
@@ -11411,6 +11628,9 @@ publish the current article to my blog.
 (system-packages-ensure "adobe-acrobat-reader")
 #+end_src
 ** TODO Hydra Timer
+:PROPERTIES:
+:CUSTOM_ID: Hydra-Timer
+:END:
 
 #+begin_src emacs-lisp
 (setq org-clock-sound t) ;; Standard Emacs beep
@@ -11436,6 +11656,9 @@ publish the current article to my blog.
 #+end_src
 
 ** Makes Org/Markdown previewabvle as we type!!! ♥
+:PROPERTIES:
+:CUSTOM_ID: Makes-Org-Markdown-previewabvle-as-we-type
+:END:
 #+begin_src emacs-lisp
   ;; Shows up as a magnifying glass in doom-modeline.
   (use-package grip-mode)
@@ -11958,6 +12181,9 @@ If the :tangle header arg is a list of files. Handle all files"
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
 ** COMMENT JavaScript                              :Does_not_work_with_flow:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-JavaScript
+:END:
 
 Let's get a JavaScript refactoring library for emacs:
 
@@ -12353,6 +12579,9 @@ Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also
 in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
 vertical line.
 ** Syntax highlighting ---numbers and escape characters
+:PROPERTIES:
+:CUSTOM_ID: Syntax-highlighting-numbers-and-escape-characters
+:END:
 Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
 
 #+begin_src emacs-lisp
@@ -12365,6 +12594,9 @@ Lightweight syntax highlighting improvement for numbers and escape sequences (e.
 #+end_src
 
 ** shell-command-and-run
+:PROPERTIES:
+:CUSTOM_ID: shell-command-and-run
+:END:
 #+begin_src emacs-lisp
 (defalias 'my/shell-command-and-run 'shell-command-and-run)
 (defun shell-command-and-run (cmd name &rest more-commands)
@@ -12402,6 +12634,9 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
      proc (concat (s-join "\n" more-commands) "\n"))))
 #+end_src
 ** COMMENT Modern Browsing within Emacs                           :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Modern-Browsing-within-Emacs
+:END:
 
 #+begin_src shell
 # https://github.com/d12frosted/homebrew-emacs-plus
