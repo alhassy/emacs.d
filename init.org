@@ -2671,16 +2671,18 @@ things went wrong.
   (message "🥳 Happy coding!"))
 #+end_src
 
-** Version Control with SVN ---Using Magit!
+** Version Control with SVN ---Using Magit! :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Version-Control-with-SVN-Using-Magit
 :END:
+
+| /Disabled: I seldom work with SVN anymore./ |
 
 Let's use git as an interface to subversion repositories so that we can continue
 to use =magit= as our version control interface.  The utility to do so is called
 =git svn= ---note =git 𝒳= on a MacOS is the same as =git-𝒳= on other systems.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp  :tangle no
 (use-package magit-svn
   :hook (magit-mode . magit-svn-mode))
 #+end_src
@@ -2701,11 +2703,11 @@ subcommands =fetch, rebase, dcommit, branch, tag=. For example:
 We get to pretend we're using ~git~ even though the underlying mechanism is ~svn~!
 # Indeed, in a terminal ~git svn log~ will show an ~svn~ log with single pushed commits.
 
-For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git
-  with Subversion]].
+For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git with
+  Subversion]].
 
-⟨ If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
-  utility above to account for them. ⟩
+(If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
+  utility above to account for them.)
 
 ** Highlighting TODO-s & Showing them in Magit
 :PROPERTIES:
@@ -2865,7 +2867,7 @@ should jump to the first entry.
   :config (beginend-global-mode)
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 #+END_SRC
-* Literate Programming
+* Literate Programming  :cannot_export_to_HTML:
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
 :END:
@@ -4806,8 +4808,8 @@ Yet, sometimes it's hard to even get started on some tasks.
 
 Note that this does not conflict with the total effort estimate for the task.
 
-⟨ I'm told there's a package already made for this ---maybe I need to stop writing
-code, and do more searches; then again, I've learned a lot by writing code. ⟩
+(I'm told there's a package already made for this ---maybe I need to stop writing
+code, and do more searches; then again, I've learned a lot by writing code.)
 
 ** Journaling
 :PROPERTIES:
@@ -9642,7 +9644,10 @@ console.log({ List the variables here whose values you want to log });
 #+end_src
 )
 
-TODO: Move some of the stuff below to the TurboLog Github repo.
+*** COMMENT TODO: Move some of the stuff below to the TurboLog Github repo. :Does_not_export_to_HTML:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-TODO-Move-some-of-the-stuff-below-to-the-TurboLog-Github-repo
+:END:
 
 #+begin_src emacs-lisp
 (unless noninteractive
@@ -10239,7 +10244,7 @@ $i^{th}$-line having pattern =pᵢ=.
   - Shows PRs that touch the current file.
   - [[https://user-images.githubusercontent.com/1402241/33802977-beb8497c-ddbf-11e7-899c-698d89298de4.gif][Enables tab and shift tab for indentation in comment fields.]]
   - [[https://user-images.githubusercontent.com/1402241/53678019-0c721280-3cf4-11e9-9c24-4d11a697f67c.png][Adds a button to insert collapsible content (via <details>)]]
-  - [[https://user-images.githubusercontent.com/1402241/65020298-1f2dfb00-d957-11e9-9a2a-1c0ceab8d9e0.gif][Wraps selected text when pressing one of Markdown symbols instead of replacing it: [ ` ' " * ~ _]]
+  # ‼ - [[https://user-images.githubusercontent.com/1402241/65020298-1f2dfb00-d957-11e9-9a2a-1c0ceab8d9e0.gif][Wraps selected text when pressing one of Markdown symbols instead of    replacing it: =[ ` ' " * ~ _= ]]
   - [[https://user-images.githubusercontent.com/1402241/99895146-16b50c80-2c4d-11eb-8038-210e6fd5e798.png][🔥 Highlights the most useful comment in conversations.]]
   - [[https://user-images.githubusercontent.com/1402241/33474535-a814ee78-d6ad-11e7-8f08-a8b72799e376.png][Shows color-coded review counts in PR lists.]]
   - [[https://user-images.githubusercontent.com/1402241/79343285-854f2080-7f2e-11ea-8d4c-a9dc163be9be.gif][Mark/unmark multiple files as “Viewed” in the PR Files tab. Click on the
