@@ -10504,6 +10504,121 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
 #+end_src
 
+* Quickly produce HTML from CSS-like selectors
+
+Emmet-mode (outside of Emacs, this is known as [[https://emmet.io/][Emmet]] and [[https://www.smashingmagazine.com/2009/11/zen-coding-a-new-way-to-write-html-code/][Zen Coding]]),
+is a powerful abbreviation engine that expands CSS selectors into HTML code.
+It's a neat way to write markup quickly in Emacs.
+
+# Alternative example candidate: div#news.module>div.header+div.body>ul>li#item-$*5
+#
+Watch this [[https://vimeo.com/7405114][demo video]]. Or here's an example: =div#page>div.logo+ul#navigation>li*5>a=
+expands into
+#+begin_src html :tangle no
+<div id="page">
+  <div class="logo"></div>
+  <ul id="navigation">
+    <li><a href=""></a></li>
+    <li><a href=""></a></li>
+    <li><a href=""></a></li>
+    <li><a href=""></a></li>
+    <li><a href=""></a></li>
+  </ul>
+</div>
+#+end_src
+
+Likewise, we can make 5 links next to 5 input boxes with:
+~(a[href=www.google.ca]{Click me!}+label{Name:}>input[value="first name"])*5~.
+
+Anyhow, here's my setup:
+#+begin_src emacs-lisp
+;; USAGE: Place point in an emmet snippet and press C-j to expand it to appropriate tag structure;
+;; e.g., #q.x>p C-j. Alternatively, press C-j then start typing an emmet snippet to see it preview live.
+;; [C-j is just M-x emmet-expand-line]
+;; 
+(use-package emmet-mode) ;; C-j ! RET  === Makes an entire HTML template for you.
+;;
+;; Please show me an HTML expansion preview as I type
+(setq emmet-preview-default t) ;; Press C-j then start typing; e.g., C-j #q.x.y>p>b RET
+;;
+;; After expanding, positioned the cursor between first empty quotes.
+;; The preview can help with tricky CSS precedence rules; e.g., C-j gives the same thing for: a>b+c>d   ==  a>(b+(c>d))
+(setq emmet-move-cursor-between-quotes t) ;; E.g., C-j #q[name] RET
+;;
+(add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
+;; (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
+#+end_src
+
+#+begin_details Notable HTML key bindings (including [[https://www.gnu.org/software/emacs/manual/html_node/emacs/HTML-Mode.html][built-ins]]):
++ Wrap with Abbreviation / C-c C-c w :: Select a region, then enter an abbreviation.
+  - For example, select the phrase ~Hello, World!~ then ~C-c C-c w q>b~ to place that phrase in a quote, and make it bold.
++ Go to Edit Point / C-M-{Leftarrow, Rightarrow} :: to move between editable-tags/empty-attributes. ([[https://docs.emmet.io/actions/go-to-edit-point/][Demo]])
++ C-c TAB :: Cheaply preview the HTML file by toggling visibility of tags.
++ C-c /, C-c C-e :: Insert a close tag for the innermost unterminated tag (sgml-close-tag). If called within a tag or a comment, close it instead of inserting a close tag.
++ C-c ? tag RET :: Display a description of the meaning of tag tag (sgml-tag-help). If the argument tag is empty, describe the tag at point. :fire:
++ C-c C-d :: Delete the tag at or after point, and delete the matching tag too (sgml-delete-tag). If the tag at or after point is an opening tag, delete the closing tag too; if it is a closing tag, delete the opening tag too.
++ C-c C-f/b :: More 'f'orward or 'b'ackward one tag element. ---Nice way to quicly check that your tags are balanced as you think they are.
++ C-c C-a :: Interactively insert attribute values for the current tag. :fire:
+  - Super helpful when you don't remember the possible attributes of a tag, or their possible values.
+    # - E.g., within ~<img />~ press ~C-c C-a~ then ~id~ then ~hola~ then ~RET~ then ~C-g~. 
+  - C-c C-t :: Interactively specify a tag and its attributes!
+#+end_details
+    
+#+begin_details Notable Emmet Features & Examples
+
++ Example that includes Ids, classes, children, sibling selectors,
+  {content}, 10 random lorem text, parenthesis for grouping; as well
+  as attributes with and without values.
+  #+begin_src html :tangle no
+ParentTag#Id.Class1.Class2[Attribute1 Attribute2]>ChildTag{hiya there}>lorem10+(GrandChild1>GreatGrandChild11)+GrandChild2#Id2[attribute=value]
+#+end_src
+
++  Nesting (>) can be 'undone' with "climb-up"(^):  ~a>b>c>d^^e~  ==  ~a>(b>c>d)+e~
++  Multiplication is repeated addition: ~X*3>Y~ == ~(X>Y)+(X>Y)+(X>Y)~
++  In general, ~loremN~ produces $N$ many random filler text. E.g., make a dummy list: =ul>li*3>lorem3=
+
+Other notable snippets include
+=a#neato.x.y.z, input[hola=value], img, p, table+, ul+, ol+=.
+
++ There are also [[https://docs.emmet.io/css-abbreviations/][CSS abbreviations]]; but that's a story for another time.
++ This [[https://docs.emmet.io/cheat-sheet/][cheat sheet]] has all the supported abbreviations, with expansions.
+
+
+--------------------------------------------------------------------------------
+
+
++ ID and CLASS attributes: =div#page.section.main=
+  - ~div~ tag name can be omitted when writing element starting from ID or CLASS:
+    ~#content>.section~ is the same as ~div#content>div.section~.
+  
++ Custom attributes: ~div[title], a[title="Hello world" rel], td[colspan=2]~
+
++ Element multiplication: ~li*5~ will output ~<li>~ tag five times.
+
++ Item numbering with the ~$~ character: ~li.item$*3~ will output ~<li>~ tag
+  three times, replacing ~$~ character with item number.
+
++ Multiple ~$~ characters in a row are used as zero padding, i.e.: ~li.item$$$~ → ~li.item001~
+
++ Abbreviation groups with unlimited nesting:
+  ~div#page>(div#header>ul#nav>li*4>a)+(div#page>(h1>span)+p*2)+div#footer~
+  - You can literally write a full document markup with just a single line.
+
++ Text support: ~p>{Click }+a{here}+{ to continue}~.
+  
+  
+--------------------------------------------------------------------------------
+
+
+Good tutorials:
++ [[https://jonchristopher.us/blog/the-art-of-zen-coding-bringing-snippets-to-a-new-level/][The Art of zen-coding: Bringing Snippets to a New Level - Jon Christopher]]
++ [[https://www.smashingmagazine.com/2009/11/zen-coding-a-new-way-to-write-html-code/][Zen Coding: A Speedy Way To Write HTML/CSS Code — Smashing Magazine]]
++ [[https://www.smashingmagazine.com/2013/03/goodbye-zen-coding-hello-emmet/][Goodbye, Zen Coding. Hello, Emmet! — Smashing Magazine]]
+
+#+end_details
+
+For more on writing HTML within Emacs, see this ~2min /yet very
+informative/ [[https://www.youtube.com/watch?app=desktop&v=sBhQ2NIcrLQ&ab_channel=emacsrocks][video]] by /Emacs Rocks!/
 * Toggles Hydra
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
