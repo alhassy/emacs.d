@@ -10504,7 +10504,8 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
 #+end_src
 
-* Quickly produce HTML from CSS-like selectors
+* Web-Development
+** Quickly produce HTML from CSS-like selectors
 
 Emmet-mode (outside of Emacs, this is known as [[https://emmet.io/][Emmet]] and [[https://www.smashingmagazine.com/2009/11/zen-coding-a-new-way-to-write-html-code/][Zen Coding]]),
 is a powerful abbreviation engine that expands CSS selectors into HTML code.
@@ -10535,7 +10536,7 @@ Anyhow, here's my setup:
 ;; USAGE: Place point in an emmet snippet and press C-j to expand it to appropriate tag structure;
 ;; e.g., #q.x>p C-j. Alternatively, press C-j then start typing an emmet snippet to see it preview live.
 ;; [C-j is just M-x emmet-expand-line]
-;; 
+;;
 (use-package emmet-mode) ;; C-j ! RET  === Makes an entire HTML template for you.
 ;;
 ;; Please show me an HTML expansion preview as I type
@@ -10560,10 +10561,10 @@ Anyhow, here's my setup:
 + C-c C-f/b :: More 'f'orward or 'b'ackward one tag element. ---Nice way to quicly check that your tags are balanced as you think they are.
 + C-c C-a :: Interactively insert attribute values for the current tag. :fire:
   - Super helpful when you don't remember the possible attributes of a tag, or their possible values.
-    # - E.g., within ~<img />~ press ~C-c C-a~ then ~id~ then ~hola~ then ~RET~ then ~C-g~. 
+    # - E.g., within ~<img />~ press ~C-c C-a~ then ~id~ then ~hola~ then ~RET~ then ~C-g~.
   - C-c C-t :: Interactively specify a tag and its attributes!
 #+end_details
-    
+
 #+begin_details Notable Emmet Features & Examples
 
 + Example that includes Ids, classes, children, sibling selectors,
@@ -10590,7 +10591,7 @@ Other notable snippets include
 + ID and CLASS attributes: =div#page.section.main=
   - ~div~ tag name can be omitted when writing element starting from ID or CLASS:
     ~#content>.section~ is the same as ~div#content>div.section~.
-  
+
 + Custom attributes: ~div[title], a[title="Hello world" rel], td[colspan=2]~
 
 + Element multiplication: ~li*5~ will output ~<li>~ tag five times.
@@ -10605,8 +10606,8 @@ Other notable snippets include
   - You can literally write a full document markup with just a single line.
 
 + Text support: ~p>{Click }+a{here}+{ to continue}~.
-  
-  
+
+
 --------------------------------------------------------------------------------
 
 
@@ -10619,6 +10620,70 @@ Good tutorials:
 
 For more on writing HTML within Emacs, see this ~2min /yet very
 informative/ [[https://www.youtube.com/watch?app=desktop&v=sBhQ2NIcrLQ&ab_channel=emacsrocks][video]] by /Emacs Rocks!/
+
+** LSP for HTML + CSS
+
+Notes: I've tried [[https://emacs-lsp.github.io/lsp-mode/page/lsp-html/][LSP for HTML]] but I didn't find it provided much, and even
+worse, it seemed to ignore the useful information I get from Flycheck!
+
++ When I accidentally duplicate Ids, or miss important tag attributes, Flycheck
+  ~(C-c !)~ reminds of these things! :-)
+
++ This is also [[https://emacs-lsp.github.io/lsp-mode/page/lsp-emmet/][LSP for Emmet]], which let's you expand any text you write as if it
+  were an emmet snippet /such that/ you can ~TAB~ to the various editable regions in
+  the expansion to fill them out. E.g., ~ul>li*5 RET~ produces a yas-snippet which
+  you TAB through to fill out.
+  - If you don't want some text to be treated as a snippet, press ~C-g~.
+  - As above, this ruins flycheck support and highlighting ---requiring ~web-mode~
+    to get some highlighting.
+
+However, [[https://emacs-lsp.github.io/lsp-mode/page/lsp-css/][LSP for CSS]] is indispensable!
++ It provides auto-completion for properties, and if you pause then a tool tip
+  with useful explanations of properties. :fire:
++ Moreover, if you press ~ENTER~ on a completion candidate, then you get to select
+  a possible value from another list!
++ /No need to remember which properties are possible, what they do, and their
+  possible values!/ Just start typing and see what pops-up!
+
+#+begin_src emacs-lisp :tangle no
+M-x lsp-install-server RET css-ls
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+;; When I accidentally duplicate a property in a rule, please report that as an error.
+(setq lsp-css-lint-duplicate-properties "error")
+
+;; If I accidentally enter an unknown property (e.g., writing Canadian “colour” instead of American “color”),
+;; then I'll be notified with an error notice.
+(setq lsp-css-lint-unknown-properties "error")
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+;; [Possibly useful snippet to keep around.]
+;; Change priority of a server; useful when multiple servers are running for a buffer.
+;; (setf (lsp--client-priority (gethash 'emmet-ls lsp-clients)) 4)
+#+end_src
+
+** Show me HTML+CSS Changes /Live as I Type/!
+
+#+begin_src emacs-lisp
+(use-package impatient-mode)
+
+;; When impatient-mode is just turned on, open the browser ---or jump to it if it's already open.
+(add-hook
+ 'impatient-mode-hook
+ (lambda ()
+   (when impatient-mode
+     ;; Note: get-buffer + (rename-buffer "Impatient Browser") on xwidget buffers did not work.
+     (-let [browser (car (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list)))]
+       (split-window-below)
+       (if browser
+           (switch-to-buffer browser)
+         (xwidget-webkit-browse-url "http://localhost:8080/imp/"))
+       (other-window -1)))))
+#+end_src
+
+
 * Toggles Hydra
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
