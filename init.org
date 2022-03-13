@@ -10642,6 +10642,7 @@ However, [[https://emacs-lsp.github.io/lsp-mode/page/lsp-css/][LSP for CSS]] is 
   with useful explanations of properties. :fire:
 + Moreover, if you press ~ENTER~ on a completion candidate, then you get to select
   a possible value from another list!
++ When I mouse hover over a property, I get a 1-line tooltip describing the property.
 + /No need to remember which properties are possible, what they do, and their
   possible values!/ Just start typing and see what pops-up!
 
@@ -10656,6 +10657,23 @@ M-x lsp-install-server RET css-ls
 ;; If I accidentally enter an unknown property (e.g., writing Canadian “colour” instead of American “color”),
 ;; then I'll be notified with an error notice.
 (setq lsp-css-lint-unknown-properties "error")
+#+end_src
+
+*** CSS Property Argument Information in the Echo Area
+
+LSP for CSS shows me a tooltip with a description and the argument syntax of a
+property; but that's only when entering a new property.  What if I'm updating a
+property; or just browsing a property and want some information on the arguments
+list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
+-  Eldoc-mode is a minor-mode which shows you, in the echo area, the argument
+  list of the function call you are currently writing.
+
+#+begin_src emacs-lisp
+;; [USAGE] In a CSS file, place cursor anywhere after the colon (but before ‘;’)
+;; in “columns: 0ch;” or in “columns: ” and look at the echo area for how
+;; arguments to this property should look like.
+(use-package css-eldoc
+  :init (turn-on-css-eldoc))
 #+end_src
 
 #+begin_src emacs-lisp :tangle no
@@ -10682,7 +10700,6 @@ M-x lsp-install-server RET css-ls
          (xwidget-webkit-browse-url "http://localhost:8080/imp/"))
        (other-window -1)))))
 #+end_src
-
 
 * Toggles Hydra
 :PROPERTIES:

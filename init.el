@@ -111,13 +111,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -3918,6 +3918,13 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; If I accidentally enter an unknown property (e.g., writing Canadian “colour” instead of American “color”),
 ;; then I'll be notified with an error notice.
 (setq lsp-css-lint-unknown-properties "error")
+
+;; [USAGE] In a CSS file, place cursor anywhere after the colon (but before ‘;’)
+;; in “columns: 0ch;” or in “columns: ” and look at the echo area for how
+;; arguments to this property should look like.
+(use-package css-eldoc
+  :init (turn-on-css-eldoc))
+
 ;; LSP for HTML + CSS:2 ends here
 
 ;; [[file:init.org::*Show me HTML+CSS Changes /Live as I Type/!][Show me HTML+CSS Changes /Live as I Type/!:1]]
