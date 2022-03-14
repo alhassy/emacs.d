@@ -10537,7 +10537,8 @@ Anyhow, here's my setup:
 ;; e.g., #q.x>p C-j. Alternatively, press C-j then start typing an emmet snippet to see it preview live.
 ;; [C-j is just M-x emmet-expand-line]
 ;;
-(use-package emmet-mode) ;; C-j ! RET  === Makes an entire HTML template for you.
+(use-package emmet-mode ;; C-j ! RET  === Makes an entire HTML template for you.
+  :hook (web-mode . emmet-mode))
 ;;
 ;; Please show me an HTML expansion preview as I type
 (setq emmet-preview-default t) ;; Press C-j then start typing; e.g., C-j #q.x.y>p>b RET
@@ -10621,6 +10622,45 @@ Good tutorials:
 For more on writing HTML within Emacs, see this ~2min /yet very
 informative/ [[https://www.youtube.com/watch?app=desktop&v=sBhQ2NIcrLQ&ab_channel=emacsrocks][video]] by /Emacs Rocks!/
 
+Let's add a new snippet so that: ~angular C-j C-c C-v~ shows us an interactive web
+application.
+#+begin_src emacs-lisp
+;; Add a new emmet snippet.
+;; [Should this be added to “emmet-snippets” variable instead?]
+(thread-last emmet-tag-snippets-table
+             (puthash "angular"
+"<!doctype html>
+<html lang=\"en\" ng-app=\"Hola\">
+  <head>
+    <title>Salamun Alaykum, world!</title>
+    <script src=\"https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js\"></script>
+    <!-- <script src=\"myscripts.js\"></script> -->
+    <script type=\"text/javascript\">
+      angular.module(\"Hola\", [])
+        .controller(\"prompt\",
+           ($scope, $window) => {
+              $scope.prompt = \"Enter a guess between 0 and 100\"
+              $scope.secret = Math.floor(Math.random() * 100)
+              $scope.reply  = gs => gs == $scope.secret ? \"You win!\" : (gs < $scope.secret ? \"Too low\" : \"Too high\")
+              $scope.go = number => { $window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
+          })
+    </script>
+    <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+    <style type=\"text/css\">
+       input, #reply { color: darkcyan; font-size: 14pt }
+    </style>
+  </head>
+  <body>
+    <div ng-controller=\"prompt\">
+      <h1>Number Guessing Game</h1>
+      <input type=\"number\" ng-model=\"guess\" style=\"width: 25%;\" placeholder=\"{{prompt}}\">
+      <button ng-click=\"go(guess)\">Learn Something!</button>
+      <div id=\"reply\"> {{reply(guess)}} </div>
+    </div>
+  </body>
+</html>"))
+#+end_src
+
 ** LSP for HTML + CSS
 
 Notes: I've tried [[https://emacs-lsp.github.io/lsp-mode/page/lsp-html/][LSP for HTML]] but I didn't find it provided much, and even
@@ -10657,6 +10697,12 @@ M-x lsp-install-server RET css-ls
 ;; If I accidentally enter an unknown property (e.g., writing Canadian “colour” instead of American “color”),
 ;; then I'll be notified with an error notice.
 (setq lsp-css-lint-unknown-properties "error")
+
+
+(use-package lsp-mode
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (css-mode . lsp-mode) ;; Enter LSP mode
+         (css-mode . lsp))      ;; Start LSP server
 #+end_src
 
 *** CSS Property Argument Information in the Echo Area
@@ -10687,18 +10733,33 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 #+begin_src emacs-lisp
 (use-package impatient-mode)
 
-;; When impatient-mode is just turned on, open the browser ---or jump to it if it's already open.
-(add-hook
- 'impatient-mode-hook
- (lambda ()
-   (when impatient-mode
-     ;; Note: get-buffer + (rename-buffer "Impatient Browser") on xwidget buffers did not work.
-     (-let [browser (car (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list)))]
-       (split-window-below)
-       (if browser
-           (switch-to-buffer browser)
-         (xwidget-webkit-browse-url "http://localhost:8080/imp/"))
-       (other-window -1)))))
+;;     C-c C-v: Browse buffer within external browser.
+;; C-u C-c C-v: Ensure impatient-mode is enabled for current buffer and browse it WITHIN Emacs.
+;; [xwidget-webkit has some bugs; e.g., sometimes buttons that should redirect don't do anything.]
+;; [The “C-u” option is useful when I want to “see” the resulting HTML change as I type; e.g., new content or styling.]
+;; [Note the “angular” snippet above works beautifully /within/ Emacs; use “b/f” to move backward/forward in the browser.]
+(bind-key* "C-c C-v"
+          (lambda (open-within-emacs) (interactive "P")
+            (if (not open-within-emacs)
+                (browse-url-of-buffer (current-buffer))
+              (unless (process-status "httpd") (httpd-start))
+              (unless impatient-mode (impatient-mode))
+              (let ((browser (car (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list))))
+                    (file (buffer-name)))
+                (when browser (switch-to-buffer browser) (let (kill-buffer-query-functions) (kill-buffer)))
+                (split-window-below)
+                (other-window -1)
+                (xwidget-webkit-browse-url (concat "http://localhost:8080/imp/live/" file))
+                (preview-it-mode -1) ;; Looks poor; and I don't need it when writing HTML.
+                (other-window -1))))
+          'web-mode-map)
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package web-mode
+  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
+
+(bind-key* "M-q" #'sgml-pretty-print 'html-mode-map)
 #+end_src
 
 * Toggles Hydra
