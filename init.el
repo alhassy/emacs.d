@@ -111,13 +111,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -3898,7 +3898,8 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; e.g., #q.x>p C-j. Alternatively, press C-j then start typing an emmet snippet to see it preview live.
 ;; [C-j is just M-x emmet-expand-line]
 ;;
-(use-package emmet-mode) ;; C-j ! RET  === Makes an entire HTML template for you.
+(use-package emmet-mode ;; C-j ! RET  === Makes an entire HTML template for you.
+  :hook (web-mode . emmet-mode))
 ;;
 ;; Please show me an HTML expansion preview as I type
 (setq emmet-preview-default t) ;; Press C-j then start typing; e.g., C-j #q.x.y>p>b RET
@@ -3911,6 +3912,43 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
 ;; Quickly produce HTML from CSS-like selectors:2 ends here
 
+;; [[file:init.org::*Quickly produce HTML from CSS-like selectors][Quickly produce HTML from CSS-like selectors:4]]
+;; Add a new emmet snippet.
+;; [Should this be added to “emmet-snippets” variable instead?]
+(thread-last emmet-tag-snippets-table
+             (puthash "angular"
+"<!doctype html>
+<html lang=\"en\" ng-app=\"Hola\">
+  <head>
+    <title>Salamun Alaykum, world!</title>
+    <script src=\"https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js\"></script>
+    <!-- <script src=\"myscripts.js\"></script> -->
+    <script type=\"text/javascript\">
+      angular.module(\"Hola\", [])
+        .controller(\"prompt\",
+           ($scope, $window) => {
+              $scope.prompt = \"Enter a guess between 0 and 100\"
+              $scope.secret = Math.floor(Math.random() * 100)
+              $scope.reply  = gs => gs == $scope.secret ? \"You win!\" : (gs < $scope.secret ? \"Too low\" : \"Too high\")
+              $scope.go = number => { $window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
+          })
+    </script>
+    <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+    <style type=\"text/css\">
+       input, #reply { color: darkcyan; font-size: 14pt }
+    </style>
+  </head>
+  <body>
+    <div ng-controller=\"prompt\">
+      <h1>Number Guessing Game</h1>
+      <input type=\"number\" ng-model=\"guess\" style=\"width: 25%;\" placeholder=\"{{prompt}}\">
+      <button ng-click=\"go(guess)\">Learn Something!</button>
+      <div id=\"reply\"> {{reply(guess)}} </div>
+    </div>
+  </body>
+</html>"))
+;; Quickly produce HTML from CSS-like selectors:4 ends here
+
 ;; [[file:init.org::*LSP for HTML + CSS][LSP for HTML + CSS:2]]
 ;; When I accidentally duplicate a property in a rule, please report that as an error.
 (setq lsp-css-lint-duplicate-properties "error")
@@ -3919,30 +3957,52 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; then I'll be notified with an error notice.
 (setq lsp-css-lint-unknown-properties "error")
 
+
+(use-package lsp-mode
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (css-mode . lsp-mode) ;; Enter LSP mode
+         (css-mode . lsp))      ;; Start LSP server
+;; LSP for HTML + CSS:2 ends here
+
+;; [[file:init.org::*CSS Property Argument Information in the Echo Area][CSS Property Argument Information in the Echo Area:1]]
 ;; [USAGE] In a CSS file, place cursor anywhere after the colon (but before ‘;’)
 ;; in “columns: 0ch;” or in “columns: ” and look at the echo area for how
 ;; arguments to this property should look like.
 (use-package css-eldoc
   :init (turn-on-css-eldoc))
-
-;; LSP for HTML + CSS:2 ends here
+;; CSS Property Argument Information in the Echo Area:1 ends here
 
 ;; [[file:init.org::*Show me HTML+CSS Changes /Live as I Type/!][Show me HTML+CSS Changes /Live as I Type/!:1]]
 (use-package impatient-mode)
 
-;; When impatient-mode is just turned on, open the browser ---or jump to it if it's already open.
-(add-hook
- 'impatient-mode-hook
- (lambda ()
-   (when impatient-mode
-     ;; Note: get-buffer + (rename-buffer "Impatient Browser") on xwidget buffers did not work.
-     (-let [browser (car (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list)))]
-       (split-window-below)
-       (if browser
-           (switch-to-buffer browser)
-         (xwidget-webkit-browse-url "http://localhost:8080/imp/"))
-       (other-window -1)))))
+;;     C-c C-v: Browse buffer within external browser.
+;; C-u C-c C-v: Ensure impatient-mode is enabled for current buffer and browse it WITHIN Emacs.
+;; [xwidget-webkit has some bugs; e.g., sometimes buttons that should redirect don't do anything.]
+;; [The “C-u” option is useful when I want to “see” the resulting HTML change as I type; e.g., new content or styling.]
+;; [Note the “angular” snippet above works beautifully /within/ Emacs; use “b/f” to move backward/forward in the browser.]
+(bind-key* "C-c C-v"
+          (lambda (open-within-emacs) (interactive "P")
+            (if (not open-within-emacs)
+                (browse-url-of-buffer (current-buffer))
+              (unless (process-status "httpd") (httpd-start))
+              (unless impatient-mode (impatient-mode))
+              (let ((browser (car (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list))))
+                    (file (buffer-name)))
+                (when browser (switch-to-buffer browser) (let (kill-buffer-query-functions) (kill-buffer)))
+                (split-window-below)
+                (other-window -1)
+                (xwidget-webkit-browse-url (concat "http://localhost:8080/imp/live/" file))
+                (preview-it-mode -1) ;; Looks poor; and I don't need it when writing HTML.
+                (other-window -1))))
+          'web-mode-map)
 ;; Show me HTML+CSS Changes /Live as I Type/!:1 ends here
+
+;; [[file:init.org::*Show me HTML+CSS Changes /Live as I Type/!][Show me HTML+CSS Changes /Live as I Type/!:2]]
+(use-package web-mode
+  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
+
+(bind-key* "M-q" #'sgml-pretty-print 'html-mode-map)
+;; Show me HTML+CSS Changes /Live as I Type/!:2 ends here
 
 ;; [[file:init.org::#Toggles-Hydra][Toggles Hydra:1]]
 (my/defhydra "C-c t" "Toggles" toggle-on

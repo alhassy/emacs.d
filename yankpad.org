@@ -321,7 +321,7 @@ unmatched, I make no use of additional space ---indeed this form of one-sided
 parentheses without a space is how LADM is written, as can be seen at the top of
 page 3.
 
-# [[file:init.org::*Emojis][Emojis:3]]
+# [[file:init.org::#][Emojis:3]]
 ** f_Grinning_Face: 😀  
 😀
 ** fd_Grinning_Face: 😀 Often conveys general pleasure and good cheer or humor. 
