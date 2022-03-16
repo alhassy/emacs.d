@@ -10513,18 +10513,20 @@ It's a neat way to write markup quickly in Emacs.
 
 # Alternative example candidate: div#news.module>div.header+div.body>ul>li#item-$*5
 #
-Watch this [[https://vimeo.com/7405114][demo video]]. Or here's an example: =div#page>div.logo+ul#navigation>li*5>a=
+Watch this [[https://vimeo.com/7405114][demo video]]. Or here's an example with filler text:
+=#page>.logo+ul#navigation>li*5>a>lorem3=
 expands into
+# =div#page>div.logo+ul#navigation>li*5>a=
 #+begin_src html :tangle no
 <div id="page">
-  <div class="logo"></div>
-  <ul id="navigation">
-    <li><a href=""></a></li>
-    <li><a href=""></a></li>
-    <li><a href=""></a></li>
-    <li><a href=""></a></li>
-    <li><a href=""></a></li>
-  </ul>
+    <div class="logo"></div>
+    <ul id="navigation">
+        <li><a href="">Justo eget magna!</a></li>
+        <li><a href="">Mattis pellentesque id!</a></li>
+        <li><a href="">Turpis massa tincidunt.</a></li>
+        <li><a href="">Sit amet, porttitor.</a></li>
+        <li><a href="">Feugiat nisl pretium.</a></li>
+    </ul>
 </div>
 #+end_src
 
@@ -10625,6 +10627,7 @@ informative/ [[https://www.youtube.com/watch?app=desktop&v=sBhQ2NIcrLQ&ab_channe
 Let's add a new snippet so that: ~angular C-j C-c C-v~ shows us an interactive web
 application.
 #+begin_src emacs-lisp
+(add-hook 'emmet-mode-hook (lambda ()
 ;; Add a new emmet snippet.
 ;; [Should this be added to “emmet-snippets” variable instead?]
 (thread-last emmet-tag-snippets-table
@@ -10658,7 +10661,74 @@ application.
       <div id=\"reply\"> {{reply(guess)}} </div>
     </div>
   </body>
-</html>"))
+</html>"))))
+#+end_src
+
+A non-blocking alternative to the built-in ~alert()~:
+#+begin_src emacs-lisp
+(add-hook 'emmet-mode-hook (lambda ()
+;; A way to show results of trying things out ---when not using a reactive framework.
+(thread-last emmet-tag-snippets-table
+             (puthash "message"
+"     // Append “text” node to the end of tag with “id”.
+     // Example: <button onclick=\"message(\"myID\", \"Hello!\")\"> Speak! </button>
+     function message(id, text = \"Hello, world\") {
+         const tag = document.createElement(\"p\") // <p></p>
+         const textNode = document.createTextNode(text)
+         tag.appendChild(textNode); // <p>Hello, world</p>
+         const element = document.getElementById(id);
+         element.appendChild(tag);
+     }"))))
+#+end_src
+
+A snippet for a form with (1) automatic alignment, and (2) submission handled by
+local JavaScript.
+#+begin_src emacs-lisp
+(add-hook 'emmet-mode-hook (lambda ()
+(thread-last emmet-tag-snippets-table
+             (puthash "form"
+        "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
+            Automatically aligned form items</a> </h1>
+
+        <form name=\"hola\"  onsubmit=\"go(hola.elements);\">
+            <label>Name</label>
+            <input name=\"name\" type=\"text\" required/>
+
+            <label>Comments</label>
+            <textarea name=\"comments\" maxlength=\"500\"></textarea>
+
+            <input type=\"submit\"/>
+        </form>
+
+        <!-- <script src=\"myscripts.js\"></script> -->
+        <script>
+         let go = form => { alert(`${form.name.value}: “${form.comments.value}”`) }
+        </script>
+
+        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+        <style>
+         form {
+             /* We want the inputs&labels to be thought of as rows in a grid*/
+             display: grid;
+             grid-auto-flow: row;
+             /* Each row has 2 columns. */
+             grid-template-columns: [mylabels] auto [myinputs] 1fr;
+             grid-gap: .8em;     /* Distance between form elements */
+             background: beige;
+             padding: 1.2em;
+         }
+         /* Let's attach column names to elements */
+         form > label  {
+             grid-column: mylabels;
+             grid-row: auto;
+         }
+         form > input,
+         form > textarea {
+             grid-column: myinputs;
+             grid-row: auto;
+         }
+         input, textarea { color: darkcyan; font-size: 14pt }
+        </style>"))))
 #+end_src
 
 ** LSP for HTML + CSS
@@ -10733,6 +10803,10 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 #+begin_src emacs-lisp
 (use-package impatient-mode)
 
+(use-package web-mode
+  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
+
+
 ;;     C-c C-v: Browse buffer within external browser.
 ;; C-u C-c C-v: Ensure impatient-mode is enabled for current buffer and browse it WITHIN Emacs.
 ;; [xwidget-webkit has some bugs; e.g., sometimes buttons that should redirect don't do anything.]
@@ -10756,10 +10830,7 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 #+end_src
 
 #+begin_src emacs-lisp
-(use-package web-mode
-  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
-
-(bind-key* "M-q" #'sgml-pretty-print 'html-mode-map)
+(bind-key* "M-q" #'sgml-pretty-print 'web-mode-map)
 #+end_src
 
 * Toggles Hydra
