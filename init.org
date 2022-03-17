@@ -2663,7 +2663,7 @@ things went wrong.
 (defun my/update-repos ()
   "Update (git checkout main & pull) recently visited repositories."
   (interactive)
-  (loop for (repo _depth) in magit-repository-directories
+  (cl-loop for (repo _depth) in magit-repository-directories
         ;; Is it “main” or “master”
         for trunk = (s-trim (shell-command-to-string (format "cd %s; git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" repo)))
         do (message (format "🤖 %s ∷ Checking out & pulling main" repo))
@@ -2734,7 +2734,7 @@ stand out from other text by being coloured and bold.
 We've added few to the default flag keywords so that in total we have the
 following flags ---where any sequence of at least 3 [[color:#cc9393][XXX]] are considered flags.
 #+BEGIN_SRC emacs-lisp :results replace raw value :exports results :eval no-export :tangle no
-(loop for (k . f) in hl-todo-keyword-faces
+(cl-loop for (k . f) in hl-todo-keyword-faces
       collect (format "[[color:%s][%s]]" f k))
 #+END_SRC
 
@@ -8649,6 +8649,8 @@ at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
 ;; M-x skerrick-eval-region
 ;;
 
+(require 'js) ;; Defined js-mode-map
+
 ;; Evaluate a region, if any is selected; otherwise evaluate the current line.
 (bind-key
  "C-x C-e"  (lambda ()
@@ -8685,7 +8687,7 @@ let b = "world"
   :bind ("C-c d" . #'devdocs-lookup)
   :config
   (when nil ;; “C-x C-e” the following once.
-    (loop for lang in '(javascript ramda typescript html css sass
+    (cl-loop for lang in '(javascript ramda typescript html css sass
                        vue~3 vuex~4 vue_router~4 "angularjs~1.6"
                        nginx webpack~5 web_extensions
                        ;;
@@ -8964,7 +8966,7 @@ Menu can be closed when servers are started; can also stop them."
   (interactive)
   (thread-last
       (-let [ shells (--filter (s-starts-with? "Shell" (process-name it)) (process-list)) ]
-        (loop for 𝑺 in (mapcar #'pp-to-string my/services)
+        (cl-loop for 𝑺 in (mapcar #'pp-to-string my/services)
               for associated-shell = (--find (s-contains? (format "%s" 𝑺) (cl-third (process-command it))) shells)
               for status = (or (ignore-errors (process-status associated-shell)) '💥)
               for branch = (-let [default-directory (format "~/%s" 𝑺)]
@@ -10789,7 +10791,7 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 ;; in “columns: 0ch;” or in “columns: ” and look at the echo area for how
 ;; arguments to this property should look like.
 (use-package css-eldoc
-  :init (turn-on-css-eldoc))
+  :init (progn (require 'css-eldoc) (turn-on-css-eldoc)))
 #+end_src
 
 #+begin_src emacs-lisp :tangle no
@@ -11084,7 +11086,7 @@ list or just its contents, etc.
 ;; Todo: Compare with org-metaup and org-metadown...
 (use-package drag-stuff
   :diminish
-  :config (loop for (key . action) in '(("<M-down>" . drag-stuff-down)
+  :config (cl-loop for (key . action) in '(("<M-down>" . drag-stuff-down)
                                       ("<M-up>" . drag-stuff-up)
                                       ("<M-right>" . drag-stuff-right)
                                       ("<M-left>" . drag-stuff-left))

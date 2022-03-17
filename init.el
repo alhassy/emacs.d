@@ -763,7 +763,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (defun my/update-repos ()
   "Update (git checkout main & pull) recently visited repositories."
   (interactive)
-  (loop for (repo _depth) in magit-repository-directories
+  (cl-loop for (repo _depth) in magit-repository-directories
         ;; Is it “main” or “master”
         for trunk = (s-trim (shell-command-to-string (format "cd %s; git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" repo)))
         do (message (format "🤖 %s ∷ Checking out & pulling main" repo))
@@ -2883,6 +2883,8 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; M-x skerrick-eval-region
 ;;
 
+(require 'js) ;; Defined js-mode-map
+
 ;; Evaluate a region, if any is selected; otherwise evaluate the current line.
 (bind-key
  "C-x C-e"  (lambda ()
@@ -2905,7 +2907,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
   :bind ("C-c d" . #'devdocs-lookup)
   :config
   (when nil ;; “C-x C-e” the following once.
-    (loop for lang in '(javascript ramda typescript html css sass
+    (cl-loop for lang in '(javascript ramda typescript html css sass
                        vue~3 vuex~4 vue_router~4 "angularjs~1.6"
                        nginx webpack~5 web_extensions
                        ;;
@@ -3105,7 +3107,7 @@ Menu can be closed when servers are started; can also stop them."
   (interactive)
   (thread-last
       (-let [ shells (--filter (s-starts-with? "Shell" (process-name it)) (process-list)) ]
-        (loop for 𝑺 in (mapcar #'pp-to-string my/services)
+        (cl-loop for 𝑺 in (mapcar #'pp-to-string my/services)
               for associated-shell = (--find (s-contains? (format "%s" 𝑺) (cl-third (process-command it))) shells)
               for status = (or (ignore-errors (process-status associated-shell)) '💥)
               for branch = (-let [default-directory (format "~/%s" 𝑺)]
@@ -3913,6 +3915,7 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; Quickly produce HTML from CSS-like selectors:2 ends here
 
 ;; [[file:init.org::*Quickly produce HTML from CSS-like selectors][Quickly produce HTML from CSS-like selectors:4]]
+(add-hook 'emmet-mode-hook (lambda ()
 ;; Add a new emmet snippet.
 ;; [Should this be added to “emmet-snippets” variable instead?]
 (thread-last emmet-tag-snippets-table
@@ -3946,8 +3949,72 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
       <div id=\"reply\"> {{reply(guess)}} </div>
     </div>
   </body>
-</html>"))
+</html>"))))
 ;; Quickly produce HTML from CSS-like selectors:4 ends here
+
+;; [[file:init.org::*Quickly produce HTML from CSS-like selectors][Quickly produce HTML from CSS-like selectors:5]]
+(add-hook 'emmet-mode-hook (lambda ()
+;; A way to show results of trying things out ---when not using a reactive framework.
+(thread-last emmet-tag-snippets-table
+             (puthash "message"
+"     // Append “text” node to the end of tag with “id”.
+     // Example: <button onclick=\"message(\"myID\", \"Hello!\")\"> Speak! </button>
+     function message(id, text = \"Hello, world\") {
+         const tag = document.createElement(\"p\") // <p></p>
+         const textNode = document.createTextNode(text)
+         tag.appendChild(textNode); // <p>Hello, world</p>
+         const element = document.getElementById(id);
+         element.appendChild(tag);
+     }"))))
+;; Quickly produce HTML from CSS-like selectors:5 ends here
+
+;; [[file:init.org::*Quickly produce HTML from CSS-like selectors][Quickly produce HTML from CSS-like selectors:6]]
+(add-hook 'emmet-mode-hook (lambda ()
+(thread-last emmet-tag-snippets-table
+             (puthash "form"
+        "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
+            Automatically aligned form items</a> </h1>
+
+        <form name=\"hola\"  onsubmit=\"go(hola.elements);\">
+            <label>Name</label>
+            <input name=\"name\" type=\"text\" required/>
+
+            <label>Comments</label>
+            <textarea name=\"comments\" maxlength=\"500\"></textarea>
+
+            <input type=\"submit\"/>
+        </form>
+
+        <!-- <script src=\"myscripts.js\"></script> -->
+        <script>
+         let go = form => { alert(`${form.name.value}: “${form.comments.value}”`) }
+        </script>
+
+        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+        <style>
+         form {
+             /* We want the inputs&labels to be thought of as rows in a grid*/
+             display: grid;
+             grid-auto-flow: row;
+             /* Each row has 2 columns. */
+             grid-template-columns: [mylabels] auto [myinputs] 1fr;
+             grid-gap: .8em;     /* Distance between form elements */
+             background: beige;
+             padding: 1.2em;
+         }
+         /* Let's attach column names to elements */
+         form > label  {
+             grid-column: mylabels;
+             grid-row: auto;
+         }
+         form > input,
+         form > textarea {
+             grid-column: myinputs;
+             grid-row: auto;
+         }
+         input, textarea { color: darkcyan; font-size: 14pt }
+        </style>"))))
+;; Quickly produce HTML from CSS-like selectors:6 ends here
 
 ;; [[file:init.org::*LSP for HTML + CSS][LSP for HTML + CSS:2]]
 ;; When I accidentally duplicate a property in a rule, please report that as an error.
@@ -3969,11 +4036,15 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; in “columns: 0ch;” or in “columns: ” and look at the echo area for how
 ;; arguments to this property should look like.
 (use-package css-eldoc
-  :init (turn-on-css-eldoc))
+  :init (progn (require 'css-eldoc) (turn-on-css-eldoc)))
 ;; CSS Property Argument Information in the Echo Area:1 ends here
 
 ;; [[file:init.org::*Show me HTML+CSS Changes /Live as I Type/!][Show me HTML+CSS Changes /Live as I Type/!:1]]
 (use-package impatient-mode)
+
+(use-package web-mode
+  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
+
 
 ;;     C-c C-v: Browse buffer within external browser.
 ;; C-u C-c C-v: Ensure impatient-mode is enabled for current buffer and browse it WITHIN Emacs.
@@ -3998,10 +4069,7 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; Show me HTML+CSS Changes /Live as I Type/!:1 ends here
 
 ;; [[file:init.org::*Show me HTML+CSS Changes /Live as I Type/!][Show me HTML+CSS Changes /Live as I Type/!:2]]
-(use-package web-mode
-  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
-
-(bind-key* "M-q" #'sgml-pretty-print 'html-mode-map)
+(bind-key* "M-q" #'sgml-pretty-print 'web-mode-map)
 ;; Show me HTML+CSS Changes /Live as I Type/!:2 ends here
 
 ;; [[file:init.org::#Toggles-Hydra][Toggles Hydra:1]]
