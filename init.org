@@ -9789,31 +9789,6 @@ blocks we use ~C-c '~.
 Super helpful in making my Emacs configuration: If a name is not highlighted,
 then I've misspelled it or it doesn't exist! :smile:
 
-** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
-:PROPERTIES:
-:CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
-:END:
-
-In =emacs-lisp-mode= we can enable =eldoc-mode= ---“Elisp Live Documentation”--- to
-display information about a function or a variable in the echo area. Likewise
-for Haskell.
-
-#+BEGIN_SRC emacs-lisp
-(use-package eldoc
-  :diminish eldoc-mode
-  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
-        (lisp-interaction-mode . turn-on-eldoc-mode)
-        (haskell-mode . turn-on-haskell-doc-mode)
-        (haskell-mode . turn-on-haskell-indent))
-
-;; Slightly shorten eldoc display delay.
-(setq eldoc-idle-delay 0.4) ;; Default 0.5
-#+END_SRC
-
-The less casual Haskeller would likely want to use [[https://haskell-lang.org/intero][intero]] to obtain
-more support; e.g., obtain suggestions from GHC about redundant imports
-or type signatures.
-
 ** COMMENT Aggressive Indentation
 :PROPERTIES:
 :CUSTOM_ID: Aggressive-Indentation
@@ -10900,6 +10875,31 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 #+begin_src emacs-lisp
 (bind-key* "M-q" #'sgml-pretty-print 'web-mode-map)
 #+end_src
+
+** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
+:PROPERTIES:
+:CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
+:END:
+
+In =emacs-lisp-mode= we can enable =eldoc-mode= ---“Elisp Live Documentation”--- to
+display information about a function or a variable in the echo area. Likewise
+for Haskell.
+
+#+BEGIN_SRC emacs-lisp
+(use-package eldoc
+  :diminish eldoc-mode
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+        (lisp-interaction-mode . turn-on-eldoc-mode)
+        (haskell-mode . turn-on-haskell-doc-mode)
+        (haskell-mode . turn-on-haskell-indent))
+
+;; Slightly shorten eldoc display delay.
+(setq eldoc-idle-delay 0.4) ;; Default 0.5
+#+END_SRC
+
+The less casual Haskeller would likely want to use [[https://haskell-lang.org/intero][intero]] to obtain
+more support; e.g., obtain suggestions from GHC about redundant imports
+or type signatures.
 
 * COMMENT Toggles Hydra
 :PROPERTIES:
