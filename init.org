@@ -4018,7 +4018,7 @@ name.
 ;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 #+end_src
-* Life within Org-mode
+* COMMENT Life within Org-mode
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
