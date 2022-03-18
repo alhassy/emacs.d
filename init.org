@@ -13101,6 +13101,44 @@ In a terminal execute: xcode-select --install
 May need to actually reboot the system as well.
 :End:
 
+** Compile                                                       :posterity:
+#+begin_src org :tangle no
+# Local Variables:
+# eval: (message "Load file specific stuffs here")
+# compile-command: (async-shell-command (concat "open " (org-latex-export-to-pdf)))
+# End:
+#+end_src
+
+Since nearly every file I work with is ─or can be coerced into being─ in org mode,
+I usually have a section ~* footer~ that contains something like the above.
+
+Let's remove repeated matter.
+#+begin_src emacs-lisp :tangle no
+;; Silently save before compiling.
+(setq compilation-ask-about-save nil)
+
+;; Silently kill previous compilation process before starting a new one.
+(setq compilation-always-kill t)
+
+;; Scroll as compilation output is procuded in *Compilation* buffer; e.g., pdflatex
+;; Use 'first-error to stop scrolling on the first error encountered; otherwise ‘t’.
+(setq compilation-scroll-output 'first-error)
+
+;; Don't stop on informaiton messages or warnings; only on errors.
+(setq compilation-skip-threshold 2)
+#+end_src
+
+#+BEGIN_SRC emacs-lisp :tangle no
+;; My global compile command
+(setq compile-command
+  '(async-shell-command (concat "open " (org-latex-export-to-pdf))))
+
+;; Bind ‘recompile’ to ‘C-c C-m’ ─“m” for “m”ake
+(global-set-key (kbd "C-c C-m") 'recompile)
+
+;; Also a helpful quick f-key.
+(global-set-key (kbd "<f7>") 'recompile)
+#+END_SRC
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate
@@ -13227,40 +13265,3 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 #+begin_center
 /Thanks to friends for “replacing me” while I was away ♥‿♥ ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ/
 #+end_center
-
-# Local Variables:
-# eval: (message "Load file specific stuffs here")
-# compile-command: (async-shell-command (concat "open " (org-latex-export-to-pdf)))
-# End:
-#+end_src
-
-Since nearly every file I work with is ─or can be coerced into being─ in org mode,
-I usually have a section ~* footer~ that contains something like the above.
-
-Let's remove repeated matter.
-#+begin_src emacs-lisp :tangle no
-;; Silently save before compiling.
-(setq compilation-ask-about-save nil)
-
-;; Silently kill previous compilation process before starting a new one.
-(setq compilation-always-kill t)
-
-;; Scroll as compilation output is procuded in *Compilation* buffer; e.g., pdflatex
-;; Use 'first-error to stop scrolling on the first error encountered; otherwise ‘t’.
-(setq compilation-scroll-output 'first-error)
-
-;; Don't stop on informaiton messages or warnings; only on errors.
-(setq compilation-skip-threshold 2)
-#+end_src
-
-#+BEGIN_SRC emacs-lisp :tangle no
-;; My global compile command
-(setq compile-command
-  '(async-shell-command (concat "open " (org-latex-export-to-pdf))))
-
-;; Bind ‘recompile’ to ‘C-c C-m’ ─“m” for “m”ake
-(global-set-key (kbd "C-c C-m") 'recompile)
-
-;; Also a helpful quick f-key.
-(global-set-key (kbd "<f7>") 'recompile)
-#+END_SRC
