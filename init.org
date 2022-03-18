@@ -120,7 +120,7 @@ jobs:
           pwd
           ls
 
-      - name: Attempting startup...
+      - name: Attempting startup & basic test ...
         run: time emacs -nw --batch --eval='(let
                                 (
                                  (user-emacs-directory default-directory))
@@ -129,7 +129,11 @@ jobs:
                               (setq url-show-status nil)
                               (package-initialize)
                               (load-file "init.el")
-                              (message "\n 🤤 Startup Successful! 🤩"))'
+                              (message "\n 🤤 Startup Successful! 🤩")
+                                  (message "\nCheck we can do something basic, like getting pretty HTML from an Org file\n")
+                                  (find-file "init.org")
+                                  (org-html-export-to-html)
+                              (message "\n 🤤 HTML file generated successfully! 🤩\n"))'
 #+end_src
 
 TODO: Build HTML export as a minimal test that things work as expected.
@@ -8637,6 +8641,9 @@ at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
 - A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
 
 *** ELisp
+:PROPERTIES:
+:CUSTOM_ID: ELisp
+:END:
 
 By default, Emacs Lisp's kbd:C-x_C-e shows results only in the minibuffer; near
 the bottom of the screen. Let's also have evaluation results displayed as inline
@@ -8660,6 +8667,9 @@ rather than forcing their eyes to shift up&down when writing&evaluating.
 # Shows a momentary overlay at the first line.
 
 *** JavaScript
+:PROPERTIES:
+:CUSTOM_ID: JavaScript
+:END:
 
 Let's setup RDD for JavaScript ---by having a NodeJS repl server running in the background.
 
@@ -8709,6 +8719,9 @@ let b = "world"
 #+end_src
 
 *** Python, etc
+:PROPERTIES:
+:CUSTOM_ID: Python-etc
+:END:
 It /seems/ to be /super easy/ to add such a support for other languages, such as Python.
 See the final comment [[https://karthinks.com/software/an-elisp-editing-tip/][here]] for the tiny change required.
 
@@ -8803,6 +8816,7 @@ That is, /repeated ⌘+r expands the selection to the next logical segment of te
 In writing this means “Word, sentence, paragraph”, and in programming this means
 “identifier, then incrementally larger scopes”.
 
+* COMMENT more
 ** Managing Processes/Servers from within Emacs ---Work-specific functions
 :PROPERTIES:
 :CUSTOM_ID: Managing-Processes-Servers-from-within-Emacs-Work-specific-functions
@@ -10543,8 +10557,14 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
 #+end_src
 
-* Web-Development
+* COMMENT Web-Development
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Web-Development
+:END:
 ** Quickly produce HTML from CSS-like selectors
+:PROPERTIES:
+:CUSTOM_ID: Quickly-produce-HTML-from-CSS-like-selectors
+:END:
 
 Emmet-mode (outside of Emacs, this is known as [[https://emmet.io/][Emmet]] and [[https://www.smashingmagazine.com/2009/11/zen-coding-a-new-way-to-write-html-code/][Zen Coding]]),
 is a powerful abbreviation engine that expands CSS selectors into HTML code.
@@ -10771,6 +10791,9 @@ local JavaScript.
 #+end_src
 
 ** LSP for HTML + CSS
+:PROPERTIES:
+:CUSTOM_ID: LSP-for-HTML-CSS
+:END:
 
 Notes: I've tried [[https://emacs-lsp.github.io/lsp-mode/page/lsp-html/][LSP for HTML]] but I didn't find it provided much, and even
 worse, it seemed to ignore the useful information I get from Flycheck!
@@ -10815,6 +10838,9 @@ M-x lsp-install-server RET css-ls
 #+end_src
 
 *** CSS Property Argument Information in the Echo Area
+:PROPERTIES:
+:CUSTOM_ID: CSS-Property-Argument-Information-in-the-Echo-Area
+:END:
 
 LSP for CSS shows me a tooltip with a description and the argument syntax of a
 property; but that's only when entering a new property.  What if I'm updating a
@@ -10838,6 +10864,9 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 #+end_src
 
 ** Show me HTML+CSS Changes /Live as I Type/!
+:PROPERTIES:
+:CUSTOM_ID: Show-me-HTML-CSS-Changes-Live-as-I-Type
+:END:
 
 #+begin_src emacs-lisp
 (use-package impatient-mode)
@@ -10872,7 +10901,7 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 (bind-key* "M-q" #'sgml-pretty-print 'web-mode-map)
 #+end_src
 
-* Toggles Hydra
+* COMMENT Toggles Hydra
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
 :END:
