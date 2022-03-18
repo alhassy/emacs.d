@@ -3775,3 +3775,823 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 ;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
+
+;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:2]]
+;; USAGE: Place point in an emmet snippet and press C-j to expand it to appropriate tag structure;
+;; e.g., #q.x>p C-j. Alternatively, press C-j then start typing an emmet snippet to see it preview live.
+;; [C-j is just M-x emmet-expand-line]
+;;
+(use-package emmet-mode ;; C-j ! RET  === Makes an entire HTML template for you.
+  :hook (web-mode . emmet-mode))
+;;
+;; Please show me an HTML expansion preview as I type
+(setq emmet-preview-default t) ;; Press C-j then start typing; e.g., C-j #q.x.y>p>b RET
+;;
+;; After expanding, positioned the cursor between first empty quotes.
+;; The preview can help with tricky CSS precedence rules; e.g., C-j gives the same thing for: a>b+c>d   ==  a>(b+(c>d))
+(setq emmet-move-cursor-between-quotes t) ;; E.g., C-j #q[name] RET
+;;
+(add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
+;; (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
+;; Quickly produce HTML from CSS-like selectors:2 ends here
+
+;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:4]]
+(add-hook 'emmet-mode-hook (lambda ()
+;; Add a new emmet snippet.
+;; [Should this be added to “emmet-snippets” variable instead?]
+(thread-last emmet-tag-snippets-table
+             (puthash "angular"
+"<!doctype html>
+<html lang=\"en\" ng-app=\"Hola\">
+  <head>
+    <title>Salamun Alaykum, world!</title>
+    <script src=\"https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js\"></script>
+    <!-- <script src=\"myscripts.js\"></script> -->
+    <script type=\"text/javascript\">
+      angular.module(\"Hola\", [])
+        .controller(\"prompt\",
+           ($scope, $window) => {
+              $scope.prompt = \"Enter a guess between 0 and 100\"
+              $scope.secret = Math.floor(Math.random() * 100)
+              $scope.reply  = gs => gs == $scope.secret ? \"You win!\" : (gs < $scope.secret ? \"Too low\" : \"Too high\")
+              $scope.go = number => { $window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
+          })
+    </script>
+    <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+    <style type=\"text/css\">
+       input, #reply { color: darkcyan; font-size: 14pt }
+    </style>
+  </head>
+  <body>
+    <div ng-controller=\"prompt\">
+      <h1>Number Guessing Game</h1>
+      <input type=\"number\" ng-model=\"guess\" style=\"width: 25%;\" placeholder=\"{{prompt}}\">
+      <button ng-click=\"go(guess)\">Learn Something!</button>
+      <div id=\"reply\"> {{reply(guess)}} </div>
+    </div>
+  </body>
+</html>"))))
+;; Quickly produce HTML from CSS-like selectors:4 ends here
+
+;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:5]]
+(add-hook 'emmet-mode-hook (lambda ()
+;; A way to show results of trying things out ---when not using a reactive framework.
+(thread-last emmet-tag-snippets-table
+             (puthash "message"
+"     // Append “text” node to the end of tag with “id”.
+     // Example: <button onclick=\"message(\"myID\", \"Hello!\")\"> Speak! </button>
+     function message(id, text = \"Hello, world\") {
+         const tag = document.createElement(\"p\") // <p></p>
+         const textNode = document.createTextNode(text)
+         tag.appendChild(textNode); // <p>Hello, world</p>
+         const element = document.getElementById(id);
+         element.appendChild(tag);
+     }"))))
+;; Quickly produce HTML from CSS-like selectors:5 ends here
+
+;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:6]]
+(add-hook 'emmet-mode-hook (lambda ()
+(thread-last emmet-tag-snippets-table
+             (puthash "form"
+        "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
+            Automatically aligned form items</a> </h1>
+
+        <form name=\"hola\"  onsubmit=\"go(hola.elements);\">
+            <label>Name</label>
+            <input name=\"name\" type=\"text\" required/>
+
+            <label>Comments</label>
+            <textarea name=\"comments\" maxlength=\"500\"></textarea>
+
+            <input type=\"submit\"/>
+        </form>
+
+        <!-- <script src=\"myscripts.js\"></script> -->
+        <script>
+         let go = form => { alert(`${form.name.value}: “${form.comments.value}”`) }
+        </script>
+
+        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+        <style>
+         form {
+             /* We want the inputs&labels to be thought of as rows in a grid*/
+             display: grid;
+             grid-auto-flow: row;
+             /* Each row has 2 columns. */
+             grid-template-columns: [mylabels] auto [myinputs] 1fr;
+             grid-gap: .8em;     /* Distance between form elements */
+             background: beige;
+             padding: 1.2em;
+         }
+         /* Let's attach column names to elements */
+         form > label  {
+             grid-column: mylabels;
+             grid-row: auto;
+         }
+         form > input,
+         form > textarea {
+             grid-column: myinputs;
+             grid-row: auto;
+         }
+         input, textarea { color: darkcyan; font-size: 14pt }
+        </style>"))))
+;; Quickly produce HTML from CSS-like selectors:6 ends here
+
+;; [[file:init.org::#LSP-for-HTML-CSS][LSP for HTML + CSS:2]]
+;; When I accidentally duplicate a property in a rule, please report that as an error.
+(setq lsp-css-lint-duplicate-properties "error")
+
+;; If I accidentally enter an unknown property (e.g., writing Canadian “colour” instead of American “color”),
+;; then I'll be notified with an error notice.
+(setq lsp-css-lint-unknown-properties "error")
+
+
+(use-package lsp-mode
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (css-mode . lsp-mode) ;; Enter LSP mode
+         (css-mode . lsp))      ;; Start LSP server
+;; LSP for HTML + CSS:2 ends here
+
+;; [[file:init.org::#CSS-Property-Argument-Information-in-the-Echo-Area][CSS Property Argument Information in the Echo Area:1]]
+;; [USAGE] In a CSS file, place cursor anywhere after the colon (but before ‘;’)
+;; in “columns: 0ch;” or in “columns: ” and look at the echo area for how
+;; arguments to this property should look like.
+(use-package css-eldoc
+  :init (progn (require 'css-eldoc) (turn-on-css-eldoc)))
+;; CSS Property Argument Information in the Echo Area:1 ends here
+
+;; [[file:init.org::#Show-me-HTML-CSS-Changes-Live-as-I-Type][Show me HTML+CSS Changes /Live as I Type/!:1]]
+(use-package impatient-mode)
+
+(use-package web-mode
+  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
+
+
+;;     C-c C-v: Browse buffer within external browser.
+;; C-u C-c C-v: Ensure impatient-mode is enabled for current buffer and browse it WITHIN Emacs.
+;; [xwidget-webkit has some bugs; e.g., sometimes buttons that should redirect don't do anything.]
+;; [The “C-u” option is useful when I want to “see” the resulting HTML change as I type; e.g., new content or styling.]
+;; [Note the “angular” snippet above works beautifully /within/ Emacs; use “b/f” to move backward/forward in the browser.]
+(bind-key* "C-c C-v"
+          (lambda (open-within-emacs) (interactive "P")
+            (if (not open-within-emacs)
+                (browse-url-of-buffer (current-buffer))
+              (unless (process-status "httpd") (httpd-start))
+              (unless impatient-mode (impatient-mode))
+              (let ((browser (car (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list))))
+                    (file (buffer-name)))
+                (when browser (switch-to-buffer browser) (let (kill-buffer-query-functions) (kill-buffer)))
+                (split-window-below)
+                (other-window -1)
+                (xwidget-webkit-browse-url (concat "http://localhost:8080/imp/live/" file))
+                (preview-it-mode -1) ;; Looks poor; and I don't need it when writing HTML.
+                (other-window -1))))
+          'web-mode-map)
+;; Show me HTML+CSS Changes /Live as I Type/!:1 ends here
+
+;; [[file:init.org::#Show-me-HTML-CSS-Changes-Live-as-I-Type][Show me HTML+CSS Changes /Live as I Type/!:2]]
+(bind-key* "M-q" #'sgml-pretty-print 'web-mode-map)
+;; Show me HTML+CSS Changes /Live as I Type/!:2 ends here
+
+;; [[file:init.org::#Eldoc-for-Lisp-and-Haskell][Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1]]
+(use-package eldoc
+  :diminish eldoc-mode
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+        (lisp-interaction-mode . turn-on-eldoc-mode)
+        (haskell-mode . turn-on-haskell-doc-mode)
+        (haskell-mode . turn-on-haskell-indent))
+
+;; Slightly shorten eldoc display delay.
+(setq eldoc-idle-delay 0.4) ;; Default 0.5
+;; Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1 ends here
+
+;; [[file:init.org::#Toggles-Hydra][Toggles Hydra:1]]
+(my/defhydra "C-c t" "Toggles" toggle-on
+   :Theme
+   ("t t" my/toggle-theme "Theme")
+   ("t s" (thread-last (all-completions "doom" (custom-available-themes))
+            (completing-read "Load custom theme: ")
+            intern
+            load-theme)
+    "Select Theme")
+
+   :UI
+   ("i" display-fill-column-indicator-mode :toggle t)
+   ("f" my/toggle-font "font")
+   ("F" writeroom-mode "Focused Work!" :toggle t)
+   ("d" treemacs "directory finder" :toggle t)
+   ("n" display-line-numbers-mode "line number" :toggle t)
+   ("u f" (setq frame-title-format (completing-read "New frame title: " nil)) "New frame title") ;; Useful for random screenshots
+
+   :Possibly_in_the_way
+   ("e" electric-pair-mode "electric pair" :toggle t)
+   ("c" flyspell-mode "spell check" :toggle t)
+   ("s" prettify-symbols-mode "pretty symbol" :toggle t)
+   ("w" whitespace-cleanup "Clean up whitespace on save" :toggle t)
+   ;; ("a" global-aggressive-indent-mode "aggressive indent" :toggle t)
+   ;; ("d" global-hungry-delete-mode "hungry delete" :toggle t)
+
+   :Modeline
+   ("m d" doom-modeline-mode "modern mode-line" :toggle t)
+   ("m b" display-battery-mode "battery" :toggle t)
+   ("m t" display-time-mode "time" :toggle t)
+   ("m w" which-function-mode "which function" :toggle t)
+
+   :Highlight
+   ("h l" global-hl-line-mode "line" :toggle t)
+   ("h p" show-paren-mode "paren" :toggle t)
+   ;; ("h s" symbol-overlay-mode "symbol" :toggle t)
+   ;; ("h r" rainbow-mode "rainbow" :toggle t)
+   ;; ("h w" (setq-default show-trailing-whitespace (not show-trailing-whitespace))
+   ;; "whitespace" :toggle show-trailing-whitespace)
+   ;; ("h d" rainbow-delimiters-mode "delimiter" :toggle t)
+   ("h i" highlight-indent-guides-mode "indent" :toggle t)
+   ("h t" global-hl-todo-mode "todo" :toggle t)
+   ;; ("x" highlight-sexp-mode "sexp" :toggle t)
+   ;; ("t" hl-todo-mode "todo" :toggle t)
+
+   :Program
+   ("f" flycheck-mode "flycheck" :toggle t)
+   ;; ("F" flymake-mode "flymake" :toggle t)
+   ("o" origami-mode "folding" :toggle t)
+   ;; ("O" hs-minor-mode "hideshow" :toggle t)
+   ("W" subword-mode "subword" :toggle t)
+   ("E" toggle-debug-on-error "debug on error" :toggle (default-value 'debug-on-error))
+   ("Q" toggle-debug-on-quit "debug on quit" :toggle (default-value 'debug-on-quit))
+   ;; ("v" global-diff-hl-mode "gutter" :toggle t)
+   ;; ("V" diff-hl-flydiff-mode "live gutter" :toggle t)
+   ;; ("M" diff-hl-margin-mode "margin gutter" :toggle t)
+   ;; ("D" diff-hl-dired-mode "dired gutter" :toggle t)
+
+   ("P" (if (profiler-running-p)
+            (progn (profiler-report) (profiler-stop))
+          (profiler-start 'cpu+mem))
+    "Profiler start / report" :exit (profiler-running-p)))
+
+;; Places single frame in centre of screen; hides many UI things (e.g., mode line).
+;; Nice for focused / immersive work.
+;;
+;; When in writeroom, let's also dim the font color of text in surrounding
+;; paragraphs / code blocks.
+(use-package writeroom-mode
+  :config (use-package focus)
+  :hook (writeroom-mode . (lambda () (focus-mode 'toggle))))
+;; Toggles Hydra:1 ends here
+
+;; [[file:init.org::#Note-M-S-SPC-is-for-my-personal-servers-dashboard][Note: M-S-SPC is for my personal servers dashboard.:1]]
+;; Note: M-S-SPC is for my personal servers dashboard.
+(global-set-key (kbd "M-SPC")   (lambda () (interactive) (setq org-agenda-files (list org-default-notes-file)) (org-agenda nil "a") (delete-other-windows) (beginning-of-buffer)))
+
+(use-package ace-jump-mode ;; Already installed above, somewhere.
+  :config (bind-key* "C-c SPC" 'ace-jump-mode))
+;; Note: M-S-SPC is for my personal servers dashboard.:1 ends here
+
+;; [[file:init.org::#w-screencapture][w-screencapture:1]]
+(bind-key "C-c s"
+  (cl-defun w-screencapture ()
+    "Interactively capture screen and save to clipboard; then paste in Slack, etc, with ⌘-c.
+
+  After we run this command, we can swipe up on mousepad to select different desktops, then
+  click & drag to select portition of screen to capture.
+
+  Captured screen is NOT saved to disk, only copied to clipboard.
+
+In MacOs,
++ Command + Shift + 5  ⇒  Select screen record
++ Command + Shift + 4  ⇒  Selection Screenshot
++ Command + Shift + 3  ⇒  Screenshot
+
+See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
+    (interactive)
+    (async-shell-command "screencapture -i -c")))
+
+(cl-defun w-delete-all-screenshots ()
+    "Delete all “Screen Shot ⋯” files in ~/Desktop."
+    (interactive)
+    (thread-last (shell-command-to-string "cd ~/Desktop; ls")
+      (s-split "\n")
+      (--filter (s-starts-with-p "Screen Shot" it))
+      (--map (f-delete (format "~/Desktop/%s" it)))))
+;; w-screencapture:1 ends here
+
+;; [[file:init.org::#Zoom][Zoom:1]]
+;; An automatic window-resizing mechanism.
+;; A “calmer” alternative to golden-ratio.
+;; https://github.com/cyrus-and/zoom
+(use-package zoom
+  :diminish
+  :config (zoom-mode t))
+;; Zoom:1 ends here
+
+;; [[file:init.org::#Projectile][Projectile:1]]
+;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
+;; https://github.com/bbatsov/projectile
+(use-package projectile
+:config (projectile-global-mode))
+(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+;; Projectile:1 ends here
+
+;; [[file:init.org::#Ibuffer][Ibuffer:1]]
+;; Let's use an improved buffer list.
+(use-package ibuffer ;; This is built-into Emacs.
+  :bind ("C-x C-b" . ibuffer))
+;; It uses similar commands as does dired; e.g.,
+;; / . org
+;; This filters (“/”) the list with extensions (“.”) being “org”.
+
+(use-package ibuffer-vc
+  :hook (ibuffer . (lambda ()
+                     (ibuffer-vc-set-filter-groups-by-vc-root)
+                     (unless (eq ibuffer-sorting-mode 'alphabetic)
+                       (ibuffer-do-sort-by-alphabetic))))
+  :custom
+  (ibuffer-formats '((mark modified read-only " "
+                           (name 18 18 :left :elide) " "
+                           (size 9 -1 :right) " "
+                           (mode 16 16 :left :elide) " "
+                           (vc-status 16 16 :left) " "
+                           (vc-relative-file)))))
+;; Ibuffer:1 ends here
+
+;; [[file:init.org::#C-x-2-and-C-x-3-now-create-a-new-window-horizontally-vertically-and-send-cursor-there][“C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there:1]]
+;; When we split open a new window, we usually want to jump to the new window.
+(advice-add #'split-window-below :after (lambda (&rest _) (other-window 1)))
+(advice-add #'split-window-right :after (lambda (&rest _) (other-window 1)))
+;; “C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there:1 ends here
+
+;; [[file:init.org::#Semantic-Change][Semantic Change:1]]
+(use-package change-inner
+  :diminish
+  :bind (("s-i" . #'change-inner)
+         ("s-o" . #'change-outer)))
+;; Semantic Change:1 ends here
+
+;; [[file:init.org::#Indentation-Guide][Indentation Guide:1]]
+;; Add a visual indent guide
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-character ?|)
+  (highlight-indent-guides-responsive 'stack))
+;; Indentation Guide:1 ends here
+
+;; [[file:init.org::#Commenting][Commenting:1]]
+(use-package comment-dwim-2
+  :bind ("M-;" . comment-dwim-2))
+
+ ;; Not ideal: M-; comments a parent Org heading and not the current line.
+ ;; (define-key org-mode-map (kbd "M-;") 'org-comment-dwim-2)
+;; Commenting:1 ends here
+
+;; [[file:init.org::#Having-a-workspace-manager-in-Emacs][Having a workspace manager in Emacs:1]]
+(use-package perspective
+  :defer t
+  :config ;; Activate it.
+          (persp-mode)
+          ;; In the modeline, tell me which workspace I'm in.
+          (persp-turn-on-modestring))
+;; Having a workspace manager in Emacs:1 ends here
+
+;; [[file:init.org::#Editor-Documentation-with-Contextual-Information][Editor Documentation with Contextual Information:1]]
+(use-package helpful :defer t)
+
+(defun my/describe-symbol (symbol)
+  "A “C-h o” replacement using “helpful”:
+   If there's a thing at point, offer that as default search item.
+
+   If a prefix is provided, i.e., “C-u C-h o” then the built-in
+   “describe-symbol” command is used.
+
+   ⇨ Pretty docstrings, with links and highlighting.
+   ⇨ Source code of symbol.
+   ⇨ Callers of function symbol.
+   ⇨ Key bindings for function symbol.
+   ⇨ Aliases.
+   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
+  "
+  (interactive "p")
+  (let* ((thing (symbol-at-point))
+         (val (completing-read
+               (format "Describe symbol (default %s): " thing)
+               (vconcat (list thing) obarray)
+               (lambda (vv)
+                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                          describe-symbol-backends))
+               t nil nil))
+         (it (intern val)))
+    (cond
+     (current-prefix-arg (funcall #'describe-symbol it))
+     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+     (t (helpful-symbol it)))))
+
+;; Keybindings.
+(global-set-key (kbd "C-h o") #'my/describe-symbol)
+(global-set-key (kbd "C-h k") #'helpful-key)
+;; Editor Documentation with Contextual Information:1 ends here
+
+;; [[file:init.org::#The-my-make-init-el-and-README-function][startup-code]]
+  (defun my/make-init-el-and-README ()
+    "Tangle an el and a github README from my init.org."
+    (interactive "P") ;; Places value of universal argument into: current-prefix-arg
+    (when current-prefix-arg
+      (let* ((time      (current-time))
+             (_date     (format-time-string "_%Y-%m-%d"))
+             (.emacs    "~/.emacs")
+             (.emacs.el "~/.emacs.el"))
+        ;; Make README.org
+        (save-excursion
+          (org-babel-goto-named-src-block "make-readme") ;; See next subsubsection.
+          (org-babel-execute-src-block))
+
+        ;; remove any other initialisation file candidates
+        (ignore-errors
+          (f-move .emacs    (concat .emacs _date))
+          (f-move .emacs.el (concat .emacs.el _date)))
+
+        ;; Make init.el
+        (org-babel-tangle)
+        ;; (byte-compile-file "~/.emacs.d/init.el")
+        (load-file "~/.emacs.d/init.el")
+
+        ;; Acknowledgement
+        (message "Tangled, compiled, and loaded init.el; and made README.md … %.06f seconds"
+                 (float-time (time-since time))))))
+
+(add-hook 'after-save-hook 'my/make-init-el-and-README nil 'local-to-this-file-please)
+;; startup-code ends here
+
+;; [[file:init.org::#Table-of-Contents-for-Org-vs-Github][‘Table of Contents’ for Org vs. Github:1]]
+(use-package toc-org
+  ;; Automatically update toc when saving an Org file.
+  :hook (org-mode . toc-org-mode)
+  ;; Use both “:ignore_N:” and ":export_N:” to exlude headings from the TOC.
+  :custom (toc-org-noexport-regexp
+           "\\(^*+\\)\s+.*:\\(ignore\\|noexport\\)\\([@_][0-9]\\)?:\\($\\|[^ ]*?:$\\)"))
+;; ‘Table of Contents’ for Org vs. Github:1 ends here
+
+;; [[file:init.org::#Table-of-Contents-for-Org-vs-Github][‘Table of Contents’ for Org vs. Github:2]]
+(cl-defun my/org-replace-tree-contents (heading &key (with "") (offset 0))
+  "Replace the contents of org tree HEADING with WITH, starting at OFFSET.
+
+Clear a subtree leaving first 3 lines untouched  ⇐  :offset 3
+Deleting a tree & its contents                   ⇐  :offset -1, or any negative number.
+Do nothing to a tree of 123456789 lines          ⇐  :offset 123456789
+
+Precondition: offset < most-positive-fixnum; else we wrap to a negative number."
+  (interactive)
+  (save-excursion
+    (beginning-of-buffer)
+    (re-search-forward (format "^\\*+ %s" (regexp-quote heading)))
+    ;; To avoid ‘forward-line’ from spilling onto other trees.
+    (org-narrow-to-subtree)
+    (org-mark-subtree)
+    ;; The 1+ is to avoid the heading.
+    (dotimes (_ (1+ offset)) (forward-line))
+    (delete-region (region-beginning) (region-end))
+    (insert with)
+    (widen)))
+
+;; Erase :TOC: body ---provided we're using toc-org.
+;; (my/org-replace-tree-contents "Table of Contents")
+;; ‘Table of Contents’ for Org vs. Github:2 ends here
+
+;; [[file:init.org::#Screencapturing-the-Current-Emacs-Frame][Screencapturing the Current Emacs Frame:1]]
+(defun my/capture-emacs-frame (&optional prefix output)
+"Insert a link to a screenshot of the current Emacs frame.
+
+Unless the name of the OUTPUT file is provided, read it from the
+user. If PREFIX is provided, let the user select a portion of the screen."
+(interactive "p")
+(defvar my/emacs-window-id
+   (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
+   "The window ID of the current Emacs frame.
+
+    Takes a second to compute, whence a defvar.")
+
+(let* ((screen  (if prefix "-i" (concat "-l" my/emacs-window-id)))
+       (temp    (format "emacs_temp_%s.png" (random)))
+       (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
+;; Get output file name
+  (unless output
+    (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
+    (when (s-blank-p output) (setq output default)))
+;; Clear minibuffer before capturing screen or prompt user
+(message (if prefix "Please select region for capture …" "♥‿♥"))
+;; Capture current screen and resize
+(thread-first
+    (format "screencapture -T 2 %s %s" screen temp)
+    (concat "; magick convert -resize 60% " temp " " output)
+    (shell-command))
+(f-delete temp)
+;; Insert a link to the image and reload inline images.
+(insert (concat "[[file:" output "]]")))
+(org-display-inline-images nil t))
+
+(bind-key* "C-c M-s" #'my/capture-emacs-frame)
+;; Screencapturing the Current Emacs Frame:1 ends here
+
+;; [[file:init.org::#Org-mode's-𝒳-Block-Expansions][Org-mode's ~<𝒳~ Block Expansions:1]]
+(require 'org-tempo)
+;; Org-mode's ~<𝒳~ Block Expansions:1 ends here
+
+;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:1]]
+;; Hunk navigation and commiting.
+(use-package git-gutter
+  :diminish
+  :config (global-git-gutter-mode))
+;; Diff updates happen in real time according when user is idle.
+;; What's changed & who's to blame?:1 ends here
+
+;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:2]]
+(defhydra hydra-version-control (global-map "C-x v")
+  "Version control"
+  ;; Syntax: (extension method description)
+  ("n" git-gutter:next-hunk      "Next hunk")
+  ("p" git-gutter:previous-hunk  "Previous hunk")
+  ("d" git-gutter:popup-hunk     "Show hunk diff")
+  ("r" git-gutter:revert-hunk    "Revert hunk\n")
+  ("c" git-gutter:stage-hunk     "Stage hunk")
+  ("s" git-gutter:statistic      "How many added & deleted lines"))
+;; What's changed & who's to blame?:2 ends here
+
+;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:3]]
+;; Colour fringe to indicate alterations.
+;; (use-package diff-hl)
+;; (global-diff-hl-mode)
+;; What's changed & who's to blame?:3 ends here
+
+;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:4]]
+;; Popup for who's to blame for alterations.
+(use-package git-messenger
+  :custom ;; Always show who authored the commit and when.
+          (git-messenger:show-detail t)
+          ;; Message menu let's us use magit diff to see the commit change.
+          (git-messenger:use-magit-popup t))
+
+;; View current file in browser on github.
+;; More generic is “browse-at-remote”.
+(use-package github-browse-file :defer t)
+
+;; Add these to the version control hydra.
+;;
+(defhydra hydra-version-control (global-map "C-x v")
+  ("b" git-messenger:popup-message "Who's to blame?")
+  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+  ("g" github-browse-file-blame "Show file in browser in github")
+  ("s" magit-status "Git status of current buffer"))
+;; What's changed & who's to blame?:4 ends here
+
+;; [[file:init.org::#What's-changed-who's-to-blame][What's changed & who's to blame?:5]]
+(use-package git-link :defer t)
+
+(defhydra hydra-version-control (global-map "C-x v")
+  ("l" git-link "Git URL for current location"))
+;; What's changed & who's to blame?:5 ends here
+
+;; [[file:init.org::#Helpful-Utilities-Shortcuts][Helpful Utilities & Shortcuts:1]]
+;; change all prompts to y or n
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;; Make RETURN key act the same way as “y” key for “y-or-n” prompts.
+;; E.g., (y-or-n-p "Happy?") accepts RETURN as “yes”.
+(define-key y-or-n-p-map [return] 'act)
+
+;; Enable all ‘possibly confusing commands’ such as helpful but
+;; initially-worrisome “narrow-to-region”, C-x n n.
+(setq-default disabled-command-function nil)
+;; Helpful Utilities & Shortcuts:1 ends here
+
+;; [[file:init.org::#Reload-buffer-with-f5][Reload buffer with ~f5~:1]]
+(global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
+;; Reload buffer with ~f5~:1 ends here
+
+;; [[file:init.org::#Reload-buffer-with-f5][Reload buffer with ~f5~:2]]
+;; Auto update buffers that change on disk.
+;; Will be prompted if there are changes that could be lost.
+(global-auto-revert-mode 1)
+;; Auto refreshes every 2 seconds. Don’t forget to refresh the version control status as well.
+(setq auto-revert-interval 2
+      auto-revert-check-vc-info t
+      global-auto-revert-non-file-buffers t
+      auto-revert-verbose nil)
+
+;; Don't show me the “ARev” marker in the mode line
+(diminish 'auto-revert-mode)
+;; Reload buffer with ~f5~:2 ends here
+
+;; [[file:init.org::#Kill-to-start-of-line][Kill to start of line:1]]
+;; M-k kills to the left
+(global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
+;; Kill to start of line:1 ends here
+
+;; [[file:init.org::#Killing-buffers-windows-C-x-k-has-a-family][Killing buffers & windows: ~C-x k~ has a family:1]]
+(global-set-key (kbd "C-x k")
+  (lambda (&optional prefix)
+"C-x k     ⇒ Kill current buffer & window
+C-u C-x k ⇒ Kill OTHER window and its buffer
+C-u C-u C-x C-k ⇒ Kill all other buffers and windows
+
+Prompt only if there are unsaved changes."
+     (interactive "P")
+     (pcase (or (car prefix) 0)
+       ;; C-x k     ⇒ Kill current buffer & window
+       (0  (kill-this-buffer)
+           (unless (one-window-p) (delete-window)))
+       ;; C-u C-x k ⇒ Kill OTHER window and its buffer
+       (4  (other-window 1)
+           (kill-this-buffer)
+           (unless (one-window-p) (delete-window)))
+       ;; C-u C-u C-x C-k ⇒ Kill all other buffers and windows
+       (16   (mapc 'kill-buffer (delq (current-buffer) (buffer-list)))
+             (delete-other-windows)))))
+;; Killing buffers & windows: ~C-x k~ has a family:1 ends here
+
+;; [[file:init.org::#Switching-from-2-horizontal-windows-to-2-vertical-windows][Switching from 2 horizontal windows to 2 vertical windows:1]]
+(defun my/ensure-two-vertical-windows ()
+  "I used this method often when programming in Coq.
+
+When there are two vertical windows, this method ensures the left-most
+window contains the buffer with the cursour in it."
+  (interactive)
+  (let ((otherBuffer (buffer-name)))
+    (other-window 1)                ;; C-x 0
+    (delete-window)                 ;; C-x 0
+    (split-window-right)			;; C-x 3
+    (other-window 1)                ;; C-x 0
+    (switch-to-buffer otherBuffer)	;; C-x b RET
+    (other-window 1)))
+
+(global-set-key (kbd "C-|") 'my/ensure-two-vertical-windows)
+;; Switching from 2 horizontal windows to 2 vertical windows:1 ends here
+
+;; [[file:init.org::#Obtaining-Values-of-KEYWORD-Annotations][Obtaining Values of ~#+KEYWORD~ Annotations:1]]
+;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
+(defun org-keywords ()
+  "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
+  (org-element-map (org-element-parse-buffer 'element) 'keyword
+                   (lambda (keyword) (cons (org-element-property :key keyword)
+                                           (org-element-property :value keyword)))))
+
+(defun org-keyword (KEYWORD)
+  "Get the value of a KEYWORD in the form of #+KEYWORD: value"
+  (cdr (assoc KEYWORD (org-keywords))))
+;; Obtaining Values of ~#+KEYWORD~ Annotations:1 ends here
+
+;; [[file:init.org::#Publishing-articles-to-my-personal-blog][Publishing articles to my personal blog:1]]
+(define-key global-map "\C-cb" 'my/publish-to-blog)
+
+(cl-defun my/publish-to-blog (&optional (draft nil) (local nil))
+  "
+  Using ‘AlBasmala’ setup to publish current article to my blog.
+  Details of AlBasmala can be found here:
+  https://alhassy.github.io/AlBasmala/
+
+  Locally: ~/alhassy.github.io/content/AlBasmala.org
+
+  A ‘draft’ will be produced in about ~7 seconds, but does not re-produce
+  a PDF and the article has a draft marker near the top. Otherwise,
+  it will generally take ~30 seconds due to PDF production, which is normal.
+  The default is not a draft and it takes ~20 seconds for the live
+  github.io page to update.
+
+  The ‘local’ optiona indicates whether the resulting article should be
+  viewed using the local server or the live webpage. Live page is default.
+
+  When ‘draft’ and ‘local’ are both set, the resulting page may momentarily
+  show a page-not-found error, simply refresh.
+  "
+
+  (load-file "~/alhassy.github.io/content/AlBasmala.el")
+
+  ;; --MOVE ME TO ALBASMALA--
+  ;; Sometimes the file I'm working with is not a .org file, so:
+  (setq file.org (buffer-name))
+
+  (preview-article :draft draft)
+  (unless draft (publish))
+  (let ((server (if local "http://localhost:4000/" "https://alhassy.github.io/")))
+    (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
+)
+;; Publishing articles to my personal blog:1 ends here
+
+;; [[file:init.org::#Jumping-without-hassle][Jumping without hassle:1]]
+(defun my/org-goto-line (line)
+  "Go to the indicated line, unfolding the parent Org header.
+
+   Implementation: Go to the line, then look at the 1st previous
+   org header, now we can unfold it whence we do so, then we go
+   back to the line we want to be at.
+  "
+  (interactive "nEnter line: ")
+  (goto-line line)
+  (org-previous-visible-heading 1)
+  (org-cycle)
+  (goto-line line))
+;; Jumping without hassle:1 ends here
+
+;; [[file:init.org::#The-evils-of-this-world][The evils of this world:1]]
+;; “PDF” stands for Portable Document Format, since you should be able to open
+;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
+;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
+;; them. Unfortunately, various government & insurance forms are only provided in
+;; this format.
+(system-packages-ensure "adobe-acrobat-reader")
+;; The evils of this world:1 ends here
+
+;; [[file:init.org::#Hydra-Timer][Hydra Timer:1]]
+(setq org-clock-sound t) ;; Standard Emacs beep
+(my/defhydra "C-c x" "Time Tracking" clock-o
+  ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
+  :Tasks
+  ("n" (my/org-journal-new-entry :work) "New")
+  ("v" (progn (my/org-journal-new-entry :work) (revert-buffer t t) (org-journal-mode)) "View all")
+  :Timer
+  ("s" org-timer-start "Start")
+  ("S" org-timer-stop "Stop")
+  ("x" org-timer-set-timer "Set")
+  ("p" org-timer "Print")
+  :Org-Clock
+  ("i" org-clock-in "in")
+  ("o" org-clock-out "out")
+  ("c" org-clock-cancel "cancel" :color pink :column "Do")
+  ("d" org-clock-display "display")
+  ("e" org-clock-modify-effort-estimate "effort")
+
+  ("j" org-clock-goto "Jump to task") ;; Jump to  the headline of the currently clocked in task. With a C-u prefix argument, select the target task from a list of recently clocked tasks.
+  ("r" org-clock-report "Insert clocktable"))
+;; Hydra Timer:1 ends here
+
+;; [[file:init.org::#Makes-Org-Markdown-previewabvle-as-we-type][Makes Org/Markdown previewabvle as we type!!! ♥:1]]
+  ;; Shows up as a magnifying glass in doom-modeline.
+  (use-package grip-mode)
+  ;;  :hook ((markdown-mode org-mode) . grip-mode)
+  ;; Pretty annyoning actually; instead we should call it as needed.
+  )
+;; Makes Org/Markdown previewabvle as we type!!! ♥:1 ends here
+
+;; [[file:init.org::#Syntax-highlighting-numbers-and-escape-characters][Syntax highlighting ---numbers and escape characters:1]]
+(use-package highlight-numbers
+  :hook ((prog-mode) . highlight-numbers-mode))
+;; Not text-mode , look Bad
+
+(use-package highlight-escape-sequences
+  :hook (prog-mode . hes-mode))
+;; Syntax highlighting ---numbers and escape characters:1 ends here
+
+;; [[file:init.org::#shell-command-and-run][shell-command-and-run:1]]
+(defalias 'my/shell-command-and-run 'shell-command-and-run)
+(defun shell-command-and-run (cmd name &rest more-commands)
+  "Run shell command CMD (possibly opening a new repl/terminal) and then MORE-COMMANDS.
+
+When to use this function? Whenever you're finding yourself in the situation:
+(1) Open a terminal, (2) start an interactive repl, (3) rename the buffer name to be informative,
+(4) run some default/initial commands. See also the `term' function.
+
+CMD and NAME are strings; MORE-COMMANDS is an arbitrary number of strings.
+
+The name of this function does not contain my personal prefix ‘my’,
+since I'd like it to show up as a possible completion when I type
+‘shell-command’.
+
+For example,
+
+   (shell-command-and-run
+    \"ghci\" \"Playing with Haskell\"
+    \"let x = 4\"
+    \":t x\")
+
+This results in an interactive shell buffer named “*Playing with Haskell*” with contents:
+
+   GHCi, version 8.10.7: https://www.haskell.org/ghc/  :? for help
+   Prelude> let x = 4
+   Prelude> :t x
+   x :: Num p => p
+   Prelude> ❙"
+  (interactive)
+  (let* ((default-directory "~/")
+         (proc (get-buffer-process
+                (ansi-term cmd name))))
+    (term-send-string
+     proc (concat (s-join "\n" more-commands) "\n"))))
+;; shell-command-and-run:1 ends here
+
+;; [[file:init.org::#Keeping-my-system-up-to-date][Keeping my system up to date:1]]
+(defun my/stay-up-to-date ()
+  "Ensure that OS and Emacs package listings are up to date.
+
+   Takes ~5 seconds when everything is up to date."
+  (async-shell-command "brew update && brew upgrade")
+  (other-window 1)
+  (rename-buffer "Keeping-system-up-to-date")
+
+  (package-refresh-contents 'please-do-so-in-the-background)
+  (message "Updated Emacs package manager.")
+  (other-window 1))
+
+(add-hook 'after-init-hook 'my/stay-up-to-date)
+
+;; For now, doing this since I'm also calling my/stay-up-to-date with
+;; after-init-hook which hides the startup message.
+(add-hook 'after-init-hook 'display-startup-echo-area-message)
+;; Keeping my system up to date:1 ends here

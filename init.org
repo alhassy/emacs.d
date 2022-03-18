@@ -537,8 +537,7 @@ its text editors.
 | Agenda / Calendar / Time Tracker             |   | Org mode                                            |
 | Literate Programming (like Jupyter)          |   | Org mode                                            |
 | Blogging Software                            |   | Org mode                                            |
-| Reference Information Platform               |   | Org mode with [[https://orgmode.org/manual/Refile-and-Copy.html
-][refile]] and doc:my/reference           |
+| Reference Information Platform               |   | Org mode with [[https://orgmode.org/manual/Refile-and-Copy.html][refile]] and doc:my/reference           |
 |----------------------------------------------+---+-----------------------------------------------------|
 | Word Processing / PDFs / Slidedeck tool      |   | Org mode                                            |
 | Spell checker & dictionary & grammar checker |   | doc:ispell & langtool                               |
@@ -10532,7 +10531,7 @@ LSP mode supports the following Features:
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
-* COMMENT Web-Development
+* Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
 :END:
@@ -10901,7 +10900,7 @@ The less casual Haskeller would likely want to use [[https://haskell-lang.org/in
 more support; e.g., obtain suggestions from GHC about redundant imports
 or type signatures.
 
-* COMMENT Toggles Hydra
+* Toggles Hydra
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
 :END:
@@ -10998,7 +10997,7 @@ or type signatures.
 (use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
-* COMMENT Lost Souls                                    :Outdated_Documentation:
+* Lost Souls                                    :Outdated_Documentation:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
