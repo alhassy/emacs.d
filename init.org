@@ -46,9 +46,9 @@
 
 #+begin_center
 
-badge:A_Life|Configuring_Emacs|success||gnu-emacs
+badge:A_Life|Configuring_Emacs|success|https://github.com/alhassy/emacs.d|gnu-emacs
 
-badge:A_Life_Configuring|Emacs|success||gnu
+badge:A_Life_Configuring|Emacs|success|https://alhassy.github.io/emacs.d/|gnu
 
 badge:Currently_Reorganising|Not_Polished|yellow
 #+end_center
