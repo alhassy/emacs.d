@@ -2870,7 +2870,7 @@ should jump to the first entry.
   :config (beginend-global-mode)
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 #+END_SRC
-* Literate Programming  :cannot_export_to_HTML:
+* Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
 :END:
@@ -4018,7 +4018,7 @@ name.
 ;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 #+end_src
-* COMMENT Life within Org-mode
+* COMMENT Life within Org-mode :broken_agenda_in_GithubActions:
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
@@ -10624,7 +10624,7 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 
 + ~C-c C-x C-v~ ⇒ Toggle inline images!
 
-* Web-Development
+* COMMENT Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
 :END:
@@ -10993,7 +10993,7 @@ The less casual Haskeller would likely want to use [[https://haskell-lang.org/in
 more support; e.g., obtain suggestions from GHC about redundant imports
 or type signatures.
 
-* Toggles Hydra
+* COMMENT Toggles Hydra
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
 :END:
