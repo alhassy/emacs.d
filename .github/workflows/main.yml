@@ -48,7 +48,7 @@ jobs:
           pwd
           ls
 
-      - name: Attempting startup...
+      - name: Attempting startup & basic test ...
         run: time emacs -nw --batch --eval='(let
                                 (
                                  (user-emacs-directory default-directory))
@@ -57,5 +57,9 @@ jobs:
                               (setq url-show-status nil)
                               (package-initialize)
                               (load-file "init.el")
-                              (message "\n 🤤 Startup Successful! 🤩"))'
+                              (message "\n 🤤 Startup Successful! 🤩")
+                                  (message "\nCheck we can do something basic, like getting pretty HTML from an Org file\n")
+                                  (find-file "init.org")
+                                  (org-html-export-to-html)
+                              (message "\n 🤤 HTML file generated successfully! 🤩\n"))'
 # Github Actions:1 ends here
