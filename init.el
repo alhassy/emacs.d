@@ -1142,6 +1142,559 @@ visit all blocks with such a name."
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 ;; Prettify inline source code:1 ends here
 
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:1]]
+(cl-defun my/org-capture-buffer (&optional keys no-additional-remarks
+                                           (heading-regexp "Subject: \\(.*\\)"))
+  "Capture the current [narrowed] buffer as a todo/note.
+
+This is mostly intended for capturing mail as todo tasks ^_^
+
+When NO-ADDITIONAL-REMARKS is provided, and a heading is found,
+then make and store the note without showing a pop-up.
+This is useful for when we capture self-contained mail.
+
+The HEADING-REGEXP must have a regexp parenthesis construction
+which is used to obtain a suitable heading for the resulting todo/note."
+  (interactive "P")
+  (let* ((current-content (substring-no-properties (buffer-string)))
+         (heading         (progn (string-match heading-regexp current-content)
+                                 (or (match-string 1 current-content) ""))))
+    (org-capture keys)
+    (insert heading "\n\n\n\n" (s-repeat 80 "-") "\n\n\n" current-content)
+
+    ;; The overtly verbose conditions are for the sake of clarity.
+    ;; Moreover, even though the final could have “t”, being explicit
+    ;; communicates exactly the necessary conditions.
+    ;; Being so verbose leads to mutual exclusive clauses, whence order is irrelevant.
+    (cond
+     ((s-blank? heading)
+        (beginning-of-buffer) (end-of-line))
+     ((and no-additional-remarks (not (s-blank? heading)))
+        (org-capture-finalize))
+     ((not (or no-additional-remarks (s-blank? heading)))
+        (beginning-of-buffer) (forward-line 2) (indent-for-tab-command)))))
+;; Capturing ideas & notes without interrupting the current workflow:1 ends here
+
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:2]]
+(defun my/org-capture (&optional prefix keys)
+  "Capture something!
+
+      C-c c   ⇒ Capture something
+C-u   C-c c   ⇒ Capture current [narrowed] buffer.
+C-u 5 C-c c   ⇒ Capture current [narrowed] buffer without adding additional remarks.
+C-u C-u C-c c ⇒ Goto last note stored.
+
+At work, ‘C-c c’ just captures notes under ‘Tasks’; no menu used."
+  (interactive "p")
+  (pcase prefix
+    (4     (my/org-capture-buffer keys))
+    (5     (my/org-capture-buffer keys :no-additional-remarks))
+    (t     (if my/personal-machine?
+               (org-capture prefix keys)
+             (org-capture prefix "t")))))
+;; Capturing ideas & notes without interrupting the current workflow:2 ends here
+
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:3]]
+(s-join "\n" (--map (concat "+  [[kbd:" (s-replace "⇒" "]]" it))  (cddr (s-split "\n" (documentation #'my/org-capture)))))
+;; Capturing ideas & notes without interrupting the current workflow:3 ends here
+
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:4]]
+;; Location of my todos / captured notes file
+(unless noninteractive
+  (setq org-default-notes-file
+        (if my/personal-machine?
+            "~/Dropbox/todo.org"
+          "~/Desktop/Work-2022-01-01.org")))
+
+;; “C-c c” to quickly capture a task/note
+(define-key global-map "\C-cc" #'my/org-capture) ;; See above.
+;; Capturing ideas & notes without interrupting the current workflow:4 ends here
+
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:5]]
+(cl-defun my/make-org-capture-template
+   (shortcut heading &optional (no-todo nil) (description heading) (scheduled nil))
+  "Quickly produce an org-capture-template.
+
+  After adding the result of this function to ‘org-capture-templates’,
+  we will be able perform a capture with “C-c c ‘shortcut’”
+  which will have description ‘description’.
+  It will be added to the tasks file under heading ‘heading’.
+
+  ‘no-todo’ omits the ‘TODO’ tag from the resulting item; e.g.,
+  when it's merely an interesting note that needn't be acted upon.
+
+  Default for ‘description’ is ‘heading’. Default for ‘no-todo’ is ‘nil’.
+
+  Scheduled items appear in the agenda; true by default.
+
+  The target is ‘file+headline’ and the type is ‘entry’; to see
+  other possibilities invoke: C-h o RET org-capture-templates.
+  The “%?” indicates the location of the Cursor, in the template,
+  when forming the entry.
+  "
+  `(,shortcut ,description entry
+      (file+headline org-default-notes-file ,heading)
+         ,(concat "*" (unless no-todo " TODO") " %?\n"
+                (when nil ;; this turned out to be a teribble idea.
+                  ":PROPERTIES:\n:"
+                (if scheduled
+                    "SCHEDULED: %^{Any time ≈ no time! Please schedule this task!}t"
+                  "CREATED: %U")
+                "\n:END:") "\n\n ")
+      :empty-lines 1 :time-prompt t))
+;; Capturing ideas & notes without interrupting the current workflow:5 ends here
+
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:6]]
+(setq org-capture-templates
+      (cl-loop for (shortcut heading)
+            in (-partition 2 '("t" "Tasks, Getting Things Done"
+                               "r" "Reference Material"
+                               "m" "Email"
+                               "e" "Emacs (•̀ᴗ•́)و"
+                               "i" "Islam"
+                               "b" "Blog"
+                               "a" "Arbitrary Reading and Learning"
+                               "l" "Programming Languages"
+                               "p" "Personal Matters"))
+            collect  (my/make-org-capture-template shortcut heading)))
+;; Capturing ideas & notes without interrupting the current workflow:6 ends here
+
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:7]]
+;; Update: Let's schedule tasks during the GTD processing phase.
+;;
+;; For now, let's automatically schedule items a week in advance.
+;; TODO: FIXME: This overwrites any scheduling I may have performed.
+;; (defun my/org-capture-schedule ()
+;;   (org-schedule nil "+7d"))
+;;
+;; (add-hook 'org-capture-before-finalize-hook 'my/org-capture-schedule)
+;; Capturing ideas & notes without interrupting the current workflow:7 ends here
+
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:8]]
+;; Cannot mark an item DONE if it has a  TODO child.
+;; Conversely, all children must be DONE in-order for a parent to be DONE.
+(setq org-enforce-todo-dependencies t)
+;; Capturing ideas & notes without interrupting the current workflow:8 ends here
+
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:9]]
+  ;; Ensure notes are stored at the top of a tree.
+  (setq org-reverse-note-order nil)
+;; Capturing ideas & notes without interrupting the current workflow:9 ends here
+
+;; [[file:init.org::#Capturing-ideas-notes-without-interrupting-the-current-workflow][Capturing ideas & notes without interrupting the current workflow:10]]
+(cl-defun my/reference (&optional (file org-default-notes-file))
+  "Look up some reference material super quick.
+
+By default we look in user's Org TODOs file.
+
+FILE should be an ORG file with a top-level heading that starts with ‘Reference’.
+We show its subheadings in a completing-read menu, then narrow to that entry."
+  (interactive)
+  (find-file file)
+  (widen)
+  (goto-char (point-min))
+  (re-search-forward "^* Reference") ;; Start of line.
+  (org-narrow-to-subtree)
+  (org-cycle) (org-cycle)
+  (let* ((headings (org-map-entries (lambda () (org-element-property :title (org-element-at-point)) ) "LEVEL=2"))
+         (topic (completing-read "What to review? " headings)))
+    (search-forward (concat "** " topic))
+    (org-narrow-to-subtree)
+    (org-cycle)))
+
+(defalias 'my/review-reference-notes 'my/reference)
+(defalias 'w-reference 'my/reference) ;; “w”ork
+;; Capturing ideas & notes without interrupting the current workflow:10 ends here
+
+;; [[file:init.org::#Step-2-Filing-your-tasks][Step 2: Filing your tasks:1]]
+;; Add a note whenever a task's deadline or scheduled date is changed.
+(setq org-log-redeadline 'time)
+(setq org-log-reschedule 'time)
+;; Step 2: Filing your tasks:1 ends here
+
+;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:1]]
+(define-key global-map "\C-ca" 'org-agenda)
+;; Step 3: Quickly review the upcoming week:1 ends here
+
+;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:2]]
+;; List of all the files & directories where todo items can be found. Only one
+;; for now: My default notes file.
+(setq org-agenda-files (list org-default-notes-file))
+
+;; Display tags really close to their tasks.
+(setq org-agenda-tags-column -10)
+
+;; How many days ahead the default agenda view should look
+(setq org-agenda-span 'day)
+;; May be any number; the larger the slower it takes to generate the view.
+;; One day is thus the fastest ^_^
+
+;; How many days early a deadline item will begin showing up in your agenda list.
+(setq org-deadline-warning-days 14)
+
+;; In the agenda view, days that have no associated tasks will still have a line showing the date.
+(setq org-agenda-show-all-dates t)
+
+;; Scheduled items marked as complete will not show up in your agenda view.
+(setq org-agenda-skip-scheduled-if-done t)
+(setq org-agenda-skip-deadline-if-done  t)
+;; Step 3: Quickly review the upcoming week:2 ends here
+
+;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:3]]
+(setq org-agenda-start-on-weekday nil)
+
+;; Start each agenda item with ‘○’, then show me it's %timestamp and how many
+;; times it's been re-%scheduled.
+(setq org-agenda-prefix-format " ○ %t%s")
+;; Step 3: Quickly review the upcoming week:3 ends here
+
+;; [[file:init.org::#Step-3-Quickly-review-the-upcoming-week][Step 3: Quickly review the upcoming week:4]]
+(use-package origami)
+(use-package org-super-agenda
+  :hook (org-agenda-mode . origami-mode) ;; Easily fold groups via TAB.
+  :bind (:map org-super-agenda-header-map ("<tab>" . origami-toggle-node))
+  :config
+  (org-super-agenda-mode)
+  (setq org-super-agenda-groups
+        '((:name "Important" :priority "A")
+          (:name "Personal" :habit t)
+          ;; For everything else, nicely display their heading hierarchy list.
+          (:auto-map (lambda (e) (org-format-outline-path (org-get-outline-path)))))))
+
+;; MA: No noticable effect when using org-super-agenda :/
+;;
+;; Leave new line at the end of an entry.
+;; (setq org-blank-before-new-entry '((heading . t) (plain-list-item . t)))
+;; Step 3: Quickly review the upcoming week:4 ends here
+
+;; [[file:init.org::#Step-4-Getting-ready-for-the-day][Step 4: Getting ready for the day:1]]
+(setq org-lowest-priority ?C) ;; Now org-speed-eky ‘,’ gives 3 options
+(setq org-priority-faces
+'((?A :foreground "red"            :weight bold) ;; :background "LightCyan1")
+  (?B :foreground "orange"         :weight bold)
+  (?C :foreground "green"          :weight bold)))
+;; See all colours with: M-x list-colors-display
+;; Step 4: Getting ready for the day:1 ends here
+
+;; [[file:init.org::#Step-4-Getting-ready-for-the-day][Step 4: Getting ready for the day:2]]
+(use-package org-fancy-priorities
+  :diminish org-fancy-priorities-mode
+  :hook   (org-mode . org-fancy-priorities-mode)
+  :custom (org-fancy-priorities-list '("High" "MID" "LOW")) ;; "OPTIONAL"
+  ;; Let's use the “Eisenhower map of priority”…
+  ;; :custom (org-fancy-priorities-list '("Urgent and Important"     ;; Do now!
+  ;;                                      "Not Urgent But Important" ;; Do schedule this.
+  ;;                                      "Urgent But Not Important" ;; Delegate?
+  ;;                                      "Not Urgent and Not Important")) ;; Don't do / Optional
+  )
+;; Step 4: Getting ready for the day:2 ends here
+
+;; [[file:init.org::#Step-4-Getting-ready-for-the-day][Step 4: Getting ready for the day:3]]
+(require 'org-agenda)
+
+;; How should the columns view look?
+(setq org-columns-default-format   "%60ITEM(Task) %6Effort(Estim){:} %3PRIORITY %TAGS")
+
+;; Press “c” in Org agenda to see the columns view; (default binding C-c C-x C-c is too long!)
+(org-defkey org-agenda-mode-map "c" #'org-agenda-columns)
+(org-defkey org-agenda-mode-map "C" #'org-agenda-goto-calendar)
+
+;; Press “e” in columns view to alter “e”ffort “e”stimates.
+(require 'org-colview)
+(org-defkey org-columns-map "e"
+            ;; Refresh after making an effort estimate.
+            (lambda () (interactive) (org-agenda-set-effort) (org-agenda-columns)))
+;; Step 4: Getting ready for the day:3 ends here
+
+;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:1]]
+;; C-c a s ➩ Search feature also looks into archived files.
+;; Helpful when need to dig stuff up from the past.
+(setq org-agenda-text-search-extra-files '(agenda-archives))
+;; Step 7: Archiving Tasks:1 ends here
+
+;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:2]]
+;; enables the org-agenda variables.
+(require 'org-agenda) ;; Need this to have “org-agenda-custom-commands” defined.
+
+(unless noninteractive
+    ;; ➩ Show my agenda upon Emacs startup.
+    (org-agenda "a" "a"))
+;; Step 7: Archiving Tasks:2 ends here
+
+;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:3]]
+;; Pressing ‘c’ in the org-agenda view shows all completed tasks,
+;; which should be archived.
+(add-to-list 'org-agenda-custom-commands
+  '("c" todo "DONE|ON_HOLD|CANCELLED" nil))
+;; Step 7: Archiving Tasks:3 ends here
+
+;; [[file:init.org::#Step-7-Archiving-Tasks][Step 7: Archiving Tasks:4]]
+(add-to-list 'org-agenda-custom-commands
+  '("u" alltodo ""
+     ((org-agenda-skip-function
+        (lambda ()
+              (org-agenda-skip-entry-if 'scheduled 'deadline 'regexp  "\n]+>")))
+              (org-agenda-overriding-header "Unscheduled TODO entries: "))))
+;; Step 7: Archiving Tasks:4 ends here
+
+;; [[file:init.org::#Tag-You're-it][Tag! You're it!:1]]
+ (setq org-tags-column -77) ;; the default
+;; Tag! You're it!:1 ends here
+
+;; [[file:init.org::#Tag-You're-it][Tag! You're it!:2]]
+(use-package helm-org) ;; Helm for org headlines and keywords completion.
+(add-to-list 'helm-completing-read-handlers-alist
+             '(org-set-tags-command . helm-org-completing-read-tags))
+
+;; Also provides: helm-org-capture-templates
+;; Tag! You're it!:2 ends here
+
+;; [[file:init.org::#Tag-You're-it][Tag! You're it!:3]]
+(use-package org-pretty-tags
+  :diminish org-pretty-tags-mode
+  :demand t
+  :config
+   (setq org-pretty-tags-surrogate-strings
+         '(("Neato"    . "💡")
+           ("Blog"     . "✍")
+           ("Audio"    . "♬")
+           ("Video"    . "📺")
+           ("Book"     . "📚")
+           ("Running"  . "🏃")
+           ("Question" . "❓")
+           ("Wife"     . "💕")
+           ("Text"     . "💬") ; 📨 📧
+           ("Friends"  . "👪")
+           ("Self"     . "🍂")
+           ("Finances" . "💰")
+           ("Car"      . "🚗") ; 🚙 🚗 🚘
+           ("Urgent"   . "🔥"))) ;; 📥 📤 📬
+   (org-pretty-tags-global-mode 1))
+;; Tag! You're it!:3 ends here
+
+;; [[file:init.org::#Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes][Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1]]
+;; Tasks get a 25 minute count down timer
+(setq org-timer-default-timer 25)
+
+;; Use the timer we set when clocking in happens.
+(add-hook 'org-clock-in-hook
+  (lambda () (org-timer-set-timer '(16))))
+
+;; unless we clocked-out with less than a minute left,
+;; show disappointment message.
+(add-hook 'org-clock-out-hook
+  (lambda ()
+  (unless (s-prefix? "0:00" (org-timer-value-string))
+     (message-box "The basic 25 minutes on this difficult task are not up; it's a shame to see you leave."))
+     (org-timer-stop)))
+;; Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”:1 ends here
+
+;; [[file:init.org::#The-Setup][The Setup:1]]
+(use-package org-journal
+  ;; C-u C-c j ⇒ Work journal ;; C-c j ⇒ Personal journal
+  :bind (("C-c j" . my/org-journal-new-entry))
+  :config
+    (setq org-journal-dir         "~/Desktop/" ;; "~/Dropbox/journal/"
+          org-journal-file-type   'yearly
+          org-journal-file-format "Personal-%Y-%m-%d.org")
+
+    (defun my/org-journal-new-entry (prefix)
+      "Open today’s journal file and start a new entry.
+
+  With a prefix, we use the work journal; otherwise the personal journal."
+      (interactive "P")
+      (let ((org-journal-dir (if prefix "~/Desktop/" org-journal-dir))
+            (org-journal-file-format (if prefix "Work-%Y-%m-%d.org" org-journal-file-format)))
+        (org-journal-new-entry nil)
+        (org-mode)
+        (org-show-all))))
+;; The Setup:1 ends here
+
+;; [[file:init.org::#Workflow-States][Workflow States:1]]
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
+        (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)")))
+
+;; Since DONE is a terminal state, it has no exit-action.
+;; Let's explicitly indicate time should be noted.
+(setq org-log-done 'time)
+;; Workflow States:1 ends here
+
+;; [[file:init.org::#Workflow-States][Workflow States:2]]
+(setq org-todo-keyword-faces
+      '(("TODO"      :foreground "red"          :weight bold)
+        ("STARTED"   :foreground "blue"         :weight bold)
+        ("DONE"      :foreground "forest green" :weight bold)
+        ("WAITING"   :foreground "orange"       :weight bold)
+        ("ON_HOLD"   :foreground "magenta"      :weight bold)
+        ("CANCELLED" :foreground "forest green" :weight bold)))
+;; Workflow States:2 ends here
+
+;; [[file:init.org::#Workflow-States][Workflow States:3]]
+(setq org-use-fast-todo-selection t)
+;; Workflow States:3 ends here
+
+;; [[file:init.org::#Workflow-States][Workflow States:4]]
+;; Install the tool
+; (async-shell-command "brew tap adoptopenjdk/openjdk; brew cask install adoptopenjdk13") ;; Dependency
+; (async-shell-command "brew install plantuml")
+
+;; Tell emacs where it is.
+;; E.g., (async-shell-command "find / -name plantuml.jar")
+(setq org-plantuml-jar-path
+      "/usr/local/Cellar/plantuml/1.2020.19/libexec/plantuml.jar")
+
+;; Enable C-c C-c to generate diagrams from plantuml src blocks.
+(add-to-list 'org-babel-load-languages '(plantuml . t) )
+(require 'ob-plantuml)
+
+; Use fundamental mode when editing plantuml blocks with C-c '
+(add-to-list 'org-src-lang-modes '("plantuml" . fundamental))
+;; Workflow States:4 ends here
+
+;; [[file:init.org::#Clocking-Work-Time][Clocking Work Time:1]]
+;; Record a note on what was accomplished when clocking out of an item.
+(setq org-log-note-clock-out t)
+;; Clocking Work Time:1 ends here
+
+;; [[file:init.org::#Clocking-Work-Time][Clocking Work Time:2]]
+(setq confirm-kill-emacs 'yes-or-no-p)
+;; Clocking Work Time:2 ends here
+
+;; [[file:init.org::#Clocking-Work-Time][Clocking Work Time:3]]
+;; Resume clocking task when emacs is restarted
+(org-clock-persistence-insinuate)
+
+;; Show lot of clocking history
+(setq org-clock-history-length 23)
+
+;; Resume clocking task on clock-in if the clock is open
+(setq org-clock-in-resume t)
+
+;; Sometimes I change tasks I'm clocking quickly ---this removes clocked tasks with 0:00 duration
+(setq org-clock-out-remove-zero-time-clocks t)
+
+;; Clock out when moving task to a done state
+(setq org-clock-out-when-done t)
+
+;; Save the running clock and all clock history when exiting Emacs, load it on startup
+(setq org-clock-persist t)
+
+;; Do not prompt to resume an active clock
+(setq org-clock-persist-query-resume nil)
+
+;; Include current clocking task in clock reports
+(setq org-clock-report-include-clocking-task t)
+;; Clocking Work Time:3 ends here
+
+;; [[file:init.org::#Estimates-versus-actual-time][Estimates versus actual time:1]]
+ (push '("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
+       org-global-properties)
+;; Estimates versus actual time:1 ends here
+
+;; [[file:init.org::#Estimates-versus-actual-time][Estimates versus actual time:2]]
+(setq org-clock-sound "~/.emacs.d/school-bell.wav")
+;; Estimates versus actual time:2 ends here
+
+;; [[file:init.org::#Habit-Formation][Habit Formation:1]]
+;; Show habits for every day in the agenda.
+(setq org-habit-show-habits t)
+(setq org-habit-show-habits-only-for-today nil)
+
+;; This shows the ‘Seinfeld consistency’ graph closer to the habit heading.
+(setq org-habit-graph-column 90)
+
+;; In order to see the habit graphs, which I've placed rightwards, let's
+;; always open org-agenda in ‘full screen’.
+;; (setq org-agenda-window-setup 'only-window)
+;; Habit Formation:1 ends here
+
+;; [[file:init.org::#Actually-Doing-Things][Actually Doing Things ---or /Sending notifications from Emacs/:1]]
+;; Obtain a notifications and text-to-speech utilities
+(system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
+(system-packages-ensure "terminal-notifier") ;; MacOS specific
+;; System Preferences → Notifications → Terminal Notifier → Allow “alerts”.
+;; E.g.,: (shell-command "terminal-notifier -title \"Hiya\" -message \"hello\"")
+;; Actually Doing Things ---or /Sending notifications from Emacs/:1 ends here
+
+;; [[file:init.org::#Actually-Doing-Things][Actually Doing Things ---or /Sending notifications from Emacs/:2]]
+(cl-defun my/notify (message &key (titled "") at repeat-every-hour open)
+  "Notify user with both an visual banner, with a beep sound, and a text-to-speech recitation.
+
+When the user clicks on the resulting notification, unless a
+given OPEN url is provided, the Emacs application is brough into
+focus.
+
+MESSAGE and TITLE are strings; AT is a time string as expected of
+`run-at-time' such as \"11.23pm\" or \"5 sec\"; REPEAT-EVERY-HOUR
+is a floating-point number of hours to continuously repeat the
+alert.  OPEN is a URL that is opened when the user clicks the
+notification. This can be a web or file URL, or any custom URL
+scheme.
+
+I initially used optional arguments, but realised that in due time
+it would be more informative to use named arguments instead.
+
+Example uses:
+
+;; In 5 minutes from now, remind me to watch this neato video!
+(my/notify \"🔔 Get things done! 📎 💻 \"
+  :open \"https://www.youtube.com/watch?v=23tusPiiNZk&ab_channel=Motiversity\"
+  :at \"5 minutes\")
+
+;; Remind me to exercise every 1.5hours; starting at 8:00am.
+(my/notify \"Take a 5min break and get your blood flowing!\"
+           :titled \"Exercise\"
+           :at \"8:00am\"
+           :repeat-every-hour 1.5)
+
+;; Actually getting things done!
+(my/notify \"Is what you're doing actually in alignment with your goals?
+           Maybe it's time to do another task?\"
+           :titled \"Check your agenda!\"
+           :at \"10:00am\"
+           :repeat-every-hour 2)
+"
+  (run-at-time at ;; the time to make the alert
+               (when repeat-every-hour (* 60 60 repeat-every-hour))
+               #'async-shell-command
+               (format "%s"
+                       `(terminal-notifier
+                         -title    ,(pp-to-string titled)
+                         -message  ,(s-replace "\\n" "\n" (pp-to-string message))
+                         ;; Play a random sound when the notification appears. See sound names with: ls /System/Library/Sounds
+                         ;; Use the special NAME “default” for the default notification sound.
+                         -sound ,(progn (require 'seq) (seq-random-elt (s-split "\n" (shell-command-to-string "ls /System/Library/Sounds"))))
+                         ;; Don't create duplicates of the notification, just one instance;
+                         ;; i.e., each notification belongs to a group and only one alert of the group may be present at any one time.
+                         -group  ,(pp-to-string titled)
+                         ;; Activate the application specified by ID when the user clicks the notification.
+                         -activate org.gnu.Emacs
+                         ,@(when open `(-open ,(pp-to-string open)))
+                         ;; Run the shell command COMMAND when the user clicks the notification.
+                         ;; -execute COMMAND
+                         & ;; … and then speak! …
+                         espeak -s 125 ,(s-replace "\\n" " " (pp-to-string message))))))
+;; Actually Doing Things ---or /Sending notifications from Emacs/:2 ends here
+
+;; [[file:init.org::#Actually-Doing-Things][Actually Doing Things ---or /Sending notifications from Emacs/:3]]
+;; (Emojis look terrible in Lisp; but much better when the alert is actually made!)
+
+;; Remind me to exercise every 1.5hours; starting at 8:00am.
+(my/notify "Take a 5min break and get your blood flowing!\n\t\t🚣 🏃‍♂️ 🧗‍♂️ 🧘‍♂️ 🏊 🏋 🚴‍♂️"
+           :titled "🤾‍♀️ Exercise  🚵‍♂️"
+           :at "8:00am"
+           :repeat-every-hour 1.5
+           :open "https://www.youtube.com/watch?v=23tusPiiNZk&ab_channel=Motiversity")
+
+;; Actually getting things done!
+(my/notify "Is what you're doing actually in alignment with your goals? ✔️📉
+           Maybe it's time to do another task? 📋"
+           :titled "📆 Check your agenda! 🔔"
+           :at "10:00am"
+           :repeat-every-hour 2)
+;; Actually Doing Things ---or /Sending notifications from Emacs/:3 ends here
+
 ;; [[file:init.org::#Cosmetics][Cosmetics:1]]
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
