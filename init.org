@@ -9299,6 +9299,17 @@ Let's get the file path of the current file. We bind it and make it a top-level 
     (message (kill-new buffer-file-name))))
 #+end_src
 
+** TODO Projectile
+:PROPERTIES:
+:CUSTOM_ID: Projectile
+:END:
+#+begin_src emacs-lisp
+;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
+;; https://github.com/bbatsov/projectile
+(use-package projectile
+:config (projectile-global-mode))
+(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+#+end_src
 ** TODO Are there any errors in my code?
 :PROPERTIES:
 :CUSTOM_ID: Are-there-any-errors-in-my-code
@@ -10531,6 +10542,88 @@ LSP mode supports the following Features:
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
+**  w-screencapture
+:PROPERTIES:
+:CUSTOM_ID: w-screencapture
+:END:
+#+begin_src emacs-lisp
+(bind-key "C-c s"
+  (cl-defun w-screencapture ()
+    "Interactively capture screen and save to clipboard; then paste in Slack, etc, with ⌘-c.
+
+  After we run this command, we can swipe up on mousepad to select different desktops, then
+  click & drag to select portition of screen to capture.
+
+  Captured screen is NOT saved to disk, only copied to clipboard.
+
+In MacOs,
++ Command + Shift + 5  ⇒  Select screen record
++ Command + Shift + 4  ⇒  Selection Screenshot
++ Command + Shift + 3  ⇒  Screenshot
+
+See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
+    (interactive)
+    (async-shell-command "screencapture -i -c")))
+
+(cl-defun w-delete-all-screenshots ()
+    "Delete all “Screen Shot ⋯” files in ~/Desktop."
+    (interactive)
+    (thread-last (shell-command-to-string "cd ~/Desktop; ls")
+      (s-split "\n")
+      (--filter (s-starts-with-p "Screen Shot" it))
+      (--map (f-delete (format "~/Desktop/%s" it)))))
+#+end_src
+** Screencapturing the Current Emacs Frame
+:PROPERTIES:
+:CUSTOM_ID: Screencapturing-the-Current-Emacs-Frame
+:END:
+
+Sometimes an image can be tremendously convincing, or at least sufficiently
+inviting. The following incantation is written for MacOS and uses it's native
+=screencapture= utility, as well as =magick=.
+#+BEGIN_SRC emacs-lisp
+(defun my/capture-emacs-frame (&optional prefix output)
+"Insert a link to a screenshot of the current Emacs frame.
+
+Unless the name of the OUTPUT file is provided, read it from the
+user. If PREFIX is provided, let the user select a portion of the screen."
+(interactive "p")
+(defvar my/emacs-window-id
+   (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
+   "The window ID of the current Emacs frame.
+
+    Takes a second to compute, whence a defvar.")
+
+(let* ((screen  (if prefix "-i" (concat "-l" my/emacs-window-id)))
+       (temp    (format "emacs_temp_%s.png" (random)))
+       (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
+;; Get output file name
+  (unless output
+    (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
+    (when (s-blank-p output) (setq output default)))
+;; Clear minibuffer before capturing screen or prompt user
+(message (if prefix "Please select region for capture …" "♥‿♥"))
+;; Capture current screen and resize
+(thread-first
+    (format "screencapture -T 2 %s %s" screen temp)
+    (concat "; magick convert -resize 60% " temp " " output)
+    (shell-command))
+(f-delete temp)
+;; Insert a link to the image and reload inline images.
+(insert (concat "[[file:" output "]]")))
+(org-display-inline-images nil t))
+
+(bind-key* "C-c M-s" #'my/capture-emacs-frame)
+#+END_SRC
+
+Why this way? On MacOS, ImageMagick's =import= doesn't seem to work ---not at all
+for me! Also, I dislike how large the resulting image is. As such, I'm using
+MacOS's =screencapture= utility, which in-turn requires me to somehow obtain frame
+IDs. Hence, the amount of work needed to make this happen on my system was most
+simple if I just wrote it out myself rather than tweaking an existing system.
+
++ ~C-c C-x C-v~ ⇒ Toggle inline images!
+
 * Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
@@ -10997,7 +11090,7 @@ or type signatures.
 (use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
-* Lost Souls                                    :Outdated_Documentation:
+* COMMENT Lost Souls                                    :Outdated_Documentation:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -11013,37 +11106,6 @@ or type signatures.
   :config (bind-key* "C-c SPC" 'ace-jump-mode))
 #+end_src
 
-**  w-screencapture
-:PROPERTIES:
-:CUSTOM_ID: w-screencapture
-:END:
-#+begin_src emacs-lisp
-(bind-key "C-c s"
-  (cl-defun w-screencapture ()
-    "Interactively capture screen and save to clipboard; then paste in Slack, etc, with ⌘-c.
-
-  After we run this command, we can swipe up on mousepad to select different desktops, then
-  click & drag to select portition of screen to capture.
-
-  Captured screen is NOT saved to disk, only copied to clipboard.
-
-In MacOs,
-+ Command + Shift + 5  ⇒  Select screen record
-+ Command + Shift + 4  ⇒  Selection Screenshot
-+ Command + Shift + 3  ⇒  Screenshot
-
-See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
-    (interactive)
-    (async-shell-command "screencapture -i -c")))
-
-(cl-defun w-delete-all-screenshots ()
-    "Delete all “Screen Shot ⋯” files in ~/Desktop."
-    (interactive)
-    (thread-last (shell-command-to-string "cd ~/Desktop; ls")
-      (s-split "\n")
-      (--filter (s-starts-with-p "Screen Shot" it))
-      (--map (f-delete (format "~/Desktop/%s" it)))))
-#+end_src
 ** Zoom
 :PROPERTIES:
 :CUSTOM_ID: Zoom
@@ -11055,17 +11117,6 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
 (use-package zoom
   :diminish
   :config (zoom-mode t))
-#+end_src
-** Projectile
-:PROPERTIES:
-:CUSTOM_ID: Projectile
-:END:
-#+begin_src emacs-lisp
-;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
-;; https://github.com/bbatsov/projectile
-(use-package projectile
-:config (projectile-global-mode))
-(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
 #+end_src
 ** Ibuffer
 :PROPERTIES:
@@ -11540,57 +11591,6 @@ file with =M-x org-md-export-to-markdown=.
        markdown links, since they don't refer to any markdown labels.
     3. Rename the exported file to =README.md=.
     4. Run ~grip~.
-** Screencapturing the Current Emacs Frame
-:PROPERTIES:
-:CUSTOM_ID: Screencapturing-the-Current-Emacs-Frame
-:END:
-
-Sometimes an image can be tremendously convincing, or at least sufficiently
-inviting. The following incantation is written for MacOS and uses it's native
-=screencapture= utility, as well as =magick=.
-#+BEGIN_SRC emacs-lisp
-(defun my/capture-emacs-frame (&optional prefix output)
-"Insert a link to a screenshot of the current Emacs frame.
-
-Unless the name of the OUTPUT file is provided, read it from the
-user. If PREFIX is provided, let the user select a portion of the screen."
-(interactive "p")
-(defvar my/emacs-window-id
-   (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
-   "The window ID of the current Emacs frame.
-
-    Takes a second to compute, whence a defvar.")
-
-(let* ((screen  (if prefix "-i" (concat "-l" my/emacs-window-id)))
-       (temp    (format "emacs_temp_%s.png" (random)))
-       (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
-;; Get output file name
-  (unless output
-    (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
-    (when (s-blank-p output) (setq output default)))
-;; Clear minibuffer before capturing screen or prompt user
-(message (if prefix "Please select region for capture …" "♥‿♥"))
-;; Capture current screen and resize
-(thread-first
-    (format "screencapture -T 2 %s %s" screen temp)
-    (concat "; magick convert -resize 60% " temp " " output)
-    (shell-command))
-(f-delete temp)
-;; Insert a link to the image and reload inline images.
-(insert (concat "[[file:" output "]]")))
-(org-display-inline-images nil t))
-
-(bind-key* "C-c M-s" #'my/capture-emacs-frame)
-#+END_SRC
-
-Why this way? On MacOS, ImageMagick's =import= doesn't seem to work ---not at all
-for me! Also, I dislike how large the resulting image is. As such, I'm using
-MacOS's =screencapture= utility, which in-turn requires me to somehow obtain frame
-IDs. Hence, the amount of work needed to make this happen on my system was most
-simple if I just wrote it out myself rather than tweaking an existing system.
-
-+ ~C-c C-x C-v~ ⇒ Toggle inline images!
-
 ** Org-mode's ~<𝒳~ Block Expansions
 :PROPERTIES:
 :CUSTOM_ID: Org-mode's-𝒳-Block-Expansions
