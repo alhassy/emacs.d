@@ -2832,3 +2832,946 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
           (t
            (call-interactively 'org-insert-link)))))
 ;; Org-mode ⇐ HTML:3 ends here
+
+;; [[file:init.org::#Quickly-Run-Code-Snippets][Quickly Run Code Snippets:1]]
+;; In any programming buffer, “M-x quickrun” to execute that program.
+;; Super useful when wanting to quickly test things out, in a playground.
+;;
+;; E.g., Make a new file named “hello.py” containing “print "hi"”, then “M-x quickrun”.
+;;
+;; Enable “quickrun-autorun-mode” to run code after every save.
+(use-package quickrun
+  ;; ⇒ “C-c C-r” to see output, “q” to close output
+  ;; ⇒ “C-u C-c C-r” prompts for a language (Useful when testing snippets different from current programming mode)
+  ;; ⇒ In a non-programming buffer, “C-c C-r” runs selected region.
+  :config (bind-key* "C-c C-r"
+                     (lambda (&optional start end)
+                       (interactive "r")
+                       (if (use-region-p)
+                           (quickrun-region start end)
+                         (quickrun current-prefix-arg)))))
+;; Quickly Run Code Snippets:1 ends here
+
+;; [[file:init.org::#Quickly-Run-Code-Snippets][Quickly Run Code Snippets:2]]
+(system-packages-ensure "rust") ;; Rust Compiler
+;; C-c C-r on the following: fn main() { println!("Hello, World!"); }
+
+;; Actually, let's get a full Rust development environment for Emacs
+(use-package rustic)
+;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
+;; rust-analyzer, the rust LSP.
+;;
+;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
+;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
+;; super nice stuff!
+;;
+;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
+;;    let v:Vec<_> = vec![1, 2, 3];
+;; Quickly Run Code Snippets:2 ends here
+
+;; [[file:init.org::#ELisp][ELisp:1]]
+;; Evaluation Result OverlayS for Emacs Lisp
+(use-package eros
+  :init (eros-mode t))
+;; ELisp:1 ends here
+
+;; [[file:init.org::#JavaScript][JavaScript:1]]
+(use-package skerrick
+  :init
+  ;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
+  (unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
+    (skerrick-install-or-upgrade-server-binary)))
+
+;; Should be run in a JS buffer; it is buffer specific.
+;; (skerrick-start-server)
+
+;; Now main function, entry point is:
+;; M-x skerrick-eval-region
+;; JavaScript:1 ends here
+
+;; [[file:init.org::#JavaScript][JavaScript:2]]
+(require 'js) ;; Defines js-mode-map
+
+;; Evaluate a region, if any is selected; otherwise evaluate the current line.
+(bind-key
+ "C-x C-e"  (lambda ()
+              (interactive)
+              (if (use-region-p)
+                  (skerrick-eval-region)
+                (beginning-of-line)
+                (set-mark-command nil)
+                (end-of-line)
+                (skerrick-eval-region)
+                (pop-mark)))
+ 'js-mode-map)
+;; JavaScript:2 ends here
+
+;; [[file:init.org::#devdocs][devdocs:1]]
+;; 1. Get docs of a languages: M-x devdocs-install
+;; 2. Lookup docs: [C-u] M-x devdocs-lookup
+;; 𝟚. Lookup docs: [C-u] C-c d
+(use-package devdocs
+  :bind ("C-c d" . #'devdocs-lookup)
+  :config
+  (when nil ;; “C-x C-e” the following once.
+    (cl-loop for lang in '(javascript ramda typescript html css sass
+                       vue~3 vuex~4 vue_router~4 "angularjs~1.6"
+                       nginx webpack~5 web_extensions
+                       ;;
+                       eslint  jest jq jsdoc prettier
+                       mocha chai jasmine
+                       ;;
+                       bash docker~19 git homebrew elisp
+                       ;;
+                       postgresql~14 redis sqlite
+                       ;;
+                       rust ruby~3 minitest "rails~7.0")
+          do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
+;; devdocs:1 ends here
+
+;; [[file:init.org::#How-do-I-do-something][How do I do something?:1]]
+(system-packages-ensure "howdoi")
+
+(cl-defun howdoi (&optional show-full-answer)
+  "Instantly insert coding answers.
+
+Replace a query with a code solution; replace it with an entire
+answer if a prefix is provided.
+
+Example usage:
+
+   On a new line, write a question such as:
+
+      search and replace buffer Emacs Lisp
+
+   Then invoke ‘M-x howdoi’ anywhere on the line
+   to get a code snippet; or ‘C-u M-x howdoi’ to get a full answer to your query.
+"
+  (interactive "P")
+  (let ((query (s-collapse-whitespace (substring-no-properties (thing-at-point 'line))))
+        (flag (if show-full-answer "-a" "")))
+    (beginning-of-line)
+    (kill-line)
+    (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
+;; How do I do something?:1 ends here
+
+;; [[file:init.org::#Sleek-Semantic-Selection][Sleek Semantic Selection:1]]
+(use-package expand-region
+  :bind (("s-r" . #'er/expand-region)))
+;; Sleek Semantic Selection:1 ends here
+
+;; [[file:init.org::#Managing-Processes-Servers-from-within-Emacs-Work-specific-functions][Managing Processes/Servers from within Emacs ---Work-specific functions:1]]
+;; “M-x prodigy”, then press “s” to start a service; “S” to stop it; “$” to see it; “r”estart
+(use-package prodigy :disabled t)
+  ;; C-h v prodigy-services ⇒ See possible properties.
+;; Managing Processes/Servers from within Emacs ---Work-specific functions:1 ends here
+
+;; [[file:init.org::#my-defaliases][my/defaliases:1]]
+(defalias 'defaliases 'my/defaliases)
+(defmacro my/defaliases (src &rest tgts)
+  "Provide names TGTS as synonymous aliases for SRC, for discovarability.
+
+Often a function SRC can be construed from different perspectives, names, purposes TGTS.
+Another example is when I define things with the ‘my/’ prefix, but also want to use them without.
+
+Example use: (my/defaliases view-hello-file greet-others learn-about-the-world)
+
+In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
+  `(--map (eval (quote (defalias `,it (quote ,src)))) (quote ,tgts)))
+;; my/defaliases:1 ends here
+
+;; [[file:init.org::#Making-unkillable-buffers-shells][Making unkillable buffers & shells:1]]
+(defun my/declare-unkillable-buffer (name)
+  (add-hook 'kill-buffer-query-functions
+            `(lambda () (or (not (equal (buffer-name) ,name))
+                       (progn (message "Not allowed to kill %s, burying instead; otherwise use “M-x force-kill”" (buffer-name))
+                              (bury-buffer))))))
+
+(my/defaliases my/force-kill force-kill w-force-kill)
+(cl-defun my/force-kill (&optional buffer-name)
+  (interactive)
+  (-let [kill-buffer-query-functions nil]
+    (if buffer-name
+        (kill-buffer buffer-name)
+      (kill-current-buffer))
+    (ignore-errors (delete-window))))
+
+(cl-defun my/run-unkillable-shell (command &optional (buffer-name command))
+  "Example use: (my/run-unkillable-shell \"cd ~/wxPortal; npm run dev\" \"wxPortal\")"
+  (-let [it (get-buffer buffer-name)]
+    (if it
+        (switch-to-buffer-other-window it)
+      (async-shell-command command buffer-name)
+      (my/declare-unkillable-buffer buffer-name))))
+;; Making unkillable buffers & shells:1 ends here
+
+;; [[file:init.org::#my-work-links][my/work-links:1]]
+(cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
+  "Given a link of TYPE with a URL, produce the correct org-link.
+
+EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
+This is how the link looks upon export."
+  `(org-link-set-parameters
+   ,type
+   :follow (lambda (label) (browse-url (format ,url label)))
+   :export (lambda (label description backend)
+             (if (equal backend 'html)
+                 (format "<a href=\"%s\">%s</a>" (format ,url label) (-let [type ,type] ,export-display))
+               (format "\\href{%s}{FM-%s}" (format ,url label) label)))
+   :face '(:foreground "green" :weight bold
+           :underline "blue" :overline "blue")))
+
+(my/work-links "FM"     "https://weeverapps.atlassian.net/browse/FM-%s")                ;; FM:2898
+(my/work-links "INEW"   "https://weeverapps.atlassian.net/browse/INEW-%s")              ;; INEW:201
+(my/work-links "portal" "https://github.com/WeeverApps/wxPortal/pull/%s")               ;; portal:4905
+(my/work-links "platform" "https://github.com/WeeverApps/api-platform-server/pull/%s")  ;; platform:2489
+(my/work-links "weever" "https://github.com/WeeverApps/%s" label)                       ;; weever:wxportal
+;; my/work-links:1 ends here
+
+;; [[file:init.org::#Process-Manager][Process Manager:1]]
+(cl-defun w-open-pm () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
+(cl-defun w-start-pm ()
+  "Starts up the local server to see Process Manager in your browser.
+
+First requires a branch (e.g., for a PR), then sets up env for it.
+
+Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-pm."
+  (interactive)
+  (-let [default-directory "~/process-builder"]
+    (if (my/application-running? "dbeaver")
+        (error "Close DBeaver; it is connected to the “pm” database. Then retry")
+      (ignore-errors (magit-pull-from-pushremote nil)
+                     (call-interactively #'magit-branch-checkout)
+                     (magit-pull-from-pushremote nil)
+                     (-let [kill-buffer-query-functions nil] (kill-buffer "*ProcessManager*")))
+      (message (shell-command-to-string "brew services stop postgresql"))
+      (my/run-unkillable-shell
+       (s-join ";" '("cd ~/process-builder"
+                     "export GEM_HOME=\"$HOME/.gem\""
+                     "gem install bundler"
+                     "bundle update --bundler"
+                     "bundle install"
+                     "source ~/.nvm/nvm.sh"
+                     "nvm use"
+                     "yarn install"
+                     "rails db:drop && rails db:create && rails db:migrate && rails db:seed app=test && rails db:seed promotion=test && yarn clean-test-db"
+                     "gem install foreman"
+                     "foreman start"))
+       "*ProcessManager*")
+      (message (shell-command-to-string "brew services start postgresql"))
+      (magit-status))))
+;; Process Manager:1 ends here
+
+;; [[file:init.org::#Blue-Screen][Blue Screen:1]]
+(my/defaliases w-dev-env-start w-blue-screen w-db-start-servers w-start-db-servers)
+;;
+(defun w-dev-env-start ()
+  "Open menu to start servers from interactive menu, etc.
+Menu can be closed when servers are started; can also stop them."
+  (interactive)
+  (shell-command "open --background -a Docker") ;; Open Docker daemon in the background, duh.
+  (shell-command "docker system prune") ;; Remove all stopped containers, dangling images/cache.
+  (shell-command
+   "osascript -e 'tell application \"Terminal\"
+      set currentTab to do script (\"cd ~/ops-helm-deployment; git checkout master; git pull; bash login.sh\")
+      activate currentTab
+      do script (\"dev-env start\") in currentTab
+      end tell'"))
+
+(defun w-login ()
+  "Open nix shell"
+  (interactive) (⌘ "cd ~/ops-helm-deployment; git checkout master; git pull; bash login.sh"))
+
+(cl-defun w-inject-users ()
+  (interactive)
+  (display-message-or-buffer (shell-command-to-string "cd ~/ops-helm-deployment/docker/wx-dev-env/root/; docker cp ../helpers/userInjector.js platform:/usr/src/userInjector.js; docker exec -t platform sh -c \"npx babel-node userInjector.js\"")))
+;; Blue Screen:1 ends here
+
+;; [[file:init.org::#w-start-stop-services][w-start/stop-services:1]]
+(defvar my/services nil "List of all services defined; used with `w-start-services' and `w-stop-services'.")
+
+(defun w-start-services ()
+  (interactive)
+  (cl-loop for 𝑺 in my/services
+           do (funcall (intern (format "w-start-%s" 𝑺)))))
+
+(defun w-stop-services ()
+  (interactive)
+  (cl-loop for 𝑺 in my/services
+           do (funcall (intern (format "w-stop-%s" 𝑺)))))
+;; w-start/stop-services:1 ends here
+
+;; [[file:init.org::#w-status-of-services][w-status-of-services:1]]
+;; It takes about ~3 seconds to build the Status of Services page, so let's jump to it if it's already built, and the user/me can request a refresh, if need be.
+(global-set-key (kbd "M-S-SPC")
+  (lambda () (interactive)
+    (-let [buf (get-buffer "Status of Services")] (if buf (switch-to-buffer buf) (w-status-of-services)))))
+;;
+;; Since M-S-SPC brings up the transient menu, and most commands close the status buffer or are transient, we get the perception that the transient menu is "sticky"; i.e., stuck to the buffer, even though this is not true. I do not yet know how to make a transient menu stuck to a buffer.
+;;
+(defun w-status-of-services ()
+  "Show me status of all servers, including their current git branch, and most recent emitted output."
+  (interactive)
+  (thread-last
+      (-let [ shells (--filter (s-starts-with? "Shell" (process-name it)) (process-list)) ]
+        (cl-loop for 𝑺 in (mapcar #'pp-to-string my/services)
+              for associated-shell = (--find (s-contains? (format "%s" 𝑺) (cl-third (process-command it))) shells)
+              for status = (or (ignore-errors (process-status associated-shell)) '💥)
+              for branch = (-let [default-directory (format "~/%s" 𝑺)]
+                             (magit-get-current-branch))
+              for saying = (let (most-recent-shell-output (here (current-buffer)))
+                             (switch-to-buffer (--find (s-starts-with-p 𝑺 (buffer-name it)) (buffer-list)))
+                             (end-of-buffer)
+                             (beginning-of-line)
+                             (setq most-recent-shell-output (or (thing-at-point 'line t) ""))
+                             (switch-to-buffer here)
+                             (s-truncate 135 (s-trim most-recent-shell-output)))
+              collect
+              ;; “%𝑾s” ⇒ Print a string with at least width 𝑾: If length(str) ≤ 𝑾, then pad with spaces on the left side.
+              ;; Use “%-𝑾s” to instead pad with spaces to the right.
+              (format "%s %-20s %-12s %s" status 𝑺 branch
+                      (-let [it (s-trim (if (s-contains? "|" saying)
+                                            (cl-second (s-split "|" saying))
+                                          saying))]
+                        (if (<= (length it) 3) "-" it)))))
+    (--map (format "%s" it))
+    (s-join "\n")
+    (s-replace "run" "✅")
+    (funcall (lambda (it) (-let [max-mini-window-height 0]
+                       (ignore-errors (kill-buffer  "Status of Services"))
+                       (display-message-or-buffer it "Status of Services")
+                       (delete-other-windows)
+                       (switch-to-buffer "Status of Services")
+                       (highlight-regexp ".*crashed.*" 'hi-red-b)
+                       (end-of-buffer)
+                       (insert "\n \n \n \n \n")
+                       (let ((register-action (lambda (key-desc-actions)
+                                                (if (stringp key-desc-actions)
+                                                    (propertize key-desc-actions 'font-lock-face '(face success))
+                                                  (-let [ [key desc &rest actions] key-desc-actions ]
+                                                    ;; For buffer-local keys, you cannot use local-set-key, unless you want to modify the keymap of the entire major-mode in question: local-set-key is local to a major-mode, not to a buffer.
+                                                    ;; (use-local-map (copy-keymap text-mode-map))
+                                                    (local-set-key key `(lambda () (interactive) ,@(seq-into actions 'list)))
+                                                    (format "%s %s"
+                                                            (propertize (format "%s" key) 'font-lock-face '(face error))
+                                                            (propertize desc 'font-lock-face '(:foreground "grey")))))))
+                             (repo-at-point (lambda () (-as-> (beginning-of-line) repo
+                                                         (thing-at-point 'line t)
+                                                         (s-split " " repo)
+                                                         cl-second))))
+                         (insert (s-join "\n"  (seq-mapn (lambda (&rest cols) (apply #'format (s-repeat (length cols) "%-40s ")
+                                                                                (--map (funcall register-action it) cols)))
+                           ["This view"
+                            ["g" "Refresh this view" (ignore-errors (kill-buffer-and-window)) (w-status-of-services)]
+                            ["q" "Quit buffer" (ignore-errors (kill-buffer-and-window))]
+                            ["" "" ""]]
+                           `["Current service"
+                             ["c" "Checkout PR" (w-pr-checkout (format "~/%s"  (funcall ,repo-at-point)))]
+                             [[return] "Visit service shell"
+                             (delete-other-windows)
+                             (split-window-below)
+                             (switch-to-buffer (--find (s-starts-with? (funcall ,repo-at-point) (buffer-name it)) (buffer-list)))
+                             (end-of-buffer)
+                             (other-window 1)]
+                            [[tab] "See service magit buffer"
+                             (magit-status (format "~/%s"  (funcall ,repo-at-point)))
+                             (delete-other-windows)]]
+                           ["Misc"
+                            ["b" "Browse an app" (w-browse-app)]
+                            ["i" "Inject users"  (w-inject-users)]
+                            ["s" "SQL buffer" (w-sql) (delete-other-windows)]]))))
+                       (beginning-of-buffer)
+                       ;; (help-mode) ;; For some reason, default fundamental-mode does not regoznise proprtised strings.
+                       ;; Also, this is read-only be default and emits a nice message for undefiend single key bindings.
+                       (help-mode))))))
+;; w-status-of-services:1 ends here
+
+;; [[file:init.org::#my-defservice][my/defservice:1]]
+(cl-defmacro my/defservice
+    (repo &key (main-setup "git checkout main; git pull")
+          (cmd "npm run docker:dev")
+          (example ""))
+  "Example use:
+
+   (my/defservice 𝒟 :cmd 𝒞 :example ℰ)
+  ⇒
+    (w-start-𝒟)    ≈ Unkillable shell: cd 𝒟; 𝒞
+    (w-is-up-𝒟?)   ≈ Open browser at ℰ
+    (w-stop-𝒟)     ≈ Kill all emacs-buffers & docker-images containing 𝒟 in their name
+
+  (w-[start|stop]-services)  ⇒ Starts/stops all defined services."
+  (add-to-list 'my/services repo)
+  `(list
+     (cl-defun ,(intern (format "w-start-%s" repo)) ()
+       "Start server off of ‘main’, with prefix just start server off of current branch."
+       (interactive)
+       (let ((command (format "cd ~/%s; pwd; hr; %s; git status; hr; %s"
+                              (quote ,repo)
+                              (if current-prefix-arg "" ,main-setup)
+                              ,cmd))
+             (buf-name (format "%s/%s" (quote ,repo)
+                               (if current-prefix-arg "main"
+                                 (-let [default-directory ,(format "~/%s" repo)]
+                                   (magit-get-current-branch))))))
+         (my/run-unkillable-shell
+          (format "echo %s; hr; %s" (pp-to-string command) command) ;; Show command being run in output buffer, then run that command
+          buf-name)
+         (with-current-buffer buf-name (read-only-mode))))
+
+     (cl-defun ,(intern (format "w-stop-%s" repo)) ()
+       "Force-kill all unkillable buffers that mention REPO in their name. Also stop any docker services mentioning REPO in their name."
+       (interactive)
+       (my/docker-stop ,(pp-to-string repo))
+       (thread-last (buffer-list)
+         (mapcar 'buffer-name)
+         (--filter (s-contains-p (f-base ,(pp-to-string repo)) it))
+         (mapcar #'my/force-kill)))
+
+     (if ,example
+         (cl-defun ,(intern (format "w-is-up-%s?" repo)) ()
+           (interactive)
+           (browse-url ,example)
+           (message "If the URL is busted, then the repo is not up correctly or the server has an error!")))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(my/defservice wxPortal ;; Takes ~18 mins Front end app
+               :main-setup "git checkout main; git pull; npm ci"
+               :example "http://mars-bur.weeverdev.com")
+
+(my/defservice orchestrator
+               :main-setup "git checkout main; git pull; npm ci"
+               :cmd "npm run dev"
+               :example "http://team.weeverdev.com:9000") ;; Microapp wrapper
+
+(my/defservice inspections/webui
+               :main-setup "git checkout main; git pull; npm ci"
+               :cmd "npm run dev --quiet --no-progress"
+               :example "http://localhost:3320/inspections/") ;; V2 app
+;; Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
+
+;; Do we need to upload files? E.g., images.
+(my/defservice api-file-server)
+
+;; Send PDFs
+(my/defservice api-pdf-server)
+
+;; (iota  "cd ~/api-iota-server; git checkout main; git pull; npm ci; npm run docker:start") ;; deprecated
+
+;; Redis stuff
+;; For local development, the email override is used; regardless of what email is entered into the app.
+(my/defservice wx-job-worker :cmd "EMAIL_OVERRIDE=musa+qa@weeverapps.com npm run docker:dev")
+
+;; Database backend
+(my/defservice api-platform-server :cmd "npm run docker:start")
+
+;; Handles routes; should see “Access Denied” when visiting the url below, if things work correctly
+(my/defservice api-router-server :example "https://router.weeverdev.com/")
+
+;; (sso "cd ~/single-sign-on/; git checkout main; git pull; export GEM_HOME=\"$HOME/.gem\"; gem install bundler:2.1.4;  source ~/.rvm/scripts/rvm; rvm use 2.7.4; bundle install; rails db:create; rails db:migrate; rails db:seed; rails server"
+;; "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
+(my/defservice single-sign-on
+               :cmd "bash scripts.sh docker:dev"
+               :example "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
+
+;; Event store stuff, emails, V2, lagoon, powerbi
+;; Getting Rust ∷ brew install rustup-init; rustup-init
+;; FAQ, ensure we use our rust-toolchain file, run:   rustup override unset
+(my/defservice wx-data-agent :cmd "cargo watch -x run")
+(my/defservice api-odata :cmd "docker-compose up --build")
+;; my/defservice:1 ends here
+
+;; [[file:init.org::#w-app-slugs][w-app-slugs:1]]
+(defvar w-app-slugs
+   (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
+
+(cl-defun w-browse-app (&optional (app (completing-read "Appslug: " w-app-slugs)))
+ (interactive)
+  (browse-url (format "https://%s.weeverdev.com/" app)))
+
+(cl-defun w-disable-sso ()
+  "Turn off SSO, locally; app is selected from a menu."
+ (interactive)
+ (-let [app (completing-read "Appslug: " w-app-slugs)]
+  (shell-command (format "echo \"false\" > ~/wxPortal/client/assets/config/apps/%s/authorization.allowSsoLogin.json" app))
+  (w-browse-app app)
+  (message "SSO for %s disabled; don't commit the “authorization.allowSsoLogin.json” file!" app)))
+;; w-app-slugs:1 ends here
+
+;; [[file:init.org::#Migrations-Rollbacks][Migrations & Rollbacks:1]]
+(cl-defun w-db-migrations ()
+  (interactive)
+  (async-shell-command "cd ~/api-platform-server; git status; npm run docker:migrate" "*DB/Migrations*"))
+
+(cl-defun w-db-rollbacks ()
+  (interactive)
+  (async-shell-command "cd ~/api-platform-server; git status; npm run docker:rollback" "*DB/Rollback*"))
+;; Migrations & Rollbacks:1 ends here
+
+;; [[file:init.org::#Project-management-navigation][Project management & navigation:1]]
+;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
+(use-package projectile
+  :config
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
+
+  ;; Replace usual find-file with a project-wide version :-)
+  (global-set-key (kbd "C-x f") #'projectile-find-file)
+
+  ;; Makes indexing large projects much faster, after first time.
+  ;; Since its caching, some files may be out of sync; you can delete the cache
+  ;; with: C-u C-x f
+  (setq projectile-enable-caching t)
+
+  (define-key projectile-mode-map (kbd "C-x p s")
+    ;; I prefer helm-do-grep-ag since it shows me a live search
+    (lambda () (interactive)
+       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
+         ;; (shell-command-to-string "echo $PWD")
+         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
+;; Project management & navigation:1 ends here
+
+;; [[file:init.org::#Project-management-navigation][Project management & navigation:2]]
+(define-key projectile-mode-map (kbd "C-x p c")
+  (defun my/copy-current-file-path ()
+    "Add current file path to kill ring."
+    (interactive)
+    (message (kill-new buffer-file-name))))
+;; Project management & navigation:2 ends here
+
+;; [[file:init.org::#Are-there-any-errors-in-my-code][Are there any errors in my code?:1]]
+(use-package flycheck-status-emoji
+  :config
+  (load-library "flycheck-status-emoji")
+  (diminish-undo 'flycheck-mode)
+  (flycheck-status-emoji-mode))
+;; Are there any errors in my code?:1 ends here
+
+;; [[file:init.org::#Are-there-any-errors-in-my-code][Are there any errors in my code?:2]]
+(use-package helm-flycheck)
+ (bind-key*
+ "C-c !"
+ (defhydra my/flycheck-hydra (:color blue :hint nil)
+   "Move around flycheck errors and get info about them"
+   ("n" flycheck-next-error "next" :column "Navigation")
+   ("p" flycheck-previous-error "previous")
+   ("f" flycheck-first-error "first")
+   ("l" flycheck-list-errors "list")
+   ("h" helm-flycheck "helm") ;; Jump to an error / see-errors from a nice interactive menu
+
+   ("e" flycheck-explain-error-at-point "explain"  :column "Current errror")
+   ("c" flycheck-copy-errors-as-kill "copy")
+
+   ("d" flycheck-describe-checker "Describe checker"  :column "More")
+   ("s" flycheck-select-checker "Select checker")
+   ("S" flycheck-verify-setup "Suggest setup")
+   ("m" flycheck-manual "manual")))
+;; Are there any errors in my code?:2 ends here
+
+;; [[file:init.org::#On-the-fly-syntax-checking][On the fly syntax checking:1]]
+(use-package flycheck
+  :diminish
+  :init (global-flycheck-mode)
+  :config ;; There may be multiple tools; I have GHC not Stack, so let's avoid that.
+  (setq-default flycheck-disabled-checkers '(haskell-stack-ghc emacs-lisp-checkdoc))
+  :custom (flycheck-display-errors-delay .3))
+;; On the fly syntax checking:1 ends here
+
+;; [[file:init.org::#On-the-fly-syntax-checking][On the fly syntax checking:3]]
+(use-package flymake
+  :hook ((emacs-lisp-mode . (lambda () (flycheck-mode -1)))
+         (emacs-lisp-mode . flymake-mode))
+  :bind (:map flymake-mode-map
+              ("C-c ! n" . flymake-goto-next-error)
+              ("C-c ! p" . flymake-goto-prev-error)))
+;; On the fly syntax checking:3 ends here
+
+;; [[file:init.org::#Jumping-to-definitions-references][Jumping to definitions & references:1]]
+(use-package dumb-jump
+  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
+         ("M-g ."     . dumb-jump-go-other-window)
+         ("M-g b"     . dumb-jump-back)
+         ("M-g p"     . dumb-jump-go-prompt)
+         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
+  :config
+  ;; If source file is visible, just shift focus to it.
+  (setq dumb-jump-use-visible-window t))
+;; Jumping to definitions & references:1 ends here
+
+;; [[file:init.org::#Documentation-Pop-Ups][Documentation Pop-Ups:1]]
+(use-package company-quickhelp
+ :config
+   (setq company-quickhelp-delay 0.1)
+   (company-quickhelp-mode))
+;; Documentation Pop-Ups:1 ends here
+
+;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:1]]
+(add-hook 'prog-mode-hook #'which-function-mode)
+(add-hook 'org-mode-hook  #'which-function-mode)
+;; Which function are we writing?:1 ends here
+
+;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:2]]
+(add-hook 'emacs-lisp-mode-hook #'check-parens)
+;; Which function are we writing?:2 ends here
+
+;; [[file:init.org::#Highlight-defined-Lisp-symbols][Highlight defined Lisp symbols:1]]
+;; Emacs Lisp specific
+(use-package highlight-defined
+  :hook (emacs-lisp-mode . highlight-defined-mode))
+;; Highlight defined Lisp symbols:1 ends here
+
+;; [[file:init.org::#Being-Generous-with-Whitespace][Being Generous with Whitespace:1]]
+(use-package electric-operator
+  :diminish
+  :hook (c-mode . electric-operator-mode))
+;; Being Generous with Whitespace:1 ends here
+
+;; [[file:init.org::#Coding-with-a-Fruit-Salad-Semantic-Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
+(use-package color-identifiers-mode
+  :config (global-color-identifiers-mode))
+
+;; Sometimes just invoke: M-x color-identifiers:refresh
+;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
+
+;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
+(use-package windmove
+  :config ;; use command key on Mac
+          (windmove-default-keybindings 'super)
+          ;; wrap around at edges
+          (setq windmove-wrap-around t))
+;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
+
+;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2]]
+(use-package buffer-flip
+  :bind
+   (:map buffer-flip-map
+    ("M-<tab>"   . buffer-flip-forward)
+    ("M-S-<tab>" . buffer-flip-backward)
+    ("C-g"       . buffer-flip-abort))
+  :config
+    (setq buffer-flip-skip-patterns
+        '("^\\*helm\\b")))
+;; key to begin cycling buffers.
+(global-set-key (kbd "M-<tab>") 'buffer-flip)
+;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2 ends here
+
+;; [[file:init.org::#hr-https-github-com-LuRsT-hr-A-horizontal-for-your-terminal][hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1]]
+(system-packages-ensure "hr") ;; ≈ brew install hr
+;; hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1 ends here
+
+;; [[file:init.org::#Browse-remote-files][Browse remote files:1]]
+;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
+(use-package browse-at-remote)
+;; Browse remote files:1 ends here
+
+;; [[file:init.org::#A-nice-Emacs-interface-for-a-portion-of-the-gh-CLI][A nice Emacs interface for a portion of the “gh” CLI:1]]
+;; A nice Emacs interface for the a portion of the “gh” CLI.
+(my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
+(cl-defun my/gh-checkout (&optional repo)
+  "With prefix, select a branch name; otherwise a Pull Request name.
+
+If no REPO is provided, let the user select one from a menu.
+Example use:      (w-pr-checkout \"~/wxPortal\")
+                  (w-pr-checkout)"
+  (interactive)
+  (let* ((repo (or repo (completing-read "Repo: " (projectile-relevant-known-projects))))
+         (default-directory repo) ;; temporarily override this global variable, used with magit
+         (current-branch (magit-get-current-branch))
+         (all-branches (magit-list-local-branch-names))
+         (status (format "cd %s; gh pr status" repo)))
+    (if current-prefix-arg
+        (-let [branch (completing-read (format "New branch (Currently “%s”): " current-branch) all-branches)]
+          (shell-command-to-string (format "cd %s; git checkout %s" repo branch)))
+      (let* ((PR-list (s-split "\n" (shell-command-to-string (format "cd %s; gh pr list" repo))))
+             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list))))
+             (_ (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯)))
+             (new-branch (magit-get-current-branch)))
+        ;; Show nice status
+        (async-shell-command status)
+        (magit-status repo)))))
+;; A nice Emacs interface for a portion of the “gh” CLI:1 ends here
+
+;; [[file:init.org::#https-github-com-sshaw-copy-as-format-copy-as-format-Emacs-function-to-copy-buffer-locations-as-GitHub-Slack-JIRA-etc-formatted-code][[[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.:1]]
+;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
+;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
+;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
+;; With a prefix argument prompt for the format style 𝒮.
+;; Easy to add more formats.
+(use-package copy-as-format)
+;; [[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.:1 ends here
+
+;; [[file:init.org::#See-all-company-related-PRs][See all company related PRs:1]]
+(cl-defun w-PRs (&rest query-options)
+  "See all company related PRs"
+  (interactive)
+  (thread-last `("is:open" "is:pr" "archived:false" "user:WeeverApps" "draft:false" ,@query-options)
+    (mapcar #'url-hexify-string)
+    (s-join "+")
+    (concat "https://github.com/pulls?q=")
+    browse-url))
+;;
+(cl-loop for (name . query-options)
+         in `((month ,(format-time-string "updated:>=%Y-%m-01"))
+              (today ,(format-time-string "updated:>=%Y-%m-%d"))
+              (created-this-week ,(format "created:>=%s"
+                                          (org-read-date nil nil "++1" nil (org-read-date nil t "-sun")))) ;; Date of most recent Monday
+              (stale!! ,(format "updated:<=%s" (org-read-date nil nil "-1w"))) ;; Items not touched in over a week
+              (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
+              (involves-me "involves:alhassy")
+              (inspections "label:Inspections")
+              (process-manager "label:\"quick and easy\"" "repo:process-builder")
+              (newts "label:\"Newts Priority Review\",Newts"))
+         do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
+;; See all company related PRs:1 ends here
+
+;; [[file:init.org::#SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only][SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only:1]]
+;; (system-packages-ensure "leiningen")
+(use-package ejc-sql
+  :config
+  (require 'ejc-company)
+  (push 'ejc-company-backend company-backends)
+  (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
+  ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
+  (bind-key "C-<return>"
+             (lambda () (interactive)
+               (setq ejc-sql-complete-query-hook
+                     (if current-prefix-arg
+                         '(w-ejc-result-pp-json)  ;; Defined below
+                       '((lambda () ;; Give each line of text just one screen line.
+                           (switch-to-buffer-other-window "*ejc-sql-output*")
+                           (visual-line-mode -1)
+                           (toggle-truncate-lines)
+                           (other-window -1)))))
+               (ejc-eval-user-sql-at-point))
+             'sql-mode-map))
+
+(defun w-sql ()
+  "Quickly run a SQL query, then dispose of the buffer when done.
+
+By default uses a connection named “platform”, to see a list of
+other connections call with a prefix argument."
+  (interactive)
+
+  ;; Get DB credentials. One does “M-x ejc-connect-interactive” once, then
+  ;;  “M-x ejc-insert-connection-data” and paste that into your init; then
+  ;; “M-x ejc-connect” provides a compleition of possible DBs to connect to.
+  (load-file "~/Desktop/work.el")
+  ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
+  ;; which temporarily adds to this hook, then calls
+  (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
+
+  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "platform")]
+    (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
+    (thread-last
+        '("\n\n/\n-- DOCS & EXAMPLES\n--"
+          "-- SQL queries should be seperated by “/”"
+          "-- [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP]"
+          "-- In result window, TAB/RET to navigate the columns/rows."
+          "-- C-c e t ⇒ List all tables"
+          "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
+          "\nselect 1 + 2 as \"Numerical, yeah!\""
+          "\n/\n"
+          "-- See the latest form's elements & extra props"
+          "select data #>'{details, properties, wxConfig, formElements}'"
+          "from platform.forms\norder by updated_at desc\nlimit 1;"
+          "\n/\n"
+          "SELECT data #> '{details, properties}'\nfrom submissions"
+          "-- The submissions that have at least a ‘number’ or an ‘MCS’, but NOT a ‘time’."
+          "where data::text similar to '%\"wxType\": \"(number|wx-multiple-choice-score)\"%'"
+          "and not data #> '{details, properties, formdata}' @> '[{\"wxType\": \"time\"}]'"
+          "limit 1;"
+          "\n-- The short arrow -> keeps the type as JSON, and the long arrow ->> returns text."
+          "-- Likewise #> yields JSON whereas #>> yields text."
+          "-- a -> 'b' -> 'c' -> 3 -> 'd'  ==  a #> '{b, c, 3, d}' "
+          "-- (Use integers to access elements of JSON arrays)"
+          "\n/\n"
+          "-- Here are the triggers that are run when an UPDATE is performed against ‘submissions’"
+          "select * from information_schema.triggers"
+          "where event_object_table = 'submissions'"
+          "and event_manipulation = 'UPDATE'"
+          "\n/\n"
+          "-- See most recently updated/altered “In Progress” ticket"
+          "select * from tickets\norder by updated_at desc\nlimit 1")
+      (s-join "\n")
+      insert)
+    (sql-mode)
+    (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
+    (ejc-connect connection-name)
+    (beginning-of-buffer)))
+
+(defun w-ejc-result-pp-json ()
+  "Pretty print JSON ejc-result buffer."
+  (interactive)
+  (ignore-errors
+    (switch-to-buffer-other-window "*ejc-sql-output*")
+    (beginning-of-buffer)
+    (re-search-forward "{")
+    (backward-char 1)
+    (delete-region (point-min) (point))
+    (end-of-buffer)
+    (re-search-backward "|")
+    (kill-line)
+    (json-mode)
+    (json-pretty-print-buffer)
+    (other-window -1)))
+;; SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only:1 ends here
+
+;; [[file:init.org::#Docker][Docker:1]]
+;; Usage: M-x docker [RET ?]
+(use-package docker
+  :config
+  (my/defaliases docker-containers w-show-docker-containers))
+
+(defun w-stop&remove-docker-containers ()
+  (interactive)
+  (shell-command "docker stop $(docker ps -a -q)")
+  (shell-command "docker rm $(docker ps -a -q)"))
+;; Docker:1 ends here
+
+;; [[file:init.org::#my-docker-stop][my/docker-stop:1]]
+(defun my/docker-stop (ctr)
+  "Stop all containers that mention CTR in their name, image, command, or container id"
+  (thread-last (shell-command-to-string "docker ps -a")
+    (s-split "\n")
+    (--filter (s-contains-p ctr it))
+    (--map (car (s-split " " it))) ;; Get docker container ids
+    (--map (shell-command (concat "docker stop " it)))))
+;; my/docker-stop:1 ends here
+
+;; [[file:init.org::#my-open-in-terminal-'][my/open-in-terminal '⌘:1]]
+(defalias 'my/open-in-terminal '⌘)
+(cl-defun ⌘ (&rest cmds)
+  "Run terminal commands CMDS in a new MacOS Terminal instance, and bring it to focus.
+
+Example: (⌘ \"echo hello\" \"echo world\")
+
+Useful for those cases where I have to interact with non-trivial ‘interactive terminal menus’."
+  (shell-command (format "osascript -e 'tell app \"Terminal\" to activate do script %s'"
+                         (pp-to-string (s-join ";" cmds)))))
+
+;; (⌘ "echo hello" "echo world")
+;; my/open-in-terminal '⌘:1 ends here
+
+;; [[file:init.org::#Check-if-application-APP-is-currently-running-in-use][Check if application APP is currently running, in use.:1]]
+(cl-defun my/application-running? (app)
+  "Check if application APP is currently running, in use."
+  (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
+;; Check if application APP is currently running, in use.:1 ends here
+
+;; [[file:init.org::#LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE][LSP: Making Emacs into a generic full-featured programming IDE:1]]
+(use-package lsp-mode
+  :init
+  ;; Set prefix for lsp commands
+  ;; (setq lsp-keymap-prefix "s-l") ;; default
+  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
+  ;; (setq lsp-idle-delay 0.500) ;; default
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (js-mode . lsp-mode) ;; Enter LSP mode
+         (js-mode . lsp)      ;; Start LSP server
+         (lsp-mode . lsp-enable-which-key-integration)
+  ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
+  :bind ("C-x y" . #'yankpad-insert)
+  :commands lsp)
+
+;; If a server crashes, restart it without asking me.
+(setq lsp-restart 'auto-restart)
+
+
+;; https://emacs-lsp.github.io/lsp-mode/page/languages/
+;; M-x lsp-install-server ⟨return⟩ jsts-ls
+;; M-x lsp-install-server ⟨return⟩ json-ls
+;; M-x lsp-install-server ⟨return⟩ eslint
+;; M-x lsp-install-server ⟨return⟩ css-ls
+;; M-x lsp-install-server ⟨return⟩ html-ls
+
+;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
+;; https://emacs-lsp.github.io/lsp-ui/#intro
+;;
+;; You only have to put (use-package lsp-ui) in your config and the package will
+;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
+(use-package lsp-ui)
+
+;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
+;; call hierarchy, etc.)
+(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
+;; M-x lsp-treemacs-errors-list
+
+;; helm-lsp provides “on type completion” alternative of cross-referencing.
+;; https://github.com/emacs-lsp/helm-lsp
+(use-package helm-lsp)
+(define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
+;; a” (The 'a' stands for apropos, which means appropriate nature)
+
+;; Set the amount of data which Emacs reads from a process.
+;; Some LSP responses are in the 8k-3MB range.
+;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
+(setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
+(setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
+;; A large gc-cons-threshold will cause freezing and stuttering during long-term
+;; interactive use. This one seems to be a good default.
+;; LSP: Making Emacs into a generic full-featured programming IDE:1 ends here
+
+;; [[file:init.org::#LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE][LSP: Making Emacs into a generic full-featured programming IDE:2]]
+;; Load the various useful utils
+(require 'lsp-ui-peek)
+(require 'lsp-ui-sideline)
+(require 'lsp-ui-doc)
+(require 'lsp-ui-imenu)
+
+; (setq lsp-mode-hook nil)
+(add-hook 'lsp-mode-hook
+          (lambda ()
+            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
+            (shell-command "rm ~/wxPortal/.flowconfig")
+            ;; Load the various useful utils
+            (require 'lsp-ui)
+            (lsp-ui-peek-enable t)
+            (lsp-ui-doc-enable t)
+            (lsp-ui-sideline-enable t)
+            (lsp-ui-imenu-buffer--enable)
+            ;; Set ⌘-l as the main mini-menu for LSP commands
+            (bind-key* "s-l" #'my/lsp-hydra/body)))
+
+(defun my/helm-lsp-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-workspace-symbol)))
+
+  (defun my/helm-lsp-global-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-global-workspace-symbol)))
+
+;; TODO: Add other cool features discussed/loaded above into this hydra!
+(defhydra my/lsp-hydra (:color blue :hint nil)
+  ;; Xref
+  ("d" xref-find-definitions "Definitions" :column "Xref")
+  ("D" xref-find-definitions-other-window "-> other win")
+  ("r" xref-find-references "References")
+  ("s" my/helm-lsp-workspace-symbol-at-point "Helm search")
+  ("S" my/helm-lsp-global-workspace-symbol-at-point "Helm global search")
+
+  ;; Peek
+  ("C-d" lsp-ui-peek-find-definitions "Definitions" :column "Peek")
+  ("C-r" lsp-ui-peek-find-references "References")
+  ("C-i" lsp-ui-peek-find-implementation "Implementation")
+
+  ;; LSP
+  ("p" lsp-describe-thing-at-point "Describe at point" :column "LSP")
+  ("C-a" lsp-execute-code-action "Execute code action")
+  ("R" lsp-rename "Rename")
+  ("t" lsp-goto-type-definition "Type definition")
+  ("i" lsp-goto-implementation "Implementation")
+  ("f" helm-imenu "Filter funcs/classes (Helm)")
+  ("C-c" lsp-describe-session "Describe session")
+
+  ;; Flycheck ---my “C-c !” flycheck hydra is much better than this simple lsp one.
+  ;; ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+  ("l" my/flycheck-hydra/body "List errs/warns/notes" :column "Flycheck")
+
+  ;; Misc
+  ("q" nil "Cancel" :column "Misc")
+  ("b" pop-tag-mark "Back"))
+;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
