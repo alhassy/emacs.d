@@ -10624,7 +10624,7 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 
 + ~C-c C-x C-v~ ⇒ Toggle inline images!
 
-* COMMENT Web-Development
+* Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
 :END:
@@ -10947,7 +10947,7 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 ;; [xwidget-webkit has some bugs; e.g., sometimes buttons that should redirect don't do anything.]
 ;; [The “C-u” option is useful when I want to “see” the resulting HTML change as I type; e.g., new content or styling.]
 ;; [Note the “angular” snippet above works beautifully /within/ Emacs; use “b/f” to move backward/forward in the browser.]
-(bind-key* "C-c C-v"
+(bind-key "C-c C-v"
           (lambda (open-within-emacs) (interactive "P")
             (if (not open-within-emacs)
                 (browse-url-of-buffer (current-buffer))
@@ -10965,7 +10965,7 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 #+end_src
 
 #+begin_src emacs-lisp
-(bind-key* "M-q" #'sgml-pretty-print 'web-mode-map)
+(bind-key "M-q" #'sgml-pretty-print 'web-mode-map)
 #+end_src
 
 ** Eldoc for Lisp and Haskell ---documentation in the mini-buffer

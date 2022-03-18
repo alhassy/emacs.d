@@ -3293,3 +3293,192 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 
 (bind-key* "C-c M-s" #'my/capture-emacs-frame)
 ;; Screencapturing the Current Emacs Frame:1 ends here
+
+;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:2]]
+;; USAGE: Place point in an emmet snippet and press C-j to expand it to appropriate tag structure;
+;; e.g., #q.x>p C-j. Alternatively, press C-j then start typing an emmet snippet to see it preview live.
+;; [C-j is just M-x emmet-expand-line]
+;;
+(use-package emmet-mode ;; C-j ! RET  === Makes an entire HTML template for you.
+  :hook (web-mode . emmet-mode))
+;;
+;; Please show me an HTML expansion preview as I type
+(setq emmet-preview-default t) ;; Press C-j then start typing; e.g., C-j #q.x.y>p>b RET
+;;
+;; After expanding, positioned the cursor between first empty quotes.
+;; The preview can help with tricky CSS precedence rules; e.g., C-j gives the same thing for: a>b+c>d   ==  a>(b+(c>d))
+(setq emmet-move-cursor-between-quotes t) ;; E.g., C-j #q[name] RET
+;;
+(add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
+;; (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
+;; Quickly produce HTML from CSS-like selectors:2 ends here
+
+;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:4]]
+(add-hook 'emmet-mode-hook (lambda ()
+;; Add a new emmet snippet.
+;; [Should this be added to “emmet-snippets” variable instead?]
+(thread-last emmet-tag-snippets-table
+             (puthash "angular"
+"<!doctype html>
+<html lang=\"en\" ng-app=\"Hola\">
+  <head>
+    <title>Salamun Alaykum, world!</title>
+    <script src=\"https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js\"></script>
+    <!-- <script src=\"myscripts.js\"></script> -->
+    <script type=\"text/javascript\">
+      angular.module(\"Hola\", [])
+        .controller(\"prompt\",
+           ($scope, $window) => {
+              $scope.prompt = \"Enter a guess between 0 and 100\"
+              $scope.secret = Math.floor(Math.random() * 100)
+              $scope.reply  = gs => gs == $scope.secret ? \"You win!\" : (gs < $scope.secret ? \"Too low\" : \"Too high\")
+              $scope.go = number => { $window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
+          })
+    </script>
+    <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+    <style type=\"text/css\">
+       input, #reply { color: darkcyan; font-size: 14pt }
+    </style>
+  </head>
+  <body>
+    <div ng-controller=\"prompt\">
+      <h1>Number Guessing Game</h1>
+      <input type=\"number\" ng-model=\"guess\" style=\"width: 25%;\" placeholder=\"{{prompt}}\">
+      <button ng-click=\"go(guess)\">Learn Something!</button>
+      <div id=\"reply\"> {{reply(guess)}} </div>
+    </div>
+  </body>
+</html>"))))
+;; Quickly produce HTML from CSS-like selectors:4 ends here
+
+;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:5]]
+(add-hook 'emmet-mode-hook (lambda ()
+;; A way to show results of trying things out ---when not using a reactive framework.
+(thread-last emmet-tag-snippets-table
+             (puthash "message"
+"     // Append “text” node to the end of tag with “id”.
+     // Example: <button onclick=\"message(\"myID\", \"Hello!\")\"> Speak! </button>
+     function message(id, text = \"Hello, world\") {
+         const tag = document.createElement(\"p\") // <p></p>
+         const textNode = document.createTextNode(text)
+         tag.appendChild(textNode); // <p>Hello, world</p>
+         const element = document.getElementById(id);
+         element.appendChild(tag);
+     }"))))
+;; Quickly produce HTML from CSS-like selectors:5 ends here
+
+;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:6]]
+(add-hook 'emmet-mode-hook (lambda ()
+(thread-last emmet-tag-snippets-table
+             (puthash "form"
+        "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
+            Automatically aligned form items</a> </h1>
+
+        <form name=\"hola\"  onsubmit=\"go(hola.elements);\">
+            <label>Name</label>
+            <input name=\"name\" type=\"text\" required/>
+
+            <label>Comments</label>
+            <textarea name=\"comments\" maxlength=\"500\"></textarea>
+
+            <input type=\"submit\"/>
+        </form>
+
+        <!-- <script src=\"myscripts.js\"></script> -->
+        <script>
+         let go = form => { alert(`${form.name.value}: “${form.comments.value}”`) }
+        </script>
+
+        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+        <style>
+         form {
+             /* We want the inputs&labels to be thought of as rows in a grid*/
+             display: grid;
+             grid-auto-flow: row;
+             /* Each row has 2 columns. */
+             grid-template-columns: [mylabels] auto [myinputs] 1fr;
+             grid-gap: .8em;     /* Distance between form elements */
+             background: beige;
+             padding: 1.2em;
+         }
+         /* Let's attach column names to elements */
+         form > label  {
+             grid-column: mylabels;
+             grid-row: auto;
+         }
+         form > input,
+         form > textarea {
+             grid-column: myinputs;
+             grid-row: auto;
+         }
+         input, textarea { color: darkcyan; font-size: 14pt }
+        </style>"))))
+;; Quickly produce HTML from CSS-like selectors:6 ends here
+
+;; [[file:init.org::#LSP-for-HTML-CSS][LSP for HTML + CSS:2]]
+;; When I accidentally duplicate a property in a rule, please report that as an error.
+(setq lsp-css-lint-duplicate-properties "error")
+
+;; If I accidentally enter an unknown property (e.g., writing Canadian “colour” instead of American “color”),
+;; then I'll be notified with an error notice.
+(setq lsp-css-lint-unknown-properties "error")
+
+
+(use-package lsp-mode
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (css-mode . lsp-mode) ;; Enter LSP mode
+         (css-mode . lsp))      ;; Start LSP server
+;; LSP for HTML + CSS:2 ends here
+
+;; [[file:init.org::#CSS-Property-Argument-Information-in-the-Echo-Area][CSS Property Argument Information in the Echo Area:1]]
+;; [USAGE] In a CSS file, place cursor anywhere after the colon (but before ‘;’)
+;; in “columns: 0ch;” or in “columns: ” and look at the echo area for how
+;; arguments to this property should look like.
+(use-package css-eldoc
+  :init (progn (require 'css-eldoc) (turn-on-css-eldoc)))
+;; CSS Property Argument Information in the Echo Area:1 ends here
+
+;; [[file:init.org::#Show-me-HTML-CSS-Changes-Live-as-I-Type][Show me HTML+CSS Changes /Live as I Type/!:1]]
+(use-package impatient-mode)
+
+(use-package web-mode
+  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
+
+
+;;     C-c C-v: Browse buffer within external browser.
+;; C-u C-c C-v: Ensure impatient-mode is enabled for current buffer and browse it WITHIN Emacs.
+;; [xwidget-webkit has some bugs; e.g., sometimes buttons that should redirect don't do anything.]
+;; [The “C-u” option is useful when I want to “see” the resulting HTML change as I type; e.g., new content or styling.]
+;; [Note the “angular” snippet above works beautifully /within/ Emacs; use “b/f” to move backward/forward in the browser.]
+(bind-key "C-c C-v"
+          (lambda (open-within-emacs) (interactive "P")
+            (if (not open-within-emacs)
+                (browse-url-of-buffer (current-buffer))
+              (unless (process-status "httpd") (httpd-start))
+              (unless impatient-mode (impatient-mode))
+              (let ((browser (car (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list))))
+                    (file (buffer-name)))
+                (when browser (switch-to-buffer browser) (let (kill-buffer-query-functions) (kill-buffer)))
+                (split-window-below)
+                (other-window -1)
+                (xwidget-webkit-browse-url (concat "http://localhost:8080/imp/live/" file))
+                (preview-it-mode -1) ;; Looks poor; and I don't need it when writing HTML.
+                (other-window -1))))
+          'web-mode-map)
+;; Show me HTML+CSS Changes /Live as I Type/!:1 ends here
+
+;; [[file:init.org::#Show-me-HTML-CSS-Changes-Live-as-I-Type][Show me HTML+CSS Changes /Live as I Type/!:2]]
+(bind-key "M-q" #'sgml-pretty-print 'web-mode-map)
+;; Show me HTML+CSS Changes /Live as I Type/!:2 ends here
+
+;; [[file:init.org::#Eldoc-for-Lisp-and-Haskell][Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1]]
+(use-package eldoc
+  :diminish eldoc-mode
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+        (lisp-interaction-mode . turn-on-eldoc-mode)
+        (haskell-mode . turn-on-haskell-doc-mode)
+        (haskell-mode . turn-on-haskell-indent))
+
+;; Slightly shorten eldoc display delay.
+(setq eldoc-idle-delay 0.4) ;; Default 0.5
+;; Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1 ends here
