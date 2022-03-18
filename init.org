@@ -8613,43 +8613,76 @@ Example...
 ;;    let v:Vec<_> = vec![1, 2, 3];
 #+end_src
 
-** C-x C-e / REPL-driven development for NodeJS!
+** C-x C-e ∷ REPL-driven development for ELisp / NodeJS / Python / Etc !
 :PROPERTIES:
 :CUSTOM_ID: C-x-C-e-REPL-driven-development-for-NodeJS
 :END:
 
 | /Evaluate code and see the results inline ---A feedback loop that is faster than ever!/ |
 
-Within Emacs, kbd:C-x_C-e evaluates a Lisp expression; e.g.,
+Within Emacs, kbd:C-x_C-e evaluates a Lisp expression /anywhere/; e.g.,
 at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
+# Likewise, evaluating a variable shows you its value: user-full-name.
+
 - We ran some code /without/ explicitly running an interpreter/repl/compiler!
 
-- We can do the same thing for JavaScript: There'll be a NodeJS repl server
-  running, implicitly in the background, and ~C-x C-e~ will send it a line (or a
-  selected regions) of JavaScript for evaluation; we then see the result as an
-  overlay in our current JS buffer. (This is a REST api).
-  - You /choose/ which code gets (re)evaluated.
+- This is known as “REPL driven development” (RDD):
+  There is a running REPL server for your language, implicitly in the
+  background, and your editor (say with ~C-x C-e~) will send it a line (or a
+  selected region) of code for evaluation; we then see the result as an
+  overlay in our current buffer.
+
+  + You /choose/ which code gets (re)evaluated.
+
+- A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
+
+*** ELisp
+
+By default, Emacs Lisp's kbd:C-x_C-e shows results only in the minibuffer; near
+the bottom of the screen. Let's also have evaluation results displayed as inline
+overlays ---at the location that the user, us, is actually looking/working;
+rather than forcing their eyes to shift up&down when writing&evaluating.
+
++ kbd:C-u_C-x_C-e inserts the evaluation result at point; kbd:C-u_0_C-x_C-e does
+  so /without truncating/ lengthy output.
++ Read this [[https://karthinks.com/software/an-elisp-editing-tip/][Sweet & short blog/GIFs]] on practical uses of kbd:C-x_C-e when working with Lisp.
+
+#+begin_src emacs-lisp
+;; Evaluation Result OverlayS for Emacs Lisp
+(use-package eros
+  :init (eros-mode t))
+#+end_src
+
+# In particular, this gives us the Lisp function
+# `eros--eval-overlay', which evaluates its argument X
+# and produces an overlay of the result at position P.
+# E.g., (eros--eval-overlay "hola" (point-min))
+# Shows a momentary overlay at the first line.
+
+*** JavaScript
+
+Let's setup RDD for JavaScript ---by having a NodeJS repl server running in the background.
 
 - See [[https://github.com/anonimitoraf/skerrick][skerrick: REPL-driven development for Javascript]] for animated GIFs; it
   works with modules as well.
 
-- A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
-
 #+begin_src emacs-lisp
-(quelpa '(skerrick :repo "anonimitoraf/skerrick" :fetcher github))
-
-;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
-(unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
-  (skerrick-install-or-upgrade-server-binary))
+(use-package skerrick
+  :init
+  ;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
+  (unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
+    (skerrick-install-or-upgrade-server-binary)))
 
 ;; Should be run in a JS buffer; it is buffer specific.
 ;; (skerrick-start-server)
 
 ;; Now main function, entry point is:
 ;; M-x skerrick-eval-region
-;;
+#+end_src
 
-(require 'js) ;; Defined js-mode-map
+Let's provide a quick keyboard shortcut. E.g., kbd:C-x_C-e evaluates ELisp, so let's mimic that for JS buffers:
+#+begin_src emacs-lisp
+(require 'js) ;; Defines js-mode-map
 
 ;; Evaluate a region, if any is selected; otherwise evaluate the current line.
 (bind-key
@@ -8674,6 +8707,10 @@ let b = "world"
 (a + ' ' + b).toUpperCase()
 // The final line should show: HELLO WORLD
 #+end_src
+
+*** Python, etc
+It /seems/ to be /super easy/ to add such a support for other languages, such as Python.
+See the final comment [[https://karthinks.com/software/an-elisp-editing-tip/][here]] for the tiny change required.
 
 ** devdocs
 :PROPERTIES:

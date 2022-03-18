@@ -2869,21 +2869,28 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;;    let v:Vec<_> = vec![1, 2, 3];
 ;; Quickly Run Code Snippets:2 ends here
 
-;; [[file:init.org::#C-x-C-e-REPL-driven-development-for-NodeJS][C-x C-e / REPL-driven development for NodeJS!:1]]
-(quelpa '(skerrick :repo "anonimitoraf/skerrick" :fetcher github))
+;; [[file:init.org::*ELisp][ELisp:1]]
+;; Evaluation Result OverlayS for Emacs Lisp
+(use-package eros
+  :init (eros-mode t))
+;; ELisp:1 ends here
 
-;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
-(unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
-  (skerrick-install-or-upgrade-server-binary))
+;; [[file:init.org::*JavaScript][JavaScript:1]]
+(use-package skerrick
+  :init
+  ;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
+  (unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
+    (skerrick-install-or-upgrade-server-binary)))
 
 ;; Should be run in a JS buffer; it is buffer specific.
 ;; (skerrick-start-server)
 
 ;; Now main function, entry point is:
 ;; M-x skerrick-eval-region
-;;
+;; JavaScript:1 ends here
 
-(require 'js) ;; Defined js-mode-map
+;; [[file:init.org::*JavaScript][JavaScript:2]]
+(require 'js) ;; Defines js-mode-map
 
 ;; Evaluate a region, if any is selected; otherwise evaluate the current line.
 (bind-key
@@ -2897,7 +2904,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
                 (skerrick-eval-region)
                 (pop-mark)))
  'js-mode-map)
-;; C-x C-e / REPL-driven development for NodeJS!:1 ends here
+;; JavaScript:2 ends here
 
 ;; [[file:init.org::#devdocs][devdocs:1]]
 ;; 1. Get docs of a languages: M-x devdocs-install
