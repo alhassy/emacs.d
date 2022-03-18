@@ -2960,6 +2960,123 @@ Example usage:
   :bind (("s-r" . #'er/expand-region)))
 ;; Sleek Semantic Selection:1 ends here
 
+;; [[file:init.org::#LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE][LSP: Making Emacs into a generic full-featured programming IDE:1]]
+(use-package lsp-mode
+  :init
+  ;; Set prefix for lsp commands
+  ;; (setq lsp-keymap-prefix "s-l") ;; default
+  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
+  ;; (setq lsp-idle-delay 0.500) ;; default
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (js-mode . lsp-mode) ;; Enter LSP mode
+         (js-mode . lsp)      ;; Start LSP server
+         (lsp-mode . lsp-enable-which-key-integration)
+  ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
+  :bind ("C-x y" . #'yankpad-insert)
+  :commands lsp)
+
+;; If a server crashes, restart it without asking me.
+(setq lsp-restart 'auto-restart)
+
+
+;; https://emacs-lsp.github.io/lsp-mode/page/languages/
+;; M-x lsp-install-server ⟨return⟩ jsts-ls
+;; M-x lsp-install-server ⟨return⟩ json-ls
+;; M-x lsp-install-server ⟨return⟩ eslint
+;; M-x lsp-install-server ⟨return⟩ css-ls
+;; M-x lsp-install-server ⟨return⟩ html-ls
+
+;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
+;; https://emacs-lsp.github.io/lsp-ui/#intro
+;;
+;; You only have to put (use-package lsp-ui) in your config and the package will
+;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
+(use-package lsp-ui)
+
+;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
+;; call hierarchy, etc.)
+(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
+;; M-x lsp-treemacs-errors-list
+
+;; helm-lsp provides “on type completion” alternative of cross-referencing.
+;; https://github.com/emacs-lsp/helm-lsp
+(use-package helm-lsp)
+(define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
+;; a” (The 'a' stands for apropos, which means appropriate nature)
+
+;; Set the amount of data which Emacs reads from a process.
+;; Some LSP responses are in the 8k-3MB range.
+;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
+(setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
+(setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
+;; A large gc-cons-threshold will cause freezing and stuttering during long-term
+;; interactive use. This one seems to be a good default.
+;; LSP: Making Emacs into a generic full-featured programming IDE:1 ends here
+
+;; [[file:init.org::#LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE][LSP: Making Emacs into a generic full-featured programming IDE:2]]
+;; Load the various useful utils
+(require 'lsp-ui-peek)
+(require 'lsp-ui-sideline)
+(require 'lsp-ui-doc)
+(require 'lsp-ui-imenu)
+
+; (setq lsp-mode-hook nil)
+(add-hook 'lsp-mode-hook
+          (lambda ()
+            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
+            (shell-command "rm ~/wxPortal/.flowconfig")
+            ;; Load the various useful utils
+            (require 'lsp-ui)
+            (lsp-ui-peek-enable t)
+            (lsp-ui-doc-enable t)
+            (lsp-ui-sideline-enable t)
+            (lsp-ui-imenu-buffer--enable)
+            ;; Set ⌘-l as the main mini-menu for LSP commands
+            (bind-key* "s-l" #'my/lsp-hydra/body)))
+
+(defun my/helm-lsp-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-workspace-symbol)))
+
+  (defun my/helm-lsp-global-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-global-workspace-symbol)))
+
+;; TODO: Add other cool features discussed/loaded above into this hydra!
+(defhydra my/lsp-hydra (:color blue :hint nil)
+  ;; Xref
+  ("d" xref-find-definitions "Definitions" :column "Xref")
+  ("D" xref-find-definitions-other-window "-> other win")
+  ("r" xref-find-references "References")
+  ("s" my/helm-lsp-workspace-symbol-at-point "Helm search")
+  ("S" my/helm-lsp-global-workspace-symbol-at-point "Helm global search")
+
+  ;; Peek
+  ("C-d" lsp-ui-peek-find-definitions "Definitions" :column "Peek")
+  ("C-r" lsp-ui-peek-find-references "References")
+  ("C-i" lsp-ui-peek-find-implementation "Implementation")
+
+  ;; LSP
+  ("p" lsp-describe-thing-at-point "Describe at point" :column "LSP")
+  ("C-a" lsp-execute-code-action "Execute code action")
+  ("R" lsp-rename "Rename")
+  ("t" lsp-goto-type-definition "Type definition")
+  ("i" lsp-goto-implementation "Implementation")
+  ("f" helm-imenu "Filter funcs/classes (Helm)")
+  ("C-c" lsp-describe-session "Describe session")
+
+  ;; Flycheck ---my “C-c !” flycheck hydra is much better than this simple lsp one.
+  ;; ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+  ("l" my/flycheck-hydra/body "List errs/warns/notes" :column "Flycheck")
+
+  ;; Misc
+  ("q" nil "Cancel" :column "Misc")
+  ("b" pop-tag-mark "Back"))
+;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
+
 ;; [[file:init.org::#Keeping-my-system-up-to-date][Keeping my system up to date:1]]
 (defun my/stay-up-to-date ()
   "Ensure that OS and Emacs package listings are up to date.
