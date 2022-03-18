@@ -8556,7 +8556,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* COMMENT Programming
+* Programming
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
@@ -8564,9 +8564,10 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
 
-+ Checkout branches/PRs with doc:my/gh-checkout
-+ See all company related PRs with doc:w-PRs
-+ Quickly look up language/library docs /within/ Emacs with kbd:C-c_d.
+TODO: Fix these docs
+#  TODO: + Checkout branches/PRs with doc:my/gh-checkout
+#  + See all company related PRs with doc:w-PRs
+# + Quickly look up language/library docs /within/ Emacs with kbd:C-c_d.
 
 ** Quickly Run Code Snippets
 :PROPERTIES:
@@ -8816,10 +8817,6 @@ That is, /repeated ⌘+r expands the selection to the next logical segment of te
 In writing this means “Word, sentence, paragraph”, and in programming this means
 “identifier, then incrementally larger scopes”.
 
-* COMMENT more
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-more
-:END:
 ** Managing Processes/Servers from within Emacs ---Work-specific functions
 :PROPERTIES:
 :CUSTOM_ID: Managing-Processes-Servers-from-within-Emacs-Work-specific-functions
@@ -9671,7 +9668,7 @@ Here are further reads:
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-** TODO Text Folding ---Selectively displaying portions of a program
+** TODO COMMENT Text Folding ---Selectively displaying portions of a program :causes_HIDING_ALL_BLOCKS_issue:
 :PROPERTIES:
 :CUSTOM_ID: Text-Folding
 :END:
@@ -10175,8 +10172,8 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
 :CUSTOM_ID: SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only
 :END:
 want to /quickly/ run a query, to check something, *without the fricition of
-switching applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-sql
-]]to produce a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.
+switching applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-sql]]
+to produce a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.
 (This also serves as a nice *reference mechanism* for useful queries.)
 #+begin_src emacs-lisp
 ;; (system-packages-ensure "leiningen")
@@ -10367,7 +10364,7 @@ needs to know what ‘workspace’ it belongs to!]/ Now you can, for example, pe
 d> to go to its definition, or <kbd:s-l g t> to see its type (which already
 shows in the mode line).  In your JS file, write the errenous line ~let a == 1;~
 then with your cursour on that line you'll see some info to the side about the
-error (thanks to doc:lsp-ui-mode) and if you invoke ~lsp-treemacs-errors-list~
+error (thanks to ~lsp-ui-mode~) and if you invoke ~lsp-treemacs-errors-list~
 then you get a nice hierarchical, ⟨tab⟩-ful, list of errors.  To find symbol
 names, with autocompletion of all names in your workspace, use <kbd:s-l g a>
 (thanks to ~helm-lsp~), for the current file doc:lsp-ui-imenu (or more simply,
@@ -10535,7 +10532,7 @@ LSP mode supports the following Features:
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
-* COMMENT Web-Development
+* Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
 :END:
@@ -10590,7 +10587,7 @@ Anyhow, here's my setup:
 ;; (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
 #+end_src
 
-#+begin_details Notable HTML key bindings (including [[https://www.gnu.org/software/emacs/manual/html_node/emacs/HTML-Mode.html][built-ins]]):
+#+begin_details Notable HTML key bindings (including [[https://www.gnu.org/software/emacs/manual/html_node/emacs/HTML-Mode.html][built-ins]])
 + Wrap with Abbreviation / C-c C-c w :: Select a region, then enter an abbreviation.
   - For example, select the phrase ~Hello, World!~ then ~C-c C-c w q>b~ to place that phrase in a quote, and make it bold.
 + Go to Edit Point / C-M-{Leftarrow, Rightarrow} :: to move between editable-tags/empty-attributes. ([[https://docs.emmet.io/actions/go-to-edit-point/][Demo]])
@@ -11001,7 +10998,7 @@ or type signatures.
 (use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
-* COMMENT Lost Souls                                    :Outdated_Documentation:
+* Lost Souls                                    :Outdated_Documentation:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
