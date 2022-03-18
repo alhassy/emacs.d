@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2022-03-17 Thu 21:33 -->
+<!-- 2022-03-17 Thu 21:58 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>A Life Configuring Emacs</title>
@@ -293,269 +293,119 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#Clean-this-section-up">1. <span class="todo TODO">TODO</span> <a href="#Clean-this-section-up">Clean this section up!</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></a></li>
-<li><a href="#Meta-setup">2. <a href="#Meta-setup">Meta-setup</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></a>
+<li><a href="#Why-Emacs">1. <a href="#Why-Emacs">Why Emacs?</a></a>
 <ul>
-<li><a href="#Blog-HTML-Setup">2.1. <a href="#Blog-HTML-Setup">Blog/HTML Setup</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></a></li>
-<li><a href="#Personal-instructions-for-a-new-machine">2.2. <a href="#Personal-instructions-for-a-new-machine">Personal instructions for a new machine</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></a></li>
+<li><a href="#Emacs-is-a-flexible-platform-for-developing-end-user-applications">1.1. <a href="#Emacs-is-a-flexible-platform-for-developing-end-user-applications">  <i>Emacs is a flexible platform for developing end-user applications</i></a></a></li>
+<li><a href="#The-Power-of-Text-Manipulation">1.2. <a href="#The-Power-of-Text-Manipulation">The Power of Text Manipulation</a></a></li>
+<li><a href="#Keyboard-Navigation-and-Alteration">1.3. <a href="#Keyboard-Navigation-and-Alteration">Keyboard Navigation and Alteration</a></a></li>
+<li><a href="#Emacs-Proverbs-as-Koan">1.4. <a href="#Emacs-Proverbs-as-Koan">Emacs Proverbs as Koan</a></a></li>
+<li><a href="#Possibly-Interesting-Reads">1.5. <a href="#Possibly-Interesting-Reads">Possibly Interesting Reads</a></a></li>
+<li><a href="#Fun-commands-to-try-out">1.6. <a href="#Fun-commands-to-try-out">Fun commands to try out</a></a></li>
+<li><a href="#What-Does-Literate-Programming-Look-Like">1.7. <a href="#What-Does-Literate-Programming-Look-Like">What Does Literate Programming Look Like?</a></a></li>
+<li><a href="#Why-a-monolithic-configuration">1.8. <a href="#Why-a-monolithic-configuration">Why a monolithic configuration?</a></a></li>
 </ul>
 </li>
-<li><a href="#Abstract">3. <a href="#Abstract">Abstract</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></a></li>
-<li><a href="#Why-Emacs">4. <a href="#Why-Emacs">Why Emacs?</a></a>
+<li><a href="#Booting-Up">2. <a href="#Booting-Up">Booting Up</a></a>
 <ul>
-<li><a href="#Mini-tutorial-on-Org-mode">4.1. <a href="#Mini-tutorial-on-Org-mode">Mini-tutorial on Org-mode</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></a></li>
-<li><a href="#Intro-to-why-Emacs">4.2. <a href="#Intro-to-why-Emacs">Intro to why Emacs</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></a></li>
-<li><a href="#Emacs-is-a-flexible-platform-for-developing-end-user-applications">4.3. <a href="#Emacs-is-a-flexible-platform-for-developing-end-user-applications">  <i>Emacs is a flexible platform for developing end-user applications</i></a></a></li>
-<li><a href="#The-Power-of-Text-Manipulation">4.4. <a href="#The-Power-of-Text-Manipulation">The Power of Text Manipulation</a></a></li>
-<li><a href="#Keyboard-Navigation-and-Alteration">4.5. <a href="#Keyboard-Navigation-and-Alteration">Keyboard Navigation and Alteration</a></a></li>
-<li><a href="#Emacs-Proverbs-as-Koan">4.6. <a href="#Emacs-Proverbs-as-Koan">Emacs Proverbs as Koan</a></a></li>
-<li><a href="#Possibly-Interesting-Reads">4.7. <a href="#Possibly-Interesting-Reads">Possibly Interesting Reads</a></a></li>
-<li><a href="#Fun-commands-to-try-out">4.8. <a href="#Fun-commands-to-try-out">Fun commands to try out</a></a></li>
-<li><a href="#What-Does-Literate-Programming-Look-Like">4.9. <a href="#What-Does-Literate-Programming-Look-Like">What Does Literate Programming Look Like?</a></a></li>
-<li><a href="#Why-a-monolithic-configuration">4.10. <a href="#Why-a-monolithic-configuration">Why a monolithic configuration?</a></a></li>
+<li><a href="#emacs-vs-init-org">2.1. <a href="#emacs-vs-init-org">  <code>~/.emacs</code> vs. <code>init.org</code></a></a></li>
+<li><a href="#Who-am-I">2.2. <a href="#Who-am-I">Who am I?</a></a></li>
+<li><a href="#Emacs-Package-Manager">2.3. <a href="#Emacs-Package-Manager">Emacs Package Manager</a></a></li>
+<li><a href="#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs">2.4. <a href="#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs">Installing OS packages, and automatically keeping my system up to data, from within Emacs</a></a></li>
+<li><a href="#Syncing-to-the-System's-PATH">2.5. <a href="#Syncing-to-the-System's-PATH">Syncing to the System's <code>$PATH</code></a></a></li>
+<li><a href="#Restarting-Emacs-Keeping-buffers-open-across-sessions">2.6. <a href="#Restarting-Emacs-Keeping-buffers-open-across-sessions">Restarting Emacs &#x2014;Keeping buffers open across sessions?</a></a></li>
+<li><a href="#Being-at-the-Helm-Completion-Narrowing-Framework">2.7. <a href="#Being-at-the-Helm-Completion-Narrowing-Framework"> “Being at the Helm” &#x2014;Completion &amp; Narrowing Framework</a></a></li>
+<li><a href="#Org-Mode-Administrivia">2.8. <a href="#Org-Mode-Administrivia">Org-Mode Administrivia</a></a></li>
+<li><a href="#Password-locking-files-encryption">2.9. <a href="#Password-locking-files-encryption">Password-locking files  &#x2014;“encryption”</a></a></li>
+<li><a href="#all-the-icons">2.10. <a href="#all-the-icons">all-the-icons</a></a></li>
+<li><a href="#Hydra-Supply-a-prefix-only-once">2.11. <a href="#Hydra-Supply-a-prefix-only-once">Hydra: Supply a prefix only once</a></a></li>
 </ul>
 </li>
-<li><a href="#Booting-Up">5. <a href="#Booting-Up">Booting Up</a></a>
+<li><a href="#Staying-Safe">3. <a href="#Staying-Safe">Staying Sane</a></a>
 <ul>
-<li><a href="#emacs-vs-init-org">5.1. <a href="#emacs-vs-init-org">  <code>~/.emacs</code> vs. <code>init.org</code></a></a></li>
-<li><a href="#Who-am-I">5.2. <a href="#Who-am-I">Who am I?</a></a></li>
-<li><a href="#Emacs-Package-Manager">5.3. <a href="#Emacs-Package-Manager">Emacs Package Manager</a></a></li>
-<li><a href="#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs">5.4. <a href="#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs">Installing OS packages, and automatically keeping my system up to data, from within Emacs</a></a></li>
-<li><a href="#Syncing-to-the-System's-PATH">5.5. <a href="#Syncing-to-the-System's-PATH">Syncing to the System's <code>$PATH</code></a></a></li>
-<li><a href="#Restarting-Emacs-Keeping-buffers-open-across-sessions">5.6. <a href="#Restarting-Emacs-Keeping-buffers-open-across-sessions">Restarting Emacs &#x2014;Keeping buffers open across sessions?</a></a></li>
-<li><a href="#Being-at-the-Helm-Completion-Narrowing-Framework">5.7. <a href="#Being-at-the-Helm-Completion-Narrowing-Framework"> “Being at the Helm” &#x2014;Completion &amp; Narrowing Framework</a></a></li>
-<li><a href="#Org-Mode-Administrivia">5.8. <a href="#Org-Mode-Administrivia">Org-Mode Administrivia</a></a></li>
-<li><a href="#Password-locking-files-encryption">5.9. <a href="#Password-locking-files-encryption">Password-locking files  &#x2014;“encryption”</a></a></li>
-<li><a href="#all-the-icons">5.10. <a href="#all-the-icons">all-the-icons</a></a></li>
-<li><a href="#Hydra-Supply-a-prefix-only-once">5.11. <a href="#Hydra-Supply-a-prefix-only-once">Hydra: Supply a prefix only once</a></a></li>
+<li><a href="#Undo-tree-Very-Local-Version-Control">3.1. <a href="#Undo-tree-Very-Local-Version-Control">Undo-tree: Very Local Version Control</a></a></li>
+<li><a href="#Automatic-Backups">3.2. <a href="#Automatic-Backups">Automatic Backups</a></a></li>
+<li><a href="#magit-Emacs'-porcelain-interface-to-gitq">3.3. <a href="#magit-Emacs'-porcelain-interface-to-gitq">  <code>magit</code> &#x2014;Emacs' porcelain interface to git</a></a></li>
+<li><a href="#Version-Control-with-SVN-Using-Magit">3.4. <a href="#Version-Control-with-SVN-Using-Magit">Version Control with SVN &#x2014;Using Magit!</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
+<li><a href="#Highlighting-TODO-s-Showing-them-in-Magit">3.5. <a href="#Highlighting-TODO-s-Showing-them-in-Magit">Highlighting TODO-s &amp; Showing them in Magit</a></a></li>
+<li><a href="#Silently-show-me-when-a-line-was-modified-and-by-whom">3.6. <a href="#Silently-show-me-when-a-line-was-modified-and-by-whom">Silently show me when a line was modified and by whom</a></a></li>
+<li><a href="#delete-by-moving-to-trash-t">3.7. <a href="#delete-by-moving-to-trash-t">delete-by-moving-to-trash t</a></a></li>
+<li><a href="#Jumping-to-extreme-semantic-units">3.8. <a href="#Jumping-to-extreme-semantic-units">Jumping to extreme semantic units</a></a></li>
 </ul>
 </li>
-<li><a href="#Staying-Safe">6. <a href="#Staying-Safe">Staying Sane</a></a>
+<li><a href="#Literate-Programming">4. <a href="#Literate-Programming">Literate Programming</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="cannot_export_to_HTML">cannot_export_to_HTML</span></span></a>
 <ul>
-<li><a href="#Undo-tree-Very-Local-Version-Control">6.1. <a href="#Undo-tree-Very-Local-Version-Control">Undo-tree: Very Local Version Control</a></a></li>
-<li><a href="#Automatic-Backups">6.2. <a href="#Automatic-Backups">Automatic Backups</a></a></li>
-<li><a href="#magit-Emacs'-porcelain-interface-to-gitq">6.3. <a href="#magit-Emacs'-porcelain-interface-to-gitq">  <code>magit</code> &#x2014;Emacs' porcelain interface to git</a></a></li>
-<li><a href="#Version-Control-with-SVN-Using-Magit">6.4. <a href="#Version-Control-with-SVN-Using-Magit">Version Control with SVN &#x2014;Using Magit!</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
-<li><a href="#Highlighting-TODO-s-Showing-them-in-Magit">6.5. <a href="#Highlighting-TODO-s-Showing-them-in-Magit">Highlighting TODO-s &amp; Showing them in Magit</a></a></li>
-<li><a href="#Silently-show-me-when-a-line-was-modified-and-by-whom">6.6. <a href="#Silently-show-me-when-a-line-was-modified-and-by-whom">Silently show me when a line was modified and by whom</a></a></li>
-<li><a href="#delete-by-moving-to-trash-t">6.7. <a href="#delete-by-moving-to-trash-t">delete-by-moving-to-trash t</a></a></li>
-<li><a href="#Jumping-to-extreme-semantic-units">6.8. <a href="#Jumping-to-extreme-semantic-units">Jumping to extreme semantic units</a></a></li>
+<li><a href="#High-Speed-Literate-Programming">4.1. <a href="#High-Speed-Literate-Programming">High Speed Literate Programming</a></a></li>
+<li><a href="#Executing-code-from-src-blocks">4.2. <a href="#Executing-code-from-src-blocks">Executing code from <code>src</code> blocks</a></a></li>
+<li><a href="#Executing-all-name-startup-code-for-local-configurations">4.3. <a href="#Executing-all-name-startup-code-for-local-configurations">Executing all <code>#+name: startup-code</code> for local configurations</a></a></li>
+<li><a href="#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh">4.4. <a href="#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh">Quickly pop-up a terminal, run a command, close it &#x2014;and zsh</a></a></li>
+<li><a href="#Snippets-Template-Expansion">4.5. <a href="#Snippets-Template-Expansion">Snippets &#x2014;Template Expansion</a></a></li>
+<li><a href="#Prettify-inline-source-code">4.6. <a href="#Prettify-inline-source-code">Prettify inline source code</a></a></li>
 </ul>
 </li>
-<li><a href="#Literate-Programming">7. <a href="#Literate-Programming">Literate Programming</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="cannot_export_to_HTML">cannot_export_to_HTML</span></span></a>
+<li><a href="#Life-within-Org-mode">5. <a href="#Life-within-Org-mode">Life within Org-mode</a></a>
 <ul>
-<li><a href="#High-Speed-Literate-Programming">7.1. <a href="#High-Speed-Literate-Programming">High Speed Literate Programming</a></a></li>
-<li><a href="#Executing-code-from-src-blocks">7.2. <a href="#Executing-code-from-src-blocks">Executing code from <code>src</code> blocks</a></a></li>
-<li><a href="#Executing-all-name-startup-code-for-local-configurations">7.3. <a href="#Executing-all-name-startup-code-for-local-configurations">Executing all <code>#+name: startup-code</code> for local configurations</a></a></li>
-<li><a href="#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh">7.4. <a href="#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh">Quickly pop-up a terminal, run a command, close it &#x2014;and zsh</a></a></li>
-<li><a href="#Snippets-Template-Expansion">7.5. <a href="#Snippets-Template-Expansion">Snippets &#x2014;Template Expansion</a></a></li>
-<li><a href="#Prettify-inline-source-code">7.6. <a href="#Prettify-inline-source-code">Prettify inline source code</a></a></li>
+<li><a href="#Using-Org-Mode-as-a-Day-Planner">5.1. <a href="#Using-Org-Mode-as-a-Day-Planner">Using Org-Mode as a Day Planner</a></a></li>
+<li><a href="#Tag-You're-it">5.2. <a href="#Tag-You're-it">Tag! You're it!</a></a></li>
+<li><a href="#Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes">5.3. <a href="#Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes">Automating Pomodoro &#x2014;“Commit for only 25 minutes!”</a></a></li>
+<li><a href="#Journaling">5.4. <a href="#Journaling">Journaling</a></a></li>
+<li><a href="#Workflow-States">5.5. <a href="#Workflow-States">Workflow States</a></a></li>
+<li><a href="#Clocking-Work-Time">5.6. <a href="#Clocking-Work-Time">Clocking Work Time</a></a></li>
+<li><a href="#Habit-Formation">5.7. <a href="#Habit-Formation">Habit Formation</a></a></li>
+<li><a href="#Actually-Doing-Things">5.8. <a href="#Actually-Doing-Things">Actually Doing Things &#x2014;or <i>Sending notifications from Emacs</i></a></a></li>
 </ul>
 </li>
-<li><a href="#Life-within-Org-mode">8. <a href="#Life-within-Org-mode">Life within Org-mode</a></a>
+<li><a href="#Cosmetics">6. <a href="#Cosmetics">Cosmetics</a></a>
 <ul>
-<li><a href="#Using-Org-Mode-as-a-Day-Planner">8.1. <a href="#Using-Org-Mode-as-a-Day-Planner">Using Org-Mode as a Day Planner</a></a></li>
-<li><a href="#Tag-You're-it">8.2. <a href="#Tag-You're-it">Tag! You're it!</a></a></li>
-<li><a href="#Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes">8.3. <a href="#Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes">Automating Pomodoro &#x2014;“Commit for only 25 minutes!”</a></a></li>
-<li><a href="#Journaling">8.4. <a href="#Journaling">Journaling</a></a></li>
-<li><a href="#Workflow-States">8.5. <a href="#Workflow-States">Workflow States</a></a></li>
-<li><a href="#Clocking-Work-Time">8.6. <a href="#Clocking-Work-Time">Clocking Work Time</a></a></li>
-<li><a href="#Habit-Formation">8.7. <a href="#Habit-Formation">Habit Formation</a></a></li>
-<li><a href="#Actually-Doing-Things">8.8. <a href="#Actually-Doing-Things">Actually Doing Things &#x2014;or <i>Sending notifications from Emacs</i></a></a></li>
+<li><a href="#Startup-message-Emacs-Org-versions">6.1. <a href="#Startup-message-Emacs-Org-versions">Startup message: Emacs &amp; Org versions</a></a></li>
+<li><a href="#My-to-do-list-The-initial-buffer-when-Emacs-opens-up">6.2. <a href="#My-to-do-list-The-initial-buffer-when-Emacs-opens-up">My to-do list: The initial buffer when Emacs opens up</a></a></li>
+<li><a href="#A-sleek-informative-and-fancy-mode-line">6.3. <a href="#A-sleek-informative-and-fancy-mode-line">A sleek, informative, &amp; fancy mode line</a></a></li>
+<li><a href="#Exquisite-Fonts-and-Themes">6.4. <a href="#Exquisite-Fonts-and-Themes">Exquisite Fonts and Themes</a></a></li>
+<li><a href="#Never-lose-the-cursor">6.5. <a href="#Never-lose-the-cursor">Never lose the cursor</a></a></li>
+<li><a href="#Dimming-Unused-Windows">6.6. <a href="#Dimming-Unused-Windows">Dimming Unused Windows</a></a></li>
+<li><a href="#Flashing-when-something-goes-wrong">6.7. <a href="#Flashing-when-something-goes-wrong">Flashing when something goes wrong</a></a></li>
+<li><a href="#Hiding-Scrollbar-tool-bar-and-menu">6.8. <a href="#Hiding-Scrollbar-tool-bar-and-menu">Hiding Scrollbar, tool bar, and menu</a></a></li>
+<li><a href="#Highlight-complete-parenthesis-pair-when-cursor-is-near">6.9. <a href="#Highlight-complete-parenthesis-pair-when-cursor-is-near">Highlight &amp; complete parenthesis pair when cursor is near ;-)</a></a></li>
+<li><a href="#Proportional-fonts-for-Headlines">6.10. <a href="#Proportional-fonts-for-Headlines">Proportional fonts for Headlines</a></a></li>
+<li><a href="#Making-Block-Delimiters-Less-Intrusive">6.11. <a href="#Making-Block-Delimiters-Less-Intrusive">Making Block Delimiters Less Intrusive</a></a></li>
+<li><a href="#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG">6.12. <a href="#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG">Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG</a></a></li>
+<li><a href="#Show-off-screen-heading-at-the-top-of-the-window">6.13. <a href="#Show-off-screen-heading-at-the-top-of-the-window">Show off-screen heading at the top of the window</a></a></li>
+<li><a href="#Powerful-Directory-Editing-with-dired">6.14. <a href="#Powerful-Directory-Editing-with-dired">Powerful Directory Editing with <code>dired</code></a></a></li>
+<li><a href="#Persistent-Scratch-Buffer">6.15. <a href="#Persistent-Scratch-Buffer">Persistent Scratch Buffer</a></a></li>
+<li><a href="#Tabs">6.16. <a href="#Tabs">Tabs</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
+<li><a href="#Window-resizing-using-the-golden-ratio">6.17. <a href="#Window-resizing-using-the-golden-ratio">Window resizing using the golden ratio</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
+<li><a href="#Org-Emphasise-for-Parts-of-Words">6.18. <a href="#Org-Emphasise-for-Parts-of-Words">Org-Emphasise for Parts of Words</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
+<li><a href="#Preview-link-under-cursor">6.19. <a href="#Preview-link-under-cursor">Preview link under cursor</a></a></li>
 </ul>
 </li>
-<li><a href="#Cosmetics">9. <a href="#Cosmetics">Cosmetics</a></a>
+<li><a href="#Prose">7. <a href="#Prose">Prose</a></a>
 <ul>
-<li><a href="#Startup-message-Emacs-Org-versions">9.1. <a href="#Startup-message-Emacs-Org-versions">Startup message: Emacs &amp; Org versions</a></a></li>
-<li><a href="#My-to-do-list-The-initial-buffer-when-Emacs-opens-up">9.2. <a href="#My-to-do-list-The-initial-buffer-when-Emacs-opens-up">My to-do list: The initial buffer when Emacs opens up</a></a></li>
-<li><a href="#A-sleek-informative-and-fancy-mode-line">9.3. <a href="#A-sleek-informative-and-fancy-mode-line">A sleek, informative, &amp; fancy mode line</a></a></li>
-<li><a href="#Exquisite-Fonts-and-Themes">9.4. <a href="#Exquisite-Fonts-and-Themes">Exquisite Fonts and Themes</a></a></li>
-<li><a href="#Never-lose-the-cursor">9.5. <a href="#Never-lose-the-cursor">Never lose the cursor</a></a></li>
-<li><a href="#Dimming-Unused-Windows">9.6. <a href="#Dimming-Unused-Windows">Dimming Unused Windows</a></a></li>
-<li><a href="#Flashing-when-something-goes-wrong">9.7. <a href="#Flashing-when-something-goes-wrong">Flashing when something goes wrong</a></a></li>
-<li><a href="#Hiding-Scrollbar-tool-bar-and-menu">9.8. <a href="#Hiding-Scrollbar-tool-bar-and-menu">Hiding Scrollbar, tool bar, and menu</a></a></li>
-<li><a href="#Highlight-complete-parenthesis-pair-when-cursor-is-near">9.9. <a href="#Highlight-complete-parenthesis-pair-when-cursor-is-near">Highlight &amp; complete parenthesis pair when cursor is near ;-)</a></a></li>
-<li><a href="#Proportional-fonts-for-Headlines">9.10. <a href="#Proportional-fonts-for-Headlines">Proportional fonts for Headlines</a></a></li>
-<li><a href="#Making-Block-Delimiters-Less-Intrusive">9.11. <a href="#Making-Block-Delimiters-Less-Intrusive">Making Block Delimiters Less Intrusive</a></a></li>
-<li><a href="#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG">9.12. <a href="#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG">Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG</a></a></li>
-<li><a href="#Show-off-screen-heading-at-the-top-of-the-window">9.13. <a href="#Show-off-screen-heading-at-the-top-of-the-window">Show off-screen heading at the top of the window</a></a></li>
-<li><a href="#Powerful-Directory-Editing-with-dired">9.14. <a href="#Powerful-Directory-Editing-with-dired">Powerful Directory Editing with <code>dired</code></a></a></li>
-<li><a href="#Persistent-Scratch-Buffer">9.15. <a href="#Persistent-Scratch-Buffer">Persistent Scratch Buffer</a></a></li>
-<li><a href="#Tabs">9.16. <a href="#Tabs">Tabs</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
-<li><a href="#Window-resizing-using-the-golden-ratio">9.17. <a href="#Window-resizing-using-the-golden-ratio">Window resizing using the golden ratio</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
-<li><a href="#Org-Emphasise-for-Parts-of-Words">9.18. <a href="#Org-Emphasise-for-Parts-of-Words">Org-Emphasise for Parts of Words</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></a></li>
-<li><a href="#Preview-link-under-cursor">9.19. <a href="#Preview-link-under-cursor">Preview link under cursor</a></a></li>
+<li><a href="#Whitespace">7.1. <a href="#Whitespace">Whitespace</a></a></li>
+<li><a href="#Formatting-Text">7.2. <a href="#Formatting-Text">Formatting Text</a></a></li>
+<li><a href="#Fill-mode-Word-Wrapping">7.3. <a href="#Fill-mode-Word-Wrapping">Fill-mode &#x2014;Word Wrapping</a></a></li>
+<li><a href="#Pretty-Lists-Markers">7.4. <a href="#Pretty-Lists-Markers">Pretty Lists Markers</a></a></li>
+<li><a href="#Fix-spelling-as-you-type-thesaurus-dictionary-too">7.5. <a href="#Fix-spelling-as-you-type-thesaurus-dictionary-too">Fix spelling as you type &#x2014;thesaurus &amp; dictionary too!</a></a></li>
+<li><a href="#Using-a-Grammar-Style-Checker">7.6. <a href="#Using-a-Grammar-Style-Checker">Using a Grammar &amp; Style Checker</a></a></li>
+<li><a href="#Lightweight-Prose-Proofchecking">7.7. <a href="#Lightweight-Prose-Proofchecking">Lightweight Prose Proofchecking</a></a></li>
+<li><a href="#Placeholder-Text-For-Learning-Experimenting">7.8. <a href="#Placeholder-Text-For-Learning-Experimenting">Placeholder Text &#x2014;For Learning &amp; Experimenting</a></a></li>
+<li><a href="#Some-text-to-make-us-smile">7.9. <a href="#Some-text-to-make-us-smile">Some text to make us smile</a></a></li>
+<li><a href="#Unicode-Input-via-Agda-Input">7.10. <a href="#Unicode-Input-via-Agda-Input">Unicode Input via Agda Input</a></a></li>
+<li><a href="#Increase-decrease-text-size">7.11. <a href="#Increase-decrease-text-size">Increase/decrease text size</a></a></li>
+<li><a href="#Moving-Text-Around">7.12. <a href="#Moving-Text-Around">Moving Text Around</a></a></li>
+<li><a href="#Enabling-CamelCase-Aware-Editing-Operations">7.13. <a href="#Enabling-CamelCase-Aware-Editing-Operations">Enabling CamelCase Aware Editing Operations</a></a></li>
+<li><a href="#Delete-Selection-Mode">7.14. <a href="#Delete-Selection-Mode">Delete Selection Mode</a></a></li>
+<li><a href="#M-n-p-Word-at-Point-Navigation">7.15. <a href="#M-n-p-Word-at-Point-Navigation">  <code>M-n,p</code>: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word</a></a></li>
+<li><a href="#Letter-based-Navigation">7.16. <a href="#Letter-based-Navigation">Letter-based Navigation</a></a></li>
+<li><a href="#C-c-e-n-p-Taking-a-tour-of-one's-edits">7.17. <a href="#C-c-e-n-p-Taking-a-tour-of-one's-edits">  <code>C-c e n,p</code>: Taking a tour of one's edits</a></a></li>
+<li><a href="#visual-regexp">7.18. <a href="#visual-regexp">visual-regexp</a></a></li>
+<li><a href="#Org-Mode-PDF-HTML">7.19. <a href="#Org-Mode-PDF-HTML">LaTeX ⇐ Org-Mode</a></a></li>
+<li><a href="#HTML-Org-mode">7.20. <a href="#HTML-Org-mode">HTML ⇐ Org-mode</a></a></li>
 </ul>
 </li>
-<li><a href="#Prose">10. <a href="#Prose">Prose</a></a>
-<ul>
-<li><a href="#Whitespace">10.1. <a href="#Whitespace">Whitespace</a></a></li>
-<li><a href="#Formatting-Text">10.2. <a href="#Formatting-Text">Formatting Text</a></a></li>
-<li><a href="#Fill-mode-Word-Wrapping">10.3. <a href="#Fill-mode-Word-Wrapping">Fill-mode &#x2014;Word Wrapping</a></a></li>
-<li><a href="#Pretty-Lists-Markers">10.4. <a href="#Pretty-Lists-Markers">Pretty Lists Markers</a></a></li>
-<li><a href="#Fix-spelling-as-you-type-thesaurus-dictionary-too">10.5. <a href="#Fix-spelling-as-you-type-thesaurus-dictionary-too">Fix spelling as you type &#x2014;thesaurus &amp; dictionary too!</a></a></li>
-<li><a href="#Using-a-Grammar-Style-Checker">10.6. <a href="#Using-a-Grammar-Style-Checker">Using a Grammar &amp; Style Checker</a></a></li>
-<li><a href="#Lightweight-Prose-Proofchecking">10.7. <a href="#Lightweight-Prose-Proofchecking">Lightweight Prose Proofchecking</a></a></li>
-<li><a href="#Placeholder-Text-For-Learning-Experimenting">10.8. <a href="#Placeholder-Text-For-Learning-Experimenting">Placeholder Text &#x2014;For Learning &amp; Experimenting</a></a></li>
-<li><a href="#Some-text-to-make-us-smile">10.9. <a href="#Some-text-to-make-us-smile">Some text to make us smile</a></a></li>
-<li><a href="#Unicode-Input-via-Agda-Input">10.10. <a href="#Unicode-Input-via-Agda-Input">Unicode Input via Agda Input</a></a></li>
-<li><a href="#Increase-decrease-text-size">10.11. <a href="#Increase-decrease-text-size">Increase/decrease text size</a></a></li>
-<li><a href="#Moving-Text-Around">10.12. <a href="#Moving-Text-Around">Moving Text Around</a></a></li>
-<li><a href="#Enabling-CamelCase-Aware-Editing-Operations">10.13. <a href="#Enabling-CamelCase-Aware-Editing-Operations">Enabling CamelCase Aware Editing Operations</a></a></li>
-<li><a href="#Delete-Selection-Mode">10.14. <a href="#Delete-Selection-Mode">Delete Selection Mode</a></a></li>
-<li><a href="#M-n-p-Word-at-Point-Navigation">10.15. <a href="#M-n-p-Word-at-Point-Navigation">  <code>M-n,p</code>: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word</a></a></li>
-<li><a href="#Letter-based-Navigation">10.16. <a href="#Letter-based-Navigation">Letter-based Navigation</a></a></li>
-<li><a href="#C-c-e-n-p-Taking-a-tour-of-one's-edits">10.17. <a href="#C-c-e-n-p-Taking-a-tour-of-one's-edits">  <code>C-c e n,p</code>: Taking a tour of one's edits</a></a></li>
-<li><a href="#visual-regexp">10.18. <a href="#visual-regexp">visual-regexp</a></a></li>
-<li><a href="#Org-Mode-PDF-HTML">10.19. <a href="#Org-Mode-PDF-HTML">LaTeX ⇐ Org-Mode</a></a></li>
-<li><a href="#HTML-Org-mode">10.20. <a href="#HTML-Org-mode">HTML ⇐ Org-mode</a></a></li>
-</ul>
-</li>
-<li><a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">11. <a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">Conclusion &#x2014;Why Configuration Files Should be Literate</a></a>
-<ul>
-<li><a href="#Keeping-my-system-up-to-date">11.1. <a href="#Keeping-my-system-up-to-date">Keeping my system up to date</a></a></li>
-</ul>
-</li>
+<li><a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">8. <a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">Conclusion &#x2014;Why Configuration Files Should be Literate</a></a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-Clean-this-section-up" class="outline-2">
-<h2 id="Clean-this-section-up"><span class="section-number-2">1.</span> <span class="todo TODO">TODO</span> <a href="#Clean-this-section-up">Clean this section up!</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></h2>
-<div class="outline-text-2" id="text-Clean-this-section-up">
-</div>
-</div>
-<div id="outline-container-Meta-setup" class="outline-2">
-<h2 id="Meta-setup"><span class="section-number-2">2.</span> <a href="#Meta-setup">Meta-setup</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></h2>
-<div class="outline-text-2" id="text-Meta-setup">
-</div>
-<div id="outline-container-Blog-HTML-Setup" class="outline-3">
-<h3 id="Blog-HTML-Setup"><span class="section-number-3">2.1.</span> <a href="#Blog-HTML-Setup">Blog/HTML Setup</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></h3>
-<div class="outline-text-3" id="text-Blog-HTML-Setup">
-</div>
-</div>
-
-<div id="outline-container-Personal-instructions-for-a-new-machine" class="outline-3">
-<h3 id="Personal-instructions-for-a-new-machine"><span class="section-number-3">2.2.</span> <a href="#Personal-instructions-for-a-new-machine">Personal instructions for a new machine</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></h3>
-<div class="outline-text-3" id="text-Personal-instructions-for-a-new-machine">
-<details class="code-details"
-                 style ="padding: 1em;
-                          background-color: #e5f5e5;
-                          /* background-color: pink; */
-                          border-radius: 15px;
-                          color: hsl(157 75%);
-                          font-size: 0.9em;
-                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
-                  <summary>
-                    <strong>
-                      <font face="Courier" size="3" color="green">
-                         “Personal instructions for a new machine”
-                      </font>
-                    </strong>
-                  </summary>
-<p>
-These steps must be performed at the terminal <i>since</i> they are
-required to get <i>my</i> Emacs, which then installs everything else <i>when
-it's first opened</i>.
-</p>
-
-<ol class="org-ol">
-<li><p>
-Install a package manager: <a href="https://brew.sh/">https://brew.sh/</a> :
-</p>
-
-<div class="org-src-container">
-<pre class="src src-shell">/bin/bash -c <span style="color: #B4DCE7;">"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</span>
-</pre>
-</div>
-
-<p>
-Also: Change to the conventional scrolling direction:
-<i>If I pull my scroll down, I want to go down.</i>
-</p>
-<ul class="org-ul">
-<li>Apple menu → System Preferences → Mouse → Tick the scroll direction option.</li>
-</ul></li>
-
-<li><p>
-<a href="https://www.emacswiki.org/emacs/EmacsForMacOS#h5o-14">Use brew to get Emacs</a>:
-</p>
-<div class="org-src-container">
-<pre class="src src-shell">brew install --cask emacs
-</pre>
-</div>
-<p>
-If that fails, try this to <a href="https://github.com/daviderestivo/homebrew-emacs-head#gnu-emacs-27-bottle-or-head">install Emacs:</a>
-</p>
-<div class="org-src-container">
-<pre class="src src-shell">brew tap daviderestivo/emacs-head
-brew install emacs-head
-</pre>
-</div></li>
-
-<li><p>
-<a href="https://emacs.stackexchange.com/a/50405/10352">Then</a>    <a href="https://www.emacswiki.org/emacs/EmacsForMacOS#h5o-14">make</a>   the command <code>emacs</code> available via the terminal &#x2014;required if
-doing any melpa development.
-</p>
-<div class="org-src-container">
-<pre class="src src-shell">ln -s /usr/local/opt/emacs-head@27/Emacs.app /Applications
-
-sudo ln -s /usr/local/opt/emacs-head@27/Emacs.app/Contents/MacOS/Emacs /usr/local/bin/emacs
-</pre>
-</div></li>
-
-<li>Install git: <code>brew install git</code></li>
-
-<li><p>
-Get my Emacs setup: <code>rm -rf ~/.emacs.d; git clone
-   https://github.com/alhassy/emacs.d.git ~/.emacs.d</code>
-</p>
-
-<p>
-Open Emacs and watch download and set up many other things &#x2026; ^_^
-</p>
-
-<p>
-<b>This may take ~15 minutes &#x2014;we install a massive LaTeX setup.</b>
-</p></li>
-</ol>
-
-<p>
-We get: Spell checker, dictionary, LaTeX + pygements, Dropbox, AG (for fast system-wide searching
-of a string with <abbr class="tooltip" title="Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.<br><br>(fn ARG)">helm-do-grep-ag</abbr>, useful for finding definitions),
-Amethyst window manager.
-</p>
-
-<p>
-Amethyst requires some more setup: Open its preferences, then&#x2026;
-</p>
-<ul class="org-ul">
-<li>Then select: <code>Mouse: Focus follows mouse</code>.</li>
-<li>Also: <code>Shortcuts</code>, then disable ‘increase/decrease main pane count’ bindings
-since they override the beloved Emacs <code>M-&lt;,&gt;</code> keys.</li>
-</ul>
-
-
-<p>
-For convenience, on a Mac, add the home (<code>~/</code>) directory to the default file
-navigator: Finder → Preferences → Sidebar, then select home 🏠.
-</p>
-
-<p>
-If you notice any “file system access” concerns, give Emacs permissions to read
-your files: General Settings → Security &amp; Privacy → Full Disk Access → <code>⌘-M-g</code> (to
-search) then enter <code>/usr/bin/ruby</code> &#x2014;Emacs is launched via a Ruby script in
-MacOS.
-</p>
-
-
-</details>
-</div>
-</div>
-</div>
-<div id="outline-container-Abstract" class="outline-2">
-<h2 id="Abstract"><span class="section-number-2">3.</span> <a href="#Abstract">Abstract</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></h2>
-<div class="outline-text-2" id="text-Abstract">
 <div class="org-center">
 <p>
 
@@ -653,11 +503,122 @@ person you are arguing against. It is painful to lose your reality, so be kind,<
 </p>
 
 </div>
-</div>
+
+
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="green">
+                         “Personal instructions for a new machine”
+                      </font>
+                    </strong>
+                  </summary>
+<p>
+These steps must be performed at the terminal <i>since</i> they are
+required to get <i>my</i> Emacs, which then installs everything else <i>when
+it's first opened</i>.
+</p>
+
+<ol class="org-ol">
+<li><p>
+Install a package manager: <a href="https://brew.sh/">https://brew.sh/</a> :
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">/bin/bash -c <span style="color: #B4DCE7;">"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</span>
+</pre>
 </div>
 
+<p>
+Also: Change to the conventional scrolling direction:
+<i>If I pull my scroll down, I want to go down.</i>
+</p>
+<ul class="org-ul">
+<li>Apple menu → System Preferences → Mouse → Tick the scroll direction option.</li>
+</ul></li>
+
+<li><p>
+<a href="https://www.emacswiki.org/emacs/EmacsForMacOS#h5o-14">Use brew to get Emacs</a>:
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">brew install --cask emacs
+</pre>
+</div>
+<p>
+If that fails, try this to <a href="https://github.com/daviderestivo/homebrew-emacs-head#gnu-emacs-27-bottle-or-head">install Emacs:</a>
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">brew tap daviderestivo/emacs-head
+brew install emacs-head
+</pre>
+</div></li>
+
+<li><p>
+<a href="https://emacs.stackexchange.com/a/50405/10352">Then</a>    <a href="https://www.emacswiki.org/emacs/EmacsForMacOS#h5o-14">make</a>   the command <code>emacs</code> available via the terminal &#x2014;required if
+doing any melpa development.
+</p>
+<div class="org-src-container">
+<pre class="src src-shell">ln -s /usr/local/opt/emacs-head@27/Emacs.app /Applications
+
+sudo ln -s /usr/local/opt/emacs-head@27/Emacs.app/Contents/MacOS/Emacs /usr/local/bin/emacs
+</pre>
+</div></li>
+
+<li>Install git: <code>brew install git</code></li>
+
+<li><p>
+Get my Emacs setup: <code>rm -rf ~/.emacs.d; git clone
+   https://github.com/alhassy/emacs.d.git ~/.emacs.d</code>
+</p>
+
+<p>
+Open Emacs and watch download and set up many other things &#x2026; ^_^
+</p>
+
+<p>
+<b>This may take ~15 minutes &#x2014;we install a massive LaTeX setup.</b>
+</p></li>
+</ol>
+
+<p>
+We get: Spell checker, dictionary, LaTeX + pygements, Dropbox, AG (for fast system-wide searching
+of a string with <abbr class="tooltip" title="Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.">helm-do-grep-ag</abbr>, useful for finding definitions),
+Amethyst window manager.
+</p>
+
+<p>
+Amethyst requires some more setup: Open its preferences, then&#x2026;
+</p>
+<ul class="org-ul">
+<li>Then select: <code>Mouse: Focus follows mouse</code>.</li>
+<li>Also: <code>Shortcuts</code>, then disable ‘increase/decrease main pane count’ bindings
+since they override the beloved Emacs <code>M-&lt;,&gt;</code> keys.</li>
+</ul>
+
+
+<p>
+For convenience, on a Mac, add the home (<code>~/</code>) directory to the default file
+navigator: Finder → Preferences → Sidebar, then select home 🏠.
+</p>
+
+<p>
+If you notice any “file system access” concerns, give Emacs permissions to read
+your files: General Settings → Security &amp; Privacy → Full Disk Access → <code>⌘-M-g</code> (to
+search) then enter <code>/usr/bin/ruby</code> &#x2014;Emacs is launched via a Ruby script in
+MacOS.
+</p>
+
+
+</details>
 <div id="outline-container-Why-Emacs" class="outline-2">
-<h2 id="Why-Emacs"><span class="section-number-2">4.</span> <a href="#Why-Emacs">Why Emacs?</a></h2>
+<h2 id="Why-Emacs"><span class="section-number-2">1.</span> <a href="#Why-Emacs">Why Emacs?</a></h2>
 <div class="outline-text-2" id="text-Why-Emacs">
 <p>
 A raw code file is difficult to maintain, especially for a <i>large</i> system such as
@@ -667,11 +628,6 @@ and subheadings, intended for consumption by humans such as myself, that,
 incidentally, can be ‘tangled’ into a raw code file that is comprehensible by a
 machine. We achieve this goal using <a href="#Life-within-Org-mode">org-mode</a> &#x2014;which is <i>Emacs' killer app</i>.
 </p>
-</div>
-
-<div id="outline-container-Mini-tutorial-on-Org-mode" class="outline-3">
-<h3 id="Mini-tutorial-on-Org-mode"><span class="section-number-3">4.1.</span> <a href="#Mini-tutorial-on-Org-mode">Mini-tutorial on Org-mode</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></h3>
-<div class="outline-text-3" id="text-Mini-tutorial-on-Org-mode">
 <details class="code-details"
                  style ="padding: 1em;
                           background-color: #e5f5e5;
@@ -919,12 +875,12 @@ See equation [[euler]].
 </div>
 <div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Result</h3>
 \begin{equation}
-\label{org78a56a2}
+\label{org79b563e}
 e ^ {i \pi} + 1 = 0
 \end{equation}
 
 <p>
-See equation \eqref{org78a56a2}.
+See equation \eqref{org79b563e}.
 </p>
 
 </div>
@@ -1007,7 +963,7 @@ essay:
 </p>
 
 
-<div id="org1b2511f" class="figure">
+<div id="org0e52839" class="figure">
 <p><img src="https://alhassy.github.io/emacs.d/images/literate-programming.png" alt="literate-programming.png" />
 </p>
 </div>
@@ -1047,12 +1003,6 @@ For more, see <a href="https://orgmode.org/features.html">https://orgmode.org/fe
 
 
 </details>
-</div>
-</div>
-
-<div id="outline-container-Intro-to-why-Emacs" class="outline-3">
-<h3 id="Intro-to-why-Emacs"><span class="section-number-3">4.2.</span> <a href="#Intro-to-why-Emacs">Intro to why Emacs</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></h3>
-<div class="outline-text-3" id="text-Intro-to-why-Emacs">
 <p>
 <i>Emacs is a flexible platform for developing end-user applications</i>
 &#x2014;unfortunately it is generally perceived as merely a text editor. Some people
@@ -1200,7 +1150,7 @@ its text editors.
 <tr>
 <td class="org-left">Package Manager</td>
 <td class="org-left">&#xa0;</td>
-<td class="org-left"><abbr class="tooltip" title="Helm user interface for system packages.<br>By default choose the package manager dedicated to this system, with a<br>prefix arg allow choosing package manager<br><br>(fn &optional ARG)">helm-system-packages</abbr></td>
+<td class="org-left"><abbr class="tooltip" title="Helm user interface for system packages.<br>By default choose the package manager dedicated to this system, with a<br>prefix arg allow choosing package manager">helm-system-packages</abbr></td>
 </tr>
 
 <tr>
@@ -1261,7 +1211,7 @@ its text editors.
 <tr>
 <td class="org-left">Lisp interpreter</td>
 <td class="org-left">&#xa0;</td>
-<td class="org-left">Anywhere press <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x C-e ∷ eros-eval-last-sexp<br>Wrapper for ‘eval-last-sexp’ that overlays results.<br><br>(fn EVAL-LAST-SEXP-ARG-INTERNAL)"><kbd style="border-color: red">C-x C-e</kbd></abbr> to run a Lisp expression</td>
+<td class="org-left">Anywhere press <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x C-e ∷ eval-last-sexp<br>Evaluate sexp before point; print value in the echo area.<br>Interactively, with a non ‘-’ prefix argument, print output into<br>current buffer.<br><br>This commands handles ‘defvar’, ‘defcustom’ and ‘defface’ the<br>same way that ‘eval-defun’ does.&emsp;See the doc string of that<br>function for details.<br><br>Normally, this function truncates long output according to the<br>value of the variables ‘eval-expression-print-length’ and<br>‘eval-expression-print-level’.&emsp;With a prefix argument of zero,<br>however, there is no such truncation.<br>Integer values are printed in several formats (decimal, octal,<br>and hexadecimal).&emsp;When the prefix argument is -1 or the value<br>doesn’t exceed ‘eval-expression-print-maximum-character’, an<br>integer value is also printed as a character of that codepoint.<br><br>If ‘eval-expression-debug-on-error’ is non-nil, which is the default,<br>this command arranges for all errors to enter the debugger.<br><br>(fn EVAL-LAST-SEXP-ARG-INTERNAL)"><kbd style="border-color: red">C-x C-e</kbd></abbr> to run a Lisp expression</td>
 </tr>
 
 <tr>
@@ -1410,7 +1360,7 @@ a bit of Lisp. As a programming language enthusiast, for me Emacs is my default 
 and a customisable IDE that I use for other programming languages
 &#x2013;such as C, Haskell, Agda, Lisp, and Prolog.
 Moreover, being a Lisp interpreter, we can alter the look and feel of Emacs live, without having
-to restart it &#x2013;e.g., press <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x C-e ∷ eros-eval-last-sexp<br>Wrapper for ‘eval-last-sexp’ that overlays results.<br><br>(fn EVAL-LAST-SEXP-ARG-INTERNAL)"><kbd style="border-color: red">C-x C-e</kbd></abbr> after the final parenthesis of <code>(scroll-bar-mode 0)</code>
+to restart it &#x2013;e.g., press <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x C-e ∷ eval-last-sexp<br>Evaluate sexp before point; print value in the echo area.<br>Interactively, with a non ‘-’ prefix argument, print output into<br>current buffer.<br><br>This commands handles ‘defvar’, ‘defcustom’ and ‘defface’ the<br>same way that ‘eval-defun’ does.&emsp;See the doc string of that<br>function for details.<br><br>Normally, this function truncates long output according to the<br>value of the variables ‘eval-expression-print-length’ and<br>‘eval-expression-print-level’.&emsp;With a prefix argument of zero,<br>however, there is no such truncation.<br>Integer values are printed in several formats (decimal, octal,<br>and hexadecimal).&emsp;When the prefix argument is -1 or the value<br>doesn’t exceed ‘eval-expression-print-maximum-character’, an<br>integer value is also printed as a character of that codepoint.<br><br>If ‘eval-expression-debug-on-error’ is non-nil, which is the default,<br>this command arranges for all errors to enter the debugger.<br><br>(fn EVAL-LAST-SEXP-ARG-INTERNAL)"><kbd style="border-color: red">C-x C-e</kbd></abbr> after the final parenthesis of <code>(scroll-bar-mode 0)</code>
 to run the code that removes the scroll-bar.
 </p>
 
@@ -1439,10 +1389,9 @@ be seen by me.
 </p>
 </blockquote>
 </div>
-</div>
 
 <div id="outline-container-Emacs-is-a-flexible-platform-for-developing-end-user-applications" class="outline-3">
-<h3 id="Emacs-is-a-flexible-platform-for-developing-end-user-applications"><span class="section-number-3">4.3.</span> <a href="#Emacs-is-a-flexible-platform-for-developing-end-user-applications">  <i>Emacs is a flexible platform for developing end-user applications</i></a></h3>
+<h3 id="Emacs-is-a-flexible-platform-for-developing-end-user-applications"><span class="section-number-3">1.1.</span> <a href="#Emacs-is-a-flexible-platform-for-developing-end-user-applications">  <i>Emacs is a flexible platform for developing end-user applications</i></a></h3>
 <div class="outline-text-3" id="text-Emacs-is-a-flexible-platform-for-developing-end-user-applications">
 <p>
 Just as a web browser is utilised as a platform for deploying applications,
@@ -1486,7 +1435,7 @@ There is no need to make an IDE from scratch.
 </div>
 
 <div id="outline-container-The-Power-of-Text-Manipulation" class="outline-3">
-<h3 id="The-Power-of-Text-Manipulation"><span class="section-number-3">4.4.</span> <a href="#The-Power-of-Text-Manipulation">The Power of Text Manipulation</a></h3>
+<h3 id="The-Power-of-Text-Manipulation"><span class="section-number-3">1.2.</span> <a href="#The-Power-of-Text-Manipulation">The Power of Text Manipulation</a></h3>
 <div class="outline-text-3" id="text-The-Power-of-Text-Manipulation">
 <p>
 Emacs has ways to represent all kinds of information as text.
@@ -1511,7 +1460,7 @@ for textually input in your operating system &#x2013;no copy-paste required.
 </div>
 
 <div id="outline-container-Keyboard-Navigation-and-Alteration" class="outline-3">
-<h3 id="Keyboard-Navigation-and-Alteration"><span class="section-number-3">4.5.</span> <a href="#Keyboard-Navigation-and-Alteration">Keyboard Navigation and Alteration</a></h3>
+<h3 id="Keyboard-Navigation-and-Alteration"><span class="section-number-3">1.3.</span> <a href="#Keyboard-Navigation-and-Alteration">Keyboard Navigation and Alteration</a></h3>
 <div class="outline-text-3" id="text-Keyboard-Navigation-and-Alteration">
 <p>
 Suppose you wrote a paragraph of text, and wanted to ‘border’ it up for
@@ -1531,7 +1480,7 @@ file. )
 </div>
 
 <div id="outline-container-Emacs-Proverbs-as-Koan" class="outline-3">
-<h3 id="Emacs-Proverbs-as-Koan"><span class="section-number-3">4.6.</span> <a href="#Emacs-Proverbs-as-Koan">Emacs Proverbs as Koan</a></h3>
+<h3 id="Emacs-Proverbs-as-Koan"><span class="section-number-3">1.4.</span> <a href="#Emacs-Proverbs-as-Koan">Emacs Proverbs as Koan</a></h3>
 <div class="outline-text-3" id="text-Emacs-Proverbs-as-Koan">
 <p>
 Below is an extract from William Cobb's “Reflections on the Game of Go”, with
@@ -1569,7 +1518,7 @@ is, well, Emacs is an operating system.
 </div>
 
 <div id="outline-container-Possibly-Interesting-Reads" class="outline-3">
-<h3 id="Possibly-Interesting-Reads"><span class="section-number-3">4.7.</span> <a href="#Possibly-Interesting-Reads">Possibly Interesting Reads</a></h3>
+<h3 id="Possibly-Interesting-Reads"><span class="section-number-3">1.5.</span> <a href="#Possibly-Interesting-Reads">Possibly Interesting Reads</a></h3>
 <div class="outline-text-3" id="text-Possibly-Interesting-Reads">
 <ul class="org-ul">
 <li><a href="https://www.gnu.org/software/emacs/tour/">The Emacs Tour</a></li>
@@ -1621,7 +1570,7 @@ Abrams</a>
 </div>
 </div>
 <div id="outline-container-Fun-commands-to-try-out" class="outline-3">
-<h3 id="Fun-commands-to-try-out"><span class="section-number-3">4.8.</span> <a href="#Fun-commands-to-try-out">Fun commands to try out</a></h3>
+<h3 id="Fun-commands-to-try-out"><span class="section-number-3">1.6.</span> <a href="#Fun-commands-to-try-out">Fun commands to try out</a></h3>
 <div class="outline-text-3" id="text-Fun-commands-to-try-out">
 <p>
 Finally, here's some fun commands to try out:
@@ -1646,7 +1595,7 @@ Before we get started…
 </div>
 </div>
 <div id="outline-container-What-Does-Literate-Programming-Look-Like" class="outline-3">
-<h3 id="What-Does-Literate-Programming-Look-Like"><span class="section-number-3">4.9.</span> <a href="#What-Does-Literate-Programming-Look-Like">What Does Literate Programming Look Like?</a></h3>
+<h3 id="What-Does-Literate-Programming-Look-Like"><span class="section-number-3">1.7.</span> <a href="#What-Does-Literate-Programming-Look-Like">What Does Literate Programming Look Like?</a></h3>
 <div class="outline-text-3" id="text-What-Does-Literate-Programming-Look-Like">
 <p>
 Briefly put, literate programming in Emacs allows us to evaluate source code
@@ -1659,7 +1608,7 @@ are presented together in a natural style.
 <p style="text-align:center">
 
 
-<div id="org12c1285" class="figure">
+<div id="org5a171cb" class="figure">
 <p><img src="images/literate-programming.png" alt="literate-programming.png" />
 </p>
 </div>
@@ -1742,7 +1691,7 @@ file, since <code>emacs-lisp</code> begins with <code>e</code> which is alphabet
 </div>
 
 <div id="outline-container-Why-a-monolithic-configuration" class="outline-3">
-<h3 id="Why-a-monolithic-configuration"><span class="section-number-3">4.10.</span> <a href="#Why-a-monolithic-configuration">Why a monolithic configuration?</a></h3>
+<h3 id="Why-a-monolithic-configuration"><span class="section-number-3">1.8.</span> <a href="#Why-a-monolithic-configuration">Why a monolithic configuration?</a></h3>
 <div class="outline-text-3" id="text-Why-a-monolithic-configuration">
 <p>
 Why am I keeping my entire configuration &#x2014;from those involving cosmetics &amp;
@@ -1786,7 +1735,7 @@ Enjoy!
 </div>
 
 <div id="outline-container-Booting-Up" class="outline-2">
-<h2 id="Booting-Up"><span class="section-number-2">5.</span> <a href="#Booting-Up">Booting Up</a></h2>
+<h2 id="Booting-Up"><span class="section-number-2">2.</span> <a href="#Booting-Up">Booting Up</a></h2>
 <div class="outline-text-2" id="text-Booting-Up">
 <p>
 Let's decide on where we want to setup our declarations for personalising Emacs
@@ -1798,7 +1747,7 @@ we are and use that to setup Emacs email service.
 </div>
 
 <div id="outline-container-emacs-vs-init-org" class="outline-3">
-<h3 id="emacs-vs-init-org"><span class="section-number-3">5.1.</span> <a href="#emacs-vs-init-org">  <code>~/.emacs</code> vs. <code>init.org</code></a></h3>
+<h3 id="emacs-vs-init-org"><span class="section-number-3">2.1.</span> <a href="#emacs-vs-init-org">  <code>~/.emacs</code> vs. <code>init.org</code></a></h3>
 <div class="outline-text-3" id="text-emacs-vs-init-org">
 <p>
 <i>Emacs is extensible</i>: When Emacs is started, it tries to load a user's Lisp
@@ -1997,7 +1946,7 @@ will remember to not prompt me each time for the safety of such local variables.
 </div>
 
 <div id="outline-container-Who-am-I" class="outline-3">
-<h3 id="Who-am-I"><span class="section-number-3">5.2.</span> <a href="#Who-am-I">Who am I?</a></h3>
+<h3 id="Who-am-I"><span class="section-number-3">2.2.</span> <a href="#Who-am-I">Who am I?</a></h3>
 <div class="outline-text-3" id="text-Who-am-I">
 <p>
 Let's set the following personal Emacs-wide variables &#x2014;to be used locations
@@ -2020,7 +1969,7 @@ For some fun, run this cute method.
 </div>
 
 <div id="outline-container-Emacs-Package-Manager" class="outline-3">
-<h3 id="Emacs-Package-Manager"><span class="section-number-3">5.3.</span> <a href="#Emacs-Package-Manager">Emacs Package Manager</a></h3>
+<h3 id="Emacs-Package-Manager"><span class="section-number-3">2.3.</span> <a href="#Emacs-Package-Manager">Emacs Package Manager</a></h3>
 <div class="outline-text-3" id="text-Emacs-Package-Manager">
 <p>
 There are a few ways to install packages &#x2014;run <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-h C-e ∷ view-external-packages<br>Display info on where to get more Emacs packages."><kbd style="border-color: red">C-h C-e</kbd></abbr> for a short
@@ -2042,7 +1991,7 @@ for installation, then install all marked packages by pressing <abbr class="tool
 I had to do a few <code>package-install</code>'s and it was annoying.  I'm looking for the
 best way to package my Emacs installation &#x2014;including my installed packages and
 configuration&#x2014; so that I can quickly install it anywhere, say if I go to
-another machine.  It seems <abbr class="tooltip" title="Declare an Emacs package by specifying a group of configuration options.<br><br>For full documentation, please see the README file that came with<br>this file.&emsp;Usage:<br><br>&emsp;(use-package package-name<br>&emsp;&emsp; [:keyword [option]]...)<br><br>:init&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Code to run before PACKAGE-NAME has been loaded.<br>:config&emsp;&emsp;&emsp;&emsp;&emsp;Code to run after PACKAGE-NAME has been loaded.&emsp;Note that<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; if loading is deferred for any reason, this code does not<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; execute until the lazy load has occurred.<br>:preface&emsp;&emsp;&emsp;&emsp; Code to be run before everything except ‘:disabled’; this<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; can be used to define functions for use in ‘:if’, or that<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; should be seen by the byte-compiler.<br><br>:mode&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Form to be added to ‘auto-mode-alist’.<br>:magic&emsp;&emsp;&emsp;&emsp;&emsp; Form to be added to ‘magic-mode-alist’.<br>:magic-fallback&emsp;Form to be added to ‘magic-fallback-mode-alist’.<br>:interpreter&emsp;&emsp; Form to be added to ‘interpreter-mode-alist’.<br><br>:commands&emsp;&emsp;&emsp;&emsp;Define autoloads for commands that will be defined by the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; package.&emsp;This is useful if the package is being lazily<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; loaded, and you wish to conditionally call functions in your<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:init’ block that are defined in the package.<br>:hook&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Specify hook(s) to attach this package to.<br><br>:bind&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Bind keys, and define autoloads for the bound commands.<br>:bind<strong>&emsp;&emsp;&emsp;&emsp;&emsp; Bind keys, and define autoloads for the bound commands,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; </strong>overriding all minor mode bindings<strong>.<br>:bind-keymap&emsp;&emsp; Bind a key prefix to an auto-loaded keymap defined in the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; package.&emsp;This is like ‘:bind’, but for keymaps.<br>:bind-keymap</strong>&emsp;&emsp;Like ‘:bind-keymap’, but overrides all minor mode bindings<br><br>:defer&emsp;&emsp;&emsp;&emsp;&emsp; Defer loading of a package -- this is implied when using<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:commands’, ‘:bind’, ‘:bind*’, ‘:mode’, ‘:magic’, ‘:hook’,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:magic-fallback’, or ‘:interpreter’.&emsp;This can be an integer,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; to force loading after N seconds of idle time, if the package<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; has not already been loaded.<br>:after&emsp;&emsp;&emsp;&emsp;&emsp; Delay the use-package declaration until after the named modules<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; have loaded. Once load, it will be as though the use-package<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; declaration (without ‘:after’) had been seen at that moment.<br>:demand&emsp;&emsp;&emsp;&emsp;&emsp;Prevent the automatic deferred loading introduced by constructs<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; such as ‘:bind’ (see ‘:defer’ for the complete list).<br><br>:if EXPR&emsp;&emsp;&emsp;&emsp; Initialize and load only if EXPR evaluates to a non-nil value.<br>:disabled&emsp;&emsp;&emsp;&emsp;The package is ignored completely if this keyword is present.<br>:defines&emsp;&emsp;&emsp;&emsp; Declare certain variables to silence the byte-compiler.<br>:functions&emsp;&emsp;&emsp; Declare certain functions to silence the byte-compiler.<br>:load-path&emsp;&emsp;&emsp; Add to the ‘load-path’ before attempting to load the package.<br>:diminish&emsp;&emsp;&emsp;&emsp;Support for diminish.el (if installed).<br>:delight&emsp;&emsp;&emsp;&emsp; Support for delight.el (if installed).<br>:custom&emsp;&emsp;&emsp;&emsp;&emsp;Call ‘custom-set’ or ‘set-default’ with each variable<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; definition without modifying the Emacs ‘custom-file’.<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; (compare with ‘custom-set-variables’).<br>:custom-face&emsp;&emsp; Call ‘customize-set-faces’ with each face definition.<br>:ensure&emsp;&emsp;&emsp;&emsp;&emsp;Loads the package using package.el if necessary.<br>:pin&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; Pin the package to an archive.<br><br>(fn NAME &rest ARGS)">use-package</abbr> allows me to configure and auto
+another machine.  It seems <abbr class="tooltip" title="Declare an Emacs package by specifying a group of configuration options.<br><br>For full documentation, please see the README file that came with<br>this file.&emsp;Usage:<br><br>&emsp;(use-package package-name<br>&emsp;&emsp; [:keyword [option]]...)<br><br>:init&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Code to run before PACKAGE-NAME has been loaded.<br>:config&emsp;&emsp;&emsp;&emsp;&emsp;Code to run after PACKAGE-NAME has been loaded.&emsp;Note that<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; if loading is deferred for any reason, this code does not<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; execute until the lazy load has occurred.<br>:preface&emsp;&emsp;&emsp;&emsp; Code to be run before everything except ‘:disabled’; this<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; can be used to define functions for use in ‘:if’, or that<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; should be seen by the byte-compiler.<br><br>:mode&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Form to be added to ‘auto-mode-alist’.<br>:magic&emsp;&emsp;&emsp;&emsp;&emsp; Form to be added to ‘magic-mode-alist’.<br>:magic-fallback&emsp;Form to be added to ‘magic-fallback-mode-alist’.<br>:interpreter&emsp;&emsp; Form to be added to ‘interpreter-mode-alist’.<br><br>:commands&emsp;&emsp;&emsp;&emsp;Define autoloads for commands that will be defined by the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; package.&emsp;This is useful if the package is being lazily<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; loaded, and you wish to conditionally call functions in your<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:init’ block that are defined in the package.<br>:hook&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Specify hook(s) to attach this package to.<br><br>:bind&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Bind keys, and define autoloads for the bound commands.<br>:bind<strong>&emsp;&emsp;&emsp;&emsp;&emsp; Bind keys, and define autoloads for the bound commands,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; </strong>overriding all minor mode bindings<strong>.<br>:bind-keymap&emsp;&emsp; Bind a key prefix to an auto-loaded keymap defined in the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; package.&emsp;This is like ‘:bind’, but for keymaps.<br>:bind-keymap</strong>&emsp;&emsp;Like ‘:bind-keymap’, but overrides all minor mode bindings<br><br>:defer&emsp;&emsp;&emsp;&emsp;&emsp; Defer loading of a package -- this is implied when using<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:commands’, ‘:bind’, ‘:bind*’, ‘:mode’, ‘:magic’, ‘:hook’,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:magic-fallback’, or ‘:interpreter’.&emsp;This can be an integer,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; to force loading after N seconds of idle time, if the package<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; has not already been loaded.<br>:after&emsp;&emsp;&emsp;&emsp;&emsp; Delay the use-package declaration until after the named modules<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; have loaded. Once load, it will be as though the use-package<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; declaration (without ‘:after’) had been seen at that moment.<br>:demand&emsp;&emsp;&emsp;&emsp;&emsp;Prevent the automatic deferred loading introduced by constructs<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; such as ‘:bind’ (see ‘:defer’ for the complete list).<br><br>:if EXPR&emsp;&emsp;&emsp;&emsp; Initialize and load only if EXPR evaluates to a non-nil value.<br>:disabled&emsp;&emsp;&emsp;&emsp;The package is ignored completely if this keyword is present.<br>:defines&emsp;&emsp;&emsp;&emsp; Declare certain variables to silence the byte-compiler.<br>:functions&emsp;&emsp;&emsp; Declare certain functions to silence the byte-compiler.<br>:load-path&emsp;&emsp;&emsp; Add to the ‘load-path’ before attempting to load the package.<br>:diminish&emsp;&emsp;&emsp;&emsp;Support for diminish.el (if installed).<br>:delight&emsp;&emsp;&emsp;&emsp; Support for delight.el (if installed).<br>:custom&emsp;&emsp;&emsp;&emsp;&emsp;Call ‘custom-set’ or ‘set-default’ with each variable<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; definition without modifying the Emacs ‘custom-file’.<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; (compare with ‘custom-set-variables’).<br>:custom-face&emsp;&emsp; Call ‘customize-set-faces’ with each face definition.<br>:ensure&emsp;&emsp;&emsp;&emsp;&emsp;Loads the package using package.el if necessary.<br>:pin&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; Pin the package to an archive.">use-package</abbr> allows me to configure and auto
 install packages.  On a new machine, when I clone my <code>.emacs.d</code> and start Emacs,
 on the first start it should automatically install and compile all of my
 packages through <code>use-package</code> when it detects they're missing. ♥‿♥
@@ -2061,9 +2010,8 @@ repositories of developers rather than having all packages in one repository.
 
 <span style="color: #91889B;">;; </span><span style="color: #91889B;">Internet repositories for new packages.</span>
 (<span style="color: #40B4C4;">setq</span> package-archives '((<span style="color: #B4DCE7;">"gnu"</span>    . <span style="color: #B4DCE7;">"http://elpa.gnu.org/packages/"</span>)
-                             (<span style="color: #B4DCE7;">"nongnu"</span> . <span style="color: #B4DCE7;">"https://elpa.nongnu.org/nongnu/"</span>)
-                         (<span style="color: #B4DCE7;">"melpa"</span>  . <span style="color: #B4DCE7;">"http://melpa.org/packages/"</span>)
-                             (<span style="color: #B4DCE7;">"org"</span>    . <span style="color: #B4DCE7;">"http://orgmode.org/elpa/"</span>)))
+                         (<span style="color: #B4DCE7;">"nongnu"</span> . <span style="color: #B4DCE7;">"https://elpa.nongnu.org/nongnu/"</span>)
+                         (<span style="color: #B4DCE7;">"melpa"</span>  . <span style="color: #B4DCE7;">"http://melpa.org/packages/"</span>)))
 
 <span style="color: #91889B;">;; </span><span style="color: #91889B;">Update local list of available packages:</span>
 <span style="color: #91889B;">;; </span><span style="color: #91889B;">Get descriptions of all configured ELPA packages,</span>
@@ -2104,7 +2052,7 @@ on my system.
 </div>
 
 <p>
-Notice that <abbr class="tooltip" title="Declare an Emacs package by specifying a group of configuration options.<br><br>For full documentation, please see the README file that came with<br>this file.&emsp;Usage:<br><br>&emsp;(use-package package-name<br>&emsp;&emsp; [:keyword [option]]...)<br><br>:init&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Code to run before PACKAGE-NAME has been loaded.<br>:config&emsp;&emsp;&emsp;&emsp;&emsp;Code to run after PACKAGE-NAME has been loaded.&emsp;Note that<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; if loading is deferred for any reason, this code does not<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; execute until the lazy load has occurred.<br>:preface&emsp;&emsp;&emsp;&emsp; Code to be run before everything except ‘:disabled’; this<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; can be used to define functions for use in ‘:if’, or that<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; should be seen by the byte-compiler.<br><br>:mode&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Form to be added to ‘auto-mode-alist’.<br>:magic&emsp;&emsp;&emsp;&emsp;&emsp; Form to be added to ‘magic-mode-alist’.<br>:magic-fallback&emsp;Form to be added to ‘magic-fallback-mode-alist’.<br>:interpreter&emsp;&emsp; Form to be added to ‘interpreter-mode-alist’.<br><br>:commands&emsp;&emsp;&emsp;&emsp;Define autoloads for commands that will be defined by the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; package.&emsp;This is useful if the package is being lazily<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; loaded, and you wish to conditionally call functions in your<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:init’ block that are defined in the package.<br>:hook&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Specify hook(s) to attach this package to.<br><br>:bind&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Bind keys, and define autoloads for the bound commands.<br>:bind<strong>&emsp;&emsp;&emsp;&emsp;&emsp; Bind keys, and define autoloads for the bound commands,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; </strong>overriding all minor mode bindings<strong>.<br>:bind-keymap&emsp;&emsp; Bind a key prefix to an auto-loaded keymap defined in the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; package.&emsp;This is like ‘:bind’, but for keymaps.<br>:bind-keymap</strong>&emsp;&emsp;Like ‘:bind-keymap’, but overrides all minor mode bindings<br><br>:defer&emsp;&emsp;&emsp;&emsp;&emsp; Defer loading of a package -- this is implied when using<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:commands’, ‘:bind’, ‘:bind*’, ‘:mode’, ‘:magic’, ‘:hook’,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:magic-fallback’, or ‘:interpreter’.&emsp;This can be an integer,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; to force loading after N seconds of idle time, if the package<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; has not already been loaded.<br>:after&emsp;&emsp;&emsp;&emsp;&emsp; Delay the use-package declaration until after the named modules<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; have loaded. Once load, it will be as though the use-package<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; declaration (without ‘:after’) had been seen at that moment.<br>:demand&emsp;&emsp;&emsp;&emsp;&emsp;Prevent the automatic deferred loading introduced by constructs<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; such as ‘:bind’ (see ‘:defer’ for the complete list).<br><br>:if EXPR&emsp;&emsp;&emsp;&emsp; Initialize and load only if EXPR evaluates to a non-nil value.<br>:disabled&emsp;&emsp;&emsp;&emsp;The package is ignored completely if this keyword is present.<br>:defines&emsp;&emsp;&emsp;&emsp; Declare certain variables to silence the byte-compiler.<br>:functions&emsp;&emsp;&emsp; Declare certain functions to silence the byte-compiler.<br>:load-path&emsp;&emsp;&emsp; Add to the ‘load-path’ before attempting to load the package.<br>:diminish&emsp;&emsp;&emsp;&emsp;Support for diminish.el (if installed).<br>:delight&emsp;&emsp;&emsp;&emsp; Support for delight.el (if installed).<br>:custom&emsp;&emsp;&emsp;&emsp;&emsp;Call ‘custom-set’ or ‘set-default’ with each variable<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; definition without modifying the Emacs ‘custom-file’.<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; (compare with ‘custom-set-variables’).<br>:custom-face&emsp;&emsp; Call ‘customize-set-faces’ with each face definition.<br>:ensure&emsp;&emsp;&emsp;&emsp;&emsp;Loads the package using package.el if necessary.<br>:pin&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; Pin the package to an archive.<br><br>(fn NAME &rest ARGS)">use-package</abbr> <i>allows us to tersely organise a package's
+Notice that <abbr class="tooltip" title="Declare an Emacs package by specifying a group of configuration options.<br><br>For full documentation, please see the README file that came with<br>this file.&emsp;Usage:<br><br>&emsp;(use-package package-name<br>&emsp;&emsp; [:keyword [option]]...)<br><br>:init&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Code to run before PACKAGE-NAME has been loaded.<br>:config&emsp;&emsp;&emsp;&emsp;&emsp;Code to run after PACKAGE-NAME has been loaded.&emsp;Note that<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; if loading is deferred for any reason, this code does not<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; execute until the lazy load has occurred.<br>:preface&emsp;&emsp;&emsp;&emsp; Code to be run before everything except ‘:disabled’; this<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; can be used to define functions for use in ‘:if’, or that<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; should be seen by the byte-compiler.<br><br>:mode&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Form to be added to ‘auto-mode-alist’.<br>:magic&emsp;&emsp;&emsp;&emsp;&emsp; Form to be added to ‘magic-mode-alist’.<br>:magic-fallback&emsp;Form to be added to ‘magic-fallback-mode-alist’.<br>:interpreter&emsp;&emsp; Form to be added to ‘interpreter-mode-alist’.<br><br>:commands&emsp;&emsp;&emsp;&emsp;Define autoloads for commands that will be defined by the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; package.&emsp;This is useful if the package is being lazily<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; loaded, and you wish to conditionally call functions in your<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:init’ block that are defined in the package.<br>:hook&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Specify hook(s) to attach this package to.<br><br>:bind&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Bind keys, and define autoloads for the bound commands.<br>:bind<strong>&emsp;&emsp;&emsp;&emsp;&emsp; Bind keys, and define autoloads for the bound commands,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; </strong>overriding all minor mode bindings<strong>.<br>:bind-keymap&emsp;&emsp; Bind a key prefix to an auto-loaded keymap defined in the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; package.&emsp;This is like ‘:bind’, but for keymaps.<br>:bind-keymap</strong>&emsp;&emsp;Like ‘:bind-keymap’, but overrides all minor mode bindings<br><br>:defer&emsp;&emsp;&emsp;&emsp;&emsp; Defer loading of a package -- this is implied when using<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:commands’, ‘:bind’, ‘:bind*’, ‘:mode’, ‘:magic’, ‘:hook’,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ‘:magic-fallback’, or ‘:interpreter’.&emsp;This can be an integer,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; to force loading after N seconds of idle time, if the package<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; has not already been loaded.<br>:after&emsp;&emsp;&emsp;&emsp;&emsp; Delay the use-package declaration until after the named modules<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; have loaded. Once load, it will be as though the use-package<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; declaration (without ‘:after’) had been seen at that moment.<br>:demand&emsp;&emsp;&emsp;&emsp;&emsp;Prevent the automatic deferred loading introduced by constructs<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; such as ‘:bind’ (see ‘:defer’ for the complete list).<br><br>:if EXPR&emsp;&emsp;&emsp;&emsp; Initialize and load only if EXPR evaluates to a non-nil value.<br>:disabled&emsp;&emsp;&emsp;&emsp;The package is ignored completely if this keyword is present.<br>:defines&emsp;&emsp;&emsp;&emsp; Declare certain variables to silence the byte-compiler.<br>:functions&emsp;&emsp;&emsp; Declare certain functions to silence the byte-compiler.<br>:load-path&emsp;&emsp;&emsp; Add to the ‘load-path’ before attempting to load the package.<br>:diminish&emsp;&emsp;&emsp;&emsp;Support for diminish.el (if installed).<br>:delight&emsp;&emsp;&emsp;&emsp; Support for delight.el (if installed).<br>:custom&emsp;&emsp;&emsp;&emsp;&emsp;Call ‘custom-set’ or ‘set-default’ with each variable<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; definition without modifying the Emacs ‘custom-file’.<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; (compare with ‘custom-set-variables’).<br>:custom-face&emsp;&emsp; Call ‘customize-set-faces’ with each face definition.<br>:ensure&emsp;&emsp;&emsp;&emsp;&emsp;Loads the package using package.el if necessary.<br>:pin&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; Pin the package to an archive.">use-package</abbr> <i>allows us to tersely organise a package's
 configuration</i> &#x2014;and that it is <i>not</i> a package manger, but we can make it one by
 having it automatically install modules, when needed, using <code>:ensure t</code>.
 </p>
@@ -2367,7 +2315,7 @@ now]
 </div>
 
 <div id="outline-container-Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs" class="outline-3">
-<h3 id="Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs"><span class="section-number-3">5.4.</span> <a href="#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs">Installing OS packages, and automatically keeping my system up to data, from within Emacs</a></h3>
+<h3 id="Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs"><span class="section-number-3">2.4.</span> <a href="#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs">Installing OS packages, and automatically keeping my system up to data, from within Emacs</a></h3>
 <div class="outline-text-3" id="text-Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs">
 <p>
 Sometimes Emacs packages depend on existing system binaries, <code>use-package</code> let's
@@ -2626,7 +2574,7 @@ I enter “⌘” using a TeX input method setup below (called “Agda”).
 </div>
 
 <div id="outline-container-Syncing-to-the-System's-PATH" class="outline-3">
-<h3 id="Syncing-to-the-System's-PATH"><span class="section-number-3">5.5.</span> <a href="#Syncing-to-the-System's-PATH">Syncing to the System's <code>$PATH</code></a></h3>
+<h3 id="Syncing-to-the-System's-PATH"><span class="section-number-3">2.5.</span> <a href="#Syncing-to-the-System's-PATH">Syncing to the System's <code>$PATH</code></a></h3>
 <div class="outline-text-3" id="text-Syncing-to-the-System's-PATH">
 <p>
 For one reason or another, on OS X it seems that an Emacs instance
@@ -2649,7 +2597,7 @@ See the <a href="https://github.com/purcell/exec-path-from-shell">exec-path-from
 </div>
 </div>
 <div id="outline-container-Restarting-Emacs-Keeping-buffers-open-across-sessions" class="outline-3">
-<h3 id="Restarting-Emacs-Keeping-buffers-open-across-sessions"><span class="section-number-3">5.6.</span> <a href="#Restarting-Emacs-Keeping-buffers-open-across-sessions">Restarting Emacs &#x2014;Keeping buffers open across sessions?</a></h3>
+<h3 id="Restarting-Emacs-Keeping-buffers-open-across-sessions"><span class="section-number-3">2.6.</span> <a href="#Restarting-Emacs-Keeping-buffers-open-across-sessions">Restarting Emacs &#x2014;Keeping buffers open across sessions?</a></h3>
 <div class="outline-text-3" id="text-Restarting-Emacs-Keeping-buffers-open-across-sessions">
 <p>
 Sometimes I wish to close then reopen Emacs; unsurprisingly someone's
@@ -2669,7 +2617,7 @@ thought of implementing that.
 The following is disabled. I found it a nuisance to have my files
 open across sessions &#x2014;If I'm closing Emacs, it's for a good reason.
 </p>
-<pre class="example" id="org6ff4d26">
+<pre class="example" id="org9d65a5f">
 ;; Keep open files open across sessions.
 (desktop-save-mode 1)
 (setq desktop-restore-eager 10)
@@ -2688,7 +2636,7 @@ place where it was when you previously visited the same file.
 </div>
 
 <div id="outline-container-Being-at-the-Helm-Completion-Narrowing-Framework" class="outline-3">
-<h3 id="Being-at-the-Helm-Completion-Narrowing-Framework"><span class="section-number-3">5.7.</span> <a href="#Being-at-the-Helm-Completion-Narrowing-Framework"> “Being at the Helm” &#x2014;Completion &amp; Narrowing Framework</a></h3>
+<h3 id="Being-at-the-Helm-Completion-Narrowing-Framework"><span class="section-number-3">2.7.</span> <a href="#Being-at-the-Helm-Completion-Narrowing-Framework"> “Being at the Helm” &#x2014;Completion &amp; Narrowing Framework</a></h3>
 <div class="outline-text-3" id="text-Being-at-the-Helm-Completion-Narrowing-Framework">
 <p>
 Whenever we have a choice to make from a list, <a href="http://tuhdo.github.io/helm-intro.html">Helm</a> provides possible
@@ -2701,7 +2649,7 @@ methods mentioning what you've typed are suddenly listed! Moreover, <code>C-c i<
 variables/functions/types when programming. Finally, whenever a Helm session has
 started, toggle follow-mode with <code>C-c C-f</code> to obtain contextual-awareness; e.g.,
 <code>C-c i RET C-c C-f</code> will change your screen as you scroll through the menu.
-<i>(A killer feature is <abbr class="tooltip" title="Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.<br><br>(fn ARG)">helm-do-grep-ag</abbr> which will do a search in your whole project, file tree).</i>
+<i>(A killer feature is <abbr class="tooltip" title="Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.">helm-do-grep-ag</abbr> which will do a search in your whole project, file tree).</i>
 </p>
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -2855,7 +2803,7 @@ changes with <code>C-c C-e</code> and apply them by <code>C-x C-s</code>.
 </ul>
 
 <p>
-Lets also use <abbr class="tooltip" title="Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.<br><br>(fn ARG)">helm-do-grep-ag</abbr> (<abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x c M-g a ∷ helm-do-grep-ag<br>Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.<br><br>(fn ARG)"><kbd style="border-color: red">C-x c M-g a</kbd></abbr>) <b>search all files in the current
+Lets also use <abbr class="tooltip" title="Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version.">helm-do-grep-ag</abbr> (<abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x c M-g a ∷ helm-do-grep-ag<br>Preconfigured ‘helm’ for grepping with AG in ‘default-directory’.<br>With prefix arg prompt for type if available with your AG<br>version."><kbd style="border-color: red">C-x c M-g a</kbd></abbr>) <b>search all files in the current
    directory for a particular (regexp) string</b>
 </p>
 <ul class="org-ul">
@@ -2894,7 +2842,7 @@ dash library works via examples ;-)
 </div>
 </div>
 <div id="outline-container-Org-Mode-Administrivia" class="outline-3">
-<h3 id="Org-Mode-Administrivia"><span class="section-number-3">5.8.</span> <a href="#Org-Mode-Administrivia">Org-Mode Administrivia</a></h3>
+<h3 id="Org-Mode-Administrivia"><span class="section-number-3">2.8.</span> <a href="#Org-Mode-Administrivia">Org-Mode Administrivia</a></h3>
 <div class="outline-text-3" id="text-Org-Mode-Administrivia">
 <p>
 Let's conclude this ‘boot-up’ by getting <i>Emacs' killer app</i>, Org-mode, setup;
@@ -2904,8 +2852,8 @@ org-mode setup for a file.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">  (<span style="color: #40B4C4;">when</span> nil use-package emacs
-    <span style="color: #EB64B9;">:ensure</span> org-plus-contrib
+<pre class="src src-emacs-lisp">(<span style="color: #40B4C4;">use-package</span> <span style="color: #B381C5;">emacs</span>
+    <span style="color: #EB64B9;">:ensure</span> org-contrib
     <span style="color: #EB64B9;">:diminish</span> org-indent-mode
     <span style="color: #EB64B9;">:config</span> (<span style="color: #40B4C4;">require</span> '<span style="color: #B381C5;">ox-extra</span>)
             (ox-extras-activate '(ignore-headlines)))
@@ -3000,7 +2948,7 @@ which renders as <abbr class="tooltip" style="border: none; text-decoration: non
 </div>
 
 <div id="outline-container-Password-locking-files-encryption" class="outline-3">
-<h3 id="Password-locking-files-encryption"><span class="section-number-3">5.9.</span> <a href="#Password-locking-files-encryption">Password-locking files  &#x2014;“encryption”</a></h3>
+<h3 id="Password-locking-files-encryption"><span class="section-number-3">2.9.</span> <a href="#Password-locking-files-encryption">Password-locking files  &#x2014;“encryption”</a></h3>
 <div class="outline-text-3" id="text-Password-locking-files-encryption">
 <p>
 With the following incantation, we name our files <code>𝒳.𝒴.gpg</code> where 𝒳 is the file
@@ -3074,7 +3022,7 @@ Possibly interesting reads:
 </div>
 
 <div id="outline-container-all-the-icons" class="outline-3">
-<h3 id="all-the-icons"><span class="section-number-3">5.10.</span> <a href="#all-the-icons">all-the-icons</a></h3>
+<h3 id="all-the-icons"><span class="section-number-3">2.10.</span> <a href="#all-the-icons">all-the-icons</a></h3>
 <div class="outline-text-3" id="text-all-the-icons">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"> (<span style="color: #40B4C4;">use-package</span> <span style="color: #B381C5;">all-the-icons</span>
@@ -3086,7 +3034,7 @@ Possibly interesting reads:
 </div>
 </div>
 <div id="outline-container-Hydra-Supply-a-prefix-only-once" class="outline-3">
-<h3 id="Hydra-Supply-a-prefix-only-once"><span class="section-number-3">5.11.</span> <a href="#Hydra-Supply-a-prefix-only-once">Hydra: Supply a prefix only once</a></h3>
+<h3 id="Hydra-Supply-a-prefix-only-once"><span class="section-number-3">2.11.</span> <a href="#Hydra-Supply-a-prefix-only-once">Hydra: Supply a prefix only once</a></h3>
 <div class="outline-text-3" id="text-Hydra-Supply-a-prefix-only-once">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -3293,7 +3241,7 @@ To <i>actually</i> define hydras, we make a helper function: <abbr class="toolti
 </details>
 </div>
 <div id="outline-container-Textual-Navigation-Look-Ma-no-CTRL-key" class="outline-4">
-<h4 id="Textual-Navigation-Look-Ma-no-CTRL-key"><span class="section-number-4">5.11.1.</span> <a href="#Textual-Navigation-Look-Ma-no-CTRL-key">Textual Navigation &#x2014;“Look Ma, no CTRL key!”</a></h4>
+<h4 id="Textual-Navigation-Look-Ma-no-CTRL-key"><span class="section-number-4">2.11.1.</span> <a href="#Textual-Navigation-Look-Ma-no-CTRL-key">Textual Navigation &#x2014;“Look Ma, no CTRL key!”</a></h4>
 <div class="outline-text-4" id="text-Textual-Navigation-Look-Ma-no-CTRL-key">
 <p>
 Basic movement commands &#x2014;without having to hold the control key!
@@ -3348,7 +3296,7 @@ Also …
 </div>
 
 <div id="outline-container-Window-Navigation" class="outline-4">
-<h4 id="Window-Navigation"><span class="section-number-4">5.11.2.</span> <a href="#Window-Navigation">Window Navigation</a></h4>
+<h4 id="Window-Navigation"><span class="section-number-4">2.11.2.</span> <a href="#Window-Navigation">Window Navigation</a></h4>
 <div class="outline-text-4" id="text-Window-Navigation">
 <p>
 It can be difficult to remember the incantations to adjust
@@ -3381,12 +3329,12 @@ windows, so we can make a hydra to alleviate the trouble.
 </div>
 </div>
 <div id="outline-container-Staying-Safe" class="outline-2">
-<h2 id="Staying-Safe"><span class="section-number-2">6.</span> <a href="#Staying-Safe">Staying Sane</a></h2>
+<h2 id="Staying-Safe"><span class="section-number-2">3.</span> <a href="#Staying-Safe">Staying Sane</a></h2>
 <div class="outline-text-2" id="text-Staying-Safe">
 </div>
 
 <div id="outline-container-Undo-tree-Very-Local-Version-Control" class="outline-3">
-<h3 id="Undo-tree-Very-Local-Version-Control"><span class="section-number-3">6.1.</span> <a href="#Undo-tree-Very-Local-Version-Control">Undo-tree: Very Local Version Control</a></h3>
+<h3 id="Undo-tree-Very-Local-Version-Control"><span class="section-number-3">3.1.</span> <a href="#Undo-tree-Very-Local-Version-Control">Undo-tree: Very Local Version Control</a></h3>
 <div class="outline-text-3" id="text-Undo-tree-Very-Local-Version-Control">
 <p>
 <abbr class="tooltip" title="Visualize the current buffer’s undo tree.">undo-tree-visualize</abbr>, <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x u ∷ undo-tree-visualize<br>Visualize the current buffer’s undo tree."><kbd style="border-color: red">C-x u</kbd></abbr>, gives a <i>visual</i> representation of the
@@ -3431,7 +3379,7 @@ is written only once; in a single source of truth!</i> )
 </div>
 
 <div id="outline-container-Automatic-Backups" class="outline-3">
-<h3 id="Automatic-Backups"><span class="section-number-3">6.2.</span> <a href="#Automatic-Backups">Automatic Backups</a></h3>
+<h3 id="Automatic-Backups"><span class="section-number-3">3.2.</span> <a href="#Automatic-Backups">Automatic Backups</a></h3>
 <div class="outline-text-3" id="text-Automatic-Backups">
 <p>
 By default, Emacs saves backup files &#x2014;those ending in <code>~</code>&#x2014; in the current
@@ -3482,7 +3430,7 @@ Finally, let's not create <code>.#</code> files (crashes 'npm') nor bother confi
 </div>
 
 <div id="outline-container-What-changed" class="outline-4">
-<h4 id="What-changed"><span class="section-number-4">6.2.1.</span> <a href="#What-changed">What changed? &#x2014;Walking through backups</a></h4>
+<h4 id="What-changed"><span class="section-number-4">3.2.1.</span> <a href="#What-changed">What changed? &#x2014;Walking through backups</a></h4>
 <div class="outline-text-4" id="text-What-changed">
 <p>
 Let's use an elementary diff system for backups: <code>backup-walker</code> essentially makes
@@ -3509,7 +3457,7 @@ There is also <abbr class="tooltip" title="Diff this file with its backup file o
 </div>
 
 <div id="outline-container-Save-Backup" class="outline-4">
-<h4 id="Save-Backup"><span class="section-number-4">6.2.2.</span> <a href="#Save-Backup">Save ≈ Backup</a></h4>
+<h4 id="Save-Backup"><span class="section-number-4">3.2.2.</span> <a href="#Save-Backup">Save ≈ Backup</a></h4>
 <div class="outline-text-4" id="text-Save-Backup">
 <p>
 Emacs only makes a backup the very first time a buffer is saved; I'd prefer
@@ -3543,7 +3491,7 @@ timestamp.
 </div>
 
 <div id="outline-container-magit-Emacs'-porcelain-interface-to-gitq" class="outline-3">
-<h3 id="magit-Emacs'-porcelain-interface-to-gitq"><span class="section-number-3">6.3.</span> <a href="#magit-Emacs'-porcelain-interface-to-gitq">  <code>magit</code> &#x2014;Emacs' porcelain interface to git</a></h3>
+<h3 id="magit-Emacs'-porcelain-interface-to-gitq"><span class="section-number-3">3.3.</span> <a href="#magit-Emacs'-porcelain-interface-to-gitq">  <code>magit</code> &#x2014;Emacs' porcelain interface to git</a></h3>
 <div class="outline-text-3" id="text-magit-Emacs'-porcelain-interface-to-gitq">
 <p>
 Let's setup an Emacs ‘porcelain’ interface to git &#x2014;it makes working with
@@ -3575,16 +3523,16 @@ details and <code>tab</code> to see children items, usually.
 </p>
 
 <ul class="org-ul">
-<li><abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x g ∷ magit-status<br>Show the status of the current Git repository in a buffer.<br><br>If the current directory isn’t located within a Git repository,<br>then prompt for an existing repository or an arbitrary directory,<br>depending on option ‘magit-repository-directories’, and show the<br>status of the selected repository instead.<br><br><strong> If that option specifies any existing repositories, then offer<br>&emsp;those for completion and show the status buffer for the<br>&emsp;selected one.<br><br></strong> Otherwise read an arbitrary directory using regular file-name<br>&emsp;completion.&emsp;If the selected directory is the top-level of an<br>&emsp;existing working tree, then show the status buffer for that.<br><br><strong> Otherwise offer to initialize the selected directory as a new<br>&emsp;repository.&emsp;After creating the repository show its status<br>&emsp;buffer.<br><br>These fallback behaviors can also be forced using one or more<br>prefix arguments:<br><br></strong> With two prefix arguments (or more precisely a numeric prefix<br>&emsp;value of 16 or greater) read an arbitrary directory and act on<br>&emsp;it as described above.&emsp;The same could be accomplished using<br>&emsp;the command ‘magit-init’.<br><br>* With a single prefix argument read an existing repository, or<br>&emsp;if none can be found based on ‘magit-repository-directories’,<br>&emsp;then fall back to the same behavior as with two prefix<br>&emsp;arguments.<br><br>(fn &optional DIRECTORY CACHE)"><kbd style="border-color: red">C-x g</kbd></abbr>, <abbr class="tooltip" title="Show the status of the current Git repository in a buffer.<br><br>If the current directory isn’t located within a Git repository,<br>then prompt for an existing repository or an arbitrary directory,<br>depending on option ‘magit-repository-directories’, and show the<br>status of the selected repository instead.<br><br><strong> If that option specifies any existing repositories, then offer<br>&emsp;those for completion and show the status buffer for the<br>&emsp;selected one.<br><br></strong> Otherwise read an arbitrary directory using regular file-name<br>&emsp;completion.&emsp;If the selected directory is the top-level of an<br>&emsp;existing working tree, then show the status buffer for that.<br><br><strong> Otherwise offer to initialize the selected directory as a new<br>&emsp;repository.&emsp;After creating the repository show its status<br>&emsp;buffer.<br><br>These fallback behaviors can also be forced using one or more<br>prefix arguments:<br><br></strong> With two prefix arguments (or more precisely a numeric prefix<br>&emsp;value of 16 or greater) read an arbitrary directory and act on<br>&emsp;it as described above.&emsp;The same could be accomplished using<br>&emsp;the command ‘magit-init’.<br><br>* With a single prefix argument read an existing repository, or<br>&emsp;if none can be found based on ‘magit-repository-directories’,<br>&emsp;then fall back to the same behavior as with two prefix<br>&emsp;arguments.<br><br>(fn &optional DIRECTORY CACHE)">magit-status</abbr>, gives you a nice buffer with an overview
+<li><abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x g ∷ magit-status<br>Show the status of the current Git repository in a buffer.<br><br>If the current directory isn’t located within a Git repository,<br>then prompt for an existing repository or an arbitrary directory,<br>depending on option ‘magit-repository-directories’, and show the<br>status of the selected repository instead.<br><br><strong> If that option specifies any existing repositories, then offer<br>&emsp;those for completion and show the status buffer for the<br>&emsp;selected one.<br><br></strong> Otherwise read an arbitrary directory using regular file-name<br>&emsp;completion.&emsp;If the selected directory is the top-level of an<br>&emsp;existing working tree, then show the status buffer for that.<br><br><strong> Otherwise offer to initialize the selected directory as a new<br>&emsp;repository.&emsp;After creating the repository show its status<br>&emsp;buffer.<br><br>These fallback behaviors can also be forced using one or more<br>prefix arguments:<br><br></strong> With two prefix arguments (or more precisely a numeric prefix<br>&emsp;value of 16 or greater) read an arbitrary directory and act on<br>&emsp;it as described above.&emsp;The same could be accomplished using<br>&emsp;the command ‘magit-init’.<br><br>* With a single prefix argument read an existing repository, or<br>&emsp;if none can be found based on ‘magit-repository-directories’,<br>&emsp;then fall back to the same behavior as with two prefix<br>&emsp;arguments."><kbd style="border-color: red">C-x g</kbd></abbr>, <abbr class="tooltip" title="Show the status of the current Git repository in a buffer.<br><br>If the current directory isn’t located within a Git repository,<br>then prompt for an existing repository or an arbitrary directory,<br>depending on option ‘magit-repository-directories’, and show the<br>status of the selected repository instead.<br><br><strong> If that option specifies any existing repositories, then offer<br>&emsp;those for completion and show the status buffer for the<br>&emsp;selected one.<br><br></strong> Otherwise read an arbitrary directory using regular file-name<br>&emsp;completion.&emsp;If the selected directory is the top-level of an<br>&emsp;existing working tree, then show the status buffer for that.<br><br><strong> Otherwise offer to initialize the selected directory as a new<br>&emsp;repository.&emsp;After creating the repository show its status<br>&emsp;buffer.<br><br>These fallback behaviors can also be forced using one or more<br>prefix arguments:<br><br></strong> With two prefix arguments (or more precisely a numeric prefix<br>&emsp;value of 16 or greater) read an arbitrary directory and act on<br>&emsp;it as described above.&emsp;The same could be accomplished using<br>&emsp;the command ‘magit-init’.<br><br>* With a single prefix argument read an existing repository, or<br>&emsp;if none can be found based on ‘magit-repository-directories’,<br>&emsp;then fall back to the same behavior as with two prefix<br>&emsp;arguments.">magit-status</abbr>, gives you a nice buffer with an overview
 of the Git repo that you're buffer is currently visiting.</li>
 <li><p>
-<kbd style="">C-c M-g</kbd>, <abbr class="tooltip" title="Invoke a Magit command that acts on the visited file.<br>When invoked outside a file-visiting buffer, then fall back<br>to ‘magit-dispatch’.">magit-file-dispatch</abbr>, lets you invoke Git actions on the
+<abbr class="tooltip" style="border: none; text-decoration: none;" title="C-c M-g ∷ magit-file-dispatch<br>Invoke a Magit command that acts on the visited file.<br>When invoked outside a file-visiting buffer, then fall back<br>to ‘magit-dispatch’."><kbd style="border-color: red">C-c M-g</kbd></abbr>, <abbr class="tooltip" title="Invoke a Magit command that acts on the visited file.<br>When invoked outside a file-visiting buffer, then fall back<br>to ‘magit-dispatch’.">magit-file-dispatch</abbr>, lets you invoke Git actions on the
 current file directly; e.g., following up with <abbr class="tooltip" style="border: none; text-decoration: none;" title="b ∷ org-self-insert-command<br>Like ‘self-insert-command’, use overwrite-mode for whitespace in tables.<br>If the cursor is in a table looking at whitespace, the whitespace is<br>overwritten, and the table is not marked as requiring realignment.<br><br>(fn N)"><kbd style="border-color: red">b</kbd></abbr>lame, <abbr class="tooltip" style="border: none; text-decoration: none;" title="l ∷ org-self-insert-command<br>Like ‘self-insert-command’, use overwrite-mode for whitespace in tables.<br>If the cursor is in a table looking at whitespace, the whitespace is<br>overwritten, and the table is not marked as requiring realignment.<br><br>(fn N)"><kbd style="border-color: red">l</kbd></abbr>og, <abbr class="tooltip" style="border: none; text-decoration: none;" title="d ∷ org-self-insert-command<br>Like ‘self-insert-command’, use overwrite-mode for whitespace in tables.<br>If the cursor is in a table looking at whitespace, the whitespace is<br>overwritten, and the table is not marked as requiring realignment.<br><br>(fn N)"><kbd style="border-color: red">d</kbd></abbr>iff,
 <abbr class="tooltip" style="border: none; text-decoration: none;" title="s ∷ org-self-insert-command<br>Like ‘self-insert-command’, use overwrite-mode for whitespace in tables.<br>If the cursor is in a table looking at whitespace, the whitespace is<br>overwritten, and the table is not marked as requiring realignment.<br><br>(fn N)"><kbd style="border-color: red">s</kbd></abbr>tage, or <abbr class="tooltip" style="border: none; text-decoration: none;" title="c ∷ org-self-insert-command<br>Like ‘self-insert-command’, use overwrite-mode for whitespace in tables.<br>If the cursor is in a table looking at whitespace, the whitespace is<br>overwritten, and the table is not marked as requiring realignment.<br><br>(fn N)"><kbd style="border-color: red">c</kbd></abbr>ommit the current file.
 </p>
 
 <p>
-For ease, above, we have also bound this to <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-c g ∷ magit-file-dispatch<br>Invoke a Magit command that acts on the visited file.<br>When invoked outside a file-visiting buffer, then fall back<br>to ‘magit-dispatch’."><kbd style="border-color: red">C-c g</kbd></abbr> &#x2014;reminiscent of <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x g ∷ magit-status<br>Show the status of the current Git repository in a buffer.<br><br>If the current directory isn’t located within a Git repository,<br>then prompt for an existing repository or an arbitrary directory,<br>depending on option ‘magit-repository-directories’, and show the<br>status of the selected repository instead.<br><br><strong> If that option specifies any existing repositories, then offer<br>&emsp;those for completion and show the status buffer for the<br>&emsp;selected one.<br><br></strong> Otherwise read an arbitrary directory using regular file-name<br>&emsp;completion.&emsp;If the selected directory is the top-level of an<br>&emsp;existing working tree, then show the status buffer for that.<br><br><strong> Otherwise offer to initialize the selected directory as a new<br>&emsp;repository.&emsp;After creating the repository show its status<br>&emsp;buffer.<br><br>These fallback behaviors can also be forced using one or more<br>prefix arguments:<br><br></strong> With two prefix arguments (or more precisely a numeric prefix<br>&emsp;value of 16 or greater) read an arbitrary directory and act on<br>&emsp;it as described above.&emsp;The same could be accomplished using<br>&emsp;the command ‘magit-init’.<br><br>* With a single prefix argument read an existing repository, or<br>&emsp;if none can be found based on ‘magit-repository-directories’,<br>&emsp;then fall back to the same behavior as with two prefix<br>&emsp;arguments.<br><br>(fn &optional DIRECTORY CACHE)"><kbd style="border-color: red">C-x g</kbd></abbr> :smile:
+For ease, above, we have also bound this to <kbd style="">C-c g</kbd> &#x2014;reminiscent of <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x g ∷ magit-status<br>Show the status of the current Git repository in a buffer.<br><br>If the current directory isn’t located within a Git repository,<br>then prompt for an existing repository or an arbitrary directory,<br>depending on option ‘magit-repository-directories’, and show the<br>status of the selected repository instead.<br><br><strong> If that option specifies any existing repositories, then offer<br>&emsp;those for completion and show the status buffer for the<br>&emsp;selected one.<br><br></strong> Otherwise read an arbitrary directory using regular file-name<br>&emsp;completion.&emsp;If the selected directory is the top-level of an<br>&emsp;existing working tree, then show the status buffer for that.<br><br><strong> Otherwise offer to initialize the selected directory as a new<br>&emsp;repository.&emsp;After creating the repository show its status<br>&emsp;buffer.<br><br>These fallback behaviors can also be forced using one or more<br>prefix arguments:<br><br></strong> With two prefix arguments (or more precisely a numeric prefix<br>&emsp;value of 16 or greater) read an arbitrary directory and act on<br>&emsp;it as described above.&emsp;The same could be accomplished using<br>&emsp;the command ‘magit-init’.<br><br>* With a single prefix argument read an existing repository, or<br>&emsp;if none can be found based on ‘magit-repository-directories’,<br>&emsp;then fall back to the same behavior as with two prefix<br>&emsp;arguments."><kbd style="border-color: red">C-x g</kbd></abbr> :smile:
 </p>
 
 <div class="org-src-container">
@@ -3606,7 +3554,7 @@ Then <abbr class="tooltip" style="border: none; text-decoration: none;" title="q
 </p>
 
 <p>
-Likewise, <abbr class="tooltip" title="Show log for the blob or file visited in the current buffer.<br>With a prefix argument or when ‘--follow’ is an active log<br>argument, then follow renames.&emsp;When the region is active,<br>restrict the log to the lines that the region touches.<br><br>(fn &optional FOLLOW BEG END)">magit-log-buffer-file</abbr> is super neat!
+Likewise, <abbr class="tooltip" title="Show log for the blob or file visited in the current buffer.<br>With a prefix argument or when ‘--follow’ is an active log<br>argument, then follow renames.&emsp;When the region is active,<br>restrict the log to the lines that the region touches.">magit-log-buffer-file</abbr> is super neat!
 </p></li>
 </ul>
 
@@ -3754,7 +3702,7 @@ Let's always notify ourselves of a file that has <a href="https://tpapp.github.i
 </div>
 
 <div id="outline-container-Credentials-I-am-who-I-am" class="outline-4">
-<h4 id="Credentials-I-am-who-I-am"><span class="section-number-4">6.3.1.</span> <a href="#Credentials-I-am-who-I-am">Credentials: I am who I am</a></h4>
+<h4 id="Credentials-I-am-who-I-am"><span class="section-number-4">3.3.1.</span> <a href="#Credentials-I-am-who-I-am">Credentials: I am who I am</a></h4>
 <div class="outline-text-4" id="text-Credentials-I-am-who-I-am">
 <p>
 First, let's setup our git credentials.
@@ -3780,7 +3728,7 @@ First, let's setup our git credentials.
 </div>
 
 <div id="outline-container-Encouraging-useful-commit-messages" class="outline-4">
-<h4 id="Encouraging-useful-commit-messages"><span class="section-number-4">6.3.2.</span> <a href="#Encouraging-useful-commit-messages">Encouraging useful commit messages</a></h4>
+<h4 id="Encouraging-useful-commit-messages"><span class="section-number-4">3.3.2.</span> <a href="#Encouraging-useful-commit-messages">Encouraging useful commit messages</a></h4>
 <div class="outline-text-4" id="text-Encouraging-useful-commit-messages">
 <p>
 Let's try our best to have a <a href="https://chris.beams.io/posts/git-commit/">useful &amp; consistent commit log</a>:
@@ -3802,7 +3750,7 @@ Super neat stuff!
 </div>
 
 <div id="outline-container-Maybe-clone-everything" class="outline-4">
-<h4 id="Maybe-clone-everything"><span class="section-number-4">6.3.3.</span> <a href="#Maybe-clone-everything">Maybe clone &#x2026; everything?</a></h4>
+<h4 id="Maybe-clone-everything"><span class="section-number-4">3.3.3.</span> <a href="#Maybe-clone-everything">Maybe clone &#x2026; everything?</a></h4>
 <div class="outline-text-4" id="text-Maybe-clone-everything">
 <p>
 Below are the git repos I'd like to clone &#x2014;along with a function to do so
@@ -3905,7 +3853,7 @@ quickly.
 <p>
 This <abbr class="tooltip" title="Clone a REMOTE repository [from clipboard] if the LOCAL directory does not exist.<br><br>If called interactively, clone URL in clipboard into ~<em>Downloads then open in dired.<br><br>Yields ‘repo-already-exists’ when no cloning transpires, otherwise yields ‘cloned-repo’.<br><br>LOCAL is optional and defaults to the base name; e.g.,<br>if REMOTE is https:</em>/github.com/X/Y then LOCAL becomes ∼/Y.">maybe-clone</abbr> utility has genuinely
 made it easier for me to learn about new projects and codebases from Github:
-I type it in with the repo's address, then <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x C-e ∷ eros-eval-last-sexp<br>Wrapper for ‘eval-last-sexp’ that overlays results.<br><br>(fn EVAL-LAST-SEXP-ARG-INTERNAL)"><kbd style="border-color: red">C-x C-e</kbd></abbr> ---<abbr class="tooltip" title="Evaluate sexp before point; print value in the echo area.<br>Interactively, with a non ‘-’ prefix argument, print output into<br>current buffer.<br><br>This commands handles ‘defvar’, ‘defcustom’ and ‘defface’ the<br>same way that ‘eval-defun’ does.&emsp;See the doc string of that<br>function for details.<br><br>Normally, this function truncates long output according to the<br>value of the variables ‘eval-expression-print-length’ and<br>‘eval-expression-print-level’.&emsp;With a prefix argument of zero,<br>however, there is no such truncation.<br>Integer values are printed in several formats (decimal, octal,<br>and hexadecimal).&emsp;When the prefix argument is -1 or the value<br>doesn’t exceed ‘eval-expression-print-maximum-character’, an<br>integer value is also printed as a character of that codepoint.<br><br>If ‘eval-expression-debug-on-error’ is non-nil, which is the default,<br>this command arranges for all errors to enter the debugger.<br><br>(fn EVAL-LAST-SEXP-ARG-INTERNAL)">eval-last-sexp</abbr>&#x2014;
+I type it in with the repo's address, then <abbr class="tooltip" style="border: none; text-decoration: none;" title="C-x C-e ∷ eval-last-sexp<br>Evaluate sexp before point; print value in the echo area.<br>Interactively, with a non ‘-’ prefix argument, print output into<br>current buffer.<br><br>This commands handles ‘defvar’, ‘defcustom’ and ‘defface’ the<br>same way that ‘eval-defun’ does.&emsp;See the doc string of that<br>function for details.<br><br>Normally, this function truncates long output according to the<br>value of the variables ‘eval-expression-print-length’ and<br>‘eval-expression-print-level’.&emsp;With a prefix argument of zero,<br>however, there is no such truncation.<br>Integer values are printed in several formats (decimal, octal,<br>and hexadecimal).&emsp;When the prefix argument is -1 or the value<br>doesn’t exceed ‘eval-expression-print-maximum-character’, an<br>integer value is also printed as a character of that codepoint.<br><br>If ‘eval-expression-debug-on-error’ is non-nil, which is the default,<br>this command arranges for all errors to enter the debugger.<br><br>(fn EVAL-LAST-SEXP-ARG-INTERNAL)"><kbd style="border-color: red">C-x C-e</kbd></abbr> ---<abbr class="tooltip" title="Evaluate sexp before point; print value in the echo area.<br>Interactively, with a non ‘-’ prefix argument, print output into<br>current buffer.<br><br>This commands handles ‘defvar’, ‘defcustom’ and ‘defface’ the<br>same way that ‘eval-defun’ does.&emsp;See the doc string of that<br>function for details.<br><br>Normally, this function truncates long output according to the<br>value of the variables ‘eval-expression-print-length’ and<br>‘eval-expression-print-level’.&emsp;With a prefix argument of zero,<br>however, there is no such truncation.<br>Integer values are printed in several formats (decimal, octal,<br>and hexadecimal).&emsp;When the prefix argument is -1 or the value<br>doesn’t exceed ‘eval-expression-print-maximum-character’, an<br>integer value is also printed as a character of that codepoint.<br><br>If ‘eval-expression-debug-on-error’ is non-nil, which is the default,<br>this command arranges for all errors to enter the debugger.<br><br>(fn EVAL-LAST-SEXP-ARG-INTERNAL)">eval-last-sexp</abbr>&#x2014;
 and then I can view it in my beloved Emacs <code>(─‿‿─)</code>.
 </p>
 
@@ -3917,14 +3865,14 @@ It marks modified repos as “<span style="color:red;">dirty</span>”.
 
 <p>
 It may be useful to know that <code>(magit-anything-modified-p t file)</code> can be used to
-check if <code>file</code> has been modified (<abbr class="tooltip" title="Return t if there are any staged or unstaged changes.<br>If optional FILES is non-nil, then only changes to those files<br>are considered.<br><br>(fn &optional IGNORE-SUBMODULES &rest FILES)">magit-anything-modified-p</abbr>), whereas
-<code>(magit-status repo)</code> checks the status of a repository (<abbr class="tooltip" title="Show the status of the current Git repository in a buffer.<br><br>If the current directory isn’t located within a Git repository,<br>then prompt for an existing repository or an arbitrary directory,<br>depending on option ‘magit-repository-directories’, and show the<br>status of the selected repository instead.<br><br><strong> If that option specifies any existing repositories, then offer<br>&emsp;those for completion and show the status buffer for the<br>&emsp;selected one.<br><br></strong> Otherwise read an arbitrary directory using regular file-name<br>&emsp;completion.&emsp;If the selected directory is the top-level of an<br>&emsp;existing working tree, then show the status buffer for that.<br><br><strong> Otherwise offer to initialize the selected directory as a new<br>&emsp;repository.&emsp;After creating the repository show its status<br>&emsp;buffer.<br><br>These fallback behaviors can also be forced using one or more<br>prefix arguments:<br><br></strong> With two prefix arguments (or more precisely a numeric prefix<br>&emsp;value of 16 or greater) read an arbitrary directory and act on<br>&emsp;it as described above.&emsp;The same could be accomplished using<br>&emsp;the command ‘magit-init’.<br><br>* With a single prefix argument read an existing repository, or<br>&emsp;if none can be found based on ‘magit-repository-directories’,<br>&emsp;then fall back to the same behavior as with two prefix<br>&emsp;arguments.<br><br>(fn &optional DIRECTORY CACHE)">magit-status</abbr>).
+check if <code>file</code> has been modified (<abbr class="tooltip" title="Return t if there are any staged or unstaged changes.<br>If optional FILES is non-nil, then only changes to those files<br>are considered.">magit-anything-modified-p</abbr>), whereas
+<code>(magit-status repo)</code> checks the status of a repository (<abbr class="tooltip" title="Show the status of the current Git repository in a buffer.<br><br>If the current directory isn’t located within a Git repository,<br>then prompt for an existing repository or an arbitrary directory,<br>depending on option ‘magit-repository-directories’, and show the<br>status of the selected repository instead.<br><br><strong> If that option specifies any existing repositories, then offer<br>&emsp;those for completion and show the status buffer for the<br>&emsp;selected one.<br><br></strong> Otherwise read an arbitrary directory using regular file-name<br>&emsp;completion.&emsp;If the selected directory is the top-level of an<br>&emsp;existing working tree, then show the status buffer for that.<br><br><strong> Otherwise offer to initialize the selected directory as a new<br>&emsp;repository.&emsp;After creating the repository show its status<br>&emsp;buffer.<br><br>These fallback behaviors can also be forced using one or more<br>prefix arguments:<br><br></strong> With two prefix arguments (or more precisely a numeric prefix<br>&emsp;value of 16 or greater) read an arbitrary directory and act on<br>&emsp;it as described above.&emsp;The same could be accomplished using<br>&emsp;the command ‘magit-init’.<br><br>* With a single prefix argument read an existing repository, or<br>&emsp;if none can be found based on ‘magit-repository-directories’,<br>&emsp;then fall back to the same behavior as with two prefix<br>&emsp;arguments.">magit-status</abbr>).
 </p>
 </div>
 </div>
 
 <div id="outline-container-Gotta-love-that-time-machine" class="outline-4">
-<h4 id="Gotta-love-that-time-machine"><span class="section-number-4">6.3.4.</span> <a href="#Gotta-love-that-time-machine">Gotta love that time machine</a></h4>
+<h4 id="Gotta-love-that-time-machine"><span class="section-number-4">3.3.4.</span> <a href="#Gotta-love-that-time-machine">Gotta love that time machine</a></h4>
 <div class="outline-text-4" id="text-Gotta-love-that-time-machine">
 <p>
 Finally, one of the main points for using version control is to have access to
@@ -3951,7 +3899,7 @@ things went wrong.
 </div>
 
 <div id="outline-container-Jump-to-a-ma-git-repository-with-C-u-C-x-g" class="outline-4">
-<h4 id="Jump-to-a-ma-git-repository-with-C-u-C-x-g"><span class="section-number-4">6.3.5.</span> <a href="#Jump-to-a-ma-git-repository-with-C-u-C-x-g">Jump to a (ma)git repository with <code>C-u C-x g</code></a></h4>
+<h4 id="Jump-to-a-ma-git-repository-with-C-u-C-x-g"><span class="section-number-4">3.3.5.</span> <a href="#Jump-to-a-ma-git-repository-with-C-u-C-x-g">Jump to a (ma)git repository with <code>C-u C-x g</code></a></h4>
 <div class="outline-text-4" id="text-Jump-to-a-ma-git-repository-with-C-u-C-x-g">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #91889B;">;; </span><span style="color: #91889B;">Jump to a (ma)git repository with C-u C-x g.</span>
@@ -3986,7 +3934,7 @@ things went wrong.
 </div>
 
 <div id="outline-container-Version-Control-with-SVN-Using-Magit" class="outline-3">
-<h3 id="Version-Control-with-SVN-Using-Magit"><span class="section-number-3">6.4.</span> <a href="#Version-Control-with-SVN-Using-Magit">Version Control with SVN &#x2014;Using Magit!</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
+<h3 id="Version-Control-with-SVN-Using-Magit"><span class="section-number-3">3.4.</span> <a href="#Version-Control-with-SVN-Using-Magit">Version Control with SVN &#x2014;Using Magit!</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
 <div class="outline-text-3" id="text-Version-Control-with-SVN-Using-Magit">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -4050,7 +3998,7 @@ For move on <code>git svn</code>, see <a href="https://gist.github.com/rickyah/7
 </div>
 
 <div id="outline-container-Highlighting-TODO-s-Showing-them-in-Magit" class="outline-3">
-<h3 id="Highlighting-TODO-s-Showing-them-in-Magit"><span class="section-number-3">6.5.</span> <a href="#Highlighting-TODO-s-Showing-them-in-Magit">Highlighting TODO-s &amp; Showing them in Magit</a></h3>
+<h3 id="Highlighting-TODO-s-Showing-them-in-Magit"><span class="section-number-3">3.5.</span> <a href="#Highlighting-TODO-s-Showing-them-in-Magit">Highlighting TODO-s &amp; Showing them in Magit</a></h3>
 <div class="outline-text-3" id="text-Highlighting-TODO-s-Showing-them-in-Magit">
 <p>
 Sometimes it's nice to flag a chunk of text by its author, such as ‘ <span style="color:#dc8cc3;">MA</span> ’ for
@@ -4125,12 +4073,12 @@ items there (•̀ᴗ•́)و
 </div>
 
 <div id="outline-container-Silently-show-me-when-a-line-was-modified-and-by-whom" class="outline-3">
-<h3 id="Silently-show-me-when-a-line-was-modified-and-by-whom"><span class="section-number-3">6.6.</span> <a href="#Silently-show-me-when-a-line-was-modified-and-by-whom">Silently show me when a line was modified and by whom</a></h3>
+<h3 id="Silently-show-me-when-a-line-was-modified-and-by-whom"><span class="section-number-3">3.6.</span> <a href="#Silently-show-me-when-a-line-was-modified-and-by-whom">Silently show me when a line was modified and by whom</a></h3>
 <div class="outline-text-3" id="text-Silently-show-me-when-a-line-was-modified-and-by-whom">
 <p>
 Quickly &amp; <i>automatically</i> glimpse who, why, and when a line or code block was
 changed, using <a href="https://github.com/Artawower/blamer.el">blamer.el</a>. Jump back through history to gain further insights
-as to how and why the code evolved with <kbd style="">C-x g l l</kbd> (<abbr class="tooltip" title="Show log for ‘HEAD’.<br><br>(fn &optional ARGS FILES)">magit-log-head</abbr>) or
+as to how and why the code evolved with <kbd style="">C-x g l l</kbd> (<abbr class="tooltip" title="Show log for ‘HEAD’.">magit-log-head</abbr>) or
 <abbr class="tooltip" title="Enable git timemachine for file of current buffer.">git-timemachine</abbr>.
 </p>
 
@@ -4184,7 +4132,7 @@ then we use <abbr class="tooltip" title="Enable git timemachine for file of curr
 </div>
 
 <div id="outline-container-delete-by-moving-to-trash-t" class="outline-3">
-<h3 id="delete-by-moving-to-trash-t"><span class="section-number-3">6.7.</span> <a href="#delete-by-moving-to-trash-t">delete-by-moving-to-trash t</a></h3>
+<h3 id="delete-by-moving-to-trash-t"><span class="section-number-3">3.7.</span> <a href="#delete-by-moving-to-trash-t">delete-by-moving-to-trash t</a></h3>
 <div class="outline-text-3" id="text-delete-by-moving-to-trash-t">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #91889B;">;; </span><span style="color: #91889B;">Move to OS&#8217; trash can when deleting stuff</span>
@@ -4196,7 +4144,7 @@ then we use <abbr class="tooltip" title="Enable git timemachine for file of curr
 </div>
 </div>
 <div id="outline-container-Jumping-to-extreme-semantic-units" class="outline-3">
-<h3 id="Jumping-to-extreme-semantic-units"><span class="section-number-3">6.8.</span> <a href="#Jumping-to-extreme-semantic-units">Jumping to extreme semantic units</a></h3>
+<h3 id="Jumping-to-extreme-semantic-units"><span class="section-number-3">3.8.</span> <a href="#Jumping-to-extreme-semantic-units">Jumping to extreme semantic units</a></h3>
 <div class="outline-text-3" id="text-Jumping-to-extreme-semantic-units">
 <p>
 <a href="https://github.com/DamienCassou/beginend">Sometimes it's unreasonable</a> for <code>M-&lt;</code> to take us to the actual start of a buffer;
@@ -4219,7 +4167,7 @@ should jump to the first entry.
 </div>
 </div>
 <div id="outline-container-Literate-Programming" class="outline-2">
-<h2 id="Literate-Programming"><span class="section-number-2">7.</span> <a href="#Literate-Programming">Literate Programming</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="cannot_export_to_HTML">cannot_export_to_HTML</span></span></h2>
+<h2 id="Literate-Programming"><span class="section-number-2">4.</span> <a href="#Literate-Programming">Literate Programming</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="cannot_export_to_HTML">cannot_export_to_HTML</span></span></h2>
 <div class="outline-text-2" id="text-Literate-Programming">
 <p>
 Org-mode lets us run chunks of code anywhere, then feed their outputs to other
@@ -4240,12 +4188,12 @@ makes Org look less like a markup and more like a word editor. Nice stuff. )
 </div>
 
 <div id="outline-container-High-Speed-Literate-Programming" class="outline-3">
-<h3 id="High-Speed-Literate-Programming"><span class="section-number-3">7.1.</span> <a href="#High-Speed-Literate-Programming">High Speed Literate Programming</a></h3>
+<h3 id="High-Speed-Literate-Programming"><span class="section-number-3">4.1.</span> <a href="#High-Speed-Literate-Programming">High Speed Literate Programming</a></h3>
 <div class="outline-text-3" id="text-High-Speed-Literate-Programming">
 </div>
 
 <div id="outline-container-Manipulating-Sections" class="outline-4">
-<h4 id="Manipulating-Sections"><span class="section-number-4">7.1.1.</span> <a href="#Manipulating-Sections">Manipulating Sections</a></h4>
+<h4 id="Manipulating-Sections"><span class="section-number-4">4.1.1.</span> <a href="#Manipulating-Sections">Manipulating Sections</a></h4>
 <div class="outline-text-4" id="text-Manipulating-Sections">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">(<span style="color: #40B4C4;">setq</span> org-use-speed-commands t)
@@ -4340,7 +4288,7 @@ list variable; e.g.,
 </div>
 
 <div id="outline-container-Seamless-Navigation-Between-Source-Blocks" class="outline-4">
-<h4 id="Seamless-Navigation-Between-Source-Blocks"><span class="section-number-4">7.1.2.</span> <a href="#Seamless-Navigation-Between-Source-Blocks">Seamless Navigation Between Source Blocks</a></h4>
+<h4 id="Seamless-Navigation-Between-Source-Blocks"><span class="section-number-4">4.1.2.</span> <a href="#Seamless-Navigation-Between-Source-Blocks">Seamless Navigation Between Source Blocks</a></h4>
 <div class="outline-text-4" id="text-Seamless-Navigation-Between-Source-Blocks">
 <p>
 The “super key” &#x2014;aka the command or windows key&#x2014; can be used to jump to the
@@ -4371,7 +4319,7 @@ Footnotes can be quickly produced with <abbr class="tooltip" title="Insert a new
 </div>
 
 <div id="outline-container-Modifying-return" class="outline-4">
-<h4 id="Modifying-return"><span class="section-number-4">7.1.3.</span> <a href="#Modifying-return">Modifying <kbd style="">⟨return⟩</kbd></a></h4>
+<h4 id="Modifying-return"><span class="section-number-4">4.1.3.</span> <a href="#Modifying-return">Modifying <kbd style="">⟨return⟩</kbd></a></h4>
 <div class="outline-text-4" id="text-Modifying-return">
 <ul class="org-ul">
 <li><kbd style="">C-⟨return⟩</kbd> ,  <kbd style="">C-S-⟨return⟩</kbd>  make a new heading where the latter marks it as a <code>TODO</code>.</li>
@@ -4452,7 +4400,7 @@ In summary:
 </div>
 
 <div id="outline-container-Executing-code-from-src-blocks" class="outline-3">
-<h3 id="Executing-code-from-src-blocks"><span class="section-number-3">7.2.</span> <a href="#Executing-code-from-src-blocks">Executing code from <code>src</code> blocks</a></h3>
+<h3 id="Executing-code-from-src-blocks"><span class="section-number-3">4.2.</span> <a href="#Executing-code-from-src-blocks">Executing code from <code>src</code> blocks</a></h3>
 <div class="outline-text-3" id="text-Executing-code-from-src-blocks">
 <p>
 For example, to execute a shell command in Emacs, write a <code>src</code> with a shell
@@ -4513,7 +4461,7 @@ More languages can be added using <abbr class="tooltip" title="Add ELEMENT to th
 </div>
 
 <div id="outline-container-Executing-all-name-startup-code-for-local-configurations" class="outline-3">
-<h3 id="Executing-all-name-startup-code-for-local-configurations"><span class="section-number-3">7.3.</span> <a href="#Executing-all-name-startup-code-for-local-configurations">Executing all <code>#+name: startup-code</code> for local configurations</a></h3>
+<h3 id="Executing-all-name-startup-code-for-local-configurations"><span class="section-number-3">4.3.</span> <a href="#Executing-all-name-startup-code-for-local-configurations">Executing all <code>#+name: startup-code</code> for local configurations</a></h3>
 <div class="outline-text-3" id="text-Executing-all-name-startup-code-for-local-configurations">
 <p>
 Sometimes my Org-files contain configurations that are local to the file,
@@ -4564,7 +4512,7 @@ should have been loaded.
 </div>
 </div>
 <div id="outline-container-Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh" class="outline-3">
-<h3 id="Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh"><span class="section-number-3">7.4.</span> <a href="#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh">Quickly pop-up a terminal, run a command, close it &#x2014;and zsh</a></h3>
+<h3 id="Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh"><span class="section-number-3">4.4.</span> <a href="#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh">Quickly pop-up a terminal, run a command, close it &#x2014;and zsh</a></h3>
 <div class="outline-text-3" id="text-Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh">
 <p>
 <i>Pop up a terminal, do some work, then close it using the same command.</i>
@@ -4664,7 +4612,7 @@ number of ways you'd actually use 𝒳. ( In Emacs, <kbd style="">C-t tldr 𝒳 
 </div>
 
 <div id="outline-container-Snippets-Template-Expansion" class="outline-3">
-<h3 id="Snippets-Template-Expansion"><span class="section-number-3">7.5.</span> <a href="#Snippets-Template-Expansion">Snippets &#x2014;Template Expansion</a></h3>
+<h3 id="Snippets-Template-Expansion"><span class="section-number-3">4.5.</span> <a href="#Snippets-Template-Expansion">Snippets &#x2014;Template Expansion</a></h3>
 <div class="outline-text-3" id="text-Snippets-Template-Expansion">
 <p>
 It is common that there is a sequence of text that we tend to repeat
@@ -4682,7 +4630,7 @@ which we also use to expand our snippets.
 </div>
 
 <div id="outline-container-Word-Completion" class="outline-4">
-<h4 id="Word-Completion"><span class="section-number-4">7.5.1.</span> <a href="#Word-Completion">Word Completion</a></h4>
+<h4 id="Word-Completion"><span class="section-number-4">4.5.1.</span> <a href="#Word-Completion">Word Completion</a></h4>
 <div class="outline-text-4" id="text-Word-Completion">
 <p>
 Let's enable <a href="https://company-mode.github.io/">“complete anything” mode</a> &#x2014;it ought to start in half a second and
@@ -4792,7 +4740,7 @@ with org-mode, so I'm not using them.
 </div>
 
 <div id="outline-container-Intro-to-Snippets" class="outline-4">
-<h4 id="Intro-to-Snippets"><span class="section-number-4">7.5.2.</span> <a href="#Intro-to-Snippets">Intro to Snippets</a></h4>
+<h4 id="Intro-to-Snippets"><span class="section-number-4">4.5.2.</span> <a href="#Intro-to-Snippets">Intro to Snippets</a></h4>
 <div class="outline-text-4" id="text-Intro-to-Snippets">
 <p>
 A <b>snippet, template, mechanism</b> is a tool that when you press some keystrokes
@@ -5011,7 +4959,7 @@ The remaining subsections discuss contents of my yankpad file.
 </div>
 
 <div id="outline-container-Org-mode-Templates-A-reason-I-generate-templates" class="outline-4">
-<h4 id="Org-mode-Templates-A-reason-I-generate-templates"><span class="section-number-4">7.5.3.</span> <a href="#Org-mode-Templates-A-reason-I-generate-templates">Org-mode Templates &#x2014;A reason I “generate” templates ;)</a></h4>
+<h4 id="Org-mode-Templates-A-reason-I-generate-templates"><span class="section-number-4">4.5.3.</span> <a href="#Org-mode-Templates-A-reason-I-generate-templates">Org-mode Templates &#x2014;A reason I “generate” templates ;)</a></h4>
 <div class="outline-text-4" id="text-Org-mode-Templates-A-reason-I-generate-templates">
 <p>
 This produces a pop-up list of org-mode block types, if <code>src</code> is selected, then a
@@ -5038,7 +4986,7 @@ it generally refers to the value of the field being mirrored with <code>${n: ⋯
 However, going through pop-ups takes precious time &#x2014;besides being slightly annyoing.
 Let's introduce a template for my most utilised kind of language blocks.
 </p>
-<pre class="example" id="orgf8e99d1">
+<pre class="example" id="orgdc53d03">
 ** s_org: src block for org
 #+begin_src org
 $0
@@ -5054,7 +5002,7 @@ generated by the following basic loop &#x2014;whose source block is named
 <code>my-org-lang-templates</code>.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="org8fd1f3b"><span style="color: #91889B;">;; </span><span style="color: #91889B;">We make an org BLOCK snippet template for each LANG the user has declared.</span>
+<pre class="src src-emacs-lisp" id="orgf54ced8"><span style="color: #91889B;">;; </span><span style="color: #91889B;">We make an org BLOCK snippet template for each LANG the user has declared.</span>
 <span style="color: #91889B;">;;</span>
 (<span style="color: #40B4C4;">cl-loop</span> for (shortcut block takes-language-argument? default-text)
       in '((<span style="color: #B4DCE7;">"s_"</span> <span style="color: #B4DCE7;">"src"</span> t)
@@ -5098,7 +5046,7 @@ utilising a <a href="https://www.gnu.org/software/emacs/manual/html_node/org/Now
 the above <code>s_org</code> block. The result is (last I checked) <b>83</b> template expansions
 &#x2014;that would have been a bit much to write by hand.
 </p>
-<pre class="example" id="org3429e79">
+<pre class="example" id="org599cb24">
 #+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes
 &lt;&lt;my-org-lang-templates()&gt;&gt;
 #+end_src
@@ -5146,7 +5094,7 @@ ${1:`(let* ((&#964; (read-string "Link type: "))
 </div>
 
 <div id="outline-container-Work-Templates" class="outline-4">
-<h4 id="Work-Templates"><span class="section-number-4">7.5.4.</span> <a href="#Work-Templates">Work Templates</a></h4>
+<h4 id="Work-Templates"><span class="section-number-4">4.5.4.</span> <a href="#Work-Templates">Work Templates</a></h4>
 <div class="outline-text-4" id="text-Work-Templates">
 <div class="org-src-container">
 <pre class="src src-org">** ll_console_log: Log some JS variables
@@ -5165,7 +5113,7 @@ pbcopy; pbpaste")] (message "Copied to clipboard, uuid: %s" it) it)`}
 </div>
 
 <div id="outline-container-Elisp-Templates" class="outline-4">
-<h4 id="Elisp-Templates"><span class="section-number-4">7.5.5.</span> <a href="#Elisp-Templates">Elisp Templates</a></h4>
+<h4 id="Elisp-Templates"><span class="section-number-4">4.5.5.</span> <a href="#Elisp-Templates">Elisp Templates</a></h4>
 <div class="outline-text-4" id="text-Elisp-Templates">
 <p>
 The following snippets were rather useful as I began learning Lisp to construct
@@ -5192,7 +5140,7 @@ one below and usually beat around the bush by using <code>(cl-loop for ⋯ do �
 </div>
 
 <div id="outline-container-Equational-Templates" class="outline-4">
-<h4 id="Equational-Templates"><span class="section-number-4">7.5.6.</span> <a href="#Equational-Templates">Equational Templates</a></h4>
+<h4 id="Equational-Templates"><span class="section-number-4">4.5.6.</span> <a href="#Equational-Templates">Equational Templates</a></h4>
 <div class="outline-text-4" id="text-Equational-Templates">
 <p>
 To show <code>ℒ = ℛ</code>, one starts at the complicated side, say <i>ℒ</i>, then, with the aim of
@@ -5230,7 +5178,7 @@ One expands <code>eqn_begin</code>, tabs to fill in the three main locations, th
 </div>
 
 <div id="outline-container-Fixed-replies" class="outline-4">
-<h4 id="Fixed-replies"><span class="section-number-4">7.5.7.</span> <a href="#Fixed-replies">Fixed replies</a></h4>
+<h4 id="Fixed-replies"><span class="section-number-4">4.5.7.</span> <a href="#Fixed-replies">Fixed replies</a></h4>
 <div class="outline-text-4" id="text-Fixed-replies">
 <p>
 Here are some replies that I sometimes need to produce; e.g., to people who
@@ -5275,10 +5223,10 @@ page 3.
 </div>
 
 <div id="outline-container-" class="outline-4">
-<h4 id=""><span class="section-number-4">7.5.8.</span> <a href="#">Emojis</a></h4>
+<h4 id=""><span class="section-number-4">4.5.8.</span> <a href="#">Emojis</a></h4>
 <div class="outline-text-4" id="text-">
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="org8b56e63"><span style="color: #91889B;">;;</span>
+<pre class="src src-emacs-lisp" id="org4c6da06"><span style="color: #91889B;">;;</span>
 <span style="color: #91889B;">;; </span><span style="color: #91889B;">https://emojipedia.org/people/</span>
 (<span style="color: #40B4C4;">cl-loop</span> for (emoji name description)
          in '((&#128512; <span style="color: #B4DCE7;">"Grinning Face"</span>
@@ -5422,7 +5370,7 @@ page 3.
 </div>
 
 <div id="outline-container-my-Templates-to-obtain-User-Information" class="outline-4">
-<h4 id="my-Templates-to-obtain-User-Information"><span class="section-number-4">7.5.9.</span> <a href="#my-Templates-to-obtain-User-Information">  <code>my_⋯</code> Templates to obtain User Information</a></h4>
+<h4 id="my-Templates-to-obtain-User-Information"><span class="section-number-4">4.5.9.</span> <a href="#my-Templates-to-obtain-User-Information">  <code>my_⋯</code> Templates to obtain User Information</a></h4>
 <div class="outline-text-4" id="text-my-Templates-to-obtain-User-Information">
 <p>
 Let's add templates for links to common user information ^_^
@@ -5463,7 +5411,7 @@ It may be useful to also have Org-link variants of these …
 </div>
 
 <div id="outline-container-Activate-templates-from-other-places-in-my-init" class="outline-4">
-<h4 id="Activate-templates-from-other-places-in-my-init"><span class="section-number-4">7.5.10.</span> <a href="#Activate-templates-from-other-places-in-my-init">Templates from other places in my init</a></h4>
+<h4 id="Activate-templates-from-other-places-in-my-init"><span class="section-number-4">4.5.10.</span> <a href="#Activate-templates-from-other-places-in-my-init">Templates from other places in my init</a></h4>
 <div class="outline-text-4" id="text-Activate-templates-from-other-places-in-my-init">
 <p>
 In this setup, I have some templates appear elsewhere, tagged with <code>:noweb-ref
@@ -5600,7 +5548,7 @@ name.
 </div>
 
 <div id="outline-container-Prettify-inline-source-code" class="outline-3">
-<h3 id="Prettify-inline-source-code"><span class="section-number-3">7.6.</span> <a href="#Prettify-inline-source-code">Prettify inline source code</a></h3>
+<h3 id="Prettify-inline-source-code"><span class="section-number-3">4.6.</span> <a href="#Prettify-inline-source-code">Prettify inline source code</a></h3>
 <div class="outline-text-3" id="text-Prettify-inline-source-code">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #91889B;">;; </span><span style="color: #91889B;">Show &#8220; src_emacs-lisp[:exports results]{ &#119987; } &#8221; as &#8220; &#8496;&#120001;&#119998;&#120008;&#120005;&#64830; &#119987; &#64831; &#8221;.</span>
@@ -5641,7 +5589,7 @@ name.
 </div>
 </div>
 <div id="outline-container-Life-within-Org-mode" class="outline-2">
-<h2 id="Life-within-Org-mode"><span class="section-number-2">8.</span> <a href="#Life-within-Org-mode">Life within Org-mode</a></h2>
+<h2 id="Life-within-Org-mode"><span class="section-number-2">5.</span> <a href="#Life-within-Org-mode">Life within Org-mode</a></h2>
 <div class="outline-text-2" id="text-Life-within-Org-mode">
 <p>
 It's hard to estimate how long a task takes if you don't keep track of time
@@ -5657,7 +5605,7 @@ Let's do this!
 </div>
 
 <div id="outline-container-Using-Org-Mode-as-a-Day-Planner" class="outline-3">
-<h3 id="Using-Org-Mode-as-a-Day-Planner"><span class="section-number-3">8.1.</span> <a href="#Using-Org-Mode-as-a-Day-Planner">Using Org-Mode as a Day Planner</a></h3>
+<h3 id="Using-Org-Mode-as-a-Day-Planner"><span class="section-number-3">5.1.</span> <a href="#Using-Org-Mode-as-a-Day-Planner">Using Org-Mode as a Day Planner</a></h3>
 <div class="outline-text-3" id="text-Using-Org-Mode-as-a-Day-Planner">
 <p>
 ⟪ This section is based on a dated, yet delightful, tutorial
@@ -5693,7 +5641,7 @@ A 1-page, 3-column, PDF summarising the ideas and keybindings of this section
 </div>
 
 <div id="outline-container-Capturing-ideas-notes-without-interrupting-the-current-workflow" class="outline-4">
-<h4 id="Capturing-ideas-notes-without-interrupting-the-current-workflow"><span class="section-number-4">8.1.1.</span> <a href="#Capturing-ideas-notes-without-interrupting-the-current-workflow">Capturing ideas &amp; notes without interrupting the current workflow</a></h4>
+<h4 id="Capturing-ideas-notes-without-interrupting-the-current-workflow"><span class="section-number-4">5.1.1.</span> <a href="#Capturing-ideas-notes-without-interrupting-the-current-workflow">Capturing ideas &amp; notes without interrupting the current workflow</a></h4>
 <div class="outline-text-4" id="text-Capturing-ideas-notes-without-interrupting-the-current-workflow">
 <p>
 <a href="https://orgmode.org/org.html#Setting-up-capture">Capture</a> lets me quickly make notes &amp; capture ideas, with associated reference
@@ -5980,7 +5928,7 @@ Quickly look up some reference material&#x2026;
 </div>
 
 <div id="outline-container-Step-1-When-new-tasks-come-up" class="outline-4">
-<h4 id="Step-1-When-new-tasks-come-up"><span class="section-number-4">8.1.2.</span> <a href="#Step-1-When-new-tasks-come-up">Step 1: When new tasks come up</a></h4>
+<h4 id="Step-1-When-new-tasks-come-up"><span class="section-number-4">5.1.2.</span> <a href="#Step-1-When-new-tasks-come-up">Step 1: When new tasks come up</a></h4>
 <div class="outline-text-4" id="text-Step-1-When-new-tasks-come-up">
 <p>
 Isn't it great that we can squirrel away info into some default location
@@ -6017,7 +5965,7 @@ When my computer isn't handy, I'll make a note on my phone then transfer it late
 </div>
 </div>
 <div id="outline-container-Step-2-Filing-your-tasks" class="outline-4">
-<h4 id="Step-2-Filing-your-tasks"><span class="section-number-4">8.1.3.</span> <a href="#Step-2-Filing-your-tasks">Step 2: Filing your tasks</a></h4>
+<h4 id="Step-2-Filing-your-tasks"><span class="section-number-4">5.1.3.</span> <a href="#Step-2-Filing-your-tasks">Step 2: Filing your tasks</a></h4>
 <div class="outline-text-4" id="text-Step-2-Filing-your-tasks">
 <p>
 At a later time, a time of reflection, we go to our tasks list and actually
@@ -6077,7 +6025,7 @@ completion state.
 </div>
 
 <div id="outline-container-Step-3-Quickly-review-the-upcoming-week" class="outline-4">
-<h4 id="Step-3-Quickly-review-the-upcoming-week"><span class="section-number-4">8.1.4.</span> <a href="#Step-3-Quickly-review-the-upcoming-week">Step 3: Quickly review the upcoming week</a></h4>
+<h4 id="Step-3-Quickly-review-the-upcoming-week"><span class="section-number-4">5.1.4.</span> <a href="#Step-3-Quickly-review-the-upcoming-week">Step 3: Quickly review the upcoming week</a></h4>
 <div class="outline-text-4" id="text-Step-3-Quickly-review-the-upcoming-week">
 <p>
 The next day we begin our work, we press <kbd style="">C-c a a</kbd> to see the scheduled tasks
@@ -6286,7 +6234,7 @@ E.g., you can change how entries in particular headings are displayed and colour
 </div>
 </div>
 <div id="outline-container-Step-4-Getting-ready-for-the-day" class="outline-4">
-<h4 id="Step-4-Getting-ready-for-the-day"><span class="section-number-4">8.1.5.</span> <a href="#Step-4-Getting-ready-for-the-day">Step 4: Getting ready for the day</a></h4>
+<h4 id="Step-4-Getting-ready-for-the-day"><span class="section-number-4">5.1.5.</span> <a href="#Step-4-Getting-ready-for-the-day">Step 4: Getting ready for the day</a></h4>
 <div class="outline-text-4" id="text-Step-4-Getting-ready-for-the-day">
 <p>
 After having seen our tasks for the week, we press <abbr class="tooltip" style="border: none; text-decoration: none;" title="d ∷ org-self-insert-command<br>Like ‘self-insert-command’, use overwrite-mode for whitespace in tables.<br>If the cursor is in a table looking at whitespace, the whitespace is<br>overwritten, and the table is not marked as requiring realignment.<br><br>(fn N)"><kbd style="border-color: red">d</kbd></abbr> to enter daily view for
@@ -6423,7 +6371,7 @@ Near the top of my TODOS file, I have the following clickable link: It looks pre
 </div>
 
 <div id="outline-container-Step-5-Doing-the-work" class="outline-4">
-<h4 id="Step-5-Doing-the-work"><span class="section-number-4">8.1.6.</span> <a href="#Step-5-Doing-the-work">Step 5: Doing the work</a></h4>
+<h4 id="Step-5-Doing-the-work"><span class="section-number-4">5.1.6.</span> <a href="#Step-5-Doing-the-work">Step 5: Doing the work</a></h4>
 <div class="outline-text-4" id="text-Step-5-Doing-the-work">
 <p>
 Since <code>A</code> tasks are the important and urgent ones, if you do all of the <code>A</code> tasks and
@@ -6447,11 +6395,11 @@ them for later in the week without a second thought.
 </div>
 
 <div id="outline-container-Step-6-Moving-a-task-toward-completion" class="outline-4">
-<h4 id="Step-6-Moving-a-task-toward-completion"><span class="section-number-4">8.1.7.</span> <a href="#Step-6-Moving-a-task-toward-completion">Step 6: Moving a task toward completion</a></h4>
+<h4 id="Step-6-Moving-a-task-toward-completion"><span class="section-number-4">5.1.7.</span> <a href="#Step-6-Moving-a-task-toward-completion">Step 6: Moving a task toward completion</a></h4>
 <div class="outline-text-4" id="text-Step-6-Moving-a-task-toward-completion">
 <p>
 My workflow states are described in the section
-<a href="#Workflow-States">8.5</a> and contain states: <code>TODO, STARTED, WAITING, ON_HOLD, CANCELLED, DONE</code>.
+<a href="#Workflow-States">5.5</a> and contain states: <code>TODO, STARTED, WAITING, ON_HOLD, CANCELLED, DONE</code>.
 </p>
 <ul class="org-ul">
 <li>Tasks marked <code>WAITING</code> are ones for which we are awaiting some event, like someone
@@ -6480,7 +6428,7 @@ every clock-out is much more practical, for me at least.
 </div>
 
 <div id="outline-container-Step-7-Archiving-Tasks" class="outline-4">
-<h4 id="Step-7-Archiving-Tasks"><span class="section-number-4">8.1.8.</span> <a href="#Step-7-Archiving-Tasks">Step 7: Archiving Tasks</a></h4>
+<h4 id="Step-7-Archiving-Tasks"><span class="section-number-4">5.1.8.</span> <a href="#Step-7-Archiving-Tasks">Step 7: Archiving Tasks</a></h4>
 <div class="outline-text-4" id="text-Step-7-Archiving-Tasks">
 <p>
 During the review state, when a task is completed, ‘archive’ it with
@@ -6554,7 +6502,7 @@ next day; i.e., have priority <code>A</code>.</i>
 </div>
 
 <div id="outline-container-Tag-You're-it" class="outline-3">
-<h3 id="Tag-You're-it"><span class="section-number-3">8.2.</span> <a href="#Tag-You're-it">Tag! You're it!</a></h3>
+<h3 id="Tag-You're-it"><span class="section-number-3">5.2.</span> <a href="#Tag-You're-it">Tag! You're it!</a></h3>
 <div class="outline-text-3" id="text-Tag-You're-it">
 <p>
 Even when items are categorised under their own parent headings, they may be
@@ -6666,7 +6614,7 @@ Let's render tags by Unicode symbols.
 </div>
 
 <div id="outline-container-Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes" class="outline-3">
-<h3 id="Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes"><span class="section-number-3">8.3.</span> <a href="#Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes">Automating <a href="https://en.wikipedia.org/wiki/Pomodoro_Technique">Pomodoro</a> &#x2014;“Commit for only 25 minutes!”</a></h3>
+<h3 id="Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes"><span class="section-number-3">5.3.</span> <a href="#Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes">Automating <a href="https://en.wikipedia.org/wiki/Pomodoro_Technique">Pomodoro</a> &#x2014;“Commit for only 25 minutes!”</a></h3>
 <div class="outline-text-3" id="text-Automating-https-en-wikipedia-org-wiki-Pomodoro-Technique-Pomodoro-Commit-for-only-25-minutes">
 <p>
 Effort estimates are for an entire task.
@@ -6716,13 +6664,8 @@ code, and do more searches; then again, I've learned a lot by writing code.)
 </div>
 
 <div id="outline-container-Journaling" class="outline-3">
-<h3 id="Journaling"><span class="section-number-3">8.4.</span> <a href="#Journaling">Journaling</a></h3>
+<h3 id="Journaling"><span class="section-number-3">5.4.</span> <a href="#Journaling">Journaling</a></h3>
 <div class="outline-text-3" id="text-Journaling">
-</div>
-
-<div id="outline-container-Intro-to-why-even-journal" class="outline-4">
-<h4 id="Intro-to-why-even-journal"><span class="section-number-4">8.4.1.</span> <a href="#Intro-to-why-even-journal">Intro to why even journal</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="ignore">ignore</span></span></h4>
-<div class="outline-text-4" id="text-Intro-to-why-even-journal">
 <p>
 Thus far I've made it easy to quickly capture ideas and tasks, not so much on
 the analysis phase:
@@ -6777,10 +6720,9 @@ like to have multiple journals, for work and for personal life, as such I will
 utilise a prefix argument to obtain my work specific entries.
 </p>
 </div>
-</div>
 
 <div id="outline-container-The-Setup" class="outline-4">
-<h4 id="The-Setup"><span class="section-number-4">8.4.2.</span> <a href="#The-Setup">The Setup</a></h4>
+<h4 id="The-Setup"><span class="section-number-4">5.4.1.</span> <a href="#The-Setup">The Setup</a></h4>
 <div class="outline-text-4" id="text-The-Setup">
 <p>
 Anyhow, the setup:
@@ -6810,7 +6752,7 @@ Anyhow, the setup:
 </div>
 
 <div id="outline-container-Super-Terse-Tutorial" class="outline-4">
-<h4 id="Super-Terse-Tutorial"><span class="section-number-4">8.4.3.</span> <a href="#Super-Terse-Tutorial">Super Terse Tutorial</a></h4>
+<h4 id="Super-Terse-Tutorial"><span class="section-number-4">5.4.2.</span> <a href="#Super-Terse-Tutorial">Super Terse Tutorial</a></h4>
 <div class="outline-text-4" id="text-Super-Terse-Tutorial">
 <p>
 Bindings available in <code>org-journal-mode</code>, when journaling:
@@ -6856,11 +6798,11 @@ week/month/year or for all time</li>
 </div>
 
 <div id="outline-container-Guided-Journaling" class="outline-4">
-<h4 id="Guided-Journaling"><span class="section-number-4">8.4.4.</span> <a href="#Guided-Journaling">Guided Journaling</a></h4>
+<h4 id="Guided-Journaling"><span class="section-number-4">5.4.3.</span> <a href="#Guided-Journaling">Guided Journaling</a></h4>
 <div class="outline-text-4" id="text-Guided-Journaling">
 <p>
 Sometimes it can be tough to journal, but filling in a template can be a way to
-get started. Later on, we will setup <a href="#Snippets-Template-Expansion">7.5</a> which will
+get started. Later on, we will setup <a href="#Snippets-Template-Expansion">4.5</a> which will
 allow us to write <code>journal_guided</code> then <code>TAB</code> to obtain the template below. Each <code>$𝓃</code>
 indicates a position that we may input text, after which we <code>TAB</code> to move to next
 location.
@@ -6949,7 +6891,7 @@ to meet my needs, but I like it as it is right now (•̀ᴗ•́)و
 </div>
 
 <div id="outline-container-Workflow-States" class="outline-3">
-<h3 id="Workflow-States"><span class="section-number-3">8.5.</span> <a href="#Workflow-States">Workflow States</a></h3>
+<h3 id="Workflow-States"><span class="section-number-3">5.5.</span> <a href="#Workflow-States">Workflow States</a></h3>
 <div class="outline-text-3" id="text-Workflow-States">
 <p>
 Here are some of my common workflow states, &#x2014;the ‘X/Y’ indicates to do action ‘X’
@@ -7101,7 +7043,7 @@ center footer  &#9829;&#8255;&#9829; Org-mode is so cool (&#8226;&#768;&#7447;&#
 </div>
 
 
-<div id="org2da8cfc" class="figure">
+<div id="orgb1d321c" class="figure">
 <p><img src="images/workflow.png" alt="workflow.png" />
 </p>
 </div>
@@ -7167,7 +7109,7 @@ You can quickly write and see the resulting UMLs using
 </div>
 
 <div id="outline-container-Clocking-Work-Time" class="outline-3">
-<h3 id="Clocking-Work-Time"><span class="section-number-3">8.6.</span> <a href="#Clocking-Work-Time">Clocking Work Time</a></h3>
+<h3 id="Clocking-Work-Time"><span class="section-number-3">5.6.</span> <a href="#Clocking-Work-Time">Clocking Work Time</a></h3>
 <div class="outline-text-3" id="text-Clocking-Work-Time">
 <p>
 Let's keep track of the time we spend working on tasks that we may have captured
@@ -7242,7 +7184,7 @@ A few more settings:
 </div>
 
 <div id="outline-container-Finding-tasks-to-clock-in" class="outline-4">
-<h4 id="Finding-tasks-to-clock-in"><span class="section-number-4">8.6.1.</span> <a href="#Finding-tasks-to-clock-in">Finding tasks to clock in</a></h4>
+<h4 id="Finding-tasks-to-clock-in"><span class="section-number-4">5.6.1.</span> <a href="#Finding-tasks-to-clock-in">Finding tasks to clock in</a></h4>
 <div class="outline-text-4" id="text-Finding-tasks-to-clock-in">
 <p>
 Use one of the following options, with the top-most being the first to be tried.
@@ -7261,7 +7203,7 @@ Use one of the following options, with the top-most being the first to be tried.
 </div>
 
 <div id="outline-container-Estimates-versus-actual-time" class="outline-4">
-<h4 id="Estimates-versus-actual-time"><span class="section-number-4">8.6.2.</span> <a href="#Estimates-versus-actual-time">Estimates versus actual time</a></h4>
+<h4 id="Estimates-versus-actual-time"><span class="section-number-4">5.6.2.</span> <a href="#Estimates-versus-actual-time">Estimates versus actual time</a></h4>
 <div class="outline-text-4" id="text-Estimates-versus-actual-time">
 <p>
 Before clocking into a task, add to the properties drawer <code>:Effort: 1:25</code> or <code>C-c
@@ -7298,7 +7240,7 @@ When you've gone above your estimate time, the modeline colours it red.
 </div>
 
 <div id="outline-container-Habit-Formation" class="outline-3">
-<h3 id="Habit-Formation"><span class="section-number-3">8.7.</span> <a href="#Habit-Formation">Habit Formation</a></h3>
+<h3 id="Habit-Formation"><span class="section-number-3">5.7.</span> <a href="#Habit-Formation">Habit Formation</a></h3>
 <div class="outline-text-3" id="text-Habit-Formation">
 <p>
 <i>The</i> reason to use habits is that they come with a graph indicating consistency
@@ -7348,7 +7290,7 @@ red is overdue, and blue is an acceptable break day.
 Here's an example habit from the <a href="https://orgmode.org/manual/Tracking-your-habits.html">Org-mode manual</a>, where <code>.+𝒳d/𝒴d</code> reads
 <i>perform the habit once every 𝒳 days, but never let me go 𝒴 days without doing it.</i>
 </p>
-<pre class="example" id="org4b56bce">
+<pre class="example" id="orgbee186a">
 ** TODO Shave
    SCHEDULED: &lt;2020-01-08 Wed .+2d/4d&gt;
    :PROPERTIES:
@@ -7369,7 +7311,7 @@ any <code>g</code> will revert the change in the agenda buffer.
 </div>
 
 <div id="outline-container-Actually-Doing-Things" class="outline-3">
-<h3 id="Actually-Doing-Things"><span class="section-number-3">8.8.</span> <a href="#Actually-Doing-Things">Actually Doing Things &#x2014;or <i>Sending notifications from Emacs</i></a></h3>
+<h3 id="Actually-Doing-Things"><span class="section-number-3">5.8.</span> <a href="#Actually-Doing-Things">Actually Doing Things &#x2014;or <i>Sending notifications from Emacs</i></a></h3>
 <div class="outline-text-3" id="text-Actually-Doing-Things">
 <p>
 Let's setup a little audio-visual reminder to regularly check my agenda
@@ -7507,7 +7449,7 @@ link back to the source.</li>
 </div>
 
 <div id="outline-container-Cosmetics" class="outline-2">
-<h2 id="Cosmetics"><span class="section-number-2">9.</span> <a href="#Cosmetics">Cosmetics</a></h2>
+<h2 id="Cosmetics"><span class="section-number-2">6.</span> <a href="#Cosmetics">Cosmetics</a></h2>
 <div class="outline-text-2" id="text-Cosmetics">
 <p>
 Upon startup, we want to be greeted with a useful, yet unobtrusive, message
@@ -7527,7 +7469,7 @@ is found with <code>M-x dired</code> ---<abbr class="tooltip" title="''Edit'' di
 </div>
 
 <div id="outline-container-Startup-message-Emacs-Org-versions" class="outline-3">
-<h3 id="Startup-message-Emacs-Org-versions"><span class="section-number-3">9.1.</span> <a href="#Startup-message-Emacs-Org-versions">Startup message: Emacs &amp; Org versions</a></h3>
+<h3 id="Startup-message-Emacs-Org-versions"><span class="section-number-3">6.1.</span> <a href="#Startup-message-Emacs-Org-versions">Startup message: Emacs &amp; Org versions</a></h3>
 <div class="outline-text-3" id="text-Startup-message-Emacs-Org-versions">
 <p>
 Let's always welcome ourselves when Emacs begins with a helpful message.  For
@@ -7553,7 +7495,7 @@ primary tools.
 <p>
 Now my startup message is,
 </p>
-<pre class="example" id="org0cb15d0">
+<pre class="example" id="org9fee6b2">
 Welcome Musa Al-hassy! Emacs 27.1; Org-mode 9.4.4; System darwin/Musas-MacBook-Air.local; Time 13.331914 seconds
 </pre>
 <p>
@@ -7568,7 +7510,7 @@ as well as a nice ‘motto’:
 </div>
 </div>
 <div id="outline-container-My-to-do-list-The-initial-buffer-when-Emacs-opens-up" class="outline-3">
-<h3 id="My-to-do-list-The-initial-buffer-when-Emacs-opens-up"><span class="section-number-3">9.2.</span> <a href="#My-to-do-list-The-initial-buffer-when-Emacs-opens-up">My to-do list: The initial buffer when Emacs opens up</a></h3>
+<h3 id="My-to-do-list-The-initial-buffer-when-Emacs-opens-up"><span class="section-number-3">6.2.</span> <a href="#My-to-do-list-The-initial-buffer-when-Emacs-opens-up">My to-do list: The initial buffer when Emacs opens up</a></h3>
 <div class="outline-text-3" id="text-My-to-do-list-The-initial-buffer-when-Emacs-opens-up">
 <p>
 I almost always have Emacs open; I don't need a dashboard, but would like to see
@@ -7601,7 +7543,7 @@ yet minimalist splash screen showing recent files, projects, and bookmarks.
 </div>
 
 <div id="outline-container-A-sleek-informative-and-fancy-mode-line" class="outline-3">
-<h3 id="A-sleek-informative-and-fancy-mode-line"><span class="section-number-3">9.3.</span> <a href="#A-sleek-informative-and-fancy-mode-line">A sleek, informative, &amp; fancy mode line</a></h3>
+<h3 id="A-sleek-informative-and-fancy-mode-line"><span class="section-number-3">6.3.</span> <a href="#A-sleek-informative-and-fancy-mode-line">A sleek, informative, &amp; fancy mode line</a></h3>
 <div class="outline-text-3" id="text-A-sleek-informative-and-fancy-mode-line">
 <p>
 The ‘modeline’ is a part near the bottom of Emacs that gives information about
@@ -7663,7 +7605,7 @@ For fine-grained control on what/how things appear, there is
 </div>
 </div>
 <div id="outline-container-Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled" class="outline-4">
-<h4 id="Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled"><span class="section-number-4">9.3.1.</span> <a href="#Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled">Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled</a></h4>
+<h4 id="Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled"><span class="section-number-4">6.3.1.</span> <a href="#Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled">Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled</a></h4>
 <div class="outline-text-4" id="text-Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled">
 <p>
 Enabled minor modes clutter up the modeline with their names, albeit some have
@@ -7687,7 +7629,7 @@ configurations gear icon. ⚙. :gear:
 </div>
 </div>
 <div id="outline-container-Nice-battery-icon-alongside-with-percentage-in-doom-modeline" class="outline-4">
-<h4 id="Nice-battery-icon-alongside-with-percentage-in-doom-modeline"><span class="section-number-4">9.3.2.</span> <a href="#Nice-battery-icon-alongside-with-percentage-in-doom-modeline">Nice battery icon alongside with percentage, in doom-modeline</a></h4>
+<h4 id="Nice-battery-icon-alongside-with-percentage-in-doom-modeline"><span class="section-number-4">6.3.2.</span> <a href="#Nice-battery-icon-alongside-with-percentage-in-doom-modeline">Nice battery icon alongside with percentage, in doom-modeline</a></h4>
 <div class="outline-text-4" id="text-Nice-battery-icon-alongside-with-percentage-in-doom-modeline">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #91889B;">;; </span><span style="color: #91889B;">If not for doom-modeline, we'd need to use fancy-battery-mode.el.</span>
@@ -7731,7 +7673,7 @@ longer maintained. It works on my machine.
 </div>
 
 <div id="outline-container-Time-date" class="outline-4">
-<h4 id="Time-date"><span class="section-number-4">9.3.3.</span> <a href="#Time-date">Time &amp; date</a></h4>
+<h4 id="Time-date"><span class="section-number-4">6.3.3.</span> <a href="#Time-date">Time &amp; date</a></h4>
 <div class="outline-text-4" id="text-Time-date">
 <p>
 Let’s display the current time, with updates every second.
@@ -7766,7 +7708,7 @@ for; so let's disable those.
 </div>
 
 <div id="outline-container-Column-Numbers" class="outline-4">
-<h4 id="Column-Numbers"><span class="section-number-4">9.3.4.</span> <a href="#Column-Numbers">Column Numbers</a></h4>
+<h4 id="Column-Numbers"><span class="section-number-4">6.3.4.</span> <a href="#Column-Numbers">Column Numbers</a></h4>
 <div class="outline-text-4" id="text-Column-Numbers">
 <p>
 Likewise, let's have the modeline display column numbers, but not line numbers.
@@ -7785,7 +7727,7 @@ as necessary.
 </div>
 </div>
 <div id="outline-container-Exquisite-Fonts-and-Themes" class="outline-3">
-<h3 id="Exquisite-Fonts-and-Themes"><span class="section-number-3">9.4.</span> <a href="#Exquisite-Fonts-and-Themes">Exquisite Fonts and Themes</a></h3>
+<h3 id="Exquisite-Fonts-and-Themes"><span class="section-number-3">6.4.</span> <a href="#Exquisite-Fonts-and-Themes">Exquisite Fonts and Themes</a></h3>
 <div class="outline-text-3" id="text-Exquisite-Fonts-and-Themes">
 <p>
 Emacs' default theme leaves much to be desired: It does not look sleek and
@@ -7986,7 +7928,7 @@ get a nice font selection menu &#x2014;this can be useful for your own ‘person
 </div>
 </div>
 <div id="outline-container-Never-lose-the-cursor" class="outline-3">
-<h3 id="Never-lose-the-cursor"><span class="section-number-3">9.5.</span> <a href="#Never-lose-the-cursor">Never lose the cursor</a></h3>
+<h3 id="Never-lose-the-cursor"><span class="section-number-3">6.5.</span> <a href="#Never-lose-the-cursor">Never lose the cursor</a></h3>
 <div class="outline-text-3" id="text-Never-lose-the-cursor">
 <p>
 Let's have the entire line containing the cursour be slightly highlighted.
@@ -8012,7 +7954,7 @@ When we switch windows or scroll, for example, we get a wave of light near the c
 </div>
 
 <div id="outline-container-Dimming-Unused-Windows" class="outline-3">
-<h3 id="Dimming-Unused-Windows"><span class="section-number-3">9.6.</span> <a href="#Dimming-Unused-Windows">Dimming Unused Windows</a></h3>
+<h3 id="Dimming-Unused-Windows"><span class="section-number-3">6.6.</span> <a href="#Dimming-Unused-Windows">Dimming Unused Windows</a></h3>
 <div class="outline-text-3" id="text-Dimming-Unused-Windows">
 <p>
 Let's dim windows, and even the whole Emacs frame, when not in use.
@@ -8031,7 +7973,7 @@ on. It's nifty, but not for me.
 </div>
 
 <div id="outline-container-Flashing-when-something-goes-wrong" class="outline-3">
-<h3 id="Flashing-when-something-goes-wrong"><span class="section-number-3">9.7.</span> <a href="#Flashing-when-something-goes-wrong">Flashing when something goes wrong</a></h3>
+<h3 id="Flashing-when-something-goes-wrong"><span class="section-number-3">6.7.</span> <a href="#Flashing-when-something-goes-wrong">Flashing when something goes wrong</a></h3>
 <div class="outline-text-3" id="text-Flashing-when-something-goes-wrong">
 <p>
 Enable flashing mode-line on errors. E.g., <code>C-g</code>, or calling an unbound key
@@ -8061,7 +8003,7 @@ a blinking cursours prompts me to continue upwards and onwards.
 </div>
 
 <div id="outline-container-Hiding-Scrollbar-tool-bar-and-menu" class="outline-3">
-<h3 id="Hiding-Scrollbar-tool-bar-and-menu"><span class="section-number-3">9.8.</span> <a href="#Hiding-Scrollbar-tool-bar-and-menu">Hiding Scrollbar, tool bar, and menu</a></h3>
+<h3 id="Hiding-Scrollbar-tool-bar-and-menu"><span class="section-number-3">6.8.</span> <a href="#Hiding-Scrollbar-tool-bar-and-menu">Hiding Scrollbar, tool bar, and menu</a></h3>
 <div class="outline-text-3" id="text-Hiding-Scrollbar-tool-bar-and-menu">
 <p>
 As a laptop user, screen space is important, so let's remove rarely used visual
@@ -8078,7 +8020,7 @@ items.
 </div>
 
 <div id="outline-container-Highlight-complete-parenthesis-pair-when-cursor-is-near" class="outline-3">
-<h3 id="Highlight-complete-parenthesis-pair-when-cursor-is-near"><span class="section-number-3">9.9.</span> <a href="#Highlight-complete-parenthesis-pair-when-cursor-is-near">Highlight &amp; complete parenthesis pair when cursor is near ;-)</a></h3>
+<h3 id="Highlight-complete-parenthesis-pair-when-cursor-is-near"><span class="section-number-3">6.9.</span> <a href="#Highlight-complete-parenthesis-pair-when-cursor-is-near">Highlight &amp; complete parenthesis pair when cursor is near ;-)</a></h3>
 <div class="outline-text-3" id="text-Highlight-complete-parenthesis-pair-when-cursor-is-near">
 <p>
 Highlight matching ‘parenthesis’ when near one of them.
@@ -8169,7 +8111,7 @@ Org headers, for which the ‘completed closing pair’ must tiresomely be delet
 </div>
 </div>
 <div id="outline-container-Proportional-fonts-for-Headlines" class="outline-3">
-<h3 id="Proportional-fonts-for-Headlines"><span class="section-number-3">9.10.</span> <a href="#Proportional-fonts-for-Headlines">Proportional fonts for Headlines</a></h3>
+<h3 id="Proportional-fonts-for-Headlines"><span class="section-number-3">6.10.</span> <a href="#Proportional-fonts-for-Headlines">Proportional fonts for Headlines</a></h3>
 <div class="outline-text-3" id="text-Proportional-fonts-for-Headlines">
 <p>
 Let's have headings stick out a bit.
@@ -8196,7 +8138,7 @@ Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
 </div>
 
 <div id="outline-container-Making-Block-Delimiters-Less-Intrusive" class="outline-3">
-<h3 id="Making-Block-Delimiters-Less-Intrusive"><span class="section-number-3">9.11.</span> <a href="#Making-Block-Delimiters-Less-Intrusive">Making Block Delimiters Less Intrusive</a></h3>
+<h3 id="Making-Block-Delimiters-Less-Intrusive"><span class="section-number-3">6.11.</span> <a href="#Making-Block-Delimiters-Less-Intrusive">Making Block Delimiters Less Intrusive</a></h3>
 <div class="outline-text-3" id="text-Making-Block-Delimiters-Less-Intrusive">
 <p>
 Let us render Org-mode's <code>#+begin_src</code> and <code>#+end_src</code> less obtrusively by,
@@ -8360,7 +8302,7 @@ A nice sanity:
 </div>
 
 <div id="outline-container-Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG" class="outline-3">
-<h3 id="Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG"><span class="section-number-3">9.12.</span> <a href="#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG">Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG</a></h3>
+<h3 id="Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG"><span class="section-number-3">6.12.</span> <a href="#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG">Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG</a></h3>
 <div class="outline-text-3" id="text-Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG">
 <p>
 Let's make some things prettier than they appear by default.
@@ -8480,7 +8422,7 @@ environments &#x2014;for personal environments, just <code>(add-to-list
 
 <p>
 This approach does not work well for forming diagrams; I've tried to make tikzcd
-work this way and failed.  Using <abbr class="tooltip" title="Execute a block of latex-as-png code with org-babel.<br>This function is called by ‘org-babel-execute-src-block’<br><br>Such blocks have two notable header arguments, PARAMS, both optional:<br>:file&emsp;&emsp;&emsp; ⇒ The name of the resulting PNG; any extensions are ignored.<br>:resolution ⇒ The resolution; by default 150.<br><br>Argument CONTENTS is the source text of the block.<br><br>(fn CONTENTS PARAMS)">ob-latex-as-png</abbr> as a substitute.
+work this way and failed.  Using <abbr class="tooltip" title="Execute a block of latex-as-png code with org-babel.<br>This function is called by ‘org-babel-execute-src-block’<br><br>Such blocks have two notable header arguments, PARAMS, both optional:<br>:file&emsp;&emsp;&emsp; ⇒ The name of the resulting PNG; any extensions are ignored.<br>:resolution ⇒ The resolution; by default 150.<br><br>Argument CONTENTS is the source text of the block.">ob-latex-as-png</abbr> as a substitute.
 </p>
 
 <div class="org-src-container">
@@ -8507,7 +8449,7 @@ blocks; as well as figure blocks. For equation blocks, you must use a
 </div>
 
 <div id="outline-container-Show-off-screen-heading-at-the-top-of-the-window" class="outline-3">
-<h3 id="Show-off-screen-heading-at-the-top-of-the-window"><span class="section-number-3">9.13.</span> <a href="#Show-off-screen-heading-at-the-top-of-the-window">Show off-screen heading at the top of the window</a></h3>
+<h3 id="Show-off-screen-heading-at-the-top-of-the-window"><span class="section-number-3">6.13.</span> <a href="#Show-off-screen-heading-at-the-top-of-the-window">Show off-screen heading at the top of the window</a></h3>
 <div class="outline-text-3" id="text-Show-off-screen-heading-at-the-top-of-the-window">
 <p>
 In case we forgot which heading we're under, let's keep
@@ -8526,7 +8468,7 @@ the current heading stuck at the top of the window.
 </div>
 </div>
 <div id="outline-container-Powerful-Directory-Editing-with-dired" class="outline-3">
-<h3 id="Powerful-Directory-Editing-with-dired"><span class="section-number-3">9.14.</span> <a href="#Powerful-Directory-Editing-with-dired">Powerful Directory Editing with <code>dired</code></a></h3>
+<h3 id="Powerful-Directory-Editing-with-dired"><span class="section-number-3">6.14.</span> <a href="#Powerful-Directory-Editing-with-dired">Powerful Directory Editing with <code>dired</code></a></h3>
 <div class="outline-text-3" id="text-Powerful-Directory-Editing-with-dired">
 <p>
 ⟨ <code>C-x C-v</code> to open a file or directory in dired, using the current buffer. ⟩
@@ -8708,7 +8650,7 @@ display of parent directories along with a file preview mechanism.</li>
 </div>
 
 <div id="outline-container-Persistent-Scratch-Buffer" class="outline-3">
-<h3 id="Persistent-Scratch-Buffer"><span class="section-number-3">9.15.</span> <a href="#Persistent-Scratch-Buffer">Persistent Scratch Buffer</a></h3>
+<h3 id="Persistent-Scratch-Buffer"><span class="section-number-3">6.15.</span> <a href="#Persistent-Scratch-Buffer">Persistent Scratch Buffer</a></h3>
 <div class="outline-text-3" id="text-Persistent-Scratch-Buffer">
 <p>
 The <code>*scratch*</code> buffer is a nice playground for temporary data or experiments.
@@ -8762,7 +8704,7 @@ I use Org-mode often, so that's how I want things to appear.
 </div>
 
 <div id="outline-container-Tabs" class="outline-3">
-<h3 id="Tabs"><span class="section-number-3">9.16.</span> <a href="#Tabs">Tabs</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
+<h3 id="Tabs"><span class="section-number-3">6.16.</span> <a href="#Tabs">Tabs</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
 <div class="outline-text-3" id="text-Tabs">
 <p>
 I really like my Helm-supported <code>C-x b</code>, but the visial appeal of a <a href="https://github.com/manateelazycat/awesome-tab">tab bar</a> for Emacs
@@ -8793,7 +8735,7 @@ An alternative is <a href="https://github.com/ema2159/centaur-tabs">centaur-tabs
 </div>
 
 <div id="outline-container-Window-resizing-using-the-golden-ratio" class="outline-3">
-<h3 id="Window-resizing-using-the-golden-ratio"><span class="section-number-3">9.17.</span> <a href="#Window-resizing-using-the-golden-ratio">Window resizing using the golden ratio</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
+<h3 id="Window-resizing-using-the-golden-ratio"><span class="section-number-3">6.17.</span> <a href="#Window-resizing-using-the-golden-ratio">Window resizing using the golden ratio</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
 <div class="outline-text-3" id="text-Window-resizing-using-the-golden-ratio">
 <p>
 Let's load the following package, which automatically resizes windows so that
@@ -8817,7 +8759,7 @@ After some time this got a bit annoying and I'm no longer  using this.
 </div>
 
 <div id="outline-container-Org-Emphasise-for-Parts-of-Words" class="outline-3">
-<h3 id="Org-Emphasise-for-Parts-of-Words"><span class="section-number-3">9.18.</span> <a href="#Org-Emphasise-for-Parts-of-Words">Org-Emphasise for Parts of Words</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
+<h3 id="Org-Emphasise-for-Parts-of-Words"><span class="section-number-3">6.18.</span> <a href="#Org-Emphasise-for-Parts-of-Words">Org-Emphasise for Parts of Words</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h3>
 <div class="outline-text-3" id="text-Org-Emphasise-for-Parts-of-Words">
 <p>
 From <a href="https://stackoverflow.com/a/24540651/3550444">stackoverflow</a>, the following incantation allows us to have
@@ -8840,7 +8782,7 @@ lengthy phrase being emphasised.
 </div>
 
 <div id="outline-container-Preview-link-under-cursor" class="outline-3">
-<h3 id="Preview-link-under-cursor"><span class="section-number-3">9.19.</span> <a href="#Preview-link-under-cursor">Preview link under cursor</a></h3>
+<h3 id="Preview-link-under-cursor"><span class="section-number-3">6.19.</span> <a href="#Preview-link-under-cursor">Preview link under cursor</a></h3>
 <div class="outline-text-3" id="text-Preview-link-under-cursor">
 <p>
 When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
@@ -8875,7 +8817,7 @@ Likewise, I'd like to preview line when executing the <abbr class="tooltip" titl
 </div>
 
 <div id="outline-container-Prose" class="outline-2">
-<h2 id="Prose"><span class="section-number-2">10.</span> <a href="#Prose">Prose</a></h2>
+<h2 id="Prose"><span class="section-number-2">7.</span> <a href="#Prose">Prose</a></h2>
 <div class="outline-text-2" id="text-Prose">
 <p>
 Emacs can be setup with a spellchecker and other expected features of a word processing tool
@@ -8890,7 +8832,7 @@ essentially text (•̀ᴗ•́)و
 
 
 <div id="outline-container-Whitespace" class="outline-3">
-<h3 id="Whitespace"><span class="section-number-3">10.1.</span> <a href="#Whitespace">Whitespace</a></h3>
+<h3 id="Whitespace"><span class="section-number-3">7.1.</span> <a href="#Whitespace">Whitespace</a></h3>
 <div class="outline-text-3" id="text-Whitespace">
 <p>
 Let's start off by cleaning-up any accidental trailing whitespace and in other
@@ -8908,7 +8850,7 @@ See <a href="http://ergoemacs.org/emacs/whitespace-mode.html">here</a> for makin
 </div>
 
 <div id="outline-container-Formatting-Text" class="outline-3">
-<h3 id="Formatting-Text"><span class="section-number-3">10.2.</span> <a href="#Formatting-Text">Formatting Text</a></h3>
+<h3 id="Formatting-Text"><span class="section-number-3">7.2.</span> <a href="#Formatting-Text">Formatting Text</a></h3>
 <div class="outline-text-3" id="text-Formatting-Text">
 <p>
 The following incantation, <abbr class="tooltip" title="Surround selected region with the given Org emphasises marker.<br><br>E.g., if this command is bound to “C-c f” then the sequence<br>“C-c f b” would make the currenly selected text be bold.<br>Likewise, “C-c f *” would achieve the same goal.<br><br>When you press “C-c f”, a message is shown with a list of<br>useful single-character completions.<br><br>Note: “C-c f 𝓍”, for an unrecognised marker 𝓍, just inserts<br>the character 𝓍 before and after the selected text.">my/org-mode-format</abbr>, makes it so that we can
@@ -8963,7 +8905,7 @@ completions) then press the symbol we want our text to be surrounded with.
 </div>
 
 <div id="outline-container-Fill-mode-Word-Wrapping" class="outline-3">
-<h3 id="Fill-mode-Word-Wrapping"><span class="section-number-3">10.3.</span> <a href="#Fill-mode-Word-Wrapping">Fill-mode &#x2014;Word Wrapping</a></h3>
+<h3 id="Fill-mode-Word-Wrapping"><span class="section-number-3">7.3.</span> <a href="#Fill-mode-Word-Wrapping">Fill-mode &#x2014;Word Wrapping</a></h3>
 <div class="outline-text-3" id="text-Fill-mode-Word-Wrapping">
 <p>
 In fill mode, when you type past the end of a line, Emacs automatically starts a
@@ -9029,7 +8971,7 @@ using smaller frames.
 </div>
 
 <div id="outline-container-Pretty-Lists-Markers" class="outline-3">
-<h3 id="Pretty-Lists-Markers"><span class="section-number-3">10.4.</span> <a href="#Pretty-Lists-Markers">Pretty Lists Markers</a></h3>
+<h3 id="Pretty-Lists-Markers"><span class="section-number-3">7.4.</span> <a href="#Pretty-Lists-Markers">Pretty Lists Markers</a></h3>
 <div class="outline-text-3" id="text-Pretty-Lists-Markers">
 <p>
 When writing, it's common to use <code>+,-,*</code> to enumerate unordered lists
@@ -9051,7 +8993,7 @@ them visually as Unicode bullets.
 </div>
 
 <div id="outline-container-Fix-spelling-as-you-type-thesaurus-dictionary-too" class="outline-3">
-<h3 id="Fix-spelling-as-you-type-thesaurus-dictionary-too"><span class="section-number-3">10.5.</span> <a href="#Fix-spelling-as-you-type-thesaurus-dictionary-too">Fix spelling as you type &#x2014;thesaurus &amp; dictionary too!</a></h3>
+<h3 id="Fix-spelling-as-you-type-thesaurus-dictionary-too"><span class="section-number-3">7.5.</span> <a href="#Fix-spelling-as-you-type-thesaurus-dictionary-too">Fix spelling as you type &#x2014;thesaurus &amp; dictionary too!</a></h3>
 <div class="outline-text-3" id="text-Fix-spelling-as-you-type-thesaurus-dictionary-too">
 <p>
 I would like to check spelling on the fly.
@@ -9204,7 +9146,7 @@ think is not ideal since it provides way less information.
 </div>
 </div>
 <div id="outline-container-Using-a-Grammar-Style-Checker" class="outline-3">
-<h3 id="Using-a-Grammar-Style-Checker"><span class="section-number-3">10.6.</span> <a href="#Using-a-Grammar-Style-Checker">Using a Grammar &amp; Style Checker</a></h3>
+<h3 id="Using-a-Grammar-Style-Checker"><span class="section-number-3">7.6.</span> <a href="#Using-a-Grammar-Style-Checker">Using a Grammar &amp; Style Checker</a></h3>
 <div class="outline-text-3" id="text-Using-a-Grammar-Style-Checker">
 <p>
 [ A possibly better alternative is <a href="https://emacstil.com/til/2022/03/05/setting-up-vale-prose-linter-on-emacs/">Vale</a>. ]
@@ -9232,7 +9174,7 @@ when we click on them we get the reason why; then we may invoke
 and finally invoke <code>langtool-check-done</code> to stop any remaining red colouring.
 </p>
 
-<pre class="example" id="org17b8f35">
+<pre class="example" id="org8797e97">
 LanguageTool offers spell and grammar checking. Just paste your text here
 and click the 'Check Text' button. Click the colored phrases for details
 on potential errors. or use this text too see an few of of the problems
@@ -9269,7 +9211,7 @@ The checking command is silent, we added a bit of comforting acknowledgement to 
 </div>
 
 <div id="outline-container-Lightweight-Prose-Proofchecking" class="outline-3">
-<h3 id="Lightweight-Prose-Proofchecking"><span class="section-number-3">10.7.</span> <a href="#Lightweight-Prose-Proofchecking">Lightweight Prose Proofchecking</a></h3>
+<h3 id="Lightweight-Prose-Proofchecking"><span class="section-number-3">7.7.</span> <a href="#Lightweight-Prose-Proofchecking">Lightweight Prose Proofchecking</a></h3>
 <div class="outline-text-3" id="text-Lightweight-Prose-Proofchecking">
 <p>
 Let's <a href="https://github.com/bnbeckwith/writegood-mode">write good</a>!
@@ -9358,7 +9300,7 @@ Harder to catch manually, but easier mechanically ;-)
 </div>
 
 <div id="outline-container-Placeholder-Text-For-Learning-Experimenting" class="outline-3">
-<h3 id="Placeholder-Text-For-Learning-Experimenting"><span class="section-number-3">10.8.</span> <a href="#Placeholder-Text-For-Learning-Experimenting">Placeholder Text &#x2014;For Learning &amp; Experimenting</a></h3>
+<h3 id="Placeholder-Text-For-Learning-Experimenting"><span class="section-number-3">7.8.</span> <a href="#Placeholder-Text-For-Learning-Experimenting">Placeholder Text &#x2014;For Learning &amp; Experimenting</a></h3>
 <div class="outline-text-3" id="text-Placeholder-Text-For-Learning-Experimenting">
 <p>
 When learning about Emacs formatting commands, such as zap-to-char <code>M-z</code>
@@ -9387,7 +9329,7 @@ bindings on lorem ipsum, gibberish text.
 </div>
 
 <div id="outline-container-Some-text-to-make-us-smile" class="outline-3">
-<h3 id="Some-text-to-make-us-smile"><span class="section-number-3">10.9.</span> <a href="#Some-text-to-make-us-smile">Some text to make us smile</a></h3>
+<h3 id="Some-text-to-make-us-smile"><span class="section-number-3">7.9.</span> <a href="#Some-text-to-make-us-smile">Some text to make us smile</a></h3>
 <div class="outline-text-3" id="text-Some-text-to-make-us-smile">
 <p>
 The  <a href="https://github.com/davep/dad-joke.el">dad-joke</a> queries <a href="https://icanhazdadjoke.com">https://icanhazdadjoke.com</a> to bring us some funny.
@@ -9412,7 +9354,7 @@ weekdays.
 </div>
 
 <div id="outline-container-Unicode-Input-via-Agda-Input" class="outline-3">
-<h3 id="Unicode-Input-via-Agda-Input"><span class="section-number-3">10.10.</span> <a href="#Unicode-Input-via-Agda-Input">Unicode Input via Agda Input</a></h3>
+<h3 id="Unicode-Input-via-Agda-Input"><span class="section-number-3">7.10.</span> <a href="#Unicode-Input-via-Agda-Input">Unicode Input via Agda Input</a></h3>
 <div class="outline-text-3" id="text-Unicode-Input-via-Agda-Input">
 <p>
 <a href="https://mazzo.li/posts/AgdaSort.html">Agda</a> is one of my favourite languages, it's like Haskell on steroids.  Let's set
@@ -9663,7 +9605,7 @@ Note that the effect of <a href="http://ergoemacs.org/emacs/emacs_n_unicode.html
 </div>
 
 <div id="outline-container-Increase-decrease-text-size" class="outline-3">
-<h3 id="Increase-decrease-text-size"><span class="section-number-3">10.11.</span> <a href="#Increase-decrease-text-size">Increase/decrease text size</a></h3>
+<h3 id="Increase-decrease-text-size"><span class="section-number-3">7.11.</span> <a href="#Increase-decrease-text-size">Increase/decrease text size</a></h3>
 <div class="outline-text-3" id="text-Increase-decrease-text-size">
 <p>
 The ‘usual’ text zoom keys <code>C-±</code> …
@@ -9707,7 +9649,7 @@ cua-mode</code> to enable <a href="https://www.gnu.org/software/emacs/manual/htm
 </div>
 
 <div id="outline-container-Moving-Text-Around" class="outline-3">
-<h3 id="Moving-Text-Around"><span class="section-number-3">10.12.</span> <a href="#Moving-Text-Around">Moving Text Around</a></h3>
+<h3 id="Moving-Text-Around"><span class="section-number-3">7.12.</span> <a href="#Moving-Text-Around">Moving Text Around</a></h3>
 <div class="outline-text-3" id="text-Moving-Text-Around">
 <p>
 This extends Org-mode's <code>M-↑,↓</code> to other modes, such as when coding.
@@ -9722,7 +9664,7 @@ This extends Org-mode's <code>M-↑,↓</code> to other modes, such as when codi
 </div>
 
 <div id="outline-container-Enabling-CamelCase-Aware-Editing-Operations" class="outline-3">
-<h3 id="Enabling-CamelCase-Aware-Editing-Operations"><span class="section-number-3">10.13.</span> <a href="#Enabling-CamelCase-Aware-Editing-Operations">Enabling CamelCase Aware Editing Operations</a></h3>
+<h3 id="Enabling-CamelCase-Aware-Editing-Operations"><span class="section-number-3">7.13.</span> <a href="#Enabling-CamelCase-Aware-Editing-Operations">Enabling CamelCase Aware Editing Operations</a></h3>
 <div class="outline-text-3" id="text-Enabling-CamelCase-Aware-Editing-Operations">
 <p>
 <a href="https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html">Subword</a> movement lets us treat “EmacsIsAwesome” as three words
@@ -9739,7 +9681,7 @@ is common among coders. Now, for example, <code>M-f</code> moves along each subw
 </div>
 
 <div id="outline-container-Delete-Selection-Mode" class="outline-3">
-<h3 id="Delete-Selection-Mode"><span class="section-number-3">10.14.</span> <a href="#Delete-Selection-Mode">Delete Selection Mode</a></h3>
+<h3 id="Delete-Selection-Mode"><span class="section-number-3">7.14.</span> <a href="#Delete-Selection-Mode">Delete Selection Mode</a></h3>
 <div class="outline-text-3" id="text-Delete-Selection-Mode">
 <p>
 Delete Selection mode lets you treat an Emacs region much like a typical text
@@ -9754,7 +9696,7 @@ selected text just by hitting the backspace key.
 </div>
 </div>
 <div id="outline-container-M-n-p-Word-at-Point-Navigation" class="outline-3">
-<h3 id="M-n-p-Word-at-Point-Navigation"><span class="section-number-3">10.15.</span> <a href="#M-n-p-Word-at-Point-Navigation">  <code>M-n,p</code>: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word</a></h3>
+<h3 id="M-n-p-Word-at-Point-Navigation"><span class="section-number-3">7.15.</span> <a href="#M-n-p-Word-at-Point-Navigation">  <code>M-n,p</code>: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word</a></h3>
 <div class="outline-text-3" id="text-M-n-p-Word-at-Point-Navigation">
 <p>
 Let's mimic the <code>C-n,p</code> constructs from line to word, so that unoccupied <code>M-n,p</code> now
@@ -9829,7 +9771,7 @@ not provide the highlighting occurances at point.
 </div>
 </div>
 <div id="outline-container-Letter-based-Navigation" class="outline-3">
-<h3 id="Letter-based-Navigation"><span class="section-number-3">10.16.</span> <a href="#Letter-based-Navigation">Letter-based Navigation</a></h3>
+<h3 id="Letter-based-Navigation"><span class="section-number-3">7.16.</span> <a href="#Letter-based-Navigation">Letter-based Navigation</a></h3>
 <div class="outline-text-3" id="text-Letter-based-Navigation">
 <p>
 At a glance of possible positions, across windows,
@@ -9929,7 +9871,7 @@ Of course we can also use it without the asterisk; e.g.:
 </div>
 
 <div id="outline-container-C-c-e-n-p-Taking-a-tour-of-one's-edits" class="outline-3">
-<h3 id="C-c-e-n-p-Taking-a-tour-of-one's-edits"><span class="section-number-3">10.17.</span> <a href="#C-c-e-n-p-Taking-a-tour-of-one's-edits">  <code>C-c e n,p</code>: Taking a tour of one's edits</a></h3>
+<h3 id="C-c-e-n-p-Taking-a-tour-of-one's-edits"><span class="section-number-3">7.17.</span> <a href="#C-c-e-n-p-Taking-a-tour-of-one's-edits">  <code>C-c e n,p</code>: Taking a tour of one's edits</a></h3>
 <div class="outline-text-3" id="text-C-c-e-n-p-Taking-a-tour-of-one's-edits">
 <p>
 This package allows us to move around the edit points of a buffer <i>without</i>
@@ -9963,7 +9905,7 @@ navigate my recent edits <i>without</i> having to supply the prefix each time.
 </div>
 
 <div id="outline-container-visual-regexp" class="outline-3">
-<h3 id="visual-regexp"><span class="section-number-3">10.18.</span> <a href="#visual-regexp">visual-regexp</a></h3>
+<h3 id="visual-regexp"><span class="section-number-3">7.18.</span> <a href="#visual-regexp">visual-regexp</a></h3>
 <div class="outline-text-3" id="text-visual-regexp">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #91889B;">;; </span><span style="color: #91889B;">While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.</span>
@@ -9979,7 +9921,7 @@ navigate my recent edits <i>without</i> having to supply the prefix each time.
 </div>
 
 <div id="outline-container-Org-Mode-PDF-HTML" class="outline-3">
-<h3 id="Org-Mode-PDF-HTML"><span class="section-number-3">10.19.</span> <a href="#Org-Mode-PDF-HTML">LaTeX ⇐ Org-Mode</a></h3>
+<h3 id="Org-Mode-PDF-HTML"><span class="section-number-3">7.19.</span> <a href="#Org-Mode-PDF-HTML">LaTeX ⇐ Org-Mode</a></h3>
 <div class="outline-text-3" id="text-Org-Mode-PDF-HTML">
 <p>
 In this section we consider the Org-mode export for PDFs (LaTeX).
@@ -9989,7 +9931,7 @@ For example, we account for LaTeX citations.
 
 
 <div id="outline-container-Get-LaTeX" class="outline-4">
-<h4 id="Get-LaTeX"><span class="section-number-4">10.19.1.</span> <a href="#Get-LaTeX">Get LaTeX:</a></h4>
+<h4 id="Get-LaTeX"><span class="section-number-4">7.19.1.</span> <a href="#Get-LaTeX">Get LaTeX:</a></h4>
 <div class="outline-text-4" id="text-Get-LaTeX">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">(system-packages-ensure <span style="color: #B4DCE7;">"mactex"</span>)
@@ -10039,7 +9981,7 @@ Finally, within Emacs: <code>M-x pdf-tools-install</code>
 </div>
 </div>
 <div id="outline-container-Working-with-Citations" class="outline-4">
-<h4 id="Working-with-Citations"><span class="section-number-4">10.19.2.</span> <a href="#Working-with-Citations">Working with Citations</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span>&#xa0;<span class="Not_Used">Not_Used</span></span></h4>
+<h4 id="Working-with-Citations"><span class="section-number-4">7.19.2.</span> <a href="#Working-with-Citations">Working with Citations</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span>&#xa0;<span class="Not_Used">Not_Used</span></span></h4>
 <div class="outline-text-4" id="text-Working-with-Citations">
 <p>
 <a href="https://github.com/jkitchin/org-ref">An exquisite system</a> for handling references.
@@ -10090,7 +10032,7 @@ nicely to LaTeX &amp; HTML via the Org-mode exporter.
 </div>
 
 <div id="outline-container-Bibliography-Coloured-LaTeX-using-Minted" class="outline-4">
-<h4 id="Bibliography-Coloured-LaTeX-using-Minted"><span class="section-number-4">10.19.3.</span> <a href="#Bibliography-Coloured-LaTeX-using-Minted">Bibliography &amp; Coloured LaTeX using Minted</a></h4>
+<h4 id="Bibliography-Coloured-LaTeX-using-Minted"><span class="section-number-4">7.19.3.</span> <a href="#Bibliography-Coloured-LaTeX-using-Minted">Bibliography &amp; Coloured LaTeX using Minted</a></h4>
 <div class="outline-text-4" id="text-Bibliography-Coloured-LaTeX-using-Minted">
 <p>
 Execute the following for bibliography references as well as minted Org-mode
@@ -10111,7 +10053,7 @@ turn requires the pygmentize system tool.
 <p>
 For faster pdf generation, possibly with errors, consider invoking:
 </p>
-<pre class="example" id="orgedb4dc1">
+<pre class="example" id="org6cb7e12">
 (setq org-latex-pdf-process
       '("pdflatex -interaction nonstopmode -output-directory %o %f"))
 </pre>
@@ -10126,7 +10068,7 @@ which is not necessary ideal when using LaTeX.
 </div>
 
 <div id="outline-container-HTML-Org-mode" class="outline-3">
-<h3 id="HTML-Org-mode"><span class="section-number-3">10.20.</span> <a href="#HTML-Org-mode">HTML ⇐ Org-mode</a></h3>
+<h3 id="HTML-Org-mode"><span class="section-number-3">7.20.</span> <a href="#HTML-Org-mode">HTML ⇐ Org-mode</a></h3>
 <div class="outline-text-3" id="text-HTML-Org-mode">
 <p>
 In this section we consider the Org-mode exporters for PDFs and
@@ -10143,7 +10085,7 @@ anchors.
 </div>
 
 <div id="outline-container-Ensuring-Useful-HTML-Anchors" class="outline-4">
-<h4 id="Ensuring-Useful-HTML-Anchors"><span class="section-number-4">10.20.1.</span> <a href="#Ensuring-Useful-HTML-Anchors">Ensuring Useful HTML Anchors</a></h4>
+<h4 id="Ensuring-Useful-HTML-Anchors"><span class="section-number-4">7.20.1.</span> <a href="#Ensuring-Useful-HTML-Anchors">Ensuring Useful HTML Anchors</a></h4>
 <div class="outline-text-4" id="text-Ensuring-Useful-HTML-Anchors">
 <p>
 Upon HTML export, each tree heading is assigned an ID to be used for hyperlinks.
@@ -10205,7 +10147,7 @@ remaining consistent for when trees share similar properties.
 </div>
 
 <div id="outline-container-Clickable-Headlines" class="outline-4">
-<h4 id="Clickable-Headlines"><span class="section-number-4">10.20.2.</span> <a href="#Clickable-Headlines">Clickable Headlines</a></h4>
+<h4 id="Clickable-Headlines"><span class="section-number-4">7.20.2.</span> <a href="#Clickable-Headlines">Clickable Headlines</a></h4>
 <div class="outline-text-4" id="text-Clickable-Headlines">
 <p>
 By default, HTML export generates ID's to headlines so they may be referenced
@@ -10260,7 +10202,7 @@ Need to have a custom id declared.
 </div>
 </div>
 <div id="outline-container-HTML-Folded-Drawers" class="outline-4">
-<h4 id="HTML-Folded-Drawers"><span class="section-number-4">10.20.3.</span> <a href="#HTML-Folded-Drawers">HTML “Folded Drawers”</a></h4>
+<h4 id="HTML-Folded-Drawers"><span class="section-number-4">7.20.3.</span> <a href="#HTML-Folded-Drawers">HTML “Folded Drawers”</a></h4>
 <div class="outline-text-4" id="text-HTML-Folded-Drawers">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">(<span style="color: #40B4C4;">defun</span> <span style="color: #EB64B9;">my/org-drawer-format</span> (name contents)
@@ -10354,10 +10296,10 @@ Now that I've written this, I'm thinking it may have been preferably to use an o
 </div>
 
 <div id="outline-container-Diagrams-with-Mermaid-Not-Reccommended" class="outline-4">
-<h4 id="Diagrams-with-Mermaid-Not-Reccommended"><span class="section-number-4">10.20.4.</span> <a href="#Diagrams-with-Mermaid-Not-Reccommended">Diagrams with Mermaid &#x2014;Not Reccommended</a></h4>
+<h4 id="Diagrams-with-Mermaid-Not-Reccommended"><span class="section-number-4">7.20.4.</span> <a href="#Diagrams-with-Mermaid-Not-Reccommended">Diagrams with Mermaid &#x2014;Not Reccommended</a></h4>
 <div class="outline-text-4" id="text-Diagrams-with-Mermaid-Not-Reccommended">
 <p>
-Let's try out an alternative to PlantUML &#x2014;covered below in §<a href="#Workflow-States">8.5</a>.
+Let's try out an alternative to PlantUML &#x2014;covered below in §<a href="#Workflow-States">5.5</a>.
 </p>
 
 <p>
@@ -10382,7 +10324,7 @@ Then, let's get the associated <code>mermaid</code> package.
 Then, <code>C-c C-c</code> on the following:
 </p>
 
-<div id="orge64947c" class="figure">
+<div id="org1ff753d" class="figure">
 <p><img src="test.png" alt="test.png" />
 </p>
 </div>
@@ -10445,7 +10387,7 @@ E.g., I cannot produce pie charts using the command line tool.
 </div>
 
 <div id="outline-container-https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework" class="outline-4">
-<h4 id="https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework"><span class="section-number-4">10.20.5.</span> <a href="#https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework">  <a href="https://revealjs.com/?transition=zoom#/">Reveal.JS</a> &#x2013; The HTML Presentation Framework</a></h4>
+<h4 id="https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework"><span class="section-number-4">7.20.5.</span> <a href="#https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework">  <a href="https://revealjs.com/?transition=zoom#/">Reveal.JS</a> &#x2013; The HTML Presentation Framework</a></h4>
 <div class="outline-text-4" id="text-https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework">
 <p>
 Org-mode documents can be transformed into beautiful slide decks
@@ -10500,7 +10442,7 @@ resulting PDF locally.
 </div>
 
 <div id="outline-container-Org-mode-HTML" class="outline-4">
-<h4 id="Org-mode-HTML"><span class="section-number-4">10.20.6.</span> <a href="#Org-mode-HTML">Org-mode ⇐ HTML</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h4>
+<h4 id="Org-mode-HTML"><span class="section-number-4">7.20.6.</span> <a href="#Org-mode-HTML">Org-mode ⇐ HTML</a>&#xa0;&#xa0;&#xa0;<span class="tag"><span class="Disabled">Disabled</span></span></h4>
 <div class="outline-text-4" id="text-Org-mode-HTML">
 <p>
 The following let's us copy htlm into org format using eww, Emacs' built-in web browser.
@@ -10588,7 +10530,7 @@ Other useful functions, needing pandoc:
 </div>
 
 <div id="outline-container-Conclusion-Why-Configuration-Files-Should-be-Literate" class="outline-2">
-<h2 id="Conclusion-Why-Configuration-Files-Should-be-Literate"><span class="section-number-2">11.</span> <a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">Conclusion &#x2014;Why Configuration Files Should be Literate</a></h2>
+<h2 id="Conclusion-Why-Configuration-Files-Should-be-Literate"><span class="section-number-2">8.</span> <a href="#Conclusion-Why-Configuration-Files-Should-be-Literate">Conclusion &#x2014;Why Configuration Files Should be Literate</a></h2>
 <div class="outline-text-2" id="text-Conclusion-Why-Configuration-Files-Should-be-Literate">
 <p>
 A configuration file sets up various features for a tool &#x2014;and serves as an
@@ -10811,34 +10753,6 @@ Let's remove repeated matter.
 <span style="color: #91889B;">;; </span><span style="color: #91889B;">Also a helpful quick f-key.</span>
 (global-set-key (kbd <span style="color: #B4DCE7;">"&lt;f7&gt;"</span>) 'recompile)
 </pre>
-</div>
-</div>
-<div id="outline-container-Keeping-my-system-up-to-date" class="outline-3">
-<h3 id="Keeping-my-system-up-to-date"><span class="section-number-3">11.1.</span> <a href="#Keeping-my-system-up-to-date">Keeping my system up to date</a></h3>
-<div class="outline-text-3" id="text-Keeping-my-system-up-to-date">
-<p>
-Let's ensure our system is always up to date.
-</p>
-<div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #40B4C4;">defun</span> <span style="color: #EB64B9;">my/stay-up-to-date</span> ()
-  <span style="color: #919ea7;">"Ensure that OS and Emacs package listings are up to date.</span>
-
-<span style="color: #919ea7;">   Takes ~5 seconds when everything is up to date."</span>
-  (async-shell-command <span style="color: #B4DCE7;">"brew update &amp;&amp; brew upgrade"</span>)
-  (other-window 1)
-  (rename-buffer <span style="color: #B4DCE7;">"Keeping-system-up-to-date"</span>)
-
-  (package-refresh-contents 'please-do-so-in-the-background)
-  (message <span style="color: #B4DCE7;">"Updated Emacs package manager."</span>)
-  (other-window 1))
-
-(add-hook 'after-init-hook 'my/stay-up-to-date)
-
-<span style="color: #91889B;">;; </span><span style="color: #91889B;">For now, doing this since I'm also calling my/stay-up-to-date with</span>
-<span style="color: #91889B;">;; </span><span style="color: #91889B;">after-init-hook which hides the startup message.</span>
-(add-hook 'after-init-hook 'display-startup-echo-area-message)
-</pre>
-</div>
 </div>
 </div>
 </div>

@@ -39,6 +39,77 @@
 (cl-defun org-clocking-buffer (&rest _))
 #+end_src
 
+* Abstract                                                           :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Abstract
+:END:
+
+#+begin_center
+
+badge:A_Life|Configuring_Emacs|success||gnu-emacs
+
+badge:A_Life_Configuring|Emacs|success||gnu
+
+badge:Currently_Reorganising|Not_Polished|yellow
+#+end_center
+
+#+html: <p align="center">
+#+begin_center text
+*Abstract*
+#+end_center
+#+html: </p>
+
+[[doc:Hello][Hello!]] Herein I document the configurations I utilise with [[https://gnu.org/s/emacs][Emacs]].
+# After cloning the file, many packages are automatically installed; usually with
+# little or no trouble.
+
+As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
+through my ever growing configuration files, ease of usability and reference
+for peers, and, most importantly, better maintainability for myself!
+
+Dear reader, when encountering a foregin command ~X~ I encourage you to execute
+~(describe-symbol 'X)~, or press kbd:C-h_o with the cursor on ~X~.  An elementary
+Elisp Cheat Sheet can be found at [[badge:Elisp|CheatSheet|success|https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf|Gnu-Emacs][Elisp cheat sheet]] and
+badge:Lifemacs|CheatSheet|informational|https://alhassy.github.io/emacs.d/CheatSheet.pdf|Gnu-Emacs
+is a 2-page 3-column PDF of the bindings in /this/ configuration.
++ kbd:C-h_e ⇒ *What'd /Emacs/ do?*
++ kbd:C-h_o ⇒ *What's this thing?*
++ kbd:C-h_l ⇒ *What'd /I/ do?*
++ [[kbd:C-h_?]] ⇒ *What're the help topics?* ---gives possible completions to “C-h ⋯”.
++ “I accidentally hit a key, which one and what did it do!?” ⇒ kbd:C-h_e and kbd:C-h_l,
+  then use kbd:C-h_o to get more details on the action.
+  ;-)
+
+Finally, kbd:C-h_d asks nicely what ‘d’ocumentation you're interested in.
+After providing a few keywords, the =apropos= tool yields possible functions
+and variables that may accomplish my goal.
+
+#+begin_center
+badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
+badge:Org|9.4|blue|https://orgmode.org|gnu
+
+[[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
+tweet:https://github.com/alhassy/org-special-block-extras
+
+badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+
+# badge:Hire|me|success|https://alhassy.github.io/about
+#+end_center
+
+This article is about /how I like/ to do things
+---/I'm not insisting others should/ do things this way.
+
+#+begin_box
+/Always remember that to argue, and win, is to break down the reality of the
+person you are arguing against. It is painful to lose your reality, so be kind,/
+/even if you are right./ - Haruki Murakami
+
+/Life is too short to not read the very best book you know of right now./ - Patrick Collison
+
+/Inspiration is for amateurs. The rest of us just show up and get to work./ - Chuck Close
+#+end_box
+
 * Meta-setup :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Meta-setup
@@ -208,77 +279,6 @@ your files: General Settings → Security & Privacy → Full Disk Access → ~�
 search) then enter =/usr/bin/ruby= ---Emacs is launched via a Ruby script in
 MacOS.
 #+end_details
-* Abstract                                                           :ignore:
-:PROPERTIES:
-:CUSTOM_ID: Abstract
-:END:
-
-#+begin_center
-
-badge:A_Life|Configuring_Emacs|success||gnu-emacs
-
-badge:A_Life_Configuring|Emacs|success||gnu
-
-badge:Currently_Reorganising|Not_Polished|yellow
-#+end_center
-
-#+html: <p align="center">
-#+begin_center text
-*Abstract*
-#+end_center
-#+html: </p>
-
-[[doc:Hello][Hello!]] Herein I document the configurations I utilise with [[https://gnu.org/s/emacs][Emacs]].
-# After cloning the file, many packages are automatically installed; usually with
-# little or no trouble.
-
-As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
-through my ever growing configuration files, ease of usability and reference
-for peers, and, most importantly, better maintainability for myself!
-
-Dear reader, when encountering a foregin command ~X~ I encourage you to execute
-~(describe-symbol 'X)~, or press kbd:C-h_o with the cursor on ~X~.  An elementary
-Elisp Cheat Sheet can be found at [[badge:Elisp|CheatSheet|success|https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf|Gnu-Emacs][Elisp cheat sheet]] and
-badge:Lifemacs|CheatSheet|informational|https://alhassy.github.io/emacs.d/CheatSheet.pdf|Gnu-Emacs
-is a 2-page 3-column PDF of the bindings in /this/ configuration.
-+ kbd:C-h_e ⇒ *What'd /Emacs/ do?*
-+ kbd:C-h_o ⇒ *What's this thing?*
-+ kbd:C-h_l ⇒ *What'd /I/ do?*
-+ [[kbd:C-h_?]] ⇒ *What're the help topics?* ---gives possible completions to “C-h ⋯”.
-+ “I accidentally hit a key, which one and what did it do!?” ⇒ kbd:C-h_e and kbd:C-h_l,
-  then use kbd:C-h_o to get more details on the action.
-  ;-)
-
-Finally, kbd:C-h_d asks nicely what ‘d’ocumentation you're interested in.
-After providing a few keywords, the =apropos= tool yields possible functions
-and variables that may accomplish my goal.
-
-#+begin_center
-badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
-badge:Org|9.4|blue|https://orgmode.org|gnu
-
-[[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
-tweet:https://github.com/alhassy/org-special-block-extras
-
-badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
-badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
-
-# badge:Hire|me|success|https://alhassy.github.io/about
-#+end_center
-
-This article is about /how I like/ to do things
----/I'm not insisting others should/ do things this way.
-
-#+begin_box
-/Always remember that to argue, and win, is to break down the reality of the
-person you are arguing against. It is painful to lose your reality, so be kind,/
-/even if you are right./ - Haruki Murakami
-
-/Life is too short to not read the very best book you know of right now./ - Patrick Collison
-
-/Inspiration is for amateurs. The rest of us just show up and get to work./ - Chuck Close
-#+end_box
-
 * Why Emacs?
 :PROPERTIES:
 :CUSTOM_ID: Why-Emacs
@@ -1148,9 +1148,8 @@ repositories of developers rather than having all packages in one repository.
 
 ;; Internet repositories for new packages.
 (setq package-archives '(("gnu"    . "http://elpa.gnu.org/packages/")
-                             ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-                         ("melpa"  . "http://melpa.org/packages/")
-                             ("org"    . "http://orgmode.org/elpa/")))
+                         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+                         ("melpa"  . "http://melpa.org/packages/")))
 
 ;; Update local list of available packages:
 ;; Get descriptions of all configured ELPA packages,
@@ -1845,8 +1844,8 @@ their contents ---e.g., such as a heading named ‘preamble’ that contains
 org-mode setup for a file.
 
 #+begin_src emacs-lisp
-  (when nil use-package emacs
-    :ensure org-plus-contrib
+(use-package emacs
+    :ensure org-contrib
     :diminish org-indent-mode
     :config (require 'ox-extra)
             (ox-extras-activate '(ignore-headlines)))
@@ -13071,7 +13070,42 @@ I like using Chrome ---I like the integration of all things Google.
   ("b" (internet (concat "https://www." (read-string "https://www."))) "Browse"  :exit t))
 #+end_src
 
-** Conclusion ---Why Configuration Files Should be Literate
+** Keeping my system up to date
+:PROPERTIES:
+:CUSTOM_ID: Keeping-my-system-up-to-date
+:END:
+
+Let's ensure our system is always up to date.
+#+BEGIN_SRC emacs-lisp
+(defun my/stay-up-to-date ()
+  "Ensure that OS and Emacs package listings are up to date.
+
+   Takes ~5 seconds when everything is up to date."
+  (async-shell-command "brew update && brew upgrade")
+  (other-window 1)
+  (rename-buffer "Keeping-system-up-to-date")
+
+  (package-refresh-contents 'please-do-so-in-the-background)
+  (message "Updated Emacs package manager.")
+  (other-window 1))
+
+(add-hook 'after-init-hook 'my/stay-up-to-date)
+
+;; For now, doing this since I'm also calling my/stay-up-to-date with
+;; after-init-hook which hides the startup message.
+(add-hook 'after-init-hook 'display-startup-echo-area-message)
+#+END_SRC
+
+:MacOS:
+After an OS upgrade, the XCode Command Line Utilities
+may need to be reset.
+
+In a terminal execute: xcode-select --install
+
+May need to actually reboot the system as well.
+:End:
+
+* Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate
 :END:
@@ -13234,37 +13268,3 @@ Let's remove repeated matter.
 ;; Also a helpful quick f-key.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
-** Keeping my system up to date
-:PROPERTIES:
-:CUSTOM_ID: Keeping-my-system-up-to-date
-:END:
-
-Let's ensure our system is always up to date.
-#+BEGIN_SRC emacs-lisp
-(defun my/stay-up-to-date ()
-  "Ensure that OS and Emacs package listings are up to date.
-
-   Takes ~5 seconds when everything is up to date."
-  (async-shell-command "brew update && brew upgrade")
-  (other-window 1)
-  (rename-buffer "Keeping-system-up-to-date")
-
-  (package-refresh-contents 'please-do-so-in-the-background)
-  (message "Updated Emacs package manager.")
-  (other-window 1))
-
-(add-hook 'after-init-hook 'my/stay-up-to-date)
-
-;; For now, doing this since I'm also calling my/stay-up-to-date with
-;; after-init-hook which hides the startup message.
-(add-hook 'after-init-hook 'display-startup-echo-area-message)
-#+END_SRC
-
-:MacOS:
-After an OS upgrade, the XCode Command Line Utilities
-may need to be reset.
-
-In a terminal execute: xcode-select --install
-
-May need to actually reboot the system as well.
-:End:

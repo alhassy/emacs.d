@@ -38,9 +38,8 @@
 
 ;; Internet repositories for new packages.
 (setq package-archives '(("gnu"    . "http://elpa.gnu.org/packages/")
-                             ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-                         ("melpa"  . "http://melpa.org/packages/")
-                             ("org"    . "http://orgmode.org/elpa/")))
+                         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+                         ("melpa"  . "http://melpa.org/packages/")))
 
 ;; Update local list of available packages:
 ;; Get descriptions of all configured ELPA packages,
@@ -337,8 +336,8 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:8 ends here
 
 ;; [[file:init.org::#Org-Mode-Administrivia][Org-Mode Administrivia:2]]
-  (when nil use-package emacs
-    :ensure org-plus-contrib
+(use-package emacs
+    :ensure org-contrib
     :diminish org-indent-mode
     :config (require 'ox-extra)
             (ox-extras-activate '(ignore-headlines)))
@@ -624,7 +623,8 @@ Is replaced by:
 ;; Bottom of Emacs will show what branch you're on
 ;; and whether the local file is modified or not.
 (use-package magit
-  :bind (("C-c g" . magit-file-dispatch))
+  :init (require 'magit-files)
+  :bind (("C-c M-g" . magit-file-dispatch))
   :custom ;; Do not ask about this variable when cloning.
     (magit-clone-set-remote.pushDefault t))
 ;;   =magit= ---Emacs' porcelain interface to git:1 ends here
@@ -2577,7 +2577,7 @@ the character 𝓍 before and after the selected text."
 ;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:1]]
 ;; Default: M-→/← moves to the next/previous instance of the currently highlighted word
 ;; These are already meaningful commands in Org-mode, so we avoid these key re-bindings in Org-mode; TODO.
-;; (use-package auto-highlight-symbol
+(use-package auto-highlight-symbol)
 ;;   :hook ((text-mode . auto-highlight-symbol-mode)
 ;;          (prog-mode . auto-highlight-symbol-mode)))
 ;;
@@ -2832,267 +2832,3 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
           (t
            (call-interactively 'org-insert-link)))))
 ;; Org-mode ⇐ HTML:3 ends here
-
-;; [[file:init.org::#Quickly-Run-Code-Snippets][Quickly Run Code Snippets:1]]
-;; In any programming buffer, “M-x quickrun” to execute that program.
-;; Super useful when wanting to quickly test things out, in a playground.
-;;
-;; E.g., Make a new file named “hello.py” containing “print "hi"”, then “M-x quickrun”.
-;;
-;; Enable “quickrun-autorun-mode” to run code after every save.
-(use-package quickrun
-  ;; ⇒ “C-c C-r” to see output, “q” to close output
-  ;; ⇒ “C-u C-c C-r” prompts for a language (Useful when testing snippets different from current programming mode)
-  ;; ⇒ In a non-programming buffer, “C-c C-r” runs selected region.
-  :config (bind-key* "C-c C-r"
-                     (lambda (&optional start end)
-                       (interactive "r")
-                       (if (use-region-p)
-                           (quickrun-region start end)
-                         (quickrun current-prefix-arg)))))
-;; Quickly Run Code Snippets:1 ends here
-
-;; [[file:init.org::#Quickly-Run-Code-Snippets][Quickly Run Code Snippets:2]]
-(system-packages-ensure "rust") ;; Rust Compiler
-;; C-c C-r on the following: fn main() { println!("Hello, World!"); }
-
-;; Actually, let's get a full Rust development environment for Emacs
-(use-package rustic)
-;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
-;; rust-analyzer, the rust LSP.
-;;
-;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
-;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
-;; super nice stuff!
-;;
-;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
-;;    let v:Vec<_> = vec![1, 2, 3];
-;; Quickly Run Code Snippets:2 ends here
-
-;; [[file:init.org::#ELisp][ELisp:1]]
-;; Evaluation Result OverlayS for Emacs Lisp
-(use-package eros
-  :init (eros-mode t))
-;; ELisp:1 ends here
-
-;; [[file:init.org::#JavaScript][JavaScript:1]]
-(use-package skerrick
-  :init
-  ;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
-  (unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
-    (skerrick-install-or-upgrade-server-binary)))
-
-;; Should be run in a JS buffer; it is buffer specific.
-;; (skerrick-start-server)
-
-;; Now main function, entry point is:
-;; M-x skerrick-eval-region
-;; JavaScript:1 ends here
-
-;; [[file:init.org::#JavaScript][JavaScript:2]]
-(require 'js) ;; Defines js-mode-map
-
-;; Evaluate a region, if any is selected; otherwise evaluate the current line.
-(bind-key
- "C-x C-e"  (lambda ()
-              (interactive)
-              (if (use-region-p)
-                  (skerrick-eval-region)
-                (beginning-of-line)
-                (set-mark-command nil)
-                (end-of-line)
-                (skerrick-eval-region)
-                (pop-mark)))
- 'js-mode-map)
-;; JavaScript:2 ends here
-
-;; [[file:init.org::#devdocs][devdocs:1]]
-;; 1. Get docs of a languages: M-x devdocs-install
-;; 2. Lookup docs: [C-u] M-x devdocs-lookup
-;; 𝟚. Lookup docs: [C-u] C-c d
-(use-package devdocs
-  :bind ("C-c d" . #'devdocs-lookup)
-  :config
-  (when nil ;; “C-x C-e” the following once.
-    (cl-loop for lang in '(javascript ramda typescript html css sass
-                       vue~3 vuex~4 vue_router~4 "angularjs~1.6"
-                       nginx webpack~5 web_extensions
-                       ;;
-                       eslint  jest jq jsdoc prettier
-                       mocha chai jasmine
-                       ;;
-                       bash docker~19 git homebrew elisp
-                       ;;
-                       postgresql~14 redis sqlite
-                       ;;
-                       rust ruby~3 minitest "rails~7.0")
-          do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
-;; devdocs:1 ends here
-
-;; [[file:init.org::#How-do-I-do-something][How do I do something?:1]]
-(system-packages-ensure "howdoi")
-
-(cl-defun howdoi (&optional show-full-answer)
-  "Instantly insert coding answers.
-
-Replace a query with a code solution; replace it with an entire
-answer if a prefix is provided.
-
-Example usage:
-
-   On a new line, write a question such as:
-
-      search and replace buffer Emacs Lisp
-
-   Then invoke ‘M-x howdoi’ anywhere on the line
-   to get a code snippet; or ‘C-u M-x howdoi’ to get a full answer to your query.
-"
-  (interactive "P")
-  (let ((query (s-collapse-whitespace (substring-no-properties (thing-at-point 'line))))
-        (flag (if show-full-answer "-a" "")))
-    (beginning-of-line)
-    (kill-line)
-    (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
-;; How do I do something?:1 ends here
-
-;; [[file:init.org::#Sleek-Semantic-Selection][Sleek Semantic Selection:1]]
-(use-package expand-region
-  :bind (("s-r" . #'er/expand-region)))
-;; Sleek Semantic Selection:1 ends here
-
-;; [[file:init.org::#LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE][LSP: Making Emacs into a generic full-featured programming IDE:1]]
-(use-package lsp-mode
-  :init
-  ;; Set prefix for lsp commands
-  ;; (setq lsp-keymap-prefix "s-l") ;; default
-  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
-  ;; (setq lsp-idle-delay 0.500) ;; default
-  :hook  ;; Every programming mode should enter & start LSP, with which-key support
-         (js-mode . lsp-mode) ;; Enter LSP mode
-         (js-mode . lsp)      ;; Start LSP server
-         (lsp-mode . lsp-enable-which-key-integration)
-  ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
-  :bind ("C-x y" . #'yankpad-insert)
-  :commands lsp)
-
-;; If a server crashes, restart it without asking me.
-(setq lsp-restart 'auto-restart)
-
-
-;; https://emacs-lsp.github.io/lsp-mode/page/languages/
-;; M-x lsp-install-server ⟨return⟩ jsts-ls
-;; M-x lsp-install-server ⟨return⟩ json-ls
-;; M-x lsp-install-server ⟨return⟩ eslint
-;; M-x lsp-install-server ⟨return⟩ css-ls
-;; M-x lsp-install-server ⟨return⟩ html-ls
-
-;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
-;; https://emacs-lsp.github.io/lsp-ui/#intro
-;;
-;; You only have to put (use-package lsp-ui) in your config and the package will
-;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
-(use-package lsp-ui)
-
-;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
-;; call hierarchy, etc.)
-(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
-;; M-x lsp-treemacs-errors-list
-
-;; helm-lsp provides “on type completion” alternative of cross-referencing.
-;; https://github.com/emacs-lsp/helm-lsp
-(use-package helm-lsp)
-(define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
-;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
-;; a” (The 'a' stands for apropos, which means appropriate nature)
-
-;; Set the amount of data which Emacs reads from a process.
-;; Some LSP responses are in the 8k-3MB range.
-;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
-(setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
-(setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
-;; A large gc-cons-threshold will cause freezing and stuttering during long-term
-;; interactive use. This one seems to be a good default.
-;; LSP: Making Emacs into a generic full-featured programming IDE:1 ends here
-
-;; [[file:init.org::#LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE][LSP: Making Emacs into a generic full-featured programming IDE:2]]
-;; Load the various useful utils
-(require 'lsp-ui-peek)
-(require 'lsp-ui-sideline)
-(require 'lsp-ui-doc)
-(require 'lsp-ui-imenu)
-
-; (setq lsp-mode-hook nil)
-(add-hook 'lsp-mode-hook
-          (lambda ()
-            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
-            (shell-command "rm ~/wxPortal/.flowconfig")
-            ;; Load the various useful utils
-            (require 'lsp-ui)
-            (lsp-ui-peek-enable t)
-            (lsp-ui-doc-enable t)
-            (lsp-ui-sideline-enable t)
-            (lsp-ui-imenu-buffer--enable)
-            ;; Set ⌘-l as the main mini-menu for LSP commands
-            (bind-key* "s-l" #'my/lsp-hydra/body)))
-
-(defun my/helm-lsp-workspace-symbol-at-point ()
-    (interactive)
-    (let ((current-prefix-arg t))
-      (call-interactively #'helm-lsp-workspace-symbol)))
-
-  (defun my/helm-lsp-global-workspace-symbol-at-point ()
-    (interactive)
-    (let ((current-prefix-arg t))
-      (call-interactively #'helm-lsp-global-workspace-symbol)))
-
-;; TODO: Add other cool features discussed/loaded above into this hydra!
-(defhydra my/lsp-hydra (:color blue :hint nil)
-  ;; Xref
-  ("d" xref-find-definitions "Definitions" :column "Xref")
-  ("D" xref-find-definitions-other-window "-> other win")
-  ("r" xref-find-references "References")
-  ("s" my/helm-lsp-workspace-symbol-at-point "Helm search")
-  ("S" my/helm-lsp-global-workspace-symbol-at-point "Helm global search")
-
-  ;; Peek
-  ("C-d" lsp-ui-peek-find-definitions "Definitions" :column "Peek")
-  ("C-r" lsp-ui-peek-find-references "References")
-  ("C-i" lsp-ui-peek-find-implementation "Implementation")
-
-  ;; LSP
-  ("p" lsp-describe-thing-at-point "Describe at point" :column "LSP")
-  ("C-a" lsp-execute-code-action "Execute code action")
-  ("R" lsp-rename "Rename")
-  ("t" lsp-goto-type-definition "Type definition")
-  ("i" lsp-goto-implementation "Implementation")
-  ("f" helm-imenu "Filter funcs/classes (Helm)")
-  ("C-c" lsp-describe-session "Describe session")
-
-  ;; Flycheck ---my “C-c !” flycheck hydra is much better than this simple lsp one.
-  ;; ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
-  ("l" my/flycheck-hydra/body "List errs/warns/notes" :column "Flycheck")
-
-  ;; Misc
-  ("q" nil "Cancel" :column "Misc")
-  ("b" pop-tag-mark "Back"))
-;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
-
-;; [[file:init.org::#Keeping-my-system-up-to-date][Keeping my system up to date:1]]
-(defun my/stay-up-to-date ()
-  "Ensure that OS and Emacs package listings are up to date.
-
-   Takes ~5 seconds when everything is up to date."
-  (async-shell-command "brew update && brew upgrade")
-  (other-window 1)
-  (rename-buffer "Keeping-system-up-to-date")
-
-  (package-refresh-contents 'please-do-so-in-the-background)
-  (message "Updated Emacs package manager.")
-  (other-window 1))
-
-(add-hook 'after-init-hook 'my/stay-up-to-date)
-
-;; For now, doing this since I'm also calling my/stay-up-to-date with
-;; after-init-hook which hides the startup message.
-(add-hook 'after-init-hook 'display-startup-echo-area-message)
-;; Keeping my system up to date:1 ends here
