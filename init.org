@@ -531,43 +531,47 @@ reasonable to think of Emacs as an operating system ---and Vim/Evil is one of
 its text editors.
 
 # Examples:
-|----------------------------------------------+---+-----------------------------------------------------|
-| Application                                  | ≈ | Emacs Package                                       |
-|----------------------------------------------+---+-----------------------------------------------------|
-| Habit Tracker / TODO-list                    |   | Org mode                                            |
-| Agenda / Calendar / Time Tracker             |   | Org mode                                            |
-| Literate Programming (like Jupyter)          |   | Org mode                                            |
-| Blogging Software                            |   | Org mode                                            |
-| Reference Information Platform               |   | Org mode with [[https://orgmode.org/manual/Refile-and-Copy.html][refile]] and doc:my/reference           |
-|----------------------------------------------+---+-----------------------------------------------------|
-| Word Processing / PDFs / Slidedeck tool      |   | Org mode                                            |
-| Spell checker & dictionary & grammar checker |   | doc:ispell & langtool                               |
-| Reference and citation manager               |   | org-ref                                             |
-| PDF Viewer                                   |   | PDF View mode                                       |
-|----------------------------------------------+---+-----------------------------------------------------|
-| Git / Version control                        |   | Magit or doc:vc-mode                                |
-| Terminal                                     |   | doc:eshell or doc:shell                             |
-| Package Manager                              |   | doc:helm-system-packages                            |
-| File Manager                                 |   | doc:dired                                           |
-| IDE / debugger                               |   | LSP / Dap                                           |
-| Scripting Language                           |   | Emacs Lisp                                          |
-|----------------------------------------------+---+-----------------------------------------------------|
-| [Neo]Vim / Modal text editor                 |   | EVIL mode                                           |
-| RSS Newsreader                               |   | ElFeed                                              |
-| Email                                        |   | Gnus/Mu4e                                           |
-| Spredsheet tool                              |   | [[https://orgmode.org/manual/The-Spreadsheet.html][Org Table]] / [[https://www.reddit.com/r/emacs/comments/t8k1cw/simple_emacs_spreadsheet/][Simple Emacs Spreadsheet]]                |
-| Automatic file backups                       |   | ⟨Built-in⟩ & backup-walker                          |
-| seemless GPG tool                            |   | ⟨Built-in⟩                                          |
-| Lisp interpreter                             |   | Anywhere press kbd:C-x_C-e to run a Lisp expression |
-| Documentation viewer                         |   | tldr-mode; kbd:C-h_o / doc:describe-symbol          |
-| Diff / Merge tool                            |   | doc:ediff, doc:diff                                 |
-|----------------------------------------------+---+-----------------------------------------------------|
-| Games                                        |   | doc:tetris, pacman, mario, etc                      |
-| Psychologist                                 |   | doc:doctor                                          |
-| Typing tutor                                 |   | typing-of-emacs                                     |
-| Modern Internet Browser                      |   | doc:xwidget-webkit-browse-url                       |
-| everything else                              |   | [[https://github.com/emacs-eaf/emacs-application-framework][EAF]]                                                 |
-|----------------------------------------------+---+-----------------------------------------------------|
+|----------------------------------------------+---+--------------------------------------------------------------------|
+| Application                                  | ≈ | Emacs Package                                                      |
+|----------------------------------------------+---+--------------------------------------------------------------------|
+| Habit Tracker / TODO-list                    |   | Org mode                                                           |
+| Agenda / Calendar / Time Tracker             |   | Org mode                                                           |
+| Literate Programming (like Jupyter)          |   | Org mode                                                           |
+| Blogging Software                            |   | Org mode                                                           |
+| Reference Information Platform               |   | Org mode with [[https://orgmode.org/manual/Refile-and-Copy.html][refile]] and doc:my/reference                          |
+|----------------------------------------------+---+--------------------------------------------------------------------|
+| Word Processing / PDFs / Slidedeck tool      |   | Org mode                                                           |
+| Spell checker & dictionary & grammar checker |   | doc:ispell & langtool                                              |
+| Reference and citation manager               |   | org-ref                                                            |
+| PDF Viewer                                   |   | PDF View mode                                                      |
+| Powerful Calculator                          |   | Calc-mode ([[https://hungyi.net/posts/solve-system-of-equations-literate-calc-mode/][Nice article on literate calc mode]])                     |
+| Fillable Forms / Data Entry                  |   | [[https://www.gnu.org/software/emacs/manual/html_mono/widget.html][Widgets]]                                                            |
+| Ebook Reader                                 |   | [[https://depp.brause.cc/nov.el/][nov.el]] and [[https://github.com/chenyanming/calibredb.el][calibredb.el]]
+|----------------------------------------------+---+--------------------------------------------------------------------|
+| Git / Version control                        |   | Magit or doc:vc-mode                                               |
+| Shells                                       |   | doc:eshell or doc:shell                                            |
+| Terminal emulators                           |   | doc:term, doc:ansi-term, and [[https://github.com/akermu/emacs-libvterm][vterm]]                                 |
+| Package Manager                              |   | doc:helm-system-packages                                           |
+| File Manager                                 |   | doc:dired                                                          |
+| IDE / debugger                               |   | LSP / Dap                                                          |
+| Scripting Language                           |   | Emacs Lisp                                                         |
+|----------------------------------------------+---+--------------------------------------------------------------------|
+| [Neo]Vim / Modal text editor                 |   | EVIL mode                                                          |
+| RSS Newsreader                               |   | ElFeed                                                             |
+| Email                                        |   | Gnus / Mu4e / notmuch                                              |
+| Spredsheet tool                              |   | [[https://orgmode.org/manual/The-Spreadsheet.html][Org Table]] / [[https://www.reddit.com/r/emacs/comments/t8k1cw/simple_emacs_spreadsheet/][Simple Emacs Spreadsheet]] / spreadsheet-mode / csv-mode |
+| Automatic file backups                       |   | ⟨Built-in⟩ & backup-walker                                         |
+| seemless GPG tool                            |   | ⟨Built-in⟩                                                         |
+| Lisp interpreter                             |   | Anywhere press kbd:C-x_C-e to run a Lisp expression                |
+| Documentation viewer                         |   | tldr-mode; kbd:C-h_o / doc:describe-symbol                         |
+| Diff / Merge tool                            |   | doc:ediff, doc:diff                                                |
+|----------------------------------------------+---+--------------------------------------------------------------------|
+| Games                                        |   | doc:tetris, pacman, mario, etc                                     |
+| Psychologist                                 |   | doc:doctor                                                         |
+| Typing tutor                                 |   | typing-of-emacs                                                    |
+| Modern Internet Browser                      |   | doc:xwidget-webkit-browse-url                                      |
+| everything else                              |   | [[https://github.com/emacs-eaf/emacs-application-framework][EAF]]                                                                |
+|----------------------------------------------+---+--------------------------------------------------------------------|
 
 I’m down to essentially Emacs and Chrome for almost all my work ---I like using Chrome; I like the integration of all things Google.
 - The [[https://nyxt.atlas.engineer/][Nyxt browser]]  is an eerily Emacs-like browser ;-)
