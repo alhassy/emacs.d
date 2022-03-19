@@ -8719,10 +8719,31 @@ let b = "world"
 // The final line should show: HELLO WORLD
 #+end_src
 
+**** Preserving the context
+
+When testing an application, you might notice a bug in a particular context
+---i.e., a particular configuration in the app.
+
+1. The classic approach is to kill the app; i.e., stop the server that is, well,
+   serving the app.
+2. Solve the problem.
+3. Try to get back to the configuration, context, you were in beforehand and
+   check that the problem has been resolved.
+
+A better approach is to ignore the bookkeeping steps, 1&3, and just do step 2.
+For that, there are numerous packages:
+- [[https://github.com/mishoo/livenode/][livenode: Live-code your NodeJS applications]] ⨾⨾ [[https://vimeo.com/60636079][Video demo]] ~11min ⨾⨾ Last
+  updated 2013
+- [[https://github.com/skeeto/skewer-mode][skewer-mode: Live web development in Emacs]] ⨾⨾ [[https://www.youtube.com/watch?v=4tyTgyzUJqM&ab_channel=Skeeto][Silent video demo]] ~5min ⨾⨾ Last
+  updated 2020
+- [[https://github.com/swank-js/swank-js][swank-js: Swank backend for Node.JS and in-browser JavaScript]] ⨾⨾ Last updated
+  2015
+
 *** Python, etc
 :PROPERTIES:
 :CUSTOM_ID: Python-etc
 :END:
+
 It /seems/ to be /super easy/ to add such a support for other languages, such as Python.
 See the final comment [[https://karthinks.com/software/an-elisp-editing-tip/][here]] for the tiny change required.
 
