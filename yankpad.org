@@ -64,11 +64,6 @@ $0
 $0
 #+end_src
 
-** s_C: src for C
-#+begin_src C
-$0
-#+end_src
-
 ** s_dot: src for dot
 #+begin_src dot
 $0
@@ -84,8 +79,18 @@ $0
 $0
 #+end_src
 
-** s_makefile: src for makefile
-#+begin_src makefile
+** s_js: src for js
+#+begin_src js
+$0
+#+end_src
+
+** s_sqlite: src for sqlite
+#+begin_src sqlite
+$0
+#+end_src
+
+** s_C: src for C
+#+begin_src C
 $0
 #+end_src
 
@@ -109,16 +114,18 @@ src_haskell[:exports code]{$1} $0
 src_ruby[:exports code]{$1} $0
 ** is_ocaml: inline source for ocaml
 src_ocaml[:exports code]{$1} $0
-** is_C: inline source for C
-src_C[:exports code]{$1} $0
 ** is_dot: inline source for dot
 src_dot[:exports code]{$1} $0
 ** is_latex: inline source for latex
 src_latex[:exports code]{$1} $0
 ** is_org: inline source for org
 src_org[:exports code]{$1} $0
-** is_makefile: inline source for makefile
-src_makefile[:exports code]{$1} $0
+** is_js: inline source for js
+src_js[:exports code]{$1} $0
+** is_sqlite: inline source for sqlite
+src_sqlite[:exports code]{$1} $0
+** is_C: inline source for C
+src_C[:exports code]{$1} $0
 ** e_org: example for org
 #+begin_example org
 $0
@@ -169,11 +176,6 @@ $0
 $0
 #+end_example
 
-** e_C: example for C
-#+begin_example C
-$0
-#+end_example
-
 ** e_dot: example for dot
 #+begin_example dot
 $0
@@ -189,8 +191,18 @@ $0
 $0
 #+end_example
 
-** e_makefile: example for makefile
-#+begin_example makefile
+** e_js: example for js
+#+begin_example js
+$0
+#+end_example
+
+** e_sqlite: example for sqlite
+#+begin_example sqlite
+$0
+#+end_example
+
+** e_C: example for C
+#+begin_example C
 $0
 #+end_example
 

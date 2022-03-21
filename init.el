@@ -3157,26 +3157,29 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 ;; Making unkillable buffers & shells:1 ends here
 
 ;; [[file:init.org::#my-work-links][my/work-links:1]]
-(cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
-  "Given a link of TYPE with a URL, produce the correct org-link.
+ (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
+   "Given a link of TYPE with a URL, produce the correct org-link.
 
-EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
-This is how the link looks upon export."
-  `(org-link-set-parameters
-   ,type
-   :follow (lambda (label) (browse-url (format ,url label)))
-   :export (lambda (label description backend)
-             (if (equal backend 'html)
-                 (format "<a href=\"%s\">%s</a>" (format ,url label) (-let [type ,type] ,export-display))
-               (format "\\href{%s}{FM-%s}" (format ,url label) label)))
-   :face '(:foreground "green" :weight bold
-           :underline "blue" :overline "blue")))
+ EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
+ This is how the link looks upon export."
+   `(org-link-set-parameters
+    ,type
+    :follow (lambda (label) (browse-url (format ,url label)))
+    :export (lambda (label description backend)
+              (-let [full-url (format ,url label)]
+                (pcase backend
+                  ('html  (format "<a href=\"%s\">%s</a>" full-url (-let [type ,type] ,export-display)))
+                  ('latex (format "\\href{%s}{FM-%s}" full-url label))
+                  (_  full-url))))
+    :face '(:foreground "green" :weight bold
+            :underline "blue" :overline "blue")))
 
-(my/work-links "FM"     "https://weeverapps.atlassian.net/browse/FM-%s")                ;; FM:2898
-(my/work-links "INEW"   "https://weeverapps.atlassian.net/browse/INEW-%s")              ;; INEW:201
-(my/work-links "portal" "https://github.com/WeeverApps/wxPortal/pull/%s")               ;; portal:4905
-(my/work-links "platform" "https://github.com/WeeverApps/api-platform-server/pull/%s")  ;; platform:2489
-(my/work-links "weever" "https://github.com/WeeverApps/%s" label)                       ;; weever:wxportal
+ (my/work-links "FM"       "https://weeverapps.atlassian.net/browse/FM-%s")                ;; FM:2898
+ (my/work-links "INEW"     "https://weeverapps.atlassian.net/browse/INEW-%s")              ;; INEW:201
+ (my/work-links "portal"   "https://github.com/WeeverApps/wxPortal/pull/%s")               ;; portal:4905
+ (my/work-links "platform" "https://github.com/WeeverApps/api-platform-server/pull/%s")    ;; platform:2489
+ (my/work-links "weever"   "https://github.com/WeeverApps/%s" label)                       ;; weever:wxportal
+ (my/work-links "backlog"  "https://weeverapps.atlassian.net/jira/software/c/projects/%s/boards/78/backlog?issueLimit=100") ;; backlog:FM , backlog:INEW
 ;; my/work-links:1 ends here
 
 ;; [[file:init.org::#Process-Manager][Process Manager:1]]
@@ -3997,6 +4000,26 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 
 (bind-key* "C-c M-s" #'my/capture-emacs-frame)
 ;; Screencapturing the Current Emacs Frame:1 ends here
+
+;; [[file:init.org::*Comment-boxes up to the fill-column][Comment-boxes up to the fill-column:1]]
+(defun my/comment-box (b e)
+  "Draw a box comment around the region but arrange for the region
+to extend to at least the fill column. Place the point after the
+comment box.
+
+Source: http://irreal.org/blog/?p=374
+
+To do fancy stuff like removing boxes, centering them, etc
+see https://github.com/lewang/rebox2/blob/master/rebox2.el"
+  (interactive "r")
+  (let ((e (copy-marker e t)))
+    (goto-char b)
+    (end-of-line)
+    (insert-char ?  (- fill-column (current-column)))
+    (comment-box b e 1)
+    (goto-char e)
+    (set-marker e nil)))
+;; Comment-boxes up to the fill-column:1 ends here
 
 ;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:2]]
 ;; USAGE: Place point in an emmet snippet and press C-j to expand it to appropriate tag structure;
