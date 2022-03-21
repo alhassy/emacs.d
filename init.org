@@ -10729,6 +10729,24 @@ LSP mode supports the following Features:
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
+*** Types as comments in JavaScript via LSP
+#+begin_src js :tangle no
+// The following enables typechecking via LSP.
+// @ts-check
+
+/**
+ *
+ * @param {number} x -
+ * @param {number} y -
+ * @returns {number} -
+ */
+// function add(x, y) {return "x + y";} // ⚠ Faulty implementation!
+function add(x, y) {return x + y;}
+
+// add("a", 1) // ⚠ Erroneous call!
+add(1, 2)
+#+end_src
+
 **  w-screencapture
 :PROPERTIES:
 :CUSTOM_ID: w-screencapture
