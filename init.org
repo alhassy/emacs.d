@@ -12,7 +12,7 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
-* TODO Clean this section up! :ignore:
+* TODO Clean this section up!                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
 :END:
@@ -9074,28 +9074,32 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 :PROPERTIES:
 :CUSTOM_ID: my-work-links
 :END:
-   #+begin_src emacs-lisp
-(cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
-  "Given a link of TYPE with a URL, produce the correct org-link.
 
-EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
-This is how the link looks upon export."
-  `(org-link-set-parameters
-   ,type
-   :follow (lambda (label) (browse-url (format ,url label)))
-   :export (lambda (label description backend)
-             (if (equal backend 'html)
-                 (format "<a href=\"%s\">%s</a>" (format ,url label) (-let [type ,type] ,export-display))
-               (format "\\href{%s}{FM-%s}" (format ,url label) label)))
-   :face '(:foreground "green" :weight bold
-           :underline "blue" :overline "blue")))
+#+begin_src emacs-lisp
+ (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
+   "Given a link of TYPE with a URL, produce the correct org-link.
 
-(my/work-links "FM"     "https://weeverapps.atlassian.net/browse/FM-%s")                ;; FM:2898
-(my/work-links "INEW"   "https://weeverapps.atlassian.net/browse/INEW-%s")              ;; INEW:201
-(my/work-links "portal" "https://github.com/WeeverApps/wxPortal/pull/%s")               ;; portal:4905
-(my/work-links "platform" "https://github.com/WeeverApps/api-platform-server/pull/%s")  ;; platform:2489
-(my/work-links "weever" "https://github.com/WeeverApps/%s" label)                       ;; weever:wxportal
-   #+end_src
+ EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
+ This is how the link looks upon export."
+   `(org-link-set-parameters
+    ,type
+    :follow (lambda (label) (browse-url (format ,url label)))
+    :export (lambda (label description backend)
+              (-let [full-url (format ,url label)]
+                (pcase backend
+                  ('html  (format "<a href=\"%s\">%s</a>" full-url (-let [type ,type] ,export-display)))
+                  ('latex (format "\\href{%s}{FM-%s}" full-url label))
+                  (_  full-url))))
+    :face '(:foreground "green" :weight bold
+            :underline "blue" :overline "blue")))
+
+ (my/work-links "FM"       "https://weeverapps.atlassian.net/browse/FM-%s")                ;; FM:2898
+ (my/work-links "INEW"     "https://weeverapps.atlassian.net/browse/INEW-%s")              ;; INEW:201
+ (my/work-links "portal"   "https://github.com/WeeverApps/wxPortal/pull/%s")               ;; portal:4905
+ (my/work-links "platform" "https://github.com/WeeverApps/api-platform-server/pull/%s")    ;; platform:2489
+ (my/work-links "weever"   "https://github.com/WeeverApps/%s" label)                       ;; weever:wxportal
+ (my/work-links "backlog"  "https://weeverapps.atlassian.net/jira/software/c/projects/%s/boards/78/backlog?issueLimit=100") ;; backlog:FM , backlog:INEW
+    #+end_src
 
 *** Process Manager
 :PROPERTIES:
