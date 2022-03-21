@@ -786,14 +786,14 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Pretty Magit Commit Leaders:1 ends here
 
 ;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:2]]
-(pretty-magit "Add"      ? (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
-(pretty-magit "Fix"      ? (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
-(pretty-magit "Clean"    ? (:foreground "#FFBB00" :height 1.2) "✂ Refactor code; reformat say by altering whitespace; refactor performance.")
-(pretty-magit "Document" ? (:foreground "#3F681C" :height 1.2) "ℹ Refactor of documentation, e.g. help files.")
-(pretty-magit "Feature"  ? (:foreground "slate gray" :height 1.2) "⛳ 🇮🇶🇨🇦 A milestone commit - flagpost")
-(pretty-magit "Generate"  ?↯ (:foreground "slate gray" :height 1.2) "↯ Generate an artifact; e.g., make a PDF or tangle raw code from a Literate Program.")
+(pretty-magit "Add"      ?➕ (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
+(pretty-magit "Fix"      ?🔨 (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
+(pretty-magit "Clean"    ?🧹 (:foreground "#FFBB00" :height 1.2) "✂ Refactor code; reformat say by altering whitespace; refactor performance.")
+(pretty-magit "Document" ?📚 (:foreground "#3F681C" :height 1.2) "ℹ Refactor of documentation, e.g. help files.")
+(pretty-magit "Feature"  ?⛲ (:foreground "slate gray" :height 1.2) "⛳ 🇮🇶🇨🇦 A milestone commit - flagpost")
+(pretty-magit "Generate"  ?🔭 (:foreground "slate gray" :height 1.2) "↯ Generate an artifact; e.g., make a PDF or tangle raw code from a Literate Program.")
 (pretty-magit "master"   ? (:box t :height 1.2) "" t)
-(pretty-magit "origin"   ? (:box t :height 1.2) "" t)
+(pretty-magit "origin"   ?🐙 (:box t :height 1.2) "" t)
 ;; Commit leader examples: https://news.ycombinator.com/item?id=13889155.
 ;;
 ;; Cut ~ Remove a capability e.g. feature, test, dependency.
