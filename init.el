@@ -905,19 +905,14 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Executing code from ~src~ blocks:1 ends here
 
 ;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
- (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     (shell      . t)
-     (python     . t)
-     (haskell    . t)
-     (ruby       . t)
-     (ocaml      . t)
-     (C          . t)  ;; Captial “C” gives access to C, C++, D
-     (dot        . t)
-     (latex      . t)
-     (org        . t)
-     (makefile   . t)))
+(defvar my/programming-languages
+  '(emacs-lisp shell python haskell ruby ocaml dot latex org js
+               sqlite C) ;; Captial “C” gives access to C, C++, D
+  "List of languages I have used in Org-mode, for literate programming.")
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ (--map (cons it t) my/programming-languages))
 
 ;; Preserve my indentation for source code during export.
 (setq org-src-preserve-indentation t)
@@ -2246,6 +2241,81 @@ fonts (•̀ᴗ•́)و"
 (quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
 (global-set-key [remap goto-line] 'goto-line-preview)
 ;; Preview link under cursor:2 ends here
+
+;; [[file:init.org::*Replace phrases with nice SVG labels][Replace phrases with nice SVG labels:1]]
+(use-package svg-tag-mode
+  ;; :hook (org-mode prog-mode svg-tag-mode)
+  :config (global-svg-tag-mode)
+  (cl-defun my/svg-tag-declare-badge (template face &optional tooltip-message-upon-hover)
+    ;; Example faces: 'org-level-1 'org-todo 'font-lock-doc-face
+    "Given a TEMPLATE of the shape \"𝑿❙𝒀\", make SVG badge whose tag is 𝑿 and label is 𝒀.
+
+     When `svg-tags-mode' is enabled, every occurence of  \"\\(𝑿\\)\\(𝒀\\)\"
+     is replaced by an SVG image essentially displaying “[𝑿∣𝒀]” using the given FACE.
+     This badge can be clicked to show all instances in the buffer.
+     You can see the badges documentation / intentions / help-message when you hover over it;
+     to see TOOLTIP-MESSAGE-UPON-HOVER.
+
+     Both 𝑿 and 𝒀 are regeular expressions; “❙” serves as the SVG tag-label delimiter
+     ---i.e., it saves as from writing \"\\(𝑿\\)\\(𝒀\\)\". Moreover, the SVG is only active
+     when regexp \"\\(𝑿\\)\\(𝒀\\)\" matches an instance."
+
+    ;; Append tooltip message with a notice on what happens upon click.
+    (--> "Click on me to all see occurrences of this badge, in the current buffer!"
+         (if tooltip-message-upon-hover (concat tooltip-message-upon-hover "\n\n" it) it)
+         (setq tooltip-message-upon-hover it))
+
+    (-let [(tag label) (s-split "❙" template)]
+      (-let [click-to-show-all-buffer-occurrences `(lambda () (interactive) (occur (concat ,tag ,label)))]
+       ;; Make an SVG for the tag.
+       (push
+        (cons (format "\\(%s\\)%s" tag label) `((lambda (tag) (svg-tag-make (s-chop-suffix ":" (s-chop-prefixes '("[" "<" "/*")  tag))    :face (quote ,face) :inverse t :margin 0 :crop-right t :crop-left nil))
+                                                ,click-to-show-all-buffer-occurrences
+                                                ,tooltip-message-upon-hover))
+        svg-tag-tags)
+       ;; Make an SVG for the label.
+       (push
+        (cons (format "%s\\(%s\\)" tag label) `((lambda (label) (svg-tag-make (s-chop-suffixes '("]" ">" "*/") label) :face (quote ,face) :crop-left t))
+                                                ,click-to-show-all-buffer-occurrences
+                                                ,tooltip-message-upon-hover))
+        svg-tag-tags))))
+
+  ;; Let's start off empty; then declare badges below.
+  (setq svg-tag-tags nil)
+
+  ;; Using caps so that these stick-out somewhat even when svg-tags-mode is not present.
+  (my/svg-tag-declare-badge "TODO:❙.*" 'org-todo "This is something I would like to do, in the future.")
+  (my/svg-tag-declare-badge "SILLY:❙.*" 'error "I’m experimenting; don't forget to clean-up when you’re done!")
+  (my/svg-tag-declare-badge "HACK:❙.*" 'error "This works, but it’s far from ideal. Plan to clean this in the future.")
+  (my/svg-tag-declare-badge "FIXME:❙.*" 'org-todo "This is busted! Plan to fix this in the future.")
+  (my/svg-tag-declare-badge "NOTE:❙.*" 'org-done "Something to be aware of; to keep in mind.")
+
+  ;; [In]Active Time stamps --- M-x org-time-stamp
+  (my/svg-tag-declare-badge "\\[2022-.* ❙.*]" 'org-done "This is an inactive time stamp. It does not trigger the parent entry to appear in the agenda.")
+  (my/svg-tag-declare-badge "<2022-.* ❙.*>" 'org-todo "This is an active time stamp. It causes the parent Org entry to appear in the agenda.")
+
+  ;; JavaScript Lint Rules: \* eslint (.*) */
+  (my/svg-tag-declare-badge "/\\* eslint ❙.* \\*/" 'org-done "It looks like you’ deviating from common conventions: Tread cautiously!")
+
+  ;; TODO: Make SVG tags for other interesting “2-part” pieces of textual information
+  )
+
+;; If everything is setup, the following examples should look like SVGs.
+;; NOTE: Do something
+;; TODO: fix me later
+;; HACK: hiya
+;; FIXME: this thing is busted 🎭
+;; SILLY: start
+;; SILLY: end
+;; [2022-04-20 Sun 16:30]
+;; <2022-04-20 Sun 16:30>
+;; /* eslint eqeqeq: 0, curly: 2 */
+
+;; NOTE: Toggle svg-tags-mode; useful when experimenting with new tags.
+;; (progn (svg-tag-mode-off) (svg-tag-mode-on))
+
+;; NOTE: (my/toggle-line-fontification) works fine with svg-tag-mode :-)
+;; Replace phrases with nice SVG labels:1 ends here
 
 ;; [[file:init.org::#Whitespace][Whitespace:1]]
 (add-hook 'before-save-hook 'whitespace-cleanup)
