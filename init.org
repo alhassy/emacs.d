@@ -8679,7 +8679,14 @@ doc:org-web-tools-insert-web-page-as-entry and
 doc:org-web-tools-convert-links-to-page-entries.
 
 #+begin_src emacs-lisp
-(bind-key* "C-c C-l" #'my/org-insert-link-dwim)
+;; C-u C-c C-l ⇒ Paste URL with title, WITHOUT prompting me for anything.
+;; C-c C-l ⇒ Prompt me for title.
+(bind-key* "C-c C-l"
+           (lambda () (interactive)
+             (call-interactively
+              (if current-prefix-arg
+                  #'org-web-tools-insert-link-for-url
+                #'my/org-insert-link-dwim))))
 ;; From:
 (defun my/org-insert-link-dwim ()
   "Like `org-insert-link' but with personal dwim preferences.
