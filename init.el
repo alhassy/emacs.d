@@ -771,6 +771,87 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (message "🥳 Happy coding!"))
 ;; Jump to a (ma)git repository with ~C-u C-x g~:1 ends here
 
+;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:1]]
+(cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
+  "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
+  `(prog1
+     (add-to-list 'pretty-magit-alist
+                  (list (rx bow (group ,WORD (eval (if ,NO-PROMPT? "" ":"))))
+                        ,ICON ',PROPS))
+     (unless ,NO-PROMPT?
+       (add-to-list 'pretty-magit-prompt (cons (concat ,WORD ": ") ,description)))))
+
+(setq pretty-magit-alist nil)
+(setq pretty-magit-prompt nil)
+;; Pretty Magit Commit Leaders:1 ends here
+
+;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:2]]
+(pretty-magit "Add"      ? (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
+(pretty-magit "Fix"      ? (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
+(pretty-magit "Clean"    ? (:foreground "#FFBB00" :height 1.2) "✂ Refactor code; reformat say by altering whitespace; refactor performance.")
+(pretty-magit "Document" ? (:foreground "#3F681C" :height 1.2) "ℹ Refactor of documentation, e.g. help files.")
+(pretty-magit "Feature"  ? (:foreground "slate gray" :height 1.2) "⛳ 🇮🇶🇨🇦 A milestone commit - flagpost")
+(pretty-magit "Generate"  ?↯ (:foreground "slate gray" :height 1.2) "↯ Generate an artifact; e.g., make a PDF or tangle raw code from a Literate Program.")
+(pretty-magit "master"   ? (:box t :height 1.2) "" t)
+(pretty-magit "origin"   ? (:box t :height 1.2) "" t)
+;; Commit leader examples: https://news.ycombinator.com/item?id=13889155.
+;;
+;; Cut ~ Remove a capability e.g. feature, test, dependency.
+;; Bump ~ Increase the version of something e.g. dependency.
+;; Make ~ Change the build process, or tooling, or infra.
+;; Start ~ Begin doing something; e.g. create a feature flag.
+;; Stop ~ End doing something; e.g. remove a feature flag.
+;; Pretty Magit Commit Leaders:2 ends here
+
+;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:3]]
+(defun add-magit-faces ()
+  "Add face properties and compose symbols for buffer from pretty-magit."
+  (interactive)
+  (with-silent-modifications
+    (--each pretty-magit-alist
+      (-let (((rgx icon props) it))
+        (save-excursion
+          (goto-char (point-min))
+          (while (search-forward-regexp rgx nil t)
+            (compose-region
+             (match-beginning 1) (match-end 1) icon)
+            (when props
+              (add-face-text-property
+               (match-beginning 1) (match-end 1) props))))))))
+
+(advice-add 'magit-status :after 'add-magit-faces)
+(advice-add 'magit-refresh-buffer :after 'add-magit-faces)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq use-magit-commit-prompt-p nil)
+(defun use-magit-commit-prompt (&rest args)
+  (setq use-magit-commit-prompt-p t))
+
+(defun magit-commit-prompt ()
+  "Magit prompt and insert commit header with faces."
+  (interactive)
+  (when use-magit-commit-prompt-p
+    (setq use-magit-commit-prompt-p nil)
+
+
+    (thread-last (--map (format "%s %s" (car it) (cdr it)) pretty-magit-prompt)
+                 (completing-read "Insert commit leader ∷ ")
+                 (s-split " ")
+                 car
+                 (insert)
+                 (end-of-line))
+
+    (add-magit-faces)
+    ))
+
+
+(remove-hook 'git-commit-setup-hook 'with-editor-usage-message)
+(add-hook 'git-commit-setup-hook 'magit-commit-prompt)
+(advice-add 'magit-commit :after 'use-magit-commit-prompt)
+;; Pretty Magit Commit Leaders:3 ends here
+
 ;; [[file:init.org::#Highlighting-TODO-s-Showing-them-in-Magit][Highlighting TODO-s & Showing them in Magit:1]]
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
