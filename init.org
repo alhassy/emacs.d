@@ -5487,9 +5487,14 @@ and ensure I'm not narrowing on a single task and ignoring others.
   non-Emacs application (gasp!). Then, doc:my/notify could be used to produce
   MacOS system-wide notifications.
 
+The [[https://askubuntu.com/a/501917][text-to-speech tool]] we'll use is ~say~; which [[https://www.lifewire.com/mac-say-command-with-talking-terminal-2260772#:~:text=In%20the%20left%20pane%2C%20select,voices%20your%20Mac%20can%20use.][on a Mac can be activated]]
+in a browser: Select some text, right-click, select ~Speech~, then ~Start/Stop Speaking~.
+- TODO: Make the command below randomly use an English speaking voice; “tldr  say” to learn more.
+- TODO: Also finish reading the above mentioned links, with nice examples.
+
 #+begin_src emacs-lisp
 ;; Obtain a notifications and text-to-speech utilities
-(system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
+(system-packages-ensure "say") ;; Built-into MacOS, but can be downloaded in Ubuntu
 (system-packages-ensure "terminal-notifier") ;; MacOS specific
 ;; System Preferences → Notifications → Terminal Notifier → Allow “alerts”.
 ;; E.g.,: (shell-command "terminal-notifier -title \"Hiya\" -message \"hello\"")
@@ -5556,7 +5561,7 @@ Example uses:
                          ;; Run the shell command COMMAND when the user clicks the notification.
                          ;; -execute COMMAND
                          & ;; … and then speak! …
-                         espeak -s 125 ,(s-replace "\\n" " " (pp-to-string message))))))
+                         say ,(s-replace "\\n" " " (pp-to-string message))))))
 #+end_src
 
 The following two actual uses cases are also mentioned in doc:my/notify
