@@ -10754,6 +10754,29 @@ function add(x, y) {return x + y;}
 add(1, 2)
 #+end_src
 
+For more on this idea on types, see [[https://github.com/BeyondCodeBootcamp/jsdoc-typescript-starter][A simple, but non-trivial example of getting the most from JSDoc + tsserver (Type Linting without TypeScript)]].
+
+** JSON
+
+Since web apps tend to be RESTful, payloads are [[https://www.json.org/json-en.html][JSON]].  To use the JSON, we need
+to tediously find paths to particular fields; let's do so with /automatically,
+without error./.
+
+When we open a JSON file, we are promoted to install an LSP server, which
+- Checks that the file is valid JSON.
+- Shows the full path to the cursor's location, at the top of the window.
+
+#+begin_src emacs-lisp
+(use-package json-mode)
+#+end_src
+
+Useful bindings are in the docstring of doc:json-mode.
++ kbd:C-c_C-f :: Pretty print buffer
++ kbd:C-c_C-p :: Copy path to field at point
+
+Note that there is also doc:json-pretty-print-buffer; which can be used to
+uglify a JSON buffer if a prefix is provided.
+
 **  w-screencapture
 :PROPERTIES:
 :CUSTOM_ID: w-screencapture
