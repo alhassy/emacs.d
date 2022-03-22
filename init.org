@@ -2709,11 +2709,12 @@ out completely every leader we choose.
 My personal choices for leaders are:
 #+begin_src emacs-lisp
 (pretty-magit "Add"      ?➕ (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
+(pretty-magit "Delete"   ?❌ (:foreground "#375E97" :height 1.2) "❌ Remove a capability e.g. feature, test, dependency.")
 (pretty-magit "Fix"      ?🔨 (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
 (pretty-magit "Clean"    ?🧹 (:foreground "#FFBB00" :height 1.2) "✂ Refactor code; reformat say by altering whitespace; refactor performance.")
 (pretty-magit "Document" ?📚 (:foreground "#3F681C" :height 1.2) "ℹ Refactor of documentation, e.g. help files.")
 (pretty-magit "Feature"  ?⛲ (:foreground "slate gray" :height 1.2) "⛳ 🇮🇶🇨🇦 A milestone commit - flagpost")
-(pretty-magit "Generate"  ?🔭 (:foreground "slate gray" :height 1.2) "↯ Generate an artifact; e.g., make a PDF or tangle raw code from a Literate Program.")
+(pretty-magit "Generate"  ?🔭 (:foreground "slate gray" :height 1.2) "Export PDF/HTML or tangle raw code from a literate program") ;; Generating artefacts
 (pretty-magit "master"   ? (:box t :height 1.2) "" t)
 (pretty-magit "origin"   ?🐙 (:box t :height 1.2) "" t)
 ;; Commit leader examples: https://news.ycombinator.com/item?id=13889155.
@@ -2757,17 +2758,13 @@ My personal choices for leaders are:
   (interactive)
   (when use-magit-commit-prompt-p
     (setq use-magit-commit-prompt-p nil)
-
-
     (thread-last (--map (format "%s %s" (car it) (cdr it)) pretty-magit-prompt)
-                 (completing-read "Insert commit leader ∷ ")
-                 (s-split " ")
-                 car
-                 (insert)
-                 (end-of-line))
-
-    (add-magit-faces)
-    ))
+      (completing-read "Insert commit leader ∷ ")
+      ;; My “Generate:” commit type has one use case, for now; so let's insert it filled-in.
+      (funcall (lambda (it) (if (s-starts-with? "Generate:" it) it (car (s-split " " it)))))
+      (insert)
+      (end-of-line))
+    (add-magit-faces)))
 
 
 (remove-hook 'git-commit-setup-hook 'with-editor-usage-message)
@@ -6285,8 +6282,21 @@ as necessary.
 #+BEGIN_SRC emacs-lisp
 ;; (column-number-mode                 t) ;; Enabled in doom-modeline by default
 ;; (line-number-mode                   t) ;; Not sure I want line numbers in modeline, since I have them in the left margin.
-(setq display-line-numbers-width-start t)
-(global-display-line-numbers-mode      t)
+#+END_SRC
+
+Line numbers are a /conventionally expected/ part of a user interface, but I've
+realised that I seldom /need to see/ them. I can still jump to a line number
+provided by a compilation error with kbd:M-g_g; and toggle line numbers on when
+I'm pair programming with doc:display-line-numbers-mode.
+- In Emacs, there are /buffer/ which exist and contain textual data, but to
+  actually see them one requires a /window/. In the same vein, there are line
+  numbers but I don't need to always see them.
+- If I need an indication of ‘progress’, the modeline contains a percentage of
+  how far I am in a buffer.
+#+BEGIN_SRC emacs-lisp
+;; (setq display-line-numbers-width-start t)
+;; (global-display-line-numbers-mode      t)
+(global-linum-mode -1)
 #+END_SRC
 ** COMMENT Buffer names are necessarily injective :Maybe_no_longer_needed_due_to_doom:
 :PROPERTIES:
