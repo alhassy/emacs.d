@@ -1687,7 +1687,7 @@ We show its subheadings in a completing-read menu, then narrow to that entry."
 
 ;; [[file:init.org::#Actually-Doing-Things][Actually Doing Things ---or /Sending notifications from Emacs/:1]]
 ;; Obtain a notifications and text-to-speech utilities
-(system-packages-ensure "espeak") ;; Alternatively: espeak-ng supports 109 languages
+(system-packages-ensure "say") ;; Built-into MacOS, but can be downloaded in Ubuntu
 (system-packages-ensure "terminal-notifier") ;; MacOS specific
 ;; System Preferences → Notifications → Terminal Notifier → Allow “alerts”.
 ;; E.g.,: (shell-command "terminal-notifier -title \"Hiya\" -message \"hello\"")
@@ -1750,7 +1750,7 @@ Example uses:
                          ;; Run the shell command COMMAND when the user clicks the notification.
                          ;; -execute COMMAND
                          & ;; … and then speak! …
-                         espeak -s 125 ,(s-replace "\\n" " " (pp-to-string message))))))
+                         say ,(s-replace "\\n" " " (pp-to-string message))))))
 ;; Actually Doing Things ---or /Sending notifications from Emacs/:2 ends here
 
 ;; [[file:init.org::#Actually-Doing-Things][Actually Doing Things ---or /Sending notifications from Emacs/:3]]
@@ -2946,7 +2946,14 @@ by spaces.
 ;; Org-mode ⇐ HTML:2 ends here
 
 ;; [[file:init.org::#Org-mode-HTML][Org-mode ⇐ HTML:3]]
-(bind-key* "C-c C-l" #'my/org-insert-link-dwim)
+;; C-u C-c C-l ⇒ Paste URL with title, WITHOUT prompting me for anything.
+;; C-c C-l ⇒ Prompt me for title.
+(bind-key* "C-c C-l"
+           (lambda () (interactive)
+             (call-interactively
+              (if current-prefix-arg
+                  #'org-web-tools-insert-link-for-url
+                #'my/org-insert-link-dwim))))
 ;; From:
 (defun my/org-insert-link-dwim ()
   "Like `org-insert-link' but with personal dwim preferences.
@@ -3937,6 +3944,10 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 ;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
+
+;; [[file:init.org::*JSON][JSON:1]]
+(use-package json-mode)
+;; JSON:1 ends here
 
 ;; [[file:init.org::#w-screencapture][w-screencapture:1]]
 (bind-key "C-c s"
