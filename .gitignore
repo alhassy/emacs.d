@@ -28,3 +28,9 @@ _minted-*
 /.persistent-scratch
 /.last-package-update-day
 /semanticdb/
+/.cache/
+/.init.org.~undo-tree~
+/.lsp-session-v1
+/auto-save-list/
+/projectile-bookmarks.eld
+/..init.org.~undo-tree~.~undo-tree~

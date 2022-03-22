@@ -787,11 +787,12 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 ;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:2]]
 (pretty-magit "Add"      ?➕ (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
+(pretty-magit "Delete"   ?❌ (:foreground "#375E97" :height 1.2) "❌ Remove a capability e.g. feature, test, dependency.")
 (pretty-magit "Fix"      ?🔨 (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
 (pretty-magit "Clean"    ?🧹 (:foreground "#FFBB00" :height 1.2) "✂ Refactor code; reformat say by altering whitespace; refactor performance.")
 (pretty-magit "Document" ?📚 (:foreground "#3F681C" :height 1.2) "ℹ Refactor of documentation, e.g. help files.")
 (pretty-magit "Feature"  ?⛲ (:foreground "slate gray" :height 1.2) "⛳ 🇮🇶🇨🇦 A milestone commit - flagpost")
-(pretty-magit "Generate"  ?🔭 (:foreground "slate gray" :height 1.2) "↯ Generate an artifact; e.g., make a PDF or tangle raw code from a Literate Program.")
+(pretty-magit "Generate"  ?🔭 (:foreground "slate gray" :height 1.2) "Export PDF/HTML or tangle raw code from a literate program") ;; Generating artefacts
 (pretty-magit "master"   ? (:box t :height 1.2) "" t)
 (pretty-magit "origin"   ?🐙 (:box t :height 1.2) "" t)
 ;; Commit leader examples: https://news.ycombinator.com/item?id=13889155.
@@ -834,17 +835,13 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (interactive)
   (when use-magit-commit-prompt-p
     (setq use-magit-commit-prompt-p nil)
-
-
     (thread-last (--map (format "%s %s" (car it) (cdr it)) pretty-magit-prompt)
-                 (completing-read "Insert commit leader ∷ ")
-                 (s-split " ")
-                 car
-                 (insert)
-                 (end-of-line))
-
-    (add-magit-faces)
-    ))
+      (completing-read "Insert commit leader ∷ ")
+      ;; My “Generate:” commit type has one use case, for now; so let's insert it filled-in.
+      (funcall (lambda (it) (if (s-starts-with? "Generate:" it) it (car (s-split " " it)))))
+      (insert)
+      (end-of-line))
+    (add-magit-faces)))
 
 
 (remove-hook 'git-commit-setup-hook 'with-editor-usage-message)
@@ -1881,9 +1878,13 @@ Example uses:
 ;; [[file:init.org::#Column-Numbers][Column Numbers:1]]
 ;; (column-number-mode                 t) ;; Enabled in doom-modeline by default
 ;; (line-number-mode                   t) ;; Not sure I want line numbers in modeline, since I have them in the left margin.
-(setq display-line-numbers-width-start t)
-(global-display-line-numbers-mode      t)
 ;; Column Numbers:1 ends here
+
+;; [[file:init.org::#Column-Numbers][Column Numbers:2]]
+;; (setq display-line-numbers-width-start t)
+;; (global-display-line-numbers-mode      t)
+(global-linum-mode -1)
+;; Column Numbers:2 ends here
 
 ;; [[file:init.org::#Exquisite-Fonts-and-Themes][Exquisite Fonts and Themes:1]]
 ;; Treat all themes as safe; no query before use.
