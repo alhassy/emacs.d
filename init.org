@@ -2203,28 +2203,6 @@ windows, so we can make a hydra to alleviate the trouble.
 ;; Have a thick ruler between vertical windows
 (window-divider-mode)
 #+end_src
-** Get CheatSheets and view them easily
-
-#+begin_src emacs-lisp
-(defvar my/cheatsheet/cached-topics nil)
-(cl-defun my/cheatsheet (&optional topic)
-  "Clone Al-hassy's ⟨TOPIC⟩CheatSheet repository when called from Lisp; visit the pretty HTML page when called interactively.
-
-- Example usage: (my/cheatsheet \"Vue\")
-- Example usage: M-x my/cheatsheet RET Vue RET."
-  (interactive)
-  (if (not topic)
-      (browse-url (format "https://alhassy.github.io/%sCheatSheet" (completing-read "Topic: " my/cheatsheet/cached-topics)))
-    (push topic my/cheatsheet/cached-topics)
-    (maybe-clone (format "https://github.com/alhassy/%sCheatSheet" topic))))
-#+end_src
-
-Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the pretty HTML (or PDF) sheets.
-#+begin_src emacs-lisp
-(mapcar #'my/cheatsheet '("ELisp" "GojuRyu")) ; Python Prolog Vue Agda Rust JavaScript
-                                              ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
-#+end_src
-
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -2991,6 +2969,28 @@ should jump to the first entry.
   :config (beginend-global-mode)
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 #+END_SRC
+** Get CheatSheets and view them easily
+
+#+begin_src emacs-lisp
+(defvar my/cheatsheet/cached-topics nil)
+(cl-defun my/cheatsheet (&optional topic)
+  "Clone Al-hassy's ⟨TOPIC⟩CheatSheet repository when called from Lisp; visit the pretty HTML page when called interactively.
+
+- Example usage: (my/cheatsheet \"Vue\")
+- Example usage: M-x my/cheatsheet RET Vue RET."
+  (interactive)
+  (if (not topic)
+      (browse-url (format "https://alhassy.github.io/%sCheatSheet" (completing-read "Topic: " my/cheatsheet/cached-topics)))
+    (push topic my/cheatsheet/cached-topics)
+    (maybe-clone (format "https://github.com/alhassy/%sCheatSheet" topic))))
+#+end_src
+
+Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the pretty HTML (or PDF) sheets.
+#+begin_src emacs-lisp
+(mapcar #'my/cheatsheet '("ELisp" "GojuRyu")) ; Python Prolog Vue Agda Rust JavaScript
+                                              ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
+#+end_src
+
 * Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
@@ -9055,7 +9055,6 @@ tasks:
 + Start/stop my servers
 + Interactively select an app to be opened in the browser
 + Do database migrations/rollbacks
-
 
 ⟨ Obfuscated with lorem ipsum text. ⟩
 [[file:images/services-dashboard.png]]

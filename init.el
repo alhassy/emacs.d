@@ -569,25 +569,6 @@ Is replaced by:
 (window-divider-mode)
 ;; Window Navigation:1 ends here
 
-;; [[file:init.org::*Get CheatSheets and view them easily][Get CheatSheets and view them easily:1]]
-(defvar my/cheatsheet/cached-topics nil)
-(cl-defun my/cheatsheet (&optional topic)
-  "Clone Al-hassy's ⟨TOPIC⟩CheatSheet repository when called from Lisp; visit the pretty HTML page when called interactively.
-
-- Example usage: (my/cheatsheet \"Vue\")
-- Example usage: M-x my/cheatsheet RET Vue RET."
-  (interactive)
-  (if (not topic)
-      (browse-url (format "https://alhassy.github.io/%sCheatSheet" (completing-read "Topic: " my/cheatsheet/cached-topics)))
-    (push topic my/cheatsheet/cached-topics)
-    (maybe-clone (format "https://github.com/alhassy/%sCheatSheet" topic))))
-;; Get CheatSheets and view them easily:1 ends here
-
-;; [[file:init.org::*Get CheatSheets and view them easily][Get CheatSheets and view them easily:2]]
-(mapcar #'my/cheatsheet '("ELisp" "GojuRyu")) ; Python Prolog Vue Agda Rust JavaScript
-                                              ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
-;; Get CheatSheets and view them easily:2 ends here
-
 ;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
 (global-set-key (kbd "C-z")
@@ -938,6 +919,25 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   :config (beginend-global-mode)
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 ;; Jumping to extreme semantic units:1 ends here
+
+;; [[file:init.org::*Get CheatSheets and view them easily][Get CheatSheets and view them easily:1]]
+(defvar my/cheatsheet/cached-topics nil)
+(cl-defun my/cheatsheet (&optional topic)
+  "Clone Al-hassy's ⟨TOPIC⟩CheatSheet repository when called from Lisp; visit the pretty HTML page when called interactively.
+
+- Example usage: (my/cheatsheet \"Vue\")
+- Example usage: M-x my/cheatsheet RET Vue RET."
+  (interactive)
+  (if (not topic)
+      (browse-url (format "https://alhassy.github.io/%sCheatSheet" (completing-read "Topic: " my/cheatsheet/cached-topics)))
+    (push topic my/cheatsheet/cached-topics)
+    (maybe-clone (format "https://github.com/alhassy/%sCheatSheet" topic))))
+;; Get CheatSheets and view them easily:1 ends here
+
+;; [[file:init.org::*Get CheatSheets and view them easily][Get CheatSheets and view them easily:2]]
+(mapcar #'my/cheatsheet '("ELisp" "GojuRyu")) ; Python Prolog Vue Agda Rust JavaScript
+                                              ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
+;; Get CheatSheets and view them easily:2 ends here
 
 ;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:1]]
 (setq org-use-speed-commands t)
