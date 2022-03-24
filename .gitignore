@@ -34,3 +34,8 @@ _minted-*
 /auto-save-list/
 /projectile-bookmarks.eld
 /..init.org.~undo-tree~.~undo-tree~
+/devdocs/
+/request/
+/projectile.cache
+/.org-id-locations
+/.*~undo-tree~

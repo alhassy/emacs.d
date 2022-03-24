@@ -1,6 +1,6 @@
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #
-# Over 11k line org file, with over 300 source code blocks.
+# Over 13k line org file, with over 300 source code blocks.
 
 #+title: A Life Configuring Emacs
 #+author: Musa Al-hassy
@@ -9056,6 +9056,10 @@ tasks:
 + Interactively select an app to be opened in the browser
 + Do database migrations/rollbacks
 
+
+⟨ Obfuscated with lorem ipsum text. ⟩
+[[file:images/services-dashboard.png]]
+
 --------------------------------------------------------------------------------
 
 Not using this, a bit too verbose to setup for each service but, more
@@ -9235,6 +9239,7 @@ Menu can be closed when servers are started; can also stop them."
 :PROPERTIES:
 :CUSTOM_ID: w-status-of-services
 :END:
+
 #+begin_src emacs-lisp
 ;; It takes about ~3 seconds to build the Status of Services page, so let's jump to it if it's already built, and the user/me can request a refresh, if need be.
 (global-set-key (kbd "M-S-SPC")
@@ -9243,6 +9248,103 @@ Menu can be closed when servers are started; can also stop them."
 ;;
 ;; Since M-S-SPC brings up the transient menu, and most commands close the status buffer or are transient, we get the perception that the transient menu is "sticky"; i.e., stuck to the buffer, even though this is not true. I do not yet know how to make a transient menu stuck to a buffer.
 ;;
+#+end_src
+
+#+begin_src emacs-lisp
+(defun w-status-of-services ()
+  "Show me status of all servers, including their current git branch, and most recent emitted output."
+  (interactive)
+  (-->
+      (-let [ shells (--filter (s-starts-with? "Shell" (process-name it)) (process-list)) ]
+        (cl-loop for 𝑺 in (mapcar #'pp-to-string my/services)
+              for associated-shell = (--find (s-contains? (format "%s" 𝑺) (cl-third (process-command it))) shells)
+              for status = (or (ignore-errors (process-status associated-shell)) '💥)
+              for branch = (-let [default-directory (format "~/%s" 𝑺)]
+                             (magit-get-current-branch))
+              for saying = (let (most-recent-shell-output (here (current-buffer)))
+                             (switch-to-buffer (--find (s-starts-with-p 𝑺 (buffer-name it)) (buffer-list)))
+                             (end-of-buffer)
+                             (beginning-of-line)
+                             (setq most-recent-shell-output (or (thing-at-point 'line t) ""))
+                             (switch-to-buffer here)
+                             (s-truncate 135 (s-trim most-recent-shell-output)))
+              for keymap = (copy-keymap org-mouse-map)
+              do (cl-loop for (key action)
+                          on `(;; Checkout branch/PR
+                               c (w-pr-checkout (format "~/%s" ,𝑺))
+                               ;; Visit service shell
+                               <return>
+                                 (progn
+                                   (delete-other-windows)
+                                   (split-window-below)
+                                   (switch-to-buffer (--find (s-starts-with? (format "%s" ,𝑺) it) (mapcar 'buffer-name (buffer-list))))
+                                   (end-of-buffer)
+                                   (other-window 1)
+                                   )
+                               ;; See service magit buffer
+                              <tab> (progn (magit-status (format "~/%s" ,𝑺)) (delete-other-windows)))
+                          by #'cddr
+                          do (define-key keymap (kbd (format "%s" key))
+                                         `(lambda () (interactive) ,action)))
+              collect
+              ;; “%𝑾s” ⇒ Print a string with at least width 𝑾: If length(str) ≤ 𝑾, then pad with spaces on the left side.
+              ;; Use “%-𝑾s” to instead pad with spaces to the right.
+              (list keymap (format "%s %-20s %-12s %s" status 𝑺 branch
+                                   (-let [it (s-trim (if (s-contains? "|" saying)
+                                                         (cl-second (s-split "|" saying))
+                                                       saying))]
+                                     (if (<= (length it) 3) "-" it))))))
+
+      ;; Setup buffer
+      (-let [buf "Status of Services"]
+        (ignore-errors (kill-buffer buf))
+        (switch-to-buffer buf)
+        (delete-other-windows)
+        it)
+      ;; Insert out buttons
+      (--each it
+        ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Overlay-Properties.html
+        (-let [help (s-join "\n"
+                            '("Keybindings:"
+                              "c         ∷  Checkout PR               \t\t\t b ∷ Browse an app"
+                              "[tab]     ∷  See service magit buffer  \t\t\t i ∷ Inject users"
+                              "[return]  ∷  Visit service shell       \t\t\t s ∷ SQL buffer"
+                              "g         ∷  Refresh this view         \t\t\t q ∷ Quit, and kill, this buffer"))]
+          (insert-text-button (s-replace "\"" "″" (s-replace "run" "✅" (nth 1 it)))
+                         'face nil
+                         ;; 'mouse-face '(:box t) ;; I use the cursor more than the mouse, so don't want two distinct views.
+                         'keymap (nth 0 it)
+                         ;; NOTE: The functions are called only when the minor mode cursor-sensor-mode is turned on.
+                         ;; When cursor enters the button, we temporarily make it a box and show shortcuts in message area.
+                         'cursor-sensor-functions `((lambda (_ old-pos entered?)
+                                                      (message ,help)
+                                                      (setq entered? (equal entered? 'entered))
+                                                      (-let [self (button-at (if entered? (point) old-pos))]
+                                                        (read-only-mode 0) ;; Temporarily disable help-mode's read-only-mode setup.
+                                                        (if entered?
+                                                            (button-put self 'face '(:box "yellow" :weight bold))
+                                                          (button-put self 'face nil)))))
+                         'help-echo help)
+                         (insert "\n")))
+      ;; Do some highlighting, as a cautionary measure.
+      (highlight-regexp ".*crashed.*" 'hi-red-b)
+      ;; Forbid editing
+      (help-mode) ;; This wont do the button face changes I like when cursor moves; so I disable read-only-mode temporarily when making the changes.
+      (cursor-sensor-mode)
+      ;; Add some specific work related bindings
+      (local-set-key "b" #'w-browse-app)
+      (local-set-key "i" #'w-inject-users)
+      (local-set-key "s" (lambda () (interactive) (w-sql) (delete-other-windows)))
+      ;; Add general view keys
+      (local-set-key "g" (lambda () "Refresh this view" (interactive) (ignore-errors (kill-buffer-and-window)) (w-status-of-services)))
+      (local-set-key "q" (lambda ()  "Quit buffer" (interactive) (ignore-errors (kill-buffer-and-window))))
+      ;; Go to the first entry, so my “homemade echo menu” appears.
+      (beginning-of-buffer)))
+#+end_src
+
+**** COMMENT Old definition with colourful menu                   :ignore:
+
+#+begin_src emacs-lisp
 (defun w-status-of-services ()
   "Show me status of all servers, including their current git branch, and most recent emitted output."
   (interactive)
@@ -9277,6 +9379,8 @@ Menu can be closed when servers are started; can also stop them."
                        (delete-other-windows)
                        (switch-to-buffer "Status of Services")
                        (highlight-regexp ".*crashed.*" 'hi-red-b)
+                       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                       ;; Start describing the keys
                        (end-of-buffer)
                        (insert "\n \n \n \n \n")
                        (let ((register-action (lambda (key-desc-actions)
@@ -9317,7 +9421,8 @@ Menu can be closed when servers are started; can also stop them."
                        (beginning-of-buffer)
                        ;; (help-mode) ;; For some reason, default fundamental-mode does not regoznise proprtised strings.
                        ;; Also, this is read-only be default and emits a nice message for undefiend single key bindings.
-                       (help-mode))))))
+                       ;; (help-mode)
+                       )))))
 #+end_src
 
 *** my/defservice

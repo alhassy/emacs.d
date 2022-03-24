@@ -3291,10 +3291,13 @@ Menu can be closed when servers are started; can also stop them."
 ;;
 ;; Since M-S-SPC brings up the transient menu, and most commands close the status buffer or are transient, we get the perception that the transient menu is "sticky"; i.e., stuck to the buffer, even though this is not true. I do not yet know how to make a transient menu stuck to a buffer.
 ;;
+;; w-status-of-services:1 ends here
+
+;; [[file:init.org::#w-status-of-services][w-status-of-services:2]]
 (defun w-status-of-services ()
   "Show me status of all servers, including their current git branch, and most recent emitted output."
   (interactive)
-  (thread-last
+  (-->
       (-let [ shells (--filter (s-starts-with? "Shell" (process-name it)) (process-list)) ]
         (cl-loop for 𝑺 in (mapcar #'pp-to-string my/services)
               for associated-shell = (--find (s-contains? (format "%s" 𝑺) (cl-third (process-command it))) shells)
@@ -3308,65 +3311,79 @@ Menu can be closed when servers are started; can also stop them."
                              (setq most-recent-shell-output (or (thing-at-point 'line t) ""))
                              (switch-to-buffer here)
                              (s-truncate 135 (s-trim most-recent-shell-output)))
+              for keymap = (copy-keymap org-mouse-map)
+              do (cl-loop for (key action)
+                          on `(;; Checkout branch/PR
+                               c (w-pr-checkout (format "~/%s" ,𝑺))
+                               ;; Visit service shell
+                               <return>
+                                 (progn
+                                   (delete-other-windows)
+                                   (split-window-below)
+                                   (switch-to-buffer (--find (s-starts-with? (format "%s" ,𝑺) it) (mapcar 'buffer-name (buffer-list))))
+                                   (end-of-buffer)
+                                   (other-window 1)
+                                   )
+                               ;; See service magit buffer
+                              <tab> (progn (magit-status (format "~/%s" ,𝑺)) (delete-other-windows)))
+                          by #'cddr
+                          do (define-key keymap (kbd (format "%s" key))
+                                         `(lambda () (interactive) ,action)))
               collect
               ;; “%𝑾s” ⇒ Print a string with at least width 𝑾: If length(str) ≤ 𝑾, then pad with spaces on the left side.
               ;; Use “%-𝑾s” to instead pad with spaces to the right.
-              (format "%s %-20s %-12s %s" status 𝑺 branch
-                      (-let [it (s-trim (if (s-contains? "|" saying)
-                                            (cl-second (s-split "|" saying))
-                                          saying))]
-                        (if (<= (length it) 3) "-" it)))))
-    (--map (format "%s" it))
-    (s-join "\n")
-    (s-replace "run" "✅")
-    (funcall (lambda (it) (-let [max-mini-window-height 0]
-                       (ignore-errors (kill-buffer  "Status of Services"))
-                       (display-message-or-buffer it "Status of Services")
-                       (delete-other-windows)
-                       (switch-to-buffer "Status of Services")
-                       (highlight-regexp ".*crashed.*" 'hi-red-b)
-                       (end-of-buffer)
-                       (insert "\n \n \n \n \n")
-                       (let ((register-action (lambda (key-desc-actions)
-                                                (if (stringp key-desc-actions)
-                                                    (propertize key-desc-actions 'font-lock-face '(face success))
-                                                  (-let [ [key desc &rest actions] key-desc-actions ]
-                                                    ;; For buffer-local keys, you cannot use local-set-key, unless you want to modify the keymap of the entire major-mode in question: local-set-key is local to a major-mode, not to a buffer.
-                                                    ;; (use-local-map (copy-keymap text-mode-map))
-                                                    (local-set-key key `(lambda () (interactive) ,@(seq-into actions 'list)))
-                                                    (format "%s %s"
-                                                            (propertize (format "%s" key) 'font-lock-face '(face error))
-                                                            (propertize desc 'font-lock-face '(:foreground "grey")))))))
-                             (repo-at-point (lambda () (-as-> (beginning-of-line) repo
-                                                         (thing-at-point 'line t)
-                                                         (s-split " " repo)
-                                                         cl-second))))
-                         (insert (s-join "\n"  (seq-mapn (lambda (&rest cols) (apply #'format (s-repeat (length cols) "%-40s ")
-                                                                                (--map (funcall register-action it) cols)))
-                           ["This view"
-                            ["g" "Refresh this view" (ignore-errors (kill-buffer-and-window)) (w-status-of-services)]
-                            ["q" "Quit buffer" (ignore-errors (kill-buffer-and-window))]
-                            ["" "" ""]]
-                           `["Current service"
-                             ["c" "Checkout PR" (w-pr-checkout (format "~/%s"  (funcall ,repo-at-point)))]
-                             [[return] "Visit service shell"
-                             (delete-other-windows)
-                             (split-window-below)
-                             (switch-to-buffer (--find (s-starts-with? (funcall ,repo-at-point) (buffer-name it)) (buffer-list)))
-                             (end-of-buffer)
-                             (other-window 1)]
-                            [[tab] "See service magit buffer"
-                             (magit-status (format "~/%s"  (funcall ,repo-at-point)))
-                             (delete-other-windows)]]
-                           ["Misc"
-                            ["b" "Browse an app" (w-browse-app)]
-                            ["i" "Inject users"  (w-inject-users)]
-                            ["s" "SQL buffer" (w-sql) (delete-other-windows)]]))))
-                       (beginning-of-buffer)
-                       ;; (help-mode) ;; For some reason, default fundamental-mode does not regoznise proprtised strings.
-                       ;; Also, this is read-only be default and emits a nice message for undefiend single key bindings.
-                       (help-mode))))))
-;; w-status-of-services:1 ends here
+              (list keymap (format "%s %-20s %-12s %s" status 𝑺 branch
+                                   (-let [it (s-trim (if (s-contains? "|" saying)
+                                                         (cl-second (s-split "|" saying))
+                                                       saying))]
+                                     (if (<= (length it) 3) "-" it))))))
+
+      ;; Setup buffer
+      (-let [buf "Status of Services"]
+        (ignore-errors (kill-buffer buf))
+        (switch-to-buffer buf)
+        (delete-other-windows)
+        it)
+      ;; Insert out buttons
+      (--each it
+        ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Overlay-Properties.html
+        (-let [help (s-join "\n"
+                            '("Keybindings:"
+                              "c         ∷  Checkout PR               \t\t\t b ∷ Browse an app"
+                              "[tab]     ∷  See service magit buffer  \t\t\t i ∷ Inject users"
+                              "[return]  ∷  Visit service shell       \t\t\t s ∷ SQL buffer"
+                              "g         ∷  Refresh this view         \t\t\t q ∷ Quit, and kill, this buffer"))]
+          (insert-text-button (s-replace "\"" "″" (s-replace "run" "✅" (nth 1 it)))
+                         'face nil
+                         ;; 'mouse-face '(:box t) ;; I use the cursor more than the mouse, so don't want two distinct views.
+                         'keymap (nth 0 it)
+                         ;; NOTE: The functions are called only when the minor mode cursor-sensor-mode is turned on.
+                         ;; When cursor enters the button, we temporarily make it a box and show shortcuts in message area.
+                         'cursor-sensor-functions `((lambda (_ old-pos entered?)
+                                                      (message ,help)
+                                                      (setq entered? (equal entered? 'entered))
+                                                      (-let [self (button-at (if entered? (point) old-pos))]
+                                                        (read-only-mode 0) ;; Temporarily disable help-mode's read-only-mode setup.
+                                                        (if entered?
+                                                            (button-put self 'face '(:box "yellow" :weight bold))
+                                                          (button-put self 'face nil)))))
+                         'help-echo help)
+                         (insert "\n")))
+      ;; Do some highlighting, as a cautionary measure.
+      (highlight-regexp ".*crashed.*" 'hi-red-b)
+      ;; Forbid editing
+      (help-mode) ;; This wont do the button face changes I like when cursor moves; so I disable read-only-mode temporarily when making the changes.
+      (cursor-sensor-mode)
+      ;; Add some specific work related bindings
+      (local-set-key "b" #'w-browse-app)
+      (local-set-key "i" #'w-inject-users)
+      (local-set-key "s" (lambda () (interactive) (w-sql) (delete-other-windows)))
+      ;; Add general view keys
+      (local-set-key "g" (lambda () "Refresh this view" (interactive) (ignore-errors (kill-buffer-and-window)) (w-status-of-services)))
+      (local-set-key "q" (lambda ()  "Quit buffer" (interactive) (ignore-errors (kill-buffer-and-window))))
+      ;; Go to the first entry, so my “homemade echo menu” appears.
+      (beginning-of-buffer)))
+;; w-status-of-services:2 ends here
 
 ;; [[file:init.org::#my-defservice][my/defservice:1]]
 (cl-defmacro my/defservice
