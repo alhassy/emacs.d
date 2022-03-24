@@ -12,8 +12,6 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
-# (maybe-clone "https://github.com/alhassy/VueCheatSheet")
-
 * TODO Clean this section up!                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
@@ -2205,6 +2203,28 @@ windows, so we can make a hydra to alleviate the trouble.
 ;; Have a thick ruler between vertical windows
 (window-divider-mode)
 #+end_src
+** Get CheatSheets and view them easily
+
+#+begin_src emacs-lisp
+(defvar my/cheatsheet/cached-topics nil)
+(cl-defun my/cheatsheet (&optional topic)
+  "Clone Al-hassy's ⟨TOPIC⟩CheatSheet repository when called from Lisp; visit the pretty HTML page when called interactively.
+
+- Example usage: (my/cheatsheet \"Vue\")
+- Example usage: M-x my/cheatsheet RET Vue RET."
+  (interactive)
+  (if (not topic)
+      (browse-url (format "https://alhassy.github.io/%sCheatSheet" (completing-read "Topic: " my/cheatsheet/cached-topics)))
+    (push topic my/cheatsheet/cached-topics)
+    (maybe-clone (format "https://github.com/alhassy/%sCheatSheet" topic))))
+#+end_src
+
+Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the pretty HTML (or PDF) sheets.
+#+begin_src emacs-lisp
+(mapcar #'my/cheatsheet '("ELisp" "GojuRyu")) ; Python Prolog Vue Agda Rust JavaScript
+                                              ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
+#+end_src
+
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -7198,7 +7218,7 @@ SVG badges.
 
 #+begin_src emacs-lisp
 (use-package svg-tag-mode
-  :hook (org-mode prog-mode svg-tag-mode)
+  :hook (org-mode prog-mode)
   ;; :config (global-svg-tag-mode) ;; Nope: Breaks xwidget-webkit-browse-url, issue#28.
   :config
   (cl-defun my/svg-tag-declare-badge (template face &optional tooltip-message-upon-hover)
@@ -10905,6 +10925,13 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
 :END:
+
+First, let's get some useful Cheat Sheets...
+#+begin_src emacs-lisp
+;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
+(mapcar #'my/cheatsheet '("JavaScript" "Vue" "AngularJS"))
+#+end_src
+
 ** Quickly produce HTML from CSS-like selectors
 :PROPERTIES:
 :CUSTOM_ID: Quickly-produce-HTML-from-CSS-like-selectors
@@ -11310,7 +11337,7 @@ or type signatures.
 
 ** Modern Browsing within Emacs                                   :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-Modern-Browsing-within-Emacs
+:CUSTOM_ID: Modern-Browsing-within-Emacs
 :END:
 
 #+begin_src shell :tangle no
@@ -11602,8 +11629,6 @@ The following is also “OK” in Org-mode ;-)
   (add-to-list 'org-babel-tangle-lang-exts '("js" . "js"))
   (system-packages-ensure "node"))
   ;; use “:results output” for js blocks!
-  (maybe-clone "https://github.com/alhassy/JavaScriptCheatSheet")
-  (maybe-clone "https://github.com/alhassy/AngularJSCheatSheet")
  #+end_src
 ** Commenting
 :PROPERTIES:

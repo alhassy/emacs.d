@@ -569,6 +569,25 @@ Is replaced by:
 (window-divider-mode)
 ;; Window Navigation:1 ends here
 
+;; [[file:init.org::*Get CheatSheets and view them easily][Get CheatSheets and view them easily:1]]
+(defvar my/cheatsheet/cached-topics nil)
+(cl-defun my/cheatsheet (&optional topic)
+  "Clone Al-hassy's ⟨TOPIC⟩CheatSheet repository when called from Lisp; visit the pretty HTML page when called interactively.
+
+- Example usage: (my/cheatsheet \"Vue\")
+- Example usage: M-x my/cheatsheet RET Vue RET."
+  (interactive)
+  (if (not topic)
+      (browse-url (format "https://alhassy.github.io/%sCheatSheet" (completing-read "Topic: " my/cheatsheet/cached-topics)))
+    (push topic my/cheatsheet/cached-topics)
+    (maybe-clone (format "https://github.com/alhassy/%sCheatSheet" topic))))
+;; Get CheatSheets and view them easily:1 ends here
+
+;; [[file:init.org::*Get CheatSheets and view them easily][Get CheatSheets and view them easily:2]]
+(mapcar #'my/cheatsheet '("ELisp" "GojuRyu")) ; Python Prolog Vue Agda Rust JavaScript
+                                              ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
+;; Get CheatSheets and view them easily:2 ends here
+
 ;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
 (global-set-key (kbd "C-z")
@@ -2326,7 +2345,7 @@ fonts (•̀ᴗ•́)و"
 
 ;; [[file:init.org::*Replace phrases with nice SVG labels][Replace phrases with nice SVG labels:1]]
 (use-package svg-tag-mode
-  :hook (org-mode prog-mode svg-tag-mode)
+  :hook (org-mode prog-mode)
   ;; :config (global-svg-tag-mode) ;; Nope: Breaks xwidget-webkit-browse-url, issue#28.
   :config
   (cl-defun my/svg-tag-declare-badge (template face &optional tooltip-message-upon-hover)
@@ -4035,6 +4054,11 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (set-marker e nil)))
 ;; Comment-boxes up to the fill-column:1 ends here
 
+;; [[file:init.org::#COMMENT-Web-Development][Web-Development:1]]
+;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
+(mapcar #'my/cheatsheet '("JavaScript" "Vue" "AngularJS"))
+;; Web-Development:1 ends here
+
 ;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:2]]
 ;; USAGE: Place point in an emmet snippet and press C-j to expand it to appropriate tag structure;
 ;; e.g., #q.x>p C-j. Alternatively, press C-j then start typing an emmet snippet to see it preview live.
@@ -4262,7 +4286,7 @@ Both arguments are strings."
 (setq eldoc-idle-delay 0.4) ;; Default 0.5
 ;; Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1 ends here
 
-;; [[file:init.org::#COMMENT-Modern-Browsing-within-Emacs][Modern Browsing within Emacs:2]]
+;; [[file:init.org::#Modern-Browsing-within-Emacs][Modern Browsing within Emacs:2]]
 (cl-defun internet (&optional (url (concat "https://www." (read-string "https://www."))))
   "Browse to URL using `xwidget-webkit-browse-url'; see also `browse-url'."
   (interactive)
