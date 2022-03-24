@@ -12,6 +12,8 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
+# (maybe-clone "https://github.com/alhassy/VueCheatSheet")
+
 * TODO Clean this section up!                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
@@ -3167,7 +3169,7 @@ let's stop that:
 Some initial languages we want org-babel to support:
 #+BEGIN_SRC emacs-lisp
 (defvar my/programming-languages
-  '(emacs-lisp shell python haskell ruby ocaml dot latex org js
+  '(emacs-lisp shell python haskell ruby ocaml dot latex org js css
                sqlite C) ;; Captial “C” gives access to C, C++, D
   "List of languages I have used in Org-mode, for literate programming.")
 
@@ -7196,8 +7198,9 @@ SVG badges.
 
 #+begin_src emacs-lisp
 (use-package svg-tag-mode
-  ;; :hook (org-mode prog-mode svg-tag-mode)
-  :config (global-svg-tag-mode)
+  :hook (org-mode prog-mode svg-tag-mode)
+  ;; :config (global-svg-tag-mode) ;; Nope: Breaks xwidget-webkit-browse-url, issue#28.
+  :config
   (cl-defun my/svg-tag-declare-badge (template face &optional tooltip-message-upon-hover)
     ;; Example faces: 'org-level-1 'org-todo 'font-lock-doc-face
     "Given a TEMPLATE of the shape \"𝑿❙𝒀\", make SVG badge whose tag is 𝑿 and label is 𝒀.
@@ -9380,6 +9383,7 @@ Menu can be closed when servers are started; can also stop them."
 
 ;; Database backend
 (my/defservice api-platform-server :cmd "npm run docker:start")
+;; TODO: Look for  [nodemon] app crashed - waiting for file changes before starting...; and make icon a crash
 
 ;; Handles routes; should see “Access Denied” when visiting the url below, if things work correctly
 (my/defservice api-router-server :example "https://router.weeverdev.com/")
@@ -9407,7 +9411,7 @@ Menu can be closed when servers are started; can also stop them."
 
 (cl-defun w-browse-app (&optional (app (completing-read "Appslug: " w-app-slugs)))
  (interactive)
-  (browse-url (format "https://%s.weeverdev.com/" app)))
+  (browse-url (format "http://%s.weeverdev.com:9000" app)))
 
 (cl-defun w-disable-sso ()
   "Turn off SSO, locally; app is selected from a menu."
@@ -11026,11 +11030,53 @@ informative/ [[https://www.youtube.com/watch?app=desktop&v=sBhQ2NIcrLQ&ab_channe
 Let's add a new snippet so that: ~angular C-j C-c C-v~ shows us an interactive web
 application.
 #+begin_src emacs-lisp
-(add-hook 'emmet-mode-hook (lambda ()
-;; Add a new emmet snippet.
-;; [Should this be added to “emmet-snippets” variable instead?]
-(thread-last emmet-tag-snippets-table
-             (puthash "angular"
+(cl-defun my/add-emmet-snippet (abbreviation expansion)
+  "Add ABBREVIATION as a snippet in `emmet-mode' to be EXPANSION.
+
+Both arguments are strings."
+  (add-hook 'emmet-mode-hook
+   ;; [Should this be added to “emmet-snippets” variable instead?]
+            `(lambda () (puthash ,abbreviation ,expansion emmet-tag-snippets-table))))
+
+
+(setq emmet-mode-hook nil)
+
+(my/add-emmet-snippet "vue"
+"<!doctype html>
+<html lang=\"en\">
+    <head>
+        <title>Salamun Alaykum, world!</title>
+        <script src=\"https://unpkg.com/vue@3\"></script>
+        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+        <style type=\"text/css\">
+         input, #reply { color: darkcyan; font-size: 14pt }
+        </style>
+    </head>
+    <body>
+        <div id=\"Hola\">
+            <h1>Number Guessing Game</h1>
+            <input type=\"number\" v-model=\"guess\" style=\"width: 25%;\" v-bind:placeholder=`${prompt}`>
+            <button v-on:click=\"go(guess)\">Learn Something!</button>
+            <div id=\"reply\"> {{reply(guess)}} </div>
+        </div>
+        <!-- <script src=\"myscripts.js\"></script> -->
+        <script type=\"text/javascript\">
+         let myApp = Vue.createApp({
+             data() {
+                 return { guess: null
+                        , prompt: \"Enter a guess between 0 and 100\"
+                        , secret: Math.floor(Math.random() * 100)
+                        }
+             },
+             methods: { reply(gs) { return gs == this.secret ? \"You win!\" : (gs < this.secret ? \"Too low\" : \"Too high\"); }
+                      , go(number) { window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
+                      }
+         }).mount('#Hola')
+        </script>
+    </body>
+</html>")
+
+(my/add-emmet-snippet "angular"
 "<!doctype html>
 <html lang=\"en\" ng-app=\"Hola\">
   <head>
@@ -11060,15 +11106,13 @@ application.
       <div id=\"reply\"> {{reply(guess)}} </div>
     </div>
   </body>
-</html>"))))
+</html>")
 #+end_src
 
 A non-blocking alternative to the built-in ~alert()~:
 #+begin_src emacs-lisp
-(add-hook 'emmet-mode-hook (lambda ()
 ;; A way to show results of trying things out ---when not using a reactive framework.
-(thread-last emmet-tag-snippets-table
-             (puthash "message"
+(my/add-emmet-snippet "message"
 "     // Append “text” node to the end of tag with “id”.
      // Example: <button onclick=\"message(\"myID\", \"Hello!\")\"> Speak! </button>
      function message(id, text = \"Hello, world\") {
@@ -11077,15 +11121,13 @@ A non-blocking alternative to the built-in ~alert()~:
          tag.appendChild(textNode); // <p>Hello, world</p>
          const element = document.getElementById(id);
          element.appendChild(tag);
-     }"))))
+     }")
 #+end_src
 
 A snippet for a form with (1) automatic alignment, and (2) submission handled by
 local JavaScript.
 #+begin_src emacs-lisp
-(add-hook 'emmet-mode-hook (lambda ()
-(thread-last emmet-tag-snippets-table
-             (puthash "form"
+(my/add-emmet-snippet "form"
         "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
             Automatically aligned form items</a> </h1>
 
@@ -11127,7 +11169,7 @@ local JavaScript.
              grid-row: auto;
          }
          input, textarea { color: darkcyan; font-size: 14pt }
-        </style>"))))
+        </style>")
 #+end_src
 
 ** LSP for HTML + CSS
@@ -11266,6 +11308,50 @@ The less casual Haskeller would likely want to use [[https://haskell-lang.org/in
 more support; e.g., obtain suggestions from GHC about redundant imports
 or type signatures.
 
+** Modern Browsing within Emacs                                   :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Modern-Browsing-within-Emacs
+:END:
+
+#+begin_src shell :tangle no
+# https://github.com/d12frosted/homebrew-emacs-plus
+$ brew tap d12frosted/emacs-plus
+$ brew install emacs-plus@29 --with-xwidgets
+$ /usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50 &
+
+# In ~/.bashrc, put the following at the end:
+alias emacs="/usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50"
+#+end_src
+
+--------------------------------------------------------------------------------
+
+I like using Chrome ---I like the integration of all things Google.
+
+#+begin_src emacs-lisp
+(cl-defun internet (&optional (url (concat "https://www." (read-string "https://www."))))
+  "Browse to URL using `xwidget-webkit-browse-url'; see also `browse-url'."
+  (interactive)
+  (delete-other-windows)
+  (split-window-right)
+  (xwidget-webkit-browse-url url))
+
+(my/defhydra "C-c p" "Emacs Browser" gamepad
+  :Internet
+  ("m" (internet "https://mail.google.com/mail/u/0/#inbox") "gMail"  :exit t)
+  ("c" (internet "https://calendar.google.com/calendar/u/0/r") "gCalendar"  :exit t)
+  ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
+  ("b" (internet) "Browse"  :exit t))
+#+end_src
+
+* Lisp Helpers / Kill all buffers that are not associated with a file
+
+#+begin_src emacs-lisp
+(cl-defun my/clean-buffers ()
+  "Kill all buffers that are not associated with a file.
+  By convention, such files are named in *earmuffs* style."
+  (interactive)
+  (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list)))))
+#+end_src
 * COMMENT Toggles Hydra
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
@@ -13307,38 +13393,6 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
     (term-send-string
      proc (concat (s-join "\n" more-commands) "\n"))))
 #+end_src
-** COMMENT Modern Browsing within Emacs                           :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Modern-Browsing-within-Emacs
-:END:
-
-#+begin_src shell
-# https://github.com/d12frosted/homebrew-emacs-plus
-$ brew tap d12frosted/emacs-plus
-$ brew install emacs-plus@29 --with-xwidgets
-$ /usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50 &
-#+end_src
-
---------------------------------------------------------------------------------
-
-I like using Chrome ---I like the integration of all things Google.
-
-#+begin_src emacs-lisp
-(defun internet (url)
-  "Browse to URL using `xwidget-webkit-browse-url'; see also `browse-url'."
-  (interactive)
-  (delete-other-windows)
-  (split-window-right)
-  (xwidget-webkit-browse-url url))
-
-(my/defhydra "C-c p" "Program Manager" gamepad
-  :Internet
-  ("m" (internet "https://mail.google.com/mail/u/0/#inbox") "gMail"  :exit t)
-  ("c" (internet "https://calendar.google.com/calendar/u/0/r") "gCalendar"  :exit t)
-  ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
-  ("b" (internet (concat "https://www." (read-string "https://www."))) "Browse"  :exit t))
-#+end_src
-
 ** Keeping my system up to date
 :PROPERTIES:
 :CUSTOM_ID: Keeping-my-system-up-to-date

@@ -984,7 +984,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 ;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
 (defvar my/programming-languages
-  '(emacs-lisp shell python haskell ruby ocaml dot latex org js
+  '(emacs-lisp shell python haskell ruby ocaml dot latex org js css
                sqlite C) ;; Captial “C” gives access to C, C++, D
   "List of languages I have used in Org-mode, for literate programming.")
 
@@ -2326,8 +2326,9 @@ fonts (•̀ᴗ•́)و"
 
 ;; [[file:init.org::*Replace phrases with nice SVG labels][Replace phrases with nice SVG labels:1]]
 (use-package svg-tag-mode
-  ;; :hook (org-mode prog-mode svg-tag-mode)
-  :config (global-svg-tag-mode)
+  :hook (org-mode prog-mode svg-tag-mode)
+  ;; :config (global-svg-tag-mode) ;; Nope: Breaks xwidget-webkit-browse-url, issue#28.
+  :config
   (cl-defun my/svg-tag-declare-badge (template face &optional tooltip-message-upon-hover)
     ;; Example faces: 'org-level-1 'org-todo 'font-lock-doc-face
     "Given a TEMPLATE of the shape \"𝑿❙𝒀\", make SVG badge whose tag is 𝑿 and label is 𝒀.
@@ -3427,6 +3428,7 @@ Menu can be closed when servers are started; can also stop them."
 
 ;; Database backend
 (my/defservice api-platform-server :cmd "npm run docker:start")
+;; TODO: Look for  [nodemon] app crashed - waiting for file changes before starting...; and make icon a crash
 
 ;; Handles routes; should see “Access Denied” when visiting the url below, if things work correctly
 (my/defservice api-router-server :example "https://router.weeverdev.com/")
@@ -3450,7 +3452,7 @@ Menu can be closed when servers are started; can also stop them."
 
 (cl-defun w-browse-app (&optional (app (completing-read "Appslug: " w-app-slugs)))
  (interactive)
-  (browse-url (format "https://%s.weeverdev.com/" app)))
+  (browse-url (format "http://%s.weeverdev.com:9000" app)))
 
 (cl-defun w-disable-sso ()
   "Turn off SSO, locally; app is selected from a menu."
@@ -4053,11 +4055,53 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Quickly produce HTML from CSS-like selectors:2 ends here
 
 ;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:4]]
-(add-hook 'emmet-mode-hook (lambda ()
-;; Add a new emmet snippet.
-;; [Should this be added to “emmet-snippets” variable instead?]
-(thread-last emmet-tag-snippets-table
-             (puthash "angular"
+(cl-defun my/add-emmet-snippet (abbreviation expansion)
+  "Add ABBREVIATION as a snippet in `emmet-mode' to be EXPANSION.
+
+Both arguments are strings."
+  (add-hook 'emmet-mode-hook
+   ;; [Should this be added to “emmet-snippets” variable instead?]
+            `(lambda () (puthash ,abbreviation ,expansion emmet-tag-snippets-table))))
+
+
+(setq emmet-mode-hook nil)
+
+(my/add-emmet-snippet "vue"
+"<!doctype html>
+<html lang=\"en\">
+    <head>
+        <title>Salamun Alaykum, world!</title>
+        <script src=\"https://unpkg.com/vue@3\"></script>
+        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+        <style type=\"text/css\">
+         input, #reply { color: darkcyan; font-size: 14pt }
+        </style>
+    </head>
+    <body>
+        <div id=\"Hola\">
+            <h1>Number Guessing Game</h1>
+            <input type=\"number\" v-model=\"guess\" style=\"width: 25%;\" v-bind:placeholder=`${prompt}`>
+            <button v-on:click=\"go(guess)\">Learn Something!</button>
+            <div id=\"reply\"> {{reply(guess)}} </div>
+        </div>
+        <!-- <script src=\"myscripts.js\"></script> -->
+        <script type=\"text/javascript\">
+         let myApp = Vue.createApp({
+             data() {
+                 return { guess: null
+                        , prompt: \"Enter a guess between 0 and 100\"
+                        , secret: Math.floor(Math.random() * 100)
+                        }
+             },
+             methods: { reply(gs) { return gs == this.secret ? \"You win!\" : (gs < this.secret ? \"Too low\" : \"Too high\"); }
+                      , go(number) { window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
+                      }
+         }).mount('#Hola')
+        </script>
+    </body>
+</html>")
+
+(my/add-emmet-snippet "angular"
 "<!doctype html>
 <html lang=\"en\" ng-app=\"Hola\">
   <head>
@@ -4087,14 +4131,12 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
       <div id=\"reply\"> {{reply(guess)}} </div>
     </div>
   </body>
-</html>"))))
+</html>")
 ;; Quickly produce HTML from CSS-like selectors:4 ends here
 
 ;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:5]]
-(add-hook 'emmet-mode-hook (lambda ()
 ;; A way to show results of trying things out ---when not using a reactive framework.
-(thread-last emmet-tag-snippets-table
-             (puthash "message"
+(my/add-emmet-snippet "message"
 "     // Append “text” node to the end of tag with “id”.
      // Example: <button onclick=\"message(\"myID\", \"Hello!\")\"> Speak! </button>
      function message(id, text = \"Hello, world\") {
@@ -4103,13 +4145,11 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
          tag.appendChild(textNode); // <p>Hello, world</p>
          const element = document.getElementById(id);
          element.appendChild(tag);
-     }"))))
+     }")
 ;; Quickly produce HTML from CSS-like selectors:5 ends here
 
 ;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:6]]
-(add-hook 'emmet-mode-hook (lambda ()
-(thread-last emmet-tag-snippets-table
-             (puthash "form"
+(my/add-emmet-snippet "form"
         "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
             Automatically aligned form items</a> </h1>
 
@@ -4151,7 +4191,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
              grid-row: auto;
          }
          input, textarea { color: darkcyan; font-size: 14pt }
-        </style>"))))
+        </style>")
 ;; Quickly produce HTML from CSS-like selectors:6 ends here
 
 ;; [[file:init.org::#LSP-for-HTML-CSS][LSP for HTML + CSS:2]]
@@ -4221,3 +4261,27 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Slightly shorten eldoc display delay.
 (setq eldoc-idle-delay 0.4) ;; Default 0.5
 ;; Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1 ends here
+
+;; [[file:init.org::#COMMENT-Modern-Browsing-within-Emacs][Modern Browsing within Emacs:2]]
+(cl-defun internet (&optional (url (concat "https://www." (read-string "https://www."))))
+  "Browse to URL using `xwidget-webkit-browse-url'; see also `browse-url'."
+  (interactive)
+  (delete-other-windows)
+  (split-window-right)
+  (xwidget-webkit-browse-url url))
+
+(my/defhydra "C-c p" "Emacs Browser" gamepad
+  :Internet
+  ("m" (internet "https://mail.google.com/mail/u/0/#inbox") "gMail"  :exit t)
+  ("c" (internet "https://calendar.google.com/calendar/u/0/r") "gCalendar"  :exit t)
+  ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
+  ("b" (internet) "Browse"  :exit t))
+;; Modern Browsing within Emacs:2 ends here
+
+;; [[file:init.org::*Lisp Helpers / Kill all buffers that are not associated with a file][Lisp Helpers / Kill all buffers that are not associated with a file:1]]
+(cl-defun my/clean-buffers ()
+  "Kill all buffers that are not associated with a file.
+  By convention, such files are named in *earmuffs* style."
+  (interactive)
+  (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list)))))
+;; Lisp Helpers / Kill all buffers that are not associated with a file:1 ends here
