@@ -9328,6 +9328,11 @@ Menu can be closed when servers are started; can also stop them."
                                  r (-let [current-prefix-arg t]
                                      (funcall (intern (format "w-stop-%s" ,𝑺)))
                                      (funcall (intern (format "w-start-%s" ,𝑺))))
+                               ;; See the repo in the web
+                                 w (--> (format "%s" ,𝑺)
+                                      (if (s-contains? "/" it) (f-parent it) it)
+                                      (format "https://github.com/WeeverApps/%s" it)
+                                      (browse-url it))
                                ;; Visit service shell
                                <return>
                                 (when ,𝑺-buffer
@@ -9360,7 +9365,7 @@ Menu can be closed when servers are started; can also stop them."
                               "[C-u] c   ∷  Checkout PR [or branch]   \t\t\t b ∷ Browse an app"
                               "tab       ∷  See service magit buffer  \t\t\t i ∷ Inject users"
                               "return    ∷  Visit service shell       \t\t\t s ∷ SQL buffer"
-                              "r         ∷  Restart service"
+                              "r         ∷  Restart service           \t\t\t w ∷ See the repo in the web"
                               "g         ∷  Refresh this view         \t\t\t q ∷ Quit, and kill, this buffer"))]
           (insert-text-button (s-replace "\"" "″" (s-replace "run" "✅" (nth 1 it)))
                          'face nil
