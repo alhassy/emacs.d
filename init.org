@@ -2680,6 +2680,9 @@ things went wrong.
 #+end_src
 
 ** Pretty Magit Commit Leaders
+:PROPERTIES:
+:CUSTOM_ID: Pretty-Magit-Commit-Leaders
+:END:
 ⟨ Following [[http://www.modernemacs.com/post/pretty-magit/][Pretty Magit - Integrating commit leaders | Modern Emacs]] ⨾⨾ Code
 comes from there as well.  Notable alteration: Helm compleition shows
 description of leaders. ⟩
@@ -2970,6 +2973,9 @@ should jump to the first entry.
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 #+END_SRC
 ** Get CheatSheets and view them easily
+:PROPERTIES:
+:CUSTOM_ID: Get-CheatSheets-and-view-them-easily
+:END:
 
 #+begin_src emacs-lisp
 (defvar my/cheatsheet/cached-topics nil)
@@ -7205,6 +7211,9 @@ Likewise, I'd like to preview line when executing the doc:goto-line / kbd:M-g_M-
 #+end_src
 
 ** Replace phrases with nice SVG labels
+:PROPERTIES:
+:CUSTOM_ID: Replace-phrases-with-nice-SVG-labels
+:END:
 
 [[ https://github.com/rougier/svg-tag-mode][SVG tags mode]] let's us replase arbitrary regular expressions with beautiful SVG
 images that can be /clicked/ to produce an action, and may have a tooltip to
@@ -8926,6 +8935,9 @@ let b = "world"
 #+end_src
 
 **** Preserving the context
+:PROPERTIES:
+:CUSTOM_ID: Preserving-the-context
+:END:
 
 When testing an application, you might notice a bug in a particular context
 ---i.e., a particular configuration in the app.
@@ -9342,6 +9354,9 @@ Menu can be closed when servers are started; can also stop them."
 #+end_src
 
 **** COMMENT Old definition with colourful menu                   :ignore:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Old-definition-with-colourful-menu
+:END:
 
 #+begin_src emacs-lisp
 (defun w-status-of-services ()
@@ -10880,6 +10895,9 @@ LSP mode supports the following Features:
   ("b" pop-tag-mark "Back"))
 #+end_src
 *** Types as comments in JavaScript via LSP
+:PROPERTIES:
+:CUSTOM_ID: Types-as-comments-in-JavaScript-via-LSP
+:END:
 #+begin_src js :tangle no
 // The following enables typechecking via LSP.
 // @ts-check
@@ -10900,6 +10918,9 @@ add(1, 2)
 For more on this idea on types, see [[https://github.com/BeyondCodeBootcamp/jsdoc-typescript-starter][A simple, but non-trivial example of getting the most from JSDoc + tsserver (Type Linting without TypeScript)]].
 
 ** JSON
+:PROPERTIES:
+:CUSTOM_ID: JSON
+:END:
 
 Since web apps tend to be RESTful, payloads are [[https://www.json.org/json-en.html][JSON]].  To use the JSON, we need
 to tediously find paths to particular fields; let's do so with /automatically,
@@ -11003,6 +11024,9 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 + ~C-c C-x C-v~ ⇒ Toggle inline images!
 
 ** Comment-boxes up to the fill-column
+:PROPERTIES:
+:CUSTOM_ID: Comment-boxes-up-to-the-fill-column
+:END:
 
 GIF: https://endlessparentheses.com/images/comment-box.gif
 
@@ -11475,6 +11499,9 @@ I like using Chrome ---I like the integration of all things Google.
 #+end_src
 
 * Lisp Helpers / Kill all buffers that are not associated with a file
+:PROPERTIES:
+:CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
+:END:
 
 #+begin_src emacs-lisp
 (cl-defun my/clean-buffers ()
@@ -11483,12 +11510,12 @@ I like using Chrome ---I like the integration of all things Google.
   (interactive)
   (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list)))))
 #+end_src
-* COMMENT Toggles Hydra
+* Toggles Hydra                                             :Not_yet_tangled:
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
 :END:
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (my/defhydra "C-c t" "Toggles" toggle-on
    :Theme
    ("t t" my/toggle-theme "Theme")
@@ -11580,7 +11607,7 @@ I like using Chrome ---I like the integration of all things Google.
 (use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
-* COMMENT Lost Souls                                    :Outdated_Documentation:
+* Lost Souls                                    :Outdated_Documentation:Not_yet_tangled:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -11588,7 +11615,7 @@ I like using Chrome ---I like the integration of all things Google.
 :PROPERTIES:
 :CUSTOM_ID: Note-M-S-SPC-is-for-my-personal-servers-dashboard
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Note: M-S-SPC is for my personal servers dashboard.
 (global-set-key (kbd "M-SPC")   (lambda () (interactive) (setq org-agenda-files (list org-default-notes-file)) (org-agenda nil "a") (delete-other-windows) (beginning-of-buffer)))
 
@@ -11600,7 +11627,7 @@ I like using Chrome ---I like the integration of all things Google.
 :PROPERTIES:
 :CUSTOM_ID: Zoom
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; An automatic window-resizing mechanism.
 ;; A “calmer” alternative to golden-ratio.
 ;; https://github.com/cyrus-and/zoom
@@ -11612,7 +11639,7 @@ I like using Chrome ---I like the integration of all things Google.
 :PROPERTIES:
 :CUSTOM_ID: Ibuffer
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Let's use an improved buffer list.
 (use-package ibuffer ;; This is built-into Emacs.
   :bind ("C-x C-b" . ibuffer))
@@ -11647,7 +11674,7 @@ to where you originally where.
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-centered-cursor-Keep-focus-in-the-centre-of-the-screen
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
    ;; When scrolling, move the screen and leave the cursour in the (vertical) center of the screen
    (use-package centered-cursor-mode
      :config (global-centered-cursor-mode))
@@ -11657,7 +11684,7 @@ to where you originally where.
 :PROPERTIES:
 :CUSTOM_ID: C-x-2-and-C-x-3-now-create-a-new-window-horizontally-vertically-and-send-cursor-there
 :END:
- #+begin_src emacs-lisp
+ #+begin_src emacs-lisp :tangle no
 ;; When we split open a new window, we usually want to jump to the new window.
 (advice-add #'split-window-below :after (lambda (&rest _) (other-window 1)))
 (advice-add #'split-window-right :after (lambda (&rest _) (other-window 1)))
@@ -11676,7 +11703,7 @@ list or just its contents, etc.
 - ~change-inner {~ ⇒ Delete all text starting from the first ‘{’ delimiter to the next one; but /keep the delimiters/.
 - ~change-outer {~ ⇒ As above, but also delete the delimiters.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package change-inner
   :diminish
   :bind (("s-i" . #'change-inner)
@@ -11687,7 +11714,7 @@ list or just its contents, etc.
 :PROPERTIES:
 :CUSTOM_ID: Drag-Stuff
 :END:
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 ;; Move current word ←/→, or current line ↑/↓.
 ;; Todo: Compare with org-metaup and org-metadown...
 (use-package drag-stuff
@@ -11708,7 +11735,7 @@ Ruins Org-mode's M-↑/↓ for moving entire sections around.
 :END:
 
 The following is also “OK” in Org-mode ;-)
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Add a visual indent guide
 (use-package highlight-indent-guides
   :hook (prog-mode . highlight-indent-guides-mode)
@@ -11725,7 +11752,7 @@ The following is also “OK” in Org-mode ;-)
 
 +  ;; FIXME Error (use-package): Failed to install ob-js: Package ‘ob-js-’ is unavailable
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package ob-js
   :config
   (add-to-list 'org-babel-load-languages '(js . t))
@@ -11748,7 +11775,7 @@ Let's get some nifty [[https://github.com/remyferre/comment-dwim-2][commenting]]
 
    For use with Org-mode, it's best to use doc:org-edit-src-code ---which I've
    bound to [[kbd:][⌘ e]].
-   #+begin_src emacs-lisp
+   #+begin_src emacs-lisp :tangle no
 (use-package comment-dwim-2
   :bind ("M-;" . comment-dwim-2))
 
@@ -11770,7 +11797,7 @@ will be visible when I'm switching between buffers, for example.
 ( The awesome-tab and centaur-tab, mentioned elsewhere here, can be used to
 achieve the same thing by ‘grouping buffers together’. )
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package perspective
   :defer t
   :config ;; Activate it.
@@ -11799,7 +11826,7 @@ at the resulting menu 😃
 Let's use a helpful Emacs /documentation/ system that cleanly shows a lot of
 contextual information ---then let's /extend/ that to work as we want it to:
 ~C-h o~ to describe the symbol at point.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package helpful :defer t)
 
 (defun my/describe-symbol (symbol)
@@ -11862,7 +11889,7 @@ that is associated with this file only.
 
 # +name: enable making init and readme
 #+name: startup-code
-#+begin_src emacs-lisp :eval never-export
+#+begin_src emacs-lisp :tangle no :eval never-export
   (defun my/make-init-el-and-README ()
     "Tangle an el and a github README from my init.org."
     (interactive "P") ;; Places value of universal argument into: current-prefix-arg
@@ -11901,7 +11928,7 @@ that is associated with this file only.
 Where the following block has ~#+NAME: make-readme~ before it.  This source block
 generates the ~README~ for the associated Github repository.
 #+NAME: make-readme
-#+begin_src emacs-lisp :tangle no :export_never t
+#+begin_src emacs-lisp :tangle no :tangle no :export_never t
 (save-buffer)
 (with-temp-buffer
     (insert
@@ -11967,7 +11994,7 @@ former provides only a top-level TOC; whereas this package allows TOCs at the
 sibling level, say, to produce a TOC of only the subsections of a particular
 heading, and other TOC features. Unlike toc-org, org-make-toc uses property drawers
 to designate TOC matter.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package toc-org
   ;; Automatically update toc when saving an Org file.
   :hook (org-mode . toc-org-mode)
@@ -12005,7 +12032,7 @@ headings with URLS in their names break. As such, below I've developed a way to
 erase it altogether ---alternatively, one could mark the toc as ~:noexport:~, but
 this would then, in my current approach, not result in a toc in the resulting
 README.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (cl-defun my/org-replace-tree-contents (heading &key (with "") (offset 0))
   "Replace the contents of org tree HEADING with WITH, starting at OFFSET.
 
@@ -12067,7 +12094,7 @@ file with =M-x org-md-export-to-markdown=.
 - [X] It allows us to preview the readme locally before comitting, using [[https://github.com/joeyespo/grip][grip]].
 
 
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+begin_src emacs-lisp :tangle no :tangle no
    ;; grip looks for README.md
    (system-packages-ensure "grip")
    ;; Next: (async-shell-command "cd ~/.emacs.d/; grip")
@@ -12087,7 +12114,7 @@ file with =M-x org-md-export-to-markdown=.
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for
 source blocks or ~<q~ for quote blocks.  It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode
 structure template expansion necessitate explicitly loading ~org-tempo~.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (require 'org-tempo)
 #+end_src
 
@@ -12138,7 +12165,7 @@ Let's have, in a fringe, an indicator for altered regions in a version
 controlled file.  The symbols “+, =” appear in a fringe by default for
 alterations ---we may change these if we like.
 # Moreover, let's stage-&-commit straight from a working buffer.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Hunk navigation and commiting.
 (use-package git-gutter
   :diminish
@@ -12151,7 +12178,7 @@ Let's set a hydra so we can press ~C-x v n n p n~ to move the next two
 altered hunks, move back one, then move to the next. This saves me having
 to supply the prefix ~C-x v~ each time I navigate among my alterations.
 At any point we may also press ~u 𝕩~ to denote ~C-u ⟪prefix⟫ 𝕩~.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defhydra hydra-version-control (global-map "C-x v")
   "Version control"
   ;; Syntax: (extension method description)
@@ -12167,14 +12194,14 @@ Commiting with ~C-x v c~ let's us use ~C-c C-k~ to cancel and ~C-c C-c~ to
 submit the given message; ~C-c C-a~ to amend the previous commit.
 
 Alternatively, we may use [[https://github.com/dgutov/diff-hl][diff-hl]]:
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Colour fringe to indicate alterations.
 ;; (use-package diff-hl)
 ;; (global-diff-hl-mode)
 #+END_SRC
 
 A few more helpful version control features:
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Popup for who's to blame for alterations.
 (use-package git-messenger
   :custom ;; Always show who authored the commit and when.
@@ -12201,7 +12228,7 @@ Obtaining URL links to the current location of a file
 ---URLs are added to the kill ring.
 Usefully, if [[https://gitlab.com/pidu/git-timemachine][git-timemachine-mode]] is active, the generated link
 points to the version of the file being visited.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package git-link :defer t)
 
 (defhydra hydra-version-control (global-map "C-x v")
@@ -12221,7 +12248,7 @@ Here is a collection of Emacs-lisp functions that I have come to use in other fi
 Disclaimer: I wrote much of the following /before/ I learned any lisp; everything below is probably terrible.
 
 Let's save a few precious seconds,
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
 
@@ -12265,7 +12292,7 @@ resulting text dumped into the text area I was working in.
 This way I can use Emacs literally anywhere for textual input!
 
 For my Mac OSX:
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (shell-command "curl -fsSL https://raw.github.com/zachcurry/emacs-anywhere/master/install | bash")
 
 (server-start)
@@ -12297,7 +12324,7 @@ I always want to be in Org-mode and input unicode:
 :END:
 
 I do this so often it's not even funny.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
 #+END_SRC
 
@@ -12308,7 +12335,7 @@ Moreover, since I use Org-mode to generate code blocks and occasionally
 inspect them, it would be nice if they automatically reverted when they
 were regenerated --Emacs should also prompt me if I make any changes!
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Auto update buffers that change on disk.
 ;; Will be prompted if there are changes that could be lost.
 (global-auto-revert-mode 1)
@@ -12327,7 +12354,7 @@ were regenerated --Emacs should also prompt me if I make any changes!
 :CUSTOM_ID: Kill-to-start-of-line
 :END:
 Dual to ~C-k~,
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; M-k kills to the left
 (global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
 #+END_SRC
@@ -12343,7 +12370,7 @@ By default ~C-x k~ prompts to select which buffer should be selected. I almost
 always want to kill the current buffer, so let's not waste time making such a
 tedious decision. Moreover, if I've killed a buffer, I usually also don't want
 the residual window, so let's get rid of it.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (global-set-key (kbd "C-x k")
   (lambda (&optional prefix)
 "C-x k     ⇒ Kill current buffer & window
@@ -12376,7 +12403,7 @@ I tend to consult.
 I often find myself switching from a horizontal view of two windows in Emacs to a
 vertical view. This requires a variation of ~C-x 1 RET C-x 3 RET C-x o C-x b RET~.
 Instead I now only need to type ~C-|~ to make this switch.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defun my/ensure-two-vertical-windows ()
   "I used this method often when programming in Coq.
 
@@ -12404,7 +12431,7 @@ the values of arbitrary ~#+THIS : THAT~ pairs, which may not necessarily be supp
 Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ tags associated with an article.
 
 # Parse org buffer as an elisp structure: https://emacs.stackexchange.com/questions/2869/turn-a-list-or-data-structure-into-an-org-document#
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
 (defun org-keywords ()
   "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
@@ -12429,7 +12456,7 @@ and how to manipulate it.
 
 I try to [[https://alhassy.github.io/][blog]] occasionally, so here's a helpful function to quickly
 publish the current article to my blog.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (define-key global-map "\C-cb" 'my/publish-to-blog)
 
 (cl-defun my/publish-to-blog (&optional (draft nil) (local nil))
@@ -12471,7 +12498,7 @@ publish the current article to my blog.
 :CUSTOM_ID: Jumping-without-hassle
 :END:
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defun my/org-goto-line (line)
   "Go to the indicated line, unfolding the parent Org header.
 
@@ -12491,7 +12518,7 @@ publish the current article to my blog.
 :CUSTOM_ID: Folding-within-a-subtree
 :END:
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defun my/org-fold-current-subtree-anywhere-in-it ()
   "Hide the current heading, while being anywhere inside it."
   (interactive)
@@ -12508,7 +12535,7 @@ publish the current article to my blog.
 :PROPERTIES:
 :CUSTOM_ID: The-evils-of-this-world
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; “PDF” stands for Portable Document Format, since you should be able to open
 ;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
 ;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
@@ -12521,7 +12548,7 @@ publish the current article to my blog.
 :CUSTOM_ID: Hydra-Timer
 :END:
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (setq org-clock-sound t) ;; Standard Emacs beep
 (my/defhydra "C-c x" "Time Tracking" clock-o
   ;; Org-Clock ---must be on an Org header;; but the timer works from anywhere
@@ -12548,7 +12575,7 @@ publish the current article to my blog.
 :PROPERTIES:
 :CUSTOM_ID: Makes-Org-Markdown-previewabvle-as-we-type
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   ;; Shows up as a magnifying glass in doom-modeline.
   (use-package grip-mode)
   ;;  :hook ((markdown-mode org-mode) . grip-mode)
@@ -12567,7 +12594,7 @@ publish the current article to my blog.
 :END:
 
 From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]].
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defun find-file-as-root ()
   "Like `ido-find-file, but automatically edit the file with
 root-privileges (using tramp/sudo), if the file is not writable
@@ -12596,7 +12623,7 @@ Incidentally, TRAMP allows us to do the same thing.
 ;; Omit empty lines between headings in the collapsed view
 (setq org-cycle-separator-lines 0)
 
-#+BEGIN_SRC emacs-lisp :results replace :tangle yes
+#+begin_src emacs-lisp :tangle no :results replace :tangle yes
 (defun show-me ()
   "Evaluate a Lisp expression and insert its value
    as a comment at the end of the line.
@@ -12623,7 +12650,7 @@ Incidentally, TRAMP allows us to do the same thing.
 :PROPERTIES:
 
 :END:
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (use-package smartparens
   :init
   (smartparens-global-mode 1)
@@ -12702,7 +12729,7 @@ a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
 Here's a neat macro I made, but I /may/ avoid using it in the init in order to
 avoid scaring anyone. I may use it in my personal stuff.
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defmacro λ (&rest body)
   "Implementing Z-notation style, interactive, lambdas; ideally for inline use:
 
@@ -12758,14 +12785,14 @@ Since not all my bindings are via ~use-package~, it does not yet cover all of my
 We could run ~C-h b~ to see /all/ our bindings
 ---or ~M-x describe-personal-bindings~ to see only those
 set throughout our init file.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package helm-descbinds
   :defer t
   :bind ("C-h b" . helm-descbinds))
 #+END_SRC
 
 Finally, we can observe which features are active in our current Emacs with,
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (message "Features: %s" features)
 #+end_src
 
@@ -12779,7 +12806,7 @@ Finally, we can observe which features are active in our current Emacs with,
 :CUSTOM_ID: hooks-and-things-for-literate-agda-with-org-agda
 :END:
 
-#+BEGIN_SRC emacs-lisp  :tangle no
+#+begin_src emacs-lisp :tangle no  :tangle no
 ;; not needed
 (defun lagda-extension-whatdo ()
        "What to do when encountering a .lagda file.
@@ -12822,7 +12849,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
  Look at the super short doc to know how to manipulate this variable.
  (describe-symbol 'org-html-postamble-format)
 
- #+BEGIN_SRC emacs-lisp :tangle no
+ #+begin_src emacs-lisp :tangle no :tangle no
 (defun make-html-link (url identifier)
   (concat "<a href=\"" url "\">" identifier "</a>"))
 
@@ -12847,7 +12874,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 :CUSTOM_ID: Haskell-tangle-no
 :END:
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
  (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
 #+END_SRC
@@ -12857,7 +12884,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 :CUSTOM_ID: Lambda-Prolog
 :END:
 
-#+BEGIN_SRC emacs-lisp  :tangle no
+#+begin_src emacs-lisp :tangle no  :tangle no
 (load "/usr/local/packages/teyjus/emacs/teyjus.el")
 (setq tjcc "/usr/local/packages/teyjus/tjcc")
 #+END_SRC
@@ -12867,7 +12894,7 @@ Add the following to a web-page if you'd like it to have a floating table of con
 :END:
 
 Sometimes I use Coq,
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Open .v files with Proof General's Coq mode
 ;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
 #+end_src
@@ -12880,7 +12907,7 @@ Sometimes I use Coq,
 (  Maybe a hook would be better? Much better...? )
 
 Have a thin line to the right to ensure I don't write “off the page”.
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (use-package fill-column-indicator)
 (define-globalized-minor-mode my-fci-global-mode fci-mode
   (lambda () (set-fill-column 90) (fci-mode 't)
@@ -12899,7 +12926,7 @@ take care of this.
 :END:
 
 [[https://github.com/jcaw/theme-magic][Theme-magic]] looks nice, in theory, but I've not found it to be useful, for me.
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 ;; Automatically propagate Emacs theme changes to OS
 (use-package theme-magic)
 ;; (shell-command "pip3 install pywal")
@@ -12918,16 +12945,16 @@ Sources:
 I want both ~get-named-text~ and ~docs~ ^_^
 
 #+NAME: get-named-text
-#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
+#+begin_src emacs-lisp :tangle no :var name = "" :var sep = "\n\n" :results replace :tangle no
 (my/get-named-text name sep)
 #+END_SRC
 
 #+NAME: docs
-#+BEGIN_SRC emacs-lisp :var name = "" :var sep = "\n\n" :results replace :tangle no
+#+begin_src emacs-lisp :tangle no :var name = "" :var sep = "\n\n" :results replace :tangle no
 (my/get-named-text name sep)
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defun my/get-named-text (name sep)
 
   (let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
@@ -12943,7 +12970,7 @@ I want both ~get-named-text~ and ~docs~ ^_^
 #+END_SRC
 
 #+NAME: OLD-get-named-text
-#+BEGIN_SRC emacs-lisp :var name="" :results replace :tangle no
+#+begin_src emacs-lisp :tangle no :var name="" :results replace :tangle no
 (let ((el (org-element-map (org-element-parse-buffer) org-element-all-elements
             (lambda (el)
               (when (string= (org-element-property :name el) name)
@@ -12955,7 +12982,7 @@ I want both ~get-named-text~ and ~docs~ ^_^
 #+END_SRC
 
 Let's make ~get-named-text~ a globally defined and callable code block:
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (org-babel-lob-ingest (expand-file-name "~/.emacs.d/init.org"))
 #+END_SRC
 
@@ -12972,7 +12999,7 @@ Let's make ~get-named-text~ a globally defined and callable code block:
 :END:
 For example:
 #+NAME: ADD
-#+BEGIN_SRC emacs-lisp -n -r :noweb yes :tangle test.el
+#+begin_src emacs-lisp :tangle no -n -r :noweb yes :tangle test.el
 (defun add (x y)
   "One line description of adding X and Y.
 <<get-named-text('DOC-OF-ADD)>> ;; code to code
@@ -12998,7 +13025,7 @@ We use the XXX function add to calculate the sum of two numbers.
 
 From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (defun org-babel-tangle-collect-blocks-handle-tangle-list (&optional language tangle-file)
   "Can be used as :override advice for `org-babel-tangle-collect-blocks'.
 Handles lists of :tangle files."
@@ -13066,7 +13093,7 @@ If the :tangle header arg is a list of files. Handle all files"
 :CUSTOM_ID: Parallel
 :END:
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
 ** COMMENT JavaScript                              :Does_not_work_with_flow:
@@ -13076,7 +13103,7 @@ If the :tangle header arg is a list of files. Handle all files"
 
 Let's get a JavaScript refactoring library for emacs:
 
-#+begin_src emacs-lisp :tangle work_secrets.el
+#+begin_src emacs-lisp :tangle no :tangle work_secrets.el
 ;; (use-package js2-mode)
 
 (use-package js2-refactor ;; Does not work with flow.js :'(
@@ -13185,7 +13212,7 @@ Below I'll equip us with an Emacs ‘porcelain’ interface to git
 Moreover, I add a little pop-up so that I don't forget to commit often!
 
 Finally, since I've symlinked my ~.emacs~:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; Don't ask for confirmation when opening symlinked files.
 (setq vc-follow-symlinks t)
 #+end_src
@@ -13194,7 +13221,7 @@ Finally, since I've symlinked my ~.emacs~:
 :CUSTOM_ID: What's-in-or-at-the-top-of-my-emacs
 :END:
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (org-babel-load-file "~/.emacs.d/init.org")
 ;;
 ;; My Emacs settings: (find-file "~/.emacs.d/init.org")
@@ -13208,7 +13235,7 @@ automatically determine if the ~init.org~ file has changed and if so it
 would tangle it producing the ~init.el~ file which will then be loaded immediately.
 
 :Maybe_bad_idea:
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 ;; In-case I forget to byte-compile!
 (byte-compile-file "~/.emacs")
 
@@ -13221,7 +13248,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 :CUSTOM_ID: README-md
 :END:
 
-#+BEGIN_SRC emacs-lisp :tangle no :export_never t
+#+begin_src emacs-lisp :tangle no :tangle no :export_never t
 (with-temp-buffer
     (insert (concat
     "#+EXPORT_FILE_NAME: README.md
@@ -13269,7 +13296,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 :CUSTOM_ID: List-recently-accessed-files-upon-startup
 :END:
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (recentf-mode 1)                   ;; Part of Emacs
 (setq recentf-max-menu-items 25)
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
@@ -13284,7 +13311,7 @@ would tangle it producing the ~init.el~ file which will then be loaded immediate
 :CUSTOM_ID: Homemade-attempt-before-learning-about-shell-pop
 :END:
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (cl-defun toggle-terminal (&optional (name "*eshell-pop-up*"))
    "Pop up a terminal, do some work, then close it using the same command.
 
@@ -13320,7 +13347,7 @@ To export the following table I put the cursor inside the table and hit M-x org-
 :CUSTOM_ID: Interpret-the-Haskell-source-blocks-in-a-file
 :END:
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defvar *current-module* "NoModuleNameSpecified"
   "The name of the module, file, that source blocks are
    currently being tangled to.
@@ -13418,7 +13445,7 @@ hello
 
 Let's have this fold-away in the source buffer as well by using [[https://www.emacswiki.org/emacs/FoldingMode][folding-mode]];
 with show/hide with ~C-<tab>~ key.
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 (use-package folding
  :init
  (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
@@ -13456,7 +13483,7 @@ This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
 |   |   |
 |---+---|
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (quelpa '(org-pretty-table
          :repo "Fuco1/org-pretty-table"
          :fetcher github))
@@ -13473,7 +13500,7 @@ vertical line.
 :END:
 Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package highlight-numbers
   :hook ((prog-mode) . highlight-numbers-mode))
 ;; Not text-mode , look Bad
@@ -13486,7 +13513,7 @@ Lightweight syntax highlighting improvement for numbers and escape sequences (e.
 :PROPERTIES:
 :CUSTOM_ID: shell-command-and-run
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defalias 'my/shell-command-and-run 'shell-command-and-run)
 (defun shell-command-and-run (cmd name &rest more-commands)
   "Run shell command CMD (possibly opening a new repl/terminal) and then MORE-COMMANDS.
@@ -13528,7 +13555,7 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
 :END:
 
 Let's ensure our system is always up to date.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defun my/stay-up-to-date ()
   "Ensure that OS and Emacs package listings are up to date.
 
@@ -13558,6 +13585,9 @@ May need to actually reboot the system as well.
 :End:
 
 ** Compile                                                       :posterity:
+:PROPERTIES:
+:CUSTOM_ID: Compile
+:END:
 #+begin_src org :tangle no
 # Local Variables:
 # eval: (message "Load file specific stuffs here")
@@ -13569,7 +13599,7 @@ Since nearly every file I work with is ─or can be coerced into being─ in org
 I usually have a section ~* footer~ that contains something like the above.
 
 Let's remove repeated matter.
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 ;; Silently save before compiling.
 (setq compilation-ask-about-save nil)
 
@@ -13584,7 +13614,7 @@ Let's remove repeated matter.
 (setq compilation-skip-threshold 2)
 #+end_src
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no :tangle no
 ;; My global compile command
 (setq compile-command
   '(async-shell-command (concat "open " (org-latex-export-to-pdf))))
