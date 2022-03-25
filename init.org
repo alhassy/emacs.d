@@ -3743,6 +3743,37 @@ ${1:`(let* ((τ (read-string "Link type: "))
        (format "[[%s][%s]]" ⊤ δ))`} $0
 #+END_SRC
 
+*** Operating System Keyboard Symbols
+
+Write ~os_~ then see a bunch of completions ;-)
+
+#+name: my-snippets-os-symbols
+#+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
+(loop for (name expansion)
+      in '((os-command ⌘)
+           (os_option ⌥)
+           (os_alt ⌥)
+           (os_control ⌃)
+           (os_shift ⇧)
+           (os_backspace ⌫)
+           (os_delete ⌫)
+           (os_delete_forward ⌦)
+           (os_enter ⏎)
+           (os_return ⏎)
+           (os_escape ⎋)
+           (os_tab_right ⇥)
+           (os_tab_left ⇤)
+           (os_caps_lock ⇪)
+           (os_eject ⏏))
+      concat
+      (format "** %s: %s Operating System Keyboard Symbol\n%s\n" name expansion expansion))
+#+end_src
+
+#+begin_src org  :tangle "~/.emacs.d/yankpad.org" :noweb yes :comments none
+<<my-snippets-os-symbols()>>
+#+end_src
+
+
 *** Work Templates
 :PROPERTIES:
 :CUSTOM_ID: Work-Templates

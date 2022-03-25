@@ -771,7 +771,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (message "🥳 Happy coding!"))
 ;; Jump to a (ma)git repository with ~C-u C-x g~:1 ends here
 
-;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:1]]
+;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:1]]
 (cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
   "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
   `(prog1
@@ -785,7 +785,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (setq pretty-magit-prompt nil)
 ;; Pretty Magit Commit Leaders:1 ends here
 
-;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:2]]
+;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:2]]
 (pretty-magit "Add"      ?➕ (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
 (pretty-magit "Delete"   ?❌ (:foreground "#375E97" :height 1.2) "❌ Remove a capability e.g. feature, test, dependency.")
 (pretty-magit "Fix"      ?🔨 (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
@@ -804,7 +804,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Stop ~ End doing something; e.g. remove a feature flag.
 ;; Pretty Magit Commit Leaders:2 ends here
 
-;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:3]]
+;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:3]]
 (defun add-magit-faces ()
   "Add face properties and compose symbols for buffer from pretty-magit."
   (interactive)
@@ -920,7 +920,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
     (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 ;; Jumping to extreme semantic units:1 ends here
 
-;; [[file:init.org::*Get CheatSheets and view them easily][Get CheatSheets and view them easily:1]]
+;; [[file:init.org::#Get-CheatSheets-and-view-them-easily][Get CheatSheets and view them easily:1]]
 (defvar my/cheatsheet/cached-topics nil)
 (cl-defun my/cheatsheet (&optional topic)
   "Clone Al-hassy's ⟨TOPIC⟩CheatSheet repository when called from Lisp; visit the pretty HTML page when called interactively.
@@ -934,7 +934,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
     (maybe-clone (format "https://github.com/alhassy/%sCheatSheet" topic))))
 ;; Get CheatSheets and view them easily:1 ends here
 
-;; [[file:init.org::*Get CheatSheets and view them easily][Get CheatSheets and view them easily:2]]
+;; [[file:init.org::#Get-CheatSheets-and-view-them-easily][Get CheatSheets and view them easily:2]]
 (mapcar #'my/cheatsheet '("ELisp" "GojuRyu")) ; Python Prolog Vue Agda Rust JavaScript
                                               ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 ;; Get CheatSheets and view them easily:2 ends here
@@ -2343,7 +2343,7 @@ fonts (•̀ᴗ•́)و"
 (global-set-key [remap goto-line] 'goto-line-preview)
 ;; Preview link under cursor:2 ends here
 
-;; [[file:init.org::*Replace phrases with nice SVG labels][Replace phrases with nice SVG labels:1]]
+;; [[file:init.org::#Replace-phrases-with-nice-SVG-labels][Replace phrases with nice SVG labels:1]]
 (use-package svg-tag-mode
   :hook (org-mode prog-mode)
   ;; :config (global-svg-tag-mode) ;; Nope: Breaks xwidget-webkit-browse-url, issue#28.
@@ -3984,7 +3984,7 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   ("b" pop-tag-mark "Back"))
 ;; LSP: Making Emacs into a generic full-featured programming IDE:2 ends here
 
-;; [[file:init.org::*JSON][JSON:1]]
+;; [[file:init.org::#JSON][JSON:1]]
 (use-package json-mode)
 ;; JSON:1 ends here
 
@@ -4051,7 +4051,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 (bind-key* "C-c M-s" #'my/capture-emacs-frame)
 ;; Screencapturing the Current Emacs Frame:1 ends here
 
-;; [[file:init.org::*Comment-boxes up to the fill-column][Comment-boxes up to the fill-column:1]]
+;; [[file:init.org::#Comment-boxes-up-to-the-fill-column][Comment-boxes up to the fill-column:1]]
 (defun my/comment-box (b e)
   "Draw a box comment around the region but arrange for the region
 to extend to at least the fill column. Place the point after the
@@ -4319,7 +4319,7 @@ Both arguments are strings."
   ("b" (internet) "Browse"  :exit t))
 ;; Modern Browsing within Emacs:2 ends here
 
-;; [[file:init.org::*Lisp Helpers / Kill all buffers that are not associated with a file][Lisp Helpers / Kill all buffers that are not associated with a file:1]]
+;; [[file:init.org::#Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file][Lisp Helpers / Kill all buffers that are not associated with a file:1]]
 (cl-defun my/clean-buffers ()
   "Kill all buffers that are not associated with a file.
   By convention, such files are named in *earmuffs* style."

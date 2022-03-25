@@ -259,6 +259,37 @@ ${1:`(let* ((τ (read-string "Link type: "))
             (⊤ (if (s-contains? ":" τ) τ (s-concat τ ":"))))
        (format "[[%s][%s]]" ⊤ δ))`} $0
 
+** os-command: ⌘ Operating System Keyboard Symbol
+⌘
+** os_option: ⌥ Operating System Keyboard Symbol
+⌥
+** os_alt: ⌥ Operating System Keyboard Symbol
+⌥
+** os_control: ⌃ Operating System Keyboard Symbol
+⌃
+** os_shift: ⇧ Operating System Keyboard Symbol
+⇧
+** os_backspace: ⌫ Operating System Keyboard Symbol
+⌫
+** os_delete: ⌫ Operating System Keyboard Symbol
+⌫
+** os_delete_forward: ⌦ Operating System Keyboard Symbol
+⌦
+** os_enter: ⏎ Operating System Keyboard Symbol
+⏎
+** os_return: ⏎ Operating System Keyboard Symbol
+⏎
+** os_escape: ⎋ Operating System Keyboard Symbol
+⎋
+** os_tab_right: ⇥ Operating System Keyboard Symbol
+⇥
+** os_tab_left: ⇤ Operating System Keyboard Symbol
+⇤
+** os_caps_lock: ⇪ Operating System Keyboard Symbol
+⇪
+** os_eject: ⏏ Operating System Keyboard Symbol
+⏏
+
 ** ll_console_log: Log some JS variables
 
 console.log("%c ******* LOOK HERE *******", "color: green; font-weight: bold;");
