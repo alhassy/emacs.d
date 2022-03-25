@@ -3304,26 +3304,39 @@ Menu can be closed when servers are started; can also stop them."
               for status = (or (ignore-errors (process-status associated-shell)) '💥)
               for branch = (-let [default-directory (format "~/%s" 𝑺)]
                              (magit-get-current-branch))
+              for 𝑺-buffer = (--find (s-starts-with? (format "%s" 𝑺) it) (mapcar 'buffer-name (buffer-list)))
               for saying = (let (most-recent-shell-output (here (current-buffer)))
-                             (switch-to-buffer (--find (s-starts-with-p 𝑺 (buffer-name it)) (buffer-list)))
-                             (end-of-buffer)
-                             (beginning-of-line)
-                             (setq most-recent-shell-output (or (thing-at-point 'line t) ""))
-                             (switch-to-buffer here)
-                             (s-truncate 135 (s-trim most-recent-shell-output)))
+                             (if (not 𝑺-buffer)
+                                 " ─Server not started─ "
+                               (switch-to-buffer 𝑺-buffer)
+                               (end-of-buffer)
+                               (beginning-of-line)
+                               (setq most-recent-shell-output (or (thing-at-point 'line t) ""))
+                               (switch-to-buffer here)
+                               ;; FIXME:here
+                               (--> (s-truncate 135 (s-trim most-recent-shell-output))
+                                  (if (s-contains? "|" it)
+                                      (cl-second (s-split "|" it))
+                                    it)
+                                  (s-trim it)
+                                  (if (<= (length it) 3) (s-repeat 70 " ") it))))
+              for _ = (if (or (s-contains? "Error" saying) (not 𝑺-buffer)) (setq status  '💥))
               for keymap = (copy-keymap org-mouse-map)
               do (cl-loop for (key action)
                           on `(;; Checkout branch/PR
                                c (w-pr-checkout (format "~/%s" ,𝑺))
+                               ;; Restart service, remaining on current branch [not switching to “main”!]
+                                 r (-let [current-prefix-arg t]
+                                     (funcall (intern (format "w-stop-%s" ,𝑺)))
+                                     (funcall (intern (format "w-start-%s" ,𝑺))))
                                ;; Visit service shell
                                <return>
-                                 (progn
-                                   (delete-other-windows)
-                                   (split-window-below)
-                                   (switch-to-buffer (--find (s-starts-with? (format "%s" ,𝑺) it) (mapcar 'buffer-name (buffer-list))))
-                                   (end-of-buffer)
-                                   (other-window 1)
-                                   )
+                                (when ,𝑺-buffer
+                                  (delete-other-windows)
+                                  (split-window-below)
+                                  (switch-to-buffer ,𝑺-buffer)
+                                  (end-of-buffer)
+                                  (other-window 1))
                                ;; See service magit buffer
                               <tab> (progn (magit-status (format "~/%s" ,𝑺)) (delete-other-windows)))
                           by #'cddr
@@ -3332,11 +3345,7 @@ Menu can be closed when servers are started; can also stop them."
               collect
               ;; “%𝑾s” ⇒ Print a string with at least width 𝑾: If length(str) ≤ 𝑾, then pad with spaces on the left side.
               ;; Use “%-𝑾s” to instead pad with spaces to the right.
-              (list keymap (format "%s %-20s %-12s %s" status 𝑺 branch
-                                   (-let [it (s-trim (if (s-contains? "|" saying)
-                                                         (cl-second (s-split "|" saying))
-                                                       saying))]
-                                     (if (<= (length it) 3) "-" it))))))
+              (list keymap (format "%s %-20s %-12s %s" status 𝑺 branch saying))))
 
       ;; Setup buffer
       (-let [buf "Status of Services"]
@@ -3349,9 +3358,10 @@ Menu can be closed when servers are started; can also stop them."
         ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Overlay-Properties.html
         (-let [help (s-join "\n"
                             '("Keybindings:"
-                              "c         ∷  Checkout PR               \t\t\t b ∷ Browse an app"
-                              "[tab]     ∷  See service magit buffer  \t\t\t i ∷ Inject users"
-                              "[return]  ∷  Visit service shell       \t\t\t s ∷ SQL buffer"
+                              "[C-u] c   ∷  Checkout PR [or branch]   \t\t\t b ∷ Browse an app"
+                              "tab       ∷  See service magit buffer  \t\t\t i ∷ Inject users"
+                              "return    ∷  Visit service shell       \t\t\t s ∷ SQL buffer"
+                              "r         ∷  Restart service"
                               "g         ∷  Refresh this view         \t\t\t q ∷ Quit, and kill, this buffer"))]
           (insert-text-button (s-replace "\"" "″" (s-replace "run" "✅" (nth 1 it)))
                          'face nil
@@ -3423,7 +3433,7 @@ Menu can be closed when servers are started; can also stop them."
        (my/docker-stop ,(pp-to-string repo))
        (thread-last (buffer-list)
          (mapcar 'buffer-name)
-         (--filter (s-contains-p (f-base ,(pp-to-string repo)) it))
+         (--filter (s-contains-p ,(pp-to-string repo) it))
          (mapcar #'my/force-kill)))
 
      (if ,example
@@ -3444,11 +3454,21 @@ Menu can be closed when servers are started; can also stop them."
                :cmd "npm run dev"
                :example "http://team.weeverdev.com:9000") ;; Microapp wrapper
 
+;; Inspections is a micro-application for working with inspections forms. It is
+;; based on Vue.js, NuxtJS, and coupled with TypeScript. The inspections api is
+;; separate from the front end code and is fully implemented with Rust.
+;;
+;; [Inspections front-end] Inspections will take a while, keep an eye out for “•
+;; Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins
+;; on my machine.
 (my/defservice inspections/webui
                :main-setup "git checkout main; git pull; npm ci"
                :cmd "npm run dev --quiet --no-progress"
-               :example "http://localhost:3320/inspections/") ;; V2 app
-;; Inspections will take a while, keep an eye out for “• Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins on my machine.
+               :example "http://localhost:3320/inspections/")
+;; [Inspections back-end]
+(my/defservice inspections/api
+               :main-setup "git checkout main; git pull; npm ci"
+               :cmd "cargo run")
 
 ;; Do we need to upload files? E.g., images.
 (my/defservice api-file-server)

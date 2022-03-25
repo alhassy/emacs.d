@@ -39,3 +39,4 @@ _minted-*
 /projectile.cache
 /.org-id-locations
 /.*~undo-tree~
+/url/
