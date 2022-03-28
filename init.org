@@ -9971,6 +9971,47 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
 )
 #+end_src
 
+*** TODO ll-debug
+# ~ Useful when no debugger setup
+
+[[https://melpa.org/#/ll-debug][ll-debug.el]] provides commands to support a low level debug style.
+It features quick insertion of various debug output statements and
+improved functions for commenting and uncommenting chunks of code.
+
+#+begin_quote
+I don't use debuggers very much. I know they can be a big help in some
+situations and I tried some of them, but I find it almost always more
+direct/convenient/enlightening to put a quick 'printf' into a critical area to
+see what is happening than to fire up a big clumsy extra program where it takes
+me ages just to step through to the interesting point. In order to avoid
+repeated typing of 'printf("I AM HERE\n");' and similar stuff, I created
+`ll-debug-insert'. It inserts a statement into your sourcecode that will display
+a debug message. It generates unique messages on each invocation (the message
+consists of a big fat DEBUG together with a counter and the current filename).
+
+---ll-debug.el
+#+end_quote
+
+#+begin_src emacs-lisp
+;; C-u C-v C-d ⇒ Log a message, printing values of expressions.
+;; E.g., in JS this prints, console.log("DEBUG-5-del.js","  1 + 3:",1 + 3);
+;; Note “5” is the fifth debug message, and “del.js” is the name of the buffer.
+;; Works with Rust, Java, Lisps, JS, TS, Clojure, C/C++, Ruby, Matlab/Octave, Shell, Perl.
+(use-package ll-debug
+  :config
+  (bind-key "C-x l" (lambda () (interactive) (ll-debug-insert 1)) #'prog-mode-map))
+
+;; See variable `ll-debug-statement-alist' if you want to know which
+;; modes are currently supported by ll-debug. You can add new modes
+;; with `ll-debug-register-mode'.
+;;
+;; If you want to get rid of the debug messages, use
+;; `ll-debug-revert'. It finds and removes the lines with the debug
+;; output statements, asking for confirmation before it removes
+;; anything.
+#+end_src
+
+
 ** Which function are we writing?
 :PROPERTIES:
 :CUSTOM_ID: Which-function-are-we-writing
