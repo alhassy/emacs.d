@@ -11151,6 +11151,35 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (goto-char e)
     (set-marker e nil)))
 #+end_src
+** Auto-format on Save
+
+[[https://github.com/lassik/emacs-format-all-the-code/tree/eb2a7fa6da15d23b57921218a36ac67d523e81f1][Auto-format source code in many languages with one command]]
+
+Lets you auto-format source code in many languages using the same command for
+all languages, instead of learning a different Emacs package and formatting
+command for each language.
+
+Just do ~M-x format-all-buffer~ and it will try its best to do the right thing. To
+auto-format code on save, use the minor mode format-all-mode.
+
+- You will need to install external programs to do the formatting. If
+  ~format-all-buffer~ can't find the right program, it will try to tell you how to
+  install it.
+
+#+begin_src emacs-lisp
+(use-package format-all
+  ;; To enable format on save for most programming language buffers:
+  :hook (prog-mode . format-all-mode)
+  :config
+  ;; Please use the default formatters; I don't care too much.
+  (add-hook 'format-all-mode-hook 'format-all-ensure-formatter))
+
+;; For JavaScript prettification: It automatically inserts semicolons, forces newlines, inserts parens, etc.
+;; Lots of redundant stuff, but stuff to make it easy to work with others.
+(shell-command "npm install --global prettier")
+;; Specific package to do only JS prettification: https://github.com/prettier/prettier-emacs
+#+end_src
+
 * Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
