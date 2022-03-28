@@ -11,6 +11,7 @@
 #+options: html-postamble:nil toc:2 d:nil num:t broken-links:auto
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
+
 * TODO Clean this section up!                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
@@ -13770,6 +13771,13 @@ Let's remove repeated matter.
           (bind-key "C-x b" (lambda () (interactive) (bufler-switch-buffer t))))
 #+end_src
 
+** [[https://github.com/motform/stimmung-themes][;; Let's try out this dope theme.]]
+#+begin_src emacs-lisp
+(use-package stimmung-themes
+  :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
+  :init (load-theme 'stimmung-themes-light))
+
+#+end_src
 
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:

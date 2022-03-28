@@ -110,13 +110,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -2006,6 +2006,11 @@ fonts (•̀ᴗ•́)و"
 (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
 ;; Exquisite Fonts and Themes:4 ends here
 
+;; [[file:init.org::#Exquisite-Fonts-and-Themes][Exquisite Fonts and Themes:5]]
+(my/toggle-font "Roboto Mono Light 14")
+(my/toggle-theme 'solarized-gruvbox-light)
+;; Exquisite Fonts and Themes:5 ends here
+
 ;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:1]]
 ;; Make it very easy to see the line with the cursor.
 (global-hl-line-mode t)
@@ -3329,6 +3334,11 @@ Menu can be closed when servers are started; can also stop them."
                                  r (-let [current-prefix-arg t]
                                      (funcall (intern (format "w-stop-%s" ,𝑺)))
                                      (funcall (intern (format "w-start-%s" ,𝑺))))
+                               ;; See the repo in the web
+                                 w (--> (format "%s" ,𝑺)
+                                      (if (s-contains? "/" it) (f-parent it) it)
+                                      (format "https://github.com/WeeverApps/%s" it)
+                                      (browse-url it))
                                ;; Visit service shell
                                <return>
                                 (when ,𝑺-buffer
@@ -3361,7 +3371,7 @@ Menu can be closed when servers are started; can also stop them."
                               "[C-u] c   ∷  Checkout PR [or branch]   \t\t\t b ∷ Browse an app"
                               "tab       ∷  See service magit buffer  \t\t\t i ∷ Inject users"
                               "return    ∷  Visit service shell       \t\t\t s ∷ SQL buffer"
-                              "r         ∷  Restart service"
+                              "r         ∷  Restart service           \t\t\t w ∷ See the repo in the web"
                               "g         ∷  Refresh this view         \t\t\t q ∷ Quit, and kill, this buffer"))]
           (insert-text-button (s-replace "\"" "″" (s-replace "run" "✅" (nth 1 it)))
                          'face nil
@@ -3633,6 +3643,25 @@ Menu can be closed when servers are started; can also stop them."
    (setq company-quickhelp-delay 0.1)
    (company-quickhelp-mode))
 ;; Documentation Pop-Ups:1 ends here
+
+;; [[file:init.org::*ll-debug][ll-debug:1]]
+;; C-u C-v C-d ⇒ Log a message, printing values of expressions.
+;; E.g., in JS this prints, console.log("DEBUG-5-del.js","  1 + 3:",1 + 3);
+;; Note “5” is the fifth debug message, and “del.js” is the name of the buffer.
+;; Works with Rust, Java, Lisps, JS, TS, Clojure, C/C++, Ruby, Matlab/Octave, Shell, Perl.
+(use-package ll-debug
+  :config
+  (bind-key "C-x l" (lambda () (interactive) (ll-debug-insert 1)) #'prog-mode-map))
+
+;; See variable `ll-debug-statement-alist' if you want to know which
+;; modes are currently supported by ll-debug. You can add new modes
+;; with `ll-debug-register-mode'.
+;;
+;; If you want to get rid of the debug messages, use
+;; `ll-debug-revert'. It finds and removes the lines with the debug
+;; output statements, asking for confirmation before it removes
+;; anything.
+;; ll-debug:1 ends here
 
 ;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:1]]
 (add-hook 'prog-mode-hook #'which-function-mode)
@@ -4346,3 +4375,43 @@ Both arguments are strings."
   (interactive)
   (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list)))))
 ;; Lisp Helpers / Kill all buffers that are not associated with a file:1 ends here
+
+;; [[file:init.org::*Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.][Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1]]
+;; M-x helm-chrome-history
+;; [Your Chrome History SQLite database file: helm-chrome-history-file]
+(use-package helm-chrome-history)
+;; M-x helm-chrome-control
+(use-package helm-chrome-control)
+;; Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1 ends here
+
+;; [[file:init.org::*Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.][Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1]]
+;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
+;;
+;; In particular, when I tangle my init.org into a Lisp file, init.el, it has Org links
+;; back to the original source section in Org, which I can then click to jump to, quickly.
+;;
+(use-package orglink
+  :config
+  (global-orglink-mode)
+  ;; Only enable this in Emacs Lisp mode, for now.
+  (setq orglink-activate-in-modes '(emacs-lisp-mode)))
+;; Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1 ends here
+
+;; [[file:init.org::*Let's make working with Emacs Lisp even better!][Let's make working with Emacs Lisp even better!:1]]
+(use-package elisp-demos
+  :config
+  ;; Show demos when I do a `C-h o'.
+  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)
+  ;; Show demos in tooltips when I pause to select a completion, in Emacs Lisp mode.
+  (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
+;; Let's make working with Emacs Lisp even better!:1 ends here
+
+;; [[file:init.org::*\[\[https:/github.com/alphapapa/bufler.el\]\[A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.\]\]][[[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]:1]]
+(use-package bufler
+  :config (bind-key "C-x C-b" #'bufler-list)
+          (bind-key "C-x b" (lambda () (interactive) (bufler-switch-buffer t))))
+;; [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]:1 ends here
+
+(use-package stimmung-themes
+  :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
+  :init (load-theme 'stimmung-themes-light))
