@@ -1282,8 +1282,12 @@ Here are other packages that I want to be installed onto my machine.
 
 ;; Let's use the “s” library.
 (defvar my/personal-machine?
-  (not (s-contains? "-MBP" (shell-command-to-string "uname -a")))
-  "Is this my personal machine, or my work machine?")
+  (not (s-contains? "work-machine" (shell-command-to-string "hostname")))
+  "Is this my personal machine, or my work machine?
+
+ At one point, on my work machine I run the following command to give the machine a sensible name.
+
+   sudo hostname work-machine")
 
 (ignore-errors (load-file "~/Desktop/work_secrets.el"))
 
@@ -13796,16 +13800,16 @@ Let's remove repeated matter.
 ** [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]
 #+begin_src emacs-lisp
 (use-package bufler
-  :config (bind-key "C-x C-b" #'bufler-list)
-          (bind-key "C-x b" (lambda () (interactive) (bufler-switch-buffer t))))
+  :config (bind-key "C-x C-b" #'bufler-list))
+;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 #+end_src
 
-** [[https://github.com/motform/stimmung-themes][;; Let's try out this dope theme.]]
+** [[https://github.com/motform/stimmung-themes][Let's try out this dope theme.]]
 #+begin_src emacs-lisp
 (use-package stimmung-themes
   :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
-  :init (load-theme 'stimmung-themes-light))
-
+  :config (load-theme 'stimmung-themes-light))
+(setq-default cursor-type 'bar)
 #+end_src
 
 * Conclusion ---Why Configuration Files Should be Literate
