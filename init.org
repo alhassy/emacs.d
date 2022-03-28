@@ -11,7 +11,6 @@
 #+options: html-postamble:nil toc:2 d:nil num:t broken-links:auto
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
-
 * TODO Clean this section up!                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
@@ -13686,6 +13685,51 @@ Let's remove repeated matter.
 ;; Also a helpful quick f-key.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
+
+** Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.
+- [[https://github.com/xuchunyang/helm-chrome-history][Browse your Chrome history with Helm.]]
+- [[https://github.com/xuchunyang/helm-chrome-control][M-x helm-chrome-control displays chrome tabs and let you control them by pressing C-z: e.g., you can focus tab, close tab, copy the title & URL of the tab, etc.]]
+#+begin_src emacs-lisp
+;; M-x helm-chrome-history
+;; [Your Chrome History SQLite database file: helm-chrome-history-file]
+(use-package helm-chrome-history)
+;; M-x helm-chrome-control
+(use-package helm-chrome-control)
+#+end_src
+
+** Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.
+#+begin_src emacs-lisp
+;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
+;;
+;; In particular, when I tangle my init.org into a Lisp file, init.el, it has Org links
+;; back to the original source section in Org, which I can then click to jump to, quickly.
+;;
+(use-package orglink
+  :config
+  (global-orglink-mode)
+  ;; Only enable this in Emacs Lisp mode, for now.
+  (setq orglink-activate-in-modes '(emacs-lisp-mode)))
+#+end_src
+
+** Let's make working with Emacs Lisp even better!
+- [[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]
+#+begin_src emacs-lisp
+(use-package elisp-demos
+  :config
+  ;; Show demos when I do a `C-h o'.
+  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)
+  ;; Show demos in tooltips when I pause to select a completion, in Emacs Lisp mode.
+  (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
+#+end_src
+
+** [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]
+#+begin_src emacs-lisp
+(use-package bufler
+  :config (bind-key "C-x C-b" #'bufler-list)
+          (bind-key "C-x b" (lambda () (interactive) (bufler-switch-buffer t))))
+#+end_src
+
+
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate
