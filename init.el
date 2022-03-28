@@ -91,8 +91,12 @@
 
 ;; Let's use the “s” library.
 (defvar my/personal-machine?
-  (not (s-contains? "-MBP" (shell-command-to-string "uname -a")))
-  "Is this my personal machine, or my work machine?")
+  (not (s-contains? "work-machine" (shell-command-to-string "hostname")))
+  "Is this my personal machine, or my work machine?
+
+ At one point, on my work machine I run the following command to give the machine a sensible name.
+
+   sudo hostname work-machine")
 
 (ignore-errors (load-file "~/Desktop/work_secrets.el"))
 
@@ -110,13 +114,13 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
@@ -4120,6 +4124,20 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (set-marker e nil)))
 ;; Comment-boxes up to the fill-column:1 ends here
 
+;; [[file:init.org::*Auto-format on Save][Auto-format on Save:1]]
+(use-package format-all
+  ;; To enable format on save for most programming language buffers:
+  :hook (prog-mode . format-all-mode)
+  :config
+  ;; Please use the default formatters; I don't care too much.
+  (add-hook 'format-all-mode-hook 'format-all-ensure-formatter))
+
+;; For JavaScript prettification: It automatically inserts semicolons, forces newlines, inserts parens, etc.
+;; Lots of redundant stuff, but stuff to make it easy to work with others.
+(shell-command "npm install --global prettier")
+;; Specific package to do only JS prettification: https://github.com/prettier/prettier-emacs
+;; Auto-format on Save:1 ends here
+
 ;; [[file:init.org::#COMMENT-Web-Development][Web-Development:1]]
 ;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
 (mapcar #'my/cheatsheet '("JavaScript" "Vue" "AngularJS"))
@@ -4408,10 +4426,13 @@ Both arguments are strings."
 
 ;; [[file:init.org::*\[\[https:/github.com/alphapapa/bufler.el\]\[A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.\]\]][[[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]:1]]
 (use-package bufler
-  :config (bind-key "C-x C-b" #'bufler-list)
-          (bind-key "C-x b" (lambda () (interactive) (bufler-switch-buffer t))))
+  :config (bind-key "C-x C-b" #'bufler-list))
+;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 ;; [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]:1 ends here
 
+;; [[file:init.org::*\[\[https:/github.com/motform/stimmung-themes\]\[Let's try out this dope theme.\]\]][[[https://github.com/motform/stimmung-themes][Let's try out this dope theme.]]:1]]
 (use-package stimmung-themes
   :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
-  :init (load-theme 'stimmung-themes-light))
+  :config (load-theme 'stimmung-themes-light))
+(setq-default cursor-type 'bar)
+;; [[https://github.com/motform/stimmung-themes][Let's try out this dope theme.]]:1 ends here
