@@ -13792,6 +13792,15 @@ Let's remove repeated matter.
 (use-package helm-chrome-control)
 #+end_src
 
+** Get Shell history within Emacs via Completing Read with Helm
+#+begin_src emacs-lisp
+;; Usage: M-x helm-shell-history
+(use-package helm-shell-history
+  :config
+  (setq helm-shell-history-file "~/.zsh_history")
+  (bind-key "M-r" #'helm-shell-history shell-mode-map))
+#+end_src
+
 ** Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.
 #+begin_src emacs-lisp
 ;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
