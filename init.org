@@ -11,6 +11,7 @@
 #+options: html-postamble:nil toc:2 d:nil num:t broken-links:auto
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
+
 * TODO Clean this section up!                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
@@ -10636,7 +10637,7 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
   (interactive)
-  (thread-last `("is:open" "is:pr" "archived:false" "user:WeeverApps" "draft:false" ,@query-options)
+  (thread-last `("is:open" "is:pr" "archived:false" "user:WeeverApps" "draft:false" "-repo:WeeverApps/process-builder" "-repo:WeeverApps/s3-request-lambda" ,@query-options)
     (mapcar #'url-hexify-string)
     (s-join "+")
     (concat "https://github.com/pulls?q=")
@@ -10755,6 +10756,13 @@ other connections call with a prefix argument."
     (json-pretty-print-buffer)
     (other-window -1)))
 #+end_src
+
+- *Postgres is the Emacs of Databases:* /It has extensions!/ E.g., It can be
+  extended to write stored functions in Ruby, Python, and [[https://plv8.github.io/#:~:text=for(var%20i%3D0%3B%20i%3Ckeys.length%3B%20i%2B%2B)%7B%0A%20%20%20%20%20%20%20%20o%5Bkeys%5Bi%5D%5D%20%3D%20vals%5Bi%5D%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20o%3B][in-particular
+  JavaScript]]. So neat!
+  - [[https://dzone.com/articles/why-postgresql-so-awesome][Why PostgreSQL is so Awesome - DZone Java]]
+  - [[https://www.2ndquadrant.com/en/blog/postgresql-is-the-worlds-best-database/][PostgreSQL is the worlds' best database - 2ndQuadrant | PostgreSQL]]
+  - [[https://www.craigkerstiens.com/2012/04/30/why-postgres/][Why Postgres - Craig Kerstiens]]
 
 ** Docker
 :PROPERTIES:
@@ -13615,11 +13623,9 @@ This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
 | 1 | 2 |
 |---+---|
 |   |   |
-|   |   |
-|   |   |
 |---+---|
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (quelpa '(org-pretty-table
          :repo "Fuco1/org-pretty-table"
          :fetcher github))
@@ -13630,6 +13636,19 @@ This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
 Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
 in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
 vertical line.
+
+** Cucumber
+
+#+begin_src emacs-lisp
+;; Emacs mode for editing Cucumber plain text stories
+;; “.feature” files now open up with nice colouring.
+(use-package feature-mode)
+;;
+;; C-c ,g	Go to step-definition under point (requires ruby_parser gem >= 3.14.2)
+;;
+;; TODO: Ruby specific; but the source could be edited to work for JS.
+;; (use-package cucumber-goto-step)
+#+end_src
 ** Syntax highlighting ---numbers and escape characters
 :PROPERTIES:
 :CUSTOM_ID: Syntax-highlighting-numbers-and-escape-characters
