@@ -573,6 +573,19 @@ Is replaced by:
 (window-divider-mode)
 ;; Window Navigation:1 ends here
 
+;; [[file:init.org::#Helpful-Utilities-Shortcuts][Helpful Utilities & Shortcuts:1]]
+;; change all prompts to y or n
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;; Make RETURN key act the same way as “y” key for “y-or-n” prompts.
+;; E.g., (y-or-n-p "Happy?") accepts RETURN as “yes”.
+(define-key y-or-n-p-map [return] 'act)
+
+;; Enable all ‘possibly confusing commands’ such as helpful but
+;; initially-worrisome “narrow-to-region”, C-x n n.
+(setq-default disabled-command-function nil)
+;; Helpful Utilities & Shortcuts:1 ends here
+
 ;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
 (global-set-key (kbd "C-z")
@@ -2011,8 +2024,9 @@ fonts (•̀ᴗ•́)و"
 ;; Exquisite Fonts and Themes:4 ends here
 
 ;; [[file:init.org::#Exquisite-Fonts-and-Themes][Exquisite Fonts and Themes:5]]
-(my/toggle-font "Roboto Mono Light 14")
-(my/toggle-theme 'solarized-gruvbox-light)
+(unless noninteractive
+  (my/toggle-font "Roboto Mono Light 14")
+  (my/toggle-theme 'solarized-gruvbox-light))
 ;; Exquisite Fonts and Themes:5 ends here
 
 ;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:1]]

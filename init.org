@@ -6556,8 +6556,9 @@ get a nice font selection menu ---this can be useful for your own ‘personal st
 
 Let's use the following theme and font, upon startup.
 #+begin_src emacs-lisp
-(my/toggle-font "Roboto Mono Light 14")
-(my/toggle-theme 'solarized-gruvbox-light)
+(unless noninteractive
+  (my/toggle-font "Roboto Mono Light 14")
+  (my/toggle-theme 'solarized-gruvbox-light))
 #+end_src
 
 ** Never lose the cursor
