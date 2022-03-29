@@ -11,7 +11,6 @@
 #+options: html-postamble:nil toc:2 d:nil num:t broken-links:auto
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
-
 * TODO Clean this section up!                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
@@ -558,7 +557,7 @@ its text editors.
 |----------------------------------------------+---+--------------------------------------------------------------------|
 | [Neo]Vim / Modal text editor                 |   | EVIL mode                                                          |
 | RSS Newsreader                               |   | ElFeed                                                             |
-| Email                                        |   | Gnus / Mu4e / notmuch                                              |
+| Email                                        |   | Gnus / [[https://gist.github.com/rougier/009e7d13a816d053d8f319b56836e1c9?permalink_comment_id=3738945#gistcomment-3738945][Mu4e]] [very pretty!] / notmuch                               |
 | Spredsheet tool                              |   | [[https://orgmode.org/manual/The-Spreadsheet.html][Org Table]] / [[https://www.reddit.com/r/emacs/comments/t8k1cw/simple_emacs_spreadsheet/][Simple Emacs Spreadsheet]] / spreadsheet-mode / csv-mode |
 | Automatic file backups                       |   | ⟨Built-in⟩ & backup-walker                                         |
 | seemless GPG tool                            |   | ⟨Built-in⟩                                                         |
@@ -1668,6 +1667,8 @@ tab-completion in Emacs with no loss of functionality.
 
 + The =execute-extended-command=, the default “M-x”, is replaced with ~helm-M-x~
   which shows possible command completions.
+  - If we want the ~M-x~ minibuffer to appear at the top of the screen, or middle,
+    we can use [[https://github.com/muffinmad/emacs-mini-frame][emacs-mini-frame]] as [[https://gist.github.com/rougier/126e358464e12aa28fac5b4f3dd5eb9c?permalink_comment_id=4110106#gistcomment-4110106][shown beautifully here.]] I like ~helm-M-x~, for now.
 
   Likewise with ~apropos~, which is helpful for looking up commands.
   It shows all meaningful Lisp symbols whose names match a given pattern.
@@ -2207,6 +2208,25 @@ windows, so we can make a hydra to alleviate the trouble.
 ;; Have a thick ruler between vertical windows
 (window-divider-mode)
 #+end_src
+** Helpful Utilities & Shortcuts
+:PROPERTIES:
+:CUSTOM_ID: Helpful-Utilities-Shortcuts
+:END:
+
+Let's save a few precious seconds,
+#+begin_src emacs-lisp
+;; change all prompts to y or n
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;; Make RETURN key act the same way as “y” key for “y-or-n” prompts.
+;; E.g., (y-or-n-p "Happy?") accepts RETURN as “yes”.
+(define-key y-or-n-p-map [return] 'act)
+
+;; Enable all ‘possibly confusing commands’ such as helpful but
+;; initially-worrisome “narrow-to-region”, C-x n n.
+(setq-default disabled-command-function nil)
+#+end_src
+
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -11638,6 +11658,10 @@ I like using Chrome ---I like the integration of all things Google.
 :CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
 :END:
 
+# Here is a collection of Emacs-lisp functions that I have come to use in other files.
+# The subsections below detail the definitions.
+# Disclaimer: I wrote much of the following /before/ I learned any lisp; everything below is probably terrible.
+
 #+begin_src emacs-lisp
 (cl-defun my/clean-buffers ()
   "Kill all buffers that are not associated with a file.
@@ -12371,30 +12395,6 @@ points to the version of the file being visited.
 #+END_SRC
 
 Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
-
-** Helpful Utilities & Shortcuts
-:PROPERTIES:
-:CUSTOM_ID: Helpful-Utilities-Shortcuts
-:END:
-
-Here is a collection of Emacs-lisp functions that I have come to use in other files.
-# The subsections below detail the definitions.
-
-Disclaimer: I wrote much of the following /before/ I learned any lisp; everything below is probably terrible.
-
-Let's save a few precious seconds,
-#+begin_src emacs-lisp :tangle no
-;; change all prompts to y or n
-(fset 'yes-or-no-p 'y-or-n-p)
-
-;; Make RETURN key act the same way as “y” key for “y-or-n” prompts.
-;; E.g., (y-or-n-p "Happy?") accepts RETURN as “yes”.
-(define-key y-or-n-p-map [return] 'act)
-
-;; Enable all ‘possibly confusing commands’ such as helpful but
-;; initially-worrisome “narrow-to-region”, C-x n n.
-(setq-default disabled-command-function nil)
-#+end_src
 
 ** Emacs keybindings for my browser :Disabled:
 :PROPERTIES:
