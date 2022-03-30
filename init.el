@@ -3426,7 +3426,7 @@ Menu can be closed when servers are started; can also stop them."
 
 ;; [[file:init.org::#my-defservice][my/defservice:1]]
 (cl-defmacro my/defservice
-    (repo &key (main-setup "git checkout main; git pull; npm ci")
+    (repo &key (main-setup "git checkout main; git pull; git status; hr; npm ci; hr; time docker system prune -af")
           (cmd "npm run docker:dev")
           (example ""))
   "Example use:
@@ -3443,7 +3443,7 @@ Menu can be closed when servers are started; can also stop them."
      (cl-defun ,(intern (format "w-start-%s" repo)) ()
        "Start server off of ‘main’, with prefix just start server off of current branch."
        (interactive)
-       (let ((command (format "cd ~/%s; pwd; hr; %s; git status; hr; %s"
+       (let ((command (format "cd ~/%s; pwd; hr; %s; hr; %s"
                               (quote ,repo)
                               (if current-prefix-arg "" ,main-setup)
                               ,cmd))
@@ -3805,7 +3805,7 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
   (push 'ejc-company-backend company-backends)
   (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
   ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
-  (bind-key "C-<return>"
+  (bind-key "C-c C-c"
              (lambda () (interactive)
                (setq ejc-sql-complete-query-hook
                      (if current-prefix-arg
@@ -3832,7 +3832,7 @@ other connections call with a prefix argument."
   ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
   ;; which temporarily adds to this hook, then calls
   (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
-
+  (require 'ejc-sql)
   (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "platform")]
     (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
     (thread-last
@@ -3845,7 +3845,7 @@ other connections call with a prefix argument."
           "\nselect 1 + 2 as \"Numerical, yeah!\""
           "\n/\n"
           "-- See the latest form's elements & extra props"
-          "select data #>'{details, properties, wxConfig, formElements}'"
+          "select data #>'{ details, properties, wxConfig, formElements }'"
           "from platform.forms\norder by updated_at desc\nlimit 1;"
           "\n/\n"
           "SELECT data #> '{details, properties}'\nfrom submissions"
@@ -3870,7 +3870,8 @@ other connections call with a prefix argument."
     (sql-mode)
     (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
     (ejc-connect connection-name)
-    (beginning-of-buffer)))
+    (beginning-of-buffer)
+    (message "Connecting to DB... please wait a moment")))
 
 (defun w-ejc-result-pp-json ()
   "Pretty print JSON ejc-result buffer."
@@ -3886,7 +3887,8 @@ other connections call with a prefix argument."
     (kill-line)
     (json-mode)
     (json-pretty-print-buffer)
-    (other-window -1)))
+    (other-window -1)
+    (message-box "hiya")))
 ;; SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only:1 ends here
 
 ;; [[file:init.org::#Docker][Docker:1]]
@@ -3899,6 +3901,21 @@ other connections call with a prefix argument."
   (interactive)
   (shell-command "docker stop $(docker ps -a -q)")
   (shell-command "docker rm $(docker ps -a -q)"))
+
+(defun w-postgres-status ()
+  (interactive)
+  (display-message-or-buffer (s-replace "healthy" "🆙 healthy 🍏" (shell-command-to-string "docker ps -a | grep postgres"))))
+
+(cl-defun w-kill-process-running-on-port (&optional (port (completing-read "Port: " '("3310" "80" "9000" "8000" "8080" "etc, whatever you want"))))
+  "We use ‘lsof’ to list open files; as in:  lsof -i :3310 +c0
+  The +c0 prints the full name of the command rather than truncating it.
+
+  We then find the PID and kill the process."
+  (interactive)
+  (-let [process (shell-command-to-string (format "lsof -i :%s +c0" 3310))]
+    (-let [pid (ignore-errors (cl-second (s-split " " (cl-second (s-split "\n" process)))))]
+      (shell-command (format "kill %s" pid))
+      (message process))))
 ;; Docker:1 ends here
 
 ;; [[file:init.org::#my-docker-stop][my/docker-stop:1]]

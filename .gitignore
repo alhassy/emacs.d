@@ -40,3 +40,5 @@ _minted-*
 /.org-id-locations
 /.*~undo-tree~
 /url/
+/#init.el#
+/init.el~
