@@ -3799,6 +3799,8 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
 
 ;; [[file:init.org::#SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only][SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only:1]]
 ;; (system-packages-ensure "leiningen")
+;; NOTE: You must commented out the (require 'ejc-direx) from ejc-sql.el
+;; Reason: https://github.com/kostafey/ejc-sql/issues/163
 (use-package ejc-sql
   :config
   (require 'ejc-company)
@@ -4205,6 +4207,34 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
    ("d" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag nil)))  "Directory")
    ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
 ;; Searching Hydra:1 ends here
+
+;; [[file:init.org::*Peer Review / Pull Request Template for Work][Peer Review / Pull Request Template for Work:1]]
+(cl-defun w-pr-template ()
+  (interactive)
+  (-let [buf "PR Template ~ Press “C-c C-s” when done"]
+    (ignore-errors (kill-buffer buf))
+    (switch-to-buffer buf)
+    (insert "w-pr-template")
+    (yankpad-expand)
+    (org-mode)
+    (beginning-of-buffer)
+    (use-local-map (copy-keymap org-mode-map))
+    (local-set-key (kbd "C-c C-s")
+                   `(lambda ()
+                     (interactive)
+                     (beginning-of-buffer)
+                     (replace-string "[X]" "✅")
+                     (beginning-of-buffer)
+                     (replace-string "[ ]" "❌")
+                     (beginning-of-buffer)
+                     (replace-string "[-]" "🚧")
+                     (-let [org-export-with-toc nil]
+                       (org-md-export-as-markdown)
+                       (kill-ring-save (point-min) (point-max)))
+                     (kill-buffer-and-window) ;; Kills the new org-md-export buffer
+                     (kill-buffer ,buf) ;; Kills this temporary PR template buffer
+                     (message "PR notes saved to clipboard in Github markdown")))))
+;; Peer Review / Pull Request Template for Work:1 ends here
 
 ;; [[file:init.org::#COMMENT-Web-Development][Web-Development:1]]
 ;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.

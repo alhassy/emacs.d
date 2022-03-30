@@ -834,3 +834,110 @@ ${15:???}
 ${16:???}
 
 $0
+
+** w-pr-template: Peer Review / Pull Request Template for Work
+I followed the testing instructions and everything look's good 😁
+
+Below is a detailed checklist of what I went through.
+
+--------------------------------------------------------------------------------
+
+1. [ ] Pull Request: The PR template was fully filled out.
+   - [ ] Clear description of the problem and how it was solved.
+   - [ ] I've cross-checked the description with the associated Jira ticket; and
+     everything is implemented.
+   - [ ] Good use of bullet points (-) and code font (‵, ‷) to make the prose
+     easier to read.
+   - [ ] The commit messages are well-written.
+   - [ ] Travis CI succeeds.
+   - [ ] PR author annotated source code, with Github comments, before the review.
+     - Annotations guide the reviewer through the changes, showing which files to look at first and defending the reason behind each code modification.
+
+2. [ ] Functionality: The code behaves as the author intended.
+   - [ ] I was able to reproduce the bug on ~main~.
+   - [ ] Ran the code and used it as an end-user would.
+       Namely, I made a new form, submitted an instance, checked ~In-Progress~,
+     & ~Form Reports~.
+   - [ ] Followed the happy path in the provided testing instructions.
+     - Nope; none provided.
+   - [ ] Also tried the following edge case: ⋯ ⁉ ⋯
+
+3. [ ] Tests: There are new unit tests (but sadly no E2Es/integration).
+   - [ ] Meaningful: Tests actually test that the code is performing the
+     intended functionality.
+   - [ ] Avoid global test fixtures and seeds, add data per-test.
+       TL;DR: To prevent test coupling and easily reason about the test flow, each test
+       should add and act on its own set of DB rows.
+
+4. [ ] Naming: Clear and informative names were chosen for top-level-items/variables/methods.
+
+5. [ ] Comments: New top-level-items/variables/methods have clear and useful documentation.
+
+6. [ ] Being Neighbourly: There was nearby code that could have been
+   improved/update, and suggestions have been left as to how to do so.
+   - We're likely to touch these files again in the future, so why not leave
+     things better than we found them 🚀
+
+7. [ ] Code Smells: Are there any [[https://blog.codinghorror.com/code-smells/][code smells?]]
+
+8. [ ] Syntax: I've read every line.
+   - Nope, there was some stuff I'm not familair with. If the PR authour can
+     jump on a call and walk me through them, that'd be awesome!
+   - [ ] I've left various suggestions and feedback, against specific lines
+     of code. Happy to discuss these further!
+   - [ ] I took my time while reviewing your code, and I'm not depending on
+     others to catch errors.
+
+9. [ ] Complexity: Another developer can easily understand and use this code when
+   they come across it in the future :-)
+
+10. [ ] Modulairty: Is there any redundant or duplicate code? Is the code as modular as possible?
+
+11. [ ] Backwards Compatiable: I made a form in ~main~, involving the work in
+    this branch, and it worked fine in this branch.
+    - I was able to edit the form, submit it, and checked that it looked find in ~Form Reports~.
+
+12. [ ] Best Practices: The following rules-of-thumb are adhered to, more or less.
+      #+html: <details>
+    - Fail fast, validate arguments [we have some in-house validation util libraries]
+    - Strings are sanitised
+    - Errors are caught; with ~try/catch~
+    - Global variables are avoided, when possible.
+    - ~const~ is preferred to ~let~; ~var~ should seldom be used.
+      - Use ~var~ and ~function~ when you want definitions hoisted to the top of
+        their enclosing scope.
+    - ~===~ is preferred to ~==~.
+    - Use default arguments instead of short-circuiting or conditionals
+      - ~f (x) { x = x || defaultValue; ⋯ }~ ≡ ~f (x = defaultValue) { ⋯ }~.
+      - Named parameters can also be optional, with default values:
+        ~f(obj) { let prop = obj.prop || defaultProp; ⋯}~ ≣ ~f ({prop =
+        defaultProp}) { ⋯ }~
+    - Unless you really need an array,  handled an indefinite number of
+      arguments using rest parameters: ~function f(...args) {⋯ // use ‘args’ as
+      an array}~ can be invoked ~f(x₁, x₂, …)~ _without_ array brackets; or as
+      ~f(...arr)~ if you have an array in-hand.
+    - Function arguments: 3 or fewer ideally
+    - If you need to declare an argument but are not using it, prefix it's name
+      with an underscore.
+    - Encapsulate conditionals in a separate _well-named_ function, if possible
+    - Avoid negative conditionals; e.g., by making use of well-choosen names.
+    - Use Demorgan's rules: ~!x && !y ≣ !(x || y)~ and ~!x || !y ≣ !(x && y)~.
+    - Be aware that ~0, "", []~ are all falsey values in JS: If a variable ~x~
+      can be one of those things, then ~if (x)~ is not always approriate; better
+      may be ~if(typeof x === 'integer')~ since this communicates two things (1)
+      the variable is defined, and (2) what it's type expected is.
+    - Use ~try/catch~ with ~async/await~; or promises with both ~then~ and ~catch~.
+    - Don't ignore rejected promises, log it to external logging service
+    - Related chunks of code are clearly demarcated.
+    - If an anonymous function is too long, more than 2 lines, give it a name:
+      E.g., in JS, ~arr.map(x => ...) ≣ arr.map( function
+      doingSomeComplexStuff(x) { return ...} )~.  The name aids in communicating
+      the intent, and is useful for debugging.
+    - [ES6] Braces are used for block scope, and not simulated using IIFEs.
+    - Avoid explicit newlines with ~+ "\n" +~ in-favour of Template Literals, which preserve line
+      breaks.
+    - Use Destructuring instead of explicit projections; aids in readability.
+      - Note∶ ~let y = x.y~ ≡ ~let {y} = x~ only holds when ~x~ is not ~null~
+        (and so when ~x~ is not a expression involving ~?.~).
+
+    #+html: </details>
