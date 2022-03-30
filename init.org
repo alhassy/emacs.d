@@ -1282,12 +1282,13 @@ Here are other packages that I want to be installed onto my machine.
 
 ;; Let's use the “s” library.
 (defvar my/personal-machine?
-  (not (s-contains? "work-machine" (shell-command-to-string "hostname")))
+  (not (s-contains? "work-machine" (shell-command-to-string "scutil --get ComputerName")))
   "Is this my personal machine, or my work machine?
 
  At one point, on my work machine I run the following command to give the machine a sensible name.
 
-   sudo hostname work-machine")
+     sudo scutil --set ComputerName work-machine
+     dscacheutil -flushcache")
 
 (ignore-errors (load-file "~/Desktop/work_secrets.el"))
 
@@ -9522,7 +9523,7 @@ Menu can be closed when servers are started; can also stop them."
 :END:
 #+begin_src emacs-lisp
 (cl-defmacro my/defservice
-    (repo &key (main-setup "git checkout main; git pull")
+    (repo &key (main-setup "git checkout main; git pull; npm ci")
           (cmd "npm run docker:dev")
           (example ""))
   "Example use:
@@ -9571,11 +9572,9 @@ Menu can be closed when servers are started; can also stop them."
 
 
 (my/defservice wxPortal ;; Takes ~18 mins Front end app
-               :main-setup "git checkout main; git pull; npm ci"
                :example "http://mars-bur.weeverdev.com")
 
 (my/defservice orchestrator
-               :main-setup "git checkout main; git pull; npm ci"
                :cmd "npm run dev"
                :example "http://team.weeverdev.com:9000") ;; Microapp wrapper
 
@@ -9587,12 +9586,10 @@ Menu can be closed when servers are started; can also stop them."
 ;; Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins
 ;; on my machine.
 (my/defservice inspections/webui
-               :main-setup "git checkout main; git pull; npm ci"
                :cmd "npm run dev --quiet --no-progress"
                :example "http://localhost:3320/inspections/")
 ;; [Inspections back-end]
 (my/defservice inspections/api
-               :main-setup "git checkout main; git pull; npm ci"
                :cmd "cargo run")
 
 ;; Do we need to upload files? E.g., images.
@@ -9625,6 +9622,7 @@ Menu can be closed when servers are started; can also stop them."
 ;; FAQ, ensure we use our rust-toolchain file, run:   rustup override unset
 (my/defservice wx-data-agent :cmd "cargo watch -x run")
 (my/defservice api-odata :cmd "docker-compose up --build")
+
 #+end_src
 
 *** w-app-slugs
