@@ -11074,6 +11074,29 @@ Useful bindings are in the docstring of doc:json-mode.
 Note that there is also doc:json-pretty-print-buffer; which can be used to
 uglify a JSON buffer if a prefix is provided.
 
+Let's make a hydra for JSON,
+#+begin_src emacs-lisp
+(my/defhydra nil "JSON Browser" gamepad
+  :Buffer
+  ("p" #'json-mode-show-path "Copy path to field at point")
+  ;; ("f" #'json-mode-beautify "Format Buffer")
+  ;; ("m"  (lambda () (interactive) (json-pretty-print-buffer t)) "Minify/ugligy buffer")
+  ("t"  (lambda  () (interactive)
+          (if my/json-hydra/pretty-printed?
+              (json-pretty-print-buffer t)
+            (json-mode-beautify (point-min) (point-max)))
+          (setq my/json-hydra/pretty-printed? (not my/json-hydra/pretty-printed?)))
+   "Toggle format/uglify of buffer"
+   :toggle (progn (defvar my/json-hydra/pretty-printed? nil)
+                  my/json-hydra/pretty-printed?)))
+
+;; TODO: (bind-key "C-c SPC" 'my/hydra/JSON\ Browser/body 'json-mode-map)
+;; NOTE: “C-x SPC” is for rectangle editing.
+#+end_src
+
+Interesting, but not for me: [[https://github.com/taku0/json-par/][json-par: Emacs minor mode for structural editing
+of JSON]].
+
 **  w-screencapture
 :PROPERTIES:
 :CUSTOM_ID: w-screencapture
@@ -13647,6 +13670,11 @@ vertical line.
 ;; TODO: Ruby specific; but the source could be edited to work for JS.
 ;; (use-package cucumber-goto-step)
 #+end_src
+
+Other packages to consider looking into include:
+- [[https://github.com/scottaj/mocha.el][mocha.el: Emacs mode for running mocha tests]]
+- [[https://github.com/Emiller88/emacs-jest][emacs-jest: A package to run jest inside emacs]]
+
 ** Syntax highlighting ---numbers and escape characters
 :PROPERTIES:
 :CUSTOM_ID: Syntax-highlighting-numbers-and-escape-characters
