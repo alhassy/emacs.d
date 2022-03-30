@@ -91,12 +91,13 @@
 
 ;; Let's use the “s” library.
 (defvar my/personal-machine?
-  (not (s-contains? "work-machine" (shell-command-to-string "hostname")))
+  (not (s-contains? "work-machine" (shell-command-to-string "scutil --get ComputerName")))
   "Is this my personal machine, or my work machine?
 
  At one point, on my work machine I run the following command to give the machine a sensible name.
 
-   sudo hostname work-machine")
+     sudo scutil --set ComputerName work-machine
+     dscacheutil -flushcache")
 
 (ignore-errors (load-file "~/Desktop/work_secrets.el"))
 
@@ -3425,7 +3426,7 @@ Menu can be closed when servers are started; can also stop them."
 
 ;; [[file:init.org::#my-defservice][my/defservice:1]]
 (cl-defmacro my/defservice
-    (repo &key (main-setup "git checkout main; git pull")
+    (repo &key (main-setup "git checkout main; git pull; npm ci")
           (cmd "npm run docker:dev")
           (example ""))
   "Example use:
@@ -3474,11 +3475,9 @@ Menu can be closed when servers are started; can also stop them."
 
 
 (my/defservice wxPortal ;; Takes ~18 mins Front end app
-               :main-setup "git checkout main; git pull; npm ci"
                :example "http://mars-bur.weeverdev.com")
 
 (my/defservice orchestrator
-               :main-setup "git checkout main; git pull; npm ci"
                :cmd "npm run dev"
                :example "http://team.weeverdev.com:9000") ;; Microapp wrapper
 
@@ -3490,12 +3489,10 @@ Menu can be closed when servers are started; can also stop them."
 ;; Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins
 ;; on my machine.
 (my/defservice inspections/webui
-               :main-setup "git checkout main; git pull; npm ci"
                :cmd "npm run dev --quiet --no-progress"
                :example "http://localhost:3320/inspections/")
 ;; [Inspections back-end]
 (my/defservice inspections/api
-               :main-setup "git checkout main; git pull; npm ci"
                :cmd "cargo run")
 
 ;; Do we need to upload files? E.g., images.
@@ -3780,7 +3777,7 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
   (interactive)
-  (thread-last `("is:open" "is:pr" "archived:false" "user:WeeverApps" "draft:false" ,@query-options)
+  (thread-last `("is:open" "is:pr" "archived:false" "user:WeeverApps" "draft:false" "-repo:WeeverApps/process-builder" "-repo:WeeverApps/s3-request-lambda" ,@query-options)
     (mapcar #'url-hexify-string)
     (s-join "+")
     (concat "https://github.com/pulls?q=")
@@ -4055,6 +4052,25 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 (use-package json-mode)
 ;; JSON:1 ends here
 
+;; [[file:init.org::#JSON][JSON:2]]
+(my/defhydra nil "JSON Browser" gamepad
+  :Buffer
+  ("p" #'json-mode-show-path "Copy path to field at point")
+  ;; ("f" #'json-mode-beautify "Format Buffer")
+  ;; ("m"  (lambda () (interactive) (json-pretty-print-buffer t)) "Minify/ugligy buffer")
+  ("t"  (lambda  () (interactive)
+          (if my/json-hydra/pretty-printed?
+              (json-pretty-print-buffer t)
+            (json-mode-beautify (point-min) (point-max)))
+          (setq my/json-hydra/pretty-printed? (not my/json-hydra/pretty-printed?)))
+   "Toggle format/uglify of buffer"
+   :toggle (progn (defvar my/json-hydra/pretty-printed? nil)
+                  my/json-hydra/pretty-printed?)))
+
+;; TODO: (bind-key "C-c SPC" 'my/hydra/JSON\ Browser/body 'json-mode-map)
+;; NOTE: “C-x SPC” is for rectangle editing.
+;; JSON:2 ends here
+
 ;; [[file:init.org::#w-screencapture][w-screencapture:1]]
 (bind-key "C-c s"
   (cl-defun w-screencapture ()
@@ -4151,6 +4167,27 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 (shell-command "npm install --global prettier")
 ;; Specific package to do only JS prettification: https://github.com/prettier/prettier-emacs
 ;; Auto-format on Save:1 ends here
+
+;; [[file:init.org::*Searching Hydra][Searching Hydra:1]]
+(my/defhydra "s-f" "\t\tLocate Everything" search
+   :Buffer
+   ;; find all the occurrences of a string, pull out the lines containing the string to another buffer where [F2] I can edit and save,
+   ("e" helm-swoop  "Editable")
+    ;; Implicit Regex, colourful
+   ("c" swiper "Classic")
+
+   :Project
+   ;; “:toggle ℰ”: ℰ is a Boolean expression that is evaluated to tell us whether the state is on-or-off
+   ("t"  (lambda  () (interactive)) "Ignore specs/jsons"
+    :toggle (let* ((with-hole "ag %s --line-numbers -S --color --nogroup %%s %%s %%s") ;; ≈ original value of ‘helm-grep-ag-command’
+                   (ignores "--ignore=\"*spec.js\" --ignore=\"*.json\" --ignore=\"*.json5\"")
+                   (on (equal helm-grep-ag-command (format with-hole ignores))))
+              (if on (progn (setq helm-grep-ag-command (format with-hole "")) nil) ;; ≈ turn off the toggle
+                (setq  helm-grep-ag-command (format with-hole ignores)))))
+   ("f" (lambda () (interactive) (helm-do-grep-ag t)) "File type")
+   ("d" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag nil)))  "Directory")
+   ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
+;; Searching Hydra:1 ends here
 
 ;; [[file:init.org::#COMMENT-Web-Development][Web-Development:1]]
 ;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
@@ -4408,6 +4445,17 @@ Both arguments are strings."
   (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list)))))
 ;; Lisp Helpers / Kill all buffers that are not associated with a file:1 ends here
 
+;; [[file:init.org::*Cucumber][Cucumber:1]]
+;; Emacs mode for editing Cucumber plain text stories
+;; “.feature” files now open up with nice colouring.
+(use-package feature-mode)
+;;
+;; C-c ,g	Go to step-definition under point (requires ruby_parser gem >= 3.14.2)
+;;
+;; TODO: Ruby specific; but the source could be edited to work for JS.
+;; (use-package cucumber-goto-step)
+;; Cucumber:1 ends here
+
 ;; [[file:init.org::*Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.][Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1]]
 ;; M-x helm-chrome-history
 ;; [Your Chrome History SQLite database file: helm-chrome-history-file]
@@ -4415,6 +4463,14 @@ Both arguments are strings."
 ;; M-x helm-chrome-control
 (use-package helm-chrome-control)
 ;; Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1 ends here
+
+;; [[file:init.org::*Get Shell history within Emacs via Completing Read with Helm][Get Shell history within Emacs via Completing Read with Helm:1]]
+;; Usage: M-x helm-shell-history
+(use-package helm-shell-history
+  :config
+  (setq helm-shell-history-file "~/.zsh_history")
+  (bind-key "M-r" #'helm-shell-history shell-mode-map))
+;; Get Shell history within Emacs via Completing Read with Helm:1 ends here
 
 ;; [[file:init.org::*Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.][Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1]]
 ;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]

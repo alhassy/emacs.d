@@ -11234,6 +11234,27 @@ auto-format code on save, use the minor mode format-all-mode.
 ;; Specific package to do only JS prettification: https://github.com/prettier/prettier-emacs
 #+end_src
 
+** Searching Hydra
+#+begin_src emacs-lisp
+(my/defhydra "s-f" "\t\tLocate Everything" search
+   :Buffer
+   ;; find all the occurrences of a string, pull out the lines containing the string to another buffer where [F2] I can edit and save,
+   ("e" helm-swoop  "Editable")
+    ;; Implicit Regex, colourful
+   ("c" swiper "Classic")
+
+   :Project
+   ;; “:toggle ℰ”: ℰ is a Boolean expression that is evaluated to tell us whether the state is on-or-off
+   ("t"  (lambda  () (interactive)) "Ignore specs/jsons"
+    :toggle (let* ((with-hole "ag %s --line-numbers -S --color --nogroup %%s %%s %%s") ;; ≈ original value of ‘helm-grep-ag-command’
+                   (ignores "--ignore=\"*spec.js\" --ignore=\"*.json\" --ignore=\"*.json5\"")
+                   (on (equal helm-grep-ag-command (format with-hole ignores))))
+              (if on (progn (setq helm-grep-ag-command (format with-hole "")) nil) ;; ≈ turn off the toggle
+                (setq  helm-grep-ag-command (format with-hole ignores)))))
+   ("f" (lambda () (interactive) (helm-do-grep-ag t)) "File type")
+   ("d" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag nil)))  "Directory")
+   ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
+#+end_src
 * Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
