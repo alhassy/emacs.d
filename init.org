@@ -11323,6 +11323,7 @@ Below is a detailed checklist of what I went through.
    - [ ] Clear description of the problem and how it was solved.
    - [ ] I've cross-checked the description with the associated Jira ticket; and
      everything is implemented.
+   - [ ] I've ticked-off the PR's check-boxes.
    - [ ] Good use of bullet points (-) and code font (‵, ‷) to make the prose
      easier to read.
    - [ ] The commit messages are well-written.
@@ -11348,7 +11349,14 @@ Below is a detailed checklist of what I went through.
 
 4. [ ] Naming: Clear and informative names were chosen for top-level-items/variables/methods.
 
-5. [ ] Comments: New top-level-items/variables/methods have clear and useful documentation.
+5. [ ] Comments: New top-level-items/variables/methods have clear and useful
+   documentation.
+   - [ ] Sometimes the code is clear ---e.g., 5 lines perform a toggle---
+     but we can improve readability by providing a “comment as function”
+     ---e.g., making a ~toggle~ function, then calling it where it is used;
+     this new function is likely to be smaller than the original inlined use.
+
+     Some comments-as-functions have been suggested.
 
 6. [ ] Being Neighbourly: There was nearby code that could have been
    improved/update, and suggestions have been left as to how to do so.
