@@ -1821,6 +1821,11 @@ Finally, note that there is now a ~M-x helm-info~ command to show documentation,
 possibly with examples, of the packages installed. For example,
 ~M-x helm-info RET dash RET -parition RET~ to see how the parition function from the
 dash library works via examples ;-)
+#+begin_src emacs-lisp
+;; Make `links' from elisp symbols (quoted functions, variables and fonts) in Gnu-Emacs Info viewer to their help documentation.
+(use-package inform
+  :config (require 'inform))
+#+end_src
 ** Org-Mode Administrivia
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-Administrivia
@@ -4919,6 +4924,7 @@ obtain a window of all existing tags to select from. Unfortunatley, this only
 supports having one tag; for more, you can add them in manually or …
 
 #+begin_src emacs-lisp
+;; Press ‘:’ on a heading to add a tag, press TAB to see all tags, press RETURN on a tag to add it, press TAB again to add more tags, when all done press RETURN twice.
 (use-package helm-org) ;; Helm for org headlines and keywords completion.
 (add-to-list 'helm-completing-read-handlers-alist
              '(org-set-tags-command . helm-org-completing-read-tags))
@@ -14011,6 +14017,12 @@ Let's remove repeated matter.
 (use-package helm-chrome-control)
 #+end_src
 
+
+There is [[https://github.com/bdc34/helm-taskswitch/tree/59f7cb99defa6e6bf6e7d599559fa8d5786cf8a9][helm-taskswitch]] for switching between X-windows: Whereas ~⌘-tab~ gives a
+list of most recently used program, ~helm-taskswitch~ gives a completing read of
+all OS windows. I'm using a MacOS right now, so X-windows are not the default
+---but [[https://en.wikipedia.org/wiki/XQuartz][can be setup.]]
+
 ** Get Shell history within Emacs via Completing Read with Helm
 #+begin_src emacs-lisp
 ;; Usage: M-x helm-shell-history
@@ -14018,6 +14030,18 @@ Let's remove repeated matter.
   :config
   (setq helm-shell-history-file "~/.zsh_history")
   (bind-key "M-r" #'helm-shell-history shell-mode-map))
+#+end_src
+
+** Launch macOS apps with Helm
+
+# In addition to apps, it can also launch system preferences, just like Alfred.
+#+begin_src emacs-lisp
+;; MacOS's default ⌘-SPC does not let us do either of the following scenarios:
+;; Usage: M-x helm-osx-app RET preferences bat RET ⇒ See battery preferences settings
+;; Another Usage: M-x helm-osx-app RET ⇒ See all apps, maybe we forgot about one of them from an install a long time ago, and open it
+;; See https://www.alfredapp.com/ as an alternative (for non-Emacs users), which can do more.
+(use-package helm-osx-app)
+;; For non-MacOS, we can use [[https://github.com/d12frosted/counsel-osx-app][counsel-osx-app]], whose name is misleading.
 #+end_src
 
 ** Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.
@@ -14051,7 +14075,6 @@ Let's remove repeated matter.
   :config (bind-key "C-x C-b" #'bufler-list))
 ;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 #+end_src
-
 ** [[https://github.com/motform/stimmung-themes][Let's try out this dope theme.]]
 #+begin_src emacs-lisp
 (use-package stimmung-themes
