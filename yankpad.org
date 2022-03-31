@@ -846,6 +846,7 @@ Below is a detailed checklist of what I went through.
    - [ ] Clear description of the problem and how it was solved.
    - [ ] I've cross-checked the description with the associated Jira ticket; and
      everything is implemented.
+   - [ ] I've ticked-off the PR's check-boxes.
    - [ ] Good use of bullet points (-) and code font (‵, ‷) to make the prose
      easier to read.
    - [ ] The commit messages are well-written.
@@ -871,7 +872,14 @@ Below is a detailed checklist of what I went through.
 
 4. [ ] Naming: Clear and informative names were chosen for top-level-items/variables/methods.
 
-5. [ ] Comments: New top-level-items/variables/methods have clear and useful documentation.
+5. [ ] Comments: New top-level-items/variables/methods have clear and useful
+   documentation.
+   - [ ] Sometimes the code is clear ---e.g., 5 lines perform a toggle---
+     but we can improve readability by providing a “comment as function”
+     ---e.g., making a ~toggle~ function, then calling it where it is used;
+     this new function is likely to be smaller than the original inlined use.
+
+     Some comments-as-functions have been suggested.
 
 6. [ ] Being Neighbourly: There was nearby code that could have been
    improved/update, and suggestions have been left as to how to do so.
@@ -899,7 +907,20 @@ Below is a detailed checklist of what I went through.
 
 12. [ ] Best Practices: The following rules-of-thumb are adhered to, more or less.
       #+html: <details>
+    - Remove some redundancy using a bit of laws of algorithmics, namely
+      ~[𝒊𝒇-𝒅𝒊𝒔𝒕𝒓𝒊𝒃𝒖𝒕𝒊𝒗𝒊𝒕𝒚] (a ? f(b) : f(c)) ≡ f(a ? b : c)~, which increases
+      readability a tad.
+      # Especially when “f” is a lengthy expression; it may also be ideal to give
+      # “a ? b : c” a local name.
     - Fail fast, validate arguments [we have some in-house validation util libraries]
+    - Be aware that ~0, "", []~ are all falsey values in JS: If a variable ~x~
+      can be one of those things, then ~if (x)~ is not always approriate; better
+      may be ~if(typeof x === 'integer')~ since this communicates two things (1)
+      the variable is defined, and (2) what it's type expected is.
+      + Likewise, better use ~typeof~ instead of ~x !== null~.
+    - You have variables declared a bit from their use sites; the distance
+      creates an unnecessary disconnect ---especially since you don't use these
+      variables elsewhere. Please relocate them to be closer to their use sites.
     - Strings are sanitised
     - Errors are caught; with ~try/catch~
     - Global variables are avoided, when possible.
@@ -922,10 +943,6 @@ Below is a detailed checklist of what I went through.
     - Encapsulate conditionals in a separate _well-named_ function, if possible
     - Avoid negative conditionals; e.g., by making use of well-choosen names.
     - Use Demorgan's rules: ~!x && !y ≣ !(x || y)~ and ~!x || !y ≣ !(x && y)~.
-    - Be aware that ~0, "", []~ are all falsey values in JS: If a variable ~x~
-      can be one of those things, then ~if (x)~ is not always approriate; better
-      may be ~if(typeof x === 'integer')~ since this communicates two things (1)
-      the variable is defined, and (2) what it's type expected is.
     - Use ~try/catch~ with ~async/await~; or promises with both ~then~ and ~catch~.
     - Don't ignore rejected promises, log it to external logging service
     - Related chunks of code are clearly demarcated.

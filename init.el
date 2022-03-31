@@ -340,6 +340,12 @@ installs of pacakges that are not in our `my/installed-packages' listing.
                         (s-trim (substring-no-properties (thing-at-point 'line)))))))
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:8 ends here
 
+;; [[file:init.org::#Being-at-the-Helm-Completion-Narrowing-Framework][ “Being at the Helm” ---Completion & Narrowing Framework:9]]
+;; Make `links' from elisp symbols (quoted functions, variables and fonts) in Gnu-Emacs Info viewer to their help documentation.
+(use-package inform
+  :config (require 'inform))
+;;  “Being at the Helm” ---Completion & Narrowing Framework:9 ends here
+
 ;; [[file:init.org::#Org-Mode-Administrivia][Org-Mode Administrivia:2]]
 (use-package emacs
     :ensure org-contrib
@@ -1552,6 +1558,7 @@ We show its subheadings in a completing-read menu, then narrow to that entry."
 ;; Tag! You're it!:1 ends here
 
 ;; [[file:init.org::#Tag-You're-it][Tag! You're it!:2]]
+;; Press ‘:’ on a heading to add a tag, press TAB to see all tags, press RETURN on a tag to add it, press TAB again to add more tags, when all done press RETURN twice.
 (use-package helm-org) ;; Helm for org headlines and keywords completion.
 (add-to-list 'helm-completing-read-handlers-alist
              '(org-set-tags-command . helm-org-completing-read-tags))
@@ -1784,7 +1791,9 @@ Example uses:
                          ;; Run the shell command COMMAND when the user clicks the notification.
                          ;; -execute COMMAND
                          & ;; … and then speak! …
-                         say ,(s-replace "\\n" " " (pp-to-string message))))))
+                         ;; NOTE:This was getting annyoning in the middle of work meetings.
+                         ;; say ,(s-replace "\\n" " " (pp-to-string message))
+                         ))))
 ;; Actually Doing Things ---or /Sending notifications from Emacs/:2 ends here
 
 ;; [[file:init.org::#Actually-Doing-Things][Actually Doing Things ---or /Sending notifications from Emacs/:3]]
@@ -3387,11 +3396,11 @@ Menu can be closed when servers are started; can also stop them."
         ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Overlay-Properties.html
         (-let [help (s-join "\n"
                             '("Keybindings:"
-                              "[C-u] c   ∷  Checkout PR [or branch]   \t\t\t b ∷ Browse an app"
-                              "tab       ∷  See service magit buffer  \t\t\t i ∷ Inject users"
-                              "return    ∷  Visit service shell       \t\t\t s ∷ SQL buffer"
-                              "r         ∷  Restart service           \t\t\t w ∷ See the repo in the web"
-                              "g         ∷  Refresh this view         \t\t\t q ∷ Quit, and kill, this buffer"))]
+                              "[C-u] c   ∷  Checkout PR [or branch]   \t\t\t b  ∷  Browse an app"
+                              "tab       ∷  See service magit buffer  \t\t\t i  ∷  Inject users"
+                              "return    ∷  Visit service shell       \t\t\t s  ∷  SQL buffer"
+                              "r         ∷  Restart service           \t\t\t w  ∷  See the repo in the web"
+                              "g         ∷  Refresh this view         \t\t\t q  ∷  Quit, and kill, this buffer"))]
           (insert-text-button (s-replace "\"" "″" (s-replace "run" "✅" (nth 1 it)))
                          'face nil
                          ;; 'mouse-face '(:box t) ;; I use the cursor more than the mouse, so don't want two distinct views.
@@ -3425,6 +3434,8 @@ Menu can be closed when servers are started; can also stop them."
 ;; w-status-of-services:2 ends here
 
 ;; [[file:init.org::#my-defservice][my/defservice:1]]
+;; Even though I'm doing frequent prunes, it helps to give docker some leeway.
+;; NOTE: Docker Icon → Preferences → Resources →  4 CPUs; 8gb Memory; 2gb Swap; 120 DiskImageSize.
 (cl-defmacro my/defservice
     (repo &key (main-setup "git checkout main; git pull; git status; hr; npm ci; hr; time docker system prune -af")
           (cmd "npm run docker:dev")
@@ -3524,7 +3535,15 @@ Menu can be closed when servers are started; can also stop them."
 ;; Getting Rust ∷ brew install rustup-init; rustup-init
 ;; FAQ, ensure we use our rust-toolchain file, run:   rustup override unset
 (my/defservice wx-data-agent :cmd "cargo watch -x run")
+
+
 (my/defservice api-odata :cmd "docker-compose up --build")
+
+;; NOTE: running in docker is closer to how we run it in production, it's just
+;; much slower to build so running outside of docker is kinder during
+;; development
+;;
+;; For local dev, outside docker, we need a .env file; this should suffice: cp sample.env .env
 ;; my/defservice:1 ends here
 
 ;; [[file:init.org::#w-app-slugs][w-app-slugs:1]]
@@ -4518,6 +4537,15 @@ Both arguments are strings."
   (setq helm-shell-history-file "~/.zsh_history")
   (bind-key "M-r" #'helm-shell-history shell-mode-map))
 ;; Get Shell history within Emacs via Completing Read with Helm:1 ends here
+
+;; [[file:init.org::*Launch macOS apps with Helm][Launch macOS apps with Helm:1]]
+;; MacOS's default ⌘-SPC does not let us do either of the following scenarios:
+;; Usage: M-x helm-osx-app RET preferences bat RET ⇒ See battery preferences settings
+;; Another Usage: M-x helm-osx-app RET ⇒ See all apps, maybe we forgot about one of them from an install a long time ago, and open it
+;; See https://www.alfredapp.com/ as an alternative (for non-Emacs users), which can do more.
+(use-package helm-osx-app)
+;; For non-MacOS, we can use [[https://github.com/d12frosted/counsel-osx-app][counsel-osx-app]], whose name is misleading.
+;; Launch macOS apps with Helm:1 ends here
 
 ;; [[file:init.org::*Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.][Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1]]
 ;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
