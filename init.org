@@ -9336,6 +9336,8 @@ Menu can be closed when servers are started; can also stop them."
 (defun w-status-of-services ()
   "Show me status of all servers, including their current git branch, and most recent emitted output."
   (interactive)
+  (defvar w-status-of-services/branch-name-width 12
+    "What is the length of the longest branch name? Let's use that to ensure there's enough whitespace.")
   (-->
       (-let [ shells (--filter (s-starts-with? "Shell" (process-name it)) (process-list)) ]
         (cl-loop for 𝑺 in (mapcar #'pp-to-string my/services)
@@ -9343,6 +9345,7 @@ Menu can be closed when servers are started; can also stop them."
               for status = (or (ignore-errors (process-status associated-shell)) '💥)
               for branch = (-let [default-directory (format "~/%s" 𝑺)]
                              (magit-get-current-branch))
+              for _ = (setq w-status-of-services/branch-name-width (max (length branch) w-status-of-services/branch-name-width))
               for 𝑺-buffer = (--find (s-starts-with? (format "%s" 𝑺) it) (mapcar 'buffer-name (buffer-list)))
               for saying = (let (most-recent-shell-output (here (current-buffer)))
                              (if (not 𝑺-buffer)
@@ -9389,7 +9392,7 @@ Menu can be closed when servers are started; can also stop them."
               collect
               ;; “%𝑾s” ⇒ Print a string with at least width 𝑾: If length(str) ≤ 𝑾, then pad with spaces on the left side.
               ;; Use “%-𝑾s” to instead pad with spaces to the right.
-              (list keymap (format "%s %-20s %-12s %s" status 𝑺 branch saying))))
+              (list keymap (format (format "%%s %%-20s %%-%ss %%s" (+ 5 w-status-of-services/branch-name-width)) status 𝑺 branch saying))))
 
       ;; Setup buffer
       (-let [buf "Status of Services"]
@@ -9428,6 +9431,8 @@ Menu can be closed when servers are started; can also stop them."
       ;; Forbid editing
       (help-mode) ;; This wont do the button face changes I like when cursor moves; so I disable read-only-mode temporarily when making the changes.
       (cursor-sensor-mode)
+      (visual-line-mode -1)
+      (toggle-truncate-lines)
       ;; Add some specific work related bindings
       (local-set-key "b" #'w-browse-app)
       (local-set-key "i" #'w-inject-users)
