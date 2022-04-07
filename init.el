@@ -959,7 +959,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Get CheatSheets and view them easily:1 ends here
 
 ;; [[file:init.org::#Get-CheatSheets-and-view-them-easily][Get CheatSheets and view them easily:2]]
-(mapcar #'my/cheatsheet '("ELisp" "GojuRyu")) ; Python Prolog Vue Agda Rust JavaScript
+(mapcar #'my/cheatsheet '("ELisp" "GojuRyu" "Rust")) ; Python Prolog Vue Agda JavaScript
                                               ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 ;; Get CheatSheets and view them easily:2 ends here
 
@@ -1027,10 +1027,14 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 ;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
 (defvar my/programming-languages
-  '(emacs-lisp shell python haskell ruby ocaml dot latex org js css
+  '(emacs-lisp shell python haskell rust ruby ocaml dot latex org js css
                sqlite C) ;; Captial “C” gives access to C, C++, D
   "List of languages I have used in Org-mode, for literate programming.")
 
+;; Load all the languagues
+(cl-loop for lang in my/programming-languages
+         do (require (intern (format "ob-%s" lang))))
+;;
 (org-babel-do-load-languages
  'org-babel-load-languages
  (--map (cons it t) my/programming-languages))
@@ -1232,6 +1236,17 @@ visit all blocks with such a name."
   (2 '(face (:foreground "blue")))
   (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
     )))
+;;
+;; Let's do this for all my languages:
+;; Show “ src_LANGUAGE[…]{ ⋯ } ” as “ ﴾ ⋯ ﴿ ”.
+(cl-loop for lang in my/programming-languages
+         do (font-lock-add-keywords 'org-mode
+               `(( ,(format "\\(src_%s\\[.*]{\\)\\(.*\\)\\(}\\)" lang)
+                  (1 '(face (:inherit (bold) :foreground "gray65") display "﴾"))
+                  (2 '(face (:foreground "blue")))
+                  (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
+                  ))))
+
 ;;
 (defun my/toggle-line-fontification ()
   "Toggle the fontification of the current line"
@@ -1862,7 +1877,7 @@ Example uses:
 ;; This package requires the fonts included with all-the-icons to be installed. Run M-x all-the-icons-install-fonts to do so.
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
-  :init (doom-modeline-mode))
+  :config (doom-modeline-mode))
 
   ;; Use minimal height so icons still fit; modeline gets slightly larger when
   ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
@@ -2368,7 +2383,7 @@ fonts (•̀ᴗ•́)و"
 
 ;; [[file:init.org::#Preview-link-under-cursor][Preview link under cursor:1]]
 (quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
-(global-preview-it-mode)
+;; (global-preview-it-mode)
 ;; Preview link under cursor:1 ends here
 
 ;; [[file:init.org::#Preview-link-under-cursor][Preview link under cursor:2]]
@@ -3066,20 +3081,25 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 
 ;; [[file:init.org::#Quickly-Run-Code-Snippets][Quickly Run Code Snippets:2]]
 (system-packages-ensure "rust") ;; Rust Compiler
-;; C-c C-r on the following: fn main() { println!("Hello, World!"); }
+;; Select the following then press C-c C-r: fn main() { println!("Hello, World!"); }
+;; Quickly Run Code Snippets:2 ends here
 
-;; Actually, let's get a full Rust development environment for Emacs
+;; [[file:init.org::#Quickly-Run-Code-Snippets][Quickly Run Code Snippets:3]]
 (use-package rustic)
 ;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
 ;; rust-analyzer, the rust LSP.
 ;;
 ;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
 ;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
-;; super nice stuff!
+;; super nice stuff! Run “M-!”/[M-x company-show-doc-buffer] if you want the doc in a colourful buffer.
 ;;
 ;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
 ;;    let v:Vec<_> = vec![1, 2, 3];
-;; Quickly Run Code Snippets:2 ends here
+
+;; The offical Rust toolchain installer
+(system-packages-ensure "rustup")
+(shell-command "rustup update")
+;; Quickly Run Code Snippets:3 ends here
 
 ;; [[file:init.org::#ELisp][ELisp:1]]
 ;; Evaluation Result OverlayS for Emacs Lisp
@@ -3330,6 +3350,8 @@ Menu can be closed when servers are started; can also stop them."
 (defun w-status-of-services ()
   "Show me status of all servers, including their current git branch, and most recent emitted output."
   (interactive)
+  (defvar w-status-of-services/branch-name-width 12
+    "What is the length of the longest branch name? Let's use that to ensure there's enough whitespace.")
   (-->
       (-let [ shells (--filter (s-starts-with? "Shell" (process-name it)) (process-list)) ]
         (cl-loop for 𝑺 in (mapcar #'pp-to-string my/services)
@@ -3337,6 +3359,7 @@ Menu can be closed when servers are started; can also stop them."
               for status = (or (ignore-errors (process-status associated-shell)) '💥)
               for branch = (-let [default-directory (format "~/%s" 𝑺)]
                              (magit-get-current-branch))
+              for _ = (setq w-status-of-services/branch-name-width (max (length branch) w-status-of-services/branch-name-width))
               for 𝑺-buffer = (--find (s-starts-with? (format "%s" 𝑺) it) (mapcar 'buffer-name (buffer-list)))
               for saying = (let (most-recent-shell-output (here (current-buffer)))
                              (if (not 𝑺-buffer)
@@ -3383,7 +3406,7 @@ Menu can be closed when servers are started; can also stop them."
               collect
               ;; “%𝑾s” ⇒ Print a string with at least width 𝑾: If length(str) ≤ 𝑾, then pad with spaces on the left side.
               ;; Use “%-𝑾s” to instead pad with spaces to the right.
-              (list keymap (format "%s %-20s %-12s %s" status 𝑺 branch saying))))
+              (list keymap (format (format "%%s %%-20s %%-%ss %%s" (+ 5 w-status-of-services/branch-name-width)) status 𝑺 branch saying))))
 
       ;; Setup buffer
       (-let [buf "Status of Services"]
@@ -3422,6 +3445,8 @@ Menu can be closed when servers are started; can also stop them."
       ;; Forbid editing
       (help-mode) ;; This wont do the button face changes I like when cursor moves; so I disable read-only-mode temporarily when making the changes.
       (cursor-sensor-mode)
+      (visual-line-mode -1)
+      (toggle-truncate-lines)
       ;; Add some specific work related bindings
       (local-set-key "b" #'w-browse-app)
       (local-set-key "i" #'w-inject-users)
@@ -3675,7 +3700,10 @@ Menu can be closed when servers are started; can also stop them."
 (use-package company-quickhelp
  :config
    (setq company-quickhelp-delay 0.1)
-   (company-quickhelp-mode))
+   (company-quickhelp-mode)
+   ;; Especially when learning a new language, looking up its definition/docstring can be helpful.
+   ;; Note: I use “M-!” everywhere else to mean “define word at point”.
+   (bind-key "M-!" #'company-show-doc-buffer 'prog-mode-map))
 ;; Documentation Pop-Ups:1 ends here
 
 ;; [[file:init.org::*ll-debug][ll-debug:1]]
@@ -3865,6 +3893,9 @@ other connections call with a prefix argument."
           "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
           "\nselect 1 + 2 as \"Numerical, yeah!\""
           "\n/\n"
+          "-- Does this app have LWA, MEWO, etc?"
+          "select metadata from application\nwhere slug = 'mars-gnv'"
+          "\n/\n"
           "-- See the latest form's elements & extra props"
           "select data #>'{ details, properties, wxConfig, formElements }'"
           "from platform.forms\norder by updated_at desc\nlimit 1;"
@@ -4010,6 +4041,7 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; helm-lsp provides “on type completion” alternative of cross-referencing.
 ;; https://github.com/emacs-lsp/helm-lsp
 (use-package helm-lsp)
+(require 'lsp-mode)
 (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
 ;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
 ;; a” (The 'a' stands for apropos, which means appropriate nature)
@@ -4502,6 +4534,10 @@ Both arguments are strings."
   ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
   ("b" (internet) "Browse"  :exit t))
 ;; Modern Browsing within Emacs:2 ends here
+
+;; [[file:init.org::*VueJS][VueJS:1]]
+(use-package vue-mode)
+;; VueJS:1 ends here
 
 ;; [[file:init.org::#Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file][Lisp Helpers / Kill all buffers that are not associated with a file:1]]
 (cl-defun my/clean-buffers ()

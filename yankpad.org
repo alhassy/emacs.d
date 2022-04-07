@@ -54,6 +54,11 @@ $0
 $0
 #+end_src
 
+** s_rust: src for rust
+#+begin_src rust
+$0
+#+end_src
+
 ** s_ruby: src for ruby
 #+begin_src ruby
 $0
@@ -115,6 +120,8 @@ src_shell[:exports code]{$1} $0
 src_python[:exports code]{$1} $0
 ** is_haskell: inline source for haskell
 src_haskell[:exports code]{$1} $0
+** is_rust: inline source for rust
+src_rust[:exports code]{$1} $0
 ** is_ruby: inline source for ruby
 src_ruby[:exports code]{$1} $0
 ** is_ocaml: inline source for ocaml
@@ -170,6 +177,11 @@ $0
 
 ** e_haskell: example for haskell
 #+begin_example haskell
+$0
+#+end_example
+
+** e_rust: example for rust
+#+begin_example rust
 $0
 #+end_example
 
@@ -859,6 +871,8 @@ Below is a detailed checklist of what I went through.
    - [ ] Ran the code and used it as an end-user would.
        Namely, I made a new form, submitted an instance, checked ~In-Progress~,
      & ~Form Reports~.
+   - [ ]  I've tried all kinds of quotes and unicode, "𝒰"\‘ℕ’/𝒊′ℭ″𝑂؛𝒟⨾'∃',
+        input for text inputs.
    - [ ] Followed the happy path in the provided testing instructions.
      - Nope; none provided.
    - [ ] Also tried the following edge case: ⋯ ⁉ ⋯

@@ -3024,7 +3024,7 @@ should jump to the first entry.
 
 Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the pretty HTML (or PDF) sheets.
 #+begin_src emacs-lisp
-(mapcar #'my/cheatsheet '("ELisp" "GojuRyu")) ; Python Prolog Vue Agda Rust JavaScript
+(mapcar #'my/cheatsheet '("ELisp" "GojuRyu" "Rust")) ; Python Prolog Vue Agda JavaScript
                                               ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 #+end_src
 
@@ -3226,10 +3226,14 @@ let's stop that:
 Some initial languages we want org-babel to support:
 #+BEGIN_SRC emacs-lisp
 (defvar my/programming-languages
-  '(emacs-lisp shell python haskell ruby ocaml dot latex org js css
+  '(emacs-lisp shell python haskell rust ruby ocaml dot latex org js css
                sqlite C) ;; Captial “C” gives access to C, C++, D
   "List of languages I have used in Org-mode, for literate programming.")
 
+;; Load all the languagues
+(cl-loop for lang in my/programming-languages
+         do (require (intern (format "ob-%s" lang))))
+;;
 (org-babel-do-load-languages
  'org-babel-load-languages
  (--map (cons it t) my/programming-languages))
@@ -4178,6 +4182,17 @@ name.
   (2 '(face (:foreground "blue")))
   (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
     )))
+;;
+;; Let's do this for all my languages:
+;; Show “ src_LANGUAGE[…]{ ⋯ } ” as “ ﴾ ⋯ ﴿ ”.
+(cl-loop for lang in my/programming-languages
+         do (font-lock-add-keywords 'org-mode
+               `(( ,(format "\\(src_%s\\[.*]{\\)\\(.*\\)\\(}\\)" lang)
+                  (1 '(face (:inherit (bold) :foreground "gray65") display "﴾"))
+                  (2 '(face (:foreground "blue")))
+                  (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
+                  ))))
+
 ;;
 (defun my/toggle-line-fontification ()
   "Toggle the fontification of the current line"
@@ -6223,7 +6238,7 @@ doc:doom-modeline-def-modeline and doc:doom-modeline-set-modeline.
 ;; This package requires the fonts included with all-the-icons to be installed. Run M-x all-the-icons-install-fonts to do so.
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
-  :init (doom-modeline-mode))
+  :config (doom-modeline-mode))
 
   ;; Use minimal height so icons still fit; modeline gets slightly larger when
   ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
@@ -7266,7 +7281,7 @@ When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
 
 #+begin_src emacs-lisp
 (quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
-(global-preview-it-mode)
+;; (global-preview-it-mode)
 #+end_src
 
 This also works nicely when I'm looking to open a file; e.g., ~C-x C-f
@@ -8889,20 +8904,48 @@ choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-
 Example...
 #+begin_src emacs-lisp
 (system-packages-ensure "rust") ;; Rust Compiler
-;; C-c C-r on the following: fn main() { println!("Hello, World!"); }
+;; Select the following then press C-c C-r: fn main() { println!("Hello, World!"); }
+#+end_src
 
-;; Actually, let's get a full Rust development environment for Emacs
+Actually, let's get a [[https://github.com/brotzeit/rustic#intro][full Rust development environment for Emacs]] (which also
+has [[https://github.com/brotzeit/rustic#org-babel][great support for Org-babel]].)
+#+begin_src emacs-lisp
 (use-package rustic)
 ;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
 ;; rust-analyzer, the rust LSP.
 ;;
 ;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
 ;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
-;; super nice stuff!
+;; super nice stuff! Run “M-!”/[M-x company-show-doc-buffer] if you want the doc in a colourful buffer.
 ;;
 ;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
 ;;    let v:Vec<_> = vec![1, 2, 3];
+
+;; The offical Rust toolchain installer
+(system-packages-ensure "rustup")
+(shell-command "rustup update")
 #+end_src
+
+:More_on_rust:
+
+Now, C-c C-c C-d on something to get help/description of it.
+(setq rustic-racer-rust-src-path "/Users/musa/.rustup/toolchains/stable-x86_64-apple-darwin/lib/rustlib/src/rust/library/")
+
+# Get Rustup, load it into current terminal session
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.bash_profile
+source ~/.bashrc
+type rustup
+
+# Get stuff
+rustup update
+rustup component add rust-src
+cargo +nightly install racer
+rustup toolchain install nightly
+rustup component add rustc-dev --toolchain=nightly
+cargo +nightly install racer
+
+:End:
 
 ** C-x C-e ∷ REPL-driven development for ELisp / NodeJS / Python / Etc !
 :PROPERTIES:
@@ -9940,8 +9983,15 @@ This is very useful when editing in a particular coding language, say via
 (use-package company-quickhelp
  :config
    (setq company-quickhelp-delay 0.1)
-   (company-quickhelp-mode))
+   (company-quickhelp-mode)
+   ;; Especially when learning a new language, looking up its definition/docstring can be helpful.
+   ;; Note: I use “M-!” everywhere else to mean “define word at point”.
+   (bind-key "M-!" #'company-show-doc-buffer 'prog-mode-map))
 #+END_SRC
+
+This ~M-!~ is from plain ~company~, but I wanted to define it here beside the
+quickhelp setup since they're related utilities.
+
 ** Turbolog: What's the value of this expression? :JavaScript:
 :PROPERTIES:
 :CUSTOM_ID: Turbolog-What's-the-value-of-this-expression
@@ -10734,6 +10784,9 @@ other connections call with a prefix argument."
           "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
           "\nselect 1 + 2 as \"Numerical, yeah!\""
           "\n/\n"
+          "-- Does this app have LWA, MEWO, etc?"
+          "select metadata from application\nwhere slug = 'mars-gnv'"
+          "\n/\n"
           "-- See the latest form's elements & extra props"
           "select data #>'{ details, properties, wxConfig, formElements }'"
           "from platform.forms\norder by updated_at desc\nlimit 1;"
@@ -10962,6 +11015,7 @@ Also: doc:lsp-format-buffer makes the code more readable.
 ;; helm-lsp provides “on type completion” alternative of cross-referencing.
 ;; https://github.com/emacs-lsp/helm-lsp
 (use-package helm-lsp)
+(require 'lsp-mode)
 (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
 ;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
 ;; a” (The 'a' stands for apropos, which means appropriate nature)
@@ -11358,6 +11412,8 @@ Below is a detailed checklist of what I went through.
    - [ ] Ran the code and used it as an end-user would.
        Namely, I made a new form, submitted an instance, checked ~In-Progress~,
      & ~Form Reports~.
+   - [ ]  I've tried all kinds of quotes and unicode, "𝒰"\‘ℕ’/𝒊′ℭ″𝑂؛𝒟⨾'∃',
+        input for text inputs.
    - [ ] Followed the happy path in the provided testing instructions.
      - Nope; none provided.
    - [ ] Also tried the following edge case: ⋯ ⁉ ⋯
@@ -11905,6 +11961,12 @@ I like using Chrome ---I like the integration of all things Google.
   ("c" (internet "https://calendar.google.com/calendar/u/0/r") "gCalendar"  :exit t)
   ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
   ("b" (internet) "Browse"  :exit t))
+#+end_src
+
+** VueJS
+
+#+begin_src emacs-lisp
+(use-package vue-mode)
 #+end_src
 
 * Lisp Helpers / Kill all buffers that are not associated with a file
