@@ -674,7 +674,7 @@ Is replaced by:
 ;; Also need to customise email routes per organization
 ;; https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/configuring-notifications#customizing-email-routes-per-organization
 (unless my/personal-machine?
-  (shell-command "git config --global user.email \"musa@weeverapps.com\""))
+  (shell-command (format "git config --global user.email \"%s\"" work/email)))
 
 ;; If we ever need to use Git in the terminal, it should be done with Emacs as
 ;; the underlying editor
@@ -1231,7 +1231,7 @@ visit all blocks with such a name."
 ;; Show “ src_emacs-lisp[:exports results]{ 𝒳 } ” as “ ℰ𝓁𝒾𝓈𝓅﴾ 𝒳 ﴿ ”.
 ;;
 (font-lock-add-keywords 'org-mode
-  '(("\\(src_emacs-lisp\\[.*]{\\)\\(.*\\)\\(}\\)"
+  '(("\\(src_emacs-lisp\\[.*]{\\)\\([^}]*\\)\\(}\\)"
   (1 '(face (:inherit (bold) :foreground "gray65") display "ℰ𝓁𝒾𝓈𝓅﴾"))
   (2 '(face (:foreground "blue")))
   (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
@@ -1241,7 +1241,7 @@ visit all blocks with such a name."
 ;; Show “ src_LANGUAGE[…]{ ⋯ } ” as “ ﴾ ⋯ ﴿ ”.
 (cl-loop for lang in my/programming-languages
          do (font-lock-add-keywords 'org-mode
-               `(( ,(format "\\(src_%s\\[.*]{\\)\\(.*\\)\\(}\\)" lang)
+               `(( ,(format "\\(src_%s\\[.*]{\\)\\([^}]*\\)\\(}\\)" lang)
                   (1 '(face (:inherit (bold) :foreground "gray65") display "﴾"))
                   (2 '(face (:foreground "blue")))
                   (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
@@ -2218,6 +2218,7 @@ fonts (•̀ᴗ•́)و"
                     ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
                     ("#+end_example"   . ?⇐)                 ;; ⇐
                     ;; Actuall beautifications
+                    ("==" . ?≈) ("===" . ?≈) ("=" . ?≔) ;; Programming specific prettifications
                     ("<=" . ?≤) (">=" . ?≥)
                     ("->" . ?→) ("-->". ?⟶) ;; threading operators
                     ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
@@ -3229,7 +3230,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
     (ignore-errors (delete-window))))
 
 (cl-defun my/run-unkillable-shell (command &optional (buffer-name command))
-  "Example use: (my/run-unkillable-shell \"cd ~/wxPortal; npm run dev\" \"wxPortal\")"
+  "Example use: (my/run-unkillable-shell \"cd ~/my-noejds-project; npm run dev\" \"my-nodejs-project\")"
   (-let [it (get-buffer buffer-name)]
     (if it
         (switch-to-buffer-other-window it)
@@ -3254,73 +3255,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
                   (_  full-url))))
     :face '(:foreground "green" :weight bold
             :underline "blue" :overline "blue")))
-
- (my/work-links "FM"       "https://weeverapps.atlassian.net/browse/FM-%s")                ;; FM:2898
- (my/work-links "INEW"     "https://weeverapps.atlassian.net/browse/INEW-%s")              ;; INEW:201
- (my/work-links "portal"   "https://github.com/WeeverApps/wxPortal/pull/%s")               ;; portal:4905
- (my/work-links "platform" "https://github.com/WeeverApps/api-platform-server/pull/%s")    ;; platform:2489
- (my/work-links "weever"   "https://github.com/WeeverApps/%s" label)                       ;; weever:wxportal
- (my/work-links "backlog"  "https://weeverapps.atlassian.net/jira/software/c/projects/%s/boards/78/backlog?issueLimit=100") ;; backlog:FM , backlog:INEW
 ;; my/work-links:1 ends here
-
-;; [[file:init.org::#Process-Manager][Process Manager:1]]
-(cl-defun w-open-pm () "May take a second. Credentials are in repo README." (interactive) (browse-url "http://localhost:3000"))
-(cl-defun w-start-pm ()
-  "Starts up the local server to see Process Manager in your browser.
-
-First requires a branch (e.g., for a PR), then sets up env for it.
-
-Takes about ~3 mins; when you see “compiled successfully”, then: M-x w-open-pm."
-  (interactive)
-  (-let [default-directory "~/process-builder"]
-    (if (my/application-running? "dbeaver")
-        (error "Close DBeaver; it is connected to the “pm” database. Then retry")
-      (ignore-errors (magit-pull-from-pushremote nil)
-                     (call-interactively #'magit-branch-checkout)
-                     (magit-pull-from-pushremote nil)
-                     (-let [kill-buffer-query-functions nil] (kill-buffer "*ProcessManager*")))
-      (message (shell-command-to-string "brew services stop postgresql"))
-      (my/run-unkillable-shell
-       (s-join ";" '("cd ~/process-builder"
-                     "export GEM_HOME=\"$HOME/.gem\""
-                     "gem install bundler"
-                     "bundle update --bundler"
-                     "bundle install"
-                     "source ~/.nvm/nvm.sh"
-                     "nvm use"
-                     "yarn install"
-                     "rails db:drop && rails db:create && rails db:migrate && rails db:seed app=test && rails db:seed promotion=test && yarn clean-test-db"
-                     "gem install foreman"
-                     "foreman start"))
-       "*ProcessManager*")
-      (message (shell-command-to-string "brew services start postgresql"))
-      (magit-status))))
-;; Process Manager:1 ends here
-
-;; [[file:init.org::#Blue-Screen][Blue Screen:1]]
-(my/defaliases w-dev-env-start w-blue-screen w-db-start-servers w-start-db-servers)
-;;
-(defun w-dev-env-start ()
-  "Open menu to start servers from interactive menu, etc.
-Menu can be closed when servers are started; can also stop them."
-  (interactive)
-  (shell-command "open --background -a Docker") ;; Open Docker daemon in the background, duh.
-  (shell-command "docker system prune") ;; Remove all stopped containers, dangling images/cache.
-  (shell-command
-   "osascript -e 'tell application \"Terminal\"
-      set currentTab to do script (\"cd ~/ops-helm-deployment; git checkout master; git pull; bash login.sh\")
-      activate currentTab
-      do script (\"dev-env start\") in currentTab
-      end tell'"))
-
-(defun w-login ()
-  "Open nix shell"
-  (interactive) (⌘ "cd ~/ops-helm-deployment; git checkout master; git pull; bash login.sh"))
-
-(cl-defun w-inject-users ()
-  (interactive)
-  (display-message-or-buffer (shell-command-to-string "cd ~/ops-helm-deployment/docker/wx-dev-env/root/; docker cp ../helpers/userInjector.js platform:/usr/src/userInjector.js; docker exec -t platform sh -c \"npx babel-node userInjector.js\"")))
-;; Blue Screen:1 ends here
 
 ;; [[file:init.org::#w-start-stop-services][w-start/stop-services:1]]
 (defvar my/services nil "List of all services defined; used with `w-start-services' and `w-stop-services'.")
@@ -3388,7 +3323,7 @@ Menu can be closed when servers are started; can also stop them."
                                ;; See the repo in the web
                                  w (--> (format "%s" ,𝑺)
                                       (if (s-contains? "/" it) (f-parent it) it)
-                                      (format "https://github.com/WeeverApps/%s" it)
+                                      (format "https://github.com/%s/%s" work/gh-user it)
                                       (browse-url it))
                                ;; Visit service shell
                                <return>
@@ -3506,97 +3441,7 @@ Menu can be closed when servers are started; can also stop them."
            (interactive)
            (browse-url ,example)
            (message "If the URL is busted, then the repo is not up correctly or the server has an error!")))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-(my/defservice wxPortal ;; Takes ~18 mins Front end app
-               :example "http://mars-bur.weeverdev.com")
-
-(my/defservice orchestrator
-               :cmd "npm run dev"
-               :example "http://team.weeverdev.com:9000") ;; Microapp wrapper
-
-;; Inspections is a micro-application for working with inspections forms. It is
-;; based on Vue.js, NuxtJS, and coupled with TypeScript. The inspections api is
-;; separate from the front end code and is fully implemented with Rust.
-;;
-;; [Inspections front-end] Inspections will take a while, keep an eye out for “•
-;; Client … building (𝑿%)”, where 𝑿 is a number. Last I looked, this took 7mins
-;; on my machine.
-(my/defservice inspections/webui
-               :cmd "npm run dev --quiet --no-progress"
-               :example "http://localhost:3320/inspections/")
-;; [Inspections back-end]
-(my/defservice inspections/api
-               :cmd "cargo run")
-
-;; Do we need to upload files? E.g., images.
-(my/defservice api-file-server)
-
-;; Send PDFs
-(my/defservice api-pdf-server)
-
-;; (iota  "cd ~/api-iota-server; git checkout main; git pull; npm ci; npm run docker:start") ;; deprecated
-
-;; Redis stuff
-;; For local development, the email override is used; regardless of what email is entered into the app.
-(my/defservice wx-job-worker :cmd "EMAIL_OVERRIDE=musa+qa@weeverapps.com npm run docker:dev")
-
-;; Database backend
-(my/defservice api-platform-server :cmd "npm run docker:start")
-;; TODO: Look for  [nodemon] app crashed - waiting for file changes before starting...; and make icon a crash
-
-;; Handles routes; should see “Access Denied” when visiting the url below, if things work correctly
-(my/defservice api-router-server :example "https://router.weeverdev.com/")
-
-;; (sso "cd ~/single-sign-on/; git checkout main; git pull; export GEM_HOME=\"$HOME/.gem\"; gem install bundler:2.1.4;  source ~/.rvm/scripts/rvm; rvm use 2.7.4; bundle install; rails db:create; rails db:migrate; rails db:seed; rails server"
-;; "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
-(my/defservice single-sign-on
-               :cmd "bash scripts.sh docker:dev"
-               :example "http://localhost:3002/v1/sso/okta/weever/login_redirect?return_path=https://mars-bur.weeverdev.com/login/callback")
-
-;; Event store stuff, emails, V2, lagoon, powerbi
-;; Getting Rust ∷ brew install rustup-init; rustup-init
-;; FAQ, ensure we use our rust-toolchain file, run:   rustup override unset
-(my/defservice wx-data-agent :cmd "cargo watch -x run")
-
-
-(my/defservice api-odata :cmd "docker-compose up --build")
-
-;; NOTE: running in docker is closer to how we run it in production, it's just
-;; much slower to build so running outside of docker is kinder during
-;; development
-;;
-;; For local dev, outside docker, we need a .env file; this should suffice: cp sample.env .env
 ;; my/defservice:1 ends here
-
-;; [[file:init.org::#w-app-slugs][w-app-slugs:1]]
-(defvar w-app-slugs
-   (s-split "\n" (shell-command-to-string "ls ~/wxPortal/client/assets/config/apps/")))
-
-(cl-defun w-browse-app (&optional (app (completing-read "Appslug: " w-app-slugs)))
- (interactive)
-  (browse-url (format "http://%s.weeverdev.com:9000" app)))
-
-(cl-defun w-disable-sso ()
-  "Turn off SSO, locally; app is selected from a menu."
- (interactive)
- (-let [app (completing-read "Appslug: " w-app-slugs)]
-  (shell-command (format "echo \"false\" > ~/wxPortal/client/assets/config/apps/%s/authorization.allowSsoLogin.json" app))
-  (w-browse-app app)
-  (message "SSO for %s disabled; don't commit the “authorization.allowSsoLogin.json” file!" app)))
-;; w-app-slugs:1 ends here
-
-;; [[file:init.org::#Migrations-Rollbacks][Migrations & Rollbacks:1]]
-(cl-defun w-db-migrations ()
-  (interactive)
-  (async-shell-command "cd ~/api-platform-server; git status; npm run docker:migrate" "*DB/Migrations*"))
-
-(cl-defun w-db-rollbacks ()
-  (interactive)
-  (async-shell-command "cd ~/api-platform-server; git status; npm run docker:rollback" "*DB/Rollback*"))
-;; Migrations & Rollbacks:1 ends here
 
 ;; [[file:init.org::#Project-management-navigation][Project management & navigation:1]]
 ;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
@@ -3791,7 +3636,7 @@ Menu can be closed when servers are started; can also stop them."
   "With prefix, select a branch name; otherwise a Pull Request name.
 
 If no REPO is provided, let the user select one from a menu.
-Example use:      (w-pr-checkout \"~/wxPortal\")
+Example use:      (w-pr-checkout \"~/my-repo\")
                   (w-pr-checkout)"
   (interactive)
   (let* ((repo (or repo (completing-read "Repo: " (projectile-relevant-known-projects))))
@@ -3824,7 +3669,8 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
   (interactive)
-  (thread-last `("is:open" "is:pr" "archived:false" "user:WeeverApps" "draft:false" "-repo:WeeverApps/process-builder" "-repo:WeeverApps/s3-request-lambda" ,@query-options)
+  (defvar work/gh-tags nil) ;; Should come from work.el
+  (thread-last `("is:open" "is:pr" "archived:false" "draft:false" ,@work/gh-tags  ,@query-options)
     (mapcar #'url-hexify-string)
     (s-join "+")
     (concat "https://github.com/pulls?q=")
@@ -3838,7 +3684,6 @@ Example use:      (w-pr-checkout \"~/wxPortal\")
               (stale!! ,(format "updated:<=%s" (org-read-date nil nil "-1w"))) ;; Items not touched in over a week
               (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
               (involves-me "involves:alhassy")
-              (inspections "label:Inspections")
               (process-manager "label:\"quick and easy\"" "repo:process-builder")
               (newts "label:\"Newts Priority Review\",Newts"))
          do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
