@@ -22,6 +22,9 @@
 (setq byte-compile-warnings '(cl-functions))
 (require 'cl-lib) ;; to get loop instead of cl-loop, etc.
 
+;; (cl-defun org-duration-to-minutes (&rest _) )
+;; (cl-defun org-id-find-id-file (&rest _))
+
 ;; Required for Github Actions; i.e., testing.
 ;; TODO Clean me!
 (defun quelpa-read-cache ()) ;; Used somewhere, but not defined.
@@ -1292,9 +1295,6 @@ Here are other packages that I want to be installed onto my machine.
 
 (defvar my/work-machine? (not my/personal-machine?))
 
-(when my/work-machine?
-  (load-file "~/Desktop/work.el"))
-
 ;; Library for working with system files;
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 (use-package f)
@@ -2538,8 +2538,8 @@ First, let's setup our git credentials.
 
 ;; Also need to customise email routes per organization
 ;; https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/configuring-notifications#customizing-email-routes-per-organization
-(unless my/personal-machine?
-  (shell-command (format "git config --global user.email \"%s\"" work/email)))
+(ignore-error (unless my/personal-machine?
+  (shell-command (format "git config --global user.email \"%s\"" work/email))))
 
 ;; If we ever need to use Git in the terminal, it should be done with Emacs as
 ;; the underlying editor
@@ -3782,6 +3782,9 @@ ${1:`(let* ((τ (read-string "Link type: "))
 #+END_SRC
 
 *** Operating System Keyboard Symbols
+:PROPERTIES:
+:CUSTOM_ID: Operating-System-Keyboard-Symbols
+:END:
 
 Write ~os_~ then see a bunch of completions ;-)
 
@@ -9570,6 +9573,12 @@ repositories, backlogs, and Kanban boards.
 In my private ~work.el~ I have declarations of the form ~(my/defservice ⟨directory⟩
 :cmd "npm run dev" :example "Example URL to try out for this server")~.
 
+#+begin_src emacs-lisp
+(when my/work-machine?
+  (load-file "~/Desktop/work.el"))
+#+end_src
+
+
 ** Project management & navigation
 :PROPERTIES:
 :CUSTOM_ID: Project-management-navigation
@@ -9898,6 +9907,9 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
 #+end_src
 
 *** TODO ll-debug
+:PROPERTIES:
+:CUSTOM_ID: ll-debug
+:END:
 # ~ Useful when no debugger setup
 
 [[https://melpa.org/#/ll-debug][ll-debug.el]] provides commands to support a low level debug style.
@@ -9936,7 +9948,6 @@ consists of a big fat DEBUG together with a counter and the current filename).
 ;; output statements, asking for confirmation before it removes
 ;; anything.
 #+end_src
-
 
 ** Which function are we writing?
 :PROPERTIES:
@@ -10537,7 +10548,6 @@ Example use:      (w-pr-checkout \"~/my-repo\")
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
   (interactive)
-  (defvar work/gh-tags nil) ;; Should come from work.el
   (thread-last `("is:open" "is:pr" "archived:false" "draft:false" ,@work/gh-tags  ,@query-options)
     (mapcar #'url-hexify-string)
     (s-join "+")
@@ -10579,7 +10589,7 @@ Let's use [[https://github.com/lighttiger2505/sqls][LSP for SQL]], to get
   - E.g., ~select 1 + 2 as "Numerical, yeah!"~ will not be run due to the ‘!’.
 
 #+begin_src emacs-lisp
-;; Installation: go get github.com/lighttiger2505/sqls
+;; Installation: go install github.com/lighttiger2505/sqls
 (setq lsp-sqls-server "/Users/musa/go/bin/sqls")
 (setq lsp-sqls-timeout 1)
 (setq lsp-sqls-workspace-config-path nil)
@@ -11188,6 +11198,9 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (set-marker e nil)))
 #+end_src
 ** Auto-format on Save
+:PROPERTIES:
+:CUSTOM_ID: Auto-format-on-Save
+:END:
 
 [[https://github.com/lassik/emacs-format-all-the-code/tree/eb2a7fa6da15d23b57921218a36ac67d523e81f1][Auto-format source code in many languages with one command]]
 
@@ -11217,6 +11230,9 @@ auto-format code on save, use the minor mode format-all-mode.
 #+end_src
 
 ** Searching Hydra
+:PROPERTIES:
+:CUSTOM_ID: Searching-Hydra
+:END:
 #+begin_src emacs-lisp
 (my/defhydra "s-f" "\t\tLocate Everything" search
    :Buffer
@@ -11238,6 +11254,9 @@ auto-format code on save, use the minor mode format-all-mode.
    ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
 #+end_src
 ** Peer Review / Pull Request Template for Work
+:PROPERTIES:
+:CUSTOM_ID: Peer-Review-Pull-Request-Template-for-Work
+:END:
 
 I run doc:w-pr-template to get a new Org buffer with a review template.  I make
 notes and check-off boxes with ~C-c C-c~ as usual, and when I'm done I press ~C-c
@@ -11246,6 +11265,7 @@ into Github.
 
 #+begin_src emacs-lisp
 (cl-defun w-pr-template ()
+  "Hi"
   (interactive)
   (-let [buf "PR Template ~ Press “C-c C-s” when done"]
     (ignore-errors (kill-buffer buf))
@@ -11849,6 +11869,9 @@ I like using Chrome ---I like the integration of all things Google.
 #+end_src
 
 ** VueJS
+:PROPERTIES:
+:CUSTOM_ID: VueJS
+:END:
 
 #+begin_src emacs-lisp
 (use-package vue-mode)
@@ -13830,6 +13853,9 @@ in one smooth horizontal rule and vertical sequences of ‘|’ results in a smo
 vertical line.
 
 ** Cucumber
+:PROPERTIES:
+:CUSTOM_ID: Cucumber
+:END:
 
 #+begin_src emacs-lisp
 ;; Emacs mode for editing Cucumber plain text stories
@@ -13979,6 +14005,9 @@ Let's remove repeated matter.
 #+END_SRC
 
 ** Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.
+:PROPERTIES:
+:CUSTOM_ID: Let's-jump-to-a-current-Chrome-browser-tab-or-one-from-our-Chrome-history-from-within-Emacs
+:END:
 - [[https://github.com/xuchunyang/helm-chrome-history][Browse your Chrome history with Helm.]]
 - [[https://github.com/xuchunyang/helm-chrome-control][M-x helm-chrome-control displays chrome tabs and let you control them by pressing C-z: e.g., you can focus tab, close tab, copy the title & URL of the tab, etc.]]
 #+begin_src emacs-lisp
@@ -13996,6 +14025,9 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
 ---but [[https://en.wikipedia.org/wiki/XQuartz][can be setup.]]
 
 ** Get Shell history within Emacs via Completing Read with Helm
+:PROPERTIES:
+:CUSTOM_ID: Get-Shell-history-within-Emacs-via-Completing-Read-with-Helm
+:END:
 #+begin_src emacs-lisp
 ;; Usage: M-x helm-shell-history
 (use-package helm-shell-history
@@ -14005,6 +14037,9 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
 #+end_src
 
 ** Launch macOS apps with Helm
+:PROPERTIES:
+:CUSTOM_ID: Launch-macOS-apps-with-Helm
+:END:
 
 # In addition to apps, it can also launch system preferences, just like Alfred.
 #+begin_src emacs-lisp
@@ -14017,6 +14052,9 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
 #+end_src
 
 ** Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.
+:PROPERTIES:
+:CUSTOM_ID: Use-Org-Mode-links-in-other-modes-Links-can-be-opened-and-edited-like-in-Org-Mode
+:END:
 #+begin_src emacs-lisp
 ;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
 ;;
@@ -14031,6 +14069,9 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
 #+end_src
 
 ** Let's make working with Emacs Lisp even better!
+:PROPERTIES:
+:CUSTOM_ID: Let's-make-working-with-Emacs-Lisp-even-better
+:END:
 - [[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]
 #+begin_src emacs-lisp
 (use-package elisp-demos
@@ -14042,12 +14083,18 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
 #+end_src
 
 ** [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]
+:PROPERTIES:
+:CUSTOM_ID: https-github-com-alphapapa-bufler-el-A-butler-for-your-buffers-Group-buffers-into-workspaces-with-programmable-rules-and-easily-switch-to-and-manipulate-them
+:END:
 #+begin_src emacs-lisp
 (use-package bufler
   :config (bind-key "C-x C-b" #'bufler-list))
 ;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 #+end_src
 ** [[https://github.com/motform/stimmung-themes][Let's try out this dope theme]] and [[https://github.com/qhga/shanty-themes#shanty-themes-light][this one too!]]
+:PROPERTIES:
+:CUSTOM_ID: https-github-com-motform-stimmung-themes-Let's-try-out-this-dope-theme-and-https-github-com-qhga-shanty-themes-shanty-themes-light-this-one-too
+:END:
 #+begin_src emacs-lisp
 (use-package stimmung-themes
   :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")

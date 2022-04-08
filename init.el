@@ -4,6 +4,9 @@
 (setq byte-compile-warnings '(cl-functions))
 (require 'cl-lib) ;; to get loop instead of cl-loop, etc.
 
+;; (cl-defun org-duration-to-minutes (&rest _) )
+;; (cl-defun org-id-find-id-file (&rest _))
+
 ;; Required for Github Actions; i.e., testing.
 ;; TODO Clean me!
 (defun quelpa-read-cache ()) ;; Used somewhere, but not defined.
@@ -100,9 +103,6 @@
      dscacheutil -flushcache")
 
 (defvar my/work-machine? (not my/personal-machine?))
-
-(when my/work-machine?
-  (load-file "~/Desktop/work.el"))
 
 ;; Library for working with system files;
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
@@ -676,8 +676,8 @@ Is replaced by:
 
 ;; Also need to customise email routes per organization
 ;; https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/configuring-notifications#customizing-email-routes-per-organization
-(unless my/personal-machine?
-  (shell-command (format "git config --global user.email \"%s\"" work/email)))
+(ignore-error (unless my/personal-machine?
+  (shell-command (format "git config --global user.email \"%s\"" work/email))))
 
 ;; If we ever need to use Git in the terminal, it should be done with Emacs as
 ;; the underlying editor
@@ -3446,6 +3446,11 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
            (message "If the URL is busted, then the repo is not up correctly or the server has an error!")))))
 ;; my/defservice:1 ends here
 
+;; [[file:init.org::#my-defservice][my/defservice:2]]
+(when my/work-machine?
+  (load-file "~/Desktop/work.el"))
+;; my/defservice:2 ends here
+
 ;; [[file:init.org::#Project-management-navigation][Project management & navigation:1]]
 ;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
 (use-package projectile
@@ -3672,7 +3677,6 @@ Example use:      (w-pr-checkout \"~/my-repo\")
 (cl-defun w-PRs (&rest query-options)
   "See all company related PRs"
   (interactive)
-  (defvar work/gh-tags nil) ;; Should come from work.el
   (thread-last `("is:open" "is:pr" "archived:false" "draft:false" ,@work/gh-tags  ,@query-options)
     (mapcar #'url-hexify-string)
     (s-join "+")
@@ -3693,7 +3697,7 @@ Example use:      (w-pr-checkout \"~/my-repo\")
 ;; See all company related PRs:1 ends here
 
 ;; [[file:init.org::#SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only][SQL ---via LSP:1]]
-;; Installation: go get github.com/lighttiger2505/sqls
+;; Installation: go install github.com/lighttiger2505/sqls
 (setq lsp-sqls-server "/Users/musa/go/bin/sqls")
 (setq lsp-sqls-timeout 1)
 (setq lsp-sqls-workspace-config-path nil)
