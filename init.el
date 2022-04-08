@@ -99,7 +99,10 @@
      sudo scutil --set ComputerName work-machine
      dscacheutil -flushcache")
 
-(ignore-errors (load-file "~/Desktop/work_secrets.el"))
+(defvar my/work-machine? (not my/personal-machine?))
+
+(when my/work-machine?
+  (load-file "~/Desktop/work.el"))
 
 ;; Library for working with system files;
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
@@ -3689,104 +3692,47 @@ Example use:      (w-pr-checkout \"~/my-repo\")
          do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
 ;; See all company related PRs:1 ends here
 
-;; [[file:init.org::#SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only][SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only:1]]
-;; (system-packages-ensure "leiningen")
-;; NOTE: You must commented out the (require 'ejc-direx) from ejc-sql.el
-;; Reason: https://github.com/kostafey/ejc-sql/issues/163
-(use-package ejc-sql
-  :config
-  (require 'ejc-company)
-  (push 'ejc-company-backend company-backends)
-  (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
-  ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
-  (bind-key "C-c C-c"
-             (lambda () (interactive)
-               (setq ejc-sql-complete-query-hook
-                     (if current-prefix-arg
-                         '(w-ejc-result-pp-json)  ;; Defined below
-                       '((lambda () ;; Give each line of text just one screen line.
-                           (switch-to-buffer-other-window "*ejc-sql-output*")
-                           (visual-line-mode -1)
-                           (toggle-truncate-lines)
-                           (other-window -1)))))
-               (ejc-eval-user-sql-at-point))
-             'sql-mode-map))
+;; [[file:init.org::#SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only][SQL ---via LSP:1]]
+;; Installation: go get github.com/lighttiger2505/sqls
+(setq lsp-sqls-server "/Users/musa/go/bin/sqls")
+(setq lsp-sqls-timeout 1)
+(setq lsp-sqls-workspace-config-path nil)
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-sqls/
+(setq lsp-sqls-connections
+      ;; (--map `((driver . "postgresql") (dataSourceName . ,it)) work/sqls-connections))
+      `(((driver . "postgresql") (dataSourceName . ,(car work/sqls-connections)))))
+;; TODO: Remove this 'car'!
+(add-hook 'sql-mode-hook 'lsp)
+
+(use-package org-modern)
+(defun my/execute-query-at-point ()
+  "Execute query at point and make resulting table an Org table and modernise it"
+  (interactive)
+  (lsp-sql-execute-paragraph)
+  (other-window 1) (org-modern-global-mode) (org-mode) (read-only-mode -1)
+  (while (re-search-forward "^\+" nil t) (replace-match "|"  nil t))
+  (toggle-truncate-lines)
+  (beginning-of-buffer) (execute-kbd-macro (read-kbd-macro "<tab>"))
+  (read-only-mode) (other-window -1)
+  (local-set-key "q" (lambda ()  "Quit buffer" (interactive) (ignore-errors (kill-buffer-and-window)))))
+
+
+(bind-key "C-c C-c" #'my/execute-query-at-point 'sql-mode-map)
+(bind-key "C-c C-<return>" #'my/execute-query-at-point 'sql-mode-map)
 
 (defun w-sql ()
   "Quickly run a SQL query, then dispose of the buffer when done.
 
-By default uses a connection named “platform”, to see a list of
-other connections call with a prefix argument."
+Uses the first connection available, to change connections
+invoke M-x `lsp-sql-switch-connection'."
   (interactive)
-
-  ;; Get DB credentials. One does “M-x ejc-connect-interactive” once, then
-  ;;  “M-x ejc-insert-connection-data” and paste that into your init; then
-  ;; “M-x ejc-connect” provides a compleition of possible DBs to connect to.
-  (load-file "~/Desktop/work.el")
-  ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
-  ;; which temporarily adds to this hook, then calls
-  (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
-  (require 'ejc-sql)
-  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "platform")]
-    (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
-    (thread-last
-        '("\n\n/\n-- DOCS & EXAMPLES\n--"
-          "-- SQL queries should be seperated by “/”"
-          "-- [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP]"
-          "-- In result window, TAB/RET to navigate the columns/rows."
-          "-- C-c e t ⇒ List all tables"
-          "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
-          "\nselect 1 + 2 as \"Numerical, yeah!\""
-          "\n/\n"
-          "-- Does this app have LWA, MEWO, etc?"
-          "select metadata from application\nwhere slug = 'mars-gnv'"
-          "\n/\n"
-          "-- See the latest form's elements & extra props"
-          "select data #>'{ details, properties, wxConfig, formElements }'"
-          "from platform.forms\norder by updated_at desc\nlimit 1;"
-          "\n/\n"
-          "SELECT data #> '{details, properties}'\nfrom submissions"
-          "-- The submissions that have at least a ‘number’ or an ‘MCS’, but NOT a ‘time’."
-          "where data::text similar to '%\"wxType\": \"(number|wx-multiple-choice-score)\"%'"
-          "and not data #> '{details, properties, formdata}' @> '[{\"wxType\": \"time\"}]'"
-          "limit 1;"
-          "\n-- The short arrow -> keeps the type as JSON, and the long arrow ->> returns text."
-          "-- Likewise #> yields JSON whereas #>> yields text."
-          "-- a -> 'b' -> 'c' -> 3 -> 'd'  ==  a #> '{b, c, 3, d}' "
-          "-- (Use integers to access elements of JSON arrays)"
-          "\n/\n"
-          "-- Here are the triggers that are run when an UPDATE is performed against ‘submissions’"
-          "select * from information_schema.triggers"
-          "where event_object_table = 'submissions'"
-          "and event_manipulation = 'UPDATE'"
-          "\n/\n"
-          "-- See most recently updated/altered “In Progress” ticket"
-          "select * from tickets\norder by updated_at desc\nlimit 1")
-      (s-join "\n")
-      insert)
-    (sql-mode)
-    (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
-    (ejc-connect connection-name)
-    (beginning-of-buffer)
-    (message "Connecting to DB... please wait a moment")))
-
-(defun w-ejc-result-pp-json ()
-  "Pretty print JSON ejc-result buffer."
-  (interactive)
-  (ignore-errors
-    (switch-to-buffer-other-window "*ejc-sql-output*")
-    (beginning-of-buffer)
-    (re-search-forward "{")
-    (backward-char 1)
-    (delete-region (point-min) (point))
-    (end-of-buffer)
-    (re-search-backward "|")
-    (kill-line)
-    (json-mode)
-    (json-pretty-print-buffer)
-    (other-window -1)
-    (message-box "hiya")))
-;; SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only:1 ends here
+  ;; LSP only works on files; not buffers; so I use this file.
+  (find-file "~/.emacs.d/scratch.sql")
+  (insert work/sql-queries) ;; docs and examples
+  (sql-mode)
+  (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
+  (beginning-of-buffer))
+;; SQL ---via LSP:1 ends here
 
 ;; [[file:init.org::#Docker][Docker:1]]
 ;; Usage: M-x docker [RET ?]
@@ -4456,9 +4402,13 @@ Both arguments are strings."
 ;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 ;; [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]:1 ends here
 
-;; [[file:init.org::*\[\[https:/github.com/motform/stimmung-themes\]\[Let's try out this dope theme.\]\]][[[https://github.com/motform/stimmung-themes][Let's try out this dope theme.]]:1]]
+;; [[file:init.org::*\[\[https:/github.com/motform/stimmung-themes\]\[Let's try out this dope theme\]\] and \[\[https:/github.com/qhga/shanty-themes#shanty-themes-light\]\[this one too!\]\]][[[https://github.com/motform/stimmung-themes][Let's try out this dope theme]] and [[https://github.com/qhga/shanty-themes#shanty-themes-light][this one too!]]:1]]
 (use-package stimmung-themes
   :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
   :config (load-theme 'stimmung-themes-light))
+
+(use-package shanty-themes)
+(load-theme 'shanty-themes-light)
+
 (setq-default cursor-type 'bar)
-;; [[https://github.com/motform/stimmung-themes][Let's try out this dope theme.]]:1 ends here
+;; [[https://github.com/motform/stimmung-themes][Let's try out this dope theme]] and [[https://github.com/qhga/shanty-themes#shanty-themes-light][this one too!]]:1 ends here

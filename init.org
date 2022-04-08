@@ -10557,15 +10557,81 @@ Example use:      (w-pr-checkout \"~/my-repo\")
          do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
 #+end_src
 
-** SQL: When doing ‘serious’ database work, I love using DBeaver.  But when I only
+** SQL ---via LSP
 :PROPERTIES:
 :CUSTOM_ID: SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only
 :END:
-want to /quickly/ run a query, to check something, *without the fricition of
-switching applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-sql]]
-to produce a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.
-(This also serves as a nice *reference mechanism* for useful queries.)
+When doing ‘serious’ database work, I love using DBeaver.  But when I only want
+to /quickly/ run a query, to check something, *without the fricition of switching
+applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-sql]] to produce
+a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.  (This also
+serves as a nice *reference mechanism* for useful queries.)
+
+Let's use [[https://github.com/lighttiger2505/sqls][LSP for SQL]], to get
++ Neato tooltips on table definitions and column constraints,
+  - Write ~select * from my-table t~ then delete the ~*~ and enter ~t.~ to see all
+    valid columns; or just delete the ~*~ and press ~.~ to see them.
++ Completions for tables & column names,
++ ~C-c C-c~ to execute query at point [My personal setup below],
+  - Run all queries with doc:lsp-execute-code-action
++ When sharing with others, maybe execute doc:lsp-format-buffer
++ Note: The tokenizer is known to a bit buggy.
+  - E.g., ~select 1 + 2 as "Numerical, yeah!"~ will not be run due to the ‘!’.
+
 #+begin_src emacs-lisp
+;; Installation: go get github.com/lighttiger2505/sqls
+(setq lsp-sqls-server "/Users/musa/go/bin/sqls")
+(setq lsp-sqls-timeout 1)
+(setq lsp-sqls-workspace-config-path nil)
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-sqls/
+(setq lsp-sqls-connections
+      ;; (--map `((driver . "postgresql") (dataSourceName . ,it)) work/sqls-connections))
+      `(((driver . "postgresql") (dataSourceName . ,(car work/sqls-connections)))))
+;; TODO: Remove this 'car'!
+(add-hook 'sql-mode-hook 'lsp)
+
+(use-package org-modern)
+(defun my/execute-query-at-point ()
+  "Execute query at point and make resulting table an Org table and modernise it"
+  (interactive)
+  (lsp-sql-execute-paragraph)
+  (other-window 1) (org-modern-global-mode) (org-mode) (read-only-mode -1)
+  (while (re-search-forward "^\+" nil t) (replace-match "|"  nil t))
+  (toggle-truncate-lines)
+  (beginning-of-buffer) (execute-kbd-macro (read-kbd-macro "<tab>"))
+  (read-only-mode) (other-window -1)
+  (local-set-key "q" (lambda ()  "Quit buffer" (interactive) (ignore-errors (kill-buffer-and-window)))))
+
+
+(bind-key "C-c C-c" #'my/execute-query-at-point 'sql-mode-map)
+(bind-key "C-c C-<return>" #'my/execute-query-at-point 'sql-mode-map)
+
+(defun w-sql ()
+  "Quickly run a SQL query, then dispose of the buffer when done.
+
+Uses the first connection available, to change connections
+invoke M-x `lsp-sql-switch-connection'."
+  (interactive)
+  ;; LSP only works on files; not buffers; so I use this file.
+  (find-file "~/.emacs.d/scratch.sql")
+  (insert work/sql-queries) ;; docs and examples
+  (sql-mode)
+  (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
+  (beginning-of-buffer))
+#+end_src
+
+#+begin_details "Previous setup ~ ejc-sql [Disabled]"
+- ❌ ~ejc-sql~ crashes with updates.
+- ✔ I like that ejc-sql gives me M-. to jump to definitions of tables/functions/etc.
+  - “Go to definition”: [M-.] M-x ejc-describe-entity ⇒ Show source code for a stored view, function, table, etc.
+  - Get entity definition: show creation SQL of view, package, function, procedure or type.
+  - C-c e t ⇒ See list of tables
+- ✔ ejc works with org-mode out of the box; https://github.com/kostafey/ejc-sql#use-with-org-mode
+
+⇒ BEST OF BOTH WORLDS? ⇐
+(setq ejc-sql-separator "-- /") ;; Otherwise LSP sql server sees ‘/’ as a syntax error.
+
+#+begin_src emacs-lisp :tangle no
 ;; (system-packages-ensure "leiningen")
 ;; NOTE: You must commented out the (require 'ejc-direx) from ejc-sql.el
 ;; Reason: https://github.com/kostafey/ejc-sql/issues/163
@@ -10591,22 +10657,22 @@ to produce a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.
 (defun w-sql ()
   "Quickly run a SQL query, then dispose of the buffer when done.
 
-By default uses a connection named “platform”, to see a list of
+By default uses a connection named “xxxx”, to see a list of
 other connections call with a prefix argument."
   (interactive)
 
   ;; Get DB credentials. One does “M-x ejc-connect-interactive” once, then
   ;;  “M-x ejc-insert-connection-data” and paste that into your init; then
-  ;; “M-x ejc-connect” provides a compleition of possible DBs to connect to.
+  ;; “M-x ejc-connect” provides a completion of possible DBs to connect to.
   (load-file "~/Desktop/work.el")
   ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
   ;; which temporarily adds to this hook, then calls
   (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
   (require 'ejc-sql)
-  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "platform")]
+  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "xxxx")]
     (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
     (thread-last
-        '("\n\n/\n-- DOCS & EXAMPLES\n--"
+        `("\n\n/\n-- DOCS & EXAMPLES\n--"
           "-- SQL queries should be seperated by “/”"
           "-- [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP]"
           "-- In result window, TAB/RET to navigate the columns/rows."
@@ -10614,30 +10680,9 @@ other connections call with a prefix argument."
           "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
           "\nselect 1 + 2 as \"Numerical, yeah!\""
           "\n/\n"
-          "-- Does this app have LWA, MEWO, etc?"
-          "select metadata from application\nwhere slug = 'mars-gnv'"
-          "\n/\n"
-          "-- See the latest form's elements & extra props"
-          "select data #>'{ details, properties, wxConfig, formElements }'"
-          "from platform.forms\norder by updated_at desc\nlimit 1;"
-          "\n/\n"
-          "SELECT data #> '{details, properties}'\nfrom submissions"
-          "-- The submissions that have at least a ‘number’ or an ‘MCS’, but NOT a ‘time’."
-          "where data::text similar to '%\"wxType\": \"(number|wx-multiple-choice-score)\"%'"
-          "and not data #> '{details, properties, formdata}' @> '[{\"wxType\": \"time\"}]'"
-          "limit 1;"
-          "\n-- The short arrow -> keeps the type as JSON, and the long arrow ->> returns text."
-          "-- Likewise #> yields JSON whereas #>> yields text."
-          "-- a -> 'b' -> 'c' -> 3 -> 'd'  ==  a #> '{b, c, 3, d}' "
-          "-- (Use integers to access elements of JSON arrays)"
-          "\n/\n"
-          "-- Here are the triggers that are run when an UPDATE is performed against ‘submissions’"
-          "select * from information_schema.triggers"
-          "where event_object_table = 'submissions'"
-          "and event_manipulation = 'UPDATE'"
-          "\n/\n"
-          "-- See most recently updated/altered “In Progress” ticket"
-          "select * from tickets\norder by updated_at desc\nlimit 1")
+          "-- More examples of useful SQL queries I might need, but don't want to remember"
+          ;; I've moved them out to my private work.el file.
+          ,@work/sql-queries)
       (s-join "\n")
       insert)
     (sql-mode)
@@ -10663,6 +10708,14 @@ other connections call with a prefix argument."
     (other-window -1)
     (message-box "hiya")))
 #+end_src
+
+;; Add minimal table autocomplete to SQL
+(require 'ejc-company)
+(push 'ejc-company-backend company-backends)
+(add-hook 'ejc-sql-minor-mode-hook
+          (lambda ()
+            (company-mode t)))
+#+end_details
 
 - *Postgres is the Emacs of Databases:* /It has extensions!/ E.g., It can be
   extended to write stored functions in Ruby, Python, and [[https://plv8.github.io/#:~:text=for(var%20i%3D0%3B%20i%3Ckeys.length%3B%20i%2B%2B)%7B%0A%20%20%20%20%20%20%20%20o%5Bkeys%5Bi%5D%5D%20%3D%20vals%5Bi%5D%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20o%3B][in-particular
@@ -13994,11 +14047,15 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
   :config (bind-key "C-x C-b" #'bufler-list))
 ;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 #+end_src
-** [[https://github.com/motform/stimmung-themes][Let's try out this dope theme.]]
+** [[https://github.com/motform/stimmung-themes][Let's try out this dope theme]] and [[https://github.com/qhga/shanty-themes#shanty-themes-light][this one too!]]
 #+begin_src emacs-lisp
 (use-package stimmung-themes
   :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
   :config (load-theme 'stimmung-themes-light))
+
+(use-package shanty-themes)
+(load-theme 'shanty-themes-light)
+
 (setq-default cursor-type 'bar)
 #+end_src
 
