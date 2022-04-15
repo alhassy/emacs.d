@@ -2222,6 +2222,9 @@ fonts (•̀ᴗ•́)و"
                     ("#+end_example"   . ?⇐)                 ;; ⇐
                     ;; Actuall beautifications
                     ("==" . ?≈) ("===" . ?≈) ("=" . ?≔) ;; Programming specific prettifications
+                    ("i32" . ?ℤ) ("u32" . ?ℕ) ("f64" . ?ℝ) ;; Rust specific
+                    ("bool" . ?𝔹)
+                    ("fn" . ?λ)
                     ("<=" . ?≤) (">=" . ?≥)
                     ("->" . ?→) ("-->". ?⟶) ;; threading operators
                     ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
@@ -3559,7 +3562,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
    (bind-key "M-!" #'company-show-doc-buffer 'prog-mode-map))
 ;; Documentation Pop-Ups:1 ends here
 
-;; [[file:init.org::*ll-debug][ll-debug:1]]
+;; [[file:init.org::#ll-debug][ll-debug:1]]
 ;; C-u C-v C-d ⇒ Log a message, printing values of expressions.
 ;; E.g., in JS this prints, console.log("DEBUG-5-del.js","  1 + 3:",1 + 3);
 ;; Note “5” is the fifth debug message, and “del.js” is the name of the buffer.
@@ -4019,21 +4022,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (set-marker e nil)))
 ;; Comment-boxes up to the fill-column:1 ends here
 
-;; [[file:init.org::*Auto-format on Save][Auto-format on Save:1]]
-(use-package format-all
-  ;; To enable format on save for most programming language buffers:
-  :hook (prog-mode . format-all-mode)
-  :config
-  ;; Please use the default formatters; I don't care too much.
-  (add-hook 'format-all-mode-hook 'format-all-ensure-formatter))
-
-;; For JavaScript prettification: It automatically inserts semicolons, forces newlines, inserts parens, etc.
-;; Lots of redundant stuff, but stuff to make it easy to work with others.
-(shell-command "npm install --global prettier")
-;; Specific package to do only JS prettification: https://github.com/prettier/prettier-emacs
-;; Auto-format on Save:1 ends here
-
-;; [[file:init.org::*Searching Hydra][Searching Hydra:1]]
+;; [[file:init.org::#Searching-Hydra][Searching Hydra:1]]
 (my/defhydra "s-f" "\t\tLocate Everything" search
    :Buffer
    ;; find all the occurrences of a string, pull out the lines containing the string to another buffer where [F2] I can edit and save,
@@ -4054,8 +4043,9 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
    ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
 ;; Searching Hydra:1 ends here
 
-;; [[file:init.org::*Peer Review / Pull Request Template for Work][Peer Review / Pull Request Template for Work:1]]
+;; [[file:init.org::#Peer-Review-Pull-Request-Template-for-Work][Peer Review / Pull Request Template for Work:1]]
 (cl-defun w-pr-template ()
+  "Hi"
   (interactive)
   (-let [buf "PR Template ~ Press “C-c C-s” when done"]
     (ignore-errors (kill-buffer buf))
@@ -4330,7 +4320,7 @@ Both arguments are strings."
   ("b" (internet) "Browse"  :exit t))
 ;; Modern Browsing within Emacs:2 ends here
 
-;; [[file:init.org::*VueJS][VueJS:1]]
+;; [[file:init.org::#VueJS][VueJS:1]]
 (use-package vue-mode)
 ;; VueJS:1 ends here
 
@@ -4342,7 +4332,7 @@ Both arguments are strings."
   (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list)))))
 ;; Lisp Helpers / Kill all buffers that are not associated with a file:1 ends here
 
-;; [[file:init.org::*Cucumber][Cucumber:1]]
+;; [[file:init.org::#Cucumber][Cucumber:1]]
 ;; Emacs mode for editing Cucumber plain text stories
 ;; “.feature” files now open up with nice colouring.
 (use-package feature-mode)
@@ -4353,7 +4343,7 @@ Both arguments are strings."
 ;; (use-package cucumber-goto-step)
 ;; Cucumber:1 ends here
 
-;; [[file:init.org::*Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.][Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1]]
+;; [[file:init.org::#Let's-jump-to-a-current-Chrome-browser-tab-or-one-from-our-Chrome-history-from-within-Emacs][Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1]]
 ;; M-x helm-chrome-history
 ;; [Your Chrome History SQLite database file: helm-chrome-history-file]
 (use-package helm-chrome-history)
@@ -4361,7 +4351,7 @@ Both arguments are strings."
 (use-package helm-chrome-control)
 ;; Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1 ends here
 
-;; [[file:init.org::*Get Shell history within Emacs via Completing Read with Helm][Get Shell history within Emacs via Completing Read with Helm:1]]
+;; [[file:init.org::#Get-Shell-history-within-Emacs-via-Completing-Read-with-Helm][Get Shell history within Emacs via Completing Read with Helm:1]]
 ;; Usage: M-x helm-shell-history
 (use-package helm-shell-history
   :config
@@ -4369,7 +4359,7 @@ Both arguments are strings."
   (bind-key "M-r" #'helm-shell-history shell-mode-map))
 ;; Get Shell history within Emacs via Completing Read with Helm:1 ends here
 
-;; [[file:init.org::*Launch macOS apps with Helm][Launch macOS apps with Helm:1]]
+;; [[file:init.org::#Launch-macOS-apps-with-Helm][Launch macOS apps with Helm:1]]
 ;; MacOS's default ⌘-SPC does not let us do either of the following scenarios:
 ;; Usage: M-x helm-osx-app RET preferences bat RET ⇒ See battery preferences settings
 ;; Another Usage: M-x helm-osx-app RET ⇒ See all apps, maybe we forgot about one of them from an install a long time ago, and open it
@@ -4378,7 +4368,7 @@ Both arguments are strings."
 ;; For non-MacOS, we can use [[https://github.com/d12frosted/counsel-osx-app][counsel-osx-app]], whose name is misleading.
 ;; Launch macOS apps with Helm:1 ends here
 
-;; [[file:init.org::*Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.][Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1]]
+;; [[file:init.org::#Use-Org-Mode-links-in-other-modes-Links-can-be-opened-and-edited-like-in-Org-Mode][Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1]]
 ;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
 ;;
 ;; In particular, when I tangle my init.org into a Lisp file, init.el, it has Org links
@@ -4391,7 +4381,7 @@ Both arguments are strings."
   (setq orglink-activate-in-modes '(emacs-lisp-mode)))
 ;; Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1 ends here
 
-;; [[file:init.org::*Let's make working with Emacs Lisp even better!][Let's make working with Emacs Lisp even better!:1]]
+;; [[file:init.org::#Let's-make-working-with-Emacs-Lisp-even-better][Let's make working with Emacs Lisp even better!:1]]
 (use-package elisp-demos
   :config
   ;; Show demos when I do a `C-h o'.
@@ -4400,13 +4390,13 @@ Both arguments are strings."
   (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
 ;; Let's make working with Emacs Lisp even better!:1 ends here
 
-;; [[file:init.org::*\[\[https:/github.com/alphapapa/bufler.el\]\[A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.\]\]][[[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]:1]]
+;; [[file:init.org::#https-github-com-alphapapa-bufler-el-A-butler-for-your-buffers-Group-buffers-into-workspaces-with-programmable-rules-and-easily-switch-to-and-manipulate-them][[[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]:1]]
 (use-package bufler
   :config (bind-key "C-x C-b" #'bufler-list))
 ;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 ;; [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]:1 ends here
 
-;; [[file:init.org::*\[\[https:/github.com/motform/stimmung-themes\]\[Let's try out this dope theme\]\] and \[\[https:/github.com/qhga/shanty-themes#shanty-themes-light\]\[this one too!\]\]][[[https://github.com/motform/stimmung-themes][Let's try out this dope theme]] and [[https://github.com/qhga/shanty-themes#shanty-themes-light][this one too!]]:1]]
+;; [[file:init.org::#https-github-com-motform-stimmung-themes-Let's-try-out-this-dope-theme-and-https-github-com-qhga-shanty-themes-shanty-themes-light-this-one-too][[[https://github.com/motform/stimmung-themes][Let's try out this dope theme]] and [[https://github.com/qhga/shanty-themes#shanty-themes-light][this one too!]]:1]]
 (use-package stimmung-themes
   :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
   :config (load-theme 'stimmung-themes-light))

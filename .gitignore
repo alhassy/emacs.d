@@ -42,3 +42,5 @@ _minted-*
 /url/
 /#init.el#
 /init.el~
+/scratch.sql
+/.log/

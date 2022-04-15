@@ -6873,6 +6873,9 @@ have busybodied headers which his setup disguises as ‘≡’.
                     ("#+end_example"   . ?⇐)                 ;; ⇐
                     ;; Actuall beautifications
                     ("==" . ?≈) ("===" . ?≈) ("=" . ?≔) ;; Programming specific prettifications
+                    ("i32" . ?ℤ) ("u32" . ?ℕ) ("f64" . ?ℝ) ;; Rust specific
+                    ("bool" . ?𝔹)
+                    ("fn" . ?λ)
                     ("<=" . ?≤) (">=" . ?≥)
                     ("->" . ?→) ("-->". ?⟶) ;; threading operators
                     ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
@@ -11197,7 +11200,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (goto-char e)
     (set-marker e nil)))
 #+end_src
-** Auto-format on Save
+** TODO Auto-format on Save :Disabled:Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
 :PROPERTIES:
 :CUSTOM_ID: Auto-format-on-Save
 :END:
@@ -11215,7 +11218,7 @@ auto-format code on save, use the minor mode format-all-mode.
   ~format-all-buffer~ can't find the right program, it will try to tell you how to
   install it.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package format-all
   ;; To enable format on save for most programming language buffers:
   :hook (prog-mode . format-all-mode)
@@ -11318,7 +11321,7 @@ Below is a detailed checklist of what I went through.
        Namely, I made a new form, submitted an instance, checked ~In-Progress~,
      & ~Form Reports~.
    - [ ]  I've tried all kinds of quotes and unicode, "𝒰"\‘ℕ’/𝒊′ℭ″𝑂؛𝒟⨾'∃',
-        input for text inputs.
+        input for text inputs; as well as special chars: +-_)(*&^%$#@!~`'".;><?/}{}[]|\.
    - [ ] Followed the happy path in the provided testing instructions.
      - Nope; none provided.
    - [ ] Also tried the following edge case: ⋯ ⁉ ⋯
@@ -11326,6 +11329,13 @@ Below is a detailed checklist of what I went through.
 3. [ ] Tests: There are new unit tests (but sadly no E2Es/integration).
    - [ ] Meaningful: Tests actually test that the code is performing the
      intended functionality.
+   - [ ] Ran associated E2Es / unit tests with the incantation: ⋯ ⁉ ⋯.
+   - [ ] I looked at the associated migrations file and ran the following SQL
+     query after running migrations and it works fine; then I ran the query
+     after running rollbacks and everything is as expected.
+     ,#+begin_src sql
+     ???
+     ,#+end_src
    - [ ] Avoid global test fixtures and seeds, add data per-test.
        TL;DR: To prevent test coupling and easily reason about the test flow, each test
        should add and act on its own set of DB rows.
