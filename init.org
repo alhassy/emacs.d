@@ -11429,6 +11429,93 @@ Below is a detailed checklist of what I went through.
 
     ,#+html: </details>
 #+end_src
+
+
+** ⌘-e: Edit Everything in a separate buffer
+
+Edit comment/string/docstring/code block in separate buffer with your favourite
+mode.
+
++ ⌘-e to toggle “e”diting of thing at point.
++ ⌘-e will try to edit thing at point, or selection, if possible; otherwise it
+  will exit edit session.
+  - 🔥 Avoid escape nightmares by editing strings in a separate buffer.
+  - On a string, press ⌘-e and a new buffer pops up with unescaped content,
+    letting you edit raw strings directly.  It then takes care of automatically
+    escaping strings for you when you press ⌘-e, or ~C-c C-c~ ---or discard your
+    changes with ~C-c C-k~.
++ ⌘-e can be used within edit session to create new edit sessions, if possible; then ⌘-e will “pop-off-the-stack” as expected.
+  - (I already use ⌘-e to toggle editing Org src blocks, and when editing a block ⌘-e will try to do a recursive edit if possible, or exit the edit session.)
+  - (The separedit package also let's me press ⌘-e to edit variable values when describing them, and to edit text when in the minibuffer.)
+
+From [[https://github.com/twlz0ne/separedit.el][source]]:
+#+begin_example org
++----------+         Edit           +-----------+         Edit           +-----------+
+|          | ---------------------> |   edit    | ---------------------> |   edit    | ...
+|          |  point-at-comment?     |   buffer  |  point-at-comment?     |   buffer  |
+|  source  |  point-at-string?      |           |  point-at-string?      |           | ...
+|  buffer  |  point-at-codeblock?   | (markdown |  point-at-codeblock?   | (markdown | ...
+|          |  point-at-...?         |  orgmode  |  point-at-...?         |  orgmode  |
+|          | <--------------------- |   ...)    | <--------------------- |   ...)    | ...
++----------+     Commit changes     +-----------+     Commit changes     +-----------+
+#+end_example
+
+#+begin_src emacs-lisp
+(use-package separedit)
+;;
+;; # Example Usage
+;;
+;; 1. Press ⌘-e on this line, to edit this entire comment.
+;; 2. Press ⌘-e to exit the edit session.
+;;
+;; ```
+;; ;; 3. Press ⌘-e on this line, to edit this source block!
+;; ;; 4. Press ⌘-e on this line, to edit this inner-most comment!
+;; ;; 5. At start of next line, press “⌘-r ⌘-e” to edit just the source block
+;; ;;
+;; (defun index ()
+;;   "6. Press ⌘-e to edit this string, \"7. and again in these quotes\""
+;;   "<p>8. Press ⌘-e to edit this <strong> HTML </strong> block, in Web-mode </p>")
+;;
+;; ;; 9. Select & press “C-u ⌘-e css-mode RET” on the following, to edit it in CSS mode.
+;; ;; #hola {color: green}
+;; ```
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setup to make the above ⌘-e behaviour happen.
+
+;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
+(--map (bind-key "s-e" #'separedit it)
+       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
+
+;; I don't want to be bothered for what mode I'm in, when a region is selected.
+;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode.
+(advice-add #'separedit--select-mode :before-until
+            (lambda (&rest r)
+              (when (and (region-active-p) (not current-prefix-arg)) (pp-to-string major-mode))))
+
+
+;; Eagerly guess that I'm in HTML mode.
+(advice-add #'separedit :after
+            (lambda (&rest r)
+              (beginning-of-buffer)
+              (when (looking-at "<")
+                (web-mode))))
+
+;; In the indirect buffer, make ⌘-e finish editing.
+(bind-key "s-e"
+(lambda ()
+  (interactive)
+  (or (ignore-errors (call-interactively #'separedit))
+      (call-interactively #'edit-indirect-commit)))
+          #'edit-indirect-mode-map)
+
+;; I also have “s-e” bound to `org-edit-src-exit'.
+(advice-add 'org-edit-src-exit :before-until
+            (lambda (&rest r)
+              (when (ignore-errors (separedit)) t)))
+#+end_src
+
 * Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
@@ -14106,14 +14193,15 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
 :CUSTOM_ID: https-github-com-motform-stimmung-themes-Let's-try-out-this-dope-theme-and-https-github-com-qhga-shanty-themes-shanty-themes-light-this-one-too
 :END:
 #+begin_src emacs-lisp
-(use-package stimmung-themes
-  :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
-  :config (load-theme 'stimmung-themes-light))
+(unless noninteractive
+  (use-package stimmung-themes
+    :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
+    :config (load-theme 'stimmung-themes-light))
 
-(use-package shanty-themes)
-(load-theme 'shanty-themes-light)
+  (use-package shanty-themes)
+  (load-theme 'shanty-themes-light)
 
-(setq-default cursor-type 'bar)
+  (setq-default cursor-type 'bar))
 #+end_src
 
 * Conclusion ---Why Configuration Files Should be Literate

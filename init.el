@@ -4072,6 +4072,62 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
                      (message "PR notes saved to clipboard in Github markdown")))))
 ;; Peer Review / Pull Request Template for Work:1 ends here
 
+;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:1]]
+(use-package separedit)
+;;
+;; # Example Usage
+;;
+;; 1. Press ⌘-e on this line, to edit this entire comment.
+;; 2. Press ⌘-e to exit the edit session.
+;;
+;; ```
+;; ;; 3. Press ⌘-e on this line, to edit this source block!
+;; ;; 4. Press ⌘-e on this line, to edit this inner-most comment!
+;; ;; 5. At start of next line, press “⌘-r ⌘-e” to edit just the source block
+;; ;;
+;; (defun index ()
+;;   "6. Press ⌘-e to edit this string, \"7. and again in these quotes\""
+;;   "<p>8. Press ⌘-e to edit this <strong> HTML </strong> block, in Web-mode </p>")
+;;
+;; ;; 9. Select & press “C-u ⌘-e css-mode RET” on the following, to edit it in CSS mode.
+;; ;; #hola {color: green}
+;; ```
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setup to make the above ⌘-e behaviour happen.
+
+;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
+(--map (bind-key "s-e" #'separedit it)
+       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
+
+;; I don't want to be bothered for what mode I'm in, when a region is selected.
+;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode.
+(advice-add #'separedit--select-mode :before-until
+            (lambda (&rest r)
+              (when (and (region-active-p) (not current-prefix-arg)) (pp-to-string major-mode))))
+
+
+;; Eagerly guess that I'm in HTML mode.
+(advice-add #'separedit :after
+            (lambda (&rest r)
+              (beginning-of-buffer)
+              (when (looking-at "<")
+                (web-mode))))
+
+;; In the indirect buffer, make ⌘-e finish editing.
+(bind-key "s-e"
+(lambda ()
+  (interactive)
+  (or (ignore-errors (call-interactively #'separedit))
+      (call-interactively #'edit-indirect-commit)))
+          #'edit-indirect-mode-map)
+
+;; I also have “s-e” bound to `org-edit-src-exit'.
+(advice-add 'org-edit-src-exit :before-until
+            (lambda (&rest r)
+              (when (ignore-errors (separedit)) t)))
+;; ⌘-e: Edit Everything in a separate buffer:1 ends here
+
 ;; [[file:init.org::#COMMENT-Web-Development][Web-Development:1]]
 ;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
 (mapcar #'my/cheatsheet '("JavaScript" "Vue" "AngularJS"))
@@ -4397,12 +4453,13 @@ Both arguments are strings."
 ;; [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]:1 ends here
 
 ;; [[file:init.org::#https-github-com-motform-stimmung-themes-Let's-try-out-this-dope-theme-and-https-github-com-qhga-shanty-themes-shanty-themes-light-this-one-too][[[https://github.com/motform/stimmung-themes][Let's try out this dope theme]] and [[https://github.com/qhga/shanty-themes#shanty-themes-light][this one too!]]:1]]
-(use-package stimmung-themes
-  :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
-  :config (load-theme 'stimmung-themes-light))
+(unless noninteractive
+  (use-package stimmung-themes
+    :quelpa (stimmung-themes :fetcher github :repo "motform/stimmung-themes")
+    :config (load-theme 'stimmung-themes-light))
 
-(use-package shanty-themes)
-(load-theme 'shanty-themes-light)
+  (use-package shanty-themes)
+  (load-theme 'shanty-themes-light)
 
-(setq-default cursor-type 'bar)
+  (setq-default cursor-type 'bar))
 ;; [[https://github.com/motform/stimmung-themes][Let's try out this dope theme]] and [[https://github.com/qhga/shanty-themes#shanty-themes-light][this one too!]]:1 ends here
