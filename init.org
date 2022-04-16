@@ -6124,6 +6124,17 @@ ${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.o
 my/contacts)))`} $0
 #+end_src
 
+
+** [[https://github.com/sabof/stripe-buffer][Add stripes to "list" buffers]]
+
+#+begin_src emacs-lisp
+;; Make every other line of a buffer grey (or whatever you like).
+;; Useful for buffers that list things.
+;; I want it to make my Org tables look nice. Even better when org-modern is activated.
+(use-package stripe-buffer
+  :config (add-hook 'org-mode-hook 'turn-on-stripe-table-mode))
+#+end_src
+
 * Cosmetics
 CLOSED: [2021-11-02 Tue 22:30]
 :PROPERTIES:
@@ -11514,6 +11525,14 @@ From [[https://github.com/twlz0ne/separedit.el][source]]:
 (advice-add 'org-edit-src-exit :before-until
             (lambda (&rest r)
               (when (ignore-errors (separedit)) t)))
+#+end_src
+
++ ⌘-e to edit an Org table cell; see [[https://orgmode.org/manual/Built_002din-Table-Editor.html][here]] for built-in table editing commands.
+#+begin_src emacs-lisp
+(advice-add #'org-edit-special :before-until
+            (lambda (&rest r)
+              (when (equal 'table-row (car (org-element-at-point)))
+                (call-interactively #'org-table-edit-field))))
 #+end_src
 
 * Web-Development
