@@ -11692,7 +11692,15 @@ associated major mode; that's what we aim to do here."
               (when (equal 'table-row (car (org-element-at-point)))
                 (call-interactively #'org-table-edit-field))))
 #+end_src
+**  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]]
 
+#+begin_src emacs-lisp
+;; This minor mode toggles on along with elisp-mode and indents on the fly when
+;; you edit the code. No special key strokes needed.
+;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
+(use-package el-fly-indent-mode
+  :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
+#+end_src
 * Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
