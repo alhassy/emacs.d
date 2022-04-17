@@ -1035,8 +1035,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   "List of languages I have used in Org-mode, for literate programming.")
 
 ;; Load all the languagues
-(cl-loop for lang in my/programming-languages
-         do (require (intern (format "ob-%s" lang))))
+;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
+(ignore-errors (cl-loop for lang in my/programming-languages
+                        do (require (intern (format "ob-%s" lang)))))
 ;;
 (org-babel-do-load-languages
  'org-babel-load-languages
@@ -4166,9 +4167,72 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 (advice-add 'org-edit-src-exit :before-until
             (lambda (&rest r)
               (when (ignore-errors (separedit)) t)))
+
+;; → ⌘-e on an Org paragraph pops-up an edit session in Org mode.
+;; → ⌘-e on a selection in Org mode pops-up an edit session in Org mode.
+;; TODO: Consider forming an alist for special blocks to refer to their preferred
+;; edit mode, defaulting to Org-mode? Perhaps something to consider /after/
+;; addressing the bug below.
+(advice-unadvice 'org-edit-special)
+(advice-add 'org-edit-special :around
+            (lambda (orginal-function &rest r)
+              (cond
+               ((region-active-p) (call-interactively #'edit-indirect-region) (org-mode))
+               ((equal 'paragraph (car (org-element-at-point)))
+                (mark-paragraph) (call-interactively #'edit-indirect-region) (org-mode))
+               (t (or (ignore-errors (apply orginal-function r))
+                      ;; We try to edit a special block when orginal-function fails.
+                      ;; This way src blocks are not confused with the more generic idea of special blocks.
+                      (when
+                          (my/org-in-any-block-p)
+                        ;; Note using org-element-at-point doesn't work well with special blocks when you're somewhere within the block.
+                        ;; It only works correctly when you're on the boundary of the special block; which is not ideal.
+                        ;; This is why I'm not using: (org-element-property :begin elem).
+                        (-let [(start . end) (my/org-in-any-block-p)]
+                          (set-mark-command start)
+                          (goto-char end) (previous-line 2) (end-of-line) ;; FIXME: Still shows #+end_XXX for some reason.
+                          (call-interactively #'edit-indirect-region) (org-mode))))))))
 ;; ⌘-e: Edit Everything in a separate buffer:3 ends here
 
 ;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:4]]
+;; where...
+(defun my/org-in-any-block-p ()
+  "Return non-nil if the point is in any Org block.
+
+The Org block can be *any*: src, example, verse, etc., even any
+Org Special block.
+
+This function is heavily adapted from `org-between-regexps-p'.
+
+Src: https://scripter.co/splitting-an-org-block-into-two/"
+  (save-match-data
+    (let ((pos (point))
+          (case-fold-search t)
+          (block-begin-re "^[[:blank:]]*#\\+begin_\\(?1:.+?\\)\\(?: .*\\)*$")
+          (limit-up (save-excursion (outline-previous-heading)))
+          (limit-down (save-excursion (outline-next-heading)))
+          beg end)
+      (save-excursion
+        ;; Point is on a block when on BLOCK-BEGIN-RE or if
+        ;; BLOCK-BEGIN-RE can be found before it...
+        (and (or (org-in-regexp block-begin-re)
+                 (re-search-backward block-begin-re limit-up :noerror))
+             (setq beg (match-beginning 0))
+             ;; ... and BLOCK-END-RE after it...
+             (let ((block-end-re (concat "^[[:blank:]]*#\\+end_"
+                                         (match-string-no-properties 1)
+                                         "\\( .*\\)*$")))
+               (goto-char (match-end 0))
+               (re-search-forward block-end-re limit-down :noerror))
+             (> (setq end (match-end 0)) pos)
+             ;; ... without another BLOCK-BEGIN-RE in-between.
+             (goto-char (match-beginning 0))
+             (not (re-search-backward block-begin-re (1+ beg) :noerror))
+             ;; Return value.
+             (cons beg end))))))
+;; ⌘-e: Edit Everything in a separate buffer:4 ends here
+
+;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:5]]
 (use-package language-detection)
 ;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
 ;; Also, (language-detection-string "select * from t") ;; ⇒ sql
@@ -4204,14 +4268,14 @@ associated major mode; that's what we aim to do here."
     (if (called-interactively-p 'any)
         (progn (call-interactively mode) (message "%s enabled!" mode))
       mode)))
-;; ⌘-e: Edit Everything in a separate buffer:4 ends here
+;; ⌘-e: Edit Everything in a separate buffer:5 ends here
 
-;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:5]]
+;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:6]]
 (advice-add #'org-edit-special :before-until
             (lambda (&rest r)
               (when (equal 'table-row (car (org-element-at-point)))
                 (call-interactively #'org-table-edit-field))))
-;; ⌘-e: Edit Everything in a separate buffer:5 ends here
+;; ⌘-e: Edit Everything in a separate buffer:6 ends here
 
 ;; [[file:init.org::#COMMENT-Web-Development][Web-Development:1]]
 ;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
