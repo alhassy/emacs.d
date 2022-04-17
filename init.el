@@ -1832,6 +1832,14 @@ Example uses:
            :repeat-every-hour 2)
 ;; Actually Doing Things ---or /Sending notifications from Emacs/:3 ends here
 
+;; [[file:init.org::*\[\[https:/github.com/sabof/stripe-buffer\]\[Add stripes to "list" buffers\]\]][[[https://github.com/sabof/stripe-buffer][Add stripes to "list" buffers]]:1]]
+;; Make every other line of a buffer grey (or whatever you like).
+;; Useful for buffers that list things.
+;; I want it to make my Org tables look nice. Even better when org-modern is activated.
+(use-package stripe-buffer
+  :config (add-hook 'org-mode-hook 'turn-on-stripe-table-mode))
+;; [[https://github.com/sabof/stripe-buffer][Add stripes to "list" buffers]]:1 ends here
+
 ;; [[file:init.org::#Cosmetics][Cosmetics:1]]
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
@@ -4080,17 +4088,24 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; 1. Press ⌘-e on this line, to edit this entire comment.
 ;; 2. Press ⌘-e to exit the edit session.
 ;;
+;; Since my ⌘-e is context sensitive, to determine whether to continue editing or
+;; exit; you can explicitly request an edit with C-c ' and an exit with C-c C-c.
+;;
 ;; ```
 ;; ;; 3. Press ⌘-e on this line, to edit this source block!
 ;; ;; 4. Press ⌘-e on this line, to edit this inner-most comment!
 ;; ;; 5. At start of next line, press “⌘-r ⌘-e” to edit just the source block
 ;; ;;
-;; (defun index ()
+;; (cl-defun index (&rest args)
 ;;   "6. Press ⌘-e to edit this string, \"7. and again in these quotes\""
 ;;   "<p>8. Press ⌘-e to edit this <strong> HTML </strong> block, in Web-mode </p>")
 ;;
-;; ;; 9. Select & press “C-u ⌘-e css-mode RET” on the following, to edit it in CSS mode.
-;; ;; #hola {color: green}
+;; ;; 9. Press C-u ⌘-e to guess the language of the next string (Rust); then ⌘-r C-c C-r to quickly run the code.
+;; "fn main() { println!(\"{}\", \"hello!\"); }"
+;;
+;; ;; 10. Select & press “C-u ⌘-e” on the following, to edit it in whatever mode you want.
+;; ;; select * from table -- Or just press ⌘-e and have the mode detected.
+;;
 ;; ```
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4099,34 +4114,104 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
 (--map (bind-key "s-e" #'separedit it)
        '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
+;; ⌘-e: Edit Everything in a separate buffer:1 ends here
 
-;; I don't want to be bothered for what mode I'm in, when a region is selected.
-;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode.
+;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:2]]
+;; TODO:Merge these changes upstream
+
+;; I'm focusing on a specific region to edit, so let's not be distracted by anything else.
+;; This makes the “editing stack” feel like a stack, with ⌘-e pushing new editing session buffers,
+;; and C-c C-c, or ⌘-e on non-editable lines, to pop-off the stack.
+(advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
+
+;; I don't want to be bothered for what mode I'm in, when a region is selected using current major mode.
+;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode for my current selected text.
 (advice-add #'separedit--select-mode :before-until
-            (lambda (&rest r)
-              (when (and (region-active-p) (not current-prefix-arg)) (pp-to-string major-mode))))
+            (lambda (&rest _)
+              (when (and (not current-prefix-arg) (region-active-p)) (pp-to-string major-mode))))
 
+;; Also: When on a string ∷
+(advice-add #'separedit--select-mode :before-until
+            (lambda (&rest _)
+              "When on a string ∷
++ ⌘-e ⇒ Edit string at point
++ C-u ⌘-e ⇒ Auto-detect my string's major mode
++ C-u C-u ⌘-e ⇒ Let me select a major mode"
+              (-let [str? (ignore-errors (thing-at-point 'string))]
+                (case (car current-prefix-arg)
+                  (4 (when str? (pp-to-string (my/detect-prog-mode str?))))
+                  (_ nil)))))
 
-;; Eagerly guess that I'm in HTML mode.
-(advice-add #'separedit :after
-            (lambda (&rest r)
-              (beginning-of-buffer)
-              (when (looking-at "<")
-                (web-mode))))
+;; NOTE: By default, separedit provides colouring for 'strings', "strings", and `strings'
+;; This doesn't look very good when I have a single quote within double quotes:
+;; In an Emacs Lisp buffer, editing the string "Bob's Work" gives unexpected highlighting.
+;; ```
+;; (advice-add #'separedit :after
+;;             (lambda (&rest _)
+;;               (when (s-ends-with? "string-mode" (pp-to-string major-mode))
+;;                 (text-mode))))
+;; ```
+;; ⌘-e: Edit Everything in a separate buffer:2 ends here
 
+;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:3]]
 ;; In the indirect buffer, make ⌘-e finish editing.
 (bind-key "s-e"
-(lambda ()
-  (interactive)
-  (or (ignore-errors (call-interactively #'separedit))
-      (call-interactively #'edit-indirect-commit)))
+          (lambda ()
+            (interactive)
+            (or (ignore-errors (call-interactively #'separedit))
+                (call-interactively #'edit-indirect-commit)))
           #'edit-indirect-mode-map)
 
 ;; I also have “s-e” bound to `org-edit-src-exit'.
 (advice-add 'org-edit-src-exit :before-until
             (lambda (&rest r)
               (when (ignore-errors (separedit)) t)))
-;; ⌘-e: Edit Everything in a separate buffer:1 ends here
+;; ⌘-e: Edit Everything in a separate buffer:3 ends here
+
+;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:4]]
+(use-package language-detection)
+;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
+;; Also, (language-detection-string "select * from t") ;; ⇒ sql
+
+;; TODO: Push this upstream; https://github.com/andreasjansson/language-detection.el/issues/1
+(cl-defun my/detect-prog-mode (&optional string)
+  "Guess programming mode of the current buffer, or STRING if it is provided.
+
+When called interactively, it enables the mode;
+from Lisp it just returns the name of the associated mode.
+
+    ;; Example Lisp usage
+    (call-interactively #'my/detect-prog-mode)
+
+`language-detection-buffer' returns a string which is not always the name of the
+associated major mode; that's what we aim to do here."
+  (interactive)
+
+  (defvar my/detect-prog-mode/special-names
+    '((c           . c-mode)
+      (cpp         . c++-mode)
+      (emacslisp   . emacs-lisp-mode)
+      (html        . web-mode) ;; I intentionally want to use this alternative.
+      (matlab      . octave-mode)
+      (shell       . shell-script-mode)
+      (visualbasic . visual-basic-mode)
+      (xml         . sgml-mode))
+    "Names in this alist map a language to its mode; all other languages 𝒳 have mode ‘𝒳-mode’ afaik.")
+
+  (let* ((lang (if string (language-detection-string string) (language-detection-buffer)))
+         (mode (or (cdr (assoc lang my/detect-prog-mode/special-names))
+                   (intern (format "%s-mode" lang)))))
+    (if (called-interactively-p 'any)
+        (progn (call-interactively mode) (message "%s enabled!" mode))
+      mode)))
+;; ⌘-e: Edit Everything in a separate buffer:4 ends here
+
+;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:5]]
+(advice-add #'org-edit-special :before-until
+            (lambda (&rest r)
+              (when (equal 'table-row (car (org-element-at-point)))
+                (call-interactively #'org-table-edit-field))))
+;; ⌘-e: Edit Everything in a separate buffer:5 ends here
 
 ;; [[file:init.org::#COMMENT-Web-Development][Web-Development:1]]
 ;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
