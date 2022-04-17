@@ -2237,6 +2237,23 @@ Let's save a few precious seconds,
 (setq-default disabled-command-function nil)
 #+end_src
 
+** An “auto read only” detection mechanism ---when jumping to definitions
+
+Files in 3ʳᵈ-party directories should be read-only whenever I open them, when
+I'm jumping to definitions (with ~M-.~).
+
+#+begin_src emacs-lisp
+;; Usage: Press “M-”. “use-package” below and you can accidentally alter the source code!
+;; But in this case you likely just wanted to see the 3ʳᵈ-party definition, not alter it.
+;; As such, with this advice, the source will not be alterable (unless you toggle read-only mode).
+(advice-add #'xref-find-definitions :after
+            (lambda (&rest _)
+              (when (--map (s-ends-with? it (f-parent buffer-file-name))
+                           '("lisp/emacs-lisp" "/lisp" ".emacs.d/elpa/"))
+                (read-only-mode))))
+#+end_src
+
+
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
