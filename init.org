@@ -10014,12 +10014,13 @@ blocks we use ~C-c '~.
 Super helpful in making my Emacs configuration: If a name is not highlighted,
 then I've misspelled it or it doesn't exist! :smile:
 
-** COMMENT Aggressive Indentation
-:PROPERTIES:
-:CUSTOM_ID: Aggressive-Indentation
-:END:
+** Aggressive Indentation
 
 With a single space or tab, my code should always remain indented.
+
+[[https://github.com/Malabarba/aggressive-indent-mode][aggressive-indent-mode]] is a minor mode that keeps your code always indented. It
+reindents after every change, making it more reliable than electric-indent-mode.
+
 #+BEGIN_SRC emacs-lisp
 ;; Always stay indented: Automatically have blocks reindented after every change.
 (use-package aggressive-indent
@@ -10030,6 +10031,19 @@ With a single space or tab, my code should always remain indented.
 (setq-default tab-width 4)
 #+END_SRC
 
+This mode requires my Lisp forms to be well-balanced; e.g., having a missing
+parenthesis does not indent. For instance, I have a form ~F~ and I write ~(when F~
+but have not yet enclosed the final parens, I still want nice indentation. So...
+
+***  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]]
+
+#+begin_src emacs-lisp
+;; This minor mode toggles on along with elisp-mode and indents on the fly when
+;; you edit the code. No special key strokes needed.
+;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
+(use-package el-fly-indent-mode
+  :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
+#+end_src
 ** Being Generous with Whitespace
 :PROPERTIES:
 :CUSTOM_ID: Being-Generous-with-Whitespace
@@ -11691,15 +11705,6 @@ associated major mode; that's what we aim to do here."
             (lambda (&rest r)
               (when (equal 'table-row (car (org-element-at-point)))
                 (call-interactively #'org-table-edit-field))))
-#+end_src
-**  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]]
-
-#+begin_src emacs-lisp
-;; This minor mode toggles on along with elisp-mode and indents on the fly when
-;; you edit the code. No special key strokes needed.
-;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
-(use-package el-fly-indent-mode
-  :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
 #+end_src
 * Web-Development
 :PROPERTIES:
