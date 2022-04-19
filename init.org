@@ -2253,15 +2253,21 @@ I'm jumping to definitions (with ~M-.~).
                 (read-only-mode))))
 #+end_src
 
-** Lisp Programming: highlight quoted symbols                     :relocate:
+** Lisp Programming                                                :relocate:
+
+*** highlight quoted symbols
 
 #+begin_src emacs-lisp
-(use-package highlight-quoted)
+(use-package highlight-quoted
+  :config (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
+
 ;; If everything worked fine, then “ 'b ” below should be coloured nicely in Emacs Lisp mode.
 (when nil
   (-let [x 'somevar]
     (list x 'b "c" :e)))
 #+end_src
+
+
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
