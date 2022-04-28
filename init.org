@@ -2267,7 +2267,6 @@ I'm jumping to definitions (with ~M-.~).
     (list x 'b "c" :e)))
 #+end_src
 
-
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -12179,7 +12178,7 @@ I like using Chrome ---I like the integration of all things Google.
 (use-package vue-mode)
 #+end_src
 
-* Lisp Helpers / Kill all buffers that are not associated with a file
+* Lisp Helpers / Kill all buffers that are not associated with a file; also ~C-x ←/→~
 :PROPERTIES:
 :CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
 :END:
@@ -12193,8 +12192,26 @@ I like using Chrome ---I like the integration of all things Google.
   "Kill all buffers that are not associated with a file.
   By convention, such files are named in *earmuffs* style."
   (interactive)
-  (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list)))))
+  (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list)))))))
 #+end_src
+
+When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
+#+begin_src emacs-lisp
+(defun my/buffer-predicate (buffer)
+  "Run `C-u 0 C-x C-e' on the following form to see all buffer names and find the
+   ones annyoning you, then place those in the function body below
+
+        (mapcar #'buffer-name (buffer-list))
+"
+  (and (not (member (buffer-name buffer) '("*Quail Completions*" "*Backtrace*" "*agda2*" "*sqls*" "*which-key*")))
+       (not (--any? (s-starts-with? it (buffer-name buffer)) '("*helm" "*Helm" "*lsp" "*Occur" "magit-" "*Flymake" "*format" "*Shell" "*Async" "*org-src-fontification:")))
+       (not (--any? (s-ends-with? it (buffer-name buffer)) '("stderr*" "log*" "-ls*")))))
+
+(set-frame-parameter nil 'buffer-predicate 'my/buffer-predicate)
+#+end_src
+
+Note: ~C-x C-r~ is very useful for jumping to recently visited files.
+
 * Toggles Hydra                                             :Not_yet_tangled:
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
