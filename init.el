@@ -596,6 +596,27 @@ Is replaced by:
 (setq-default disabled-command-function nil)
 ;; Helpful Utilities & Shortcuts:1 ends here
 
+;; [[file:init.org::*An “auto read only” detection mechanism ---when jumping to definitions][An “auto read only” detection mechanism ---when jumping to definitions:1]]
+;; Usage: Press “M-”. “use-package” below and you can accidentally alter the source code!
+;; But in this case you likely just wanted to see the 3ʳᵈ-party definition, not alter it.
+;; As such, with this advice, the source will not be alterable (unless you toggle read-only mode).
+(advice-add #'xref-find-definitions :after
+            (lambda (&rest _)
+              (when (--map (s-ends-with? it (f-parent buffer-file-name))
+                           '("lisp/emacs-lisp" "/lisp" ".emacs.d/elpa/"))
+                (read-only-mode))))
+;; An “auto read only” detection mechanism ---when jumping to definitions:1 ends here
+
+;; [[file:init.org::*highlight quoted symbols][highlight quoted symbols:1]]
+(use-package highlight-quoted
+  :config (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
+
+;; If everything worked fine, then “ 'b ” below should be coloured nicely in Emacs Lisp mode.
+(when nil
+  (-let [x 'somevar]
+    (list x 'b "c" :e)))
+;; highlight quoted symbols:1 ends here
+
 ;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
 (global-set-key (kbd "C-z")
@@ -3604,6 +3625,24 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 (use-package highlight-defined
   :hook (emacs-lisp-mode . highlight-defined-mode))
 ;; Highlight defined Lisp symbols:1 ends here
+
+;; [[file:init.org::*Aggressive Indentation][Aggressive Indentation:1]]
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent
+  :config (global-aggressive-indent-mode t))
+
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+;; Aggressive Indentation:1 ends here
+
+;; [[file:init.org::* \[\[https:/github.com/jiahaowork/el-fly-indent-mode.el\]\[Indent Emacs Lisp on the fly\]\]][ [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]]:1]]
+;; This minor mode toggles on along with elisp-mode and indents on the fly when
+;; you edit the code. No special key strokes needed.
+;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
+(use-package el-fly-indent-mode
+  :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
+;;  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]]:1 ends here
 
 ;; [[file:init.org::#Being-Generous-with-Whitespace][Being Generous with Whitespace:1]]
 (use-package electric-operator
