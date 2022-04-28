@@ -9377,7 +9377,7 @@ repositories, backlogs, and Kanban boards.
               for branch = (-let [default-directory (format "~/%s" 𝑺)]
                              (magit-get-current-branch))
               for _ = (setq w-status-of-services/branch-name-width (max (length branch) w-status-of-services/branch-name-width))
-              for 𝑺-buffer = (--find (s-starts-with? (format "%s" 𝑺) it) (mapcar 'buffer-name (buffer-list)))
+              for 𝑺-buffer = (--find (s-starts-with? (format "*Server:%s" 𝑺) it) (mapcar 'buffer-name (buffer-list)))
               for saying = (let (most-recent-shell-output (here (current-buffer)))
                              (if (not 𝑺-buffer)
                                  " ─Server not started─ "
@@ -9591,7 +9591,7 @@ repositories, backlogs, and Kanban boards.
                               (quote ,repo)
                               (if current-prefix-arg "" ,main-setup)
                               ,cmd))
-             (buf-name (format "%s/%s" (quote ,repo)
+             (buf-name (format "*Server:%s/%s*" (quote ,repo)
                                (if current-prefix-arg "main"
                                  (-let [default-directory ,(format "~/%s" repo)]
                                    (magit-get-current-branch))))))
@@ -12203,9 +12203,19 @@ When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
 
         (mapcar #'buffer-name (buffer-list))
 "
-  (and (not (member (buffer-name buffer) '("*Quail Completions*" "*Backtrace*" "*agda2*" "*sqls*" "*which-key*")))
-       (not (--any? (s-starts-with? it (buffer-name buffer)) '("*helm" "*Helm" "*lsp" "*Occur" "magit-" "*Flymake" "*format" "*Shell" "*Async" "*org-src-fontification:")))
-       (not (--any? (s-ends-with? it (buffer-name buffer)) '("stderr*" "log*" "-ls*")))))
+  ;; First let's kill a bunch of buffers
+  ;; (my/clean-buffers) ;; TODO: Bad idea?
+
+  ;; Next let's filter out any remaining ones [Redundant?]
+  (defvar my/ignore/buffer/name '("*Quail Completions*" "*Backtrace*" "*Help*" "*agda2*" "*sqls*" "*which-key*" "*Warnings*" "*Messages*" "Status of Services"))
+  (defvar my/ignore/buffer/prefix '("*helm" "*Helm"  "*quelpa" "*lsp" "*Occur" "magit-" "*Flymake" "*format" "*Shell" "*Async"
+                                    "*org-src-fontification:" "*Server:"))
+  (defvar my/ignore/buffer/suffix  '("stderr*" "log*" "-ls*"))
+
+  (-let [name (buffer-name buffer)]
+    (not (or (member name my/ignore/buffer/name)
+             (--any? (s-starts-with? it name) my/ignore/buffer/prefix)
+             (--any? (s-ends-with? it name) my/ignore/buffer/suffix)))))
 
 (set-frame-parameter nil 'buffer-predicate 'my/buffer-predicate)
 #+end_src
