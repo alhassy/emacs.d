@@ -12196,6 +12196,8 @@ I like using Chrome ---I like the integration of all things Google.
 #+end_src
 
 When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
+- If I want to see a particular buffer, I'll summon it explicitly.
+  + E.g., Messages with ~C-h e~, Magit with ~C-x g~, Server Status with ~M-S-SPC~, etc.
 #+begin_src emacs-lisp
 (defun my/buffer-predicate (buffer)
   "Run `C-u 0 C-x C-e' on the following form to see all buffer names and find the
@@ -12208,7 +12210,7 @@ When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
 
   ;; Next let's filter out any remaining ones [Redundant?]
   (defvar my/ignore/buffer/name '("*Quail Completions*" "*Backtrace*" "*Help*" "*agda2*" "*sqls*" "*which-key*" "*Warnings*" "*Messages*" "Status of Services"))
-  (defvar my/ignore/buffer/prefix '("*helm" "*Helm"  "*quelpa" "*lsp" "*Occur" "magit-" "*Flymake" "*format" "*Shell" "*Async"
+  (defvar my/ignore/buffer/prefix '("*helm" "*Helm"  "*quelpa" "*lsp" "*Occur" "magit" "*Flymake" "*format" "*Shell" "*Async"
                                     "*org-src-fontification:" "*Server:"))
   (defvar my/ignore/buffer/suffix  '("stderr*" "log*" "-ls*"))
 
