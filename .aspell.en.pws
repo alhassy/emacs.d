@@ -1,4 +1,4 @@
-personal_ws-1.1 en 296 
+personal_ws-1.1 en 302 
 ACSII
 Administrivia
 Agda's
@@ -25,6 +25,7 @@ Excerption
 Executables
 Genericity
 Goju
+Hemi
 Hoare
 Invariance
 Kahl
@@ -32,6 +33,7 @@ Karim
 Knowns
 LaTeX
 Lekhani
+Liam
 Lvalues
 Löf's
 Malak
@@ -48,6 +50,7 @@ Monotonicity
 Muawiyah
 Musa
 Neato
+Orchestrator
 PackageFormer
 PackageFormer's
 Prepend
@@ -62,6 +65,7 @@ Sessional
 Shyam
 Subsegment
 Surjection
+TypeScript
 Unbundling
 Uncomment
 Yoneda
@@ -99,6 +103,7 @@ catenated
 catenating
 catenation
 centric
+cli
 coalgebra
 coercions
 colimit
@@ -216,6 +221,7 @@ naturality
 nullary
 observationally
 oolean
+orchestrator
 parameterisation
 parenthesisation
 pointfree
