@@ -44,3 +44,9 @@ _minted-*
 /init.el~
 /scratch.sql
 /.log/
+/scratch.md
+/scratch.csv
+/scratch.el
+/scratch.js
+/scratch.json
+/scratch.org
