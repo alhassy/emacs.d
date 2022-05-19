@@ -11435,8 +11435,9 @@ Below is a detailed checklist of what I went through.
 12. [ ] Best Practices: The following rules-of-thumb are adhered to, more or less.
       ,#+html: <details>
     - Remove some redundancy using a bit of laws of algorithmics, namely
-      ~[𝒊𝒇-𝒅𝒊𝒔𝒕𝒓𝒊𝒃𝒖𝒕𝒊𝒗𝒊𝒕𝒚] (a ? f(b) : f(c)) ≡ f(a ? b : c)~, which increases
-      readability a tad.
+      + ~[𝒆𝒕𝒂-𝒓𝒆𝒅𝒖𝒄𝒕𝒊𝒐𝒏] ⋯(x => f(x))⋯  ≡ ⋯f⋯~
+      + ~[𝒊𝒇-𝒅𝒊𝒔𝒕𝒓𝒊𝒃𝒖𝒕𝒊𝒗𝒊𝒕𝒚] (a ? f(b) : f(c)) ≡ f(a ? b : c)~
+      which increase readability a tad.
       # Especially when “f” is a lengthy expression; it may also be ideal to give
       # “a ? b : c” a local name.
     - Fail fast, validate arguments [we have some in-house validation util libraries]
