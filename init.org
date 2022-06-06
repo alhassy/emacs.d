@@ -9396,12 +9396,15 @@ repositories, backlogs, and Kanban boards.
               for _ = (if (or (s-contains? "Error" saying) (not 𝑺-buffer)) (setq status  '💥))
               for keymap = (copy-keymap org-mouse-map)
               do (cl-loop for (key action)
-                          on `(;; Checkout branch/PR
+                          on `( ;; Checkout branch/PR
                                c (w-pr-checkout (format "~/%s" ,𝑺))
                                ;; Restart service, remaining on current branch [not switching to “main”!]
                                r (-let [current-prefix-arg t]
                                    (funcall (intern (format "w-stop-%s" ,𝑺)))
                                    (funcall (intern (format "w-start-%s" ,𝑺))))
+                               f (-let [default-directory  (format "~/%s" ,𝑺)]
+                                   (call-interactively #' projectile-find-file))
+                               t (vterm-shell-command (format "clear; cd ~/%s; git status" ,𝑺) (format "vterm/%s" ,𝑺))
                                ;; See the repo in the web
                                w (--> (format "%s" ,𝑺)
                                     (if (s-contains? "/" it) (f-parent it) it)
@@ -9440,6 +9443,7 @@ repositories, backlogs, and Kanban boards.
                            "tab       ∷  See service magit buffer  \t\t\t i  ∷  Inject users"
                            "return    ∷  Visit service shell       \t\t\t s  ∷  SQL buffer"
                            "r         ∷  Restart service           \t\t\t w  ∷  See the repo in the web"
+                           "f         ∷  Find file in project      \t\t\t t  ∷ Terminal"
                            "g         ∷  Refresh this view         \t\t\t q  ∷  Quit, and kill, this buffer"))]
        (insert-text-button (s-replace "\"" "″" (s-replace "run" "✅" (nth 1 it)))
                            'face nil
@@ -10128,7 +10132,7 @@ Here are further reads:
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-** TODO COMMENT Text Folding ---Selectively displaying portions of a program :causes_HIDING_ALL_BLOCKS_issue:
+** TODO Text Folding ---Selectively displaying portions of a program :causes_HIDING_ALL_BLOCKS_issue:
 :PROPERTIES:
 :CUSTOM_ID: Text-Folding
 :END:
@@ -10935,24 +10939,43 @@ Also: doc:lsp-format-buffer makes the code more readable.
   ;; Set how often highlights, lenses, links, etc will be refreshed while you type
   ;; (setq lsp-idle-delay 0.500) ;; default
   :hook  ;; Every programming mode should enter & start LSP, with which-key support
-         (js-mode . lsp-mode) ;; Enter LSP mode
-         (js-mode . lsp)      ;; Start LSP server
-         (lsp-mode . lsp-enable-which-key-integration)
+  (js-mode . lsp-mode) ;; Enter LSP mode
+  (js-mode . lsp)      ;; Start LSP server
+  (lsp-mode . lsp-enable-which-key-integration)
   ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
   :bind ("C-x y" . #'yankpad-insert)
+  ;; When I'm typing and possible completitions appear, I can press M-! to see their docstrings in a temporary buffer.
+  ;; But on already written words, I'll use “C-u M-.” to toggle having their docstrings in a scrollable&growable tooltip-like-overlay-window.
+  ;; Use “bind*” to override Js-mode's dumbjump, which is useless for me
+  :bind* ("M-." . (lambda () (interactive)
+                    (if (not current-prefix-arg)
+                        (call-interactively #'lsp-ui-peek-find-definitions)
+                      (if (lsp-ui-doc--visible-p)
+                          (lsp-ui-doc-hide)
+                        (lsp-ui-doc-show)))))
   :commands lsp)
 
 ;; If a server crashes, restart it without asking me.
 (setq lsp-restart 'auto-restart)
+#+end_src
 
-
+#+begin_src emacs-lisp
 ;; https://emacs-lsp.github.io/lsp-mode/page/languages/
 ;; M-x lsp-install-server ⟨return⟩ jsts-ls
 ;; M-x lsp-install-server ⟨return⟩ json-ls
 ;; M-x lsp-install-server ⟨return⟩ eslint
 ;; M-x lsp-install-server ⟨return⟩ css-ls
 ;; M-x lsp-install-server ⟨return⟩ html-ls
+#+end_src
 
+For JavaScript development, actually install the required servers locally.
+- Otherwise, tooltips with documentation on hover, args info echoed in mode
+  line, jump to definition, and etc wont work.
+#+begin_src emacs-lisp
+(shell-command "npm i -g typescript-language-server; npm i -g typescript")
+#+end_src
+
+#+begin_src emacs-lisp
 ;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
 ;; https://emacs-lsp.github.io/lsp-ui/#intro
 ;;
@@ -11077,20 +11100,20 @@ LSP mode supports the following Features:
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
-*** Types as comments in JavaScript via LSP
+*** Types as comments in JavaScript via LSP && Using LSP for Org-Src Blocks
 :PROPERTIES:
 :CUSTOM_ID: Types-as-comments-in-JavaScript-via-LSP
 :END:
-#+begin_src js :tangle no
+#+begin_src js :tangle "~/.emacs.d/scratch.js"
 // The following enables typechecking via LSP.
 // @ts-check
 
 /**
- *
- * @param {number} x -
- * @param {number} y -
- * @returns {number} -
- */
+ ,*
+ ,* @param {number} x -
+ ,* @param {number} y -
+ ,* @returns {number} -
+ ,*/
 // function add(x, y) {return "x + y";} // ⚠ Faulty implementation!
 function add(x, y) {return x + y;}
 
@@ -11099,6 +11122,10 @@ add(1, 2)
 #+end_src
 
 For more on this idea on types, see [[https://github.com/BeyondCodeBootcamp/jsdoc-typescript-starter][A simple, but non-trivial example of getting the most from JSDoc + tsserver (Type Linting without TypeScript)]].
+
+Within Org-mode, at the start of the above ~src~ block, execute ~M-x lsp-org~ to [[https://emacs-lsp.github.io/lsp-mode/manual-language-docs/lsp-org/][get
+some LSP]] working even though you're in Org-mode.
+
 
 ** JSON
 :PROPERTIES:
@@ -11257,37 +11284,71 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (goto-char e)
     (set-marker e nil)))
 #+end_src
-** TODO Auto-format on Save :Disabled:Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
+** TODO Auto-format on Save :Reenabled:Should_be_Disabled:Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
 :PROPERTIES:
 :CUSTOM_ID: Auto-format-on-Save
 :END:
 
 [[https://github.com/lassik/emacs-format-all-the-code/tree/eb2a7fa6da15d23b57921218a36ac67d523e81f1][Auto-format source code in many languages with one command]]
 
-Lets you auto-format source code in many languages using the same command for
-all languages, instead of learning a different Emacs package and formatting
-command for each language.
+Let's auto-format source code in many languages using the same command for all
+languages, instead of learning a different Emacs package and formatting command
+for each language.
 
 Just do ~M-x format-all-buffer~ and it will try its best to do the right thing. To
-auto-format code on save, use the minor mode format-all-mode.
+auto-format code on save, use the minor mode format-all-mode. Better yet, we ask
+for it to do so “on save”.
 
 - You will need to install external programs to do the formatting. If
   ~format-all-buffer~ can't find the right program, it will try to tell you how to
   install it.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package format-all
   ;; To enable format on save for most programming language buffers:
   :hook (prog-mode . format-all-mode)
   :config
   ;; Please use the default formatters; I don't care too much.
   (add-hook 'format-all-mode-hook 'format-all-ensure-formatter))
+#+end_src
 
+[[https://prettier.io/docs/en/index.html][Prettier]] is an opinionated code formatter for numerous web related languages,
+including JS, TS, HTML, CSS, JSON, Vue, Markdown, and YAML.
+
+#+begin_src emacs-lisp
 ;; For JavaScript prettification: It automatically inserts semicolons, forces newlines, inserts parens, etc.
 ;; Lots of redundant stuff, but stuff to make it easy to work with others.
 (shell-command "npm install --global prettier")
 ;; Specific package to do only JS prettification: https://github.com/prettier/prettier-emacs
 #+end_src
+
+For example, in a NodeJS app make a file ~.prettierrc.json~ whose contents are
+#+begin_src json :tangle no
+{
+    "singleQuote": true,
+    "arrowParens": "avoid",
+    "printWidth": 120,
+    "semi": false,
+    "trailingComma": "none"
+}
+#+end_src
+Unfortunately, my current team prefers ~"semi": true~ ---which is understandable
+for people not familar with how JavaScript does [[https://www.freecodecamp.org/news/lets-talk-about-semicolons-in-javascript-f1fe08ab4e53/][semicolon insertion]].
+
+( If you're having trouble getting prettier to work on save, consider using this
+[[https://github.com/codesuki/add-node-modules-path][package]] which detects your node modules' path. )
+
+Anyhow, with these rules:
+- I write =const f = (x) => "x" == x= then on save it becomes =const f = x => 'x' == x;=
+- I write =let xs = [1, 2, 3,]= then on save it becomes =let xs = [1, 2, 3];=
+- I write =foo(reallyLongArg(), omgSoManyParameters(), IShouldRefactorThis(), isThereSeriouslyAnotherOne());=
+  then nothing happens on save; but if you add one more argument, =, 12=, then it gets reformatted with each arg on one line.
+
+Notice that in the first example above, only minor syntactic changes were made;
+nothing altering semantics or quality of code ---for that, we use a /linter/.
+In particular, [[https://emacs-lsp.github.io/lsp-mode/page/lsp-eslint/][LSP ESLint]] when activated will show us two errors: It's almost always
+better to use ~===~ instead of ~==~ and literals should be on the right side of the equality.
+We can use ~M-x lsp-execute-code-action~ to get a list of actions that can be performed to fix this /quality/ problem.
 
 ** Searching Hydra
 :PROPERTIES:
@@ -11610,13 +11671,15 @@ edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected reg
 (advice-add 'org-edit-src-exit :before-until
             (lambda (&rest r)
               (when (ignore-errors (separedit)) t)))
+#+end_src
 
+#+begin_src emacs-lisp
 ;; → ⌘-e on an Org paragraph pops-up an edit session in Org mode.
 ;; → ⌘-e on a selection in Org mode pops-up an edit session in Org mode.
 ;; TODO: Consider forming an alist for special blocks to refer to their preferred
 ;; edit mode, defaulting to Org-mode? Perhaps something to consider /after/
 ;; addressing the bug below.
-(advice-unadvice 'org-edit-special)
+;; (advice-unadvice 'org-edit-special) MA: TODO: FIXME: Delete this?
 (advice-add 'org-edit-special :around
             (lambda (orginal-function &rest r)
               (cond
@@ -11721,6 +11784,17 @@ associated major mode; that's what we aim to do here."
               (when (equal 'table-row (car (org-element-at-point)))
                 (call-interactively #'org-table-edit-field))))
 #+end_src
+** Emphasised Comments
+
+#+begin_src emacs-lisp
+;; In VSCode, with the “Better Comments” extension, comments starting with a “bang” are made to stand out, via bold red.
+;; Let's do the same thing in Emacs.
+;;I did not look around, there might be a package/option for this 🤷
+(add-hook 'prog-mode-hook (lambda ()
+                            (highlight-lines-matching-regexp ".*\\*.*!.*" 'hi-red-b)
+                            (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)))
+#+end_src
+
 * Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
@@ -12193,7 +12267,7 @@ I like using Chrome ---I like the integration of all things Google.
   "Kill all buffers that are not associated with a file.
   By convention, such files are named in *earmuffs* style."
   (interactive)
-  (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list)))))))
+  (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list))))))
 #+end_src
 
 When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
