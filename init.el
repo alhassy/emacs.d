@@ -1056,7 +1056,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 ;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
 (defvar my/programming-languages
-  '(emacs-lisp shell python haskell rust ruby ocaml dot latex org js css
+  '(emacs-lisp shell python haskell
+      ;; rust ;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
+    ruby ocaml dot latex org js css
                sqlite C) ;; Captial “C” gives access to C, C++, D
   "List of languages I have used in Org-mode, for literate programming.")
 
