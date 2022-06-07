@@ -12,6 +12,8 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
+(setq doom-modeline-buffer-file-name-style 'truncate-except-project)
+
 * TODO Clean this section up!                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
@@ -21,6 +23,11 @@
 ;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
 (setq byte-compile-warnings '(cl-functions))
 (require 'cl-lib) ;; to get loop instead of cl-loop, etc.
+
+
+(setq  work/sqls-connections nil)(setq work/sqls-connections
+      '("host=127.0.0.1 port=5432 user=SUPER_SECRET password=ALSO_SUPER_SECRET dbname=YET_AGAIN_SECRET sslmode=disable"))
+
 
 ;; (cl-defun org-duration-to-minutes (&rest _) )
 ;; (cl-defun org-id-find-id-file (&rest _))
@@ -3821,7 +3828,7 @@ Write ~os_~ then see a bunch of completions ;-)
 
 #+name: my-snippets-os-symbols
 #+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
-(loop for (name expansion)
+(cl-loop for (name expansion)
       in '((os-command ⌘)
            (os_option ⌥)
            (os_alt ⌥)
@@ -4255,7 +4262,7 @@ name.
 ;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 #+end_src
-* Life within Org-mode
+* COMMENT Life within Org-mode
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :END:
@@ -6516,7 +6523,7 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 
 #+BEGIN_SRC emacs-lisp
 ;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-laserwave doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
+(setq my/themes '(doom-laserwave shany-themes-light stimming-themes-light stimming-themes-dark doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
 (setcdr (last my/themes) my/themes)
 #+END_SRC
 
@@ -9628,7 +9635,6 @@ In my private ~work.el~ I have declarations of the form ~(my/defservice ⟨direc
   (load-file "~/Desktop/work.el"))
 #+end_src
 
-
 ** Project management & navigation
 :PROPERTIES:
 :CUSTOM_ID: Project-management-navigation
@@ -10032,7 +10038,7 @@ blocks we use ~C-c '~.
 Super helpful in making my Emacs configuration: If a name is not highlighted,
 then I've misspelled it or it doesn't exist! :smile:
 
-** Aggressive Indentation
+** TODO Aggressive Indentation :Broken_Subsection:
 
 With a single space or tab, my code should always remain indented.
 
@@ -10053,9 +10059,9 @@ This mode requires my Lisp forms to be well-balanced; e.g., having a missing
 parenthesis does not indent. For instance, I have a form ~F~ and I write ~(when F~
 but have not yet enclosed the final parens, I still want nice indentation. So...
 
-***  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]]
+*** TODO  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]]        :Disabled:Breaks_C_c_C_v_C_t:
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; This minor mode toggles on along with elisp-mode and indents on the fly when
 ;; you edit the code. No special key strokes needed.
 ;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
@@ -10676,9 +10682,9 @@ Let's use [[https://github.com/lighttiger2505/sqls][LSP for SQL]], to get
   (read-only-mode) (other-window -1)
   (local-set-key "q" (lambda ()  "Quit buffer" (interactive) (ignore-errors (kill-buffer-and-window)))))
 
-
-(bind-key "C-c C-c" #'my/execute-query-at-point 'sql-mode-map)
-(bind-key "C-c C-<return>" #'my/execute-query-at-point 'sql-mode-map)
+;; TODO: FIXME: Debugger entered--Lisp error: (void-variable sql-mode-map)
+;; (bind-key "C-c C-c" #'my/execute-query-at-point 'sql-mode-map)
+;; (bind-key "C-c C-<return>" #'my/execute-query-at-point 'sql-mode-map)
 
 (defun w-sql ()
   "Quickly run a SQL query, then dispose of the buffer when done.
@@ -11126,7 +11132,6 @@ For more on this idea on types, see [[https://github.com/BeyondCodeBootcamp/jsdo
 Within Org-mode, at the start of the above ~src~ block, execute ~M-x lsp-org~ to [[https://emacs-lsp.github.io/lsp-mode/manual-language-docs/lsp-org/][get
 some LSP]] working even though you're in Org-mode.
 
-
 ** JSON
 :PROPERTIES:
 :CUSTOM_ID: JSON
@@ -11548,7 +11553,6 @@ Below is a detailed checklist of what I went through.
 
     ,#+html: </details>
 #+end_src
-
 
 ** ⌘-e: Edit Everything in a separate buffer
 

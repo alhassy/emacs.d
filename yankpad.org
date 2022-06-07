@@ -29,11 +29,6 @@ $0
 $0
 #+end_src
 
-** s_plantuml: src for plantuml
-#+begin_src plantuml
-$0
-#+end_src
-
 ** s_emacs-lisp: src for emacs-lisp
 #+begin_src emacs-lisp
 $0
@@ -110,8 +105,6 @@ src_org[:exports code]{$1} $0
 src_agda2[:exports code]{$1} $0
 ** is_any: inline source for any
 src_any[:exports code]{$1} $0
-** is_plantuml: inline source for plantuml
-src_plantuml[:exports code]{$1} $0
 ** is_emacs-lisp: inline source for emacs-lisp
 src_emacs-lisp[:exports code]{$1} $0
 ** is_shell: inline source for shell
@@ -152,11 +145,6 @@ $0
 
 ** e_any: example for any
 #+begin_example any
-$0
-#+end_example
-
-** e_plantuml: example for plantuml
-#+begin_example plantuml
 $0
 #+end_example
 
@@ -784,68 +772,7 @@ https://twitter.com/musa314
 A Mechanisation of Internal Galois Connections In Order Theory Formalised Without Meets
 https://macsphere.mcmaster.ca/bitstream/11375/17276/2/thesis.pdf
 
-** journal_guided: Introspection & Growth
-I'm writing from ${1:location}.
 
-Gut answer, today I feel ${2:scale}/10.
-⇒ ${3:Few words or paragraphs to explain what's on your mind.}
-
-${4: All things which cause us to groan or recoil are part of the tax of
-life. These things you should never hope or seek to escape.  Life is a battle,
-and to live is to fight.
-
-⟨ Press TAB once you've read this mantra. ⟩
-$(when yas-moving-away-p "")
-}
-`(progn
-  (eww "https://www.dailyinspirationalquotes.in/")
-  (sit-for 2) (when nil let eww load)
-  (read-only-mode -1)
-  (goto-line 52)
-  (kill-line)
-  (kill-buffer)
-  (yank))`
-${7:
-Self Beliefs:
-+ I am working on a healthier lifestyle, including a low-carb diet.
-
-  - I’m also investing in a healthy, long-lasting relationship.
-
-  ➩ These are what I want and are important to me. ⇦
-
-+ I will not use any substances to avoid real issues in my life. I must own them.
-
-+ Everything I’m searching for is already inside of me.
-
-+ Progress is more important than perfection.
-
-⟨ Press TAB once you've read these beliefs. ⟩
-$(when yas-moving-away-p "")
-}
-
-*Three things I'm grateful for:*
-1. ${8:??? … e.g., old relationship, something great yesterday, an opportunity I
-   have today, something simple near me within sight}
-2. ${9:??? … e.g., old relationship, something great yesterday, an opportunity I
-   have today, something simple near me within sight}
-3. ${10:??? … e.g., old relationship, something great yesterday, an opportunity I
-   have today, something simple near me within sight}
-
-*Three things that would make today great:*
-1. ${11:???}
-2. ${12:???}
-3. ${13:???}
-
-*What one thing is top of mind today?*
-${14:???}
-
-*What’s one opportunity I want to go after?*
-${15:???}
-
-*What’s one thing I’m really proud of OR I’m amazed and in awe of?*
-${16:???}
-
-$0
 
 ** w-pr-template: Peer Review / Pull Request Template for Work
 I followed the testing instructions and everything look's good 😁
@@ -929,8 +856,9 @@ Below is a detailed checklist of what I went through.
 12. [ ] Best Practices: The following rules-of-thumb are adhered to, more or less.
       #+html: <details>
     - Remove some redundancy using a bit of laws of algorithmics, namely
-      ~[𝒊𝒇-𝒅𝒊𝒔𝒕𝒓𝒊𝒃𝒖𝒕𝒊𝒗𝒊𝒕𝒚] (a ? f(b) : f(c)) ≡ f(a ? b : c)~, which increases
-      readability a tad.
+      + ~[𝒆𝒕𝒂-𝒓𝒆𝒅𝒖𝒄𝒕𝒊𝒐𝒏] ⋯(x => f(x))⋯  ≡ ⋯f⋯~
+      + ~[𝒊𝒇-𝒅𝒊𝒔𝒕𝒓𝒊𝒃𝒖𝒕𝒊𝒗𝒊𝒕𝒚] (a ? f(b) : f(c)) ≡ f(a ? b : c)~
+      which increase readability a tad.
       # Especially when “f” is a lengthy expression; it may also be ideal to give
       # “a ? b : c” a local name.
     - Fail fast, validate arguments [we have some in-house validation util libraries]

@@ -50,3 +50,6 @@ _minted-*
 /scratch.js
 /scratch.json
 /scratch.org
+/vimish-fold/
+scratch.*
+/projects
