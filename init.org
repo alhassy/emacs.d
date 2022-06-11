@@ -2577,11 +2577,16 @@ First, let's setup our git credentials.
 ;; https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/configuring-notifications#customizing-email-routes-per-organization
 (ignore-error (unless my/personal-machine?
   (shell-command (format "git config --global user.email \"%s\"" work/email))))
-
-;; If we ever need to use Git in the terminal, it should be done with Emacs as
-;; the underlying editor
-(shell-command "git config --global core.editor emacs")
 #+END_SRC
+
+If we ever need to use Git in the terminal, it should be done with Emacs as the
+underlying editor
+#+BEGIN_SRC emacs-lisp
+(shell-command "git config --global core.editor 'emacsclient -t -a=\\\"\\\"'")
+#+END_SRC
+This will start a daemon if there is not already one running ---The ~-a~ option---
+and opens a new Emacs frame on the current terminal ---The ~-t~ option.
+
 
 *** Encouraging useful commit messages
 :PROPERTIES:
