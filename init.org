@@ -9108,6 +9108,16 @@ Let's provide a quick keyboard shortcut. E.g., kbd:C-x_C-e evaluates ELisp, so l
  'js-mode-map)
 #+end_src
 
+
+Trying something else instead of skerrick, until
+https://github.com/anonimitoraf/skerrick/issues/7 is resolved.
+
+In any JS file, I just press ~C-x C-e~ and the JS interpreter is brought up with the evaluation results shown:
+#+begin_src emacs-lisp
+(use-package js-comint)
+(define-key js-mode-map (kbd "C-x C-e") (lambda () (interactive) (call-interactively #'run-js) (other-window -1) (js-comint-send-last-sexp)))
+#+end_src
+
 For instance,
 #+begin_src js :tangle no
 // Start the server... then
@@ -9140,6 +9150,8 @@ For that, there are numerous packages:
   updated 2020
 - [[https://github.com/swank-js/swank-js][swank-js: Swank backend for Node.JS and in-browser JavaScript]] ⨾⨾ Last updated
   2015
+
+For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick/issues/8.
 
 *** Python, etc
 :PROPERTIES:
