@@ -10526,6 +10526,34 @@ I found using yafolding-mode to be way too slow.
   (global-set-key (kbd "s-f") 'yafolding-hydra/body)
 #+end_src
 #+end_details
+*** E2E Test :ignore:
+
+#+begin_details Test
+#+begin_src emacs-lisp :tangle init-test.el
+(ert-deftest hideshow-is-enabled-and-folds-by-default ()
+  :tags '(hideshow)
+  (-let [contents "function fierce(name) { \n return \\`\\${name}: ROAR\\` \n }"]
+    (shell-command (format "echo \"%s\" > ~/.emacs.d/scratch.js" contents))
+
+    ;; Hideshow is enabled whenever we open a code file
+    (find-file "~/.emacs.d/scratch.js")
+    (should hs-minor-mode)
+
+    ;; Function definition is a hidden block
+    (end-of-line)
+    (backward-char 2)
+    (should (hs-already-hidden-p))
+
+    ;; Indeed, the hidden block starts at the first line break and ends just before the second.
+    (-let [ov (hs-already-hidden-p)]
+      (-let [(first\n second\n) (-elem-indices "\n" (s-split "" contents))]
+        (should (equal (overlay-start ov) first\n)) ;; ≈ 25
+        (should (equal (overlay-end ov) (1- second\n))))) ;; ≈ 52
+
+    (kill-buffer)))
+#+end_src
+#+end_details
+
 ** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab :relocate:
 :PROPERTIES:
 :CUSTOM_ID: Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab
@@ -11192,6 +11220,31 @@ LSP mode supports the following Features:
   ("q" nil "Cancel" :column "Misc")
   ("b" pop-tag-mark "Back"))
 #+end_src
+
+#+begin_details End-to-end Test
+#+begin_src emacs-lisp :tangle init-test.el
+(ert-deftest lsp-hover-shows-type-signature ()
+  (shell-command "touch ~/.emacs.d/scratch.js")
+  (find-file "~/.emacs.d/scratch.js")
+  (erase-buffer)
+
+  (lsp)
+  ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
+  (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (car msg))))
+
+  (insert "\n const first = (x, y) => 3")
+
+  (insert "\n first")
+  (lsp-hover) ;; Alternatively: (lsp-describe-thing-at-point)
+
+  (should (equal "const first: (x: any, y: any) => number"
+                 (substring-no-properties (car my/lsp-hover-message))))
+
+  (save-buffer)
+  (kill-buffer))
+#+end_src
+#+end_details
+
 *** Types as comments in JavaScript via LSP && Using LSP for Org-Src Blocks
 :PROPERTIES:
 :CUSTOM_ID: Types-as-comments-in-JavaScript-via-LSP
@@ -11889,30 +11942,6 @@ associated major mode; that's what we aim to do here."
                             (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)))
 #+end_src
 
-** TODO E2E Tests
-#+begin_src emacs-lisp
-(ert-deftest lsp-hover-shows-type-signature ()
-  (shell-command "touch ~/.emacs.d/scratch.js")
-  (find-file "~/.emacs.d/scratch.js")
-  (erase-buffer)
-
-  (lsp)
-  ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
-  (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (car msg))))
-
-  (insert "\n const first = (x, y) => 3")
-
-  (insert "\n first")
-  (lsp-hover) ;; Alternatively: (lsp-describe-thing-at-point)
-
-  (should (equal "const first: (x: any, y: any) => number"
-                 (substring-no-properties (car my/lsp-hover-message))))
-
-  (save-buffer)
-  (kill-buffer))
-#+end_src
-
-
 ** Pair Programming
 
 # Add: Quickly toggle my Emacs for when doing pair programming
@@ -11984,7 +12013,6 @@ my VSCoder counterparts.
 
 (my/toggle-pair-programming)
 #+end_src
-
 
 * Web-Development
 :PROPERTIES:
