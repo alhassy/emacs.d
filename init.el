@@ -1437,43 +1437,45 @@ visit all blocks with such a name."
 (setf custom-safe-themes t)
 
 ;; Nice looking themes ^_^
-(use-package solarized-theme :defer t)
+(use-package solarized-theme)
 (use-package doom-themes :defer t)
 (use-package spacemacs-common
   :defer t
   :ensure spacemacs-theme)
+(use-package stimmung-themes :defer t)
+(use-package shanty-themes :defer t)
 ;; Exquisite Fonts and Themes:1 ends here
 
 ;; [[file:init.org::#Exquisite-Fonts-and-Themes][Exquisite Fonts and Themes:2]]
 ;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-laserwave shany-themes-light stimming-themes-light stimming-themes-dark doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
+(setq my/themes '(doom-laserwave shany-themes-light stimmung-themes-light stimmung-themes-dark doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
 (setcdr (last my/themes) my/themes)
 ;; Exquisite Fonts and Themes:2 ends here
 
 ;; [[file:init.org::#Exquisite-Fonts-and-Themes][Exquisite Fonts and Themes:3]]
-(cl-defun my/disable-all-themes (&optional (new-theme (pop my/themes)))
+(cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
+  "Disable all themes and load the given one ---read from user when called interactively."
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes)
+  (load-theme new-theme)
+  (message "Theme %s" new-theme))
+
+(cl-defun my/toggle-theme (&optional (new-theme (pop my/themes)))
   "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
 
 When a universal prefix is given, “C-u C-c t”, we load a random
 theme from all possible themes.  Nice way to learn about more
 themes (•̀ᴗ•́)و"
   (interactive)
-  (mapc #'disable-theme custom-enabled-themes)
   (-let [theme (if current-prefix-arg
                    (nth (random (length (custom-available-themes)))
                         (custom-available-themes))
                  new-theme)]
-    (when theme
-      (load-theme theme)
-      (message "Theme %s" theme))))
+    (my/load-theme theme)))
 
-
-(defalias 'my/toggle-theme #' my/disable-all-themes)
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-
 ;; (my/toggle-theme)
-(use-package solarized-theme)
 (my/toggle-theme 'doom-laserwave)
 ;; Exquisite Fonts and Themes:3 ends here
 
@@ -1986,7 +1988,7 @@ the character 𝓍 before and after the selected text."
 ;; Formatting Text:1 ends here
 
 ;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:1]]
-(setq-default fill-column 80          ;; Let's avoid going over 80 columns
+(setq-default fill-column 120         ;; Let's avoid going over 120 columns
               truncate-lines nil      ;; I never want to scroll horizontally
               indent-tabs-mode nil)   ;; Use spaces instead of tabs
 ;; Fill-mode ---Word Wrapping:1 ends here
@@ -3934,28 +3936,6 @@ associated major mode; that's what we aim to do here."
                             (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)))
 ;; Emphasised Comments:1 ends here
 
-;; [[file:init.org::*E2E Tests][E2E Tests:1]]
-(ert-deftest lsp-hover-shows-type-signature ()
-  (shell-command "touch ~/.emacs.d/scratch.js")
-  (find-file "~/.emacs.d/scratch.js")
-  (erase-buffer)
-
-  (lsp)
-  ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
-  (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (car msg))))
-
-  (insert "\n const first = (x, y) => 3")
-
-  (insert "\n first")
-  (lsp-hover) ;; Alternatively: (lsp-describe-thing-at-point)
-
-  (should (equal "const first: (x: any, y: any) => number"
-                 (substring-no-properties (car my/lsp-hover-message))))
-
-  (save-buffer)
-  (kill-buffer))
-;; E2E Tests:1 ends here
-
 ;; [[file:init.org::#COMMENT-Web-Development][Web-Development:1]]
 ;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
 (mapcar #'my/cheatsheet '("JavaScript" "Vue" "AngularJS"))
@@ -4315,3 +4295,26 @@ Both arguments are strings."
 
   (setq-default cursor-type 'bar))
 ;; [[https://github.com/motform/stimmung-themes][Let's try out this dope theme]] and [[https://github.com/qhga/shanty-themes#shanty-themes-light][this one too!]]:1 ends here
+
+;; [[file:init.org::*Fontifying =#+begin_details= blocks as if they were Org blocks][Fontifying =#+begin_details= blocks as if they were Org blocks:1]]
+  (defvar my/block-fontifications
+        '(("details" . "org"))
+      "A cons list of block type and language pairs.
+
+      The intent is that the block types are fontified using the given language name.")
+
+  (defvar osbe--original-match-string (symbol-function 'match-string))
+
+  (cl-defun osbe--match-string (n &optional str)
+          (let* ((block-type (string-remove-prefix "_" (funcall osbe--original-match-string 4 str)))
+             (fontification (cdr (assoc block-type my/block-fontifications))))
+        ;; (message "%s - %s -> %s" n block-type fontification) ;; For debugging.
+        (if (and (equal n 7) fontification)
+            fontification
+          (funcall osbe--original-match-string n str))))
+
+        (advice-add 'org-fontify-meta-lines-and-blocks
+            :around (lambda (fontify &rest args)
+                  (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
+                    (apply fontify args))))
+;; Fontifying =#+begin_details= blocks as if they were Org blocks:1 ends here

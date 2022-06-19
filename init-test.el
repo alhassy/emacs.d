@@ -51,3 +51,49 @@
 
   )
 ;; Word Completion:2 ends here
+
+;; [[file:init.org::*E2E Test][E2E Test:1]]
+(ert-deftest hideshow-is-enabled-and-folds-by-default ()
+  :tags '(hideshow)
+  (-let [contents "function fierce(name) { \n return \\`\\${name}: ROAR\\` \n }"]
+    (shell-command (format "echo \"%s\" > ~/.emacs.d/scratch.js" contents))
+
+    ;; Hideshow is enabled whenever we open a code file
+    (find-file "~/.emacs.d/scratch.js")
+    (should hs-minor-mode)
+
+    ;; Function definition is a hidden block
+    (end-of-line)
+    (backward-char 2)
+    (should (hs-already-hidden-p))
+
+    ;; Indeed, the hidden block starts at the first line break and ends just before the second.
+    (-let [ov (hs-already-hidden-p)]
+      (-let [(first\n second\n) (-elem-indices "\n" (s-split "" contents))]
+        (should (equal (overlay-start ov) first\n)) ;; ≈ 25
+        (should (equal (overlay-end ov) (1- second\n))))) ;; ≈ 52
+
+    (kill-buffer)))
+;; E2E Test:1 ends here
+
+;; [[file:init.org::#LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE][LSP: Making Emacs into a generic full-featured programming IDE:6]]
+(ert-deftest lsp-hover-shows-type-signature ()
+  (shell-command "touch ~/.emacs.d/scratch.js")
+  (find-file "~/.emacs.d/scratch.js")
+  (erase-buffer)
+
+  (lsp)
+  ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
+  (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (car msg))))
+
+  (insert "\n const first = (x, y) => 3")
+
+  (insert "\n first")
+  (lsp-hover) ;; Alternatively: (lsp-describe-thing-at-point)
+
+  (should (equal "const first: (x: any, y: any) => number"
+                 (substring-no-properties (car my/lsp-hover-message))))
+
+  (save-buffer)
+  (kill-buffer))
+;; LSP: Making Emacs into a generic full-featured programming IDE:6 ends here
