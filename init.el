@@ -6,7 +6,7 @@
 
 
 (setq  work/sqls-connections nil)(setq work/sqls-connections
-                                       '("host=127.0.0.1 port=5432 user=SUPER_SECRET password=ALSO_SUPER_SECRET dbname=YET_AGAIN_SECRET sslmode=disable"))
+      '("host=127.0.0.1 port=5432 user=SUPER_SECRET password=ALSO_SUPER_SECRET dbname=YET_AGAIN_SECRET sslmode=disable"))
 
 
 ;; (cl-defun org-duration-to-minutes (&rest _) )
@@ -81,8 +81,8 @@
 (use-package which-key
   :diminish
   :config (which-key-mode)
-  (which-key-setup-side-window-bottom)
-  (setq which-key-idle-delay 0.05))
+          (which-key-setup-side-window-bottom)
+          (setq which-key-idle-delay 0.05))
 ;; Emacs Package Manager:5 ends here
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:6]]
@@ -115,23 +115,23 @@
 ;; Emacs Package Manager:7 ends here
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:8]]
-;; Allow tree-semantics for undo operations.
-(use-package undo-tree
-  :diminish                       ;; Don't show an icon in the modeline
-  :bind ("C-x u" . undo-tree-visualize)
-  :hook (org-mode . undo-tree-mode) ;; For some reason, I need this. FIXME.
-  :config
-  ;; Always have it on
-  (global-undo-tree-mode)
-
-  ;; Each node in the undo tree should have a timestamp.
-  (setq undo-tree-visualizer-timestamps t)
-
-  ;; Show a diff window displaying changes between undo nodes.
-  (setq undo-tree-visualizer-diff t))
-
-;; Execute (undo-tree-visualize) then navigate along the tree to witness
-;; changes being made to your file live!
+  ;; Allow tree-semantics for undo operations.
+  (use-package undo-tree
+    :diminish                       ;; Don't show an icon in the modeline
+    :bind ("C-x u" . undo-tree-visualize)
+    :hook (org-mode . undo-tree-mode) ;; For some reason, I need this. FIXME.
+    :config
+      ;; Always have it on
+      (global-undo-tree-mode)
+  
+      ;; Each node in the undo tree should have a timestamp.
+      (setq undo-tree-visualizer-timestamps t)
+  
+      ;; Show a diff window displaying changes between undo nodes.
+      (setq undo-tree-visualizer-diff t))
+  
+  ;; Execute (undo-tree-visualize) then navigate along the tree to witness
+  ;; changes being made to your file live!
 ;; Emacs Package Manager:8 ends here
 
 ;; [[file:init.org::#Emacs-Package-Manager][Emacs Package Manager:10]]
@@ -162,8 +162,8 @@
 ;; Don't ask me if I want to kill a buffer with a live process attached to it;
 ;; just kill it please.
 (setq kill-buffer-query-functions
-      (remq 'process-kill-buffer-query-function
-            kill-buffer-query-functions))
+  (remq 'process-kill-buffer-query-function
+         kill-buffer-query-functions))
 
 ;; Ensure our operating system is always up to date.
 ;; This is run whenever we open Emacs & so wont take long if we're up to date.
@@ -174,7 +174,7 @@
 
 (defvar my/installed-packages
   (shell-command-to-string "brew list")
-  "What is on my machine already?
+   "What is on my machine already?
 
 Sometimes when I install a GUI based application and do not have access to it everywhere in my path,
 it may seem that I do not have that application installed. For instance,
@@ -198,7 +198,7 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; After 1 minute after startup, kill all buffers created by ensuring system
 ;; packages are present.
 (run-with-timer 60 nil
-                (lambda () (kill-matching-buffers ".*system-packages.*" t :kill-without-confirmation)))
+ (lambda () (kill-matching-buffers ".*system-packages.*" t :kill-without-confirmation)))
 ;; Installing OS packages, and automatically keeping my system up to data, from within Emacs:4 ends here
 
 ;; [[file:init.org::#Installing-OS-packages-and-automatically-keeping-my-system-up-to-data-from-within-Emacs][Installing OS packages, and automatically keeping my system up to data, from within Emacs:5]]
@@ -241,7 +241,7 @@ installs of pacakges that are not in our `my/installed-packages' listing.
   (shell-command (format "osascript -e 'quit app \"%s\"'" app)))
 
 (defun ⌘-open (app)
-  "Open application APP; e.g., “amethyst” or “Safari”"
+ "Open application APP; e.g., “amethyst” or “Safari”"
   (async-shell-command (format "osascript -e 'launch app \"%s\"'" app)))
 
 ;; (bind-key "???-a r" #'my/relaunch-amethyst)
@@ -280,25 +280,25 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 
 ;; [[file:init.org::#Being-at-the-Helm-Completion-Narrowing-Framework][ “Being at the Helm” ---Completion & Narrowing Framework:1]]
 (use-package helm
-  :diminish
-  :init (helm-mode t)
-  :bind (("M-x"     . helm-M-x)
-         ("C-x C-f" . helm-find-files)
-         ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
-         ("C-x r b" . helm-filtered-bookmarks)
-         ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
-         ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
-         ;; ("C-u C-c i" . imenu-list)  ;; TODO FIXME  Key sequence C-u C-c i starts with non-prefix key C-u
-         ("C-h a"   . helm-apropos)
-         ;; Look at what was cut recently & paste it in.
-         ("M-y" . helm-show-kill-ring)
-         ("C-x C-x" . helm-all-mark-rings)
-         :map helm-map
-         ;; We can list ‘actions’ on the currently selected item by C-z.
-         ("C-z" . helm-select-action)
-         ;; Let's keep tab-completetion anyhow.
-         ("TAB"   . helm-execute-persistent-action)
-         ("<tab>" . helm-execute-persistent-action)))
+ :diminish
+ :init (helm-mode t)
+ :bind (("M-x"     . helm-M-x)
+        ("C-x C-f" . helm-find-files)
+        ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
+        ("C-x r b" . helm-filtered-bookmarks)
+        ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
+        ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
+        ;; ("C-u C-c i" . imenu-list)  ;; TODO FIXME  Key sequence C-u C-c i starts with non-prefix key C-u
+        ("C-h a"   . helm-apropos)
+        ;; Look at what was cut recently & paste it in.
+        ("M-y" . helm-show-kill-ring)
+        ("C-x C-x" . helm-all-mark-rings)
+        :map helm-map
+        ;; We can list ‘actions’ on the currently selected item by C-z.
+        ("C-z" . helm-select-action)
+        ;; Let's keep tab-completetion anyhow.
+        ("TAB"   . helm-execute-persistent-action)
+        ("<tab>" . helm-execute-persistent-action)))
 
 ;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
 (use-package helm-icons
@@ -308,15 +308,15 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 
 ;; [[file:init.org::#Being-at-the-Helm-Completion-Narrowing-Framework][ “Being at the Helm” ---Completion & Narrowing Framework:2]]
 (setq helm-mini-default-sources '(helm-source-buffers-list
-                                  helm-source-recentf
-                                  helm-source-bookmarks
-                                  helm-source-bookmark-set
-                                  helm-source-buffer-not-found))
+                                    helm-source-recentf
+                                    helm-source-bookmarks
+                                    helm-source-bookmark-set
+                                    helm-source-buffer-not-found))
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:2 ends here
 
 ;; [[file:init.org::#Being-at-the-Helm-Completion-Narrowing-Framework][ “Being at the Helm” ---Completion & Narrowing Framework:3]]
 (system-packages-ensure "surfraw")
-                                        ; ⇒  “M-x helm-surfraw” or “C-x c s”
+; ⇒  “M-x helm-surfraw” or “C-x c s”
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:3 ends here
 
 ;; [[file:init.org::#Being-at-the-Helm-Completion-Narrowing-Framework][ “Being at the Helm” ---Completion & Narrowing Framework:4]]
@@ -326,10 +326,10 @@ installs of pacakges that are not in our `my/installed-packages' listing.
           ;; Go back to last position where ‘helm-swoop’ was called
           ("C-S-s" . 'helm-swoop-back-to-last-point)
           ;; swoop doesn't work with PDFs, use Emacs' default isearch instead.
-                                        ; :map pdf-view-mode-map ("C-s" . isearch-forward)
+          ; :map pdf-view-mode-map ("C-s" . isearch-forward)
           )
   :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
-  (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
+          (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
 ;;  “Being at the Helm” ---Completion & Narrowing Framework:4 ends here
 
 ;; [[file:init.org::#Being-at-the-Helm-Completion-Narrowing-Framework][ “Being at the Helm” ---Completion & Narrowing Framework:7]]
@@ -356,10 +356,10 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 
 ;; [[file:init.org::#Org-Mode-Administrivia][Org-Mode Administrivia:2]]
 (use-package emacs
-  :ensure org-contrib
-  :diminish org-indent-mode
-  :config (require 'ox-extra)
-  (ox-extras-activate '(ignore-headlines)))
+    :ensure org-contrib
+    :diminish org-indent-mode
+    :config (require 'ox-extra)
+            (ox-extras-activate '(ignore-headlines)))
 ;; Org-Mode Administrivia:2 ends here
 
 ;; [[file:init.org::#Org-Mode-Administrivia][Org-Mode Administrivia:3]]
@@ -397,23 +397,23 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; TODO org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
 ;;
 (when nil use-package org-special-block-extras
-      :hook (org-mode . org-special-block-extras-mode)
-      :custom
-      ;; The places where I keep my ‘#+documentation’
-      (org-special-block-extras--docs-libraries
-       '("~/org-special-block-extras/documentation.org"))
-      ;; Disable the in-Emacs fancy-links feature?
-      (org-special-block-extras-fancy-links
-       '(elisp badge kbd link-here doc tweet))
-      ;; Details heading “flash pink” whenever the user hovers over them?
-      (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
-      ;; The message prefixing a ‘tweet:url’ badge
-      (org-special-block-extras-link-twitter-excitement
-       "This looks super neat (•̀ᴗ•́)و:")
-      :config
-      ;; Use short names like ‘defblock’ instead of the fully qualified name
-      ;; ‘org-special-block-extras--defblock’
-      (org-special-block-extras-short-names))
+  :hook (org-mode . org-special-block-extras-mode)
+  :custom
+    ;; The places where I keep my ‘#+documentation’
+    (org-special-block-extras--docs-libraries
+     '("~/org-special-block-extras/documentation.org"))
+    ;; Disable the in-Emacs fancy-links feature?
+    (org-special-block-extras-fancy-links
+     '(elisp badge kbd link-here doc tweet))
+    ;; Details heading “flash pink” whenever the user hovers over them?
+    (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
+    ;; The message prefixing a ‘tweet:url’ badge
+    (org-special-block-extras-link-twitter-excitement
+     "This looks super neat (•̀ᴗ•́)و:")
+  :config
+  ;; Use short names like ‘defblock’ instead of the fully qualified name
+  ;; ‘org-special-block-extras--defblock’
+    (org-special-block-extras-short-names))
 
 ;; Let's execute Lisp code with links, as in “elisp:view-hello-file”.
 (setq org-confirm-elisp-link-function nil)
@@ -436,8 +436,8 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; Password-locking files  ---“encryption”:1 ends here
 
 ;; [[file:init.org::#all-the-icons][all-the-icons:1]]
-(use-package all-the-icons
-  :config (all-the-icons-install-fonts 'install-without-asking))
+ (use-package all-the-icons
+    :config (all-the-icons-install-fonts 'install-without-asking))
 ;; (cl-defun all-the-icons-faicon (icon &rest _)
 ;;  #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
 ;; all-the-icons:1 ends here
@@ -464,7 +464,7 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; [[file:init.org::#Hydra-Supply-a-prefix-only-once][Hydra: Supply a prefix only once:3]]
 ;; TODO convert my existing defhydras to my/defhydra.
 (defmacro my/defhydra (key title icon-name &rest body)
-  "Make a hydra whose heads appear in a pretty pop-up window.
+"Make a hydra whose heads appear in a pretty pop-up window.
 Heads are signalled by keywords and the hydra has an icon in its title.
 
 KEY [String]: Global keybinding for the new hydra.
@@ -516,9 +516,9 @@ Is replaced by:
        (\"n\" shrink-window-horizontally      \"narrow\")
        (\"w\" enlarge-window-horizontally     \"widen\"))"
   (let* ((name (intern (concat "my/hydra/"
-                               (if (stringp title)
-                                   title
-                                 (plist-get title :title)))))
+                              (if (stringp title)
+                                  title
+                                (plist-get title :title)))))
          (icon-face `(:foreground ,(face-background 'highlight)))
          (iconised-title
           (concat
@@ -535,30 +535,30 @@ Is replaced by:
                    :quit-key "q")
            title)
         ,(thread-last body
-                      (-partition-by-header #'keywordp)
-                      (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
-                      (-flatten-n 1))))))
+           (-partition-by-header #'keywordp)
+           (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
+           (-flatten-n 1))))))
 ;; Hydra: Supply a prefix only once:3 ends here
 
 ;; [[file:init.org::#Textual-Navigation-Look-Ma-no-CTRL-key][Textual Navigation ---“Look Ma, no CTRL key!”:1]]
 (my/defhydra "C-n" "\t\t\t\t\tTextual Navigation" arrows
-             :Line
-             ("n" next-line)
-             ("p" previous-line)
-             ("a" beginning-of-line)
-             ("e" move-end-of-line)
-             ("g" goto-line)
-             :Word
-             ("f" forward-word "Next")
-             ("b" backward-word "Previous")
-             ("{" org-backward-element "Next Element")
-             ("}" org-forward-element "Previous Element")
-             :Screen
-             ("v" scroll-up-command "Scroll Down")
-             ("V" scroll-down-command "Scroll Up")
-             ("l" recenter-top-bottom "Center Page")
-             ("r" move-to-window-line-top-bottom "Relocate Point")
-             ("m" helm-imenu "Textual Menu"))
+   :Line
+   ("n" next-line)
+   ("p" previous-line)
+   ("a" beginning-of-line)
+   ("e" move-end-of-line)
+   ("g" goto-line)
+   :Word
+   ("f" forward-word "Next")
+   ("b" backward-word "Previous")
+   ("{" org-backward-element "Next Element")
+   ("}" org-forward-element "Previous Element")
+   :Screen
+   ("v" scroll-up-command "Scroll Down")
+   ("V" scroll-down-command "Scroll Up")
+   ("l" recenter-top-bottom "Center Page")
+   ("r" move-to-window-line-top-bottom "Relocate Point")
+   ("m" helm-imenu "Textual Menu"))
 ;; Textual Navigation ---“Look Ma, no CTRL key!”:1 ends here
 
 ;; [[file:init.org::#Textual-Navigation-Look-Ma-no-CTRL-key][Textual Navigation ---“Look Ma, no CTRL key!”:2]]
@@ -569,15 +569,15 @@ Is replaced by:
 ;; [[file:init.org::#Window-Navigation][Window Navigation:1]]
 ;; Use ijkl to denote ↑←↓→ arrows.
 (my/defhydra "C-c w" "\t\tWindow Adjustment" windows
-             :Both
-             ("b" balance-windows                 "balance")
-             ("s" switch-window-then-swap-buffer  "swap")
-             :Vertical_adjustment
-             ("h" enlarge-window                  "heighten")
-             ("l" shrink-window                   "lower")
-             :Horizontal_adjustment
-             ("n" shrink-window-horizontally      "narrow")
-             ("w" enlarge-window-horizontally     "widen"))
+   :Both
+   ("b" balance-windows                 "balance")
+   ("s" switch-window-then-swap-buffer  "swap")
+   :Vertical_adjustment
+   ("h" enlarge-window                  "heighten")
+   ("l" shrink-window                   "lower")
+   :Horizontal_adjustment
+   ("n" shrink-window-horizontally      "narrow")
+   ("w" enlarge-window-horizontally     "widen"))
 
 ;; Provides a *visual* way to choose a window to switch to.
 ;; (use-package switch-window :defer t)
@@ -625,9 +625,9 @@ Is replaced by:
 ;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
 (global-set-key (kbd "C-z")
-                (lambda () (interactive)
-                  (undo-tree-mode) ;; Ensure the mode is on
-                  (undo-tree-visualize)))
+  (lambda () (interactive)
+   (undo-tree-mode) ;; Ensure the mode is on
+   (undo-tree-visualize)))
 ;; Undo-tree: Very Local Version Control:2 ends here
 
 ;; [[file:init.org::#Automatic-Backups][Automatic Backups:1]]
@@ -679,7 +679,7 @@ Is replaced by:
   :init (require 'magit-files)
   :bind (("C-c M-g" . magit-file-dispatch))
   :custom ;; Do not ask about this variable when cloning.
-  (magit-clone-set-remote.pushDefault t))
+    (magit-clone-set-remote.pushDefault t))
 ;;   =magit= ---Emacs' porcelain interface to git:1 ends here
 
 ;; [[file:init.org::#magit-Emacs'-porcelain-interface-to-gitq][  =magit= ---Emacs' porcelain interface to git:2]]
@@ -703,12 +703,12 @@ Is replaced by:
 ;; Also need to customise email routes per organization
 ;; https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/configuring-notifications#customizing-email-routes-per-organization
 (ignore-error (unless my/personal-machine?
-                (shell-command (format "git config --global user.email \"%s\"" work/email))))
-
-;; If we ever need to use Git in the terminal, it should be done with Emacs as
-;; the underlying editor
-(shell-command "git config --global core.editor emacs")
+  (shell-command (format "git config --global user.email \"%s\"" work/email))))
 ;; Credentials: I am who I am:1 ends here
+
+;; [[file:init.org::#Credentials-I-am-who-I-am][Credentials: I am who I am:2]]
+(shell-command "git config --global core.editor 'emacsclient -t -a=\\\"\\\"'")
+;; Credentials: I am who I am:2 ends here
 
 ;; [[file:init.org::#Encouraging-useful-commit-messages][Encouraging useful commit messages:1]]
 (defun my/git-commit-reminder ()
@@ -808,18 +808,18 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (with-eval-after-load 'projectile
   (setq magit-repository-directories
         (thread-last (projectile-relevant-known-projects)
-                     (--filter (unless (file-remote-p it)
-                                 (file-directory-p (concat it "/.git/"))))
-                     (--map (list (substring it 0 -1) 0)))))
+          (--filter (unless (file-remote-p it)
+                      (file-directory-p (concat it "/.git/"))))
+          (--map (list (substring it 0 -1) 0)))))
 
 ;; Follow-up utility
 (defun my/update-repos ()
   "Update (git checkout main & pull) recently visited repositories."
   (interactive)
   (cl-loop for (repo _depth) in magit-repository-directories
-           ;; Is it “main” or “master”
-           for trunk = (s-trim (shell-command-to-string (format "cd %s; git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" repo)))
-           do (message (format "🤖 %s ∷ Checking out & pulling main" repo))
+        ;; Is it “main” or “master”
+        for trunk = (s-trim (shell-command-to-string (format "cd %s; git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" repo)))
+        do (message (format "🤖 %s ∷ Checking out & pulling main" repo))
            (shell-command (format "cd %s; git checkout %s; git pull" repo trunk)))
   (message "🥳 Happy coding!"))
 ;; Jump to a (ma)git repository with ~C-u C-x g~:1 ends here
@@ -828,9 +828,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
   "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
   `(prog1
-       (add-to-list 'pretty-magit-alist
-                    (list (rx bow (group ,WORD (eval (if ,NO-PROMPT? "" ":"))))
-                          ,ICON ',PROPS))
+     (add-to-list 'pretty-magit-alist
+                  (list (rx bow (group ,WORD (eval (if ,NO-PROMPT? "" ":"))))
+                        ,ICON ',PROPS))
      (unless ,NO-PROMPT?
        (add-to-list 'pretty-magit-prompt (cons (concat ,WORD ": ") ,description)))))
 
@@ -889,11 +889,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (when use-magit-commit-prompt-p
     (setq use-magit-commit-prompt-p nil)
     (thread-last (--map (format "%s %s" (car it) (cdr it)) pretty-magit-prompt)
-                 (completing-read "Insert commit leader ∷ ")
-                 ;; My “Generate:” commit type has one use case, for now; so let's insert it filled-in.
-                 (funcall (lambda (it) (if (s-starts-with? "Generate:" it) it (car (s-split " " it)))))
-                 (insert)
-                 (end-of-line))
+      (completing-read "Insert commit leader ∷ ")
+      ;; My “Generate:” commit type has one use case, for now; so let's insert it filled-in.
+      (funcall (lambda (it) (if (s-starts-with? "Generate:" it) it (car (s-split " " it)))))
+      (insert)
+      (end-of-line))
     (add-magit-faces)))
 
 
@@ -908,18 +908,18 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   ;; I want todo-words highlighted in prose, not just in code fragements.
   :hook (org-mode . hl-todo-mode)
   :config
-  ;; Adding new keywords
-  (cl-loop for kw in '("TEST" "MA" "WK" "JC")
-           do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3")))
-  ;; Enable it everywhere.
-  (global-hl-todo-mode))
+    ;; Adding new keywords
+    (cl-loop for kw in '("TEST" "MA" "WK" "JC")
+             do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3")))
+    ;; Enable it everywhere.
+    (global-hl-todo-mode))
 ;; Highlighting TODO-s & Showing them in Magit:1 ends here
 
 ;; [[file:init.org::#Highlighting-TODO-s-Showing-them-in-Magit][Highlighting TODO-s & Showing them in Magit:3]]
 (defun add-watchwords () "Add TODO: words to font-lock keywords."
-       (font-lock-add-keywords nil
-                               '(("\\(\\<TODO\\|\\<FIXME\\|\\<HACK\\|@.+\\):" 1
-                                  font-lock-warning-face t))))
+  (font-lock-add-keywords nil
+                          '(("\\(\\<TODO\\|\\<FIXME\\|\\<HACK\\|@.+\\):" 1
+                             font-lock-warning-face t))))
 
 (add-hook 'prog-mode-hook #'add-watchwords)
 ;; Highlighting TODO-s & Showing them in Magit:3 ends here
@@ -933,7 +933,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   :config
   ;; For some reason cannot use :custom with this package.
   (custom-set-variables
-   '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
   ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
   (setq magit-todos-exclude-globs '("*.html"))
   (magit-todos-mode))
@@ -950,9 +950,9 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
     (blamer-max-commit-message-length 80) ;; Show me a lot of the commit title
     :custom-face
     (blamer-face ((t :foreground "#7a88cf"
-                     :background nil
-                     :height 140
-                     :italic t)))
+                      :background nil
+                      :height 140
+                      :italic t)))
     :config
     (global-blamer-mode 1)))
 ;; Silently show me when a line was modified and by whom:1 ends here
@@ -970,7 +970,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (use-package beginend
   :diminish 'beginend-global-mode
   :config (beginend-global-mode)
-  (cl-loop for (_ . m) in beginend-modes do (diminish m)))
+    (cl-loop for (_ . m) in beginend-modes do (diminish m)))
 ;; Jumping to extreme semantic units:1 ends here
 
 ;; [[file:init.org::#Get-CheatSheets-and-view-them-easily][Get CheatSheets and view them easily:1]]
@@ -989,7 +989,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 ;; [[file:init.org::#Get-CheatSheets-and-view-them-easily][Get CheatSheets and view them easily:2]]
 (mapcar #'my/cheatsheet '("ELisp" "GojuRyu" "Rust")) ; Python Prolog Vue Agda JavaScript
-                                        ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
+                                              ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 ;; Get CheatSheets and view them easily:2 ends here
 
 ;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:1]]
@@ -1032,8 +1032,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 ;; [[file:init.org::#Modifying-return][Modifying [[kbd:⟨return⟩]]:1]]
 (add-hook 'org-mode-hook '(lambda ()
-                            (local-set-key (kbd "<return>") 'org-return-indent))
-          (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline))
+   (local-set-key (kbd "<return>") 'org-return-indent))
+   (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline))
 ;; Modifying [[kbd:⟨return⟩]]:1 ends here
 
 ;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:1]]
@@ -1057,8 +1057,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
 (defvar my/programming-languages
   '(emacs-lisp shell python haskell
-               ;; rust ;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
-               ruby ocaml dot latex org js css
+      ;; rust ;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
+    ruby ocaml dot latex org js css
                sqlite C) ;; Captial “C” gives access to C, C++, D
   "List of languages I have used in Org-mode, for literate programming.")
 
@@ -1103,17 +1103,17 @@ visit all blocks with such a name."
 ;; [[file:init.org::#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:1]]
 (use-package shell-pop
   :custom
-  ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
-  (shell-pop-universal-key "C-t")
+    ;; This binding toggles popping up a shell, or moving cursour to the shell pop-up.
+    (shell-pop-universal-key "C-t")
 
-  ;; Percentage for shell-buffer window size.
-  (shell-pop-window-size 30)
+    ;; Percentage for shell-buffer window size.
+    (shell-pop-window-size 30)
 
-  ;; Position of the popped buffer: top, bottom, left, right, full.
-  (shell-pop-window-position "bottom")
+    ;; Position of the popped buffer: top, bottom, left, right, full.
+    (shell-pop-window-position "bottom")
 
-  ;; Please use an awesome shell.
-  (shell-pop-term-shell "/bin/zsh"))
+    ;; Please use an awesome shell.
+    (shell-pop-term-shell "/bin/zsh"))
 ;; Quickly pop-up a terminal, run a command, close it ---and zsh:1 ends here
 
 ;; [[file:init.org::#Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh][Quickly pop-up a terminal, run a command, close it ---and zsh:2]]
@@ -1184,16 +1184,25 @@ visit all blocks with such a name."
 ;; It's so fast that we don't need a key-binding to start it!
 ;; Word Completion:1 ends here
 
-;; [[file:init.org::#Word-Completion][Word Completion:2]]
+;; [[file:init.org::#Word-Completion][Word Completion:3]]
+(defun my/ensure-machine-works-as-expected ()
+  "Run all my personal tests to ensure Emacs behaves as I expect it to."
+  (interactive)
+  (load-file "init-test.el")
+  (ert t)
+  (ert-results-pop-to-timings))
+;; Word Completion:3 ends here
+
+;; [[file:init.org::#Word-Completion][Word Completion:4]]
 (use-package company-emoji
   :config (add-to-list 'company-backends 'company-emoji))
-;; Word Completion:2 ends here
+;; Word Completion:4 ends here
 
-;; [[file:init.org::#Word-Completion][Word Completion:3]]
+;; [[file:init.org::#Word-Completion][Word Completion:5]]
 (use-package emojify
-  :config (setq emojify-display-style 'image)
-  :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
-;; Word Completion:3 ends here
+ :config (setq emojify-display-style 'image)
+ :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
+;; Word Completion:5 ends here
 
 ;; [[file:init.org::#Intro-to-Snippets][Intro to Snippets:1]]
 ;; Add yasnippet support for all company backends
@@ -1216,26 +1225,26 @@ visit all blocks with such a name."
 (use-package yasnippet
   :diminish yas-minor-mode
   :config
-  (yas-global-mode 1) ;; Always have this on for when using yasnippet syntax within yankpad
-  ;; respect the spacing in my snippet declarations
-  (setq yas-indent-line 'fixed))
+    (yas-global-mode 1) ;; Always have this on for when using yasnippet syntax within yankpad
+    ;; respect the spacing in my snippet declarations
+    (setq yas-indent-line 'fixed))
 
 ;; Alternative, Org-based extension program
 (use-package yankpad
   :diminish
   :config
-  ;; Location of templates
-  (setq yankpad-file "~/.emacs.d/yankpad.org")
+    ;; Location of templates
+    (setq yankpad-file "~/.emacs.d/yankpad.org")
 
-  ;; Ignore major mode, always use defaults.
-  ;; Yankpad will freeze if no org heading has the name of the given category.
-  (setq yankpad-category "Default")
+    ;; Ignore major mode, always use defaults.
+    ;; Yankpad will freeze if no org heading has the name of the given category.
+    (setq yankpad-category "Default")
 
-  ;; Load the snippet templates ---useful after yankpad is altered
-  (yankpad-reload)
+    ;; Load the snippet templates ---useful after yankpad is altered
+    (yankpad-reload)
 
-  ;; Set company-backend as a secondary completion backend to all existing backends.
-  (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
+    ;; Set company-backend as a secondary completion backend to all existing backends.
+    (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
 ;; Intro to Snippets:2 ends here
 
 ;; [[file:init.org::#Intro-to-Snippets][Intro to Snippets:5]]
@@ -1263,21 +1272,21 @@ visit all blocks with such a name."
 ;; Show “ src_emacs-lisp[:exports results]{ 𝒳 } ” as “ ℰ𝓁𝒾𝓈𝓅﴾ 𝒳 ﴿ ”.
 ;;
 (font-lock-add-keywords 'org-mode
-                        '(("\\(src_emacs-lisp\\[.*]{\\)\\([^}]*\\)\\(}\\)"
-                           (1 '(face (:inherit (bold) :foreground "gray65") display "ℰ𝓁𝒾𝓈𝓅﴾"))
-                           (2 '(face (:foreground "blue")))
-                           (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
-                           )))
+  '(("\\(src_emacs-lisp\\[.*]{\\)\\([^}]*\\)\\(}\\)"
+  (1 '(face (:inherit (bold) :foreground "gray65") display "ℰ𝓁𝒾𝓈𝓅﴾"))
+  (2 '(face (:foreground "blue")))
+  (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
+    )))
 ;;
 ;; Let's do this for all my languages:
 ;; Show “ src_LANGUAGE[…]{ ⋯ } ” as “ ﴾ ⋯ ﴿ ”.
 (cl-loop for lang in my/programming-languages
          do (font-lock-add-keywords 'org-mode
-                                    `(( ,(format "\\(src_%s\\[.*]{\\)\\([^}]*\\)\\(}\\)" lang)
-                                        (1 '(face (:inherit (bold) :foreground "gray65") display "﴾"))
-                                        (2 '(face (:foreground "blue")))
-                                        (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
-                                        ))))
+               `(( ,(format "\\(src_%s\\[.*]{\\)\\([^}]*\\)\\(}\\)" lang)
+                  (1 '(face (:inherit (bold) :foreground "gray65") display "﴾"))
+                  (2 '(face (:foreground "blue")))
+                  (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
+                  ))))
 
 ;;
 (defun my/toggle-line-fontification ()
@@ -1300,7 +1309,7 @@ visit all blocks with such a name."
             my/toggle-fontify/on? :yes_please_fontify)
       (font-lock-unfontify-region  start end)))))
 
-;; TODO FIXME; maybe ignore: Wasted too much time here already.
+  ;; TODO FIXME; maybe ignore: Wasted too much time here already.
 ;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 ;; Prettify inline source code:1 ends here
@@ -1319,12 +1328,12 @@ visit all blocks with such a name."
 (defun display-startup-echo-area-message ()
   "The message that is shown after ‘user-init-file’ is loaded."
   (message
-   (concat "Welcome "      user-full-name
-           "! Emacs "      emacs-version
-           "; Org-mode "   org-version
-           "; System "     (symbol-name system-type)
-           "/"             (system-name)
-           "; Time "       (emacs-init-time))))
+      (concat "Welcome "      user-full-name
+              "! Emacs "      emacs-version
+              "; Org-mode "   org-version
+              "; System "     (symbol-name system-type)
+              "/"             (system-name)
+              "; Time "       (emacs-init-time))))
 ;; Startup message: Emacs & Org versions:1 ends here
 
 ;; [[file:init.org::#Startup-message-Emacs-Org-versions][Startup message: Emacs & Org versions:3]]
@@ -1341,7 +1350,7 @@ visit all blocks with such a name."
     ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
     ;; which is a GPG file and so requires passphrase before other things can load.
     ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
-    (find-file "~/Desktop/Work-2022-01-01.org")) ;; Org-journal for work
+      (find-file "~/Desktop/Work-2022-01-01.org")) ;; Org-journal for work
   (split-window-right)                          ;; C-x 3
   (other-window 1)                              ;; C-x 0
   (let ((enable-local-variables :all)           ;; Load *all* locals.
@@ -1355,36 +1364,36 @@ visit all blocks with such a name."
 (use-package doom-modeline
   :config (doom-modeline-mode))
 
-;; Use minimal height so icons still fit; modeline gets slightly larger when
-;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
-;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
-(setq doom-modeline-height 1)
-(setq doom-modeline-buffer-state-icon nil)
-(setq doom-modeline-hud t)
-(setq doom-modeline-bar-width 1)
+  ;; Use minimal height so icons still fit; modeline gets slightly larger when
+  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
+  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
+  (setq doom-modeline-height 1)
+  (setq doom-modeline-buffer-state-icon nil)
+  (setq doom-modeline-hud t)
+  (setq doom-modeline-bar-width 1)
 
-;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
-;; we can click to see a listing.
-;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
-(setq doom-modeline-checker-simple-format nil)
+  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
+  ;; we can click to see a listing.
+  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
+  (setq doom-modeline-checker-simple-format nil)
 
-;; Don't display the buffer encoding, E.g., “UTF-8”.
-(setq doom-modeline-buffer-encoding nil)
+  ;; Don't display the buffer encoding, E.g., “UTF-8”.
+  (setq doom-modeline-buffer-encoding nil)
 
-;; Inactive buffers' modeline is greyed out.
-;; (let ((it "Source Code Pro Light" ))
-;;   (set-face-attribute 'mode-line nil :family it :height 100)
-;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
+  ;; Inactive buffers' modeline is greyed out.
+  ;; (let ((it "Source Code Pro Light" ))
+  ;;   (set-face-attribute 'mode-line nil :family it :height 100)
+  ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
 ;; A sleek, informative, & fancy mode line:1 ends here
 
 ;; [[file:init.org::#Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled][Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled:1]]
-(setq doom-modeline-minor-modes t)
-(use-package minions
-  :init (minions-mode))
+  (setq doom-modeline-minor-modes t)
+  (use-package minions
+    :init (minions-mode))
 
-;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
-;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
-;; We likely want to add this locally, to hooks on major modes.
+  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
+  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
+  ;; We likely want to add this locally, to hooks on major modes.
 ;; Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled:1 ends here
 
 ;; [[file:init.org::#Nice-battery-icon-alongside-with-percentage-in-doom-modeline][Nice battery icon alongside with percentage, in doom-modeline:1]]
@@ -1604,76 +1613,76 @@ fonts (•̀ᴗ•́)و"
 ;; Proportional fonts for Headlines:1 ends here
 
 ;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:1]]
-(defvar-local rasmus/org-at-src-begin -1
-  "Variable that holds whether last position was a ")
+  (defvar-local rasmus/org-at-src-begin -1
+    "Variable that holds whether last position was a ")
 
-(defvar rasmus/ob-header-symbol ?☰
-  "Symbol used for babel headers")
+  (defvar rasmus/ob-header-symbol ?☰
+    "Symbol used for babel headers")
 
-(defun rasmus/org-prettify-src--update ()
-  (let ((case-fold-search t)
-        (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
-        found)
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward re nil t)
-        (goto-char (match-end 0))
-        (let ((args (org-trim
-                     (buffer-substring-no-properties (point)
-                                                     (line-end-position)))))
-          (when (org-string-nw-p args)
-            (let ((new-cell (cons args rasmus/ob-header-symbol)))
-              (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
-              (cl-pushnew new-cell found :test #'equal)))))
-      (setq prettify-symbols-alist
-            (cl-set-difference prettify-symbols-alist
-                               (cl-set-difference
-                                (cl-remove-if-not
-                                 (lambda (elm)
-                                   (eq (cdr elm) rasmus/ob-header-symbol))
-                                 prettify-symbols-alist)
-                                found :test #'equal)))
-      ;; Clean up old font-lock-keywords.
-      (font-lock-remove-keywords nil prettify-symbols--keywords)
-      (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
-      (font-lock-add-keywords nil prettify-symbols--keywords)
-      (while (re-search-forward re nil t)
-        (font-lock-flush (line-beginning-position) (line-end-position))))))
+  (defun rasmus/org-prettify-src--update ()
+    (let ((case-fold-search t)
+          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+          found)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward re nil t)
+          (goto-char (match-end 0))
+          (let ((args (org-trim
+                       (buffer-substring-no-properties (point)
+                                                       (line-end-position)))))
+            (when (org-string-nw-p args)
+              (let ((new-cell (cons args rasmus/ob-header-symbol)))
+                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+                (cl-pushnew new-cell found :test #'equal)))))
+        (setq prettify-symbols-alist
+              (cl-set-difference prettify-symbols-alist
+                                 (cl-set-difference
+                                  (cl-remove-if-not
+                                   (lambda (elm)
+                                     (eq (cdr elm) rasmus/ob-header-symbol))
+                                   prettify-symbols-alist)
+                                  found :test #'equal)))
+        ;; Clean up old font-lock-keywords.
+        (font-lock-remove-keywords nil prettify-symbols--keywords)
+        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+        (font-lock-add-keywords nil prettify-symbols--keywords)
+        (while (re-search-forward re nil t)
+          (font-lock-flush (line-beginning-position) (line-end-position))))))
 
-(defun rasmus/org-prettify-src ()
-  "Hide src options via `prettify-symbols-mode'.
+  (defun rasmus/org-prettify-src ()
+    "Hide src options via `prettify-symbols-mode'.
 
   `prettify-symbols-mode' is used because it has uncollpasing. It's
   may not be efficient."
-  (let* ((case-fold-search t)
-         (at-src-block (save-excursion
-                         (beginning-of-line)
-                         (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
-    ;; Test if we moved out of a block.
-    (when (or (and rasmus/org-at-src-begin
-                   (not at-src-block))
-              ;; File was just opened.
-              (eq rasmus/org-at-src-begin -1))
-      (rasmus/org-prettify-src--update))
-    ;; Remove composition if at line; doesn't work properly.
-    ;; (when at-src-block
-    ;;   (with-silent-modifications
-    ;;     (remove-text-properties (match-end 0)
-    ;;                             (1+ (line-end-position))
-    ;;                             '(composition))))
-    (setq rasmus/org-at-src-begin at-src-block)))
+    (let* ((case-fold-search t)
+           (at-src-block (save-excursion
+                           (beginning-of-line)
+                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+      ;; Test if we moved out of a block.
+      (when (or (and rasmus/org-at-src-begin
+                     (not at-src-block))
+                ;; File was just opened.
+                (eq rasmus/org-at-src-begin -1))
+        (rasmus/org-prettify-src--update))
+      ;; Remove composition if at line; doesn't work properly.
+      ;; (when at-src-block
+      ;;   (with-silent-modifications
+      ;;     (remove-text-properties (match-end 0)
+      ;;                             (1+ (line-end-position))
+      ;;                             '(composition))))
+      (setq rasmus/org-at-src-begin at-src-block)))
 
-(defun rasmus/org-prettify-symbols ()
-  (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
-        (cl-reduce 'append
-                   (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
-                           `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
-                             ("#+end_src"   . ?□) ;; ⏹
-                             ("#+header:" . ,rasmus/ob-header-symbol)
-                             ("#+begin_quote" . ?»)
-                             ("#+end_quote" . ?«)))))
-  (turn-on-prettify-symbols-mode)
-  (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
+  (defun rasmus/org-prettify-symbols ()
+    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+          (cl-reduce 'append
+                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
+                               ("#+end_src"   . ?□) ;; ⏹
+                               ("#+header:" . ,rasmus/ob-header-symbol)
+                               ("#+begin_quote" . ?»)
+                               ("#+end_quote" . ?«)))))
+    (turn-on-prettify-symbols-mode)
+    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
 
 
 ;; Last up­dated: 2019-06-09
@@ -1691,26 +1700,26 @@ fonts (•̀ᴗ•́)و"
   "Musa's personal prettifications.")
 
 (cl-loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
-                       ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                       ("#+end_example"   . ?⇐)                 ;; ⇐
-                       ;; Actuall beautifications
-                       ("==" . ?≈) ("===" . ?≈) ("=" . ?≔) ;; Programming specific prettifications
-                       ("i32" . ?ℤ) ("u32" . ?ℕ) ("f64" . ?ℝ) ;; Rust specific
-                       ("bool" . ?𝔹)
-                       ("fn" . ?λ)
-                       ("<=" . ?≤) (">=" . ?≥)
-                       ("->" . ?→) ("-->". ?⟶) ;; threading operators
-                       ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
-         do (push pair my/prettify-alist))
+                    ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
+                    ("#+end_example"   . ?⇐)                 ;; ⇐
+                    ;; Actuall beautifications
+                    ("==" . ?≈) ("===" . ?≈) ("=" . ?≔) ;; Programming specific prettifications
+                    ("i32" . ?ℤ) ("u32" . ?ℕ) ("f64" . ?ℝ) ;; Rust specific
+                    ("bool" . ?𝔹)
+                    ("fn" . ?λ)
+                    ("<=" . ?≤) (">=" . ?≥)
+                    ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                    ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
+      do (push pair my/prettify-alist))
 
 ;; Replace all Org [metadata]keywords with the “▷” symbol; e.g., “#+title: Hello” looks like “▷ Hello”.
 (cl-loop for keyword in '(title author email date description options property startup export_file_name html_head)
          do (push (cons (format "#+%s:" keyword) ?▷) my/prettify-alist))
 
 (cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
-         do (add-hook hk (lambda ()
-                           (setq prettify-symbols-alist
-                                 (append my/prettify-alist prettify-symbols-alist)))))
+      do (add-hook hk (lambda ()
+                        (setq prettify-symbols-alist
+                              (append my/prettify-alist prettify-symbols-alist)))))
 ;; Making Block Delimiters Less Intrusive:3 ends here
 
 ;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:4]]
@@ -1777,7 +1786,7 @@ fonts (•̀ᴗ•́)و"
 ;; Always support unicode upon LaTeX export
 ;; No need to explicitly import armkeh's unicode-sty in each org file.
 (add-to-list 'org-latex-packages-alist
-             "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}")
+  "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}")
 ;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:5 ends here
 
 ;; [[file:init.org::#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG][Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:7]]
@@ -1791,7 +1800,7 @@ fonts (•̀ᴗ•́)و"
 ;; Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG:8 ends here
 
 ;; [[file:init.org::#Show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window:1]]
-(use-package org-sticky-header
+ (use-package org-sticky-header
   :hook (org-mode . org-sticky-header-mode)
   :config
   (setq-default
@@ -1814,20 +1823,20 @@ fonts (•̀ᴗ•́)و"
 ;; [[file:init.org::#Powerful-Directory-Editing-with-dired][Powerful Directory Editing with ~dired~:3]]
 (use-package dired-filter
   :hook (dired-mode . (lambda () (dired-filter-group-mode)
-                        (dired-filter-by-garbage)))
+                                 (dired-filter-by-garbage)))
   :custom
-  (dired-garbage-files-regexp
-   "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
-  (dired-filter-group-saved-groups
-   '(("default"
-      ("Org"    (extension "org"))
-      ("Executables" (exexutable))
-      ("Directories" (directory))
-      ("PDF"    (extension "pdf"))
-      ("LaTeX"  (extension "tex" "bib"))
-      ("Images" (extension "png"))
-      ("Code"   (extension "hs" "agda" "lagda"))
-      ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
+    (dired-garbage-files-regexp
+      "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
+    (dired-filter-group-saved-groups
+      '(("default"
+         ("Org"    (extension "org"))
+         ("Executables" (exexutable))
+         ("Directories" (directory))
+         ("PDF"    (extension "pdf"))
+         ("LaTeX"  (extension "tex" "bib"))
+         ("Images" (extension "png"))
+         ("Code"   (extension "hs" "agda" "lagda"))
+         ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
 ;; Powerful Directory Editing with ~dired~:3 ends here
 
 ;; [[file:init.org::#Persistent-Scratch-Buffer][Persistent Scratch Buffer:1]]
@@ -1840,13 +1849,13 @@ fonts (•̀ᴗ•́)و"
 
 ;; [[file:init.org::#Persistent-Scratch-Buffer][Persistent Scratch Buffer:2]]
 (defun scratch ()
-  "Recreate the scratch buffer, loading any persistent state."
-  (interactive)
-  (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
-  (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
-  (org-mode)
-  (persistent-scratch-mode)
-  (persistent-scratch-autosave-mode 1))
+   "Recreate the scratch buffer, loading any persistent state."
+   (interactive)
+   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
+   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
+   (org-mode)
+   (persistent-scratch-mode)
+   (persistent-scratch-autosave-mode 1))
 
 ;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
 
@@ -1856,9 +1865,9 @@ fonts (•̀ᴗ•́)و"
 
 ;; [[file:init.org::#Persistent-Scratch-Buffer][Persistent Scratch Buffer:3]]
 (setq initial-scratch-message (concat
-                               "#+Title: Persistent Scratch Buffer"
-                               "\n#\n# Welcome! This’ a place for trying things out."
-                               "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
+  "#+Title: Persistent Scratch Buffer"
+  "\n#\n# Welcome! This’ a place for trying things out."
+  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
 ;; Persistent Scratch Buffer:3 ends here
 
 ;; [[file:init.org::#Preview-link-under-cursor][Preview link under cursor:1]]
@@ -1897,18 +1906,18 @@ fonts (•̀ᴗ•́)و"
 
     (-let [(tag label) (s-split "❙" template)]
       (-let [click-to-show-all-buffer-occurrences `(lambda () (interactive) (occur (concat ,tag ,label)))]
-        ;; Make an SVG for the tag.
-        (push
-         (cons (format "\\(%s\\)%s" tag label) `((lambda (tag) (svg-tag-make (s-chop-suffix ":" (s-chop-prefixes '("[" "<" "/*")  tag))    :face (quote ,face) :inverse t :margin 0 :crop-right t :crop-left nil))
-                                                 ,click-to-show-all-buffer-occurrences
-                                                 ,tooltip-message-upon-hover))
-         svg-tag-tags)
-        ;; Make an SVG for the label.
-        (push
-         (cons (format "%s\\(%s\\)" tag label) `((lambda (label) (svg-tag-make (s-chop-suffixes '("]" ">" "*/") label) :face (quote ,face) :crop-left t))
-                                                 ,click-to-show-all-buffer-occurrences
-                                                 ,tooltip-message-upon-hover))
-         svg-tag-tags))))
+       ;; Make an SVG for the tag.
+       (push
+        (cons (format "\\(%s\\)%s" tag label) `((lambda (tag) (svg-tag-make (s-chop-suffix ":" (s-chop-prefixes '("[" "<" "/*")  tag))    :face (quote ,face) :inverse t :margin 0 :crop-right t :crop-left nil))
+                                                ,click-to-show-all-buffer-occurrences
+                                                ,tooltip-message-upon-hover))
+        svg-tag-tags)
+       ;; Make an SVG for the label.
+       (push
+        (cons (format "%s\\(%s\\)" tag label) `((lambda (label) (svg-tag-make (s-chop-suffixes '("]" ">" "*/") label) :face (quote ,face) :crop-left t))
+                                                ,click-to-show-all-buffer-occurrences
+                                                ,tooltip-message-upon-hover))
+        svg-tag-tags))))
 
   ;; Let's start off empty; then declare badges below.
   (setq svg-tag-tags nil)
@@ -1954,7 +1963,7 @@ fonts (•̀ᴗ•́)و"
 ;; [[file:init.org::#Formatting-Text][Formatting Text:1]]
 (local-set-key (kbd "C-c f") #'my/org-mode-format)
 (defun my/org-mode-format (&optional text)
-  "Surround selected region with the given Org emphasises marker.
+"Surround selected region with the given Org emphasises marker.
 
 E.g., if this command is bound to “C-c f” then the sequence
 “C-c f b” would make the currenly selected text be bold.
@@ -1966,7 +1975,7 @@ useful single-character completions.
 Note: “C-c f 𝓍”, for an unrecognised marker 𝓍, just inserts
 the character 𝓍 before and after the selected text."
   (interactive "P") ;; Works on a region
-                                        ; (message "b,* ⟨Bold⟩; i,/ ⟨Italics⟩; u,_ ⟨Underline⟩; c,~ ⟨Monotype⟩")
+  ; (message "b,* ⟨Bold⟩; i,/ ⟨Italics⟩; u,_ ⟨Underline⟩; c,~ ⟨Monotype⟩")
   (message "⟨Bold b,*⟩ ⟨Italics i,/⟩ ⟨Underline u,_⟩ ⟨Monotype c,~⟩")
   (let ((kind (read-char)))
     ;; Map letters to Org formatting symbols
@@ -2001,11 +2010,11 @@ the character 𝓍 before and after the selected text."
 ;; [[file:init.org::#Pretty-Lists-Markers][Pretty Lists Markers:1]]
 ;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
 (cl-loop for (x y z) in '(("+" "◦" *)
-                          ("-" "•" *)
-                          ("*" "⋆" +))
-         do (font-lock-add-keywords 'org-mode
-                                    `((,(format "^ %s\\([%s]\\) " z x)
-                                       (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
+                       ("-" "•" *)
+                       ("*" "⋆" +))
+      do (font-lock-add-keywords 'org-mode
+                                 `((,(format "^ %s\\([%s]\\) " z x)
+                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
 ;; Pretty Lists Markers:1 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:1]]
@@ -2028,8 +2037,8 @@ the character 𝓍 before and after the selected text."
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:5]]
 (eval-after-load "flyspell"
   ' (progn
-      (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-      (define-key flyspell-mouse-map [mouse-3] #'undefined)))
+     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:5 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:6]]
@@ -2055,7 +2064,7 @@ the character 𝓍 before and after the selected text."
   :diminish synosaurus-mode
   :init    (synosaurus-mode)
   :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-  (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
+           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:11]]
@@ -2065,15 +2074,15 @@ the character 𝓍 before and after the selected text."
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:12]]
 (use-package wordnut
-  :bind ("M-!" . wordnut-lookup-current-word))
+ :bind ("M-!" . wordnut-lookup-current-word))
 
 ;; Use M-& for async shell commands.
 ;; Fix spelling as you type ---thesaurus & dictionary too!:12 ends here
 
 ;; [[file:init.org::#Using-a-Grammar-Style-Checker][Using a Grammar & Style Checker:1]]
 (use-package langtool
-  :defer t
-  :custom
+ :defer t
+ :custom
   (langtool-language-tool-jar
    "~/Applications/LanguageTool-4.5/languagetool-commandline.jar"))
 ;; Using a Grammar & Style Checker:1 ends here
@@ -2081,17 +2090,17 @@ the character 𝓍 before and after the selected text."
 ;; [[file:init.org::#Using-a-Grammar-Style-Checker][Using a Grammar & Style Checker:2]]
 ;; Quickly check, correct, then clean up /region/ with M-^
 (eval-after-load 'langtool
-  (progn
-    (add-hook 'langtool-error-exists-hook
-              (lambda ()
-                (langtool-correct-buffer)
-                (langtool-check-done)))
+(progn
+(add-hook 'langtool-error-exists-hook
+  (lambda ()
+     (langtool-correct-buffer)
+     (langtool-check-done)))
 
-    (global-set-key "\M-^"
-                    (lambda ()
-                      (interactive)
-                      (message "Grammar checking begun ...")
-                      (langtool-check)))))
+(global-set-key "\M-^"
+                (lambda ()
+                  (interactive)
+                  (message "Grammar checking begun ...")
+                  (langtool-check)))))
 ;; Using a Grammar & Style Checker:2 ends here
 
 ;; [[file:init.org::#Lightweight-Prose-Proofchecking][Lightweight Prose Proofchecking:1]]
@@ -2108,7 +2117,7 @@ the character 𝓍 before and after the selected text."
            "experience shows"      ;; Whose? What kind? How does it do so?
            "may have"              ;; It may also have not!
            "it turns out that")))  ;; How does it turn out so?
-;; ↯ What is the evidence of highighted phrase? ↯
+           ;; ↯ What is the evidence of highighted phrase? ↯
 ;; Lightweight Prose Proofchecking:1 ends here
 
 ;; [[file:init.org::#Placeholder-Text-For-Learning-Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
@@ -2122,10 +2131,10 @@ the character 𝓍 before and after the selected text."
 ;; Some text to make us smile:1 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:1]]
-                                        ; (load (shell-command-to-string "agda-mode locate"))
+; (load (shell-command-to-string "agda-mode locate"))
 ;;
 ;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
-                                        ; (makunbound 'agda2-include-dirs)
+; (makunbound 'agda2-include-dirs)
 ;; Unicode Input via Agda Input:1 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:2]]
@@ -2142,11 +2151,11 @@ the character 𝓍 before and after the selected text."
 ;; MA: This results in "Package cl is deprecated" !?
 (unless noninteractive
   (use-package agda-input
-    :ensure nil ;; I have it locally.
-    :demand t
-    :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-    :custom (default-input-method "Agda")))
-;; Now C-\ or M-x toggle-input-method turn it on and offers
+  :ensure nil ;; I have it locally.
+  :demand t
+  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
+  :custom (default-input-method "Agda")))
+  ;; Now C-\ or M-x toggle-input-method turn it on and offers
 
 
 ;; TODO add a hook that when the input method becomes Agda, just don't bother showing me in the modeline.
@@ -2169,83 +2178,83 @@ the character 𝓍 before and after the selected text."
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:8]]
 (unless noninteractive
-  (cl-loop for item
-           in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
-                ("(" "﴾")
-                (")" "﴿")
-                ("cmd" "⌘")
-                ;; categorial ;;
-                ("alg" "𝒜𝓁ℊ")
-                ("split" "▵")
-                ("join" "▿")
-                ("adj" "⊣")
-                (";;" "﹔")
-                (";;" "⨾")
-                (";;" "∘")
-                ;; logic
-                ("if" "⇐")
-                ("onlyif" "⇒")
-                ;; lattices ;;
-                ("meet" "⊓")
-                ("join" "⊔")
-                ;; tortoise brackets, infix relations
-                ("((" "〔")
-                ("))" "〕")
-                ;; residuals
-                ("syq"  "╳")
-                ("over" "╱")
-                ("under" "╲")
-                ;; Z-quantification range notation ;;
-                ;; e.g., “∀ x ❙ R • P” ;;
-                ("|"    "❙")
-                ("with" "❙")
-                ;; Z relational operators
-                ("domainrestriction" "◁")
-                ("domr" "◁")
-                ("domainantirestriction" "⩤")
-                ("doma" "⩤")
-                ("rangerestriction" "▷")
-                ("ranr" "▷")
-                ("rangeantirestriction" "⩥")
-                ("rana" "⩥")
-                ;; adjunction isomorphism pair ;;
-                ("floor"  "⌊⌋")
-                ("lower"  "⌊⌋")
-                ("lad"    "⌊⌋")
-                ("ceil"   "⌈⌉")
-                ("raise"  "⌈⌉")
-                ("rad"    "⌈⌉")
-                ;; Replies
-                ("yes"  "✔")
-                ("no"    "❌")
-                ;; Arrows
-                ("<=" "⇐")
-                ;; more (key value) pairs here
-                )
-           do (add-to-list 'agda-input-user-translations item)))
+(cl-loop for item
+      in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
+          ("(" "﴾")
+          (")" "﴿")
+          ("cmd" "⌘")
+           ;; categorial ;;
+           ("alg" "𝒜𝓁ℊ")
+           ("split" "▵")
+           ("join" "▿")
+           ("adj" "⊣")
+           (";;" "﹔")
+           (";;" "⨾")
+           (";;" "∘")
+           ;; logic
+           ("if" "⇐")
+           ("onlyif" "⇒")
+           ;; lattices ;;
+           ("meet" "⊓")
+           ("join" "⊔")
+           ;; tortoise brackets, infix relations
+           ("((" "〔")
+           ("))" "〕")
+           ;; residuals
+           ("syq"  "╳")
+           ("over" "╱")
+           ("under" "╲")
+           ;; Z-quantification range notation ;;
+           ;; e.g., “∀ x ❙ R • P” ;;
+           ("|"    "❙")
+           ("with" "❙")
+           ;; Z relational operators
+           ("domainrestriction" "◁")
+           ("domr" "◁")
+           ("domainantirestriction" "⩤")
+           ("doma" "⩤")
+           ("rangerestriction" "▷")
+           ("ranr" "▷")
+           ("rangeantirestriction" "⩥")
+           ("rana" "⩥")
+           ;; adjunction isomorphism pair ;;
+           ("floor"  "⌊⌋")
+           ("lower"  "⌊⌋")
+           ("lad"    "⌊⌋")
+           ("ceil"   "⌈⌉")
+           ("raise"  "⌈⌉")
+           ("rad"    "⌈⌉")
+           ;; Replies
+           ("yes"  "✔")
+           ("no"    "❌")
+           ;; Arrows
+           ("<=" "⇐")
+        ;; more (key value) pairs here
+        )
+      do (add-to-list 'agda-input-user-translations item)))
 ;; Unicode Input via Agda Input:8 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:9]]
 (unless noninteractive
-  ;; Add to the list of translations using “emot” and the given, more specfic, name.
-  ;; Whence, \emot shows all possible emotions.
-  (cl-loop for emot
-           in `(;; angry, cry, why-you-no
-                ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "ಠ_ಠ" "(╬ ಠ益ಠ)" "･ﾟ(*❦ω❦)*･ﾟ" "(╯°□°）╯︵ ┻━┻") ;; flip the table
-                ;; confused, disapprove, dead, shrug, awkward
-                ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"  "(´°ω°`)" "･✧_✧･")
-                ;; dance, csi
-                ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
-                 ,(s-collapse-whitespace "•_•)
+;; Add to the list of translations using “emot” and the given, more specfic, name.
+;; Whence, \emot shows all possible emotions.
+(cl-loop for emot
+      in `(;; angry, cry, why-you-no
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "ಠ_ಠ" "(╬ ಠ益ಠ)" "･ﾟ(*❦ω❦)*･ﾟ" "(╯°□°）╯︵ ┻━┻") ;; flip the table
+           ;; confused, disapprove, dead, shrug, awkward
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"  "(´°ω°`)" "･✧_✧･")
+           ;; dance, csi
+           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
+            ,(s-collapse-whitespace "•_•)
                                       ( •_•)>⌐■-■
                                       (⌐■_■)"))
-                ;; love, pleased, success, yesss, smile, excited, yay
-                ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "ᕦ( ᴼ ڡ ᴼ )ᕤ" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "(◕‿◕)" "( ˃ ヮ˂)" "[ ⇀ ‿ ↼ ]" "٩(⁎❛ᴗ❛⁎)۶" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ" "(✿◠‿◠)")
-                ;; flower high-5
-                ("hug" "♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡" "(づ｡◕‿◕｡)づ" "(づ｡◕‿‿‿‿◕｡)づ"))
-           do
-           (add-to-list 'agda-input-user-translations emot)
-           (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
+           ;; love, pleased, success, yesss, smile, excited, yay
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "ᕦ( ᴼ ڡ ᴼ )ᕤ" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "(◕‿◕)" "( ˃ ヮ˂)" "[ ⇀ ‿ ↼ ]" "٩(⁎❛ᴗ❛⁎)۶" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ" "(✿◠‿◠)")
+           ;; flower high-5
+           ("hug" "♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡" "(づ｡◕‿◕｡)づ" "(づ｡◕‿‿‿‿◕｡)づ"))
+      do
+      (add-to-list 'agda-input-user-translations emot)
+      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
 ;; Unicode Input via Agda Input:9 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:10]]
@@ -2299,11 +2308,11 @@ the character 𝓍 before and after the selected text."
 ;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:3]]
 (defmacro my/make-navigation-hydra (initial-action)
   `(defhydra word-navigation
-     (:body-pre (,initial-action)) "Word-at-point Navigation"
-     ("n" ahs-forward "Next instance")
-     ("p" smartscan-symbol-go-backward "Previous instance")
-     ("r" my/symbol-replace "Replace all occurances")
-     ("s" ahs-display-stat "Stats")))
+    (:body-pre (,initial-action)) "Word-at-point Navigation"
+    ("n" ahs-forward "Next instance")
+    ("p" smartscan-symbol-go-backward "Previous instance")
+    ("r" my/symbol-replace "Replace all occurances")
+    ("s" ahs-display-stat "Stats")))
 
 ;; (bind-key* str func) ≈ (global-set-key (kbd str) func)
 (bind-key* "M-n" (my/make-navigation-hydra ahs-forward))
@@ -2332,8 +2341,8 @@ the character 𝓍 before and after the selected text."
   :custom (glc-default-span 0))
 
 (my/defhydra "C-c e" "Look at them edits!" bus
-             :\  ("p" goto-last-change "Goto nᵗʰ last change")
-             ("n" goto-last-change-reverse "Goto more recent change"))
+  :\  ("p" goto-last-change "Goto nᵗʰ last change")
+      ("n" goto-last-change-reverse "Goto more recent change"))
 ;;   =C-c e n,p=: Taking a tour of one's edits:1 ends here
 
 ;; [[file:init.org::#visual-regexp][visual-regexp:1]]
@@ -2343,7 +2352,7 @@ the character 𝓍 before and after the selected text."
 ;; C-u M-%  do to regexp replace, without querying.
 (use-package visual-regexp
   :config (define-key global-map (kbd "M-%")
-                      (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
 ;; visual-regexp:1 ends here
 
 ;; [[file:init.org::#Get-LaTeX][Get LaTeX::1]]
@@ -2390,11 +2399,11 @@ E.g., ↯ We'll go on a ∀∃⇅ adventure
          (let ((id (org-entry-get nil "CUSTOM_ID")))
            (unless id
              (thread-last (nth 4 (org-heading-components))
-                          (s-replace-regexp "[^[:alnum:]']" "-")
-                          (s-replace-regexp "-+" "-")
-                          (s-chop-prefix "-")
-                          (s-chop-suffix "-")
-                          (setq id))
+               (s-replace-regexp "[^[:alnum:]']" "-")
+               (s-replace-regexp "-+" "-")
+               (s-chop-prefix "-")
+               (s-chop-suffix "-")
+               (setq id))
              (if (not (member id ids))
                  (push id ids)
                (message-box "Oh no, a repeated id!\n\n\t%s" id)
@@ -2458,8 +2467,8 @@ by spaces.
      (not-export? nil)
      (fold?
       (thread-last contents′
-                   (replace-regexp-in-string ":title:.*\n" "")
-                   (format "<details class=\"code-details\"> <summary> <strong>
+        (replace-regexp-in-string ":title:.*\n" "")
+        (format "<details class=\"code-details\"> <summary> <strong>
             <font face=\"Courier\" size=\"3\" color=\"green\"> %s
             </font> </strong> </summary> %s </details>" title′))))))
 
@@ -2540,6 +2549,11 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 ;; Org-mode ⇐ HTML:3 ends here
 
+;; [[file:init.org::#Programming][Programming:1]]
+(when my/work-machine?
+  (setq doom-modeline-buffer-file-name-style 'truncate-except-project))
+;; Programming:1 ends here
+
 ;; [[file:init.org::#Quickly-Run-Code-Snippets][Quickly Run Code Snippets:1]]
 ;; In any programming buffer, “M-x quickrun” to execute that program.
 ;; Super useful when wanting to quickly test things out, in a playground.
@@ -2618,6 +2632,11 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
  'js-mode-map)
 ;; JavaScript:2 ends here
 
+;; [[file:init.org::#JavaScript][JavaScript:3]]
+(use-package js-comint)
+(define-key js-mode-map (kbd "C-x C-e") (lambda () (interactive) (call-interactively #'js-comint-repl) (other-window -1) (js-comint-send-last-sexp)))
+;; JavaScript:3 ends here
+
 ;; [[file:init.org::#devdocs][devdocs:1]]
 ;; 1. Get docs of a languages: M-x devdocs-install
 ;; 2. Lookup docs: [C-u] M-x devdocs-lookup
@@ -2627,18 +2646,18 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
   :config
   (when nil ;; “C-x C-e” the following once.
     (cl-loop for lang in '(javascript ramda typescript html css sass
-                                      vue~3 vuex~4 vue_router~4 "angularjs~1.6"
-                                      nginx webpack~5 web_extensions
-                                      ;;
-                                      eslint  jest jq jsdoc prettier
-                                      mocha chai jasmine
-                                      ;;
-                                      bash docker~19 git homebrew elisp
-                                      ;;
-                                      postgresql~14 redis sqlite
-                                      ;;
-                                      rust ruby~3 minitest "rails~7.0")
-             do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
+                       vue~3 vuex~4 vue_router~4 "angularjs~1.6"
+                       nginx webpack~5 web_extensions
+                       ;;
+                       eslint  jest jq jsdoc prettier
+                       mocha chai jasmine
+                       ;;
+                       bash docker~19 git homebrew elisp
+                       ;;
+                       postgresql~14 redis sqlite
+                       ;;
+                       rust ruby~3 minitest "rails~7.0")
+          do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
 ;; devdocs:1 ends here
 
 ;; [[file:init.org::#How-do-I-do-something][How do I do something?:1]]
@@ -2675,7 +2694,7 @@ Example usage:
 ;; [[file:init.org::#Managing-Processes-Servers-from-within-Emacs-Work-specific-functions][Managing Processes/Servers from within Emacs ---Work-specific functions:1]]
 ;; “M-x prodigy”, then press “s” to start a service; “S” to stop it; “$” to see it; “r”estart
 (use-package prodigy :disabled t)
-;; C-h v prodigy-services ⇒ See possible properties.
+  ;; C-h v prodigy-services ⇒ See possible properties.
 ;; Managing Processes/Servers from within Emacs ---Work-specific functions:1 ends here
 
 ;; [[file:init.org::#my-defaliases][my/defaliases:1]]
@@ -2696,8 +2715,8 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 (defun my/declare-unkillable-buffer (name)
   (add-hook 'kill-buffer-query-functions
             `(lambda () (or (not (equal (buffer-name) ,name))
-                            (progn (message "Not allowed to kill %s, burying instead; otherwise use “M-x force-kill”" (buffer-name))
-                                   (bury-buffer))))))
+                       (progn (message "Not allowed to kill %s, burying instead; otherwise use “M-x force-kill”" (buffer-name))
+                              (bury-buffer))))))
 
 (my/defaliases my/force-kill force-kill w-force-kill)
 (cl-defun my/force-kill (&optional buffer-name)
@@ -2718,12 +2737,12 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 ;; Making unkillable buffers & shells:1 ends here
 
 ;; [[file:init.org::#my-work-links][my/work-links:1]]
-(cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
-  "Given a link of TYPE with a URL, produce the correct org-link.
+ (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
+   "Given a link of TYPE with a URL, produce the correct org-link.
 
  EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
  This is how the link looks upon export."
-  `(org-link-set-parameters
+   `(org-link-set-parameters
     ,type
     :follow (lambda (label) (browse-url (format ,url label)))
     :export (lambda (label description backend)
@@ -2733,7 +2752,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
                   ('latex (format "\\href{%s}{FM-%s}" full-url label))
                   (_  full-url))))
     :face '(:foreground "green" :weight bold
-                        :underline "blue" :overline "blue")))
+            :underline "blue" :overline "blue")))
 ;; my/work-links:1 ends here
 
 ;; [[file:init.org::#w-start-stop-services][w-start/stop-services:1]]
@@ -2753,8 +2772,8 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 ;; [[file:init.org::#w-status-of-services][w-status-of-services:1]]
 ;; It takes about ~3 seconds to build the Status of Services page, so let's jump to it if it's already built, and the user/me can request a refresh, if need be.
 (global-set-key (kbd "M-S-SPC")
-                (lambda () (interactive)
-                  (-let [buf (get-buffer "Status of Services")] (if buf (switch-to-buffer buf) (w-status-of-services)))))
+  (lambda () (interactive)
+    (-let [buf (get-buffer "Status of Services")] (if buf (switch-to-buffer buf) (w-status-of-services)))))
 ;;
 ;; Since M-S-SPC brings up the transient menu, and most commands close the status buffer or are transient, we get the perception that the transient menu is "sticky"; i.e., stuck to the buffer, even though this is not true. I do not yet know how to make a transient menu stuck to a buffer.
 ;;
@@ -2785,11 +2804,11 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
                                (switch-to-buffer here)
                                ;; FIXME:here
                                (--> (s-truncate 135 (s-trim most-recent-shell-output))
-                                    (if (s-contains? "|" it)
-                                        (cl-second (s-split "|" it))
-                                      it)
-                                    (s-trim it)
-                                    (if (<= (length it) 3) (s-repeat 70 " ") it))))
+                                  (if (s-contains? "|" it)
+                                      (cl-second (s-split "|" it))
+                                    it)
+                                  (s-trim it)
+                                  (if (<= (length it) 3) (s-repeat 70 " ") it))))
               for _ = (if (or (s-contains? "Error" saying) (not 𝑺-buffer)) (setq status  '💥))
               for keymap = (copy-keymap org-mouse-map)
               do (cl-loop for (key action)
@@ -2804,9 +2823,9 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
                                t (vterm-shell-command (format "clear; cd ~/%s; git status" ,𝑺) (format "vterm/%s" ,𝑺))
                                ;; See the repo in the web
                                w (--> (format "%s" ,𝑺)
-                                      (if (s-contains? "/" it) (f-parent it) it)
-                                      (format "https://github.com/%s/%s" work/gh-user it)
-                                      (browse-url it))
+                                    (if (s-contains? "/" it) (f-parent it) it)
+                                    (format "https://github.com/%s/%s" work/gh-user it)
+                                    (browse-url it))
                                ;; Visit service shell
                                <return>
                                (when ,𝑺-buffer
@@ -2895,36 +2914,36 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
   (w-[start|stop]-services)  ⇒ Starts/stops all defined services."
   (add-to-list 'my/services repo)
   `(list
-    (cl-defun ,(intern (format "w-start-%s" repo)) ()
-      "Start server off of ‘main’, with prefix just start server off of current branch."
-      (interactive)
-      (let ((command (format "cd ~/%s; pwd; hr; %s; hr; %s"
-                             (quote ,repo)
-                             (if current-prefix-arg "" ,main-setup)
-                             ,cmd))
-            (buf-name (format "*Server:%s/%s*" (quote ,repo)
-                              (if current-prefix-arg "main"
-                                (-let [default-directory ,(format "~/%s" repo)]
-                                  (magit-get-current-branch))))))
-        (my/run-unkillable-shell
-         (format "echo %s; hr; %s" (pp-to-string command) command) ;; Show command being run in output buffer, then run that command
-         buf-name)
-        (with-current-buffer buf-name (read-only-mode))))
+     (cl-defun ,(intern (format "w-start-%s" repo)) ()
+       "Start server off of ‘main’, with prefix just start server off of current branch."
+       (interactive)
+       (let ((command (format "cd ~/%s; pwd; hr; %s; hr; %s"
+                              (quote ,repo)
+                              (if current-prefix-arg "" ,main-setup)
+                              ,cmd))
+             (buf-name (format "*Server:%s/%s*" (quote ,repo)
+                               (if current-prefix-arg "main"
+                                 (-let [default-directory ,(format "~/%s" repo)]
+                                   (magit-get-current-branch))))))
+         (my/run-unkillable-shell
+          (format "echo %s; hr; %s" (pp-to-string command) command) ;; Show command being run in output buffer, then run that command
+          buf-name)
+         (with-current-buffer buf-name (read-only-mode))))
 
-    (cl-defun ,(intern (format "w-stop-%s" repo)) ()
-      "Force-kill all unkillable buffers that mention REPO in their name. Also stop any docker services mentioning REPO in their name."
-      (interactive)
-      (my/docker-stop ,(pp-to-string repo))
-      (thread-last (buffer-list)
-                   (mapcar 'buffer-name)
-                   (--filter (s-contains-p ,(pp-to-string repo) it))
-                   (mapcar #'my/force-kill)))
+     (cl-defun ,(intern (format "w-stop-%s" repo)) ()
+       "Force-kill all unkillable buffers that mention REPO in their name. Also stop any docker services mentioning REPO in their name."
+       (interactive)
+       (my/docker-stop ,(pp-to-string repo))
+       (thread-last (buffer-list)
+         (mapcar 'buffer-name)
+         (--filter (s-contains-p ,(pp-to-string repo) it))
+         (mapcar #'my/force-kill)))
 
-    (if ,example
-        (cl-defun ,(intern (format "w-is-up-%s?" repo)) ()
-          (interactive)
-          (browse-url ,example)
-          (message "If the URL is busted, then the repo is not up correctly or the server has an error!")))))
+     (if ,example
+         (cl-defun ,(intern (format "w-is-up-%s?" repo)) ()
+           (interactive)
+           (browse-url ,example)
+           (message "If the URL is busted, then the repo is not up correctly or the server has an error!")))))
 ;; my/defservice:1 ends here
 
 ;; [[file:init.org::#my-defservice][my/defservice:2]]
@@ -2948,26 +2967,26 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
   (setq projectile-enable-caching t)
 
   (define-key projectile-mode-map (kbd "C-x p s")
-              ;; I prefer helm-do-grep-ag since it shows me a live search
-              (lambda () (interactive)
-                (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
-                  ;; (shell-command-to-string "echo $PWD")
-                  (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
+    ;; I prefer helm-do-grep-ag since it shows me a live search
+    (lambda () (interactive)
+       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
+         ;; (shell-command-to-string "echo $PWD")
+         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
 ;; Project management & navigation:1 ends here
 
 ;; [[file:init.org::#Project-management-navigation][Project management & navigation:2]]
 (define-key projectile-mode-map (kbd "C-x p c")
-            (defun my/copy-current-file-path ()
-              "Add current file path to kill ring."
-              (interactive)
-              (message (kill-new buffer-file-name))))
+  (defun my/copy-current-file-path ()
+    "Add current file path to kill ring."
+    (interactive)
+    (message (kill-new buffer-file-name))))
 ;; Project management & navigation:2 ends here
 
 ;; [[file:init.org::#Projectile][Projectile:1]]
 ;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
 ;; https://github.com/bbatsov/projectile
 (use-package projectile
-  :config (projectile-global-mode))
+:config (projectile-global-mode))
 (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
 ;; Projectile:1 ends here
 
@@ -2981,7 +3000,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 
 ;; [[file:init.org::#Are-there-any-errors-in-my-code][Are there any errors in my code?:2]]
 (use-package helm-flycheck)
-(bind-key*
+ (bind-key*
  "C-c !"
  (defhydra my/flycheck-hydra (:color blue :hint nil)
    "Move around flycheck errors and get info about them"
@@ -3032,12 +3051,12 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 
 ;; [[file:init.org::#Documentation-Pop-Ups][Documentation Pop-Ups:1]]
 (use-package company-quickhelp
-  :config
-  (setq company-quickhelp-delay 0.1)
-  (company-quickhelp-mode)
-  ;; Especially when learning a new language, looking up its definition/docstring can be helpful.
-  ;; Note: I use “M-!” everywhere else to mean “define word at point”.
-  (bind-key "M-!" #'company-show-doc-buffer 'prog-mode-map))
+ :config
+   (setq company-quickhelp-delay 0.1)
+   (company-quickhelp-mode)
+   ;; Especially when learning a new language, looking up its definition/docstring can be helpful.
+   ;; Note: I use “M-!” everywhere else to mean “define word at point”.
+   (bind-key "M-!" #'company-show-doc-buffer 'prog-mode-map))
 ;; Documentation Pop-Ups:1 ends here
 
 ;; [[file:init.org::#ll-debug][ll-debug:1]]
@@ -3127,31 +3146,31 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 
 ;; [[file:init.org::#Actual-Setup][Actual Setup:2]]
 (my/defhydra "C-c f" "Folding text" archive
-             :Current
-             ("h" hs-hide-block "Hide")
-             ("s" hs-show-block "Show")
-             ("t" hs-toggle-hiding "Toggle")
-             ;; "l" hs-hide-level "Hide blocks n levels below this block"; TODO: Enable folding feature
-             :Buffer
-             ("H" hs-hide-all "Hide")
-             ("S" hs-show-all "Show")
-             ("T" my/hs-toggle-buffer "Toggle")
-             :Style
-             ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
-             ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
-             :Region
-             ("f" (lambda () (interactive) (vimish-fold-toggle) (vimish-fold (region-beginning) (region-end))) "Fold/Toggle")
-             ("d" vimish-fold-delete "Delete fold")
-             ("U" vimish-fold-unfold-all "Unfold all")
-             ("D" vimish-fold-delete-all "Delete all")
-             ("n" vimish-fold-next-fold "Next fold")
-             ("p" vimish-fold-previous-fold "Previous fold")
-             :...
-             ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
-             ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
-             ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
-             ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset Hideshow")  ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
-             ("q" nil "Quit" :color blue))
+  :Current
+  ("h" hs-hide-block "Hide")
+  ("s" hs-show-block "Show")
+  ("t" hs-toggle-hiding "Toggle")
+  ;; "l" hs-hide-level "Hide blocks n levels below this block"; TODO: Enable folding feature
+  :Buffer
+  ("H" hs-hide-all "Hide")
+  ("S" hs-show-all "Show")
+  ("T" my/hs-toggle-buffer "Toggle")
+  :Style
+  ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
+  ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
+  :Region
+  ("f" (lambda () (interactive) (vimish-fold-toggle) (vimish-fold (region-beginning) (region-end))) "Fold/Toggle")
+  ("d" vimish-fold-delete "Delete fold")
+  ("U" vimish-fold-unfold-all "Unfold all")
+  ("D" vimish-fold-delete-all "Delete all")
+  ("n" vimish-fold-next-fold "Next fold")
+  ("p" vimish-fold-previous-fold "Previous fold")
+  :...
+  ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
+  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
+  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
+  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset Hideshow")  ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
+  ("q" nil "Quit" :color blue))
 
 ;; Features from origami/yafolding that maybe I'd like to implement include:
 ;; narrowing to block or folding everything except block, navigating back and forth between folded blocks.
@@ -3170,7 +3189,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 
 ;; [[file:init.org::#Actual-Setup][Actual Setup:4]]
 (defun my/clever-selective-display (&optional level)
-  "Fold text indented same of more than the cursor.
+"Fold text indented same of more than the cursor.
 
 This function toggles folding according to the level of
 indentation at point. It's convenient not having to specify a
@@ -3214,20 +3233,20 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
 ;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
 (use-package windmove
   :config ;; use command key on Mac
-  (windmove-default-keybindings 'super)
-  ;; wrap around at edges
-  (setq windmove-wrap-around t))
+          (windmove-default-keybindings 'super)
+          ;; wrap around at edges
+          (setq windmove-wrap-around t))
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
 
 ;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:2]]
 (use-package buffer-flip
   :bind
-  (:map buffer-flip-map
-        ("M-<tab>"   . buffer-flip-forward)
-        ("M-S-<tab>" . buffer-flip-backward)
-        ("C-g"       . buffer-flip-abort))
+   (:map buffer-flip-map
+    ("M-<tab>"   . buffer-flip-forward)
+    ("M-S-<tab>" . buffer-flip-backward)
+    ("C-g"       . buffer-flip-abort))
   :config
-  (setq buffer-flip-skip-patterns
+    (setq buffer-flip-skip-patterns
         '("^\\*helm\\b")))
 ;; key to begin cycling buffers.
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
@@ -3283,10 +3302,10 @@ Example use:      (w-pr-checkout \"~/my-repo\")
   "See all company related PRs"
   (interactive)
   (thread-last `("is:open" "is:pr" "archived:false" "draft:false" ,@work/gh-tags  ,@query-options)
-               (mapcar #'url-hexify-string)
-               (s-join "+")
-               (concat "https://github.com/pulls?q=")
-               browse-url))
+    (mapcar #'url-hexify-string)
+    (s-join "+")
+    (concat "https://github.com/pulls?q=")
+    browse-url))
 ;;
 (cl-loop for (name . query-options)
          in `((month ,(format-time-string "updated:>=%Y-%m-01"))
@@ -3374,10 +3393,10 @@ invoke M-x `lsp-sql-switch-connection'."
 (defun my/docker-stop (ctr)
   "Stop all containers that mention CTR in their name, image, command, or container id"
   (thread-last (shell-command-to-string "docker ps -a")
-               (s-split "\n")
-               (--filter (s-contains-p ctr it))
-               (--map (car (s-split " " it))) ;; Get docker container ids
-               (--map (shell-command (concat "docker stop " it)))))
+    (s-split "\n")
+    (--filter (s-contains-p ctr it))
+    (--map (car (s-split " " it))) ;; Get docker container ids
+    (--map (shell-command (concat "docker stop " it)))))
 ;; my/docker-stop:1 ends here
 
 ;; [[file:init.org::#my-open-in-terminal-'][my/open-in-terminal '⌘:1]]
@@ -3465,8 +3484,8 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 ;; Set the amount of data which Emacs reads from a process.
 ;; Some LSP responses are in the 8k-3MB range.
 ;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
-(setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
-(setq gc-cons-threshold 800000)
+;; NO! (setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
+;; NO! (setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
 ;; A large gc-cons-threshold will cause freezing and stuttering during long-term
 ;; interactive use. This one seems to be a good default.
 ;; LSP: Making Emacs into a generic full-featured programming IDE:4 ends here
@@ -3478,7 +3497,7 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 (require 'lsp-ui-doc)
 (require 'lsp-ui-imenu)
 
-                                        ; (setq lsp-mode-hook nil)
+; (setq lsp-mode-hook nil)
 (add-hook 'lsp-mode-hook
           (lambda ()
             ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
@@ -3493,14 +3512,14 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
             (bind-key* "s-l" #'my/lsp-hydra/body)))
 
 (defun my/helm-lsp-workspace-symbol-at-point ()
-  (interactive)
-  (let ((current-prefix-arg t))
-    (call-interactively #'helm-lsp-workspace-symbol)))
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-workspace-symbol)))
 
-(defun my/helm-lsp-global-workspace-symbol-at-point ()
-  (interactive)
-  (let ((current-prefix-arg t))
-    (call-interactively #'helm-lsp-global-workspace-symbol)))
+  (defun my/helm-lsp-global-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-global-workspace-symbol)))
 
 ;; TODO: Add other cool features discussed/loaded above into this hydra!
 (defhydra my/lsp-hydra (:color blue :hint nil)
@@ -3540,18 +3559,18 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 
 ;; [[file:init.org::#JSON][JSON:2]]
 (my/defhydra nil "JSON Browser" gamepad
-             :Buffer
-             ("p" #'json-mode-show-path "Copy path to field at point")
-             ;; ("f" #'json-mode-beautify "Format Buffer")
-             ;; ("m"  (lambda () (interactive) (json-pretty-print-buffer t)) "Minify/ugligy buffer")
-             ("t"  (lambda  () (interactive)
-                     (if my/json-hydra/pretty-printed?
-                         (json-pretty-print-buffer t)
-                       (json-mode-beautify (point-min) (point-max)))
-                     (setq my/json-hydra/pretty-printed? (not my/json-hydra/pretty-printed?)))
-              "Toggle format/uglify of buffer"
-              :toggle (progn (defvar my/json-hydra/pretty-printed? nil)
-                             my/json-hydra/pretty-printed?)))
+  :Buffer
+  ("p" #'json-mode-show-path "Copy path to field at point")
+  ;; ("f" #'json-mode-beautify "Format Buffer")
+  ;; ("m"  (lambda () (interactive) (json-pretty-print-buffer t)) "Minify/ugligy buffer")
+  ("t"  (lambda  () (interactive)
+          (if my/json-hydra/pretty-printed?
+              (json-pretty-print-buffer t)
+            (json-mode-beautify (point-min) (point-max)))
+          (setq my/json-hydra/pretty-printed? (not my/json-hydra/pretty-printed?)))
+   "Toggle format/uglify of buffer"
+   :toggle (progn (defvar my/json-hydra/pretty-printed? nil)
+                  my/json-hydra/pretty-printed?)))
 
 ;; TODO: (bind-key "C-c SPC" 'my/hydra/JSON\ Browser/body 'json-mode-map)
 ;; NOTE: “C-x SPC” is for rectangle editing.
@@ -3559,8 +3578,8 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
 
 ;; [[file:init.org::#w-screencapture][w-screencapture:1]]
 (bind-key "C-c s"
-          (cl-defun w-screencapture ()
-            "Interactively capture screen and save to clipboard; then paste in Slack, etc, with ⌘-c.
+  (cl-defun w-screencapture ()
+    "Interactively capture screen and save to clipboard; then paste in Slack, etc, with ⌘-c.
 
   After we run this command, we can swipe up on mousepad to select different desktops, then
   click & drag to select portition of screen to capture.
@@ -3573,49 +3592,49 @@ In MacOs,
 + Command + Shift + 3  ⇒  Screenshot
 
 See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
-            (interactive)
-            (async-shell-command "screencapture -i -c")))
+    (interactive)
+    (async-shell-command "screencapture -i -c")))
 
 (cl-defun w-delete-all-screenshots ()
-  "Delete all “Screen Shot ⋯” files in ~/Desktop."
-  (interactive)
-  (thread-last (shell-command-to-string "cd ~/Desktop; ls")
-               (s-split "\n")
-               (--filter (s-starts-with-p "Screen Shot" it))
-               (--map (f-delete (format "~/Desktop/%s" it)))))
+    "Delete all “Screen Shot ⋯” files in ~/Desktop."
+    (interactive)
+    (thread-last (shell-command-to-string "cd ~/Desktop; ls")
+      (s-split "\n")
+      (--filter (s-starts-with-p "Screen Shot" it))
+      (--map (f-delete (format "~/Desktop/%s" it)))))
 ;; w-screencapture:1 ends here
 
 ;; [[file:init.org::#Screencapturing-the-Current-Emacs-Frame][Screencapturing the Current Emacs Frame:1]]
 (defun my/capture-emacs-frame (&optional prefix output)
-  "Insert a link to a screenshot of the current Emacs frame.
+"Insert a link to a screenshot of the current Emacs frame.
 
 Unless the name of the OUTPUT file is provided, read it from the
 user. If PREFIX is provided, let the user select a portion of the screen."
-  (interactive "p")
-  (defvar my/emacs-window-id
-    (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
-    "The window ID of the current Emacs frame.
+(interactive "p")
+(defvar my/emacs-window-id
+   (s-collapse-whitespace (shell-command-to-string "osascript -e 'tell app \"Emacs\" to id of window 1'"))
+   "The window ID of the current Emacs frame.
 
     Takes a second to compute, whence a defvar.")
 
-  (let* ((screen  (if prefix "-i" (concat "-l" my/emacs-window-id)))
-         (temp    (format "emacs_temp_%s.png" (random)))
-         (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
-    ;; Get output file name
-    (unless output
-      (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
-      (when (s-blank-p output) (setq output default)))
-    ;; Clear minibuffer before capturing screen or prompt user
-    (message (if prefix "Please select region for capture …" "♥‿♥"))
-    ;; Capture current screen and resize
-    (thread-first
-      (format "screencapture -T 2 %s %s" screen temp)
-      (concat "; magick convert -resize 60% " temp " " output)
-      (shell-command))
-    (f-delete temp)
-    ;; Insert a link to the image and reload inline images.
-    (insert (concat "[[file:" output "]]")))
-  (org-display-inline-images nil t))
+(let* ((screen  (if prefix "-i" (concat "-l" my/emacs-window-id)))
+       (temp    (format "emacs_temp_%s.png" (random)))
+       (default (format-time-string "emacs-%m-%d-%Y-%H:%M:%S.png")))
+;; Get output file name
+  (unless output
+    (setq output (read-string (format "Emacs screenshot filename (%s): " default)))
+    (when (s-blank-p output) (setq output default)))
+;; Clear minibuffer before capturing screen or prompt user
+(message (if prefix "Please select region for capture …" "♥‿♥"))
+;; Capture current screen and resize
+(thread-first
+    (format "screencapture -T 2 %s %s" screen temp)
+    (concat "; magick convert -resize 60% " temp " " output)
+    (shell-command))
+(f-delete temp)
+;; Insert a link to the image and reload inline images.
+(insert (concat "[[file:" output "]]")))
+(org-display-inline-images nil t))
 
 (bind-key* "C-c M-s" #'my/capture-emacs-frame)
 ;; Screencapturing the Current Emacs Frame:1 ends here
@@ -3658,23 +3677,23 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 
 ;; [[file:init.org::#Searching-Hydra][Searching Hydra:1]]
 (my/defhydra "s-f" "\t\tLocate Everything" search
-             :Buffer
-             ;; find all the occurrences of a string, pull out the lines containing the string to another buffer where [F2] I can edit and save,
-             ("e" helm-swoop  "Editable")
-             ;; Implicit Regex, colourful
-             ("c" swiper "Classic")
+   :Buffer
+   ;; find all the occurrences of a string, pull out the lines containing the string to another buffer where [F2] I can edit and save,
+   ("e" helm-swoop  "Editable")
+    ;; Implicit Regex, colourful
+   ("c" swiper "Classic")
 
-             :Project
-             ;; “:toggle ℰ”: ℰ is a Boolean expression that is evaluated to tell us whether the state is on-or-off
-             ("t"  (lambda  () (interactive)) "Ignore specs/jsons"
-              :toggle (let* ((with-hole "ag %s --line-numbers -S --color --nogroup %%s %%s %%s") ;; ≈ original value of ‘helm-grep-ag-command’
-                             (ignores "--ignore=\"*spec.js\" --ignore=\"*.json\" --ignore=\"*.json5\"")
-                             (on (equal helm-grep-ag-command (format with-hole ignores))))
-                        (if on (progn (setq helm-grep-ag-command (format with-hole "")) nil) ;; ≈ turn off the toggle
-                          (setq  helm-grep-ag-command (format with-hole ignores)))))
-             ("f" (lambda () (interactive) (helm-do-grep-ag t)) "File type")
-             ("d" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag nil)))  "Directory")
-             ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
+   :Project
+   ;; “:toggle ℰ”: ℰ is a Boolean expression that is evaluated to tell us whether the state is on-or-off
+   ("t"  (lambda  () (interactive)) "Ignore specs/jsons"
+    :toggle (let* ((with-hole "ag %s --line-numbers -S --color --nogroup %%s %%s %%s") ;; ≈ original value of ‘helm-grep-ag-command’
+                   (ignores "--ignore=\"*spec.js\" --ignore=\"*.json\" --ignore=\"*.json5\"")
+                   (on (equal helm-grep-ag-command (format with-hole ignores))))
+              (if on (progn (setq helm-grep-ag-command (format with-hole "")) nil) ;; ≈ turn off the toggle
+                (setq  helm-grep-ag-command (format with-hole ignores)))))
+   ("f" (lambda () (interactive) (helm-do-grep-ag t)) "File type")
+   ("d" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag nil)))  "Directory")
+   ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
 ;; Searching Hydra:1 ends here
 
 ;; [[file:init.org::#Peer-Review-Pull-Request-Template-for-Work][Peer Review / Pull Request Template for Work:1]]
@@ -3691,19 +3710,19 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (use-local-map (copy-keymap org-mode-map))
     (local-set-key (kbd "C-c C-s")
                    `(lambda ()
-                      (interactive)
-                      (beginning-of-buffer)
-                      (replace-string "[X]" "✅")
-                      (beginning-of-buffer)
-                      (replace-string "[ ]" "❌")
-                      (beginning-of-buffer)
-                      (replace-string "[-]" "🚧")
-                      (-let [org-export-with-toc nil]
-                        (org-md-export-as-markdown)
-                        (kill-ring-save (point-min) (point-max)))
-                      (kill-buffer-and-window) ;; Kills the new org-md-export buffer
-                      (kill-buffer ,buf) ;; Kills this temporary PR template buffer
-                      (message "PR notes saved to clipboard in Github markdown")))))
+                     (interactive)
+                     (beginning-of-buffer)
+                     (replace-string "[X]" "✅")
+                     (beginning-of-buffer)
+                     (replace-string "[ ]" "❌")
+                     (beginning-of-buffer)
+                     (replace-string "[-]" "🚧")
+                     (-let [org-export-with-toc nil]
+                       (org-md-export-as-markdown)
+                       (kill-ring-save (point-min) (point-max)))
+                     (kill-buffer-and-window) ;; Kills the new org-md-export buffer
+                     (kill-buffer ,buf) ;; Kills this temporary PR template buffer
+                     (message "PR notes saved to clipboard in Github markdown")))))
 ;; Peer Review / Pull Request Template for Work:1 ends here
 
 ;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:1]]
@@ -3748,7 +3767,9 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; I'm focusing on a specific region to edit, so let's not be distracted by anything else.
 ;; This makes the “editing stack” feel like a stack, with ⌘-e pushing new editing session buffers,
 ;; and C-c C-c, or ⌘-e on non-editable lines, to pop-off the stack.
-(advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
+;; (advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
+;;
+;; NOTE: This actually breaks the stack nature of popping with ⌘-e; we need to actually save the stack via some list of buffers than push/pop buffers on that variable.
 
 ;; I don't want to be bothered for what mode I'm in, when a region is selected using current major mode.
 ;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode for my current selected text.
@@ -3913,6 +3934,28 @@ associated major mode; that's what we aim to do here."
                             (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)))
 ;; Emphasised Comments:1 ends here
 
+;; [[file:init.org::*E2E Tests][E2E Tests:1]]
+(ert-deftest lsp-hover-shows-type-signature ()
+  (shell-command "touch ~/.emacs.d/scratch.js")
+  (find-file "~/.emacs.d/scratch.js")
+  (erase-buffer)
+
+  (lsp)
+  ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
+  (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (car msg))))
+
+  (insert "\n const first = (x, y) => 3")
+
+  (insert "\n first")
+  (lsp-hover) ;; Alternatively: (lsp-describe-thing-at-point)
+
+  (should (equal "const first: (x: any, y: any) => number"
+                 (substring-no-properties (car my/lsp-hover-message))))
+
+  (save-buffer)
+  (kill-buffer))
+;; E2E Tests:1 ends here
+
 ;; [[file:init.org::#COMMENT-Web-Development][Web-Development:1]]
 ;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
 (mapcar #'my/cheatsheet '("JavaScript" "Vue" "AngularJS"))
@@ -3943,14 +3986,14 @@ associated major mode; that's what we aim to do here."
 
 Both arguments are strings."
   (add-hook 'emmet-mode-hook
-            ;; [Should this be added to “emmet-snippets” variable instead?]
+   ;; [Should this be added to “emmet-snippets” variable instead?]
             `(lambda () (puthash ,abbreviation ,expansion emmet-tag-snippets-table))))
 
 
 (setq emmet-mode-hook nil)
 
 (my/add-emmet-snippet "vue"
-                      "<!doctype html>
+"<!doctype html>
 <html lang=\"en\">
     <head>
         <title>Salamun Alaykum, world!</title>
@@ -3985,7 +4028,7 @@ Both arguments are strings."
 </html>")
 
 (my/add-emmet-snippet "angular"
-                      "<!doctype html>
+"<!doctype html>
 <html lang=\"en\" ng-app=\"Hola\">
   <head>
     <title>Salamun Alaykum, world!</title>
@@ -4020,7 +4063,7 @@ Both arguments are strings."
 ;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:5]]
 ;; A way to show results of trying things out ---when not using a reactive framework.
 (my/add-emmet-snippet "message"
-                      "     // Append “text” node to the end of tag with “id”.
+"     // Append “text” node to the end of tag with “id”.
      // Example: <button onclick=\"message(\"myID\", \"Hello!\")\"> Speak! </button>
      function message(id, text = \"Hello, world\") {
          const tag = document.createElement(\"p\") // <p></p>
@@ -4033,7 +4076,7 @@ Both arguments are strings."
 
 ;; [[file:init.org::#Quickly-produce-HTML-from-CSS-like-selectors][Quickly produce HTML from CSS-like selectors:6]]
 (my/add-emmet-snippet "form"
-                      "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
+        "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
             Automatically aligned form items</a> </h1>
 
         <form name=\"hola\"  onsubmit=\"go(hola.elements);\">
@@ -4088,8 +4131,8 @@ Both arguments are strings."
 
 (use-package lsp-mode
   :hook  ;; Every programming mode should enter & start LSP, with which-key support
-  (css-mode . lsp-mode) ;; Enter LSP mode
-  (css-mode . lsp))      ;; Start LSP server
+         (css-mode . lsp-mode) ;; Enter LSP mode
+         (css-mode . lsp))      ;; Start LSP server
 ;; LSP for HTML + CSS:2 ends here
 
 ;; [[file:init.org::#CSS-Property-Argument-Information-in-the-Echo-Area][CSS Property Argument Information in the Echo Area:1]]
@@ -4137,9 +4180,9 @@ Both arguments are strings."
 (use-package eldoc
   :diminish eldoc-mode
   :hook (emacs-lisp-mode . turn-on-eldoc-mode)
-  (lisp-interaction-mode . turn-on-eldoc-mode)
-  (haskell-mode . turn-on-haskell-doc-mode)
-  (haskell-mode . turn-on-haskell-indent))
+        (lisp-interaction-mode . turn-on-eldoc-mode)
+        (haskell-mode . turn-on-haskell-doc-mode)
+        (haskell-mode . turn-on-haskell-indent))
 
 ;; Slightly shorten eldoc display delay.
 (setq eldoc-idle-delay 0.4) ;; Default 0.5
@@ -4154,11 +4197,11 @@ Both arguments are strings."
   (xwidget-webkit-browse-url url))
 
 (my/defhydra "C-c p" "Emacs Browser" gamepad
-             :Internet
-             ("m" (internet "https://mail.google.com/mail/u/0/#inbox") "gMail"  :exit t)
-             ("c" (internet "https://calendar.google.com/calendar/u/0/r") "gCalendar"  :exit t)
-             ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
-             ("b" (internet) "Browse"  :exit t))
+  :Internet
+  ("m" (internet "https://mail.google.com/mail/u/0/#inbox") "gMail"  :exit t)
+  ("c" (internet "https://calendar.google.com/calendar/u/0/r") "gCalendar"  :exit t)
+  ("e" (internet "https://www.reddit.com/r/emacs/") "Emacs Forum"  :exit t)
+  ("b" (internet) "Browse"  :exit t))
 ;; Modern Browsing within Emacs:2 ends here
 
 ;; [[file:init.org::#VueJS][VueJS:1]]

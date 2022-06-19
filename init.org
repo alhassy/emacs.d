@@ -7589,19 +7589,17 @@ the character 𝓍 before and after the selected text."
 :CUSTOM_ID: Fill-mode-Word-Wrapping
 :END:
 
-In fill mode, when you type past the end of a line, Emacs automatically starts a
-new line, cleverly formatting paragraphs. This is a powerful form of “word
-wrap”.
+In fill mode, when you type past the end of a line, Emacs automatically starts a new line, cleverly formatting
+paragraphs. This is a powerful form of “word wrap”.
 
 #+BEGIN_SRC emacs-lisp
-(setq-default fill-column 80          ;; Let's avoid going over 80 columns
+(setq-default fill-column 120         ;; Let's avoid going over 120 columns
               truncate-lines nil      ;; I never want to scroll horizontally
               indent-tabs-mode nil)   ;; Use spaces instead of tabs
 #+END_SRC
 
-Certain variables are sensibly local to a buffer, and so ~setq~ only alters their
-value for one buffer. Using ~setq-default~ we change a variable's default value,
-in every buffer.
+Certain variables are sensibly local to a buffer, and so ~setq~ only alters their value for one buffer. Using ~setq-default~
+we change a variable's default value, in every buffer.
 
 #+BEGIN_SRC emacs-lisp
 ;; Wrap long lines when editing text
@@ -7612,26 +7610,22 @@ in every buffer.
 (diminish 'auto-fill-function)
 #+END_SRC
 
-We may press ~M-q~ to cleverly redistribute the line breaks within any paragraph,
-thereby making it look better. With a prefix argument, it justifies it as well
----i.e., pads extra white space to make the paragraph appear rectangular.
+We may press ~M-q~ to cleverly redistribute the line breaks within any paragraph, thereby making it look better. With a
+prefix argument, it justifies it as well ---i.e., pads extra white space to make the paragraph appear rectangular.
 
             Note that ~M-o M-s~ centres a line of text ;-) Fun stuff!
 
-Fill-mode is also known as “hard word wrapping”, which has the counterpart
-“soft word wrapping” …
+Fill-mode is also known as “hard word wrapping”, which has the counterpart “soft word wrapping” …
 
-Visual line mode is built-in and provides support for editing by visual lines:
-Lines off the screen are visually word wrapped, but logically remain one line.
-Moreover =C-a,e,k= operate on visual lines rather than logical lines.
+Visual line mode is built-in and provides support for editing by visual lines: Lines off the screen are visually word
+wrapped, but logically remain one line.  Moreover =C-a,e,k= operate on visual lines rather than logical lines.
 #+begin_src emacs-lisp
 ;; Bent arrows at the end and start of long lines.
 (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
 (diminish 'visual-line-mode)
 (global-visual-line-mode 1)
 #+end_src
-Visual line mode is useful when I have way too many windows open or when
-using smaller frames.
+Visual line mode is useful when I have way too many windows open or when using smaller frames.
 
 ** Pretty Lists Markers
 :PROPERTIES:
