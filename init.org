@@ -11912,6 +11912,80 @@ associated major mode; that's what we aim to do here."
   (kill-buffer))
 #+end_src
 
+
+** Pair Programming
+
+# Add: Quickly toggle my Emacs for when doing pair programming
+
+I try to make my Emacs look more predictable for my colleagues, by introducing a bunch of UI elements that I normally
+have off by default but would otherwise serve as useful aids when working together or provide a sense of familiarity for
+my VSCoder counterparts.
+
+#+begin_src emacs-lisp :tangle ~/Desktop/work.el
+(defun my/toggle-pair-programming ()
+  "Toggle enabling features that might aid communication when sharing screen, or pair programming
+
+- Full screen mode
+- Line numbers, and column numbers, and cat progress bar
+- Blamer overlays
+- Dark theme
+- Tabs
+- Folder navigator
+"
+  (interactive)
+  (defvar my/sharing-screen? +1)
+  (setq my/sharing-screen? (- my/sharing-screen?)) ;; Toggle between +1 and -1.
+
+  ;; When pair programming, exit full screen mode so others can “draw” on my screen, eg using Slack
+  (toggle-frame-fullscreen)
+
+  ;; Line numbers in the left margin
+  (setq display-line-numbers-width-start t)
+  (global-display-line-numbers-mode my/sharing-screen?)
+
+  ;; Column & line numbers in the modeline; always want these on?
+  (column-number-mode                 +1) ;; Enabled in doom-modeline by default?
+  (line-number-mode                   +1) ;; Enabled in doom-modeline by default?
+
+  ;; Progress bar, graphic and percentage
+  (use-package nyan-mode)
+  (nyan-mode my/sharing-screen?)
+
+  ;; Who did what and when?
+  (global-blamer-mode my/sharing-screen?)
+
+  ;; Make things look like VSCode; reduce friction with others
+  ;; → Dark theme, tabs, and clickable folder navigation
+  (if (= +1 my/sharing-screen?)
+      (my/toggle-theme 'doom-dracula)
+    (my/toggle-theme 'doom-solarized-light))
+
+  (use-package centaur-tabs)
+  (setq centaur-tabs-set-icons t)
+  (setq centaur-tabs-gray-out-icons 'buffer)
+  (setq centaur-tabs-set-bar 'over)
+  (centaur-tabs-mode my/sharing-screen?)
+
+  ;; Treemacs is feature-right; e.g. highlights file associated to current buffer automatically and fully mouse-complaint.
+  ;;  press ? to summon a helpful hydra
+  (use-package treemacs)
+  (if (= +1 my/sharing-screen?) ;; Toggle showing treemacs window
+      (treemacs)
+    (ignore-errors (delete-window (treemacs-get-local-window))))
+  ;; Press “C-e” to see the end of length file names, or use the mouse to widen treemacs
+  (treemacs-toggle-fixed-width)
+  (ignore-errors (treemacs-indent-guide-mode +1))
+  (treemacs-resize-icons 18)
+  (other-window -1)
+
+  ;; Kickoff message
+  (if (= +1 my/sharing-screen?)
+      (message "Pair programming provides an excellent test of technical and social skills")))
+
+(my/toggle-pair-programming)
+#+end_src
+
+
 * Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
