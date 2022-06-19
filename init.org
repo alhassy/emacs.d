@@ -6582,11 +6582,13 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 (setf custom-safe-themes t)
 
 ;; Nice looking themes ^_^
-(use-package solarized-theme :defer t)
+(use-package solarized-theme)
 (use-package doom-themes :defer t)
 (use-package spacemacs-common
   :defer t
   :ensure spacemacs-theme)
+(use-package stimmung-themes :defer t)
+(use-package shanty-themes :defer t)
 #+END_SRC
 
 + The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
@@ -6596,35 +6598,35 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 
 #+BEGIN_SRC emacs-lisp
 ;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-laserwave shany-themes-light stimming-themes-light stimming-themes-dark doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
+(setq my/themes '(doom-laserwave shany-themes-light stimmung-themes-light stimmung-themes-dark doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
 (setcdr (last my/themes) my/themes)
 #+END_SRC
 
 kbd:C-c_t to toggle between the personal themes.
 #+BEGIN_SRC emacs-lisp
-(cl-defun my/disable-all-themes (&optional (new-theme (pop my/themes)))
+(cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
+  "Disable all themes and load the given one ---read from user when called interactively."
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes)
+  (load-theme new-theme)
+  (message "Theme %s" new-theme))
+
+(cl-defun my/toggle-theme (&optional (new-theme (pop my/themes)))
   "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
 
 When a universal prefix is given, “C-u C-c t”, we load a random
 theme from all possible themes.  Nice way to learn about more
 themes (•̀ᴗ•́)و"
   (interactive)
-  (mapc #'disable-theme custom-enabled-themes)
   (-let [theme (if current-prefix-arg
                    (nth (random (length (custom-available-themes)))
                         (custom-available-themes))
                  new-theme)]
-    (when theme
-      (load-theme theme)
-      (message "Theme %s" theme))))
+    (my/load-theme theme)))
 
-
-(defalias 'my/toggle-theme #' my/disable-all-themes)
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-
 ;; (my/toggle-theme)
-(use-package solarized-theme)
 (my/toggle-theme 'doom-laserwave)
 #+END_SRC
 
@@ -14628,6 +14630,51 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
   (setq-default cursor-type 'bar))
 #+end_src
 
+* Fontifying =#+begin_details= blocks as if they were Org blocks :Push_upstream_to_OSBE:
+
+Looking at =org-src-fontify-natively='s documentation leads up to looking at =org-fontify-meta-lines-and-blocks-1= which
+uses ~(match-string 7)~ to obtain the language used to fontify a block.  We advice this function so that it's call to
+~match-string~ behaves slightly different on input 7: We try to get the language used for fontification from
+=my/block-fontifications= if possible, otherwise defaulting to the existing mechanism.
+
+#+begin_src emacs-lisp
+  (defvar my/block-fontifications
+        '(("details" . "org"))
+      "A cons list of block type and language pairs.
+
+      The intent is that the block types are fontified using the given language name.")
+
+  (defvar osbe--original-match-string (symbol-function 'match-string))
+
+  (cl-defun osbe--match-string (n &optional str)
+          (let* ((block-type (string-remove-prefix "_" (funcall osbe--original-match-string 4 str)))
+             (fontification (cdr (assoc block-type my/block-fontifications))))
+        ;; (message "%s - %s -> %s" n block-type fontification) ;; For debugging.
+        (if (and (equal n 7) fontification)
+            fontification
+          (funcall osbe--original-match-string n str))))
+
+        (advice-add 'org-fontify-meta-lines-and-blocks
+            :around (lambda (fontify &rest args)
+                  (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
+                    (apply fontify args))))
+ #+end_src
+
+With the above setup, the following is fontified nicely in Org mode.
+#+begin_details musa and then some more!
+woah, nelly
+
+# hello
+# world
+
+then:
+#+begin_src emacs-lisp :tangle no
+;; super neato
+(defun hola () "HI")
+#+end_src
+
+Bye!
+#+end_details
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate
