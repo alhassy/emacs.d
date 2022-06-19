@@ -49,17 +49,19 @@
   (execute-kbd-macro (kbd "C-g C-/ M-2")) ;; Quit and restart the completion, to get to starting position, then M-2.
   (should (looking-back "finally"))
 
+  (kill-buffer)
   )
 ;; Word Completion:2 ends here
 
 ;; [[file:init.org::*E2E Test][E2E Test:1]]
 (ert-deftest hideshow-is-enabled-and-folds-by-default ()
   :tags '(hideshow)
-  (-let [contents "function fierce(name) { \n return \\`\\${name}: ROAR\\` \n }"]
-    (shell-command (format "echo \"%s\" > ~/.emacs.d/scratch.js" contents))
+  ;; Make a temporary scratch.js file with the given contents.
+  (let* ((contents "function fierce(name) { \n return `${name}: ROAR` \n }")
+         (scratch.js (make-temp-file "scratch" nil ".js" contents)))
 
     ;; Hideshow is enabled whenever we open a code file
-    (find-file "~/.emacs.d/scratch.js")
+    (find-file scratch.js)
     (should hs-minor-mode)
 
     ;; Function definition is a hidden block
@@ -71,29 +73,27 @@
     (-let [ov (hs-already-hidden-p)]
       (-let [(first\n second\n) (-elem-indices "\n" (s-split "" contents))]
         (should (equal (overlay-start ov) first\n)) ;; ≈ 25
-        (should (equal (overlay-end ov) (1- second\n))))) ;; ≈ 52
+        (should (equal (overlay-end ov) (+ second\n 2))))) ;; ≈ 52
 
     (kill-buffer)))
 ;; E2E Test:1 ends here
 
 ;; [[file:init.org::#LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE][LSP: Making Emacs into a generic full-featured programming IDE:6]]
 (ert-deftest lsp-hover-shows-type-signature ()
-  (shell-command "touch ~/.emacs.d/scratch.js")
-  (find-file "~/.emacs.d/scratch.js")
-  (erase-buffer)
+  ;; Make a temporary scratch.js file with the given contents.
+  (-let [scratch.js (make-temp-file "scratch" nil ".js" "const first = (x, y) => 3")]
+    (find-file scratch.js)
+    (lsp-workspace-folders-add (f-parent scratch.js))
+    (lsp)
 
-  (lsp)
-  ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
-  (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (car msg))))
+    ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
+    (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (substring-no-properties (car msg)))))
 
-  (insert "\n const first = (x, y) => 3")
+    (end-of-buffer)
+    (insert "\n first")
+    (lsp-hover)  ;; Alternatively: (lsp-describe-thing-at-point)
+    (should (equal "const first: (x: any, y: any) => number" my/lsp-hover-message))
 
-  (insert "\n first")
-  (lsp-hover) ;; Alternatively: (lsp-describe-thing-at-point)
-
-  (should (equal "const first: (x: any, y: any) => number"
-                 (substring-no-properties (car my/lsp-hover-message))))
-
-  (save-buffer)
-  (kill-buffer))
+    (save-buffer)
+    (kill-buffer)))
 ;; LSP: Making Emacs into a generic full-featured programming IDE:6 ends here
