@@ -12,8 +12,6 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
-(setq doom-modeline-buffer-file-name-style 'truncate-except-project)
-
 * TODO Clean this section up!                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
@@ -8940,6 +8938,11 @@ TODO: Fix these docs
 #  + See all company related PRs with doc:w-PRs
 # + Quickly look up language/library docs /within/ Emacs with kbd:C-c_d.
 
+#+begin_src emacs-lisp
+(when my/work-machine?
+  (setq doom-modeline-buffer-file-name-style 'truncate-except-project))
+#+end_src
+
 ** Quickly Run Code Snippets
 :PROPERTIES:
 :CUSTOM_ID: Quickly-Run-Code-Snippets
@@ -9115,7 +9118,7 @@ https://github.com/anonimitoraf/skerrick/issues/7 is resolved.
 In any JS file, I just press ~C-x C-e~ and the JS interpreter is brought up with the evaluation results shown:
 #+begin_src emacs-lisp
 (use-package js-comint)
-(define-key js-mode-map (kbd "C-x C-e") (lambda () (interactive) (call-interactively #'run-js) (other-window -1) (js-comint-send-last-sexp)))
+(define-key js-mode-map (kbd "C-x C-e") (lambda () (interactive) (call-interactively #'js-comint-repl) (other-window -1) (js-comint-send-last-sexp)))
 #+end_src
 
 For instance,
@@ -11326,6 +11329,8 @@ for it to do so “on save”.
 - You will need to install external programs to do the formatting. If
   ~format-all-buffer~ can't find the right program, it will try to tell you how to
   install it.
+- An alternative Emacs tool is [[https://github.com/radian-software/apheleia][apheleia: 🌷 Run code formatter on buffer
+  contents without moving point, using RCS patches and dynamic programming.]]
 
 #+begin_src emacs-lisp
 (use-package format-all
@@ -11650,7 +11655,9 @@ edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected reg
 ;; I'm focusing on a specific region to edit, so let's not be distracted by anything else.
 ;; This makes the “editing stack” feel like a stack, with ⌘-e pushing new editing session buffers,
 ;; and C-c C-c, or ⌘-e on non-editable lines, to pop-off the stack.
-(advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
+;; (advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
+;;
+;; NOTE: This actually breaks the stack nature of popping with ⌘-e; we need to actually save the stack via some list of buffers than push/pop buffers on that variable.
 
 ;; I don't want to be bothered for what mode I'm in, when a region is selected using current major mode.
 ;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode for my current selected text.
