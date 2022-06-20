@@ -11401,7 +11401,7 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 
 + ~C-c C-x C-v~ ⇒ Toggle inline images!
 
-** Comment-boxes up to the fill-column
+** Comment-boxes up to the fill-column ---or banner instead?
 :PROPERTIES:
 :CUSTOM_ID: Comment-boxes-up-to-the-fill-column
 :END:
@@ -11427,6 +11427,16 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (goto-char e)
     (set-marker e nil)))
 #+end_src
+
+A comment box sometimes increases the size of a file more than I'd like, or more than others on my dev team would like.
+As such, let's try [[https://github.com/WJCFerguson/banner-comment][banner comments]]:
+- GIF: https://github.com/WJCFerguson/banner-comment/blob/35d3315683d3f97605207691b77e9f447af18fe2/demo.png
+#+begin_src emacs-lisp
+(use-package banner-comment)
+#+end_src
+
+Pretty slick!
+
 ** TODO Auto-format on Save :Reenabled:Should_be_Disabled:Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
 :PROPERTIES:
 :CUSTOM_ID: Auto-format-on-Save
