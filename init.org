@@ -2753,6 +2753,30 @@ things went wrong.
   (message "🥳 Happy coding!"))
 #+end_src
 
+** Github /within/ Emacs
+
+We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[https://github.com/magit/forge][forge]] package.
++ In particular, it adds two new “topics” to the Magit status page: =Issues= and =Pull Requests=.
+  - We can tab on these to see their “posts” ---the contributions to the conversations and /new/ commits.
+  - [[https://magit.vc/manual/forge/Editing-Topics-and-Posts.html][Here]] is a list of actions that can be done on topics and posts.
+
+#+begin_src emacs-lisp
+(use-package forge
+  :after magit)
+#+end_src
+
+1. Make a file =~/.authinfo= whose top-most line is =machine api.github.com login ⟪𝑼𝑺𝑬𝑹𝑵𝑨𝑴𝑬⟫^forge password ⟪𝑻𝑶𝑲𝑬𝑵⟫= where ⟪⋯⟫
+   should be replaced by your Github username and a token ---which can be [[https://github.com/settings/tokens][created from this page]] with [[https://magit.vc/manual/forge/Token-Creation.html][permissions]] for
+   ~repo, user, read:org~ checked-off.
+   - For more detailed information, see [[https://magit.vc/manual/ghub/Creating-and-Storing-a-Token.html][this Forge manual page]].
+
+2. Now open a Magit status buffer for a repository and run ~M-x forge-pull~, after which you should be able to see all issues and pull requests.
+   - Alternatively, press ~N~ to see the forge menu.
+   - Press ~N f f~ to pull latest information from the repository.
+     + Note how pulling data from a forge’s API works the same way as pulling Git data does; you do it explicitly when
+       you want to see the work done by others.
+     + We can also “c”reate a new “p”ull request or a new “i”ssue with ~N c p~ or ~N c i~, respectively.
+
 ** Pretty Magit Commit Leaders
 :PROPERTIES:
 :CUSTOM_ID: Pretty-Magit-Commit-Leaders
