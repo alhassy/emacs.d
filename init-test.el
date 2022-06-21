@@ -49,8 +49,7 @@
   (execute-kbd-macro (kbd "C-g C-/ M-2")) ;; Quit and restart the completion, to get to starting position, then M-2.
   (should (looking-back "finally"))
 
-  (kill-buffer)
-  )
+  (kill-buffer))
 ;; Word Completion:2 ends here
 
 ;; [[file:init.org::*E2E Test][E2E Test:1]]
@@ -69,7 +68,7 @@
     (backward-char 2)
     (should (hs-already-hidden-p))
 
-    ;; Indeed, the hidden block starts at the first line break and ends just before the second.
+    ;; Indeed, the hidden block starts at the first line break and ends just after the second.
     (-let [ov (hs-already-hidden-p)]
       (-let [(first\n second\n) (-elem-indices "\n" (s-split "" contents))]
         (should (equal (overlay-start ov) first\n)) ;; ≈ 25

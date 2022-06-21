@@ -563,6 +563,7 @@ its text editors.
 | File Manager                                 |   | doc:dired                                                          |
 | IDE / debugger                               |   | LSP / Dap                                                          |
 | Scripting Language                           |   | Emacs Lisp                                                         |
+| Web client / server                          |   | [[https://github.com/pashky/restclient.el][Restclient]] / [[https://github.com/skeeto/emacs-web-server][emacs-web-server]]                                      |
 |----------------------------------------------+---+--------------------------------------------------------------------|
 | [Neo]Vim / Modal text editor                 |   | EVIL mode                                                          |
 | RSS Newsreader                               |   | ElFeed                                                             |
@@ -619,10 +620,11 @@ It is not just bigger and brighter; it simply makes everything else vanish.
     - Emacs is one of the oldest open source projects still under developement.
     # - Unlike other certain editors, Emacs' source is completely open.
 
-Of course Emacs comes with the basic features of a text editor, but it is much more;
-for example, it comes with a powerful notion of ‘undo’: Basic text editors have a single stream of undo,
-yet in Emacs, we have a tree --when we undo and make new edits, we branch off in our editing stream
-as if our text was being version controlled as we type! --We can even switch between such branches!
+Of course Emacs comes with the basic features of a text editor, but it is much more; for example, it comes with a
+powerful notion of ‘undo’: Basic text editors have a single stream of undo, yet in Emacs, we have a /tree/ ---when we undo
+and make new edits, we branch off in our editing stream as if our text was being version controlled as we type! We can
+even switch between such branches! /That is, while other editors have a single-item clipboard, Emacs has an infinite
+clipboard that allows undoing to any historical state./
 
 #+begin_src emacs-lisp :tangle no :noweb-ref undo-tree-setup
 ;; Allow tree-semantics for undo operations.
@@ -725,6 +727,33 @@ Just as a web browser is utilised as a platform for deploying applications,
 
 Moreover, as will be shown below, you can literally use [[https://github.com/zachcurry/emacs-anywhere/#usage][Emacs anywhere]]
 for textually input in your operating system --no copy-paste required.
+
+** COMMENT It will change how you think about programming
+
+Emacs is an incremental programming environment: You run snippets of code immediately after writing them ---there is no
+formal edit-run cycle.  /The editor is the interpreter./
+
+In my personal experience, Emacs introduced me to Lisp.
+- Since Lisp has no concrete syntax, everything is written using abstract syntax trees (and macros introduce concrete,
+  domain-specific, syntax), we can see Lisp everywhere and so see Lisp as “building material” for other programming
+  languages.
+- Likewise, Emacs is building material for a computing environment.  Whereas others might use a mixture of bash scripts
+  to accomplish their goals, I can use Lisp to produce applications with radically distinct uses; e.g., using the same
+  template application to produce email snippets and code snippets.
+
+  - [ ] Generally speaking, applications provide configurations via checkboxes that can be ticked off (i.e., a JSON file).
+    - [ ] What if you want such a feature enabled only under specific settings?
+    - [ ] What if you want the value of the checkbox setting to be the result of an arbitrary expression evaluated
+      according to a file?
+
+    Emacs provides a full fledged programming language for the purposes of configuration: Press ~C- h k~ then any key
+    sequence to find out what (well-documented) code is run, then /advise/ that code with your desired configuration.
+    # This is the power of full introspectivity!
+
+    That is, general applications are configured using a /passive/ JSON *files* (i.e., checkboxes) whereas Emacs is
+    configured using an /executable/ Lisp *program*.
+
+I have fallen head over heels for Lisp.
 
 ** Keyboard Navigation and Alteration
 :PROPERTIES:
@@ -2776,6 +2805,9 @@ We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[h
      + Note how pulling data from a forge’s API works the same way as pulling Git data does; you do it explicitly when
        you want to see the work done by others.
      + We can also “c”reate a new “p”ull request or a new “i”ssue with ~N c p~ or ~N c i~, respectively.
+     + [[https://www.youtube.com/watch?v=fFuf3hExF5w&ab_channel=ZaisteProgramming][~5 min video]]
+
+To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
 
 ** Pretty Magit Commit Leaders
 :PROPERTIES:
@@ -14763,6 +14795,76 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
   (load-theme 'shanty-themes-light)
 
   (setq-default cursor-type 'bar))
+#+end_src
+
+* Random Misc Stuff I'm trying out past midnight 🤷
+
+Buffer defaults:
+- I’d much rather have my new buffers in org-mode than fundamental-mode:
+#+begin_src emacs-lisp
+(setq-default major-mode 'org-mode)
+#+end_src
+
+Get nice child frames when looking at completions candidates.  In particular, when editing Lisp code, the
+(company-quickhelp) doc strings appear in nice (but non-mouse friendly) frames when I pause on a completion candidate.
+#+begin_src emacs-lisp
+(use-package company-posframe)
+
+;; https://github.com/joddie/macrostep
+;;
+;; Anywhere *within* a form press “C-c e e e ⋯” to see pretty interactive expansions of your macro, then “q” to quit the
+;; interactive session. Very useful when forming new macros!
+(use-package macrostep)
+(define-key emacs-lisp-mode-map (kbd "C-c e") 'macrostep-expand)
+
+
+;;============================================= Smart jumping to definitions ============================================
+;; https://github.com/Wilfred/elisp-def
+(use-package elisp-def)
+(bind-key*  "M-." #'elisp-def emacs-lisp-mode-map)
+(when nil
+  (let ((foo 1))
+    (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
+#+end_src
+
+
+* COMMENT The following, ~M-x dashboard~, might be a nice thing to have on display when invoking =M-x my/pair-program= ?
+
+https://github.com/emacs-dashboard/emacs-dashboard
+
+#+begin_src emacs-lisp
+(use-package dashboard)
+
+(defun dashboard ()
+  "Open Emacs dashboard"
+  (interactive)
+  (switch-to-buffer dashboard-buffer-name)
+  (goto-char (point-min))
+  (redisplay)
+  (run-hooks 'dashboard-after-initialize-hook)
+  (dashboard-refresh-buffer))
+
+(setq
+ dashboard-items '((recents  . 5) (projects . 7)) ;; What do I want to see?
+ dashboard-center-content t                       ;; Where do I want to see it?
+ dashboard-set-heading-icons t                    ;; With icons please!
+ dashboard-set-file-icons t
+ dashboard-set-navigator t                        ;; I also want some “quick links”!
+ dashboard-navigator-buttons
+ ;; Format: "(icon label tooltip-help action face [prefix = ⟦] [suffix = ⟧])"
+ `(;; ============================== line 1 ==============================
+   ((,(all-the-icons-octicon "mark-github" :height 1.1 :v-adjust 0.0)
+     "Homepage"
+     "Browse homepage"
+     (lambda (&rest _) (browse-url "homepage")))
+    ("★" "Star" "Show stars" (lambda (&rest _) (show-stars)) warning)
+    ("?" "" "Learn!" (lambda (&rest _) (help-with-tutorial)) nil "<" ">"))
+   ;; ============================== line 2 ==============================
+   ((,(all-the-icons-faicon "linkedin" :height 1.1 :v-adjust 0.0)
+     "Linkedin"
+     ""
+     (lambda (&rest _) (browse-url "homepage")))
+    ("⚑" nil "Show flags" (lambda (&rest _) (message "flag")) error))))
 #+end_src
 
 * Fontifying =#+begin_details= blocks as if they were Org blocks :Push_upstream_to_OSBE:

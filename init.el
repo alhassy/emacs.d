@@ -824,6 +824,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (message "🥳 Happy coding!"))
 ;; Jump to a (ma)git repository with ~C-u C-x g~:1 ends here
 
+;; [[file:init.org::*Github /within/ Emacs][Github /within/ Emacs:1]]
+(use-package forge
+  :after magit)
+;; Github /within/ Emacs:1 ends here
+
 ;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:1]]
 (cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
   "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
@@ -3641,7 +3646,7 @@ user. If PREFIX is provided, let the user select a portion of the screen."
 (bind-key* "C-c M-s" #'my/capture-emacs-frame)
 ;; Screencapturing the Current Emacs Frame:1 ends here
 
-;; [[file:init.org::#Comment-boxes-up-to-the-fill-column][Comment-boxes up to the fill-column:1]]
+;; [[file:init.org::#Comment-boxes-up-to-the-fill-column][Comment-boxes up to the fill-column ---or banner instead?:1]]
 (defun my/comment-box (b e)
   "Draw a box comment around the region but arrange for the region
 to extend to at least the fill column. Place the point after the
@@ -3659,7 +3664,11 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (comment-box b e 1)
     (goto-char e)
     (set-marker e nil)))
-;; Comment-boxes up to the fill-column:1 ends here
+;; Comment-boxes up to the fill-column ---or banner instead?:1 ends here
+
+;; [[file:init.org::#Comment-boxes-up-to-the-fill-column][Comment-boxes up to the fill-column ---or banner instead?:2]]
+(use-package banner-comment)
+;; Comment-boxes up to the fill-column ---or banner instead?:2 ends here
 
 ;; [[file:init.org::#Auto-format-on-Save][Auto-format on Save:1]]
 (use-package format-all
