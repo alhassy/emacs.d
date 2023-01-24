@@ -1,4 +1,4 @@
-personal_ws-1.1 en 304 
+personal_ws-1.1 en 307 
 ACSII
 Administrivia
 Agda's
@@ -20,6 +20,7 @@ Destructuring
 Discovarability
 Distributivity
 Dualise
+Dually
 Equipollence
 Excerption
 Executables
@@ -104,6 +105,7 @@ calculational
 catenated
 catenating
 catenation
+center
 centric
 cli
 coalgebra
@@ -221,6 +223,7 @@ namespaces
 namespacing
 naturality
 nullary
+nunation
 observationally
 oolean
 orchestrator

@@ -9,48 +9,11 @@
 #+description: My Emacs Initialisation File, Written in Org-mode.
 #+startup: indent lognoteclock-out
 #+options: html-postamble:nil toc:2 d:nil num:t broken-links:auto
-#+property: header-args :tangle deferred-init.el :comments link :results none
+# +property: header-args :tangle deferred-init.el :comments link :results none
+#+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
-
-    ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
-    ;; which is a GPG file and so requires passphrase before other things can load.
-    ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
-
-
-
-The ~defer~ macro:
-#+begin_src emacs-lisp :tangle init.el
-(defmacro 😴 (&rest sexp)
-  "Defer any sexp.
-
-If you have a call `(f x y)' then `(😴 f x y)' behaves the same but is run
-when Emacs has been idle for 2 seconds.
-
-E.g., (setq hi 12) defines a variable `hi', so `M-: hi' shows a value.
-Whereas (😴 setq hello 12) does not immediately define a variable: `M-: hello' yields an error
-when run immediately, but yields a value when Emacs is idle for 2 seconds.
-
-Save the name of this macro by highlighting it and pressing `C-x r s z', then use it with `C-x r i z'."
-  `(run-with-idle-timer 20 nil (lambda nil ,sexp)))
-
-;; (defmacro when-idle (&rest body)
-   ;; `(run-with-idle-timer 20 nil (lambda () ,@body)))
-;;
-
-;; first this,
-(setq gc-cons-threshold most-positive-fixnum ; 2^61 bytes
-      gc-cons-percentage 0.6)
-;; then
-(😴 load-file "~/.emacs.d/deferred-init.el")
-;; finally [[the following should really be at the end of deferred-init.el]]
-(add-hook 'emacs-startup-hook
-  (lambda ()
-    (setq gc-cons-threshold 16777216 ; 16mb
-          gc-cons-percentage 0.1)))
-#+end_src
-
-* COMMENT !! TODO Clean this section up!                             :ignore:
+* !! TODO Clean this section up!                             :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Clean-this-section-up
 :END:
@@ -60,6 +23,8 @@ Save the name of this macro by highlighting it and pressing `C-x r s z', then us
 (setq byte-compile-warnings '(cl-functions))
 (require 'cl-lib) ;; to get loop instead of cl-loop, etc.
 
+
+(cl-defun define-short-documentation-group (&rest _) )
 ;; (cl-defun org-duration-to-minutes (&rest _) )
 ;; (cl-defun org-id-find-id-file (&rest _))
 
@@ -1230,7 +1195,7 @@ repositories of developers rather than having all packages in one repository.
                          ("melpa"  . "http://melpa.org/packages/")))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Update local list of available packages:
 ;; Get descriptions of all configured ELPA packages,
 ;; and make them available for download.
@@ -1314,7 +1279,7 @@ We now bootstrap ~use-package~.
 
 The use of ~:ensure t~ only installs absent modules, but it does no updating.
 Let's set up [[https://github.com/rranelli/auto-package-update.el][an auto-update mechanism]].
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (use-package auto-package-update
   :config
   ;; Delete residual old versions
@@ -1329,7 +1294,7 @@ Here's another example use of ~use-package~.  Later on, I have a “show recent 
 pop-up” command set to ~C-x C-r~; but what if I forget? This mode shows me all key
 completions when I type ~C-x~, for example.  Moreover, I will be shown other
 commands I did not know about! Neato :-)
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Making it easier to discover Emacs key presses.
 (use-package which-key
   :defer nil
@@ -1341,7 +1306,7 @@ commands I did not know about! Neato :-)
 to people when I'm promoting Emacs. ⟩
 
 Here are other packages that I want to be installed onto my machine.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Haskell's cool
 (use-package haskell-mode :defer t)
 
@@ -1350,9 +1315,8 @@ Here are other packages that I want to be installed onto my machine.
 (use-package s   )    ;; “The long lost Emacs string manipulation library”.
 
 ;; Let's use the “s” library.
-(progn
-      (defvar my/personal-machine?
-  (not (s-contains? "work-machine" (shell-command-to-string "scutil --get ComputerName")))
+(defvar my/personal-machine?
+  (equal "Musa’s MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
   "Is this my personal machine, or my work machine?
 
  At one point, on my work machine I run the following command to give the machine a sensible name.
@@ -1360,11 +1324,11 @@ Here are other packages that I want to be installed onto my machine.
      sudo scutil --set ComputerName work-machine
      dscacheutil -flushcache")
 
-(defvar my/work-machine? (not my/personal-machine?)))
+(defvar my/work-machine? (not my/personal-machine?))
 
 ;; Library for working with system files;
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
-(use-package f   :defer nil)
+(use-package f :demand t)
 #+END_SRC
 
 Note:
@@ -1375,7 +1339,7 @@ Note:
 
 Remember that snippet for ~undo-tree~ in the introductory section?
 Let's activate it now, after ~use-package~ has been setup.
-#+BEGIN_SRC emacs-lisp :noweb yes :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :noweb yes :tangle init.el
   <<undo-tree-setup>>
 #+END_SRC
 
@@ -1403,7 +1367,7 @@ when we want to install a file from souce we use the keyword ~:quelpa~.
 
 # Example invocation.
 # (quelpa '(discover-my-major :fetcher git :url "https://framagit.org/steckerhalter/discover-my-major.git"))
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (use-package quelpa
   :custom (quelpa-upgrade-p t "Always try to update packages")
   :config
@@ -1435,7 +1399,7 @@ us ensure these exist using the ~:ensure-system-package~ keyword extension.
 - It has [[https://github.com/jwiegley/use-package#use-package-ensure-system-package][multiple features]].
 
 Let's obtain the extension.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Auto installing OS system packages
  (use-package use-package-ensure-system-package
   :config (system-packages-update))
@@ -1500,7 +1464,7 @@ This is remedied by [[https://github.com/emacs-helm/helm-system-packages][M-x he
 package's description, or ~TAB~ for the other features!
 /This is so cool!/
 
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; An Emacs-based interface to the package manager of your operating system.
 (use-package helm-system-packages)
 #+END_SRC
@@ -1508,7 +1472,7 @@ package's description, or ~TAB~ for the other features!
 The Helm counterpart is great for /discovarability/, whereas
 the plain ~system-packages~ is great for /programmability/.
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (setq system-packages-noconfirm :do-not-prompt-me-about-confirms)
 
 ;; After 1 minute after startup, kill all buffers created by ensuring system
@@ -1522,7 +1486,7 @@ window managers, which automatically arrange them.  I had been using [[https://x
 until recently when I obtained a Mac machine and now use [[https://ianyh.com/amethyst/][Amethyst]] ---“Tiling
 window manager for macOS along the lines of xmonad.”
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 ;; Unlike the Helm variant, we need to specify our OS pacman.
 (when (eq system-type 'darwin)
   (setq system-packages-package-manager 'brew))
@@ -1575,7 +1539,7 @@ Neato! Now I can live in Emacs even more ^_^
 problem of randomly not working.  Unfortunatley it has no command line
 interface, so let's make one in Emacs: Now kbd:⌘-a_r relaunches Amethyst.
 #+begin_details
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (defun ⌘-quit (app)
   "Kill application APP; e.g., “amethyst” or “Safari”"
   (shell-command (format "osascript -e 'quit app \"%s\"'" app)))
@@ -1594,7 +1558,7 @@ We use the ~osascript~ command to ~tell~ the [[https://en.wikibooks.org/wiki/App
 keystrokes to other applications. I found out about by Googling “How to send
 keystrokes from terminal”.
 
-#+begin_src emacs-lisp  :tangle deferred-init.el
+#+begin_src emacs-lisp  :tangle init.el
 ;; (bind-key "???-a c" #'amethyst/cycle-layout)
 (defun amethyst/cycle-layout ()
   (interactive)
@@ -1627,7 +1591,7 @@ begun from the terminal may not inherit the terminal's environment
 variables, thus making it difficult to use utilities like ~pdflatex~
 when Org-mode attempts to produce a PDF.
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (use-package exec-path-from-shell
   :defer nil
   :init
@@ -1661,7 +1625,7 @@ See the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]
 
 Sometimes I wish to close then reopen Emacs; unsurprisingly someone's
 thought of implementing that.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
   :defer nil
@@ -1673,7 +1637,7 @@ thought of implementing that.
 
 The following is disabled. I found it a nuisance to have my files
 open across sessions ---If I'm closing Emacs, it's for a good reason.
-#+begin_example emacs-lisp :tangle deferred-init.el
+#+begin_example emacs-lisp :tangle init.el
 ;; Keep open files open across sessions.
 (desktop-save-mode 1)
 (setq desktop-restore-eager 10)
@@ -1681,7 +1645,7 @@ open across sessions ---If I'm closing Emacs, it's for a good reason.
 
 Instead, let's try the following: When you visit a file, point goes to the last
 place where it was when you previously visited the same file.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (setq-default save-place  t)
 (setq save-place-file "~/.emacs.d/etc/saveplace")
 #+END_SRC
@@ -1706,7 +1670,7 @@ started, toggle follow-mode with ~C-c C-f~ to obtain contextual-awareness; e.g.,
 | Remembrance comes with time, until then /ask/ Emacs! |
 
 /Try and be grateful!/
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (use-package helm
   :defer nil
  :init (helm-mode t)
@@ -1772,7 +1736,7 @@ For example, I press ~C-x b~ then type any string and will have the option of
 making that a bookmark referring to the current location I'm working in, or
 jump to it if it's an existing bookmark, or make a buffer with that name,
 or find a file with that name.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (setq helm-mini-default-sources '(helm-source-buffers-list
                                     helm-source-recentf
                                     helm-source-bookmarks
@@ -1783,7 +1747,7 @@ or find a file with that name.
 Incidentally, Helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the ~top~ program via
 ~helm-top~. It also serves as an interface to popular search engines
 and over 100 websites such as ~google, stackoverflow, ctan~, and ~arxiv~.
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (system-packages-ensure "surfraw")
 ; ⇒  “M-x helm-surfraw” or “C-x c s”
 #+end_src
@@ -1797,7 +1761,7 @@ not only search the current buffer but also the other buffers and to make live
 edits by pressing ~C-c C-e~ when a search buffer exists. Incidentally, executing
 ~C-s~ on a word, region, will search for that particular word, region; then make
 changes with ~C-c C-e~ and apply them by ~C-x C-s~.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (use-package helm-swoop
   :defer nil
   :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
@@ -1870,13 +1834,13 @@ Lets also use doc:helm-do-grep-ag ([[kbd:C-x c M-g a]]) *search all files in the
    directory for a particular (regexp) string*
    - Shows matches live as you type
    - Very helpful when looking for a definition of something
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (system-packages-ensure "ag")
 #+end_src
 
 *Marking my place when I jump around*
 Let's use ~M-m~ to get a nice menu of places we've been recently.
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 ;; Save/mark a location with “C-u M-m”, jump back to it with “M-m”.
 (bind-key* "M-m"
            (lambda ()
@@ -1893,7 +1857,7 @@ Finally, note that there is now a ~M-x helm-info~ command to show documentation,
 possibly with examples, of the packages installed. For example,
 ~M-x helm-info RET dash RET -parition RET~ to see how the parition function from the
 dash library works via examples ;-)
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 ;; Make `links' from elisp symbols (quoted functions, variables and fonts) in Gnu-Emacs Info viewer to their help documentation.
 (use-package inform
   :defer nil
@@ -1932,7 +1896,7 @@ along with the extras that allow us to ignore heading names, but still utilise
 their contents ---e.g., such as a heading named ‘preamble’ that contains
 org-mode setup for a file.
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (use-package emacs
     :defer nil
     :ensure org-contrib
@@ -1946,7 +1910,7 @@ contributions from the [[https://code.orgmode.org/bzg/org-mode/src/master/contri
   ignoring their content.
 + Use the ~:noexport:~ tag to omit a headline /and/ its contents.
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 ;; Replace the content marker, “⋯”, with a nice unicode arrow.
 (setq org-ellipsis " ⤵")
 
@@ -1978,14 +1942,14 @@ a [[http://www.howardism.org/Technical/Emacs/spreadsheet.html][friendly tutorial
 
 Moreover, since I end up using org-mode most of the time, let's make that the
 default mode.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (setq initial-major-mode 'org-mode)
 #+END_SRC
 
 Finally, let's get some extra Org-mode mark-up goodies, such as ~kbd:C-c_C-e~
 which renders as kbd:C-c_C-e.  Documentations and screenshots at:
 https://alhassy.github.io/org-special-block-extras/
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 
 (defun org-special-block-extras-short-names ())
 ;;
@@ -2068,7 +2032,7 @@ Possibly interesting reads:
 :CUSTOM_ID: all-the-icons
 :END:
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
  (cl-defun all-the-icons-faicon (icon &rest _)
   #("" 0 1 (rear-nonsticky t display (raise -0.24) font-lock-face (:family "FontAwesome" :height 1.2) face (:family "FontAwesome" :height 1.2))))
 
@@ -2090,7 +2054,7 @@ shared prefix /only once/ thereby having:
 - The [[https://github.com/abo-abo/hydra#the-one-with-the-least-amount-of-code][“hydra-zoom”]] example from the documentation really showcases this utility.
 - After the prefix is supplied, all extensions are shown in a minibuffer.
 
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
 (use-package hydra :defer nil)
@@ -2129,7 +2093,7 @@ occur at the line level or word level or screen level--- we obtain a nice
 interface by declaraing hydras using [[https://github.com/jerrypnz/major-mode-hydra.el#get-started][pretty-hydra-define]] ---this saves us the
 trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][formating docstrings using classic hydra]].
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 ;; TODO Fix me, breaking Github Actions test setup
 ;; Show hydras overlyaed in the middle of the frame
 ;; (use-package hydra-posframe
@@ -2145,7 +2109,7 @@ trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][format
 To /actually/ define hydras, we make a helper function: doc:my/defhydra
 ---which combines doc:defhydra and doc:pretty-hydra-define.
 #+begin_details Implementation
-#+begin_src emacs-lisp  :tangle deferred-init.el
+#+begin_src emacs-lisp  :tangle init.el
 ;; TODO convert my existing defhydras to my/defhydra.
 (defmacro my/defhydra (key title icon-name &rest body)
 "Make a hydra whose heads appear in a pretty pop-up window.
@@ -2235,7 +2199,7 @@ Basic movement commands ---without having to hold the control key!
 =n,p,f,…= for other movement commands. Unlisted keys insert themselves, whereas ~q~
 close the pop-up menu.
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (my/defhydra "C-n" "\t\t\t\t\tTextual Navigation" arrows
    :Line
    ("n" next-line)
@@ -2263,7 +2227,7 @@ For “key-based navigation”, consider ‘EVIL-mode’ or ‘Spacemacs’, or
 [[#Letter-based-Navigation][ace-jump-mode]] (below).
 
 Also …
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; C-n, next line, inserts newlines when at the end of the buffer
 (setq next-line-add-newlines t)
 #+END_SRC
@@ -2274,7 +2238,7 @@ Also …
 :END:
 It can be difficult to remember the incantations to adjust
 windows, so we can make a hydra to alleviate the trouble.
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 ;; Use ijkl to denote ↑←↓→ arrows.
 (my/defhydra "C-c w" "\t\tWindow Adjustment" windows
    :Both
@@ -2301,7 +2265,7 @@ windows, so we can make a hydra to alleviate the trouble.
 :END:
 
 Let's save a few precious seconds,
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
 
@@ -3181,7 +3145,7 @@ Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the 
                                               ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 #+end_src
 
-* COMMENT Literate Programming
+* Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
 :END:
@@ -3509,7 +3473,7 @@ number of ways you'd actually use 𝒳. ( In Emacs, [[kbd:C-t tldr 𝒳 ⟨retur
 (system-packages-ensure "tldr")
 #+END_SRC
 
-** Snippets ---Template Expansion
+** TODO COMMENT Snippets ---Template Expansion
 :PROPERTIES:
 :CUSTOM_ID: Snippets-Template-Expansion
 :END:
@@ -4444,9 +4408,107 @@ name.
 ;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 #+end_src
-* COMMENT Life within Org-mode
+* Repl-Driven-Development :Java:TODO_MAKE_INTO_MELPA_PACKAGE:
+
+I'd like to do arbitrary RDD, provided the language has a repl tool.
+
+So let's code that up:
+#+begin_src emacs-lisp
+(use-package eros)
+
+(require 'eros)
+
+(cl-defun my/declare-repl (cli keys &key (prompt ">") (prompt* nil))
+  "CLI is a string denoting a shell command that starts a repl; e.g., `node'.
+     KEYS is the keybinding that will send the selected region to the repl.
+
+Evaluate a region, if any is selected; otherwise evaluate the current line."
+  (-let* (((cmd . args) (s-split " " cli))
+         (repl (apply #'start-process "my/REPL" "*REPL*" cmd args))) ;; Identifier "my/REPL" is made unique by start-process.
+
+    ;; https://stackoverflow.com/questions/4120054/emacs-showing-m-in-a-process-buffer
+    (set-process-coding-system repl 'utf-8-dos)
+
+    (bind-key keys `(lambda (beg end) (interactive "r")
+                      (unless (use-region-p)
+                        (beginning-of-line)
+                        (set-mark-command nil)
+                        (end-of-line)
+                        (setq beg (region-beginning)
+                              end (region-end))
+                        (pop-mark))
+                      (process-send-region ,repl beg end)
+                      (process-send-string ,repl "\n")
+                      ))
+    (set-process-filter repl `(lambda (process output)
+                               (if (or (s-starts-with? " " output)
+                                       (s-starts-with? ,prompt (s-trim (s-collapse-whitespace output))))
+
+                                   ( ordinary-insertion-filter process "\n")
+
+                                 ( ordinary-insertion-filter process output)
+                                 (setq output  (s-trim (s-replace (concat "\n" ,prompt) "" (s-replace "
+" "" (s-replace "\r" "" output)))))
+                                 ;; PROMPT* is like PROMPT, but we deleted everything after the start of the prompt.
+                                 (when ,prompt*
+                                   (setq output (s-replace-regexp (concat (regexp-quote ,prompt*) ".*") "" output))
+                                   )
+                                  ;; that way “C-h e” shows things as well.
+                                 (let ((inhibit-message t))
+                                   (message "REPL⇒ %s" (s-collapse-whitespace output)))
+                                 ;;  "Show VALUE as an overlay at the current position of the cursor; return VALUE." ;; output shown for 3 seconds
+                                   (eros--make-result-overlay (s-collapse-whitespace output)
+                                     :format  " %s"
+                                     :duration 3 ;; output shown for 3 seconds
+                                     )
+                                 )))
+    repl
+    ))
+
+;; Src: https://www.gnu.org/software/emacs/manual/html_node/elisp/Filter-Functions.html
+(defun ordinary-insertion-filter (proc string)
+  (when (buffer-live-p (process-buffer proc))
+    (with-current-buffer (process-buffer proc)
+      (let ((moving (= (point) (process-mark proc))))
+        (save-excursion
+          ;; Insert the text, advancing the process marker.
+          (goto-char (process-mark proc))
+          (insert string)
+          (set-marker (process-mark proc) (point)))
+        (if moving (goto-char (process-mark proc))))))
+  )
+;;
+;; TODO: Use process-filter in the future to get the default filter, rather than typing it out, and then advise that to show my message/overlay ;-)
+;; HACK: Unless I'm testing/debugging; there's no need to actually make use of the output buffer 😉 But, in the long term, it's useful to read full logs!
+#+end_src
+
+Then, for instance, for Java:
+#+begin_src emacs-lisp
+;; Java {{Tip: select all lines then evaluate!}}
+(setq repl (my/declare-repl "jshell --enable-preview" "C-x C-j" :prompt "jshell>"))
+#+end_src
+
+Now, we can select the following and press =C-x C-j= to evaluate the Java code:
+
+#+begin_src java :tangle no
+// (Ensure I'm not fullscreen!)
+import javax.swing.*;
+JOptionPane.showMessageDialog(new JFrame(){{ setAlwaysOnTop(true); }}, "Super nice!");
+#+end_src
+Or doing algebraic datatypes in Java:
+#+begin_src java :tangle no
+sealed interface Maybe {
+    record None() implements Maybe {}
+    record Just(int x) implements Maybe {}
+}
+
+new Maybe.Just(3).equals(new Maybe.Just(3)) // yay
+#+end_src
+
+* Life within Org-mode                                            :Posterity:
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
+:header-args: :tangle no
 :END:
 
 It's hard to estimate how long a task takes if you don't keep track of time
@@ -5242,6 +5304,7 @@ code, and do more searches; then again, I've learned a lot by writing code.)
 ** Journaling
 :PROPERTIES:
 :CUSTOM_ID: Journaling
+:header-args:    :tangle no
 :END:
 
 *** Intro to why even journal                                      :ignore:
@@ -5293,6 +5356,11 @@ utilise a prefix argument to obtain my work specific entries.
 :PROPERTIES:
 :CUSTOM_ID: The-Setup
 :END:
+
+
+# As of Oct2022, Using org-journal breaks my permissions. E.g., org-time-stamp / C-c . results in "
+# directory-files-recursively: Opening directory: Operation not permitted, /Users/musa/Desktop"
+
 
 Anyhow, the setup:
 #+begin_src emacs-lisp
@@ -6369,7 +6437,7 @@ screen should display battery life, data, & time. Likewise, we may have a casual
 file explorer ---primarily to show-off to newcomers, since great functionality
 is found with ~M-x dired~ ---doc:dired.
 
-#+BEGIN_SRC emacs-lisp  :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp  :tangle init.el
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
 (use-package org-bullets
@@ -6377,7 +6445,7 @@ is found with ~M-x dired~ ---doc:dired.
   :hook (org-mode . org-bullets-mode))
 #+END_SRC
 
-** COMMENT Startup message: Emacs & Org versions
+** Startup message: Emacs & Org versions
 :PROPERTIES:
 :CUSTOM_ID: Startup-message-Emacs-Org-versions
 :END:
@@ -6474,7 +6542,7 @@ minimalistic, yet fancy/ setup with the following notable perks:
 For fine-grained control on what/how things appear, there is
 doc:doom-modeline-def-modeline and doc:doom-modeline-set-modeline.
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 ;; This package requires the fonts included with all-the-icons to be installed. Run M-x all-the-icons-install-fonts to do so.
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
@@ -6553,7 +6621,7 @@ are enabled or we can use minions.el to “gather up” all enabled minor modes,
 recently enabled ones, under a single menu which doom-modeline shows as a simple
 configurations gear icon. ⚙. :gear:
 
-#+begin_src emacs-lisp  :tangle deferred-init.el
+#+begin_src emacs-lisp  :tangle init.el
   (setq doom-modeline-minor-modes t)
   (use-package minions
     :defer nil
@@ -6567,7 +6635,7 @@ configurations gear icon. ⚙. :gear:
 :PROPERTIES:
 :CUSTOM_ID: Nice-battery-icon-alongside-with-percentage-in-doom-modeline
 :END:
-#+begin_src emacs-lisp  :tangle deferred-init.el
+#+begin_src emacs-lisp  :tangle init.el
 ;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
 (display-battery-mode +1)
 #+end_src
@@ -6593,7 +6661,7 @@ longer maintained. It works on my machine.
 :END:
 Let’s display the current time, with updates every second.
 
-#+begin_src emacs-lisp  :tangle deferred-init.el
+#+begin_src emacs-lisp  :tangle init.el
 ;; Show date and time as well.
 
 ;; [Simple Approach]
@@ -6609,7 +6677,7 @@ Let’s display the current time, with updates every second.
 
 But doc:display-time-mode shows me a bit more info that I actually don't care
 for; so let's disable those.
-#+begin_src emacs-lisp  :tangle deferred-init.el
+#+begin_src emacs-lisp  :tangle init.el
 ;; I don't need the system load average in the modeline.
 (setq display-time-default-load-average nil)
 (setq display-time-load-average nil)
@@ -6623,7 +6691,7 @@ Likewise, let's have the modeline display column numbers, but not line numbers.
 Instead, let's have line numbers on the side of the buffer; moreover let's have
 a uniform width for displaying line numbers, rather than having the width grow
 as necessary.
-#+BEGIN_SRC emacs-lisp  :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp  :tangle init.el
 ;; (column-number-mode                 t) ;; Enabled in doom-modeline by default
 ;; (line-number-mode                   t) ;; Not sure I want line numbers in modeline, since I have them in the left margin.
 #+END_SRC
@@ -6637,7 +6705,7 @@ I'm pair programming with doc:display-line-numbers-mode.
   numbers but I don't need to always see them.
 - If I need an indication of ‘progress’, the modeline contains a percentage of
   how far I am in a buffer.
-#+BEGIN_SRC emacs-lisp  :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp  :tangle init.el
 ;; (setq display-line-numbers-width-start t)
 ;; (global-display-line-numbers-mode      t)
 (global-linum-mode -1)
@@ -6685,7 +6753,7 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 
 --------------------------------------------------------------------------------
 
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 ;; Treat all themes as safe; no query before use.
 (setf custom-safe-themes t)
 
@@ -6705,14 +6773,14 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 
 --------------------------------------------------------------------------------
 
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Infinite list of my commonly used themes.
 (setq my/themes '(doom-laserwave shanty-themes-light stimmung-themes-light stimmung-themes-dark doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
 (setcdr (last my/themes) my/themes)
 #+END_SRC
 
 kbd:C-c_t to toggle between the personal themes.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
   "Disable all themes and load the given one ---read from user when called interactively."
   (interactive)
@@ -6753,34 +6821,37 @@ mood 😸). [I already use kbd:C-c_f, doc:my/org-mode-format, for the more likel
 operation of formatting text.]
 #+begin_details “my/toggle-font” Implementation
 
-#+begin_src emacs-lisp :tangle deferred-init.el
-;; Infinite list of my commonly used fonts
-(setq my/fonts
-      '("Roboto Mono Light 14" ;; Sleek
-        "Input Mono 14"
-        "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
-        "Papyrus 14"
-        "Bradley Hand Light 12"
-        ;; "Chalkduster 14" ;; Laggy!
-        "Courier Light 12"
-        "Noteworthy 9"
-        "Savoye LET 14"
-        "Fantasque Sans Mono 16"
-        ))
-(setcdr (last my/fonts) my/fonts)
+#+begin_src emacs-lisp :tangle init.el
+(unless my/work-machine?
 
-;; Let's ensure they're on our system
-;; brew search "/font-/"   # List all fonts
-(shell-command "brew tap homebrew/cask-fonts")
-(system-packages-ensure "svn") ;; Required for the following font installs
-(system-packages-ensure "font-roboto-mono")
-(system-packages-ensure "font-input")
-(system-packages-ensure "font-source-code-pro")
-(system-packages-ensure "font-fira-mono")
-(system-packages-ensure "font-mononoki")
-(system-packages-ensure "font-monoid")
-(system-packages-ensure "font-menlo-for-powerline")
-(system-packages-ensure "font-fantasque-sans-mono")
+  ;; Infinite list of my commonly used fonts
+  (setq my/fonts
+        '("Roboto Mono Light 14" ;; Sleek
+          "Input Mono 14"
+          "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
+          "Papyrus 14"
+          "Bradley Hand Light 12"
+          ;; "Chalkduster 14" ;; Laggy!
+          "Courier Light 12"
+          "Noteworthy 9"
+          "Savoye LET 14"
+          "Fantasque Sans Mono 16"
+          ))
+  (setcdr (last my/fonts) my/fonts)
+
+  ;; Let's ensure they're on our system
+  ;; brew search "/font-/"   # List all fonts
+
+  (shell-command "brew tap homebrew/cask-fonts")
+  (system-packages-ensure "svn") ;; Required for the following font installs
+  (system-packages-ensure "font-roboto-mono")
+  (system-packages-ensure "font-input")
+  (system-packages-ensure "font-source-code-pro")
+  (system-packages-ensure "font-fira-mono")
+  (system-packages-ensure "font-mononoki")
+  (system-packages-ensure "font-monoid")
+  (system-packages-ensure "font-menlo-for-powerline")
+  (system-packages-ensure "font-fantasque-sans-mono")
 
 ;; Use “M-x set-face-font RET default RET”, or...
 ;; (set-face-font 'default "Source Code Pro Light14")
@@ -6788,7 +6859,7 @@ operation of formatting text.]
 ;; See ~2232 fonts
 ;; (append (fontset-list) (x-list-fonts "*" nil))
 
-(cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
+  (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
   "Load NEW-FONT, which defaults from ‘my/fonts’.
 
 When a universal prefix is given, “C-u C-c F”, we load a random
@@ -6802,11 +6873,11 @@ fonts (•̀ᴗ•́)و"
     (set-face-font 'default font)
     (message "Font: %s" font)))
 
-(global-set-key "\C-c\ F" 'my/toggle-font)
+  (global-set-key "\C-c\ F" 'my/toggle-font)
 
-;; Default font; the “ignore-⋯” is for users who may not have the font.
-(ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
-(ignore-errors (my/toggle-font "Source Code Pro Light 14"))
+  ;; Default font; the “ignore-⋯” is for users who may not have the font.
+  (ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
+  (ignore-errors (my/toggle-font "Source Code Pro Light 14")))
 #+end_src
 
 #+end_details
@@ -6819,7 +6890,7 @@ get a nice font selection menu ---this can be useful for your own ‘personal st
 # MA: This does not work well with dark themes; should use a theme-based setting.
 
 Let's use the following theme and font, upon startup.
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (unless noninteractive
   (my/toggle-font "Roboto Mono Light 14")
   (my/toggle-theme 'solarized-gruvbox-light))
@@ -6891,7 +6962,7 @@ a blinking cursours prompts me to continue upwards and onwards.
 
 As a laptop user, screen space is important, so let's remove rarely used visual
 items.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (unless noninteractive
   (tool-bar-mode   -1)  ;; No large icons please
   (scroll-bar-mode -1)  ;; No visual indicator please
@@ -6904,7 +6975,7 @@ items.
 :END:
 
 Highlight matching ‘parenthesis’ when near one of them.
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (setq show-paren-delay  0)
 (setq show-paren-style 'mixed)
 (show-paren-mode)
@@ -6912,7 +6983,7 @@ Highlight matching ‘parenthesis’ when near one of them.
 
 Colour parens, and other delimiters, depending on their depth.
 Very useful for parens heavy languages like Lisp.
-#+begin_src emacs-lisp :tangle deferred-init.el
+#+begin_src emacs-lisp :tangle init.el
 (use-package rainbow-delimiters
   :disabled
   :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
@@ -6926,14 +6997,14 @@ For example:
 There is a powerful package called ‘smartparens’ for working with pair-able
 characters, but I've found it to be too much for my uses. Instead I'll utilise
 the lightweight package ~electric~, which Emacs provides out of the box.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 (electric-pair-mode 1)
 #+END_SRC
 It supports, by default, ACSII pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
 
 When writing Lisp, it is annoyong to have ‘<’ and ‘>’ be completed
 /and/ considered as pairs.  Let's disassociate them from both notions.
-#+BEGIN_SRC emacs-lisp :tangle deferred-init.el
+#+BEGIN_SRC emacs-lisp :tangle init.el
 ;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
 (setq electric-pair-inhibit-predicate
       (lambda (c)
@@ -6996,7 +7067,7 @@ Let's have headings stick out a bit.
 Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
 ---See notes on Custom above.
 
-** COMMENT Making Block Delimiters Less Intrusive
+** Making Block Delimiters Less Intrusive
 :PROPERTIES:
 :CUSTOM_ID: Making-Block-Delimiters-Less-Intrusive
 :END:
@@ -7116,7 +7187,7 @@ have busybodied headers which his setup disguises as ‘≡’.
       do (push pair my/prettify-alist))
 
 ;; Replace all Org [metadata]keywords with the “▷” symbol; e.g., “#+title: Hello” looks like “▷ Hello”.
-(cl-loop for keyword in '(title author email date description options property startup export_file_name html_head)
+(cl-loop for keyword in '(title author email date description options property startup export_file_name html_head fileimage filetags)
          do (push (cons (format "#+%s:" keyword) ?▷) my/prettify-alist))
 
 (cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
@@ -7124,6 +7195,8 @@ have busybodied headers which his setup disguises as ‘≡’.
                         (setq prettify-symbols-alist
                               (append my/prettify-alist prettify-symbols-alist)))))
 #+end_src
+
+#+RESULTS:
 
 :Did_it_work:
 #+begin_example lisp
@@ -7145,7 +7218,7 @@ A nice sanity:
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 #+END_SRC
 
-** COMMENT Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG
+** Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG
 :PROPERTIES:
 :CUSTOM_ID: Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG
 :END:
@@ -7262,7 +7335,8 @@ environments ---for personal environments, just ~(add-to-list
 #+end_src
 
 This approach does not work well for forming diagrams; I've tried to make tikzcd
-work this way and failed.  Using [[doc:org-babel-execute:latex-as-png][ob-latex-as-png]] as a substitute.
+work this way and failed.  Using ~ob-latex-as-png~ as a substitute.
+# work this way and failed.  Using [doc : org-babel-execute:latex-as-png][ob-latex-as-png] as a substitute.
 :calc:
 #+begin_src emacs-lisp :tangle no
 ;; \step should be local to \begin{calc}⋯\end{calc}!
@@ -7561,8 +7635,7 @@ doc:font-lock-mode, which performs arbitrary syntax highlighting.
 - For more power, use the ~svg-lib~ package.
 - The docs have nice examples. [[https://github.com/rougier/svg-tag-mode/blob/main/examples/example-2.el][Here]] are more useful examples.
 
-Below I setup a function, doc:my/svg-tag-declare-badge to /declaratively/ produce
-SVG badges.
+# Below I setup a function, doc : my/svg-tag-declare-badge to /declaratively/ produce SVG badges.
 
 #+begin_src emacs-lisp
 (use-package svg-tag-mode
@@ -7642,7 +7715,6 @@ SVG badges.
 #+end_src
 
 * Prose
-CLOSED: [2021-11-02 Tue 22:43]
 :PROPERTIES:
 :CUSTOM_ID: Prose
 :END:
@@ -8546,7 +8618,7 @@ navigate my recent edits /without/ having to supply the prefix each time.
             (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
 #+end_src
 
-** LaTeX ⇐ Org-Mode
+** COMMENT LaTeX ⇐ Org-Mode
 CLOSED: [2021-11-02 Tue 22:18]
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
@@ -9099,7 +9171,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* Programming
+* COMMENT Programming
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
@@ -9108,8 +9180,8 @@ Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
 
 TODO: Fix these docs
-#  TODO: + Checkout branches/PRs with doc:my/gh-checkout
-#  + See all company related PRs with doc:w-PRs
+#  TODO: + Checkout branches/PRs with doc : my/gh-checkout
+#  + See all company related PRs with doc : w-PRs
 # + Quickly look up language/library docs /within/ Emacs with kbd:C-c_d.
 
 #+begin_src emacs-lisp
@@ -9124,9 +9196,9 @@ TODO: Fix these docs
 
 Sometimes we want to quickly run some code /without making a dedicated file/ or
 with a file but /without remembering the terminal incantation to do so/, enter
-~quickrun~. Anywhere, we can select a snippet of code and run doc:quickrun-region
+~quickrun~. Anywhere, we can select a snippet of code and run TODO. doc.quickrun-region
 to execute that snippet after selecting the associated programming language, or
-doc:quickrun-replace-region if we want the results in-line. If our language of
+TODO. doc.quickrun-replace-region if we want the results in-line. If our language of
 choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-defined-command][easily add support for it]].
 
 #+begin_src emacs-lisp
@@ -9381,7 +9453,7 @@ See the final comment [[https://karthinks.com/software/an-elisp-editing-tip/][he
     things you'd like to read].
   - Better would be to use the [[https://github.com/gleitz/howdoi][howdoi]] tool, which gives instant coding answers
     for common questions via the command line.
-  - Below, my /Emacs Lisp/ function doc:howdoi let's me reduce the 4-step process
+  - Below, my /Emacs Lisp/ function doc : howdoi let's me reduce the 4-step process
     to just 2 steps: Write your query /anywhere/ then call ~M-x howdoi~ on it to
     replace the query with the answer. (Or ~C-u M-x howdoi~ to see the full answer
     and a link to it on StackOverflow.)
@@ -10376,13 +10448,13 @@ Literate programming within Org-mode is not always ideal or possible, so we use
 a programming mode directly and then may want to have arbitrary ‘sections’ of
 text folded up.  Let's describe how to accomplish this goal. I've tried the
 feature-full folding modes [[https://github.com/gregsexton/origami.el][Origami-mode]] and ~yafolding-mode~, but it seems the
-/built-in/ doc:hs-minor-mode is the best: (0) It folds comments, (1) it's the
+/built-in/ TODO. doc.hs-minor-mode is the best: (0) It folds comments, (1) it's the
 fastest, and (2) it Just Worksᵀᴹ out-of-the-box. Coupled with Vimish folding,
 for arbitrary region folding; and a helpful hydra, I'm rather happy with my
 setup.
 
-On two JavaScript files, I found the following timings (using doc:elp-instrument-function
-and doc:elp-results):
+On two JavaScript files, I found the following timings (using TODO. doc.elp-instrument-function
+and TODO. doc.elp-results):
 | Folding function        | ~500 lines | ~2300 lines |
 |-------------------------+------------+-------------|
 | hs-hide-all             |    0.00277 |    0.004358 |
@@ -10392,7 +10464,7 @@ and doc:elp-results):
 with ~emacs -Q~.)
 
 #+begin_box "There's a built-in, less featureful, alternative based on indentation!"
-Quickly fold-away code with doc:set-selective-display; e.g., <kbd:C-u C-x $>
+Quickly fold-away code with TODO. doc.set-selective-display; e.g., <kbd:C-u C-x $>
 folds away all code indented 4 spaces, whereas <kbd:C-u 8 C-x $> is for 8
 spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
 
@@ -10406,7 +10478,7 @@ to a programming language's syntactic constructions.
 [[https://github.com/mrkkrp/vimish-fold][Vimish-fold]] gives us just that and with many fancy features, from the README:
 + folding of active regions;
 + good visual feedback: it's obvious which part of text is folded with a ‘⋮’ in the fringe.
-+ create folds from regions between ~{{{~ and ~}}}~ automatically (marks are customizable; doc:vimish-fold-from-marks);
++ create folds from regions between ~{{{~ and ~}}}~ automatically (marks are customizable; TODO. doc.vimish-fold-from-marks);
 + persistence by default: when you kill a buffer your folds don't disappear;
 + persistence scales well, you can work on hundreds of files with lots of folds without adverse effects;
 + it does not break indentation;
@@ -10421,13 +10493,13 @@ to a programming language's syntactic constructions.
 #+end_src
 #+end_box
 
-*** Actual Setup :ignore:
+*** TODO Actual Setup                                              :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Actual-Setup
 :END:
 --------------------------------------------------------------------------------
 
-Below I setup hideshow along with [[doc:hideshowvis-symbols][hideshowvis]] which gives us a nice clickable
+TODO: Below I setup hideshow along with [doc : hideshowvis-symbols] [hideshowvis]  which gives us a nice clickable
 “+/-” marker for foldable blocks as well as an overlay that indicates how many
 lines are folded away.  For more on hideshow-mode, see the [[https://writequit.org/denver-emacs/presentations/2017-11-02-hidden-gems.html][Hidden Gem Packages]]
 presentation which contains a small self-contained introduction, or [[https://github.com/emacs-mirror/emacs/blob/master/lisp/progmodes/hideshow.el#L127][these super useful source comments]]
@@ -10899,13 +10971,13 @@ Example use:      (w-pr-checkout \"~/my-repo\")
          do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
 #+end_src
 
-** SQL ---via LSP
+** TODO SQL ---via LSP
 :PROPERTIES:
 :CUSTOM_ID: SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only
 :END:
 When doing ‘serious’ database work, I love using DBeaver.  But when I only want
 to /quickly/ run a query, to check something, *without the fricition of switching
-applications*, then doing so in Emacs is a no-brainer: I use [[doc:w-sql]] to produce
+applications*, then doing so in Emacs is a no-brainer: I use doc : w-sql  to produce
 a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.  (This also
 serves as a nice *reference mechanism* for useful queries.)
 
@@ -10915,8 +10987,8 @@ Let's use [[https://github.com/lighttiger2505/sqls][LSP for SQL]], to get
     valid columns; or just delete the ~*~ and press ~.~ to see them.
 + Completions for tables & column names,
 + ~C-c C-c~ to execute query at point [My personal setup below],
-  - Run all queries with doc:lsp-execute-code-action
-+ When sharing with others, maybe execute doc:lsp-format-buffer
+  - TODO: Run all queries with doc : lsp-execute-code-action
++ TODO: When sharing with others, maybe execute doc : lsp-format-buffer
 + Note: The tokenizer is known to a bit buggy.
   - E.g., ~select 1 + 2 as "Numerical, yeah!"~ will not be run due to the ‘!’.
 
@@ -11187,10 +11259,10 @@ then with your cursour on that line you'll see some info to the side about the
 error (thanks to ~lsp-ui-mode~) and if you invoke ~lsp-treemacs-errors-list~
 then you get a nice hierarchical, ⟨tab⟩-ful, list of errors.  To find symbol
 names, with autocompletion of all names in your workspace, use <kbd:s-l g a>
-(thanks to ~helm-lsp~), for the current file doc:lsp-ui-imenu (or more simply,
+(thanks to ~helm-lsp~), for the current file TODO. doc.lsp-ui-imenu (or more simply,
 <kbd:C-c i>) is nice.  As the LSP server runs it can even detect JSON objects
 and show their values in the mode line when the cursour is above them; which can
-also be requested with <kbd:s-l h h>.  (doc:lsp-describe-thing-at-point).  /That
+also be requested with <kbd:s-l h h>.  (TODO. doc.lsp-describe-thing-at-point).  /That
 is all!/
 
 | [[kbd:][s-l g g]] | Find definitions of the symbol under point                         |
@@ -11201,7 +11273,7 @@ is all!/
 | [[kbd:][s-l h g]] | Trigger display hover information popup and hide it on next typing |
 | [[kbd:][s-l r r]] | Rename the symbol (and all references to it)                       |
 
-Also: doc:lsp-format-buffer makes the code more readable.
+Also: TODO. doc.lsp-format-buffer makes the code more readable.
 
 #+begin_src emacs-lisp
 (use-package lsp-mode
@@ -11285,7 +11357,7 @@ highlighted /and/ you get to see its (type) description in the mode line.
 type will be shown, along with their (type) descriptions.
 
 🚁 If you see an error ~“LSP :: Could not connect to 𝒳 server”~, then run
-doc:lsp-doctor and look at the buffer ~𝒳::stderr~ for hints on what the cause
+TODO. doc.lsp-doctor and look at the buffer ~𝒳::stderr~ for hints on what the cause
 could have been; [[https://emacs-lsp.github.io/lsp-mode/page/faq/][FAQ]].
 
 The Language Server protocol is used between a tool (the client) and a language
@@ -11439,11 +11511,11 @@ When we open a JSON file, we are promoted to install an LSP server, which
 (use-package json-mode   :defer nil)
 #+end_src
 
-Useful bindings are in the docstring of doc:json-mode.
+Useful bindings are in the docstring of TODO. doc.json-mode.
 + kbd:C-c_C-f :: Pretty print buffer
 + kbd:C-c_C-p :: Copy path to field at point
 
-Note that there is also doc:json-pretty-print-buffer; which can be used to
+Note that there is also TODO. doc.json-pretty-print-buffer; which can be used to
 uglify a JSON buffer if a prefix is provided.
 
 Let's make a hydra for JSON,
@@ -11687,7 +11759,7 @@ We can use ~M-x lsp-execute-code-action~ to get a list of actions that can be pe
 :CUSTOM_ID: Peer-Review-Pull-Request-Template-for-Work
 :END:
 
-I run doc:w-pr-template to get a new Org buffer with a review template.  I make
+I run TODO. doc.w-pr-template to get a new Org buffer with a review template.  I make
 notes and check-off boxes with ~C-c C-c~ as usual, and when I'm done I press ~C-c
 C-s~ to copy the buffer to clipboard, in markdown format. Then I can paste it
 into Github.
@@ -12185,6 +12257,57 @@ my VSCoder counterparts.
 (my/toggle-pair-programming)
 #+end_src
 
+* COMMENT Arabic Setup      :Possibly_already_in_AlBasmala_so_just_load_that:
+
+#+begin_src emacs-lisp
+(bind-key "M-x" #'execute-extended-command)
+
+(set-fontset-font "fontset-default" '(#x600 . #x6ff) "Amiri Quran Colored") ;; Makes all dots, hamza, diadiract marks colored!
+
+;; Note: "arabic" input method just changes my English query keyboard into an Arabic keyboard ---useful if one's mastered touch typing in Arabic!
+;; In contrast, the Perso-Arabic input method uses a system of transliteration: Ascii keys are phonetically mapped to Arabic letters.
+(bind-key* "M-SPC" (lambda () (interactive)
+   (message (if (not current-input-method)
+      (progn (set-input-method "farsi-transliterate-banan" t) "Perso-Arabic! Hint: M-x describe-input-method")
+      (progn (set-input-method nil) "English!")))))
+
+
+;; Press C-q on a word to quote it with nice unicode quotes.
+(bind-key* "C-q" (lambda () (interactive) (insert (format "“%s”" (thing-at-point 'word))) (kill-word 1)))
+#+end_src
+
+** COMMENT [HERE TODAY] Rndm
+
+    ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
+    ;; which is a GPG file and so requires passphrase before other things can load.
+    ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
+
+
+
+;; NOTE: Will not work when doom-modeline is enabled!
+;; (xwidget-webkit-browse-url  "https://www.reddit.com/r/emacs/")
+
+
+;; Press C-q on a word to quote it with nice unicode quotes.
+(bind-key* "C-q" (lambda () (interactive) (insert (format "“%s”" (thing-at-point 'word))) (kill-word 1)))
+
+
+(load-file "~/blog/AlBasmala.el")
+
+#+begin_src emacs-lisp :exports code
+(org-deflink card
+ "Show one of 6 hardcoded phrases as a small inline image."
+ (-let [url
+        (pcase o-label
+          ("Let's take a break" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-19.png")
+          ("Yes" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-20.png")
+          ("No" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-21.png")
+          ("Agree" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-22.png")
+          ("Disagree" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-23.png")
+          ("I have a question" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-35.png"))]
+   (format "<a href=\"%s\" class=\"tooltip\" title=\"%s\"><img src=\"%s\" height=50></a>" url o-label url)))
+#+end_src
+
 * COMMENT Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
@@ -12640,149 +12763,6 @@ I like using Chrome ---I like the integration of all things Google.
 
 #+begin_src emacs-lisp
 (use-package vue-mode)
-#+end_src
-
-* COMMENT Lisp Helpers / Kill all buffers that are not associated with a file; also ~C-x ←/→~
-:PROPERTIES:
-:CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
-:END:
-
-# Here is a collection of Emacs-lisp functions that I have come to use in other files.
-# The subsections below detail the definitions.
-# Disclaimer: I wrote much of the following /before/ I learned any lisp; everything below is probably terrible.
-
-#+begin_src emacs-lisp
-(cl-defun my/clean-buffers ()
-  "Kill all buffers that are not associated with a file.
-  By convention, such files are named in *earmuffs* style."
-  (interactive)
-  (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list))))))
-#+end_src
-
-* When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
-- If I want to see a particular buffer, I'll summon it explicitly.
-  + E.g., Messages with ~C-h e~, Magit with ~C-x g~, Server Status with ~M-S-SPC~, etc.
-#+begin_src emacs-lisp
-(defun my/buffer-predicate (buffer)
-  "Run `C-u 0 C-x C-e' on the following form to see all buffer names and find the
-   ones annyoning you, then place those in the function body below
-
-        (mapcar #'buffer-name (buffer-list))
-"
-  ;; First let's kill a bunch of buffers
-  ;; (my/clean-buffers) ;; TODO: Bad idea?
-
-  ;; Next let's filter out any remaining ones [Redundant?]
-  (defvar my/ignore/buffer/name '("*Quail Completions*" "*Backtrace*" "*Help*" "*agda2*" "*sqls*" "*which-key*" "*Warnings*" "*Messages*" "Status of Services"))
-  (defvar my/ignore/buffer/prefix '("*helm" "*Helm"  "*quelpa" "*lsp" "*Occur" "magit" "*Flymake" "*format" "*Shell" "*Async"
-                                    "*org-src-fontification:" "*Server:"))
-  (defvar my/ignore/buffer/suffix  '("stderr*" "log*" "-ls*"))
-
-  (-let [name (buffer-name buffer)]
-    (not (or (member name my/ignore/buffer/name)
-             (--any? (s-starts-with? it name) my/ignore/buffer/prefix)
-             (--any? (s-ends-with? it name) my/ignore/buffer/suffix)))))
-
-(set-frame-parameter nil 'buffer-predicate 'my/buffer-predicate)
-#+end_src
-
-Note: ~C-x C-r~ is very useful for jumping to recently visited files.
-
-* COMMENT Toggles Hydra                                             :Not_yet_tangled:
-:PROPERTIES:
-:CUSTOM_ID: Toggles-Hydra
-:END:
-
-#+begin_src emacs-lisp :tangle no
-(my/defhydra "C-c t" "Toggles" toggle-on
-   :Theme
-   ("t t" my/toggle-theme "Theme")
-   ("t s" (thread-last (all-completions "doom" (custom-available-themes))
-            (completing-read "Load custom theme: ")
-            intern
-            load-theme)
-    "Select Theme")
-
-   :UI
-   ("i" display-fill-column-indicator-mode :toggle t)
-   ("f" my/toggle-font "font")
-   ("F" writeroom-mode "Focused Work!" :toggle t)
-   ("d" treemacs "directory finder" :toggle t)
-   ("n" display-line-numbers-mode "line number" :toggle t)
-   ("u f" (setq frame-title-format (completing-read "New frame title: " nil)) "New frame title") ;; Useful for random screenshots
-
-   :Possibly_in_the_way
-   ("e" electric-pair-mode "electric pair" :toggle t)
-   ("c" flyspell-mode "spell check" :toggle t)
-   ("s" prettify-symbols-mode "pretty symbol" :toggle t)
-   ("w" whitespace-cleanup "Clean up whitespace on save" :toggle t)
-   ;; ("a" global-aggressive-indent-mode "aggressive indent" :toggle t)
-   ;; ("d" global-hungry-delete-mode "hungry delete" :toggle t)
-
-   :Modeline
-   ("m d" doom-modeline-mode "modern mode-line" :toggle t)
-   ("m b" display-battery-mode "battery" :toggle t)
-   ("m t" display-time-mode "time" :toggle t)
-   ("m w" which-function-mode "which function" :toggle t)
-
-   :Highlight
-   ("h l" global-hl-line-mode "line" :toggle t)
-   ("h p" show-paren-mode "paren" :toggle t)
-   ;; ("h s" symbol-overlay-mode "symbol" :toggle t)
-   ;; ("h r" rainbow-mode "rainbow" :toggle t)
-   ;; ("h w" (setq-default show-trailing-whitespace (not show-trailing-whitespace))
-   ;; "whitespace" :toggle show-trailing-whitespace)
-   ;; ("h d" rainbow-delimiters-mode "delimiter" :toggle t)
-   ("h i" highlight-indent-guides-mode "indent" :toggle t)
-   ("h t" global-hl-todo-mode "todo" :toggle t)
-   ;; ("x" highlight-sexp-mode "sexp" :toggle t)
-   ;; ("t" hl-todo-mode "todo" :toggle t)
-
-   :Program
-   ("f" flycheck-mode "flycheck" :toggle t)
-   ;; ("F" flymake-mode "flymake" :toggle t)
-   ("o" origami-mode "folding" :toggle t)
-   ;; ("O" hs-minor-mode "hideshow" :toggle t)
-   ("W" subword-mode "subword" :toggle t)
-   ("E" toggle-debug-on-error "debug on error" :toggle (default-value 'debug-on-error))
-   ("Q" toggle-debug-on-quit "debug on quit" :toggle (default-value 'debug-on-quit))
-   ;; ("v" global-diff-hl-mode "gutter" :toggle t)
-   ;; ("V" diff-hl-flydiff-mode "live gutter" :toggle t)
-   ;; ("M" diff-hl-margin-mode "margin gutter" :toggle t)
-   ;; ("D" diff-hl-dired-mode "dired gutter" :toggle t)
-
-   ("P" (if (profiler-running-p)
-            (progn (profiler-report) (profiler-stop))
-          (profiler-start 'cpu+mem))
-    "Profiler start / report" :exit (profiler-running-p)))
-
-;; Places single frame in centre of screen; hides many UI things (e.g., mode line).
-;; Nice for focused / immersive work.
-;;
-;; When in writeroom, let's also dim the font color of text in surrounding
-;; paragraphs / code blocks.
-(use-package writeroom-mode
-  :config (use-package focus)
-  :hook (writeroom-mode . (lambda () (focus-mode 'toggle))))
-#+end_src
-
-** COMMENT Toggling System                                      :RelocateMe:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Toggling-System
-:END:
-
-#+begin_src emacs-lisp
-(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
-  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
-  ;; First row
-  ("t" my/toggle-theme)
-  ("f" my/toggle-font)
-  ("m" imenu-list-smart-toggle)
-  ("c" column-number-mode)
-)
-
- ;; Shows a nice sidebar menu of the buffer's contents
-(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
 * COMMENT Lost Souls                                    :Outdated_Documentation:Not_yet_tangled:
@@ -13607,7 +13587,7 @@ and how to manipulate it.
 
 I try to [[https://alhassy.github.io/][blog]] occasionally, so here's a helpful function to quickly
 publish the current article to my blog.
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (define-key global-map "\C-cb" 'my/publish-to-blog)
 
 (cl-defun my/publish-to-blog (&optional (draft nil) (local nil))
@@ -13631,7 +13611,7 @@ publish the current article to my blog.
   show a page-not-found error, simply refresh.
   "
 
-  (load-file "~/alhassy.github.io/content/AlBasmala.el")
+  (load-file "~/blog/AlBasmala.el")
 
   ;; --MOVE ME TO ALBASMALA--
   ;; Sometimes the file I'm working with is not a .org file, so:
@@ -14644,6 +14624,9 @@ Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also
 in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
 vertical line.
 
+
+NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
+
 ** Cucumber
 :PROPERTIES:
 :CUSTOM_ID: Cucumber
@@ -14738,7 +14721,8 @@ Let's ensure our system is always up to date.
   (message "Updated Emacs package manager.")
   (other-window 1))
 
-(add-hook 'after-init-hook 'my/stay-up-to-date)
+;; Do this when idle?
+;; (add-hook 'after-init-hook 'my/stay-up-to-date)
 
 ;; For now, doing this since I'm also calling my/stay-up-to-date with
 ;; after-init-hook which hides the startup message.
@@ -14899,12 +14883,43 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
   (setq-default cursor-type 'bar))
 #+end_src
 
-* COMMENT Random Misc Stuff I'm trying out past midnight 🤷
+** COMMENT The ~defer~ macro:
+#+begin_src emacs-lisp :tangle init.el
+(defmacro 😴 (&rest sexp)
+  "Defer any sexp.
+
+If you have a call `(f x y)' then `(😴 f x y)' behaves the same but is run
+when Emacs has been idle for 2 seconds.
+
+E.g., (setq hi 12) defines a variable `hi', so `M-: hi' shows a value.
+Whereas (😴 setq hello 12) does not immediately define a variable: `M-: hello' yields an error
+when run immediately, but yields a value when Emacs is idle for 2 seconds.
+
+Save the name of this macro by highlighting it and pressing `C-x r s z', then use it with `C-x r i z'."
+  `(run-with-idle-timer 20 nil (lambda nil ,sexp)))
+
+;; (defmacro when-idle (&rest body)
+   ;; `(run-with-idle-timer 20 nil (lambda () ,@body)))
+;;
+
+;; first this,
+(setq gc-cons-threshold most-positive-fixnum ; 2^61 bytes
+      gc-cons-percentage 0.6)
+;; then
+(😴 load-file "~/.emacs.d/deferred-init.el")
+;; finally [[the following should really be at the end of deferred-init.el]]
+(add-hook 'emacs-startup-hook
+  (lambda ()
+    (setq gc-cons-threshold 16777216 ; 16mb
+          gc-cons-percentage 0.1)))
+#+end_src
+
+** COMMENT Random Misc Stuff I'm trying out past midnight 🤷
 :PROPERTIES:
 :CUSTOM_ID: Random-Misc-Stuff-I'm-trying-out-past-midnight
 :END:
 
-** Buffer defaults:
+*** Buffer defaults:
 :PROPERTIES:
 :CUSTOM_ID: Buffer-defaults
 :END:
@@ -14913,7 +14928,7 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
 (setq-default major-mode 'org-mode)
 #+end_src
 
-** Get nice child frames when looking at completions candidates.  In particular, when editing Lisp code, the
+*** Get nice child frames when looking at completions candidates.  In particular, when editing Lisp code, the
 :PROPERTIES:
 :CUSTOM_ID: Get-nice-child-frames-when-looking-at-completions-candidates-In-particular-when-editing-Lisp-code-the
 :END:
@@ -14936,7 +14951,7 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
   (let ((foo 1))
     (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
 #+end_src
-** FlowJS
+*** FlowJS
 :PROPERTIES:
 :CUSTOM_ID: FlowJS
 :END:
@@ -15021,7 +15036,7 @@ Now shutdown LSP in a JS file, and restart it to see this server being run!
 
 (file-notify-rm-all-watches)
 
-* TODO COMMENT DELETE? Attempt 1
+** TODO COMMENT DELETE? Attempt 1
 :PROPERTIES:
 :CUSTOM_ID: Attempt-1
 :END:
@@ -15107,7 +15122,7 @@ Now shutdown LSP in a JS file, and restart it to see this server being run!
       :server-id 'flowjs))
  #+end_src
 
-* COMMENT !! TODO FlowJs
+** COMMENT !! TODO FlowJs
 
 #+begin_src emacs-lisp
 (defun yes-plz (file-name major-mode) t)
@@ -15125,7 +15140,7 @@ Now shutdown LSP in a JS file, and restart it to see this server being run!
 (setq lsp-ui-doc-show-with-cursor t)
 #+end_src
 
-* The following, ~M-x dashboard~, might be a nice thing to have on display when invoking =M-x my/pair-program= ?
+** COMMENT The following, ~M-x dashboard~, might be a nice thing to have on display when invoking =M-x my/pair-program= ?
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-The-following-M-x-dashboard-might-be-a-nice-thing-to-have-on-display-when-invoking-M-x-my-pair-program
 :header-args: :tangle init.el
@@ -15278,7 +15293,150 @@ This is a DoomEmacs macro: https://github.com/doomemacs/doomemacs/blob/master/co
 ;;=======================================================================================================================
 #+end_src
 
-* Fontifying =#+begin_details= blocks as if they were Org blocks :Push_upstream_to_OSBE:
+** COMMENT Toggles Hydra                                   :Not_yet_tangled:
+:PROPERTIES:
+:CUSTOM_ID: Toggles-Hydra
+:END:
+
+#+begin_src emacs-lisp :tangle no
+(my/defhydra "C-c t" "Toggles" toggle-on
+   :Theme
+   ("t t" my/toggle-theme "Theme")
+   ("t s" (thread-last (all-completions "doom" (custom-available-themes))
+            (completing-read "Load custom theme: ")
+            intern
+            load-theme)
+    "Select Theme")
+
+   :UI
+   ("i" display-fill-column-indicator-mode :toggle t)
+   ("f" my/toggle-font "font")
+   ("F" writeroom-mode "Focused Work!" :toggle t)
+   ("d" treemacs "directory finder" :toggle t)
+   ("n" display-line-numbers-mode "line number" :toggle t)
+   ("u f" (setq frame-title-format (completing-read "New frame title: " nil)) "New frame title") ;; Useful for random screenshots
+
+   :Possibly_in_the_way
+   ("e" electric-pair-mode "electric pair" :toggle t)
+   ("c" flyspell-mode "spell check" :toggle t)
+   ("s" prettify-symbols-mode "pretty symbol" :toggle t)
+   ("w" whitespace-cleanup "Clean up whitespace on save" :toggle t)
+   ;; ("a" global-aggressive-indent-mode "aggressive indent" :toggle t)
+   ;; ("d" global-hungry-delete-mode "hungry delete" :toggle t)
+
+   :Modeline
+   ("m d" doom-modeline-mode "modern mode-line" :toggle t)
+   ("m b" display-battery-mode "battery" :toggle t)
+   ("m t" display-time-mode "time" :toggle t)
+   ("m w" which-function-mode "which function" :toggle t)
+
+   :Highlight
+   ("h l" global-hl-line-mode "line" :toggle t)
+   ("h p" show-paren-mode "paren" :toggle t)
+   ;; ("h s" symbol-overlay-mode "symbol" :toggle t)
+   ;; ("h r" rainbow-mode "rainbow" :toggle t)
+   ;; ("h w" (setq-default show-trailing-whitespace (not show-trailing-whitespace))
+   ;; "whitespace" :toggle show-trailing-whitespace)
+   ;; ("h d" rainbow-delimiters-mode "delimiter" :toggle t)
+   ("h i" highlight-indent-guides-mode "indent" :toggle t)
+   ("h t" global-hl-todo-mode "todo" :toggle t)
+   ;; ("x" highlight-sexp-mode "sexp" :toggle t)
+   ;; ("t" hl-todo-mode "todo" :toggle t)
+
+   :Program
+   ("f" flycheck-mode "flycheck" :toggle t)
+   ;; ("F" flymake-mode "flymake" :toggle t)
+   ("o" origami-mode "folding" :toggle t)
+   ;; ("O" hs-minor-mode "hideshow" :toggle t)
+   ("W" subword-mode "subword" :toggle t)
+   ("E" toggle-debug-on-error "debug on error" :toggle (default-value 'debug-on-error))
+   ("Q" toggle-debug-on-quit "debug on quit" :toggle (default-value 'debug-on-quit))
+   ;; ("v" global-diff-hl-mode "gutter" :toggle t)
+   ;; ("V" diff-hl-flydiff-mode "live gutter" :toggle t)
+   ;; ("M" diff-hl-margin-mode "margin gutter" :toggle t)
+   ;; ("D" diff-hl-dired-mode "dired gutter" :toggle t)
+
+   ("P" (if (profiler-running-p)
+            (progn (profiler-report) (profiler-stop))
+          (profiler-start 'cpu+mem))
+    "Profiler start / report" :exit (profiler-running-p)))
+
+;; Places single frame in centre of screen; hides many UI things (e.g., mode line).
+;; Nice for focused / immersive work.
+;;
+;; When in writeroom, let's also dim the font color of text in surrounding
+;; paragraphs / code blocks.
+(use-package writeroom-mode
+  :config (use-package focus)
+  :hook (writeroom-mode . (lambda () (focus-mode 'toggle))))
+#+end_src
+
+*** COMMENT Toggling System                                    :RelocateMe:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Toggling-System
+:END:
+
+#+begin_src emacs-lisp
+(defhydra toggle-me-to-the-moon (global-map "C-x t") ;; (:color pink :columns 3)
+  "Emacs, please toggle my [t]heme | [f]ont | [m]enu"
+  ;; First row
+  ("t" my/toggle-theme)
+  ("f" my/toggle-font)
+  ("m" imenu-list-smart-toggle)
+  ("c" column-number-mode)
+)
+
+ ;; Shows a nice sidebar menu of the buffer's contents
+(use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
+#+end_src
+
+** COMMENT Lisp Helpers / Kill all buffers that are not associated with a file; also ~C-x ←/→~
+:PROPERTIES:
+:CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
+:END:
+
+# Here is a collection of Emacs-lisp functions that I have come to use in other files.
+# The subsections below detail the definitions.
+# Disclaimer: I wrote much of the following /before/ I learned any lisp; everything below is probably terrible.
+
+#+begin_src emacs-lisp
+(cl-defun my/clean-buffers ()
+  "Kill all buffers that are not associated with a file.
+  By convention, such files are named in *earmuffs* style."
+  (interactive)
+  (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list))))))
+#+end_src
+
+* COMMENT [HERE TODAY] When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
+- If I want to see a particular buffer, I'll summon it explicitly.
+  + E.g., Messages with ~C-h e~, Magit with ~C-x g~, Server Status with ~M-S-SPC~, etc.
+#+begin_src emacs-lisp
+(defun my/buffer-predicate (buffer)
+  "Run `C-u 0 C-x C-e' on the following form to see all buffer names and find the
+   ones annyoning you, then place those in the function body below
+
+        (mapcar #'buffer-name (buffer-list))
+"
+  ;; First let's kill a bunch of buffers
+  ;; (my/clean-buffers) ;; TODO: Bad idea?
+
+  ;; Next let's filter out any remaining ones [Redundant?]
+  (defvar my/ignore/buffer/name '("*Quail Completions*" "*Backtrace*" "*Help*" "*agda2*" "*sqls*" "*which-key*" "*Warnings*" "*Messages*" "Status of Services"))
+  (defvar my/ignore/buffer/prefix '("*helm" "*Helm"  "*quelpa" "*lsp" "*Occur" "magit" "*Flymake" "*format" "*Shell" "*Async"
+                                    "*org-src-fontification:" "*Server:"))
+  (defvar my/ignore/buffer/suffix  '("stderr*" "log*" "-ls*"))
+
+  (-let [name (buffer-name buffer)]
+    (not (or (member name my/ignore/buffer/name)
+             (--any? (s-starts-with? it name) my/ignore/buffer/prefix)
+             (--any? (s-ends-with? it name) my/ignore/buffer/suffix)))))
+
+(set-frame-parameter nil 'buffer-predicate 'my/buffer-predicate)
+#+end_src
+
+Note: ~C-x C-r~ is very useful for jumping to recently visited files.
+
+* DONE COMMENT Fontifying =#+begin_details= blocks as if they were Org blocks :Push_upstream_to_OSBE:
 :PROPERTIES:
 :CUSTOM_ID: Fontifying-begin-details-blocks-as-if-they-were-Org-blocks
 :END:
@@ -15452,3 +15610,12 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 #+begin_center
 /Thanks to friends for “replacing me” while I was away ♥‿♥ ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ/
 #+end_center
+
+* COMMENT DONE?
+
+#+begin_src emacs-lisp :tangle "init.el"
+(message-box "Done")
+#+end_src
+
+(load-file "init.el")
+(find-file "init.el")
