@@ -71,7 +71,23 @@
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 (use-package f)
 
-
+  ;; Allow tree-semantics for undo operations.
+  (use-package undo-tree
+    :defer nil
+    :bind ("C-x u" . undo-tree-visualize)
+    :hook (org-mode . undo-tree-mode) ;; For some reason, I need this. FIXME.
+    :config
+      ;; Always have it on
+      (global-undo-tree-mode)
+  
+      ;; Each node in the undo tree should have a timestamp.
+      (setq undo-tree-visualizer-timestamps t)
+  
+      ;; Show a diff window displaying changes between undo nodes.
+      (setq undo-tree-visualizer-diff t))
+  
+  ;; Execute (undo-tree-visualize) then navigate along the tree to witness
+  ;; changes being made to your file live!
 
 (use-package quelpa
   :custom (quelpa-upgrade-p t "Always try to update packages")

@@ -2,7 +2,7 @@
 #
 # Over 13k line org file, with over 300 source code blocks.
 
-#+title: A Life Configuring Emacs :::: OPTIMISE FOR BLOGGING!
+#+title: A Life Configuring Emacs :: TODO :: OPTIMISE FOR BLOGGING!
 #+author: Musa Al-hassy
 #+email: alhassy@gmail.com
 #+date: 2018-07-25
@@ -21,27 +21,6 @@
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
 #+end_src
-
-* COMMENT Tree cmd
-(system-packages-ensure "tree")
-- A useful way to get an overview of a new repoistory.
-- Alternatively, a nice way to quickly see what's at the current level and all subdirectories.
-- =tree | ls=
-
-I might browse around the various subdirectories trying to get a feel for the layout of the project. I might try lots of ls commands, or perhaps something like
-
-          tree | less
-          #(or perhaps)#
-
-and then within less I can use the interactive search function / to look around for keywords.
-
-E.g., =tree | less= then =/ karate= will show me a tree overview with all files that
-have the word “karate” in their full filename; then =/ png= will do a new search
-(on the tree overview) to show me all files with the phrase =png= (including as an
-extension).
-
-Of-course, to actually do anything with the files (like mass renaming), there's
-Emacs' Dired (the directory editor).
 
 * Abstract                                                           :ignore:
 :PROPERTIES:
@@ -284,7 +263,7 @@ your files: General Settings → Security & Privacy → Full Disk Access → ~�
 search) then enter =/usr/bin/ruby= ---Emacs is launched via a Ruby script in
 MacOS.
 #+end_details
-* COMMENT Why Emacs?
+* Why Emacs?
 :PROPERTIES:
 :CUSTOM_ID: Why-Emacs
 :header-args: :tangle init.el
@@ -2367,6 +2346,57 @@ I'm jumping to definitions (with ~M-.~).
 #+begin_src emacs-lisp :exports none
 ;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
 (cl-defun org-clocking-buffer (&rest _))
+#+end_src
+
+** COMMENT Arabic Setup    :Possibly_already_in_AlBasmala_so_just_load_that:
+
+#+begin_src emacs-lisp
+(bind-key "M-x" #'execute-extended-command)
+
+(set-fontset-font "fontset-default" '(#x600 . #x6ff) "Amiri Quran Colored") ;; Makes all dots, hamza, diadiract marks colored!
+
+;; Note: "arabic" input method just changes my English query keyboard into an Arabic keyboard ---useful if one's mastered touch typing in Arabic!
+;; In contrast, the Perso-Arabic input method uses a system of transliteration: Ascii keys are phonetically mapped to Arabic letters.
+(bind-key* "M-SPC" (lambda () (interactive)
+   (message (if (not current-input-method)
+      (progn (set-input-method "farsi-transliterate-banan" t) "Perso-Arabic! Hint: M-x describe-input-method")
+      (progn (set-input-method nil) "English!")))))
+
+
+;; Press C-q on a word to quote it with nice unicode quotes.
+(bind-key* "C-q" (lambda () (interactive) (insert (format "“%s”" (thing-at-point 'word))) (kill-word 1)))
+#+end_src
+
+*** COMMENT [HERE TODAY] Rndm
+
+    ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
+    ;; which is a GPG file and so requires passphrase before other things can load.
+    ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
+
+
+
+;; NOTE: Will not work when doom-modeline is enabled!
+;; (xwidget-webkit-browse-url  "https://www.reddit.com/r/emacs/")
+
+
+;; Press C-q on a word to quote it with nice unicode quotes.
+(bind-key* "C-q" (lambda () (interactive) (insert (format "“%s”" (thing-at-point 'word))) (kill-word 1)))
+
+
+(load-file "~/blog/AlBasmala.el")
+
+#+begin_src emacs-lisp :exports code
+(org-deflink card
+ "Show one of 6 hardcoded phrases as a small inline image."
+ (-let [url
+        (pcase o-label
+          ("Let's take a break" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-19.png")
+          ("Yes" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-20.png")
+          ("No" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-21.png")
+          ("Agree" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-22.png")
+          ("Disagree" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-23.png")
+          ("I have a question" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-35.png"))]
+   (format "<a href=\"%s\" class=\"tooltip\" title=\"%s\"><img src=\"%s\" height=50></a>" url o-label url)))
 #+end_src
 
 * TODO Staying Sane
@@ -4460,103 +4490,6 @@ name.
 ;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 #+end_src
-* COMMENT Repl-Driven-Development :Java:TODO_MAKE_INTO_MELPA_PACKAGE:
-
-I'd like to do arbitrary RDD, provided the language has a repl tool.
-
-So let's code that up:
-#+begin_src emacs-lisp
-(use-package eros)
-
-(require 'eros)
-
-(cl-defun my/declare-repl (cli keys &key (prompt ">") (prompt* nil))
-  "CLI is a string denoting a shell command that starts a repl; e.g., `node'.
-     KEYS is the keybinding that will send the selected region to the repl.
-
-Evaluate a region, if any is selected; otherwise evaluate the current line."
-  (-let* (((cmd . args) (s-split " " cli))
-         (repl (apply #'start-process "my/REPL" "*REPL*" cmd args))) ;; Identifier "my/REPL" is made unique by start-process.
-
-    ;; https://stackoverflow.com/questions/4120054/emacs-showing-m-in-a-process-buffer
-    (set-process-coding-system repl 'utf-8-dos)
-
-    (bind-key keys `(lambda (beg end) (interactive "r")
-                      (unless (use-region-p)
-                        (beginning-of-line)
-                        (set-mark-command nil)
-                        (end-of-line)
-                        (setq beg (region-beginning)
-                              end (region-end))
-                        (pop-mark))
-                      (process-send-region ,repl beg end)
-                      (process-send-string ,repl "\n")
-                      ))
-    (set-process-filter repl `(lambda (process output)
-                               (if (or (s-starts-with? " " output)
-                                       (s-starts-with? ,prompt (s-trim (s-collapse-whitespace output))))
-
-                                   ( ordinary-insertion-filter process "\n")
-
-                                 ( ordinary-insertion-filter process output)
-                                 (setq output  (s-trim (s-replace (concat "\n" ,prompt) "" (s-replace "
-" "" (s-replace "\r" "" output)))))
-                                 ;; PROMPT* is like PROMPT, but we deleted everything after the start of the prompt.
-                                 (when ,prompt*
-                                   (setq output (s-replace-regexp (concat (regexp-quote ,prompt*) ".*") "" output))
-                                   )
-                                  ;; that way “C-h e” shows things as well.
-                                 (let ((inhibit-message t))
-                                   (message "REPL⇒ %s" (s-collapse-whitespace output)))
-                                 ;;  "Show VALUE as an overlay at the current position of the cursor; return VALUE." ;; output shown for 3 seconds
-                                   (eros--make-result-overlay (s-collapse-whitespace output)
-                                     :format  " %s"
-                                     :duration 3 ;; output shown for 3 seconds
-                                     )
-                                 )))
-    repl
-    ))
-
-;; Src: https://www.gnu.org/software/emacs/manual/html_node/elisp/Filter-Functions.html
-(defun ordinary-insertion-filter (proc string)
-  (when (buffer-live-p (process-buffer proc))
-    (with-current-buffer (process-buffer proc)
-      (let ((moving (= (point) (process-mark proc))))
-        (save-excursion
-          ;; Insert the text, advancing the process marker.
-          (goto-char (process-mark proc))
-          (insert string)
-          (set-marker (process-mark proc) (point)))
-        (if moving (goto-char (process-mark proc))))))
-  )
-;;
-;; TODO: Use process-filter in the future to get the default filter, rather than typing it out, and then advise that to show my message/overlay ;-)
-;; HACK: Unless I'm testing/debugging; there's no need to actually make use of the output buffer 😉 But, in the long term, it's useful to read full logs!
-#+end_src
-
-Then, for instance, for Java:
-#+begin_src emacs-lisp
-;; Java {{Tip: select all lines then evaluate!}}
-(setq repl (my/declare-repl "jshell --enable-preview" "C-x C-j" :prompt "jshell>"))
-#+end_src
-
-Now, we can select the following and press =C-x C-j= to evaluate the Java code:
-
-#+begin_src java :tangle no
-// (Ensure I'm not fullscreen!)
-import javax.swing.*;
-JOptionPane.showMessageDialog(new JFrame(){{ setAlwaysOnTop(true); }}, "Super nice!");
-#+end_src
-Or doing algebraic datatypes in Java:
-#+begin_src java :tangle no
-sealed interface Maybe {
-    record None() implements Maybe {}
-    record Just(int x) implements Maybe {}
-}
-
-new Maybe.Just(3).equals(new Maybe.Just(3)) // yay
-#+end_src
-
 * COMMENT Life within Org-mode                                    :Posterity:
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
@@ -12308,58 +12241,7 @@ my VSCoder counterparts.
 (my/toggle-pair-programming)
 #+end_src
 
-* COMMENT Arabic Setup      :Possibly_already_in_AlBasmala_so_just_load_that:
-
-#+begin_src emacs-lisp
-(bind-key "M-x" #'execute-extended-command)
-
-(set-fontset-font "fontset-default" '(#x600 . #x6ff) "Amiri Quran Colored") ;; Makes all dots, hamza, diadiract marks colored!
-
-;; Note: "arabic" input method just changes my English query keyboard into an Arabic keyboard ---useful if one's mastered touch typing in Arabic!
-;; In contrast, the Perso-Arabic input method uses a system of transliteration: Ascii keys are phonetically mapped to Arabic letters.
-(bind-key* "M-SPC" (lambda () (interactive)
-   (message (if (not current-input-method)
-      (progn (set-input-method "farsi-transliterate-banan" t) "Perso-Arabic! Hint: M-x describe-input-method")
-      (progn (set-input-method nil) "English!")))))
-
-
-;; Press C-q on a word to quote it with nice unicode quotes.
-(bind-key* "C-q" (lambda () (interactive) (insert (format "“%s”" (thing-at-point 'word))) (kill-word 1)))
-#+end_src
-
-** COMMENT [HERE TODAY] Rndm
-
-    ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
-    ;; which is a GPG file and so requires passphrase before other things can load.
-    ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
-
-
-
-;; NOTE: Will not work when doom-modeline is enabled!
-;; (xwidget-webkit-browse-url  "https://www.reddit.com/r/emacs/")
-
-
-;; Press C-q on a word to quote it with nice unicode quotes.
-(bind-key* "C-q" (lambda () (interactive) (insert (format "“%s”" (thing-at-point 'word))) (kill-word 1)))
-
-
-(load-file "~/blog/AlBasmala.el")
-
-#+begin_src emacs-lisp :exports code
-(org-deflink card
- "Show one of 6 hardcoded phrases as a small inline image."
- (-let [url
-        (pcase o-label
-          ("Let's take a break" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-19.png")
-          ("Yes" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-20.png")
-          ("No" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-21.png")
-          ("Agree" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-22.png")
-          ("Disagree" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-23.png")
-          ("I have a question" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-35.png"))]
-   (format "<a href=\"%s\" class=\"tooltip\" title=\"%s\"><img src=\"%s\" height=50></a>" url o-label url)))
-#+end_src
-
-* COMMENT Web-Development
+** COMMENT Web-Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
 :END:
@@ -12370,7 +12252,7 @@ First, let's get some useful Cheat Sheets...
 (mapcar #'my/cheatsheet '("JavaScript" "Vue" "AngularJS"))
 #+end_src
 
-** Quickly produce HTML from CSS-like selectors
+*** Quickly produce HTML from CSS-like selectors
 :PROPERTIES:
 :CUSTOM_ID: Quickly-produce-HTML-from-CSS-like-selectors
 :END:
@@ -12637,7 +12519,7 @@ local JavaScript.
         </style>")
 #+end_src
 
-** LSP for HTML + CSS
+*** LSP for HTML + CSS
 :PROPERTIES:
 :CUSTOM_ID: LSP-for-HTML-CSS
 :END:
@@ -12684,7 +12566,7 @@ M-x lsp-install-server RET css-ls
          (css-mode . lsp))      ;; Start LSP server
 #+end_src
 
-*** CSS Property Argument Information in the Echo Area
+**** CSS Property Argument Information in the Echo Area
 :PROPERTIES:
 :CUSTOM_ID: CSS-Property-Argument-Information-in-the-Echo-Area
 :END:
@@ -12710,7 +12592,7 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 ;; (setf (lsp--client-priority (gethash 'emmet-ls lsp-clients)) 4)
 #+end_src
 
-** Show me HTML+CSS Changes /Live as I Type/!
+*** Show me HTML+CSS Changes /Live as I Type/!
 :PROPERTIES:
 :CUSTOM_ID: Show-me-HTML-CSS-Changes-Live-as-I-Type
 :END:
@@ -12748,7 +12630,7 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
 (bind-key "M-q" #'sgml-pretty-print 'web-mode-map)
 #+end_src
 
-** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
+*** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
 :PROPERTIES:
 :CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
 :END:
@@ -12772,7 +12654,7 @@ The less casual Haskeller would likely want to use [[https://haskell-lang.org/in
 more support; e.g., obtain suggestions from GHC about redundant imports
 or type signatures.
 
-** Modern Browsing within Emacs                                   :Disabled:
+*** Modern Browsing within Emacs                                 :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Modern-Browsing-within-Emacs
 :END:
@@ -12807,7 +12689,7 @@ I like using Chrome ---I like the integration of all things Google.
   ("b" (internet) "Browse"  :exit t))
 #+end_src
 
-** VueJS
+*** VueJS
 :PROPERTIES:
 :CUSTOM_ID: VueJS
 :END:
@@ -12815,7 +12697,6 @@ I like using Chrome ---I like the integration of all things Google.
 #+begin_src emacs-lisp
 (use-package vue-mode)
 #+end_src
-
 * COMMENT Lost Souls                                    :Outdated_Documentation:Not_yet_tangled:
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
@@ -15458,7 +15339,28 @@ This is a DoomEmacs macro: https://github.com/doomemacs/doomemacs/blob/master/co
   (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list))))))
 #+end_src
 
-* COMMENT [HERE TODAY] When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
+** COMMENT Tree cmd
+(system-packages-ensure "tree")
+- A useful way to get an overview of a new repoistory.
+- Alternatively, a nice way to quickly see what's at the current level and all subdirectories.
+- =tree | ls=
+
+I might browse around the various subdirectories trying to get a feel for the layout of the project. I might try lots of ls commands, or perhaps something like
+
+          tree | less
+          #(or perhaps)#
+
+and then within less I can use the interactive search function / to look around for keywords.
+
+E.g., =tree | less= then =/ karate= will show me a tree overview with all files that
+have the word “karate” in their full filename; then =/ png= will do a new search
+(on the tree overview) to show me all files with the phrase =png= (including as an
+extension).
+
+Of-course, to actually do anything with the files (like mass renaming), there's
+Emacs' Dired (the directory editor).
+
+** COMMENT [HERE TODAY] When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
 - If I want to see a particular buffer, I'll summon it explicitly.
   + E.g., Messages with ~C-h e~, Magit with ~C-x g~, Server Status with ~M-S-SPC~, etc.
 #+begin_src emacs-lisp
