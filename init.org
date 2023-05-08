@@ -219,15 +219,26 @@ it's first opened/.
    - Apple menu → System Preferences → Mouse → Tick the scroll direction option.
 
 2. [[https://www.emacswiki.org/emacs/EmacsForMacOS#h5o-14][Use brew to get Emacs]]:
+   #    #+begin_src shell :tangle no
+   # brew install --cask emacs
+   #    #+end_src
+   #
    #+begin_src shell :tangle no
-brew install --cask emacs
-   #+end_src
-   If that fails, try this to [[https://github.com/daviderestivo/homebrew-emacs-head#gnu-emacs-27-bottle-or-head][install Emacs:]]
-   #+BEGIN_SRC shell :tangle no
-brew tap daviderestivo/emacs-head
-brew install emacs-head
-#+END_SRC
+# https://github.com/d12frosted/homebrew-emacs-plus
+$ brew tap d12frosted/emacs-plus
+$ brew install emacs-plus@29 --with-xwidgets
+$ /usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50 &
 
+# In ~/.bashrc, put the following at the end:
+alias emacs="/usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50"
+#+end_src
+   #
+   #    If that fails, try this to [[https://github.com/daviderestivo/homebrew-emacs-head#gnu-emacs-27-bottle-or-head][install Emacs:]]
+   #    #+BEGIN_SRC shell :tangle no
+   # brew tap daviderestivo/emacs-head
+   # brew install emacs-head
+   # #+END_SRC
+   #
 3. [[https://emacs.stackexchange.com/a/50405/10352][Then]]    [[https://www.emacswiki.org/emacs/EmacsForMacOS#h5o-14][make]]   the command ~emacs~ available via the terminal ---required if
    doing any melpa development.
    #+begin_src shell :tangle no
@@ -2304,99 +2315,6 @@ I'm jumping to definitions (with ~M-.~).
 (when nil
   (-let [x 'somevar]
     (list x 'b "c" :e)))
-#+end_src
-
-* COMMENT !! AlBasmala !! TODO Clean this section up!                :ignore:
-:PROPERTIES:
-:CUSTOM_ID: Clean-this-section-up
-:END:
-#+begin_src emacs-lisp :exports none
-;; cl-lib was published as a better (namespaced!) alternative to cl, which has a deprecation warning in Emacs27.
-;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
-(setq byte-compile-warnings '(cl-functions))
-(require 'cl-lib) ;; to get loop instead of cl-loop, etc.
-
-
-(require 'shortdoc) ;; Essentially "tldr" but for Emacs Lisp!
-;; (cl-defun define-short-documentation-group (&rest _) )
-;; (cl-defun org-duration-to-minutes (&rest _) )
-;; (cl-defun org-id-find-id-file (&rest _))
-
-(ignore-errors
-  (use-package org-preview-html)
-  (setq org-preview-html-viewer 'xwidget)
-  ;; (xwidget-webkit-browse-url "https://github.com/adithyaov/helm-org-static-blog")
-  (advice-add #'xwidget-webkit-browse-url :before (lambda (&rest _) (doom-modeline-mode 0)))
-  (advice-add #'xwidget-webkit-browse-url :after (lambda (&rest _) (--map (with-current-buffer it (setq mode-line-format "%b %p L%l C%c")) (buffer-list)) ))
-  (advice-add #'doom-modeline-mode :before (lambda (&rest _)  (-let [kill-buffer-query-functions nil]
-                                                           (mapcar #'kill-buffer (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list)))
-                                                           )))
-  (use-package org-special-block-extras)
-  (load-file "~/blog/AlBasmala.el")) ;; M-x blog/preview
-
-;; Required for Github Actions; i.e., testing.
-;; TODO Clean me!
-(defun quelpa-read-cache ()) ;; Used somewhere, but not defined.
-;; See: quelpa-persistent-cache-file
-(setq quelpa-cache nil)
-
-;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
-;; Symbol’s function definition is void: all-the-icons-faicon
-#+end_src
-#+begin_src emacs-lisp :exports none
-;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
-(cl-defun org-clocking-buffer (&rest _))
-#+end_src
-
-** COMMENT Arabic Setup    :Possibly_already_in_AlBasmala_so_just_load_that:
-
-#+begin_src emacs-lisp
-(bind-key "M-x" #'execute-extended-command)
-
-(set-fontset-font "fontset-default" '(#x600 . #x6ff) "Amiri Quran Colored") ;; Makes all dots, hamza, diadiract marks colored!
-
-;; Note: "arabic" input method just changes my English query keyboard into an Arabic keyboard ---useful if one's mastered touch typing in Arabic!
-;; In contrast, the Perso-Arabic input method uses a system of transliteration: Ascii keys are phonetically mapped to Arabic letters.
-(bind-key* "M-SPC" (lambda () (interactive)
-   (message (if (not current-input-method)
-      (progn (set-input-method "farsi-transliterate-banan" t) "Perso-Arabic! Hint: M-x describe-input-method")
-      (progn (set-input-method nil) "English!")))))
-
-
-;; Press C-q on a word to quote it with nice unicode quotes.
-(bind-key* "C-q" (lambda () (interactive) (insert (format "“%s”" (thing-at-point 'word))) (kill-word 1)))
-#+end_src
-
-*** COMMENT [HERE TODAY] Rndm
-
-    ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
-    ;; which is a GPG file and so requires passphrase before other things can load.
-    ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
-
-
-
-;; NOTE: Will not work when doom-modeline is enabled!
-;; (xwidget-webkit-browse-url  "https://www.reddit.com/r/emacs/")
-
-
-;; Press C-q on a word to quote it with nice unicode quotes.
-(bind-key* "C-q" (lambda () (interactive) (insert (format "“%s”" (thing-at-point 'word))) (kill-word 1)))
-
-
-(load-file "~/blog/AlBasmala.el")
-
-#+begin_src emacs-lisp :exports code
-(org-deflink card
- "Show one of 6 hardcoded phrases as a small inline image."
- (-let [url
-        (pcase o-label
-          ("Let's take a break" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-19.png")
-          ("Yes" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-20.png")
-          ("No" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-21.png")
-          ("Agree" "https://i0.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-22.png")
-          ("Disagree" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-23.png")
-          ("I have a question" "https://i1.wp.com/oerabic.llc.ed.ac.uk/wp-content/uploads/2020/09/Visual-Communication-Signs-IRAQI-35.png"))]
-   (format "<a href=\"%s\" class=\"tooltip\" title=\"%s\"><img src=\"%s\" height=50></a>" url o-label url)))
 #+end_src
 
 * TODO Staying Sane
