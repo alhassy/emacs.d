@@ -2458,7 +2458,7 @@ own backup system]], were Emacs lacked one, by having our function simply save
 copies of our file ---on each save--- where the filename is augmented with a
 timestamp.
 
-**   =magit= ---Emacs' porcelain interface to git
+** TODO   =magit= ---Emacs' porcelain interface to git
 :PROPERTIES:
 :CUSTOM_ID: magit-Emacs'-porcelain-interface-to-gitq
 :END:
@@ -2606,7 +2606,7 @@ Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/
 # In doubt, execute ~C-h e~ to jump to the ~*Messages*~ buffer.
 #+end_details
 
-*** Credentials: I am who I am
+*** TODO COMMENT Credentials: I am who I am
 :PROPERTIES:
 :CUSTOM_ID: Credentials-I-am-who-I-am
 :END:
@@ -6585,7 +6585,7 @@ for; so let's disable those.
 (setq display-time-load-average nil)
 #+end_src
 
-*** Column Numbers
+*** TODO COMMENT Column Numbers
 :PROPERTIES:
 :CUSTOM_ID: Column-Numbers
 :END:
