@@ -2,7 +2,7 @@
 #
 # Over 13k line org file, with over 300 source code blocks.
 
-#+title: A Life Configuring Emacs
+#+title: A Life Configuring Emacs :::: OPTIMISE FOR BLOGGING!
 #+author: Musa Al-hassy
 #+email: alhassy@gmail.com
 #+date: 2018-07-25
@@ -13,34 +13,35 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
-* !! TODO Clean this section up!                             :ignore:
-:PROPERTIES:
-:CUSTOM_ID: Clean-this-section-up
-:END:
-#+begin_src emacs-lisp :exports none
-;; cl-lib was published as a better (namespaced!) alternative to cl, which has a deprecation warning in Emacs27.
-;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
-(setq byte-compile-warnings '(cl-functions))
-(require 'cl-lib) ;; to get loop instead of cl-loop, etc.
+#+begin_src emacs-lisp
+  (require 'cl-lib)
 
+      (cl-defun maybe-clone (remote &optional local))
 
-(cl-defun define-short-documentation-group (&rest _) )
-;; (cl-defun org-duration-to-minutes (&rest _) )
-;; (cl-defun org-id-find-id-file (&rest _))
-
-;; Required for Github Actions; i.e., testing.
-;; TODO Clean me!
-(defun quelpa-read-cache ()) ;; Used somewhere, but not defined.
-;; See: quelpa-persistent-cache-file
-(setq quelpa-cache nil)
-
-;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
-;; Symbol’s function definition is void: all-the-icons-faicon
+      ;; Prevent undo tree files from polluting your git repo
+      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
 #+end_src
-#+begin_src emacs-lisp :exports none
-;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
-(cl-defun org-clocking-buffer (&rest _))
-#+end_src
+
+* COMMENT Tree cmd
+(system-packages-ensure "tree")
+- A useful way to get an overview of a new repoistory.
+- Alternatively, a nice way to quickly see what's at the current level and all subdirectories.
+- =tree | ls=
+
+I might browse around the various subdirectories trying to get a feel for the layout of the project. I might try lots of ls commands, or perhaps something like
+
+          tree | less
+          #(or perhaps)#
+
+and then within less I can use the interactive search function / to look around for keywords.
+
+E.g., =tree | less= then =/ karate= will show me a tree overview with all files that
+have the word “karate” in their full filename; then =/ png= will do a new search
+(on the tree overview) to show me all files with the phrase =png= (including as an
+extension).
+
+Of-course, to actually do anything with the files (like mass renaming), there's
+Emacs' Dired (the directory editor).
 
 * Abstract                                                           :ignore:
 :PROPERTIES:
@@ -283,7 +284,7 @@ your files: General Settings → Security & Privacy → Full Disk Access → ~�
 search) then enter =/usr/bin/ruby= ---Emacs is launched via a Ruby script in
 MacOS.
 #+end_details
-* Why Emacs?
+* COMMENT Why Emacs?
 :PROPERTIES:
 :CUSTOM_ID: Why-Emacs
 :header-args: :tangle init.el
@@ -1328,7 +1329,7 @@ Here are other packages that I want to be installed onto my machine.
 
 ;; Library for working with system files;
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
-(use-package f :demand t)
+(use-package f)
 #+END_SRC
 
 Note:
@@ -1403,6 +1404,13 @@ Let's obtain the extension.
 ;; Auto installing OS system packages
  (use-package use-package-ensure-system-package
   :config (system-packages-update))
+
+
+;; Caching the installed pkgs list makes system-package-ensure return nearly immediately for things already installed!
+(setq my/installed-packages (shell-command-to-string "brew list"))
+(defun system-packages-ensure (pkg)
+  (unless (s-contains-p pkg  my/installed-packages)
+      (shell-command-to-string (format "brew list %s || brew install %s --force" pkg pkg))))
 
 ;; Please don't bother me when shell buffer names are in use, just make a new
 ;; buffer.
@@ -1693,10 +1701,10 @@ started, toggle follow-mode with ~C-c C-f~ to obtain contextual-awareness; e.g.,
         ("<tab>" . helm-execute-persistent-action)))
 
 ;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
-(use-package helm-icons
-  :defer nil
-  :custom (helm-icons-provider 'all-the-icons)
-  :config (helm-icons-enable))
+;; (use-package helm-icons
+;;   :defer nil
+;;   :custom (helm-icons-provider 'all-the-icons)
+;;   :config (helm-icons-enable))
 #+END_SRC
 
 Helm provides generic functions for completions to replace
@@ -1743,6 +1751,7 @@ or find a file with that name.
                                     helm-source-bookmark-set
                                     helm-source-buffer-not-found))
 #+END_SRC
+
 
 Incidentally, Helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the ~top~ program via
 ~helm-top~. It also serves as an interface to popular search engines
@@ -2039,7 +2048,7 @@ Possibly interesting reads:
 (use-package all-the-icons
     :config (all-the-icons-install-fonts 'install-without-asking))
 #+end_src
-** Hydra: Supply a prefix only once
+** TODO COMMENT Hydra: Supply a prefix only once
 :PROPERTIES:
 :CUSTOM_ID: Hydra-Supply-a-prefix-only-once
 :END:
@@ -2318,7 +2327,49 @@ I'm jumping to definitions (with ~M-.~).
     (list x 'b "c" :e)))
 #+end_src
 
-* Staying Sane
+* COMMENT !! AlBasmala !! TODO Clean this section up!                :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Clean-this-section-up
+:END:
+#+begin_src emacs-lisp :exports none
+;; cl-lib was published as a better (namespaced!) alternative to cl, which has a deprecation warning in Emacs27.
+;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
+(setq byte-compile-warnings '(cl-functions))
+(require 'cl-lib) ;; to get loop instead of cl-loop, etc.
+
+
+(require 'shortdoc) ;; Essentially "tldr" but for Emacs Lisp!
+;; (cl-defun define-short-documentation-group (&rest _) )
+;; (cl-defun org-duration-to-minutes (&rest _) )
+;; (cl-defun org-id-find-id-file (&rest _))
+
+(ignore-errors
+  (use-package org-preview-html)
+  (setq org-preview-html-viewer 'xwidget)
+  ;; (xwidget-webkit-browse-url "https://github.com/adithyaov/helm-org-static-blog")
+  (advice-add #'xwidget-webkit-browse-url :before (lambda (&rest _) (doom-modeline-mode 0)))
+  (advice-add #'xwidget-webkit-browse-url :after (lambda (&rest _) (--map (with-current-buffer it (setq mode-line-format "%b %p L%l C%c")) (buffer-list)) ))
+  (advice-add #'doom-modeline-mode :before (lambda (&rest _)  (-let [kill-buffer-query-functions nil]
+                                                           (mapcar #'kill-buffer (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list)))
+                                                           )))
+  (use-package org-special-block-extras)
+  (load-file "~/blog/AlBasmala.el")) ;; M-x blog/preview
+
+;; Required for Github Actions; i.e., testing.
+;; TODO Clean me!
+(defun quelpa-read-cache ()) ;; Used somewhere, but not defined.
+;; See: quelpa-persistent-cache-file
+(setq quelpa-cache nil)
+
+;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
+;; Symbol’s function definition is void: all-the-icons-faicon
+#+end_src
+#+begin_src emacs-lisp :exports none
+;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
+(cl-defun org-clocking-buffer (&rest _))
+#+end_src
+
+* TODO Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
 :END:
@@ -2463,6 +2514,8 @@ timestamp.
 :PROPERTIES:
 :CUSTOM_ID: magit-Emacs'-porcelain-interface-to-gitq
 :END:
+
+*** Intro                                                  :ignore:
 
 Let's setup an Emacs ‘porcelain’ interface to git ---it makes working with
 version control tremendously convenient.
@@ -2631,7 +2684,6 @@ underlying editor
 This will start a daemon if there is not already one running ---The ~-a~ option---
 and opens a new Emacs frame on the current terminal ---The ~-t~ option.
 
-
 *** Encouraging useful commit messages
 :PROPERTIES:
 :CUSTOM_ID: Encouraging-useful-commit-messages
@@ -2675,8 +2727,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (unless local
     (setq local (concat "~/" (if (interactive-p) "Downloads/" "") (file-name-base remote))))
 
-  (require 'magit-repos) ;; Gets us the magit-repository-directories variable.
-  (add-to-list 'magit-repository-directories `(,local . 0))
+  ;; (require 'magit-repos) ;; Gets us the magit-repository-directories variable.
+  ;; (add-to-list 'magit-repository-directories `(,local . 0))
 
   (if (file-directory-p local)
       'repo-already-exists
@@ -2799,7 +2851,7 @@ things went wrong.
   (message "🥳 Happy coding!"))
 #+end_src
 
-** Github /within/ Emacs
+** COMMENT Github /within/ Emacs
 :PROPERTIES:
 :CUSTOM_ID: Github-within-Emacs
 :END:
@@ -2926,7 +2978,7 @@ My personal choices for leaders are:
 #+end_src
 #+end_details
 
-** Version Control with SVN ---Using Magit! :Disabled:
+** COMMENT Version Control with SVN ---Using Magit! :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Version-Control-with-SVN-Using-Magit
 :END:
@@ -3120,7 +3172,7 @@ should jump to the first entry.
 (use-package beginend
   :config (beginend-global-mode))
 #+END_SRC
-** Get CheatSheets and view them easily
+** COMMENT Get CheatSheets and view them easily
 :PROPERTIES:
 :CUSTOM_ID: Get-CheatSheets-and-view-them-easily
 :END:
@@ -4408,7 +4460,7 @@ name.
 ;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 #+end_src
-* Repl-Driven-Development :Java:TODO_MAKE_INTO_MELPA_PACKAGE:
+* COMMENT Repl-Driven-Development :Java:TODO_MAKE_INTO_MELPA_PACKAGE:
 
 I'd like to do arbitrary RDD, provided the language has a repl tool.
 
@@ -4505,7 +4557,7 @@ sealed interface Maybe {
 new Maybe.Just(3).equals(new Maybe.Just(3)) // yay
 #+end_src
 
-* Life within Org-mode                                            :Posterity:
+* COMMENT Life within Org-mode                                    :Posterity:
 :PROPERTIES:
 :CUSTOM_ID: Life-within-Org-mode
 :header-args: :tangle no
@@ -5593,7 +5645,7 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 ;; Tell emacs where it is.
 ;; E.g., (async-shell-command "find / -name plantuml.jar")
 (setq org-plantuml-jar-path
-      "/usr/local/Cellar/plantuml/1.2020.19/libexec/plantuml.jar")
+      "/usr/local/Cellar/plantuml/1.2022.14/libexec/plantuml.jar")
 
 ;; Enable C-c C-c to generate diagrams from plantuml src blocks.
 (add-to-list 'org-babel-load-languages '(plantuml . t) )
@@ -6424,8 +6476,7 @@ my/contacts)))`} $0
   :config (add-hook 'org-mode-hook 'turn-on-stripe-table-mode))
 #+end_src
 
-* Cosmetics
-CLOSED: [2021-11-02 Tue 22:30]
+* TODO Cosmetics
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
 :header-args: :tangle init.el
@@ -6969,7 +7020,7 @@ items.
   (menu-bar-mode   -1))  ;; The Mac OS top pane has menu options
 #+END_SRC
 
-** Highlight & complete parenthesis pair when cursor is near ;-)
+**  TODO COMMENT Highlight & complete parenthesis pair when cursor is near ;-)
 :PROPERTIES:
 :CUSTOM_ID: Highlight-complete-parenthesis-pair-when-cursor-is-near
 :END:
@@ -8453,7 +8504,7 @@ selected text just by hitting the backspace key.
 #+BEGIN_SRC emacs-lisp
 (delete-selection-mode 1)
 #+END_SRC
-**   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word
+** COMMENT   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word
 :PROPERTIES:
 :CUSTOM_ID: M-n-p-Word-at-Point-Navigation
 :END:
@@ -8578,7 +8629,7 @@ Of course we can also use it without the asterisk; e.g.:
 (bind-key "C-x O" (lambda () (interactive) (other-window -1)))
 #+end_src
 
-**   =C-c e n,p=: Taking a tour of one's edits
+** COMMENT   =C-c e n,p=: Taking a tour of one's edits
 :PROPERTIES:
 :CUSTOM_ID: C-c-e-n-p-Taking-a-tour-of-one's-edits
 :END:
@@ -15611,9 +15662,11 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 /Thanks to friends for “replacing me” while I was away ♥‿♥ ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ/
 #+end_center
 
-* COMMENT DONE?
+* DONE?
 
 #+begin_src emacs-lisp :tangle "init.el"
+(find-file "~/.emacs.d/init.org")
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
 (message-box "Done")
 #+end_src
 

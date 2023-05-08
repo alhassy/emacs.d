@@ -1,28 +1,11 @@
-;; [[file:init.org::#Clean-this-section-up][!! TODO Clean this section up!:1]]
-;; cl-lib was published as a better (namespaced!) alternative to cl, which has a deprecation warning in Emacs27.
-;; Yet some old pacakges require cl, and so the below setq silences the deprecation warning.
-(setq byte-compile-warnings '(cl-functions))
-(require 'cl-lib) ;; to get loop instead of cl-loop, etc.
+;; [[file:init.org::+begin_src emacs-lisp][No heading:1]]
+  (require 'cl-lib)
 
+      (cl-defun maybe-clone (remote &optional local))
 
-(cl-defun define-short-documentation-group (&rest _) )
-;; (cl-defun org-duration-to-minutes (&rest _) )
-;; (cl-defun org-id-find-id-file (&rest _))
-
-;; Required for Github Actions; i.e., testing.
-;; TODO Clean me!
-(defun quelpa-read-cache ()) ;; Used somewhere, but not defined.
-;; See: quelpa-persistent-cache-file
-(setq quelpa-cache nil)
-
-;; Eager macro-expansion failure: (void-function all-the-icons-faicon)
-;; Symbol’s function definition is void: all-the-icons-faicon
-;; !! TODO Clean this section up!:1 ends here
-
-;; [[file:init.org::#Clean-this-section-up][!! TODO Clean this section up!:2]]
-;; Error in kill-emacs-hook (org-clock-save): (void-function org-clocking-buffer)
-(cl-defun org-clocking-buffer (&rest _))
-;; !! TODO Clean this section up!:2 ends here
+      ;; Prevent undo tree files from polluting your git repo
+      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
+;; No heading:1 ends here
 
 (setq custom-file "~/.emacs.d/custom.el")
 (ignore-errors (load custom-file)) ;; It may not yet exist.
@@ -86,25 +69,9 @@
 
 ;; Library for working with system files;
 ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
-(use-package f :demand t)
+(use-package f)
 
-  ;; Allow tree-semantics for undo operations.
-  (use-package undo-tree
-    :defer nil
-    :bind ("C-x u" . undo-tree-visualize)
-    :hook (org-mode . undo-tree-mode) ;; For some reason, I need this. FIXME.
-    :config
-      ;; Always have it on
-      (global-undo-tree-mode)
-  
-      ;; Each node in the undo tree should have a timestamp.
-      (setq undo-tree-visualizer-timestamps t)
-  
-      ;; Show a diff window displaying changes between undo nodes.
-      (setq undo-tree-visualizer-diff t))
-  
-  ;; Execute (undo-tree-visualize) then navigate along the tree to witness
-  ;; changes being made to your file live!
+
 
 (use-package quelpa
   :custom (quelpa-upgrade-p t "Always try to update packages")
@@ -119,6 +86,13 @@
 ;; Auto installing OS system packages
  (use-package use-package-ensure-system-package
   :config (system-packages-update))
+
+
+;; Caching the installed pkgs list makes system-package-ensure return nearly immediately for things already installed!
+(setq my/installed-packages (shell-command-to-string "brew list"))
+(defun system-packages-ensure (pkg)
+  (unless (s-contains-p pkg  my/installed-packages)
+      (shell-command-to-string (format "brew list %s || brew install %s --force" pkg pkg))))
 
 ;; Please don't bother me when shell buffer names are in use, just make a new
 ;; buffer.
@@ -258,10 +232,10 @@ installs of pacakges that are not in our `my/installed-packages' listing.
         ("<tab>" . helm-execute-persistent-action)))
 
 ;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
-(use-package helm-icons
-  :defer nil
-  :custom (helm-icons-provider 'all-the-icons)
-  :config (helm-icons-enable))
+;; (use-package helm-icons
+;;   :defer nil
+;;   :custom (helm-icons-provider 'all-the-icons)
+;;   :config (helm-icons-enable))
 
 (setq helm-mini-default-sources '(helm-source-buffers-list
                                     helm-source-recentf
@@ -370,140 +344,6 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 (use-package all-the-icons
     :config (all-the-icons-install-fonts 'install-without-asking))
 
-;; Invoke all possible key extensions having a common prefix by
-;; supplying the prefix only once.
-(use-package hydra :defer nil)
-
-;; TODO Fix me, breaking Github Actions test setup
-;; Show hydras overlyaed in the middle of the frame
-;; (use-package hydra-posframe
-;;   :quelpa (hydra-posframe :fetcher git :url
-;;                           "https://github.com/Ladicle/hydra-posframe.git")
-;;   :hook (after-init . hydra-posframe-mode)
-;;   :custom (hydra-posframe-border-width 5))
-
-;; Neato doc strings for hydras
-(use-package pretty-hydra :defer nil)
-
-;; TODO convert my existing defhydras to my/defhydra.
-(defmacro my/defhydra (key title icon-name &rest body)
-"Make a hydra whose heads appear in a pretty pop-up window.
-Heads are signalled by keywords and the hydra has an icon in its title.
-
-KEY [String]: Global keybinding for the new hydra.
-
-TITLE [String]: Either a string or a plist, as specified for pretty-hydra-define.
-       The underlying Lisp function's name is derived from the TITLE;
-       which is intentional since hydra's are for interactive, pretty, use.
-
-       One uses a plist TITLE to specify what a hydra should do *before*
-       any options, or to specify an alternate quit key (:q by default).
-
-ICON-NAME [Symbol]: Possible FontAwesome icon-types: C-h v `all-the-icons-data/fa-icon-alist'.
-
-BODY: A list of columns and entries. Keywords indicate the title
-      of a column; 3-lists (triples) indicate an entry key and
-      the associated operation to perform and, optionally, a name
-      to be shown in the pop-up. See DEFHYDRA for more details.
-
-
-For instance, the verbose mess:
-
-    ;; Use ijkl to denote ↑←↓→ arrows.
-    (global-set-key
-     (kbd \"C-c w\")
-     (pretty-hydra-define my/hydra/\\t\\tWindow\\ Adjustment
-       ;; Omitting extra work to get an icon into the title.
-       (:title \"\t\tWindow Adjustment\" :quit-key \"q\")
-       (\"Both\"
-        ((\"b\" balance-windows                 \"balance\")
-         (\"s\" switch-window-then-swap-buffer  \"swap\"))
-        \"Vertical adjustment\"
-        ((\"h\" enlarge-window                  \"heighten\")
-         (\"l\" shrink-window                   \"lower\"))
-        \"Horizontal adjustment\"
-        ((\"n\" shrink-window-horizontally      \"narrow\")
-         (\"w\" enlarge-window-horizontally \"widen\" )))))
-
-Is replaced by:
-
-    ;; Use ijkl to denote ↑←↓→ arrows.
-    (my/defhydra \"C-c w\" \"\t\tWindow Adjustment\" windows
-       :Both
-       (\"b\" balance-windows                 \"balance\")
-       (\"s\" switch-window-then-swap-buffer  \"swap\")
-       :Vertical_adjustment
-       (\"h\" enlarge-window                  \"heighten\")
-       (\"l\" shrink-window                   \"lower\")
-       :Horizontal_adjustment
-       (\"n\" shrink-window-horizontally      \"narrow\")
-       (\"w\" enlarge-window-horizontally     \"widen\"))"
-  (let* ((name (intern (concat "my/hydra/"
-                              (if (stringp title)
-                                  title
-                                (plist-get title :title)))))
-         (icon-face `(:foreground ,(face-background 'highlight)))
-         (iconised-title
-          (concat
-           (when icon-name
-             (concat
-              (all-the-icons-faicon (format "%s" icon-name) :face icon-face :height 1.0 :v-adjust -0.1)
-              " "))
-           (propertize title 'face icon-face))))
-    `(global-set-key
-      (kbd ,key)
-      (pretty-hydra-define ,name
-        ,(if (stringp title)
-             (list :title iconised-title
-                   :quit-key "q")
-           title)
-        ,(thread-last body
-           (-partition-by-header #'keywordp)
-           (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
-           (-flatten-n 1))))))
-
-(my/defhydra "C-n" "\t\t\t\t\tTextual Navigation" arrows
-   :Line
-   ("n" next-line)
-   ("p" previous-line)
-   ("a" beginning-of-line)
-   ("e" move-end-of-line)
-   ("g" goto-line)
-   :Word
-   ("f" forward-word "Next")
-   ("b" backward-word "Previous")
-   ("{" org-backward-element "Next Element")
-   ("}" org-forward-element "Previous Element")
-   :Screen
-   ("v" scroll-up-command "Scroll Down")
-   ("V" scroll-down-command "Scroll Up")
-   ("l" recenter-top-bottom "Center Page")
-   ("r" move-to-window-line-top-bottom "Relocate Point")
-   ("m" helm-imenu "Textual Menu"))
-
-;; C-n, next line, inserts newlines when at the end of the buffer
-(setq next-line-add-newlines t)
-
-;; Use ijkl to denote ↑←↓→ arrows.
-(my/defhydra "C-c w" "\t\tWindow Adjustment" windows
-   :Both
-   ("b" balance-windows                 "balance")
-   ("s" switch-window-then-swap-buffer  "swap")
-   :Vertical_adjustment
-   ("h" enlarge-window                  "heighten")
-   ("l" shrink-window                   "lower")
-   :Horizontal_adjustment
-   ("n" shrink-window-horizontally      "narrow")
-   ("w" enlarge-window-horizontally     "widen"))
-
-;; Provides a *visual* way to choose a window to switch to.
-;; (use-package switch-window :defer t)
-;; :bind (("C-x o" . switch-window)
-;;        ("C-x w" . switch-window-then-swap-buffer))
-
-;; Have a thick ruler between vertical windows
-(window-divider-mode)
-
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
 
@@ -565,7 +405,7 @@ Is replaced by:
       auto-save-interval 300)
 ;; Save ≈ Backup:1 ends here
 
-;; [[file:init.org::#magit-Emacs'-porcelain-interface-to-gitq][  =magit= ---Emacs' porcelain interface to git:1]]
+;; [[file:init.org::*Intro][Intro:1]]
 ;; Bottom of Emacs will show what branch you're on
 ;; and whether the local file is modified or not.
 (use-package magit
@@ -573,9 +413,9 @@ Is replaced by:
   :bind (("C-c M-g" . magit-file-dispatch))
   :custom ;; Do not ask about this variable when cloning.
     (magit-clone-set-remote.pushDefault t))
-;;   =magit= ---Emacs' porcelain interface to git:1 ends here
+;; Intro:1 ends here
 
-;; [[file:init.org::#magit-Emacs'-porcelain-interface-to-gitq][  =magit= ---Emacs' porcelain interface to git:2]]
+;; [[file:init.org::*Intro][Intro:2]]
 ;; When we invoke magit-status, show green/red the altered lines, with extra
 ;; green/red on the subparts of a line that got alerted.
 (system-packages-ensure "git-delta")
@@ -584,7 +424,7 @@ Is replaced by:
 
 ;; Don't forget to copy/paste the delta config into the global ~/.gitconfig file.
 ;; Copy/paste this: https://github.com/dandavison/delta#get-started
-;;   =magit= ---Emacs' porcelain interface to git:2 ends here
+;; Intro:2 ends here
 
 ;; [[file:init.org::#Credentials-I-am-who-I-am][Credentials: I am who I am:1]]
 ;; See here for a short & useful tutorial:
@@ -632,8 +472,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (unless local
     (setq local (concat "~/" (if (interactive-p) "Downloads/" "") (file-name-base remote))))
 
-  (require 'magit-repos) ;; Gets us the magit-repository-directories variable.
-  (add-to-list 'magit-repository-directories `(,local . 0))
+  ;; (require 'magit-repos) ;; Gets us the magit-repository-directories variable.
+  ;; (add-to-list 'magit-repository-directories `(,local . 0))
 
   (if (file-directory-p local)
       'repo-already-exists
@@ -716,11 +556,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
            (shell-command (format "cd %s; git checkout %s; git pull" repo trunk)))
   (message "🥳 Happy coding!"))
 ;; Jump to a (ma)git repository with ~C-u C-x g~:1 ends here
-
-;; [[file:init.org::#Github-within-Emacs][Github /within/ Emacs:1]]
-(use-package forge
-  :after magit)
-;; Github /within/ Emacs:1 ends here
 
 ;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:1]]
 (cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
@@ -850,25 +685,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (use-package beginend
   :config (beginend-global-mode))
 ;; Jumping to extreme semantic units:1 ends here
-
-;; [[file:init.org::#Get-CheatSheets-and-view-them-easily][Get CheatSheets and view them easily:1]]
-(defvar my/cheatsheet/cached-topics nil)
-(cl-defun my/cheatsheet (&optional topic)
-  "Clone Al-hassy's ⟨TOPIC⟩CheatSheet repository when called from Lisp; visit the pretty HTML page when called interactively.
-
-- Example usage: (my/cheatsheet \"Vue\")
-- Example usage: M-x my/cheatsheet RET Vue RET."
-  (interactive)
-  (if (not topic)
-      (browse-url (format "https://alhassy.github.io/%sCheatSheet" (completing-read "Topic: " my/cheatsheet/cached-topics)))
-    (push topic my/cheatsheet/cached-topics)
-    (maybe-clone (format "https://github.com/alhassy/%sCheatSheet" topic))))
-;; Get CheatSheets and view them easily:1 ends here
-
-;; [[file:init.org::#Get-CheatSheets-and-view-them-easily][Get CheatSheets and view them easily:2]]
-(mapcar #'my/cheatsheet '("ELisp" "GojuRyu" "Rust")) ; Python Prolog Vue Agda JavaScript
-                                              ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
-;; Get CheatSheets and view them easily:2 ends here
 
 ;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:1]]
 (setq org-use-speed-commands t)
@@ -1049,80 +865,6 @@ visit all blocks with such a name."
 ;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 ;; Prettify inline source code:1 ends here
-
-;; [[file:init.org::*Repl-Driven-Development][Repl-Driven-Development:1]]
-(use-package eros)
-
-(require 'eros)
-
-(cl-defun my/declare-repl (cli keys &key (prompt ">") (prompt* nil))
-  "CLI is a string denoting a shell command that starts a repl; e.g., `node'.
-     KEYS is the keybinding that will send the selected region to the repl.
-
-Evaluate a region, if any is selected; otherwise evaluate the current line."
-  (-let* (((cmd . args) (s-split " " cli))
-         (repl (apply #'start-process "my/REPL" "*REPL*" cmd args))) ;; Identifier "my/REPL" is made unique by start-process.
-
-    ;; https://stackoverflow.com/questions/4120054/emacs-showing-m-in-a-process-buffer
-    (set-process-coding-system repl 'utf-8-dos)
-
-    (bind-key keys `(lambda (beg end) (interactive "r")
-                      (unless (use-region-p)
-                        (beginning-of-line)
-                        (set-mark-command nil)
-                        (end-of-line)
-                        (setq beg (region-beginning)
-                              end (region-end))
-                        (pop-mark))
-                      (process-send-region ,repl beg end)
-                      (process-send-string ,repl "\n")
-                      ))
-    (set-process-filter repl `(lambda (process output)
-                               (if (or (s-starts-with? " " output)
-                                       (s-starts-with? ,prompt (s-trim (s-collapse-whitespace output))))
-
-                                   ( ordinary-insertion-filter process "\n")
-
-                                 ( ordinary-insertion-filter process output)
-                                 (setq output  (s-trim (s-replace (concat "\n" ,prompt) "" (s-replace "
-" "" (s-replace "\r" "" output)))))
-                                 ;; PROMPT* is like PROMPT, but we deleted everything after the start of the prompt.
-                                 (when ,prompt*
-                                   (setq output (s-replace-regexp (concat (regexp-quote ,prompt*) ".*") "" output))
-                                   )
-                                  ;; that way “C-h e” shows things as well.
-                                 (let ((inhibit-message t))
-                                   (message "REPL⇒ %s" (s-collapse-whitespace output)))
-                                 ;;  "Show VALUE as an overlay at the current position of the cursor; return VALUE." ;; output shown for 3 seconds
-                                   (eros--make-result-overlay (s-collapse-whitespace output)
-                                     :format  " %s"
-                                     :duration 3 ;; output shown for 3 seconds
-                                     )
-                                 )))
-    repl
-    ))
-
-;; Src: https://www.gnu.org/software/emacs/manual/html_node/elisp/Filter-Functions.html
-(defun ordinary-insertion-filter (proc string)
-  (when (buffer-live-p (process-buffer proc))
-    (with-current-buffer (process-buffer proc)
-      (let ((moving (= (point) (process-mark proc))))
-        (save-excursion
-          ;; Insert the text, advancing the process marker.
-          (goto-char (process-mark proc))
-          (insert string)
-          (set-marker (process-mark proc) (point)))
-        (if moving (goto-char (process-mark proc))))))
-  )
-;;
-;; TODO: Use process-filter in the future to get the default filter, rather than typing it out, and then advise that to show my message/overlay ;-)
-;; HACK: Unless I'm testing/debugging; there's no need to actually make use of the output buffer 😉 But, in the long term, it's useful to read full logs!
-;; Repl-Driven-Development:1 ends here
-
-;; [[file:init.org::*Repl-Driven-Development][Repl-Driven-Development:2]]
-;; Java {{Tip: select all lines then evaluate!}}
-(setq repl (my/declare-repl "jshell --enable-preview" "C-x C-j" :prompt "jshell>"))
-;; Repl-Driven-Development:2 ends here
 
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
@@ -1314,25 +1056,6 @@ fonts (•̀ᴗ•́)و"
   (tool-bar-mode   -1)  ;; No large icons please
   (scroll-bar-mode -1)  ;; No visual indicator please
   (menu-bar-mode   -1))  ;; The Mac OS top pane has menu options
-
-(setq show-paren-delay  0)
-(setq show-paren-style 'mixed)
-(show-paren-mode)
-
-(use-package rainbow-delimiters
-  :disabled
-  :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
-
-(electric-pair-mode 1)
-
-;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
-(setq electric-pair-inhibit-predicate
-      (lambda (c)
-        (or (member c '(?< ?> ?~)) (electric-pair-default-inhibit c))))
-
-;; Treat ‘<’ and ‘>’ as if they were words, instead of ‘parenthesis’.
-(modify-syntax-entry ?< "w<")
-(modify-syntax-entry ?> "w>")
 
   (defvar-local rasmus/org-at-src-begin -1
     "Variable that holds whether last position was a ")
@@ -1824,43 +1547,6 @@ the character 𝓍 before and after the selected text."
 (delete-selection-mode 1)
 ;; Delete Selection Mode:1 ends here
 
-;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:1]]
-;; Default: M-→/← moves to the next/previous instance of the currently highlighted word
-;; These are already meaningful commands in Org-mode, so we avoid these key re-bindings in Org-mode; TODO.
-(use-package auto-highlight-symbol)
-;;   :hook ((text-mode . auto-highlight-symbol-mode)
-;;          (prog-mode . auto-highlight-symbol-mode)))
-;;
-;; This breaks Org Exports; e.g.,
-;; C-c C-e h o  ⇒  Match data clobbered by buffer modification hooks
-;;   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:1 ends here
-
-;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:2]]
-(defun my/symbol-replace (replacement)
-  "Replace all standalone symbols in the buffer matching the one at point."
-  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
-  (save-excursion
-    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
-      (beginning-of-buffer)
-      ;; (query-replace-regexp symbol replacement)
-      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
-;;   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:2 ends here
-
-;; [[file:init.org::#M-n-p-Word-at-Point-Navigation][  ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:3]]
-(defmacro my/make-navigation-hydra (initial-action)
-  `(defhydra word-navigation
-    (:body-pre (,initial-action)) "Word-at-point Navigation"
-    ("n" ahs-forward "Next instance")
-    ("p" smartscan-symbol-go-backward "Previous instance")
-    ("r" my/symbol-replace "Replace all occurances")
-    ("s" ahs-display-stat "Stats")))
-
-;; (bind-key* str func) ≈ (global-set-key (kbd str) func)
-(bind-key* "M-n" (my/make-navigation-hydra ahs-forward))
-(bind-key* "M-p" (my/make-navigation-hydra ahs-backward))
-(bind-key* "M-'" (my/make-navigation-hydra my/symbol-replace))
-;;   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word:3 ends here
-
 ;; [[file:init.org::#Letter-based-Navigation][Letter-based Navigation:1]]
 (use-package ace-jump-mode
   :defer t
@@ -1874,17 +1560,6 @@ the character 𝓍 before and after the selected text."
 ;; C-x O ⇒ Switch back to the previous window
 (bind-key "C-x O" (lambda () (interactive) (other-window -1)))
 ;; Letter-based Navigation:2 ends here
-
-;; [[file:init.org::#C-c-e-n-p-Taking-a-tour-of-one's-edits][  =C-c e n,p=: Taking a tour of one's edits:1]]
-;; Give me a description of the change made at a particular stop.
-(use-package goto-chg
-  :defer t
-  :custom (glc-default-span 0))
-
-(my/defhydra "C-c e" "Look at them edits!" bus
-  :\  ("p" goto-last-change "Goto nᵗʰ last change")
-      ("n" goto-last-change-reverse "Goto more recent change"))
-;;   =C-c e n,p=: Taking a tour of one's edits:1 ends here
 
 ;; [[file:init.org::#visual-regexp][visual-regexp:1]]
 ;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
@@ -2071,3 +1746,9 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
           (t
            (call-interactively 'org-insert-link)))))
 ;; Org-mode ⇐ HTML:3 ends here
+
+;; [[file:init.org::*DONE?][DONE?:1]]
+(find-file "~/.emacs.d/init.org")
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+(message-box "Done")
+;; DONE?:1 ends here
