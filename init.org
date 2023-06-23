@@ -22,6 +22,114 @@
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
 #+end_src
 
+* RDD
+
+#+begin_src java
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Date;
+
+;; TODO: Make this an after-the-fact actual advice-add, rather than building this logic into
+;; (repl-driven-development ...) ;; i.e., make it the final call in that function
+;;
+;; Add a user-facing variable “(defvar repl-driven-development/prefix-to-abandon-sessions [C-&])”
+;; Users can then set this to ‘nil’ if they don't want this behaviour, or any other prefix.
+;; Maybe also make the abaon-sessions function top-level (consuming a keybinding and repl string) so that users can bind their own keys to it.
+;;
+(advice-add 'repl/jshell\ --enable-preview\ -R\ -ea
+ :around (lambda (repl &rest args)
+          (pcase current-prefix-arg
+           ;; 0 ⇒ Jump to repl [todo, add a  keybinding for “C-u 0 C-x C-j” to retrun to original position.]
+           (0 (switch-to-buffer (--> (buffer-list) (--map (buffer-name it) it) (--filter (s-starts-with? "*REPL/jshell" it) it) car)))
+          (-1
+              ;; restart repl, [then send to repl --does not work since REPLs take a sec to load. That's OK, not a deal-breaker!]
+           (progn
+              (--> (buffer-list) (--map (buffer-name it) it) (--filter (s-starts-with? "*REPL/jshell" it) it) car kill-buffer)
+              (repl-driven-development [C-x C-j]
+                         "jshell --enable-preview -R -ea" ;; enable assertions!
+               :prompt "jshell>")
+            (apply repl args)))
+           ;; if 666, then leave existing repl alone [TODO: Name it, so that we can easily return to it later]
+           (666
+              ;; ⟨1⟩ send region to repl
+               (apply repl args)
+               ;; <NOPE> TODO: (-let [session (completing-read "Rebind “C-x C-j” to one of the following named sessions,\nor name the current session for future use and start a new session." '("a" "b"))]) </NOPE>
+               ;; It's probably rare we want to have named sessions, if someone wants this, they can advise (as done here lol).
+               ;; ⟨2⟩ For now, just rename the current session /uniquely/ and start a new one
+               ;; TODO: Actually that might be good enough, since that's how other Emacs processes do it?
+               (-let [here (current-buffer)]
+                (switch-to-buffer (--> (buffer-list) (--map (buffer-name it) it) (--filter (s-starts-with? "*REPL/jshell" it) it) car))
+                (rename-uniquely)
+                (-let [new (buffer-name (current-buffer))]
+                 (switch-to-buffer here)
+                 ;; TODO: Maybe make the following part of step ⟨3⟩ by having (repl-driven-development) take a :welcome-msg.
+                (eros--make-result-overlay (message "Existing REPL session is alive async, kill the buffer when you're done with it. “%s”" new)
+                :format "﴾ %s ﴿"
+                :duration 5 ;; output shown for 5 seconds
+                 ;; echo this message one line above the current point position
+                 :where (+ (current-column) (save-excursion (forward-line -1) (point)))
+                 )
+                ;; ⟨3⟩ start new session (alongside existing 666 one)
+                (repl-driven-development [C-x C-j] "jshell --enable-preview -R -ea" :prompt "jshell>"))))
+           ;; kill all buffers created by this repl; then start a fresh new one.
+           (999
+            (--> (buffer-list) (--map (buffer-name it) it) (--filter (s-starts-with? "*REPL/jshell" it) it) (--map (kill-buffer it) it))
+            (repl-driven-development [C-x C-j] "jshell --enable-preview -R -ea" :prompt "jshell>"))
+            ;; otherwise business as usual
+           (t (apply repl args)))))
+
+
+
+;; remove all advice
+    (-let [sym 'repl/jshell\ --enable-preview\ -R\ -ea]
+     (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
+
+
+(bind-key "C-& C-x C-j" (lambda (beg end) (interactive "r")
+                             (-let [current-prefix-arg 666]
+                      (unless (use-region-p)
+                        (beginning-of-line)
+                        (set-mark-command nil)
+                        (end-of-line)
+                        (setq beg (region-beginning)
+                         end (region-end))
+                         (pop-mark))
+                              (funcall-interactively
+                                                             #'repl/jshell\ --enable-preview\ -R\ -ea
+                                                             beg end
+                                                             ))))
+
+10 (+ (current-column) (save-excursion (forward-line -1) (point)))
+20
+
+var listener = new ServerSocket(59090);
+while (true) {
+ var socket = listener.accept();
+ var sendAfterPrintln = true;
+ var out = new PrintWriter(socket.getOutputStream(), sendAfterPrintln);
+ out.println(new Date().toString());
+ out.close();
+}
+
+// Is our server even running?
+// (shell-command-to-string "netstat -an | grep 59090") ;; C-x C-e ⇒ LISTENING
+//
+// Let's invoke our server!
+// (shell-command-to-string "nc localhost 59090") ;; C-x C-e ⇒ LISTENING
+//
+// Without the “out.close()”, this “nc” command gets the date but keeps waiting for more output!
+
+// Let's write our own “client”: It connects to localhost/59090, prints the response, then exits.
+// C-u 666 C-x C-j ⇒ Make existing REPL session async: Start a new session.
+var socket = new Socket("localhost", 59090);
+var in = new Scanner(socket.getInputStream());
+System.out.println("Server response: " + in.nextLine());
+
+// C-u 999 C-x C-j to kill all of these sessions, and start with a fresh Java REPL.
+#+end_src
+
 * COMMENT Init.el misc
 #+begin_src emacs-lisp
 +
