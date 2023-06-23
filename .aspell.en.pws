@@ -1,5 +1,7 @@
-personal_ws-1.1 en 307 
+personal_ws-1.1 en 324 
 ACSII
+AST
+ASTs
 Administrivia
 Agda's
 Akram
@@ -28,8 +30,10 @@ Genericity
 Goju
 Hemi
 Hoare
+IPv
 Invariance
 Kahl
+Karbala
 Karim
 Knowns
 LaTeX
@@ -51,7 +55,9 @@ Monoids
 Monotonicity
 Muawiyah
 Musa
+Nasriyah
 Neato
+Netmask
 Orchestrator
 PackageFormer
 PackageFormer's
@@ -63,14 +69,18 @@ Pushout
 Quran
 Ramda
 Reducts
+Runnable
 SRC
+STMP
 Sessional
 Shyam
 Subsegment
 Surjection
 TypeScript
+Typecheck
 Unbundling
 Uncomment
+Yay
 Yoneda
 Yoneda's
 Yusuf
@@ -139,6 +149,7 @@ destructuring
 desugars
 deterministicly
 dinatural
+discovarability
 disjunction
 disjunctions
 distributivity
@@ -181,6 +192,7 @@ inlined
 inlining
 instantiation
 instantiations
+internets
 intuitionistic
 invariants
 invertible
@@ -227,6 +239,7 @@ nunation
 observationally
 oolean
 orchestrator
+parallelize
 parameterisation
 parenthesisation
 pointfree
@@ -247,6 +260,7 @@ pseudocomplement
 pushout
 pushouts
 quantifications
+reachability
 redistributable
 reduct
 representable
@@ -260,6 +274,7 @@ scalable
 schemas
 semantical
 semilattice
+serialize
 sessional
 siloed
 stepwise
@@ -298,9 +313,11 @@ unmarking
 unowned
 unparenthesised
 unquotation
+unrollings
 unsymmetric
 unvisited
 upcasing
+upcast
 usepackage
 variational
 variationals

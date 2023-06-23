@@ -22,6 +22,167 @@
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
 #+end_src
 
+* COMMENT Init.el misc
+#+begin_src emacs-lisp
++
++;; HACK: The system-packages-ensure pkg is neat and all, but I know I'm using brew. So I'll just define the utility myself, rather  than loading an entire pkg.
++;; Moreover, my custom form has the added benefit of only installed packages that are not already installed, thereby foregoing any error messages which crash my init.el
++(defun system-packages-ensure (pkg)
++  (unless (s-contains-p pkg my/installed-packages)
++    (message "Installing ... %s" pkg)
++    ;; to call async shell command without a buffer you need to run:
++    ;; (shell-command "something&" (universal-argument))
++   (ignore-errors (shell-command-to-string (format "brew install %s &" pkg) (universal-argument)))))
+
+
+
+(load (shell-command-to-string "agda-mode locate"))
+
+
+
++;; Prevent undo tree files from polluting your git repo
++(setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
++;; That will persist the undo history in ~/.emacs.d/undo instead of locally.
++
++(set-face-font 'default "Source Code Pro Light 14")
++
++
++(use-package eros)
++
++(require 'eros)
++
++(defun ordinary-insertion-filter (proc string)
++  (when (buffer-live-p (process-buffer proc))
++    (with-current-buffer (process-buffer proc)
++      (let ((moving (= (point) (process-mark proc))))
++        (save-excursion
++          ;; Insert the text, advancing the process marker.
++          (goto-char (process-mark proc))
++          (insert string)
++          (set-marker (process-mark proc) (point))
++          )
++        (if moving (goto-char (process-mark proc))))))
++  )
++
++(cl-defun my/declare-repl (cli keys &key (prompt ">") (prompt* nil) (format " %s"))
++  "CLI is a string denoting a shell command that starts a repl; e.g., `node'.
++     KEYS is the keybinding that will send the selected region to the repl.
++
++Evaluate a region, if any is selected; otherwise evaluate the current line."
++  (-let* (((cmd . args) (s-split " " cli))
++         (repl (apply #'start-process "my/REPL" "*REPL*" cmd args))) ;; Identifier "my/REPL" is made unique by start-process.
++
++    ;; https://stackoverflow.com/questions/4120054/emacs-showing-m-in-a-process-buffer
++    (set-process-coding-system repl 'utf-8-dos y'utf-8-dos)
++
++    (bind-key keys `(lambda (beg end) (interactive "r")
++                      (if current-prefix-arg
++                          (progn (switch-to-buffer-other-window (process-buffer ,repl))
++                                 (goto-char (point-max)))
++                      (unless (use-region-p)
++                        (beginning-of-line)
++                        (set-mark-command nil)
++                        (end-of-line)
++                        (setq beg (region-beginning)
++                              end (region-end))
++                        (pop-mark))
++                      (process-send-region ,repl beg end)
++                      (process-send-string ,repl "\n")
++                      )))
++    (set-process-filter repl `(lambda (process output)
++                               (if (or (s-starts-with? " " output)
++                                       (s-starts-with? ,prompt (s-trim (s-collapse-whitespace output))))
++
++                                   (ordinary-insertion-filter process "\n")
++
++                                 ;; (ordinary-insertion-filter process (ansi-color-apply output))
++                                 ;; https://www.reddit.com/r/emacs/comments/kbwkca/comment/gfl2196/?utm_source=share&utm_medium=web2x&context=3
++
++                                 (ordinary-insertion-filter process (ansi-color-apply output))
++
++                                 (setq output  (s-trim (s-replace (concat "\n" ,prompt) "" (s-replace "
++" "" (s-replace "\r" "" output)))))
++                                 ;; PROMPT* is like PROMPT, but we deleted everything after the start of the prompt.
++                                 (when ,prompt*
++                                   (setq output (s-replace-regexp (concat (regexp-quote ,prompt*) ".*") "" output))
++                                   )
++                                  ;; that way “C-h e” shows things as well.
++                                 (let nil ; ((inhibit-message nil))
++                                   (message "REPL⇒ %s" (s-collapse-whitespace output)))
++                                 ;;  "Show VALUE as an overlay at the current position of the cursor; return VALUE." ;; output shown for 3 seconds
++                                   (eros--make-result-overlay (s-collapse-whitespace output)
++                                     :format   ,format
++                                     :duration 5 ;; output shown for 3 seconds
++                                     )
++                                 )))
++    repl
++    ))
++
++(setq repl (my/declare-repl "ts-node -i" "C-x C-t" :prompt* ">" :format "  ⇒  %s"))
++
++(when nil
++  let hi = "Hello" + 1
++  hi
++  3 + 3
++)
++;; (setq repl (my/declare-repl "jshell --enable-preview" "C-x C-j" :prompt "jshell>"))
++(setq repl (my/declare-repl "jshell" "C-x C-j" :prompt "jshell>"))
++
++
++
++
++
++
++(set-face-font 'default "Source Code Pro Light 14")
++
++;; Use “M-x set-face-font RET default RET”, or...
++;; (set-face-font 'default "Source Code Pro Light14")
++
++;; See ~2232 fonts
++;; (append (fontset-list) (x-list-fonts "*" nil))
++
++  (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
++  "Load NEW-FONT, which defaults from ‘my/fonts’.
++
++When a universal prefix is given, “C-u C-c F”, we load a random
++font from all possible themes.  Nice way to learn about more
++fonts (•̀ᴗ•́)و"
++  (interactive)
++  (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
++         (font (if current-prefix-arg
++                   (nth (random (length all-fonts)) all-fonts)
++                 new-font)))
++    (set-face-font 'default font)
++    (message "Font: %s" font)))
++
++  (global-set-key "\C-c\ F" 'my/toggle-font)
++
++  ;; Default font; the “ignore-⋯” is for users who may not have the font.
++  (ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
++  (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
++
++(unless noninteractive
++  (my/toggle-font "Roboto Mono Light 14")
++  (my/toggle-theme 'solarized-gruvbox-light))
++
++(unless noninteractive
++  (load-file (let ((coding-system-for-read 'utf-8))
++               (shell-command-to-string "/opt/homebrew/Cellar/agda/2.6.2.2_3/bin/agda-mode locate"))))
++
++;; HACK: The system-packages-ensure pkg is neat and all, but I know I'm using brew. So I'll just define the utility myself, rather  than loading an entire pkg.
++;; Moreover, my custom form has the added benefit of only installed packages that are not already installed, thereby foregoing any error messages which crash my init.el
++(defun system-packages-ensure (pkg)
++  (unless (s-contains-p pkg my/installed-packages)
++    (message "Installing ... %s" pkg)
++    ;; to call async shell command without a buffer you need to run:
++    ;; (shell-command "something&" (universal-argument))
++    (ignore-errors (shell-command-to-string (format "brew install %s &" pkg) (universal-argument)))))
++
++
++;; At work, Using Visual Studio Code as your editor
++(shell-command "git config --global core.editor \"code --wait\"")
+#+end_src
+
 * Abstract                                                           :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -227,11 +388,15 @@ it's first opened/.
 # https://github.com/d12frosted/homebrew-emacs-plus
 $ brew tap d12frosted/emacs-plus
 $ brew install emacs-plus@29 --with-xwidgets
+$ brew link --overwrite emacs-plus@29
 $ /usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50 &
 
-# In ~/.bashrc, put the following at the end:
-alias emacs="/usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50"
+# In ~/.bashrc, or ~/.zshrc, put the following at the end:
+alias emacs="/opt/homebrew/Cellar/emacs-plus@29/29.0.90/bin/emacs-29.0.90"
 #+end_src
+
+# alias emacs="/usr/local/Cellar/emacs-plus@29/29.0.50/bin/emacs-29.0.50"
+
    #
    #    If that fails, try this to [[https://github.com/daviderestivo/homebrew-emacs-head#gnu-emacs-27-bottle-or-head][install Emacs:]]
    #    #+BEGIN_SRC shell :tangle no
@@ -6724,11 +6889,11 @@ operation of formatting text.]
 #+begin_details “my/toggle-font” Implementation
 
 #+begin_src emacs-lisp :tangle init.el
-(unless my/work-machine?
+(unless nil ;; my/work-machine?
 
   ;; Infinite list of my commonly used fonts
   (setq my/fonts
-        '("Roboto Mono Light 14" ;; Sleek
+        '(;; NOPE: Breaks Gerrit! "Roboto Mono Light 14" ;; Sleek
           "Input Mono 14"
           "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
           "Papyrus 14"
@@ -6746,7 +6911,7 @@ operation of formatting text.]
 
   (shell-command "brew tap homebrew/cask-fonts")
   (system-packages-ensure "svn") ;; Required for the following font installs
-  (system-packages-ensure "font-roboto-mono")
+  ;; No thanks! (system-packages-ensure "font-roboto-mono") ;; Makes Gerrit in Chrome look like Gibberish!
   (system-packages-ensure "font-input")
   (system-packages-ensure "font-source-code-pro")
   (system-packages-ensure "font-fira-mono")
@@ -6794,7 +6959,7 @@ get a nice font selection menu ---this can be useful for your own ‘personal st
 Let's use the following theme and font, upon startup.
 #+begin_src emacs-lisp :tangle init.el
 (unless noninteractive
-  (my/toggle-font "Roboto Mono Light 14")
+  ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
   (my/toggle-theme 'solarized-gruvbox-light))
 #+end_src
 
@@ -7770,7 +7935,7 @@ that Emacs' ~ispell~ is the interface to such a command line spelling utility.
 # See available dictionary via ~aspell dicts~.
 
 #+BEGIN_SRC emacs-lisp
-(setq ispell-program-name "/usr/local/bin/aspell")
+(setq ispell-program-name "/opt/homebrew/bin/aspell")
 (setq ispell-dictionary "en_GB") ;; set the default dictionary
 #+END_SRC
 
@@ -8062,7 +8227,7 @@ weekdays.
 :END:
 :agda2-include-dirs-Issue:
 #+BEGIN_SRC emacs-lisp
-; (load (shell-command-to-string "agda-mode locate"))
+;; (load (shell-command-to-string "agda-mode locate"))
 ;;
 ;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
 ; (makunbound 'agda2-include-dirs)
@@ -8106,7 +8271,7 @@ Let's put it here ourselves.
 #+begin_src emacs-lisp
 (unless noninteractive
   (load-file (let ((coding-system-for-read 'utf-8))
-               (shell-command-to-string "/usr/local/bin/agda-mode locate"))))
+               (shell-command-to-string "agda-mode locate"))))
 #+end_src
 
 I almost always want the ~agda-mode~ input method ---it's like the TeX method, but
