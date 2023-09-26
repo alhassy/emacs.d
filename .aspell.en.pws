@@ -1,4 +1,4 @@
-personal_ws-1.1 en 324 
+personal_ws-1.1 en 336 
 ACSII
 AST
 ASTs
@@ -23,6 +23,7 @@ Discovarability
 Distributivity
 Dualise
 Dually
+Eglot
 Equipollence
 Excerption
 Executables
@@ -54,6 +55,8 @@ Monoid
 Monoids
 Monotonicity
 Muawiyah
+Multimethod
+Multimethods
 Musa
 Nasriyah
 Neato
@@ -61,9 +64,11 @@ Netmask
 Orchestrator
 PackageFormer
 PackageFormer's
+Parametricity
 Prepend
 Procedurally
 Prolog
+Protobufs
 Pseudocode
 Pushout
 Quran
@@ -76,6 +81,8 @@ Sessional
 Shyam
 Subsegment
 Surjection
+TODO
+Tcl
 TypeScript
 Typecheck
 Unbundling
@@ -129,6 +136,7 @@ compositional
 computability
 computable
 connectedness
+continous
 contrapositive
 datatypes
 deallocate
@@ -142,6 +150,7 @@ decrypting
 definitional
 definitionaly
 deliverables
+dereference
 dereferencing
 destructor
 destructure
@@ -187,6 +196,7 @@ indiscernibles
 indistinguishability
 infimum
 init
+initializers
 injective
 inlined
 inlining
@@ -261,6 +271,7 @@ pushout
 pushouts
 quantifications
 reachability
+rebased
 redistributable
 reduct
 representable
@@ -278,6 +289,7 @@ serialize
 sessional
 siloed
 stepwise
+stringify
 subalgebras
 subclasses
 subexpression

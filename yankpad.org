@@ -29,6 +29,11 @@ $0
 $0
 #+end_src
 
+** s_plantuml: src for plantuml
+#+begin_src plantuml
+$0
+#+end_src
+
 ** s_emacs-lisp: src for emacs-lisp
 #+begin_src emacs-lisp
 $0
@@ -100,6 +105,8 @@ src_org[:exports code]{$1} $0
 src_agda2[:exports code]{$1} $0
 ** is_any: inline source for any
 src_any[:exports code]{$1} $0
+** is_plantuml: inline source for plantuml
+src_plantuml[:exports code]{$1} $0
 ** is_emacs-lisp: inline source for emacs-lisp
 src_emacs-lisp[:exports code]{$1} $0
 ** is_shell: inline source for shell
@@ -138,6 +145,11 @@ $0
 
 ** e_any: example for any
 #+begin_example any
+$0
+#+end_example
+
+** e_plantuml: example for plantuml
+#+begin_example plantuml
 $0
 #+end_example
 
@@ -364,376 +376,9 @@ unmatched, I make no use of additional space ---indeed this form of one-sided
 parentheses without a space is how LADM is written, as can be seen at the top of
 page 3.
 
-# [[file:init.org::#][Emojis:3]]
-** f_Grinning_Face: 😀  
-😀
-** fd_Grinning_Face: 😀 Often conveys general pleasure and good cheer or humor. 
-😀
-** f_Grinning_Face_with_Big_Eyes: 😃  
-😃
-** fd_Grinning_Face_with_Big_Eyes: 😃 Often conveys general happiness and good-natured amusement. Similar to 😀 Grinning Face but with taller, more excited eyes. 
-😃
-** f_Grinning_Face_with_Smiling_Eyes: 😄  
-😄
-** fd_Grinning_Face_with_Smiling_Eyes: 😄 Often conveys general happiness and good-natured amusement. Similar to 😀 Grinning Face and 😃 Grinning Face With Big Eyes, but with warmer, less excited eyes. 
-😄
-** f_Beaming_Face_with_Smiling_Eyes: 😁  
-😁
-** fd_Beaming_Face_with_Smiling_Eyes: 😁 Often expresses a radiant, gratified happiness. Tone varies, including warm, silly, amused, or proud. 
-😁
-** f_Grinning_Squinting_Face: 😆  
-😆
-** fd_Grinning_Squinting_Face: 😆 Often conveys excitement or hearty laughter. Similar to 😀 Grinning Face but with eyes that might say ‘Squee!’ or ‘Awesome!’ An emoji form of the >< or xD emoticons. 
-😆
-** f_Grinning_Face_with_Sweat: 😅  
-😅
-** fd_Grinning_Face_with_Sweat: 😅 Intended to depict nerves or discomfort but commonly used to express a close call, as if saying ‘Whew!’ and wiping sweat from the forehead.  
-😅
-** f_Rolling_on_the_Floor_Laughing: 🤣  
-🤣
-** fd_Rolling_on_the_Floor_Laughing: 🤣 Often conveys hysterical laughter more intense than 😂 Face With Tears of Joy. 
-🤣
-** f_Face_with_Tears_of_Joy: 😂  
-😂
-** fd_Face_with_Tears_of_Joy: 😂  
-😂
-** f_Slightly_Smiling_Face: 🙂  
-🙂
-** fd_Slightly_Smiling_Face: 🙂  
-🙂
-** f_Upside-Down_Face: 🙃  
-🙃
-** fd_Upside-Down_Face: 🙃  
-🙃
-** f_Winking_Face: 😉  
-😉
-** fd_Winking_Face: 😉  
-😉
-** f_Smiling_Face_with_Smiling_Eyes: 😊  
-😊
-** fd_Smiling_Face_with_Smiling_Eyes: 😊  
-😊
-** f_Smiling_Face_with_Halo: 😇  
-😇
-** fd_Smiling_Face_with_Halo: 😇  
-😇
-** f_Smiling_Face_with_Hearts: 🥰  
-🥰
-** fd_Smiling_Face_with_Hearts: 🥰  
-🥰
-** f_Smiling_Face_with_Heart-Eyes: 😍  
-😍
-** fd_Smiling_Face_with_Heart-Eyes: 😍  
-😍
-** f_Star-Struck: 🤩  
-🤩
-** fd_Star-Struck: 🤩  
-🤩
-** f_Face_Blowing_a_Kiss: 😘  
-😘
-** fd_Face_Blowing_a_Kiss: 😘  
-😘
-** f_Kissing_Face: 😗  
-😗
-** fd_Kissing_Face: 😗  
-😗
-** f_Smiling_Face: ☺️  
-☺️
-** fd_Smiling_Face: ☺️  
-☺️
-** f_Kissing_Face_with_Closed_Eyes: 😚  
-😚
-** fd_Kissing_Face_with_Closed_Eyes: 😚  
-😚
-** f_Kissing_Face_with_Smiling_Eyes: 😙  
-😙
-** fd_Kissing_Face_with_Smiling_Eyes: 😙  
-😙
-** f_Smiling_Face_with_Tear: 🥲  
-🥲
-** fd_Smiling_Face_with_Tear: 🥲  
-🥲
-** f_Face_Savoring_Food: 😋  
-😋
-** fd_Face_Savoring_Food: 😋  
-😋
-** f_Face_with_Tongue: 😛  
-😛
-** fd_Face_with_Tongue: 😛  
-😛
-** f_Winking_Face_with_Tongue: 😜  
-😜
-** fd_Winking_Face_with_Tongue: 😜  
-😜
-** f_Zany_Face: 🤪  
-🤪
-** fd_Zany_Face: 🤪  
-🤪
-** f_Squinting_Face_with_Tongue: 😝  
-😝
-** fd_Squinting_Face_with_Tongue: 😝  
-😝
-** f_Money-Mouth_Face: 🤑  
-🤑
-** fd_Money-Mouth_Face: 🤑  
-🤑
-** f_Hugging_Face: 🤗  
-🤗
-** fd_Hugging_Face: 🤗  
-🤗
-** f_Face_with_Hand_Over_Mouth: 🤭  
-🤭
-** fd_Face_with_Hand_Over_Mouth: 🤭  
-🤭
-** f_Shushing_Face: 🤫  
-🤫
-** fd_Shushing_Face: 🤫  
-🤫
-** f_Thinking_Face: 🤔  
-🤔
-** fd_Thinking_Face: 🤔  
-🤔
-** f_Zipper-Mouth_Face: 🤐  
-🤐
-** fd_Zipper-Mouth_Face: 🤐  
-🤐
-** f_Face_with_Raised_Eyebrow: 🤨  
-🤨
-** fd_Face_with_Raised_Eyebrow: 🤨  
-🤨
-** f_Neutral_Face: 😐  
-😐
-** fd_Neutral_Face: 😐  
-😐
-** f_Expressionless_Face: 😑  
-😑
-** fd_Expressionless_Face: 😑  
-😑
-** f_Face_Without_Mouth: 😶  
-😶
-** fd_Face_Without_Mouth: 😶  
-😶
-** f_Smirking_Face: 😏  
-😏
-** fd_Smirking_Face: 😏  
-😏
-** f_Unamused_Face: 😒  
-😒
-** fd_Unamused_Face: 😒  
-😒
-** f_Face_with_Rolling_Eyes: 🙄  
-🙄
-** fd_Face_with_Rolling_Eyes: 🙄  
-🙄
-** f_Grimacing_Face: 😬  
-😬
-** fd_Grimacing_Face: 😬  
-😬
-** f_Lying_Face: 🤥  
-🤥
-** fd_Lying_Face: 🤥  
-🤥
-** f_Relieved_Face: 😌  
-😌
-** fd_Relieved_Face: 😌  
-😌
-** f_Pensive_Face: 😔  
-😔
-** fd_Pensive_Face: 😔  
-😔
-** f_Sleepy_Face: 😪  
-😪
-** fd_Sleepy_Face: 😪  
-😪
-** f_Drooling_Face: 🤤  
-🤤
-** fd_Drooling_Face: 🤤  
-🤤
-** f_Sleeping_Face: 😴  
-😴
-** fd_Sleeping_Face: 😴  
-😴
-** f_Face_with_Medical_Mask: 😷  
-😷
-** fd_Face_with_Medical_Mask: 😷  
-😷
-** f_Face_with_Thermometer: 🤒  
-🤒
-** fd_Face_with_Thermometer: 🤒  
-🤒
-** f_Face_with_Head-Bandage: 🤕  
-🤕
-** fd_Face_with_Head-Bandage: 🤕  
-🤕
-** f_Nauseated_Face: 🤢  
-🤢
-** fd_Nauseated_Face: 🤢  
-🤢
-** f_Face_Vomiting: 🤮  
-🤮
-** fd_Face_Vomiting: 🤮  
-🤮
-** f_Sneezing_Face: 🤧  
-🤧
-** fd_Sneezing_Face: 🤧  
-🤧
-** f_Hot_Face: 🥵  
-🥵
-** fd_Hot_Face: 🥵  
-🥵
-** f_Cold_Face: 🥶  
-🥶
-** fd_Cold_Face: 🥶  
-🥶
-** f_Woozy_Face: 🥴  
-🥴
-** fd_Woozy_Face: 🥴  
-🥴
-** f_Dizzy_Face: 😵  
-😵
-** fd_Dizzy_Face: 😵  
-😵
-** f_Exploding_Head: 🤯  
-🤯
-** fd_Exploding_Head: 🤯  
-🤯
-** f_Cowboy_Hat_Face: 🤠  
-🤠
-** fd_Cowboy_Hat_Face: 🤠  
-🤠
-** f_Partying_Face: 🥳  
-🥳
-** fd_Partying_Face: 🥳  
-🥳
-** f_Disguised_Face: 🥸  
-🥸
-** fd_Disguised_Face: 🥸  
-🥸
-** f_Smiling_Face_with_Sunglasses: 😎  
-😎
-** fd_Smiling_Face_with_Sunglasses: 😎  
-😎
-** f_Nerd_Face: 🤓  
-🤓
-** fd_Nerd_Face: 🤓  
-🤓
-** f_Face_with_Monocle: 🧐  
-🧐
-** fd_Face_with_Monocle: 🧐  
-🧐
-** f_Confused_Face: 😕  
-😕
-** fd_Confused_Face: 😕  
-😕
-** f_Worried_Face: 😟  
-😟
-** fd_Worried_Face: 😟  
-😟
-** f_Slightly_Frowning_Face: 🙁  
-🙁
-** fd_Slightly_Frowning_Face: 🙁  
-🙁
-** f_Frowning_Face: ☹️  
-☹️
-** fd_Frowning_Face: ☹️  
-☹️
-** f_Face_with_Open_Mouth: 😮  
-😮
-** fd_Face_with_Open_Mouth: 😮  
-😮
-** f_Hushed_Face: 😯  
-😯
-** fd_Hushed_Face: 😯  
-😯
-** f_Astonished_Face: 😲  
-😲
-** fd_Astonished_Face: 😲  
-😲
-** f_Flushed_Face: 😳  
-😳
-** fd_Flushed_Face: 😳  
-😳
-** f_Pleading_Face: 🥺  
-🥺
-** fd_Pleading_Face: 🥺  
-🥺
-** f_Frowning_Face_with_Open_Mouth: 😦  
-😦
-** fd_Frowning_Face_with_Open_Mouth: 😦  
-😦
-** f_Anguished_Face: 😧  
-😧
-** fd_Anguished_Face: 😧  
-😧
-** f_Fearful_Face: 😨  
-😨
-** fd_Fearful_Face: 😨  
-😨
-** f_Anxious_Face_with_Sweat: 😰  
-😰
-** fd_Anxious_Face_with_Sweat: 😰  
-😰
-** f_Sad_but_Relieved_Face: 😥  
-😥
-** fd_Sad_but_Relieved_Face: 😥  
-😥
-** f_Crying_Face: 😢  
-😢
-** fd_Crying_Face: 😢  
-😢
-** f_Loudly_Crying_Face: 😭  
-😭
-** fd_Loudly_Crying_Face: 😭  
-😭
-** f_Face_Screaming_in_Fear: 😱  
-😱
-** fd_Face_Screaming_in_Fear: 😱  
-😱
-** f_Confounded_Face: 😖  
-😖
-** fd_Confounded_Face: 😖  
-😖
-** f_Persevering_Face: 😣  
-😣
-** fd_Persevering_Face: 😣  
-😣
-** f_Disappointed_Face: 😞  
-😞
-** fd_Disappointed_Face: 😞  
-😞
-** f_Downcast_Face_with_Sweat: 😓  
-😓
-** fd_Downcast_Face_with_Sweat: 😓  
-😓
-** f_Weary_Face: 😩  
-😩
-** fd_Weary_Face: 😩  
-😩
-** f_Tired_Face: 😫  
-😫
-** fd_Tired_Face: 😫  
-😫
-** f_Yawning_Face: 🥱  
-🥱
-** fd_Yawning_Face: 🥱  
-🥱
-** f_Face_with_Steam_From_Nose: 😤  
-😤
-** fd_Face_with_Steam_From_Nose: 😤  
-😤
-** f_Pouting_Face: 😡  
-😡
-** fd_Pouting_Face: 😡  
-😡
-** f_Angry_Face: 😠  
-😠
-** fd_Angry_Face: 😠  
-😠
-** f_Face_with_Symbols_on_Mouth: 🤬  
-🤬
-** fd_Face_with_Symbols_on_Mouth: 🤬  
-🤬
-# Emojis:3 ends here
+** remark: top-level literate comment
+
+{{{remark(${1:thoughts})}}} $0
 
 ** my_name: User's name
 `user-full-name`
@@ -760,138 +405,70 @@ https://twitter.com/musa314
 A Mechanisation of Internal Galois Connections In Order Theory Formalised Without Meets
 https://macsphere.mcmaster.ca/bitstream/11375/17276/2/thesis.pdf
 
+** journal_guided: Introspection & Growth
+I'm writing from ${1:location}.
 
+Gut answer, today I feel ${2:scale}/10.
+⇒ ${3:Few words or paragraphs to explain what's on your mind.}
 
-** w-pr-template: Peer Review / Pull Request Template for Work
-I followed the testing instructions and everything look's good 😁
+${4: All things which cause us to groan or recoil are part of the tax of
+life. These things you should never hope or seek to escape.  Life is a battle,
+and to live is to fight.
 
-Below is a detailed checklist of what I went through.
+⟨ Press TAB once you've read this mantra. ⟩
+$(when yas-moving-away-p "")
+}
+`(progn
+  (eww "https://www.dailyinspirationalquotes.in/")
+  (sit-for 2) (when nil let eww load)
+  (read-only-mode -1)
+  (goto-line 52)
+  (kill-line)
+  (kill-buffer)
+  (yank))`
+${7:
+Self Beliefs:
++ I am working on a healthier lifestyle, including a low-carb diet.
 
---------------------------------------------------------------------------------
+  - I’m also investing in a healthy, long-lasting relationship.
 
-1. [ ] Pull Request: The PR template was fully filled out.
-   - [ ] Clear description of the problem and how it was solved.
-   - [ ] I've cross-checked the description with the associated Jira ticket; and
-     everything is implemented.
-   - [ ] I've ticked-off the PR's check-boxes.
-   - [ ] Good use of bullet points (-) and code font (‵, ‷) to make the prose
-     easier to read.
-   - [ ] The commit messages are well-written.
-   - [ ] Travis CI succeeds.
-   - [ ] PR author annotated source code, with Github comments, before the review.
-     - Annotations guide the reviewer through the changes, showing which files to look at first and defending the reason behind each code modification.
+  ➩ These are what I want and are important to me. ⇦
 
-2. [ ] Functionality: The code behaves as the author intended.
-   - [ ] I was able to reproduce the bug on ~main~.
-   - [ ] Ran the code and used it as an end-user would.
-       Namely, I made a new form, submitted an instance, checked ~In-Progress~,
-     & ~Form Reports~.
-   - [ ]  I've tried all kinds of quotes and unicode, "𝒰"\‘ℕ’/𝒊′ℭ″𝑂؛𝒟⨾'∃',
-        input for text inputs; as well as special chars: +-_)(*&^%$#@!~`'".;><?/}{}[]|\.
-   - [ ] Followed the happy path in the provided testing instructions.
-     - Nope; none provided.
-   - [ ] Also tried the following edge case: ⋯ ⁉ ⋯
++ I will not use any substances to avoid real issues in my life. I must own them.
 
-3. [ ] Tests: There are new unit tests (but sadly no E2Es/integration).
-   - [ ] Meaningful: Tests actually test that the code is performing the
-     intended functionality.
-   - [ ] Ran associated E2Es / unit tests with the incantation: ⋯ ⁉ ⋯.
-   - [ ] I looked at the associated migrations file and ran the following SQL
-     query after running migrations and it works fine; then I ran the query
-     after running rollbacks and everything is as expected.
-     #+begin_src sql
-     ???
-     #+end_src
-   - [ ] Avoid global test fixtures and seeds, add data per-test.
-       TL;DR: To prevent test coupling and easily reason about the test flow, each test
-       should add and act on its own set of DB rows.
++ Everything I’m searching for is already inside of me.
 
-4. [ ] Naming: Clear and informative names were chosen for top-level-items/variables/methods.
++ Progress is more important than perfection.
 
-5. [ ] Comments: New top-level-items/variables/methods have clear and useful
-   documentation.
-   - [ ] Sometimes the code is clear ---e.g., 5 lines perform a toggle---
-     but we can improve readability by providing a “comment as function”
-     ---e.g., making a ~toggle~ function, then calling it where it is used;
-     this new function is likely to be smaller than the original inlined use.
+⟨ Press TAB once you've read these beliefs. ⟩
+$(when yas-moving-away-p "")
+}
 
-     Some comments-as-functions have been suggested.
+*Three things I'm grateful for:*
+1. ${8:??? … e.g., old relationship, something great yesterday, an opportunity I
+   have today, something simple near me within sight}
+2. ${9:??? … e.g., old relationship, something great yesterday, an opportunity I
+   have today, something simple near me within sight}
+3. ${10:??? … e.g., old relationship, something great yesterday, an opportunity I
+   have today, something simple near me within sight}
 
-6. [ ] Being Neighbourly: There was nearby code that could have been
-   improved/update, and suggestions have been left as to how to do so.
-   - We're likely to touch these files again in the future, so why not leave
-     things better than we found them 🚀
+*Three things that would make today great:*
+1. ${11:???}
+2. ${12:???}
+3. ${13:???}
 
-7. [ ] Code Smells: Are there any [[https://blog.codinghorror.com/code-smells/][code smells?]]
+*What one thing is top of mind today?*
+${14:???}
 
-8. [ ] Syntax: I've read every line.
-   - Nope, there was some stuff I'm not familair with. If the PR authour can
-     jump on a call and walk me through them, that'd be awesome!
-   - [ ] I've left various suggestions and feedback, against specific lines
-     of code. Happy to discuss these further!
-   - [ ] I took my time while reviewing your code, and I'm not depending on
-     others to catch errors.
+*What’s one opportunity I want to go after?*
+${15:???}
 
-9. [ ] Complexity: Another developer can easily understand and use this code when
-   they come across it in the future :-)
+*What’s one thing I’m really proud of OR I’m amazed and in awe of?*
+${16:???}
 
-10. [ ] Modulairty: Is there any redundant or duplicate code? Is the code as modular as possible?
+$0
+** contacts: Get the email of one of my personal contacts
 
-11. [ ] Backwards Compatiable: I made a form in ~main~, involving the work in
-    this branch, and it worked fine in this branch.
-    - I was able to edit the form, submit it, and checked that it looked find in ~Form Reports~.
-
-12. [ ] Best Practices: The following rules-of-thumb are adhered to, more or less.
-      #+html: <details>
-    - Remove some redundancy using a bit of laws of algorithmics, namely
-      + ~[𝒆𝒕𝒂-𝒓𝒆𝒅𝒖𝒄𝒕𝒊𝒐𝒏] ⋯(x => f(x))⋯  ≡ ⋯f⋯~
-      + ~[𝒊𝒇-𝒅𝒊𝒔𝒕𝒓𝒊𝒃𝒖𝒕𝒊𝒗𝒊𝒕𝒚] (a ? f(b) : f(c)) ≡ f(a ? b : c)~
-      which increase readability a tad.
-      # Especially when “f” is a lengthy expression; it may also be ideal to give
-      # “a ? b : c” a local name.
-    - Fail fast, validate arguments [we have some in-house validation util libraries]
-    - Be aware that ~0, "", []~ are all falsey values in JS: If a variable ~x~
-      can be one of those things, then ~if (x)~ is not always approriate; better
-      may be ~if(typeof x === 'integer')~ since this communicates two things (1)
-      the variable is defined, and (2) what it's type expected is.
-      + Likewise, better use ~typeof~ instead of ~x !== null~.
-    - You have variables declared a bit from their use sites; the distance
-      creates an unnecessary disconnect ---especially since you don't use these
-      variables elsewhere. Please relocate them to be closer to their use sites.
-    - Strings are sanitised
-    - Errors are caught; with ~try/catch~
-    - Global variables are avoided, when possible.
-    - ~const~ is preferred to ~let~; ~var~ should seldom be used.
-      - Use ~var~ and ~function~ when you want definitions hoisted to the top of
-        their enclosing scope.
-    - ~===~ is preferred to ~==~.
-    - Use default arguments instead of short-circuiting or conditionals
-      - ~f (x) { x = x || defaultValue; ⋯ }~ ≡ ~f (x = defaultValue) { ⋯ }~.
-      - Named parameters can also be optional, with default values:
-        ~f(obj) { let prop = obj.prop || defaultProp; ⋯}~ ≣ ~f ({prop =
-        defaultProp}) { ⋯ }~
-    - Unless you really need an array,  handled an indefinite number of
-      arguments using rest parameters: ~function f(...args) {⋯ // use ‘args’ as
-      an array}~ can be invoked ~f(x₁, x₂, …)~ _without_ array brackets; or as
-      ~f(...arr)~ if you have an array in-hand.
-    - Function arguments: 3 or fewer ideally
-    - If you need to declare an argument but are not using it, prefix it's name
-      with an underscore.
-    - Encapsulate conditionals in a separate _well-named_ function, if possible
-    - Avoid negative conditionals; e.g., by making use of well-choosen names.
-    - Use Demorgan's rules: ~!x && !y ≣ !(x || y)~ and ~!x || !y ≣ !(x && y)~.
-    - Use ~try/catch~ with ~async/await~; or promises with both ~then~ and ~catch~.
-    - Don't ignore rejected promises, log it to external logging service
-    - Related chunks of code are clearly demarcated.
-    - If an anonymous function is too long, more than 2 lines, give it a name:
-      E.g., in JS, ~arr.map(x => ...) ≣ arr.map( function
-      doingSomeComplexStuff(x) { return ...} )~.  The name aids in communicating
-      the intent, and is useful for debugging.
-    - [ES6] Braces are used for block scope, and not simulated using IIFEs.
-    - Avoid explicit newlines with ~+ "\n" +~ in-favour of Template Literals, which preserve line
-      breaks.
-    - Use Destructuring instead of explicit projections; aids in readability.
-      - Note∶ ~let y = x.y~ ≡ ~let {y} = x~ only holds when ~x~ is not ~null~
-        (and so when ~x~ is not a expression involving ~?.~).
-
-    #+html: </details>
+${1:`(and (or (featurep 'my/contacts) (org-babel-load-file "~/Dropbox/contacts.org"))
+(yas-choose-value (--map (format "%s <%s>" (getf it :name) (getf it :email))
+my/contacts)))`} $0

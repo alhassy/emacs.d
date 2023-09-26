@@ -1,4 +1,4 @@
-;; [[file:init.org::#Word-Completion][Word Completion:2]]
+;; [[file:init.org::*Word Completion and Documentation Pop-ups][Word Completion and Documentation Pop-ups:2]]
 (ert-deftest company-works-as-expected-in-text-mode ()
   :tags '(company)
   (switch-to-buffer "*TESTING COMPANY MODE ~ Text*")
@@ -50,7 +50,7 @@
   (should (looking-back "finally"))
 
   (kill-buffer))
-;; Word Completion:2 ends here
+;; Word Completion and Documentation Pop-ups:2 ends here
 
 ;; [[file:init.org::*E2E Test][E2E Test:1]]
 (ert-deftest hideshow-is-enabled-and-folds-by-default ()
@@ -76,23 +76,3 @@
 
     (kill-buffer)))
 ;; E2E Test:1 ends here
-
-;; [[file:init.org::#LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE][LSP: Making Emacs into a generic full-featured programming IDE:6]]
-(ert-deftest lsp-hover-shows-type-signature ()
-  ;; Make a temporary scratch.js file with the given contents.
-  (-let [scratch.js (make-temp-file "scratch" nil ".js" "const first = (x, y) => 3")]
-    (find-file scratch.js)
-    (lsp-workspace-folders-add (f-parent scratch.js))
-    (lsp)
-
-    ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
-    (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (substring-no-properties (car msg)))))
-
-    (end-of-buffer)
-    (insert "\n first")
-    (lsp-hover)  ;; Alternatively: (lsp-describe-thing-at-point)
-    (should (equal "const first: (x: any, y: any) => number" my/lsp-hover-message))
-
-    (save-buffer)
-    (kill-buffer)))
-;; LSP: Making Emacs into a generic full-featured programming IDE:6 ends here
