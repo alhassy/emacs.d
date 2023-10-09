@@ -1067,7 +1067,7 @@ Let's decide on where we want to setup our declarations for personalising Emacs
 to our needs. Then, let's bootstrap Emacs' primintive packaging mechanism with a
 slick interface ---which not only installs Emacs packages but also programs at
 the operating system level, all from inside Emacs!  Finally, let's declare who
-we are and use that to setup Emacs email service.
+we are +and use that to setup Emacs email service.+
 
 **   =~/.emacs= vs. =init.org=
 :PROPERTIES:
@@ -2213,6 +2213,7 @@ Is replaced by:
          (iconised-title
           (concat
            (when icon-name
+                 (require 'all-the-icons)
              (concat
               (all-the-icons-faicon (format "%s" icon-name) :face icon-face :height 1.0 :v-adjust -0.1)
               " "))
@@ -9298,189 +9299,492 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* TODO FIXME: repl/java ignores newlines but that means single-line-comments should be stripped out /first/!
 * TODO loading work.el
 #+begin_src emacs-lisp
 (load-file "~/Desktop/work.el")
 #+end_src
 
-* TODO RDD methods: repl/jshell/insert-last-output ;; repl/jshell/copy-last-output-to-clipboard ;; repl/jshell/show-last-output-in-own-buffer [An Org mode buffer with the last-input and last output, headings]
 * TODO RDD
 
-TODO: Make repl load all company class files, that way I have them upon start up.
-OR: Provide a command `//!load ~/dir` which recursively loads/imports all java files? <---Probably this!
-
+** get the pkg
 #+begin_src emacs-lisp :tangle init.el
-(setq enable-local-variables :safe)
-
 (use-package repl-driven-development)
-(setq repl-driven-development/echo-duration 10) ;; seconds
+(setq repl-driven-development-echo-duration 10)
 
+;; NOTE Missing closing parens of repl-driven-development--install-any-not-yet-installed-docs
+(defun repl-driven-development--install-any-not-yet-installed-docs (docs)
+  "Install any not-yet-installed DOCS; return a List<String> of the installed \
+docs."
+  (when docs
+    (require 'devdocs)
+    (cl-assert (stringp docs))
+    (setq docs (--reject (s-blank? it) (s-split " " docs)))
+    (cl-assert (listp docs))
+    (-let [installed (mapc #'f-base (f-entries devdocs-data-dir))]
+      (--map (unless (member it installed)
+               (devdocs-install (list (cons 'slug it)))) docs))
+    docs))
+
+;; NOTE: Echo shows needless new line, over useful output. Ensure echo does nothing when output is empty.
+(defun repl-driven-development--insert-or-echo (repl output)
+  "If there's a C-u, then insert the output; else echo it in overlay"
+  (cl-assert (stringp output))
+  (pcase current-prefix-arg
+    ('(4) (unless (equal output (s-trim (rdd@ repl current-input)))
+            (insert " " (funcall
+                         (intern (format "repl/%s/read"
+                                         (rdd@ repl cmd))) output))))
+    ;; All other prefixes are handled by repl-fun-name, above.
+    (_
+     ;; Show output as an overlay at the current cursor position
+     ;; ﴾ Since eros is intended to be used with ELisp, not arbitrary langs,
+     ;; it does some sexp look-about, which may not mix well with, say, JS
+     ;; arrow functions, so we freeze such movements, locally. ﴿
+     (setq output
+           (apply (rdd@ repl echo-rewrite-fn)
+                  (list (repl-driven-development--ignore-ansi-color-codes
+                         output))))
+     (unless (s-blank? (s-trim output))
+       (unless  (equal output (s-trim (rdd@ repl current-input)))
+         (mapcar #'delete-overlay
+                 (overlays-at (rdd@ repl current-input/start)))
+         (let ((overlay (make-overlay (rdd@ repl current-input/start)
+                                      (rdd@ repl current-input/end))))
+           (overlay-put overlay 'help-echo output)))
+       (thread-yield)
+       (require 'eros)
+       (cl-letf (((symbol-function 'backward-sexp) (lambda (&rest _) 0)))
+         (eros--make-result-overlay output
+           :format  " ⮕ %s"
+           :duration repl-driven-development-echo-duration))))))
+#+end_src
+
+** terminal
+#+begin_src emacs-lisp :tangle init.el
 ;; Sometimes I see a bunch of shell incantations in a README or something and I'd like to execute them right there and then,
 ;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
 ;; shell commands from anywhere.
-(repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
-(when nil ;; example
-NAME=musa
-echo hello $NAME
-echo hello $CLASSPATH
-)
+;; (repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
+;; TODO: Docs for C-x C-t look super ugly.
+;; TODO: C-u 0 C-x C-t does not toggle.
+(repl-driven-development [C-x C-t] terminal)
+;; TODO: terminal-repl-insert-last-output, terminal-repl-copy-last-output-to-clipboard,
+;; terminal-repl-show-last-input-and-output [An Org mode buffer with the last-input and last output, headings]
+#+end_src
 
-
+** jshell
+#+begin_src emacs-lisp :tangle init.el
 ;; Set “C­x C­j” to evaluate Java code in a background REPL.
-(repl-driven-development [C-x C-j]
-                         ;; enable assertions, and add everything installed, via mvn, in scope; and imports all Java SE packages by default!
-                         (format "jshell --class-path %s --enable-preview -R -ea"
-                                  (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
-                         :prompt "jshell>")
-;; Do not use the “--startup JAVASE” option.
-;;
-;; List.of(1)  | Error:
-;; |  reference to List is ambiguous
-;; |    both interface java.util.List in java.util and class java.awt.List in java.awt match
-;; |  List.of(1)
-;; |  ^--^
-;;
+"
 
+⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+﴾ Setting a Classpath ﴿
+
+The classpath lets jshell access non-standard-library code.
+
+    % jshell --class-path .:myJar:myOtherJar:dir/to/compiled/classes
+
+Paths can be to Java Archives (JARs) or to directories of *compiled* class files
+---which must be in a *named package*.
+
+You also use the '/env' command to set the classpath:
+
+jshell> /env --class-path myOwnClassPath
+|  Setting new options and restoring state.
+jshell> import my.cool.code.*
+
+Note that this command resets the execution state, reloading any
+current snippets with the new classpath setting (or other
+environment setting).
+
+⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+﴾ JShell Feedback Modes ﴿
+
+The built-in feedback modes cannot have their
+prompt|truncation|format changed, but we can inheirt from a
+built-in mode, then change those properties.
+
+⟅ ✔ Notify me when imports succeed ⟆
+
+In the format, inherited from normal mode, an import doesn't give
+any feedback, and the type of a value is not shown.
+
+    import java.beans.* // Submit this twice and both times see nothing :-(
+
+    /set mode myNewMode normal -command
+    /set feedback myNewMode
+    /help /set format  // There is extensive help on this command with /help /set format.
+
+    /set format myNewMode display \"{pre}added import {name}{post}\" import-added
+    /set format myNewMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
+
+    import java.awt.Graphics // Submit this twice and see two distinct messages 🕹
+
+This is automatically part of the Emacs Java REPL.
+
+⟅ ✔ Show types of results ⟆
+
+Let's also change the default “var ==> value” output to include the type of the resulting value.
+
+    // The payload does not indicate the type of this thing,
+    // I'd like to know what kind of data I'm working with!
+    Locale.CANADA.getUnicodeLocaleAttributes() // $10 ==> []
+
+    /set format myNewMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
+
+    2 + 4                                      // int $11 = 6
+    String me = \"hello\"                      // Emits: String me ⇒ \"hello\"
+    Locale.CANADA.getUnicodeLocaleAttributes() // Set<String> $12 = []
+
+⟅ ✔ Extended Truncation Limit ⟆
+
+We can increase the truncation as follows, this is done automatically for the Java REPL.
+
+   /set truncation myNewMode 40000
+   IntStream.range(0, 40000).mapToObj(x -> x).toList()
+
+⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+﴾ Useful Reading ﴿
+
+- The excellent JShell Tutorial by Robert Field:
+  https://cr.openjdk.org/~rfield/tutorial/JShellTutorial.htmlA Gentle Intro to JShell:
+  https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/Java-JShell-Online-Commands-How-to-Tutorial-Exit
+
+⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+﴾ Implementation Notes ﴿
+
+We do not use the “--startup JAVASE” option to import all Java SE packages by
+default; since the simplest call “List.of(1)” results in an ambiguity error:
+java.util.List and java.awt.List match.
+"
+(repl-driven-development
+ [C-x C-j]
+ ;; enable assertions, and add everything installed, via `mvn', in scope.
+ (format "jshell --class-path %s --enable-preview -R -ea --feedback silent"
+         (concat ".:" (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f 2>/dev/null | tr '\n' ':'")))
+ :prompt "jshell>"
+ :init "\n /set mode EmacsJavaMode normal -command
+        \n /set format EmacsJavaMode display \"{pre}added import {name}{post}\" import-added
+        \n /set format EmacsJavaMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
+        \n /set format EmacsJavaMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
+        \n /set truncation EmacsJavaMode 40000
+        \n /set feedback EmacsJavaMode
+        \n System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
+;; TODO [Truncation; Low] https://github.com/xiongtx/eros/blob/master/eros.el#L202
+#+end_src
+** mvn
+#+begin_src emacs-lisp :tangle init.el
 (defun mvn (groupId artifactId)
   "Quickly install a library from Maven Central."
-      (async-shell-command (format "mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -Dartifact=%s:%s:LATEST:jar:sources" groupId  artifactId)))
-(when nil ;; Example use of C-x C-j
+  (async-shell-command (format "mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -Dartifact=%s:%s:LATEST:jar:sources" groupId  artifactId)))
 
-  1 + 22
+(when nil
+  ⨾⨾ Example use of `mvn`
 
-  TestNG is a testing framework inspired from JUnit and NUnit but introducing some new functionalities that make it more powerful and easier to use. It supports test configured by annotations, data-driven testing, parametric tests, etc.
-(mvn "org.testng" "testng")
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  ;; First confirm C-x C-j works as intended
+  IntStream.range(0, 15).mapToObj(i -> i % 15 == 0 ? "FizzBuzz" : i % 3 == 0 ? "Fizz" : i % 5 == 0 ? "Buzz" : String.valueOf(i)).toList()
 
-import org.testng.*;
- /imports  // Now can see org.testng at the end of the list
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  (mvn "org.antlr" "antlr4") ;; C-x C-e
+  ;; Now re-start the Java C-x C-j repl via a C-x C-e (lame! not ergonomic!)
+  ;; Now check that you have access to antrl in your repl by importing it and looking at one of its classes:
+  ;; ⦃ jshell --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar ⦄
+  import org.antlr.v4.runtime.*;
+  CommonTokenStream.class
+  ;; NOTE: This is the runtime, to use the actual tool:
+  java -jar /Users/musa/.m2/repository/org/antlr/antlr4/4.13.0/antlr4-4.13.0-complete.jar
 
-java -jar /Users/musa/.m2/repository/org/antlr/antlr4/4.13.0/antlr4-4.13.0-complete.jar
+  ;; Alternatively,
+  ;; $ jshell
+  ;; > var x = 5
+  ;; > import org.antlr.v4.runtime.*;  // CRASHES since antlr is not in scope
+  ;; > /reset --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar
+  ;; > import org.antlr.v4.runtime.*;  // WORKS, yay
+  ;; > x // CRASHES, not in scope
 
-(mvn "org.antlr" "antlr4") ;; C-x C-e
-;; Now re-start the Java C-x C-j repl via a C-x C-e (lame! not ergonomic!)
-;; Now check that you have access to antrl in your repl by importing it and looking at one of its classes:
-;; ⦃ jshell --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar ⦄
-import org.antlr.v4.runtime.*;
-CommonTokenStream.class
-;; MA: This is the runtime, I want the actual tool!
-;;
-;;
-;; MA: to be ergonomic, make “C-u -1 C-x C-j” restart the repl, by *default* this means kill the repl process and restart it.
-;;
-;; MA: TODO: For working with Lombok annotations, use the jshell `/reset --class-path` command to include the lombok compiled file into
-;; the current Jshell session.
-;;
-;; See: https://stackoverflow.com/questions/74084364/how-to-use-lombok-in-jshell
-;; For example,
-;;
-;; $ jshell
-;; > var x = 5
-;; > import org.antlr.v4.runtime.*;  // CRASHES since antlr is not in scope
-;; > /reset --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar
-;; > import org.antlr.v4.runtime.*;  // WORKS, yay
-;; > x // CRASHES, not in scope
-;;
-;; (mvn "org.projectlombok" "lombok")
-;; import lombok.*;
-;; @lombok.Data class Test { private String name; }
-;; new Test().equals(new Test())
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  import org.apache.commons.lang3.StringUtils;
+  StringUtils.class;
+  /imports  // JShell command to list all imports, it now contains apache!
 
-import org.apache.commons.lang3.StringUtils;
-StringUtils.class;
-/imports  // JShell command to list all imports, it now contains apache!
+  // Guava is the Google core libraries for Java
+  import com.google.common.collect.ImmutableMap;
 
+  ImmutableMap.of(1, "A", 2, "B") // ⇒ {1=A, 2=B}
 
-// Guava is the Google core libraries for Java
-import com.google.common.collect.ImmutableMap;
+  ;; (mvn "com.google.code.gson" "gson")
+  // Then C-x C-e to update the repl definition of C-x C-j to include the updated gson library.
+  import com.google.gson.*;
+  String json = new Gson().toJson(Map.of("me", List.of(1, 2,3), "you", Map.of("Love", "Lisp", "Hate", "Verbosity")))
 
-ImmutableMap.of(1, "A", 2, "B") // ⇒ {1=A, 2=B}
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  ;; TestNG is a testing framework; supporting tests configured by annotations, data-driven testing, parametric tests, etc.
+  (mvn "org.testng" "testng")
+  import org.testng.*;
+  /imports  // Now can see org.testng at the end of the list
 
-// (mvn "com.google.code.gson" "gson")
-// Then C-x C-e to update the repl definition of C-x C-j to include the updated gson library.
-import com.google.gson.*;
-String json = new Gson().toJson(Map.of("me", List.of(1, 2,3), "you", Map.of("Love", "Lisp", "Hate", "Verbosity")))
-
-;; End examples
-)
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  ;; TODO[Low]: For working with Lombok annotations, use the jshell `/reset --class-path` command to include the lombok compiled file into
+  ;; the current Jshell session.
+  ;;
+  ;; See: https://stackoverflow.com/questions/74084364/how-to-use-lombok-in-jshell
+  ;;
+  ;; (mvn "org.projectlombok" "lombok")
+  ;; import lombok.*;
+  ;; @lombok.Data class Test { private String name; }
+  ;; new Test().equals(new Test())
+  )
 #+end_src
-** COMMENT Quickly Run Code Snippets
-:PROPERTIES:
-:CUSTOM_ID: Quickly-Run-Code-Snippets
-:END:
-
-Sometimes we want to quickly run some code /without making a dedicated file/ or
-with a file but /without remembering the terminal incantation to do so/, enter
-~quickrun~. Anywhere, we can select a snippet of code and run TODO. doc.quickrun-region
-to execute that snippet after selecting the associated programming language, or
-TODO. doc.quickrun-replace-region if we want the results in-line. If our language of
-choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-defined-command][easily add support for it]].
+** repl/jshell/read
 
 #+begin_src emacs-lisp
-;; In any programming buffer, “M-x quickrun” to execute that program.
-;; Super useful when wanting to quickly test things out, in a playground.
-;;
-;; E.g., Make a new file named “hello.py” containing “print "hi"”, then “M-x quickrun”.
-;;
-;; Enable “quickrun-autorun-mode” to run code after every save.
-(use-package quickrun
-  ;; ⇒ “C-c C-r” to see output, “q” to close output
-  ;; ⇒ “C-u C-c C-r” prompts for a language (Useful when testing snippets different from current programming mode)
-  ;; ⇒ In a non-programming buffer, “C-c C-r” runs selected region.
-  :defer nil
-  :config (bind-key* "C-c C-r"
-                     (lambda (&optional start end)
-                       (interactive "r")
-                       (if (use-region-p)
-                           (quickrun-region start end)
-                         (quickrun current-prefix-arg)))))
-#+end_src
+(when nil
+  // Let's make a type to model stuff we're working with
+  record Person(String name, int age) { }
 
-Example...
+  // Let's write a super duper complex algorithm
+  List<Person> foo(String... names) { return Arrays.stream(names).map(n -> new Person(n, n.length())).toList(); }
+
+  // Let's run our algorithm and get *executable* outputs that can then be used for regression tests
+  foo("musa", "hamid") // C-x C-j shows me “human readable” results
+  // C-u C-x C-j shows me “java readable” code that can be used for regression tests
+  foo("musa", "hamid")
+  // ⇒ List.of(new Person("musa", 4), new Person("hamid", 5))
+  )
+
+(defun repl/jshell/read (a-pretty-printed-record)
+  "Reads executable Java code from pretty-printed record representations.
+
+If called interactively via M-x, copies executable Java to clipboard; otherwise
+returns the executable Java as a string.
+
+Using PEGs: https://elpa.gnu.org/packages/peg.html"
+  (interactive "sJava Read: ")
+  (let ((result (thread-last
+                  a-pretty-printed-record ;; Has shape “type name = value”.
+                  (s-replace-regexp "^[^ ]* [^ ]* = " "")
+                  rdd--parse-pretty-printed-java
+                  rdd--lisp-to-java)))
+    (if (called-interactively-p 'interactive)
+        (progn (kill-new result)
+               (message "Copied: %s" result))
+      (insert "\n")
+      result)))
+
+;; TODO: Add to java init/prologue
+;; JShell has a truncation for outputs exceeding 1k chars, let's increase the threshold to size 40k chars.
+;; /set truncation 40000
+;;
+;; TODO: Add to docs of repl-driven-development-current--output, that if you see “...” then chances are that you have
+;; exceeded the truncation threshold for your repl. Consider increasing the threshold, if possible, and add it to the :init/:prologue of your repl.
+;; See Java repl for an example.
+
+(use-package peg)
+(bind-key
+ [M-p]
+ (defun rdd--parse-pretty-printed-java (&optional str)
+   "If called interactively, run the parser at point.
+If called from Lisp, run the parse on the given string.
+
+Return a list:
+- It is has a single item, denoting a non-record value.
+- Or, it has multiple items. The car is the record name,
+and the cdr are the arguments.
+
+TODO: Change the logic so that if called interactively,
+then prompt the user for the given string.
+
+⦉𝒯𝒾𝓅⦊ When actually implementing this parser, I altered the logic
+slightly: When called interactively, it runs the parse at
+point. I then enclosed the defun in (bind-key [M-p] ⋯). Now I
+could quickly iterate on the parser: Make a small modification to
+the parser, have one of my test cases in the same buffer, and
+invoke M-p to parse it.  This let me see “how far” the parsing
+got and where it got stuck.
+"
+   (interactive)
+   (with-peg-rules ((expr (or structured-expr literal))
+                    (structured-expr (or map list record number))
+                    (list (or empty-list non-empty-list))
+                    (empty-list "[]" `(val -- (list :type :list :items nil)))
+                    (non-empty-list "[" expr (list (* "," (* [space]) structured-expr)) "]" `(first rest -- (list :type :list :items (cons first rest))))
+                    (map "{" (list (opt payloads)) "}" `(entries -- (cons :type (cons :map (cons :entries entries)))))
+                    (literal (substring (* [a-z A-Z 0-9 " \"-;!#%&'*+,./:;<=>?@[]^_`{|}~"])))
+                    (record identifier "[" (opt payloads) "]"
+                            `(k vs -- (list :type :record :name (plist-get k :value) :fields vs)))
+                    (identifier (substring (+ (or [alpha] comma "-" [space]))) `(val -- (list :type :string :value val)))
+                    (comma    "," (not (and [space] (+ [alpha]) "=")))
+                    (payloads (list payload (* (and "," (opt (+ [space])) payload))))
+                    (payload identifier "=" (or structured-expr identifier) `(k v -- (list :name (plist-get k :value) :value v)))
+                    (number (substring (and (+ [digit]) (opt (and "." (+ [digit]))))) `(val -- (list :type :number :value (string-to-number val)))))
+     (if (called-interactively-p)
+         (peg-run (peg expr) #'ignore (lambda (args) (insert " ;; ⇒ " (pp-to-string (car (funcall args))))))
+       (with-temp-buffer
+         (insert str)
+         (goto-char (point-min))
+         (let (result)
+           ;; peg-run ⇒ Parse with matcher at point, & run success|failure function.
+           (peg-run (peg expr) #'ignore (lambda (args) (setq result (car (funcall args)))))
+           result))))))
+
+(defun rdd--lisp-to-java (data)
+  (s-replace-regexp
+   "\n\\(,\\|)\\)" "\\1"
+   (pcase (plist-get data :type)
+     (:number (format "%s" (plist-get data :value)))
+     (:string (-let [it (plist-get data :value)] (if (equal it "null") it (pp-to-string it)))) ;; Escapes quotes.
+     (:list (format "List.of(%s)" (s-join ", " (--map (rdd--lisp-to-java it) (plist-get data :items)))))
+     ;; Invariant: A :record type have :value in all fields.
+     (:record (format "new %s(%s)" (plist-get data :name) (s-join ", " (--map (rdd--lisp-to-java (plist-get it :value)) (plist-get data :fields)))))
+     (:map (format "Map.of(%s)" (s-join ", " (--map (format "%s, %s" (plist-get it :name) (rdd--lisp-to-java (plist-get it :value))) (plist-get data :entries)))))
+     (else (error "lisp-to-java: Unknown data type “%s”" else)))))
+
+(progn ;; ert-deftest java-read-works-as-intended ()
+  (defun java-read (string)
+    (rdd--lisp-to-java (rdd--parse-pretty-printed-java string)))
+  ;; Non-record *values* are read literally
+  (should (equal (java-read "123") "123"))
+  ;; Records with a single field become constructor calls on that field: As a number (if possible), otherwise as a string.
+  (should (equal (java-read  "Person[name=Musa]") "new Person(\"Musa\")"))
+  (should (equal (java-read  "Person[age=31.2]") "new Person(31.2)"))
+  ;; Record payloads can include spaces and commas
+  (should (equal (java-read "Person[name=Alhassy, Musa, the first, age=thirty and one, years=31]")
+                 "new Person(\"Alhassy, Musa, the first\", \"thirty and one\", 31)"))
+  ;; We can read nested records.
+  ;; For arbitrarly deep nesting, we cannot use regular expressions, and so we need to move to using PEGs.
+  (should (equal (java-read  "Person[name=Musa, child=Person[name=Yusuf]]") "new Person(\"Musa\", new Person(\"Yusuf\"))"))
+  (should (equal (java-read  "Person[name=Musa, child=Person[name=Yusuf], child=Person[name=Zaynab]]")
+                 "new Person(\"Musa\", new Person(\"Yusuf\"), new Person(\"Zaynab\"))"))
+  (should (equal (java-read  "Person[name=Hamid, child=Person[name=Musa, child=Person[name=Yusuf]]]")
+                 "new Person(\"Hamid\", new Person(\"Musa\", new Person(\"Yusuf\")))"))
+  (should (equal (java-read "Person[name=hamid, child=Person[name=musa, age=12]]") "new Person(\"hamid\", new Person(\"musa\", 12))"))
+  ;; We can read lists.
+  (should (equal (java-read "[1, 2, 3]") "List.of(1, 2, 3)"))
+  (should (equal (java-read "[]") "List.of()"))
+  (should (equal (java-read "[Person[name=Jasim, age=72, zindex=0.5], Person[name=Kathy, age=82, zindex=2.78], Person[name=Musa, age=31, zindex=3]]")
+                 "List.of(new Person(\"Jasim\", 72, 0.5), new Person(\"Kathy\", 82, 2.78), new Person(\"Musa\", 31, 3))"))
+  (should (equal (java-read "[[1], [2, 3], [4, 5, 6]]") "List.of(List.of(1), List.of(2, 3), List.of(4, 5, 6))"))
+  ;; We can mix the various structures (records & lists)
+  ;; TODO: (java-read "Person[children=[]]")
+  (should (equal (java-read "A[a=[B[b=[C[c=D[d=[E[e=hello]]]]]]]]")
+                 "new A(List.of(new B(List.of(new C(new D(List.of(new E(\"hello\"))))))))"))
+  ;; Null is known
+  (should (equal (java-read "Person[name=null]") "new Person(null)"))
+  ;; Maps are known
+  (should (equal (java-read "{}") "Map.of()"))
+  (should (equal (java-read "{a=1, b=2, c=3}") "Map.of(a, 1, b, 2, c, 3)"))
+  (should (equal (java-read "{a=Alice, b=Bob, c=Kathy}") "Map.of(a, \"Alice\", b, \"Bob\", c, \"Kathy\")"))
+  ;; TODO: Allow numbers as keys.
+  ;; {1=hello, 2=world}
+  ;; TODO: (java-read "Person[]")
+  )
+#+end_src
 #+begin_src emacs-lisp
-(system-packages-ensure "rust") ;; Rust Compiler
-;; Select the following then press C-c C-r: fn main() { println!("Hello, World!"); }
+;; Other DSL rewrites I want NOW
+
+(cl-defun jRead/rewrite (java-code)
+  (interactive "s")
+  (--> java-code
+     (loop for (rx replacement) in jRead-defs
+           do (setq it (s-replace-regexp rx replacement it))
+           finally return it)
+     ;; (my/format-code #'java-mode it) ;; TODO: Not actually running; async issue probably.
+     kill-new
+     (yank)))
+
+;; Other DSL rewrites I want NOW
+(defvar jRead-defs nil
+  "List of regexp-to-replacement pairs to apply to Java code.")
+
+;; (add-to-list 'jRead-defs '("new X(List.of(new Y(\\(.*?\\))))" "xy(\\1)"))
+
+(defun my/format-code (language-mode text)
+  "Format TEXT according to the given LANGUAGE-MODE.
+
+Example:
+
+ ;; The following results in the standard 5-line convention for an if-then-else clause in Java
+ (my/format-code #'java-mode \"if(true) { System.out.println(2); } else { System.out.println(3); } \")
+
+The tool needed to do the formatting is specified in
+`format-all-default-formatters', so ensure it's installed!
+"
+  (with-temp-buffer
+    ;; (java-mode)
+    (funcall language-mode)
+    ;; Don't prompt me which formatter to use; just use the defaults.
+    ;; For example, for Java, I need to: brew install clang-format
+    (setq format-all-formatters format-all-default-formatters)
+    ;; (insert "cmd(new TclCat(List.of(new TclAtom(\"cmd4\"))), new TclQuote(List.of(new TclCat(List.of(new TclAtom(\"arg5\"))))), new TclCat(List.of(new TclAtom(\"$arg6\"))), new TclBrace(List.of(new TclCat(List.of(new TclAtom(\"a\"))), new TclCat(List.of(new TclAtom(\"r\"))), new TclCat(List.of(new TclAtom(\"g\"))), new TclCat(List.of(new TclAtom(\"7\"))))))")
+    (insert text)
+    (format-all-buffer)
+    (buffer-substring-no-properties (point-min) (point-max))))
 #+end_src
 
-Actually, let's get a [[https://github.com/brotzeit/rustic#intro][full Rust development environment for Emacs]] (which also
-has [[https://github.com/brotzeit/rustic#org-babel][great support for Org-babel]].)
+** Adding support for “//!use” & “//!omit” top level repl commands
 #+begin_src emacs-lisp
-(use-package rustic   :defer nil)
-;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
-;; rust-analyzer, the rust LSP.
-;;
-;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
-;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
-;; super nice stuff! Run “M-!”/[M-x company-show-doc-buffer] if you want the doc in a colourful buffer.
-;;
-;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
-;;    let v:Vec<_> = vec![1, 2, 3];
+;; Adding support for “//!use” & “//!omit” top level repl commands
+(setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
+(advice-add 'repl/jshell
+            :around (lambda (repl &rest args)
+                      (if (equal nil current-prefix-arg)
+                          ;; No prefix supplied
+                          (progn
+                            (setq rdd---current-input (s-replace-regexp "\n" "" (s-trim-left
+                                                                                 (if (region-active-p) (buffer-substring-no-properties  (region-beginning) (region-end))
+                                                                                   (substring-no-properties (thing-at-point 'line))))))
+                            (if (s-starts-with? "//!use" rdd---current-input)
+                                (-let [jar (s-trim (s-chop-prefix "//!use" rdd---current-input))]
+                                  (repl/top-level//!use jar))
+                              (if (s-starts-with? "//!omit" rdd---current-input)
+                                  (-let [jar (s-trim (s-chop-prefix "//!omit" rdd---current-input))]
+                                    (repl/top-level//!omit jar))
+                                ;; otherwise business as usual
+                                (apply repl args))))
+                        (pcase current-prefix-arg
+                          (-1
+                           ;; reset classpath to default, then business as usual.
+                           (setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
+                           (apply repl args))
+                          (999
+                           (message-box "It worked"))
+                          ;; otherwise business as usual
+                          (t (apply repl args))))))
 
-;; The offical Rust toolchain installer
-(system-packages-ensure "rustup")
-(shell-command "rustup update")
+;; remove all advice
+;; (-let [sym 'repl/jshell] (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
+
+(cl-defun repl/top-level//!omit (str)
+  (with-temp-buffer
+    (setq repl/jshell/classpath (s-replace-regexp (format ":[^:]*%s[^:]*:" str) ":" repl/jshell/classpath))
+    (insert "/env --class-path ")
+    (insert repl/jshell/classpath)
+    (repl/jshell (point-min) (point-max))))
+
+(cl-defun repl/top-level//!use (str)
+  "If the given jar cannot be added successful, the existing classpath remains untouched.
+
+Return to your default classpath by invoking the repl with the -1 prefix.
+
+Example usage:
+
+    //!use ~/path/to/compiled/java/classes
+    import com.x.y.z;
+
+Where directory hierarchy com/x/y/z denotes a Java package under the above //!use path.
+"
+  (with-temp-buffer
+    (setq repl/jshell/classpath (concat (s-trim str) ":" repl/jshell/classpath))
+    (insert "/env --class-path ")
+    (insert repl/jshell/classpath)
+    (repl/jshell (point-min) (point-max))))
 #+end_src
 
-:More_on_rust:
+** Misc top level cmds
 
-Now, C-c C-c C-d on something to get help/description of it.
-(setq rustic-racer-rust-src-path "/Users/musa/.rustup/toolchains/stable-x86_64-apple-darwin/lib/rustlib/src/rust/library/")
-
-# Get Rustup, load it into current terminal session
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source ~/.bash_profile
-source ~/.bashrc
-type rustup
-
-# Get stuff
-rustup update
-rustup component add rust-src
-cargo +nightly install racer
-rustup toolchain install nightly
-rustup component add rustc-dev --toolchain=nightly
-cargo +nightly install racer
-
-:End:
+TODO: Make repl load all company class files, that way I have them upon start up.
+OR: Provide a command `//!load ~/dir` which recursively loads/imports all java files? <---Probably this!
 
 ** COMMENT C-x C-e ∷ REPL-driven development for ELisp / NodeJS / Python / Etc !
 :PROPERTIES:
@@ -9628,229 +9932,96 @@ For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick
 It /seems/ to be /super easy/ to add such a support for other languages, such as Python.
 See the final comment [[https://karthinks.com/software/an-elisp-editing-tip/][here]] for the tiny change required.
 
-** Setting a Classpath
-One way you can connect external code to be accessed by the jshell tool is setting the classpath. The classpath can be set on the command-line:
+** COMMENT Quickly Run Code Snippets
+:PROPERTIES:
+:CUSTOM_ID: Quickly-Run-Code-Snippets
+:END:
 
- % jshell --class-path myOwnClassPath
-Your classpath should point to directories or JAR files with the packages you wish to access. The code must be compiled into class files. Code in the default package (also known as the unnamed package) cannot be accessed from JShell. Once you have set the classpath these packages can be imported:
+Sometimes we want to quickly run some code /without making a dedicated file/ or
+with a file but /without remembering the terminal incantation to do so/, enter
+~quickrun~. Anywhere, we can select a snippet of code and run TODO. doc.quickrun-region
+to execute that snippet after selecting the associated programming language, or
+TODO. doc.quickrun-replace-region if we want the results in-line. If our language of
+choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-defined-command][easily add support for it]].
 
-jshell> import my.cool.code.*
-You also use the '/env' command to set the classpath:
-
-jshell> /env --class-path myOwnClassPath
-|  Setting new options and restoring state.
-Note that this command resets the execution state, reloading any current snippets with the new classpath setting (or other environment setting).
-
-Source: The excellent [[https://cr.openjdk.org/~rfield/tutorial/JShellTutorial.html][JShell Tutorial]] by Robert Field.
-
-** The built-in feedback modes cannot have their prompt|truncation|format changed, but we can inheirt from a built-in mode, then change those properties.
-*** format: Notify me when imports succeed, and show types of results
-In the format, inherited from normal mode, an import doesn't give any feedback, and the type of a value is not shown. The format of snippet output is set with the /set format command. Try this, without settings, for some mode, to see the current format settings:
-
-my mode: /set format mine
-#+begin_src java :tangle no
-import java.beans.* // Submit this twice and both times see nothing :-(
-
-/set mode myNewMode normal -command
-/set feedback myNewMode
-/help /set format  // There is extensive help on this command with /help /set format.
-
-/set format myNewMode display "{pre}added import {name}{post}" import-added
-/set format myNewMode display "{pre}re-added import {name}{post}" import-modified,replaced
-
-import java.awt.Graphics // Submit this twice and see two distinct messages 🕹
-#+end_src
-
-Let's also change the defult “var ==> value” output to include the type of the resulting value.
-#+begin_src java :tangle no
-// The payload does not indicate the type of this thing, I'd like to know what kind of data I'm working with!
-Locale.CANADA.getUnicodeLocaleAttributes() // $5 ==> []
-
-/set format myNewMode result "{type} {name} = {value}{post}" added,modified,replaced-primary-ok
-
-2 + 4                   // int $40 = 6
-String me = "hello"     // Emits: String me ⇒ "hello"
-Locale.CANADA.getUnicodeLocaleAttributes() // Set<String> $41 = []
-
-
-// Aside: JAVASE	Imports all Java SE packages, this is big and will cause a noticeable startup delay
-#+end_src
-
-*** truncation
-/set mode myNewMode normal -command
-/set feedback myNewMode
-/set truncation myNewMode 40000
-var big = IntStream.range(0, 40000).mapToObj(x -> x).toList()
-big
-
-;; This should be an flet around eros call in repl-driven-development macro.
-;; (defun window-width (&rest args) most-positive-fixnum)
-;; https://github.com/xiongtx/eros/blob/master/eros.el#L202
-
-* Adding support for “//!use” & “//!omit” top level repl commands
 #+begin_src emacs-lisp
-;; Adding support for “//!use” & “//!omit” top level repl commands
-(setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
-(advice-add 'repl/jshell
-            :around (lambda (repl &rest args)
-                      (if (equal nil current-prefix-arg)
-                          ;; No prefix supplied
-                          (progn
-                            (setq rdd---current-input (s-replace-regexp "\n" "" (s-trim-left
-                                                                                 (if (region-active-p) (buffer-substring-no-properties  (region-beginning) (region-end))
-                                                                                   (substring-no-properties (thing-at-point 'line))))))
-                            (if (s-starts-with? "//!use" rdd---current-input)
-                                (-let [jar (s-trim (s-chop-prefix "//!use" rdd---current-input))]
-                                  (repl/top-level//!use jar))
-                              (if (s-starts-with? "//!omit" rdd---current-input)
-                                  (-let [jar (s-trim (s-chop-prefix "//!omit" rdd---current-input))]
-                                    (repl/top-level//!omit jar))
-                                ;; otherwise business as usual
-                                (apply repl args))))
-                        (pcase current-prefix-arg
-                          (-1
-                           ;; reset classpath to default, then business as usual.
-                           (setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
-                           (apply repl args))
-                          (999
-                           (message-box "It worked"))
-                          ;; otherwise business as usual
-                          (t (apply repl args))))))
-
-;; remove all advice
-;; (-let [sym 'repl/jshell] (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
-
-(cl-defun repl/top-level//!omit (str)
-  (with-temp-buffer
-    (setq repl/jshell/classpath (s-replace-regexp (format ":[^:]*%s[^:]*:" str) ":" repl/jshell/classpath))
-    (insert "/env --class-path ")
-    (insert repl/jshell/classpath)
-    (repl/jshell (point-min) (point-max))))
-
-(cl-defun repl/top-level//!use (str)
-  "If the given jar cannot be added successful, the existing classpath remains untouched.
-
-Return to your default classpath by invoking the repl with the -1 prefix.
-
-Example usage:
-
-    //!use ~/path/to/compiled/java/classes
-    import com.x.y.z;
-
-Where directory hierarchy com/x/y/z denotes a Java package under the above //!use path.
-"
-  (with-temp-buffer
-    (setq repl/jshell/classpath (concat (s-trim str) ":" repl/jshell/classpath))
-    (insert "/env --class-path ")
-    (insert repl/jshell/classpath)
-    (repl/jshell (point-min) (point-max))))
+;; In any programming buffer, “M-x quickrun” to execute that program.
+;; Super useful when wanting to quickly test things out, in a playground.
+;;
+;; E.g., Make a new file named “hello.py” containing “print "hi"”, then “M-x quickrun”.
+;;
+;; Enable “quickrun-autorun-mode” to run code after every save.
+(use-package quickrun
+  ;; ⇒ “C-c C-r” to see output, “q” to close output
+  ;; ⇒ “C-u C-c C-r” prompts for a language (Useful when testing snippets different from current programming mode)
+  ;; ⇒ In a non-programming buffer, “C-c C-r” runs selected region.
+  :defer nil
+  :config (bind-key* "C-c C-r"
+                     (lambda (&optional start end)
+                       (interactive "r")
+                       (if (use-region-p)
+                           (quickrun-region start end)
+                         (quickrun current-prefix-arg)))))
 #+end_src
 
-* TODO jRead -- ;; Nesting does not work.
+Example...
 #+begin_src emacs-lisp
-(add-hook 'repl-driven-development/output-hook
-          (lambda (output)
-            (when (equal current-prefix-arg '(4)) ;; insertion prefix
-              (insert "\n")
-              (insert (jRead (s-replace-regexp  "^.* ==> " "" repl-driven-development-current--output)))
-              ;; Disable default insertion behaviour.
-              (setq current-prefix-arg nil))
-            output))
-;;
-;;
-;; TODO: Add to java init/prologue
-;; JShell has a truncation for outputs exceeding 1k chars, let's increase the threshold to size 40k chars.
-;; /set truncation 40000
-;;
-;; TODO: Add to docs of repl-driven-development-current--output, that if you see “...” then chances are that you have
-;; exceeded the truncation threshold for your repl. Consider increasing the threshold, if possible, and add it to the :init/:prologue of your repl.
-;;
-;;
-;; record Person(String name, int age, double zindex) { }
-;; var people = List.of(new Person("Jasim", 72, .5), new Person("Kathy", 82, 2.78), new Person("Al-hassy, Musa", 31, 1 + 2))
-;; people // Press C-u C-x C-j to get the executable Java represenation inserted
-(cl-defun jRead (a-pretty-printed-record--diff)
-  "Reads executable Java code from pretty-printed record representations.
-
-If called interactively, copies executable Java to clipboard; otherwise
-returns the executable Java as a string."
-  (interactive "sJava Read: ")
-  (let* ((sep (format " ⟨%s⟩ " (gensym)))
-         (rx-sep (regexp-quote sep))
-         (result
-          (-->
-           a-pretty-printed-record--diff
-           ;; "[Person[name=Jasim, age=72, zindex=.5], Person[name=Kathy, age=82, zindex=2.78], Person[name=Musa, age=31, zindex=3]]"
-           ;; "Person[name=Al-hassy, Musa, age=thirty and one, years=31]"
-           ;; Identify field delimiters from commas that may be present in the payloads.
-           ;; Drop all field names from pretty-printed records: `RecordName[fieldName=value goes to `RecordName[value]`
-           (s-replace-regexp ", [^ \\[]*=" (concat sep sep) it) ;; ⇒⇒⇒ "Person[name=Al-hassy, Musa ⟨g760⟩  ⟨g760⟩ thirty and one ⟨g760⟩  ⟨g760⟩ 31]"
-           ;; Replace `RecordName[value]` with `new RecordName(value]`
-           (s-replace-regexp "\\([A-Za-z]+\\)\\[[^ ]*=" (concat "new \\1(" sep) it :lower-case) ;; ⇒⇒⇒ "new Person( ⟨g761⟩ Al-hassy, Musa ⟨g761⟩  ⟨g761⟩ thirty and one ⟨g761⟩  ⟨g761⟩ 31]"
-           ;; All remaining `]` can now be replaced by `)`.
-           (s-replace-regexp "\\]" (concat sep ")") it) ;; ⇒⇒⇒ "new Person( ⟨g779⟩ Al-hassy, Musa ⟨g779⟩  ⟨g779⟩ thirty and one ⟨g779⟩  ⟨g779⟩ 31 ⟨g779⟩ )"
-           ;; As a precautionary measure, let's enclose all arguments in quotes
-           (s-replace-regexp (format "%s\\(.*?\\)%s" rx-sep rx-sep) ", \"\\1\"" it) ;; ⇒⇒⇒ "new Person(, \"Al-hassy, Musa\", \"thirty and one\", \"31\")"
-           ;; Remove quotes around numbers
-           (s-replace-regexp "\"\\([0-9.]+.?[0-9.]*\\)\"" "\\1" it) ;; ⇒⇒⇒ "new Person(,\"Al-hassy, Musa\",\"thirty and one\",31)"
-           ;; Remove malformed “(,”
-           (s-replace-regexp "(, " "(" it)
-           (s-replace-regexp (concat sep ")") ")" it)
-           ;; All remaining `[` are now `List.of` pretty-printings
-           (s-replace-regexp "\\[" "List.of(" it :lower-case))))
-    (if (called-interactively-p)
-        (progn (kill-new result)
-               (message "Copied: %s" result))
-      result)))
-
-(ert-deftest jRead-works-as-intended ()
-  (should (equal (jRead "1 + 2") "1 + 2"))
-  (should (equal (jRead  "Person[name=Musa]") "new Person(\"Musa\")"))
-   ;;(should (equal (jRead  "Person[name=Musa, child=Person[name=Yusuf]]") 'TODO) ;; Nesting does not work.
-  (should (equal (jRead "Person[name=Al-hassy, Musa, age=thirty and one, years=31]") "new Person(\"Al-hassy, Musa\", \"thirty and one\", 31)"))
-  (should (equal (jRead "[Person[name=Jasim, age=72, zindex=.5], Person[name=Kathy, age=82, zindex=2.78], Person[name=Musa, age=31, zindex=3]]")
-                 "List.of(new Person(\"Jasim\", 72, .5), new Person(\"Kathy\", 82, 2.78), new Person(\"Musa\", 31, 3))")))
+(system-packages-ensure "rust") ;; Rust Compiler
+;; Select the following then press C-c C-r: fn main() { println!("Hello, World!"); }
 #+end_src
+
+Actually, let's get a [[https://github.com/brotzeit/rustic#intro][full Rust development environment for Emacs]] (which also
+has [[https://github.com/brotzeit/rustic#org-babel][great support for Org-babel]].)
 #+begin_src emacs-lisp
-;; Other DSL rewrites I want NOW
+(use-package rustic   :defer nil)
+;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
+;; rust-analyzer, the rust LSP.
+;;
+;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
+;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
+;; super nice stuff! Run “M-!”/[M-x company-show-doc-buffer] if you want the doc in a colourful buffer.
+;;
+;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
+;;    let v:Vec<_> = vec![1, 2, 3];
 
-(cl-defun jRead/rewrite (java-code)
-  (interactive "s")
-  (--> java-code
-     (loop for (rx replacement) in jRead-defs
-           do (setq it (s-replace-regexp rx replacement it))
-           finally return it)
-     ;; (my/format-code #'java-mode it) ;; TODO: Not actually running; async issue probably.
-     kill-new
-     (yank)))
+;; The offical Rust toolchain installer
+(system-packages-ensure "rustup")
+(shell-command "rustup update")
+#+end_src
 
-;; Other DSL rewrites I want NOW
-(defvar jRead-defs nil
-  "List of regexp-to-replacement pairs to apply to Java code.")
+:More_on_rust:
 
-;; (add-to-list 'jRead-defs '("new X(List.of(new Y(\\(.*?\\))))" "xy(\\1)"))
+Now, C-c C-c C-d on something to get help/description of it.
+(setq rustic-racer-rust-src-path "/Users/musa/.rustup/toolchains/stable-x86_64-apple-darwin/lib/rustlib/src/rust/library/")
 
-(defun my/format-code (language-mode text)
-  "Format TEXT according to the given LANGUAGE-MODE.
+# Get Rustup, load it into current terminal session
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.bash_profile
+source ~/.bashrc
+type rustup
 
-Example:
+# Get stuff
+rustup update
+rustup component add rust-src
+cargo +nightly install racer
+rustup toolchain install nightly
+rustup component add rustc-dev --toolchain=nightly
+cargo +nightly install racer
 
- ;; The following results in the standard 5-line convention for an if-then-else clause in Java
- (my/format-code #'java-mode \"if(true) { System.out.println(2); } else { System.out.println(3); } \")
+:End:
 
-The tool needed to do the formatting is specified in
-`format-all-default-formatters', so ensure it's installed!
-"
-  (with-temp-buffer
-    ;; (java-mode)
-    (funcall language-mode)
-    ;; Don't prompt me which formatter to use; just use the defaults.
-    ;; For example, for Java, I need to: brew install clang-format
-    (setq format-all-formatters format-all-default-formatters)
-    ;; (insert "cmd(new TclCat(List.of(new TclAtom(\"cmd4\"))), new TclQuote(List.of(new TclCat(List.of(new TclAtom(\"arg5\"))))), new TclCat(List.of(new TclAtom(\"$arg6\"))), new TclBrace(List.of(new TclCat(List.of(new TclAtom(\"a\"))), new TclCat(List.of(new TclAtom(\"r\"))), new TclCat(List.of(new TclAtom(\"g\"))), new TclCat(List.of(new TclAtom(\"7\"))))))")
-    (insert text)
-    (format-all-buffer)
-    (buffer-substring-no-properties (point-min) (point-max))))
+* Don't show updating/installation shell buffers
+
+#+begin_src emacs-lisp
+;; By default, say, (async-shell-command "date") produces a buffer
+;; with the result. In general, such commands in my init.el are for
+;; updating/installing things to make sure I have the same up-to-date
+;; setup where-ever I use my Emacs. As such, I don't need to see such buffers.
+(add-to-list 'display-buffer-alist
+             '("\\*Async Shell Command\\*.*" display-buffer-no-window))
+
+;; For an approach that does not inhibit async-shell-command this way,
+;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
 #+end_src
 
 * TODO Programming

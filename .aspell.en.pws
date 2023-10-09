@@ -1,4 +1,4 @@
-personal_ws-1.1 en 336 
+personal_ws-1.1 en 346 
 ACSII
 AST
 ASTs
@@ -10,6 +10,7 @@ Antitonicity
 Booleans
 Bruijn
 Carette
+Classpath
 Componentwise
 Contrapositive
 Coq
@@ -29,10 +30,12 @@ Excerption
 Executables
 Genericity
 Goju
+Hamid
 Hemi
 Hoare
 IPv
 Invariance
+JShell
 Kahl
 Karbala
 Karim
@@ -43,6 +46,7 @@ Liam
 Lvalues
 Löf's
 Malak
+Mariam
 Marwan
 McMaster
 Meijing
@@ -58,6 +62,7 @@ Muawiyah
 Multimethod
 Multimethods
 Musa
+Musa's
 Nasriyah
 Neato
 Netmask
@@ -124,6 +129,7 @@ catenating
 catenation
 center
 centric
+classpath
 cli
 coalgebra
 coercions
@@ -180,6 +186,7 @@ formedness
 functor's
 functorial
 functors
+hamid
 haskell
 hassy
 homoiconic
@@ -211,12 +218,15 @@ isomorphisms
 iterable
 iterables
 journaling
+jshell
 kubernetes
 lexemes
 lexicographically
 logics
 macOS
 magit
+mariam
+matcher
 matchers
 matchings
 meaningfuls

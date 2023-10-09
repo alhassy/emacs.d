@@ -81,16 +81,16 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-  
+
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -2457,6 +2457,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Sometimes I see a bunch of shell incantations in a README or something and I'd like to execute them right there and then,
 ;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
 ;; shell commands from anywhere.
+;; TODO: Docs for C-x C-t look super ugly.
 (repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
 (when nil ;; example
 NAME=musa
