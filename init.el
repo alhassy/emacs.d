@@ -2,6 +2,9 @@
     (setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
+(setq fill-column 80)
+
+
 ;; [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:5]]
     ;; Clicking on a URL, or running M-x browse-url, should open the URL *within* Emacs.
     (setq browse-url-browser-function #'xwidget-webkit-browse-url)

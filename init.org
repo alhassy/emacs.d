@@ -13,6 +13,9 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
+(setq fill-column 80)
+
+
 * Abstract                                                           :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -4775,7 +4778,7 @@ as necessary.
 (line-number-mode   -1)
 
 ;; Likewise, no need to show me “Top∣Mid∣Bot” in the modeline.
-(setq mode-line-percent-position nil)
+(setq-default mode-line-percent-position nil)
 #+END_SRC
 
 Line numbers are a /conventionally expected/ part of a user interface, but I've
@@ -9310,53 +9313,6 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 #+begin_src emacs-lisp :tangle init.el
 (use-package repl-driven-development)
 (setq repl-driven-development-echo-duration 10)
-
-;; NOTE Missing closing parens of repl-driven-development--install-any-not-yet-installed-docs
-(defun repl-driven-development--install-any-not-yet-installed-docs (docs)
-  "Install any not-yet-installed DOCS; return a List<String> of the installed \
-docs."
-  (when docs
-    (require 'devdocs)
-    (cl-assert (stringp docs))
-    (setq docs (--reject (s-blank? it) (s-split " " docs)))
-    (cl-assert (listp docs))
-    (-let [installed (mapc #'f-base (f-entries devdocs-data-dir))]
-      (--map (unless (member it installed)
-               (devdocs-install (list (cons 'slug it)))) docs))
-    docs))
-
-;; NOTE: Echo shows needless new line, over useful output. Ensure echo does nothing when output is empty.
-(defun repl-driven-development--insert-or-echo (repl output)
-  "If there's a C-u, then insert the output; else echo it in overlay"
-  (cl-assert (stringp output))
-  (pcase current-prefix-arg
-    ('(4) (unless (equal output (s-trim (rdd@ repl current-input)))
-            (insert " " (funcall
-                         (intern (format "repl/%s/read"
-                                         (rdd@ repl cmd))) output))))
-    ;; All other prefixes are handled by repl-fun-name, above.
-    (_
-     ;; Show output as an overlay at the current cursor position
-     ;; ﴾ Since eros is intended to be used with ELisp, not arbitrary langs,
-     ;; it does some sexp look-about, which may not mix well with, say, JS
-     ;; arrow functions, so we freeze such movements, locally. ﴿
-     (setq output
-           (apply (rdd@ repl echo-rewrite-fn)
-                  (list (repl-driven-development--ignore-ansi-color-codes
-                         output))))
-     (unless (s-blank? (s-trim output))
-       (unless  (equal output (s-trim (rdd@ repl current-input)))
-         (mapcar #'delete-overlay
-                 (overlays-at (rdd@ repl current-input/start)))
-         (let ((overlay (make-overlay (rdd@ repl current-input/start)
-                                      (rdd@ repl current-input/end))))
-           (overlay-put overlay 'help-echo output)))
-       (thread-yield)
-       (require 'eros)
-       (cl-letf (((symbol-function 'backward-sexp) (lambda (&rest _) 0)))
-         (eros--make-result-overlay output
-           :format  " ⮕ %s"
-           :duration repl-driven-development-echo-duration))))))
 #+end_src
 
 ** terminal
@@ -9365,98 +9321,12 @@ docs."
 ;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
 ;; shell commands from anywhere.
 ;; (repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
-;; TODO: Docs for C-x C-t look super ugly.
-;; TODO: C-u 0 C-x C-t does not toggle.
 (repl-driven-development [C-x C-t] terminal)
-;; TODO: terminal-repl-insert-last-output, terminal-repl-copy-last-output-to-clipboard,
-;; terminal-repl-show-last-input-and-output [An Org mode buffer with the last-input and last output, headings]
 #+end_src
 
 ** jshell
 #+begin_src emacs-lisp :tangle init.el
 ;; Set “C­x C­j” to evaluate Java code in a background REPL.
-"
-
-⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-﴾ Setting a Classpath ﴿
-
-The classpath lets jshell access non-standard-library code.
-
-    % jshell --class-path .:myJar:myOtherJar:dir/to/compiled/classes
-
-Paths can be to Java Archives (JARs) or to directories of *compiled* class files
----which must be in a *named package*.
-
-You also use the '/env' command to set the classpath:
-
-jshell> /env --class-path myOwnClassPath
-|  Setting new options and restoring state.
-jshell> import my.cool.code.*
-
-Note that this command resets the execution state, reloading any
-current snippets with the new classpath setting (or other
-environment setting).
-
-⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-﴾ JShell Feedback Modes ﴿
-
-The built-in feedback modes cannot have their
-prompt|truncation|format changed, but we can inheirt from a
-built-in mode, then change those properties.
-
-⟅ ✔ Notify me when imports succeed ⟆
-
-In the format, inherited from normal mode, an import doesn't give
-any feedback, and the type of a value is not shown.
-
-    import java.beans.* // Submit this twice and both times see nothing :-(
-
-    /set mode myNewMode normal -command
-    /set feedback myNewMode
-    /help /set format  // There is extensive help on this command with /help /set format.
-
-    /set format myNewMode display \"{pre}added import {name}{post}\" import-added
-    /set format myNewMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
-
-    import java.awt.Graphics // Submit this twice and see two distinct messages 🕹
-
-This is automatically part of the Emacs Java REPL.
-
-⟅ ✔ Show types of results ⟆
-
-Let's also change the default “var ==> value” output to include the type of the resulting value.
-
-    // The payload does not indicate the type of this thing,
-    // I'd like to know what kind of data I'm working with!
-    Locale.CANADA.getUnicodeLocaleAttributes() // $10 ==> []
-
-    /set format myNewMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
-
-    2 + 4                                      // int $11 = 6
-    String me = \"hello\"                      // Emits: String me ⇒ \"hello\"
-    Locale.CANADA.getUnicodeLocaleAttributes() // Set<String> $12 = []
-
-⟅ ✔ Extended Truncation Limit ⟆
-
-We can increase the truncation as follows, this is done automatically for the Java REPL.
-
-   /set truncation myNewMode 40000
-   IntStream.range(0, 40000).mapToObj(x -> x).toList()
-
-⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-﴾ Useful Reading ﴿
-
-- The excellent JShell Tutorial by Robert Field:
-  https://cr.openjdk.org/~rfield/tutorial/JShellTutorial.htmlA Gentle Intro to JShell:
-  https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/Java-JShell-Online-Commands-How-to-Tutorial-Exit
-
-⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-﴾ Implementation Notes ﴿
-
-We do not use the “--startup JAVASE” option to import all Java SE packages by
-default; since the simplest call “List.of(1)” results in an ambiguity error:
-java.util.List and java.awt.List match.
-"
 (repl-driven-development
  [C-x C-j]
  ;; enable assertions, and add everything installed, via `mvn', in scope.
@@ -9535,191 +9405,6 @@ java.util.List and java.awt.List match.
   ;; @lombok.Data class Test { private String name; }
   ;; new Test().equals(new Test())
   )
-#+end_src
-** repl/jshell/read
-
-#+begin_src emacs-lisp
-(when nil
-  // Let's make a type to model stuff we're working with
-  record Person(String name, int age) { }
-
-  // Let's write a super duper complex algorithm
-  List<Person> foo(String... names) { return Arrays.stream(names).map(n -> new Person(n, n.length())).toList(); }
-
-  // Let's run our algorithm and get *executable* outputs that can then be used for regression tests
-  foo("musa", "hamid") // C-x C-j shows me “human readable” results
-  // C-u C-x C-j shows me “java readable” code that can be used for regression tests
-  foo("musa", "hamid")
-  // ⇒ List.of(new Person("musa", 4), new Person("hamid", 5))
-  )
-
-(defun repl/jshell/read (a-pretty-printed-record)
-  "Reads executable Java code from pretty-printed record representations.
-
-If called interactively via M-x, copies executable Java to clipboard; otherwise
-returns the executable Java as a string.
-
-Using PEGs: https://elpa.gnu.org/packages/peg.html"
-  (interactive "sJava Read: ")
-  (let ((result (thread-last
-                  a-pretty-printed-record ;; Has shape “type name = value”.
-                  (s-replace-regexp "^[^ ]* [^ ]* = " "")
-                  rdd--parse-pretty-printed-java
-                  rdd--lisp-to-java)))
-    (if (called-interactively-p 'interactive)
-        (progn (kill-new result)
-               (message "Copied: %s" result))
-      (insert "\n")
-      result)))
-
-;; TODO: Add to java init/prologue
-;; JShell has a truncation for outputs exceeding 1k chars, let's increase the threshold to size 40k chars.
-;; /set truncation 40000
-;;
-;; TODO: Add to docs of repl-driven-development-current--output, that if you see “...” then chances are that you have
-;; exceeded the truncation threshold for your repl. Consider increasing the threshold, if possible, and add it to the :init/:prologue of your repl.
-;; See Java repl for an example.
-
-(use-package peg)
-(bind-key
- [M-p]
- (defun rdd--parse-pretty-printed-java (&optional str)
-   "If called interactively, run the parser at point.
-If called from Lisp, run the parse on the given string.
-
-Return a list:
-- It is has a single item, denoting a non-record value.
-- Or, it has multiple items. The car is the record name,
-and the cdr are the arguments.
-
-TODO: Change the logic so that if called interactively,
-then prompt the user for the given string.
-
-⦉𝒯𝒾𝓅⦊ When actually implementing this parser, I altered the logic
-slightly: When called interactively, it runs the parse at
-point. I then enclosed the defun in (bind-key [M-p] ⋯). Now I
-could quickly iterate on the parser: Make a small modification to
-the parser, have one of my test cases in the same buffer, and
-invoke M-p to parse it.  This let me see “how far” the parsing
-got and where it got stuck.
-"
-   (interactive)
-   (with-peg-rules ((expr (or structured-expr literal))
-                    (structured-expr (or map list record number))
-                    (list (or empty-list non-empty-list))
-                    (empty-list "[]" `(val -- (list :type :list :items nil)))
-                    (non-empty-list "[" expr (list (* "," (* [space]) structured-expr)) "]" `(first rest -- (list :type :list :items (cons first rest))))
-                    (map "{" (list (opt payloads)) "}" `(entries -- (cons :type (cons :map (cons :entries entries)))))
-                    (literal (substring (* [a-z A-Z 0-9 " \"-;!#%&'*+,./:;<=>?@[]^_`{|}~"])))
-                    (record identifier "[" (opt payloads) "]"
-                            `(k vs -- (list :type :record :name (plist-get k :value) :fields vs)))
-                    (identifier (substring (+ (or [alpha] comma "-" [space]))) `(val -- (list :type :string :value val)))
-                    (comma    "," (not (and [space] (+ [alpha]) "=")))
-                    (payloads (list payload (* (and "," (opt (+ [space])) payload))))
-                    (payload identifier "=" (or structured-expr identifier) `(k v -- (list :name (plist-get k :value) :value v)))
-                    (number (substring (and (+ [digit]) (opt (and "." (+ [digit]))))) `(val -- (list :type :number :value (string-to-number val)))))
-     (if (called-interactively-p)
-         (peg-run (peg expr) #'ignore (lambda (args) (insert " ;; ⇒ " (pp-to-string (car (funcall args))))))
-       (with-temp-buffer
-         (insert str)
-         (goto-char (point-min))
-         (let (result)
-           ;; peg-run ⇒ Parse with matcher at point, & run success|failure function.
-           (peg-run (peg expr) #'ignore (lambda (args) (setq result (car (funcall args)))))
-           result))))))
-
-(defun rdd--lisp-to-java (data)
-  (s-replace-regexp
-   "\n\\(,\\|)\\)" "\\1"
-   (pcase (plist-get data :type)
-     (:number (format "%s" (plist-get data :value)))
-     (:string (-let [it (plist-get data :value)] (if (equal it "null") it (pp-to-string it)))) ;; Escapes quotes.
-     (:list (format "List.of(%s)" (s-join ", " (--map (rdd--lisp-to-java it) (plist-get data :items)))))
-     ;; Invariant: A :record type have :value in all fields.
-     (:record (format "new %s(%s)" (plist-get data :name) (s-join ", " (--map (rdd--lisp-to-java (plist-get it :value)) (plist-get data :fields)))))
-     (:map (format "Map.of(%s)" (s-join ", " (--map (format "%s, %s" (plist-get it :name) (rdd--lisp-to-java (plist-get it :value))) (plist-get data :entries)))))
-     (else (error "lisp-to-java: Unknown data type “%s”" else)))))
-
-(progn ;; ert-deftest java-read-works-as-intended ()
-  (defun java-read (string)
-    (rdd--lisp-to-java (rdd--parse-pretty-printed-java string)))
-  ;; Non-record *values* are read literally
-  (should (equal (java-read "123") "123"))
-  ;; Records with a single field become constructor calls on that field: As a number (if possible), otherwise as a string.
-  (should (equal (java-read  "Person[name=Musa]") "new Person(\"Musa\")"))
-  (should (equal (java-read  "Person[age=31.2]") "new Person(31.2)"))
-  ;; Record payloads can include spaces and commas
-  (should (equal (java-read "Person[name=Alhassy, Musa, the first, age=thirty and one, years=31]")
-                 "new Person(\"Alhassy, Musa, the first\", \"thirty and one\", 31)"))
-  ;; We can read nested records.
-  ;; For arbitrarly deep nesting, we cannot use regular expressions, and so we need to move to using PEGs.
-  (should (equal (java-read  "Person[name=Musa, child=Person[name=Yusuf]]") "new Person(\"Musa\", new Person(\"Yusuf\"))"))
-  (should (equal (java-read  "Person[name=Musa, child=Person[name=Yusuf], child=Person[name=Zaynab]]")
-                 "new Person(\"Musa\", new Person(\"Yusuf\"), new Person(\"Zaynab\"))"))
-  (should (equal (java-read  "Person[name=Hamid, child=Person[name=Musa, child=Person[name=Yusuf]]]")
-                 "new Person(\"Hamid\", new Person(\"Musa\", new Person(\"Yusuf\")))"))
-  (should (equal (java-read "Person[name=hamid, child=Person[name=musa, age=12]]") "new Person(\"hamid\", new Person(\"musa\", 12))"))
-  ;; We can read lists.
-  (should (equal (java-read "[1, 2, 3]") "List.of(1, 2, 3)"))
-  (should (equal (java-read "[]") "List.of()"))
-  (should (equal (java-read "[Person[name=Jasim, age=72, zindex=0.5], Person[name=Kathy, age=82, zindex=2.78], Person[name=Musa, age=31, zindex=3]]")
-                 "List.of(new Person(\"Jasim\", 72, 0.5), new Person(\"Kathy\", 82, 2.78), new Person(\"Musa\", 31, 3))"))
-  (should (equal (java-read "[[1], [2, 3], [4, 5, 6]]") "List.of(List.of(1), List.of(2, 3), List.of(4, 5, 6))"))
-  ;; We can mix the various structures (records & lists)
-  ;; TODO: (java-read "Person[children=[]]")
-  (should (equal (java-read "A[a=[B[b=[C[c=D[d=[E[e=hello]]]]]]]]")
-                 "new A(List.of(new B(List.of(new C(new D(List.of(new E(\"hello\"))))))))"))
-  ;; Null is known
-  (should (equal (java-read "Person[name=null]") "new Person(null)"))
-  ;; Maps are known
-  (should (equal (java-read "{}") "Map.of()"))
-  (should (equal (java-read "{a=1, b=2, c=3}") "Map.of(a, 1, b, 2, c, 3)"))
-  (should (equal (java-read "{a=Alice, b=Bob, c=Kathy}") "Map.of(a, \"Alice\", b, \"Bob\", c, \"Kathy\")"))
-  ;; TODO: Allow numbers as keys.
-  ;; {1=hello, 2=world}
-  ;; TODO: (java-read "Person[]")
-  )
-#+end_src
-#+begin_src emacs-lisp
-;; Other DSL rewrites I want NOW
-
-(cl-defun jRead/rewrite (java-code)
-  (interactive "s")
-  (--> java-code
-     (loop for (rx replacement) in jRead-defs
-           do (setq it (s-replace-regexp rx replacement it))
-           finally return it)
-     ;; (my/format-code #'java-mode it) ;; TODO: Not actually running; async issue probably.
-     kill-new
-     (yank)))
-
-;; Other DSL rewrites I want NOW
-(defvar jRead-defs nil
-  "List of regexp-to-replacement pairs to apply to Java code.")
-
-;; (add-to-list 'jRead-defs '("new X(List.of(new Y(\\(.*?\\))))" "xy(\\1)"))
-
-(defun my/format-code (language-mode text)
-  "Format TEXT according to the given LANGUAGE-MODE.
-
-Example:
-
- ;; The following results in the standard 5-line convention for an if-then-else clause in Java
- (my/format-code #'java-mode \"if(true) { System.out.println(2); } else { System.out.println(3); } \")
-
-The tool needed to do the formatting is specified in
-`format-all-default-formatters', so ensure it's installed!
-"
-  (with-temp-buffer
-    ;; (java-mode)
-    (funcall language-mode)
-    ;; Don't prompt me which formatter to use; just use the defaults.
-    ;; For example, for Java, I need to: brew install clang-format
-    (setq format-all-formatters format-all-default-formatters)
-    ;; (insert "cmd(new TclCat(List.of(new TclAtom(\"cmd4\"))), new TclQuote(List.of(new TclCat(List.of(new TclAtom(\"arg5\"))))), new TclCat(List.of(new TclAtom(\"$arg6\"))), new TclBrace(List.of(new TclCat(List.of(new TclAtom(\"a\"))), new TclCat(List.of(new TclAtom(\"r\"))), new TclCat(List.of(new TclAtom(\"g\"))), new TclCat(List.of(new TclAtom(\"7\"))))))")
-    (insert text)
-    (format-all-buffer)
-    (buffer-substring-no-properties (point-min) (point-max))))
 #+end_src
 
 ** Adding support for “//!use” & “//!omit” top level repl commands
