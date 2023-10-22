@@ -2,9 +2,6 @@
     (setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
-(setq fill-column 80)
-
-
 ;; [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:5]]
     ;; Clicking on a URL, or running M-x browse-url, should open the URL *within* Emacs.
     (setq browse-url-browser-function #'xwidget-webkit-browse-url)
@@ -84,16 +81,16 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-
+  
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -442,6 +439,7 @@ Is replaced by:
          (iconised-title
           (concat
            (when icon-name
+                 (require 'all-the-icons)
              (concat
               (all-the-icons-faicon (format "%s" icon-name) :face icon-face :height 1.0 :v-adjust -0.1)
               " "))
@@ -1265,7 +1263,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (line-number-mode   -1)
 
 ;; Likewise, no need to show me “Top∣Mid∣Bot” in the modeline.
-(setq mode-line-percent-position nil)
+(setq-default mode-line-percent-position nil)
 
 ;; (setq display-line-numbers-width-start t)
 ;; (global-display-line-numbers-mode      t)
@@ -1985,7 +1983,7 @@ the character 𝓍 before and after the selected text."
 ;; Formatting Text:1 ends here
 
 ;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:1]]
-(setq-default fill-column 120         ;; Let's avoid going over 120 columns
+(setq-default fill-column 80          ;; Let's avoid going over 80 columns
               truncate-lines nil      ;; I never want to scroll horizontally
               indent-tabs-mode nil)   ;; Use spaces instead of tabs
 ;; Fill-mode ---Word Wrapping:1 ends here
@@ -2025,7 +2023,7 @@ the character 𝓍 before and after the selected text."
 ;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
 
 ;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:3]]
-(setq ispell-program-name "/opt/homebrew/bin/aspell")
+(setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
 (setq ispell-dictionary "en_GB") ;; set the default dictionary
 ;; Fix spelling as you type ---thesaurus & dictionary too!:3 ends here
 
@@ -2451,101 +2449,100 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 (load-file "~/Desktop/work.el")
 ;; loading work.el:1 ends here
 
-;; [[file:init.org::*RDD][RDD:1]]
-(setq enable-local-variables :safe)
-
+;; [[file:init.org::*get the pkg][get the pkg:1]]
 (use-package repl-driven-development)
-(setq repl-driven-development/echo-duration 10) ;; seconds
+(setq repl-driven-development-echo-duration 10)
+;; get the pkg:1 ends here
 
+;; [[file:init.org::*terminal][terminal:1]]
 ;; Sometimes I see a bunch of shell incantations in a README or something and I'd like to execute them right there and then,
 ;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
 ;; shell commands from anywhere.
-;; TODO: Docs for C-x C-t look super ugly.
-(repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
-(when nil ;; example
-NAME=musa
-echo hello $NAME
-echo hello $CLASSPATH
-)
+;; (repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
+(repl-driven-development [C-x C-t] terminal)
+;; terminal:1 ends here
 
-
+;; [[file:init.org::*jshell][jshell:1]]
 ;; Set “C­x C­j” to evaluate Java code in a background REPL.
-(repl-driven-development [C-x C-j]
-                         ;; enable assertions, and add everything installed, via mvn, in scope; and imports all Java SE packages by default!
-                         (format "jshell --class-path %s --enable-preview -R -ea"
-                                  (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
-                         :prompt "jshell>")
-;; Do not use the “--startup JAVASE” option.
-;;
-;; List.of(1)  | Error:
-;; |  reference to List is ambiguous
-;; |    both interface java.util.List in java.util and class java.awt.List in java.awt match
-;; |  List.of(1)
-;; |  ^--^
-;;
+(repl-driven-development
+ [C-x C-j]
+ ;; enable assertions, and add everything installed, via `mvn', in scope.
+ (format "jshell --class-path %s --enable-preview -R -ea --feedback silent"
+         (concat ".:" (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f 2>/dev/null | tr '\n' ':'")))
+ :prompt "jshell>"
+ :init "\n /set mode EmacsJavaMode normal -command
+        \n /set format EmacsJavaMode display \"{pre}added import {name}{post}\" import-added
+        \n /set format EmacsJavaMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
+        \n /set format EmacsJavaMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
+        \n /set truncation EmacsJavaMode 40000
+        \n /set feedback EmacsJavaMode
+        \n System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
+;; TODO [Truncation; Low] https://github.com/xiongtx/eros/blob/master/eros.el#L202
+;; jshell:1 ends here
 
+;; [[file:init.org::*mvn][mvn:1]]
 (defun mvn (groupId artifactId)
   "Quickly install a library from Maven Central."
-      (async-shell-command (format "mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -Dartifact=%s:%s:LATEST:jar:sources" groupId  artifactId)))
-(when nil ;; Example use of C-x C-j
+  (async-shell-command (format "mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -Dartifact=%s:%s:LATEST:jar:sources" groupId  artifactId)))
 
-  1 + 22
+(when nil
+  ⨾⨾ Example use of `mvn`
 
-  TestNG is a testing framework inspired from JUnit and NUnit but introducing some new functionalities that make it more powerful and easier to use. It supports test configured by annotations, data-driven testing, parametric tests, etc.
-(mvn "org.testng" "testng")
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  ;; First confirm C-x C-j works as intended
+  IntStream.range(0, 15).mapToObj(i -> i % 15 == 0 ? "FizzBuzz" : i % 3 == 0 ? "Fizz" : i % 5 == 0 ? "Buzz" : String.valueOf(i)).toList()
 
-import org.testng.*;
- /imports  // Now can see org.testng at the end of the list
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  (mvn "org.antlr" "antlr4") ;; C-x C-e
+  ;; Now re-start the Java C-x C-j repl via a C-x C-e (lame! not ergonomic!)
+  ;; Now check that you have access to antrl in your repl by importing it and looking at one of its classes:
+  ;; ⦃ jshell --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar ⦄
+  import org.antlr.v4.runtime.*;
+  CommonTokenStream.class
+  ;; NOTE: This is the runtime, to use the actual tool:
+  java -jar /Users/musa/.m2/repository/org/antlr/antlr4/4.13.0/antlr4-4.13.0-complete.jar
 
-java -jar /Users/musa/.m2/repository/org/antlr/antlr4/4.13.0/antlr4-4.13.0-complete.jar
+  ;; Alternatively,
+  ;; $ jshell
+  ;; > var x = 5
+  ;; > import org.antlr.v4.runtime.*;  // CRASHES since antlr is not in scope
+  ;; > /reset --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar
+  ;; > import org.antlr.v4.runtime.*;  // WORKS, yay
+  ;; > x // CRASHES, not in scope
 
-(mvn "org.antlr" "antlr4") ;; C-x C-e
-;; Now re-start the Java C-x C-j repl via a C-x C-e (lame! not ergonomic!)
-;; Now check that you have access to antrl in your repl by importing it and looking at one of its classes:
-;; ⦃ jshell --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar ⦄
-import org.antlr.v4.runtime.*;
-CommonTokenStream.class
-;; MA: This is the runtime, I want the actual tool!
-;;
-;;
-;; MA: to be ergonomic, make “C-u -1 C-x C-j” restart the repl, by *default* this means kill the repl process and restart it.
-;;
-;; MA: TODO: For working with Lombok annotations, use the jshell `/reset --class-path` command to include the lombok compiled file into
-;; the current Jshell session.
-;;
-;; See: https://stackoverflow.com/questions/74084364/how-to-use-lombok-in-jshell
-;; For example,
-;;
-;; $ jshell
-;; > var x = 5
-;; > import org.antlr.v4.runtime.*;  // CRASHES since antlr is not in scope
-;; > /reset --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar
-;; > import org.antlr.v4.runtime.*;  // WORKS, yay
-;; > x // CRASHES, not in scope
-;;
-;; (mvn "org.projectlombok" "lombok")
-;; import lombok.*;
-;; @lombok.Data class Test { private String name; }
-;; new Test().equals(new Test())
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  import org.apache.commons.lang3.StringUtils;
+  StringUtils.class;
+  /imports  // JShell command to list all imports, it now contains apache!
 
-import org.apache.commons.lang3.StringUtils;
-StringUtils.class;
-/imports  // JShell command to list all imports, it now contains apache!
+  // Guava is the Google core libraries for Java
+  import com.google.common.collect.ImmutableMap;
 
+  ImmutableMap.of(1, "A", 2, "B") // ⇒ {1=A, 2=B}
 
-// Guava is the Google core libraries for Java
-import com.google.common.collect.ImmutableMap;
+  ;; (mvn "com.google.code.gson" "gson")
+  // Then C-x C-e to update the repl definition of C-x C-j to include the updated gson library.
+  import com.google.gson.*;
+  String json = new Gson().toJson(Map.of("me", List.of(1, 2,3), "you", Map.of("Love", "Lisp", "Hate", "Verbosity")))
 
-ImmutableMap.of(1, "A", 2, "B") // ⇒ {1=A, 2=B}
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  ;; TestNG is a testing framework; supporting tests configured by annotations, data-driven testing, parametric tests, etc.
+  (mvn "org.testng" "testng")
+  import org.testng.*;
+  /imports  // Now can see org.testng at the end of the list
 
-// (mvn "com.google.code.gson" "gson")
-// Then C-x C-e to update the repl definition of C-x C-j to include the updated gson library.
-import com.google.gson.*;
-String json = new Gson().toJson(Map.of("me", List.of(1, 2,3), "you", Map.of("Love", "Lisp", "Hate", "Verbosity")))
-
-;; End examples
-)
-;; RDD:1 ends here
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  ;; TODO[Low]: For working with Lombok annotations, use the jshell `/reset --class-path` command to include the lombok compiled file into
+  ;; the current Jshell session.
+  ;;
+  ;; See: https://stackoverflow.com/questions/74084364/how-to-use-lombok-in-jshell
+  ;;
+  ;; (mvn "org.projectlombok" "lombok")
+  ;; import lombok.*;
+  ;; @lombok.Data class Test { private String name; }
+  ;; new Test().equals(new Test())
+  )
+;; mvn:1 ends here
 
 ;; [[file:init.org::*Adding support for “/!use” & “/!omit” top level repl commands][Adding support for “//!use” & “//!omit” top level repl commands:1]]
 ;; Adding support for “//!use” & “//!omit” top level repl commands
@@ -2605,111 +2602,17 @@ Where directory hierarchy com/x/y/z denotes a Java package under the above //!us
     (repl/jshell (point-min) (point-max))))
 ;; Adding support for “//!use” & “//!omit” top level repl commands:1 ends here
 
-;; [[file:init.org::*jRead][jRead:1]]
-(add-hook 'repl-driven-development/output-hook
-          (lambda (output)
-            (when (equal current-prefix-arg '(4)) ;; insertion prefix
-              (insert "\n")
-              (insert (jRead (s-replace-regexp  "^.* ==> " "" repl-driven-development-current--output)))
-              ;; Disable default insertion behaviour.
-              (setq current-prefix-arg nil))
-            output))
-;;
-;;
-;; TODO: Add to java init/prologue
-;; JShell has a truncation for outputs exceeding 1k chars, let's increase the threshold to size 40k chars.
-;; /set truncation 40000
-;;
-;; TODO: Add to docs of repl-driven-development-current--output, that if you see “...” then chances are that you have
-;; exceeded the truncation threshold for your repl. Consider increasing the threshold, if possible, and add it to the :init/:prologue of your repl.
-;;
-;;
-;; record Person(String name, int age, double zindex) { }
-;; var people = List.of(new Person("Jasim", 72, .5), new Person("Kathy", 82, 2.78), new Person("Al-hassy, Musa", 31, 1 + 2))
-;; people // Press C-u C-x C-j to get the executable Java represenation inserted
-(cl-defun jRead (a-pretty-printed-record--diff)
-  "Reads executable Java code from pretty-printed record representations.
+;; [[file:init.org::*Don't show updating/installation shell buffers][Don't show updating/installation shell buffers:1]]
+;; By default, say, (async-shell-command "date") produces a buffer
+;; with the result. In general, such commands in my init.el are for
+;; updating/installing things to make sure I have the same up-to-date
+;; setup where-ever I use my Emacs. As such, I don't need to see such buffers.
+(add-to-list 'display-buffer-alist
+             '("\\*Async Shell Command\\*.*" display-buffer-no-window))
 
-If called interactively, copies executable Java to clipboard; otherwise
-returns the executable Java as a string."
-  (interactive "sJava Read: ")
-  (let* ((sep (format " ⟨%s⟩ " (gensym)))
-         (rx-sep (regexp-quote sep))
-         (result
-          (-->
-           a-pretty-printed-record--diff
-           ;; "[Person[name=Jasim, age=72, zindex=.5], Person[name=Kathy, age=82, zindex=2.78], Person[name=Musa, age=31, zindex=3]]"
-           ;; "Person[name=Al-hassy, Musa, age=thirty and one, years=31]"
-           ;; Identify field delimiters from commas that may be present in the payloads.
-           ;; Drop all field names from pretty-printed records: `RecordName[fieldName=value goes to `RecordName[value]`
-           (s-replace-regexp ", [^ \\[]*=" (concat sep sep) it) ;; ⇒⇒⇒ "Person[name=Al-hassy, Musa ⟨g760⟩  ⟨g760⟩ thirty and one ⟨g760⟩  ⟨g760⟩ 31]"
-           ;; Replace `RecordName[value]` with `new RecordName(value]`
-           (s-replace-regexp "\\([A-Za-z]+\\)\\[[^ ]*=" (concat "new \\1(" sep) it :lower-case) ;; ⇒⇒⇒ "new Person( ⟨g761⟩ Al-hassy, Musa ⟨g761⟩  ⟨g761⟩ thirty and one ⟨g761⟩  ⟨g761⟩ 31]"
-           ;; All remaining `]` can now be replaced by `)`.
-           (s-replace-regexp "\\]" (concat sep ")") it) ;; ⇒⇒⇒ "new Person( ⟨g779⟩ Al-hassy, Musa ⟨g779⟩  ⟨g779⟩ thirty and one ⟨g779⟩  ⟨g779⟩ 31 ⟨g779⟩ )"
-           ;; As a precautionary measure, let's enclose all arguments in quotes
-           (s-replace-regexp (format "%s\\(.*?\\)%s" rx-sep rx-sep) ", \"\\1\"" it) ;; ⇒⇒⇒ "new Person(, \"Al-hassy, Musa\", \"thirty and one\", \"31\")"
-           ;; Remove quotes around numbers
-           (s-replace-regexp "\"\\([0-9.]+.?[0-9.]*\\)\"" "\\1" it) ;; ⇒⇒⇒ "new Person(,\"Al-hassy, Musa\",\"thirty and one\",31)"
-           ;; Remove malformed “(,”
-           (s-replace-regexp "(, " "(" it)
-           (s-replace-regexp (concat sep ")") ")" it)
-           ;; All remaining `[` are now `List.of` pretty-printings
-           (s-replace-regexp "\\[" "List.of(" it :lower-case))))
-    (if (called-interactively-p)
-        (progn (kill-new result)
-               (message "Copied: %s" result))
-      result)))
-
-(ert-deftest jRead-works-as-intended ()
-  (should (equal (jRead "1 + 2") "1 + 2"))
-  (should (equal (jRead  "Person[name=Musa]") "new Person(\"Musa\")"))
-  (should (equal (jRead "Person[name=Al-hassy, Musa, age=thirty and one, years=31]") "new Person(\"Al-hassy, Musa\", \"thirty and one\", 31)"))
-  (should (equal (jRead "[Person[name=Jasim, age=72, zindex=.5], Person[name=Kathy, age=82, zindex=2.78], Person[name=Musa, age=31, zindex=3]]")
-                 "List.of(new Person(\"Jasim\", 72, .5), new Person(\"Kathy\", 82, 2.78), new Person(\"Musa\", 31, 3))")))
-;; jRead:1 ends here
-
-;; [[file:init.org::*jRead][jRead:2]]
-;; Other DSL rewrites I want NOW
-
-(cl-defun jRead/rewrite (java-code)
-  (interactive "s")
-  (--> java-code
-     (loop for (rx replacement) in jRead-defs
-           do (setq it (s-replace-regexp rx replacement it))
-           finally return it)
-     ;; (my/format-code #'java-mode it) ;; TODO: Not actually running; async issue probably.
-     kill-new
-     (yank)))
-
-;; Other DSL rewrites I want NOW
-(defvar jRead-defs nil
-  "List of regexp-to-replacement pairs to apply to Java code.")
-
-;; (add-to-list 'jRead-defs '("new X(List.of(new Y(\\(.*?\\))))" "xy(\\1)"))
-
-(defun my/format-code (language-mode text)
-  "Format TEXT according to the given LANGUAGE-MODE.
-
-Example:
-
- ;; The following results in the standard 5-line convention for an if-then-else clause in Java
- (my/format-code #'java-mode \"if(true) { System.out.println(2); } else { System.out.println(3); } \")
-
-The tool needed to do the formatting is specified in
-`format-all-default-formatters', so ensure it's installed!
-"
-  (with-temp-buffer
-    ;; (java-mode)
-    (funcall language-mode)
-    ;; Don't prompt me which formatter to use; just use the defaults.
-    ;; For example, for Java, I need to: brew install clang-format
-    (setq format-all-formatters format-all-default-formatters)
-    ;; (insert "cmd(new TclCat(List.of(new TclAtom(\"cmd4\"))), new TclQuote(List.of(new TclCat(List.of(new TclAtom(\"arg5\"))))), new TclCat(List.of(new TclAtom(\"$arg6\"))), new TclBrace(List.of(new TclCat(List.of(new TclAtom(\"a\"))), new TclCat(List.of(new TclAtom(\"r\"))), new TclCat(List.of(new TclAtom(\"g\"))), new TclCat(List.of(new TclAtom(\"7\"))))))")
-    (insert text)
-    (format-all-buffer)
-    (buffer-substring-no-properties (point-min) (point-max))))
-;; jRead:2 ends here
+;; For an approach that does not inhibit async-shell-command this way,
+;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
+;; Don't show updating/installation shell buffers:1 ends here
 
 ;; [[file:init.org::*Programming][Programming:1]]
 (when my/work-machine?

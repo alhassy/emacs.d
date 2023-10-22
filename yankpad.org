@@ -29,8 +29,73 @@ $0
 $0
 #+end_src
 
+** s_plantuml: src for plantuml
+#+begin_src plantuml
+$0
+#+end_src
+
 ** s_emacs-lisp: src for emacs-lisp
 #+begin_src emacs-lisp
+$0
+#+end_src
+
+** s_shell: src for shell
+#+begin_src shell
+$0
+#+end_src
+
+** s_python: src for python
+#+begin_src python
+$0
+#+end_src
+
+** s_haskell: src for haskell
+#+begin_src haskell
+$0
+#+end_src
+
+** s_ruby: src for ruby
+#+begin_src ruby
+$0
+#+end_src
+
+** s_ocaml: src for ocaml
+#+begin_src ocaml
+$0
+#+end_src
+
+** s_dot: src for dot
+#+begin_src dot
+$0
+#+end_src
+
+** s_latex: src for latex
+#+begin_src latex
+$0
+#+end_src
+
+** s_org: src for org
+#+begin_src org
+$0
+#+end_src
+
+** s_js: src for js
+#+begin_src js
+$0
+#+end_src
+
+** s_css: src for css
+#+begin_src css
+$0
+#+end_src
+
+** s_sqlite: src for sqlite
+#+begin_src sqlite
+$0
+#+end_src
+
+** s_C: src for C
+#+begin_src C
 $0
 #+end_src
 
@@ -40,8 +105,34 @@ src_org[:exports code]{$1} $0
 src_agda2[:exports code]{$1} $0
 ** is_any: inline source for any
 src_any[:exports code]{$1} $0
+** is_plantuml: inline source for plantuml
+src_plantuml[:exports code]{$1} $0
 ** is_emacs-lisp: inline source for emacs-lisp
 src_emacs-lisp[:exports code]{$1} $0
+** is_shell: inline source for shell
+src_shell[:exports code]{$1} $0
+** is_python: inline source for python
+src_python[:exports code]{$1} $0
+** is_haskell: inline source for haskell
+src_haskell[:exports code]{$1} $0
+** is_ruby: inline source for ruby
+src_ruby[:exports code]{$1} $0
+** is_ocaml: inline source for ocaml
+src_ocaml[:exports code]{$1} $0
+** is_dot: inline source for dot
+src_dot[:exports code]{$1} $0
+** is_latex: inline source for latex
+src_latex[:exports code]{$1} $0
+** is_org: inline source for org
+src_org[:exports code]{$1} $0
+** is_js: inline source for js
+src_js[:exports code]{$1} $0
+** is_css: inline source for css
+src_css[:exports code]{$1} $0
+** is_sqlite: inline source for sqlite
+src_sqlite[:exports code]{$1} $0
+** is_C: inline source for C
+src_C[:exports code]{$1} $0
 ** e_org: example for org
 #+begin_example org
 $0
@@ -57,8 +148,73 @@ $0
 $0
 #+end_example
 
+** e_plantuml: example for plantuml
+#+begin_example plantuml
+$0
+#+end_example
+
 ** e_emacs-lisp: example for emacs-lisp
 #+begin_example emacs-lisp
+$0
+#+end_example
+
+** e_shell: example for shell
+#+begin_example shell
+$0
+#+end_example
+
+** e_python: example for python
+#+begin_example python
+$0
+#+end_example
+
+** e_haskell: example for haskell
+#+begin_example haskell
+$0
+#+end_example
+
+** e_ruby: example for ruby
+#+begin_example ruby
+$0
+#+end_example
+
+** e_ocaml: example for ocaml
+#+begin_example ocaml
+$0
+#+end_example
+
+** e_dot: example for dot
+#+begin_example dot
+$0
+#+end_example
+
+** e_latex: example for latex
+#+begin_example latex
+$0
+#+end_example
+
+** e_org: example for org
+#+begin_example org
+$0
+#+end_example
+
+** e_js: example for js
+#+begin_example js
+$0
+#+end_example
+
+** e_css: example for css
+#+begin_example css
+$0
+#+end_example
+
+** e_sqlite: example for sqlite
+#+begin_example sqlite
+$0
+#+end_example
+
+** e_C: example for C
+#+begin_example C
 $0
 #+end_example
 

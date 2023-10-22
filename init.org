@@ -13,9 +13,6 @@
 #+property: header-args :tangle init.el :comments link :results none
 #+export_file_name: index
 
-(setq fill-column 80)
-
-
 * Abstract                                                           :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Abstract
@@ -7891,7 +7888,7 @@ In fill mode, when you type past the end of a line, Emacs automatically starts a
 paragraphs. This is a powerful form of “word wrap”.
 
 #+BEGIN_SRC emacs-lisp
-(setq-default fill-column 120         ;; Let's avoid going over 120 columns
+(setq-default fill-column 80          ;; Let's avoid going over 80 columns
               truncate-lines nil      ;; I never want to scroll horizontally
               indent-tabs-mode nil)   ;; Use spaces instead of tabs
 #+END_SRC
@@ -7976,7 +7973,7 @@ that Emacs' ~ispell~ is the interface to such a command line spelling utility.
 # See available dictionary via ~aspell dicts~.
 
 #+BEGIN_SRC emacs-lisp
-(setq ispell-program-name "/opt/homebrew/bin/aspell")
+(setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
 (setq ispell-dictionary "en_GB") ;; set the default dictionary
 #+END_SRC
 
