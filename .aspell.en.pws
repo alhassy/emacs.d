@@ -1,4 +1,4 @@
-personal_ws-1.1 en 346 
+personal_ws-1.1 en 351 
 ACSII
 AST
 ASTs
@@ -66,6 +66,7 @@ Musa's
 Nasriyah
 Neato
 Netmask
+Occultation
 Orchestrator
 PackageFormer
 PackageFormer's
@@ -73,6 +74,7 @@ Parametricity
 Prepend
 Procedurally
 Prolog
+Protobuf
 Protobufs
 Pseudocode
 Pushout
@@ -141,6 +143,7 @@ combinators
 compositional
 computability
 computable
+concat
 connectedness
 continous
 contrapositive
@@ -169,6 +172,7 @@ disjunction
 disjunctions
 distributivity
 dualised
+emacs
 endofunctors
 equalities
 equational
@@ -284,6 +288,7 @@ reachability
 rebased
 redistributable
 reduct
+repl
 representable
 requireds
 reusability
