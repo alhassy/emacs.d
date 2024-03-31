@@ -1193,7 +1193,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   ;; Only run the following when we're in GUI mode;
   ;; i.e., don't run it in Github Actions when testing.
   (if (not my/personal-machine?)
-      (find-file "/Users/musa/Google Drive/My Drive/notes.org")) ;; Org-journal for work
+      (find-file "~/Documents/notes.org")) ;; Org-journal for work
   (find-file "~/Dropbox/todo.org")
   ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
   ;; which is a GPG file and so requires passphrase before other things can load.
@@ -2278,58 +2278,6 @@ the character 𝓍 before and after the selected text."
 ;; Can be used to export a file into a coloured html.
 ;; HTML ⇐ Org-mode:1 ends here
 
-;; [[file:init.org::*Ensuring Useful HTML Anchors][Ensuring Useful HTML Anchors:1]]
-(defun my/ensure-headline-ids (&rest _)
-  "Org trees without a
-
-All non-alphanumeric characters are cleverly replaced with ‘-’.
-
-If multiple trees end-up with the same id property, issue a
-message and undo any property insertion thus far.
-
-E.g., ↯ We'll go on a ∀∃⇅ adventure
-   ↦  We'll-go-on-a-adventure
-"
-  (interactive)
-  (let ((ids))
-    (org-map-entries
-     (lambda ()
-       (org-with-point-at (point)
-         (let ((id (org-entry-get nil "CUSTOM_ID")))
-           (unless id
-             (thread-last (nth 4 (org-heading-components))
-               (s-replace-regexp "[^[:alnum:]']" "-")
-               (s-replace-regexp "-+" "-")
-               (s-chop-prefix "-")
-               (s-chop-suffix "-")
-               (setq id))
-             (if (not (member id ids))
-                 (push id ids)
-               (message-box "Oh no, a repeated id!\n\n\t%s" id)
-               (undo)
-               (setq quit-flag t))
-             (org-entry-put nil "CUSTOM_ID" id))))))))
-
-;; Whenever html & md export happens, ensure we have headline ids.
-(advice-add 'org-html-export-to-html   :before 'my/ensure-headline-ids)
-(advice-add 'org-md-export-to-markdown :before 'my/ensure-headline-ids)
-;; Ensuring Useful HTML Anchors:1 ends here
-
-;; [[file:init.org::*Clickable Headlines][Clickable Headlines:1]]
-;; Src: https://writepermission.com/org-blogging-clickable-headlines.html
-(setq org-html-format-headline-function
-      (lambda (todo todo-type priority text tags info)
-        "Format a headline with a link to itself."
-        (let* ((headline (get-text-property 0 :parent text))
-               (id (or (org-element-property :CUSTOM_ID headline)
-                       (ignore-errors (org-export-get-reference headline info))
-                       (org-element-property :ID headline)))
-               (link (if id
-                         (format "<a href=\"#%s\">%s</a>" id text)
-                       text)))
-          (org-html-format-headline-default-function todo todo-type priority link tags info))))
-;; Clickable Headlines:1 ends here
-
 ;; [[file:init.org::*HTML “Folded Drawers”][HTML “Folded Drawers”:1]]
 (defun my/org-drawer-format (name contents)
   "Export to HTML the drawers named with prefix ‘fold_’, ignoring case.
@@ -2624,6 +2572,25 @@ Where directory hierarchy com/x/y/z denotes a Java package under the above //!us
 
   :bind (("s-r" . #'er/expand-region)))
 ;; Sleek Semantic Selection:1 ends here
+
+;; [[file:init.org::*my/work-links][my/work-links:1]]
+ (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
+   "Given a link of TYPE with a URL, produce the correct org-link.
+
+ EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
+ This is how the link looks upon export."
+   `(org-link-set-parameters
+    ,type
+    :follow (lambda (label) (browse-url (format ,url label)))
+    :export (lambda (label description backend)
+              (-let [full-url (format ,url label)]
+                (pcase backend
+                  ('html  (format "<a href=\"%s\">%s</a>" full-url (-let [type ,type] ,export-display)))
+                  ('latex (format "\\href{%s}{FM-%s}" full-url label))
+                  (_  full-url))))
+    :face '(:foreground "green" :weight bold
+            :underline "blue" :overline "blue")))
+;; my/work-links:1 ends here
 
 ;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
 ;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html

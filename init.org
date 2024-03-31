@@ -4578,7 +4578,7 @@ my to-do list and my init file, side-by-side.
   ;; Only run the following when we're in GUI mode;
   ;; i.e., don't run it in Github Actions when testing.
   (if (not my/personal-machine?)
-      (find-file "/Users/musa/Google Drive/My Drive/notes.org")) ;; Org-journal for work
+      (find-file "~/Documents/notes.org")) ;; Org-journal for work
   (find-file "~/Dropbox/todo.org")
   ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
   ;; which is a GPG file and so requires passphrase before other things can load.
@@ -9795,36 +9795,6 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 #+end_src
 #+end_details
 
-*** my/work-links
-:PROPERTIES:
-:CUSTOM_ID: my-work-links
-:END:
-
-In my private ~work.el~ file, I have declarations of the form ~(my/work-links
-"REPO" "https://⟨COMPANY⟩.atlassian.net/browse/REPO-%s")~ so that I can write
-things like ~REPO:1234~ to get a nice green bold link in Org-mode that will take
-me to that Jira link. I also have similar links to take me to the Github
-repositories, backlogs, and Kanban boards.
-
-#+begin_src emacs-lisp
- (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
-   "Given a link of TYPE with a URL, produce the correct org-link.
-
- EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
- This is how the link looks upon export."
-   `(org-link-set-parameters
-    ,type
-    :follow (lambda (label) (browse-url (format ,url label)))
-    :export (lambda (label description backend)
-              (-let [full-url (format ,url label)]
-                (pcase backend
-                  ('html  (format "<a href=\"%s\">%s</a>" full-url (-let [type ,type] ,export-display)))
-                  ('latex (format "\\href{%s}{FM-%s}" full-url label))
-                  (_  full-url))))
-    :face '(:foreground "green" :weight bold
-            :underline "blue" :overline "blue")))
-    #+end_src
-
 *** w-start/stop-services
 :PROPERTIES:
 :CUSTOM_ID: w-start-stop-services
@@ -10122,6 +10092,36 @@ In my private ~work.el~ I have declarations of the form ~(my/defservice ⟨direc
 (when my/work-machine?
   (load-file "~/Desktop/work.el"))
 #+end_src
+
+** my/work-links
+:PROPERTIES:
+:CUSTOM_ID: my-work-links
+:END:
+
+In my private ~work.el~ file, I have declarations of the form ~(my/work-links
+"REPO" "https://⟨COMPANY⟩.atlassian.net/browse/REPO-%s")~ so that I can write
+things like ~REPO:1234~ to get a nice green bold link in Org-mode that will take
+me to that Jira link. I also have similar links to take me to the Github
+repositories, backlogs, and Kanban boards.
+
+#+begin_src emacs-lisp
+ (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
+   "Given a link of TYPE with a URL, produce the correct org-link.
+
+ EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
+ This is how the link looks upon export."
+   `(org-link-set-parameters
+    ,type
+    :follow (lambda (label) (browse-url (format ,url label)))
+    :export (lambda (label description backend)
+              (-let [full-url (format ,url label)]
+                (pcase backend
+                  ('html  (format "<a href=\"%s\">%s</a>" full-url (-let [type ,type] ,export-display)))
+                  ('latex (format "\\href{%s}{FM-%s}" full-url label))
+                  (_  full-url))))
+    :face '(:foreground "green" :weight bold
+            :underline "blue" :overline "blue")))
+    #+end_src
 
 ** Project management & navigation
 :PROPERTIES:
