@@ -1,4 +1,4 @@
-personal_ws-1.1 en 351 
+personal_ws-1.1 en 366
 ACSII
 AST
 ASTs
@@ -53,6 +53,7 @@ Meijing
 Metaprograms
 Metatheorem
 Metavariable
+Microkernel
 Mixins
 Modularity
 Monoid
@@ -68,6 +69,7 @@ Neato
 Netmask
 Occultation
 Orchestrator
+PARAMETERIZE
 PackageFormer
 PackageFormer's
 Parametricity
@@ -80,7 +82,9 @@ Pseudocode
 Pushout
 Quran
 Ramda
+Readably
 Reducts
+Refactorings
 Runnable
 SRC
 STMP
@@ -124,6 +128,7 @@ backends
 backticks
 bifunctor
 bijective
+boolean
 busybodied
 calculational
 catenated
@@ -173,6 +178,7 @@ disjunctions
 distributivity
 dualised
 emacs
+embeddable
 endofunctors
 equalities
 equational
@@ -198,6 +204,8 @@ homomorphic
 homomorphism
 homomorphisms
 homomrphism
+iRule
+iRules
 imamah
 implementers
 incentivize
@@ -247,6 +255,7 @@ mixfix
 modularisation
 modus
 monads
+monoid
 monoidal
 monomorphic
 morphism
@@ -285,9 +294,11 @@ pushout
 pushouts
 quantifications
 reachability
+readably
 rebased
 redistributable
 reduct
+referentially
 repl
 representable
 requireds
@@ -312,14 +323,17 @@ subexpressions
 subsequence
 substitutivity
 subtype
+subtyped
 subtyping
 subword
 surjective
 surjectivity
 termtype
 termtypes
+tldr
 tooltip
 tooltips
+traveling
 truthified
 truthifies
 truthify
