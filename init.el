@@ -2636,10 +2636,6 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 ;; C-c C-l Org-mode ⇐ HTML:3 ends here
 
-;; [[file:init.org::*loading work.el][loading work.el:1]]
-(load-file "~/Desktop/work.el")
-;; loading work.el:1 ends here
-
 ;; [[file:init.org::*get the pkg][get the pkg:1]]
 (use-package repl-driven-development)
 (setq repl-driven-development-echo-duration 10)

@@ -9468,11 +9468,6 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* TODO loading work.el
-#+begin_src emacs-lisp
-(load-file "~/Desktop/work.el")
-#+end_src
-
 * TODO RDD
 
 ** get the pkg
