@@ -1935,6 +1935,249 @@ Example uses:
   :defer 100
   :config (add-hook 'org-mode-hook 'turn-on-stripe-table-mode))
 
+;; [[file:init.org::*Basic Agenda Config][Basic Agenda Config:1]]
+(setq org-agenda-files (list "~/Documents/notes.org"))
+
+(setq org-agenda-span 'week)
+
+(setq org-agenda-custom-commands '(("o" "Open Loops" tags-tree "TODO=\"STARTED\"" )))
+
+(setq org-log-into-drawer t) ;; hide the log state change history a bit better
+;; Basic Agenda Config:1 ends here
+
+;; [[file:init.org::*See all motivational images I have, and indent things so it's clearer when something is a child of something else][See all motivational images I have, and indent things so it's clearer when something is a child of something else:1]]
+(defun my/org-settings ()
+    (org-display-inline-images)
+    (org-indent-mode)
+    nil)
+
+(add-hook 'org-mode-hook #'my/org-settings)
+;; See all motivational images I have, and indent things so it's clearer when something is a child of something else:1 ends here
+
+;; [[file:init.org::*org-num-mode][org-num-mode:1]]
+;; Please dynamically number all headlines
+(setq org-startup-numerated t)
+    ;; More options @ https://orgmode.org/manual/Dynamic-Headline-Numbering.html
+
+;; Prefer “𝓏” instead of “𝓍.𝓎.𝓏” ---indentation ‘org-indent-mode’ resolves ambiguity
+(setq org-num-format-function (defun my/org-num-format (number-path) (format "%s " (car (last number-path)))))
+;; org-num-mode:1 ends here
+
+;; [[file:init.org::*How tasks look in org agenda][How tasks look in org agenda:1]]
+;; Start each agenda item with ‘○’, then show me it's %timestamp and how many
+;; times it's been re-%scheduled.
+(setq org-agenda-prefix-format " ○ %?-12t%-6e%s ")
+
+;;  (setq org-agenda-deadline-leaders '("DUE:       " "In %3d d.: " "%2d d. ago:  "))
+
+;; Don't say “Scheduled ⟨Task⟩”, just show “⟨Task⟩”.
+;; If something's overdue, say “Overdue 𝓃× ⟨Task⟩”.
+(setq org-agenda-scheduled-leaders '("" "Overdue%2dx "))
+;; How tasks look in org agenda:1 ends here
+
+;; [[file:init.org::*Todo states][Todo states:1]]
+;; These denote ‘progress’ on a task.
+;; For contextual information, one uses “tags”.
+;; For example, a delegated task could be in state “STARTED” and tagged “:delegate:James:”.
+(setq org-todo-keyword-faces
+      ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
+
+      '(
+        ;; Tasks that are not started and not planned. They could be the
+        ;; backlogs or the GTD’s someday/maybe. These tasks could be converted
+        ;; to NEXT during a weekly review.
+        ("TODO"      :foreground "red"          :weight bold)
+
+        ;; A task moves from TODO to NEXT only when I've actually split the task
+        ;; into small achievable chunks; ie i've done some investigation into
+        ;; the task and thought about what steps I need to do to actually get
+        ;; the task done. With this planning in place, I can then ensure I
+        ;; allocate sufficient timeblocks to work on the subtasks of this
+        ;; task. (Aside, a “project” is a task with multiple subtasks.)
+        ;;
+        ;;
+        ;; Use my 1/1 time with my manager/peers to review my INVESTIGATED/NEXT
+        ;; findings for the tickets of the current sprint. I just want to make
+        ;; sure I'm on the right track, before starting to work on them. Or, if
+        ;; a ticket is not investigated, do that with my manager.  I find that while it
+        ;; might take me half an hour or more, it'll take like 5 minutes with
+        ;; him since he's familiar with the code-base.
+        ;;
+        ;;
+        ;; ≈ NEXT. Tasks that are not started but planned to do as soon as I
+        ;; can. When there is no actionable STARTED (e.g., blocked), I start one
+        ;; of those and convert it to STARTED.
+        ("INVESTIGATED"   :foreground "blue"         :weight bold)
+
+        ;; Tasks that are working in progress (“open loops”). I work on these
+        ;; tasks before starting another NEXT task to avoid too many open loops
+        ;; at any moment.
+        ("STARTED"   :foreground "blue"         :weight bold)
+
+        ;; AWAITING_REVIEW/IN_PROGRESS = Tasks that are working in progress
+        ;; (open loops). I work on these tasks before starting another NEXT task
+        ;; to avoid too many open loops at any moment.
+        ;;
+        ;; When a task goes into AWAITING_REVIEW, I've finished the task
+        ;; scheduled for that day and now my agenda will show “Sched. 𝓃× MyTask”
+        ;; for 𝓃 days /after/ the schedule date. Now, I interpret this 𝓃 to mean
+        ;; “This work was ready for review 𝓃 days ago, and if 𝓃 is large (ie
+        ;; ~5), then I should message the relevant people to review/unblock that
+        ;; work.”
+        ("AWAITING_REVIEW" :foreground "orange"       :weight bold) ;; “In progress, but blocked by others”
+
+        ("DONE"            :foreground "forest green" :weight bold)
+        ("PAUSED"          :foreground "magenta"      :weight bold)
+        ("CANCELLED"       :foreground "forest green" :weight bold)))
+;; Todo states:1 ends here
+
+;; [[file:init.org::*I use lots of “checkbox lists” in my routines: I want to think about things once, then follow the routine on auto-pilot][I use lots of “checkbox lists” in my routines: I want to think about things once, then follow the routine on auto-pilot:1]]
+;; list items will be treated like low-level headlines; i.e., folded by default.
+(setq org-cycle-include-plain-lists 'integrate)
+;; I use lots of “checkbox lists” in my routines: I want to think about things once, then follow the routine on auto-pilot:1 ends here
+
+;; [[file:init.org::*my/work-links][my/work-links:1]]
+ (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
+   "Given a link of TYPE with a URL, produce the correct org-link.
+
+ EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
+ This is how the link looks upon export."
+   `(org-link-set-parameters
+    ,type
+    :follow (lambda (label) (browse-url (format ,url label)))
+    :export (lambda (label description backend)
+              (-let [full-url (format ,url label)]
+                (pcase backend
+                  ('html  (format "<a href=\"%s\">%s</a>" full-url (-let [type ,type] ,export-display)))
+                  ('latex (format "\\href{%s}{%s}" full-url label))
+                  (_  full-url))))
+    :face '(:foreground "green" :weight bold
+            :underline "blue" :overline "blue")))
+;; my/work-links:1 ends here
+
+;; [[file:init.org::*Work links][Work links:1]]
+(defvar COMPANY (getenv "COMPANY") "Name of place I work at.")
+
+(my/work-links "FWD" (lf-string "https://bugs.local.${(downcase COMPANY)}.com/browse/FWD-%s"))
+(my/work-links "OUT" (lf-string "https://bugs.local.${(downcase COMPANY)}.com/browse/OUT-%s"))
+(my/work-links "gerrit" (lf-string "https://gerrit.local.${(downcase COMPANY)}.com/c/fwd/+/%s"))
+
+;; Open all such links in Chrome
+(setq browse-url-browser-function 'browse-url-default-macosx-browser)
+;; Work links:1 ends here
+
+;; [[file:init.org::*Quick Capture][Quick Capture:1]]
+;; Location of my todos / captured notes file
+(setq org-default-notes-file "~/Documents/notes.org")
+;; Quick Capture:1 ends here
+
+;; [[file:init.org::*Quick Capture][Quick Capture:2]]
+(defmacro def-capture (name location template)
+"Creates a method “my/capture-NAME”, which opens a capture buffer named NAME showing TEMPLATE.
+When you press `C-c C-c`, the note is saved as an entry (ie TEMPLATE should start with “* ”.)
+in `org-default-notes-file' section named LOCATION.
+
++ NAME, LOCATION, TEMPLATE are all strings that may contain spaces.
++ Example:  (def-capture \"Friends Info\" \"Journal\" \"* %t\")
+  This can be used as “M-x my/capture-friends-info” or via an Org link: “[[elisp:( my/capture-friends-info)]]”.
+
+  Note: My “Journal” is nested in a section called “Workflow”, and capture finds it anyways (｡◕‿◕｡)
+  (More precisely, Org-Capture looks for the first (sub)headline called “Journal” /anywhere/ and uses that as the target location.)
+
+Usage:
+1.         M-x my/capture-NAME  ⇒ Capture something to my LOCATION; no menu used.
+2.     C-u M-x my/capture-NAME  ⇒ Jump to my LOCATION.
+3. C-u C-u M-x my/capture-NAME  ⇒ Goto last note stored (by any my/capture-* method).
+"
+  `(defun ,(intern (concat "my/capture-" (s-replace-regexp " " "-" (downcase name)))) (&optional prefix)
+      (interactive "p")
+      (-let [org-capture-templates
+       ;; I'm using omega 𝓌 as a placeholder; i.e., a gensym-like key.
+        `(("𝓌" ,,name entry (file+headline ,,org-default-notes-file ,,location) ,,template))]
+        (org-capture (list prefix) "𝓌")
+      (unless (> prefix 1) (rename-buffer ,name)))))
+;; Quick Capture:2 ends here
+
+;; [[file:init.org::*C-c c ⇒ Capture inbox entry][C-c c ⇒ Capture inbox entry:1]]
+;; I have “* Inbox [%]”, so when a new item is captured the “%” changes to reflect that.
+;; When I've processed by inbox, I see “* Inbox [100%]” and feel good about it (✿◠‿◠)
+(bind-key* "C-c c" (def-capture "Inbox Entry" "Inbox" "* TODO %?\n Captured: %U \n"))
+;; C-c c ⇒ Capture inbox entry:1 ends here
+
+;; [[file:init.org::*Capture morning journal entry][Capture morning journal entry:1]]
+(defalias #'my/new-journal-entry (def-capture "Journal Entry" "Journal"
+  (s-join "\n\n" (list
+    (format-time-string "* %Y-%m-%d %a %R :mood_𝒏%?:")
+    "My most important goal for the day is: "
+    (let (todays-agenda) (org-agenda-list 1) (setq todays-agenda (buffer-string)) (org-agenda-quit)
+    (concat "Here's what my day looks like so far:\n" todays-agenda))))))
+;; Capture morning journal entry:1 ends here
+
+;; [[file:init.org::*Capture evening journal entry][Capture evening journal entry:1]]
+(def-capture "Daily Retrospective" "Journal"
+             (concat
+              ;; The “:mood_𝓃:” tag is so that I can easily see my moods across my entries.
+              ;; Keeping track of mood is a simple way to monitor success; e.g., whether GTD is working for me or not.
+   (format-time-string "* %Y-%m-%d %a %R :mood_𝒏%?:retro:daily:\n")
+"
+Instructions: Read section contents and replace them with your own words.
+
+** Monitoring Mood For Success
+  - Why do I feel the way I do?
+  - 1 ≈ 😢 extremely negative; 5 ≈ :neutral_face: neutral; 10 ≈ 😁 extremely positive.
+
+** Celebrating Successes
+  - Acknowledge and celebrate your achievements, no matter how small.
+  - Recognising your progress boosts morale and motivation, inspiring you to continue striving for success.
+  - /Give yourself credit for your efforts!/
+
+** Goal Alignment
+  - Were today's actions directed at achieving the sprint's goals? Stay focused!
+  - Review your day: use my/what-did-i-do-today to review the tasks you  clocked into.
+      [[elisp:(let ((org-clock-clocktable-default-properties (-snoc org-clock-clocktable-default-properties :block 'today :timestamp 'nil))) (beginning-of-line) (kill-line) (org-clock-report))][What Did I Work on Today?]]
+  - Set SMART goals for tomorrow.
+
+** Stress Reduction
+  - Any challenges or frustrations encountered today?
+
+** Continuous Improvement
+  - What went well, what didn't go as planned, and were there any unexpected challenges today?
+  - Learn from your experiences & brainstorm strategies better outcomes in the future.
+  - Consider what factors contributed to these challenges and how you responded to them.
+  - What thought patterns were influencing my outcomes?
+
+** Express Gratitude
+  - Conclude your retrospective by expressing gratitude for the positive aspects of your day.
+  - Reflect on the people, opportunities, and experiences that brought you joy or fulfilment.
+"))
+;; Capture evening journal entry:1 ends here
+
+;; [[file:init.org::*my/see-sorted-todos][my/see-sorted-todos:1]]
+(defun my/see-sorted-todos ()
+  "See TODOs sorted by state, priority, then effort.
+
+This view shows me all tasks, sorted, and from there I can pick & schedule & edit as desired.
+
+Much nicer than me physically sorting tasks!
+
+The main benefit here is I can keep /active/ tasks under their
+own disjoint ‘projects’, yet still have a nice unified view of
+all of my /active/ *and* non-active tasks.
+
+⇒ You can mark DONE and archive from the sorted view.
+⇒ But leave that to the Weekly Review, so that you can extract any
+  reference information or Lessons Learned out of the tasks to be archived.
+
+See: https://emacs.stackexchange.com/questions/9585/org-how-to-sort-headings-by-todo-and-then-by-priority
+"
+  (interactive)
+  (let ((org-agenda-custom-commands '(("𝓌" nil todo "*"
+                                       ((org-agenda-overriding-header "\nTODOs sorted by state, priority, effort")
+                                        (org-agenda-sorting-strategy '(todo-state-down priority-down effort-up)))))))
+    (org-agenda nil "𝓌" t)
+    (beginning-of-buffer)))
+;; my/see-sorted-todos:1 ends here
+
 ;; [[file:init.org::*highlight quoted symbols][highlight quoted symbols:1]]
 (use-package highlight-quoted
   :defer nil
@@ -2572,25 +2815,6 @@ Where directory hierarchy com/x/y/z denotes a Java package under the above //!us
 
   :bind (("s-r" . #'er/expand-region)))
 ;; Sleek Semantic Selection:1 ends here
-
-;; [[file:init.org::*my/work-links][my/work-links:1]]
- (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
-   "Given a link of TYPE with a URL, produce the correct org-link.
-
- EXPORT-DISPLAY is string-valued term that may mention the symbolic names ‘type’ and ‘label’.
- This is how the link looks upon export."
-   `(org-link-set-parameters
-    ,type
-    :follow (lambda (label) (browse-url (format ,url label)))
-    :export (lambda (label description backend)
-              (-let [full-url (format ,url label)]
-                (pcase backend
-                  ('html  (format "<a href=\"%s\">%s</a>" full-url (-let [type ,type] ,export-display)))
-                  ('latex (format "\\href{%s}{FM-%s}" full-url label))
-                  (_  full-url))))
-    :face '(:foreground "green" :weight bold
-            :underline "blue" :overline "blue")))
-;; my/work-links:1 ends here
 
 ;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
 ;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
