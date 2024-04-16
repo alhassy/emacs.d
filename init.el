@@ -81,16 +81,16 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-  
+
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -3334,3 +3334,83 @@ associated major mode; that's what we aim to do here."
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (message-box "Done")
 ;; DONE?:1 ends here
+
+
+;; Since DONE is a terminal state, it has no exit-action.
+;; Let's explicitly indicate time should be noted.
+(setq org-log-done 'time)
+
+;; TODO: Make this into a list of plists, so things are named and only present if needed.
+;;
+;; These denote ‘progress’ on a task.
+;; For contextual information, one uses “tags”.
+;; For example, a delegated task could be in state “STARTED” and tagged “:delegate:James:”.
+(setq my/workflow-states
+      ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
+
+      ;; (state action-on-entry action-on-exit foreground)
+      '(
+        ;; Tasks that are not started and not planned. They could be the
+        ;; backlogs or the GTD’s someday/maybe. These tasks could be converted
+        ;; to NEXT during a weekly review.
+        ("TODO" nil nil                   "red")
+
+        ;; A task moves from TODO to NEXT only when I've actually split the task
+        ;; into small achievable chunks; ie i've done some investigation into
+        ;; the task and thought about what steps I need to do to actually get
+        ;; the task done. With this planning in place, I can then ensure I
+        ;; allocate sufficient timeblocks to work on the subtasks of this
+        ;; task. (Aside, a “project” is a task with multiple subtasks.)
+        ;;
+        ;;
+        ;; Use my 1/1 time with my manager/peers to review my INVESTIGATED/NEXT
+        ;; findings for the tickets of the current sprint. I just want to make
+        ;; sure I'm on the right track, before starting to work on them. Or, if
+        ;; a ticket is not investigated, do that with my manager.  I find that while it
+        ;; might take me half an hour or more, it'll take like 5 minutes with
+        ;; him since he's familiar with the code-base.
+        ;;
+        ;;
+        ;; ≈ NEXT. Tasks that are not started but planned to do as soon as I
+        ;; can. When there is no actionable STARTED (e.g., blocked), I start one
+        ;; of those and convert it to STARTED.
+        ("INVESTIGATED"   nil timestamp "blue")
+
+        ;; Tasks that are working in progress (“open loops”). I work on these
+        ;; tasks before starting another NEXT task to avoid too many open loops
+        ;; at any moment.
+        ("STARTED"         nil  timestamp "blue") ;; When did I start?
+
+        ;; AWAITING_REVIEW/IN_PROGRESS = Tasks that are working in progress
+        ;; (open loops). I work on these tasks before starting another NEXT task
+        ;; to avoid too many open loops at any moment.
+        ;;
+        ;; When a task goes into AWAITING_REVIEW, I've finished the task
+        ;; scheduled for that day and now my agenda will show “Sched. 𝓃× MyTask”
+        ;; for 𝓃 days /after/ the schedule date. Now, I interpret this 𝓃 to mean
+        ;; “This work was ready for review 𝓃 days ago, and if 𝓃 is large (ie
+        ;; ~5), then I should message the relevant people to review/unblock that
+        ;; work.”
+        ;;
+        ;; “In progress, but blocked by others”
+        ("AWAITING_REVIEW" nil  timestamp "orange") ;; When did this task enter in-review?
+
+        ("PAUSED"          note timestamp "magenta") ;; When & why is the task paused?
+
+        ("|")
+
+        ("DONE" nil timestamp  "forest green")             ;; When did this task finish?
+
+        ("CANCELLED" note timestamp)))     ;; When & why was this task cancelled?
+
+(setq org-todo-keywords
+      (list (cons 'sequence
+                  (cl-loop for (state on-entry on-exit _foreground) in my/workflow-states
+                           for first-letter = (downcase (substring state 0 1))
+                           for entry = (if (not on-entry) "" (if (equal on-entry 'note) "@" "!"))
+                           for exit = (if (not on-exit) "" (if (equal on-exit 'note) "@" "!"))
+                           collect (if (equal state "|") state (format "%s(%s%s/%s)" state first-letter entry exit))))))
+
+(setq org-todo-keyword-faces
+      (cl-loop for (state _on-entry _on-exit foreground) in my/workflow-states
+               collect (list state :foreground foreground :weight 'bold)))
