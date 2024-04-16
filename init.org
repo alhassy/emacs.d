@@ -4572,7 +4572,7 @@ as well as a nice ‘motto’:
 
 I almost always have Emacs open; I don't need a dashboard, but would like to see
 my to-do list and my init file, side-by-side.
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; If work machine, then show notes; otherwise show my todos & init side-by-side.
 (unless noninteractive
   ;; Only run the following when we're in GUI mode;
@@ -16043,7 +16043,7 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 * DONE?
 
 #+begin_src emacs-lisp :tangle "init.el"
-(find-file "~/.emacs.d/init.org")
+;; (find-file "~/.emacs.d/init.org")
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (message-box "Done")
 #+end_src
