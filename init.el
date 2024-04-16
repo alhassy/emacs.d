@@ -1188,6 +1188,25 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Keep self motivated!
 (setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 
+;; I have symlinks for various things, just follow them, do not ask me.
+(setq vc-follow-symlinks t)
+
+;; If work machine, then show notes; otherwise show my todos & init side-by-side.
+(unless noninteractive
+  ;; Only run the following when we're in GUI mode;
+  ;; i.e., don't run it in Github Actions when testing.
+  (if (not my/personal-machine?)
+      (find-file "~/Documents/notes.org")
+    (find-file "~/Dropbox/todo.org")
+    ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
+    ;; which is a GPG file and so requires passphrase before other things can load.
+    ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
+    (split-window-right)                          ;; C-x 3
+    (other-window 1)                              ;; C-x 0
+    (let ((enable-local-variables :all)           ;; Load *all* locals.
+          (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
+      (ignore-errors (find-file "~/.emacs.d/init.org")))))
+
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
   :defer nil
