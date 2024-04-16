@@ -29,11 +29,6 @@ $0
 $0
 #+end_src
 
-** s_plantuml: src for plantuml
-#+begin_src plantuml
-$0
-#+end_src
-
 ** s_emacs-lisp: src for emacs-lisp
 #+begin_src emacs-lisp
 $0
@@ -105,8 +100,6 @@ src_org[:exports code]{$1} $0
 src_agda2[:exports code]{$1} $0
 ** is_any: inline source for any
 src_any[:exports code]{$1} $0
-** is_plantuml: inline source for plantuml
-src_plantuml[:exports code]{$1} $0
 ** is_emacs-lisp: inline source for emacs-lisp
 src_emacs-lisp[:exports code]{$1} $0
 ** is_shell: inline source for shell
@@ -145,11 +138,6 @@ $0
 
 ** e_any: example for any
 #+begin_example any
-$0
-#+end_example
-
-** e_plantuml: example for plantuml
-#+begin_example plantuml
 $0
 #+end_example
 

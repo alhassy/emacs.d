@@ -1193,8 +1193,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   ;; Only run the following when we're in GUI mode;
   ;; i.e., don't run it in Github Actions when testing.
   (if (not my/personal-machine?)
-      (find-file "~/Documents/notes.org")) ;; Org-journal for work
-  (find-file "~/Dropbox/todo.org")
+      (find-file "~/Documents/notes.org")
+    (find-file "~/Dropbox/todo.org"))
   ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
   ;; which is a GPG file and so requires passphrase before other things can load.
   ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
