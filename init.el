@@ -81,16 +81,16 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-
+  
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-
+  
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -1732,25 +1732,46 @@ fonts (•̀ᴗ•́)و"
 
 ;; Also provides: helm-org-capture-templates
 
+(setq org-tag-alist
+      '(
+        ("Work"     . ?w)
+        ("Personal" . ?p)
+        ;; Instead of a “:meeting:” tag, I prefer to call it “social credit” (✿◠‿◠)
+        ("SocialCredit" . ?s)
+        ;; “Out Of Office”
+        ("OOO"      . ?o)
+        ("Family"   . ?f)
+        ("Errand"   . ?e)
+        ("Reading"  . ?r)
+        ("BlogRoll" . ?b)
+        ("Urgent"   . ?u)))
+
+
+;; I can't see the entire tags menu when using doom-modeline, so let's redisplay
+;; when the tags menu appears.
+;; See https://emacs.stackexchange.com/a/70856
+(advice-add #'fit-window-to-buffer :before (lambda (&rest _) (redisplay t)))
+
+
 (use-package org-pretty-tags
 
   :config
-   (setq org-pretty-tags-surrogate-strings
-         '(("Neato"    . "💡")
-           ("Blog"     . "✍")
-           ("Audio"    . "♬")
-           ("Video"    . "📺")
-           ("Book"     . "📚")
-           ("Running"  . "🏃")
-           ("Question" . "❓")
-           ("Wife"     . "💕")
-           ("Text"     . "💬") ; 📨 📧
-           ("Friends"  . "👪")
-           ("Self"     . "🍂")
-           ("Finances" . "💰")
-           ("Car"      . "🚗") ; 🚙 🚗 🚘
-           ("Urgent"   . "🔥"))) ;; 📥 📤 📬
-   (org-pretty-tags-global-mode 1))
+  (setq org-pretty-tags-surrogate-strings
+        '(("Neato"    . "💡")
+          ("Blog"     . "✍")
+          ("Audio"    . "♬")
+          ("Video"    . "📺")
+          ("Book"     . "📚")
+          ("Running"  . "🏃")
+          ("Question" . "❓")
+          ("Wife"     . "💕")
+          ("Text"     . "💬") ; 📨 📧
+          ("Friends"  . "👪")
+          ("Self"     . "🍂")
+          ("Finances" . "💰")
+          ("Car"      . "🚗") ; 🚙 🚗 🚘
+          ("Urgent"   . "🔥"))) ;; 📥 📤 📬
+  (org-pretty-tags-global-mode 1))
 
 ;; Tasks get a 25 minute count down timer
 (setq org-timer-default-timer 25)
@@ -1767,21 +1788,111 @@ fonts (•̀ᴗ•́)و"
      (message-box "The basic 25 minutes on this difficult task are not up; it's a shame to see you leave."))
      (org-timer-stop)))
 
-(setq org-todo-keywords
-      '((sequence "TODO(t)" "STARTED(s@/!)" "|" "DONE(d/!)")
-        (sequence "WAITING(w@/!)" "ON_HOLD(h@/!)" "|" "CANCELLED(c@/!)")))
+;; TODO: Add the line “(declare (indent defun))” right after the docstring of “lf-define”,
+;; so that Emacs indents it like a “defun”.
+;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
+;;
+;; Until then, use the following incantation:
+(lf-define (get 'lf-define 'lisp-indent-function) 'defun)
+
+
+(lf-define my/declare-workflow-states (states)
+  [:requires  (listp states) :ensures (stringp result)]
+  "Declare STATES as todo-states. STATES is a list of (name on-entry on-exit color) lists."
+  (setq org-todo-keywords  (list (cons 'sequence
+                                       (cl-loop for (state . props) in states
+                                                for first-letter = (downcase (substring state 0 1))
+                                                for on-entry = (plist-get props :on-entry)
+                                                for on-exit = (plist-get props :on-exit)
+                                                for entry = (if (not on-entry) "" (if (equal on-entry 'note) "@" "!"))
+                                                for exit = (if (not on-exit) "" (if (equal on-exit 'note) "/@" "/!"))
+                                                collect (if (equal state "|") state (format "%s(%s%s%s)" state first-letter entry exit))))))
+  (setq org-todo-keyword-faces
+        (cl-loop for (state . props) in states
+                 collect (list state :foreground (plist-get props :foreground) :weight 'bold)))
+  "✔ Invoke “org-mode-restart” in existing Org buffers for this to take effect.")
+
+
+;; These denote ‘progress’ on a task.
+;; For contextual information, one uses “tags”.
+;; For example, a delegated task could be in state “STARTED” and tagged “:delegate:James:”.
+(my/declare-workflow-states
+ ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
+ '(
+   ;; Tasks that are not started and not planned. They could be the
+   ;; backlogs or the GTD’s someday/maybe. These tasks could be converted
+   ;; to NEXT during a weekly review.
+   ("TODO" :foreground "red")
+
+   ;; A task moves from TODO to NEXT only when I've actually split the task
+   ;; into small achievable chunks; ie i've done some investigation into
+   ;; the task and thought about what steps I need to do to actually get
+   ;; the task done. With this planning in place, I can then ensure I
+   ;; allocate sufficient timeblocks to work on the subtasks of this
+   ;; task. (Aside, a “project” is a task with multiple subtasks.)
+   ;;
+   ;;
+   ;; Use my 1/1 time with my manager/peers to review my INVESTIGATED/NEXT
+   ;; findings for the tickets of the current sprint. I just want to make
+   ;; sure I'm on the right track, before starting to work on them. Or, if
+   ;; a ticket is not investigated, do that with my manager.  I find that while it
+   ;; might take me half an hour or more, it'll take like 5 minutes with
+   ;; him since he's familiar with the code-base.
+   ;;
+   ;;
+   ;; ≈ NEXT. Tasks that are not started but planned to do as soon as I
+   ;; can. When there is no actionable STARTED (e.g., blocked), I start one
+   ;; of those and convert it to STARTED.
+   ("INVESTIGATED"  :on-entry timestamp :foreground "dark orange")
+
+   ;; Tasks that are working in progress (“open loops”). I work on these
+   ;; tasks before starting another NEXT task to avoid too many open loops
+   ;; at any moment.
+   ("STARTED" :on-entry timestamp :foreground "blue") ;; When did I start?
+
+   ("PAUSED" :on-entry  note :on-exit timestamp :foreground "magenta") ;; When & why is the task paused?
+
+   ;; When a task goes into WAITING, I've finished the task as much as possible
+   ;; and now need to rely on someone else; e.g., for feedback.
+   ;;
+   ;; I don't want to see these scheduled tasks in my Agenda.
+   ;;
+   ;; In the Weekly Review, I will take time to look at my WAITING tasks
+   ;; and if they've been waiting ~2 weeks, then I should message the relevant people to unblock it.
+   ;;
+   ;; “In progress, but blocked by others”
+   ("WAITING" :on-entry timestamp :foreground "red2") ;; When did this task enter in-review?
+
+   ("|") ;; All states after this special marker are “terminal” and so not shown in the org-agenda: (setq org-agenda-skip-scheduled-if-done t)
+
+   ("DONE" :on-entry timestamp  :foreground "forest green")             ;; When did this task finish?
+
+   ;; This is useful at work to keep track of *why* we have decided against doing a task; in my Org file there may be more, private, reasons not mentioned in the company's Jira file. (For example).
+   ;;
+   ;; This is useful at home since I might have had the same task/idea again and it's useful to know *why* I didn't do it last time; also useful for when doing Annual Reviews.
+   ("CANCELLED" :on-entry note :foreground "saddle brown")))     ;; Why was this task cancelled? (Notes come with a timestamp!)
 
 ;; Since DONE is a terminal state, it has no exit-action.
 ;; Let's explicitly indicate time should be noted.
 (setq org-log-done 'time)
 
-(setq org-todo-keyword-faces
-      '(("TODO"      :foreground "red"          :weight bold)
-        ("STARTED"   :foreground "blue"         :weight bold)
-        ("DONE"      :foreground "forest green" :weight bold)
-        ("WAITING"   :foreground "orange"       :weight bold)
-        ("ON_HOLD"   :foreground "magenta"      :weight bold)
-        ("CANCELLED" :foreground "forest green" :weight bold)))
+;; I prefer to log TODO creation also
+(setq org-treat-insert-todo-heading-as-state-change t)
+
+;; When a task goes into the WAITING state, please remove its schedule
+;; so that it does not appear in my agenda. (However, it's still not “done” and so appears when I do “C-c a t” for example.)
+;; Source: https://emacs.stackexchange.com/a/2760
+(add-hook 'org-after-todo-state-change-hook
+          (defun rasmus/remove-schedule ()
+            "Remove SCHEDULED-cookie is switching state to WAITING."
+            (save-excursion
+              (and (equal (org-get-todo-state) "WAITING")
+                   (org-get-scheduled-time (point))
+                   (when (search-forward-regexp org-scheduled-time-regexp nil t)
+                     (or (delete-region (match-beginning 0) (match-end 0)) t))
+                   (get-buffer "*Org Agenda*")
+                   (with-current-buffer "*Org Agenda*"
+                     (org-agenda-redo))))))
 
 (setq org-use-fast-todo-selection t)
 
@@ -1835,6 +1946,8 @@ fonts (•̀ᴗ•́)و"
 
 (setq org-clock-sound "~/.emacs.d/school-bell.wav")
 
+(require 'org-habit) ;; To actually see the consistency graph in org-agenda
+
 ;; Show habits for every day in the agenda.
 (setq org-habit-show-habits t)
 (setq org-habit-show-habits-only-for-today nil)
@@ -1845,6 +1958,12 @@ fonts (•̀ᴗ•́)و"
 ;; In order to see the habit graphs, which I've placed rightwards, let's
 ;; always open org-agenda in ‘full screen’.
 ;; (setq org-agenda-window-setup 'only-window)
+
+(setq org-habit-completed-glyph ?😊)
+(setq org-habit-today-glyph 33)
+
+;; When showing the agenda, do not collect habits together at the bottom, as is the default.
+(add-to-list 'org-agenda-sorting-strategy '(agenda time-up priority-down category-keep))
 
 ;; Obtain a notifications and text-to-speech utilities
 (system-packages-ensure "say") ;; Built-into MacOS, but can be downloaded in Ubuntu
@@ -1938,7 +2057,6 @@ Example uses:
   :defer 100
   :config (add-hook 'org-mode-hook 'turn-on-stripe-table-mode))
 
-;; [[file:init.org::*Basic Agenda Config][Basic Agenda Config:1]]
 (setq org-agenda-files (list "~/Documents/notes.org"))
 
 (setq org-agenda-span 'week)
@@ -1946,27 +2064,31 @@ Example uses:
 (setq org-agenda-custom-commands '(("o" "Open Loops" tags-tree "TODO=\"STARTED\"" )))
 
 (setq org-log-into-drawer t) ;; hide the log state change history a bit better
-;; Basic Agenda Config:1 ends here
 
-;; [[file:init.org::*See all motivational images I have, and indent things so it's clearer when something is a child of something else][See all motivational images I have, and indent things so it's clearer when something is a child of something else:1]]
-(defun my/org-settings ()
-    (org-display-inline-images)
-    (org-indent-mode)
-    nil)
+;; p to “p”ush back a task to the next day.
+(add-hook 'org-agenda-mode-hook
+          ;; Note: There's also org-agenda-date-earlier to change the date by -1 day.
+          (lambda ()
+            (define-key org-agenda-mode-map "p" 'org-agenda-date-later)
 
-(add-hook 'org-mode-hook #'my/org-settings)
-;; See all motivational images I have, and indent things so it's clearer when something is a child of something else:1 ends here
+            ;; Reschedule agenda items to today, “right 𝓃ow”, with a single command
+            (define-key org-agenda-mode-map "n" (defun org-agenda-reschedule-to-today ()
+                                                  (interactive)
+                                                  (flet ((org-read-date (&rest rest) (current-time)))
+                                                    (call-interactively 'org-agenda-schedule))))))
 
-;; [[file:init.org::*org-num-mode][org-num-mode:1]]
-;; Please dynamically number all headlines
-(setq org-startup-numerated t)
-    ;; More options @ https://orgmode.org/manual/Dynamic-Headline-Numbering.html
+(setq org-log-note-headings '((done        . "CLOSING NOTE %t")
+                              (state       . "State %-12s from %-12S %t")
+                              (note        . "Note taken on %t")
+     ;;   (reschedule . "Rescheduled from %S on %t") ;; Default
+                              (reschedule  . "Schedule changed on %t: %S -> %s")
+                              (delschedule . "Not scheduled, was %S on %t")
+                              (redeadline  . "Deadline changed on %t: %S -> %s")
+       ;;  (redeadline . "New deadline from %S on %t") ;; Default
+                              (deldeadline . "Removed deadline, was %S on %t")
+                              (refile      . "Refiled on %t")
+                              (clock-out   . "")))
 
-;; Prefer “𝓏” instead of “𝓍.𝓎.𝓏” ---indentation ‘org-indent-mode’ resolves ambiguity
-(setq org-num-format-function (defun my/org-num-format (number-path) (format "%s " (car (last number-path)))))
-;; org-num-mode:1 ends here
-
-;; [[file:init.org::*How tasks look in org agenda][How tasks look in org agenda:1]]
 ;; Start each agenda item with ‘○’, then show me it's %timestamp and how many
 ;; times it's been re-%scheduled.
 (setq org-agenda-prefix-format " ○ %?-12t%-6e%s ")
@@ -1976,70 +2098,10 @@ Example uses:
 ;; Don't say “Scheduled ⟨Task⟩”, just show “⟨Task⟩”.
 ;; If something's overdue, say “Overdue 𝓃× ⟨Task⟩”.
 (setq org-agenda-scheduled-leaders '("" "Overdue%2dx "))
-;; How tasks look in org agenda:1 ends here
 
-;; [[file:init.org::*Todo states][Todo states:1]]
-;; These denote ‘progress’ on a task.
-;; For contextual information, one uses “tags”.
-;; For example, a delegated task could be in state “STARTED” and tagged “:delegate:James:”.
-(setq org-todo-keyword-faces
-      ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
-
-      '(
-        ;; Tasks that are not started and not planned. They could be the
-        ;; backlogs or the GTD’s someday/maybe. These tasks could be converted
-        ;; to NEXT during a weekly review.
-        ("TODO"      :foreground "red"          :weight bold)
-
-        ;; A task moves from TODO to NEXT only when I've actually split the task
-        ;; into small achievable chunks; ie i've done some investigation into
-        ;; the task and thought about what steps I need to do to actually get
-        ;; the task done. With this planning in place, I can then ensure I
-        ;; allocate sufficient timeblocks to work on the subtasks of this
-        ;; task. (Aside, a “project” is a task with multiple subtasks.)
-        ;;
-        ;;
-        ;; Use my 1/1 time with my manager/peers to review my INVESTIGATED/NEXT
-        ;; findings for the tickets of the current sprint. I just want to make
-        ;; sure I'm on the right track, before starting to work on them. Or, if
-        ;; a ticket is not investigated, do that with my manager.  I find that while it
-        ;; might take me half an hour or more, it'll take like 5 minutes with
-        ;; him since he's familiar with the code-base.
-        ;;
-        ;;
-        ;; ≈ NEXT. Tasks that are not started but planned to do as soon as I
-        ;; can. When there is no actionable STARTED (e.g., blocked), I start one
-        ;; of those and convert it to STARTED.
-        ("INVESTIGATED"   :foreground "blue"         :weight bold)
-
-        ;; Tasks that are working in progress (“open loops”). I work on these
-        ;; tasks before starting another NEXT task to avoid too many open loops
-        ;; at any moment.
-        ("STARTED"   :foreground "blue"         :weight bold)
-
-        ;; AWAITING_REVIEW/IN_PROGRESS = Tasks that are working in progress
-        ;; (open loops). I work on these tasks before starting another NEXT task
-        ;; to avoid too many open loops at any moment.
-        ;;
-        ;; When a task goes into AWAITING_REVIEW, I've finished the task
-        ;; scheduled for that day and now my agenda will show “Sched. 𝓃× MyTask”
-        ;; for 𝓃 days /after/ the schedule date. Now, I interpret this 𝓃 to mean
-        ;; “This work was ready for review 𝓃 days ago, and if 𝓃 is large (ie
-        ;; ~5), then I should message the relevant people to review/unblock that
-        ;; work.”
-        ("AWAITING_REVIEW" :foreground "orange"       :weight bold) ;; “In progress, but blocked by others”
-
-        ("DONE"            :foreground "forest green" :weight bold)
-        ("PAUSED"          :foreground "magenta"      :weight bold)
-        ("CANCELLED"       :foreground "forest green" :weight bold)))
-;; Todo states:1 ends here
-
-;; [[file:init.org::*I use lots of “checkbox lists” in my routines: I want to think about things once, then follow the routine on auto-pilot][I use lots of “checkbox lists” in my routines: I want to think about things once, then follow the routine on auto-pilot:1]]
 ;; list items will be treated like low-level headlines; i.e., folded by default.
 (setq org-cycle-include-plain-lists 'integrate)
-;; I use lots of “checkbox lists” in my routines: I want to think about things once, then follow the routine on auto-pilot:1 ends here
 
-;; [[file:init.org::*my/work-links][my/work-links:1]]
  (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
    "Given a link of TYPE with a URL, produce the correct org-link.
 
@@ -2056,9 +2118,7 @@ Example uses:
                   (_  full-url))))
     :face '(:foreground "green" :weight bold
             :underline "blue" :overline "blue")))
-;; my/work-links:1 ends here
 
-;; [[file:init.org::*Work links][Work links:1]]
 (defvar COMPANY (getenv "COMPANY") "Name of place I work at.")
 
 (my/work-links "FWD" (lf-string "https://bugs.local.${(downcase COMPANY)}.com/browse/FWD-%s"))
@@ -2067,20 +2127,18 @@ Example uses:
 
 ;; Open all such links in Chrome
 (setq browse-url-browser-function 'browse-url-default-macosx-browser)
-;; Work links:1 ends here
 
-;; [[file:init.org::*Quick Capture][Quick Capture:1]]
 ;; Location of my todos / captured notes file
 (setq org-default-notes-file "~/Documents/notes.org")
-;; Quick Capture:1 ends here
 
-;; [[file:init.org::*Quick Capture][Quick Capture:2]]
 (defmacro def-capture (name location template)
 "Creates a method “my/capture-NAME”, which opens a capture buffer named NAME showing TEMPLATE.
 When you press `C-c C-c`, the note is saved as an entry (ie TEMPLATE should start with “* ”.)
 in `org-default-notes-file' section named LOCATION.
 
 + NAME, LOCATION, TEMPLATE are all strings that may contain spaces.
+  ⇒ If you want to evaluate a function in TEMPLATE, use the syntax “%(f args)”.
+    See https://stackoverflow.com/a/69331239 for an example.
 + Example:  (def-capture \"Friends Info\" \"Journal\" \"* %t\")
   This can be used as “M-x my/capture-friends-info” or via an Org link: “[[elisp:( my/capture-friends-info)]]”.
 
@@ -2099,24 +2157,22 @@ Usage:
         `(("𝓌" ,,name entry (file+headline ,,org-default-notes-file ,,location) ,,template))]
         (org-capture (list prefix) "𝓌")
       (unless (> prefix 1) (rename-buffer ,name)))))
-;; Quick Capture:2 ends here
 
-;; [[file:init.org::*C-c c ⇒ Capture inbox entry][C-c c ⇒ Capture inbox entry:1]]
-;; I have “* Inbox [%]”, so when a new item is captured the “%” changes to reflect that.
-;; When I've processed by inbox, I see “* Inbox [100%]” and feel good about it (✿◠‿◠)
+;; I mark inbox captures as “TODO” so that they appear in my task list (C-c a t) in the event
+;; I've forgotten to process my inbox.
+;;
+;; When I process my “* Inbox” section, I am left with an empty Org section and so delete it.
+;; ⇒ “C-c c” will create the section if it does not exist.
+;; ⇒ Deleting it is a nice ‘cheery on top’ when processing my inbox (✿◠‿◠)
 (bind-key* "C-c c" (def-capture "Inbox Entry" "Inbox" "* TODO %?\n Captured: %U \n"))
-;; C-c c ⇒ Capture inbox entry:1 ends here
 
-;; [[file:init.org::*Capture morning journal entry][Capture morning journal entry:1]]
 (defalias #'my/new-journal-entry (def-capture "Journal Entry" "Journal"
   (s-join "\n\n" (list
     (format-time-string "* %Y-%m-%d %a %R :mood_𝒏%?:")
     "My most important goal for the day is: "
     (let (todays-agenda) (org-agenda-list 1) (setq todays-agenda (buffer-string)) (org-agenda-quit)
     (concat "Here's what my day looks like so far:\n" todays-agenda))))))
-;; Capture morning journal entry:1 ends here
 
-;; [[file:init.org::*Capture evening journal entry][Capture evening journal entry:1]]
 (def-capture "Daily Retrospective" "Journal"
              (concat
               ;; The “:mood_𝓃:” tag is so that I can easily see my moods across my entries.
@@ -2153,9 +2209,7 @@ Instructions: Read section contents and replace them with your own words.
   - Conclude your retrospective by expressing gratitude for the positive aspects of your day.
   - Reflect on the people, opportunities, and experiences that brought you joy or fulfilment.
 "))
-;; Capture evening journal entry:1 ends here
 
-;; [[file:init.org::*my/see-sorted-todos][my/see-sorted-todos:1]]
 (defun my/see-sorted-todos ()
   "See TODOs sorted by state, priority, then effort.
 
@@ -2179,7 +2233,31 @@ See: https://emacs.stackexchange.com/questions/9585/org-how-to-sort-headings-by-
                                         (org-agenda-sorting-strategy '(todo-state-down priority-down effort-up)))))))
     (org-agenda nil "𝓌" t)
     (beginning-of-buffer)))
-;; my/see-sorted-todos:1 ends here
+
+(defun jump-to-org-agenda ()
+  (interactive)
+  (let ((buf (get-buffer "*Org Agenda*"))
+        wind)
+    (if buf
+        (if (setq wind (get-buffer-window buf))
+            (select-window wind)
+          (if (called-interactively-p)
+              (progn
+                (select-window (display-buffer buf t t))
+                (org-fit-window-to-buffer)
+                ;; (org-agenda-redo)
+                )
+            (with-selected-window (display-buffer buf)
+              (org-fit-window-to-buffer)
+              ;; (org-agenda-redo)
+              )))
+      (call-interactively 'org-agenda-list)))
+  ;;(let ((buf (get-buffer "*Calendar*")))
+  ;;  (unless (get-buffer-window buf)
+  ;;    (org-agenda-goto-calendar)))
+  )
+
+(run-with-idle-timer 300 t 'jump-to-org-agenda)
 
 ;; [[file:init.org::*highlight quoted symbols][highlight quoted symbols:1]]
 (use-package highlight-quoted
@@ -3334,83 +3412,3 @@ associated major mode; that's what we aim to do here."
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (message-box "Done")
 ;; DONE?:1 ends here
-
-
-;; Since DONE is a terminal state, it has no exit-action.
-;; Let's explicitly indicate time should be noted.
-(setq org-log-done 'time)
-
-;; TODO: Make this into a list of plists, so things are named and only present if needed.
-;;
-;; These denote ‘progress’ on a task.
-;; For contextual information, one uses “tags”.
-;; For example, a delegated task could be in state “STARTED” and tagged “:delegate:James:”.
-(setq my/workflow-states
-      ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
-
-      ;; (state action-on-entry action-on-exit foreground)
-      '(
-        ;; Tasks that are not started and not planned. They could be the
-        ;; backlogs or the GTD’s someday/maybe. These tasks could be converted
-        ;; to NEXT during a weekly review.
-        ("TODO" nil nil                   "red")
-
-        ;; A task moves from TODO to NEXT only when I've actually split the task
-        ;; into small achievable chunks; ie i've done some investigation into
-        ;; the task and thought about what steps I need to do to actually get
-        ;; the task done. With this planning in place, I can then ensure I
-        ;; allocate sufficient timeblocks to work on the subtasks of this
-        ;; task. (Aside, a “project” is a task with multiple subtasks.)
-        ;;
-        ;;
-        ;; Use my 1/1 time with my manager/peers to review my INVESTIGATED/NEXT
-        ;; findings for the tickets of the current sprint. I just want to make
-        ;; sure I'm on the right track, before starting to work on them. Or, if
-        ;; a ticket is not investigated, do that with my manager.  I find that while it
-        ;; might take me half an hour or more, it'll take like 5 minutes with
-        ;; him since he's familiar with the code-base.
-        ;;
-        ;;
-        ;; ≈ NEXT. Tasks that are not started but planned to do as soon as I
-        ;; can. When there is no actionable STARTED (e.g., blocked), I start one
-        ;; of those and convert it to STARTED.
-        ("INVESTIGATED"   nil timestamp "blue")
-
-        ;; Tasks that are working in progress (“open loops”). I work on these
-        ;; tasks before starting another NEXT task to avoid too many open loops
-        ;; at any moment.
-        ("STARTED"         nil  timestamp "blue") ;; When did I start?
-
-        ;; AWAITING_REVIEW/IN_PROGRESS = Tasks that are working in progress
-        ;; (open loops). I work on these tasks before starting another NEXT task
-        ;; to avoid too many open loops at any moment.
-        ;;
-        ;; When a task goes into AWAITING_REVIEW, I've finished the task
-        ;; scheduled for that day and now my agenda will show “Sched. 𝓃× MyTask”
-        ;; for 𝓃 days /after/ the schedule date. Now, I interpret this 𝓃 to mean
-        ;; “This work was ready for review 𝓃 days ago, and if 𝓃 is large (ie
-        ;; ~5), then I should message the relevant people to review/unblock that
-        ;; work.”
-        ;;
-        ;; “In progress, but blocked by others”
-        ("AWAITING_REVIEW" nil  timestamp "orange") ;; When did this task enter in-review?
-
-        ("PAUSED"          note timestamp "magenta") ;; When & why is the task paused?
-
-        ("|")
-
-        ("DONE" nil timestamp  "forest green")             ;; When did this task finish?
-
-        ("CANCELLED" note timestamp)))     ;; When & why was this task cancelled?
-
-(setq org-todo-keywords
-      (list (cons 'sequence
-                  (cl-loop for (state on-entry on-exit _foreground) in my/workflow-states
-                           for first-letter = (downcase (substring state 0 1))
-                           for entry = (if (not on-entry) "" (if (equal on-entry 'note) "@" "!"))
-                           for exit = (if (not on-exit) "" (if (equal on-exit 'note) "@" "!"))
-                           collect (if (equal state "|") state (format "%s(%s%s/%s)" state first-letter entry exit))))))
-
-(setq org-todo-keyword-faces
-      (cl-loop for (state _on-entry _on-exit foreground) in my/workflow-states
-               collect (list state :foreground foreground :weight 'bold)))
