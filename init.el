@@ -1191,21 +1191,26 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; I have symlinks for various things, just follow them, do not ask me.
 (setq vc-follow-symlinks t)
 
+;; After my settings have been loaded, e.g., fancy priorities
+;; and cosmetics, then open my notes files.
+(add-hook 'emacs-startup-hook (lambda () (find-file "~/Documents/notes.org")))
+
 ;; If work machine, then show notes; otherwise show my todos & init side-by-side.
-(unless noninteractive
-  ;; Only run the following when we're in GUI mode;
-  ;; i.e., don't run it in Github Actions when testing.
-  (if (not my/personal-machine?)
-      (find-file "~/Documents/notes.org")
-    (find-file "~/Dropbox/todo.org")
-    ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
-    ;; which is a GPG file and so requires passphrase before other things can load.
-    ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
-    (split-window-right)                          ;; C-x 3
-    (other-window 1)                              ;; C-x 0
-    (let ((enable-local-variables :all)           ;; Load *all* locals.
-          (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
-      (ignore-errors (find-file "~/.emacs.d/init.org")))))
+(when nil
+  (unless noninteractive
+    ;; Only run the following when we're in GUI mode;
+    ;; i.e., don't run it in Github Actions when testing.
+    (if (not my/personal-machine?)
+        (find-file "~/Documents/notes.org")
+      (find-file "~/Dropbox/todo.org")
+      ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
+      ;; which is a GPG file and so requires passphrase before other things can load.
+      ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
+      (split-window-right)                          ;; C-x 3
+      (other-window 1)                              ;; C-x 0
+      (let ((enable-local-variables :all)           ;; Load *all* locals.
+            (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
+        (ignore-errors (find-file "~/.emacs.d/init.org"))))))
 
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
@@ -2061,18 +2066,28 @@ Example uses:
 
 (setq org-agenda-span 'week)
 
-(setq org-agenda-custom-commands '(("o" "Open Loops" tags-tree "TODO=\"STARTED\"" )))
+;; (setq org-agenda-custom-commands '(("o" "Open Loops" tags-tree "TODO=\"STARTED\"" )))
 
 (setq org-log-into-drawer t) ;; hide the log state change history a bit better
+
+
+(setq  org-fold-catch-invisible-edits 'show-and-error ;; Avoid accidental edits to folded sections
+       org-special-ctrl-a/e t ;; C-a/C-e know about leading “*” and ending :tags:
+       ;; Agenda styling
+       org-agenda-tags-column -80
+       org-agenda-time-grid '((daily today require-timed)
+                              (800 1000 1200 1400 1600 1800 2000)
+                              " ───── " "───────────────")
+       org-agenda-current-time-string "◀── now ─────────────────────────────────────────────────")
 
 ;; p to “p”ush back a task to the next day.
 (add-hook 'org-agenda-mode-hook
           ;; Note: There's also org-agenda-date-earlier to change the date by -1 day.
           (lambda ()
-            (define-key org-agenda-mode-map "p" 'org-agenda-date-later)
+         (define-key org-agenda-mode-map "p" 'org-agenda-date-later)
 
-            ;; Reschedule agenda items to today, “right 𝓃ow”, with a single command
-            (define-key org-agenda-mode-map "n" (defun org-agenda-reschedule-to-today ()
+         ;; Reschedule agenda items to today, “right 𝓃ow”, with a single command
+         (define-key org-agenda-mode-map "n" (defun org-agenda-reschedule-to-today ()
                                                   (interactive)
                                                   (flet ((org-read-date (&rest rest) (current-time)))
                                                     (call-interactively 'org-agenda-schedule))))))
@@ -2101,6 +2116,21 @@ Example uses:
 
 ;; list items will be treated like low-level headlines; i.e., folded by default.
 (setq org-cycle-include-plain-lists 'integrate)
+
+;; clear checkbox when repeating a todo task
+(add-hook 'org-todo-repeat-hook #'org-reset-checkbox-state-subtree)
+
+;; clear sub-sub-tasks when repeating a todo task.
+;; ⇒ If I have “** A [%] \n #+STYLE: habit \n SCHEDULED: <2024-04-19 Fri .+1d> \n *** DONE B”
+;; then on “** A” I press ‘t’ then mark it as ‘DONE’, then the “*** B” task resets to ‘TODO’.
+(add-hook 'org-todo-repeat-hook
+          (lambda () (org-map-entries (lambda () (when (> (length (org-get-outline-path)) 1) (org-todo "TODO"))) t 'tree)))
+
+;; “C-c a t” ⇒ List all (non-recurring non-someday) todos sorted by state, priority, effort
+(setq org-agenda-custom-commands
+      '(("t" "My list of all TODO entries" tags-todo "-recurring-someday"
+         ((org-agenda-overriding-header "\nTODOs sorted by state, priority, effort")
+          (org-agenda-sorting-strategy '(todo-state-down priority-down effort-up))))))
 
  (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
    "Given a link of TYPE with a URL, produce the correct org-link.
