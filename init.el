@@ -1793,6 +1793,9 @@ fonts (•̀ᴗ•́)و"
      (message-box "The basic 25 minutes on this difficult task are not up; it's a shame to see you leave."))
      (org-timer-stop)))
 
+;; Attempting to move a task to a DONE state is blocked if the has a child task that is not marked as DONE
+(setq org-enforce-todo-dependencies t)
+
 ;; TODO: Add the line “(declare (indent defun))” right after the docstring of “lf-define”,
 ;; so that Emacs indents it like a “defun”.
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
@@ -1855,7 +1858,8 @@ fonts (•̀ᴗ•́)و"
    ;; at any moment.
    ("STARTED" :on-entry timestamp :foreground "blue") ;; When did I start?
 
-   ("PAUSED" :on-entry  note :on-exit timestamp :foreground "magenta") ;; When & why is the task paused?
+   ;; I'm not actively working on this task anymore. I may return to it later.
+   ("PAUSED"   :on-entry  note :on-exit timestamp :foreground "magenta") ;; When & why is the task paused?
 
    ;; When a task goes into WAITING, I've finished the task as much as possible
    ;; and now need to rely on someone else; e.g., for feedback.
@@ -1867,6 +1871,13 @@ fonts (•̀ᴗ•́)و"
    ;;
    ;; “In progress, but blocked by others”
    ("WAITING" :on-entry timestamp :foreground "red2") ;; When did this task enter in-review?
+
+   ;; I'm actively working on this task, and not waiting on any one else,
+   ;; but there is some blocker; e.g., a merge dependency issue or a conflict to resolve.
+   ;; Sometimes these are quick to dispatch; other times they're blocked by PAUSED/WAITING tasks.
+   ;;
+   ;; This is essentially DONE, but there's some blocker.
+   ("APPROVED" :on-entry  timestamp :foreground "magenta")
 
    ("|") ;; All states after this special marker are “terminal” and so not shown in the org-agenda: (setq org-agenda-skip-scheduled-if-done t)
 
@@ -1970,11 +1981,37 @@ fonts (•̀ᴗ•́)و"
 ;; When showing the agenda, do not collect habits together at the bottom, as is the default.
 (add-to-list 'org-agenda-sorting-strategy '(agenda time-up priority-down category-keep))
 
+(defun jump-to-org-agenda ()
+  (interactive)
+  (let ((buf (get-buffer "*Org Agenda*"))
+        wind)
+    (if buf
+        (if (setq wind (get-buffer-window buf))
+            (select-window wind)
+          (if (called-interactively-p)
+              (progn
+                (select-window (display-buffer buf t t))
+                (org-fit-window-to-buffer)
+                ;; (org-agenda-redo)
+                )
+            (with-selected-window (display-buffer buf)
+              (org-fit-window-to-buffer)
+              ;; (org-agenda-redo)
+              )))
+      (call-interactively 'org-agenda-list)))
+  ;;(let ((buf (get-buffer "*Calendar*")))
+  ;;  (unless (get-buffer-window buf)
+  ;;    (org-agenda-goto-calendar)))
+  )
+
+(run-with-idle-timer 300 t 'jump-to-org-agenda)
+
 ;; Obtain a notifications and text-to-speech utilities
 (system-packages-ensure "say") ;; Built-into MacOS, but can be downloaded in Ubuntu
 (system-packages-ensure "terminal-notifier") ;; MacOS specific
 ;; System Preferences → Notifications → Terminal Notifier → Allow “alerts”.
 ;; E.g.,: (shell-command "terminal-notifier -title \"Hiya\" -message \"hello\"")
+;; Ensure you're not in “Mac OS Focus” mode: https://cleanmymac.com/blog/notifications-not-showing-mac
 
 (cl-defun my/notify (message &key (titled "") at repeat-every-hour open)
   "Notify user with both an visual banner, with a beep sound, and a text-to-speech recitation.
@@ -2034,9 +2071,9 @@ Example uses:
                          ,@(when open `(-open ,(pp-to-string open)))
                          ;; Run the shell command COMMAND when the user clicks the notification.
                          ;; -execute COMMAND
-                         ;; & ;; … and then speak! …
+                         & ;; … and then speak! …
                          ;; NOTE:This was getting annyoning in the middle of work meetings.
-                         ;; say ,(s-replace "\\n" " " (pp-to-string message))
+                         say ,(s-replace "\\n" " " (pp-to-string message))
                          )))))))
 
 ;; (Emojis look terrible in Lisp; but much better when the alert is actually made!)
@@ -2055,6 +2092,23 @@ Example uses:
            :at "10:00am"
            :repeat-every-hour 2)
 
+;; Provides notifications for scheduled or deadlined agenda entries.
+(use-package org-alert
+   :config
+      (setq org-alert-interval 300
+            org-alert-notify-cutoff 10
+            org-alert-notify-after-event-cutoff 10)
+      (org-alert-enable))
+
+(use-package alert
+   :config (setq alert-default-style 'osx-notifier))
+
+(alert "HELLO")
+
+(my/notify "🔔 Get things done! 📎 💻 "
+  :open "https://www.youtube.com/watch?v=23tusPiiNZk&ab_channel=Motiversity"
+   :at "1 sec")
+
 ;; Make every other line of a buffer grey (or whatever you like).
 ;; Useful for buffers that list things.
 ;; I want it to make my Org tables look nice. Even better when org-modern is activated.
@@ -2069,6 +2123,15 @@ Example uses:
 ;; (setq org-agenda-custom-commands '(("o" "Open Loops" tags-tree "TODO=\"STARTED\"" )))
 
 (setq org-log-into-drawer t) ;; hide the log state change history a bit better
+
+
+;; Quick key to go to the currently clocked-in entry, or to the most recently clocked one.
+;; With prefix arg, offer recently clocked tasks for selection.
+(bind-key* "C-c SPC"
+           (lambda (&optional prefix)
+             (interactive)
+             (org-clock-goto prefix)
+             (org-narrow-to-subtree)))
 
 
 (setq  org-fold-catch-invisible-edits 'show-and-error ;; Avoid accidental edits to folded sections
@@ -2123,8 +2186,83 @@ Example uses:
 ;; clear sub-sub-tasks when repeating a todo task.
 ;; ⇒ If I have “** A [%] \n #+STYLE: habit \n SCHEDULED: <2024-04-19 Fri .+1d> \n *** DONE B”
 ;; then on “** A” I press ‘t’ then mark it as ‘DONE’, then the “*** B” task resets to ‘TODO’.
+;;
+;; In particular, sometimes I have reference/posterity info “*** something to remember” which need not be marked TODO/DONE,
+;; since it has no todo state, it is not impacted by this hook. Notable example includes “** Review feedback :drill: \n *** Fact 1 \n *** Fact 2”
+;; using: M-x org-drill-tree.
 (add-hook 'org-todo-repeat-hook
-          (lambda () (org-map-entries (lambda () (when (> (length (org-get-outline-path)) 1) (org-todo "TODO"))) t 'tree)))
+          (lambda () (org-map-entries (lambda () (when (and (> (length (org-get-outline-path)) 1) (equal (org-get-todo-state) "DONE")) (org-todo "TODO"))) t 'tree)))
+
+
+;; If current day is Sat/Sun, then schedule to the next upcoming monday (but retain time hours).
+;; TODO: Maybe only do this if an org entry has a property, say, “ :ONLY_WEEKDAYS: t ”
+(add-hook 'org-todo-repeat-hook
+          (lambda () (org-map-entries
+                 (lambda ()
+         (let* ((scheduled (date-to-time (org-entry-get (point) "SCHEDULED")))
+                          (day (format-time-string "%a" scheduled)))
+                     (when (member day '("Sat" "Sun"))
+                       (org-schedule nil (format-time-string "+1mon %T" scheduled))
+                       (message "Musa says this is a weekend-only habit (◕‿◕)"))))
+                 t
+                 'tree)))
+
+
+;; Run hooks “ON_[STARTED∣DONE]” state changes.
+;; (MA: Consider adding “ON_𝒳” for all states 𝒳, using above workflow loop.)
+;; (MA: Consider turning the example /below/ into a single property hook, say “:TEMPORARILY_TREAT_SUBTREES_AS_CHECKBOXES: t”)
+;;
+;; For example, in the following, when we press “t s” to put “A” into “STARTED A” the declared code is run:
+;; It essentially treats all children trees, temporarily, as checkboxes: Pressing “t” toggles between “ ∣ TODO ∣ DONE”
+;; and does not log any info about state change of the subtrees. (Also, the “STARTED A” is becomes “A”).
+;; Then when we press “t” on “A” we get “DONE A”, which invokes the associated ON_DONE code, which just resets things to before
+;; we began working on task “A”.
+;;
+;; ** A
+;; :PROPERTIES:
+;; :ON_STARTUP: (progn (if (search-forward-regexp org-todo-regexp nil t) (or (delete-region (match-beginning 0) (match-end 0)) t)) (setq remember/org-todo-keywords org-todo-keywords) (setq org-todo-keywords '("TODO" "DONE")) (setq remember/org-log-done org-log-done) (setq org-log-done nil) (org-mode-restart))
+;; :ON_DONE: (progn (setq org-todo-keywords remember/org-todo-keywords  org-log-done remember/org-log-done) (org-mode-restart))
+;; :END:
+;;
+;; *** TODO B
+;;
+(add-hook 'org-after-todo-state-change-hook
+          (defun my/special-ON_STARTED-property-hook ()
+            "When a task enters STARTED/DONE state, execute the code in its ON_STARTED/ON_DONE property."
+            (save-excursion
+              ;; yet another property support
+              (when (equal (org-get-todo-state) "TODO")
+                  ;; Instead of ignore-errors, it should only evaluate the string /if/ it is present.
+                  (ignore-errors  (eval (car (read-from-string (eval (org-entry-get (point) "ON_TODO")))))))
+
+              ;; yet another property support
+              (when (equal (org-get-todo-state) "STARTED")
+                  ;; Instead of ignore-errors, it should only evaluate the string /if/ it is present.
+                   (ignore-errors (eval (car (read-from-string (eval (org-entry-get (point) "ON_STARTED")))))))
+
+              ;; yet another property support
+              (when (equal (org-get-todo-state) "DONE")
+                  ;; Instead of ignore-errors, it should only evaluate the string /if/ it is present.
+               (ignore-errors (eval (car (read-from-string (eval (org-entry-get (point) "ON_DONE")))))))
+
+              ;; yet another property support
+              (when (equal "t" (org-entry-get (point) "TEMPORARILY_TREAT_SUBTREES_AS_CHECKBOXES"))
+                (when (equal (org-get-todo-state) "TODO")
+                  (let ((current-prefix-arg :random-theme)) (my/toggle-theme))
+                  (org-narrow-to-subtree)
+                  (beginning-of-buffer)
+                  (setq remember/org-todo-keywords org-todo-keywords
+                        org-todo-keywords '("TODO" "DONE")
+                        remember/org-log-done org-log-done
+                        org-log-done nil
+                        remember/org-log-note-headings org-log-note-headings
+                        org-log-note-headings nil)
+                  (org-mode-restart))
+                (when (or (equal (org-get-todo-state) "DONE") (equal (org-get-todo-state) ""))
+                  (setq org-todo-keywords remember/org-todo-keywords
+                        org-log-done remember/org-log-done
+                        org-log-note-headings remember/org-log-note-headings)
+                  (org-mode-restart))))))
 
 ;; “C-c a t” ⇒ List all (non-recurring non-someday) todos sorted by state, priority, effort
 (setq org-agenda-custom-commands
@@ -2149,7 +2287,11 @@ Example uses:
     :face '(:foreground "green" :weight bold
             :underline "blue" :overline "blue")))
 
-(defvar COMPANY (getenv "COMPANY") "Name of place I work at.")
+(defvar COMPANY (exec-path-from-shell-copy-env "COMPANY")
+  "Name of place I work at.
+
+      It's setup in ~/.zshrc")
+;; Note, “getenv” requires an Emacs restart if the shell vars changed /after/ starting Emacs.
 
 (my/work-links "FWD" (lf-string "https://bugs.local.${(downcase COMPANY)}.com/browse/FWD-%s"))
 (my/work-links "OUT" (lf-string "https://bugs.local.${(downcase COMPANY)}.com/browse/OUT-%s"))
@@ -2194,6 +2336,11 @@ Usage:
 ;; When I process my “* Inbox” section, I am left with an empty Org section and so delete it.
 ;; ⇒ “C-c c” will create the section if it does not exist.
 ;; ⇒ Deleting it is a nice ‘cheery on top’ when processing my inbox (✿◠‿◠)
+;;
+;; The process of adding a task is very fast and non-disruptive to my work. The
+;; capture template includes the date added. This is useful when reviewing tasks
+;; to see how long the task has been on the list and if I have been
+;; procrastinating.
 (bind-key* "C-c c" (def-capture "Inbox Entry" "Inbox" "* TODO %?\n Captured: %U \n"))
 
 (defalias #'my/new-journal-entry (def-capture "Journal Entry" "Journal"
@@ -2207,9 +2354,9 @@ Usage:
              (concat
               ;; The “:mood_𝓃:” tag is so that I can easily see my moods across my entries.
               ;; Keeping track of mood is a simple way to monitor success; e.g., whether GTD is working for me or not.
-   (format-time-string "* %Y-%m-%d %a %R :mood_𝒏%?:retro:daily:\n")
+   (format-time-string "* %Y-%m-%d %a %R :mood_%^{Mood at the end of the day?}:retro:daily:\n")
 "
-Instructions: Read section contents and replace them with your own words.
+Instructions: Read section contents and replace them with your own words.%?
 
 ** Monitoring Mood For Success
   - Why do I feel the way I do?
@@ -2222,8 +2369,10 @@ Instructions: Read section contents and replace them with your own words.
 
 ** Goal Alignment
   - Were today's actions directed at achieving the sprint's goals? Stay focused!
-  - Review your day: use my/what-did-i-do-today to review the tasks you  clocked into.
-      [[elisp:(let ((org-clock-clocktable-default-properties (-snoc org-clock-clocktable-default-properties :block 'today :timestamp 'nil))) (beginning-of-line) (kill-line) (org-clock-report))][What Did I Work on Today?]]
+  - Review your day by reviewing the tasks you clocked into.
+
+     %(let ((org-clock-clocktable-default-properties (-snoc org-clock-clocktable-default-properties :block 'today :timestamp 'nil))) (beginning-of-line) (kill-line) (org-clock-report))
+
   - Set SMART goals for tomorrow.
 
 ** Stress Reduction
@@ -2239,6 +2388,68 @@ Instructions: Read section contents and replace them with your own words.
   - Conclude your retrospective by expressing gratitude for the positive aspects of your day.
   - Reflect on the people, opportunities, and experiences that brought you joy or fulfilment.
 "))
+
+;; This only works well if my tasks have timestamps; ie are scheduled ^_^
+(setq org-clock-clocktable-default-properties
+      '(:scope ("~/Documents/notes.org")       ;; Consider the current file
+        :hidefiles t      ;; Hide the file column when multiple files are used to produced the table.
+        :maxlevel 5       ;; Consider sub-sub-sections
+        :block lastweek   ;; Only show me what I did last week
+        ;; Other values: 2024-04, lastmonth, yesterday, thisyear, 2024
+        ;; :tstart "<-2w>" :tend "<now>"   ;; Show me the past two weeks
+        ;; :tstart "<2006-08-10 Thu 10:00>" :tend "<2006-08-10 Thu 12:00>" ;; Show me a particular range
+        :step day         ;; Split the report into daily chunks
+        :formula %        ;; Show me the percentage of time a task took relative to my day
+        :link t           ;; Link the item headlines in the table to their origins
+        :narrow 55!       ;; Limit the width of the headline column in the Org table
+        :tcolumns 1       ;; Show only 1 column ---not multiple, for the sections and subsections and etc.
+        :timestamp t      ;; Show the timestamp, if any
+        :tags t        ;; Do not show task tags in a column; I use mostly hierarchies for my tasks right now.
+        ;; :match "billable|notes-travel" ;; ⇒ Includes tags “billable” and “notes”, excludes tag “travel”
+        ;; More examples at: https://orgmode.org/manual/Matching-tags-and-properties.html#Matching-tags-and-properties
+        ;; For example, we can match tags & priority & todo states & property drawer values; “/DONE” matches all tasks with state being ‘DONE’.
+        :match "-OOO" ;; Exclude tasks tagged “OOO”, which means “Out of Office” ---e.g., taking a break, or praying, or out for an appointment.
+        ;; :formatter org-clocktable-write-default ;; This is the default way to print a table; it looks very long and annoying to change.
+        ;; :sort (3 . ?N)              ;; Sort descendingly on time. Not ideal, since I'm very hierarchical.
+        ))
+;; More properties at:  https://orgmode.org/manual/The-clock-table.html
+;; [Low Priority] Figure out whether I've underworked or overworked? ⇒ https://www.erichgrunewald.com/posts/how-i-track-my-hour-balance-with-a-custom-org-mode-clock-table/
+
+;; I prefer “27h” over “1d 3h”.
+(setq org-duration-format 'h:mm)
+
+
+
+;; In Org-agenda, press “v r” to view the clock report
+;; (This method is invoked when you hit “v r” in Org-agenda.)
+(defalias 'org-agenda-clockreport-mode 'my/what-did-i-work-on-this-week)
+
+(defun my/what-did-i-work-on-this-week ()
+  (interactive)
+  (my/what-did-i-work-on
+   "*What Did I Work On This Week?*"
+   org-clock-clocktable-default-properties))
+
+(defun my/what-did-i-work-on-today ()
+  (interactive)
+  (my/what-did-i-work-on
+   "*What Did I Work on Today?*"
+   (-snoc org-clock-clocktable-default-properties :block 'today)))
+
+(defun my/what-did-i-work-on (buffer-title clocktable-properties)
+  (switch-to-buffer buffer-title)
+  (org-mode)
+  ;; (org-modern-mode) Tables don't look good with the unicode/timestamp svg
+  (-let [org-clock-clocktable-default-properties clocktable-properties]
+    (org-clock-report))
+  ;; For some reason, some of org-modern carries from the current buffer to the new buffer.
+  (org-modern-mode +1)
+  (org-modern-mode -1)
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "\\\\_" nil t)
+      (replace-match "⇒")
+      (org-table-align))))
 
 (defun my/see-sorted-todos ()
   "See TODOs sorted by state, priority, then effort.
@@ -2263,31 +2474,6 @@ See: https://emacs.stackexchange.com/questions/9585/org-how-to-sort-headings-by-
                                         (org-agenda-sorting-strategy '(todo-state-down priority-down effort-up)))))))
     (org-agenda nil "𝓌" t)
     (beginning-of-buffer)))
-
-(defun jump-to-org-agenda ()
-  (interactive)
-  (let ((buf (get-buffer "*Org Agenda*"))
-        wind)
-    (if buf
-        (if (setq wind (get-buffer-window buf))
-            (select-window wind)
-          (if (called-interactively-p)
-              (progn
-                (select-window (display-buffer buf t t))
-                (org-fit-window-to-buffer)
-                ;; (org-agenda-redo)
-                )
-            (with-selected-window (display-buffer buf)
-              (org-fit-window-to-buffer)
-              ;; (org-agenda-redo)
-              )))
-      (call-interactively 'org-agenda-list)))
-  ;;(let ((buf (get-buffer "*Calendar*")))
-  ;;  (unless (get-buffer-window buf)
-  ;;    (org-agenda-goto-calendar)))
-  )
-
-(run-with-idle-timer 300 t 'jump-to-org-agenda)
 
 ;; [[file:init.org::*highlight quoted symbols][highlight quoted symbols:1]]
 (use-package highlight-quoted
