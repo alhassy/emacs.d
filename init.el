@@ -1705,7 +1705,7 @@ fonts (•̀ᴗ•́)و"
 (use-package org-fancy-priorities
 
   :hook   (org-mode . org-fancy-priorities-mode)
-  :custom (org-fancy-priorities-list '("High" "MID" "LOW")) ;; "OPTIONAL"
+  :custom (org-fancy-priorities-list '("MUST DO" "MID" "LOW")) ;; "OPTIONAL"
   ;; Let's use the “Eisenhower map of priority”…
   ;; :custom (org-fancy-priorities-list '("Urgent and Important"     ;; Do now!
   ;;                                      "Not Urgent But Important" ;; Do schedule this.
@@ -1929,7 +1929,7 @@ fonts (•̀ᴗ•́)و"
 (add-to-list 'org-src-lang-modes '("plantuml" . fundamental))
 
 ;; Record a note on what was accomplished when clocking out of an item.
-(setq org-log-note-clock-out t)
+(setq org-log-note-clock-out nil) ;; I break tasks down & use C-c C-z, so no need for this anymore.
 
 (setq confirm-kill-emacs 'yes-or-no-p)
 
@@ -2155,17 +2155,29 @@ Example uses:
                                                   (flet ((org-read-date (&rest rest) (current-time)))
                                                     (call-interactively 'org-agenda-schedule))))))
 
+;; Relevant function is “C-c C-z”.
+;;
+;; In Org-Agenda, “l” to see top-level clocked in/out logs.
+;; On a given item, press “L” to see its note logs.
+;;
+;; Or, just “v L” to see all logged notes in the agenda view.
+;;
 (setq org-log-note-headings '((done        . "CLOSING NOTE %t")
                               (state       . "State %-12s from %-12S %t")
-                              (note        . "Note taken on %t")
-     ;;   (reschedule . "Rescheduled from %S on %t") ;; Default
+                              (note        . "%t")
+                              ;;   (reschedule . "Rescheduled from %S on %t") ;; Default
                               (reschedule  . "Schedule changed on %t: %S -> %s")
                               (delschedule . "Not scheduled, was %S on %t")
                               (redeadline  . "Deadline changed on %t: %S -> %s")
-       ;;  (redeadline . "New deadline from %S on %t") ;; Default
+                              ;;  (redeadline . "New deadline from %S on %t") ;; Default
                               (deldeadline . "Removed deadline, was %S on %t")
                               (refile      . "Refiled on %t")
                               (clock-out   . "")))
+
+
+;; Remove the “\\\n” added to the end of notes.
+(advice-add 'org-store-log-note :after
+            (cl-defun remove-\\ (&rest _) (org-narrow-to-subtree) (replace-in-buffer "\\\\\\\\\n" "") (widen)))
 
 ;; Start each agenda item with ‘○’, then show me it's %timestamp and how many
 ;; times it's been re-%scheduled.
@@ -2230,23 +2242,23 @@ Example uses:
           (defun my/special-ON_STARTED-property-hook ()
             "When a task enters STARTED/DONE state, execute the code in its ON_STARTED/ON_DONE property."
             (save-excursion
-              ;; yet another property support
-              (when (equal (org-get-todo-state) "TODO")
+         ;; yet another property support
+         (when (equal (org-get-todo-state) "TODO")
                   ;; Instead of ignore-errors, it should only evaluate the string /if/ it is present.
                   (ignore-errors  (eval (car (read-from-string (eval (org-entry-get (point) "ON_TODO")))))))
 
-              ;; yet another property support
-              (when (equal (org-get-todo-state) "STARTED")
+         ;; yet another property support
+         (when (equal (org-get-todo-state) "STARTED")
                   ;; Instead of ignore-errors, it should only evaluate the string /if/ it is present.
                    (ignore-errors (eval (car (read-from-string (eval (org-entry-get (point) "ON_STARTED")))))))
 
-              ;; yet another property support
-              (when (equal (org-get-todo-state) "DONE")
+         ;; yet another property support
+         (when (equal (org-get-todo-state) "DONE")
                   ;; Instead of ignore-errors, it should only evaluate the string /if/ it is present.
                (ignore-errors (eval (car (read-from-string (eval (org-entry-get (point) "ON_DONE")))))))
 
-              ;; yet another property support
-              (when (equal "t" (org-entry-get (point) "TEMPORARILY_TREAT_SUBTREES_AS_CHECKBOXES"))
+         ;; yet another property support -- AXE?
+         (when (equal "t" (org-entry-get (point) "TEMPORARILY_TREAT_SUBTREES_AS_CHECKBOXES"))
                 (when (equal (org-get-todo-state) "TODO")
                   (let ((current-prefix-arg :random-theme)) (my/toggle-theme))
                   (org-narrow-to-subtree)
@@ -2265,10 +2277,103 @@ Example uses:
                   (org-mode-restart))))))
 
 ;; “C-c a t” ⇒ List all (non-recurring non-someday) todos sorted by state, priority, effort
+;; “C-c a a” ⇒ Daily agenda view, followed by unscheduled open loops
+;;
+;; Query Language :: https://orgmode.org/manual/Matching-tags-and-properties.html
+;; For general-purpose SQL-like queries against all Org entries, consider using org-ql: https://github.com/alphapapa/org-ql
+;; For example, to find all entries that have any timestamp in a given period.
+;; Another example: Suppose you know that there is a “src” block you're looking for in your notes, but
+;; you're not sure which entry it is in, you can use org-ql to find all entries that contain a “src” block.
+;; Moreover, you can refine the query by considering only a specific time window, if the entry has any timestamp at all.
+
+;; You can even use org-ql in org-agenda-custom-commands! See https://github.com/alphapapa/org-ql/blob/master/examples.org#stuck-projects-block-agenda
+;; or, even, better: https://www.reddit.com/r/emacs/comments/cnrt2d/comment/ewtqez8/
+;; That is, you can write SQL-like queries for your agenda, if you prefer.
+;; Moreover, one could use org-ql-agenda as an alternative implementation of org-agenda,
+;; but their are pros/cons to both, neither is strictly better: org-ql has better queries, org-agenda has different features (such as weekly view). ⟵ This might not be true anymore.
+;; MA: I may switch to org-ql since org-ql-block is about 80% faster than org-agenda!
+;; MA: Actually, no thanks: I dislike that my agenda is broken down my projects, I like the usual timebased grid ordering of org-agenda.
+;;     ⇒ This is the only blocker, if I can fix it, then I'd be happy to use org-ql / org-super-agenda.
+;;    ⇒ Note: Any use of org-ql in org-agenda-custom-commands actually recreates the agenda buffer from scratch: It's not what you get by calling classic org-agenda!
+;;      See: https://www.reddit.com/r/emacs/comments/cnrt2d/comment/ewhf0zj/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+;;      i.e., see org-super-agenda
 (setq org-agenda-custom-commands
-      '(("t" "My list of all TODO entries" tags-todo "-recurring-someday"
+      '(("t" "My list of all TODO entries" tags-todo "-recurring-someday+LEVEL=2"
          ((org-agenda-overriding-header "\nTODOs sorted by state, priority, effort")
-          (org-agenda-sorting-strategy '(todo-state-down priority-down effort-up))))))
+          (org-agenda-sorting-strategy '(todo-state-down priority-down effort-up))
+          (org-super-agenda-groups (progn (org-super-agenda-mode t) '(
+             (:name "Important" :and (:priority "A" :not (:todo ("DONE" "CANCELED"))))
+             (:name "Process your Inbox" :tag "inbox")
+             (:name "Approved" :todo "APPROVED")
+             (:name "Started" :todo "STARTED")
+             (:name "Waiting" :todo "WAITING")
+             (:name "Low Priority" :priority "C" :tag "maybe"))))))
+        ("w" "WAITING Tasks"
+         ((tags "todo=\"WAITING\"+LEVEL=2")))
+        ;; To see EVERYTHING I've done, just press “C-c a a v w l” and it will activate logbook mode.
+        ;;
+        ;; This is a helpful view:
+        ;; As the week moves along, I know what I have left to do
+        ;; and can choose to /not/ do low-priority tasks, or to
+        ;; act as a motivator for me to work faster or focus better, etc.
+        ("a" "Daily Agenda;    Productivity  ≈   ♯DONE / ♯TASKS"
+         (;; TODO: MAYBE MOVE DOWN: (tags-todo "inbox" ((org-agenda-prefix-format "  %?-12t% s") (org-agenda-overriding-header "\nProcess your Inbox\n")))
+         (agenda "" ((org-agenda-span 'day) (org-agenda-overriding-header (progn (org-super-agenda-mode -1) "Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!"))))
+         ;; Show me deadline items grouped together
+         (agenda nil
+                  ((org-agenda-entry-types '(:deadline))
+                   (org-agenda-format-date "")
+                   (org-deadline-warning-days 7)
+                   (org-agenda-show-all-dates nil) ;; Only show if there are actually entries
+                   (org-agenda-skip-function
+                    '(org-agenda-skip-entry-if 'notregexp "\\* NEXT"))
+                   (org-agenda-overriding-header "\nDeadlines")))
+          ;; What I've left to do is all incomplete tasks scheduled within the next 5-𝓃 days, where 𝓃 is the numeral of the current week day.
+          ;;  ;; Mon=1, ⋯, Thu=4, ⋯
+          (tags (with-today
+                  ;; Add 1 to include tasks scheduled for today.
+                 (format "-recurring-TODO=\"DONE\"+SCHEDULED>=\"<-%sd>\"+SCHEDULED<=\"<+%sd>\"" (1+ it) it))
+                ((org-agenda-overriding-header "What I have left to do this week")))
+          ;; Press E to toggle seeing ~5 lines of each entry; might be helpful for rescheduling or doing a task sooner.
+          ;; https://emacs.stackexchange.com/questions/41468/show-notes-in-org-mode-agenda
+          ;;
+          ;; What I've done so far is all tasks closed in the past 𝓃-days, where 𝓃 is the numeral of the current week day.
+          ;;  ;; Mon=1, ⋯, Thu=4, ⋯
+          (tags (with-today (format
+                             ;; NOTE: AND “&” bindings tigher than OR “|”.
+                             ;; TODO [LOW PRIORITY]: The second clause, on WAITING, should reference this week. E.g., state entered this week.
+                             "-recurring&LEVEL=2&TODO=\"DONE\"&CLOSED>=\"<-%sd>\"|-recurring&LEVEL=2&TODO=\"WAITING\"" it))
+                ((org-agenda-overriding-header "What I've done so far this week")))
+        ;; Section on what I “Completed Today”. Not useful now in my life since I do 1 or do large non-recuring tasks per day.
+        ;; (tags "CLOSED>=\"<today>\"" ((org-agenda-overriding-header "\nCompleted today\n")))
+          (tags "-Someday+todo=\"STARTED\""
+                ((org-agenda-overriding-header "Please 𝒓𝒆𝒅𝒖𝒄𝒆 the number of (unscheduled) open loops")
+                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled))))
+          ))))
+
+(defmacro with-today (&rest body)
+  "Evaluate BODY which may mention `it' to refer to the numeral denoting today"
+  `(-let [it (calendar-day-of-week (calendar-current-date))] ,@body))
+
+(with-today it)
+
+(setq org-agenda-span 'day)
+
+(defun replace-in-buffer (regexp replacement)
+  "Perform a regexp replace in the entire buffer."
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward regexp nil t)
+      )
+
+;; Press “?” on a leading headline star to see other speed commands.
+;;
+;; Press “d” to mark a task as DONE without logging any meta-data
+(add-to-list 'org-speed-commands (cons "d"
+  (cl-defun my/mark-as-DONE-without-logging-meta-data ()
+    (org-narrow-to-subtree)
+    (replace-in-buffer  (concat "\\(^\\*+ \\)" org-todo-regexp "?") "\\1DONE") (widen)
+    (message "Nicely 𝑑𝑜𝑛𝑒!"))))
 
  (cl-defmacro my/work-links (type url &optional (export-display '(format "%s-%s" type label)))
    "Given a link of TYPE with a URL, produce the correct org-link.
@@ -2326,7 +2431,7 @@ Usage:
       (interactive "p")
       (-let [org-capture-templates
        ;; I'm using omega 𝓌 as a placeholder; i.e., a gensym-like key.
-        `(("𝓌" ,,name entry (file+headline ,,org-default-notes-file ,,location) ,,template))]
+        `(("𝓌" ,,name entry (file+headline ,,org-default-notes-file ,,location) ,,template :clock-in t :clock-keep t))]
         (org-capture (list prefix) "𝓌")
       (unless (> prefix 1) (rename-buffer ,name)))))
 
