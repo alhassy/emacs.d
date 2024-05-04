@@ -7003,6 +7003,11 @@ should be generated and ‘@’ denoting a user note should be made.
 ;; Since DONE is a terminal state, it has no exit-action.
 ;; Let's explicitly indicate time should be noted.
 (setq org-log-done 'time)
+;; → Take a look at org-log-done and org-log-into-drawer. These will tell org to log the date and time when an item's status is changed (you can specify).
+;; → When the agenda is built you can show all these logged items on the date they were completed with org-agenda-log-mode, org-agenda-log-mode-items, and org-agenda-start-with-log-mode.
+;; → This allows me to place TODO items anywhere I want (my logbook, notes, and a scratch list) and as I complete them through the week they're all shown in the agenda according to when I completed each.
+;; → I use org-clock-in to the task I'm working on, then a simple clocktable with some dates will show me exactly what I worked on.
+;; → [Weekly Review] which creates a day-by-day summary of the time I worked on what tasks. On Friday, I can look at this and see what I did over the week.
 
 ;; I prefer to log TODO creation also
 (setq org-treat-insert-todo-heading-as-state-change t)
@@ -8263,7 +8268,7 @@ TODO: Causes weird max-image-size issues?
   (save-excursion
     (goto-char (point-min))
     (while (re-search-forward regexp nil t)
-      )
+      (replace-match replacement))))
 
 ;; Press “?” on a leading headline star to see other speed commands.
 ;;
