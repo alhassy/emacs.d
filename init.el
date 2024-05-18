@@ -81,16 +81,16 @@
     :config
       ;; Always have it on
       (global-undo-tree-mode)
-  
+
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-  
+
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -301,13 +301,18 @@ installs of pacakges that are not in our `my/installed-packages' listing.
   :config (require 'inform))
 
 (use-package emacs
-    :defer nil
-    :ensure org-contrib
-    :config (require 'ox-extra)
-            (ox-extras-activate '(ignore-headlines)))
+  :defer nil
+  :ensure org-contrib
+  :config (require 'ox-extra)
+  )
 
 ;; Replace the content marker, “⋯”, with a nice unicode arrow.
-(setq org-ellipsis " ⤵")
+(setq org-ellipsis "  ⮛")
+;; Other candidates:
+;; (setq org-ellipsis "   📖")
+;; (setq org-ellipsis "  ◦◦◦")
+;; (setq org-ellipsis "  ⟨🫣⟩")
+;; (setq org-ellipsis "  ⟨👀⟩")
 
 ;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
@@ -791,7 +796,7 @@ visit all blocks with such a name."
 ;; [[file:init.org::*Emojis][Emojis:2]]
 ;; Get all unicode emojis to appear within Emacs
 ;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
-(unless noninteractive (set-fontset-font t nil "Apple Color Emoji"))
+;; (unless noninteractive (set-fontset-font t nil "Apple Color Emoji"))
 ;; Emojis:2 ends here
 
 ;; [[file:init.org::*Prettify inline source code][Prettify inline source code:1]]

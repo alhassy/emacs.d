@@ -1968,7 +1968,14 @@ contributions from the [[https://code.orgmode.org/bzg/org-mode/src/master/contri
 
 #+begin_src emacs-lisp :tangle init.el
 ;; Replace the content marker, “⋯”, with a nice unicode arrow.
-(setq org-ellipsis " ⤵")
+(setq org-ellipsis "  ⮛")
+;; Other candidates:
+;; (setq org-ellipsis "   📖")
+;; (setq org-ellipsis "  ◦◦◦")
+;; (setq org-ellipsis "  ⟨🫣⟩")
+;; (setq org-ellipsis "  ⟨👀⟩")
+;; (setq org-ellipsis " ⤵")
+
 
 ;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
@@ -3363,7 +3370,7 @@ Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1
 :END:
 
 #+NAME: my-emoji-templates
-#+begin_src emacs-lisp :tangle no :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
+#+begin_src emacs-lisp :tangle nil :wrap "src org :tangle ~/.emacs.d/yankpad.org" :exports code :results replace drawer
 ;;
 ;; https://emojipedia.org/people/
 (cl-loop for (emoji name description)
@@ -3500,12 +3507,12 @@ Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1
 #+begin_src emacs-lisp
 ;; Get all unicode emojis to appear within Emacs
 ;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
-(unless noninteractive (set-fontset-font t nil "Apple Color Emoji"))
+;; (unless noninteractive (set-fontset-font t nil "Apple Color Emoji"))
 #+end_src
-##
-## #+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes :exports none
-## <<my-emoji-templates()>>
-## #+end_src
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes :exports none
+<<my-emoji-templates()>>
+#+end_src
 ##
 ***   =my_⋯= Templates to obtain User Information
 :PROPERTIES:
