@@ -702,9 +702,21 @@ visit all blocks with such a name."
 ;; Word Completion and Documentation Pop-ups:4 ends here
 
 ;; [[file:init.org::*Word Completion and Documentation Pop-ups][Word Completion and Documentation Pop-ups:5]]
-(use-package emojify
- :config (setq emojify-display-style 'image)
- :init (global-emojify-mode 1)) ;; Will install missing images, if need be.
+(use-package emojify)
+
+
+
+(-let [font-for-emojis "Noto Color Emoji"]
+(if (member font-for-emojis (font-family-list))
+  (set-fontset-font
+    t 'symbol (font-spec :family font-for-emojis) nil 'prepend)
+  (message-box "Musa: Install the font!")
+  ;; Download font @ https://fonts.google.com/noto/specimen/Noto+Color+Emoji
+  ;; Double-click on the ttf file then select “install” to have it installed on your system
+    ))
+(setq emojify-display-style 'unicode) ;; unicode is the way to go!
+
+(global-emojify-mode 1) ;; Will install missing images, if need be.
 ;; Word Completion and Documentation Pop-ups:5 ends here
 
 ;; [[file:init.org::*Documentation Pop-Ups][Documentation Pop-Ups:1]]
