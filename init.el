@@ -105,7 +105,6 @@
   (require 'quelpa-use-package))
 
 ;; Auto installing OS system packages
-(use-package system-packages :config (system-packages-update))
 
 ;; Install OS packages using `use-package`.
 (use-package use-package-ensure-system-package)
@@ -180,17 +179,13 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 (system-packages-ensure "licecap") ;; Use: ⌘-SPACE licecap
 
 ;; Pack, ship and run any application as a lightweight container
-(system-packages-ensure "docker")
 ;; Free universal database tool and SQL client
-(system-packages-ensure "dbeaver-community")
 ;; Kubernetes IDE
-(system-packages-ensure "lens")
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
 (system-packages-ensure "node") ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
-(shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
 ;; According to https://github.com/nvm-sh/nvm, nvm shouldn't be installed via brew.
 
 ;; ;; Use “brew cask install” instead of “brew install” for installing programs.;
@@ -252,12 +247,6 @@ installs of pacakges that are not in our `my/installed-packages' listing.
         ;; Let's keep tab-completetion anyhow.
         ("TAB"   . helm-execute-persistent-action)
         ("<tab>" . helm-execute-persistent-action)))
-
-;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
-;; (use-package helm-icons
-;;   :defer nil
-;;   :custom (helm-icons-provider 'all-the-icons)
-;;   :config (helm-icons-enable))
 
 ;; When I want to see the TOC of an Org file, show me down to 3 subheadings.
 (setq org-imenu-depth 3)
@@ -383,117 +372,9 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; Neato doc strings for hydras
 (use-package pretty-hydra :defer nil)
 
-;; TODO convert my existing defhydras to my/defhydra.
-(defmacro my/defhydra (key title icon-name &rest body)
-"Make a hydra whose heads appear in a pretty pop-up window.
-Heads are signalled by keywords and the hydra has an icon in its title.
-
-KEY [String]: Global keybinding for the new hydra.
-
-TITLE [String]: Either a string or a plist, as specified for pretty-hydra-define.
-       The underlying Lisp function's name is derived from the TITLE;
-       which is intentional since hydra's are for interactive, pretty, use.
-
-       One uses a plist TITLE to specify what a hydra should do *before*
-       any options, or to specify an alternate quit key (:q by default).
-
-ICON-NAME [Symbol]: Possible FontAwesome icon-types: C-h v `all-the-icons-data/fa-icon-alist'.
-
-BODY: A list of columns and entries. Keywords indicate the title
-      of a column; 3-lists (triples) indicate an entry key and
-      the associated operation to perform and, optionally, a name
-      to be shown in the pop-up. See DEFHYDRA for more details.
-
-
-For instance, the verbose mess:
-
-    ;; Use ijkl to denote ↑←↓→ arrows.
-    (global-set-key
-     (kbd \"C-c w\")
-     (pretty-hydra-define my/hydra/\\t\\tWindow\\ Adjustment
-       ;; Omitting extra work to get an icon into the title.
-       (:title \"\t\tWindow Adjustment\" :quit-key \"q\")
-       (\"Both\"
-        ((\"b\" balance-windows                 \"balance\")
-         (\"s\" switch-window-then-swap-buffer  \"swap\"))
-        \"Vertical adjustment\"
-        ((\"h\" enlarge-window                  \"heighten\")
-         (\"l\" shrink-window                   \"lower\"))
-        \"Horizontal adjustment\"
-        ((\"n\" shrink-window-horizontally      \"narrow\")
-         (\"w\" enlarge-window-horizontally \"widen\" )))))
-
-Is replaced by:
-
-    ;; Use ijkl to denote ↑←↓→ arrows.
-    (my/defhydra \"C-c w\" \"\t\tWindow Adjustment\" windows
-       :Both
-       (\"b\" balance-windows                 \"balance\")
-       (\"s\" switch-window-then-swap-buffer  \"swap\")
-       :Vertical_adjustment
-       (\"h\" enlarge-window                  \"heighten\")
-       (\"l\" shrink-window                   \"lower\")
-       :Horizontal_adjustment
-       (\"n\" shrink-window-horizontally      \"narrow\")
-       (\"w\" enlarge-window-horizontally     \"widen\"))"
-  (let* ((name (intern (concat "my/hydra/"
-                              (if (stringp title)
-                                  title
-                                (plist-get title :title)))))
-         (icon-face `(:foreground ,(face-background 'highlight)))
-         (iconised-title
-          (concat
-           (when icon-name
-                 (require 'all-the-icons)
-             (concat
-              (all-the-icons-faicon (format "%s" icon-name) :face icon-face :height 1.0 :v-adjust -0.1)
-              " "))
-           (propertize title 'face icon-face))))
-    `(global-set-key
-      (kbd ,key)
-      (pretty-hydra-define ,name
-        ,(if (stringp title)
-             (list :title iconised-title
-                   :quit-key "q")
-           title)
-        ,(thread-last body
-           (-partition-by-header #'keywordp)
-           (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
-           (-flatten-n 1))))))
-
-(my/defhydra "C-n" "\t\t\t\t\tTextual Navigation" arrows
-   :Line
-   ("n" next-line)
-   ("p" previous-line)
-   ("a" beginning-of-line)
-   ("e" move-end-of-line)
-   ("g" goto-line)
-   :Word
-   ("f" forward-word "Next")
-   ("b" backward-word "Previous")
-   ("{" org-backward-element "Next Element")
-   ("}" org-forward-element "Previous Element")
-   :Screen
-   ("v" scroll-up-command "Scroll Down")
-   ("V" scroll-down-command "Scroll Up")
-   ("l" recenter-top-bottom "Center Page")
-   ("r" move-to-window-line-top-bottom "Relocate Point")
-   ("m" helm-imenu "Textual Menu"))
 
 ;; C-n, next line, inserts newlines when at the end of the buffer
 (setq next-line-add-newlines t)
-
-;; Use ijkl to denote ↑←↓→ arrows.
-(my/defhydra "C-c w" "\t\tWindow Adjustment" windows
-   :Both
-   ("b" balance-windows                 "balance")
-   ("s" switch-window-then-swap-buffer  "swap")
-   :Vertical_adjustment
-   ("h" enlarge-window                  "heighten")
-   ("l" shrink-window                   "lower")
-   :Horizontal_adjustment
-   ("n" shrink-window-horizontally      "narrow")
-   ("w" enlarge-window-horizontally     "widen"))
 
 ;; Provides a *visual* way to choose a window to switch to.
 ;; (use-package switch-window )
@@ -1035,34 +916,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;;
 ;; We use projectile's record of known projects, and keep only projects with
 ;; .git directory.
-(with-eval-after-load 'projectile
-  (setq magit-repository-directories
-        (thread-last (projectile-relevant-known-projects)
-          (--filter (unless (file-remote-p it)
-                      (file-directory-p (concat it "/.git/"))))
-          (--map (list (substring it 0 -1) 0)))))
-
-;; Follow-up utility
-(defun my/update-repos ()
-  "Update (git checkout main & pull) recently visited repositories."
-  (interactive)
-  (cl-loop for (repo _depth) in magit-repository-directories
-        ;; Is it “main” or “master”
-        for trunk = (s-trim (shell-command-to-string (format "cd %s; git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" repo)))
-        do (message (format "🤖 %s ∷ Checking out & pulling main" repo))
-           (shell-command (format "cd %s; git checkout %s; git pull" repo trunk)))
-  (message "🥳 Happy coding!"))
-;; Jump to a (ma)git repository with ~C-u C-x g~:1 ends here
-
-;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:1]]
-(cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
-  "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
-  `(prog1
-     (add-to-list 'pretty-magit-alist
-                  (list (rx bow (group ,WORD (eval (if ,NO-PROMPT? "" ":"))))
-                        ,ICON ',PROPS))
-     (unless ,NO-PROMPT?
-       (add-to-list 'pretty-magit-prompt (cons (concat ,WORD ": ") ,description)))))
 
 (setq pretty-magit-alist nil)
 (setq pretty-magit-prompt nil)
@@ -2127,11 +1980,6 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
       (let ((title (match-string 1 str))
             (url (match-string 2 str)))
         (list title url))))
-;; example usage
-(when nil
-  (let ((input "12345: [nqe, fix] NQE Regex Syntax: Fix parsing of quantifiers | https://gerrit.local.company.com/c/fwd/+/12345"))
-    (-let [ (title url) (ai/extract-title-and-url input) ] 
-      (message "Title: %s\nURL: %s" title url))))
 
 ;; C-c C-l Org-mode ⇐ HTML:3 ends here
 
@@ -2407,33 +2255,6 @@ Where directory hierarchy com/x/y/z denotes a Java package under the above //!us
                         (hs-hide-all)))))
 ;; Actual Setup:1 ends here
 
-;; [[file:init.org::*Actual Setup][Actual Setup:2]]
-(my/defhydra "C-c f" "Folding text" archive
-  :Current
-  ("h" hs-hide-block "Hide")
-  ("s" hs-show-block "Show")
-  ("t" hs-toggle-hiding "Toggle")
-  ;; "l" hs-hide-level "Hide blocks n levels below this block"; TODO: Enable folding feature
-  :Buffer
-  ("H" hs-hide-all "Hide")
-  ("S" hs-show-all "Show")
-  ("T" my/hs-toggle-buffer "Toggle")
-  :Style
-  ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
-  ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
-  :Region
-  ("f" (lambda () (interactive) (vimish-fold-toggle) (vimish-fold (region-beginning) (region-end))) "Fold/Toggle")
-  ("d" vimish-fold-delete "Delete fold")
-  ("U" vimish-fold-unfold-all "Unfold all")
-  ("D" vimish-fold-delete-all "Delete all")
-  ("n" vimish-fold-next-fold "Next fold")
-  ("p" vimish-fold-previous-fold "Previous fold")
-  :...
-  ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
-  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
-  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
-  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset Hideshow")  ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
-  ("q" nil "Quit" :color blue))
 
 ;; Features from origami/yafolding that maybe I'd like to implement include:
 ;; narrowing to block or folding everything except block, navigating back and forth between folded blocks.
@@ -2549,26 +2370,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 (use-package banner-comment   :defer nil)
 ;; Comment-boxes up to the fill-column ---or banner instead?:2 ends here
 
-;; [[file:init.org::*Searching Hydra][Searching Hydra:1]]
-(my/defhydra "s-f" "\t\tLocate Everything" search
-   :Buffer
-   ;; find all the occurrences of a string, pull out the lines containing the string to another buffer where [F2] I can edit and save,
-   ("e" helm-swoop  "Editable")
-    ;; Implicit Regex, colourful
-   ("c" swiper "Classic")
-
-   :Project
-   ;; “:toggle ℰ”: ℰ is a Boolean expression that is evaluated to tell us whether the state is on-or-off
-   ("t"  (lambda  () (interactive)) "Ignore specs/jsons"
-    :toggle (let* ((with-hole "ag %s --line-numbers -S --color --nogroup %%s %%s %%s") ;; ≈ original value of ‘helm-grep-ag-command’
-                   (ignores "--ignore=\"*spec.js\" --ignore=\"*.json\" --ignore=\"*.json5\"")
-                   (on (equal helm-grep-ag-command (format with-hole ignores))))
-              (if on (progn (setq helm-grep-ag-command (format with-hole "")) nil) ;; ≈ turn off the toggle
-                (setq  helm-grep-ag-command (format with-hole ignores)))))
-   ("f" (lambda () (interactive) (helm-do-grep-ag t)) "File type")
-   ("d" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag nil)))  "Directory")
-   ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
-;; Searching Hydra:1 ends here
+;; (find-file "/Users/musa/Documents/private-goal-getting/notes.org")
 
 ;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:1]]
 (use-package separedit   :defer nil)
