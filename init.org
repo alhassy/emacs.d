@@ -8546,13 +8546,28 @@ Here are further reads:
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-** TODO Text Folding ---Selectively displaying portions of a program :causes_HIDING_ALL_BLOCKS_issue:
+** Text Folding ---Selectively displaying portions of a program
 :PROPERTIES:
 :CUSTOM_ID: Text-Folding
 :END:
 
 ⟦‼ TODO: hideshowvis shows ="*hideshowvis*"= literally in src code blocks upon
 export; as such we need to hook to exports so as to temporarily disable it. ⟧
+#+begin_src emacs-lisp
+(require 'cl-lib)
+
+(defun my/disable-hs-hide-all (orig-fun &rest args)
+  "Advise `org-export-dispatch` to disable `hs-hide-all` temporarily."
+  ;; Without this, export hangs “Hiding all blocks...”
+  (cl-letf (((symbol-function 'hs-hide-all) (lambda (&rest _) nil)))
+    ;; Without this, export shows “*hideshowvis*” markers in my exported code blocks.
+    (cl-letf (((symbol-function 'hideshowvis-highlight-hs-regions-in-fringe) (lambda (&rest _) nil)))
+      (apply orig-fun args))))
+
+(advice-add 'org-export-dispatch :around #'my/disable-hs-hide-all)
+
+#+end_src
+
 
 Literate programming within Org-mode is not always ideal or possible, so we use
 a programming mode directly and then may want to have arbitrary ‘sections’ of
