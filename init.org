@@ -670,11 +670,7 @@ clipboard that allows undoing to any historical state./
 (use-package undo-tree
   :defer nil
   :bind ("C-x u" . undo-tree-visualize)
-  :hook (org-mode . undo-tree-mode) ;; For some reason, I need this. FIXME.
   :config
-    ;; Always have it on
-    (global-undo-tree-mode)
-
     ;; Each node in the undo tree should have a timestamp.
     (setq undo-tree-visualizer-timestamps t)
 
@@ -683,6 +679,9 @@ clipboard that allows undoing to any historical state./
 
     ;; Prevent undo tree files from polluting your git repo
     (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
+
+;; Always have it on
+(global-undo-tree-mode)
 
 ;; Execute (undo-tree-visualize) then navigate along the tree to witness
 ;; changes being made to your file live!
@@ -1067,7 +1066,7 @@ one. ( Upon an initial startup using this configuration, it takes a total of
 :END:
 
 Let's decide on where we want to setup our declarations for personalising Emacs
-to our needs. Then, let's bootstrap Emacs' primintive packaging mechanism with a
+to our needs. Then, let's bootstrap Emacs' primitive packaging mechanism with a
 slick interface ---which not only installs Emacs packages but also programs at
 the operating system level, all from inside Emacs!  Finally, let's declare who
 we are +and use that to setup Emacs email service.+
@@ -3731,7 +3730,7 @@ the backup directory, if ever. That the backups are numbered is so sweet ^_^
 Like package installations, my backups are not kept in any version control
 system, like git; only locally.
 
-Finally, let's not create ~.#~ files (crashes 'npm') nor bother confirming killing processes.
+Finally, let's not create ~.#~ files nor bother confirming killing processes.
 #+begin_src emacs-lisp
 (setq confirm-kill-processes nil
       create-lockfiles nil)
@@ -3792,6 +3791,16 @@ own backup system]], were Emacs lacked one, by having our function simply save
 copies of our file ---on each save--- where the filename is augmented with a
 timestamp.
 
+** delete-by-moving-to-trash t
+:PROPERTIES:
+:CUSTOM_ID: delete-by-moving-to-trash-t
+:END:
+#+begin_src emacs-lisp
+;; Move to OS’ trash can when deleting stuff
+;; instead of deleting things outright!
+(setq delete-by-moving-to-trash t
+      trash-directory "~/.Trash/")
+#+end_src
 **   =magit= ---Emacs' porcelain interface to git
 :PROPERTIES:
 :CUSTOM_ID: magit-Emacs'-porcelain-interface-to-gitq
@@ -3811,8 +3820,8 @@ simplifies the GitHub interface and adds useful features]]!)
 #+BEGIN_SRC emacs-lisp
 ;; Bottom of Emacs will show what branch you're on
 ;; and whether the local file is modified or not.
-(use-package magit
-  :init (require 'magit-files)
+(use-package magit)
+  ;; :init (require 'magit-files)
   :bind (("C-c M-g" . magit-file-dispatch))
   :custom ;; Do not ask about this variable when cloning.
     (magit-clone-set-remote.pushDefault t))
@@ -4433,16 +4442,6 @@ If we want to see commit messages alongside /all/ code, then we can invoke
 doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
 then we use doc:git-timemachine.
 
-** delete-by-moving-to-trash t
-:PROPERTIES:
-:CUSTOM_ID: delete-by-moving-to-trash-t
-:END:
-#+begin_src emacs-lisp
-;; Move to OS’ trash can when deleting stuff
-;; instead of deleting things outright!
-(setq delete-by-moving-to-trash t
-      trash-directory "~/.Trash/")
-#+end_src
 ** Jumping to extreme semantic units
 :PROPERTIES:
 :CUSTOM_ID: Jumping-to-extreme-semantic-units
