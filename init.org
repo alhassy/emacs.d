@@ -4663,7 +4663,7 @@ NOTE: We need to run =M-x= doc:nerd-icons-install-fonts for doom-modeline to use
   ;; Use minimal height so icons still fit; modeline gets slightly larger when
   ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
   ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
-  (setq doom-modeline-height 1)
+  (setq doom-modeline-height 21)
   (setq doom-modeline-buffer-state-icon nil)
   (setq doom-modeline-hud t)
   (setq doom-modeline-bar-width 1)

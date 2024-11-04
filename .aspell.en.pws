@@ -1,10 +1,14 @@
-personal_ws-1.1 en 379 
 ACSII
 AST
 ASTs
+Abu
 Administrivia
+Adulting
 Agda's
 Akram
+AlMahdi
+AlMustafa
+AlWilyah
 Anaphoric
 Andi
 Antitonicity
@@ -28,21 +32,30 @@ Dualise
 Dually
 Eglot
 Eid
+Eman
 Equipollence
 Excerption
 Executables
+Falah
+Fallsview
 GDoc
 Genericity
 Goju
 Hamid
+Hassan
 Hemi
 Hoare
+Husayn
 IPv
+InshaAllah
 Invariance
 JShell
+Jaafar
+Jiras
 Kahl
 Karbala
 Karim
+Kata
 Knowns
 LaTeX
 Lekhani
@@ -53,6 +66,7 @@ Malak
 Malak's
 Mariam
 Marwan
+Masjid
 McMaster
 Meijing
 Metaprograms
@@ -66,6 +80,7 @@ Monoids
 Monotonicity
 Montather
 Muawiyah
+Muharram
 Multimethod
 Multimethods
 Musa
@@ -95,6 +110,7 @@ Refactorings
 Runnable
 SRC
 STMP
+Sawsan
 Sessional
 Shyam
 StackExchange
@@ -112,6 +128,7 @@ Yay
 Yoneda
 Yoneda's
 Yusuf
+Yusuf's
 Zaynab
 absoprtion
 accessor
@@ -129,6 +146,7 @@ anaphoric
 antisymmetry
 applicative
 architecturing
+arity
 associator
 asymptotics
 automata
@@ -186,6 +204,7 @@ dinatural
 discovarability
 disjunction
 disjunctions
+disjuncts
 distributivity
 dualised
 emacs
@@ -204,9 +223,11 @@ falsy
 fixpoint
 formalisations
 formedness
+fragmentarily
 functor's
 functorial
 functors
+ghrelin
 hamid
 haskell
 hassy
@@ -244,6 +265,7 @@ iterables
 journaling
 jshell
 kubernetes
+leptin
 lexemes
 lexicographically
 logics
@@ -280,10 +302,12 @@ namespace
 namespaces
 namespacing
 naturality
+nullable
 nullary
 nunation
 observationally
 oolean
+optionality
 orchestrator
 overhwheliming
 parallelize
@@ -336,6 +360,7 @@ subexpression
 subexpressions
 subsequence
 substitutivity
+substring
 subtype
 subtyped
 subtyping
