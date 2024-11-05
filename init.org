@@ -3649,28 +3649,115 @@ name.
 (setq org-fold-core-style 'overlays)
 #+end_src
 
+* The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved
+
+tldr: Add ~:Disabled:~ to a heading to render its contents in a ~<details>~ HTML
+element. If a heading has a ~:COLOR~ property, then that is used for the colour of
+the element, defaulting to ~pink~.
+
+#+begin_src emacs-lisp
+(defmacro org-deftag (name args docstring &rest body)
+  "Re-render an Org section in any way you like, by tagging the section with NAME.
+
+That is to say, we essentially treat tags as functions that act on Org headings:
+We redefine Org sections for the same purposes as Org special blocks.
+
+The “arguments” to the function-tag can be declared as Org properties, then
+the function can access them using the `o-properties' keyword as in
+   (-let [(&plist :file :date :color) o-properties]
+       (insert \"%s: %s\" file date))
+
+Anyhow:
+ARGS are the sequence of items seperated by underscores after the NAME of the new tag.
+BODY is a form that may anaphorically mention:
+- O-BACKEND: The backend we are exporting to, such as `latex' or `html'.
+- O-HEADING: The string denoting the title of the tagged section heading.
+- O-PROPERTIES: A plist of the Org properties at point.
+
+DOCSTRING is mandatory; everything should be documented for future maintainability.
+
+The result of this anaphoric macro is a symbolic function name `org-deftag/NAME',
+which is added to `org-export-before-parsing-hook'.
+
+----------------------------------------------------------------------
+
+Below is the motivating reason for inventing this macro. It is used:
+
+     ,** Interesting, but low-priority, content   :details_red:
+     Blah blah blah blah blah blah blah blah blah blah blah.
+     Blah blah blah blah blah blah blah blah blah blah blah.
+
+Here is the actual implementation:
+
+(org-deftag details (color)
+   \"HTML export a heading as if it were a <details> block; COLOR is an optional
+   argument indicating the background colour of the resulting block.\"
+   (insert \"\n#+html:\"
+           (format \"<details style=\\\"background-color: %s\\\">\" color)
+           \"<summary>\" (s-replace-regexp \"^\** \" \"\" o-heading) \"</summary>\")
+   (org-next-visible-heading 1)
+   (insert \"#+html: </details>\"))
+
+"
+  (let ((func-name (intern (format "org-deftag/%s" name))))
+    `(progn
+       (cl-defun ,func-name (o-backend)
+         ,docstring
+         (outline-show-all)
+         (org-map-entries
+          (lambda ()
+            (-let [(&alist ,@ (mapcar #'symbol-name args)) (map-apply (lambda (k v) (cons (downcase k) v)) (org-entry-properties (point)))]
+              ;; MA: Maybe get rid of o-heading and o-properties and let people operate on raw Org secitons
+              ;; as they do with org-agenda. That might provide a more unified approach.
+              (let ((o-properties (map-into (map-apply (lambda (k v) (cons (intern (concat ":" (downcase k))) v)) (org-entry-properties (point))) 'plist))
+                    (o-heading (progn (kill-line) (car kill-ring))))
+                (if (not (s-contains? (format ":%s" (quote ,name)) o-heading 'ignoring-case))
+                    (insert o-heading)
+                  (setq o-heading (s-replace-regexp (format ":%s[^:]*:" (quote ,name)) "" o-heading))
+                  ,@body)
+                ;; Otherwise we impede on the auto-inserted “* footer :ignore:”
+                (insert "\n"))))))
+       (add-hook 'org-export-before-parsing-hook (quote ,func-name))
+       )))
+
+
+
+       (-let [(&plist :file) (map-into (map-apply (lambda (k v) (cons (intern (concat ":" (downcase k))) v)) (org-entry-properties (point))) 'plist)]
+         file
+         )
+
+
+       ;; MA: This is new stuff.
+       (put 'org-deflink 'lisp-indent-function 'defun)
+       (put 'org-deftag 'lisp-indent-function 'defun)
+
+       ;; Example use
+       (org-deftag identity ()
+         "Do nothing to Org headings"
+         (insert o-heading)) ;; Wait, I think this strips tags?
+
+       (org-deftag disabled (color)
+         "Render the body of a heading in a <details> element, titled “Disabled”.
+
+The heading remains in view, and so appears in the TOC."
+         (insert "\n") (insert  o-heading) (insert "\n")
+         (insert "\n#+html:"
+                 (format "<div> <details class=\"float-child\" style=\"background-color: %s\">"
+                         (or color "pink"))
+                 "<summary> <strong> <font face=\"Courier\" size=\"3\" color=\"green\">"
+                 "Details ﴾This is disabled, I'm not actively using it.﴿"
+                 "</font> </strong> </summary>")
+         ;; Something to consider: (org-set-property "UNNUMBERED" "nil")
+         (org-next-visible-heading 1)
+         (insert "#+html: </details> </div>"))
+#+end_src
+
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
 :END:
 
 # See [[https://jeremykun.com/2020/01/14/the-communicative-value-of-using-git-well/][The Communicative Value of Using Git Well]]
-
-** Dropbox & Mega                                                 :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Dropbox-Mega-Not-really-in-use
-:header-args: :tangle no
-:END:
-Install quick file sharing utility ---[[https://www.dropbox.com/install][Dropbox]]--- as well as a backup
-service, [[https://mega.nz/fm][Mega]] ---I use this for my =backups= directory: Keep reading.
-# +begin_src shell
-# brew install --cask dropbox
-# brew install --cask megasync
-# +end_src
-#+begin_src emacs-lisp
-(system-packages-ensure "dropbox")
-(system-packages-ensure "megasync")
-#+end_src
 
 ** Undo-tree: Very Local Version Control
 :PROPERTIES:
@@ -3820,8 +3907,7 @@ simplifies the GitHub interface and adds useful features]]!)
 #+BEGIN_SRC emacs-lisp
 ;; Bottom of Emacs will show what branch you're on
 ;; and whether the local file is modified or not.
-(use-package magit)
-  ;; :init (require 'magit-files)
+(use-package magit
   :bind (("C-c M-g" . magit-file-dispatch))
   :custom ;; Do not ask about this variable when cloning.
     (magit-clone-set-remote.pushDefault t))
@@ -4112,9 +4198,10 @@ kbd:C-x_C-s as usual! The power of text!
 doc:vc-annotate is also very useful to go through history and work out when
 things went wrong.
 
-*** Jump to a (ma)git repository with ~C-u C-x g~
+*** Jump to a (ma)git repository with ~C-u C-x g~                  :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Jump-to-a-ma-git-repository-with-C-u-C-x-g
+:header-args: :tangle no
 :END:
 
 #+begin_src emacs-lisp
@@ -4144,37 +4231,6 @@ things went wrong.
            (shell-command (format "cd %s; git checkout %s; git pull" repo trunk)))
   (message "🥳 Happy coding!"))
 #+end_src
-
-** Github /within/ Emacs                                          :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Github-within-Emacs
-:header-args: :tangle no
-:END:
-
-We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[https://github.com/magit/forge][forge]] package.
-+ In particular, it adds two new “topics” to the Magit status page: =Issues= and =Pull Requests=.
-  - We can tab on these to see their “posts” ---the contributions to the conversations and /new/ commits.
-  - [[https://magit.vc/manual/forge/Editing-Topics-and-Posts.html][Here]] is a list of actions that can be done on topics and posts.
-
-#+begin_src emacs-lisp
-(use-package forge
-  :after magit)
-#+end_src
-
-1. Make a file =~/.authinfo= whose top-most line is =machine api.github.com login ⟪𝑼𝑺𝑬𝑹𝑵𝑨𝑴𝑬⟫^forge password ⟪𝑻𝑶𝑲𝑬𝑵⟫= where ⟪⋯⟫
-   should be replaced by your Github username and a token ---which can be [[https://github.com/settings/tokens][created from this page]] with [[https://magit.vc/manual/forge/Token-Creation.html][permissions]] for
-   ~repo, user, read:org~ checked-off.
-   - For more detailed information, see [[https://magit.vc/manual/ghub/Creating-and-Storing-a-Token.html][this Forge manual page]].
-
-2. Now open a Magit status buffer for a repository and run ~M-x forge-pull~, after which you should be able to see all issues and pull requests.
-   - Alternatively, press ~N~ to see the forge menu.
-   - Press ~N f f~ to pull latest information from the repository.
-     + Note how pulling data from a forge’s API works the same way as pulling Git data does; you do it explicitly when
-       you want to see the work done by others.
-     + We can also “c”reate a new “p”ull request or a new “i”ssue with ~N c p~ or ~N c i~, respectively.
-     + [[https://www.youtube.com/watch?v=fFuf3hExF5w&ab_channel=ZaisteProgramming][~5 min video]]
-
-To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
 
 ** Pretty Magit Commit Leaders
 :PROPERTIES:
@@ -4272,45 +4328,6 @@ My personal choices for leaders are:
 (advice-add 'magit-commit :after 'use-magit-commit-prompt)
 #+end_src
 #+end_details
-
-** Version Control with SVN ---Using Magit!                       :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Version-Control-with-SVN-Using-Magit
-:header-args: :tangle no
-:END:
-
-| /Disabled: I seldom work with SVN anymore./ |
-
-Let's use git as an interface to subversion repositories so that we can continue
-to use =magit= as our version control interface.  The utility to do so is called
-=git svn= ---note =git 𝒳= on a MacOS is the same as =git-𝒳= on other systems.
-
-#+begin_src emacs-lisp  :tangle no
-(use-package magit-svn
-  :hook (magit-mode . magit-svn-mode))
-#+end_src
-
-Here's an example. The following command checksout an SVN repo; afterwhich we may open a file
-there and do =M-x magit-status= to get the expected porcelain git interface  ^_^
-#+begin_src emacs-lisp :tangle no
-(async-shell-command "mkdir ~/2fa3; git svn clone --username alhassm https://websvn.mcmaster.ca/csse2fa3/2019-2020_Term2 ~/2fa3/")
-#+end_src
-
-In the magit buffer, we may now use the ~N~ key which wraps the =git svn=
-subcommands =fetch, rebase, dcommit, branch, tag=. For example:
-
-1. Make changes to a file.
-2. ‘Stage’ them with ~s~ and ‘commit’ them with ~c~.
-3. ‘Push’ changes with ~N c~.
-
-We get to pretend we're using ~git~ even though the underlying mechanism is ~svn~!
-# Indeed, in a terminal ~git svn log~ will show an ~svn~ log with single pushed commits.
-
-For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git with
-  Subversion]].
-
-(If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
-  utility above to account for them.)
 
 ** Highlighting TODO-s & Showing them in Magit
 :PROPERTIES:
@@ -4441,8 +4458,95 @@ answers that seamlessly ---almost as if a transient comment 😁
 If we want to see commit messages alongside /all/ code, then we can invoke
 doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
 then we use doc:git-timemachine.
+** Github /within/ Emacs                                            :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Github-within-Emacs
+:header-args: :tangle no
+:END:
 
-** Jumping to extreme semantic units
+We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[https://github.com/magit/forge][forge]] package.
++ In particular, it adds two new “topics” to the Magit status page: =Issues= and =Pull Requests=.
+  - We can tab on these to see their “posts” ---the contributions to the conversations and /new/ commits.
+  - [[https://magit.vc/manual/forge/Editing-Topics-and-Posts.html][Here]] is a list of actions that can be done on topics and posts.
+
+#+begin_src emacs-lisp
+(use-package forge
+  :after magit)
+#+end_src
+
+1. Make a file =~/.authinfo= whose top-most line is =machine api.github.com login ⟪𝑼𝑺𝑬𝑹𝑵𝑨𝑴𝑬⟫^forge password ⟪𝑻𝑶𝑲𝑬𝑵⟫= where ⟪⋯⟫
+   should be replaced by your Github username and a token ---which can be [[https://github.com/settings/tokens][created from this page]] with [[https://magit.vc/manual/forge/Token-Creation.html][permissions]] for
+   ~repo, user, read:org~ checked-off.
+   - For more detailed information, see [[https://magit.vc/manual/ghub/Creating-and-Storing-a-Token.html][this Forge manual page]].
+
+2. Now open a Magit status buffer for a repository and run ~M-x forge-pull~, after which you should be able to see all issues and pull requests.
+   - Alternatively, press ~N~ to see the forge menu.
+   - Press ~N f f~ to pull latest information from the repository.
+     + Note how pulling data from a forge’s API works the same way as pulling Git data does; you do it explicitly when
+       you want to see the work done by others.
+     + We can also “c”reate a new “p”ull request or a new “i”ssue with ~N c p~ or ~N c i~, respectively.
+     + [[https://www.youtube.com/watch?v=fFuf3hExF5w&ab_channel=ZaisteProgramming][~5 min video]]
+
+To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
+
+** Version Control with SVN ---Using Magit!                       :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Version-Control-with-SVN-Using-Magit
+:header-args: :tangle no
+:END:
+
+| /Disabled: I seldom work with SVN anymore./ |
+
+Let's use git as an interface to subversion repositories so that we can continue
+to use =magit= as our version control interface.  The utility to do so is called
+=git svn= ---note =git 𝒳= on a MacOS is the same as =git-𝒳= on other systems.
+
+#+begin_src emacs-lisp  :tangle no
+(use-package magit-svn
+  :hook (magit-mode . magit-svn-mode))
+#+end_src
+
+Here's an example. The following command checksout an SVN repo; afterwhich we may open a file
+there and do =M-x magit-status= to get the expected porcelain git interface  ^_^
+#+begin_src emacs-lisp :tangle no
+(async-shell-command "mkdir ~/2fa3; git svn clone --username alhassm https://websvn.mcmaster.ca/csse2fa3/2019-2020_Term2 ~/2fa3/")
+#+end_src
+
+In the magit buffer, we may now use the ~N~ key which wraps the =git svn=
+subcommands =fetch, rebase, dcommit, branch, tag=. For example:
+
+1. Make changes to a file.
+2. ‘Stage’ them with ~s~ and ‘commit’ them with ~c~.
+3. ‘Push’ changes with ~N c~.
+
+We get to pretend we're using ~git~ even though the underlying mechanism is ~svn~!
+# Indeed, in a terminal ~git svn log~ will show an ~svn~ log with single pushed commits.
+
+For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git with
+  Subversion]].
+
+(If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
+  utility above to account for them.)
+
+** Dropbox & Mega                                                 :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-Dropbox-Mega-Not-really-in-use
+:header-args: :tangle no
+:color:    cyan
+:END:
+Install quick file sharing utility ---[[https://www.dropbox.com/install][Dropbox]]--- as well as a backup
+service, [[https://mega.nz/fm][Mega]] ---I use this for my =backups= directory: Keep reading.
+# +begin_src shell
+# brew install --cask dropbox
+# brew install --cask megasync
+# +end_src
+#+begin_src emacs-lisp
+(system-packages-ensure "dropbox")
+(system-packages-ensure "megasync")
+#+end_src
+
+
+* Jumping to extreme semantic units
 :PROPERTIES:
 :CUSTOM_ID: Jumping-to-extreme-semantic-units
 :END:
