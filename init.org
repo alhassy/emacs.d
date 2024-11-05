@@ -3775,6 +3775,22 @@ should jump to the first entry.
 (use-package beginend
   :config (beginend-global-mode))
 #+END_SRC
+** Folding within a subtree
+:PROPERTIES:
+:CUSTOM_ID: Folding-within-a-subtree
+:END:
+
+#+begin_src emacs-lisp :tangle no
+(bind-key "C-c C-h"
+          (defun my/org-fold-current-subtree-anywhere-in-it ()
+            (interactive)
+            (save-excursion (save-restriction
+                              (org-narrow-to-subtree)
+                              (org-shifttab)
+                              (widen))))
+          org-mode-map)
+#+END_SRC
+
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -5988,7 +6004,114 @@ Example:
 :CUSTOM_ID: Lisp-Programming
 :END:
 
-** highlight quoted symbols
+** Editor Documentation with Contextual Information
+:PROPERTIES:
+:CUSTOM_ID: Editor-Documentation-with-Contextual-Information
+:END:
+
+/Emacs is an extensible self-documenting editor!/
+
+Let's use a helpful Emacs /documentation/ system that cleanly shows a lot of
+contextual information ---then let's /extend/ that to work as we want it to:
+~C-h o~ to describe the symbol at point.
+#+begin_src emacs-lisp :tangle no
+(use-package helpful)
+
+(defun my/describe-symbol (symbol)
+  "A “C-h o” replacement using “helpful”:
+   If there's a thing at point, offer that as default search item.
+
+   If a prefix is provided, i.e., “C-u C-h o” then the built-in
+   “describe-symbol” command is used.
+
+   ⇨ Pretty docstrings, with links and highlighting.
+   ⇨ Source code of symbol.
+   ⇨ Callers of function symbol.
+   ⇨ Key bindings for function symbol.
+   ⇨ Aliases.
+   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
+  "
+  (interactive "p")
+  (let* ((thing (symbol-at-point))
+         (val (completing-read
+               (format "Describe symbol (default %s): " thing)
+               (vconcat (list thing) obarray)
+               (lambda (vv)
+                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                          describe-symbol-backends))
+               t nil nil))
+         (it (intern val)))
+    (cond
+     (current-prefix-arg (funcall #'describe-symbol it))
+     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+     (t (helpful-symbol it)))))
+
+;; Keybindings.
+(global-set-key (kbd "C-h o") #'my/describe-symbol)
+(global-set-key (kbd "C-h k") #'helpful-key)
+#+END_SRC
+
+I like [[https://github.com/Wilfred/helpful][helpful]] and wanted it to have the same behaviour as ~C-h o~, which
+~helpful-at-point~ does not achieve. The incantation above makes ~C-h o~ use ~helpful~
+in that if the cursor is on a symbol, then it is offered to the user as a
+default search item for help, otherwise a plain search box for help
+appears. Using a universal argument lets us drop to the built-in help command.
+
+** [[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]
+:PROPERTIES:
+:CUSTOM_ID: Let's-make-working-with-Emacs-Lisp-even-better
+:END:
+
+If you query ~C-h o mapcar~ you get some nice docs, but it'd be even nice to get
+some example usage of that method.
+
+#+begin_src emacs-lisp
+(use-package elisp-demos
+  :config
+  ;; Show demos when I do a `C-h o'.
+  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)
+  ;; Show demos in tooltips when I pause to select a completion, in Emacs Lisp mode.
+  (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
+#+end_src
+
+** Commenting
+:PROPERTIES:
+:CUSTOM_ID: Commenting
+:END:
+
+Let's get some nifty [[https://github.com/remyferre/comment-dwim-2][commenting]] features ---the link has nice usage gifs.
++ [[kbd:][M-;]]
+  repeatedly does (1) comments current line, (2) inserts a comment at the end
+  of the current line, and (3) deletes an existing end-of-line comment.
+
+   [[kbd:][C-u_M-;]] indents the current enf-of-line comment with any above it.
+
+   For use with Org-mode, it's best to use doc:org-edit-src-code ---which I've
+   bound to [[kbd:][⌘ e]].
+   #+begin_src emacs-lisp
+(use-package comment-dwim-2
+  :bind ("M-;" . comment-dwim-2))
+
+ ;; Not ideal: M-; comments a parent Org heading and not the current line.
+ ;; (define-key org-mode-map (kbd "M-;") 'org-comment-dwim-2)
+   #+end_src
+
+** Indentation Guide
+:PROPERTIES:
+:CUSTOM_ID: Indentation-Guide
+:END:
+
+The following is also “OK” in Org-mode ;-)
+#+begin_src emacs-lisp
+;; Add a visual indent guide
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-character ?|)
+  (highlight-indent-guides-responsive 'stack))
+#+end_src
+** Highlight Quoted Symbols
 :PROPERTIES:
 :CUSTOM_ID: highlight-quoted-symbols
 :END:
@@ -6002,6 +6125,28 @@ Example:
 (when nil
   (-let [x 'somevar]
     (list x 'b "c" :e)))
+#+end_src
+
+** Highlighting Numbers and Escape Characters
+:PROPERTIES:
+:CUSTOM_ID: Syntax-highlighting-numbers-and-escape-characters
+:END:
+Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
+
+#+begin_src emacs-lisp :tangle no
+(use-package highlight-numbers
+  :hook (prog-mode separedit-double-quote-string-mode)) ;; The latter is for when I do ⌘-e on a quoted string to edit it.
+
+(use-package highlight-escape-sequences
+  :hook ((prog-mode . hes-mode)
+         (separedit-double-quote-string-mode . hes-mode)) ;; Wont work since this mode has no font-lock-builtin-face
+  :config
+  ;; Colour the escapes as if they were builtin keywords.
+  (put 'hes-escape-backslash-face 'face-alias 'font-lock-builtin-face)
+  (put 'hes-escape-sequence-face 'face-alias 'font-lock-builtin-face))
+
+;; If the above two worked fine, then you should see \n and 3 highlighted below
+(when nil "Look: 1 and \\ and \n 2" (setq three 3))
 #+end_src
 
 ** Get CheatSheets and view them easily                           :Disabled:
@@ -6029,6 +6174,7 @@ Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the 
 (mapcar #'my/cheatsheet '("ELisp" "GojuRyu" "Rust")) ; Python Prolog Vue Agda JavaScript
                                               ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 #+end_src
+
 
 * Prose
 :PROPERTIES:
@@ -7422,7 +7568,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* TODO COMMENT [0/65] Lost Souls
+* TODO COMMENT [0/61] Lost Souls
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -10160,22 +10306,6 @@ list or just its contents, etc.
 
 Ruins Org-mode's M-↑/↓ for moving entire sections around.
 
-** TODO Indentation Guide
-:PROPERTIES:
-:CUSTOM_ID: Indentation-Guide
-:END:
-
-The following is also “OK” in Org-mode ;-)
-#+begin_src emacs-lisp :tangle no
-;; Add a visual indent guide
-(use-package highlight-indent-guides
-  :hook (prog-mode . highlight-indent-guides-mode)
-  :custom
-  (highlight-indent-guides-method 'character)
-  (highlight-indent-guides-character ?|)
-  (highlight-indent-guides-responsive 'stack))
-#+end_src
-
 ** TODO Web Development
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
@@ -10835,28 +10965,6 @@ Using ~⌘ j~ then one of the following...
 | ~ss~ | Split a string, at point, into a catenation of strings                         |
 | ~st~ | Convert a string into a `template`.                                            |
 
-** TODO Commenting :Keep:Lisp:
-:PROPERTIES:
-:CUSTOM_ID: Commenting
-:END:
-
-Let's get some nifty [[https://github.com/remyferre/comment-dwim-2][commenting]] features ---the link has nice usage gifs.
-+ [[kbd:][M-;]]
-  repeatedly does (1) comments current line, (2) inserts a comment at the end
-  of the current line, and (3) deletes an existing end-of-line comment.
-
-   [[kbd:][C-u_M-;]] indents the current enf-of-line comment with any above it.
-
-   For use with Org-mode, it's best to use doc:org-edit-src-code ---which I've
-   bound to [[kbd:][⌘ e]].
-   #+begin_src emacs-lisp :tangle no
-(use-package comment-dwim-2
-  :bind ("M-;" . comment-dwim-2))
-
- ;; Not ideal: M-; comments a parent Org heading and not the current line.
- ;; (define-key org-mode-map (kbd "M-;") 'org-comment-dwim-2)
-   #+end_src
-
 ** TODO Having a workspace manager in Emacs
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
@@ -10890,58 +10998,6 @@ All commands are prefixed by ~C-x x~; main commands:
 As always, since we've installed ~which-key~, it suffices to press ~C-x x~ then look
 at the resulting menu 😃
 
-** TODO Editor Documentation with Contextual Information
-:PROPERTIES:
-:CUSTOM_ID: Editor-Documentation-with-Contextual-Information
-:END:
-
-/Emacs is an extensible self-documenting editor!/
-
-Let's use a helpful Emacs /documentation/ system that cleanly shows a lot of
-contextual information ---then let's /extend/ that to work as we want it to:
-~C-h o~ to describe the symbol at point.
-#+begin_src emacs-lisp :tangle no
-(use-package helpful )
-
-(defun my/describe-symbol (symbol)
-  "A “C-h o” replacement using “helpful”:
-   If there's a thing at point, offer that as default search item.
-
-   If a prefix is provided, i.e., “C-u C-h o” then the built-in
-   “describe-symbol” command is used.
-
-   ⇨ Pretty docstrings, with links and highlighting.
-   ⇨ Source code of symbol.
-   ⇨ Callers of function symbol.
-   ⇨ Key bindings for function symbol.
-   ⇨ Aliases.
-   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
-  "
-  (interactive "p")
-  (let* ((thing (symbol-at-point))
-         (val (completing-read
-               (format "Describe symbol (default %s): " thing)
-               (vconcat (list thing) obarray)
-               (lambda (vv)
-                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
-                          describe-symbol-backends))
-               t nil nil))
-         (it (intern val)))
-    (cond
-     (current-prefix-arg (funcall #'describe-symbol it))
-     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
-     (t (helpful-symbol it)))))
-
-;; Keybindings.
-(global-set-key (kbd "C-h o") #'my/describe-symbol)
-(global-set-key (kbd "C-h k") #'helpful-key)
-#+END_SRC
-
-I like [[https://github.com/Wilfred/helpful][helpful]] and wanted it to have the same behaviour as ~C-h o~, which
-~helpful-at-point~ does not achieve. The incantation above makes ~C-h o~ use ~helpful~
-in that if the cursor is on a symbol, then it is offered to the user as a
-default search item for help, otherwise a plain search box for help
-appears. Using a universal argument lets us drop to the built-in help command.
 ** TODO   =README= ---From =init.org= to =init.el=
 :PROPERTIES:
 :CUSTOM_ID: README-From-init-org-to-init-el
@@ -11457,44 +11513,6 @@ publish the current article to my blog.
   (let ((server (if local "http://localhost:4000/" "https://alhassy.github.io/")))
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
 )
-#+END_SRC
-
-** TODO Jumping without hassle
-:PROPERTIES:
-:CUSTOM_ID: Jumping-without-hassle
-:END:
-
-#+begin_src emacs-lisp :tangle no
-(defun my/org-goto-line (line)
-  "Go to the indicated line, unfolding the parent Org header.
-
-   Implementation: Go to the line, then look at the 1st previous
-   org header, now we can unfold it whence we do so, then we go
-   back to the line we want to be at.
-  "
-  (interactive "nEnter line: ")
-  (goto-line line)
-  (org-previous-visible-heading 1)
-  (org-cycle)
-  (goto-line line))
-#+END_SRC
-
-** TODO Folding within a subtree
-:PROPERTIES:
-:CUSTOM_ID: Folding-within-a-subtree
-:END:
-
-#+begin_src emacs-lisp :tangle no
-(defun my/org-fold-current-subtree-anywhere-in-it ()
-  "Hide the current heading, while being anywhere inside it."
-  (interactive)
-  (save-excursion
-    (org-narrow-to-subtree)
-    (org-shifttab)
-    (widen)))
-
-(add-hook 'org-mode-hook '(lambda ()
-  (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
 
 ** TODO Hydra Timer
@@ -12404,21 +12422,6 @@ vertical line.
 
 NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
 
-** TODO Syntax highlighting ---numbers and escape characters
-:PROPERTIES:
-:CUSTOM_ID: Syntax-highlighting-numbers-and-escape-characters
-:END:
-Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
-
-#+begin_src emacs-lisp :tangle no
-(use-package highlight-numbers
-  :hook ((prog-mode) . highlight-numbers-mode))
-;; Not text-mode , look Bad
-
-(use-package highlight-escape-sequences
-  :hook (prog-mode . hes-mode))
-#+end_src
-
 ** TODO shell-command-and-run
 :PROPERTIES:
 :CUSTOM_ID: shell-command-and-run
@@ -12563,20 +12566,6 @@ all OS windows. I'm using a MacOS right now, so X-windows are not the default
   (global-orglink-mode)
   ;; Only enable this in Emacs Lisp mode, for now.
   (setq orglink-activate-in-modes '(emacs-lisp-mode)))
-#+end_src
-
-** TODO [#A] Let's make working with Emacs Lisp even better!
-:PROPERTIES:
-:CUSTOM_ID: Let's-make-working-with-Emacs-Lisp-even-better
-:END:
-- [[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]
-#+begin_src emacs-lisp
-(use-package elisp-demos
-  :config
-  ;; Show demos when I do a `C-h o'.
-  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)
-  ;; Show demos in tooltips when I pause to select a completion, in Emacs Lisp mode.
-  (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
 #+end_src
 
 ** TODO [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]
