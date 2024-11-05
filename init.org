@@ -2867,14 +2867,17 @@ with org-mode, so I'm not using them.
 
 
 (-let [font-for-emojis "Noto Color Emoji"]
-(if (member font-for-emojis (font-family-list))
-  (set-fontset-font
-    t 'symbol (font-spec :family font-for-emojis) nil 'prepend)
-  (message-box "Musa: Install the font!")
-  ;; Download font @ https://fonts.google.com/noto/specimen/Noto+Color+Emoji
-  ;; Double-click on the ttf file then select “install” to have it installed on your system
+  (if (member font-for-emojis (font-family-list))
+      (set-fontset-font
+       t 'symbol (font-spec :family font-for-emojis) nil 'prepend)
+    (message-box "Musa: Install the font!")
+    ;; Download font @ https://fonts.google.com/noto/specimen/Noto+Color+Emoji
+    ;; Double-click on the ttf file then select “install” to have it installed on your system
     ))
 (setq emojify-display-style 'unicode) ;; unicode is the way to go!
+
+
+(setq emojify-emoji-styles '(unicode))
 
 (global-emojify-mode 1) ;; Will install missing images, if need be.
 
@@ -7401,7 +7404,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* TODO COMMENT Lost Souls                    :Outdated_Documentation:Not_yet_tangled:
+* TODO COMMENT Lost Souls
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -9730,7 +9733,6 @@ For JavaScript:
 For Java, install doc:eglot-java-mode and activate that in a Java file ---it automatically installs the required
 language server. 🚀
 
-
 ** Note: M-S-SPC is for my personal servers dashboard.
 :PROPERTIES:
 :CUSTOM_ID: Note-M-S-SPC-is-for-my-personal-servers-dashboard
@@ -11998,110 +12000,6 @@ Now shutdown LSP in a JS file, and restart it to see this server being run!
 
 (file-notify-rm-all-watches)
 
-** TODO COMMENT DELETE? Attempt 1
-:PROPERTIES:
-:CUSTOM_ID: Attempt-1
-:END:
-
-#+begin_src emacs-lisp
- (lsp-register-client
-    (make-lsp-client :new-connection (lsp-stdio-connection "flow-language-server")
-       :activation-fn (lsp-activate-on "javascript")
-       :server-id 'flow))
- #+end_src
-
-#+begin_src emacs-lisp
- (lsp-register-client
-    (make-lsp-client :new-connection (lsp-stdio-connection "flow-language-server")
-       :activation-fn (lsp-activate-on "javascript")
-       :server-id 'my/flowjs))
- #+end_src
-
---------------------------------------------------------------------------------
-
-#+begin_src emacs-lisp
- (lsp-register-client
- (make-lsp-client
-       :new-connection (lsp-stdio-connection "flow lsp")
-       :activation-fn (lsp-activate-on "javascript")
-       :server-id 'flow))
-                  #+end_src
-
-#+begin_src emacs-lisp
- (lsp-register-client
- (make-lsp-client
-       :new-connection (lsp-stdio-connection "flow lsp")
-       :activation-fn (lsp-activate-on "javascript")
-       :server-id 'flowjs))
-                  #+end_src
-
- #+begin_src emacs-lisp
- (lsp-register-client
- (make-lsp-client
-      :new-connection (lsp-stdio-connection "flow-language-server --socket=5051")
-      :activation-fn (lsp-activate-on "javascript")
-      :server-id 'flow))
- #+end_src
-
-
-  #+begin_src emacs-lisp
- (lsp-register-client
- (make-lsp-client
-      :new-connection (lsp-stdio-connection "flow-language-server --socket=5051")
-      :activation-fn (lsp-activate-on "javascript")
-      :server-id 'flowjs))
- #+end_src
-
-   #+begin_src emacs-lisp
- (lsp-register-client
- (make-lsp-client
-      :new-connection (lsp-stdio-connection "flow-language-server --stdio")
-      :activation-fn (lsp-activate-on "javascript")
-      :server-id 'flowjs))
- #+end_src
-
-    #+begin_src emacs-lisp
- (lsp-register-client
- (make-lsp-client
-      :new-connection (lsp-stdio-connection "flow-language-server --stdio")
-      :activation-fn (lsp-activate-on "javascript")
-      :server-id 'flow))
- #+end_src
-
-     #+begin_src emacs-lisp
- (lsp-register-client
- (make-lsp-client
-      :new-connection (lsp-stdio-connection "flow-language-server")
-      :activation-fn (lsp-activate-on "javascript")
-      :server-id 'flow))
- #+end_src
-
-      #+begin_src emacs-lisp
- (lsp-register-client
- (make-lsp-client
-      :new-connection (lsp-stdio-connection "flow-language-server")
-      :activation-fn (lsp-activate-on "javascript")
-      :server-id 'flowjs))
- #+end_src
-
-** COMMENT !! TODO FlowJs
-
-#+begin_src emacs-lisp
-(defun yes-plz (file-name major-mode) t)
-
-(require 'lsp)
-(lsp-register-client
- (make-lsp-client :new-connection (lsp-stdio-connection
-                                   (-const `("lsp" "flow")))
-                  :priority 3
-                  :activation-fn 'yes-plz
-                  :server-id 'musa/flow-ls))
-
-
-;; Please show me docs not only when I hover with my mouse, but also with my cursor.
-(setq lsp-ui-doc-show-with-cursor t)
-#+end_src
-
 ** COMMENT The following, ~M-x dashboard~, might be a nice thing to have on display when invoking =M-x my/pair-program= ?
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-The-following-M-x-dashboard-might-be-a-nice-thing-to-have-on-display-when-invoking-M-x-my-pair-program
@@ -12190,7 +12088,6 @@ https://github.com/emacs-dashboard/emacs-dashboard
 
 (dashboard)
 #+end_src
-
 
 ** COMMENT more
 
