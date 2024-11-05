@@ -8970,16 +8970,6 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
-** TODO Check if application APP is currently running, in use.
-:PROPERTIES:
-:CUSTOM_ID: Check-if-application-APP-is-currently-running-in-use
-:END:
-#+begin_src emacs-lisp
-(cl-defun my/application-running? (app)
-  "Check if application APP is currently running, in use."
-  (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
-#+end_src
-
 ** TODO Work Programming                                          :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Programming
