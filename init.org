@@ -4636,7 +4636,6 @@ We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[h
 
 To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
 
-
 * Cosmetics
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
@@ -7423,7 +7422,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* TODO COMMENT [0/70] Lost Souls
+* TODO COMMENT [0/65] Lost Souls
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -9722,6 +9721,18 @@ I'm jumping to definitions (with ~M-.~).
     ;; https://github.com/fuxialexander/org-pdftools/tree/967f48fb5038bba32915ee9da8dc4e8b10ba3376
 #+end_src
 
+*** TODO The evils of this world
+:PROPERTIES:
+:CUSTOM_ID: The-evils-of-this-world
+:END:
+#+begin_src emacs-lisp :tangle no
+;; “PDF” stands for Portable Document Format, since you should be able to open
+;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
+;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
+;; them. Unfortunately, various government & insurance forms are only provided in
+;; this format.
+(system-packages-ensure "adobe-acrobat-reader")
+#+end_src
 ** TODO Background audio I want to listen to as I work
 #+begin_src emacs-lisp
 (use-package empv )
@@ -10165,23 +10176,666 @@ The following is also “OK” in Org-mode ;-)
   (highlight-indent-guides-responsive 'stack))
 #+end_src
 
-** TODO [Nope?] JavaScript
+** TODO Web Development
 :PROPERTIES:
-:CUSTOM_ID: COMMENT-Nope-JavaScript
+:CUSTOM_ID: COMMENT-Web-Development
 :END:
 
-+  ;; FIXME Error (use-package): Failed to install ob-js: Package ‘ob-js-’ is unavailable
+First, let's get some useful Cheat Sheets...
+#+begin_src emacs-lisp
+;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
+(mapcar #'my/cheatsheet '("JavaScript" "Vue" "AngularJS"))
+#+end_src
+
+*** Quickly produce HTML from CSS-like selectors
+:PROPERTIES:
+:CUSTOM_ID: Quickly-produce-HTML-from-CSS-like-selectors
+:END:
+
+Emmet-mode (outside of Emacs, this is known as [[https://emmet.io/][Emmet]] and [[https://www.smashingmagazine.com/2009/11/zen-coding-a-new-way-to-write-html-code/][Zen Coding]]),
+is a powerful abbreviation engine that expands CSS selectors into HTML code.
+It's a neat way to write markup quickly in Emacs.
+
+# Alternative example candidate: div#news.module>div.header+div.body>ul>li#item-$*5
+#
+Watch this [[https://vimeo.com/7405114][demo video]]. Or here's an example with filler text:
+=#page>.logo+ul#navigation>li*5>a>lorem3=
+expands into
+# =div#page>div.logo+ul#navigation>li*5>a=
+#+begin_src html :tangle no
+<div id="page">
+    <div class="logo"></div>
+    <ul id="navigation">
+        <li><a href="">Justo eget magna!</a></li>
+        <li><a href="">Mattis pellentesque id!</a></li>
+        <li><a href="">Turpis massa tincidunt.</a></li>
+        <li><a href="">Sit amet, porttitor.</a></li>
+        <li><a href="">Feugiat nisl pretium.</a></li>
+    </ul>
+</div>
+#+end_src
+
+Likewise, we can make 5 links next to 5 input boxes with:
+~(a[href=www.google.ca]{Click me!}+label{Name:}>input[value="first name"])*5~.
+
+Anyhow, here's my setup:
+#+begin_src emacs-lisp
+;; USAGE: Place point in an emmet snippet and press C-j to expand it to appropriate tag structure;
+;; e.g., #q.x>p C-j. Alternatively, press C-j then start typing an emmet snippet to see it preview live.
+;; [C-j is just M-x emmet-expand-line]
+;;
+(use-package emmet-mode ;; C-j ! RET  === Makes an entire HTML template for you.
+  :hook (web-mode . emmet-mode))
+;;
+;; Please show me an HTML expansion preview as I type
+(setq emmet-preview-default t) ;; Press C-j then start typing; e.g., C-j #q.x.y>p>b RET
+;;
+;; After expanding, positioned the cursor between first empty quotes.
+;; The preview can help with tricky CSS precedence rules; e.g., C-j gives the same thing for: a>b+c>d   ==  a>(b+(c>d))
+(setq emmet-move-cursor-between-quotes t) ;; E.g., C-j #q[name] RET
+;;
+(add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
+;; (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
+#+end_src
+
+#+begin_details Notable HTML key bindings (including [[https://www.gnu.org/software/emacs/manual/html_node/emacs/HTML-Mode.html][built-ins]])
++ Wrap with Abbreviation / C-c C-c w :: Select a region, then enter an abbreviation.
+  - For example, select the phrase ~Hello, World!~ then ~C-c C-c w q>b~ to place that phrase in a quote, and make it bold.
++ Go to Edit Point / C-M-{Leftarrow, Rightarrow} :: to move between editable-tags/empty-attributes. ([[https://docs.emmet.io/actions/go-to-edit-point/][Demo]])
++ C-c TAB :: Cheaply preview the HTML file by toggling visibility of tags.
++ C-c /, C-c C-e :: Insert a close tag for the innermost unterminated tag (sgml-close-tag). If called within a tag or a comment, close it instead of inserting a close tag.
++ C-c ? tag RET :: Display a description of the meaning of tag tag (sgml-tag-help). If the argument tag is empty, describe the tag at point. :fire:
++ C-c C-d :: Delete the tag at or after point, and delete the matching tag too (sgml-delete-tag). If the tag at or after point is an opening tag, delete the closing tag too; if it is a closing tag, delete the opening tag too.
++ C-c C-f/b :: More 'f'orward or 'b'ackward one tag element. ---Nice way to quicly check that your tags are balanced as you think they are.
++ C-c C-a :: Interactively insert attribute values for the current tag. :fire:
+  - Super helpful when you don't remember the possible attributes of a tag, or their possible values.
+    # - E.g., within ~<img />~ press ~C-c C-a~ then ~id~ then ~hola~ then ~RET~ then ~C-g~.
+  - C-c C-t :: Interactively specify a tag and its attributes!
+#+end_details
+
+#+begin_details Notable Emmet Features & Examples
+
++ Example that includes Ids, classes, children, sibling selectors,
+  {content}, 10 random lorem text, parenthesis for grouping; as well
+  as attributes with and without values.
+  #+begin_src html :tangle no
+ParentTag#Id.Class1.Class2[Attribute1 Attribute2]>ChildTag{hiya there}>lorem10+(GrandChild1>GreatGrandChild11)+GrandChild2#Id2[attribute=value]
+#+end_src
+
++  Nesting (>) can be 'undone' with "climb-up"(^):  ~a>b>c>d^^e~  ==  ~a>(b>c>d)+e~
++  Multiplication is repeated addition: ~X*3>Y~ == ~(X>Y)+(X>Y)+(X>Y)~
++  In general, ~loremN~ produces $N$ many random filler text. E.g., make a dummy list: =ul>li*3>lorem3=
+
+Other notable snippets include
+=a#neato.x.y.z, input[hola=value], img, p, table+, ul+, ol+=.
+
++ There are also [[https://docs.emmet.io/css-abbreviations/][CSS abbreviations]]; but that's a story for another time.
++ This [[https://docs.emmet.io/cheat-sheet/][cheat sheet]] has all the supported abbreviations, with expansions.
+
+
+--------------------------------------------------------------------------------
+
+
++ ID and CLASS attributes: =div#page.section.main=
+  - ~div~ tag name can be omitted when writing element starting from ID or CLASS:
+    ~#content>.section~ is the same as ~div#content>div.section~.
+
++ Custom attributes: ~div[title], a[title="Hello world" rel], td[colspan=2]~
+
++ Element multiplication: ~li*5~ will output ~<li>~ tag five times.
+
++ Item numbering with the ~$~ character: ~li.item$*3~ will output ~<li>~ tag
+  three times, replacing ~$~ character with item number.
+
++ Multiple ~$~ characters in a row are used as zero padding, i.e.: ~li.item$$$~ → ~li.item001~
+
++ Abbreviation groups with unlimited nesting:
+  ~div#page>(div#header>ul#nav>li*4>a)+(div#page>(h1>span)+p*2)+div#footer~
+  - You can literally write a full document markup with just a single line.
+
++ Text support: ~p>{Click }+a{here}+{ to continue}~.
+
+
+--------------------------------------------------------------------------------
+
+
+Good tutorials:
++ [[https://jonchristopher.us/blog/the-art-of-zen-coding-bringing-snippets-to-a-new-level/][The Art of zen-coding: Bringing Snippets to a New Level - Jon Christopher]]
++ [[https://www.smashingmagazine.com/2009/11/zen-coding-a-new-way-to-write-html-code/][Zen Coding: A Speedy Way To Write HTML/CSS Code — Smashing Magazine]]
++ [[https://www.smashingmagazine.com/2013/03/goodbye-zen-coding-hello-emmet/][Goodbye, Zen Coding. Hello, Emmet! — Smashing Magazine]]
+
+#+end_details
+
+For more on writing HTML within Emacs, see this ~2min /yet very
+informative/ [[https://www.youtube.com/watch?app=desktop&v=sBhQ2NIcrLQ&ab_channel=emacsrocks][video]] by /Emacs Rocks!/
+
+Let's add a new snippet so that: ~angular C-j C-c C-v~ shows us an interactive web
+application.
+#+begin_src emacs-lisp
+(cl-defun my/add-emmet-snippet (abbreviation expansion)
+  "Add ABBREVIATION as a snippet in `emmet-mode' to be EXPANSION.
+
+Both arguments are strings."
+  (add-hook 'emmet-mode-hook
+   ;; [Should this be added to “emmet-snippets” variable instead?]
+            `(lambda () (puthash ,abbreviation ,expansion emmet-tag-snippets-table))))
+
+
+(setq emmet-mode-hook nil)
+
+(my/add-emmet-snippet "vue"
+"<!doctype html>
+<html lang=\"en\">
+    <head>
+        <title>Salamun Alaykum, world!</title>
+        <script src=\"https://unpkg.com/vue@3\"></script>
+        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+        <style type=\"text/css\">
+         input, #reply { color: darkcyan; font-size: 14pt }
+        </style>
+    </head>
+    <body>
+        <div id=\"Hola\">
+            <h1>Number Guessing Game</h1>
+            <input type=\"number\" v-model=\"guess\" style=\"width: 25%;\" v-bind:placeholder=`${prompt}`>
+            <button v-on:click=\"go(guess)\">Learn Something!</button>
+            <div id=\"reply\"> {{reply(guess)}} </div>
+        </div>
+        <!-- <script src=\"myscripts.js\"></script> -->
+        <script type=\"text/javascript\">
+         let myApp = Vue.createApp({
+             data() {
+                 return { guess: null
+                        , prompt: \"Enter a guess between 0 and 100\"
+                        , secret: Math.floor(Math.random() * 100)
+                        }
+             },
+             methods: { reply(gs) { return gs == this.secret ? \"You win!\" : (gs < this.secret ? \"Too low\" : \"Too high\"); }
+                      , go(number) { window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
+                      }
+         }).mount('#Hola')
+        </script>
+    </body>
+</html>")
+
+(my/add-emmet-snippet "angular"
+"<!doctype html>
+<html lang=\"en\" ng-app=\"Hola\">
+  <head>
+    <title>Salamun Alaykum, world!</title>
+    <script src=\"https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js\"></script>
+    <!-- <script src=\"myscripts.js\"></script> -->
+    <script type=\"text/javascript\">
+      angular.module(\"Hola\", [])
+        .controller(\"prompt\",
+           ($scope, $window) => {
+              $scope.prompt = \"Enter a guess between 0 and 100\"
+              $scope.secret = Math.floor(Math.random() * 100)
+              $scope.reply  = gs => gs == $scope.secret ? \"You win!\" : (gs < $scope.secret ? \"Too low\" : \"Too high\")
+              $scope.go = number => { $window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
+          })
+    </script>
+    <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+    <style type=\"text/css\">
+       input, #reply { color: darkcyan; font-size: 14pt }
+    </style>
+  </head>
+  <body>
+    <div ng-controller=\"prompt\">
+      <h1>Number Guessing Game</h1>
+      <input type=\"number\" ng-model=\"guess\" style=\"width: 25%;\" placeholder=\"{{prompt}}\">
+      <button ng-click=\"go(guess)\">Learn Something!</button>
+      <div id=\"reply\"> {{reply(guess)}} </div>
+    </div>
+  </body>
+</html>")
+#+end_src
+
+A non-blocking alternative to the built-in ~alert()~:
+#+begin_src emacs-lisp
+;; A way to show results of trying things out ---when not using a reactive framework.
+(my/add-emmet-snippet "message"
+"     // Append “text” node to the end of tag with “id”.
+     // Example: <button onclick=\"message(\"myID\", \"Hello!\")\"> Speak! </button>
+     function message(id, text = \"Hello, world\") {
+         const tag = document.createElement(\"p\") // <p></p>
+         const textNode = document.createTextNode(text)
+         tag.appendChild(textNode); // <p>Hello, world</p>
+         const element = document.getElementById(id);
+         element.appendChild(tag);
+     }")
+#+end_src
+
+A snippet for a form with (1) automatic alignment, and (2) submission handled by
+local JavaScript.
+#+begin_src emacs-lisp
+(my/add-emmet-snippet "form"
+        "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
+            Automatically aligned form items</a> </h1>
+
+        <form name=\"hola\"  onsubmit=\"go(hola.elements);\">
+            <label>Name</label>
+            <input name=\"name\" type=\"text\" required/>
+
+            <label>Comments</label>
+            <textarea name=\"comments\" maxlength=\"500\"></textarea>
+
+            <input type=\"submit\"/>
+        </form>
+
+        <!-- <script src=\"myscripts.js\"></script> -->
+        <script>
+         let go = form => { alert(`${form.name.value}: “${form.comments.value}”`) }
+        </script>
+
+        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
+        <style>
+         form {
+             /* We want the inputs&labels to be thought of as rows in a grid*/
+             display: grid;
+             grid-auto-flow: row;
+             /* Each row has 2 columns. */
+             grid-template-columns: [mylabels] auto [myinputs] 1fr;
+             grid-gap: .8em;     /* Distance between form elements */
+             background: beige;
+             padding: 1.2em;
+         }
+         /* Let's attach column names to elements */
+         form > label  {
+             grid-column: mylabels;
+             grid-row: auto;
+         }
+         form > input,
+         form > textarea {
+             grid-column: myinputs;
+             grid-row: auto;
+         }
+         input, textarea { color: darkcyan; font-size: 14pt }
+        </style>")
+#+end_src
+
+*** LSP for HTML + CSS
+:PROPERTIES:
+:CUSTOM_ID: LSP-for-HTML-CSS
+:END:
+
+Notes: I've tried [[https://emacs-lsp.github.io/lsp-mode/page/lsp-html/][LSP for HTML]] but I didn't find it provided much, and even
+worse, it seemed to ignore the useful information I get from Flycheck!
+
++ When I accidentally duplicate Ids, or miss important tag attributes, Flycheck
+  ~(C-c !)~ reminds of these things! :-)
+
++ This is also [[https://emacs-lsp.github.io/lsp-mode/page/lsp-emmet/][LSP for Emmet]], which let's you expand any text you write as if it
+  were an emmet snippet /such that/ you can ~TAB~ to the various editable regions in
+  the expansion to fill them out. E.g., ~ul>li*5 RET~ produces a yas-snippet which
+  you TAB through to fill out.
+  - If you don't want some text to be treated as a snippet, press ~C-g~.
+  - As above, this ruins flycheck support and highlighting ---requiring ~web-mode~
+    to get some highlighting.
+
+However, [[https://emacs-lsp.github.io/lsp-mode/page/lsp-css/][LSP for CSS]] is indispensable!
++ It provides auto-completion for properties, and if you pause then a tool tip
+  with useful explanations of properties. :fire:
++ Moreover, if you press ~ENTER~ on a completion candidate, then you get to select
+  a possible value from another list!
++ When I mouse hover over a property, I get a 1-line tooltip describing the property.
++ /No need to remember which properties are possible, what they do, and their
+  possible values!/ Just start typing and see what pops-up!
 
 #+begin_src emacs-lisp :tangle no
-(use-package ob-js
+M-x lsp-install-server RET css-ls
+#+end_src
+
+#+begin_src emacs-lisp
+;; When I accidentally duplicate a property in a rule, please report that as an error.
+(setq lsp-css-lint-duplicate-properties "error")
+
+;; If I accidentally enter an unknown property (e.g., writing Canadian “colour” instead of American “color”),
+;; then I'll be notified with an error notice.
+(setq lsp-css-lint-unknown-properties "error")
+
+
+(use-package lsp-mode
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+         (css-mode . lsp-mode) ;; Enter LSP mode
+         (css-mode . lsp))      ;; Start LSP server
+#+end_src
+
+**** CSS Property Argument Information in the Echo Area
+:PROPERTIES:
+:CUSTOM_ID: CSS-Property-Argument-Information-in-the-Echo-Area
+:END:
+
+LSP for CSS shows me a tooltip with a description and the argument syntax of a
+property; but that's only when entering a new property.  What if I'm updating a
+property; or just browsing a property and want some information on the arguments
+list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
+-  Eldoc-mode is a minor-mode which shows you, in the echo area, the argument
+  list of the function call you are currently writing.
+
+#+begin_src emacs-lisp
+;; [USAGE] In a CSS file, place cursor anywhere after the colon (but before ‘;’)
+;; in “columns: 0ch;” or in “columns: ” and look at the echo area for how
+;; arguments to this property should look like.
+(use-package css-eldoc
+  :init (progn (require 'css-eldoc) (turn-on-css-eldoc)))
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+;; [Possibly useful snippet to keep around.]
+;; Change priority of a server; useful when multiple servers are running for a buffer.
+;; (setf (lsp--client-priority (gethash 'emmet-ls lsp-clients)) 4)
+#+end_src
+
+*** Show me HTML+CSS Changes /Live as I Type/!
+:PROPERTIES:
+:CUSTOM_ID: Show-me-HTML-CSS-Changes-Live-as-I-Type
+:END:
+
+#+begin_src emacs-lisp
+(use-package impatient-mode)
+
+(use-package web-mode
+  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
+
+
+;;     C-c C-v: Browse buffer within external browser.
+;; C-u C-c C-v: Ensure impatient-mode is enabled for current buffer and browse it WITHIN Emacs.
+;; [xwidget-webkit has some bugs; e.g., sometimes buttons that should redirect don't do anything.]
+;; [The “C-u” option is useful when I want to “see” the resulting HTML change as I type; e.g., new content or styling.]
+;; [Note the “angular” snippet above works beautifully /within/ Emacs; use “b/f” to move backward/forward in the browser.]
+(bind-key "C-c C-v"
+          (lambda (open-within-emacs) (interactive "P")
+            (if (not open-within-emacs)
+                (browse-url-of-buffer (current-buffer))
+              (unless (process-status "httpd") (httpd-start))
+              (unless impatient-mode (impatient-mode))
+              (let ((browser (car (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list))))
+                    (file (buffer-name)))
+                (when browser (switch-to-buffer browser) (let (kill-buffer-query-functions) (kill-buffer)))
+                (split-window-below)
+                (other-window -1)
+                (xwidget-webkit-browse-url (concat "http://localhost:8080/imp/live/" file))
+                (preview-it-mode -1) ;; Looks poor; and I don't need it when writing HTML.
+                (other-window -1))))
+          'web-mode-map)
+#+end_src
+
+#+begin_src emacs-lisp
+(bind-key "M-q" #'sgml-pretty-print 'web-mode-map)
+#+end_src
+
+*** VueJS
+:PROPERTIES:
+:CUSTOM_ID: VueJS
+:END:
+
+#+begin_src emacs-lisp
+(use-package vue-mode)
+#+end_src
+*** JSON
+:PROPERTIES:
+:CUSTOM_ID: JSON
+:END:
+
+Since web apps tend to be RESTful, payloads are [[https://www.json.org/json-en.html][JSON]].  To use the JSON, we need
+to tediously find paths to particular fields; let's do so with /automatically,
+without error./.
+
+When we open a JSON file, we are promoted to install an LSP server, which
+- Checks that the file is valid JSON.
+- Shows the full path to the cursor's location, at the top of the window.
+
+#+begin_src emacs-lisp
+(use-package json-mode   :defer nil)
+#+end_src
+
+Useful bindings are in the docstring of TODO. doc.json-mode.
++ kbd:C-c_C-f :: Pretty print buffer
++ kbd:C-c_C-p :: Copy path to field at point
+
+Note that there is also TODO. doc.json-pretty-print-buffer; which can be used to
+uglify a JSON buffer if a prefix is provided.
+
+Let's make a hydra for JSON,
+#+begin_src emacs-lisp
+(my/defhydra nil "JSON Browser" gamepad
+  :Buffer
+  ("p" #'json-mode-show-path "Copy path to field at point")
+  ;; ("f" #'json-mode-beautify "Format Buffer")
+  ;; ("m"  (lambda () (interactive) (json-pretty-print-buffer t)) "Minify/ugligy buffer")
+  ("t"  (lambda  () (interactive)
+          (if my/json-hydra/pretty-printed?
+              (json-pretty-print-buffer t)
+            (json-mode-beautify (point-min) (point-max)))
+          (setq my/json-hydra/pretty-printed? (not my/json-hydra/pretty-printed?)))
+   "Toggle format/uglify of buffer"
+   :toggle (progn (defvar my/json-hydra/pretty-printed? nil)
+                  my/json-hydra/pretty-printed?)))
+
+;; TODO: (bind-key "C-c SPC" 'my/hydra/JSON\ Browser/body 'json-mode-map)
+;; NOTE: “C-x SPC” is for rectangle editing.
+#+end_src
+
+Interesting, but not for me: [[https://github.com/taku0/json-par/][json-par: Emacs minor mode for structural editing
+of JSON]].
+
+Also: [[https://transform.tools/json-to-jsdoc][JSON to X]] is a website to convert JSON to other formats, such as in Rust
+or as JSDoc type annotations.
+*** Turbolog: What's the value of this expression?              :JavaScript:
+:PROPERTIES:
+:CUSTOM_ID: Turbolog-What's-the-value-of-this-expression
+:END:
+With [[https://github.com/Artawower/turbo-log][turbo-log]], I can select an expression then press [[kbd:C-x l l]] to have
+that expression be part of a console log message, in the next line, that also
+mentions the line number and buffer's name. I can toggle all these inserted
+messages to be comments with kbd:C-x_l_c and kbd:C-x_l_u, and when I'm done
+debugging I can quickly get rid of all of them with kbd:C-x_l_d.
+
+( Before TurboLog, I used a snippet bound to kbd:l_l that inserted
+#+begin_src js :tangle no
+console.log("%c ******* LOOK HERE *******", "color: green; font-weight: bold;");
+console.log({ List the variables here whose values you want to log });
+#+end_src
+)
+
+**** COMMENT TODO: Move some of the stuff below to the TurboLog Github repo. :Does_not_export_to_HTML:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-TODO-Move-some-of-the-stuff-below-to-the-TurboLog-Github-repo
+:END:
+
+#+begin_src emacs-lisp
+(unless noninteractive
+
+(setq turbo-log--prefix "%c ******* LOOK HERE *******")
+(defun length> (x y) (> (length x) y))
+(defun length= (x y) (= (length x) y))
+(ignore-error (use-package turbo-log
+  :defer nil
+  :quelpa (turbo-log :fetcher github :repo "artawower/turbo-log.el")
+  :config (setq turbo-console--prefix "✰")))
+(bind-key* "C-x l" #'my/turbo-log-hydra/body)
+(defhydra my/turbo-log-hydra (:color blue :hint nil)
+  ("l" turbo-log-print "Log selected expression" :column "TurboLog: Insert meaningful log message for selected expressions")
+  ("c" turbo-log-comment-all-logs "Comment out all logs")
+  ("u" turbo-log-uncomment-all-logs "Uncomment out all logs")
+  ("d" turbo-log-delete-all-logs "Delete all TurboLog logs")
+  ("q" nil "Cancel"))
+
+
+(defun turbo-log--ecmascript-print (current-line-number formatted-selected-text prev-line-text multiple-logger-p)
+  "Console log for ecmascript, js/ts modes.
+CURRENT-LINE-NUMBER - line number under cursor
+FORMATTED-SELECTED-TEXT - formatted text without space at start position
+PREV-LINE-TEXT - text from previous line
+MULTIPLE-LOGGER-P - should guess list of available loggers?"
+
+  (let* ((is-empty-body (turbo-log--ecmascript-empty-body-p (turbo-log--get-line-text current-line-number)))
+         (insert-line-number (turbo-log--ecmascript-find-insert-pos current-line-number prev-line-text))
+         (meta-info (turbo-log--format-meta-info insert-line-number))
+         (normalized-code (turbo-log--ecmascript-normilize-code formatted-selected-text))
+         (turbo-log--message
+          (concat
+           (turbo-log--choose-logger turbo-log--ecmascript-loggers multiple-logger-p)
+           "('"
+           meta-info
+           formatted-selected-text ": ', "
+           ;; HACK this is my change: Does the TurboLog prefix have a %c console styling marker? If so, use it.
+           (if (s-contains? "%c" meta-info) "'color: green; font-weight: bold;', " "")
+           normalized-code ")"
+           (if (plist-get turbo-log--ecmascript-configs :include-semicolon) ";"))))
+
+    (if is-empty-body
+        (progn
+          (turbo-log--goto-line (- current-line-number 1))
+          (beginning-of-line)
+          (search-forward-regexp "}[[:blank:]]*")
+          (replace-match "")
+          (turbo-log--insert-with-indent current-line-number turbo-log--message)
+          (turbo-log--insert-with-indent (+ current-line-number 1) "}")
+          (indent-according-to-mode))
+      (turbo-log--insert-with-indent insert-line-number turbo-log--message))))
+
+)
+#+end_src
+
+**** TODO ll-debug
+:PROPERTIES:
+:CUSTOM_ID: ll-debug
+:END:
+# ~ Useful when no debugger setup
+
+[[https://melpa.org/#/ll-debug][ll-debug.el]] provides commands to support a low level debug style.
+It features quick insertion of various debug output statements and
+improved functions for commenting and uncommenting chunks of code.
+
+#+begin_quote
+I don't use debuggers very much. I know they can be a big help in some
+situations and I tried some of them, but I find it almost always more
+direct/convenient/enlightening to put a quick 'printf' into a critical area to
+see what is happening than to fire up a big clumsy extra program where it takes
+me ages just to step through to the interesting point. In order to avoid
+repeated typing of 'printf("I AM HERE\n");' and similar stuff, I created
+`ll-debug-insert'. It inserts a statement into your sourcecode that will display
+a debug message. It generates unique messages on each invocation (the message
+consists of a big fat DEBUG together with a counter and the current filename).
+
+---ll-debug.el
+#+end_quote
+
+#+begin_src emacs-lisp
+;; C-u C-v C-d ⇒ Log a message, printing values of expressions.
+;; E.g., in JS this prints, console.log("DEBUG-5-del.js","  1 + 3:",1 + 3);
+;; Note “5” is the fifth debug message, and “del.js” is the name of the buffer.
+;; Works with Rust, Java, Lisps, JS, TS, Clojure, C/C++, Ruby, Matlab/Octave, Shell, Perl.
+(use-package ll-debug
+  :defer nil
   :config
-  (add-to-list 'org-babel-load-languages '(js . t))
-  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
-  (add-to-list 'org-babel-tangle-lang-exts '("js" . "js"))
-  (system-packages-ensure "node"))
-  ;; use “:results output” for js blocks!
- #+end_src
-** TODO Commenting
+  (bind-key "C-x l" (lambda () (interactive) (ll-debug-insert 1)) #'prog-mode-map))
+
+;; See variable `ll-debug-statement-alist' if you want to know which
+;; modes are currently supported by ll-debug. You can add new modes
+;; with `ll-debug-register-mode'.
+;;
+;; If you want to get rid of the debug messages, use
+;; `ll-debug-revert'. It finds and removes the lines with the debug
+;; output statements, asking for confirmation before it removes
+;; anything.
+#+end_src
+
+***   ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-M-x-jsdoc-Insert-JSDocs-with-minimal-type-inference-useful-with-LSP-mode
+:END:
+
+Let's make use of JSDocs for functions ---since then LSP will show us the types
+and function description in a neato pop-up to the side.  [[https://github.com/isamert/jsdoc.el][jsdoc.el]] inserts JSDoc
+function comments/typedefs easily; it also tries to infer types by itself while
+doing that.
+#+begin_src emacs-lisp
+;; [Minimal Type Inference] When default values are provided, then we can infer
+;; the type of the arguments.
+;;
+;; Use: Run “M-x jsdoc” on a JS function.
+;;
+(use-package jsdoc
+    :defer nil
+  :quelpa (jsdoc
+           :fetcher github
+           :repo "isamert/jsdoc.el")
+  :config
+   (use-package tree-sitter)        ;; Required dependencies
+   (use-package tree-sitter-langs)
+  :hook (js-mode . tree-sitter-mode))
+#+end_src
+
+*** Cucumber
+:PROPERTIES:
+:CUSTOM_ID: Cucumber
+:END:
+
+#+begin_src emacs-lisp
+;; Emacs mode for editing Cucumber plain text stories
+;; “.feature” files now open up with nice colouring.
+(use-package feature-mode)
+;;
+;; C-c ,g	Go to step-definition under point (requires ruby_parser gem >= 3.14.2)
+;;
+;; TODO: Ruby specific; but the source could be edited to work for JS.
+;; (use-package cucumber-goto-step)
+#+end_src
+
+Other packages to consider looking into include:
+- [[https://github.com/scottaj/mocha.el][mocha.el: Emacs mode for running mocha tests]]
+- [[https://github.com/Emiller88/emacs-jest][emacs-jest: A package to run jest inside emacs]]
+
+*** JavaScript                                    :Does_not_work_with_flow:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-JavaScript
+:END:
+
+Let's get a JavaScript refactoring library for emacs:
+
+#+begin_src emacs-lisp :tangle no :tangle work_secrets.el
+;; (use-package js2-mode)
+
+(use-package js2-refactor ;; Does not work with flow.js :'(
+  :hook (js-mode . js2-refactor-mode)
+  :config (js2r-add-keybindings-with-prefix "s-j"))
+
+;; To be aware of https://github.com/azer/npm.el
+;; Create and rule NPM packages from Emacs
+#+end_src
+
+Using ~⌘ j~ then one of the following...
+
+| ~lt~ | Adds a console.log() statement for what is at point (or region).               |
+|    | With a prefix argument, use JSON pretty-printing.                              |
+| ~dt~ | Adds a debug() statement for what is at point (or region).                     |
+| ~k~  | is kill: Kills to the end of the line, but does not cross semantic boundaries. |
+|----+--------------------------------------------------------------------------------|
+| ~ee~ | Make an inline list/object/function/funcall be on multiple lines               |
+| ~cc~ | Opposite of ee                                                                 |
+|----+--------------------------------------------------------------------------------|
+| ~tf~ | Toggle between ~function name() {}~ and ~var name = function () {}~                |
+| ~ta~ | Toggle between function expression to arrow function                           |
+| ~ts~ | Toggle between an async and a regular function.                                |
+|----+--------------------------------------------------------------------------------|
+| ~ef~ | Extract the currently selected expression into a top level function            |
+| ~em~ | Like ef, but it's a method in the parent/ambient class                         |
+| ~ev~ | Takes a marked expression and replaces it with a var                           |
+| ~el~ | Similar to extract-var but uses a let-statement                                |
+| ~ec~ | Similar to extract-var but uses a const-statement                              |
+| ~iv~ | Opposite of iv: Replaces all instances of a variable with its initial value    |
+| ~vt~ | Changes local var a to be this.a instead, and all lexical uses.                |
+| ~rv~ | Renames the variable on point and all occurrences in its lexical scope         |
+|----+--------------------------------------------------------------------------------|
+| ~wi~ | Wraps the entire buffer in an immediately invoked function expression          |
+| ~3i~ | Converts ternary operator to if-statement; nice!                               |
+| ~ss~ | Split a string, at point, into a catenation of strings                         |
+| ~st~ | Convert a string into a `template`.                                            |
+
+** TODO Commenting :Keep:Lisp:
 :PROPERTIES:
 :CUSTOM_ID: Commenting
 :END:
@@ -10843,18 +11497,6 @@ publish the current article to my blog.
   (local-set-key (kbd "C-c C-h") 'my/org-fold-current-subtree-anywhere-in-it)))
 #+END_SRC
 
-** TODO The evils of this world
-:PROPERTIES:
-:CUSTOM_ID: The-evils-of-this-world
-:END:
-#+begin_src emacs-lisp :tangle no
-;; “PDF” stands for Portable Document Format, since you should be able to open
-;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
-;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
-;; them. Unfortunately, various government & insurance forms are only provided in
-;; this format.
-(system-packages-ensure "adobe-acrobat-reader")
-#+end_src
 ** TODO Hydra Timer
 :PROPERTIES:
 :CUSTOM_ID: Hydra-Timer
@@ -11408,52 +12050,6 @@ If the :tangle header arg is a list of files. Handle all files"
 #+begin_src emacs-lisp :tangle no :tangle no
 (add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
 #+END_SRC
-** TODO JavaScript                                 :Does_not_work_with_flow:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-JavaScript
-:END:
-
-Let's get a JavaScript refactoring library for emacs:
-
-#+begin_src emacs-lisp :tangle no :tangle work_secrets.el
-;; (use-package js2-mode)
-
-(use-package js2-refactor ;; Does not work with flow.js :'(
-  :hook (js-mode . js2-refactor-mode)
-  :config (js2r-add-keybindings-with-prefix "s-j"))
-
-;; To be aware of https://github.com/azer/npm.el
-;; Create and rule NPM packages from Emacs
-#+end_src
-
-Using ~⌘ j~ then one of the following...
-
-| ~lt~ | Adds a console.log() statement for what is at point (or region).               |
-|    | With a prefix argument, use JSON pretty-printing.                              |
-| ~dt~ | Adds a debug() statement for what is at point (or region).                     |
-| ~k~  | is kill: Kills to the end of the line, but does not cross semantic boundaries. |
-|----+--------------------------------------------------------------------------------|
-| ~ee~ | Make an inline list/object/function/funcall be on multiple lines               |
-| ~cc~ | Opposite of ee                                                                 |
-|----+--------------------------------------------------------------------------------|
-| ~tf~ | Toggle between ~function name() {}~ and ~var name = function () {}~                |
-| ~ta~ | Toggle between function expression to arrow function                           |
-| ~ts~ | Toggle between an async and a regular function.                                |
-|----+--------------------------------------------------------------------------------|
-| ~ef~ | Extract the currently selected expression into a top level function            |
-| ~em~ | Like ef, but it's a method in the parent/ambient class                         |
-| ~ev~ | Takes a marked expression and replaces it with a var                           |
-| ~el~ | Similar to extract-var but uses a let-statement                                |
-| ~ec~ | Similar to extract-var but uses a const-statement                              |
-| ~iv~ | Opposite of iv: Replaces all instances of a variable with its initial value    |
-| ~vt~ | Changes local var a to be this.a instead, and all lexical uses.                |
-| ~rv~ | Renames the variable on point and all occurrences in its lexical scope         |
-|----+--------------------------------------------------------------------------------|
-| ~wi~ | Wraps the entire buffer in an immediately invoked function expression          |
-| ~3i~ | Converts ternary operator to if-statement; nice!                               |
-| ~ss~ | Split a string, at point, into a catenation of strings                         |
-| ~st~ | Convert a string into a `template`.                                            |
-
 ** TODO Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 :PROPERTIES:
 :CUSTOM_ID: Approaches-Before-Reading-Documentation
@@ -11808,26 +12404,6 @@ vertical line.
 
 NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
 
-** TODO Cucumber
-:PROPERTIES:
-:CUSTOM_ID: Cucumber
-:END:
-
-#+begin_src emacs-lisp
-;; Emacs mode for editing Cucumber plain text stories
-;; “.feature” files now open up with nice colouring.
-(use-package feature-mode)
-;;
-;; C-c ,g	Go to step-definition under point (requires ruby_parser gem >= 3.14.2)
-;;
-;; TODO: Ruby specific; but the source could be edited to work for JS.
-;; (use-package cucumber-goto-step)
-#+end_src
-
-Other packages to consider looking into include:
-- [[https://github.com/scottaj/mocha.el][mocha.el: Emacs mode for running mocha tests]]
-- [[https://github.com/Emiller88/emacs-jest][emacs-jest: A package to run jest inside emacs]]
-
 ** TODO Syntax highlighting ---numbers and escape characters
 :PROPERTIES:
 :CUSTOM_ID: Syntax-highlighting-numbers-and-escape-characters
@@ -12059,12 +12635,7 @@ Save the name of this macro by highlighting it and pressing `C-x r s z', then us
           gc-cons-percentage 0.1)))
 #+end_src
 
-** TODO Random Misc Stuff I'm trying out past midnight 🤷
-:PROPERTIES:
-:CUSTOM_ID: Random-Misc-Stuff-I'm-trying-out-past-midnight
-:END:
-
-*** Buffer defaults:
+** TODO Buffer default mode is org-mode
 :PROPERTIES:
 :CUSTOM_ID: Buffer-defaults
 :END:
@@ -12073,7 +12644,7 @@ Save the name of this macro by highlighting it and pressing `C-x r s z', then us
 (setq-default major-mode 'org-mode)
 #+end_src
 
-*** Get nice child frames when looking at completions candidates.  In particular, when editing Lisp code, the
+** TODO Get nice child frames when looking at completions candidates.  In particular, when editing Lisp code, the
 :PROPERTIES:
 :CUSTOM_ID: Get-nice-child-frames-when-looking-at-completions-candidates-In-particular-when-editing-Lisp-code-the
 :END:
@@ -12096,180 +12667,6 @@ Save the name of this macro by highlighting it and pressing `C-x r s z', then us
   (let ((foo 1))
     (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
 #+end_src
-*** FlowJS
-:PROPERTIES:
-:CUSTOM_ID: FlowJS
-:END:
-
-:fire: THIS WORKED, YAY
-#+begin_src emacs-lisp
-(defun yes-plz (file-name major-mode) t)
-
-(lsp-register-client
- (make-lsp-client :new-connection (lsp-stdio-connection
-                                   (-const `(,lsp-clients-flow-server
-                                             ,@lsp-clients-flow-server-args)))
-                  :priority 10
-                  :activation-fn 'yes-plz
-                  ;; :add-on? t
-                  :server-id 'musa/flow-ls))
-#+end_src
-
-https://github.com/emacs-lsp/lsp-mode/issues/613
-https://marketplace.visualstudio.com/items?itemName=flowtype.flow-for-vscode
-
-Language Server Protocol is now supported natively in the core flow program by running flow lsp, and all of flow-language-server's supported features are supported in Flow's native LSP implementation.
-
-:fire: https://codeburst.io/getting-started-with-flow-and-nodejs-b8442d3d2e57
-https://betterprogramming.pub/javascript-type-checking-with-flow-objects-1eb7fca4032e
-
-https://develop.spacemacs.org/layers/+lang/flow-type/README.html
-
-https://github.com/stevenremot/spacemacs-layer-flow
-
-https://github.com/an-sh/flow-minor-mode
-
-
-
---------------------------------------------------------------------------------
-
-The [[https://github.com/an-sh/flow-minor-mode][flow-minor-mode]] project integrates flow features such as navigation to definition, eldoc support for printing types
-of expressions at point and similar into Emacs.
-
-#+begin_src emacs-lisp
-(when nil ;; M-. ⇒ Jump to type definitions
-(use-package flow-minor-mode
-  :hook (js-mode . flow-minor-enable-automatically)
-  :config (add-hook 'js2-mode-hook #'flow-minor-enable-automatically))
-
-(use-package company-flow
-  :hook (js-mode . company-mode)
-  :config (add-to-list 'company-backends 'company-flow))
-
-  (use-package flycheck-flow
-    :init (add-hook 'js-mode-hook #'flycheck-mode)
-    :config (progn  (flycheck-add-mode 'javascript-flow 'flow-minor-mode)
-                    (flycheck-add-mode 'javascript-eslint 'flow-minor-mode)
-                    (flycheck-add-next-checker 'javascript-flow 'javascript-eslint))) )
-
-;; The LSP setup below gives us all these goodies!
-#+end_src
-
-#+begin_src emacs-lisp
-;; Install flow-language-server globally beforehand:
-;; npm i -g flow-language-server
-;; brew install flow
-#+end_src
-
-#+begin_src emacs-lisp
-;; File watches are created over-zealously
-;; https://github.com/emacs-lsp/lsp-mode/issues/713
-(setq lsp-enable-file-watchers nil)
-#+end_src
-
-
-Let's make JS files with ~// @flow strict~ at the top be treated as typed FlowJS files.
-#+begin_src emacs-lisp
-;; Mimicing guide https://emacs-lsp.github.io/lsp-mode/page/adding-new-language/
-(lsp-register-client
- (make-lsp-client ;; :new-connection (lsp-stdio-connection "flow-language-server --socket=5051")
-                  :new-connection (lsp-stdio-connection "flow lsp")
-                  :activation-fn (lsp-activate-on "javascript")
-                  :server-id 'flow))
-#+end_src
-Now shutdown LSP in a JS file, and restart it to see this server being run!
-
-(file-notify-rm-all-watches)
-
-** TODO The following, ~M-x dashboard~, might be a nice thing to have on display when invoking =M-x my/pair-program= ?
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-The-following-M-x-dashboard-might-be-a-nice-thing-to-have-on-display-when-invoking-M-x-my-pair-program
-:header-args: :tangle init.el
-:END:
-
-https://github.com/emacs-dashboard/emacs-dashboard
-
-
-
-#+begin_src emacs-lisp
-(use-package dashboard)
-
-(defun dashboard ()
-  "Open Emacs dashboard"
-  (interactive)
-  (switch-to-buffer dashboard-buffer-name)
-  (goto-char (point-min))
-  (redisplay)
-  (run-hooks 'dashboard-after-initialize-hook)
-  (dashboard-refresh-buffer))
-
-
-
-;; (add-to-list 'recentf-exclude (expand-file-name "~/.emacs.d/.*"))
-(add-to-list 'recentf-exclude (expand-file-name "/usr/local/Cellar/emacs-plus.*"))
-(recentf-cleanup) ;; then run M-x recentf-cleanup to make it work.
-
-
-(setq
- dashboard-items '((recents  . 10) (projects . 3)) ;; What do I want to see?
- dashboard-center-content t                       ;; Where do I want to see it?
- dashboard-set-heading-icons t                    ;; With icons please!
- dashboard-set-file-icons t
- dashboard-set-navigator t                        ;; I also want some “quick links”!
- dashboard-navigator-buttons
- ;; Format: "(icon label tooltip-help action face [prefix = ⟦] [suffix = ⟧])"
- `(;; ("★" "Star" "Show stars" (lambda (&rest _) (show-stars)) warning)
-   ;; ============================== line 1 ==============================
-   (("😆"
-     "Make me smile"
-     ""
-     (lambda (&rest _)
-       (use-package org-special-block-extras)
-       (let* ((animals '( blowfish bud-frogs cower default dragon
-                          dragon-and-cow flaming-sheep ghostbusters
-                          moose mutilated sheep stegosaurus turkey
-                          turtle tux))
-              (animal (seq-random-elt animals))
-              (_loads (progn (require 'dad-joke) (require 'seq) (require 'lolcat)))
-              (saying (format "echo %s" (pp-to-string (dad-joke-get))))
-              (result (format "%s\t\t\t%s"
-                              (shell-command-to-string (format "%s | cowsay -f %s" saying animal))
-                              animal))
-              (buf-name (format "fortune:%s" animal)))
-         (display-message-or-buffer result)
-         (ignore-errors (kill-buffer buf-name))
-         (switch-to-buffer-other-window "*Message*")
-         (rename-buffer buf-name)
-         (highlight-regexp (format "%s" animal) 'hi-green-b)
-         (delete-other-windows)
-         (lolcat-this-buffer)
-         (local-set-key "q" #'kill-buffer-and-window)
-         (message "“q” to kill buffer and window.")))))
-   ;; ============================== line 2 ==============================
-   (("?" "" "What I'm learning lately"
-     (lambda (&rest _)
-       ;; (help-with-tutorial)
-       (browse-url "https://fullstackopen.com/en/part0/fundamentals_of_web_apps#forms-and-http-post"))
-     nil "<" ">"))
-   ;; ============================== line 3 ==============================
-   (("HI" ;; ,(all-the-icons-octicon "bug" :height 1.1 :v-adjust 0.0)
-     "Jira"
-     ""
-     (lambda (&rest _) (browse-url "https://$company.atlassian.net/jira/software/c/projects/FM/boards/100"))))
-   ;; ============================== line 4 ==============================
-   (("🕙"
-     "My Times"
-     "Need to ensure dev team have logged their times for the week"
-     (lambda (&rest _) (browse-url "https://$company.atlassian.net/plugins/servlet/ac/io.tempo.jira/tempo-app#!/my-work/week?type=LIST")))
-    ("🕙"
-     "Team Times"
-     "Need to ensure dev team have logged their times for the week"
-     (lambda (&rest _) (browse-url "https://$company.atlassian.net/plugins/servlet/ac/io.tempo.jira/tempo-app#!/teams/team/4/timesheet?columns=WORKED_COLUMN&dateDisplayType=days&groupBy=worker&order=ASCENDING&periodKey&periodType=CURRENT_WEEK&showCharts=false&sortBy=WORKED_COLUMN&subPeriodType=MONTH&teamId=4&viewType=TIMESHEET")))
-    )))
-
-(dashboard)
-#+end_src
-
 ** TODO power-mode, defadvice!
 
 #+begin_src emacs-lisp
@@ -12456,7 +12853,7 @@ This is a DoomEmacs macro: https://github.com/doomemacs/doomemacs/blob/master/co
   (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list))))))
 #+end_src
 
-** TODO Tree cmd
+** TODO Tree cmd, also treemacs for navigating a new repository
 (system-packages-ensure "tree")
 - A useful way to get an overview of a new repoistory.
 - Alternatively, a nice way to quickly see what's at the current level and all subdirectories.
@@ -12505,153 +12902,6 @@ Emacs' Dired (the directory editor).
 #+end_src
 
 Note: ~C-x C-r~ is very useful for jumping to recently visited files.
-
-** TODO   ~M-x jsdoc~: Insert JSDocs with minimal type inference, useful with LSP-mode
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-M-x-jsdoc-Insert-JSDocs-with-minimal-type-inference-useful-with-LSP-mode
-:END:
-
-Let's make use of JSDocs for functions ---since then LSP will show us the types
-and function description in a neato pop-up to the side.  [[https://github.com/isamert/jsdoc.el][jsdoc.el]] inserts JSDoc
-function comments/typedefs easily; it also tries to infer types by itself while
-doing that.
-#+begin_src emacs-lisp
-;; [Minimal Type Inference] When default values are provided, then we can infer
-;; the type of the arguments.
-;;
-;; Use: Run “M-x jsdoc” on a JS function.
-;;
-(use-package jsdoc
-    :defer nil
-  :quelpa (jsdoc
-           :fetcher github
-           :repo "isamert/jsdoc.el")
-  :config
-   (use-package tree-sitter)        ;; Required dependencies
-   (use-package tree-sitter-langs)
-  :hook (js-mode . tree-sitter-mode))
-#+end_src
-
-** TODO Turbolog: What's the value of this expression?          :JavaScript:
-:PROPERTIES:
-:CUSTOM_ID: Turbolog-What's-the-value-of-this-expression
-:END:
-With [[https://github.com/Artawower/turbo-log][turbo-log]], I can select an expression then press [[kbd:C-x l l]] to have
-that expression be part of a console log message, in the next line, that also
-mentions the line number and buffer's name. I can toggle all these inserted
-messages to be comments with kbd:C-x_l_c and kbd:C-x_l_u, and when I'm done
-debugging I can quickly get rid of all of them with kbd:C-x_l_d.
-
-( Before TurboLog, I used a snippet bound to kbd:l_l that inserted
-#+begin_src js :tangle no
-console.log("%c ******* LOOK HERE *******", "color: green; font-weight: bold;");
-console.log({ List the variables here whose values you want to log });
-#+end_src
-)
-
-*** COMMENT TODO: Move some of the stuff below to the TurboLog Github repo. :Does_not_export_to_HTML:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-TODO-Move-some-of-the-stuff-below-to-the-TurboLog-Github-repo
-:END:
-
-#+begin_src emacs-lisp
-(unless noninteractive
-
-(setq turbo-log--prefix "%c ******* LOOK HERE *******")
-(defun length> (x y) (> (length x) y))
-(defun length= (x y) (= (length x) y))
-(ignore-error (use-package turbo-log
-  :defer nil
-  :quelpa (turbo-log :fetcher github :repo "artawower/turbo-log.el")
-  :config (setq turbo-console--prefix "✰")))
-(bind-key* "C-x l" #'my/turbo-log-hydra/body)
-(defhydra my/turbo-log-hydra (:color blue :hint nil)
-  ("l" turbo-log-print "Log selected expression" :column "TurboLog: Insert meaningful log message for selected expressions")
-  ("c" turbo-log-comment-all-logs "Comment out all logs")
-  ("u" turbo-log-uncomment-all-logs "Uncomment out all logs")
-  ("d" turbo-log-delete-all-logs "Delete all TurboLog logs")
-  ("q" nil "Cancel"))
-
-
-(defun turbo-log--ecmascript-print (current-line-number formatted-selected-text prev-line-text multiple-logger-p)
-  "Console log for ecmascript, js/ts modes.
-CURRENT-LINE-NUMBER - line number under cursor
-FORMATTED-SELECTED-TEXT - formatted text without space at start position
-PREV-LINE-TEXT - text from previous line
-MULTIPLE-LOGGER-P - should guess list of available loggers?"
-
-  (let* ((is-empty-body (turbo-log--ecmascript-empty-body-p (turbo-log--get-line-text current-line-number)))
-         (insert-line-number (turbo-log--ecmascript-find-insert-pos current-line-number prev-line-text))
-         (meta-info (turbo-log--format-meta-info insert-line-number))
-         (normalized-code (turbo-log--ecmascript-normilize-code formatted-selected-text))
-         (turbo-log--message
-          (concat
-           (turbo-log--choose-logger turbo-log--ecmascript-loggers multiple-logger-p)
-           "('"
-           meta-info
-           formatted-selected-text ": ', "
-           ;; HACK this is my change: Does the TurboLog prefix have a %c console styling marker? If so, use it.
-           (if (s-contains? "%c" meta-info) "'color: green; font-weight: bold;', " "")
-           normalized-code ")"
-           (if (plist-get turbo-log--ecmascript-configs :include-semicolon) ";"))))
-
-    (if is-empty-body
-        (progn
-          (turbo-log--goto-line (- current-line-number 1))
-          (beginning-of-line)
-          (search-forward-regexp "}[[:blank:]]*")
-          (replace-match "")
-          (turbo-log--insert-with-indent current-line-number turbo-log--message)
-          (turbo-log--insert-with-indent (+ current-line-number 1) "}")
-          (indent-according-to-mode))
-      (turbo-log--insert-with-indent insert-line-number turbo-log--message))))
-
-)
-#+end_src
-
-*** TODO ll-debug
-:PROPERTIES:
-:CUSTOM_ID: ll-debug
-:END:
-# ~ Useful when no debugger setup
-
-[[https://melpa.org/#/ll-debug][ll-debug.el]] provides commands to support a low level debug style.
-It features quick insertion of various debug output statements and
-improved functions for commenting and uncommenting chunks of code.
-
-#+begin_quote
-I don't use debuggers very much. I know they can be a big help in some
-situations and I tried some of them, but I find it almost always more
-direct/convenient/enlightening to put a quick 'printf' into a critical area to
-see what is happening than to fire up a big clumsy extra program where it takes
-me ages just to step through to the interesting point. In order to avoid
-repeated typing of 'printf("I AM HERE\n");' and similar stuff, I created
-`ll-debug-insert'. It inserts a statement into your sourcecode that will display
-a debug message. It generates unique messages on each invocation (the message
-consists of a big fat DEBUG together with a counter and the current filename).
-
----ll-debug.el
-#+end_quote
-
-#+begin_src emacs-lisp
-;; C-u C-v C-d ⇒ Log a message, printing values of expressions.
-;; E.g., in JS this prints, console.log("DEBUG-5-del.js","  1 + 3:",1 + 3);
-;; Note “5” is the fifth debug message, and “del.js” is the name of the buffer.
-;; Works with Rust, Java, Lisps, JS, TS, Clojure, C/C++, Ruby, Matlab/Octave, Shell, Perl.
-(use-package ll-debug
-  :defer nil
-  :config
-  (bind-key "C-x l" (lambda () (interactive) (ll-debug-insert 1)) #'prog-mode-map))
-
-;; See variable `ll-debug-statement-alist' if you want to know which
-;; modes are currently supported by ll-debug. You can add new modes
-;; with `ll-debug-register-mode'.
-;;
-;; If you want to get rid of the debug messages, use
-;; `ll-debug-revert'. It finds and removes the lines with the debug
-;; output statements, asking for confirmation before it removes
-;; anything.
-#+end_src
 
 ** TODO Github Browser Extensions (for Chrome)
 :PROPERTIES:
@@ -13013,55 +13263,6 @@ Useful for those cases where I have to interact with non-trivial ‘interactive 
   (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
 #+end_src
 
-** TODO JSON
-:PROPERTIES:
-:CUSTOM_ID: JSON
-:END:
-
-Since web apps tend to be RESTful, payloads are [[https://www.json.org/json-en.html][JSON]].  To use the JSON, we need
-to tediously find paths to particular fields; let's do so with /automatically,
-without error./.
-
-When we open a JSON file, we are promoted to install an LSP server, which
-- Checks that the file is valid JSON.
-- Shows the full path to the cursor's location, at the top of the window.
-
-#+begin_src emacs-lisp
-(use-package json-mode   :defer nil)
-#+end_src
-
-Useful bindings are in the docstring of TODO. doc.json-mode.
-+ kbd:C-c_C-f :: Pretty print buffer
-+ kbd:C-c_C-p :: Copy path to field at point
-
-Note that there is also TODO. doc.json-pretty-print-buffer; which can be used to
-uglify a JSON buffer if a prefix is provided.
-
-Let's make a hydra for JSON,
-#+begin_src emacs-lisp
-(my/defhydra nil "JSON Browser" gamepad
-  :Buffer
-  ("p" #'json-mode-show-path "Copy path to field at point")
-  ;; ("f" #'json-mode-beautify "Format Buffer")
-  ;; ("m"  (lambda () (interactive) (json-pretty-print-buffer t)) "Minify/ugligy buffer")
-  ("t"  (lambda  () (interactive)
-          (if my/json-hydra/pretty-printed?
-              (json-pretty-print-buffer t)
-            (json-mode-beautify (point-min) (point-max)))
-          (setq my/json-hydra/pretty-printed? (not my/json-hydra/pretty-printed?)))
-   "Toggle format/uglify of buffer"
-   :toggle (progn (defvar my/json-hydra/pretty-printed? nil)
-                  my/json-hydra/pretty-printed?)))
-
-;; TODO: (bind-key "C-c SPC" 'my/hydra/JSON\ Browser/body 'json-mode-map)
-;; NOTE: “C-x SPC” is for rectangle editing.
-#+end_src
-
-Interesting, but not for me: [[https://github.com/taku0/json-par/][json-par: Emacs minor mode for structural editing
-of JSON]].
-
-Also: [[https://transform.tools/json-to-jsdoc][JSON to X]] is a website to convert JSON to other formats, such as in Rust
-or as JSDoc type annotations.
 ** TODO Peer Review / Pull Request Template for Work
 :PROPERTIES:
 :CUSTOM_ID: Peer-Review-Pull-Request-Template-for-Work
@@ -13237,403 +13438,6 @@ Below is a detailed checklist of what I went through.
     ,#+html: </details>
 #+end_src
 
-** TODO Web-Development
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Web-Development
-:END:
-
-First, let's get some useful Cheat Sheets...
-#+begin_src emacs-lisp
-;; Get the repos locally, and use: M-x my/cheatsheet to view the pretty HTML sheets.
-(mapcar #'my/cheatsheet '("JavaScript" "Vue" "AngularJS"))
-#+end_src
-
-*** Quickly produce HTML from CSS-like selectors
-:PROPERTIES:
-:CUSTOM_ID: Quickly-produce-HTML-from-CSS-like-selectors
-:END:
-
-Emmet-mode (outside of Emacs, this is known as [[https://emmet.io/][Emmet]] and [[https://www.smashingmagazine.com/2009/11/zen-coding-a-new-way-to-write-html-code/][Zen Coding]]),
-is a powerful abbreviation engine that expands CSS selectors into HTML code.
-It's a neat way to write markup quickly in Emacs.
-
-# Alternative example candidate: div#news.module>div.header+div.body>ul>li#item-$*5
-#
-Watch this [[https://vimeo.com/7405114][demo video]]. Or here's an example with filler text:
-=#page>.logo+ul#navigation>li*5>a>lorem3=
-expands into
-# =div#page>div.logo+ul#navigation>li*5>a=
-#+begin_src html :tangle no
-<div id="page">
-    <div class="logo"></div>
-    <ul id="navigation">
-        <li><a href="">Justo eget magna!</a></li>
-        <li><a href="">Mattis pellentesque id!</a></li>
-        <li><a href="">Turpis massa tincidunt.</a></li>
-        <li><a href="">Sit amet, porttitor.</a></li>
-        <li><a href="">Feugiat nisl pretium.</a></li>
-    </ul>
-</div>
-#+end_src
-
-Likewise, we can make 5 links next to 5 input boxes with:
-~(a[href=www.google.ca]{Click me!}+label{Name:}>input[value="first name"])*5~.
-
-Anyhow, here's my setup:
-#+begin_src emacs-lisp
-;; USAGE: Place point in an emmet snippet and press C-j to expand it to appropriate tag structure;
-;; e.g., #q.x>p C-j. Alternatively, press C-j then start typing an emmet snippet to see it preview live.
-;; [C-j is just M-x emmet-expand-line]
-;;
-(use-package emmet-mode ;; C-j ! RET  === Makes an entire HTML template for you.
-  :hook (web-mode . emmet-mode))
-;;
-;; Please show me an HTML expansion preview as I type
-(setq emmet-preview-default t) ;; Press C-j then start typing; e.g., C-j #q.x.y>p>b RET
-;;
-;; After expanding, positioned the cursor between first empty quotes.
-;; The preview can help with tricky CSS precedence rules; e.g., C-j gives the same thing for: a>b+c>d   ==  a>(b+(c>d))
-(setq emmet-move-cursor-between-quotes t) ;; E.g., C-j #q[name] RET
-;;
-(add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
-;; (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
-#+end_src
-
-#+begin_details Notable HTML key bindings (including [[https://www.gnu.org/software/emacs/manual/html_node/emacs/HTML-Mode.html][built-ins]])
-+ Wrap with Abbreviation / C-c C-c w :: Select a region, then enter an abbreviation.
-  - For example, select the phrase ~Hello, World!~ then ~C-c C-c w q>b~ to place that phrase in a quote, and make it bold.
-+ Go to Edit Point / C-M-{Leftarrow, Rightarrow} :: to move between editable-tags/empty-attributes. ([[https://docs.emmet.io/actions/go-to-edit-point/][Demo]])
-+ C-c TAB :: Cheaply preview the HTML file by toggling visibility of tags.
-+ C-c /, C-c C-e :: Insert a close tag for the innermost unterminated tag (sgml-close-tag). If called within a tag or a comment, close it instead of inserting a close tag.
-+ C-c ? tag RET :: Display a description of the meaning of tag tag (sgml-tag-help). If the argument tag is empty, describe the tag at point. :fire:
-+ C-c C-d :: Delete the tag at or after point, and delete the matching tag too (sgml-delete-tag). If the tag at or after point is an opening tag, delete the closing tag too; if it is a closing tag, delete the opening tag too.
-+ C-c C-f/b :: More 'f'orward or 'b'ackward one tag element. ---Nice way to quicly check that your tags are balanced as you think they are.
-+ C-c C-a :: Interactively insert attribute values for the current tag. :fire:
-  - Super helpful when you don't remember the possible attributes of a tag, or their possible values.
-    # - E.g., within ~<img />~ press ~C-c C-a~ then ~id~ then ~hola~ then ~RET~ then ~C-g~.
-  - C-c C-t :: Interactively specify a tag and its attributes!
-#+end_details
-
-#+begin_details Notable Emmet Features & Examples
-
-+ Example that includes Ids, classes, children, sibling selectors,
-  {content}, 10 random lorem text, parenthesis for grouping; as well
-  as attributes with and without values.
-  #+begin_src html :tangle no
-ParentTag#Id.Class1.Class2[Attribute1 Attribute2]>ChildTag{hiya there}>lorem10+(GrandChild1>GreatGrandChild11)+GrandChild2#Id2[attribute=value]
-#+end_src
-
-+  Nesting (>) can be 'undone' with "climb-up"(^):  ~a>b>c>d^^e~  ==  ~a>(b>c>d)+e~
-+  Multiplication is repeated addition: ~X*3>Y~ == ~(X>Y)+(X>Y)+(X>Y)~
-+  In general, ~loremN~ produces $N$ many random filler text. E.g., make a dummy list: =ul>li*3>lorem3=
-
-Other notable snippets include
-=a#neato.x.y.z, input[hola=value], img, p, table+, ul+, ol+=.
-
-+ There are also [[https://docs.emmet.io/css-abbreviations/][CSS abbreviations]]; but that's a story for another time.
-+ This [[https://docs.emmet.io/cheat-sheet/][cheat sheet]] has all the supported abbreviations, with expansions.
-
-
---------------------------------------------------------------------------------
-
-
-+ ID and CLASS attributes: =div#page.section.main=
-  - ~div~ tag name can be omitted when writing element starting from ID or CLASS:
-    ~#content>.section~ is the same as ~div#content>div.section~.
-
-+ Custom attributes: ~div[title], a[title="Hello world" rel], td[colspan=2]~
-
-+ Element multiplication: ~li*5~ will output ~<li>~ tag five times.
-
-+ Item numbering with the ~$~ character: ~li.item$*3~ will output ~<li>~ tag
-  three times, replacing ~$~ character with item number.
-
-+ Multiple ~$~ characters in a row are used as zero padding, i.e.: ~li.item$$$~ → ~li.item001~
-
-+ Abbreviation groups with unlimited nesting:
-  ~div#page>(div#header>ul#nav>li*4>a)+(div#page>(h1>span)+p*2)+div#footer~
-  - You can literally write a full document markup with just a single line.
-
-+ Text support: ~p>{Click }+a{here}+{ to continue}~.
-
-
---------------------------------------------------------------------------------
-
-
-Good tutorials:
-+ [[https://jonchristopher.us/blog/the-art-of-zen-coding-bringing-snippets-to-a-new-level/][The Art of zen-coding: Bringing Snippets to a New Level - Jon Christopher]]
-+ [[https://www.smashingmagazine.com/2009/11/zen-coding-a-new-way-to-write-html-code/][Zen Coding: A Speedy Way To Write HTML/CSS Code — Smashing Magazine]]
-+ [[https://www.smashingmagazine.com/2013/03/goodbye-zen-coding-hello-emmet/][Goodbye, Zen Coding. Hello, Emmet! — Smashing Magazine]]
-
-#+end_details
-
-For more on writing HTML within Emacs, see this ~2min /yet very
-informative/ [[https://www.youtube.com/watch?app=desktop&v=sBhQ2NIcrLQ&ab_channel=emacsrocks][video]] by /Emacs Rocks!/
-
-Let's add a new snippet so that: ~angular C-j C-c C-v~ shows us an interactive web
-application.
-#+begin_src emacs-lisp
-(cl-defun my/add-emmet-snippet (abbreviation expansion)
-  "Add ABBREVIATION as a snippet in `emmet-mode' to be EXPANSION.
-
-Both arguments are strings."
-  (add-hook 'emmet-mode-hook
-   ;; [Should this be added to “emmet-snippets” variable instead?]
-            `(lambda () (puthash ,abbreviation ,expansion emmet-tag-snippets-table))))
-
-
-(setq emmet-mode-hook nil)
-
-(my/add-emmet-snippet "vue"
-"<!doctype html>
-<html lang=\"en\">
-    <head>
-        <title>Salamun Alaykum, world!</title>
-        <script src=\"https://unpkg.com/vue@3\"></script>
-        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
-        <style type=\"text/css\">
-         input, #reply { color: darkcyan; font-size: 14pt }
-        </style>
-    </head>
-    <body>
-        <div id=\"Hola\">
-            <h1>Number Guessing Game</h1>
-            <input type=\"number\" v-model=\"guess\" style=\"width: 25%;\" v-bind:placeholder=`${prompt}`>
-            <button v-on:click=\"go(guess)\">Learn Something!</button>
-            <div id=\"reply\"> {{reply(guess)}} </div>
-        </div>
-        <!-- <script src=\"myscripts.js\"></script> -->
-        <script type=\"text/javascript\">
-         let myApp = Vue.createApp({
-             data() {
-                 return { guess: null
-                        , prompt: \"Enter a guess between 0 and 100\"
-                        , secret: Math.floor(Math.random() * 100)
-                        }
-             },
-             methods: { reply(gs) { return gs == this.secret ? \"You win!\" : (gs < this.secret ? \"Too low\" : \"Too high\"); }
-                      , go(number) { window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
-                      }
-         }).mount('#Hola')
-        </script>
-    </body>
-</html>")
-
-(my/add-emmet-snippet "angular"
-"<!doctype html>
-<html lang=\"en\" ng-app=\"Hola\">
-  <head>
-    <title>Salamun Alaykum, world!</title>
-    <script src=\"https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js\"></script>
-    <!-- <script src=\"myscripts.js\"></script> -->
-    <script type=\"text/javascript\">
-      angular.module(\"Hola\", [])
-        .controller(\"prompt\",
-           ($scope, $window) => {
-              $scope.prompt = \"Enter a guess between 0 and 100\"
-              $scope.secret = Math.floor(Math.random() * 100)
-              $scope.reply  = gs => gs == $scope.secret ? \"You win!\" : (gs < $scope.secret ? \"Too low\" : \"Too high\")
-              $scope.go = number => { $window.location.href = \"https://www.wolframalpha.com/input?i=\" + number }
-          })
-    </script>
-    <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
-    <style type=\"text/css\">
-       input, #reply { color: darkcyan; font-size: 14pt }
-    </style>
-  </head>
-  <body>
-    <div ng-controller=\"prompt\">
-      <h1>Number Guessing Game</h1>
-      <input type=\"number\" ng-model=\"guess\" style=\"width: 25%;\" placeholder=\"{{prompt}}\">
-      <button ng-click=\"go(guess)\">Learn Something!</button>
-      <div id=\"reply\"> {{reply(guess)}} </div>
-    </div>
-  </body>
-</html>")
-#+end_src
-
-A non-blocking alternative to the built-in ~alert()~:
-#+begin_src emacs-lisp
-;; A way to show results of trying things out ---when not using a reactive framework.
-(my/add-emmet-snippet "message"
-"     // Append “text” node to the end of tag with “id”.
-     // Example: <button onclick=\"message(\"myID\", \"Hello!\")\"> Speak! </button>
-     function message(id, text = \"Hello, world\") {
-         const tag = document.createElement(\"p\") // <p></p>
-         const textNode = document.createTextNode(text)
-         tag.appendChild(textNode); // <p>Hello, world</p>
-         const element = document.getElementById(id);
-         element.appendChild(tag);
-     }")
-#+end_src
-
-A snippet for a form with (1) automatic alignment, and (2) submission handled by
-local JavaScript.
-#+begin_src emacs-lisp
-(my/add-emmet-snippet "form"
-        "<h1> <a href=\"https://www.quackit.com/css/grid/tutorial/form_layout_with_auto_placement.cfm\">
-            Automatically aligned form items</a> </h1>
-
-        <form name=\"hola\"  onsubmit=\"go(hola.elements);\">
-            <label>Name</label>
-            <input name=\"name\" type=\"text\" required/>
-
-            <label>Comments</label>
-            <textarea name=\"comments\" maxlength=\"500\"></textarea>
-
-            <input type=\"submit\"/>
-        </form>
-
-        <!-- <script src=\"myscripts.js\"></script> -->
-        <script>
-         let go = form => { alert(`${form.name.value}: “${form.comments.value}”`) }
-        </script>
-
-        <!-- <link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\" /> -->
-        <style>
-         form {
-             /* We want the inputs&labels to be thought of as rows in a grid*/
-             display: grid;
-             grid-auto-flow: row;
-             /* Each row has 2 columns. */
-             grid-template-columns: [mylabels] auto [myinputs] 1fr;
-             grid-gap: .8em;     /* Distance between form elements */
-             background: beige;
-             padding: 1.2em;
-         }
-         /* Let's attach column names to elements */
-         form > label  {
-             grid-column: mylabels;
-             grid-row: auto;
-         }
-         form > input,
-         form > textarea {
-             grid-column: myinputs;
-             grid-row: auto;
-         }
-         input, textarea { color: darkcyan; font-size: 14pt }
-        </style>")
-#+end_src
-
-*** LSP for HTML + CSS
-:PROPERTIES:
-:CUSTOM_ID: LSP-for-HTML-CSS
-:END:
-
-Notes: I've tried [[https://emacs-lsp.github.io/lsp-mode/page/lsp-html/][LSP for HTML]] but I didn't find it provided much, and even
-worse, it seemed to ignore the useful information I get from Flycheck!
-
-+ When I accidentally duplicate Ids, or miss important tag attributes, Flycheck
-  ~(C-c !)~ reminds of these things! :-)
-
-+ This is also [[https://emacs-lsp.github.io/lsp-mode/page/lsp-emmet/][LSP for Emmet]], which let's you expand any text you write as if it
-  were an emmet snippet /such that/ you can ~TAB~ to the various editable regions in
-  the expansion to fill them out. E.g., ~ul>li*5 RET~ produces a yas-snippet which
-  you TAB through to fill out.
-  - If you don't want some text to be treated as a snippet, press ~C-g~.
-  - As above, this ruins flycheck support and highlighting ---requiring ~web-mode~
-    to get some highlighting.
-
-However, [[https://emacs-lsp.github.io/lsp-mode/page/lsp-css/][LSP for CSS]] is indispensable!
-+ It provides auto-completion for properties, and if you pause then a tool tip
-  with useful explanations of properties. :fire:
-+ Moreover, if you press ~ENTER~ on a completion candidate, then you get to select
-  a possible value from another list!
-+ When I mouse hover over a property, I get a 1-line tooltip describing the property.
-+ /No need to remember which properties are possible, what they do, and their
-  possible values!/ Just start typing and see what pops-up!
-
-#+begin_src emacs-lisp :tangle no
-M-x lsp-install-server RET css-ls
-#+end_src
-
-#+begin_src emacs-lisp
-;; When I accidentally duplicate a property in a rule, please report that as an error.
-(setq lsp-css-lint-duplicate-properties "error")
-
-;; If I accidentally enter an unknown property (e.g., writing Canadian “colour” instead of American “color”),
-;; then I'll be notified with an error notice.
-(setq lsp-css-lint-unknown-properties "error")
-
-
-(use-package lsp-mode
-  :hook  ;; Every programming mode should enter & start LSP, with which-key support
-         (css-mode . lsp-mode) ;; Enter LSP mode
-         (css-mode . lsp))      ;; Start LSP server
-#+end_src
-
-**** CSS Property Argument Information in the Echo Area
-:PROPERTIES:
-:CUSTOM_ID: CSS-Property-Argument-Information-in-the-Echo-Area
-:END:
-
-LSP for CSS shows me a tooltip with a description and the argument syntax of a
-property; but that's only when entering a new property.  What if I'm updating a
-property; or just browsing a property and want some information on the arguments
-list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
--  Eldoc-mode is a minor-mode which shows you, in the echo area, the argument
-  list of the function call you are currently writing.
-
-#+begin_src emacs-lisp
-;; [USAGE] In a CSS file, place cursor anywhere after the colon (but before ‘;’)
-;; in “columns: 0ch;” or in “columns: ” and look at the echo area for how
-;; arguments to this property should look like.
-(use-package css-eldoc
-  :init (progn (require 'css-eldoc) (turn-on-css-eldoc)))
-#+end_src
-
-#+begin_src emacs-lisp :tangle no
-;; [Possibly useful snippet to keep around.]
-;; Change priority of a server; useful when multiple servers are running for a buffer.
-;; (setf (lsp--client-priority (gethash 'emmet-ls lsp-clients)) 4)
-#+end_src
-
-*** Show me HTML+CSS Changes /Live as I Type/!
-:PROPERTIES:
-:CUSTOM_ID: Show-me-HTML-CSS-Changes-Live-as-I-Type
-:END:
-
-#+begin_src emacs-lisp
-(use-package impatient-mode)
-
-(use-package web-mode
-  :init (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
-
-
-;;     C-c C-v: Browse buffer within external browser.
-;; C-u C-c C-v: Ensure impatient-mode is enabled for current buffer and browse it WITHIN Emacs.
-;; [xwidget-webkit has some bugs; e.g., sometimes buttons that should redirect don't do anything.]
-;; [The “C-u” option is useful when I want to “see” the resulting HTML change as I type; e.g., new content or styling.]
-;; [Note the “angular” snippet above works beautifully /within/ Emacs; use “b/f” to move backward/forward in the browser.]
-(bind-key "C-c C-v"
-          (lambda (open-within-emacs) (interactive "P")
-            (if (not open-within-emacs)
-                (browse-url-of-buffer (current-buffer))
-              (unless (process-status "httpd") (httpd-start))
-              (unless impatient-mode (impatient-mode))
-              (let ((browser (car (--filter (s-starts-with? "*xwidget" (buffer-name it)) (buffer-list))))
-                    (file (buffer-name)))
-                (when browser (switch-to-buffer browser) (let (kill-buffer-query-functions) (kill-buffer)))
-                (split-window-below)
-                (other-window -1)
-                (xwidget-webkit-browse-url (concat "http://localhost:8080/imp/live/" file))
-                (preview-it-mode -1) ;; Looks poor; and I don't need it when writing HTML.
-                (other-window -1))))
-          'web-mode-map)
-#+end_src
-
-#+begin_src emacs-lisp
-(bind-key "M-q" #'sgml-pretty-print 'web-mode-map)
-#+end_src
-
-*** VueJS
-:PROPERTIES:
-:CUSTOM_ID: VueJS
-:END:
-
-#+begin_src emacs-lisp
-(use-package vue-mode)
-#+end_src
 ** TODO Emphasised Comments
 :PROPERTIES:
 :CUSTOM_ID: Emphasised-Comments
@@ -13648,7 +13452,6 @@ list? [[https://github.com/zenozeng/css-eldoc][css-eldoc]] to the rescue.
                             (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)))
 
 #+end_src
-
 
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
