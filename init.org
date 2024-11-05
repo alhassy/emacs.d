@@ -6036,7 +6036,674 @@ Example:
 :CUSTOM_ID: Lisp-Programming
 :END:
 
-** Editor Documentation with Contextual Information
+** C-x C-e ∷ REPL-driven development for ELisp / NodeJS / Python / Etc !
+:PROPERTIES:
+:CUSTOM_ID: C-x-C-e-REPL-driven-development-for-NodeJS
+:END:
+
+| /Evaluate code and see the results inline ---A feedback loop that is faster than ever!/ |
+
+Within Emacs, kbd:C-x_C-e evaluates a Lisp expression /anywhere/; e.g.,
+at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
+# Likewise, evaluating a variable shows you its value: user-full-name.
+
+- We ran some code /without/ explicitly running an interpreter/repl/compiler!
+
+- This is known as “REPL driven development” (RDD):
+  There is a running REPL server for your language, implicitly in the
+  background, and your editor (say with ~C-x C-e~) will send it a line (or a
+  selected region) of code for evaluation; we then see the result as an
+  overlay in our current buffer.
+
+  + You /choose/ which code gets (re)evaluated.
+
+- A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
+
+*** ELisp
+:PROPERTIES:
+:CUSTOM_ID: ELisp
+:END:
+
+By default, Emacs Lisp's kbd:C-x_C-e shows results only in the minibuffer; near
+the bottom of the screen. Let's also have evaluation results displayed as inline
+overlays ---at the location that the user, us, is actually looking/working;
+rather than forcing their eyes to shift up&down when writing&evaluating.
+
++ kbd:C-u_C-x_C-e inserts the evaluation result at point; kbd:C-u_0_C-x_C-e does
+  so /without truncating/ lengthy output.
++ Read this [[https://karthinks.com/software/an-elisp-editing-tip/][Sweet & short blog/GIFs]] on practical uses of kbd:C-x_C-e when working with Lisp.
+
+#+begin_src emacs-lisp
+;; Evaluation Result OverlayS for Emacs Lisp
+(use-package eros :init (eros-mode t))
+#+end_src
+
+# In particular, this gives us the Lisp function
+# `eros--eval-overlay', which evaluates its argument X
+# and produces an overlay of the result at position P.
+# E.g., (eros--eval-overlay "hola" (point-min))
+# Shows a momentary overlay at the first line.
+
+*** JavaScript                                                    :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: JavaScript
+:END:
+
+Let's setup RDD for JavaScript ---by having a NodeJS repl server running in the background.
+
+- See [[https://github.com/anonimitoraf/skerrick][skerrick: REPL-driven development for Javascript]] for animated GIFs; it
+  works with modules as well.
+
+#+begin_src emacs-lisp
+(use-package skerrick
+    :defer nil
+  :init
+  ;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
+  (unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
+    (skerrick-install-or-upgrade-server-binary)))
+
+;; Should be run in a JS buffer; it is buffer specific.
+;; (skerrick-start-server)
+
+;; Now main function, entry point is:
+;; M-x skerrick-eval-region
+#+end_src
+
+Let's provide a quick keyboard shortcut. E.g., kbd:C-x_C-e evaluates ELisp, so let's mimic that for JS buffers:
+#+begin_src emacs-lisp
+(require 'js) ;; Defines js-mode-map
+
+;; Evaluate a region, if any is selected; otherwise evaluate the current line.
+(bind-key
+ "C-x C-e"  (lambda ()
+              (interactive)
+              (if (use-region-p)
+                  (skerrick-eval-region)
+                (beginning-of-line)
+                (set-mark-command nil)
+                (end-of-line)
+                (skerrick-eval-region)
+                (pop-mark)))
+ 'js-mode-map)
+#+end_src
+
+
+Trying something else instead of skerrick, until
+https://github.com/anonimitoraf/skerrick/issues/7 is resolved.
+
+In any JS file, I just press ~C-x C-e~ and the JS interpreter is brought up with the evaluation results shown:
+#+begin_src emacs-lisp
+(use-package js-comint   :defer nil)
+(define-key js-mode-map (kbd "C-x C-e") (lambda () (interactive) (call-interactively #'js-comint-repl) (other-window -1) (js-comint-send-last-sexp)))
+#+end_src
+
+For instance,
+#+begin_src js :tangle no
+// Start the server... then
+// On each line and press C-x C-e
+let a = "hello"
+let b = "world"
+(a + ' ' + b).toUpperCase()
+// The final line should show: HELLO WORLD
+#+end_src
+
+**** Preserving the context
+:PROPERTIES:
+:CUSTOM_ID: Preserving-the-context
+:END:
+
+When testing an application, you might notice a bug in a particular context
+---i.e., a particular configuration in the app.
+
+1. The classic approach is to kill the app; i.e., stop the server that is, well,
+   serving the app.
+2. Solve the problem.
+3. Try to get back to the configuration, context, you were in beforehand and
+   check that the problem has been resolved.
+
+A better approach is to ignore the bookkeeping steps, 1&3, and just do step 2.
+For that, there are numerous packages:
+- [[https://github.com/mishoo/livenode/][livenode: Live-code your NodeJS applications]] ⨾⨾ [[https://vimeo.com/60636079][Video demo]] ~11min ⨾⨾ Last
+  updated 2013
+- [[https://github.com/skeeto/skewer-mode][skewer-mode: Live web development in Emacs]] ⨾⨾ [[https://www.youtube.com/watch?v=4tyTgyzUJqM&ab_channel=Skeeto][Silent video demo]] ~5min ⨾⨾ Last
+  updated 2020
+- [[https://github.com/swank-js/swank-js][swank-js: Swank backend for Node.JS and in-browser JavaScript]] ⨾⨾ Last updated
+  2015
+
+For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick/issues/8.
+
+*** Python, etc                                                   :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Python-etc
+:END:
+
+It /seems/ to be /super easy/ to add such a support for other languages, such as Python.
+See the final comment [[https://karthinks.com/software/an-elisp-editing-tip/][here]] for the tiny change required.
+
+** TODO COMMENT RDD
+
+*** get the pkg
+#+begin_src emacs-lisp :tangle init.el
+(use-package repl-driven-development)
+(setq repl-driven-development-echo-duration 10)
+#+end_src
+
+*** terminal
+#+begin_src emacs-lisp :tangle init.el
+;; Sometimes I see a bunch of shell incantations in a README or something and I'd like to execute them right there and then,
+;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
+;; shell commands from anywhere.
+;; (repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
+(repl-driven-development [C-x C-t] terminal)
+#+end_src
+
+*** jshell
+#+begin_src emacs-lisp :tangle init.el
+;; Set “C­x C­j” to evaluate Java code in a background REPL.
+(repl-driven-development
+ [C-x C-j]
+ ;; enable assertions, and add everything installed, via `mvn', in scope.
+ (format "jshell --class-path %s --enable-preview -R -ea --feedback silent"
+         (concat ".:" (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f 2>/dev/null | tr '\n' ':'")))
+ :prompt "jshell>"
+ :init "\n /set mode EmacsJavaMode normal -command
+        \n /set format EmacsJavaMode display \"{pre}added import {name}{post}\" import-added
+        \n /set format EmacsJavaMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
+        \n /set format EmacsJavaMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
+        \n /set truncation EmacsJavaMode 40000
+        \n /set feedback EmacsJavaMode
+        \n System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
+;; TODO [Truncation; Low] https://github.com/xiongtx/eros/blob/master/eros.el#L202
+#+end_src
+*** mvn
+#+begin_src emacs-lisp :tangle init.el
+(defun mvn (groupId artifactId)
+  "Quickly install a library from Maven Central."
+  (async-shell-command (format "mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -Dartifact=%s:%s:LATEST:jar:sources" groupId  artifactId)))
+
+(when nil
+  ⨾⨾ Example use of `mvn`
+
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  ;; First confirm C-x C-j works as intended
+  IntStream.range(0, 15).mapToObj(i -> i % 15 == 0 ? "FizzBuzz" : i % 3 == 0 ? "Fizz" : i % 5 == 0 ? "Buzz" : String.valueOf(i)).toList()
+
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  (mvn "org.antlr" "antlr4") ;; C-x C-e
+  ;; Now re-start the Java C-x C-j repl via a C-x C-e (lame! not ergonomic!)
+  ;; Now check that you have access to antrl in your repl by importing it and looking at one of its classes:
+  ;; ⦃ jshell --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar ⦄
+  import org.antlr.v4.runtime.*;
+  CommonTokenStream.class
+  ;; NOTE: This is the runtime, to use the actual tool:
+  java -jar /Users/musa/.m2/repository/org/antlr/antlr4/4.13.0/antlr4-4.13.0-complete.jar
+
+  ;; Alternatively,
+  ;; $ jshell
+  ;; > var x = 5
+  ;; > import org.antlr.v4.runtime.*;  // CRASHES since antlr is not in scope
+  ;; > /reset --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar
+  ;; > import org.antlr.v4.runtime.*;  // WORKS, yay
+  ;; > x // CRASHES, not in scope
+
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  import org.apache.commons.lang3.StringUtils;
+  StringUtils.class;
+  /imports  // JShell command to list all imports, it now contains apache!
+
+  // Guava is the Google core libraries for Java
+  import com.google.common.collect.ImmutableMap;
+
+  ImmutableMap.of(1, "A", 2, "B") // ⇒ {1=A, 2=B}
+
+  ;; (mvn "com.google.code.gson" "gson")
+  // Then C-x C-e to update the repl definition of C-x C-j to include the updated gson library.
+  import com.google.gson.*;
+  String json = new Gson().toJson(Map.of("me", List.of(1, 2,3), "you", Map.of("Love", "Lisp", "Hate", "Verbosity")))
+
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  ;; TestNG is a testing framework; supporting tests configured by annotations, data-driven testing, parametric tests, etc.
+  (mvn "org.testng" "testng")
+  import org.testng.*;
+  /imports  // Now can see org.testng at the end of the list
+
+  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
+  ;; TODO[Low]: For working with Lombok annotations, use the jshell `/reset --class-path` command to include the lombok compiled file into
+  ;; the current Jshell session.
+  ;;
+  ;; See: https://stackoverflow.com/questions/74084364/how-to-use-lombok-in-jshell
+  ;;
+  ;; (mvn "org.projectlombok" "lombok")
+  ;; import lombok.*;
+  ;; @lombok.Data class Test { private String name; }
+  ;; new Test().equals(new Test())
+  )
+#+end_src
+
+*** Adding support for “//!use” & “//!omit” top level repl commands
+#+begin_src emacs-lisp
+;; Adding support for “//!use” & “//!omit” top level repl commands
+(setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
+(advice-add 'repl/jshell
+            :around (lambda (repl &rest args)
+                      (if (equal nil current-prefix-arg)
+                          ;; No prefix supplied
+                          (progn
+                            (setq rdd---current-input (s-replace-regexp "\n" "" (s-trim-left
+                                                                                 (if (region-active-p) (buffer-substring-no-properties  (region-beginning) (region-end))
+                                                                                   (substring-no-properties (thing-at-point 'line))))))
+                            (if (s-starts-with? "//!use" rdd---current-input)
+                                (-let [jar (s-trim (s-chop-prefix "//!use" rdd---current-input))]
+                                  (repl/top-level//!use jar))
+                              (if (s-starts-with? "//!omit" rdd---current-input)
+                                  (-let [jar (s-trim (s-chop-prefix "//!omit" rdd---current-input))]
+                                    (repl/top-level//!omit jar))
+                                ;; otherwise business as usual
+                                (apply repl args))))
+                        (pcase current-prefix-arg
+                          (-1
+                           ;; reset classpath to default, then business as usual.
+                           (setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
+                           (apply repl args))
+                          (999
+                           (message-box "It worked"))
+                          ;; otherwise business as usual
+                          (t (apply repl args))))))
+
+;; remove all advice
+;; (-let [sym 'repl/jshell] (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
+
+(cl-defun repl/top-level//!omit (str)
+  (with-temp-buffer
+    (setq repl/jshell/classpath (s-replace-regexp (format ":[^:]*%s[^:]*:" str) ":" repl/jshell/classpath))
+    (insert "/env --class-path ")
+    (insert repl/jshell/classpath)
+    (repl/jshell (point-min) (point-max))))
+
+(cl-defun repl/top-level//!use (str)
+  "If the given jar cannot be added successful, the existing classpath remains untouched.
+
+Return to your default classpath by invoking the repl with the -1 prefix.
+
+Example usage:
+
+    //!use ~/path/to/compiled/java/classes
+    import com.x.y.z;
+
+Where directory hierarchy com/x/y/z denotes a Java package under the above //!use path.
+"
+  (with-temp-buffer
+    (setq repl/jshell/classpath (concat (s-trim str) ":" repl/jshell/classpath))
+    (insert "/env --class-path ")
+    (insert repl/jshell/classpath)
+    (repl/jshell (point-min) (point-max))))
+#+end_src
+
+*** Misc top level cmds
+
+TODO: Make repl load all company class files, that way I have them upon start up.
+OR: Provide a command `//!load ~/dir` which recursively loads/imports all java files? <---Probably this!
+
+*** COMMENT Quickly Run Code Snippets
+:PROPERTIES:
+:CUSTOM_ID: Quickly-Run-Code-Snippets
+:END:
+
+Sometimes we want to quickly run some code /without making a dedicated file/ or
+with a file but /without remembering the terminal incantation to do so/, enter
+~quickrun~. Anywhere, we can select a snippet of code and run TODO. doc.quickrun-region
+to execute that snippet after selecting the associated programming language, or
+TODO. doc.quickrun-replace-region if we want the results in-line. If our language of
+choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-defined-command][easily add support for it]].
+
+#+begin_src emacs-lisp
+;; In any programming buffer, “M-x quickrun” to execute that program.
+;; Super useful when wanting to quickly test things out, in a playground.
+;;
+;; E.g., Make a new file named “hello.py” containing “print "hi"”, then “M-x quickrun”.
+;;
+;; Enable “quickrun-autorun-mode” to run code after every save.
+(use-package quickrun
+  ;; ⇒ “C-c C-r” to see output, “q” to close output
+  ;; ⇒ “C-u C-c C-r” prompts for a language (Useful when testing snippets different from current programming mode)
+  ;; ⇒ In a non-programming buffer, “C-c C-r” runs selected region.
+  :defer nil
+  :config (bind-key* "C-c C-r"
+                     (lambda (&optional start end)
+                       (interactive "r")
+                       (if (use-region-p)
+                           (quickrun-region start end)
+                         (quickrun current-prefix-arg)))))
+#+end_src
+
+Example...
+#+begin_src emacs-lisp
+(system-packages-ensure "rust") ;; Rust Compiler
+;; Select the following then press C-c C-r: fn main() { println!("Hello, World!"); }
+#+end_src
+
+Actually, let's get a [[https://github.com/brotzeit/rustic#intro][full Rust development environment for Emacs]] (which also
+has [[https://github.com/brotzeit/rustic#org-babel][great support for Org-babel]].)
+#+begin_src emacs-lisp
+(use-package rustic   :defer nil)
+;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
+;; rust-analyzer, the rust LSP.
+;;
+;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
+;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
+;; super nice stuff! Run “M-!”/[M-x company-show-doc-buffer] if you want the doc in a colourful buffer.
+;;
+;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
+;;    let v:Vec<_> = vec![1, 2, 3];
+
+;; The offical Rust toolchain installer
+(system-packages-ensure "rustup")
+(shell-command "rustup update")
+#+end_src
+
+:More_on_rust:
+
+Now, C-c C-c C-d on something to get help/description of it.
+(setq rustic-racer-rust-src-path "/Users/musa/.rustup/toolchains/stable-x86_64-apple-darwin/lib/rustlib/src/rust/library/")
+
+# Get Rustup, load it into current terminal session
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.bash_profile
+source ~/.bashrc
+type rustup
+
+# Get stuff
+rustup update
+rustup component add rust-src
+cargo +nightly install racer
+rustup toolchain install nightly
+rustup component add rustc-dev --toolchain=nightly
+cargo +nightly install racer
+
+:End:
+** ⌘-e: Edit Everything in a separate buffer
+:PROPERTIES:
+:CUSTOM_ID: e-Edit-Everything-in-a-separate-buffer
+:END:
+
+Edit comment/string/docstring/code block in separate buffer with your favourite
+mode.
+
++ ⌘-e to toggle “e”diting of thing at point.
++ ⌘-e will try to edit thing at point, or selection, if possible; otherwise it
+  will exit edit session.
+  - 🔥 Avoid escape nightmares by editing strings in a separate buffer.
+  - On a string, press ⌘-e and a new buffer pops up with unescaped content,
+    letting you edit raw strings directly.  It then takes care of automatically
+    escaping strings for you when you press ⌘-e, or ~C-c C-c~ ---or discard your
+    changes with ~C-c C-k~.
++ ⌘-e can be used within edit session to create new edit sessions, if possible; then ⌘-e will “pop-off-the-stack” as expected.
+  - (I already use ⌘-e to toggle editing Org src blocks, and when editing a block ⌘-e will try to do a recursive edit if possible, or exit the edit session.)
+  - (The separedit package also let's me press ⌘-e to edit variable values when describing them, and to edit text when in the minibuffer.)
+
+From [[https://github.com/twlz0ne/separedit.el][source]]:
+#+begin_example org
++----------+         Edit           +-----------+         Edit           +-----------+
+|          | ---------------------> |   edit    | ---------------------> |   edit    | ...
+|          |  point-at-comment?     |   buffer  |  point-at-comment?     |   buffer  |
+|  source  |  point-at-string?      |           |  point-at-string?      |           | ...
+|  buffer  |  point-at-codeblock?   | (markdown |  point-at-codeblock?   | (markdown | ...
+|          |  point-at-...?         |  orgmode  |  point-at-...?         |  orgmode  |
+|          | <--------------------- |   ...)    | <--------------------- |   ...)    | ...
++----------+     Commit changes     +-----------+     Commit changes     +-----------+
+#+end_example
+
+[In-general, we can invoke [[https://github.com/Fanael/edit-indirect/blob/e3d86416bcf8ddca951d7d112e57ad30c5f9a081/edit-indirect.el#L124][M-x edit-indirect-region]] to edit any selected piece
+of text in its own buffer, then ~C-c C-c~ (or ~⌘-e~ with my setup) to commit the
+edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected region
+😉]
+
+#+begin_src emacs-lisp
+(use-package separedit   :defer nil)
+;;
+;; # Example Usage
+;;
+;; 1. Press ⌘-e on this line, to edit this entire comment.
+;; 2. Press ⌘-e to exit the edit session.
+;;
+;; Since my ⌘-e is context sensitive, to determine whether to continue editing or
+;; exit; you can explicitly request an edit with C-c ' and an exit with C-c C-c.
+;;
+;; ```
+;; ;; 3. Press ⌘-e on this line, to edit this source block!
+;; ;; 4. Press ⌘-e on this line, to edit this inner-most comment!
+;; ;; 5. At start of next line, press “⌘-r ⌘-e” to edit just the source block
+;; ;;
+;; (cl-defun index (&rest args)
+;;   "6. Press ⌘-e to edit this string, \"7. and again in these quotes\""
+;;   "<p>8. Press ⌘-e to edit this <strong> HTML </strong> block, in Web-mode </p>")
+;;
+;; ;; 9. Press C-u ⌘-e to guess the language of the next string (Rust); then ⌘-r C-c C-r to quickly run the code.
+;; "fn main() { println!(\"{}\", \"hello!\"); }"
+;;
+;; ;; 10. Select & press “C-u ⌘-e” on the following, to edit it in whatever mode you want.
+;; ;; select * from table -- Or just press ⌘-e and have the mode detected.
+;;
+;; ```
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setup to make the above ⌘-e behaviour happen.
+
+;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
+(--map (bind-key "s-e" #'separedit it)
+       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
+
+#+end_src
+
+#+begin_src emacs-lisp
+;; TODO:Merge these changes upstream
+
+;; I'm focusing on a specific region to edit, so let's not be distracted by anything else.
+;; This makes the “editing stack” feel like a stack, with ⌘-e pushing new editing session buffers,
+;; and C-c C-c, or ⌘-e on non-editable lines, to pop-off the stack.
+;; (advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
+;;
+;; NOTE: This actually breaks the stack nature of popping with ⌘-e; we need to actually save the stack via some list of buffers than push/pop buffers on that variable.
+
+;; I don't want to be bothered for what mode I'm in, when a region is selected using current major mode.
+;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode for my current selected text.
+(advice-add #'separedit--select-mode :before-until
+            (lambda (&rest _)
+              (when (and (not current-prefix-arg) (region-active-p)) (pp-to-string major-mode))))
+
+;; Also: When on a string ∷
+(advice-add #'separedit--select-mode :before-until
+            (lambda (&rest _)
+              "When on a string ∷
++ ⌘-e ⇒ Edit string at point
++ C-u ⌘-e ⇒ Auto-detect my string's major mode
++ C-u C-u ⌘-e ⇒ Let me select a major mode"
+              (-let [str? (ignore-errors (thing-at-point 'string))]
+                (case (car current-prefix-arg)
+                  (4 (when str? (pp-to-string (my/detect-prog-mode str?))))
+                  (_ nil)))))
+
+;; NOTE: By default, separedit provides colouring for 'strings', "strings", and `strings'
+;; This doesn't look very good when I have a single quote within double quotes:
+;; In an Emacs Lisp buffer, editing the string "Bob's Work" gives unexpected highlighting.
+;; ```
+;; (advice-add #'separedit :after
+;;             (lambda (&rest _)
+;;               (when (s-ends-with? "string-mode" (pp-to-string major-mode))
+;;                 (text-mode))))
+;; ```
+#+end_src
+
+#+begin_src emacs-lisp
+;; In the indirect buffer, make ⌘-e finish editing.
+(use-package edit-indirect
+  :config (bind-key "s-e"
+                    (lambda ()
+                      (interactive)
+                      (or (ignore-errors (call-interactively #'separedit))
+                          (call-interactively #'edit-indirect-commit)))
+                    #'edit-indirect-mode-map))
+
+;; I also have “s-e” bound to `org-edit-src-exit'.
+(advice-add 'org-edit-src-exit :before-until
+            (lambda (&rest r)
+              (when (ignore-errors (separedit)) t)))
+#+end_src
+
+#+begin_src emacs-lisp
+;; → ⌘-e on an Org paragraph pops-up an edit session in Org mode.
+;; → ⌘-e on a selection in Org mode pops-up an edit session in Org mode.
+;; TODO: Consider forming an alist for special blocks to refer to their preferred
+;; edit mode, defaulting to Org-mode? Perhaps something to consider /after/
+;; addressing the bug below.
+;; (advice-unadvice 'org-edit-special) MA: TODO: FIXME: Delete this?
+(advice-add 'org-edit-special :around
+            (lambda (orginal-function &rest r)
+              (cond
+               ((region-active-p) (call-interactively #'edit-indirect-region) (org-mode))
+               ((equal 'paragraph (car (org-element-at-point)))
+                (mark-paragraph) (call-interactively #'edit-indirect-region) (org-mode))
+               (t (or (ignore-errors (apply orginal-function r))
+                      ;; We try to edit a special block when orginal-function fails.
+                      ;; This way src blocks are not confused with the more generic idea of special blocks.
+                      (when
+                          (my/org-in-any-block-p)
+                        ;; Note using org-element-at-point doesn't work well with special blocks when you're somewhere within the block.
+                        ;; It only works correctly when you're on the boundary of the special block; which is not ideal.
+                        ;; This is why I'm not using: (org-element-property :begin elem).
+                        (-let [(start . end) (my/org-in-any-block-p)]
+                          (set-mark-command start)
+                          (goto-char end) (previous-line 2) (end-of-line) ;; FIXME: Still shows #+end_XXX for some reason.
+                          (call-interactively #'edit-indirect-region) (org-mode))))))))
+#+end_src
+
+#+begin_src emacs-lisp
+;; where...
+(defun my/org-in-any-block-p ()
+  "Return non-nil if the point is in any Org block.
+
+The Org block can be *any*: src, example, verse, etc., even any
+Org Special block.
+
+This function is heavily adapted from `org-between-regexps-p'.
+
+Src: https://scripter.co/splitting-an-org-block-into-two/"
+  (save-match-data
+    (let ((pos (point))
+          (case-fold-search t)
+          (block-begin-re "^[[:blank:]]*#\\+begin_\\(?1:.+?\\)\\(?: .*\\)*$")
+          (limit-up (save-excursion (outline-previous-heading)))
+          (limit-down (save-excursion (outline-next-heading)))
+          beg end)
+      (save-excursion
+        ;; Point is on a block when on BLOCK-BEGIN-RE or if
+        ;; BLOCK-BEGIN-RE can be found before it...
+        (and (or (org-in-regexp block-begin-re)
+                 (re-search-backward block-begin-re limit-up :noerror))
+             (setq beg (match-beginning 0))
+             ;; ... and BLOCK-END-RE after it...
+             (let ((block-end-re (concat "^[[:blank:]]*#\\+end_"
+                                         (match-string-no-properties 1)
+                                         "\\( .*\\)*$")))
+               (goto-char (match-end 0))
+               (re-search-forward block-end-re limit-down :noerror))
+             (> (setq end (match-end 0)) pos)
+             ;; ... without another BLOCK-BEGIN-RE in-between.
+             (goto-char (match-beginning 0))
+             (not (re-search-backward block-begin-re (1+ beg) :noerror))
+             ;; Return value.
+             (cons beg end))))))
+#+end_src
+
+I'd like to [[https://github.com/andreasjansson/language-detection.el][guess the language]] I'm in, when working with strings.
+#+begin_src emacs-lisp
+(use-package language-detection   :defer nil)
+;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
+;; Also, (language-detection-string "select * from t") ;; ⇒ sql
+
+;; TODO: Push this upstream; https://github.com/andreasjansson/language-detection.el/issues/1
+(cl-defun my/detect-prog-mode (&optional string)
+  "Guess programming mode of the current buffer, or STRING if it is provided.
+
+When called interactively, it enables the mode;
+from Lisp it just returns the name of the associated mode.
+
+    ;; Example Lisp usage
+    (call-interactively #'my/detect-prog-mode)
+
+`language-detection-buffer' returns a string which is not always the name of the
+associated major mode; that's what we aim to do here."
+  (interactive)
+
+  (defvar my/detect-prog-mode/special-names
+    '((c           . c-mode)
+      (cpp         . c++-mode)
+      (emacslisp   . emacs-lisp-mode)
+      (html        . web-mode) ;; I intentionally want to use this alternative.
+      (matlab      . octave-mode)
+      (shell       . shell-script-mode)
+      (visualbasic . visual-basic-mode)
+      (xml         . sgml-mode))
+    "Names in this alist map a language to its mode; all other languages 𝒳 have mode ‘𝒳-mode’ afaik.")
+
+  (let* ((lang (if string (language-detection-string string) (language-detection-buffer)))
+         (mode (or (cdr (assoc lang my/detect-prog-mode/special-names))
+                   (intern (format "%s-mode" lang)))))
+    (if (called-interactively-p 'any)
+        (progn (call-interactively mode) (message "%s enabled!" mode))
+      mode)))
+#+end_src
+
++ ⌘-e to edit an Org table cell; see [[https://orgmode.org/manual/Built_002din-Table-Editor.html][here]] for built-in table editing commands.
+#+begin_src emacs-lisp
+(advice-add #'org-edit-special :before-until
+            (lambda (&rest r)
+              (when (equal 'table-row (car (org-element-at-point)))
+                (call-interactively #'org-table-edit-field))))
+#+end_src
+** ⌘-r, ⌘-i, ⌘-o: Sleek Semantic Selection
+:PROPERTIES:
+:CUSTOM_ID: Sleek-Semantic-Selection
+:END:
+
+Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
+word, press it again to select sentence, then again for the current paragraph,
+then more to get the current section.
+
+#+begin_src emacs-lisp
+(use-package expand-region
+
+  :bind (("s-r" . #'er/expand-region)))
+#+end_src
+
+You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
+
+That is, /repeated ⌘+r expands the selection to the next logical segment of text:/
+In writing this means “Word, sentence, paragraph”, and in programming this means
+“identifier, then incrementally larger scopes”.
+
+*** Semantic Change
+:PROPERTIES:
+:CUSTOM_ID: Semantic-Change
+:END:
+
+Using kbd:⌘-i and kbd:⌘-o we can quickly, for example, delete a string or its
+contents; or delete a {}-block or just its contents; or delete a ()-argument
+list or just its contents, etc.
+
+ ~change-inner~ gives you vim's ~ci~ command:
+- ~change-inner {~ ⇒ Delete all text starting from the first ‘{’ delimiter to the next one; but /keep the delimiters/.
+- ~change-outer {~ ⇒ As above, but also delete the delimiters.
+
+#+begin_src emacs-lisp :tangle no
+(use-package change-inner
+
+  :bind (("s-i" . #'change-inner)
+         ("s-o" . #'change-outer)))
+#+end_src
+
+** Documentation
+*** Editor Documentation with Contextual Information
 :PROPERTIES:
 :CUSTOM_ID: Editor-Documentation-with-Contextual-Information
 :END:
@@ -6089,7 +6756,7 @@ in that if the cursor is on a symbol, then it is offered to the user as a
 default search item for help, otherwise a plain search box for help
 appears. Using a universal argument lets us drop to the built-in help command.
 
-** [[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]
+*** [[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]
 :PROPERTIES:
 :CUSTOM_ID: Let's-make-working-with-Emacs-Lisp-even-better
 :END:
@@ -6106,82 +6773,7 @@ some example usage of that method.
   (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
 #+end_src
 
-** Commenting
-:PROPERTIES:
-:CUSTOM_ID: Commenting
-:END:
-
-Let's get some nifty [[https://github.com/remyferre/comment-dwim-2][commenting]] features ---the link has nice usage gifs.
-+ [[kbd:][M-;]]
-  repeatedly does (1) comments current line, (2) inserts a comment at the end
-  of the current line, and (3) deletes an existing end-of-line comment.
-
-   [[kbd:][C-u_M-;]] indents the current enf-of-line comment with any above it.
-
-   For use with Org-mode, it's best to use doc:org-edit-src-code ---which I've
-   bound to [[kbd:][⌘ e]].
-   #+begin_src emacs-lisp
-(use-package comment-dwim-2
-  :bind ("M-;" . comment-dwim-2))
-
- ;; Not ideal: M-; comments a parent Org heading and not the current line.
- ;; (define-key org-mode-map (kbd "M-;") 'org-comment-dwim-2)
-   #+end_src
-
-** Indentation Guide
-:PROPERTIES:
-:CUSTOM_ID: Indentation-Guide
-:END:
-
-The following is also “OK” in Org-mode ;-)
-#+begin_src emacs-lisp
-;; Add a visual indent guide
-(use-package highlight-indent-guides
-  :hook (prog-mode . highlight-indent-guides-mode)
-  :custom
-  (highlight-indent-guides-method 'character)
-  (highlight-indent-guides-character ?|)
-  (highlight-indent-guides-responsive 'stack))
-#+end_src
-** Highlight Quoted Symbols
-:PROPERTIES:
-:CUSTOM_ID: highlight-quoted-symbols
-:END:
-
-#+begin_src emacs-lisp
-(use-package highlight-quoted
-  :defer nil
-  :config (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
-
-;; If everything worked fine, then “ 'b ” below should be coloured nicely in Emacs Lisp mode.
-(when nil
-  (-let [x 'somevar]
-    (list x 'b "c" :e)))
-#+end_src
-
-** Highlighting Numbers and Escape Characters
-:PROPERTIES:
-:CUSTOM_ID: Syntax-highlighting-numbers-and-escape-characters
-:END:
-Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
-
-#+begin_src emacs-lisp
-(use-package highlight-numbers
-  :hook (prog-mode separedit-double-quote-string-mode)) ;; The latter is for when I do ⌘-e on a quoted string to edit it.
-
-(use-package highlight-escape-sequences
-  :hook ((prog-mode . hes-mode)
-         (separedit-double-quote-string-mode . hes-mode)) ;; Wont work since this mode has no font-lock-builtin-face
-  :config
-  ;; Colour the escapes as if they were builtin keywords.
-  (put 'hes-escape-backslash-face 'face-alias 'font-lock-builtin-face)
-  (put 'hes-escape-sequence-face 'face-alias 'font-lock-builtin-face))
-
-;; If the above two worked fine, then you should see \n and 3 highlighted below
-(when nil "Look: 1 and \\ and \n 2" (setq three 3))
-#+end_src
-
-** Get CheatSheets and view them easily                           :Disabled:
+*** Get CheatSheets and view them easily                          :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Get-CheatSheets-and-view-them-easily
 :header-args: :tangle no
@@ -6207,36 +6799,10 @@ Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the 
                                               ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 #+end_src
 
-
-** TODO Semantic Change
-:PROPERTIES:
-:CUSTOM_ID: Semantic-Change
-:END:
-
-Using kbd:⌘-i and kbd:⌘-o we can quickly, for example, delete a string or its
-contents; or delete a {}-block or just its contents; or delete a ()-argument
-list or just its contents, etc.
-
- ~change-inner~ gives you vim's ~ci~ command:
-- ~change-inner {~ ⇒ Delete all text starting from the first ‘{’ delimiter to the next one; but /keep the delimiters/.
-- ~change-outer {~ ⇒ As above, but also delete the delimiters.
-
-#+begin_src emacs-lisp :tangle no
-(use-package change-inner
-
-  :bind (("s-i" . #'change-inner)
-         ("s-o" . #'change-outer)))
-#+end_src
-
-** TODO find function at point
-:PROPERTIES:
-:CUSTOM_ID: find-function-at-point
-:END:
-Friendly reminder that ~M-.~ takes you to the definition, and ~M-,~ takes you back
-to where you originally where.
-** COMMENT How do I do something?
+*** How do I do something?                                        :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: How-do-I-do-something
+:header-args: :tangle no
 :END:
 
   When programming, sometimes you just gotta Google “how do I do ⋯”.
@@ -6278,31 +6844,29 @@ Example usage:
     (kill-line)
     (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
 #+end_src
-** Sleek Semantic Selection
+*** Elisp live documentation in the mini-buffer
 :PROPERTIES:
-:CUSTOM_ID: Sleek-Semantic-Selection
+:CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
 :END:
 
-Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
-word, press it again to select sentence, then again for the current paragraph,
-then more to get the current section.
+In =emacs-lisp-mode= we can enable =eldoc-mode= ---“Elisp Live Documentation”--- to
+display information about a function or a variable in the echo area.
 
-#+begin_src emacs-lisp
-(use-package expand-region
+#+BEGIN_SRC emacs-lisp
+(use-package eldoc
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode))
 
-  :bind (("s-r" . #'er/expand-region)))
-#+end_src
+;; Slightly shorten eldoc display delay.
+(setq eldoc-idle-delay 0.4) ;; Default 0.5
+#+END_SRC
 
-You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
-
-That is, /repeated ⌘+r expands the selection to the next logical segment of text:/
-In writing this means “Word, sentence, paragraph”, and in programming this means
-“identifier, then incrementally larger scopes”.
-
-** COMMENT Jumping to definitions & references
+** Jumping to definitions & references
 :PROPERTIES:
 :CUSTOM_ID: Jumping-to-definitions-references
 :END:
+
+Friendly reminder that ~M-.~ takes you to the definition, and ~M-,~ takes you back
+to where you originally where.
 
 Out-of-the-box Emacs has ‘xref’ utilities ~M-.~ and ~C-u M-.~ to [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html#Xref][Find Identifier
 References]]; however, tags to source definitions need to be generated using the
@@ -6335,148 +6899,100 @@ variable ---the first is likely what is desired.  Alternatively, one could just
 add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
 works fine even for locally bound definitions.  It works depending on the
 extension of a file.
-** COMMENT Which function are we writing?
+*** An “auto read only” detection mechanism ---when jumping to definitions :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Which-function-are-we-writing
-:END:
-In the modeline, show the name of the function we're currently writing.
-#+BEGIN_SRC emacs-lisp
-(add-hook 'prog-mode-hook #'which-function-mode)
-(add-hook 'org-mode-hook  #'which-function-mode)
-#+END_SRC
-In Org-mode, this places the current heading in the modeline.
-
-In Lisp mode, ensure we always have matching parens.
-#+BEGIN_SRC emacs-lisp
-(add-hook 'emacs-lisp-mode-hook #'check-parens)
-#+END_SRC
-
-** COMMENT Highlight defined Lisp symbols
-:PROPERTIES:
-:CUSTOM_ID: Highlight-defined-Lisp-symbols
+:CUSTOM_ID: An-auto-read-only-detection-mechanism-when-jumping-to-definitions
+:header-args: :tangle no
 :END:
 
-Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes it
-highlight all defined names ---as long as we're in Lisp mode, whence in org-src
-blocks we use ~C-c '~.
-#+BEGIN_SRC emacs-lisp
-;; Emacs Lisp specific
-(use-package highlight-defined
-    :defer nil
-  :hook (emacs-lisp-mode . highlight-defined-mode))
-#+END_SRC
-
-Super helpful in making my Emacs configuration: If a name is not highlighted,
-then I've misspelled it or it doesn't exist! :smile:
-
-** TODO Aggressive Indentation                           :Broken_Subsection:
-:PROPERTIES:
-:CUSTOM_ID: Aggressive-Indentation
-:END:
-
-With a single space or tab, my code should always remain indented.
-
-[[https://github.com/Malabarba/aggressive-indent-mode][aggressive-indent-mode]] is a minor mode that keeps your code always indented. It
-reindents after every change, making it more reliable than electric-indent-mode.
-
-#+BEGIN_SRC emacs-lisp
-;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-    :defer nil
-  :config (global-aggressive-indent-mode t))
-
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-#+END_SRC
-
-This mode requires my Lisp forms to be well-balanced; e.g., having a missing
-parenthesis does not indent. For instance, I have a form ~F~ and I write ~(when F~
-but have not yet enclosed the final parens, I still want nice indentation. So...
-
-*** TODO  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]] :Disabled:Breaks_C_c_C_v_C_t:
-:PROPERTIES:
-:CUSTOM_ID: https-github-com-jiahaowork-el-fly-indent-mode-el-Indent-Emacs-Lisp-on-the-fly
-:END:
-
-#+begin_src emacs-lisp :tangle no
-;; This minor mode toggles on along with elisp-mode and indents on the fly when
-;; you edit the code. No special key strokes needed.
-;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
-(use-package el-fly-indent-mode
-    :defer nil
-  :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
-#+end_src
-** COMMENT Being Generous with Whitespace
-:PROPERTIES:
-:CUSTOM_ID: Being-Generous-with-Whitespace
-:END:
-The following minor mode automatically adds spacing around operators.
-#+begin_src emacs-lisp
-(use-package electric-operator
-  :defer nil
-  :hook (c-mode . electric-operator-mode))
-#+end_src
-
-I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Also,
-languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
-an identifier, not an expression! ⟩
-
-** Coding with a Fruit Salad: Semantic Highlighting
-:PROPERTIES:
-:CUSTOM_ID: Coding-with-a-Fruit-Salad-Semantic-Highlighting
-:END:
-
-What should be highlighted when we write code? Static keywords with fixed uses,
-or dynamic user-defined names?
-
-+ /Syntax/ highlighting ⇨ Specific words are highlighted in strong colours so that
-  the /structure/ can be easily gleaned.
-  - Generally this only includes a language's keywords, such as ~if, loop, begin,
-    end, cond~.
-  - User defined names generally share one colour; usually black.
-  - Hence, an ~if~ block may be seen as one coloured keyword followed by
-    a blob of black text.
-
-  /Obvious keywords are highlighted while the rest remains in black!/
-
-+ /Semantic/ highlighting ⇨ Identifiers obtain unique colouring.
-  - This makes it much easier to visually spot dependencies with a quick glance.
-    + One can *see* how data flows through a function.
-  - In dynamic languages, this is a visual form of typing: Different colours are
-    for different names.
-    + Especially helpful for (library) names that are almost the same.
-    + This can be accomplished anywhere in Emacs by pressing ~M-s h .~ on
-      a selected phrase.
-
-For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifiers Mode]] gives unique highlighting to identifiers.
-- It comes with support for a bunch of languages, and one can add support for others.
-- It picks colours adaptively to fit the theme; one uses ~M-x color-identifiers:regenerate-colors~ after a theme change.
+Files in 3ʳᵈ-party directories should be read-only whenever I open them, when
+I'm jumping to definitions (with ~M-.~).
 
 #+begin_src emacs-lisp
-(use-package color-identifiers-mode
+;; Usage: Press “M-”. “use-package” below and you can accidentally alter the source code!
+;; But in this case you likely just wanted to see the 3ʳᵈ-party definition, not alter it.
+;; As such, with this advice, the source will not be alterable (unless you toggle read-only mode).
+(advice-add #'xref-find-definitions :after
+            (lambda (&rest _)
+              (when (--map (s-ends-with? it (f-parent buffer-file-name))
+                           '("lisp/emacs-lisp" "/lisp" ".emacs.d/elpa/"))
+                (read-only-mode))))
+#+end_src
+** Comments
+*** Commenting
+:PROPERTIES:
+:CUSTOM_ID: Commenting
+:END:
 
-  :config (global-color-identifiers-mode))
+Let's get some nifty [[https://github.com/remyferre/comment-dwim-2][commenting]] features ---the link has nice usage gifs.
++ [[kbd:][M-;]]
+  repeatedly does (1) comments current line, (2) inserts a comment at the end
+  of the current line, and (3) deletes an existing end-of-line comment.
 
-;; Sometimes just invoke: M-x color-identifiers:refresh
-#+END_SRC
+   [[kbd:][C-u_M-;]] indents the current enf-of-line comment with any above it.
 
-When writing a new name, after about ~5 seconds it obtains a colour which is then
-propagated immediately to any new occurrences. This timeout before recolouring
-is to avoid any lag from multithreading and can be changed by altering the following
-line (#64) in the source file, changing the ~5~ to a smaller number.
-#+BEGIN_SRC emacs-lisp :tangle no
-(run-with-idle-timer 5 t 'color-identifiers:refresh)
-#+END_SRC
+   For use with Org-mode, it's best to use doc:org-edit-src-code ---which I've
+   bound to [[kbd:][⌘ e]].
+   #+begin_src emacs-lisp
+(use-package comment-dwim-2
+  :bind ("M-;" . comment-dwim-2))
 
-Here are further reads:
-  - [[https://medium.com/@evnbr/coding-in-color-3a6db2743a1e][Coding in color: How to make syntax highlighting more useful]] ---an excellent, terse, read
-  - [[https://zwabel.wordpress.com/2009/01/08/c-ide-evolution-from-syntax-highlighting-to-semantic-highlighting/][C++ IDE Evolution: From Syntax Highlighting to Semantic Highlighting]]
-    + Names with a similar prefix share a colour, and class-local items share a colour.
-  - [[https://wordsandbuttons.online/lexical_differential_highlighting_instead_of_syntax_highlighting.html][Lexical differential highlighting instead of syntax highlighting]]
-    + /Ideally, the smaller the lexical difference, the greater the color difference should be./
-  - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
-  - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
+ ;; Not ideal: M-; comments a parent Org heading and not the current line.
+ ;; (define-key org-mode-map (kbd "M-;") 'org-comment-dwim-2)
+   #+end_src
+
+*** Emphasised Comments: Useful for warnings
+:PROPERTIES:
+:CUSTOM_ID: Emphasised-Comments
+:END:
+
+#+begin_src emacs-lisp
+;; In VSCode, with the “Better Comments” extension, comments starting with a “bang” are made to stand out, via bold red.
+;; Let's do the same thing in Emacs.
+;; I did not look around, there might be a package/option for this 🤷
+(add-hook 'prog-mode-hook
+          (defun emphasize-comments-starting-with-! ()
+            (highlight-lines-matching-regexp ".*\\*.*!.*" 'hi-red-b)
+            (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)
+            (highlight-lines-matching-regexp ";;!.*" 'hi-red-b))) ;;! Look it works (｡◕‿◕｡)
+
+#+end_src
+
+*** Comment-boxes up to the fill-column ---or banner instead?
+:PROPERTIES:
+:CUSTOM_ID: Comment-boxes-up-to-the-fill-column
+:END:
+
+GIF: https://endlessparentheses.com/images/comment-box.gif
+
+#+begin_src emacs-lisp
+(defun my/comment-box (b e)
+  "Draw a box comment around the region but arrange for the region
+to extend to at least the fill column. Place the point after the
+comment box.
+
+Source: http://irreal.org/blog/?p=374
+
+To do fancy stuff like removing boxes, centering them, etc
+see https://github.com/lewang/rebox2/blob/master/rebox2.el"
+  (interactive "r")
+  (let ((e (copy-marker e t)))
+    (goto-char b)
+    (end-of-line)
+    (insert-char ?  (- fill-column (current-column)))
+    (comment-box b e 1)
+    (goto-char e)
+    (set-marker e nil)))
+#+end_src
+
+A comment box sometimes increases the size of a file more than I'd like, or more than others on my dev team would like.
+As such, let's try [[https://github.com/WJCFerguson/banner-comment][banner comments]]:
+- GIF: https://github.com/WJCFerguson/banner-comment/blob/35d3315683d3f97605207691b77e9f447af18fe2/demo.png
+#+begin_src emacs-lisp
+(use-package banner-comment   :defer nil)
+#+end_src
+
+Pretty slick!
 
 ** Text Folding ---Selectively displaying portions of a program
 :PROPERTIES:
@@ -6550,7 +7066,7 @@ to a programming language's syntactic constructions.
 #+end_src
 #+end_box
 
-*** TODO Actual Setup                                                :ignore:
+*** TODO Actual Setup                                               :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Actual-Setup
 :END:
@@ -6797,7 +7313,7 @@ I found using yafolding-mode to be way too slow.
   (global-set-key (kbd "s-f") 'yafolding-hydra/body)
 #+end_src
 #+end_details
-*** E2E Test                                                         :ignore:
+*** E2E Test                                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: E2E-Test
 :END:
@@ -6829,329 +7345,83 @@ I found using yafolding-mode to be way too slow.
 #+end_src
 #+end_details
 
-** Comment-boxes up to the fill-column ---or banner instead?
+** Aggressive Indentation
 :PROPERTIES:
-:CUSTOM_ID: Comment-boxes-up-to-the-fill-column
+:CUSTOM_ID: Aggressive-Indentation
 :END:
 
-GIF: https://endlessparentheses.com/images/comment-box.gif
+With a single space or tab, my code should always remain indented.
 
-#+begin_src emacs-lisp
-(defun my/comment-box (b e)
-  "Draw a box comment around the region but arrange for the region
-to extend to at least the fill column. Place the point after the
-comment box.
-
-Source: http://irreal.org/blog/?p=374
-
-To do fancy stuff like removing boxes, centering them, etc
-see https://github.com/lewang/rebox2/blob/master/rebox2.el"
-  (interactive "r")
-  (let ((e (copy-marker e t)))
-    (goto-char b)
-    (end-of-line)
-    (insert-char ?  (- fill-column (current-column)))
-    (comment-box b e 1)
-    (goto-char e)
-    (set-marker e nil)))
-#+end_src
-
-A comment box sometimes increases the size of a file more than I'd like, or more than others on my dev team would like.
-As such, let's try [[https://github.com/WJCFerguson/banner-comment][banner comments]]:
-- GIF: https://github.com/WJCFerguson/banner-comment/blob/35d3315683d3f97605207691b77e9f447af18fe2/demo.png
-#+begin_src emacs-lisp
-(use-package banner-comment   :defer nil)
-#+end_src
-
-Pretty slick!
-
-** TODO ⌘-e: Edit Everything in a separate buffer
-:PROPERTIES:
-:CUSTOM_ID: e-Edit-Everything-in-a-separate-buffer
-:END:
-
-Edit comment/string/docstring/code block in separate buffer with your favourite
-mode.
-
-+ ⌘-e to toggle “e”diting of thing at point.
-+ ⌘-e will try to edit thing at point, or selection, if possible; otherwise it
-  will exit edit session.
-  - 🔥 Avoid escape nightmares by editing strings in a separate buffer.
-  - On a string, press ⌘-e and a new buffer pops up with unescaped content,
-    letting you edit raw strings directly.  It then takes care of automatically
-    escaping strings for you when you press ⌘-e, or ~C-c C-c~ ---or discard your
-    changes with ~C-c C-k~.
-+ ⌘-e can be used within edit session to create new edit sessions, if possible; then ⌘-e will “pop-off-the-stack” as expected.
-  - (I already use ⌘-e to toggle editing Org src blocks, and when editing a block ⌘-e will try to do a recursive edit if possible, or exit the edit session.)
-  - (The separedit package also let's me press ⌘-e to edit variable values when describing them, and to edit text when in the minibuffer.)
-
-From [[https://github.com/twlz0ne/separedit.el][source]]:
-#+begin_example org
-+----------+         Edit           +-----------+         Edit           +-----------+
-|          | ---------------------> |   edit    | ---------------------> |   edit    | ...
-|          |  point-at-comment?     |   buffer  |  point-at-comment?     |   buffer  |
-|  source  |  point-at-string?      |           |  point-at-string?      |           | ...
-|  buffer  |  point-at-codeblock?   | (markdown |  point-at-codeblock?   | (markdown | ...
-|          |  point-at-...?         |  orgmode  |  point-at-...?         |  orgmode  |
-|          | <--------------------- |   ...)    | <--------------------- |   ...)    | ...
-+----------+     Commit changes     +-----------+     Commit changes     +-----------+
-#+end_example
-
-[In-general, we can invoke [[https://github.com/Fanael/edit-indirect/blob/e3d86416bcf8ddca951d7d112e57ad30c5f9a081/edit-indirect.el#L124][M-x edit-indirect-region]] to edit any selected piece
-of text in its own buffer, then ~C-c C-c~ (or ~⌘-e~ with my setup) to commit the
-edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected region
-😉]
-
-#+begin_src emacs-lisp
-(use-package separedit   :defer nil)
-;;
-;; # Example Usage
-;;
-;; 1. Press ⌘-e on this line, to edit this entire comment.
-;; 2. Press ⌘-e to exit the edit session.
-;;
-;; Since my ⌘-e is context sensitive, to determine whether to continue editing or
-;; exit; you can explicitly request an edit with C-c ' and an exit with C-c C-c.
-;;
-;; ```
-;; ;; 3. Press ⌘-e on this line, to edit this source block!
-;; ;; 4. Press ⌘-e on this line, to edit this inner-most comment!
-;; ;; 5. At start of next line, press “⌘-r ⌘-e” to edit just the source block
-;; ;;
-;; (cl-defun index (&rest args)
-;;   "6. Press ⌘-e to edit this string, \"7. and again in these quotes\""
-;;   "<p>8. Press ⌘-e to edit this <strong> HTML </strong> block, in Web-mode </p>")
-;;
-;; ;; 9. Press C-u ⌘-e to guess the language of the next string (Rust); then ⌘-r C-c C-r to quickly run the code.
-;; "fn main() { println!(\"{}\", \"hello!\"); }"
-;;
-;; ;; 10. Select & press “C-u ⌘-e” on the following, to edit it in whatever mode you want.
-;; ;; select * from table -- Or just press ⌘-e and have the mode detected.
-;;
-;; ```
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Setup to make the above ⌘-e behaviour happen.
-
-;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
-(--map (bind-key "s-e" #'separedit it)
-       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
-
-#+end_src
-
-#+begin_src emacs-lisp
-;; TODO:Merge these changes upstream
-
-;; I'm focusing on a specific region to edit, so let's not be distracted by anything else.
-;; This makes the “editing stack” feel like a stack, with ⌘-e pushing new editing session buffers,
-;; and C-c C-c, or ⌘-e on non-editable lines, to pop-off the stack.
-;; (advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
-;;
-;; NOTE: This actually breaks the stack nature of popping with ⌘-e; we need to actually save the stack via some list of buffers than push/pop buffers on that variable.
-
-;; I don't want to be bothered for what mode I'm in, when a region is selected using current major mode.
-;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode for my current selected text.
-(advice-add #'separedit--select-mode :before-until
-            (lambda (&rest _)
-              (when (and (not current-prefix-arg) (region-active-p)) (pp-to-string major-mode))))
-
-;; Also: When on a string ∷
-(advice-add #'separedit--select-mode :before-until
-            (lambda (&rest _)
-              "When on a string ∷
-+ ⌘-e ⇒ Edit string at point
-+ C-u ⌘-e ⇒ Auto-detect my string's major mode
-+ C-u C-u ⌘-e ⇒ Let me select a major mode"
-              (-let [str? (ignore-errors (thing-at-point 'string))]
-                (case (car current-prefix-arg)
-                  (4 (when str? (pp-to-string (my/detect-prog-mode str?))))
-                  (_ nil)))))
-
-;; NOTE: By default, separedit provides colouring for 'strings', "strings", and `strings'
-;; This doesn't look very good when I have a single quote within double quotes:
-;; In an Emacs Lisp buffer, editing the string "Bob's Work" gives unexpected highlighting.
-;; ```
-;; (advice-add #'separedit :after
-;;             (lambda (&rest _)
-;;               (when (s-ends-with? "string-mode" (pp-to-string major-mode))
-;;                 (text-mode))))
-;; ```
-#+end_src
-
-#+begin_src emacs-lisp
-;; In the indirect buffer, make ⌘-e finish editing.
-(use-package edit-indirect
-  :config (bind-key "s-e"
-                    (lambda ()
-                      (interactive)
-                      (or (ignore-errors (call-interactively #'separedit))
-                          (call-interactively #'edit-indirect-commit)))
-                    #'edit-indirect-mode-map))
-
-;; I also have “s-e” bound to `org-edit-src-exit'.
-(advice-add 'org-edit-src-exit :before-until
-            (lambda (&rest r)
-              (when (ignore-errors (separedit)) t)))
-#+end_src
-
-#+begin_src emacs-lisp
-;; → ⌘-e on an Org paragraph pops-up an edit session in Org mode.
-;; → ⌘-e on a selection in Org mode pops-up an edit session in Org mode.
-;; TODO: Consider forming an alist for special blocks to refer to their preferred
-;; edit mode, defaulting to Org-mode? Perhaps something to consider /after/
-;; addressing the bug below.
-;; (advice-unadvice 'org-edit-special) MA: TODO: FIXME: Delete this?
-(advice-add 'org-edit-special :around
-            (lambda (orginal-function &rest r)
-              (cond
-               ((region-active-p) (call-interactively #'edit-indirect-region) (org-mode))
-               ((equal 'paragraph (car (org-element-at-point)))
-                (mark-paragraph) (call-interactively #'edit-indirect-region) (org-mode))
-               (t (or (ignore-errors (apply orginal-function r))
-                      ;; We try to edit a special block when orginal-function fails.
-                      ;; This way src blocks are not confused with the more generic idea of special blocks.
-                      (when
-                          (my/org-in-any-block-p)
-                        ;; Note using org-element-at-point doesn't work well with special blocks when you're somewhere within the block.
-                        ;; It only works correctly when you're on the boundary of the special block; which is not ideal.
-                        ;; This is why I'm not using: (org-element-property :begin elem).
-                        (-let [(start . end) (my/org-in-any-block-p)]
-                          (set-mark-command start)
-                          (goto-char end) (previous-line 2) (end-of-line) ;; FIXME: Still shows #+end_XXX for some reason.
-                          (call-interactively #'edit-indirect-region) (org-mode))))))))
-#+end_src
-
-#+begin_src emacs-lisp
-;; where...
-(defun my/org-in-any-block-p ()
-  "Return non-nil if the point is in any Org block.
-
-The Org block can be *any*: src, example, verse, etc., even any
-Org Special block.
-
-This function is heavily adapted from `org-between-regexps-p'.
-
-Src: https://scripter.co/splitting-an-org-block-into-two/"
-  (save-match-data
-    (let ((pos (point))
-          (case-fold-search t)
-          (block-begin-re "^[[:blank:]]*#\\+begin_\\(?1:.+?\\)\\(?: .*\\)*$")
-          (limit-up (save-excursion (outline-previous-heading)))
-          (limit-down (save-excursion (outline-next-heading)))
-          beg end)
-      (save-excursion
-        ;; Point is on a block when on BLOCK-BEGIN-RE or if
-        ;; BLOCK-BEGIN-RE can be found before it...
-        (and (or (org-in-regexp block-begin-re)
-                 (re-search-backward block-begin-re limit-up :noerror))
-             (setq beg (match-beginning 0))
-             ;; ... and BLOCK-END-RE after it...
-             (let ((block-end-re (concat "^[[:blank:]]*#\\+end_"
-                                         (match-string-no-properties 1)
-                                         "\\( .*\\)*$")))
-               (goto-char (match-end 0))
-               (re-search-forward block-end-re limit-down :noerror))
-             (> (setq end (match-end 0)) pos)
-             ;; ... without another BLOCK-BEGIN-RE in-between.
-             (goto-char (match-beginning 0))
-             (not (re-search-backward block-begin-re (1+ beg) :noerror))
-             ;; Return value.
-             (cons beg end))))))
-#+end_src
-
-I'd like to [[https://github.com/andreasjansson/language-detection.el][guess the language]] I'm in, when working with strings.
-#+begin_src emacs-lisp
-(use-package language-detection   :defer nil)
-;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
-;; Also, (language-detection-string "select * from t") ;; ⇒ sql
-
-;; TODO: Push this upstream; https://github.com/andreasjansson/language-detection.el/issues/1
-(cl-defun my/detect-prog-mode (&optional string)
-  "Guess programming mode of the current buffer, or STRING if it is provided.
-
-When called interactively, it enables the mode;
-from Lisp it just returns the name of the associated mode.
-
-    ;; Example Lisp usage
-    (call-interactively #'my/detect-prog-mode)
-
-`language-detection-buffer' returns a string which is not always the name of the
-associated major mode; that's what we aim to do here."
-  (interactive)
-
-  (defvar my/detect-prog-mode/special-names
-    '((c           . c-mode)
-      (cpp         . c++-mode)
-      (emacslisp   . emacs-lisp-mode)
-      (html        . web-mode) ;; I intentionally want to use this alternative.
-      (matlab      . octave-mode)
-      (shell       . shell-script-mode)
-      (visualbasic . visual-basic-mode)
-      (xml         . sgml-mode))
-    "Names in this alist map a language to its mode; all other languages 𝒳 have mode ‘𝒳-mode’ afaik.")
-
-  (let* ((lang (if string (language-detection-string string) (language-detection-buffer)))
-         (mode (or (cdr (assoc lang my/detect-prog-mode/special-names))
-                   (intern (format "%s-mode" lang)))))
-    (if (called-interactively-p 'any)
-        (progn (call-interactively mode) (message "%s enabled!" mode))
-      mode)))
-#+end_src
-
-+ ⌘-e to edit an Org table cell; see [[https://orgmode.org/manual/Built_002din-Table-Editor.html][here]] for built-in table editing commands.
-#+begin_src emacs-lisp
-(advice-add #'org-edit-special :before-until
-            (lambda (&rest r)
-              (when (equal 'table-row (car (org-element-at-point)))
-                (call-interactively #'org-table-edit-field))))
-#+end_src
-** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
-:PROPERTIES:
-:CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
-:END:
-
-In =emacs-lisp-mode= we can enable =eldoc-mode= ---“Elisp Live Documentation”--- to
-display information about a function or a variable in the echo area. Likewise
-for Haskell.
+[[https://github.com/Malabarba/aggressive-indent-mode][aggressive-indent-mode]] is a minor mode that keeps your code always indented. It
+reindents after every change, making it more reliable than electric-indent-mode.
 
 #+BEGIN_SRC emacs-lisp
-(use-package eldoc
-  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
-        (lisp-interaction-mode . turn-on-eldoc-mode)
-        (haskell-mode . turn-on-haskell-doc-mode)
-        (haskell-mode . turn-on-haskell-indent))
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent :config (global-aggressive-indent-mode t))
 
-;; Slightly shorten eldoc display delay.
-(setq eldoc-idle-delay 0.4) ;; Default 0.5
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
 #+END_SRC
 
-The less casual Haskeller would likely want to use [[https://haskell-lang.org/intero][intero]] to obtain
-more support; e.g., obtain suggestions from GHC about redundant imports
-or type signatures.
+This mode requires my Lisp forms to be well-balanced; e.g., having a missing
+parenthesis does not indent. For instance, I have a form ~F~ and I write ~(when F~
+but have not yet enclosed the final parens, I still want nice indentation. So...
 
-** An “auto read only” detection mechanism ---when jumping to definitions :Disabled:
+***  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]] :Disabled:Breaks_C_c_C_v_C_t:
 :PROPERTIES:
-:CUSTOM_ID: An-auto-read-only-detection-mechanism-when-jumping-to-definitions
+:CUSTOM_ID: https-github-com-jiahaowork-el-fly-indent-mode-el-Indent-Emacs-Lisp-on-the-fly
 :header-args: :tangle no
 :END:
 
-Files in 3ʳᵈ-party directories should be read-only whenever I open them, when
-I'm jumping to definitions (with ~M-.~).
-
-#+begin_src emacs-lisp
-;; Usage: Press “M-”. “use-package” below and you can accidentally alter the source code!
-;; But in this case you likely just wanted to see the 3ʳᵈ-party definition, not alter it.
-;; As such, with this advice, the source will not be alterable (unless you toggle read-only mode).
-(advice-add #'xref-find-definitions :after
-            (lambda (&rest _)
-              (when (--map (s-ends-with? it (f-parent buffer-file-name))
-                           '("lisp/emacs-lisp" "/lisp" ".emacs.d/elpa/"))
-                (read-only-mode))))
+#+begin_src emacs-lisp :tangle no
+;; This minor mode toggles on along with elisp-mode and indents on the fly when
+;; you edit the code. No special key strokes needed.
+;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
+(use-package el-fly-indent-mode
+    :defer nil
+  :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
 #+end_src
-** TODO COMMENT Auto-format on Save :Reenabled:Should_be_Disabled:Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
+*** Indentation Guide
+:PROPERTIES:
+:CUSTOM_ID: Indentation-Guide
+:END:
+
+The following is also “OK” in Org-mode ;-)
+#+begin_src emacs-lisp
+;; Add a visual indent guide
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-character ?|)
+  (highlight-indent-guides-responsive 'stack))
+#+end_src
+*** Being Generous with Whitespace                                :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Being-Generous-with-Whitespace
+:END:
+
+| Disabled: I'm not actively writing C-like code in Emacs. |
+
+The following minor mode automatically adds spacing around operators.
+#+begin_src emacs-lisp :tangle no
+(use-package electric-operator
+  :hook (c-mode . electric-operator-mode))
+#+end_src
+
+I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Also,
+languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
+an identifier, not an expression! ⟩
+
+*** Auto-format on Save                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Auto-format-on-Save
+:header-args: :tangle no
 :END:
+
+| Disabled: I mainly code in ELisp and so don't require this utility. |
+# ! :Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
 
 [[https://github.com/lassik/emacs-format-all-the-code/tree/eb2a7fa6da15d23b57921218a36ac67d523e81f1][Auto-format source code in many languages with one command]]
 
@@ -7217,20 +7487,133 @@ In particular, [[https://emacs-lsp.github.io/lsp-mode/page/lsp-eslint/][LSP ESLi
 better to use ~===~ instead of ~==~ and literals should be on the right side of the equality.
 We can use ~M-x lsp-execute-code-action~ to get a list of actions that can be performed to fix this /quality/ problem.
 
-** TODO Emphasised Comments
+*** Which function are we writing?
 :PROPERTIES:
-:CUSTOM_ID: Emphasised-Comments
+:CUSTOM_ID: Which-function-are-we-writing
+:END:
+In the modeline, show the name of the function we're currently writing.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'prog-mode-hook #'which-function-mode)
+(add-hook 'org-mode-hook  #'which-function-mode)
+#+END_SRC
+In Org-mode, this places the current heading in the modeline.
+
+In Lisp mode, ensure we always have matching parens.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'emacs-lisp-mode-hook #'check-parens)
+#+END_SRC
+
+** Semantic and Syntactic Highlighting
+*** Coding with a Fruit Salad: Semantic Highlighting
+:PROPERTIES:
+:CUSTOM_ID: Coding-with-a-Fruit-Salad-Semantic-Highlighting
+:END:
+
+What should be highlighted when we write code? Static keywords with fixed uses,
+or dynamic user-defined names?
+
++ /Syntax/ highlighting ⇨ Specific words are highlighted in strong colours so that
+  the /structure/ can be easily gleaned.
+  - Generally this only includes a language's keywords, such as ~if, loop, begin,
+    end, cond~.
+  - User defined names generally share one colour; usually black.
+  - Hence, an ~if~ block may be seen as one coloured keyword followed by
+    a blob of black text.
+
+  /Obvious keywords are highlighted while the rest remains in black!/
+
++ /Semantic/ highlighting ⇨ Identifiers obtain unique colouring.
+  - This makes it much easier to visually spot dependencies with a quick glance.
+    + One can *see* how data flows through a function.
+  - In dynamic languages, this is a visual form of typing: Different colours are
+    for different names.
+    + Especially helpful for (library) names that are almost the same.
+    + This can be accomplished anywhere in Emacs by pressing ~M-s h .~ on
+      a selected phrase.
+
+For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifiers Mode]] gives unique highlighting to identifiers.
+- It comes with support for a bunch of languages, and one can add support for others.
+- It picks colours adaptively to fit the theme; one uses ~M-x color-identifiers:regenerate-colors~ after a theme change.
+
+#+begin_src emacs-lisp
+(use-package color-identifiers-mode
+
+  :config (global-color-identifiers-mode))
+
+;; Sometimes just invoke: M-x color-identifiers:refresh
+#+END_SRC
+
+When writing a new name, after about ~5 seconds it obtains a colour which is then
+propagated immediately to any new occurrences. This timeout before recolouring
+is to avoid any lag from multithreading and can be changed by altering the following
+line (#64) in the source file, changing the ~5~ to a smaller number.
+#+BEGIN_SRC emacs-lisp :tangle no
+(run-with-idle-timer 5 t 'color-identifiers:refresh)
+#+END_SRC
+
+Here are further reads:
+  - [[https://medium.com/@evnbr/coding-in-color-3a6db2743a1e][Coding in color: How to make syntax highlighting more useful]] ---an excellent, terse, read
+  - [[https://zwabel.wordpress.com/2009/01/08/c-ide-evolution-from-syntax-highlighting-to-semantic-highlighting/][C++ IDE Evolution: From Syntax Highlighting to Semantic Highlighting]]
+    + Names with a similar prefix share a colour, and class-local items share a colour.
+  - [[https://wordsandbuttons.online/lexical_differential_highlighting_instead_of_syntax_highlighting.html][Lexical differential highlighting instead of syntax highlighting]]
+    + /Ideally, the smaller the lexical difference, the greater the color difference should be./
+  - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
+  - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
+
+*** Highlight Quoted Symbols
+:PROPERTIES:
+:CUSTOM_ID: highlight-quoted-symbols
 :END:
 
 #+begin_src emacs-lisp
-;; In VSCode, with the “Better Comments” extension, comments starting with a “bang” are made to stand out, via bold red.
-;; Let's do the same thing in Emacs.
-;;I did not look around, there might be a package/option for this 🤷
-(add-hook 'prog-mode-hook (lambda ()
-                            (highlight-lines-matching-regexp ".*\\*.*!.*" 'hi-red-b)
-                            (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)))
+(use-package highlight-quoted
+  :defer nil
+  :config (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
 
+;; If everything worked fine, then “ 'b ” below should be coloured nicely in Emacs Lisp mode.
+(when nil
+  (-let [x 'somevar]
+    (list x 'b "c" :e)))
 #+end_src
+
+*** Highlighting Numbers and Escape Characters
+:PROPERTIES:
+:CUSTOM_ID: Syntax-highlighting-numbers-and-escape-characters
+:END:
+Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
+
+#+begin_src emacs-lisp
+(use-package highlight-numbers
+  :hook (prog-mode separedit-double-quote-string-mode)) ;; The latter is for when I do ⌘-e on a quoted string to edit it.
+
+(use-package highlight-escape-sequences
+  :hook ((prog-mode . hes-mode)
+         (separedit-double-quote-string-mode . hes-mode)) ;; Wont work since this mode has no font-lock-builtin-face
+  :config
+  ;; Colour the escapes as if they were builtin keywords.
+  (put 'hes-escape-backslash-face 'face-alias 'font-lock-builtin-face)
+  (put 'hes-escape-sequence-face 'face-alias 'font-lock-builtin-face))
+
+;; If the above two worked fine, then you should see \n and 3 highlighted below
+(when nil "Look: 1 and \\ and \n 2" (setq three 3))
+#+end_src
+
+*** Highlight /defined/ Lisp symbols
+:PROPERTIES:
+:CUSTOM_ID: Highlight-defined-Lisp-symbols
+:END:
+
+Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes it
+highlight all defined names ---as long as we're in Lisp mode, whence in org-src
+blocks we use ~C-c '~.
+#+BEGIN_SRC emacs-lisp
+;; Emacs Lisp specific
+(use-package highlight-defined :hook emacs-lisp-mode)
+#+END_SRC
+
+Super helpful in making my Emacs configuration: If a name is not highlighted,
+then I've misspelled it or it doesn't exist! :smile:
+
 
 * Prose
 :PROPERTIES:
@@ -8637,398 +9020,10 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 (use-package copy-as-format   :defer nil)
 #+end_src
 
-* TODO COMMENT [0/44] Lost Souls
+* TODO COMMENT [0/43] Lost Souls
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
-** TODO RDD
-
-*** get the pkg
-#+begin_src emacs-lisp :tangle init.el
-(use-package repl-driven-development)
-(setq repl-driven-development-echo-duration 10)
-#+end_src
-
-*** terminal
-#+begin_src emacs-lisp :tangle init.el
-;; Sometimes I see a bunch of shell incantations in a README or something and I'd like to execute them right there and then,
-;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
-;; shell commands from anywhere.
-;; (repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
-(repl-driven-development [C-x C-t] terminal)
-#+end_src
-
-*** jshell
-#+begin_src emacs-lisp :tangle init.el
-;; Set “C­x C­j” to evaluate Java code in a background REPL.
-(repl-driven-development
- [C-x C-j]
- ;; enable assertions, and add everything installed, via `mvn', in scope.
- (format "jshell --class-path %s --enable-preview -R -ea --feedback silent"
-         (concat ".:" (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f 2>/dev/null | tr '\n' ':'")))
- :prompt "jshell>"
- :init "\n /set mode EmacsJavaMode normal -command
-        \n /set format EmacsJavaMode display \"{pre}added import {name}{post}\" import-added
-        \n /set format EmacsJavaMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
-        \n /set format EmacsJavaMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
-        \n /set truncation EmacsJavaMode 40000
-        \n /set feedback EmacsJavaMode
-        \n System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
-;; TODO [Truncation; Low] https://github.com/xiongtx/eros/blob/master/eros.el#L202
-#+end_src
-*** mvn
-#+begin_src emacs-lisp :tangle init.el
-(defun mvn (groupId artifactId)
-  "Quickly install a library from Maven Central."
-  (async-shell-command (format "mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -Dartifact=%s:%s:LATEST:jar:sources" groupId  artifactId)))
-
-(when nil
-  ⨾⨾ Example use of `mvn`
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  ;; First confirm C-x C-j works as intended
-  IntStream.range(0, 15).mapToObj(i -> i % 15 == 0 ? "FizzBuzz" : i % 3 == 0 ? "Fizz" : i % 5 == 0 ? "Buzz" : String.valueOf(i)).toList()
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  (mvn "org.antlr" "antlr4") ;; C-x C-e
-  ;; Now re-start the Java C-x C-j repl via a C-x C-e (lame! not ergonomic!)
-  ;; Now check that you have access to antrl in your repl by importing it and looking at one of its classes:
-  ;; ⦃ jshell --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar ⦄
-  import org.antlr.v4.runtime.*;
-  CommonTokenStream.class
-  ;; NOTE: This is the runtime, to use the actual tool:
-  java -jar /Users/musa/.m2/repository/org/antlr/antlr4/4.13.0/antlr4-4.13.0-complete.jar
-
-  ;; Alternatively,
-  ;; $ jshell
-  ;; > var x = 5
-  ;; > import org.antlr.v4.runtime.*;  // CRASHES since antlr is not in scope
-  ;; > /reset --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar
-  ;; > import org.antlr.v4.runtime.*;  // WORKS, yay
-  ;; > x // CRASHES, not in scope
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  import org.apache.commons.lang3.StringUtils;
-  StringUtils.class;
-  /imports  // JShell command to list all imports, it now contains apache!
-
-  // Guava is the Google core libraries for Java
-  import com.google.common.collect.ImmutableMap;
-
-  ImmutableMap.of(1, "A", 2, "B") // ⇒ {1=A, 2=B}
-
-  ;; (mvn "com.google.code.gson" "gson")
-  // Then C-x C-e to update the repl definition of C-x C-j to include the updated gson library.
-  import com.google.gson.*;
-  String json = new Gson().toJson(Map.of("me", List.of(1, 2,3), "you", Map.of("Love", "Lisp", "Hate", "Verbosity")))
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  ;; TestNG is a testing framework; supporting tests configured by annotations, data-driven testing, parametric tests, etc.
-  (mvn "org.testng" "testng")
-  import org.testng.*;
-  /imports  // Now can see org.testng at the end of the list
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  ;; TODO[Low]: For working with Lombok annotations, use the jshell `/reset --class-path` command to include the lombok compiled file into
-  ;; the current Jshell session.
-  ;;
-  ;; See: https://stackoverflow.com/questions/74084364/how-to-use-lombok-in-jshell
-  ;;
-  ;; (mvn "org.projectlombok" "lombok")
-  ;; import lombok.*;
-  ;; @lombok.Data class Test { private String name; }
-  ;; new Test().equals(new Test())
-  )
-#+end_src
-
-*** Adding support for “//!use” & “//!omit” top level repl commands
-#+begin_src emacs-lisp
-;; Adding support for “//!use” & “//!omit” top level repl commands
-(setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
-(advice-add 'repl/jshell
-            :around (lambda (repl &rest args)
-                      (if (equal nil current-prefix-arg)
-                          ;; No prefix supplied
-                          (progn
-                            (setq rdd---current-input (s-replace-regexp "\n" "" (s-trim-left
-                                                                                 (if (region-active-p) (buffer-substring-no-properties  (region-beginning) (region-end))
-                                                                                   (substring-no-properties (thing-at-point 'line))))))
-                            (if (s-starts-with? "//!use" rdd---current-input)
-                                (-let [jar (s-trim (s-chop-prefix "//!use" rdd---current-input))]
-                                  (repl/top-level//!use jar))
-                              (if (s-starts-with? "//!omit" rdd---current-input)
-                                  (-let [jar (s-trim (s-chop-prefix "//!omit" rdd---current-input))]
-                                    (repl/top-level//!omit jar))
-                                ;; otherwise business as usual
-                                (apply repl args))))
-                        (pcase current-prefix-arg
-                          (-1
-                           ;; reset classpath to default, then business as usual.
-                           (setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
-                           (apply repl args))
-                          (999
-                           (message-box "It worked"))
-                          ;; otherwise business as usual
-                          (t (apply repl args))))))
-
-;; remove all advice
-;; (-let [sym 'repl/jshell] (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
-
-(cl-defun repl/top-level//!omit (str)
-  (with-temp-buffer
-    (setq repl/jshell/classpath (s-replace-regexp (format ":[^:]*%s[^:]*:" str) ":" repl/jshell/classpath))
-    (insert "/env --class-path ")
-    (insert repl/jshell/classpath)
-    (repl/jshell (point-min) (point-max))))
-
-(cl-defun repl/top-level//!use (str)
-  "If the given jar cannot be added successful, the existing classpath remains untouched.
-
-Return to your default classpath by invoking the repl with the -1 prefix.
-
-Example usage:
-
-    //!use ~/path/to/compiled/java/classes
-    import com.x.y.z;
-
-Where directory hierarchy com/x/y/z denotes a Java package under the above //!use path.
-"
-  (with-temp-buffer
-    (setq repl/jshell/classpath (concat (s-trim str) ":" repl/jshell/classpath))
-    (insert "/env --class-path ")
-    (insert repl/jshell/classpath)
-    (repl/jshell (point-min) (point-max))))
-#+end_src
-
-*** Misc top level cmds
-
-TODO: Make repl load all company class files, that way I have them upon start up.
-OR: Provide a command `//!load ~/dir` which recursively loads/imports all java files? <---Probably this!
-
-*** COMMENT C-x C-e ∷ REPL-driven development for ELisp / NodeJS / Python / Etc !
-:PROPERTIES:
-:CUSTOM_ID: C-x-C-e-REPL-driven-development-for-NodeJS
-:END:
-
-| /Evaluate code and see the results inline ---A feedback loop that is faster than ever!/ |
-
-Within Emacs, kbd:C-x_C-e evaluates a Lisp expression /anywhere/; e.g.,
-at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
-# Likewise, evaluating a variable shows you its value: user-full-name.
-
-- We ran some code /without/ explicitly running an interpreter/repl/compiler!
-
-- This is known as “REPL driven development” (RDD):
-  There is a running REPL server for your language, implicitly in the
-  background, and your editor (say with ~C-x C-e~) will send it a line (or a
-  selected region) of code for evaluation; we then see the result as an
-  overlay in our current buffer.
-
-  + You /choose/ which code gets (re)evaluated.
-
-- A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
-
-**** ELisp
-:PROPERTIES:
-:CUSTOM_ID: ELisp
-:END:
-
-By default, Emacs Lisp's kbd:C-x_C-e shows results only in the minibuffer; near
-the bottom of the screen. Let's also have evaluation results displayed as inline
-overlays ---at the location that the user, us, is actually looking/working;
-rather than forcing their eyes to shift up&down when writing&evaluating.
-
-+ kbd:C-u_C-x_C-e inserts the evaluation result at point; kbd:C-u_0_C-x_C-e does
-  so /without truncating/ lengthy output.
-+ Read this [[https://karthinks.com/software/an-elisp-editing-tip/][Sweet & short blog/GIFs]] on practical uses of kbd:C-x_C-e when working with Lisp.
-
-#+begin_src emacs-lisp
-;; Evaluation Result OverlayS for Emacs Lisp
-(use-package eros
-    :defer nil
-  :init (eros-mode t))
-#+end_src
-
-# In particular, this gives us the Lisp function
-# `eros--eval-overlay', which evaluates its argument X
-# and produces an overlay of the result at position P.
-# E.g., (eros--eval-overlay "hola" (point-min))
-# Shows a momentary overlay at the first line.
-
-**** JavaScript
-:PROPERTIES:
-:CUSTOM_ID: JavaScript
-:END:
-
-Let's setup RDD for JavaScript ---by having a NodeJS repl server running in the background.
-
-- See [[https://github.com/anonimitoraf/skerrick][skerrick: REPL-driven development for Javascript]] for animated GIFs; it
-  works with modules as well.
-
-#+begin_src emacs-lisp
-(use-package skerrick
-    :defer nil
-  :init
-  ;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
-  (unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
-    (skerrick-install-or-upgrade-server-binary)))
-
-;; Should be run in a JS buffer; it is buffer specific.
-;; (skerrick-start-server)
-
-;; Now main function, entry point is:
-;; M-x skerrick-eval-region
-#+end_src
-
-Let's provide a quick keyboard shortcut. E.g., kbd:C-x_C-e evaluates ELisp, so let's mimic that for JS buffers:
-#+begin_src emacs-lisp
-(require 'js) ;; Defines js-mode-map
-
-;; Evaluate a region, if any is selected; otherwise evaluate the current line.
-(bind-key
- "C-x C-e"  (lambda ()
-              (interactive)
-              (if (use-region-p)
-                  (skerrick-eval-region)
-                (beginning-of-line)
-                (set-mark-command nil)
-                (end-of-line)
-                (skerrick-eval-region)
-                (pop-mark)))
- 'js-mode-map)
-#+end_src
-
-
-Trying something else instead of skerrick, until
-https://github.com/anonimitoraf/skerrick/issues/7 is resolved.
-
-In any JS file, I just press ~C-x C-e~ and the JS interpreter is brought up with the evaluation results shown:
-#+begin_src emacs-lisp
-(use-package js-comint   :defer nil)
-(define-key js-mode-map (kbd "C-x C-e") (lambda () (interactive) (call-interactively #'js-comint-repl) (other-window -1) (js-comint-send-last-sexp)))
-#+end_src
-
-For instance,
-#+begin_src js :tangle no
-// Start the server... then
-// On each line and press C-x C-e
-let a = "hello"
-let b = "world"
-(a + ' ' + b).toUpperCase()
-// The final line should show: HELLO WORLD
-#+end_src
-
-***** Preserving the context
-:PROPERTIES:
-:CUSTOM_ID: Preserving-the-context
-:END:
-
-When testing an application, you might notice a bug in a particular context
----i.e., a particular configuration in the app.
-
-1. The classic approach is to kill the app; i.e., stop the server that is, well,
-   serving the app.
-2. Solve the problem.
-3. Try to get back to the configuration, context, you were in beforehand and
-   check that the problem has been resolved.
-
-A better approach is to ignore the bookkeeping steps, 1&3, and just do step 2.
-For that, there are numerous packages:
-- [[https://github.com/mishoo/livenode/][livenode: Live-code your NodeJS applications]] ⨾⨾ [[https://vimeo.com/60636079][Video demo]] ~11min ⨾⨾ Last
-  updated 2013
-- [[https://github.com/skeeto/skewer-mode][skewer-mode: Live web development in Emacs]] ⨾⨾ [[https://www.youtube.com/watch?v=4tyTgyzUJqM&ab_channel=Skeeto][Silent video demo]] ~5min ⨾⨾ Last
-  updated 2020
-- [[https://github.com/swank-js/swank-js][swank-js: Swank backend for Node.JS and in-browser JavaScript]] ⨾⨾ Last updated
-  2015
-
-For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick/issues/8.
-
-**** Python, etc
-:PROPERTIES:
-:CUSTOM_ID: Python-etc
-:END:
-
-It /seems/ to be /super easy/ to add such a support for other languages, such as Python.
-See the final comment [[https://karthinks.com/software/an-elisp-editing-tip/][here]] for the tiny change required.
-
-*** COMMENT Quickly Run Code Snippets
-:PROPERTIES:
-:CUSTOM_ID: Quickly-Run-Code-Snippets
-:END:
-
-Sometimes we want to quickly run some code /without making a dedicated file/ or
-with a file but /without remembering the terminal incantation to do so/, enter
-~quickrun~. Anywhere, we can select a snippet of code and run TODO. doc.quickrun-region
-to execute that snippet after selecting the associated programming language, or
-TODO. doc.quickrun-replace-region if we want the results in-line. If our language of
-choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-defined-command][easily add support for it]].
-
-#+begin_src emacs-lisp
-;; In any programming buffer, “M-x quickrun” to execute that program.
-;; Super useful when wanting to quickly test things out, in a playground.
-;;
-;; E.g., Make a new file named “hello.py” containing “print "hi"”, then “M-x quickrun”.
-;;
-;; Enable “quickrun-autorun-mode” to run code after every save.
-(use-package quickrun
-  ;; ⇒ “C-c C-r” to see output, “q” to close output
-  ;; ⇒ “C-u C-c C-r” prompts for a language (Useful when testing snippets different from current programming mode)
-  ;; ⇒ In a non-programming buffer, “C-c C-r” runs selected region.
-  :defer nil
-  :config (bind-key* "C-c C-r"
-                     (lambda (&optional start end)
-                       (interactive "r")
-                       (if (use-region-p)
-                           (quickrun-region start end)
-                         (quickrun current-prefix-arg)))))
-#+end_src
-
-Example...
-#+begin_src emacs-lisp
-(system-packages-ensure "rust") ;; Rust Compiler
-;; Select the following then press C-c C-r: fn main() { println!("Hello, World!"); }
-#+end_src
-
-Actually, let's get a [[https://github.com/brotzeit/rustic#intro][full Rust development environment for Emacs]] (which also
-has [[https://github.com/brotzeit/rustic#org-babel][great support for Org-babel]].)
-#+begin_src emacs-lisp
-(use-package rustic   :defer nil)
-;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
-;; rust-analyzer, the rust LSP.
-;;
-;; LSP for Rust ⇒ Goto definition (M-. / ⌘-l), code completion with types and
-;; docstrings, colourful documentation on hover, “Run [Test] | Debug” overlays,
-;; super nice stuff! Run “M-!”/[M-x company-show-doc-buffer] if you want the doc in a colourful buffer.
-;;
-;; Below, hover over “Vec” and see nice, scrollable, colourful docs on vectors.
-;;    let v:Vec<_> = vec![1, 2, 3];
-
-;; The offical Rust toolchain installer
-(system-packages-ensure "rustup")
-(shell-command "rustup update")
-#+end_src
-
-:More_on_rust:
-
-Now, C-c C-c C-d on something to get help/description of it.
-(setq rustic-racer-rust-src-path "/Users/musa/.rustup/toolchains/stable-x86_64-apple-darwin/lib/rustlib/src/rust/library/")
-
-# Get Rustup, load it into current terminal session
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source ~/.bash_profile
-source ~/.bashrc
-type rustup
-
-# Get stuff
-rustup update
-rustup component add rust-src
-cargo +nightly install racer
-rustup toolchain install nightly
-rustup component add rustc-dev --toolchain=nightly
-cargo +nightly install racer
-
-:End:
-
 ** TODO my/open-in-terminal '⌘
 :PROPERTIES:
 :CUSTOM_ID: my-open-in-terminal-'
