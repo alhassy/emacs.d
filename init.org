@@ -3782,6 +3782,9 @@ should jump to the first entry.
 
 See [[https://jeremykun.com/2020/01/14/the-communicative-value-of-using-git-well/][The Communicative Value of Using Git Well]]
 
+Note: Emacs has built-in version control, e.g., kbd:C-x_v_l to see the change
+log of the repository containing the current file.
+
 ** Undo-tree: Very Local Version Control
 :PROPERTIES:
 :CUSTOM_ID: Undo-tree-Very-Local-Version-Control
@@ -4481,40 +4484,91 @@ answers that seamlessly ---almost as if a transient comment 😁
 If we want to see commit messages alongside /all/ code, then we can invoke
 doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
 then we use doc:git-timemachine.
-** Github /within/ Emacs                                            :Disabled:
+** Git gutter: Jumping between hunks                              :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Github-within-Emacs
+:CUSTOM_ID: What's-changed-who's-to-blame
+:END:
+
+Let's have, in a fringe, an indicator for altered regions in a version
+controlled file.  The symbols “+, =” appear in a fringe by default for
+alterations ---we may change these if we like.
+# Moreover, let's stage-&-commit straight from a working buffer.
+#+begin_src emacs-lisp :tangle no
+;; Hunk navigation and commiting.
+(use-package git-gutter :config (global-git-gutter-mode))
+;; Diff updates happen in real time according when user is idle.
+#+END_SRC
+# There's a fork, [[https://github.com/nonsequitur/git-gutter-plus][git-gutter+]], which provides additional features but was slow for me on large, 10k, files.
+
+Let's set a hydra so we can press ~C-x v n n p n~ to move the next two
+altered hunks, move back one, then move to the next. This saves me having
+to supply the prefix ~C-x v~ each time I navigate among my alterations.
+At any point we may also press ~u 𝕩~ to denote ~C-u ⟪prefix⟫ 𝕩~.
+#+begin_src emacs-lisp :tangle no
+(defhydra hydra-version-control (global-map "C-x v")
+  "Version control"
+  ;; Syntax: (extension method description)
+  ("n" git-gutter:next-hunk      "Next hunk")
+  ("p" git-gutter:previous-hunk  "Previous hunk")
+  ("d" git-gutter:popup-hunk     "Show hunk diff")
+  ("r" git-gutter:revert-hunk    "Revert hunk\n")
+  ("c" git-gutter:stage-hunk     "Stage hunk")
+  ("s" git-gutter:statistic      "How many added & deleted lines"))
+#+END_SRC
+
+Committing with ~C-x v c~ let's us use ~C-c C-k~ to cancel and ~C-c C-c~ to
+submit the given message; ~C-c C-a~ to amend the previous commit.
+
+Alternatively, we may use [[https://github.com/dgutov/diff-hl][diff-hl]]:
+#+begin_src emacs-lisp :tangle no
+;; Colour fringe to indicate alterations.
+;; (use-package diff-hl)
+;; (global-diff-hl-mode)
+#+END_SRC
+
+#+begin_src emacs-lisp :tangle no
+;; Popup for who's to blame for alterations.
+(use-package git-messenger
+  :custom ;; Always show who authored the commit and when.
+          (git-messenger:show-detail t)
+          ;; Message menu let's us use magit diff to see the commit change.
+          (git-messenger:use-magit-popup t))
+
+;; View current file in browser on github.
+;; More generic is “browse-at-remote”.
+(use-package github-browse-file )
+
+;; Add these to the version control hydra.
+;;
+(defhydra hydra-version-control (global-map "C-x v")
+  ("b" git-messenger:popup-message "Who's to blame?")
+  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+  ("g" github-browse-file-blame "Show file in browser in github")
+  ("s" magit-status "Git status of current buffer"))
+#+END_SRC
+
+Perhaps ~C-x v b~ will motivate smaller, frequent, commits.
+
+** URLs to git changes :Disabled:
+:PROPERTIES:
 :header-args: :tangle no
 :END:
 
-We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[https://github.com/magit/forge][forge]] package.
-+ In particular, it adds two new “topics” to the Magit status page: =Issues= and =Pull Requests=.
-  - We can tab on these to see their “posts” ---the contributions to the conversations and /new/ commits.
-  - [[https://magit.vc/manual/forge/Editing-Topics-and-Posts.html][Here]] is a list of actions that can be done on topics and posts.
+Obtaining URL links to the current location of a file
+---URLs are added to the kill ring.
+Usefully, if [[https://gitlab.com/pidu/git-timemachine][git-timemachine-mode]] is active, the generated link
+points to the version of the file being visited.
+#+begin_src emacs-lisp :tangle no
+(use-package git-link )
 
-#+begin_src emacs-lisp
-(use-package forge
-  :after magit)
-#+end_src
+(defhydra hydra-version-control (global-map "C-x v")
+  ("l" git-link "Git URL for current location"))
+#+END_SRC
 
-1. Make a file =~/.authinfo= whose top-most line is =machine api.github.com login ⟪𝑼𝑺𝑬𝑹𝑵𝑨𝑴𝑬⟫^forge password ⟪𝑻𝑶𝑲𝑬𝑵⟫= where ⟪⋯⟫
-   should be replaced by your Github username and a token ---which can be [[https://github.com/settings/tokens][created from this page]] with [[https://magit.vc/manual/forge/Token-Creation.html][permissions]] for
-   ~repo, user, read:org~ checked-off.
-   - For more detailed information, see [[https://magit.vc/manual/ghub/Creating-and-Storing-a-Token.html][this Forge manual page]].
-
-2. Now open a Magit status buffer for a repository and run ~M-x forge-pull~, after which you should be able to see all issues and pull requests.
-   - Alternatively, press ~N~ to see the forge menu.
-   - Press ~N f f~ to pull latest information from the repository.
-     + Note how pulling data from a forge’s API works the same way as pulling Git data does; you do it explicitly when
-       you want to see the work done by others.
-     + We can also “c”reate a new “p”ull request or a new “i”ssue with ~N c p~ or ~N c i~, respectively.
-     + [[https://www.youtube.com/watch?v=fFuf3hExF5w&ab_channel=ZaisteProgramming][~5 min video]]
-
-To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
+Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
 
 ** Version Control with SVN ---Using Magit!                       :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Version-Control-with-SVN-Using-Magit
 :header-args: :tangle no
 :END:
 
@@ -4550,6 +4604,38 @@ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba0711
 
 (If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
   utility above to account for them.)
+
+** Github /within/ Emacs                                            :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Github-within-Emacs
+:header-args: :tangle no
+:END:
+
+We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[https://github.com/magit/forge][forge]] package.
++ In particular, it adds two new “topics” to the Magit status page: =Issues= and =Pull Requests=.
+  - We can tab on these to see their “posts” ---the contributions to the conversations and /new/ commits.
+  - [[https://magit.vc/manual/forge/Editing-Topics-and-Posts.html][Here]] is a list of actions that can be done on topics and posts.
+
+#+begin_src emacs-lisp
+(use-package forge
+  :after magit)
+#+end_src
+
+1. Make a file =~/.authinfo= whose top-most line is =machine api.github.com login ⟪𝑼𝑺𝑬𝑹𝑵𝑨𝑴𝑬⟫^forge password ⟪𝑻𝑶𝑲𝑬𝑵⟫= where ⟪⋯⟫
+   should be replaced by your Github username and a token ---which can be [[https://github.com/settings/tokens][created from this page]] with [[https://magit.vc/manual/forge/Token-Creation.html][permissions]] for
+   ~repo, user, read:org~ checked-off.
+   - For more detailed information, see [[https://magit.vc/manual/ghub/Creating-and-Storing-a-Token.html][this Forge manual page]].
+
+2. Now open a Magit status buffer for a repository and run ~M-x forge-pull~, after which you should be able to see all issues and pull requests.
+   - Alternatively, press ~N~ to see the forge menu.
+   - Press ~N f f~ to pull latest information from the repository.
+     + Note how pulling data from a forge’s API works the same way as pulling Git data does; you do it explicitly when
+       you want to see the work done by others.
+     + We can also “c”reate a new “p”ull request or a new “i”ssue with ~N c p~ or ~N c i~, respectively.
+     + [[https://www.youtube.com/watch?v=fFuf3hExF5w&ab_channel=ZaisteProgramming][~5 min video]]
+
+To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
+
 
 * Cosmetics
 :PROPERTIES:
@@ -7337,7 +7423,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* TODO COMMENT [0/72] Lost Souls
+* TODO COMMENT [0/70] Lost Souls
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -10489,87 +10575,6 @@ language.  This saves us a few key strokes.
 
  #+RESULTS:
  [[file:simple_markov.png]]
-
-** TODO [#A] What's changed & who's to blame?
-:PROPERTIES:
-:CUSTOM_ID: What's-changed-who's-to-blame
-:END:
-
-Let's have, in a fringe, an indicator for altered regions in a version
-controlled file.  The symbols “+, =” appear in a fringe by default for
-alterations ---we may change these if we like.
-# Moreover, let's stage-&-commit straight from a working buffer.
-#+begin_src emacs-lisp :tangle no
-;; Hunk navigation and commiting.
-(use-package git-gutter
-
-  :config (global-git-gutter-mode))
-;; Diff updates happen in real time according when user is idle.
-#+END_SRC
-# There's a fork, [[https://github.com/nonsequitur/git-gutter-plus][git-gutter+]], which provides additional features but was slow for me on large, 10k, files.
-
-Let's set a hydra so we can press ~C-x v n n p n~ to move the next two
-altered hunks, move back one, then move to the next. This saves me having
-to supply the prefix ~C-x v~ each time I navigate among my alterations.
-At any point we may also press ~u 𝕩~ to denote ~C-u ⟪prefix⟫ 𝕩~.
-#+begin_src emacs-lisp :tangle no
-(defhydra hydra-version-control (global-map "C-x v")
-  "Version control"
-  ;; Syntax: (extension method description)
-  ("n" git-gutter:next-hunk      "Next hunk")
-  ("p" git-gutter:previous-hunk  "Previous hunk")
-  ("d" git-gutter:popup-hunk     "Show hunk diff")
-  ("r" git-gutter:revert-hunk    "Revert hunk\n")
-  ("c" git-gutter:stage-hunk     "Stage hunk")
-  ("s" git-gutter:statistic      "How many added & deleted lines"))
-#+END_SRC
-
-Commiting with ~C-x v c~ let's us use ~C-c C-k~ to cancel and ~C-c C-c~ to
-submit the given message; ~C-c C-a~ to amend the previous commit.
-
-Alternatively, we may use [[https://github.com/dgutov/diff-hl][diff-hl]]:
-#+begin_src emacs-lisp :tangle no
-;; Colour fringe to indicate alterations.
-;; (use-package diff-hl)
-;; (global-diff-hl-mode)
-#+END_SRC
-
-A few more helpful version control features:
-#+begin_src emacs-lisp :tangle no
-;; Popup for who's to blame for alterations.
-(use-package git-messenger
-  :custom ;; Always show who authored the commit and when.
-          (git-messenger:show-detail t)
-          ;; Message menu let's us use magit diff to see the commit change.
-          (git-messenger:use-magit-popup t))
-
-;; View current file in browser on github.
-;; More generic is “browse-at-remote”.
-(use-package github-browse-file )
-
-;; Add these to the version control hydra.
-;;
-(defhydra hydra-version-control (global-map "C-x v")
-  ("b" git-messenger:popup-message "Who's to blame?")
-  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
-  ("g" github-browse-file-blame "Show file in browser in github")
-  ("s" magit-status "Git status of current buffer"))
-#+END_SRC
-
-Perhaps ~C-x v b~ will motivate smaller, frequent, commits.
-
-Obtaining URL links to the current location of a file
----URLs are added to the kill ring.
-Usefully, if [[https://gitlab.com/pidu/git-timemachine][git-timemachine-mode]] is active, the generated link
-points to the version of the file being visited.
-#+begin_src emacs-lisp :tangle no
-(use-package git-link )
-
-(defhydra hydra-version-control (global-map "C-x v")
-  ("l" git-link "Git URL for current location"))
-#+END_SRC
-
-Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
 
 ** TODO Emacs keybindings for my browser                          :Disabled:
 :PROPERTIES:
