@@ -1632,6 +1632,20 @@ Reads:
 
 I enter “⌘” using a TeX input method setup below (called “Agda”).
 
+*** Don't show updating/installation shell buffers
+
+#+begin_src emacs-lisp
+;; By default, say, (async-shell-command "date") produces a buffer
+;; with the result. In general, such commands in my init.el are for
+;; updating/installing things to make sure I have the same up-to-date
+;; setup where-ever I use my Emacs. As such, I don't need to see such buffers.
+(add-to-list 'display-buffer-alist
+             '("\\*Async Shell Command\\*.*" display-buffer-no-window))
+
+;; For an approach that does not inhibit async-shell-command this way,
+;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
+#+end_src
+
 ** Syncing to the System's =$PATH=
 :PROPERTIES:
 :CUSTOM_ID: Syncing-to-the-System's-PATH
@@ -3649,7 +3663,7 @@ name.
 (setq org-fold-core-style 'overlays)
 #+end_src
 
-* The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved
+** The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved
 
 tldr: Add ~:Disabled:~ to a heading to render its contents in a ~<details>~ HTML
 element. If a heading has a ~:COLOR~ property, then that is used for the colour of
@@ -3752,6 +3766,22 @@ The heading remains in view, and so appears in the TOC."
          (insert "#+html: </details> </div>"))
 #+end_src
 
+** Jumping to extreme semantic units
+:PROPERTIES:
+:CUSTOM_ID: Jumping-to-extreme-semantic-units
+:END:
+[[https://github.com/DamienCassou/beginend][Sometimes it's unreasonable]] for ~M-<~ to take us to the actual start of a buffer;
+instead it'd be preferable to go to the first “semantic unit” in the buffer. For
+example, when directory editing with ~dired~ we should jump to the first file,
+with version control with ~magit~ we should jump to the first section, when
+composing mail we should jump to the first body line, and in the agenda we
+should jump to the first entry.
+#+BEGIN_SRC emacs-lisp
+;; M-< and M-> jump to first and final semantic units.
+;; If pressed twice, they go to physical first and last positions.
+(use-package beginend
+  :config (beginend-global-mode))
+#+END_SRC
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -4528,22 +4558,6 @@ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba0711
 (If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
   utility above to account for them.)
 
-* Jumping to extreme semantic units
-:PROPERTIES:
-:CUSTOM_ID: Jumping-to-extreme-semantic-units
-:END:
-[[https://github.com/DamienCassou/beginend][Sometimes it's unreasonable]] for ~M-<~ to take us to the actual start of a buffer;
-instead it'd be preferable to go to the first “semantic unit” in the buffer. For
-example, when directory editing with ~dired~ we should jump to the first file,
-with version control with ~magit~ we should jump to the first section, when
-composing mail we should jump to the first body line, and in the agenda we
-should jump to the first entry.
-#+BEGIN_SRC emacs-lisp
-;; M-< and M-> jump to first and final semantic units.
-;; If pressed twice, they go to physical first and last positions.
-(use-package beginend
-  :config (beginend-global-mode))
-#+END_SRC
 * COMMENT Init.el misc
 #+begin_src emacs-lisp
 +
@@ -7387,15 +7401,19 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* TODO RDD
+* TODO COMMENT Lost Souls                    :Outdated_Documentation:Not_yet_tangled:
+:PROPERTIES:
+:CUSTOM_ID: Lost-Souls
+:END:
+** TODO RDD
 
-** get the pkg
+*** get the pkg
 #+begin_src emacs-lisp :tangle init.el
 (use-package repl-driven-development)
 (setq repl-driven-development-echo-duration 10)
 #+end_src
 
-** terminal
+*** terminal
 #+begin_src emacs-lisp :tangle init.el
 ;; Sometimes I see a bunch of shell incantations in a README or something and I'd like to execute them right there and then,
 ;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
@@ -7404,7 +7422,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 (repl-driven-development [C-x C-t] terminal)
 #+end_src
 
-** jshell
+*** jshell
 #+begin_src emacs-lisp :tangle init.el
 ;; Set “C­x C­j” to evaluate Java code in a background REPL.
 (repl-driven-development
@@ -7422,7 +7440,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
         \n System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
 ;; TODO [Truncation; Low] https://github.com/xiongtx/eros/blob/master/eros.el#L202
 #+end_src
-** mvn
+*** mvn
 #+begin_src emacs-lisp :tangle init.el
 (defun mvn (groupId artifactId)
   "Quickly install a library from Maven Central."
@@ -7487,7 +7505,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
   )
 #+end_src
 
-** Adding support for “//!use” & “//!omit” top level repl commands
+*** Adding support for “//!use” & “//!omit” top level repl commands
 #+begin_src emacs-lisp
 ;; Adding support for “//!use” & “//!omit” top level repl commands
 (setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
@@ -7546,12 +7564,12 @@ Where directory hierarchy com/x/y/z denotes a Java package under the above //!us
     (repl/jshell (point-min) (point-max))))
 #+end_src
 
-** Misc top level cmds
+*** Misc top level cmds
 
 TODO: Make repl load all company class files, that way I have them upon start up.
 OR: Provide a command `//!load ~/dir` which recursively loads/imports all java files? <---Probably this!
 
-** COMMENT C-x C-e ∷ REPL-driven development for ELisp / NodeJS / Python / Etc !
+*** COMMENT C-x C-e ∷ REPL-driven development for ELisp / NodeJS / Python / Etc !
 :PROPERTIES:
 :CUSTOM_ID: C-x-C-e-REPL-driven-development-for-NodeJS
 :END:
@@ -7574,7 +7592,7 @@ at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
 
 - A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
 
-*** ELisp
+**** ELisp
 :PROPERTIES:
 :CUSTOM_ID: ELisp
 :END:
@@ -7601,7 +7619,7 @@ rather than forcing their eyes to shift up&down when writing&evaluating.
 # E.g., (eros--eval-overlay "hola" (point-min))
 # Shows a momentary overlay at the first line.
 
-*** JavaScript
+**** JavaScript
 :PROPERTIES:
 :CUSTOM_ID: JavaScript
 :END:
@@ -7664,7 +7682,7 @@ let b = "world"
 // The final line should show: HELLO WORLD
 #+end_src
 
-**** Preserving the context
+***** Preserving the context
 :PROPERTIES:
 :CUSTOM_ID: Preserving-the-context
 :END:
@@ -7689,7 +7707,7 @@ For that, there are numerous packages:
 
 For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick/issues/8.
 
-*** Python, etc
+**** Python, etc
 :PROPERTIES:
 :CUSTOM_ID: Python-etc
 :END:
@@ -7697,7 +7715,7 @@ For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick
 It /seems/ to be /super easy/ to add such a support for other languages, such as Python.
 See the final comment [[https://karthinks.com/software/an-elisp-editing-tip/][here]] for the tiny change required.
 
-** COMMENT Quickly Run Code Snippets
+*** COMMENT Quickly Run Code Snippets
 :PROPERTIES:
 :CUSTOM_ID: Quickly-Run-Code-Snippets
 :END:
@@ -7775,21 +7793,7 @@ cargo +nightly install racer
 
 :End:
 
-* Don't show updating/installation shell buffers
-
-#+begin_src emacs-lisp
-;; By default, say, (async-shell-command "date") produces a buffer
-;; with the result. In general, such commands in my init.el are for
-;; updating/installing things to make sure I have the same up-to-date
-;; setup where-ever I use my Emacs. As such, I don't need to see such buffers.
-(add-to-list 'display-buffer-alist
-             '("\\*Async Shell Command\\*.*" display-buffer-no-window))
-
-;; For an approach that does not inhibit async-shell-command this way,
-;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
-#+end_src
-
-* TODO Programming
+** TODO Programming
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
@@ -7807,7 +7811,7 @@ TODO: Fix these docs
   (setq doom-modeline-buffer-file-name-style 'truncate-except-project))
 #+end_src
 
-** COMMENT devdocs
+*** COMMENT devdocs
 :PROPERTIES:
 :CUSTOM_ID: devdocs
 :END:
@@ -7835,7 +7839,7 @@ TODO: Fix these docs
           do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
 #+end_src
 
-** COMMENT How do I do something?
+*** COMMENT How do I do something?
 :PROPERTIES:
 :CUSTOM_ID: How-do-I-do-something
 :END:
@@ -7879,7 +7883,7 @@ Example usage:
     (kill-line)
     (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
 #+end_src
-** Sleek Semantic Selection
+*** Sleek Semantic Selection
 :PROPERTIES:
 :CUSTOM_ID: Sleek-Semantic-Selection
 :END:
@@ -7900,7 +7904,7 @@ That is, /repeated ⌘+r expands the selection to the next logical segment of te
 In writing this means “Word, sentence, paragraph”, and in programming this means
 “identifier, then incrementally larger scopes”.
 
-** COMMENT Managing Processes/Servers from within Emacs ---Work-specific functions
+*** COMMENT Managing Processes/Servers from within Emacs ---Work-specific functions
 :PROPERTIES:
 :CUSTOM_ID: Managing-Processes-Servers-from-within-Emacs-Work-specific-functions
 :END:
@@ -7925,7 +7929,7 @@ accurately, does not Just Workᵀᴹ for my needs.
   ;; C-h v prodigy-services ⇒ See possible properties.
 #+end_src
 
-*** my/defaliases
+**** my/defaliases
 :PROPERTIES:
 :CUSTOM_ID: my-defaliases
 :END:
@@ -7943,7 +7947,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
   `(--map (eval (quote (defalias `,it (quote ,src)))) (quote ,tgts)))
 #+end_src
 
-*** Making unkillable buffers & shells
+**** Making unkillable buffers & shells
 :PROPERTIES:
 :CUSTOM_ID: Making-unkillable-buffers-shells
 :END:
@@ -7974,7 +7978,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
 #+end_src
 #+end_details
 
-*** w-start/stop-services
+**** w-start/stop-services
 :PROPERTIES:
 :CUSTOM_ID: w-start-stop-services
 :END:
@@ -7992,7 +7996,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
            do (funcall (intern (format "w-stop-%s" 𝑺)))))
 #+end_src
 
-*** w-status-of-services
+**** w-status-of-services
 :PROPERTIES:
 :CUSTOM_ID: w-status-of-services
 :END:
@@ -8124,7 +8128,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
    (beginning-of-buffer)))
 #+end_src
 
-**** COMMENT Old definition with colourful menu                   :ignore:
+***** COMMENT Old definition with colourful menu                     :ignore:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Old-definition-with-colourful-menu
 :END:
@@ -8210,7 +8214,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
                        )))))
 #+end_src
 
-*** my/defservice
+**** my/defservice
 :PROPERTIES:
 :CUSTOM_ID: my-defservice
 :END:
@@ -8272,7 +8276,7 @@ In my private ~work.el~ I have declarations of the form ~(my/defservice ⟨direc
   (load-file "~/Desktop/work.el"))
 #+end_src
 
-** Project management & navigation
+*** Project management & navigation
 :PROPERTIES:
 :CUSTOM_ID: Project-management-navigation
 :END:
@@ -8339,7 +8343,7 @@ Let's get the file path of the current file. We bind it and make it a top-level 
     (message (kill-new buffer-file-name)))))
 #+end_src
 
-** TODO Projectile
+*** TODO Projectile
 :PROPERTIES:
 :CUSTOM_ID: Projectile
 :END:
@@ -8351,7 +8355,7 @@ Let's get the file path of the current file. We bind it and make it a top-level 
 :config (projectile-global-mode)
 (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
 #+end_src
-** TODO COMMENT Are there any errors in my code?
+*** TODO COMMENT Are there any errors in my code?
 :PROPERTIES:
 :CUSTOM_ID: Are-there-any-errors-in-my-code
 :END:
@@ -8392,7 +8396,7 @@ Let's also have a nifty modal menu to quickly navigate between errors.
    ("S" flycheck-verify-setup "Suggest setup")
    ("m" flycheck-manual "manual")))
 #+end_src
-*** On the fly syntax checking
+**** On the fly syntax checking
 :PROPERTIES:
 :CUSTOM_ID: On-the-fly-syntax-checking
 :END:
@@ -8452,7 +8456,7 @@ Try it out:
 (setq 1 2) ;; Error: ‘1’ is not a variable.
 #+end_src
 
-** COMMENT Jumping to definitions & references
+*** COMMENT Jumping to definitions & references
 :PROPERTIES:
 :CUSTOM_ID: Jumping-to-definitions-references
 :END:
@@ -8488,7 +8492,7 @@ variable ---the first is likely what is desired.  Alternatively, one could just
 add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
 works fine even for locally bound definitions.  It works depending on the
 extension of a file.
-** COMMENT Which function are we writing?
+*** COMMENT Which function are we writing?
 :PROPERTIES:
 :CUSTOM_ID: Which-function-are-we-writing
 :END:
@@ -8504,7 +8508,7 @@ In Lisp mode, ensure we always have matching parens.
 (add-hook 'emacs-lisp-mode-hook #'check-parens)
 #+END_SRC
 
-** COMMENT Highlight defined Lisp symbols
+*** COMMENT Highlight defined Lisp symbols
 :PROPERTIES:
 :CUSTOM_ID: Highlight-defined-Lisp-symbols
 :END:
@@ -8522,7 +8526,7 @@ blocks we use ~C-c '~.
 Super helpful in making my Emacs configuration: If a name is not highlighted,
 then I've misspelled it or it doesn't exist! :smile:
 
-** TODO Aggressive Indentation                           :Broken_Subsection:
+*** TODO Aggressive Indentation                           :Broken_Subsection:
 :PROPERTIES:
 :CUSTOM_ID: Aggressive-Indentation
 :END:
@@ -8547,7 +8551,7 @@ This mode requires my Lisp forms to be well-balanced; e.g., having a missing
 parenthesis does not indent. For instance, I have a form ~F~ and I write ~(when F~
 but have not yet enclosed the final parens, I still want nice indentation. So...
 
-*** TODO  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]] :Disabled:Breaks_C_c_C_v_C_t:
+**** TODO  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]] :Disabled:Breaks_C_c_C_v_C_t:
 :PROPERTIES:
 :CUSTOM_ID: https-github-com-jiahaowork-el-fly-indent-mode-el-Indent-Emacs-Lisp-on-the-fly
 :END:
@@ -8560,7 +8564,7 @@ but have not yet enclosed the final parens, I still want nice indentation. So...
     :defer nil
   :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
 #+end_src
-** COMMENT Being Generous with Whitespace
+*** COMMENT Being Generous with Whitespace
 :PROPERTIES:
 :CUSTOM_ID: Being-Generous-with-Whitespace
 :END:
@@ -8575,7 +8579,7 @@ I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Al
 languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
 an identifier, not an expression! ⟩
 
-** Coding with a Fruit Salad: Semantic Highlighting
+*** Coding with a Fruit Salad: Semantic Highlighting
 :PROPERTIES:
 :CUSTOM_ID: Coding-with-a-Fruit-Salad-Semantic-Highlighting
 :END:
@@ -8631,7 +8635,7 @@ Here are further reads:
   - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
   - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
 
-** Text Folding ---Selectively displaying portions of a program
+*** Text Folding ---Selectively displaying portions of a program
 :PROPERTIES:
 :CUSTOM_ID: Text-Folding
 :END:
@@ -8703,7 +8707,7 @@ to a programming language's syntactic constructions.
 #+end_src
 #+end_box
 
-*** TODO Actual Setup                                              :ignore:
+**** TODO Actual Setup                                               :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Actual-Setup
 :END:
@@ -8950,7 +8954,7 @@ I found using yafolding-mode to be way too slow.
   (global-set-key (kbd "s-f") 'yafolding-hydra/body)
 #+end_src
 #+end_details
-*** E2E Test                                                       :ignore:
+**** E2E Test                                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: E2E-Test
 :END:
@@ -8982,7 +8986,7 @@ I found using yafolding-mode to be way too slow.
 #+end_src
 #+end_details
 
-** COMMENT Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab :relocate:
+*** COMMENT Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab :relocate:
 :PROPERTIES:
 :CUSTOM_ID: Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab
 :END:
@@ -9017,7 +9021,7 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, ha
 See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
 into new configurations.
 
-** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]] :relocate:
+*** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]] :relocate:
 :PROPERTIES:
 :CUSTOM_ID: hr-https-github-com-LuRsT-hr-A-horizontal-for-your-terminal
 :END:
@@ -9034,7 +9038,7 @@ $i^{th}$-line having pattern =pᵢ=.
 (system-packages-ensure "hr") ;; ≈ brew install hr
 #+end_src
 
-** COMMENT Browse remote files
+*** COMMENT Browse remote files
 :PROPERTIES:
 :CUSTOM_ID: Browse-remote-files
 :END:
@@ -9049,7 +9053,7 @@ $i^{th}$-line having pattern =pᵢ=.
 ;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
 (use-package browse-at-remote   :defer nil)
 #+end_src
-** COMMENT [[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.
+*** COMMENT [[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.
 :PROPERTIES:
 :CUSTOM_ID: https-github-com-sshaw-copy-as-format-copy-as-format-Emacs-function-to-copy-buffer-locations-as-GitHub-Slack-JIRA-etc-formatted-code
 :END:
@@ -9062,7 +9066,7 @@ $i^{th}$-line having pattern =pᵢ=.
 (use-package copy-as-format   :defer nil)
 #+end_src
 
-** w-screencapture
+*** w-screencapture
 :PROPERTIES:
 :CUSTOM_ID: w-screencapture
 :END:
@@ -9093,7 +9097,7 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
       (--filter (s-starts-with-p "Screen Shot" it))
       (--map (f-delete (format "~/Desktop/%s" it)))))
 #+end_src
-** COMMENT Screencapturing the Current Emacs Frame
+*** COMMENT Screencapturing the Current Emacs Frame
 :PROPERTIES:
 :CUSTOM_ID: Screencapturing-the-Current-Emacs-Frame
 :END:
@@ -9144,7 +9148,7 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 
 + ~C-c C-x C-v~ ⇒ Toggle inline images!
 
-** Comment-boxes up to the fill-column ---or banner instead?
+*** Comment-boxes up to the fill-column ---or banner instead?
 :PROPERTIES:
 :CUSTOM_ID: Comment-boxes-up-to-the-fill-column
 :END:
@@ -9180,7 +9184,7 @@ As such, let's try [[https://github.com/WJCFerguson/banner-comment][banner comme
 
 Pretty slick!
 
-** TODO COMMENT Auto-format on Save :Reenabled:Should_be_Disabled:Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
+*** TODO COMMENT Auto-format on Save :Reenabled:Should_be_Disabled:Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
 :PROPERTIES:
 :CUSTOM_ID: Auto-format-on-Save
 :END:
@@ -9249,7 +9253,7 @@ In particular, [[https://emacs-lsp.github.io/lsp-mode/page/lsp-eslint/][LSP ESLi
 better to use ~===~ instead of ~==~ and literals should be on the right side of the equality.
 We can use ~M-x lsp-execute-code-action~ to get a list of actions that can be performed to fix this /quality/ problem.
 
-** Searching Hydra
+*** Searching Hydra
 :PROPERTIES:
 :CUSTOM_ID: Searching-Hydra
 :END:
@@ -9273,7 +9277,7 @@ We can use ~M-x lsp-execute-code-action~ to get a list of actions that can be pe
    ("d" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag nil)))  "Directory")
    ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
 #+end_src
-** TODO ⌘-e: Edit Everything in a separate buffer
+*** TODO ⌘-e: Edit Everything in a separate buffer
 :PROPERTIES:
 :CUSTOM_ID: e-Edit-Everything-in-a-separate-buffer
 :END:
@@ -9513,7 +9517,7 @@ associated major mode; that's what we aim to do here."
               (when (equal 'table-row (car (org-element-at-point)))
                 (call-interactively #'org-table-edit-field))))
 #+end_src
-** COMMENT Pair Programming
+*** COMMENT Pair Programming
 :PROPERTIES:
 :CUSTOM_ID: Pair-Programming
 :END:
@@ -9588,7 +9592,7 @@ my VSCoder counterparts.
 (my/toggle-pair-programming)
 #+end_src
 
-** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
+*** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
 :PROPERTIES:
 :CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
 :END:
@@ -9612,7 +9616,7 @@ The less casual Haskeller would likely want to use [[https://haskell-lang.org/in
 more support; e.g., obtain suggestions from GHC about redundant imports
 or type signatures.
 
-** COMMENT Modern Browsing within Emacs                           :Disabled:
+*** COMMENT Modern Browsing within Emacs                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Modern-Browsing-within-Emacs
 :END:
@@ -9647,7 +9651,7 @@ I like using Chrome ---I like the integration of all things Google.
   ("b" (internet) "Browse"  :exit t))
 #+end_src
 
-** An “auto read only” detection mechanism ---when jumping to definitions :Disabled:
+*** An “auto read only” detection mechanism ---when jumping to definitions :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: An-auto-read-only-detection-mechanism-when-jumping-to-definitions
 :header-args: :tangle no
@@ -9667,7 +9671,7 @@ I'm jumping to definitions (with ~M-.~).
                 (read-only-mode))))
 #+end_src
 
-* Open PDFs in Emacs
+** Open PDFs in Emacs
 #+begin_src emacs-lisp
     ;; In Org-mode, clicking on PDF should open it in Emacs
     ;; Example:          [[~/Desktop/stuff-I'm-learning.pdf::12]]       ;; Opens the pdf to page 12
@@ -9695,7 +9699,7 @@ I'm jumping to definitions (with ~M-.~).
     ;; https://github.com/fuxialexander/org-pdftools/tree/967f48fb5038bba32915ee9da8dc4e8b10ba3376
 #+end_src
 
-* empv
+** empv
 #+begin_src emacs-lisp
 (use-package empv )
 
@@ -9712,7 +9716,7 @@ I'm jumping to definitions (with ~M-.~).
 (setq empv-invidious-instance "https://invidious.fdn.fr.com")
 #+end_src
 
-* TODO COMMENT Eglot ----Fancy IDE Features that Just Workᵀᴹ
+** TODO COMMENT Eglot ----Fancy IDE Features that Just Workᵀᴹ
 
 For JavaScript:
 #+begin_src emacs-lisp
@@ -9726,10 +9730,7 @@ For JavaScript:
 For Java, install doc:eglot-java-mode and activate that in a Java file ---it automatically installs the required
 language server. 🚀
 
-* COMMENT Lost Souls                 :Outdated_Documentation:Not_yet_tangled:
-:PROPERTIES:
-:CUSTOM_ID: Lost-Souls
-:END:
+
 ** Note: M-S-SPC is for my personal servers dashboard.
 :PROPERTIES:
 :CUSTOM_ID: Note-M-S-SPC-is-for-my-personal-servers-dashboard
