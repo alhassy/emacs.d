@@ -8970,24 +8970,6 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
-** TODO my/open-in-terminal '⌘
-:PROPERTIES:
-:CUSTOM_ID: my-open-in-terminal-'
-:END:
-#+begin_src emacs-lisp
-(defalias 'my/open-in-terminal '⌘)
-(cl-defun ⌘ (&rest cmds)
-  "Run terminal commands CMDS in a new MacOS Terminal instance, and bring it to focus.
-
-Example: (⌘ \"echo hello\" \"echo world\")
-
-Useful for those cases where I have to interact with non-trivial ‘interactive terminal menus’."
-  (shell-command (format "osascript -e 'tell app \"Terminal\" to activate do script %s'"
-                         (pp-to-string (s-join ";" cmds)))))
-
-;; (⌘ "echo hello" "echo world")
-#+end_src
-
 ** TODO Check if application APP is currently running, in use.
 :PROPERTIES:
 :CUSTOM_ID: Check-if-application-APP-is-currently-running-in-use
