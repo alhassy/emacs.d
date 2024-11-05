@@ -4971,16 +4971,6 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 #+begin_src emacs-lisp :tangle init.el
 ;; Treat all themes as safe; no query before use.
 (setf custom-safe-themes t)
-
-;; Nice looking themes ^_^
-(use-package solarized-theme   )
-(use-package doom-themes )
-(use-package spacemacs-common
-
-  :ensure spacemacs-theme)
-(use-package stimmung-themes )
-(use-package shanty-themes )
-
 #+end_src
 
 + The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
@@ -4990,8 +4980,31 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 
 #+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-laserwave shanty-themes-light stimmung-themes-light stimmung-themes-dark doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
+(setq my/themes
+      (cl-loop for (package . theme-variants-I-like) in
+               ;; I like theme doom-flatwhite <3 It feels “warm”.
+               ;; (I found out thanks to C-u C-c t!)
+               '((doom-themes doom-flatwhite doom-snazzy doom-monokai-ristretto doom-laserwave doom-solarized-light doom-vibrant)
+                 (solarized-theme solarized-gruvbox-dark solarized-gruvbox-light)
+                 (stimmung-themes stimmung-themes-light stimmung-themes-dark)
+                 (shanty-themes shanty-themes-light)
+                 (apropospriate-theme apropospriate-light) ;; /super/ nice! Super “clean”, like writing on paper
+                 (tao-theme tao-yang) ;; nice light theme.
+                 (leuven-theme leuven-dark leuven) ;; Nice minimal variant
+                 (material-theme material-light)
+                 (moe-theme moe-light)
+                 (organic-green-theme organic-green)
+                 (tango-plus-theme tango-plus)
+                 ;; I like all 3 variants.
+                 (minimal-theme minimal minimal-black minimal-light)
+                 (espresso-theme espresso)
+                 (emacs dichromacy)
+                 (modus-themes modus-operandi-tinted))
+               do (package-install package)
+               append theme-variants-I-like))
+
 (setcdr (last my/themes) my/themes)
+
 #+END_SRC
 
 kbd:C-c_t to toggle between the personal themes.
@@ -5018,8 +5031,7 @@ themes (•̀ᴗ•́)و"
 
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-;; (my/toggle-theme)
-(my/toggle-theme 'doom-laserwave)
+(my/toggle-theme)
 #+END_SRC
 
 Apparently, there's already a package that accomplishes these goals and more:
@@ -13872,14 +13884,9 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 /Thanks to friends for “replacing me” while I was away ♥‿♥ ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ/
 #+end_center
 
-* DONE?
+** Done!                                                            :ignore:
 
 #+begin_src emacs-lisp :tangle "init.el"
-;; (find-file "~/.emacs.d/init.org")
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
-(message-box "Done")
+(message-box "Enjoy life (｡◕‿◕｡))")
 #+end_src
-
-(load-file "init.el")
-(find-file "init.el"
-)
