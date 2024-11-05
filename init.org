@@ -1444,19 +1444,30 @@ us ensure these exist using the ~:ensure-system-package~ keyword extension.
 Let's obtain the extension.
 #+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Auto installing OS system packages
-(use-package system-packages :config (system-packages-update))
+(use-package system-packages)
 
-;; Install OS packages using `use-package`.
-(use-package use-package-ensure-system-package)
+;; Ensure our operating system is always up to date.
+;; This is run whenever we open Emacs & so wont take long if we're up to date.
+;; It happens in the background ^_^
+;;
+;; After 5 seconds of being idle, after starting up.
+(run-with-idle-timer 5 nil #'system-packages-update)
 
-;; Caching the installed pkgs list makes system-package-ensure return nearly immediately for things already installed!
-(setq my/installed-packages (shell-command-to-string "brew list"))
-(defun system-packages-ensure (pkg)
-  (unless (s-contains-p pkg  my/installed-packages)
-      (shell-command-to-string (format "brew list %s || brew install %s --force" pkg pkg))))
+(defvar my/installed-packages
+  (shell-command-to-string "brew list")
+  "What is on my machine already?
 
-;; Please don't bother me when shell buffer names are in use, just make a new
-;; buffer.
+Sometimes when I install a GUI based application and do not have access to it everywhere in my path,
+it may seem that I do not have that application installed. For instance,
+   (system-packages-package-installed-p \"google-chrome\")
+returns nil, even though Google Chrome is on my machine.
+
+As such, we advise the `system-packages-ensure' installtion method to only do
+installs of packages that are not in our `my/installed-packages' listing.
+")
+(advice-add 'system-packages-ensure   :before-until (lambda (pkg) (s-contains-p pkg my/installed-packages)))
+
+;; Please don't bother me when shell buffer names are in use, just make a new buffer.
 (setq async-shell-command-buffer 'new-buffer)
 
 ;; Display the output buffer for asynchronous shell commands only when the
@@ -1466,29 +1477,8 @@ Let's obtain the extension.
 ;; Don't ask me if I want to kill a buffer with a live process attached to it;
 ;; just kill it please.
 (setq kill-buffer-query-functions
-  (remq 'process-kill-buffer-query-function
-         kill-buffer-query-functions))
-
-;; Ensure our operating system is always up to date.
-;; This is run whenever we open Emacs & so wont take long if we're up to date.
-;; It happens in the background ^_^
-;;
-;; After 5 seconds of being idle, after starting up.
-
-
-(defvar my/installed-packages
-  (shell-command-to-string "brew list")
-   "What is on my machine already?
-
-Sometimes when I install a GUI based application and do not have access to it everywhere in my path,
-it may seem that I do not have that application installed. For instance,
-   (system-packages-package-installed-p \"google-chrome\")
-returns nil, even though Google Chrome is on my machine.
-
-As such, we advise the `system-packages-ensure' installtion method to only do
-installs of pacakges that are not in our `my/installed-packages' listing.
-")
-(advice-add 'system-packages-ensure   :before-until (lambda (pkg) (s-contains-p pkg my/installed-packages)))
+      (remq 'process-kill-buffer-query-function
+            kill-buffer-query-functions))
 #+END_SRC
 
 After an update to Mac OS, one may need to [[https://emacs.stackexchange.com/questions/53026/how-to-restore-file-system-access-in-macos-catalina][restore file system access privileges
@@ -4562,18 +4552,8 @@ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba0711
   utility above to account for them.)
 
 * COMMENT Init.el misc
+
 #+begin_src emacs-lisp
-+
-+;; HACK: The system-packages-ensure pkg is neat and all, but I know I'm using brew. So I'll just define the utility myself, rather  than loading an entire pkg.
-+;; Moreover, my custom form has the added benefit of only installed packages that are not already installed, thereby foregoing any error messages which crash my init.el
-+(defun system-packages-ensure (pkg)
-+  (unless (s-contains-p pkg my/installed-packages)
-+    (message "Installing ... %s" pkg)
-+    ;; to call async shell command without a buffer you need to run:
-+    ;; (shell-command "something&" (universal-argument))
-+   (ignore-errors (shell-command-to-string (format "brew install %s &" pkg) (universal-argument)))))
-
-
 (load (shell-command-to-string "agda-mode locate"))
 
 
@@ -4619,15 +4599,6 @@ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba0711
 (unless noninteractive
   (load-file (let ((coding-system-for-read 'utf-8))
                (shell-command-to-string "/opt/homebrew/Cellar/agda/2.6.2.2_3/bin/agda-mode locate"))))
-+
-+;; HACK: The system-packages-ensure pkg is neat and all, but I know I'm using brew. So I'll just define the utility myself, rather  than loading an entire pkg.
-+;; Moreover, my custom form has the added benefit of only installed packages that are not already installed, thereby foregoing any error messages which crash my init.el
-+(defun system-packages-ensure (pkg)
-+  (unless (s-contains-p pkg my/installed-packages)
-+    (message "Installing ... %s" pkg)
-+    ;; to call async shell command without a buffer you need to run:
-+    ;; (shell-command "something&" (universal-argument))
-+    (ignore-errors (shell-command-to-string (format "brew install %s &" pkg) (universal-argument)))))
 #+end_src
 
 * Cosmetics
