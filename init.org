@@ -6036,7 +6036,7 @@ Example:
 :CUSTOM_ID: Lisp-Programming
 :END:
 
-** C-x C-e ∷ REPL-driven development for ELisp / NodeJS / Python / Etc !
+** C-x C-e ∷ REPL-driven development for ELisp
 :PROPERTIES:
 :CUSTOM_ID: C-x-C-e-REPL-driven-development-for-NodeJS
 :END:
@@ -6057,9 +6057,11 @@ at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
 
   + You /choose/ which code gets (re)evaluated.
 
-- A quick introduction to RDD can be viewed at [[https://purelyfunctional.tv/lesson/what-is-repl-driven-development/][PurelyFunctional.tv]].
+- A quick introduction to RDD can be viewed at
+  https://alhassy.com/repl-driven-development, including setup for other
+  languages.
 
-*** ELisp
+*** ELisp :ignore:
 :PROPERTIES:
 :CUSTOM_ID: ELisp
 :END:
@@ -6084,70 +6086,23 @@ rather than forcing their eyes to shift up&down when writing&evaluating.
 # E.g., (eros--eval-overlay "hola" (point-min))
 # Shows a momentary overlay at the first line.
 
-*** JavaScript                                                    :Disabled:
+*** COMMENT JavaScript                                                    :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: JavaScript
 :END:
 
-Let's setup RDD for JavaScript ---by having a NodeJS repl server running in the background.
-
-- See [[https://github.com/anonimitoraf/skerrick][skerrick: REPL-driven development for Javascript]] for animated GIFs; it
-  works with modules as well.
-
-#+begin_src emacs-lisp
-(use-package skerrick
-    :defer nil
-  :init
-  ;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
-  (unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
-    (skerrick-install-or-upgrade-server-binary)))
-
-;; Should be run in a JS buffer; it is buffer specific.
-;; (skerrick-start-server)
-
-;; Now main function, entry point is:
-;; M-x skerrick-eval-region
-#+end_src
-
-Let's provide a quick keyboard shortcut. E.g., kbd:C-x_C-e evaluates ELisp, so let's mimic that for JS buffers:
-#+begin_src emacs-lisp
-(require 'js) ;; Defines js-mode-map
-
-;; Evaluate a region, if any is selected; otherwise evaluate the current line.
-(bind-key
- "C-x C-e"  (lambda ()
-              (interactive)
-              (if (use-region-p)
-                  (skerrick-eval-region)
-                (beginning-of-line)
-                (set-mark-command nil)
-                (end-of-line)
-                (skerrick-eval-region)
-                (pop-mark)))
- 'js-mode-map)
-#+end_src
-
-
-Trying something else instead of skerrick, until
-https://github.com/anonimitoraf/skerrick/issues/7 is resolved.
-
 In any JS file, I just press ~C-x C-e~ and the JS interpreter is brought up with the evaluation results shown:
-#+begin_src emacs-lisp
-(use-package js-comint   :defer nil)
-(define-key js-mode-map (kbd "C-x C-e") (lambda () (interactive) (call-interactively #'js-comint-repl) (other-window -1) (js-comint-send-last-sexp)))
-#+end_src
 
 For instance,
 #+begin_src js :tangle no
-// Start the server... then
-// On each line and press C-x C-e
+// On each line and press C-x C-j
 let a = "hello"
 let b = "world"
 (a + ' ' + b).toUpperCase()
 // The final line should show: HELLO WORLD
 #+end_src
 
-**** Preserving the context
+**** COMMENT Preserving the context
 :PROPERTIES:
 :CUSTOM_ID: Preserving-the-context
 :END:
@@ -6171,14 +6126,6 @@ For that, there are numerous packages:
   2015
 
 For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick/issues/8.
-
-*** Python, etc                                                   :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Python-etc
-:END:
-
-It /seems/ to be /super easy/ to add such a support for other languages, such as Python.
-See the final comment [[https://karthinks.com/software/an-elisp-editing-tip/][here]] for the tiny change required.
 
 ** TODO COMMENT RDD
 
@@ -7613,7 +7560,6 @@ blocks we use ~C-c '~.
 
 Super helpful in making my Emacs configuration: If a name is not highlighted,
 then I've misspelled it or it doesn't exist! :smile:
-
 
 * Prose
 :PROPERTIES:
