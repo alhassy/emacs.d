@@ -4551,56 +4551,6 @@ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba0711
 (If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
   utility above to account for them.)
 
-* COMMENT Init.el misc
-
-#+begin_src emacs-lisp
-(load (shell-command-to-string "agda-mode locate"))
-
-
-
-+;; Prevent undo tree files from polluting your git repo
-+(setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
-+;; That will persist the undo history in ~/.emacs.d/undo instead of locally.
-+
-+(set-face-font 'default "Source Code Pro Light 14")
-#+end_src
-
-#+begin_src emacs-lisp
-+;; Use “M-x set-face-font RET default RET”, or...
-+;; (set-face-font 'default "Source Code Pro Light14")
-+
-+;; See ~2232 fonts
-+;; (append (fontset-list) (x-list-fonts "*" nil))
-+
-+  (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
-+  "Load NEW-FONT, which defaults from ‘my/fonts’.
-+
-+When a universal prefix is given, “C-u C-c F”, we load a random
-+font from all possible themes.  Nice way to learn about more
-+fonts (•̀ᴗ•́)و"
-+  (interactive)
-+  (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
-+         (font (if current-prefix-arg
-+                   (nth (random (length all-fonts)) all-fonts)
-+                 new-font)))
-+    (set-face-font 'default font)
-+    (message "Font: %s" font)))
-+
-+  (global-set-key "\C-c\ F" 'my/toggle-font)
-+
-+  ;; Default font; the “ignore-⋯” is for users who may not have the font.
-+  (ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
-+  (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
-+
-+(unless noninteractive
-+  (my/toggle-font "Roboto Mono Light 14")
-+  (my/toggle-theme 'solarized-gruvbox-light))
-+
-(unless noninteractive
-  (load-file (let ((coding-system-for-read 'utf-8))
-               (shell-command-to-string "/opt/homebrew/Cellar/agda/2.6.2.2_3/bin/agda-mode locate"))))
-#+end_src
-
 * Cosmetics
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
