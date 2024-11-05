@@ -583,7 +583,7 @@ its text editors.
 | Agenda / Calendar / Time Tracker             |   | Org mode                                                           |
 | Literate Programming (like Jupyter)          |   | Org mode                                                           |
 | Blogging Software                            |   | Org mode                                                           |
-| Reference Information Platform               |   | Org mode with [[https://orgmode.org/manual/Refile-and-Copy.html][refile]] and doc:my/reference                          |
+| Reference Information Platform               |   | Org mode with [[https://orgmode.org/manual/Refile-and-Copy.html][refile]] and my/reference                          |
 |----------------------------------------------+---+--------------------------------------------------------------------|
 | Word Processing / PDFs / Slidedeck tool      |   | Org mode                                                           |
 | Spell checker & dictionary & grammar checker |   | doc:ispell & langtool                                              |
@@ -3757,7 +3757,7 @@ The heading remains in view, and so appears in the TOC."
 :CUSTOM_ID: Staying-Safe
 :END:
 
-# See [[https://jeremykun.com/2020/01/14/the-communicative-value-of-using-git-well/][The Communicative Value of Using Git Well]]
+See [[https://jeremykun.com/2020/01/14/the-communicative-value-of-using-git-well/][The Communicative Value of Using Git Well]]
 
 ** Undo-tree: Very Local Version Control
 :PROPERTIES:
@@ -6769,8 +6769,8 @@ serve to take us to the next or previous instance of the word under the
 cursor. This is less intrusive than searching ~C-s~ or listing all occurrences ~M-s
 o~. Moreover, let's automaticly highlight current symbols, words under the cursour, and cycle
 quickly between highlkighted locations with
-doc:ahs-forward / [[kbd:M-→]] and
-doc:ahs-backward / [[kbd:M-←]].
+~ahs-forward~ / [[kbd:M-→]] and
+~ahs-backward~ / [[kbd:M-←]].
 
 #+BEGIN_SRC emacs-lisp
 ;; Default: M-→/← moves to the next/previous instance of the currently highlighted word
@@ -7338,8 +7338,8 @@ may be a very useful tool.
   )
 #+end_src
 Other useful functions, needing pandoc:
-doc:org-web-tools-insert-web-page-as-entry and
-doc:org-web-tools-convert-links-to-page-entries.
++ ~org-web-tools-insert-web-page-as-entry~ and
++ ~org-web-tools-convert-links-to-page-entries~.
 
 #+begin_src emacs-lisp
 ;; C-u C-c C-l ⇒ Paste URL with title, WITHOUT prompting me for anything.
