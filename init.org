@@ -1451,7 +1451,7 @@ Let's obtain the extension.
 ;; It happens in the background ^_^
 ;;
 ;; After 5 seconds of being idle, after starting up.
-(run-with-idle-timer 5 nil #'system-packages-update)
+(run-with-idle-timer 5 nil #'system-packages-update) ;; ≈ (async-shell-command "brew update && brew upgrade")
 
 (defvar my/installed-packages
   (shell-command-to-string "brew list")
@@ -7337,7 +7337,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* TODO COMMENT [0/74] Lost Souls
+* TODO COMMENT [0/72] Lost Souls
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -11878,42 +11878,6 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
     (term-send-string
      proc (concat (s-join "\n" more-commands) "\n"))))
 #+end_src
-** TODO [#A] Keeping my system up to date
-:PROPERTIES:
-:CUSTOM_ID: Keeping-my-system-up-to-date
-:END:
-
-Let's ensure our system is always up to date.
-#+begin_src emacs-lisp :tangle no
-(defun my/stay-up-to-date ()
-  "Ensure that OS and Emacs package listings are up to date.
-
-   Takes ~5 seconds when everything is up to date."
-  (ignore-errors (async-shell-command "brew update && brew upgrade"))
-  (other-window 1)
-  (rename-buffer "Keeping-system-up-to-date")
-
-  (package-refresh-contents 'please-do-so-in-the-background)
-  (message "Updated Emacs package manager.")
-  (other-window 1))
-
-;; Do this when idle?
-;; (add-hook 'after-init-hook 'my/stay-up-to-date)
-
-;; For now, doing this since I'm also calling my/stay-up-to-date with
-;; after-init-hook which hides the startup message.
-(add-hook 'after-init-hook 'display-startup-echo-area-message)
-#+END_SRC
-
-:MacOS:
-After an OS upgrade, the XCode Command Line Utilities
-may need to be reset.
-
-In a terminal execute: xcode-select --install
-
-May need to actually reboot the system as well.
-:End:
-
 ** TODO Compile                                                  :posterity:
 :PROPERTIES:
 :CUSTOM_ID: Compile
