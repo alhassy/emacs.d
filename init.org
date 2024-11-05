@@ -2407,6 +2407,23 @@ number of ways you'd actually use 𝒳. ( In Emacs, [[kbd:C-t tldr 𝒳 ⟨retur
 (system-packages-ensure "tldr")
 #+END_SRC
 
+** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]                             :relocate:
+:PROPERTIES:
+:CUSTOM_ID: hr-https-github-com-LuRsT-hr-A-horizontal-for-your-terminal
+:END:
+
+When working in the terminal, at least in my day job, it can be helpful to
+visually segregate large chunks of output. With the ~hr~ command, I can run ~hr
+'output5`~, for example, to have the same the string /output5/ repeated horizontal
+across one line of my terminal.  We can also just run ~hr~ which is the same as ~hr
+'#'~. Finally, you can also run =hr '-#-' '-' '-#-'= to have 3 horizontal lines and
+more generally =hr p₁ p₂ … pₙ= will produce /n/-many horizontal lines with the
+$i^{th}$-line having pattern =pᵢ=.
+
+#+begin_src emacs-lisp
+(system-packages-ensure "hr") ;; ≈ brew install hr
+#+end_src
+
 * Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
@@ -4652,6 +4669,21 @@ We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[h
 
 To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
 
+** COMMENT Browse remote files
+:PROPERTIES:
+:CUSTOM_ID: Browse-remote-files
+:END:
+
+  Sometimes you want to see the current file in Github; e.g., you select a
+  region and press ~M-x browse-at-remote-kill~ to get the URL for that region in
+  Github then you can send that URL to your peers when referencing something.
+  - Or just ~M-x browse-at-remote~ to see it in Github.
+  - [[https://github.com/rmuslimov/browse-at-remote][browse-at-remote: Browse target page on github/bitbucket from emacs buffers]].
+
+#+begin_src emacs-lisp
+;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
+(use-package browse-at-remote   :defer nil)
+#+end_src
 * Cosmetics
 :PROPERTIES:
 :CUSTOM_ID: Cosmetics
@@ -6014,7 +6046,7 @@ Example:
 Let's use a helpful Emacs /documentation/ system that cleanly shows a lot of
 contextual information ---then let's /extend/ that to work as we want it to:
 ~C-h o~ to describe the symbol at point.
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package helpful)
 
 (defun my/describe-symbol (symbol)
@@ -6133,7 +6165,7 @@ The following is also “OK” in Org-mode ;-)
 :END:
 Lightweight syntax highlighting improvement for numbers and escape sequences (e.g. \n, \t) /within/ quotes.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package highlight-numbers
   :hook (prog-mode separedit-double-quote-string-mode)) ;; The latter is for when I do ⌘-e on a quoted string to edit it.
 
@@ -6175,6 +6207,1030 @@ Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the 
                                               ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 #+end_src
 
+
+** TODO Semantic Change
+:PROPERTIES:
+:CUSTOM_ID: Semantic-Change
+:END:
+
+Using kbd:⌘-i and kbd:⌘-o we can quickly, for example, delete a string or its
+contents; or delete a {}-block or just its contents; or delete a ()-argument
+list or just its contents, etc.
+
+ ~change-inner~ gives you vim's ~ci~ command:
+- ~change-inner {~ ⇒ Delete all text starting from the first ‘{’ delimiter to the next one; but /keep the delimiters/.
+- ~change-outer {~ ⇒ As above, but also delete the delimiters.
+
+#+begin_src emacs-lisp :tangle no
+(use-package change-inner
+
+  :bind (("s-i" . #'change-inner)
+         ("s-o" . #'change-outer)))
+#+end_src
+
+** TODO find function at point
+:PROPERTIES:
+:CUSTOM_ID: find-function-at-point
+:END:
+Friendly reminder that ~M-.~ takes you to the definition, and ~M-,~ takes you back
+to where you originally where.
+** COMMENT How do I do something?
+:PROPERTIES:
+:CUSTOM_ID: How-do-I-do-something
+:END:
+
+  When programming, sometimes you just gotta Google “how do I do ⋯”.
+  - The usual process is (1) open a browser, (2) make a Google query, (3) look
+    at StackOverflow's most upvoted answer for your query, (4) copy-paste the
+    code solution/example to your editor; [(5) get distracted by interesting
+    things you'd like to read].
+  - Better would be to use the [[https://github.com/gleitz/howdoi][howdoi]] tool, which gives instant coding answers
+    for common questions via the command line.
+  - Below, my /Emacs Lisp/ function doc : howdoi let's me reduce the 4-step process
+    to just 2 steps: Write your query /anywhere/ then call ~M-x howdoi~ on it to
+    replace the query with the answer. (Or ~C-u M-x howdoi~ to see the full answer
+    and a link to it on StackOverflow.)
+
+    | /⚡ Never open your browser to look for help again ⚡/ |
+
+#+begin_src emacs-lisp
+(system-packages-ensure "howdoi")
+
+(cl-defun howdoi (&optional show-full-answer)
+  "Instantly insert coding answers.
+
+Replace a query with a code solution; replace it with an entire
+answer if a prefix is provided.
+
+Example usage:
+
+   On a new line, write a question such as:
+
+      search and replace buffer Emacs Lisp
+
+   Then invoke ‘M-x howdoi’ anywhere on the line
+   to get a code snippet; or ‘C-u M-x howdoi’ to get a full answer to your query.
+"
+  (interactive "P")
+  (let ((query (s-collapse-whitespace (substring-no-properties (thing-at-point 'line))))
+        (flag (if show-full-answer "-a" "")))
+    (beginning-of-line)
+    (kill-line)
+    (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
+#+end_src
+** Sleek Semantic Selection
+:PROPERTIES:
+:CUSTOM_ID: Sleek-Semantic-Selection
+:END:
+
+Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
+word, press it again to select sentence, then again for the current paragraph,
+then more to get the current section.
+
+#+begin_src emacs-lisp
+(use-package expand-region
+
+  :bind (("s-r" . #'er/expand-region)))
+#+end_src
+
+You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
+
+That is, /repeated ⌘+r expands the selection to the next logical segment of text:/
+In writing this means “Word, sentence, paragraph”, and in programming this means
+“identifier, then incrementally larger scopes”.
+
+** COMMENT Jumping to definitions & references
+:PROPERTIES:
+:CUSTOM_ID: Jumping-to-definitions-references
+:END:
+
+Out-of-the-box Emacs has ‘xref’ utilities ~M-.~ and ~C-u M-.~ to [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html#Xref][Find Identifier
+References]]; however, tags to source definitions need to be generated using the
+=etags= program. Nonetheless, the xref utilites are impressive and some just work:
+For example, ~M-?~ cleverly finds /all/ references for an identifier in ‘near by’
+files; whereas ~C-u M-. RET my/.*~, for example, uses the given regular expression
+to list all identifiers with prefix ~my/~, thereby listing my personally defined
+names ^_^
+
+| =C-M-. 𝓇𝓮ℊ𝓮𝓍= | Find all identifiers whose name matches the given pattern |
+
+Let's get [[https://github.com/jacktasia/dumb-jump][dumb-jump]], where the ‘dumb’ is possibly due to the fact
+that it works by brute-force regular-expression lookup of
+pre-defined ‘definitional template’ rules. It “just works” ^_^
+#+BEGIN_SRC emacs-lisp
+(use-package dumb-jump
+    :defer nil
+  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
+         ("M-g ."     . dumb-jump-go-other-window)
+         ("M-g b"     . dumb-jump-back)
+         ("M-g p"     . dumb-jump-go-prompt)
+         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
+  :config
+  ;; If source file is visible, just shift focus to it.
+  (setq dumb-jump-use-visible-window t))
+#+END_SRC
+
+In Lisp, for binding macros, it lists all possible mentions of the bound
+variable ---the first is likely what is desired.  Alternatively, one could just
+add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
+works fine even for locally bound definitions.  It works depending on the
+extension of a file.
+** COMMENT Which function are we writing?
+:PROPERTIES:
+:CUSTOM_ID: Which-function-are-we-writing
+:END:
+In the modeline, show the name of the function we're currently writing.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'prog-mode-hook #'which-function-mode)
+(add-hook 'org-mode-hook  #'which-function-mode)
+#+END_SRC
+In Org-mode, this places the current heading in the modeline.
+
+In Lisp mode, ensure we always have matching parens.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'emacs-lisp-mode-hook #'check-parens)
+#+END_SRC
+
+** COMMENT Highlight defined Lisp symbols
+:PROPERTIES:
+:CUSTOM_ID: Highlight-defined-Lisp-symbols
+:END:
+
+Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes it
+highlight all defined names ---as long as we're in Lisp mode, whence in org-src
+blocks we use ~C-c '~.
+#+BEGIN_SRC emacs-lisp
+;; Emacs Lisp specific
+(use-package highlight-defined
+    :defer nil
+  :hook (emacs-lisp-mode . highlight-defined-mode))
+#+END_SRC
+
+Super helpful in making my Emacs configuration: If a name is not highlighted,
+then I've misspelled it or it doesn't exist! :smile:
+
+** TODO Aggressive Indentation                           :Broken_Subsection:
+:PROPERTIES:
+:CUSTOM_ID: Aggressive-Indentation
+:END:
+
+With a single space or tab, my code should always remain indented.
+
+[[https://github.com/Malabarba/aggressive-indent-mode][aggressive-indent-mode]] is a minor mode that keeps your code always indented. It
+reindents after every change, making it more reliable than electric-indent-mode.
+
+#+BEGIN_SRC emacs-lisp
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent
+    :defer nil
+  :config (global-aggressive-indent-mode t))
+
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+#+END_SRC
+
+This mode requires my Lisp forms to be well-balanced; e.g., having a missing
+parenthesis does not indent. For instance, I have a form ~F~ and I write ~(when F~
+but have not yet enclosed the final parens, I still want nice indentation. So...
+
+*** TODO  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]] :Disabled:Breaks_C_c_C_v_C_t:
+:PROPERTIES:
+:CUSTOM_ID: https-github-com-jiahaowork-el-fly-indent-mode-el-Indent-Emacs-Lisp-on-the-fly
+:END:
+
+#+begin_src emacs-lisp :tangle no
+;; This minor mode toggles on along with elisp-mode and indents on the fly when
+;; you edit the code. No special key strokes needed.
+;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
+(use-package el-fly-indent-mode
+    :defer nil
+  :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
+#+end_src
+** COMMENT Being Generous with Whitespace
+:PROPERTIES:
+:CUSTOM_ID: Being-Generous-with-Whitespace
+:END:
+The following minor mode automatically adds spacing around operators.
+#+begin_src emacs-lisp
+(use-package electric-operator
+  :defer nil
+  :hook (c-mode . electric-operator-mode))
+#+end_src
+
+I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Also,
+languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
+an identifier, not an expression! ⟩
+
+** Coding with a Fruit Salad: Semantic Highlighting
+:PROPERTIES:
+:CUSTOM_ID: Coding-with-a-Fruit-Salad-Semantic-Highlighting
+:END:
+
+What should be highlighted when we write code? Static keywords with fixed uses,
+or dynamic user-defined names?
+
++ /Syntax/ highlighting ⇨ Specific words are highlighted in strong colours so that
+  the /structure/ can be easily gleaned.
+  - Generally this only includes a language's keywords, such as ~if, loop, begin,
+    end, cond~.
+  - User defined names generally share one colour; usually black.
+  - Hence, an ~if~ block may be seen as one coloured keyword followed by
+    a blob of black text.
+
+  /Obvious keywords are highlighted while the rest remains in black!/
+
++ /Semantic/ highlighting ⇨ Identifiers obtain unique colouring.
+  - This makes it much easier to visually spot dependencies with a quick glance.
+    + One can *see* how data flows through a function.
+  - In dynamic languages, this is a visual form of typing: Different colours are
+    for different names.
+    + Especially helpful for (library) names that are almost the same.
+    + This can be accomplished anywhere in Emacs by pressing ~M-s h .~ on
+      a selected phrase.
+
+For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifiers Mode]] gives unique highlighting to identifiers.
+- It comes with support for a bunch of languages, and one can add support for others.
+- It picks colours adaptively to fit the theme; one uses ~M-x color-identifiers:regenerate-colors~ after a theme change.
+
+#+begin_src emacs-lisp
+(use-package color-identifiers-mode
+
+  :config (global-color-identifiers-mode))
+
+;; Sometimes just invoke: M-x color-identifiers:refresh
+#+END_SRC
+
+When writing a new name, after about ~5 seconds it obtains a colour which is then
+propagated immediately to any new occurrences. This timeout before recolouring
+is to avoid any lag from multithreading and can be changed by altering the following
+line (#64) in the source file, changing the ~5~ to a smaller number.
+#+BEGIN_SRC emacs-lisp :tangle no
+(run-with-idle-timer 5 t 'color-identifiers:refresh)
+#+END_SRC
+
+Here are further reads:
+  - [[https://medium.com/@evnbr/coding-in-color-3a6db2743a1e][Coding in color: How to make syntax highlighting more useful]] ---an excellent, terse, read
+  - [[https://zwabel.wordpress.com/2009/01/08/c-ide-evolution-from-syntax-highlighting-to-semantic-highlighting/][C++ IDE Evolution: From Syntax Highlighting to Semantic Highlighting]]
+    + Names with a similar prefix share a colour, and class-local items share a colour.
+  - [[https://wordsandbuttons.online/lexical_differential_highlighting_instead_of_syntax_highlighting.html][Lexical differential highlighting instead of syntax highlighting]]
+    + /Ideally, the smaller the lexical difference, the greater the color difference should be./
+  - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
+  - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
+
+** Text Folding ---Selectively displaying portions of a program
+:PROPERTIES:
+:CUSTOM_ID: Text-Folding
+:END:
+
+⟦‼ TODO: hideshowvis shows ="*hideshowvis*"= literally in src code blocks upon
+export; as such we need to hook to exports so as to temporarily disable it. ⟧
+#+begin_src emacs-lisp
+(require 'cl-lib)
+
+(defun my/disable-hs-hide-all (orig-fun &rest args)
+  "Advise `org-export-dispatch` to disable `hs-hide-all` temporarily."
+  ;; Without this, export hangs “Hiding all blocks...”
+  (cl-letf (((symbol-function 'hs-hide-all) (lambda (&rest _) nil)))
+    ;; Without this, export shows “*hideshowvis*” markers in my exported code blocks.
+    (cl-letf (((symbol-function 'hideshowvis-highlight-hs-regions-in-fringe) (lambda (&rest _) nil)))
+      (apply orig-fun args))))
+
+(advice-add 'org-export-dispatch :around #'my/disable-hs-hide-all)
+
+#+end_src
+
+
+Literate programming within Org-mode is not always ideal or possible, so we use
+a programming mode directly and then may want to have arbitrary ‘sections’ of
+text folded up.  Let's describe how to accomplish this goal. I've tried the
+feature-full folding modes [[https://github.com/gregsexton/origami.el][Origami-mode]] and ~yafolding-mode~, but it seems the
+/built-in/ TODO. doc.hs-minor-mode is the best: (0) It folds comments, (1) it's the
+fastest, and (2) it Just Worksᵀᴹ out-of-the-box. Coupled with Vimish folding,
+for arbitrary region folding; and a helpful hydra, I'm rather happy with my
+setup.
+
+On two JavaScript files, I found the following timings (using TODO. doc.elp-instrument-function
+and TODO. doc.elp-results):
+| Folding function        | ~500 lines | ~2300 lines |
+|-------------------------+------------+-------------|
+| hs-hide-all             |    0.00277 |    0.004358 |
+| origami-close-all-nodes |    0.00304 |    0.025569 |
+| yafolding-hide-all      |   7.051795 |   74.252598 |
+(TODO: Maybe these timings are due to my config, I should try to reproduce these
+with ~emacs -Q~.)
+
+#+begin_box "There's a built-in, less featureful, alternative based on indentation!"
+Quickly fold-away code with TODO. doc.set-selective-display; e.g., <kbd:C-u C-x $>
+folds away all code indented 4 spaces, whereas <kbd:C-u 8 C-x $> is for 8
+spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
+
+I've incorporated this into my folding hydra, below.
+#+end_box
+
+#+begin_box "Vimish fold - Fold regions based on selection, not syntax"
+Sometimes we want to fold some random piece of text ---rather than fold accoding
+to a programming language's syntactic constructions.
+
+[[https://github.com/mrkkrp/vimish-fold][Vimish-fold]] gives us just that and with many fancy features, from the README:
++ folding of active regions;
++ good visual feedback: it's obvious which part of text is folded with a ‘⋮’ in the fringe.
++ create folds from regions between ~{{{~ and ~}}}~ automatically (marks are customizable; TODO. doc.vimish-fold-from-marks);
++ persistence by default: when you kill a buffer your folds don't disappear;
++ persistence scales well, you can work on hundreds of files with lots of folds without adverse effects;
++ it does not break indentation;
++ folds can be toggled from folded state to unfolded and back very easily;
++ quick navigation between existing folds;
++ you can use mouse to unfold folds (good for beginners and not only for them).
+
+#+begin_src emacs-lisp
+(use-package vimish-fold
+
+  :config (vimish-fold-global-mode 1))
+#+end_src
+#+end_box
+
+*** TODO Actual Setup                                                :ignore:
+:PROPERTIES:
+:CUSTOM_ID: Actual-Setup
+:END:
+--------------------------------------------------------------------------------
+
+TODO: Below I setup hideshow along with [doc : hideshowvis-symbols] [hideshowvis]  which gives us a nice clickable
+“+/-” marker for foldable blocks as well as an overlay that indicates how many
+lines are folded away.  For more on hideshow-mode, see the [[https://writequit.org/denver-emacs/presentations/2017-11-02-hidden-gems.html][Hidden Gem Packages]]
+presentation which contains a small self-contained introduction, or [[https://github.com/emacs-mirror/emacs/blob/master/lisp/progmodes/hideshow.el#L127][these super useful source comments]]
+which discuss hooks and support for special modes ([[https://superuser.com/questions/576447/enable-hideshow-for-more-modes-e-g-ruby][like this one]]).
+#+BEGIN_SRC emacs-lisp
+(use-package hideshow
+  :defer nil
+  :init
+  ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
+  (quelpa '(hideshowvis :fetcher wiki))
+
+  ;; Press “C-c TAB” to toggle a block's visibility or “C-c f” for my folding hydra.
+  :bind (("C-c TAB" . hs-toggle-hiding))
+
+  ;; https://github.com/shanecelis/hideshow-org/tree/master
+  ;; This extension bring Org-mode tab behaviour to folding, at the block level
+  ;; and buffer level ---but not cycling visibility.
+  ;; (use-package hideshow-org) ;; Disabled as commented below.
+
+  :hook ((prog-mode . (lambda () (hs-minor-mode +1)
+                        (hideshowvis-minor-mode t)
+                        (hideshowvis-symbols)
+                        ;; This hook along with hs-org mode breaks editing of src blocks in Org files.
+                        ;; That's OK, since my folding hydra does a better job for my needs.
+                        ;; (hs-org/minor-mode t)
+                        (hs-hide-all)))))
+#+END_SRC
+
+Along with a hydra for super quick navigation and easily folding, unfolding
+blocks! Love this one (•̀ᴗ•́)و
+#+BEGIN_SRC emacs-lisp
+(my/defhydra "C-c f" "Folding text" archive
+  :Current
+  ("h" hs-hide-block "Hide")
+  ("s" hs-show-block "Show")
+  ("t" hs-toggle-hiding "Toggle")
+  ;; "l" hs-hide-level "Hide blocks n levels below this block"; TODO: Enable folding feature
+  :Buffer
+  ("H" hs-hide-all "Hide")
+  ("S" hs-show-all "Show")
+  ("T" my/hs-toggle-buffer "Toggle")
+  :Style
+  ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
+  ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
+  :Region
+  ("f" (lambda () (interactive) (vimish-fold-toggle) (vimish-fold (region-beginning) (region-end))) "Fold/Toggle")
+  ("d" vimish-fold-delete "Delete fold")
+  ("U" vimish-fold-unfold-all "Unfold all")
+  ("D" vimish-fold-delete-all "Delete all")
+  ("n" vimish-fold-next-fold "Next fold")
+  ("p" vimish-fold-previous-fold "Previous fold")
+  :...
+  ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
+  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
+  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
+  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset Hideshow")  ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
+  ("q" nil "Quit" :color blue))
+
+;; Features from origami/yafolding that maybe I'd like to implement include:
+;; narrowing to block or folding everything except block, navigating back and forth between folded blocks.
+;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
+#+END_SRC
+#+begin_details "Folding Hydra Helpers"
+#+BEGIN_SRC emacs-lisp
+(defvar my/hs-hide nil "Current state of hideshow for toggling all.")
+(defun my/hs-toggle-buffer () "Toggle hideshow all."
+       (interactive)
+       (setq my/hs-hide (not my/hs-hide))
+       (if my/hs-hide
+           (hs-hide-all)
+         (hs-show-all)))
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+(defun my/clever-selective-display (&optional level)
+"Fold text indented same of more than the cursor.
+
+This function toggles folding according to the level of
+indentation at point. It's convenient not having to specify a
+number nor move point to the desired column.
+"
+  (interactive "P")
+  (if (eq selective-display (1+ (current-column)))
+      (set-selective-display 0)
+    (set-selective-display (or level (1+ (current-column))))))
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+;; Src: https://emacs.stackexchange.com/questions/52588/dynamically-hide-lines-indented-more-than-current-line
+(define-minor-mode auto-set-selective-display-mode
+  "Automatically apply `set-selective-display' at all times based on current indentation."
+  nil "$" nil
+  (if auto-set-selective-display-mode
+      (add-hook 'post-command-hook #'auto-set-selective-display nil t)
+    (remove-hook 'post-command-hook #'auto-set-selective-display t)
+    (with-temp-message ""
+      (set-selective-display nil))))
+;;
+(defun auto-set-selective-display ()
+  "Apply `set-selective-display' such that current and next line are visible.
+
+Scroll events are excluded in order to prevent wild flickering while navigating."
+  (unless (eq last-command #'mwheel-scroll)
+    (let*((this-line-indent (current-indentation))
+          (next-line-indent (save-excursion (forward-line) (current-indentation))))
+      (with-temp-message "" ; Suppress messages.
+        (set-selective-display (1+ (max this-line-indent next-line-indent)))))))
+#+END_SRC
+#+end_details
+
+With expected support for searching.
+#+BEGIN_SRC emacs-lisp
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+(defun my/search-hook-function ()
+  (when hs-minor-mode (set-mark-command nil) (hs-show-block) (pop-to-mark-command)))
+#+END_SRC
+
+#+begin_details "What if I want my own hideshow overlays, instead of hideshowvis?"
+#+BEGIN_SRC emacs-lisp :tangle no
+ ;; Add an overlay to display the number of hidden lines 😁;; https://github.com/shanecelis/hideshow-org/tree/master
+ (setq hs-set-up-overlay
+       (defun my-display-code-line-counts (ov)
+         (when (eq 'code (overlay-get ov 'hs))
+           (overlay-put ov 'display
+                        (propertize
+                         (format " ... ﴾%d﴿"
+                                 (count-lines (overlay-start ov)
+                                              (overlay-end ov)))
+                         'face 'font-lock-type-face)))))
+#+END_SRC
+#+end_details
+#+begin_details  "[Disabled / Alternative] origami"
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package origami
+  ;; In Lisp languages, by default only function definitions are folded.
+  ;; :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
+
+  ;; Please open any code with top level items folded away.
+  :hook (prog-mode .  (lambda () (interactive)
+                       (origami-close-all-nodes (current-buffer))))
+  ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
+
+  :config
+
+  ;; For any major-mode that doesn't have explicit support, origami will use the
+  ;; indentation of the buffer to determine folds.
+  (global-origami-mode)
+
+  ;; With basic support for one of my languages.
+  (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
+         origami-parser-alist))
+#+END_SRC
+
+With expected support for searching.
+#+BEGIN_SRC emacs-lisp :tangle no
+(defun my/search-hook-function ()
+  (when origami-mode (origami-open-node-recursively (current-buffer) (point))))
+
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+;;
+;; Likewise for incremental search, isearch, users.
+;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
+#+END_SRC
+
+And hydra...
+#+BEGIN_SRC emacs-lisp :tangle no
+(my/defhydra "C-c f" "Folding text" archive
+  :Current
+  ("h" origami-close-node-recursively "Hide")
+  ("s" origami-open-node-recursively  "Show")
+  ("c" origami-recursively-toggle-node "Cycle") ;; Acts like org-mode header collapsing. Cycle a fold between open, recursively open, closed.
+  ("f" origami-show-only-node "Focus") ;; Close everything but the folds necessary to see the point. Very useful for concentrating on an area of code.
+  ;; ("H" origami-close-all-nodes "Hide All")
+  ;; ("S" origami-open-all-nodes "Show All")
+  :Navigate
+  ("n" origami-next-fold "Next")
+  ("p" origami-previous-fold "Previous")
+  :...
+  ("t" origami-toggle-all-nodes  "Toggle buffer")
+  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
+  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
+  ("r" origami-reset)) ;; Remove all folds from the buffer and reset all origami state. Useful if origami messes up!
+#+END_SRC
+
+# *Disabled:* I've looked at a few folding modes, and I like this one.
+# However, I seldom need it.
+#+end_details
+#+begin_details "[Disabled / Alternative] yafolding"
+I found using yafolding-mode to be way too slow.
+#+begin_src emacs-lisp :tangle no
+;; “Yet Another Folding” just works: Indented elements are folded away; no setup required.
+;; (use-package discover)
+(use-package yafolding
+    ;; Please open any code with top level items folded away:
+    ;; Open the file super quick, but when I'm inactive for 5 seconds,
+    ;; then I'm probably doing other stuff so do the folding then.
+    ;; :hook prog-mode .  (lambda () (interactive)
+   ;; (run-with-idle-timer 5 nil #'yafolding-hide-all))
+   ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
+  )
+(defhydra yafolding-hydra (:color pink :columns 3)
+  "Fold code based on indentation levels"
+  ;; First row
+  ("s" yafolding-show-element "show element")
+  ("S" yafolding-show-all "show all")
+  ("<right>" (lambda () (interactive)
+     (let ((next (car (yafolding-get-overlays (point) (point-max)))) pos)
+       (if (not next) (message "No more folded regions")
+         (setq pos (overlay-start next))
+               (yafolding-hide-element)
+               (goto-char pos)
+               (yafolding-show-element))))
+   "forward element")
+  ;; Second row
+  ("h" yafolding-hide-element "hide element")
+  ("H" yafolding-hide-all "hide all")
+  ("<left>" (lambda () (interactive)
+     (let ((previous (car (yafolding-get-overlays (point-min) (point)))) pos)
+       (if (not previous) (message "No more folded regions")
+         (setq pos (overlay-start previous))
+               (yafolding-hide-element)
+               (goto-char pos)
+               (yafolding-show-element))))
+        "backward element")
+  ;; Third row
+  ("SPC" yafolding-toggle-element "toggle element")
+  ("T" yafolding-toggle-all "toggle all")
+  ("q" nil "quit" :color red)
+  ("p" yafolding-hide-parent-element "hide parent")
+  ("<up>" (lambda () (interactive) (or (ignore-errors (yafolding-go-parent-element))
+    (message "Already at the top level.")))
+   "go to parent")
+  ("r" (lambda () (interactive) (yafolding-hide-region (region-beginning) (region-end)))
+   "hide region"
+  ))
+
+  (global-set-key (kbd "s-f") 'yafolding-hydra/body)
+#+end_src
+#+end_details
+*** E2E Test                                                         :ignore:
+:PROPERTIES:
+:CUSTOM_ID: E2E-Test
+:END:
+
+#+begin_details Test
+#+begin_src emacs-lisp :tangle init-test.el
+(ert-deftest hideshow-is-enabled-and-folds-by-default ()
+  :tags '(hideshow)
+  ;; Make a temporary scratch.js file with the given contents.
+  (let* ((contents "function fierce(name) { \n return `${name}: ROAR` \n }")
+         (scratch.js (make-temp-file "scratch" nil ".js" contents)))
+
+    ;; Hideshow is enabled whenever we open a code file
+    (find-file scratch.js)
+    (should hs-minor-mode)
+
+    ;; Function definition is a hidden block
+    (end-of-line)
+    (backward-char 2)
+    (should (hs-already-hidden-p))
+
+    ;; Indeed, the hidden block starts at the first line break and ends just after the second.
+    (-let [ov (hs-already-hidden-p)]
+      (-let [(first\n second\n) (-elem-indices "\n" (s-split "" contents))]
+        (should (equal (overlay-start ov) first\n)) ;; ≈ 25
+        (should (equal (overlay-end ov) (+ second\n 2))))) ;; ≈ 52
+
+    (kill-buffer)))
+#+end_src
+#+end_details
+
+** Comment-boxes up to the fill-column ---or banner instead?
+:PROPERTIES:
+:CUSTOM_ID: Comment-boxes-up-to-the-fill-column
+:END:
+
+GIF: https://endlessparentheses.com/images/comment-box.gif
+
+#+begin_src emacs-lisp
+(defun my/comment-box (b e)
+  "Draw a box comment around the region but arrange for the region
+to extend to at least the fill column. Place the point after the
+comment box.
+
+Source: http://irreal.org/blog/?p=374
+
+To do fancy stuff like removing boxes, centering them, etc
+see https://github.com/lewang/rebox2/blob/master/rebox2.el"
+  (interactive "r")
+  (let ((e (copy-marker e t)))
+    (goto-char b)
+    (end-of-line)
+    (insert-char ?  (- fill-column (current-column)))
+    (comment-box b e 1)
+    (goto-char e)
+    (set-marker e nil)))
+#+end_src
+
+A comment box sometimes increases the size of a file more than I'd like, or more than others on my dev team would like.
+As such, let's try [[https://github.com/WJCFerguson/banner-comment][banner comments]]:
+- GIF: https://github.com/WJCFerguson/banner-comment/blob/35d3315683d3f97605207691b77e9f447af18fe2/demo.png
+#+begin_src emacs-lisp
+(use-package banner-comment   :defer nil)
+#+end_src
+
+Pretty slick!
+
+** TODO ⌘-e: Edit Everything in a separate buffer
+:PROPERTIES:
+:CUSTOM_ID: e-Edit-Everything-in-a-separate-buffer
+:END:
+
+Edit comment/string/docstring/code block in separate buffer with your favourite
+mode.
+
++ ⌘-e to toggle “e”diting of thing at point.
++ ⌘-e will try to edit thing at point, or selection, if possible; otherwise it
+  will exit edit session.
+  - 🔥 Avoid escape nightmares by editing strings in a separate buffer.
+  - On a string, press ⌘-e and a new buffer pops up with unescaped content,
+    letting you edit raw strings directly.  It then takes care of automatically
+    escaping strings for you when you press ⌘-e, or ~C-c C-c~ ---or discard your
+    changes with ~C-c C-k~.
++ ⌘-e can be used within edit session to create new edit sessions, if possible; then ⌘-e will “pop-off-the-stack” as expected.
+  - (I already use ⌘-e to toggle editing Org src blocks, and when editing a block ⌘-e will try to do a recursive edit if possible, or exit the edit session.)
+  - (The separedit package also let's me press ⌘-e to edit variable values when describing them, and to edit text when in the minibuffer.)
+
+From [[https://github.com/twlz0ne/separedit.el][source]]:
+#+begin_example org
++----------+         Edit           +-----------+         Edit           +-----------+
+|          | ---------------------> |   edit    | ---------------------> |   edit    | ...
+|          |  point-at-comment?     |   buffer  |  point-at-comment?     |   buffer  |
+|  source  |  point-at-string?      |           |  point-at-string?      |           | ...
+|  buffer  |  point-at-codeblock?   | (markdown |  point-at-codeblock?   | (markdown | ...
+|          |  point-at-...?         |  orgmode  |  point-at-...?         |  orgmode  |
+|          | <--------------------- |   ...)    | <--------------------- |   ...)    | ...
++----------+     Commit changes     +-----------+     Commit changes     +-----------+
+#+end_example
+
+[In-general, we can invoke [[https://github.com/Fanael/edit-indirect/blob/e3d86416bcf8ddca951d7d112e57ad30c5f9a081/edit-indirect.el#L124][M-x edit-indirect-region]] to edit any selected piece
+of text in its own buffer, then ~C-c C-c~ (or ~⌘-e~ with my setup) to commit the
+edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected region
+😉]
+
+#+begin_src emacs-lisp
+(use-package separedit   :defer nil)
+;;
+;; # Example Usage
+;;
+;; 1. Press ⌘-e on this line, to edit this entire comment.
+;; 2. Press ⌘-e to exit the edit session.
+;;
+;; Since my ⌘-e is context sensitive, to determine whether to continue editing or
+;; exit; you can explicitly request an edit with C-c ' and an exit with C-c C-c.
+;;
+;; ```
+;; ;; 3. Press ⌘-e on this line, to edit this source block!
+;; ;; 4. Press ⌘-e on this line, to edit this inner-most comment!
+;; ;; 5. At start of next line, press “⌘-r ⌘-e” to edit just the source block
+;; ;;
+;; (cl-defun index (&rest args)
+;;   "6. Press ⌘-e to edit this string, \"7. and again in these quotes\""
+;;   "<p>8. Press ⌘-e to edit this <strong> HTML </strong> block, in Web-mode </p>")
+;;
+;; ;; 9. Press C-u ⌘-e to guess the language of the next string (Rust); then ⌘-r C-c C-r to quickly run the code.
+;; "fn main() { println!(\"{}\", \"hello!\"); }"
+;;
+;; ;; 10. Select & press “C-u ⌘-e” on the following, to edit it in whatever mode you want.
+;; ;; select * from table -- Or just press ⌘-e and have the mode detected.
+;;
+;; ```
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setup to make the above ⌘-e behaviour happen.
+
+;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
+(--map (bind-key "s-e" #'separedit it)
+       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
+
+#+end_src
+
+#+begin_src emacs-lisp
+;; TODO:Merge these changes upstream
+
+;; I'm focusing on a specific region to edit, so let's not be distracted by anything else.
+;; This makes the “editing stack” feel like a stack, with ⌘-e pushing new editing session buffers,
+;; and C-c C-c, or ⌘-e on non-editable lines, to pop-off the stack.
+;; (advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
+;;
+;; NOTE: This actually breaks the stack nature of popping with ⌘-e; we need to actually save the stack via some list of buffers than push/pop buffers on that variable.
+
+;; I don't want to be bothered for what mode I'm in, when a region is selected using current major mode.
+;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode for my current selected text.
+(advice-add #'separedit--select-mode :before-until
+            (lambda (&rest _)
+              (when (and (not current-prefix-arg) (region-active-p)) (pp-to-string major-mode))))
+
+;; Also: When on a string ∷
+(advice-add #'separedit--select-mode :before-until
+            (lambda (&rest _)
+              "When on a string ∷
++ ⌘-e ⇒ Edit string at point
++ C-u ⌘-e ⇒ Auto-detect my string's major mode
++ C-u C-u ⌘-e ⇒ Let me select a major mode"
+              (-let [str? (ignore-errors (thing-at-point 'string))]
+                (case (car current-prefix-arg)
+                  (4 (when str? (pp-to-string (my/detect-prog-mode str?))))
+                  (_ nil)))))
+
+;; NOTE: By default, separedit provides colouring for 'strings', "strings", and `strings'
+;; This doesn't look very good when I have a single quote within double quotes:
+;; In an Emacs Lisp buffer, editing the string "Bob's Work" gives unexpected highlighting.
+;; ```
+;; (advice-add #'separedit :after
+;;             (lambda (&rest _)
+;;               (when (s-ends-with? "string-mode" (pp-to-string major-mode))
+;;                 (text-mode))))
+;; ```
+#+end_src
+
+#+begin_src emacs-lisp
+;; In the indirect buffer, make ⌘-e finish editing.
+(use-package edit-indirect
+  :config (bind-key "s-e"
+                    (lambda ()
+                      (interactive)
+                      (or (ignore-errors (call-interactively #'separedit))
+                          (call-interactively #'edit-indirect-commit)))
+                    #'edit-indirect-mode-map))
+
+;; I also have “s-e” bound to `org-edit-src-exit'.
+(advice-add 'org-edit-src-exit :before-until
+            (lambda (&rest r)
+              (when (ignore-errors (separedit)) t)))
+#+end_src
+
+#+begin_src emacs-lisp
+;; → ⌘-e on an Org paragraph pops-up an edit session in Org mode.
+;; → ⌘-e on a selection in Org mode pops-up an edit session in Org mode.
+;; TODO: Consider forming an alist for special blocks to refer to their preferred
+;; edit mode, defaulting to Org-mode? Perhaps something to consider /after/
+;; addressing the bug below.
+;; (advice-unadvice 'org-edit-special) MA: TODO: FIXME: Delete this?
+(advice-add 'org-edit-special :around
+            (lambda (orginal-function &rest r)
+              (cond
+               ((region-active-p) (call-interactively #'edit-indirect-region) (org-mode))
+               ((equal 'paragraph (car (org-element-at-point)))
+                (mark-paragraph) (call-interactively #'edit-indirect-region) (org-mode))
+               (t (or (ignore-errors (apply orginal-function r))
+                      ;; We try to edit a special block when orginal-function fails.
+                      ;; This way src blocks are not confused with the more generic idea of special blocks.
+                      (when
+                          (my/org-in-any-block-p)
+                        ;; Note using org-element-at-point doesn't work well with special blocks when you're somewhere within the block.
+                        ;; It only works correctly when you're on the boundary of the special block; which is not ideal.
+                        ;; This is why I'm not using: (org-element-property :begin elem).
+                        (-let [(start . end) (my/org-in-any-block-p)]
+                          (set-mark-command start)
+                          (goto-char end) (previous-line 2) (end-of-line) ;; FIXME: Still shows #+end_XXX for some reason.
+                          (call-interactively #'edit-indirect-region) (org-mode))))))))
+#+end_src
+
+#+begin_src emacs-lisp
+;; where...
+(defun my/org-in-any-block-p ()
+  "Return non-nil if the point is in any Org block.
+
+The Org block can be *any*: src, example, verse, etc., even any
+Org Special block.
+
+This function is heavily adapted from `org-between-regexps-p'.
+
+Src: https://scripter.co/splitting-an-org-block-into-two/"
+  (save-match-data
+    (let ((pos (point))
+          (case-fold-search t)
+          (block-begin-re "^[[:blank:]]*#\\+begin_\\(?1:.+?\\)\\(?: .*\\)*$")
+          (limit-up (save-excursion (outline-previous-heading)))
+          (limit-down (save-excursion (outline-next-heading)))
+          beg end)
+      (save-excursion
+        ;; Point is on a block when on BLOCK-BEGIN-RE or if
+        ;; BLOCK-BEGIN-RE can be found before it...
+        (and (or (org-in-regexp block-begin-re)
+                 (re-search-backward block-begin-re limit-up :noerror))
+             (setq beg (match-beginning 0))
+             ;; ... and BLOCK-END-RE after it...
+             (let ((block-end-re (concat "^[[:blank:]]*#\\+end_"
+                                         (match-string-no-properties 1)
+                                         "\\( .*\\)*$")))
+               (goto-char (match-end 0))
+               (re-search-forward block-end-re limit-down :noerror))
+             (> (setq end (match-end 0)) pos)
+             ;; ... without another BLOCK-BEGIN-RE in-between.
+             (goto-char (match-beginning 0))
+             (not (re-search-backward block-begin-re (1+ beg) :noerror))
+             ;; Return value.
+             (cons beg end))))))
+#+end_src
+
+I'd like to [[https://github.com/andreasjansson/language-detection.el][guess the language]] I'm in, when working with strings.
+#+begin_src emacs-lisp
+(use-package language-detection   :defer nil)
+;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
+;; Also, (language-detection-string "select * from t") ;; ⇒ sql
+
+;; TODO: Push this upstream; https://github.com/andreasjansson/language-detection.el/issues/1
+(cl-defun my/detect-prog-mode (&optional string)
+  "Guess programming mode of the current buffer, or STRING if it is provided.
+
+When called interactively, it enables the mode;
+from Lisp it just returns the name of the associated mode.
+
+    ;; Example Lisp usage
+    (call-interactively #'my/detect-prog-mode)
+
+`language-detection-buffer' returns a string which is not always the name of the
+associated major mode; that's what we aim to do here."
+  (interactive)
+
+  (defvar my/detect-prog-mode/special-names
+    '((c           . c-mode)
+      (cpp         . c++-mode)
+      (emacslisp   . emacs-lisp-mode)
+      (html        . web-mode) ;; I intentionally want to use this alternative.
+      (matlab      . octave-mode)
+      (shell       . shell-script-mode)
+      (visualbasic . visual-basic-mode)
+      (xml         . sgml-mode))
+    "Names in this alist map a language to its mode; all other languages 𝒳 have mode ‘𝒳-mode’ afaik.")
+
+  (let* ((lang (if string (language-detection-string string) (language-detection-buffer)))
+         (mode (or (cdr (assoc lang my/detect-prog-mode/special-names))
+                   (intern (format "%s-mode" lang)))))
+    (if (called-interactively-p 'any)
+        (progn (call-interactively mode) (message "%s enabled!" mode))
+      mode)))
+#+end_src
+
++ ⌘-e to edit an Org table cell; see [[https://orgmode.org/manual/Built_002din-Table-Editor.html][here]] for built-in table editing commands.
+#+begin_src emacs-lisp
+(advice-add #'org-edit-special :before-until
+            (lambda (&rest r)
+              (when (equal 'table-row (car (org-element-at-point)))
+                (call-interactively #'org-table-edit-field))))
+#+end_src
+** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
+:PROPERTIES:
+:CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
+:END:
+
+In =emacs-lisp-mode= we can enable =eldoc-mode= ---“Elisp Live Documentation”--- to
+display information about a function or a variable in the echo area. Likewise
+for Haskell.
+
+#+BEGIN_SRC emacs-lisp
+(use-package eldoc
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
+        (lisp-interaction-mode . turn-on-eldoc-mode)
+        (haskell-mode . turn-on-haskell-doc-mode)
+        (haskell-mode . turn-on-haskell-indent))
+
+;; Slightly shorten eldoc display delay.
+(setq eldoc-idle-delay 0.4) ;; Default 0.5
+#+END_SRC
+
+The less casual Haskeller would likely want to use [[https://haskell-lang.org/intero][intero]] to obtain
+more support; e.g., obtain suggestions from GHC about redundant imports
+or type signatures.
+
+** An “auto read only” detection mechanism ---when jumping to definitions :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: An-auto-read-only-detection-mechanism-when-jumping-to-definitions
+:header-args: :tangle no
+:END:
+
+Files in 3ʳᵈ-party directories should be read-only whenever I open them, when
+I'm jumping to definitions (with ~M-.~).
+
+#+begin_src emacs-lisp
+;; Usage: Press “M-”. “use-package” below and you can accidentally alter the source code!
+;; But in this case you likely just wanted to see the 3ʳᵈ-party definition, not alter it.
+;; As such, with this advice, the source will not be alterable (unless you toggle read-only mode).
+(advice-add #'xref-find-definitions :after
+            (lambda (&rest _)
+              (when (--map (s-ends-with? it (f-parent buffer-file-name))
+                           '("lisp/emacs-lisp" "/lisp" ".emacs.d/elpa/"))
+                (read-only-mode))))
+#+end_src
+** TODO COMMENT Auto-format on Save :Reenabled:Should_be_Disabled:Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
+:PROPERTIES:
+:CUSTOM_ID: Auto-format-on-Save
+:END:
+
+[[https://github.com/lassik/emacs-format-all-the-code/tree/eb2a7fa6da15d23b57921218a36ac67d523e81f1][Auto-format source code in many languages with one command]]
+
+Let's auto-format source code in many languages using the same command for all
+languages, instead of learning a different Emacs package and formatting command
+for each language.
+
+Just do ~M-x format-all-buffer~ and it will try its best to do the right thing. To
+auto-format code on save, use the minor mode format-all-mode. Better yet, we ask
+for it to do so “on save”.
+
+- You will need to install external programs to do the formatting. If
+  ~format-all-buffer~ can't find the right program, it will try to tell you how to
+  install it.
+- An alternative Emacs tool is [[https://github.com/radian-software/apheleia][apheleia: 🌷 Run code formatter on buffer
+  contents without moving point, using RCS patches and dynamic programming.]]
+
+#+begin_src emacs-lisp
+(use-package format-all
+    :defer nil
+  ;; To enable format on save for most programming language buffers:
+  :hook (prog-mode . format-all-mode)
+  :config
+  ;; Please use the default formatters; I don't care too much.
+  (add-hook 'format-all-mode-hook 'format-all-ensure-formatter))
+#+end_src
+
+[[https://prettier.io/docs/en/index.html][Prettier]] is an opinionated code formatter for numerous web related languages,
+including JS, TS, HTML, CSS, JSON, Vue, Markdown, and YAML.
+
+#+begin_src emacs-lisp
+;; For JavaScript prettification: It automatically inserts semicolons, forces newlines, inserts parens, etc.
+;; Lots of redundant stuff, but stuff to make it easy to work with others.
+(shell-command "npm install --global prettier")
+;; Specific package to do only JS prettification: https://github.com/prettier/prettier-emacs
+#+end_src
+
+For example, in a NodeJS app make a file ~.prettierrc.json~ whose contents are
+#+begin_src json :tangle no
+{
+    "singleQuote": true,
+    "arrowParens": "avoid",
+    "printWidth": 120,
+    "semi": false,
+    "trailingComma": "none"
+}
+#+end_src
+Unfortunately, my current team prefers ~"semi": true~ ---which is understandable
+for people not familar with how JavaScript does [[https://www.freecodecamp.org/news/lets-talk-about-semicolons-in-javascript-f1fe08ab4e53/][semicolon insertion]].
+
+( If you're having trouble getting prettier to work on save, consider using this
+[[https://github.com/codesuki/add-node-modules-path][package]] which detects your node modules' path. )
+
+Anyhow, with these rules:
+- I write =const f = (x) => "x" == x= then on save it becomes =const f = x => 'x' == x;=
+- I write =let xs = [1, 2, 3,]= then on save it becomes =let xs = [1, 2, 3];=
+- I write =foo(reallyLongArg(), omgSoManyParameters(), IShouldRefactorThis(), isThereSeriouslyAnotherOne());=
+  then nothing happens on save; but if you add one more argument, =, 12=, then it gets reformatted with each arg on one line.
+
+Notice that in the first example above, only minor syntactic changes were made;
+nothing altering semantics or quality of code ---for that, we use a /linter/.
+In particular, [[https://emacs-lsp.github.io/lsp-mode/page/lsp-eslint/][LSP ESLint]] when activated will show us two errors: It's almost always
+better to use ~===~ instead of ~==~ and literals should be on the right side of the equality.
+We can use ~M-x lsp-execute-code-action~ to get a list of actions that can be performed to fix this /quality/ problem.
+
+** TODO Emphasised Comments
+:PROPERTIES:
+:CUSTOM_ID: Emphasised-Comments
+:END:
+
+#+begin_src emacs-lisp
+;; In VSCode, with the “Better Comments” extension, comments starting with a “bang” are made to stand out, via bold red.
+;; Let's do the same thing in Emacs.
+;;I did not look around, there might be a package/option for this 🤷
+(add-hook 'prog-mode-hook (lambda ()
+                            (highlight-lines-matching-regexp ".*\\*.*!.*" 'hi-red-b)
+                            (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)))
+
+#+end_src
 
 * Prose
 :PROPERTIES:
@@ -7568,7 +8624,20 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-* TODO COMMENT [0/61] Lost Souls
+** COMMENT [[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.
+:PROPERTIES:
+:CUSTOM_ID: https-github-com-sshaw-copy-as-format-copy-as-format-Emacs-function-to-copy-buffer-locations-as-GitHub-Slack-JIRA-etc-formatted-code
+:END:
+#+begin_src emacs-lisp
+;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
+;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
+;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
+;; With a prefix argument prompt for the format style 𝒮.
+;; Easy to add more formats.
+(use-package copy-as-format   :defer nil)
+#+end_src
+
+* TODO COMMENT [0/44] Lost Souls
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -7960,15 +9029,45 @@ cargo +nightly install racer
 
 :End:
 
-** TODO Programming
+** TODO my/open-in-terminal '⌘
+:PROPERTIES:
+:CUSTOM_ID: my-open-in-terminal-'
+:END:
+#+begin_src emacs-lisp
+(defalias 'my/open-in-terminal '⌘)
+(cl-defun ⌘ (&rest cmds)
+  "Run terminal commands CMDS in a new MacOS Terminal instance, and bring it to focus.
+
+Example: (⌘ \"echo hello\" \"echo world\")
+
+Useful for those cases where I have to interact with non-trivial ‘interactive terminal menus’."
+  (shell-command (format "osascript -e 'tell app \"Terminal\" to activate do script %s'"
+                         (pp-to-string (s-join ";" cmds)))))
+
+;; (⌘ "echo hello" "echo world")
+#+end_src
+
+** TODO Check if application APP is currently running, in use.
+:PROPERTIES:
+:CUSTOM_ID: Check-if-application-APP-is-currently-running-in-use
+:END:
+#+begin_src emacs-lisp
+(cl-defun my/application-running? (app)
+  "Check if application APP is currently running, in use."
+  (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
+#+end_src
+
+** TODO Work Programming                                          :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
 
+| Disabled: At work I program in Java, and IntelliJ is better than Emacs out-of-the-box. |
+
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
 
-TODO: Fix these docs
+# TODO: Fix these docs
 #  TODO: + Checkout branches/PRs with doc : my/gh-checkout
 #  + See all company related PRs with doc : w-PRs
 # + Quickly look up language/library docs /within/ Emacs with kbd:C-c_d.
@@ -7978,7 +9077,7 @@ TODO: Fix these docs
   (setq doom-modeline-buffer-file-name-style 'truncate-except-project))
 #+end_src
 
-*** COMMENT devdocs
+*** devdocs
 :PROPERTIES:
 :CUSTOM_ID: devdocs
 :END:
@@ -8006,72 +9105,7 @@ TODO: Fix these docs
           do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
 #+end_src
 
-*** COMMENT How do I do something?
-:PROPERTIES:
-:CUSTOM_ID: How-do-I-do-something
-:END:
-
-  When programming, sometimes you just gotta Google “how do I do ⋯”.
-  - The usual process is (1) open a browser, (2) make a Google query, (3) look
-    at StackOverflow's most upvoted answer for your query, (4) copy-paste the
-    code solution/example to your editor; [(5) get distracted by interesting
-    things you'd like to read].
-  - Better would be to use the [[https://github.com/gleitz/howdoi][howdoi]] tool, which gives instant coding answers
-    for common questions via the command line.
-  - Below, my /Emacs Lisp/ function doc : howdoi let's me reduce the 4-step process
-    to just 2 steps: Write your query /anywhere/ then call ~M-x howdoi~ on it to
-    replace the query with the answer. (Or ~C-u M-x howdoi~ to see the full answer
-    and a link to it on StackOverflow.)
-
-    | /⚡ Never open your browser to look for help again ⚡/ |
-
-#+begin_src emacs-lisp
-(system-packages-ensure "howdoi")
-
-(cl-defun howdoi (&optional show-full-answer)
-  "Instantly insert coding answers.
-
-Replace a query with a code solution; replace it with an entire
-answer if a prefix is provided.
-
-Example usage:
-
-   On a new line, write a question such as:
-
-      search and replace buffer Emacs Lisp
-
-   Then invoke ‘M-x howdoi’ anywhere on the line
-   to get a code snippet; or ‘C-u M-x howdoi’ to get a full answer to your query.
-"
-  (interactive "P")
-  (let ((query (s-collapse-whitespace (substring-no-properties (thing-at-point 'line))))
-        (flag (if show-full-answer "-a" "")))
-    (beginning-of-line)
-    (kill-line)
-    (insert (shell-command-to-string (format "howdoi %s %s" query flag)))))
-#+end_src
-*** Sleek Semantic Selection
-:PROPERTIES:
-:CUSTOM_ID: Sleek-Semantic-Selection
-:END:
-
-Super sleek way to select regions: Anywhere press kbd:⌘-r to select the current
-word, press it again to select sentence, then again for the current paragraph,
-then more to get the current section.
-
-#+begin_src emacs-lisp
-(use-package expand-region
-
-  :bind (("s-r" . #'er/expand-region)))
-#+end_src
-
-You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
-
-That is, /repeated ⌘+r expands the selection to the next logical segment of text:/
-In writing this means “Word, sentence, paragraph”, and in programming this means
-“identifier, then incrementally larger scopes”.
-
-*** COMMENT Managing Processes/Servers from within Emacs ---Work-specific functions
+*** Managing Processes/Servers from within Emacs ---Work-specific functions
 :PROPERTIES:
 :CUSTOM_ID: Managing-Processes-Servers-from-within-Emacs-Work-specific-functions
 :END:
@@ -8510,7 +9544,7 @@ Let's get the file path of the current file. We bind it and make it a top-level 
     (message (kill-new buffer-file-name)))))
 #+end_src
 
-*** TODO Projectile
+*** Projectile
 :PROPERTIES:
 :CUSTOM_ID: Projectile
 :END:
@@ -8522,7 +9556,7 @@ Let's get the file path of the current file. We bind it and make it a top-level 
 :config (projectile-global-mode)
 (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
 #+end_src
-*** TODO COMMENT Are there any errors in my code?
+*** Are there any errors in my code?
 :PROPERTIES:
 :CUSTOM_ID: Are-there-any-errors-in-my-code
 :END:
@@ -8623,537 +9657,7 @@ Try it out:
 (setq 1 2) ;; Error: ‘1’ is not a variable.
 #+end_src
 
-*** COMMENT Jumping to definitions & references
-:PROPERTIES:
-:CUSTOM_ID: Jumping-to-definitions-references
-:END:
-
-Out-of-the-box Emacs has ‘xref’ utilities ~M-.~ and ~C-u M-.~ to [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html#Xref][Find Identifier
-References]]; however, tags to source definitions need to be generated using the
-=etags= program. Nonetheless, the xref utilites are impressive and some just work:
-For example, ~M-?~ cleverly finds /all/ references for an identifier in ‘near by’
-files; whereas ~C-u M-. RET my/.*~, for example, uses the given regular expression
-to list all identifiers with prefix ~my/~, thereby listing my personally defined
-names ^_^
-
-| =C-M-. 𝓇𝓮ℊ𝓮𝓍= | Find all identifiers whose name matches the given pattern |
-
-Let's get [[https://github.com/jacktasia/dumb-jump][dumb-jump]], where the ‘dumb’ is possibly due to the fact
-that it works by brute-force regular-expression lookup of
-pre-defined ‘definitional template’ rules. It “just works” ^_^
-#+BEGIN_SRC emacs-lisp
-(use-package dumb-jump
-    :defer nil
-  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
-         ("M-g ."     . dumb-jump-go-other-window)
-         ("M-g b"     . dumb-jump-back)
-         ("M-g p"     . dumb-jump-go-prompt)
-         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
-  :config
-  ;; If source file is visible, just shift focus to it.
-  (setq dumb-jump-use-visible-window t))
-#+END_SRC
-
-In Lisp, for binding macros, it lists all possible mentions of the bound
-variable ---the first is likely what is desired.  Alternatively, one could just
-add the necessary rule to the variable =dumb-jump-find-rules=.  Otherwise, it
-works fine even for locally bound definitions.  It works depending on the
-extension of a file.
-*** COMMENT Which function are we writing?
-:PROPERTIES:
-:CUSTOM_ID: Which-function-are-we-writing
-:END:
-In the modeline, show the name of the function we're currently writing.
-#+BEGIN_SRC emacs-lisp
-(add-hook 'prog-mode-hook #'which-function-mode)
-(add-hook 'org-mode-hook  #'which-function-mode)
-#+END_SRC
-In Org-mode, this places the current heading in the modeline.
-
-In Lisp mode, ensure we always have matching parens.
-#+BEGIN_SRC emacs-lisp
-(add-hook 'emacs-lisp-mode-hook #'check-parens)
-#+END_SRC
-
-*** COMMENT Highlight defined Lisp symbols
-:PROPERTIES:
-:CUSTOM_ID: Highlight-defined-Lisp-symbols
-:END:
-
-Usually Emacs only highlights macro names, the [[https://github.com/Fanael/highlight-defined][following]] incantation makes it
-highlight all defined names ---as long as we're in Lisp mode, whence in org-src
-blocks we use ~C-c '~.
-#+BEGIN_SRC emacs-lisp
-;; Emacs Lisp specific
-(use-package highlight-defined
-    :defer nil
-  :hook (emacs-lisp-mode . highlight-defined-mode))
-#+END_SRC
-
-Super helpful in making my Emacs configuration: If a name is not highlighted,
-then I've misspelled it or it doesn't exist! :smile:
-
-*** TODO Aggressive Indentation                           :Broken_Subsection:
-:PROPERTIES:
-:CUSTOM_ID: Aggressive-Indentation
-:END:
-
-With a single space or tab, my code should always remain indented.
-
-[[https://github.com/Malabarba/aggressive-indent-mode][aggressive-indent-mode]] is a minor mode that keeps your code always indented. It
-reindents after every change, making it more reliable than electric-indent-mode.
-
-#+BEGIN_SRC emacs-lisp
-;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-    :defer nil
-  :config (global-aggressive-indent-mode t))
-
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-#+END_SRC
-
-This mode requires my Lisp forms to be well-balanced; e.g., having a missing
-parenthesis does not indent. For instance, I have a form ~F~ and I write ~(when F~
-but have not yet enclosed the final parens, I still want nice indentation. So...
-
-**** TODO  [[https://github.com/jiahaowork/el-fly-indent-mode.el][Indent Emacs Lisp on the fly]] :Disabled:Breaks_C_c_C_v_C_t:
-:PROPERTIES:
-:CUSTOM_ID: https-github-com-jiahaowork-el-fly-indent-mode-el-Indent-Emacs-Lisp-on-the-fly
-:END:
-
-#+begin_src emacs-lisp :tangle no
-;; This minor mode toggles on along with elisp-mode and indents on the fly when
-;; you edit the code. No special key strokes needed.
-;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
-(use-package el-fly-indent-mode
-    :defer nil
-  :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
-#+end_src
-*** COMMENT Being Generous with Whitespace
-:PROPERTIES:
-:CUSTOM_ID: Being-Generous-with-Whitespace
-:END:
-The following minor mode automatically adds spacing around operators.
-#+begin_src emacs-lisp
-(use-package electric-operator
-  :defer nil
-  :hook (c-mode . electric-operator-mode))
-#+end_src
-
-I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Also,
-languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
-an identifier, not an expression! ⟩
-
-*** Coding with a Fruit Salad: Semantic Highlighting
-:PROPERTIES:
-:CUSTOM_ID: Coding-with-a-Fruit-Salad-Semantic-Highlighting
-:END:
-
-What should be highlighted when we write code? Static keywords with fixed uses,
-or dynamic user-defined names?
-
-+ /Syntax/ highlighting ⇨ Specific words are highlighted in strong colours so that
-  the /structure/ can be easily gleaned.
-  - Generally this only includes a language's keywords, such as ~if, loop, begin,
-    end, cond~.
-  - User defined names generally share one colour; usually black.
-  - Hence, an ~if~ block may be seen as one coloured keyword followed by
-    a blob of black text.
-
-  /Obvious keywords are highlighted while the rest remains in black!/
-
-+ /Semantic/ highlighting ⇨ Identifiers obtain unique colouring.
-  - This makes it much easier to visually spot dependencies with a quick glance.
-    + One can *see* how data flows through a function.
-  - In dynamic languages, this is a visual form of typing: Different colours are
-    for different names.
-    + Especially helpful for (library) names that are almost the same.
-    + This can be accomplished anywhere in Emacs by pressing ~M-s h .~ on
-      a selected phrase.
-
-For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifiers Mode]] gives unique highlighting to identifiers.
-- It comes with support for a bunch of languages, and one can add support for others.
-- It picks colours adaptively to fit the theme; one uses ~M-x color-identifiers:regenerate-colors~ after a theme change.
-
-#+begin_src emacs-lisp
-(use-package color-identifiers-mode
-
-  :config (global-color-identifiers-mode))
-
-;; Sometimes just invoke: M-x color-identifiers:refresh
-#+END_SRC
-
-When writing a new name, after about ~5 seconds it obtains a colour which is then
-propagated immediately to any new occurrences. This timeout before recolouring
-is to avoid any lag from multithreading and can be changed by altering the following
-line (#64) in the source file, changing the ~5~ to a smaller number.
-#+BEGIN_SRC emacs-lisp :tangle no
-(run-with-idle-timer 5 t 'color-identifiers:refresh)
-#+END_SRC
-
-Here are further reads:
-  - [[https://medium.com/@evnbr/coding-in-color-3a6db2743a1e][Coding in color: How to make syntax highlighting more useful]] ---an excellent, terse, read
-  - [[https://zwabel.wordpress.com/2009/01/08/c-ide-evolution-from-syntax-highlighting-to-semantic-highlighting/][C++ IDE Evolution: From Syntax Highlighting to Semantic Highlighting]]
-    + Names with a similar prefix share a colour, and class-local items share a colour.
-  - [[https://wordsandbuttons.online/lexical_differential_highlighting_instead_of_syntax_highlighting.html][Lexical differential highlighting instead of syntax highlighting]]
-    + /Ideally, the smaller the lexical difference, the greater the color difference should be./
-  - [[https://github.com/jacksonrayhamilton/context-coloring][Colouring by Context]] ---an Emacs package
-  - [[http://www.linusakesson.net/programming/syntaxhighlighting/][A case against syntax highlighting]]
-
-*** Text Folding ---Selectively displaying portions of a program
-:PROPERTIES:
-:CUSTOM_ID: Text-Folding
-:END:
-
-⟦‼ TODO: hideshowvis shows ="*hideshowvis*"= literally in src code blocks upon
-export; as such we need to hook to exports so as to temporarily disable it. ⟧
-#+begin_src emacs-lisp
-(require 'cl-lib)
-
-(defun my/disable-hs-hide-all (orig-fun &rest args)
-  "Advise `org-export-dispatch` to disable `hs-hide-all` temporarily."
-  ;; Without this, export hangs “Hiding all blocks...”
-  (cl-letf (((symbol-function 'hs-hide-all) (lambda (&rest _) nil)))
-    ;; Without this, export shows “*hideshowvis*” markers in my exported code blocks.
-    (cl-letf (((symbol-function 'hideshowvis-highlight-hs-regions-in-fringe) (lambda (&rest _) nil)))
-      (apply orig-fun args))))
-
-(advice-add 'org-export-dispatch :around #'my/disable-hs-hide-all)
-
-#+end_src
-
-
-Literate programming within Org-mode is not always ideal or possible, so we use
-a programming mode directly and then may want to have arbitrary ‘sections’ of
-text folded up.  Let's describe how to accomplish this goal. I've tried the
-feature-full folding modes [[https://github.com/gregsexton/origami.el][Origami-mode]] and ~yafolding-mode~, but it seems the
-/built-in/ TODO. doc.hs-minor-mode is the best: (0) It folds comments, (1) it's the
-fastest, and (2) it Just Worksᵀᴹ out-of-the-box. Coupled with Vimish folding,
-for arbitrary region folding; and a helpful hydra, I'm rather happy with my
-setup.
-
-On two JavaScript files, I found the following timings (using TODO. doc.elp-instrument-function
-and TODO. doc.elp-results):
-| Folding function        | ~500 lines | ~2300 lines |
-|-------------------------+------------+-------------|
-| hs-hide-all             |    0.00277 |    0.004358 |
-| origami-close-all-nodes |    0.00304 |    0.025569 |
-| yafolding-hide-all      |   7.051795 |   74.252598 |
-(TODO: Maybe these timings are due to my config, I should try to reproduce these
-with ~emacs -Q~.)
-
-#+begin_box "There's a built-in, less featureful, alternative based on indentation!"
-Quickly fold-away code with TODO. doc.set-selective-display; e.g., <kbd:C-u C-x $>
-folds away all code indented 4 spaces, whereas <kbd:C-u 8 C-x $> is for 8
-spaces, and <kbd:C-x $> disables the folding. This is built into Emacs.
-
-I've incorporated this into my folding hydra, below.
-#+end_box
-
-#+begin_box "Vimish fold - Fold regions based on selection, not syntax"
-Sometimes we want to fold some random piece of text ---rather than fold accoding
-to a programming language's syntactic constructions.
-
-[[https://github.com/mrkkrp/vimish-fold][Vimish-fold]] gives us just that and with many fancy features, from the README:
-+ folding of active regions;
-+ good visual feedback: it's obvious which part of text is folded with a ‘⋮’ in the fringe.
-+ create folds from regions between ~{{{~ and ~}}}~ automatically (marks are customizable; TODO. doc.vimish-fold-from-marks);
-+ persistence by default: when you kill a buffer your folds don't disappear;
-+ persistence scales well, you can work on hundreds of files with lots of folds without adverse effects;
-+ it does not break indentation;
-+ folds can be toggled from folded state to unfolded and back very easily;
-+ quick navigation between existing folds;
-+ you can use mouse to unfold folds (good for beginners and not only for them).
-
-#+begin_src emacs-lisp
-(use-package vimish-fold
-
-  :config (vimish-fold-global-mode 1))
-#+end_src
-#+end_box
-
-**** TODO Actual Setup                                               :ignore:
-:PROPERTIES:
-:CUSTOM_ID: Actual-Setup
-:END:
---------------------------------------------------------------------------------
-
-TODO: Below I setup hideshow along with [doc : hideshowvis-symbols] [hideshowvis]  which gives us a nice clickable
-“+/-” marker for foldable blocks as well as an overlay that indicates how many
-lines are folded away.  For more on hideshow-mode, see the [[https://writequit.org/denver-emacs/presentations/2017-11-02-hidden-gems.html][Hidden Gem Packages]]
-presentation which contains a small self-contained introduction, or [[https://github.com/emacs-mirror/emacs/blob/master/lisp/progmodes/hideshow.el#L127][these super useful source comments]]
-which discuss hooks and support for special modes ([[https://superuser.com/questions/576447/enable-hideshow-for-more-modes-e-g-ruby][like this one]]).
-#+BEGIN_SRC emacs-lisp
-(use-package hideshow
-  :defer nil
-  :init
-  ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
-  (quelpa '(hideshowvis :fetcher wiki))
-
-  ;; Press “C-c TAB” to toggle a block's visibility or “C-c f” for my folding hydra.
-  :bind (("C-c TAB" . hs-toggle-hiding))
-
-  ;; https://github.com/shanecelis/hideshow-org/tree/master
-  ;; This extension bring Org-mode tab behaviour to folding, at the block level
-  ;; and buffer level ---but not cycling visibility.
-  ;; (use-package hideshow-org) ;; Disabled as commented below.
-
-  :hook ((prog-mode . (lambda () (hs-minor-mode +1)
-                        (hideshowvis-minor-mode t)
-                        (hideshowvis-symbols)
-                        ;; This hook along with hs-org mode breaks editing of src blocks in Org files.
-                        ;; That's OK, since my folding hydra does a better job for my needs.
-                        ;; (hs-org/minor-mode t)
-                        (hs-hide-all)))))
-#+END_SRC
-
-Along with a hydra for super quick navigation and easily folding, unfolding
-blocks! Love this one (•̀ᴗ•́)و
-#+BEGIN_SRC emacs-lisp
-(my/defhydra "C-c f" "Folding text" archive
-  :Current
-  ("h" hs-hide-block "Hide")
-  ("s" hs-show-block "Show")
-  ("t" hs-toggle-hiding "Toggle")
-  ;; "l" hs-hide-level "Hide blocks n levels below this block"; TODO: Enable folding feature
-  :Buffer
-  ("H" hs-hide-all "Hide")
-  ("S" hs-show-all "Show")
-  ("T" my/hs-toggle-buffer "Toggle")
-  :Style
-  ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
-  ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
-  :Region
-  ("f" (lambda () (interactive) (vimish-fold-toggle) (vimish-fold (region-beginning) (region-end))) "Fold/Toggle")
-  ("d" vimish-fold-delete "Delete fold")
-  ("U" vimish-fold-unfold-all "Unfold all")
-  ("D" vimish-fold-delete-all "Delete all")
-  ("n" vimish-fold-next-fold "Next fold")
-  ("p" vimish-fold-previous-fold "Previous fold")
-  :...
-  ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
-  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
-  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
-  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset Hideshow")  ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
-  ("q" nil "Quit" :color blue))
-
-;; Features from origami/yafolding that maybe I'd like to implement include:
-;; narrowing to block or folding everything except block, navigating back and forth between folded blocks.
-;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
-#+END_SRC
-#+begin_details "Folding Hydra Helpers"
-#+BEGIN_SRC emacs-lisp
-(defvar my/hs-hide nil "Current state of hideshow for toggling all.")
-(defun my/hs-toggle-buffer () "Toggle hideshow all."
-       (interactive)
-       (setq my/hs-hide (not my/hs-hide))
-       (if my/hs-hide
-           (hs-hide-all)
-         (hs-show-all)))
-#+END_SRC
-#+BEGIN_SRC emacs-lisp
-(defun my/clever-selective-display (&optional level)
-"Fold text indented same of more than the cursor.
-
-This function toggles folding according to the level of
-indentation at point. It's convenient not having to specify a
-number nor move point to the desired column.
-"
-  (interactive "P")
-  (if (eq selective-display (1+ (current-column)))
-      (set-selective-display 0)
-    (set-selective-display (or level (1+ (current-column))))))
-#+END_SRC
-#+BEGIN_SRC emacs-lisp
-;; Src: https://emacs.stackexchange.com/questions/52588/dynamically-hide-lines-indented-more-than-current-line
-(define-minor-mode auto-set-selective-display-mode
-  "Automatically apply `set-selective-display' at all times based on current indentation."
-  nil "$" nil
-  (if auto-set-selective-display-mode
-      (add-hook 'post-command-hook #'auto-set-selective-display nil t)
-    (remove-hook 'post-command-hook #'auto-set-selective-display t)
-    (with-temp-message ""
-      (set-selective-display nil))))
-;;
-(defun auto-set-selective-display ()
-  "Apply `set-selective-display' such that current and next line are visible.
-
-Scroll events are excluded in order to prevent wild flickering while navigating."
-  (unless (eq last-command #'mwheel-scroll)
-    (let*((this-line-indent (current-indentation))
-          (next-line-indent (save-excursion (forward-line) (current-indentation))))
-      (with-temp-message "" ; Suppress messages.
-        (set-selective-display (1+ (max this-line-indent next-line-indent)))))))
-#+END_SRC
-#+end_details
-
-With expected support for searching.
-#+BEGIN_SRC emacs-lisp
-;; Open folded nodes if a search stops there.
-(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-(defun my/search-hook-function ()
-  (when hs-minor-mode (set-mark-command nil) (hs-show-block) (pop-to-mark-command)))
-#+END_SRC
-
-#+begin_details "What if I want my own hideshow overlays, instead of hideshowvis?"
-#+BEGIN_SRC emacs-lisp :tangle no
- ;; Add an overlay to display the number of hidden lines 😁;; https://github.com/shanecelis/hideshow-org/tree/master
- (setq hs-set-up-overlay
-       (defun my-display-code-line-counts (ov)
-         (when (eq 'code (overlay-get ov 'hs))
-           (overlay-put ov 'display
-                        (propertize
-                         (format " ... ﴾%d﴿"
-                                 (count-lines (overlay-start ov)
-                                              (overlay-end ov)))
-                         'face 'font-lock-type-face)))))
-#+END_SRC
-#+end_details
-#+begin_details  "[Disabled / Alternative] origami"
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package origami
-  ;; In Lisp languages, by default only function definitions are folded.
-  ;; :hook ((agda2-mode lisp-mode c-mode) . origami-mode)
-
-  ;; Please open any code with top level items folded away.
-  :hook (prog-mode .  (lambda () (interactive)
-                       (origami-close-all-nodes (current-buffer))))
-  ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
-
-  :config
-
-  ;; For any major-mode that doesn't have explicit support, origami will use the
-  ;; indentation of the buffer to determine folds.
-  (global-origami-mode)
-
-  ;; With basic support for one of my languages.
-  (push '(agda2-mode . (origami-markers-parser "{-" "-}"))
-         origami-parser-alist))
-#+END_SRC
-
-With expected support for searching.
-#+BEGIN_SRC emacs-lisp :tangle no
-(defun my/search-hook-function ()
-  (when origami-mode (origami-open-node-recursively (current-buffer) (point))))
-
-;; Open folded nodes if a search stops there.
-(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-;;
-;; Likewise for incremental search, isearch, users.
-;; (add-hook 'isearch-mode-end-hook #'my/search-hook-function)
-#+END_SRC
-
-And hydra...
-#+BEGIN_SRC emacs-lisp :tangle no
-(my/defhydra "C-c f" "Folding text" archive
-  :Current
-  ("h" origami-close-node-recursively "Hide")
-  ("s" origami-open-node-recursively  "Show")
-  ("c" origami-recursively-toggle-node "Cycle") ;; Acts like org-mode header collapsing. Cycle a fold between open, recursively open, closed.
-  ("f" origami-show-only-node "Focus") ;; Close everything but the folds necessary to see the point. Very useful for concentrating on an area of code.
-  ;; ("H" origami-close-all-nodes "Hide All")
-  ;; ("S" origami-open-all-nodes "Show All")
-  :Navigate
-  ("n" origami-next-fold "Next")
-  ("p" origami-previous-fold "Previous")
-  :...
-  ("t" origami-toggle-all-nodes  "Toggle buffer")
-  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
-  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
-  ("r" origami-reset)) ;; Remove all folds from the buffer and reset all origami state. Useful if origami messes up!
-#+END_SRC
-
-# *Disabled:* I've looked at a few folding modes, and I like this one.
-# However, I seldom need it.
-#+end_details
-#+begin_details "[Disabled / Alternative] yafolding"
-I found using yafolding-mode to be way too slow.
-#+begin_src emacs-lisp :tangle no
-;; “Yet Another Folding” just works: Indented elements are folded away; no setup required.
-;; (use-package discover)
-(use-package yafolding
-    ;; Please open any code with top level items folded away:
-    ;; Open the file super quick, but when I'm inactive for 5 seconds,
-    ;; then I'm probably doing other stuff so do the folding then.
-    ;; :hook prog-mode .  (lambda () (interactive)
-   ;; (run-with-idle-timer 5 nil #'yafolding-hide-all))
-   ;; MA: It seems that this is not ideal; it takes a bit longer than I'd like to fold the whole file.
-  )
-(defhydra yafolding-hydra (:color pink :columns 3)
-  "Fold code based on indentation levels"
-  ;; First row
-  ("s" yafolding-show-element "show element")
-  ("S" yafolding-show-all "show all")
-  ("<right>" (lambda () (interactive)
-     (let ((next (car (yafolding-get-overlays (point) (point-max)))) pos)
-       (if (not next) (message "No more folded regions")
-         (setq pos (overlay-start next))
-               (yafolding-hide-element)
-               (goto-char pos)
-               (yafolding-show-element))))
-   "forward element")
-  ;; Second row
-  ("h" yafolding-hide-element "hide element")
-  ("H" yafolding-hide-all "hide all")
-  ("<left>" (lambda () (interactive)
-     (let ((previous (car (yafolding-get-overlays (point-min) (point)))) pos)
-       (if (not previous) (message "No more folded regions")
-         (setq pos (overlay-start previous))
-               (yafolding-hide-element)
-               (goto-char pos)
-               (yafolding-show-element))))
-        "backward element")
-  ;; Third row
-  ("SPC" yafolding-toggle-element "toggle element")
-  ("T" yafolding-toggle-all "toggle all")
-  ("q" nil "quit" :color red)
-  ("p" yafolding-hide-parent-element "hide parent")
-  ("<up>" (lambda () (interactive) (or (ignore-errors (yafolding-go-parent-element))
-    (message "Already at the top level.")))
-   "go to parent")
-  ("r" (lambda () (interactive) (yafolding-hide-region (region-beginning) (region-end)))
-   "hide region"
-  ))
-
-  (global-set-key (kbd "s-f") 'yafolding-hydra/body)
-#+end_src
-#+end_details
-**** E2E Test                                                        :ignore:
-:PROPERTIES:
-:CUSTOM_ID: E2E-Test
-:END:
-
-#+begin_details Test
-#+begin_src emacs-lisp :tangle init-test.el
-(ert-deftest hideshow-is-enabled-and-folds-by-default ()
-  :tags '(hideshow)
-  ;; Make a temporary scratch.js file with the given contents.
-  (let* ((contents "function fierce(name) { \n return `${name}: ROAR` \n }")
-         (scratch.js (make-temp-file "scratch" nil ".js" contents)))
-
-    ;; Hideshow is enabled whenever we open a code file
-    (find-file scratch.js)
-    (should hs-minor-mode)
-
-    ;; Function definition is a hidden block
-    (end-of-line)
-    (backward-char 2)
-    (should (hs-already-hidden-p))
-
-    ;; Indeed, the hidden block starts at the first line break and ends just after the second.
-    (-let [ov (hs-already-hidden-p)]
-      (-let [(first\n second\n) (-elem-indices "\n" (s-split "" contents))]
-        (should (equal (overlay-start ov) first\n)) ;; ≈ 25
-        (should (equal (overlay-end ov) (+ second\n 2))))) ;; ≈ 52
-
-    (kill-buffer)))
-#+end_src
-#+end_details
-
-*** COMMENT Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab :relocate:
+*** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab :relocate:
 :PROPERTIES:
 :CUSTOM_ID: Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab
 :END:
@@ -9188,51 +9692,6 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, ha
 See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
 into new configurations.
 
-*** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]] :relocate:
-:PROPERTIES:
-:CUSTOM_ID: hr-https-github-com-LuRsT-hr-A-horizontal-for-your-terminal
-:END:
-
-When working in the terminal, at least in my day job, it can be helpful to
-visually segregate large chunks of output. With the ~hr~ command, I can run ~hr
-'output5`~, for example, to have the same the string /output5/ repeated horizontal
-across one line of my terminal.  We can also just run ~hr~ which is the same as ~hr
-'#'~. Finally, you can also run =hr '-#-' '-' '-#-'= to have 3 horizontal lines and
-more generally =hr p₁ p₂ … pₙ= will produce /n/-many horizontal lines with the
-$i^{th}$-line having pattern =pᵢ=.
-
-#+begin_src emacs-lisp
-(system-packages-ensure "hr") ;; ≈ brew install hr
-#+end_src
-
-*** COMMENT Browse remote files
-:PROPERTIES:
-:CUSTOM_ID: Browse-remote-files
-:END:
-
-  Sometimes you want to see the current file in Github; e.g., you select a
-  region and press ~M-x browse-at-remote-kill~ to get the URL for that region in
-  Github then you can send that URL to your peers when referencing something.
-  - Or just ~M-x browse-at-remote~ to see it in Github.
-  - [[https://github.com/rmuslimov/browse-at-remote][browse-at-remote: Browse target page on github/bitbucket from emacs buffers]].
-
-#+begin_src emacs-lisp
-;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
-(use-package browse-at-remote   :defer nil)
-#+end_src
-*** COMMENT [[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.
-:PROPERTIES:
-:CUSTOM_ID: https-github-com-sshaw-copy-as-format-copy-as-format-Emacs-function-to-copy-buffer-locations-as-GitHub-Slack-JIRA-etc-formatted-code
-:END:
-#+begin_src emacs-lisp
-;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
-;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
-;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
-;; With a prefix argument prompt for the format style 𝒮.
-;; Easy to add more formats.
-(use-package copy-as-format   :defer nil)
-#+end_src
-
 *** w-screencapture
 :PROPERTIES:
 :CUSTOM_ID: w-screencapture
@@ -9264,7 +9723,7 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
       (--filter (s-starts-with-p "Screen Shot" it))
       (--map (f-delete (format "~/Desktop/%s" it)))))
 #+end_src
-*** COMMENT Screencapturing the Current Emacs Frame
+*** Screencapturing the Current Emacs Frame
 :PROPERTIES:
 :CUSTOM_ID: Screencapturing-the-Current-Emacs-Frame
 :END:
@@ -9315,111 +9774,6 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 
 + ~C-c C-x C-v~ ⇒ Toggle inline images!
 
-*** Comment-boxes up to the fill-column ---or banner instead?
-:PROPERTIES:
-:CUSTOM_ID: Comment-boxes-up-to-the-fill-column
-:END:
-
-GIF: https://endlessparentheses.com/images/comment-box.gif
-
-#+begin_src emacs-lisp
-(defun my/comment-box (b e)
-  "Draw a box comment around the region but arrange for the region
-to extend to at least the fill column. Place the point after the
-comment box.
-
-Source: http://irreal.org/blog/?p=374
-
-To do fancy stuff like removing boxes, centering them, etc
-see https://github.com/lewang/rebox2/blob/master/rebox2.el"
-  (interactive "r")
-  (let ((e (copy-marker e t)))
-    (goto-char b)
-    (end-of-line)
-    (insert-char ?  (- fill-column (current-column)))
-    (comment-box b e 1)
-    (goto-char e)
-    (set-marker e nil)))
-#+end_src
-
-A comment box sometimes increases the size of a file more than I'd like, or more than others on my dev team would like.
-As such, let's try [[https://github.com/WJCFerguson/banner-comment][banner comments]]:
-- GIF: https://github.com/WJCFerguson/banner-comment/blob/35d3315683d3f97605207691b77e9f447af18fe2/demo.png
-#+begin_src emacs-lisp
-(use-package banner-comment   :defer nil)
-#+end_src
-
-Pretty slick!
-
-*** TODO COMMENT Auto-format on Save :Reenabled:Should_be_Disabled:Breaks_HTML_export_of_org_files_with_unicode_or_emojis:
-:PROPERTIES:
-:CUSTOM_ID: Auto-format-on-Save
-:END:
-
-[[https://github.com/lassik/emacs-format-all-the-code/tree/eb2a7fa6da15d23b57921218a36ac67d523e81f1][Auto-format source code in many languages with one command]]
-
-Let's auto-format source code in many languages using the same command for all
-languages, instead of learning a different Emacs package and formatting command
-for each language.
-
-Just do ~M-x format-all-buffer~ and it will try its best to do the right thing. To
-auto-format code on save, use the minor mode format-all-mode. Better yet, we ask
-for it to do so “on save”.
-
-- You will need to install external programs to do the formatting. If
-  ~format-all-buffer~ can't find the right program, it will try to tell you how to
-  install it.
-- An alternative Emacs tool is [[https://github.com/radian-software/apheleia][apheleia: 🌷 Run code formatter on buffer
-  contents without moving point, using RCS patches and dynamic programming.]]
-
-#+begin_src emacs-lisp
-(use-package format-all
-    :defer nil
-  ;; To enable format on save for most programming language buffers:
-  :hook (prog-mode . format-all-mode)
-  :config
-  ;; Please use the default formatters; I don't care too much.
-  (add-hook 'format-all-mode-hook 'format-all-ensure-formatter))
-#+end_src
-
-[[https://prettier.io/docs/en/index.html][Prettier]] is an opinionated code formatter for numerous web related languages,
-including JS, TS, HTML, CSS, JSON, Vue, Markdown, and YAML.
-
-#+begin_src emacs-lisp
-;; For JavaScript prettification: It automatically inserts semicolons, forces newlines, inserts parens, etc.
-;; Lots of redundant stuff, but stuff to make it easy to work with others.
-(shell-command "npm install --global prettier")
-;; Specific package to do only JS prettification: https://github.com/prettier/prettier-emacs
-#+end_src
-
-For example, in a NodeJS app make a file ~.prettierrc.json~ whose contents are
-#+begin_src json :tangle no
-{
-    "singleQuote": true,
-    "arrowParens": "avoid",
-    "printWidth": 120,
-    "semi": false,
-    "trailingComma": "none"
-}
-#+end_src
-Unfortunately, my current team prefers ~"semi": true~ ---which is understandable
-for people not familar with how JavaScript does [[https://www.freecodecamp.org/news/lets-talk-about-semicolons-in-javascript-f1fe08ab4e53/][semicolon insertion]].
-
-( If you're having trouble getting prettier to work on save, consider using this
-[[https://github.com/codesuki/add-node-modules-path][package]] which detects your node modules' path. )
-
-Anyhow, with these rules:
-- I write =const f = (x) => "x" == x= then on save it becomes =const f = x => 'x' == x;=
-- I write =let xs = [1, 2, 3,]= then on save it becomes =let xs = [1, 2, 3];=
-- I write =foo(reallyLongArg(), omgSoManyParameters(), IShouldRefactorThis(), isThereSeriouslyAnotherOne());=
-  then nothing happens on save; but if you add one more argument, =, 12=, then it gets reformatted with each arg on one line.
-
-Notice that in the first example above, only minor syntactic changes were made;
-nothing altering semantics or quality of code ---for that, we use a /linter/.
-In particular, [[https://emacs-lsp.github.io/lsp-mode/page/lsp-eslint/][LSP ESLint]] when activated will show us two errors: It's almost always
-better to use ~===~ instead of ~==~ and literals should be on the right side of the equality.
-We can use ~M-x lsp-execute-code-action~ to get a list of actions that can be performed to fix this /quality/ problem.
-
 *** Searching Hydra
 :PROPERTIES:
 :CUSTOM_ID: Searching-Hydra
@@ -9444,247 +9798,7 @@ We can use ~M-x lsp-execute-code-action~ to get a list of actions that can be pe
    ("d" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag nil)))  "Directory")
    ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
 #+end_src
-*** TODO ⌘-e: Edit Everything in a separate buffer
-:PROPERTIES:
-:CUSTOM_ID: e-Edit-Everything-in-a-separate-buffer
-:END:
-
-Edit comment/string/docstring/code block in separate buffer with your favourite
-mode.
-
-+ ⌘-e to toggle “e”diting of thing at point.
-+ ⌘-e will try to edit thing at point, or selection, if possible; otherwise it
-  will exit edit session.
-  - 🔥 Avoid escape nightmares by editing strings in a separate buffer.
-  - On a string, press ⌘-e and a new buffer pops up with unescaped content,
-    letting you edit raw strings directly.  It then takes care of automatically
-    escaping strings for you when you press ⌘-e, or ~C-c C-c~ ---or discard your
-    changes with ~C-c C-k~.
-+ ⌘-e can be used within edit session to create new edit sessions, if possible; then ⌘-e will “pop-off-the-stack” as expected.
-  - (I already use ⌘-e to toggle editing Org src blocks, and when editing a block ⌘-e will try to do a recursive edit if possible, or exit the edit session.)
-  - (The separedit package also let's me press ⌘-e to edit variable values when describing them, and to edit text when in the minibuffer.)
-
-From [[https://github.com/twlz0ne/separedit.el][source]]:
-#+begin_example org
-+----------+         Edit           +-----------+         Edit           +-----------+
-|          | ---------------------> |   edit    | ---------------------> |   edit    | ...
-|          |  point-at-comment?     |   buffer  |  point-at-comment?     |   buffer  |
-|  source  |  point-at-string?      |           |  point-at-string?      |           | ...
-|  buffer  |  point-at-codeblock?   | (markdown |  point-at-codeblock?   | (markdown | ...
-|          |  point-at-...?         |  orgmode  |  point-at-...?         |  orgmode  |
-|          | <--------------------- |   ...)    | <--------------------- |   ...)    | ...
-+----------+     Commit changes     +-----------+     Commit changes     +-----------+
-#+end_example
-
-[In-general, we can invoke [[https://github.com/Fanael/edit-indirect/blob/e3d86416bcf8ddca951d7d112e57ad30c5f9a081/edit-indirect.el#L124][M-x edit-indirect-region]] to edit any selected piece
-of text in its own buffer, then ~C-c C-c~ (or ~⌘-e~ with my setup) to commit the
-edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected region
-😉]
-
-#+begin_src emacs-lisp
-(use-package separedit   :defer nil)
-;;
-;; # Example Usage
-;;
-;; 1. Press ⌘-e on this line, to edit this entire comment.
-;; 2. Press ⌘-e to exit the edit session.
-;;
-;; Since my ⌘-e is context sensitive, to determine whether to continue editing or
-;; exit; you can explicitly request an edit with C-c ' and an exit with C-c C-c.
-;;
-;; ```
-;; ;; 3. Press ⌘-e on this line, to edit this source block!
-;; ;; 4. Press ⌘-e on this line, to edit this inner-most comment!
-;; ;; 5. At start of next line, press “⌘-r ⌘-e” to edit just the source block
-;; ;;
-;; (cl-defun index (&rest args)
-;;   "6. Press ⌘-e to edit this string, \"7. and again in these quotes\""
-;;   "<p>8. Press ⌘-e to edit this <strong> HTML </strong> block, in Web-mode </p>")
-;;
-;; ;; 9. Press C-u ⌘-e to guess the language of the next string (Rust); then ⌘-r C-c C-r to quickly run the code.
-;; "fn main() { println!(\"{}\", \"hello!\"); }"
-;;
-;; ;; 10. Select & press “C-u ⌘-e” on the following, to edit it in whatever mode you want.
-;; ;; select * from table -- Or just press ⌘-e and have the mode detected.
-;;
-;; ```
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Setup to make the above ⌘-e behaviour happen.
-
-;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
-(--map (bind-key "s-e" #'separedit it)
-       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
-
-#+end_src
-
-#+begin_src emacs-lisp
-;; TODO:Merge these changes upstream
-
-;; I'm focusing on a specific region to edit, so let's not be distracted by anything else.
-;; This makes the “editing stack” feel like a stack, with ⌘-e pushing new editing session buffers,
-;; and C-c C-c, or ⌘-e on non-editable lines, to pop-off the stack.
-;; (advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
-;;
-;; NOTE: This actually breaks the stack nature of popping with ⌘-e; we need to actually save the stack via some list of buffers than push/pop buffers on that variable.
-
-;; I don't want to be bothered for what mode I'm in, when a region is selected using current major mode.
-;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode for my current selected text.
-(advice-add #'separedit--select-mode :before-until
-            (lambda (&rest _)
-              (when (and (not current-prefix-arg) (region-active-p)) (pp-to-string major-mode))))
-
-;; Also: When on a string ∷
-(advice-add #'separedit--select-mode :before-until
-            (lambda (&rest _)
-              "When on a string ∷
-+ ⌘-e ⇒ Edit string at point
-+ C-u ⌘-e ⇒ Auto-detect my string's major mode
-+ C-u C-u ⌘-e ⇒ Let me select a major mode"
-              (-let [str? (ignore-errors (thing-at-point 'string))]
-                (case (car current-prefix-arg)
-                  (4 (when str? (pp-to-string (my/detect-prog-mode str?))))
-                  (_ nil)))))
-
-;; NOTE: By default, separedit provides colouring for 'strings', "strings", and `strings'
-;; This doesn't look very good when I have a single quote within double quotes:
-;; In an Emacs Lisp buffer, editing the string "Bob's Work" gives unexpected highlighting.
-;; ```
-;; (advice-add #'separedit :after
-;;             (lambda (&rest _)
-;;               (when (s-ends-with? "string-mode" (pp-to-string major-mode))
-;;                 (text-mode))))
-;; ```
-#+end_src
-
-#+begin_src emacs-lisp
-;; In the indirect buffer, make ⌘-e finish editing.
-(use-package edit-indirect
-  :config (bind-key "s-e"
-                    (lambda ()
-                      (interactive)
-                      (or (ignore-errors (call-interactively #'separedit))
-                          (call-interactively #'edit-indirect-commit)))
-                    #'edit-indirect-mode-map))
-
-;; I also have “s-e” bound to `org-edit-src-exit'.
-(advice-add 'org-edit-src-exit :before-until
-            (lambda (&rest r)
-              (when (ignore-errors (separedit)) t)))
-#+end_src
-
-#+begin_src emacs-lisp
-;; → ⌘-e on an Org paragraph pops-up an edit session in Org mode.
-;; → ⌘-e on a selection in Org mode pops-up an edit session in Org mode.
-;; TODO: Consider forming an alist for special blocks to refer to their preferred
-;; edit mode, defaulting to Org-mode? Perhaps something to consider /after/
-;; addressing the bug below.
-;; (advice-unadvice 'org-edit-special) MA: TODO: FIXME: Delete this?
-(advice-add 'org-edit-special :around
-            (lambda (orginal-function &rest r)
-              (cond
-               ((region-active-p) (call-interactively #'edit-indirect-region) (org-mode))
-               ((equal 'paragraph (car (org-element-at-point)))
-                (mark-paragraph) (call-interactively #'edit-indirect-region) (org-mode))
-               (t (or (ignore-errors (apply orginal-function r))
-                      ;; We try to edit a special block when orginal-function fails.
-                      ;; This way src blocks are not confused with the more generic idea of special blocks.
-                      (when
-                          (my/org-in-any-block-p)
-                        ;; Note using org-element-at-point doesn't work well with special blocks when you're somewhere within the block.
-                        ;; It only works correctly when you're on the boundary of the special block; which is not ideal.
-                        ;; This is why I'm not using: (org-element-property :begin elem).
-                        (-let [(start . end) (my/org-in-any-block-p)]
-                          (set-mark-command start)
-                          (goto-char end) (previous-line 2) (end-of-line) ;; FIXME: Still shows #+end_XXX for some reason.
-                          (call-interactively #'edit-indirect-region) (org-mode))))))))
-#+end_src
-
-#+begin_src emacs-lisp
-;; where...
-(defun my/org-in-any-block-p ()
-  "Return non-nil if the point is in any Org block.
-
-The Org block can be *any*: src, example, verse, etc., even any
-Org Special block.
-
-This function is heavily adapted from `org-between-regexps-p'.
-
-Src: https://scripter.co/splitting-an-org-block-into-two/"
-  (save-match-data
-    (let ((pos (point))
-          (case-fold-search t)
-          (block-begin-re "^[[:blank:]]*#\\+begin_\\(?1:.+?\\)\\(?: .*\\)*$")
-          (limit-up (save-excursion (outline-previous-heading)))
-          (limit-down (save-excursion (outline-next-heading)))
-          beg end)
-      (save-excursion
-        ;; Point is on a block when on BLOCK-BEGIN-RE or if
-        ;; BLOCK-BEGIN-RE can be found before it...
-        (and (or (org-in-regexp block-begin-re)
-                 (re-search-backward block-begin-re limit-up :noerror))
-             (setq beg (match-beginning 0))
-             ;; ... and BLOCK-END-RE after it...
-             (let ((block-end-re (concat "^[[:blank:]]*#\\+end_"
-                                         (match-string-no-properties 1)
-                                         "\\( .*\\)*$")))
-               (goto-char (match-end 0))
-               (re-search-forward block-end-re limit-down :noerror))
-             (> (setq end (match-end 0)) pos)
-             ;; ... without another BLOCK-BEGIN-RE in-between.
-             (goto-char (match-beginning 0))
-             (not (re-search-backward block-begin-re (1+ beg) :noerror))
-             ;; Return value.
-             (cons beg end))))))
-#+end_src
-
-I'd like to [[https://github.com/andreasjansson/language-detection.el][guess the language]] I'm in, when working with strings.
-#+begin_src emacs-lisp
-(use-package language-detection   :defer nil)
-;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
-;; Also, (language-detection-string "select * from t") ;; ⇒ sql
-
-;; TODO: Push this upstream; https://github.com/andreasjansson/language-detection.el/issues/1
-(cl-defun my/detect-prog-mode (&optional string)
-  "Guess programming mode of the current buffer, or STRING if it is provided.
-
-When called interactively, it enables the mode;
-from Lisp it just returns the name of the associated mode.
-
-    ;; Example Lisp usage
-    (call-interactively #'my/detect-prog-mode)
-
-`language-detection-buffer' returns a string which is not always the name of the
-associated major mode; that's what we aim to do here."
-  (interactive)
-
-  (defvar my/detect-prog-mode/special-names
-    '((c           . c-mode)
-      (cpp         . c++-mode)
-      (emacslisp   . emacs-lisp-mode)
-      (html        . web-mode) ;; I intentionally want to use this alternative.
-      (matlab      . octave-mode)
-      (shell       . shell-script-mode)
-      (visualbasic . visual-basic-mode)
-      (xml         . sgml-mode))
-    "Names in this alist map a language to its mode; all other languages 𝒳 have mode ‘𝒳-mode’ afaik.")
-
-  (let* ((lang (if string (language-detection-string string) (language-detection-buffer)))
-         (mode (or (cdr (assoc lang my/detect-prog-mode/special-names))
-                   (intern (format "%s-mode" lang)))))
-    (if (called-interactively-p 'any)
-        (progn (call-interactively mode) (message "%s enabled!" mode))
-      mode)))
-#+end_src
-
-+ ⌘-e to edit an Org table cell; see [[https://orgmode.org/manual/Built_002din-Table-Editor.html][here]] for built-in table editing commands.
-#+begin_src emacs-lisp
-(advice-add #'org-edit-special :before-until
-            (lambda (&rest r)
-              (when (equal 'table-row (car (org-element-at-point)))
-                (call-interactively #'org-table-edit-field))))
-#+end_src
-*** COMMENT Pair Programming
+*** Pair Programming
 :PROPERTIES:
 :CUSTOM_ID: Pair-Programming
 :END:
@@ -9759,31 +9873,7 @@ my VSCoder counterparts.
 (my/toggle-pair-programming)
 #+end_src
 
-*** Eldoc for Lisp and Haskell ---documentation in the mini-buffer
-:PROPERTIES:
-:CUSTOM_ID: Eldoc-for-Lisp-and-Haskell
-:END:
-
-In =emacs-lisp-mode= we can enable =eldoc-mode= ---“Elisp Live Documentation”--- to
-display information about a function or a variable in the echo area. Likewise
-for Haskell.
-
-#+BEGIN_SRC emacs-lisp
-(use-package eldoc
-  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
-        (lisp-interaction-mode . turn-on-eldoc-mode)
-        (haskell-mode . turn-on-haskell-doc-mode)
-        (haskell-mode . turn-on-haskell-indent))
-
-;; Slightly shorten eldoc display delay.
-(setq eldoc-idle-delay 0.4) ;; Default 0.5
-#+END_SRC
-
-The less casual Haskeller would likely want to use [[https://haskell-lang.org/intero][intero]] to obtain
-more support; e.g., obtain suggestions from GHC about redundant imports
-or type signatures.
-
-*** COMMENT Modern Browsing within Emacs                           :Disabled:
+*** Modern Browsing within Emacs                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Modern-Browsing-within-Emacs
 :END:
@@ -9818,86 +9908,516 @@ I like using Chrome ---I like the integration of all things Google.
   ("b" (internet) "Browse"  :exit t))
 #+end_src
 
-*** An “auto read only” detection mechanism ---when jumping to definitions :Disabled:
+
+*** TODO Github Browser Extensions (for Chrome)
 :PROPERTIES:
-:CUSTOM_ID: An-auto-read-only-detection-mechanism-when-jumping-to-definitions
-:header-args: :tangle no
+:CUSTOM_ID: Github-Browser-Extensions-for-Chrome
 :END:
 
-Files in 3ʳᵈ-party directories should be read-only whenever I open them, when
-I'm jumping to definitions (with ~M-.~).
++ [[https://github.com/ovity/octotree][octotree]]  :: Lets you explore the files and folders of a repository with a
+  tree and search bar. Can also quickly browse the files changed in the current
+  PR/branch.
 
-#+begin_src emacs-lisp
-;; Usage: Press “M-”. “use-package” below and you can accidentally alter the source code!
-;; But in this case you likely just wanted to see the 3ʳᵈ-party definition, not alter it.
-;; As such, with this advice, the source will not be alterable (unless you toggle read-only mode).
-(advice-add #'xref-find-definitions :after
-            (lambda (&rest _)
-              (when (--map (s-ends-with? it (f-parent buffer-file-name))
-                           '("lisp/emacs-lisp" "/lisp" ".emacs.d/elpa/"))
-                (read-only-mode))))
-#+end_src
++ [[https://github.com/jasonlong/isometric-contributions][isometric-contributions]] :: Renders your contribution graph on your profile in
+  a nicer way: 3D instead of the default 2D.
 
-** TODO Working with PDFs
-*** TODO Open PDFs in Emacs
-#+begin_src emacs-lisp
-    ;; In Org-mode, clicking on PDF should open it in Emacs
-    ;; Example:          [[~/Desktop/stuff-I'm-learning.pdf::12]]       ;; Opens the pdf to page 12
-    ;; Another Example:  docview:~/Desktop/stuff-I'm-learning.pdf::12
-  (ignore-errors (add-to-list 'org-file-apps '("\\.pdf\\'" . emacs)))
++ [[https://github.com/OctoLinker/OctoLinker][OctoLinker]] :: Turns language-specific statements like ~include~, ~require~ or
+  ~import~ into links.  Gives you the ability to go to files by clicking at their
+  paths, not only internal files it also works for imported packages!
 
-    ;; Required code to make the above links work as expected.
-    ;; Source: https://www.reddit.com/r/emacs/comments/re0dx8/how_do_you_link_a_specific_pdf_page_in_org_mode/
-    (defun my-org-docview-open-hack (orig-func &rest args)
-      (let* ((link (car args)) path page)
-        (string-match "\\(.*?\\)\\(?:::\\([0-9]+\\)\\)?$" link)
-        (setq path (match-string 1 link))
-        (setq page (and (match-beginning 2)
-                        (string-to-number (match-string 2 link))))
-        (org-open-file path 1)
-        (when page
-          (cond
-           ((eq major-mode 'pdf-view-mode)
-            (pdf-view-goto-page page))
-           (t
-            (doc-view-goto-page page))))))
-    (advice-add 'org-docview-open :around #'my-org-docview-open-hack)
++ [[https://github.com/Justineo/github-hovercard][github-hovercard]] :: Show a neat hover card when you hover over an element! No
+  need to open everything in a new page, just hover over it!
 
-    ;; Alternatively, there's a dedicated package for this
-    ;; https://github.com/fuxialexander/org-pdftools/tree/967f48fb5038bba32915ee9da8dc4e8b10ba3376
-#+end_src
++ [[https://github.com/homerchen19/github-file-icons][github-file-icons]] :: Gives different filetypes different icons to GitHub 🚀
 
-*** TODO The evils of this world
++ [[https://github.com/N1ck/gifs-for-github][gifs-for-github]] :: Makes it easy to search GIPHY and add a GIF into any GitHub comment box.
+
++ [[https://github.com/benbalter/github-mention-highlighter][github-mention-highlighter]] :: Any GitHub issue you've been mentioned in and your mentions should now be more easily visible.
+
++ :flame: [[https://github.com/sindresorhus/refined-github][refined-github]] :: Browser extension that simplifies the GitHub interface and adds useful features
+
+  - Makes whitespace characters visible
+  - Adds one-click merge conflict fixers
+  - Adds reaction avatars showing who reacted to a comment
+  - Linkifies issue/PR references and URLs in code and conversation titles
+  - Adds a button to revert all the changes to a file in a PR
+  - Lets you hide every event except comments or unresolved comments in issues and PRs
+  - 🔥 Adds a build/CI status icon next to the repo’s name.
+  - Adds a button to download entire folders, via download-directory.github.io.
+  - Adds a link to preview HTML files.
+  - Adds a button to copy a file’s content.
+  - Shows PRs that touch the current file.
+  - [[https://user-images.githubusercontent.com/1402241/33802977-beb8497c-ddbf-11e7-899c-698d89298de4.gif][Enables tab and shift tab for indentation in comment fields.]]
+  - [[https://user-images.githubusercontent.com/1402241/53678019-0c721280-3cf4-11e9-9c24-4d11a697f67c.png][Adds a button to insert collapsible content (via <details>)]]
+  # ‼ - [[https://user-images.githubusercontent.com/1402241/65020298-1f2dfb00-d957-11e9-9a2a-1c0ceab8d9e0.gif][Wraps selected text when pressing one of Markdown symbols instead of    replacing it: =[ ` ' " * ~ _= ]]
+  - [[https://user-images.githubusercontent.com/1402241/99895146-16b50c80-2c4d-11eb-8038-210e6fd5e798.png][🔥 Highlights the most useful comment in conversations.]]
+  - [[https://user-images.githubusercontent.com/1402241/33474535-a814ee78-d6ad-11e7-8f08-a8b72799e376.png][Shows color-coded review counts in PR lists.]]
+  - [[https://user-images.githubusercontent.com/1402241/79343285-854f2080-7f2e-11ea-8d4c-a9dc163be9be.gif][Mark/unmark multiple files as “Viewed” in the PR Files tab. Click on the
+    first checkbox you want to mark/unmark and then shift-click another one; all
+    the files between the two checkboxes will be marked/unmarked as “Viewed”.]]
+  - [[https://user-images.githubusercontent.com/16872793/81943321-38ac4300-95c9-11ea-8543-0f4858174e1e.png][Shows the first Git tag a merged PR was included in.]]
+  - Automatically deletes the branch right after merging a PR, if possible.
+  - [[https://user-images.githubusercontent.com/16872793/87246205-ccf42400-c419-11ea-86d5-0e6570d99e6e.gif][Uses the first commit for a new PR’s title and description.]]
+  - [[https://user-images.githubusercontent.com/1402241/54178764-d1c96080-44d1-11e9-889c-734ffd2a602d.png][Adds one-click buttons to change diff style and to ignore the whitespace and a keyboard shortcut to ignore the whitespace: d w.]]
+    ( The toggle-whitespace-changes is very useful when there are minor linting changes that can be safely ignored in a PR. )
+  - Adds a keyboard shortcut to visit your own profile: g m.
+  - [[https://user-images.githubusercontent.com/170270/55060505-31179b00-50a4-11e9-99a9-c3691ba38d66.png][Renders `text in backticks` in issue titles, commit titles and more places.]]
+  - Shows all of Refined GitHub’s new keyboard shortcuts in the help modal ([[kbd:?]] hotkey).
+
+*** TODO See all company related PRs
 :PROPERTIES:
-:CUSTOM_ID: The-evils-of-this-world
+:CUSTOM_ID: See-all-company-related-PRs
 :END:
-#+begin_src emacs-lisp :tangle no
-;; “PDF” stands for Portable Document Format, since you should be able to open
-;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
-;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
-;; them. Unfortunately, various government & insurance forms are only provided in
-;; this format.
-(system-packages-ensure "adobe-acrobat-reader")
-#+end_src
-** TODO Background audio I want to listen to as I work
-#+begin_src emacs-lisp
-(use-package empv )
 
-;; Then, M-x empv-play https://invidious.fdn.fr/watch?v=hlTqCmpP5eo, to listen to Dua Ifitiah in the background
-;; Or: M-x empv-play https://invidious.fdn.fr/watch?v=9m9yE7qtq5w
-;; lol maybe make a hydra(ie playlist) of things I commonly listen to in the background while working.
-;; Require: brew install mpv
-;; See also:
-;; Maybe better? https://github.com/spiderbit/ytdious/tree/941460b51e43ef6764e15e2b9c4af54c3e56115f
-;; Maybe better? https://melpa.org/#/yeetube
-;; https://github.com/maximus12793/helm-youtube/tree/e7272f1648c7fa836ea5ac1a61770b4931ab4709
-;; https://github.com/isamert/empv.el/tree/1721a581d68f211a7f0104554858ea2afb1723ff
+#+begin_src emacs-lisp
+(cl-defun w-PRs (&rest query-options)
+  "See all company related PRs"
+  (interactive)
+  (thread-last `("is:open" "is:pr" "archived:false" "draft:false" ,@work/gh-tags  ,@query-options)
+    (mapcar #'url-hexify-string)
+    (s-join "+")
+    (concat "https://github.com/pulls?q=")
+    browse-url))
 ;;
-(setq empv-invidious-instance "https://invidious.fdn.fr.com")
+(cl-loop for (name . query-options)
+         in `((month ,(format-time-string "updated:>=%Y-%m-01"))
+              (today ,(format-time-string "updated:>=%Y-%m-%d"))
+              (created-this-week ,(format "created:>=%s"
+                                          (org-read-date nil nil "++1" nil (org-read-date nil t "-sun")))) ;; Date of most recent Monday
+              (stale!! ,(format "updated:<=%s" (org-read-date nil nil "-1w"))) ;; Items not touched in over a week
+              (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
+              (involves-me "involves:alhassy")
+              (process-manager "label:\"quick and easy\"" "repo:process-builder")
+              (newts "label:\"Newts Priority Review\",Newts"))
+         do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
 #+end_src
 
-** TODO LSP and Eglot Experiments
-*** TODO Eglot ----Fancy IDE Features that Just Workᵀᴹ
+**** TODO A nice Emacs interface for a portion of the “gh” CLI
+:PROPERTIES:
+:CUSTOM_ID: A-nice-Emacs-interface-for-a-portion-of-the-gh-CLI
+:END:
+#+begin_src emacs-lisp
+;; A nice Emacs interface for the a portion of the “gh” CLI.
+(my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
+(cl-defun my/gh-checkout (&optional repo)
+  "With prefix, select a branch name; otherwise a Pull Request name.
+
+If no REPO is provided, let the user select one from a menu.
+Example use:      (w-pr-checkout \"~/my-repo\")
+                  (w-pr-checkout)"
+  (interactive)
+  (let* ((repo (or repo (completing-read "Repo: " (projectile-relevant-known-projects))))
+         (default-directory repo) ;; temporarily override this global variable, used with magit
+         (current-branch (magit-get-current-branch))
+         (all-branches (magit-list-local-branch-names))
+         (status (format "cd %s; gh pr status" repo)))
+    (if current-prefix-arg
+        (-let [branch (completing-read (format "New branch (Currently “%s”): " current-branch) all-branches)]
+          (shell-command-to-string (format "cd %s; git checkout %s" repo branch)))
+      (let* ((PR-list (s-split "\n" (shell-command-to-string (format "cd %s; gh pr list" repo))))
+             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list))))
+             (_ (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯)))
+             (new-branch (magit-get-current-branch)))
+        ;; Show nice status
+        (async-shell-command status)
+        (magit-status repo)))))
+#+end_src
+
+*** TODO SQL ---via LSP
+:PROPERTIES:
+:CUSTOM_ID: SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only
+:END:
+When doing ‘serious’ database work, I love using DBeaver.  But when I only want
+to /quickly/ run a query, to check something, *without the fricition of switching
+applications*, then doing so in Emacs is a no-brainer: I use doc : w-sql  to produce
+a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.  (This also
+serves as a nice *reference mechanism* for useful queries.)
+
+Let's use [[https://github.com/lighttiger2505/sqls][LSP for SQL]], to get
++ Neato tooltips on table definitions and column constraints,
+  - Write ~select * from my-table t~ then delete the ~*~ and enter ~t.~ to see all
+    valid columns; or just delete the ~*~ and press ~.~ to see them.
++ Completions for tables & column names,
++ ~C-c C-c~ to execute query at point [My personal setup below],
+  - TODO: Run all queries with doc : lsp-execute-code-action
++ TODO: When sharing with others, maybe execute doc : lsp-format-buffer
++ Note: The tokenizer is known to a bit buggy.
+  - E.g., ~select 1 + 2 as "Numerical, yeah!"~ will not be run due to the ‘!’.
+
+#+begin_src emacs-lisp
+;; Installation: go install github.com/lighttiger2505/sqls
+(setq lsp-sqls-server "/Users/musa/go/bin/sqls")
+(setq lsp-sqls-timeout 1)
+(setq lsp-sqls-workspace-config-path nil)
+;; https://emacs-lsp.github.io/lsp-mode/page/lsp-sqls/
+(setq  work/sqls-connections nil)(setq work/sqls-connections
+      '("host=127.0.0.1 port=5432 user=SUPER_SECRET password=ALSO_SUPER_SECRET dbname=YET_AGAIN_SECRET sslmode=disable"))
+(setq lsp-sqls-connections
+      ;; (--map `((driver . "postgresql") (dataSourceName . ,it)) work/sqls-connections))
+      `(((driver . "postgresql") (dataSourceName . ,(car work/sqls-connections)))))
+;; TODO: Remove this 'car'!
+(add-hook 'sql-mode-hook 'lsp)
+
+(use-package org-modern   :defer nil)
+(defun my/execute-query-at-point ()
+  "Execute query at point and make resulting table an Org table and modernise it"
+  (interactive)
+  (lsp-sql-execute-paragraph)
+  (other-window 1) (org-modern-global-mode) (org-mode) (read-only-mode -1)
+  (while (re-search-forward "^\+" nil t) (replace-match "|"  nil t))
+  (toggle-truncate-lines)
+  (beginning-of-buffer) (execute-kbd-macro (read-kbd-macro "<tab>"))
+  (read-only-mode) (other-window -1)
+  (local-set-key "q" (lambda ()  "Quit buffer" (interactive) (ignore-errors (kill-buffer-and-window)))))
+
+;; TODO: FIXME: Debugger entered--Lisp error: (void-variable sql-mode-map)
+;; (bind-key "C-c C-c" #'my/execute-query-at-point 'sql-mode-map)
+;; (bind-key "C-c C-<return>" #'my/execute-query-at-point 'sql-mode-map)
+
+(defun w-sql ()
+  "Quickly run a SQL query, then dispose of the buffer when done.
+
+Uses the first connection available, to change connections
+invoke M-x `lsp-sql-switch-connection'."
+  (interactive)
+  ;; LSP only works on files; not buffers; so I use this file.
+  (find-file "~/.emacs.d/scratch.sql")
+  (insert work/sql-queries) ;; docs and examples
+  (sql-mode)
+  (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
+  (beginning-of-buffer))
+#+end_src
+
+#+begin_details "Previous setup ~ ejc-sql [Disabled]"
+- ❌ ~ejc-sql~ crashes with updates.
+- ✔ I like that ejc-sql gives me M-. to jump to definitions of tables/functions/etc.
+  - “Go to definition”: [M-.] M-x ejc-describe-entity ⇒ Show source code for a stored view, function, table, etc.
+  - Get entity definition: show creation SQL of view, package, function, procedure or type.
+  - C-c e t ⇒ See list of tables
+- ✔ ejc works with org-mode out of the box; https://github.com/kostafey/ejc-sql#use-with-org-mode
+
+⇒ BEST OF BOTH WORLDS? ⇐
+(setq ejc-sql-separator "-- /") ;; Otherwise LSP sql server sees ‘/’ as a syntax error.
+
+#+begin_src emacs-lisp :tangle no
+;; (system-packages-ensure "leiningen")
+;; NOTE: You must commented out the (require 'ejc-direx) from ejc-sql.el
+;; Reason: https://github.com/kostafey/ejc-sql/issues/163
+(use-package ejc-sql
+    :defer nil
+  :config
+  (require 'ejc-company)
+  (push 'ejc-company-backend company-backends)
+  (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
+  ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
+  (bind-key "C-c C-c"
+             (lambda () (interactive)
+               (setq ejc-sql-complete-query-hook
+                     (if current-prefix-arg
+                         '(w-ejc-result-pp-json)  ;; Defined below
+                       '((lambda () ;; Give each line of text just one screen line.
+                           (switch-to-buffer-other-window "*ejc-sql-output*")
+                           (visual-line-mode -1)
+                           (toggle-truncate-lines)
+                           (other-window -1)))))
+               (ejc-eval-user-sql-at-point))
+             'sql-mode-map))
+
+(defun w-sql ()
+  "Quickly run a SQL query, then dispose of the buffer when done.
+
+By default uses a connection named “xxxx”, to see a list of
+other connections call with a prefix argument."
+  (interactive)
+
+  ;; Get DB credentials. One does “M-x ejc-connect-interactive” once, then
+  ;;  “M-x ejc-insert-connection-data” and paste that into your init; then
+  ;; “M-x ejc-connect” provides a completion of possible DBs to connect to.
+  (load-file "~/Desktop/work.el")
+  ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
+  ;; which temporarily adds to this hook, then calls
+  (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
+  (require 'ejc-sql)
+  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "xxxx")]
+    (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
+    (thread-last
+        `("\n\n/\n-- DOCS & EXAMPLES\n--"
+          "-- SQL queries should be seperated by “/”"
+          "-- [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP]"
+          "-- In result window, TAB/RET to navigate the columns/rows."
+          "-- C-c e t ⇒ List all tables"
+          "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
+          "\nselect 1 + 2 as \"Numerical, yeah!\""
+          "\n/\n"
+          "-- More examples of useful SQL queries I might need, but don't want to remember"
+          ;; I've moved them out to my private work.el file.
+          ,@work/sql-queries)
+      (s-join "\n")
+      insert)
+    (sql-mode)
+    (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
+    (ejc-connect connection-name)
+    (beginning-of-buffer)
+    (message "Connecting to DB... please wait a moment")))
+
+(defun w-ejc-result-pp-json ()
+  "Pretty print JSON ejc-result buffer."
+  (interactive)
+  (ignore-errors
+    (switch-to-buffer-other-window "*ejc-sql-output*")
+    (beginning-of-buffer)
+    (re-search-forward "{")
+    (backward-char 1)
+    (delete-region (point-min) (point))
+    (end-of-buffer)
+    (re-search-backward "|")
+    (kill-line)
+    (json-mode)
+    (json-pretty-print-buffer)
+    (other-window -1)
+    (message-box "hiya")))
+#+end_src
+
+;; Add minimal table autocomplete to SQL
+(require 'ejc-company)
+(push 'ejc-company-backend company-backends)
+(add-hook 'ejc-sql-minor-mode-hook
+          (lambda ()
+            (company-mode t)))
+#+end_details
+
+- *Postgres is the Emacs of Databases:* /It has extensions!/ E.g., It can be
+  extended to write stored functions in Ruby, Python, and [[https://plv8.github.io/#:~:text=for(var%20i%3D0%3B%20i%3Ckeys.length%3B%20i%2B%2B)%7B%0A%20%20%20%20%20%20%20%20o%5Bkeys%5Bi%5D%5D%20%3D%20vals%5Bi%5D%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20o%3B][in-particular
+  JavaScript]]. So neat!
+  - [[https://dzone.com/articles/why-postgresql-so-awesome][Why PostgreSQL is so Awesome - DZone Java]]
+  - [[https://www.2ndquadrant.com/en/blog/postgresql-is-the-worlds-best-database/][PostgreSQL is the worlds' best database - 2ndQuadrant | PostgreSQL]]
+  - [[https://www.craigkerstiens.com/2012/04/30/why-postgres/][Why Postgres - Craig Kerstiens]]
+
+*** TODO Docker
+:PROPERTIES:
+:CUSTOM_ID: Docker
+:END:
+#+begin_src emacs-lisp
+;; Usage: M-x docker [RET ?]
+(use-package docker
+    :defer nil
+  :config
+  (my/defaliases docker-containers w-show-docker-containers))
+
+(defun w-stop&remove-docker-containers ()
+  (interactive)
+  (shell-command "docker stop $(docker ps -a -q)")
+  (shell-command "docker rm $(docker ps -a -q)"))
+
+(defun w-postgres-status ()
+  (interactive)
+  (display-message-or-buffer (s-replace "healthy" "🆙 healthy 🍏" (shell-command-to-string "docker ps -a | grep postgres"))))
+
+(cl-defun w-kill-process-running-on-port (&optional (port (completing-read "Port: " '("3310" "80" "9000" "8000" "8080" "etc, whatever you want"))))
+  "We use ‘lsof’ to list open files; as in:  lsof -i :3310 +c0
+  The +c0 prints the full name of the command rather than truncating it.
+
+  We then find the PID and kill the process."
+  (interactive)
+  (-let [process (shell-command-to-string (format "lsof -i :%s +c0" 3310))]
+    (-let [pid (ignore-errors (cl-second (s-split " " (cl-second (s-split "\n" process)))))]
+      (shell-command (format "kill %s" pid))
+      (message process))))
+
+
+#+end_src
+
+**** my/docker-stop
+:PROPERTIES:
+:CUSTOM_ID: my-docker-stop
+:END:
+#+begin_src emacs-lisp
+(defun my/docker-stop (ctr)
+  "Stop all containers that mention CTR in their name, image, command, or container id"
+  (thread-last (shell-command-to-string "docker ps -a")
+    (s-split "\n")
+    (--filter (s-contains-p ctr it))
+    (--map (car (s-split " " it))) ;; Get docker container ids
+    (--map (shell-command (concat "docker stop " it)))))
+#+end_src
+
+*** TODO Peer Review / Pull Request Template for Work
+:PROPERTIES:
+:CUSTOM_ID: Peer-Review-Pull-Request-Template-for-Work
+:END:
+
+I run TODO. doc.w-pr-template to get a new Org buffer with a review template.  I make
+notes and check-off boxes with ~C-c C-c~ as usual, and when I'm done I press ~C-c
+C-s~ to copy the buffer to clipboard, in markdown format. Then I can paste it
+into Github.
+
+#+begin_src emacs-lisp
+(cl-defun w-pr-template ()
+  "Hi"
+  (interactive)
+  (-let [buf "PR Template ~ Press “C-c C-s” when done"]
+    (ignore-errors (kill-buffer buf))
+    (switch-to-buffer buf)
+    (insert "w-pr-template")
+    (yankpad-expand)
+    (org-mode)
+    (beginning-of-buffer)
+    (use-local-map (copy-keymap org-mode-map))
+    (local-set-key (kbd "C-c C-s")
+                   `(lambda ()
+                     (interactive)
+                     (beginning-of-buffer)
+                     (replace-string "[X]" "✅")
+                     (beginning-of-buffer)
+                     (replace-string "[ ]" "❌")
+                     (beginning-of-buffer)
+                     (replace-string "[-]" "🚧")
+                     (-let [org-export-with-toc nil]
+                       (org-md-export-as-markdown)
+                       (kill-ring-save (point-min) (point-max)))
+                     (kill-buffer-and-window) ;; Kills the new org-md-export buffer
+                     (kill-buffer ,buf) ;; Kills this temporary PR template buffer
+                     (message "PR notes saved to clipboard in Github markdown")))))
+#+end_src
+
+#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
+,** w-pr-template: Peer Review / Pull Request Template for Work
+I followed the testing instructions and everything look's good 😁
+
+Below is a detailed checklist of what I went through.
+
+--------------------------------------------------------------------------------
+
+1. [ ] Pull Request: The PR template was fully filled out.
+   - [ ] Clear description of the problem and how it was solved.
+   - [ ] I've cross-checked the description with the associated Jira ticket; and
+     everything is implemented.
+   - [ ] I've ticked-off the PR's check-boxes.
+   - [ ] Good use of bullet points (-) and code font (‵, ‷) to make the prose
+     easier to read.
+   - [ ] The commit messages are well-written.
+   - [ ] Travis CI succeeds.
+   - [ ] PR author annotated source code, with Github comments, before the review.
+     - Annotations guide the reviewer through the changes, showing which files to look at first and defending the reason behind each code modification.
+
+2. [ ] Functionality: The code behaves as the author intended.
+   - [ ] I was able to reproduce the bug on ~main~.
+   - [ ] Ran the code and used it as an end-user would.
+       Namely, I made a new form, submitted an instance, checked ~In-Progress~,
+     & ~Form Reports~.
+   - [ ]  I've tried all kinds of quotes and unicode, "𝒰"\‘ℕ’/𝒊′ℭ″𝑂؛𝒟⨾'∃',
+        input for text inputs; as well as special chars: +-_)(*&^%$#@!~`'".;><?/}{}[]|\.
+   - [ ] Followed the happy path in the provided testing instructions.
+     - Nope; none provided.
+   - [ ] Also tried the following edge case: ⋯ ⁉ ⋯
+
+3. [ ] Tests: There are new unit tests (but sadly no E2Es/integration).
+   - [ ] Meaningful: Tests actually test that the code is performing the
+     intended functionality.
+   - [ ] Ran associated E2Es / unit tests with the incantation: ⋯ ⁉ ⋯.
+   - [ ] I looked at the associated migrations file and ran the following SQL
+     query after running migrations and it works fine; then I ran the query
+     after running rollbacks and everything is as expected.
+     ,#+begin_src sql
+     ???
+     ,#+end_src
+   - [ ] Avoid global test fixtures and seeds, add data per-test.
+       TL;DR: To prevent test coupling and easily reason about the test flow, each test
+       should add and act on its own set of DB rows.
+
+4. [ ] Naming: Clear and informative names were chosen for top-level-items/variables/methods.
+
+5. [ ] Comments: New top-level-items/variables/methods have clear and useful
+   documentation.
+   - [ ] Sometimes the code is clear ---e.g., 5 lines perform a toggle---
+     but we can improve readability by providing a “comment as function”
+     ---e.g., making a ~toggle~ function, then calling it where it is used;
+     this new function is likely to be smaller than the original inlined use.
+
+     Some comments-as-functions have been suggested.
+
+6. [ ] Being Neighbourly: There was nearby code that could have been
+   improved/update, and suggestions have been left as to how to do so.
+   - We're likely to touch these files again in the future, so why not leave
+     things better than we found them 🚀
+
+7. [ ] Code Smells: Are there any [[https://blog.codinghorror.com/code-smells/][code smells?]]
+
+8. [ ] Syntax: I've read every line.
+   - Nope, there was some stuff I'm not familair with. If the PR authour can
+     jump on a call and walk me through them, that'd be awesome!
+   - [ ] I've left various suggestions and feedback, against specific lines
+     of code. Happy to discuss these further!
+   - [ ] I took my time while reviewing your code, and I'm not depending on
+     others to catch errors.
+
+9. [ ] Complexity: Another developer can easily understand and use this code when
+   they come across it in the future :-)
+
+10. [ ] Modulairty: Is there any redundant or duplicate code? Is the code as modular as possible?
+
+11. [ ] Backwards Compatiable: I made a form in ~main~, involving the work in
+    this branch, and it worked fine in this branch.
+    - I was able to edit the form, submit it, and checked that it looked find in ~Form Reports~.
+
+12. [ ] Best Practices: The following rules-of-thumb are adhered to, more or less.
+      ,#+html: <details>
+    - Remove some redundancy using a bit of laws of algorithmics, namely
+      + ~[𝒆𝒕𝒂-𝒓𝒆𝒅𝒖𝒄𝒕𝒊𝒐𝒏] ⋯(x => f(x))⋯  ≡ ⋯f⋯~
+      + ~[𝒊𝒇-𝒅𝒊𝒔𝒕𝒓𝒊𝒃𝒖𝒕𝒊𝒗𝒊𝒕𝒚] (a ? f(b) : f(c)) ≡ f(a ? b : c)~
+      which increase readability a tad.
+      # Especially when “f” is a lengthy expression; it may also be ideal to give
+      # “a ? b : c” a local name.
+    - Fail fast, validate arguments [we have some in-house validation util libraries]
+    - Be aware that ~0, "", []~ are all falsey values in JS: If a variable ~x~
+      can be one of those things, then ~if (x)~ is not always approriate; better
+      may be ~if(typeof x === 'integer')~ since this communicates two things (1)
+      the variable is defined, and (2) what it's type expected is.
+      + Likewise, better use ~typeof~ instead of ~x !== null~.
+    - You have variables declared a bit from their use sites; the distance
+      creates an unnecessary disconnect ---especially since you don't use these
+      variables elsewhere. Please relocate them to be closer to their use sites.
+    - Strings are sanitised
+    - Errors are caught; with ~try/catch~
+    - Global variables are avoided, when possible.
+    - ~const~ is preferred to ~let~; ~var~ should seldom be used.
+      - Use ~var~ and ~function~ when you want definitions hoisted to the top of
+        their enclosing scope.
+    - ~===~ is preferred to ~==~.
+    - Use default arguments instead of short-circuiting or conditionals
+      - ~f (x) { x = x || defaultValue; ⋯ }~ ≡ ~f (x = defaultValue) { ⋯ }~.
+      - Named parameters can also be optional, with default values:
+        ~f(obj) { let prop = obj.prop || defaultProp; ⋯}~ ≣ ~f ({prop =
+        defaultProp}) { ⋯ }~
+    - Unless you really need an array,  handled an indefinite number of
+      arguments using rest parameters: ~function f(...args) {⋯ // use ‘args’ as
+      an array}~ can be invoked ~f(x₁, x₂, …)~ _without_ array brackets; or as
+      ~f(...arr)~ if you have an array in-hand.
+    - Function arguments: 3 or fewer ideally
+    - If you need to declare an argument but are not using it, prefix it's name
+      with an underscore.
+    - Encapsulate conditionals in a separate _well-named_ function, if possible
+    - Avoid negative conditionals; e.g., by making use of well-choosen names.
+    - Use Demorgan's rules: ~!x && !y ≣ !(x || y)~ and ~!x || !y ≣ !(x && y)~.
+    - Use ~try/catch~ with ~async/await~; or promises with both ~then~ and ~catch~.
+    - Don't ignore rejected promises, log it to external logging service
+    - Related chunks of code are clearly demarcated.
+    - If an anonymous function is too long, more than 2 lines, give it a name:
+      E.g., in JS, ~arr.map(x => ...) ≣ arr.map( function
+      doingSomeComplexStuff(x) { return ...} )~.  The name aids in communicating
+      the intent, and is useful for debugging.
+    - [ES6] Braces are used for block scope, and not simulated using IIFEs.
+    - Avoid explicit newlines with ~+ "\n" +~ in-favour of Template Literals, which preserve line
+      breaks.
+    - Use Destructuring instead of explicit projections; aids in readability.
+      - Note∶ ~let y = x.y~ ≡ ~let {y} = x~ only holds when ~x~ is not ~null~
+        (and so when ~x~ is not a expression involving ~?.~).
+
+    ,#+html: </details>
+#+end_src
+
+*** TODO LSP and Eglot Experiments
+**** TODO Eglot ----Fancy IDE Features that Just Workᵀᴹ
 
 For JavaScript:
 #+begin_src emacs-lisp
@@ -9911,7 +10431,7 @@ For JavaScript:
 For Java, install doc:eglot-java-mode and activate that in a Java file ---it automatically installs the required
 language server. 🚀
 
-*** TODO LSP: Making Emacs into a generic full-featured programming IDE
+**** TODO LSP: Making Emacs into a generic full-featured programming IDE
 :PROPERTIES:
 :CUSTOM_ID: LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE
 :END:
@@ -10162,7 +10682,7 @@ LSP mode supports the following Features:
 #+end_src
 #+end_details
 
-**** Types as comments in JavaScript via LSP && Using LSP for Org-Src Blocks
+***** Types as comments in JavaScript via LSP && Using LSP for Org-Src Blocks
 :PROPERTIES:
 :CUSTOM_ID: Types-as-comments-in-JavaScript-via-LSP
 :END:
@@ -10188,7 +10708,7 @@ For more on this idea on types, see [[https://github.com/BeyondCodeBootcamp/jsdo
 Within Org-mode, at the start of the above ~src~ block, execute ~M-x lsp-org~ to [[https://emacs-lsp.github.io/lsp-mode/manual-language-docs/lsp-org/][get
 some LSP]] working even though you're in Org-mode.
 
-** TODO Note: M-S-SPC is for my personal servers dashboard.
+*** TODO Note: M-S-SPC is for my personal servers dashboard.
 :PROPERTIES:
 :CUSTOM_ID: Note-M-S-SPC-is-for-my-personal-servers-dashboard
 :END:
@@ -10200,111 +10720,26 @@ some LSP]] working even though you're in Org-mode.
   :config (bind-key* "C-c SPC" 'ace-jump-mode))
 #+end_src
 
-** TODO Zoom
-:PROPERTIES:
-:CUSTOM_ID: Zoom
-:END:
-#+begin_src emacs-lisp :tangle no
-;; An automatic window-resizing mechanism.
-;; A “calmer” alternative to golden-ratio.
-;; https://github.com/cyrus-and/zoom
-(use-package zoom
+*** TODO Tree cmd, also treemacs for navigating a new repository
+(system-packages-ensure "tree")
+- A useful way to get an overview of a new repoistory.
+- Alternatively, a nice way to quickly see what's at the current level and all subdirectories.
+- =tree | ls=
 
-  :config (zoom-mode t))
-#+end_src
-** TODO Ibuffer
-:PROPERTIES:
-:CUSTOM_ID: Ibuffer
-:END:
-#+begin_src emacs-lisp :tangle no
-;; Let's use an improved buffer list.
-(use-package ibuffer ;; This is built-into Emacs.
-  :bind ("C-x C-b" . ibuffer))
-;; It uses similar commands as does dired; e.g.,
-;; / . org
-;; This filters (“/”) the list with extensions (“.”) being “org”.
+I might browse around the various subdirectories trying to get a feel for the layout of the project. I might try lots of ls commands, or perhaps something like
 
-(use-package ibuffer-vc
-  :hook (ibuffer . (lambda ()
-                     (ibuffer-vc-set-filter-groups-by-vc-root)
-                     (unless (eq ibuffer-sorting-mode 'alphabetic)
-                       (ibuffer-do-sort-by-alphabetic))))
-  :custom
-  (ibuffer-formats '((mark modified read-only " "
-                           (name 18 18 :left :elide) " "
-                           (size 9 -1 :right) " "
-                           (mode 16 16 :left :elide) " "
-                           (vc-status 16 16 :left) " "
-                           (vc-relative-file)))))
- #+end_src
-+ [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
-+ (~10 minute video) [[https://cestlaz.github.io/posts/using-emacs-34-ibuffer-emmet/][Using Emacs - 34 - ibuffer and emmet - C'est la Z]]
-+ (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
+          tree | less
+          #(or perhaps)#
 
-** TODO find function at point
-:PROPERTIES:
-:CUSTOM_ID: find-function-at-point
-:END:
-Friendly reminder that ~M-.~ takes you to the definition, and ~M-,~ takes you back
-to where you originally where.
-** TODO centered-cursor: Keep focus in the centre of the screen       :Eeek:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-centered-cursor-Keep-focus-in-the-centre-of-the-screen
-:END:
-#+begin_src emacs-lisp :tangle no
-   ;; When scrolling, move the screen and leave the cursour in the (vertical) center of the screen
-   (use-package centered-cursor-mode
-     :config (global-centered-cursor-mode))
-#+end_src
+and then within less I can use the interactive search function / to look around for keywords.
 
-** TODO “C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there
-:PROPERTIES:
-:CUSTOM_ID: C-x-2-and-C-x-3-now-create-a-new-window-horizontally-vertically-and-send-cursor-there
-:END:
- #+begin_src emacs-lisp :tangle no
-;; When we split open a new window, we usually want to jump to the new window.
-(advice-add #'split-window-below :after (lambda (&rest _) (other-window 1)))
-(advice-add #'split-window-right :after (lambda (&rest _) (other-window 1)))
- #+end_src
+E.g., =tree | less= then =/ karate= will show me a tree overview with all files that
+have the word “karate” in their full filename; then =/ png= will do a new search
+(on the tree overview) to show me all files with the phrase =png= (including as an
+extension).
 
-** TODO Semantic Change
-:PROPERTIES:
-:CUSTOM_ID: Semantic-Change
-:END:
-
-Using kbd:⌘-i and kbd:⌘-o we can quickly, for example, delete a string or its
-contents; or delete a {}-block or just its contents; or delete a ()-argument
-list or just its contents, etc.
-
- ~change-inner~ gives you vim's ~ci~ command:
-- ~change-inner {~ ⇒ Delete all text starting from the first ‘{’ delimiter to the next one; but /keep the delimiters/.
-- ~change-outer {~ ⇒ As above, but also delete the delimiters.
-
-#+begin_src emacs-lisp :tangle no
-(use-package change-inner
-
-  :bind (("s-i" . #'change-inner)
-         ("s-o" . #'change-outer)))
-#+end_src
-
-** TODO Drag Stuff                                                :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Drag-Stuff
-:END:
-#+begin_src emacs-lisp :tangle no :tangle no
-;; Move current word ←/→, or current line ↑/↓.
-;; Todo: Compare with org-metaup and org-metadown...
-(use-package drag-stuff
-
-  :config (cl-loop for (key . action) in '(("<M-down>" . drag-stuff-down)
-                                      ("<M-up>" . drag-stuff-up)
-                                      ("<M-right>" . drag-stuff-right)
-                                      ("<M-left>" . drag-stuff-left))
-                do (bind-key key action org-mode-map))
-      (drag-stuff-global-mode 1))
-#+end_src
-
-Ruins Org-mode's M-↑/↓ for moving entire sections around.
+Of-course, to actually do anything with the files (like mass renaming), there's
+Emacs' Dired (the directory editor).
 
 ** TODO Web Development
 :PROPERTIES:
@@ -10964,6 +11399,144 @@ Using ~⌘ j~ then one of the following...
 | ~3i~ | Converts ternary operator to if-statement; nice!                               |
 | ~ss~ | Split a string, at point, into a catenation of strings                         |
 | ~st~ | Convert a string into a `template`.                                            |
+
+** TODO Working with PDFs
+*** TODO Open PDFs in Emacs
+#+begin_src emacs-lisp
+    ;; In Org-mode, clicking on PDF should open it in Emacs
+    ;; Example:          [[~/Desktop/stuff-I'm-learning.pdf::12]]       ;; Opens the pdf to page 12
+    ;; Another Example:  docview:~/Desktop/stuff-I'm-learning.pdf::12
+  (ignore-errors (add-to-list 'org-file-apps '("\\.pdf\\'" . emacs)))
+
+    ;; Required code to make the above links work as expected.
+    ;; Source: https://www.reddit.com/r/emacs/comments/re0dx8/how_do_you_link_a_specific_pdf_page_in_org_mode/
+    (defun my-org-docview-open-hack (orig-func &rest args)
+      (let* ((link (car args)) path page)
+        (string-match "\\(.*?\\)\\(?:::\\([0-9]+\\)\\)?$" link)
+        (setq path (match-string 1 link))
+        (setq page (and (match-beginning 2)
+                        (string-to-number (match-string 2 link))))
+        (org-open-file path 1)
+        (when page
+          (cond
+           ((eq major-mode 'pdf-view-mode)
+            (pdf-view-goto-page page))
+           (t
+            (doc-view-goto-page page))))))
+    (advice-add 'org-docview-open :around #'my-org-docview-open-hack)
+
+    ;; Alternatively, there's a dedicated package for this
+    ;; https://github.com/fuxialexander/org-pdftools/tree/967f48fb5038bba32915ee9da8dc4e8b10ba3376
+#+end_src
+
+*** TODO The evils of this world
+:PROPERTIES:
+:CUSTOM_ID: The-evils-of-this-world
+:END:
+#+begin_src emacs-lisp :tangle no
+;; “PDF” stands for Portable Document Format, since you should be able to open
+;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
+;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
+;; them. Unfortunately, various government & insurance forms are only provided in
+;; this format.
+(system-packages-ensure "adobe-acrobat-reader")
+#+end_src
+** TODO Background audio I want to listen to as I work
+#+begin_src emacs-lisp
+(use-package empv )
+
+;; Then, M-x empv-play https://invidious.fdn.fr/watch?v=hlTqCmpP5eo, to listen to Dua Ifitiah in the background
+;; Or: M-x empv-play https://invidious.fdn.fr/watch?v=9m9yE7qtq5w
+;; lol maybe make a hydra(ie playlist) of things I commonly listen to in the background while working.
+;; Require: brew install mpv
+;; See also:
+;; Maybe better? https://github.com/spiderbit/ytdious/tree/941460b51e43ef6764e15e2b9c4af54c3e56115f
+;; Maybe better? https://melpa.org/#/yeetube
+;; https://github.com/maximus12793/helm-youtube/tree/e7272f1648c7fa836ea5ac1a61770b4931ab4709
+;; https://github.com/isamert/empv.el/tree/1721a581d68f211a7f0104554858ea2afb1723ff
+;;
+(setq empv-invidious-instance "https://invidious.fdn.fr.com")
+#+end_src
+
+** TODO Zoom
+:PROPERTIES:
+:CUSTOM_ID: Zoom
+:END:
+#+begin_src emacs-lisp :tangle no
+;; An automatic window-resizing mechanism.
+;; A “calmer” alternative to golden-ratio.
+;; https://github.com/cyrus-and/zoom
+(use-package zoom
+
+  :config (zoom-mode t))
+#+end_src
+** TODO Ibuffer
+:PROPERTIES:
+:CUSTOM_ID: Ibuffer
+:END:
+#+begin_src emacs-lisp :tangle no
+;; Let's use an improved buffer list.
+(use-package ibuffer ;; This is built-into Emacs.
+  :bind ("C-x C-b" . ibuffer))
+;; It uses similar commands as does dired; e.g.,
+;; / . org
+;; This filters (“/”) the list with extensions (“.”) being “org”.
+
+(use-package ibuffer-vc
+  :hook (ibuffer . (lambda ()
+                     (ibuffer-vc-set-filter-groups-by-vc-root)
+                     (unless (eq ibuffer-sorting-mode 'alphabetic)
+                       (ibuffer-do-sort-by-alphabetic))))
+  :custom
+  (ibuffer-formats '((mark modified read-only " "
+                           (name 18 18 :left :elide) " "
+                           (size 9 -1 :right) " "
+                           (mode 16 16 :left :elide) " "
+                           (vc-status 16 16 :left) " "
+                           (vc-relative-file)))))
+ #+end_src
++ [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
++ (~10 minute video) [[https://cestlaz.github.io/posts/using-emacs-34-ibuffer-emmet/][Using Emacs - 34 - ibuffer and emmet - C'est la Z]]
++ (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
+
+** TODO centered-cursor: Keep focus in the centre of the screen       :Eeek:
+:PROPERTIES:
+:CUSTOM_ID: COMMENT-centered-cursor-Keep-focus-in-the-centre-of-the-screen
+:END:
+#+begin_src emacs-lisp :tangle no
+   ;; When scrolling, move the screen and leave the cursour in the (vertical) center of the screen
+   (use-package centered-cursor-mode
+     :config (global-centered-cursor-mode))
+#+end_src
+
+** TODO “C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there
+:PROPERTIES:
+:CUSTOM_ID: C-x-2-and-C-x-3-now-create-a-new-window-horizontally-vertically-and-send-cursor-there
+:END:
+ #+begin_src emacs-lisp :tangle no
+;; When we split open a new window, we usually want to jump to the new window.
+(advice-add #'split-window-below :after (lambda (&rest _) (other-window 1)))
+(advice-add #'split-window-right :after (lambda (&rest _) (other-window 1)))
+ #+end_src
+
+** TODO Drag Stuff                                                :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Drag-Stuff
+:END:
+#+begin_src emacs-lisp :tangle no :tangle no
+;; Move current word ←/→, or current line ↑/↓.
+;; Todo: Compare with org-metaup and org-metadown...
+(use-package drag-stuff
+
+  :config (cl-loop for (key . action) in '(("<M-down>" . drag-stuff-down)
+                                      ("<M-up>" . drag-stuff-up)
+                                      ("<M-right>" . drag-stuff-right)
+                                      ("<M-left>" . drag-stuff-left))
+                do (bind-key key action org-mode-map))
+      (drag-stuff-global-mode 1))
+#+end_src
+
+Ruins Org-mode's M-↑/↓ for moving entire sections around.
 
 ** TODO Having a workspace manager in Emacs
 :PROPERTIES:
@@ -12842,27 +13415,6 @@ This is a DoomEmacs macro: https://github.com/doomemacs/doomemacs/blob/master/co
   (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list))))))
 #+end_src
 
-** TODO Tree cmd, also treemacs for navigating a new repository
-(system-packages-ensure "tree")
-- A useful way to get an overview of a new repoistory.
-- Alternatively, a nice way to quickly see what's at the current level and all subdirectories.
-- =tree | ls=
-
-I might browse around the various subdirectories trying to get a feel for the layout of the project. I might try lots of ls commands, or perhaps something like
-
-          tree | less
-          #(or perhaps)#
-
-and then within less I can use the interactive search function / to look around for keywords.
-
-E.g., =tree | less= then =/ karate= will show me a tree overview with all files that
-have the word “karate” in their full filename; then =/ png= will do a new search
-(on the tree overview) to show me all files with the phrase =png= (including as an
-extension).
-
-Of-course, to actually do anything with the files (like mass renaming), there's
-Emacs' Dired (the directory editor).
-
 ** TODO [HERE TODAY] When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
 - If I want to see a particular buffer, I'll summon it explicitly.
   + E.g., Messages with ~C-h e~, Magit with ~C-x g~, Server Status with ~M-S-SPC~, etc.
@@ -12891,556 +13443,6 @@ Emacs' Dired (the directory editor).
 #+end_src
 
 Note: ~C-x C-r~ is very useful for jumping to recently visited files.
-
-** TODO Github Browser Extensions (for Chrome)
-:PROPERTIES:
-:CUSTOM_ID: Github-Browser-Extensions-for-Chrome
-:END:
-
-+ [[https://github.com/ovity/octotree][octotree]]  :: Lets you explore the files and folders of a repository with a
-  tree and search bar. Can also quickly browse the files changed in the current
-  PR/branch.
-
-+ [[https://github.com/jasonlong/isometric-contributions][isometric-contributions]] :: Renders your contribution graph on your profile in
-  a nicer way: 3D instead of the default 2D.
-
-+ [[https://github.com/OctoLinker/OctoLinker][OctoLinker]] :: Turns language-specific statements like ~include~, ~require~ or
-  ~import~ into links.  Gives you the ability to go to files by clicking at their
-  paths, not only internal files it also works for imported packages!
-
-+ [[https://github.com/Justineo/github-hovercard][github-hovercard]] :: Show a neat hover card when you hover over an element! No
-  need to open everything in a new page, just hover over it!
-
-+ [[https://github.com/homerchen19/github-file-icons][github-file-icons]] :: Gives different filetypes different icons to GitHub 🚀
-
-+ [[https://github.com/N1ck/gifs-for-github][gifs-for-github]] :: Makes it easy to search GIPHY and add a GIF into any GitHub comment box.
-
-+ [[https://github.com/benbalter/github-mention-highlighter][github-mention-highlighter]] :: Any GitHub issue you've been mentioned in and your mentions should now be more easily visible.
-
-+ :flame: [[https://github.com/sindresorhus/refined-github][refined-github]] :: Browser extension that simplifies the GitHub interface and adds useful features
-
-  - Makes whitespace characters visible
-  - Adds one-click merge conflict fixers
-  - Adds reaction avatars showing who reacted to a comment
-  - Linkifies issue/PR references and URLs in code and conversation titles
-  - Adds a button to revert all the changes to a file in a PR
-  - Lets you hide every event except comments or unresolved comments in issues and PRs
-  - 🔥 Adds a build/CI status icon next to the repo’s name.
-  - Adds a button to download entire folders, via download-directory.github.io.
-  - Adds a link to preview HTML files.
-  - Adds a button to copy a file’s content.
-  - Shows PRs that touch the current file.
-  - [[https://user-images.githubusercontent.com/1402241/33802977-beb8497c-ddbf-11e7-899c-698d89298de4.gif][Enables tab and shift tab for indentation in comment fields.]]
-  - [[https://user-images.githubusercontent.com/1402241/53678019-0c721280-3cf4-11e9-9c24-4d11a697f67c.png][Adds a button to insert collapsible content (via <details>)]]
-  # ‼ - [[https://user-images.githubusercontent.com/1402241/65020298-1f2dfb00-d957-11e9-9a2a-1c0ceab8d9e0.gif][Wraps selected text when pressing one of Markdown symbols instead of    replacing it: =[ ` ' " * ~ _= ]]
-  - [[https://user-images.githubusercontent.com/1402241/99895146-16b50c80-2c4d-11eb-8038-210e6fd5e798.png][🔥 Highlights the most useful comment in conversations.]]
-  - [[https://user-images.githubusercontent.com/1402241/33474535-a814ee78-d6ad-11e7-8f08-a8b72799e376.png][Shows color-coded review counts in PR lists.]]
-  - [[https://user-images.githubusercontent.com/1402241/79343285-854f2080-7f2e-11ea-8d4c-a9dc163be9be.gif][Mark/unmark multiple files as “Viewed” in the PR Files tab. Click on the
-    first checkbox you want to mark/unmark and then shift-click another one; all
-    the files between the two checkboxes will be marked/unmarked as “Viewed”.]]
-  - [[https://user-images.githubusercontent.com/16872793/81943321-38ac4300-95c9-11ea-8543-0f4858174e1e.png][Shows the first Git tag a merged PR was included in.]]
-  - Automatically deletes the branch right after merging a PR, if possible.
-  - [[https://user-images.githubusercontent.com/16872793/87246205-ccf42400-c419-11ea-86d5-0e6570d99e6e.gif][Uses the first commit for a new PR’s title and description.]]
-  - [[https://user-images.githubusercontent.com/1402241/54178764-d1c96080-44d1-11e9-889c-734ffd2a602d.png][Adds one-click buttons to change diff style and to ignore the whitespace and a keyboard shortcut to ignore the whitespace: d w.]]
-    ( The toggle-whitespace-changes is very useful when there are minor linting changes that can be safely ignored in a PR. )
-  - Adds a keyboard shortcut to visit your own profile: g m.
-  - [[https://user-images.githubusercontent.com/170270/55060505-31179b00-50a4-11e9-99a9-c3691ba38d66.png][Renders `text in backticks` in issue titles, commit titles and more places.]]
-  - Shows all of Refined GitHub’s new keyboard shortcuts in the help modal ([[kbd:?]] hotkey).
-
-** TODO A nice Emacs interface for a portion of the “gh” CLI
-:PROPERTIES:
-:CUSTOM_ID: A-nice-Emacs-interface-for-a-portion-of-the-gh-CLI
-:END:
-#+begin_src emacs-lisp
-;; A nice Emacs interface for the a portion of the “gh” CLI.
-(my/defaliases my/gh-checkout gh-checkout w-pr-checkout w-branch-checkout)
-(cl-defun my/gh-checkout (&optional repo)
-  "With prefix, select a branch name; otherwise a Pull Request name.
-
-If no REPO is provided, let the user select one from a menu.
-Example use:      (w-pr-checkout \"~/my-repo\")
-                  (w-pr-checkout)"
-  (interactive)
-  (let* ((repo (or repo (completing-read "Repo: " (projectile-relevant-known-projects))))
-         (default-directory repo) ;; temporarily override this global variable, used with magit
-         (current-branch (magit-get-current-branch))
-         (all-branches (magit-list-local-branch-names))
-         (status (format "cd %s; gh pr status" repo)))
-    (if current-prefix-arg
-        (-let [branch (completing-read (format "New branch (Currently “%s”): " current-branch) all-branches)]
-          (shell-command-to-string (format "cd %s; git checkout %s" repo branch)))
-      (let* ((PR-list (s-split "\n" (shell-command-to-string (format "cd %s; gh pr list" repo))))
-             (pr♯ (car (s-split "\t" (completing-read "PR: " PR-list))))
-             (_ (shell-command-to-string (format "cd %s; gh pr checkout %s" repo pr♯)))
-             (new-branch (magit-get-current-branch)))
-        ;; Show nice status
-        (async-shell-command status)
-        (magit-status repo)))))
-#+end_src
-
-** TODO See all company related PRs
-:PROPERTIES:
-:CUSTOM_ID: See-all-company-related-PRs
-:END:
-
-#+begin_src emacs-lisp
-(cl-defun w-PRs (&rest query-options)
-  "See all company related PRs"
-  (interactive)
-  (thread-last `("is:open" "is:pr" "archived:false" "draft:false" ,@work/gh-tags  ,@query-options)
-    (mapcar #'url-hexify-string)
-    (s-join "+")
-    (concat "https://github.com/pulls?q=")
-    browse-url))
-;;
-(cl-loop for (name . query-options)
-         in `((month ,(format-time-string "updated:>=%Y-%m-01"))
-              (today ,(format-time-string "updated:>=%Y-%m-%d"))
-              (created-this-week ,(format "created:>=%s"
-                                          (org-read-date nil nil "++1" nil (org-read-date nil t "-sun")))) ;; Date of most recent Monday
-              (stale!! ,(format "updated:<=%s" (org-read-date nil nil "-1w"))) ;; Items not touched in over a week
-              (mentions-me "mentions:alhassy") ;; i.e., stuff I need to look at
-              (involves-me "involves:alhassy")
-              (process-manager "label:\"quick and easy\"" "repo:process-builder")
-              (newts "label:\"Newts Priority Review\",Newts"))
-         do (eval `(cl-defun ,(intern (format "w-PRs-%s" name)) () (interactive) (w-PRs ,@query-options))))
-#+end_src
-
-** TODO SQL ---via LSP
-:PROPERTIES:
-:CUSTOM_ID: SQL-When-doing-serious-database-work-I-love-using-DBeaver-But-when-I-only
-:END:
-When doing ‘serious’ database work, I love using DBeaver.  But when I only want
-to /quickly/ run a query, to check something, *without the fricition of switching
-applications*, then doing so in Emacs is a no-brainer: I use doc : w-sql  to produce
-a query buffer, if one doesn't exist, then ~C-c C-c~ to send queries.  (This also
-serves as a nice *reference mechanism* for useful queries.)
-
-Let's use [[https://github.com/lighttiger2505/sqls][LSP for SQL]], to get
-+ Neato tooltips on table definitions and column constraints,
-  - Write ~select * from my-table t~ then delete the ~*~ and enter ~t.~ to see all
-    valid columns; or just delete the ~*~ and press ~.~ to see them.
-+ Completions for tables & column names,
-+ ~C-c C-c~ to execute query at point [My personal setup below],
-  - TODO: Run all queries with doc : lsp-execute-code-action
-+ TODO: When sharing with others, maybe execute doc : lsp-format-buffer
-+ Note: The tokenizer is known to a bit buggy.
-  - E.g., ~select 1 + 2 as "Numerical, yeah!"~ will not be run due to the ‘!’.
-
-#+begin_src emacs-lisp
-;; Installation: go install github.com/lighttiger2505/sqls
-(setq lsp-sqls-server "/Users/musa/go/bin/sqls")
-(setq lsp-sqls-timeout 1)
-(setq lsp-sqls-workspace-config-path nil)
-;; https://emacs-lsp.github.io/lsp-mode/page/lsp-sqls/
-(setq  work/sqls-connections nil)(setq work/sqls-connections
-      '("host=127.0.0.1 port=5432 user=SUPER_SECRET password=ALSO_SUPER_SECRET dbname=YET_AGAIN_SECRET sslmode=disable"))
-(setq lsp-sqls-connections
-      ;; (--map `((driver . "postgresql") (dataSourceName . ,it)) work/sqls-connections))
-      `(((driver . "postgresql") (dataSourceName . ,(car work/sqls-connections)))))
-;; TODO: Remove this 'car'!
-(add-hook 'sql-mode-hook 'lsp)
-
-(use-package org-modern   :defer nil)
-(defun my/execute-query-at-point ()
-  "Execute query at point and make resulting table an Org table and modernise it"
-  (interactive)
-  (lsp-sql-execute-paragraph)
-  (other-window 1) (org-modern-global-mode) (org-mode) (read-only-mode -1)
-  (while (re-search-forward "^\+" nil t) (replace-match "|"  nil t))
-  (toggle-truncate-lines)
-  (beginning-of-buffer) (execute-kbd-macro (read-kbd-macro "<tab>"))
-  (read-only-mode) (other-window -1)
-  (local-set-key "q" (lambda ()  "Quit buffer" (interactive) (ignore-errors (kill-buffer-and-window)))))
-
-;; TODO: FIXME: Debugger entered--Lisp error: (void-variable sql-mode-map)
-;; (bind-key "C-c C-c" #'my/execute-query-at-point 'sql-mode-map)
-;; (bind-key "C-c C-<return>" #'my/execute-query-at-point 'sql-mode-map)
-
-(defun w-sql ()
-  "Quickly run a SQL query, then dispose of the buffer when done.
-
-Uses the first connection available, to change connections
-invoke M-x `lsp-sql-switch-connection'."
-  (interactive)
-  ;; LSP only works on files; not buffers; so I use this file.
-  (find-file "~/.emacs.d/scratch.sql")
-  (insert work/sql-queries) ;; docs and examples
-  (sql-mode)
-  (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
-  (beginning-of-buffer))
-#+end_src
-
-#+begin_details "Previous setup ~ ejc-sql [Disabled]"
-- ❌ ~ejc-sql~ crashes with updates.
-- ✔ I like that ejc-sql gives me M-. to jump to definitions of tables/functions/etc.
-  - “Go to definition”: [M-.] M-x ejc-describe-entity ⇒ Show source code for a stored view, function, table, etc.
-  - Get entity definition: show creation SQL of view, package, function, procedure or type.
-  - C-c e t ⇒ See list of tables
-- ✔ ejc works with org-mode out of the box; https://github.com/kostafey/ejc-sql#use-with-org-mode
-
-⇒ BEST OF BOTH WORLDS? ⇐
-(setq ejc-sql-separator "-- /") ;; Otherwise LSP sql server sees ‘/’ as a syntax error.
-
-#+begin_src emacs-lisp :tangle no
-;; (system-packages-ensure "leiningen")
-;; NOTE: You must commented out the (require 'ejc-direx) from ejc-sql.el
-;; Reason: https://github.com/kostafey/ejc-sql/issues/163
-(use-package ejc-sql
-    :defer nil
-  :config
-  (require 'ejc-company)
-  (push 'ejc-company-backend company-backends)
-  (setq ejc-completion-system 'standard) ;; Use my setup; i.e., Helm.
-  ;; [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP].
-  (bind-key "C-c C-c"
-             (lambda () (interactive)
-               (setq ejc-sql-complete-query-hook
-                     (if current-prefix-arg
-                         '(w-ejc-result-pp-json)  ;; Defined below
-                       '((lambda () ;; Give each line of text just one screen line.
-                           (switch-to-buffer-other-window "*ejc-sql-output*")
-                           (visual-line-mode -1)
-                           (toggle-truncate-lines)
-                           (other-window -1)))))
-               (ejc-eval-user-sql-at-point))
-             'sql-mode-map))
-
-(defun w-sql ()
-  "Quickly run a SQL query, then dispose of the buffer when done.
-
-By default uses a connection named “xxxx”, to see a list of
-other connections call with a prefix argument."
-  (interactive)
-
-  ;; Get DB credentials. One does “M-x ejc-connect-interactive” once, then
-  ;;  “M-x ejc-insert-connection-data” and paste that into your init; then
-  ;; “M-x ejc-connect” provides a completion of possible DBs to connect to.
-  (load-file "~/Desktop/work.el")
-  ;; For the following: Alternatively, we could make a new binding such as “C-c C-j”
-  ;; which temporarily adds to this hook, then calls
-  (add-to-list 'ejc-sql-complete-query-hook 'w-ejc-result-pp-json) ;; Defined below
-  (require 'ejc-sql)
-  (-let [connection-name (if current-prefix-arg (ejc-read-connection-name) "xxxx")]
-    (switch-to-buffer-other-window (format "*SQL/%s*" connection-name))
-    (thread-last
-        `("\n\n/\n-- DOCS & EXAMPLES\n--"
-          "-- SQL queries should be seperated by “/”"
-          "-- [C-u] C-c C-c ⇒ Evaluate current query [With JSON PP]"
-          "-- In result window, TAB/RET to navigate the columns/rows."
-          "-- C-c e t ⇒ List all tables"
-          "-- C-h t   ⇒ ‘H’elp for a ‘t’able"
-          "\nselect 1 + 2 as \"Numerical, yeah!\""
-          "\n/\n"
-          "-- More examples of useful SQL queries I might need, but don't want to remember"
-          ;; I've moved them out to my private work.el file.
-          ,@work/sql-queries)
-      (s-join "\n")
-      insert)
-    (sql-mode)
-    (hs-minor-mode -1) ;; I don't want the above comments to be collapsed away.
-    (ejc-connect connection-name)
-    (beginning-of-buffer)
-    (message "Connecting to DB... please wait a moment")))
-
-(defun w-ejc-result-pp-json ()
-  "Pretty print JSON ejc-result buffer."
-  (interactive)
-  (ignore-errors
-    (switch-to-buffer-other-window "*ejc-sql-output*")
-    (beginning-of-buffer)
-    (re-search-forward "{")
-    (backward-char 1)
-    (delete-region (point-min) (point))
-    (end-of-buffer)
-    (re-search-backward "|")
-    (kill-line)
-    (json-mode)
-    (json-pretty-print-buffer)
-    (other-window -1)
-    (message-box "hiya")))
-#+end_src
-
-;; Add minimal table autocomplete to SQL
-(require 'ejc-company)
-(push 'ejc-company-backend company-backends)
-(add-hook 'ejc-sql-minor-mode-hook
-          (lambda ()
-            (company-mode t)))
-#+end_details
-
-- *Postgres is the Emacs of Databases:* /It has extensions!/ E.g., It can be
-  extended to write stored functions in Ruby, Python, and [[https://plv8.github.io/#:~:text=for(var%20i%3D0%3B%20i%3Ckeys.length%3B%20i%2B%2B)%7B%0A%20%20%20%20%20%20%20%20o%5Bkeys%5Bi%5D%5D%20%3D%20vals%5Bi%5D%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20o%3B][in-particular
-  JavaScript]]. So neat!
-  - [[https://dzone.com/articles/why-postgresql-so-awesome][Why PostgreSQL is so Awesome - DZone Java]]
-  - [[https://www.2ndquadrant.com/en/blog/postgresql-is-the-worlds-best-database/][PostgreSQL is the worlds' best database - 2ndQuadrant | PostgreSQL]]
-  - [[https://www.craigkerstiens.com/2012/04/30/why-postgres/][Why Postgres - Craig Kerstiens]]
-
-** TODO Docker
-:PROPERTIES:
-:CUSTOM_ID: Docker
-:END:
-#+begin_src emacs-lisp
-;; Usage: M-x docker [RET ?]
-(use-package docker
-    :defer nil
-  :config
-  (my/defaliases docker-containers w-show-docker-containers))
-
-(defun w-stop&remove-docker-containers ()
-  (interactive)
-  (shell-command "docker stop $(docker ps -a -q)")
-  (shell-command "docker rm $(docker ps -a -q)"))
-
-(defun w-postgres-status ()
-  (interactive)
-  (display-message-or-buffer (s-replace "healthy" "🆙 healthy 🍏" (shell-command-to-string "docker ps -a | grep postgres"))))
-
-(cl-defun w-kill-process-running-on-port (&optional (port (completing-read "Port: " '("3310" "80" "9000" "8000" "8080" "etc, whatever you want"))))
-  "We use ‘lsof’ to list open files; as in:  lsof -i :3310 +c0
-  The +c0 prints the full name of the command rather than truncating it.
-
-  We then find the PID and kill the process."
-  (interactive)
-  (-let [process (shell-command-to-string (format "lsof -i :%s +c0" 3310))]
-    (-let [pid (ignore-errors (cl-second (s-split " " (cl-second (s-split "\n" process)))))]
-      (shell-command (format "kill %s" pid))
-      (message process))))
-
-
-#+end_src
-
-*** my/docker-stop
-:PROPERTIES:
-:CUSTOM_ID: my-docker-stop
-:END:
-#+begin_src emacs-lisp
-(defun my/docker-stop (ctr)
-  "Stop all containers that mention CTR in their name, image, command, or container id"
-  (thread-last (shell-command-to-string "docker ps -a")
-    (s-split "\n")
-    (--filter (s-contains-p ctr it))
-    (--map (car (s-split " " it))) ;; Get docker container ids
-    (--map (shell-command (concat "docker stop " it)))))
-#+end_src
-
-** TODO my/open-in-terminal '⌘
-:PROPERTIES:
-:CUSTOM_ID: my-open-in-terminal-'
-:END:
-#+begin_src emacs-lisp
-(defalias 'my/open-in-terminal '⌘)
-(cl-defun ⌘ (&rest cmds)
-  "Run terminal commands CMDS in a new MacOS Terminal instance, and bring it to focus.
-
-Example: (⌘ \"echo hello\" \"echo world\")
-
-Useful for those cases where I have to interact with non-trivial ‘interactive terminal menus’."
-  (shell-command (format "osascript -e 'tell app \"Terminal\" to activate do script %s'"
-                         (pp-to-string (s-join ";" cmds)))))
-
-;; (⌘ "echo hello" "echo world")
-#+end_src
-
-** TODO Check if application APP is currently running, in use.
-:PROPERTIES:
-:CUSTOM_ID: Check-if-application-APP-is-currently-running-in-use
-:END:
-#+begin_src emacs-lisp
-(cl-defun my/application-running? (app)
-  "Check if application APP is currently running, in use."
-  (not (equal "0" (s-trim (shell-command-to-string (format "ps aux | grep -v grep | grep -ci %s" app))))))
-#+end_src
-
-** TODO Peer Review / Pull Request Template for Work
-:PROPERTIES:
-:CUSTOM_ID: Peer-Review-Pull-Request-Template-for-Work
-:END:
-
-I run TODO. doc.w-pr-template to get a new Org buffer with a review template.  I make
-notes and check-off boxes with ~C-c C-c~ as usual, and when I'm done I press ~C-c
-C-s~ to copy the buffer to clipboard, in markdown format. Then I can paste it
-into Github.
-
-#+begin_src emacs-lisp
-(cl-defun w-pr-template ()
-  "Hi"
-  (interactive)
-  (-let [buf "PR Template ~ Press “C-c C-s” when done"]
-    (ignore-errors (kill-buffer buf))
-    (switch-to-buffer buf)
-    (insert "w-pr-template")
-    (yankpad-expand)
-    (org-mode)
-    (beginning-of-buffer)
-    (use-local-map (copy-keymap org-mode-map))
-    (local-set-key (kbd "C-c C-s")
-                   `(lambda ()
-                     (interactive)
-                     (beginning-of-buffer)
-                     (replace-string "[X]" "✅")
-                     (beginning-of-buffer)
-                     (replace-string "[ ]" "❌")
-                     (beginning-of-buffer)
-                     (replace-string "[-]" "🚧")
-                     (-let [org-export-with-toc nil]
-                       (org-md-export-as-markdown)
-                       (kill-ring-save (point-min) (point-max)))
-                     (kill-buffer-and-window) ;; Kills the new org-md-export buffer
-                     (kill-buffer ,buf) ;; Kills this temporary PR template buffer
-                     (message "PR notes saved to clipboard in Github markdown")))))
-#+end_src
-
-#+begin_src org :tangle "~/.emacs.d/yankpad.org"  :comments none
-,** w-pr-template: Peer Review / Pull Request Template for Work
-I followed the testing instructions and everything look's good 😁
-
-Below is a detailed checklist of what I went through.
-
---------------------------------------------------------------------------------
-
-1. [ ] Pull Request: The PR template was fully filled out.
-   - [ ] Clear description of the problem and how it was solved.
-   - [ ] I've cross-checked the description with the associated Jira ticket; and
-     everything is implemented.
-   - [ ] I've ticked-off the PR's check-boxes.
-   - [ ] Good use of bullet points (-) and code font (‵, ‷) to make the prose
-     easier to read.
-   - [ ] The commit messages are well-written.
-   - [ ] Travis CI succeeds.
-   - [ ] PR author annotated source code, with Github comments, before the review.
-     - Annotations guide the reviewer through the changes, showing which files to look at first and defending the reason behind each code modification.
-
-2. [ ] Functionality: The code behaves as the author intended.
-   - [ ] I was able to reproduce the bug on ~main~.
-   - [ ] Ran the code and used it as an end-user would.
-       Namely, I made a new form, submitted an instance, checked ~In-Progress~,
-     & ~Form Reports~.
-   - [ ]  I've tried all kinds of quotes and unicode, "𝒰"\‘ℕ’/𝒊′ℭ″𝑂؛𝒟⨾'∃',
-        input for text inputs; as well as special chars: +-_)(*&^%$#@!~`'".;><?/}{}[]|\.
-   - [ ] Followed the happy path in the provided testing instructions.
-     - Nope; none provided.
-   - [ ] Also tried the following edge case: ⋯ ⁉ ⋯
-
-3. [ ] Tests: There are new unit tests (but sadly no E2Es/integration).
-   - [ ] Meaningful: Tests actually test that the code is performing the
-     intended functionality.
-   - [ ] Ran associated E2Es / unit tests with the incantation: ⋯ ⁉ ⋯.
-   - [ ] I looked at the associated migrations file and ran the following SQL
-     query after running migrations and it works fine; then I ran the query
-     after running rollbacks and everything is as expected.
-     ,#+begin_src sql
-     ???
-     ,#+end_src
-   - [ ] Avoid global test fixtures and seeds, add data per-test.
-       TL;DR: To prevent test coupling and easily reason about the test flow, each test
-       should add and act on its own set of DB rows.
-
-4. [ ] Naming: Clear and informative names were chosen for top-level-items/variables/methods.
-
-5. [ ] Comments: New top-level-items/variables/methods have clear and useful
-   documentation.
-   - [ ] Sometimes the code is clear ---e.g., 5 lines perform a toggle---
-     but we can improve readability by providing a “comment as function”
-     ---e.g., making a ~toggle~ function, then calling it where it is used;
-     this new function is likely to be smaller than the original inlined use.
-
-     Some comments-as-functions have been suggested.
-
-6. [ ] Being Neighbourly: There was nearby code that could have been
-   improved/update, and suggestions have been left as to how to do so.
-   - We're likely to touch these files again in the future, so why not leave
-     things better than we found them 🚀
-
-7. [ ] Code Smells: Are there any [[https://blog.codinghorror.com/code-smells/][code smells?]]
-
-8. [ ] Syntax: I've read every line.
-   - Nope, there was some stuff I'm not familair with. If the PR authour can
-     jump on a call and walk me through them, that'd be awesome!
-   - [ ] I've left various suggestions and feedback, against specific lines
-     of code. Happy to discuss these further!
-   - [ ] I took my time while reviewing your code, and I'm not depending on
-     others to catch errors.
-
-9. [ ] Complexity: Another developer can easily understand and use this code when
-   they come across it in the future :-)
-
-10. [ ] Modulairty: Is there any redundant or duplicate code? Is the code as modular as possible?
-
-11. [ ] Backwards Compatiable: I made a form in ~main~, involving the work in
-    this branch, and it worked fine in this branch.
-    - I was able to edit the form, submit it, and checked that it looked find in ~Form Reports~.
-
-12. [ ] Best Practices: The following rules-of-thumb are adhered to, more or less.
-      ,#+html: <details>
-    - Remove some redundancy using a bit of laws of algorithmics, namely
-      + ~[𝒆𝒕𝒂-𝒓𝒆𝒅𝒖𝒄𝒕𝒊𝒐𝒏] ⋯(x => f(x))⋯  ≡ ⋯f⋯~
-      + ~[𝒊𝒇-𝒅𝒊𝒔𝒕𝒓𝒊𝒃𝒖𝒕𝒊𝒗𝒊𝒕𝒚] (a ? f(b) : f(c)) ≡ f(a ? b : c)~
-      which increase readability a tad.
-      # Especially when “f” is a lengthy expression; it may also be ideal to give
-      # “a ? b : c” a local name.
-    - Fail fast, validate arguments [we have some in-house validation util libraries]
-    - Be aware that ~0, "", []~ are all falsey values in JS: If a variable ~x~
-      can be one of those things, then ~if (x)~ is not always approriate; better
-      may be ~if(typeof x === 'integer')~ since this communicates two things (1)
-      the variable is defined, and (2) what it's type expected is.
-      + Likewise, better use ~typeof~ instead of ~x !== null~.
-    - You have variables declared a bit from their use sites; the distance
-      creates an unnecessary disconnect ---especially since you don't use these
-      variables elsewhere. Please relocate them to be closer to their use sites.
-    - Strings are sanitised
-    - Errors are caught; with ~try/catch~
-    - Global variables are avoided, when possible.
-    - ~const~ is preferred to ~let~; ~var~ should seldom be used.
-      - Use ~var~ and ~function~ when you want definitions hoisted to the top of
-        their enclosing scope.
-    - ~===~ is preferred to ~==~.
-    - Use default arguments instead of short-circuiting or conditionals
-      - ~f (x) { x = x || defaultValue; ⋯ }~ ≡ ~f (x = defaultValue) { ⋯ }~.
-      - Named parameters can also be optional, with default values:
-        ~f(obj) { let prop = obj.prop || defaultProp; ⋯}~ ≣ ~f ({prop =
-        defaultProp}) { ⋯ }~
-    - Unless you really need an array,  handled an indefinite number of
-      arguments using rest parameters: ~function f(...args) {⋯ // use ‘args’ as
-      an array}~ can be invoked ~f(x₁, x₂, …)~ _without_ array brackets; or as
-      ~f(...arr)~ if you have an array in-hand.
-    - Function arguments: 3 or fewer ideally
-    - If you need to declare an argument but are not using it, prefix it's name
-      with an underscore.
-    - Encapsulate conditionals in a separate _well-named_ function, if possible
-    - Avoid negative conditionals; e.g., by making use of well-choosen names.
-    - Use Demorgan's rules: ~!x && !y ≣ !(x || y)~ and ~!x || !y ≣ !(x && y)~.
-    - Use ~try/catch~ with ~async/await~; or promises with both ~then~ and ~catch~.
-    - Don't ignore rejected promises, log it to external logging service
-    - Related chunks of code are clearly demarcated.
-    - If an anonymous function is too long, more than 2 lines, give it a name:
-      E.g., in JS, ~arr.map(x => ...) ≣ arr.map( function
-      doingSomeComplexStuff(x) { return ...} )~.  The name aids in communicating
-      the intent, and is useful for debugging.
-    - [ES6] Braces are used for block scope, and not simulated using IIFEs.
-    - Avoid explicit newlines with ~+ "\n" +~ in-favour of Template Literals, which preserve line
-      breaks.
-    - Use Destructuring instead of explicit projections; aids in readability.
-      - Note∶ ~let y = x.y~ ≡ ~let {y} = x~ only holds when ~x~ is not ~null~
-        (and so when ~x~ is not a expression involving ~?.~).
-
-    ,#+html: </details>
-#+end_src
-
-** TODO Emphasised Comments
-:PROPERTIES:
-:CUSTOM_ID: Emphasised-Comments
-:END:
-
-#+begin_src emacs-lisp
-;; In VSCode, with the “Better Comments” extension, comments starting with a “bang” are made to stand out, via bold red.
-;; Let's do the same thing in Emacs.
-;;I did not look around, there might be a package/option for this 🤷
-(add-hook 'prog-mode-hook (lambda ()
-                            (highlight-lines-matching-regexp ".*\\*.*!.*" 'hi-red-b)
-                            (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)))
-
-#+end_src
 
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
