@@ -4528,24 +4528,6 @@ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba0711
 (If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
   utility above to account for them.)
 
-** Dropbox & Mega                                                 :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-Dropbox-Mega-Not-really-in-use
-:header-args: :tangle no
-:color:    cyan
-:END:
-Install quick file sharing utility ---[[https://www.dropbox.com/install][Dropbox]]--- as well as a backup
-service, [[https://mega.nz/fm][Mega]] ---I use this for my =backups= directory: Keep reading.
-# +begin_src shell
-# brew install --cask dropbox
-# brew install --cask megasync
-# +end_src
-#+begin_src emacs-lisp
-(system-packages-ensure "dropbox")
-(system-packages-ensure "megasync")
-#+end_src
-
-
 * Jumping to extreme semantic units
 :PROPERTIES:
 :CUSTOM_ID: Jumping-to-extreme-semantic-units
