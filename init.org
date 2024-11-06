@@ -2424,6 +2424,37 @@ $i^{th}$-line having pattern =pᵢ=.
 (system-packages-ensure "hr") ;; ≈ brew install hr
 #+end_src
 
+** TODO Summary of Utilities Provided
+:PROPERTIES:
+:CUSTOM_ID: Summary-of-Utilities-Provided
+:END:
+
+Since I'm using ~use-package~, I can invoke ~M-x describe-personal-keybindings~ to see what key bindings I've defined.
+Since not all my bindings are via ~use-package~, it does not yet cover all of my bindings.
+
+We could run ~C-h b~ to see /all/ our bindings ---or ~M-x describe-personal-bindings~
+to see only those set throughout our init file.
+#+begin_src emacs-lisp :tangle no
+(use-package helm-descbinds
+  :bind ("C-h b" . helm-descbinds))
+#+END_SRC
+
+Finally, we can observe which features are active in our current Emacs with,
+#+begin_src emacs-lisp :tangle no :tangle no
+(message "Features: %s" features)
+#+end_src
+
+# List of installed packages: (mapcar 'car package-alist)
+** “C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there
+:PROPERTIES:
+:CUSTOM_ID: C-x-2-and-C-x-3-now-create-a-new-window-horizontally-vertically-and-send-cursor-there
+:END:
+ #+begin_src emacs-lisp :tangle no
+;; When we split open a new window, we usually want to jump to the new window.
+(advice-add #'split-window-below :after (lambda (&rest _) (other-window 1)))
+(advice-add #'split-window-right :after (lambda (&rest _) (other-window 1)))
+ #+end_src
+
 * Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
@@ -3807,6 +3838,54 @@ should jump to the first entry.
                               (widen))))
           org-mode-map)
 #+END_SRC
+
+** TODO Draw pretty unicode tables in org-mode                  :to_include:
+:PROPERTIES:
+:CUSTOM_ID: Draw-pretty-unicode-tables-in-org-mode
+:END:
+This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
+
+|---+---|
+| a | b |
+|---+---|
+| 1 | 2 |
+|---+---|
+|   |   |
+|---+---|
+
+#+begin_src emacs-lisp
+(quelpa '(org-pretty-table
+         :repo "Fuco1/org-pretty-table"
+         :fetcher github))
+
+(add-hook 'org-mode-hook 'org-pretty-table-mode)
+#+END_SRC
+
+Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
+in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
+vertical line.
+
+
+NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
+
+** Drag Stuff                                                     :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Drag-Stuff
+:END:
+#+begin_src emacs-lisp :tangle no :tangle no
+;; Move current word ←/→, or current line ↑/↓.
+;; Todo: Compare with org-metaup and org-metadown...
+(use-package drag-stuff
+
+  :config (cl-loop for (key . action) in '(("<M-down>" . drag-stuff-down)
+                                      ("<M-up>" . drag-stuff-up)
+                                      ("<M-right>" . drag-stuff-right)
+                                      ("<M-left>" . drag-stuff-left))
+                do (bind-key key action org-mode-map))
+      (drag-stuff-global-mode 1))
+#+end_src
+
+Ruins Org-mode's M-↑/↓ for moving entire sections around.
 
 * Staying Sane
 :PROPERTIES:
@@ -5871,6 +5950,14 @@ are still readable.
 
 After some time this got a bit annoying and I'm no longer  using this.
 
+An alternative, also disabled:
+#+begin_src emacs-lisp :tangle no
+;; An automatic window-resizing mechanism.
+;; A “calmer” alternative to golden-ratio.
+;; https://github.com/cyrus-and/zoom
+(use-package zoom :config (zoom-mode t))
+#+end_src
+
 ** Org-Emphasise for Parts of Words                               :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
@@ -6030,6 +6117,35 @@ Example:
 
 
 [[https://miro.medium.com/v2/resize:fit:4800/1*bpG6TxN-nS6enHkp-KIZgg.jpeg][1% better everyday, push-ups!]]
+
+** Ibuffer: C-x C-b shows colour-coded buffers, grouped according to their git repos
+:PROPERTIES:
+:CUSTOM_ID: Ibuffer
+:END:
+#+begin_src emacs-lisp :tangle no
+;; Let's use an improved buffer list.
+(use-package ibuffer ;; This is built-into Emacs.
+  :bind ("C-x C-b" . ibuffer))
+;; It uses similar commands as does dired; e.g.,
+;; / . org
+;; This filters (“/”) the list with extensions (“.”) being “org”.
+
+(use-package ibuffer-vc
+  :hook (ibuffer . (lambda ()
+                     (ibuffer-vc-set-filter-groups-by-vc-root)
+                     (unless (eq ibuffer-sorting-mode 'alphabetic)
+                       (ibuffer-do-sort-by-alphabetic))))
+  :custom
+  (ibuffer-formats '((mark modified read-only " "
+                           (name 18 18 :left :elide) " "
+                           (size 9 -1 :right) " "
+                           (mode 16 16 :left :elide) " "
+                           (vc-status 16 16 :left) " "
+                      (vc-relative-file)))))
+ #+end_src
++ [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
++ (~10 minute video) [[https://cestlaz.github.io/posts/using-emacs-34-ibuffer-emmet/][Using Emacs - 34 - ibuffer and emmet - C'est la Z]]
++ (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
 
 * Lisp Programming
 :PROPERTIES:
@@ -7561,6 +7677,110 @@ blocks we use ~C-c '~.
 Super helpful in making my Emacs configuration: If a name is not highlighted,
 then I've misspelled it or it doesn't exist! :smile:
 
+** show-me
+#+begin_src emacs-lisp :tangle no :results replace
+(defun show-me ()
+  "Evaluate a Lisp expression and insert its value
+   as a comment at the end of the line.
+
+   Useful for documenting values or checking values.
+  "
+  (interactive)
+  (-let [it
+         (thread-last (thing-at-point 'line)
+           read-from-string
+           car
+           eval
+           (format " ;; ⇒ %s"))]
+    (end-of-line)
+    (insert it)))
+#+END_SRC
+
+** TODO Smartparens
+
+#+begin_src emacs-lisp :tangle no
+(use-package smartparens
+  :init
+  (smartparens-global-mode 1)
+  (show-smartparens-global-mode +1)
+
+  :bind (
+
+         ("M-f" . sp-forward-sexp)  ;; Move forward one  expression.
+         ("M-b" . sp-backward-sexp) ;; Move backward one expression.
+
+         ;; Going to the start & end of current expr in pair-able character.
+         ("M-a" . sp-beginning-of-sexp)
+         ("M-e" . sp-end-of-sexp)
+
+         ;; Going forwards deep down & up current expr; treating it as a tree.
+         ("M-d" . sp-down-sexp)
+         ("M-u" . sp-up-sexp)
+         ;; Acending & descending backwards; i.e., leftwards.
+         ("M-n" . sp-backward-down-sexp)
+         ("M-p" . sp-backward-up-sexp)
+
+         ;; Unwrapping: Removing pair-able characters.
+         ("M-w" . sp-unwrap-sexp)
+         ("M-m" . sp-backward-unwrap-sexp)
+
+         ;; “Slurping”: Move closing character forward/backward to include next sexp.
+         ;; “Barfing”: Contract a sexp, or string, by pushing a its last/first item out.
+         ;; See below for examples.
+         ("M-)" . sp-forward-slurp-sexp)
+         ("M-(" . sp-backward-slurp-sexp)
+         ("M-]" . sp-forward-barf-sexp)
+         ("M-[" . sp-backward-barf-sexp)
+
+         ;; Transpose two bracketed terms; e.g., a b c ⟪Here⟫ ⟶ a c b ⟪Here⟫
+         ;; Transpose backwards by being on the token;
+         ;; transpose forwards by being after the token.
+         ("M-t" . sp-transpose-sexp)
+
+         )
+
+  :config
+  ;; Enable smartparens everywhere
+  (use-package smartparens-config)
+
+  (setq
+   ;; smartparens-strict-mode t
+   ;; sp-autoinsert-if-followed-by-word t
+   ;; sp-autoskip-closing-pair 'always
+   sp-hybrid-kill-entire-symbol nil)
+
+  ;; In Elisp & org modes, do not ‘close’ a back-tick or single quote!
+  (sp-local-pair 'emacs-lisp-mode "`" nil :when '(sp-in-string-p))
+  (sp-local-pair 'emacs-lisp-mode "'" nil :when '(sp-in-string-p))
+  (sp-local-pair 'org-mode "`" nil :when '(sp-in-string-p))
+  (sp-local-pair 'org-mode "'" nil :when '(sp-in-string-p))
+  )
+#+END_SRC
+
+*Wrapping*
+To enclose a token with a pair-able character, at the start of the expression
+press ~C-ESCAPE-SPACE~, select the region, followed by a pair-able character such as ~[, {, ", ', *,~ etc.
+To wrap a single token forwards, use ~C-M-SPACE~.
+
+Examples of slurping & barfing --i.e., sexp inclusion and contraction.
+#+begin_example
+a [x y z] b  ⟶“M-) inside [⋯]”⟶  a [x y z b]
+a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
+[a x y z b]  ⟶“M-] inside [⋯]”⟶  a [x y z b]
+[a x y z b]  ⟶“M-] inside [⋯]”⟶  [a x y z] b
+#+end_example
+** Column Marker
+:PROPERTIES:
+:CUSTOM_ID: Column-Marker
+:END:
+
+Have a thin line to the right to ensure I don't write “off the page”.
+#+begin_src emacs-lisp :tangle no :tangle no
+(use-package fill-column-indicator
+  :hook (prog-mode . fci-mode))
+;; (setq fill-column 120)
+#+END_SRC
+
 * Prose
 :PROPERTIES:
 :CUSTOM_ID: Prose
@@ -8966,7 +9186,24 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 (use-package copy-as-format   :defer nil)
 #+end_src
 
-* TODO COMMENT [0/43] Lost Souls
+* Browsing
+
+** Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.
+:PROPERTIES:
+:CUSTOM_ID: Let's-jump-to-a-current-Chrome-browser-tab-or-one-from-our-Chrome-history-from-within-Emacs
+:END:
+- [[https://github.com/xuchunyang/helm-chrome-history][Browse your Chrome history with Helm.]]
+- [[https://github.com/xuchunyang/helm-chrome-control][M-x helm-chrome-control displays chrome tabs and let you control them by pressing C-z: e.g., you can focus tab, close tab, copy the title & URL of the tab, etc.]]
+#+begin_src emacs-lisp
+;; M-x helm-chrome-history: Open a webpage from my history
+;; [Your Chrome History SQLite database file: helm-chrome-history-file]
+(use-package helm-chrome-history)
+
+;; M-x helm-chrome-control: Jump to an open tab in Chrome
+(use-package helm-chrome-control)
+#+end_src
+
+* TODO COMMENT [0/34] Lost Souls
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -11370,87 +11607,6 @@ Using ~⌘ j~ then one of the following...
 ;;
 (setq empv-invidious-instance "https://invidious.fdn.fr.com")
 #+end_src
-
-** TODO Zoom
-:PROPERTIES:
-:CUSTOM_ID: Zoom
-:END:
-#+begin_src emacs-lisp :tangle no
-;; An automatic window-resizing mechanism.
-;; A “calmer” alternative to golden-ratio.
-;; https://github.com/cyrus-and/zoom
-(use-package zoom
-
-  :config (zoom-mode t))
-#+end_src
-** TODO Ibuffer
-:PROPERTIES:
-:CUSTOM_ID: Ibuffer
-:END:
-#+begin_src emacs-lisp :tangle no
-;; Let's use an improved buffer list.
-(use-package ibuffer ;; This is built-into Emacs.
-  :bind ("C-x C-b" . ibuffer))
-;; It uses similar commands as does dired; e.g.,
-;; / . org
-;; This filters (“/”) the list with extensions (“.”) being “org”.
-
-(use-package ibuffer-vc
-  :hook (ibuffer . (lambda ()
-                     (ibuffer-vc-set-filter-groups-by-vc-root)
-                     (unless (eq ibuffer-sorting-mode 'alphabetic)
-                       (ibuffer-do-sort-by-alphabetic))))
-  :custom
-  (ibuffer-formats '((mark modified read-only " "
-                           (name 18 18 :left :elide) " "
-                           (size 9 -1 :right) " "
-                           (mode 16 16 :left :elide) " "
-                           (vc-status 16 16 :left) " "
-                           (vc-relative-file)))))
- #+end_src
-+ [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
-+ (~10 minute video) [[https://cestlaz.github.io/posts/using-emacs-34-ibuffer-emmet/][Using Emacs - 34 - ibuffer and emmet - C'est la Z]]
-+ (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
-
-** TODO centered-cursor: Keep focus in the centre of the screen       :Eeek:
-:PROPERTIES:
-:CUSTOM_ID: COMMENT-centered-cursor-Keep-focus-in-the-centre-of-the-screen
-:END:
-#+begin_src emacs-lisp :tangle no
-   ;; When scrolling, move the screen and leave the cursour in the (vertical) center of the screen
-   (use-package centered-cursor-mode
-     :config (global-centered-cursor-mode))
-#+end_src
-
-** TODO “C-x 2” and “C-x 3” now create a new window horizontally/vertically and send cursor there
-:PROPERTIES:
-:CUSTOM_ID: C-x-2-and-C-x-3-now-create-a-new-window-horizontally-vertically-and-send-cursor-there
-:END:
- #+begin_src emacs-lisp :tangle no
-;; When we split open a new window, we usually want to jump to the new window.
-(advice-add #'split-window-below :after (lambda (&rest _) (other-window 1)))
-(advice-add #'split-window-right :after (lambda (&rest _) (other-window 1)))
- #+end_src
-
-** TODO Drag Stuff                                                :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Drag-Stuff
-:END:
-#+begin_src emacs-lisp :tangle no :tangle no
-;; Move current word ←/→, or current line ↑/↓.
-;; Todo: Compare with org-metaup and org-metadown...
-(use-package drag-stuff
-
-  :config (cl-loop for (key . action) in '(("<M-down>" . drag-stuff-down)
-                                      ("<M-up>" . drag-stuff-up)
-                                      ("<M-right>" . drag-stuff-right)
-                                      ("<M-left>" . drag-stuff-left))
-                do (bind-key key action org-mode-map))
-      (drag-stuff-global-mode 1))
-#+end_src
-
-Ruins Org-mode's M-↑/↓ for moving entire sections around.
-
 ** TODO Having a workspace manager in Emacs
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
@@ -11772,21 +11928,6 @@ language.  This saves us a few key strokes.
  #+RESULTS:
  [[file:simple_markov.png]]
 
-** TODO Emacs keybindings for my browser                          :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Emacs-keybindings-for-my-browser
-:END:
-
-#+begin_center
-⟨ I was a bit too Emacs-happy at one-point; this' cool, but I rarely use it;
-except ~C-x b~: A buffer approach is far superior to a tab-based one. ⟩
-#+end_center
-
-I've downloaded the [[https://chrome.google.com/webstore/detail/vimium/dbepggeogbaibhgnhhndojpepiihcmeb/related][Vimium]] extension for Google Chrome,
-and have copy-pasted [[https://gist.github.com/dmgerman/6f0e5f9ffc6484dfaf53][these]] Emacs key bindings into it.
-Now ~C-h~ in my browser shows which Emacs-like bindings
-can be used to navigate my browser ^_^
-
 ** TODO Using Emacs in any text area on my OS                     :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Using-Emacs-in-any-text-area-on-my-OS
@@ -11903,31 +12044,6 @@ Prompt only if there are unsaved changes."
 The incantation ~C-u C-x k~ will reduce the noise of all the documentation buffers
 I tend to consult.
 
-** TODO Switching from 2 horizontal windows to 2 vertical windows
-:PROPERTIES:
-:CUSTOM_ID: Switching-from-2-horizontal-windows-to-2-vertical-windows
-:END:
-
-I often find myself switching from a horizontal view of two windows in Emacs to a
-vertical view. This requires a variation of ~C-x 1 RET C-x 3 RET C-x o C-x b RET~.
-Instead I now only need to type ~C-|~ to make this switch.
-#+begin_src emacs-lisp :tangle no
-(defun my/ensure-two-vertical-windows ()
-  "I used this method often when programming in Coq.
-
-When there are two vertical windows, this method ensures the left-most
-window contains the buffer with the cursour in it."
-  (interactive)
-  (let ((otherBuffer (buffer-name)))
-    (other-window 1)                ;; C-x 0
-    (delete-window)                 ;; C-x 0
-    (split-window-right)			;; C-x 3
-    (other-window 1)                ;; C-x 0
-    (switch-to-buffer otherBuffer)	;; C-x b RET
-    (other-window 1)))
-
-(global-set-key (kbd "C-|") 'my/ensure-two-vertical-windows)
-#+END_SRC
 ** TODO Obtaining Values of ~#+KEYWORD~ Annotations
 :PROPERTIES:
 :CUSTOM_ID: Obtaining-Values-of-KEYWORD-Annotations
@@ -12041,357 +12157,16 @@ publish the current article to my blog.
   )
 #+end_src
 
-** TODO Improvements                                              :noexport:
-:PROPERTIES:
-:CUSTOM_ID: Improvements
-:END:
-
-*** Learn about TRAMP & Edit as Root
-:PROPERTIES:
-:CUSTOM_ID: Learn-about-TRAMP-Edit-as-Root
-:END:
-
-From an [[http://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html][emacs-fu blog post]].
-#+begin_src emacs-lisp :tangle no
-(defun find-file-as-root ()
-  "Like `ido-find-file, but automatically edit the file with
-root-privileges (using tramp/sudo), if the file is not writable
-by user."
-  (interactive)
-  (let ((file (ido-read-file-name "Edit as root: ")))
-    (unless (file-writable-p file)
-      (setq file (concat "/sudo:root@localhost:" file)))
-    (find-file file)))
-
-(bind-key "C-x F" 'find-file-as-root)
-#+END_SRC
-
-Incidentally, TRAMP allows us to do the same thing.
-*** Easy tasks
+** TODO ox-pandoc
 :PROPERTIES:
 :CUSTOM_ID: Easy-tasks
 :END:
-
-# TODO: MA: ⇨ Add unit tests for the init file.
 
 # ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
 # (shell-command "brew install pandoc")
 # (use-package ox-pandoc)
 
-;; Omit empty lines between headings in the collapsed view
-(setq org-cycle-separator-lines 0)
-
-#+begin_src emacs-lisp :tangle no :results replace
-(defun show-me ()
-  "Evaluate a Lisp expression and insert its value
-   as a comment at the end of the line.
-
-   Useful for documenting values or checking values.
-  "
-  (interactive)
-  (-let [it
-         (thread-last (thing-at-point 'line)
-           read-from-string
-           car
-           eval
-           (format " ;; ⇒ %s"))]
-    (end-of-line)
-    (insert it)))
-#+END_SRC
-
-+ [ ] Consider moving emots, such as \csi and \whyme, into yassnipets.
-*** Smartparens
-:PROPERTIES:
-:CUSTOM_ID: Smartparens
-:END:
-
-:PROPERTIES:
-
-:END:
-#+begin_src emacs-lisp :tangle no :tangle no
-(use-package smartparens
-  :init
-  (smartparens-global-mode 1)
-  (show-smartparens-global-mode +1)
-
-  :bind (
-
-         ("M-f" . sp-forward-sexp)  ;; Move forward one  expression.
-         ("M-b" . sp-backward-sexp) ;; Move backward one expression.
-
-         ;; Going to the start & end of current expr in pair-able character.
-         ("M-a" . sp-beginning-of-sexp)
-         ("M-e" . sp-end-of-sexp)
-
-         ;; Going forwards deep down & up current expr; treating it as a tree.
-         ("M-d" . sp-down-sexp)
-         ("M-u" . sp-up-sexp)
-         ;; Acending & descending backwards; i.e., leftwards.
-         ("M-n" . sp-backward-down-sexp)
-         ("M-p" . sp-backward-up-sexp)
-
-         ;; Unwrapping: Removing pair-able characters.
-         ("M-w" . sp-unwrap-sexp)
-         ("M-m" . sp-backward-unwrap-sexp)
-
-         ;; “Slurping”: Move closing character forward/backward to include next sexp.
-         ;; “Barfing”: Contract a sexp, or string, by pushing a its last/first item out.
-         ;; See below for examples.
-         ("M-)" . sp-forward-slurp-sexp)
-         ("M-(" . sp-backward-slurp-sexp)
-         ("M-]" . sp-forward-barf-sexp)
-         ("M-[" . sp-backward-barf-sexp)
-
-         ;; Transpose two bracketed terms; e.g., a b c ⟪Here⟫ ⟶ a c b ⟪Here⟫
-         ;; Transpose backwards by being on the token;
-         ;; transpose forwards by being after the token.
-         ("M-t" . sp-transpose-sexp)
-
-         )
-
-  :config
-  ;; Enable smartparens everywhere
-  (use-package smartparens-config)
-
-  (setq
-   ;; smartparens-strict-mode t
-   ;; sp-autoinsert-if-followed-by-word t
-   ;; sp-autoskip-closing-pair 'always
-   sp-hybrid-kill-entire-symbol nil)
-
-  ;; In Elisp & org modes, do not ‘close’ a back-tick or single quote!
-  (sp-local-pair 'emacs-lisp-mode "`" nil :when '(sp-in-string-p))
-  (sp-local-pair 'emacs-lisp-mode "'" nil :when '(sp-in-string-p))
-  (sp-local-pair 'org-mode "`" nil :when '(sp-in-string-p))
-  (sp-local-pair 'org-mode "'" nil :when '(sp-in-string-p))
-  )
-#+END_SRC
-
-*Wrapping*
-To enclose a token with a pair-able character, at the start of the expression
-press ~C-ESCAPE-SPACE~, select the region, followed by a pair-able character such as ~[, {, ", ', *,~ etc.
-To wrap a single token forwards, use ~C-M-SPACE~.
-
-Examples of slurping & barfing --i.e., sexp inclusion and contraction.
-#+begin_example
-a [x y z] b  ⟶“M-) inside [⋯]”⟶  a [x y z b]
-a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
-[a x y z b]  ⟶“M-] inside [⋯]”⟶  a [x y z b]
-[a x y z b]  ⟶“M-] inside [⋯]”⟶  [a x y z] b
-#+end_example
-*** Macros
-:PROPERTIES:
-:CUSTOM_ID: Macros
-:END:
-
-Here's a neat macro I made, but I /may/ avoid using it in the init in order to
-avoid scaring anyone. I may use it in my personal stuff.
-
-#+begin_src emacs-lisp :tangle no
-(defmacro λ (&rest body)
-  "Implementing Z-notation style, interactive, lambdas; ideally for inline use:
-
-   “λ α β … ω • body”  becomes an interactive function with arguments α, …, ω.
-
-   The args list may be empty, in which case the separator “•” may be omitted
-   entirely, if desired.
-  "
-
-  (let* ((parts (-split-on '• body)) args rest)
-
-    (if (<= 2 (length parts))
-        (progn (setq args (car parts)) (setq rest (cadr parts)))
-         ;; Otherwise, only one part was found ---no arguments were provided.
-         (setq args nil) (setq rest (car parts)))
-
-   `(lambda ,args (interactive) ,@rest)
-  ))
-
-;; Some tests
-
-(setq f (λ x y • (+ x y)))   ;; ⇒ (lambda (x y) (interactive) (+ x y))
-(setq g (λ • 'neato "woah")) ;; ⇒ (lambda (x y) (interactive) 'neato "woah")
-(setq h (λ "bye" 'bye))      ;; ⇒ (lambda (x y) (interactive) "bye" 'bye)
-(funcall f 1 2)
-(funcall g)
-(funcall h)
-
-;; intended use case
-
-(local-set-key (kbd "C-x x x") (lambda () (interactive) (message-box "Test!")))
-(local-set-key (kbd "C-x x x") (λ (message-box "Terse!")))
-#+END_SRC
-
-*** Summary of Utilities Provided
-:PROPERTIES:
-:CUSTOM_ID: Summary-of-Utilities-Provided
-:END:
-
-| _Command_                                | _Action_                                                |
-| ~<f5>~                                   | revert buffer                                           |
-| ~C-∣~                                    | toggle 2 windows from horizontal to vertical view       |
-| ~M-x create-scratch-buffer~              | --self evident--                                        |
-| ~M-$~                                    | check spelling of word at point                         |
-| ~M-#~                                    | thesaurus look-up word at point                         |
-| ~C-+/-~                                  | increase/decrease text size                             |
-| ~(org-keywords)~                         | get ~#+Property: Value~ pairs from an org file          |
-| ~(org-keyword property)~                 | get the ~value~ of a given org ~#+property~             |
-
-Since I'm using ~use-package~, I can invoke ~M-x describe-personal-keybindings~ to see what key bindings I've defined.
-Since not all my bindings are via ~use-package~, it does not yet cover all of my bindings.
-
-We could run ~C-h b~ to see /all/ our bindings
----or ~M-x describe-personal-bindings~ to see only those
-set throughout our init file.
-#+begin_src emacs-lisp :tangle no
-(use-package helm-descbinds
-
-  :bind ("C-h b" . helm-descbinds))
-#+END_SRC
-
-Finally, we can observe which features are active in our current Emacs with,
-#+begin_src emacs-lisp :tangle no :tangle no
-(message "Features: %s" features)
-#+end_src
-
-# List of installed packages: (mapcar 'car package-alist)
-*** Stuff I don't really use, but may want to look at later
-:PROPERTIES:
-:CUSTOM_ID: Stuff-I-don't-really-use-but-may-want-to-look-at-later
-:END:
-**** hooks and things for literate agda with org-agda
-:PROPERTIES:
-:CUSTOM_ID: hooks-and-things-for-literate-agda-with-org-agda
-:END:
-
-#+begin_src emacs-lisp :tangle no  :tangle no
-;; not needed
-(defun lagda-extension-whatdo ()
-       "What to do when encountering a .lagda file.
-       To be added to auto-mode-list."
-       (agda2-mode)
-       (org-babel-load-file "~/Dropbox/lagda-with-org.org")
-       (message "Musa's special Agda settings enabled."))
-
-(add-to-list 'auto-mode-alist '("\\.lagda\\'" . (lambda () (lagda-extension-whatdo))))
-; (add-to-list 'auto-mode-alist '("\\.lagda\\'" . 'lagda-extension-whatdo))
-
-(defun my-add-to-multiple-hooks (function hooks) (mapc (lambda (hook) (add-hook hook function)) hooks))
-(defun my-common-hook () (fci-mode) (orgstruct-mode) )
-(my-add-to-multiple-hooks 'my-common-hook '(text-mode-hook agda2-mode-hook))
-#+END_SRC
-**** floating toc material                          :no_longer_using_this:
-:PROPERTIES:
-:CUSTOM_ID: floating-toc-material
-:END:
-
-Add the following to a web-page if you'd like it to have a floating table of contents.
-+ Perhaps consider making this a default for all org-files?
- + The ~floatingTocStyle.css~ lives in my Dropbox; bring it here to be self-contained.
-
-#+BEGIN_SRC org :tangle no
-#+HTML: <small><center>
-( Please remember that you can always access a section using the floating table of contents at the upper-right corner of your screen. )
-#+HTML: </center></small>
-#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"floatingTocStyle.css\" />
-#+HTML: <div id=\"toc\"> &nbsp;Table of Contents&nbsp; <small> <div id=\"full\">
-#+TOC: headlines 2
-#+HTML: </div> </small> </div>
-#+END_SRC
-
-**** org-html-postamble-format
-:PROPERTIES:
-:CUSTOM_ID: org-html-postamble-format
-:END:
-
- Look at the super short doc to know how to manipulate this variable.
- (describe-symbol 'org-html-postamble-format)
-
- #+begin_src emacs-lisp :tangle no :tangle no
-(defun make-html-link (url identifier)
-  (concat "<a href=\"" url "\">" identifier "</a>"))
-
-(setq org-html-postamble-format
-  (let* ((nomorg (buffer-name))
-         (nom    (file-name-sans-extension nomorg))
-         (src    (make-html-link nomorg "Org Source"))
-         (nompdf (concat nom ".pdf"))
-         (pdf    (make-html-link nompdf "View me as a PDF"))
-        )
-`(("en" ,(concat "<center> Last modified on %C ; " pdf " ; " src " ; Contact me at %e </center>"))))
-)
- #+END_SRC
-
-**** Programming Language Support                                   :TODO:
-:PROPERTIES:
-:CUSTOM_ID: Programming-Language-Support
-:END:
-
-****** Haskell :tangle no
-:PROPERTIES:
-:CUSTOM_ID: Haskell-tangle-no
-:END:
-
-#+begin_src emacs-lisp :tangle no
-;; now C-c C-l interpets the current buffer; will ofcourse need to switch to the ghci buffer
- (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-#+END_SRC
-
-****** Lambda Prolog
-:PROPERTIES:
-:CUSTOM_ID: Lambda-Prolog
-:END:
-
-#+begin_src emacs-lisp :tangle no  :tangle no
-(load "/usr/local/packages/teyjus/emacs/teyjus.el")
-(setq tjcc "/usr/local/packages/teyjus/tjcc")
-#+END_SRC
-****** Coq Support
-:PROPERTIES:
-:CUSTOM_ID: Coq-Support
-:END:
-
-Sometimes I use Coq,
-#+begin_src emacs-lisp :tangle no
-;; Open .v files with Proof General's Coq mode
-;; (load "~/.emacs.d/lisp/PG/generic/proof-site")
-#+end_src
-
-**** Column Marker
-:PROPERTIES:
-:CUSTOM_ID: Column-Marker
-:END:
-
-(  Maybe a hook would be better? Much better...? )
-
-Have a thin line to the right to ensure I don't write “off the page”.
-#+begin_src emacs-lisp :tangle no :tangle no
-(use-package fill-column-indicator)
-(define-globalized-minor-mode my-fci-global-mode fci-mode
-  (lambda () (set-fill-column 90) (fci-mode 't)
-))
-(my-fci-global-mode 1)
-#+END_SRC
-
-There are issues with making things global.
-In this case, exporting to html produces curious symbols
-thereby prompting ~my-org-html-export-to-html~ below to
-take care of this.
-
-**** theme magic
-:PROPERTIES:
-:CUSTOM_ID: theme-magic
-:END:
-
-[[https://github.com/jcaw/theme-magic][Theme-magic]] looks nice, in theory, but I've not found it to be useful, for me.
-#+begin_src emacs-lisp :tangle no :tangle no
-;; Automatically propagate Emacs theme changes to OS
-(use-package theme-magic)
-;; (shell-command "pip3 install pywal")
-(theme-magic-export-theme-mode)
-#+END_SRC
-
-*** Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
+** TODO Referencing Text From Code Blocks ---Attaching prose as doc strings :noexport:ignore:
 :PROPERTIES:
 :CUSTOM_ID: Referencing-Text-From-Code-Blocks-Attaching-prose-as-doc-strings
 :END:
@@ -12445,7 +12220,7 @@ Let's make ~get-named-text~ a globally defined and callable code block:
 #+END_SRC
 
 
-****  COMMENT Example
+***  COMMENT Example
 :PROPERTIES:
 :CUSTOM_ID: Example
 :END:
@@ -12476,84 +12251,6 @@ We use the XXX function add to calculate the sum of two numbers.
 - and of course "optional things"
 
 + There is a reason we only support two args
-*** Tangeling to multiple files
-:PROPERTIES:
-:CUSTOM_ID: Tangeling-to-multiple-files
-:END:
-
-From https://emacs.stackexchange.com/questions/39032/tangle-the-same-src-block-to-different-files,
-
-#+begin_src emacs-lisp :tangle no :tangle no
-(defun org-babel-tangle-collect-blocks-handle-tangle-list (&optional language tangle-file)
-  "Can be used as :override advice for `org-babel-tangle-collect-blocks'.
-Handles lists of :tangle files."
-  (let ((counter 0) last-heading-pos blocks)
-    (org-babel-map-src-blocks (buffer-file-name)
-      (let ((current-heading-pos
-         (org-with-wide-buffer
-          (org-with-limited-levels (outline-previous-heading)))))
-    (if (eq last-heading-pos current-heading-pos) (cl-incf counter)
-      (setq counter 1)
-      (setq last-heading-pos current-heading-pos)))
-      (unless (org-in-commented-heading-p)
-    (let* ((info (org-babel-get-src-block-info)) ;; MA: not “light”!
-                                          ;; (describe-symbol 'org-babel-get-src-block-info)
-           (src-lang (nth 0 info))
-           (src-tfiles (cdr (assq :tangle (nth 2 info))))) ; Tobias: accept list for :tangle
-      (unless (consp src-tfiles) ; Tobias: unify handling of strings and lists for :tangle
-        (setq src-tfiles (list src-tfiles))) ; Tobias: unify handling
-      (dolist (src-tfile src-tfiles) ; Tobias: iterate over list
-        (unless (or (string= src-tfile "no")
-            (and tangle-file (not (equal tangle-file src-tfile)))
-            (and language (not (string= language src-lang))))
-          ;; Add the spec for this block to blocks under its
-          ;; language.
-          (let ((by-lang (assoc src-lang blocks))
-            (block (org-babel-tangle-single-block counter)))
-        (setcdr (assoc :tangle (nth 4 block)) src-tfile) ; Tobias:
-        (if by-lang (setcdr by-lang (cons block (cdr by-lang)))
-          (push (cons src-lang (list block)) blocks)))))))) ; Tobias: just ()
-    ;; Ensure blocks are in the correct order.
-    (mapcar (lambda (b) (cons (car b) (nreverse (cdr b)))) blocks)))
-
-(defun org-babel-tangle-single-block-handle-tangle-list (oldfun block-counter &optional only-this-block)
-  "Can be used as :around advice for `org-babel-tangle-single-block'.
-If the :tangle header arg is a list of files. Handle all files"
-  (let* ((info (org-babel-get-src-block-info))
-     (params (nth 2 info))
-     (tfiles (cdr (assoc :tangle params))))
-    (if (null (and only-this-block (consp tfiles)))
-    (funcall oldfun block-counter only-this-block)
-      (cl-assert (listp tfiles) nil
-         ":tangle only allows a tangle file name or a list of tangle file names")
-      (let ((ret (mapcar
-          (lambda (tfile)
-            (let (old-get-info)
-              (cl-letf* (((symbol-function 'old-get-info) (symbol-function 'org-babel-get-src-block-info))
-                 ((symbol-function 'org-babel-get-src-block-info)
-                  `(lambda (&rest get-info-args)
-                     (let* ((info (apply 'old-get-info get-info-args))
-                        (params (nth 2 info))
-                        (tfile-cons (assoc :tangle params)))
-                       (setcdr tfile-cons ,tfile)
-                       info))))
-            (funcall oldfun block-counter only-this-block))))
-          tfiles)))
-    (if only-this-block
-        (list (cons (cl-caaar ret) (mapcar #'cadar ret)))
-      ret)))))
-
-(advice-add 'org-babel-tangle-collect-blocks :override #'org-babel-tangle-collect-blocks-handle-tangle-list)
-(advice-add 'org-babel-tangle-single-block :around #'org-babel-tangle-single-block-handle-tangle-list)
-#+end_src
-*** Parallel
-:PROPERTIES:
-:CUSTOM_ID: Parallel
-:END:
-
-#+begin_src emacs-lisp :tangle no :tangle no
-(add-to-list 'org-structure-template-alist '("p" . "parallel latex"))
-#+END_SRC
 ** TODO Approaches Before Reading Documentation :Documentation:Posterity:Learning:noexport:
 :PROPERTIES:
 :CUSTOM_ID: Approaches-Before-Reading-Documentation
@@ -12879,35 +12576,6 @@ Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allow
 when ~M-x recompile~ is invoked. One of my habits is to append
 most of my files with the following:
 #+begin_src org :tangle no
-** TODO Draw pretty unicode tables in org-mode                  :to_include:
-:PROPERTIES:
-:CUSTOM_ID: Draw-pretty-unicode-tables-in-org-mode
-:END:
-This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
-
-|---+---|
-| a | b |
-|---+---|
-| 1 | 2 |
-|---+---|
-|   |   |
-|---+---|
-
-#+begin_src emacs-lisp
-(quelpa '(org-pretty-table
-         :repo "Fuco1/org-pretty-table"
-         :fetcher github))
-
-(add-hook 'org-mode-hook 'org-pretty-table-mode)
-#+END_SRC
-
-Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
-in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
-vertical line.
-
-
-NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
-
 ** TODO shell-command-and-run
 :PROPERTIES:
 :CUSTOM_ID: shell-command-and-run
@@ -12989,26 +12657,6 @@ Let's remove repeated matter.
 ;; Also a helpful quick f-key.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
-
-** TODO Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.
-:PROPERTIES:
-:CUSTOM_ID: Let's-jump-to-a-current-Chrome-browser-tab-or-one-from-our-Chrome-history-from-within-Emacs
-:END:
-- [[https://github.com/xuchunyang/helm-chrome-history][Browse your Chrome history with Helm.]]
-- [[https://github.com/xuchunyang/helm-chrome-control][M-x helm-chrome-control displays chrome tabs and let you control them by pressing C-z: e.g., you can focus tab, close tab, copy the title & URL of the tab, etc.]]
-#+begin_src emacs-lisp
-;; M-x helm-chrome-history
-;; [Your Chrome History SQLite database file: helm-chrome-history-file]
-(use-package helm-chrome-history)
-;; M-x helm-chrome-control
-(use-package helm-chrome-control)
-#+end_src
-
-
-There is [[https://github.com/bdc34/helm-taskswitch/tree/59f7cb99defa6e6bf6e7d599559fa8d5786cf8a9][helm-taskswitch]] for switching between X-windows: Whereas ~⌘-tab~ gives a
-list of most recently used program, ~helm-taskswitch~ gives a completing read of
-all OS windows. I'm using a MacOS right now, so X-windows are not the default
----but [[https://en.wikipedia.org/wiki/XQuartz][can be setup.]]
 
 ** TODO Get Shell history within Emacs via Completing Read with Helm
 :PROPERTIES:
