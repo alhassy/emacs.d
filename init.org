@@ -88,7 +88,7 @@ person you are arguing against. It is painful to lose your reality, so be kind,/
 :PROPERTIES:
 :CUSTOM_ID: Meta-setup
 :END:
-** Blog/HTML Setup                                                  :ignore:
+** Blog/HTML Setup                                                   :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Blog-HTML-Setup
 :END:
@@ -103,7 +103,7 @@ person you are arguing against. It is painful to lose your reality, so be kind,/
 #+html_head: <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
 # The last one has the styling for lists.
 
-** Github Actions                                                 :noexport:
+** Github Actions                                                  :noexport:
 :PROPERTIES:
 :CUSTOM_ID: Github-Actions
 :END:
@@ -190,7 +190,7 @@ TODO: Build HTML export as a minimal test that things work as expected.
 
 (unless noninteractive ...) ;; Use this to omit stuff from the Github Actions test
 
-** Personal instructions for a new machine                          :ignore:
+** Personal instructions for a new machine                           :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Personal-instructions-for-a-new-machine
 :END:
@@ -337,7 +337,7 @@ and subheadings, intended for consumption by humans such as myself, that,
 incidentally, can be ‘tangled’ into a raw code file that is comprehensible by a
 machine. We achieve this goal using [[#Life-within-Org-mode][org-mode]] ---which is /Emacs' killer app/.
 
-** Mini-tutorial on Org-mode                                        :ignore:
+** Mini-tutorial on Org-mode                                         :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Mini-tutorial-on-Org-mode
 :header-args: :tangle no
@@ -548,7 +548,7 @@ by declaring
 For more, see https://orgmode.org/features.html.
 #+end_details
 
-** Intro to why Emacs                                               :ignore:
+** Intro to why Emacs                                                :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Intro-to-why-Emacs
 :END:
@@ -2048,7 +2048,7 @@ https://alhassy.github.io/org-special-block-extras/
 (setq org-confirm-elisp-link-function nil)
 #+END_SRC
 
-** Password-locking files  ---“encryption”                        :Disabled:
+** Password-locking files  ---“encryption”                         :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Password-locking-files-encryption
 :header-args: :tangle no
@@ -2349,7 +2349,7 @@ Let's save a few precious seconds,
     :bind* ("C-t" . vterm-toggle))
 #+end_src
 
-*** Shell-pop                                            :Disabled:details:
+*** Shell-pop                                              :Disabled:details:
 
 [[https://github.com/kyagi/shell-pop-el][Shell-pop]] uses only one key action to work: If the buffer exists, and we're in
 it, then hide it; else jump to it; otherwise create it if it doesn't exit.  Use
@@ -2373,7 +2373,7 @@ universal arguments to pop those shells up, but ~C-t~ to pop them away.
 #+END_SRC
 # There are also a number of hooks for shell-pop. E.g., to unconditionally kill the buffer afterwards.
 
-*** Oh My Zsh                                                     :details:
+*** Oh My Zsh                                                       :details:
 Now that we have access to quick pop-up for a shell, let's get a pretty and
 practical shell: [[https://www.howtogeek.com/362409/what-is-zsh-and-why-should-you-use-it-instead-of-bash/][zsh]] along with the [[https://ohmyz.sh/][Oh My Zsh]] community configurations give us:
 
@@ -2407,7 +2407,7 @@ number of ways you'd actually use 𝒳. ( In Emacs, [[kbd:C-t tldr 𝒳 ⟨retur
 (system-packages-ensure "tldr")
 #+END_SRC
 
-** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]                             :relocate:
+** hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]] :relocate:
 :PROPERTIES:
 :CUSTOM_ID: hr-https-github-com-LuRsT-hr-A-horizontal-for-your-terminal
 :END:
@@ -2624,7 +2624,7 @@ In summary:
 | [[kbd:C-⟨return⟩]]   | doc:org-insert-heading-respect-content      | New heading /after/ current content |
 | [[kbd:C-S-⟨return⟩]] | doc:org-insert-todo-heading-respect-content | Ditto, but with a ~TODO~ marker     |
 
-*** COMMENT   ~C-a,e,k~ and Yanking of sections             :Does_not_work:
+*** COMMENT   ~C-a,e,k~ and Yanking of sections               :Does_not_work:
 :PROPERTIES:
 :CUSTOM_ID: C-a-e-k-and-Yanking-of-sections
 :END:
@@ -3447,7 +3447,7 @@ page 3.
 
 Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1 }}@@~.
 
-*** Emojis                                                       :Disabled:
+*** Emojis                                                         :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: emojis
 :END:
@@ -3868,7 +3868,7 @@ should jump to the first entry.
           org-mode-map)
 #+END_SRC
 
-** TODO Draw pretty unicode tables in org-mode                  :to_include:
+** TODO Draw pretty unicode tables in org-mode                   :to_include:
 :PROPERTIES:
 :CUSTOM_ID: Draw-pretty-unicode-tables-in-org-mode
 :END:
@@ -3897,7 +3897,7 @@ vertical line.
 
 NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
 
-** Drag Stuff                                                     :Disabled:
+** Drag Stuff                                                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Drag-Stuff
 :END:
@@ -3941,6 +3941,15 @@ Ruins Org-mode's M-↑/↓ for moving entire sections around.
   ;; Only enable this in Emacs Lisp mode, for now.
   (setq orglink-activate-in-modes '(emacs-lisp-mode)))
 #+end_src
+
+** COMMENT ox-pandoc
+:PROPERTIES:
+:CUSTOM_ID: Easy-tasks
+:END:
+
+# ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
+# (shell-command "brew install pandoc")
+# (use-package ox-pandoc)
 
 * Staying Sane
 :PROPERTIES:
@@ -4086,7 +4095,7 @@ timestamp.
 :CUSTOM_ID: magit-Emacs'-porcelain-interface-to-gitq
 :END:
 
-*** Intro                                                          :ignore:
+*** Intro                                                            :ignore:
 
 Let's setup an Emacs ‘porcelain’ interface to git ---it makes working with
 version control tremendously convenient.
@@ -4605,7 +4614,7 @@ items there (•̀ᴗ•́)و
 # #+END_SRC
 #
 
-** Silently show me when a line was modified and by whom          :Disabled:
+** Silently show me when a line was modified and by whom           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Silently-show-me-when-a-line-was-modified-and-by-whom
 :header-args: :tangle no
@@ -4651,7 +4660,7 @@ answers that seamlessly ---almost as if a transient comment 😁
 If we want to see commit messages alongside /all/ code, then we can invoke
 doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
 then we use doc:git-timemachine.
-** Git gutter: Jumping between hunks                              :Disabled:
+** Git gutter: Jumping between hunks                               :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: What's-changed-who's-to-blame
 :END:
@@ -4716,7 +4725,7 @@ Alternatively, we may use [[https://github.com/dgutov/diff-hl][diff-hl]]:
 
 Perhaps ~C-x v b~ will motivate smaller, frequent, commits.
 
-** URLs to git changes :Disabled:
+** URLs to git changes                                             :Disabled:
 :PROPERTIES:
 :header-args: :tangle no
 :END:
@@ -4734,7 +4743,7 @@ points to the version of the file being visited.
 
 Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
 
-** Version Control with SVN ---Using Magit!                       :Disabled:
+** Version Control with SVN ---Using Magit!                        :Disabled:
 :PROPERTIES:
 :header-args: :tangle no
 :END:
@@ -4772,7 +4781,7 @@ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba0711
 (If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
   utility above to account for them.)
 
-** Github /within/ Emacs                                            :Disabled:
+** Github /within/ Emacs                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Github-within-Emacs
 :header-args: :tangle no
@@ -4817,6 +4826,71 @@ To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to chec
 #+begin_src emacs-lisp
 ;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
 (use-package browse-at-remote   :defer nil)
+#+end_src
+** COMMENT Elementary Version Control
+:PROPERTIES:
+:CUSTOM_ID: Elementary-Version-Control
+:END:
+
+[[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
+are pointers to memory location of a given filename!
+Soft links are preferable since they defer to the orginal filename
+and can work across servers.
+
+We can declare them as follows,
+#+BEGIN_EXAMPLE shell
+ln -s source_file myfile
+#+END_EXAMPLE
+
+If ~repo~ refers to a directory under version control
+--or Dropbox-- we move our init file and emacs directory to it,
+then make soft links to these locations so that whenever ~~/.emacs~
+is accessed it will refer to ~repo/.emacs~ and likewise for ~.emacs.d~ :-)
+
+On a new machine, copy-paste any existing emacs configs we want
+to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
+links only.
+
+#+BEGIN_EXAMPLE shell
+repo=~/Dropbox     ## or my git repository: ~/dotfiles
+
+cd ~
+
+mv .emacs $repo/
+ln -s $repo/.emacs .emacs
+
+mv .emacs.elc $repo/
+ln -s $repo/.emacs.elc .emacs.elc
+
+mv .emacs.d/ $repo/
+ln -s $repo/.emacs.d/ .emacs.d
+#+END_EXAMPLE
+Note the extra ~/~ after ~.emacs.d~!
+
+You may need to unlink soft links if you already have them;
+e.g., ~unlink .emacs.d~.
+
+To make another softlink to a file, say in a blogging directory,
+we ~cd~ to the location of interest then execute, say:
+~ln -s $repo/.emacs.d/init.org init.org~
+
+While we're at it, let's make this super-duper file (and another) easily
+accessible --since we'll be altering it often--:
+#+BEGIN_EXAMPLE shell
+cd ~
+
+ln -s dotfiles/.emacs.d/init.org init.org
+ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
+#+END_EXAMPLE
+
+Below I'll equip us with an Emacs ‘porcelain’ interface to git
+--it makes working with version control tremendously convenient.
+Moreover, I add a little pop-up so that I don't forget to commit often!
+
+Finally, since I've symlinked my ~.emacs~:
+#+begin_src emacs-lisp :tangle no
+;; Don't ask for confirmation when opening symlinked files.
+(setq vc-follow-symlinks t)
 #+end_src
 * Cosmetics
 :PROPERTIES:
@@ -5961,7 +6035,7 @@ I use Org-mode often, so that's how I want things to appear.
   "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
 #+END_SRC
 
-** Tabs                                                           :Disabled:
+** Tabs                                                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Tabs
 :header-args: :tangle no
@@ -5986,7 +6060,7 @@ It's been less than three days and I've found this utility to be unhelpful, to m
 
 An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
 
-** Window resizing using the golden ratio                         :Disabled:
+** Window resizing using the golden ratio                          :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Window-resizing-using-the-golden-ratio
 :header-args: :tangle no
@@ -6013,7 +6087,7 @@ An alternative, also disabled:
 (use-package zoom :config (zoom-mode t))
 #+end_src
 
-** Org-Emphasise for Parts of Words                               :Disabled:
+** Org-Emphasise for Parts of Words                                :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
 :header-args: :tangle no
@@ -6032,7 +6106,7 @@ I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
 
-** Preview link under cursor                                      :Disabled:
+** Preview link under cursor                                       :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Preview-link-under-cursor
 :header-args: :tangle no
@@ -6211,6 +6285,15 @@ Example:
   :config (bind-key "C-x C-b" #'bufler-list))
 ;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 #+end_src
+** all-the-icons
+:PROPERTIES:
+:CUSTOM_ID: all-the-icons
+:END:
+
+#+begin_src emacs-lisp :tangle init.el
+(use-package all-the-icons
+    :config (all-the-icons-install-fonts 'install-without-asking))
+#+end_src
 * Lisp Programming
 :PROPERTIES:
 :CUSTOM_ID: Lisp-Programming
@@ -6241,7 +6324,7 @@ at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
   https://alhassy.com/repl-driven-development, including setup for other
   languages.
 
-*** ELisp :ignore:
+*** ELisp                                                            :ignore:
 :PROPERTIES:
 :CUSTOM_ID: ELisp
 :END:
@@ -6266,7 +6349,7 @@ rather than forcing their eyes to shift up&down when writing&evaluating.
 # E.g., (eros--eval-overlay "hola" (point-min))
 # Shows a momentary overlay at the first line.
 
-*** COMMENT JavaScript                                                    :Disabled:
+*** COMMENT JavaScript                                             :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: JavaScript
 :END:
@@ -6900,7 +6983,7 @@ some example usage of that method.
   (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
 #+end_src
 
-*** Get CheatSheets and view them easily                          :Disabled:
+*** Get CheatSheets and view them easily                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Get-CheatSheets-and-view-them-easily
 :header-args: :tangle no
@@ -6926,7 +7009,7 @@ Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the 
                                               ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 #+end_src
 
-*** How do I do something?                                        :Disabled:
+*** How do I do something?                                         :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: How-do-I-do-something
 :header-args: :tangle no
@@ -7193,7 +7276,7 @@ to a programming language's syntactic constructions.
 #+end_src
 #+end_box
 
-*** TODO Actual Setup                                               :ignore:
+*** TODO Actual Setup                                                :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Actual-Setup
 :END:
@@ -7440,7 +7523,7 @@ I found using yafolding-mode to be way too slow.
   (global-set-key (kbd "s-f") 'yafolding-hydra/body)
 #+end_src
 #+end_details
-*** E2E Test                                                        :ignore:
+*** E2E Test                                                         :ignore:
 :PROPERTIES:
 :CUSTOM_ID: E2E-Test
 :END:
@@ -7524,7 +7607,7 @@ The following is also “OK” in Org-mode ;-)
   (highlight-indent-guides-character ?|)
   (highlight-indent-guides-responsive 'stack))
 #+end_src
-*** Being Generous with Whitespace                                :Disabled:
+*** Being Generous with Whitespace                                 :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Being-Generous-with-Whitespace
 :END:
@@ -7541,7 +7624,7 @@ I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Al
 languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
 an identifier, not an expression! ⟩
 
-*** Auto-format on Save                                           :Disabled:
+*** Auto-format on Save                                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Auto-format-on-Save
 :header-args: :tangle no
@@ -7845,6 +7928,42 @@ Have a thin line to the right to ensure I don't write “off the page”.
 ;; (setq fill-column 120)
 #+END_SRC
 
+** Get nice child frames when looking at completions candidates
+:PROPERTIES:
+:CUSTOM_ID: Get-nice-child-frames-when-looking-at-completions-candidates-In-particular-when-editing-Lisp-code-the
+:END:
+In particular, when editing Lisp code, the (company-quickhelp) doc strings
+appear in nice frames when I pause on a completion candidate.
+#+begin_src emacs-lisp
+(use-package company-posframe :hook prog-mode)
+#+end_src
+
+** interactive macro-expander
+
+Anywhere in a macro form, press ~C-c e~ to start an (inline) interactive session
+where you can see what the expanded form of the macro looks like and you can
+move your cursor to other macro forms and expand those as well by pressing
+~e~. Then press ~q~ to quit.
+#+begin_src emacs-lisp
+(use-package macrostep)
+(define-key emacs-lisp-mode-map (kbd "C-c e") 'macrostep-expand)
+#+end_src
+
+This seems like an excellent way to debug macros.
+
+** Smart jumping to definitions
+
+# By default ~M-.~ only works on definitions that live in files: If you press ~C-x
+# C-e~ at the end of ~(setq foo 1)~ then invoke ~M-.~ on “ foo ”
+#+begin_src emacs-lisp
+(use-package elisp-def)
+(bind-key*  "M-." #'elisp-def emacs-lisp-mode-map)
+
+;; Example usage:
+(when nil
+  (let ((foo 1))
+    (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
+#+end_src
 * Prose
 :PROPERTIES:
 :CUSTOM_ID: Prose
@@ -8089,7 +8208,7 @@ think is not ideal since it provides way less information.
 ;; Website currently down ... https://github.com/SavchenkoValeriy/emacs-powerthesaurus/issues/6
 #+END_SRC
 :End:
-** Touch Typing                                                   :Disabled:
+** Touch Typing                                                    :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Touch-Typing
 :header-args: :tangle no
@@ -8141,7 +8260,7 @@ Then /detect language/ then /Arabic/ to obtain:
 #+end_quote
 Neato 😲
 
-** Using a Grammar & Style Checker                                :Disabled:
+** Using a Grammar & Style Checker                                 :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Using-a-Grammar-Style-Checker
 :header-args: :tangle no
@@ -8583,7 +8702,7 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 (global-subword-mode 1)
 #+end_src
 
-** Mouse Editing Support                                          :Disabled:
+** Mouse Editing Support                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Mouse-Editing-Support
 :header-args: :tangle no
@@ -8673,7 +8792,7 @@ An alternative is the [[https://github.com/mickeynp/smart-scan][smart-scan]] lib
 not provide the highlighting occurances at point.
 # The default symbol replacement is [[https://github.com/mickeynp/smart-scan/issues/23][over-zealous]] in that it replaces sub-terms
 # occurring as parts of larger words. Let's do something about that.
-** Letter-based Navigation                                        :Disabled:
+** Letter-based Navigation                                         :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Letter-based-Navigation
 :header-args: :tangle no
@@ -8735,7 +8854,7 @@ Of course we can also use it without the asterisk; e.g.:
 (bind-key "C-x O" (lambda () (interactive) (other-window -1)))
 #+end_src
 
-**   =C-c e n,p=: Taking a tour of one's edits                    :Disabled:
+**   =C-c e n,p=: Taking a tour of one's edits                     :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: C-c-e-n-p-Taking-a-tour-of-one's-edits
 :header-args: :tangle no
@@ -8777,7 +8896,7 @@ navigate my recent edits /without/ having to supply the prefix each time.
             (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
 #+end_src
 
-** LaTeX ⇐ Org-Mode                                               :Disabled:
+** LaTeX ⇐ Org-Mode                                                :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
 :header-args: :tangle no
@@ -8843,7 +8962,7 @@ For example, we account for LaTeX citations.
 ;; (setq org-export-with-section-numbers nil)
 #+END_SRC
 :End:
-*** Working with Citations                              :Disabled:Not_Used:
+*** Working with Citations                                :Disabled:Not_Used:
 :PROPERTIES:
 :CUSTOM_ID: Working-with-Citations
 :END:
@@ -8950,7 +9069,7 @@ anchors.
 ;; Can be used to export a file into a coloured html.
 #+END_SRC
 
-*** HTML “Folded Drawers”                :Move_to_org_special_block_extras:
+*** HTML “Folded Drawers”                  :Move_to_org_special_block_extras:
 :PROPERTIES:
 :CUSTOM_ID: HTML-Folded-Drawers
 :END:
@@ -9041,7 +9160,7 @@ Hey bud, hope you're enjoying this read ^_^
 
 Now that I've written this, I'm thinking it may have been preferably to use an org-block…?
 
-*** Diagrams with Mermaid ---Not Reccommended                    :Disabled:
+*** Diagrams with Mermaid ---Not Reccommended                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Diagrams-with-Mermaid-Not-Reccommended
 :header-args: :tangle no
@@ -9267,7 +9386,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 (use-package helm-chrome-control)
 #+end_src
 
-* TODO COMMENT [3/25] Lost Souls
+* TODO COMMENT [2/22] Lost Souls
 :PROPERTIES:
 :CUSTOM_ID: Lost-Souls
 :END:
@@ -9543,7 +9662,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
    (beginning-of-buffer)))
 #+end_src
 
-***** COMMENT Old definition with colourful menu                     :ignore:
+***** COMMENT Old definition with colourful menu                    :ignore:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Old-definition-with-colourful-menu
 :END:
@@ -10087,7 +10206,7 @@ my VSCoder counterparts.
 (my/toggle-pair-programming)
 #+end_src
 
-*** Modern Browsing within Emacs                           :Disabled:
+*** Modern Browsing within Emacs                                  :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Modern-Browsing-within-Emacs
 :END:
@@ -10955,7 +11074,7 @@ extension).
 Of-course, to actually do anything with the files (like mass renaming), there's
 Emacs' Dired (the directory editor).
 
-** TODO Web Development
+** TODO Web Development                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
 :END:
@@ -11568,7 +11687,7 @@ Other packages to consider looking into include:
 - [[https://github.com/scottaj/mocha.el][mocha.el: Emacs mode for running mocha tests]]
 - [[https://github.com/Emiller88/emacs-jest][emacs-jest: A package to run jest inside emacs]]
 
-*** JavaScript                                    :Does_not_work_with_flow:
+*** JavaScript                                     :Does_not_work_with_flow:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-JavaScript
 :END:
@@ -11614,7 +11733,7 @@ Using ~⌘ j~ then one of the following...
 | ~ss~ | Split a string, at point, into a catenation of strings                         |
 | ~st~ | Convert a string into a `template`.                                            |
 
-** TODO Working with PDFs
+** TODO Working with PDFs                                         :Disabled:
 *** TODO Open PDFs in Emacs
 #+begin_src emacs-lisp
     ;; In Org-mode, clicking on PDF should open it in Emacs
@@ -11671,7 +11790,7 @@ Using ~⌘ j~ then one of the following...
 ;;
 (setq empv-invidious-instance "https://invidious.fdn.fr.com")
 #+end_src
-** TODO Having a workspace manager in Emacs
+** TODO Having a workspace manager in Emacs                       :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
 :END:
@@ -12222,80 +12341,6 @@ publish the current article to my blog.
   )
 #+end_src
 
-** DONE ox-pandoc
-:PROPERTIES:
-:CUSTOM_ID: Easy-tasks
-:END:
-
-# ox-pandoc is "another exporter that translates Org-mode file to various other formats via Pandoc".
-# (shell-command "brew install pandoc")
-# (use-package ox-pandoc)
-
-** Elementary Version Control
-:PROPERTIES:
-:CUSTOM_ID: Elementary-Version-Control
-:END:
-
-[[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
-are pointers to memory location of a given filename!
-Soft links are preferable since they defer to the orginal filename
-and can work across servers.
-
-We can declare them as follows,
-#+BEGIN_EXAMPLE shell
-ln -s source_file myfile
-#+END_EXAMPLE
-
-If ~repo~ refers to a directory under version control
---or Dropbox-- we move our init file and emacs directory to it,
-then make soft links to these locations so that whenever ~~/.emacs~
-is accessed it will refer to ~repo/.emacs~ and likewise for ~.emacs.d~ :-)
-
-On a new machine, copy-paste any existing emacs configs we want
-to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
-links only.
-
-#+BEGIN_EXAMPLE shell
-repo=~/Dropbox     ## or my git repository: ~/dotfiles
-
-cd ~
-
-mv .emacs $repo/
-ln -s $repo/.emacs .emacs
-
-mv .emacs.elc $repo/
-ln -s $repo/.emacs.elc .emacs.elc
-
-mv .emacs.d/ $repo/
-ln -s $repo/.emacs.d/ .emacs.d
-#+END_EXAMPLE
-Note the extra ~/~ after ~.emacs.d~!
-
-You may need to unlink soft links if you already have them;
-e.g., ~unlink .emacs.d~.
-
-To make another softlink to a file, say in a blogging directory,
-we ~cd~ to the location of interest then execute, say:
-~ln -s $repo/.emacs.d/init.org init.org~
-
-While we're at it, let's make this super-duper file (and another) easily
-accessible --since we'll be altering it often--:
-#+BEGIN_EXAMPLE shell
-cd ~
-
-ln -s dotfiles/.emacs.d/init.org init.org
-ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
-#+END_EXAMPLE
-
-Below I'll equip us with an Emacs ‘porcelain’ interface to git
---it makes working with version control tremendously convenient.
-Moreover, I add a little pop-up so that I don't forget to commit often!
-
-Finally, since I've symlinked my ~.emacs~:
-#+begin_src emacs-lisp :tangle no
-;; Don't ask for confirmation when opening symlinked files.
-(setq vc-follow-symlinks t)
-#+end_src
 ** README.md
 :PROPERTIES:
 :CUSTOM_ID: README-md
@@ -12538,29 +12583,6 @@ Save the name of this macro by highlighting it and pressing `C-x r s z', then us
           gc-cons-percentage 0.1)))
 #+end_src
 
-** TODO Get nice child frames when looking at completions candidates.  In particular, when editing Lisp code, the
-:PROPERTIES:
-:CUSTOM_ID: Get-nice-child-frames-when-looking-at-completions-candidates-In-particular-when-editing-Lisp-code-the
-:END:
-(company-quickhelp) doc strings appear in nice (but non-mouse friendly) frames when I pause on a completion candidate.
-#+begin_src emacs-lisp
-(use-package company-posframe)
-
-;; https://github.com/joddie/macrostep
-;;
-;; Anywhere *within* a form press “C-c e e e ⋯” to see pretty interactive expansions of your macro, then “q” to quit the
-;; interactive session. Very useful when forming new macros!
-(use-package macrostep)
-(define-key emacs-lisp-mode-map (kbd "C-c e") 'macrostep-expand)
-
-;;============================================= Smart jumping to definitions ============================================
-;; https://github.com/Wilfred/elisp-def
-(use-package elisp-def)
-(bind-key*  "M-." #'elisp-def emacs-lisp-mode-map)
-(when nil
-  (let ((foo 1))
-    (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
-#+end_src
 ** TODO power-mode, defadvice!
 
 #+begin_src emacs-lisp
@@ -12702,7 +12724,7 @@ This is a DoomEmacs macro: https://github.com/doomemacs/doomemacs/blob/master/co
   :hook (writeroom-mode . (lambda () (focus-mode 'toggle))))
 #+end_src
 
-*** COMMENT Toggling System                                    :RelocateMe:
+*** COMMENT Toggling System                                     :RelocateMe:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Toggling-System
 :END:
@@ -12721,23 +12743,10 @@ This is a DoomEmacs macro: https://github.com/doomemacs/doomemacs/blob/master/co
 (use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
-** TODO all-the-icons
-:PROPERTIES:
-:CUSTOM_ID: all-the-icons
-:END:
-
-#+begin_src emacs-lisp :tangle init.el
-(use-package all-the-icons
-    :config (all-the-icons-install-fonts 'install-without-asking))
-#+end_src
-** TODO Kill all buffers that are not associated with a file; also ~C-x ←/→~
+** TODO Kill all buffers that are not associated with a file
 :PROPERTIES:
 :CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
 :END:
-
-# Here is a collection of Emacs-lisp functions that I have come to use in other files.
-# The subsections below detail the definitions.
-# Disclaimer: I wrote much of the following /before/ I learned any lisp; everything below is probably terrible.
 
 #+begin_src emacs-lisp
 (cl-defun my/clean-buffers ()
@@ -12747,7 +12756,7 @@ This is a DoomEmacs macro: https://github.com/doomemacs/doomemacs/blob/master/co
   (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list))))))
 #+end_src
 
-** TODO [HERE TODAY] When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
+** TODO [#A] When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
 - If I want to see a particular buffer, I'll summon it explicitly.
   + E.g., Messages with ~C-h e~, Magit with ~C-x g~, Server Status with ~M-S-SPC~, etc.
 #+begin_src emacs-lisp
@@ -12903,7 +12912,7 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 /Thanks to friends for “replacing me” while I was away ♥‿♥ ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ/
 #+end_center
 
-** Done!                                                            :ignore:
+** Done!                                                             :ignore:
 
 #+begin_src emacs-lisp :tangle "init.el"
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
