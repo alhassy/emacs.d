@@ -2750,7 +2750,7 @@ is a nice *[[green:‘in your face’]]* reminder that there is local configurat
 should have been loaded.
 # - E.g., this init file has local configuration for making the corresponding
 #  =init.el= file and generating the =README.org= file.
-** Snippets ---Template Expansion & Completion
+** TODO COMMENT Snippets ---Template Expansion & Completion
 :PROPERTIES:
 :CUSTOM_ID: Snippets-Template-Expansion
 :END:
@@ -3857,7 +3857,7 @@ should jump to the first entry.
 :CUSTOM_ID: Folding-within-a-subtree
 :END:
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (bind-key "C-c C-h"
           (defun my/org-fold-current-subtree-anywhere-in-it ()
             (interactive)
@@ -3868,7 +3868,7 @@ should jump to the first entry.
           org-mode-map)
 #+END_SRC
 
-** TODO Draw pretty unicode tables in org-mode                   :to_include:
+** Draw pretty unicode tables in org-mode
 :PROPERTIES:
 :CUSTOM_ID: Draw-pretty-unicode-tables-in-org-mode
 :END:
@@ -3900,8 +3900,9 @@ NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
 ** Drag Stuff                                                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Drag-Stuff
+:header-args: :tangle no
 :END:
-#+begin_src emacs-lisp :tangle no :tangle no
+#+begin_src emacs-lisp
 ;; Move current word ←/→, or current line ↑/↓.
 ;; Todo: Compare with org-metaup and org-metadown...
 (use-package drag-stuff
@@ -3916,7 +3917,7 @@ NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
 
 Ruins Org-mode's M-↑/↓ for moving entire sections around.
 
-** TODO Buffer default mode is org-mode
+** Buffer default mode is org-mode
 :PROPERTIES:
 :CUSTOM_ID: Buffer-defaults
 :END:
@@ -3942,7 +3943,7 @@ Ruins Org-mode's M-↑/↓ for moving entire sections around.
   (setq orglink-activate-in-modes '(emacs-lisp-mode)))
 #+end_src
 
-** COMMENT ox-pandoc
+** ox-pandoc
 :PROPERTIES:
 :CUSTOM_ID: Easy-tasks
 :END:
@@ -4965,25 +4966,10 @@ my to-do list and my init file, side-by-side.
 
 ;; After my settings have been loaded, e.g., fancy priorities
 ;; and cosmetics, then open my notes files.
-(add-hook 'emacs-startup-hook (lambda () (find-file "~/Documents/notes.org")))
-
-;; If work machine, then show notes; otherwise show my todos & init side-by-side.
-(when nil
-  (unless noninteractive
-    ;; Only run the following when we're in GUI mode;
-    ;; i.e., don't run it in Github Actions when testing.
-    (if (not my/personal-machine?)
-        (find-file "~/Documents/notes.org")
-      (find-file "~/Dropbox/todo.org")
-      ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
-      ;; which is a GPG file and so requires passphrase before other things can load.
-      ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
-      (split-window-right)                          ;; C-x 3
-      (other-window 1)                              ;; C-x 0
-      (let ((enable-local-variables :all)           ;; Load *all* locals.
-            (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
-        (ignore-errors (find-file "~/.emacs.d/init.org"))))))
-
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (find-file "~/my-life.org")
+            (load "~/my-life.el")))
 #+END_SRC
 
 There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile

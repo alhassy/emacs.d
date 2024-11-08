@@ -1,8 +1,8 @@
-;; [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:4]]
+;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:4]]
     (setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
-;; [[file:init.org::*Personal instructions for a new machine][Personal instructions for a new machine:5]]
+;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:5]]
     ;; Clicking on a URL, or running M-x browse-url, should open the URL *within* Emacs.
     (setq browse-url-browser-function #'xwidget-webkit-browse-url)
 
@@ -77,20 +77,19 @@
   (use-package undo-tree
     :defer nil
     :bind ("C-x u" . undo-tree-visualize)
-    :hook (org-mode . undo-tree-mode) ;; For some reason, I need this. FIXME.
     :config
-      ;; Always have it on
-      (global-undo-tree-mode)
-
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-
+  
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-
+  
+  ;; Always have it on
+  (global-undo-tree-mode)
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -105,18 +104,30 @@
   (require 'quelpa-use-package))
 
 ;; Auto installing OS system packages
+(use-package system-packages)
 
-;; Install OS packages using `use-package`.
-(use-package use-package-ensure-system-package)
+;; Ensure our operating system is always up to date.
+;; This is run whenever we open Emacs & so wont take long if we're up to date.
+;; It happens in the background ^_^
+;;
+;; After 5 seconds of being idle, after starting up.
+(run-with-idle-timer 5 nil #'system-packages-update) ;; ≈ (async-shell-command "brew update && brew upgrade")
 
-;; Caching the installed pkgs list makes system-package-ensure return nearly immediately for things already installed!
-(setq my/installed-packages (shell-command-to-string "brew list"))
-(defun system-packages-ensure (pkg)
-  (unless (s-contains-p pkg  my/installed-packages)
-      (shell-command-to-string (format "brew list %s || brew install %s --force" pkg pkg))))
+(defvar my/installed-packages
+  (shell-command-to-string "brew list")
+  "What is on my machine already?
 
-;; Please don't bother me when shell buffer names are in use, just make a new
-;; buffer.
+Sometimes when I install a GUI based application and do not have access to it everywhere in my path,
+it may seem that I do not have that application installed. For instance,
+   (system-packages-package-installed-p \"google-chrome\")
+returns nil, even though Google Chrome is on my machine.
+
+As such, we advise the `system-packages-ensure' installtion method to only do
+installs of packages that are not in our `my/installed-packages' listing.
+")
+(advice-add 'system-packages-ensure   :before-until (lambda (pkg) (s-contains-p pkg my/installed-packages)))
+
+;; Please don't bother me when shell buffer names are in use, just make a new buffer.
 (setq async-shell-command-buffer 'new-buffer)
 
 ;; Display the output buffer for asynchronous shell commands only when the
@@ -126,29 +137,8 @@
 ;; Don't ask me if I want to kill a buffer with a live process attached to it;
 ;; just kill it please.
 (setq kill-buffer-query-functions
-  (remq 'process-kill-buffer-query-function
-         kill-buffer-query-functions))
-
-;; Ensure our operating system is always up to date.
-;; This is run whenever we open Emacs & so wont take long if we're up to date.
-;; It happens in the background ^_^
-;;
-;; After 5 seconds of being idle, after starting up.
-
-
-(defvar my/installed-packages
-  (shell-command-to-string "brew list")
-   "What is on my machine already?
-
-Sometimes when I install a GUI based application and do not have access to it everywhere in my path,
-it may seem that I do not have that application installed. For instance,
-   (system-packages-package-installed-p \"google-chrome\")
-returns nil, even though Google Chrome is on my machine.
-
-As such, we advise the `system-packages-ensure' installtion method to only do
-installs of pacakges that are not in our `my/installed-packages' listing.
-")
-(advice-add 'system-packages-ensure   :before-until (lambda (pkg) (s-contains-p pkg my/installed-packages)))
+      (remq 'process-kill-buffer-query-function
+            kill-buffer-query-functions))
 
 ;; An Emacs-based interface to the package manager of your operating system.
 (use-package helm-system-packages)
@@ -179,13 +169,17 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 (system-packages-ensure "licecap") ;; Use: ⌘-SPACE licecap
 
 ;; Pack, ship and run any application as a lightweight container
+(system-packages-ensure "docker")
 ;; Free universal database tool and SQL client
+(system-packages-ensure "dbeaver-community")
 ;; Kubernetes IDE
+(system-packages-ensure "lens")
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
 (system-packages-ensure "node") ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
+(shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
 ;; According to https://github.com/nvm-sh/nvm, nvm shouldn't be installed via brew.
 
 ;; ;; Use “brew cask install” instead of “brew install” for installing programs.;
@@ -209,6 +203,16 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 (defun amethyst/cycle-layout ()
   (interactive)
   (shell-command "osascript -e 'tell application \"System Events\" to keystroke space using {shift down, option down}'"))
+
+;; By default, say, (async-shell-command "date") produces a buffer
+;; with the result. In general, such commands in my init.el are for
+;; updating/installing things to make sure I have the same up-to-date
+;; setup where-ever I use my Emacs. As such, I don't need to see such buffers.
+(add-to-list 'display-buffer-alist
+             '("\\*Async Shell Command\\*.*" display-buffer-no-window))
+
+;; For an approach that does not inhibit async-shell-command this way,
+;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
 
 (use-package exec-path-from-shell
   :defer nil
@@ -247,6 +251,12 @@ installs of pacakges that are not in our `my/installed-packages' listing.
         ;; Let's keep tab-completetion anyhow.
         ("TAB"   . helm-execute-persistent-action)
         ("<tab>" . helm-execute-persistent-action)))
+
+;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
+;; (use-package helm-icons
+;;   :defer nil
+;;   :custom (helm-icons-provider 'all-the-icons)
+;;   :config (helm-icons-enable))
 
 ;; When I want to see the TOC of an Org file, show me down to 3 subheadings.
 (setq org-imenu-depth 3)
@@ -290,10 +300,10 @@ installs of pacakges that are not in our `my/installed-packages' listing.
   :config (require 'inform))
 
 (use-package emacs
-  :defer nil
-  :ensure org-contrib
-  :config (require 'ox-extra)
-  )
+    :defer nil
+    :ensure org-contrib
+    :config (require 'ox-extra)
+            (ox-extras-activate '(ignore-headlines)))
 
 ;; Replace the content marker, “⋯”, with a nice unicode arrow.
 (setq org-ellipsis "  ⮛")
@@ -302,6 +312,8 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; (setq org-ellipsis "  ◦◦◦")
 ;; (setq org-ellipsis "  ⟨🫣⟩")
 ;; (setq org-ellipsis "  ⟨👀⟩")
+;; (setq org-ellipsis " ⤵")
+
 
 ;; Fold all source blocks on startup.
 (setq org-hide-block-startup t)
@@ -372,9 +384,117 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; Neato doc strings for hydras
 (use-package pretty-hydra :defer nil)
 
+;; TODO convert my existing defhydras to my/defhydra.
+(defmacro my/defhydra (key title icon-name &rest body)
+"Make a hydra whose heads appear in a pretty pop-up window.
+Heads are signalled by keywords and the hydra has an icon in its title.
+
+KEY [String]: Global keybinding for the new hydra.
+
+TITLE [String]: Either a string or a plist, as specified for pretty-hydra-define.
+       The underlying Lisp function's name is derived from the TITLE;
+       which is intentional since hydra's are for interactive, pretty, use.
+
+       One uses a plist TITLE to specify what a hydra should do *before*
+       any options, or to specify an alternate quit key (:q by default).
+
+ICON-NAME [Symbol]: Possible FontAwesome icon-types: C-h v `all-the-icons-data/fa-icon-alist'.
+
+BODY: A list of columns and entries. Keywords indicate the title
+      of a column; 3-lists (triples) indicate an entry key and
+      the associated operation to perform and, optionally, a name
+      to be shown in the pop-up. See DEFHYDRA for more details.
+
+
+For instance, the verbose mess:
+
+    ;; Use ijkl to denote ↑←↓→ arrows.
+    (global-set-key
+     (kbd \"C-c w\")
+     (pretty-hydra-define my/hydra/\\t\\tWindow\\ Adjustment
+       ;; Omitting extra work to get an icon into the title.
+       (:title \"\t\tWindow Adjustment\" :quit-key \"q\")
+       (\"Both\"
+        ((\"b\" balance-windows                 \"balance\")
+         (\"s\" switch-window-then-swap-buffer  \"swap\"))
+        \"Vertical adjustment\"
+        ((\"h\" enlarge-window                  \"heighten\")
+         (\"l\" shrink-window                   \"lower\"))
+        \"Horizontal adjustment\"
+        ((\"n\" shrink-window-horizontally      \"narrow\")
+         (\"w\" enlarge-window-horizontally \"widen\" )))))
+
+Is replaced by:
+
+    ;; Use ijkl to denote ↑←↓→ arrows.
+    (my/defhydra \"C-c w\" \"\t\tWindow Adjustment\" windows
+       :Both
+       (\"b\" balance-windows                 \"balance\")
+       (\"s\" switch-window-then-swap-buffer  \"swap\")
+       :Vertical_adjustment
+       (\"h\" enlarge-window                  \"heighten\")
+       (\"l\" shrink-window                   \"lower\")
+       :Horizontal_adjustment
+       (\"n\" shrink-window-horizontally      \"narrow\")
+       (\"w\" enlarge-window-horizontally     \"widen\"))"
+  (let* ((name (intern (concat "my/hydra/"
+                              (if (stringp title)
+                                  title
+                                (plist-get title :title)))))
+         (icon-face `(:foreground ,(face-background 'highlight)))
+         (iconised-title
+          (concat
+           (when icon-name
+                 (require 'all-the-icons)
+             (concat
+              (all-the-icons-faicon (format "%s" icon-name) :face icon-face :height 1.0 :v-adjust -0.1)
+              " "))
+           (propertize title 'face icon-face))))
+    `(global-set-key
+      (kbd ,key)
+      (pretty-hydra-define ,name
+        ,(if (stringp title)
+             (list :title iconised-title
+                   :quit-key "q")
+           title)
+        ,(thread-last body
+           (-partition-by-header #'keywordp)
+           (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
+           (-flatten-n 1))))))
+
+(my/defhydra "C-n" "\t\t\t\t\tTextual Navigation" arrows
+   :Line
+   ("n" next-line)
+   ("p" previous-line)
+   ("a" beginning-of-line)
+   ("e" move-end-of-line)
+   ("g" goto-line)
+   :Word
+   ("f" forward-word "Next")
+   ("b" backward-word "Previous")
+   ("{" org-backward-element "Next Element")
+   ("}" org-forward-element "Previous Element")
+   :Screen
+   ("v" scroll-up-command "Scroll Down")
+   ("V" scroll-down-command "Scroll Up")
+   ("l" recenter-top-bottom "Center Page")
+   ("r" move-to-window-line-top-bottom "Relocate Point")
+   ("m" helm-imenu "Textual Menu"))
 
 ;; C-n, next line, inserts newlines when at the end of the buffer
 (setq next-line-add-newlines t)
+
+;; Use ijkl to denote ↑←↓→ arrows.
+(my/defhydra "C-c w" "\t\tWindow Adjustment" windows
+   :Both
+   ("b" balance-windows                 "balance")
+   ("s" switch-window-then-swap-buffer  "swap")
+   :Vertical_adjustment
+   ("h" enlarge-window                  "heighten")
+   ("l" shrink-window                   "lower")
+   :Horizontal_adjustment
+   ("n" shrink-window-horizontally      "narrow")
+   ("w" enlarge-window-horizontally     "widen"))
 
 ;; Provides a *visual* way to choose a window to switch to.
 ;; (use-package switch-window )
@@ -407,11 +527,26 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 
 (system-packages-ensure "tldr")
 
-;; [[file:init.org::*Manipulating Sections][Manipulating Sections:1]]
+(system-packages-ensure "hr") ;; ≈ brew install hr
+
+;; Usage: M-x helm-shell-history
+(use-package helm-shell-history
+  :config
+  (setq helm-shell-history-file "~/.zsh_history")
+  (bind-key "M-r" #'helm-shell-history shell-mode-map))
+
+;; MacOS's default ⌘-SPC does not let us do either of the following scenarios:
+;; Usage: M-x helm-osx-app RET preferences bat RET ⇒ See battery preferences settings
+;; Another Usage: M-x helm-osx-app RET ⇒ See all apps, maybe we forgot about one of them from an install a long time ago, and open it
+;; See https://www.alfredapp.com/ as an alternative (for non-Emacs users), which can do more.
+(use-package helm-osx-app)
+;; For non-MacOS, we can use [[https://github.com/d12frosted/counsel-osx-app][counsel-osx-app]], whose name is misleading.
+
+;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:1]]
 (setq org-use-speed-commands t)
 ;; Manipulating Sections:1 ends here
 
-;; [[file:init.org::*Manipulating Sections][Manipulating Sections:2]]
+;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:2]]
 ;; When refiling, only show me top level headings [Default]. Sometimes 2 is useful.
 ;; When I'm refiling my TODOS, then give me all the freedom.
 (setq org-refile-targets '((nil :maxlevel . 1)
@@ -426,13 +561,13 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 (setq org-refile-use-outline-path 'file-path)
 ;; Manipulating Sections:2 ends here
 
-;; [[file:init.org::*Manipulating Sections][Manipulating Sections:3]]
+;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:3]]
 ;; TODO FIXME Crashes upon startup.
 (when nil (add-to-list 'org-speed-commands (cons "P" #'org-set-property)))
 ;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
 ;; Manipulating Sections:3 ends here
 
-;; [[file:init.org::*Seamless Navigation Between Source Blocks][Seamless Navigation Between Source Blocks:1]]
+;; [[file:init.org::#Seamless-Navigation-Between-Source-Blocks][Seamless Navigation Between Source Blocks:1]]
 ;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
 ;;
 (require 'org)
@@ -445,13 +580,13 @@ installs of pacakges that are not in our `my/installed-packages' listing.
               ("s-e" . org-edit-src-exit)))
 ;; Seamless Navigation Between Source Blocks:1 ends here
 
-;; [[file:init.org::*Modifying \[\[kbd:⟨return⟩\]\]][Modifying [[kbd:⟨return⟩]]:1]]
+;; [[file:init.org::#Modifying-return][Modifying [[kbd:⟨return⟩]]:1]]
 (add-hook 'org-mode-hook '(lambda ()
    (local-set-key (kbd "<return>") 'org-return-indent))
    (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline))
 ;; Modifying [[kbd:⟨return⟩]]:1 ends here
 
-;; [[file:init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:1]]
+;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:1]]
 ;; Seamless use of babel: No confirmation upon execution.
 ;; Downside: Could accidentally evaluate harmful code.
 (setq org-confirm-babel-evaluate nil)
@@ -469,7 +604,7 @@ installs of pacakges that are not in our `my/installed-packages' listing.
         (:eval . "never-export")))
 ;; Executing code from ~src~ blocks:1 ends here
 
-;; [[file:init.org::*Executing code from ~src~ blocks][Executing code from ~src~ blocks:2]]
+;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
 (defvar my/programming-languages
   '(emacs-lisp shell python haskell
       ;; rust ;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
@@ -494,7 +629,7 @@ installs of pacakges that are not in our `my/installed-packages' listing.
 ;; (setq org-export-in-background t)
 ;; Executing code from ~src~ blocks:2 ends here
 
-;; [[file:init.org::*Executing all =#+name: startup-code= for local configurations][Executing all =#+name: startup-code= for local configurations:1]]
+;; [[file:init.org::#Executing-all-name-startup-code-for-local-configurations][Executing all =#+name: startup-code= for local configurations:1]]
 (defun my/execute-startup-blocks ()
   "Execute all startup blocks, those named ‘startup-code’.
 
@@ -508,179 +643,14 @@ visit all blocks with such a name."
       (org-babel-execute-src-block))))
 ;; Executing all =#+name: startup-code= for local configurations:1 ends here
 
-;; [[file:init.org::*Executing all =#+name: startup-code= for local configurations][Executing all =#+name: startup-code= for local configurations:2]]
+;; [[file:init.org::#Executing-all-name-startup-code-for-local-configurations][Executing all =#+name: startup-code= for local configurations:2]]
 ;; Please ask me on a file by file basis whether its local variables are ‘safe’
 ;; or not. Use ‘!’ to mark them as permanently ‘safe’ to avoid being queried
 ;; again for the same file.
 (setq enable-local-variables t)
 ;; Executing all =#+name: startup-code= for local configurations:2 ends here
 
-;; [[file:init.org::*Word Completion and Documentation Pop-ups][Word Completion and Documentation Pop-ups:1]]
-(use-package company
-
-  :config
-  (global-company-mode 1)
-  (setq ;; Only 2 letters required for completion to activate.
-   company-minimum-prefix-length 2
-
-   ;; Search other buffers for compleition candidates
-   company-dabbrev-other-buffers t
-   company-dabbrev-code-other-buffers t
-
-   ;; Show candidates according to importance, then case, then in-buffer frequency
-   company-transformers '(company-sort-by-backend-importance
-                          company-sort-prefer-same-case-prefix
-                          company-sort-by-occurrence)
-
-   ;; Flushright any annotations for a compleition;
-   ;; e.g., the description of what a snippet template word expands into.
-   company-tooltip-align-annotations t
-
-   ;; Allow (lengthy) numbers to be eligible for completion.
-   company-complete-number t
-
-   ;; M-⟪num⟫ to select an option according to its number.
-   company-show-numbers t
-
-   ;; Show 10 items in a tooltip; scrollbar otherwise or C-s ^_^
-   company-tooltip-limit 10
-
-   ;; Edge of the completion list cycles around.
-   company-selection-wrap-around t
-
-   ;; Do not downcase completions by default.
-   company-dabbrev-downcase nil
-
-   ;; Even if I write something with the ‘wrong’ case,
-   ;; provide the ‘correct’ casing.
-   company-dabbrev-ignore-case nil
-
-   ;; Immediately activate completion.
-   company-idle-delay 0)
-
-  ;; Use C-/ to manually start company mode at point. C-/ is used by undo-tree.
-  ;; Override all minor modes that use C-/; bind-key* is discussed below.
-  (bind-key* "C-/" #'company-manual-begin)
-
-  ;; Bindings when the company list is active.
-  :bind (:map company-active-map
-              ("C-d" . company-show-doc-buffer) ;; In new temp buffer
-              ("<tab>" . company-complete-selection)
-              ;; Use C-n,p for navigation in addition to M-n,p
-              ("C-n" . (lambda () (interactive) (company-complete-common-or-cycle 1)))
-              ("C-p" . (lambda () (interactive) (company-complete-common-or-cycle -1)))))
-
-;; It's so fast that we don't need a key-binding to start it!
-;; Word Completion and Documentation Pop-ups:1 ends here
-
-;; [[file:init.org::*Word Completion and Documentation Pop-ups][Word Completion and Documentation Pop-ups:3]]
-(defun my/ensure-machine-works-as-expected ()
-  "Run all my personal tests to ensure Emacs behaves as I expect it to."
-  (interactive)
-  (load-file "init-test.el")
-  (ert t)
-  (ert-results-pop-to-timings))
-;; Word Completion and Documentation Pop-ups:3 ends here
-
-;; [[file:init.org::*Word Completion and Documentation Pop-ups][Word Completion and Documentation Pop-ups:4]]
-(use-package company-emoji
-  :config (add-to-list 'company-backends 'company-emoji))
-;; Word Completion and Documentation Pop-ups:4 ends here
-
-;; [[file:init.org::*Word Completion and Documentation Pop-ups][Word Completion and Documentation Pop-ups:5]]
-(use-package emojify)
-
-
-
-(-let [font-for-emojis "Noto Color Emoji"]
-(if (member font-for-emojis (font-family-list))
-  (set-fontset-font
-    t 'symbol (font-spec :family font-for-emojis) nil 'prepend)
-  (message-box "Musa: Install the font!")
-  ;; Download font @ https://fonts.google.com/noto/specimen/Noto+Color+Emoji
-  ;; Double-click on the ttf file then select “install” to have it installed on your system
-    ))
-(setq emojify-display-style 'unicode) ;; unicode is the way to go!
-
-(global-emojify-mode 1) ;; Will install missing images, if need be.
-;; Word Completion and Documentation Pop-ups:5 ends here
-
-;; [[file:init.org::*Documentation Pop-Ups][Documentation Pop-Ups:1]]
-(use-package company-quickhelp
-  :config
-  (setq company-quickhelp-delay 0.1)
-  (company-quickhelp-mode)
-  ;; Especially when learning a new language, looking up its definition/docstring can be helpful.
-  ;; Note: I use “M-!” everywhere else to mean “define word at point”.
-  )
-
-;; TODO: Consider adding a hook to company mode to immediately call (company-quickhelp--show), in prog-modes
-;; Documentation Pop-Ups:1 ends here
-
-;; [[file:init.org::*Intro to Snippets][Intro to Snippets:1]]
-;; Add yasnippet support for all company backends
-;;
-(cl-defun my/company-backend-with-yankpad (backend)
-  "There can only be one main completition backend, so let's
-   enable yasnippet/yankpad as a secondary for all completion
-   backends.
-
-   Src: https://emacs.stackexchange.com/a/10520/10352"
-
-  (if (and (listp backend) (member 'company-yankpad backend))
-      backend
-    (append (if (consp backend) backend (list backend))
-            '(:with company-yankpad))))
-;; Intro to Snippets:1 ends here
-
-;; [[file:init.org::*Intro to Snippets][Intro to Snippets:2]]
-;; Yet another snippet extension program
-(use-package yasnippet
-  :config
-    (yas-global-mode 1) ;; Always have this on for when using yasnippet syntax within yankpad
-    ;; respect the spacing in my snippet declarations
-    (setq yas-indent-line 'fixed))
-
-;; Alternative, Org-based extension program
-(use-package yankpad
-
-  :config
-    ;; Location of templates
-    (setq yankpad-file "~/.emacs.d/yankpad.org")
-
-    ;; Ignore major mode, always use defaults.
-    ;; Yankpad will freeze if no org heading has the name of the given category.
-    (setq yankpad-category "Default")
-
-    ;; Load the snippet templates ---useful after yankpad is altered
-    (yankpad-reload)
-
-    ;; Set company-backend as a secondary completion backend to all existing backends.
-    (setq company-backends (mapcar #'my/company-backend-with-yankpad company-backends)))
-;; Intro to Snippets:2 ends here
-
-;; [[file:init.org::*Intro to Snippets][Intro to Snippets:5]]
-(cl-defun org-insert-link ()
-  "Makes an org link by inserting the URL copied to clipboard and
-  prompting for the link description only.
-
-  Type over the shown link to change it, or tab to move to the
-  description field.
-
-  This overrides Org-mode's built-in ‘org-insert-link’ utility;
-  whence C-c C-l uses the snippet."
-  (interactive)
-  (insert "my_org_insert_link")
-  (yankpad-expand))
-;; Intro to Snippets:5 ends here
-
-;; [[file:init.org::*Emojis][Emojis:2]]
-;; Get all unicode emojis to appear within Emacs
-;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
-;; (unless noninteractive (set-fontset-font t nil "Apple Color Emoji"))
-;; Emojis:2 ends here
-
-;; [[file:init.org::*Prettify inline source code][Prettify inline source code:1]]
+;; [[file:init.org::#Prettify-inline-source-code][Prettify inline source code:1]]
 ;; Show “ src_emacs-lisp[:exports results]{ 𝒳 } ” as “ ℰ𝓁𝒾𝓈𝓅﴾ 𝒳 ﴿ ”.
 ;;
 (font-lock-add-keywords 'org-mode
@@ -730,7 +700,147 @@ visit all blocks with such a name."
 (setq org-fold-core-style 'overlays)
 ;; Unfold Org Headings when I perform a search:1 ends here
 
-;; [[file:init.org::*Undo-tree: Very Local Version Control][Undo-tree: Very Local Version Control:2]]
+;; [[file:init.org::*The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved][The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved:1]]
+(defmacro org-deftag (name args docstring &rest body)
+  "Re-render an Org section in any way you like, by tagging the section with NAME.
+
+That is to say, we essentially treat tags as functions that act on Org headings:
+We redefine Org sections for the same purposes as Org special blocks.
+
+The “arguments” to the function-tag can be declared as Org properties, then
+the function can access them using the `o-properties' keyword as in
+   (-let [(&plist :file :date :color) o-properties]
+       (insert \"%s: %s\" file date))
+
+Anyhow:
+ARGS are the sequence of items seperated by underscores after the NAME of the new tag.
+BODY is a form that may anaphorically mention:
+- O-BACKEND: The backend we are exporting to, such as `latex' or `html'.
+- O-HEADING: The string denoting the title of the tagged section heading.
+- O-PROPERTIES: A plist of the Org properties at point.
+
+DOCSTRING is mandatory; everything should be documented for future maintainability.
+
+The result of this anaphoric macro is a symbolic function name `org-deftag/NAME',
+which is added to `org-export-before-parsing-hook'.
+
+----------------------------------------------------------------------
+
+Below is the motivating reason for inventing this macro. It is used:
+
+     ** Interesting, but low-priority, content   :details_red:
+     Blah blah blah blah blah blah blah blah blah blah blah.
+     Blah blah blah blah blah blah blah blah blah blah blah.
+
+Here is the actual implementation:
+
+(org-deftag details (color)
+   \"HTML export a heading as if it were a <details> block; COLOR is an optional
+   argument indicating the background colour of the resulting block.\"
+   (insert \"\n#+html:\"
+           (format \"<details style=\\\"background-color: %s\\\">\" color)
+           \"<summary>\" (s-replace-regexp \"^\** \" \"\" o-heading) \"</summary>\")
+   (org-next-visible-heading 1)
+   (insert \"#+html: </details>\"))
+
+"
+  (let ((func-name (intern (format "org-deftag/%s" name))))
+    `(progn
+       (cl-defun ,func-name (o-backend)
+         ,docstring
+         (outline-show-all)
+         (org-map-entries
+          (lambda ()
+            (-let [(&alist ,@ (mapcar #'symbol-name args)) (map-apply (lambda (k v) (cons (downcase k) v)) (org-entry-properties (point)))]
+              ;; MA: Maybe get rid of o-heading and o-properties and let people operate on raw Org secitons
+              ;; as they do with org-agenda. That might provide a more unified approach.
+              (let ((o-properties (map-into (map-apply (lambda (k v) (cons (intern (concat ":" (downcase k))) v)) (org-entry-properties (point))) 'plist))
+                    (o-heading (progn (kill-line) (car kill-ring))))
+                (if (not (s-contains? (format ":%s" (quote ,name)) o-heading 'ignoring-case))
+                    (insert o-heading)
+                  (setq o-heading (s-replace-regexp (format ":%s[^:]*:" (quote ,name)) "" o-heading))
+                  ,@body)
+                ;; Otherwise we impede on the auto-inserted “* footer :ignore:”
+                (insert "\n"))))))
+       (add-hook 'org-export-before-parsing-hook (quote ,func-name))
+       )))
+
+
+
+       (-let [(&plist :file) (map-into (map-apply (lambda (k v) (cons (intern (concat ":" (downcase k))) v)) (org-entry-properties (point))) 'plist)]
+         file
+         )
+
+
+       ;; MA: This is new stuff.
+       (put 'org-deflink 'lisp-indent-function 'defun)
+       (put 'org-deftag 'lisp-indent-function 'defun)
+
+       ;; Example use
+       (org-deftag identity ()
+         "Do nothing to Org headings"
+         (insert o-heading)) ;; Wait, I think this strips tags?
+
+       (org-deftag disabled (color)
+         "Render the body of a heading in a <details> element, titled “Disabled”.
+
+The heading remains in view, and so appears in the TOC."
+         (insert "\n") (insert  o-heading) (insert "\n")
+         (insert "\n#+html:"
+                 (format "<div> <details class=\"float-child\" style=\"background-color: %s\">"
+                         (or color "pink"))
+                 "<summary> <strong> <font face=\"Courier\" size=\"3\" color=\"green\">"
+                 "Details ﴾This is disabled, I'm not actively using it.﴿"
+                 "</font> </strong> </summary>")
+         ;; Something to consider: (org-set-property "UNNUMBERED" "nil")
+         (org-next-visible-heading 1)
+         (insert "#+html: </details> </div>"))
+;; The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved:1 ends here
+
+;; [[file:init.org::#Jumping-to-extreme-semantic-units][Jumping to extreme semantic units:1]]
+;; M-< and M-> jump to first and final semantic units.
+;; If pressed twice, they go to physical first and last positions.
+(use-package beginend
+  :config (beginend-global-mode))
+;; Jumping to extreme semantic units:1 ends here
+
+;; [[file:init.org::#Folding-within-a-subtree][Folding within a subtree:1]]
+(bind-key "C-c C-h"
+          (defun my/org-fold-current-subtree-anywhere-in-it ()
+            (interactive)
+            (save-excursion (save-restriction
+                              (org-narrow-to-subtree)
+                              (org-shifttab)
+                              (widen))))
+          org-mode-map)
+;; Folding within a subtree:1 ends here
+
+;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
+(quelpa '(org-pretty-table
+         :repo "Fuco1/org-pretty-table"
+         :fetcher github))
+
+(add-hook 'org-mode-hook 'org-pretty-table-mode)
+;; Draw pretty unicode tables in org-mode:1 ends here
+
+;; [[file:init.org::#Buffer-defaults][Buffer default mode is org-mode:1]]
+(setq-default major-mode 'org-mode)
+;; Buffer default mode is org-mode:1 ends here
+
+;; [[file:init.org::#Use-Org-Mode-links-in-other-modes-Links-can-be-opened-and-edited-like-in-Org-Mode][Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1]]
+;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
+;;
+;; In particular, when I tangle my init.org into a Lisp file, init.el, it has Org links
+;; back to the original source section in Org, which I can then click to jump to, quickly.
+;;
+(use-package orglink
+  :config
+  (global-orglink-mode)
+  ;; Only enable this in Emacs Lisp mode, for now.
+  (setq orglink-activate-in-modes '(emacs-lisp-mode)))
+;; Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1 ends here
+
+;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
 (global-set-key (kbd "C-z")
   (lambda () (interactive)
@@ -738,7 +848,7 @@ visit all blocks with such a name."
    (undo-tree-visualize)))
 ;; Undo-tree: Very Local Version Control:2 ends here
 
-;; [[file:init.org::*Automatic Backups][Automatic Backups:1]]
+;; [[file:init.org::#Automatic-Backups][Automatic Backups:1]]
 ;; New location for backups.
 (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
 
@@ -755,17 +865,17 @@ visit all blocks with such a name."
 (setq version-control t)
 ;; Automatic Backups:1 ends here
 
-;; [[file:init.org::*Automatic Backups][Automatic Backups:2]]
+;; [[file:init.org::#Automatic-Backups][Automatic Backups:2]]
 (setq confirm-kill-processes nil
       create-lockfiles nil)
 ;; Automatic Backups:2 ends here
 
-;; [[file:init.org::*What changed? ---Walking through backups][What changed? ---Walking through backups:1]]
+;; [[file:init.org::#What-changed][What changed? ---Walking through backups:1]]
 (use-package backup-walker
   :commands backup-walker-start)
 ;; What changed? ---Walking through backups:1 ends here
 
-;; [[file:init.org::*Save ≈ Backup][Save ≈ Backup:1]]
+;; [[file:init.org::#Save-Backup][Save ≈ Backup:1]]
 ;; Make Emacs backup everytime I save
 
 (defun my/force-backup-of-buffer ()
@@ -780,11 +890,17 @@ visit all blocks with such a name."
       auto-save-interval 300)
 ;; Save ≈ Backup:1 ends here
 
+;; [[file:init.org::#delete-by-moving-to-trash-t][delete-by-moving-to-trash t:1]]
+;; Move to OS’ trash can when deleting stuff
+;; instead of deleting things outright!
+(setq delete-by-moving-to-trash t
+      trash-directory "~/.Trash/")
+;; delete-by-moving-to-trash t:1 ends here
+
 ;; [[file:init.org::*Intro][Intro:1]]
 ;; Bottom of Emacs will show what branch you're on
 ;; and whether the local file is modified or not.
 (use-package magit
-  :init (require 'magit-files)
   :bind (("C-c M-g" . magit-file-dispatch))
   :custom ;; Do not ask about this variable when cloning.
     (magit-clone-set-remote.pushDefault t))
@@ -801,7 +917,7 @@ visit all blocks with such a name."
 ;; Copy/paste this: https://github.com/dandavison/delta#get-started
 ;; Intro:2 ends here
 
-;; [[file:init.org::*Credentials: I am who I am][Credentials: I am who I am:1]]
+;; [[file:init.org::#Credentials-I-am-who-I-am][Credentials: I am who I am:1]]
 ;; Only set these creds up if there is no Git email set up ---ie at work I have an email set up, so don't
 ;; override it with my personal creds.
 ;;
@@ -812,7 +928,7 @@ visit all blocks with such a name."
   (shell-command (format "git config --global user.email \"%s\"" user-mail-address)))
 ;; Credentials: I am who I am:1 ends here
 
-;; [[file:init.org::*Credentials: I am who I am][Credentials: I am who I am:2]]
+;; [[file:init.org::#Credentials-I-am-who-I-am][Credentials: I am who I am:2]]
 ;; We want to reuse an existing Emacs process from the command line
 ;; E.g.,  emacsclient --eval '(+ 1 2)'    # ⇒ 3
 (server-start)
@@ -821,7 +937,7 @@ visit all blocks with such a name."
 (shell-command "git config --global core.editor 'emacsclient -t -a=\\\"\\\"'")
 ;; Credentials: I am who I am:2 ends here
 
-;; [[file:init.org::*Encouraging useful commit messages][Encouraging useful commit messages:1]]
+;; [[file:init.org::#Encouraging-useful-commit-messages][Encouraging useful commit messages:1]]
 (defun my/git-commit-reminder ()
   (insert "\n\n# The commit subject line ought to finish the phrase:
 # “If applied, this commit will ⟪your subject line here⟫.” ")
@@ -830,7 +946,7 @@ visit all blocks with such a name."
 (add-hook 'git-commit-setup-hook 'my/git-commit-reminder)
 ;; Encouraging useful commit messages:1 ends here
 
-;; [[file:init.org::*Maybe clone ... everything?][Maybe clone ... everything?:1]]
+;; [[file:init.org::#Maybe-clone-everything][Maybe clone ... everything?:1]]
 ;; Clone git repo from clipboard
 (cl-defun maybe-clone (remote &optional local)
   "Clone a REMOTE repository [from clipboard] if the LOCAL directory does not exist.
@@ -865,7 +981,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (maybe-clone "https://github.com/alhassy/holy-books")
 ;; Maybe clone ... everything?:1 ends here
 
-;; [[file:init.org::*Maybe clone ... everything?][Maybe clone ... everything?:2]]
+;; [[file:init.org::#Maybe-clone-everything][Maybe clone ... everything?:2]]
 (maybe-clone "https://github.com/alhassy/melpa")
 (maybe-clone "https://github.com/alhassy/org-special-block-extras")
 
@@ -903,25 +1019,25 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; (maybe-clone "https://gitlab.cas.mcmaster.ca/2DM3/LectureNotes.git" "~/2dm3")
 ;; Maybe clone ... everything?:2 ends here
 
-;; [[file:init.org::*Gotta love that time machine][Gotta love that time machine:1]]
+;; [[file:init.org::#Gotta-love-that-time-machine][Gotta love that time machine:1]]
 (use-package git-timemachine )
 ;; Gotta love that time machine:1 ends here
 
-;; [[file:init.org::*Jump to a (ma)git repository with ~C-u C-x g~][Jump to a (ma)git repository with ~C-u C-x g~:1]]
-;; Jump to a (ma)git repository with C-u C-x g.
-;;
-;; To get a selection of repositories (that have been visited at least once),
-;; call with “C-u M-x magit-status” or “C-u C-x g”; use “C-u C-u C-x g” to
-;; manually enter a path to a repository.
-;;
-;; We use projectile's record of known projects, and keep only projects with
-;; .git directory.
+;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:1]]
+(cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
+  "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
+  `(prog1
+     (add-to-list 'pretty-magit-alist
+                  (list (rx bow (group ,WORD (eval (if ,NO-PROMPT? "" ":"))))
+                        ,ICON ',PROPS))
+     (unless ,NO-PROMPT?
+       (add-to-list 'pretty-magit-prompt (cons (concat ,WORD ": ") ,description)))))
 
 (setq pretty-magit-alist nil)
 (setq pretty-magit-prompt nil)
 ;; Pretty Magit Commit Leaders:1 ends here
 
-;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:2]]
+;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:2]]
 (pretty-magit "Add"      ?➕ (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
 (pretty-magit "Delete"   ?❌ (:foreground "#375E97" :height 1.2) "❌ Remove a capability e.g. feature, test, dependency.")
 (pretty-magit "Fix"      ?🔨 (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
@@ -940,7 +1056,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Stop ~ End doing something; e.g. remove a feature flag.
 ;; Pretty Magit Commit Leaders:2 ends here
 
-;; [[file:init.org::*Pretty Magit Commit Leaders][Pretty Magit Commit Leaders:3]]
+;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:3]]
 (defun add-magit-faces ()
   "Add face properties and compose symbols for buffer from pretty-magit."
   (interactive)
@@ -985,7 +1101,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (advice-add 'magit-commit :after 'use-magit-commit-prompt)
 ;; Pretty Magit Commit Leaders:3 ends here
 
-;; [[file:init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:1]]
+;; [[file:init.org::#Highlighting-TODO-s-Showing-them-in-Magit][Highlighting TODO-s & Showing them in Magit:1]]
 ;; NOTE that the highlighting works even in comments.
 (use-package hl-todo
   ;; I want todo-words highlighted in prose, not just in code fragements.
@@ -998,7 +1114,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
     (global-hl-todo-mode))
 ;; Highlighting TODO-s & Showing them in Magit:1 ends here
 
-;; [[file:init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:3]]
+;; [[file:init.org::#Highlighting-TODO-s-Showing-them-in-Magit][Highlighting TODO-s & Showing them in Magit:3]]
 (defun add-watchwords () "Add TODO: words to font-lock keywords."
   (font-lock-add-keywords nil
                           '(("\\(\\<TODO\\|\\<FIXME\\|\\<HACK\\|@.+\\):" 1
@@ -1007,7 +1123,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (add-hook 'prog-mode-hook #'add-watchwords)
 ;; Highlighting TODO-s & Showing them in Magit:3 ends here
 
-;; [[file:init.org::*Highlighting TODO-s & Showing them in Magit][Highlighting TODO-s & Showing them in Magit:4]]
+;; [[file:init.org::#Highlighting-TODO-s-Showing-them-in-Magit][Highlighting TODO-s & Showing them in Magit:4]]
 ;; MA: The todo keywords work in code too!
 (use-package magit-todos
   :after magit
@@ -1021,20 +1137,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (setq magit-todos-exclude-globs '("*.html"))
   (magit-todos-mode))
 ;; Highlighting TODO-s & Showing them in Magit:4 ends here
-
-;; [[file:init.org::*delete-by-moving-to-trash t][delete-by-moving-to-trash t:1]]
-;; Move to OS’ trash can when deleting stuff
-;; instead of deleting things outright!
-(setq delete-by-moving-to-trash t
-      trash-directory "~/.Trash/")
-;; delete-by-moving-to-trash t:1 ends here
-
-;; [[file:init.org::*Jumping to extreme semantic units][Jumping to extreme semantic units:1]]
-;; M-< and M-> jump to first and final semantic units.
-;; If pressed twice, they go to physical first and last positions.
-(use-package beginend
-  :config (beginend-global-mode))
-;; Jumping to extreme semantic units:1 ends here
 
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
@@ -1063,59 +1165,45 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 ;; After my settings have been loaded, e.g., fancy priorities
 ;; and cosmetics, then open my notes files.
-(add-hook 'emacs-startup-hook (lambda () (find-file "~/Documents/notes.org")))
-
-;; If work machine, then show notes; otherwise show my todos & init side-by-side.
-(when nil
-  (unless noninteractive
-    ;; Only run the following when we're in GUI mode;
-    ;; i.e., don't run it in Github Actions when testing.
-    (if (not my/personal-machine?)
-        (find-file "~/Documents/notes.org")
-      (find-file "~/Dropbox/todo.org")
-      ;; After startup, if Emacs is idle for 10 seconds, then open my work file;
-      ;; which is a GPG file and so requires passphrase before other things can load.
-      ;; (run-with-idle-timer 10 nil (lambda () (find-file "~/Desktop/work.org.gpg")))
-      (split-window-right)                          ;; C-x 3
-      (other-window 1)                              ;; C-x 0
-      (let ((enable-local-variables :all)           ;; Load *all* locals.
-            (org-confirm-babel-evaluate nil))       ;; Eval *all* blocks.
-        (ignore-errors (find-file "~/.emacs.d/init.org"))))))
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (find-file "~/my-life.org")
+            (load "~/my-life.el")))
 
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
   :defer nil
   :config (doom-modeline-mode))
 
-;; Use minimal height so icons still fit; modeline gets slightly larger when
-;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
-;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
-(setq doom-modeline-height 21)
-(setq doom-modeline-buffer-state-icon nil)
-(setq doom-modeline-hud t)
-(setq doom-modeline-bar-width 1)
+  ;; Use minimal height so icons still fit; modeline gets slightly larger when
+  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
+  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
+  (setq doom-modeline-height 21)
+  (setq doom-modeline-buffer-state-icon nil)
+  (setq doom-modeline-hud t)
+  (setq doom-modeline-bar-width 1)
 
-;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
-;; we can click to see a listing.
-;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
-(setq doom-modeline-checker-simple-format nil)
+  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
+  ;; we can click to see a listing.
+  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
+  (setq doom-modeline-checker-simple-format nil)
 
-;; Don't display the buffer encoding, E.g., “UTF-8”.
-(setq doom-modeline-buffer-encoding nil)
+  ;; Don't display the buffer encoding, E.g., “UTF-8”.
+  (setq doom-modeline-buffer-encoding nil)
 
-;; Inactive buffers' modeline is greyed out.
-;; (let ((it "Source Code Pro Light" ))
-;;   (set-face-attribute 'mode-line nil :family it :height 100)
-;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
+  ;; Inactive buffers' modeline is greyed out.
+  ;; (let ((it "Source Code Pro Light" ))
+  ;;   (set-face-attribute 'mode-line nil :family it :height 100)
+  ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
 
-;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
-;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
-;; We likely want to add this locally, to hooks on major modes.
+  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
+  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
+  ;; We likely want to add this locally, to hooks on major modes.
 
-(setq doom-modeline-minor-modes t)
-(use-package minions
+  (setq doom-modeline-minor-modes t)
+  (use-package minions
 
-  :init (minions-mode 1))
+    :init (minions-mode 1))
 
 ;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
 (display-battery-mode +1)
@@ -1149,17 +1237,30 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Treat all themes as safe; no query before use.
 (setf custom-safe-themes t)
 
-;; Nice looking themes ^_^
-(use-package solarized-theme   )
-(use-package doom-themes )
-(use-package spacemacs-common
-
-  :ensure spacemacs-theme)
-(use-package stimmung-themes )
-(use-package shanty-themes )
-
 ;; Infinite list of my commonly used themes.
-(setq my/themes '(doom-laserwave shanty-themes-light stimmung-themes-light stimmung-themes-dark doom-solarized-light doom-vibrant spacemacs-light solarized-gruvbox-dark solarized-gruvbox-light))
+(setq my/themes
+      (cl-loop for (package . theme-variants-I-like) in
+               ;; I like theme doom-flatwhite <3 It feels “warm”.
+               ;; (I found out thanks to C-u C-c t!)
+               '((doom-themes doom-flatwhite doom-snazzy doom-monokai-ristretto doom-laserwave doom-solarized-light doom-vibrant)
+                 (solarized-theme solarized-gruvbox-dark solarized-gruvbox-light)
+                 (stimmung-themes stimmung-themes-light stimmung-themes-dark)
+                 (shanty-themes shanty-themes-light)
+                 (apropospriate-theme apropospriate-light) ;; /super/ nice! Super “clean”, like writing on paper
+                 (tao-theme tao-yang) ;; nice light theme.
+                 (leuven-theme leuven-dark leuven) ;; Nice minimal variant
+                 (material-theme material-light)
+                 (moe-theme moe-light)
+                 (organic-green-theme organic-green)
+                 (tango-plus-theme tango-plus)
+                 ;; I like all 3 variants.
+                 (minimal-theme minimal minimal-black minimal-light)
+                 (espresso-theme espresso)
+                 (emacs dichromacy)
+                 (modus-themes modus-operandi-tinted))
+               do (package-install package)
+               append theme-variants-I-like))
+
 (setcdr (last my/themes) my/themes)
 
 (cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
@@ -1184,8 +1285,7 @@ themes (•̀ᴗ•́)و"
 
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-;; (my/toggle-theme)
-(my/toggle-theme 'doom-laserwave)
+(my/toggle-theme)
 
 (unless nil ;; my/work-machine?
 
@@ -1513,7 +1613,502 @@ fonts (•̀ᴗ•́)و"
   (setq url-cache-directory "~/emacs.d/.cache/")
   (setq org-display-remote-inline-images 'cache)
 
-;; [[file:init.org::*highlight quoted symbols][highlight quoted symbols:1]]
+(use-package bufler
+  :config (bind-key "C-x C-b" #'bufler-list))
+;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
+
+(use-package all-the-icons
+    :config (all-the-icons-install-fonts 'install-without-asking))
+
+;; [[file:init.org::#ELisp][ELisp:1]]
+;; Evaluation Result OverlayS for Emacs Lisp
+(use-package eros :init (eros-mode t))
+;; ELisp:1 ends here
+
+;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:1]]
+(use-package separedit   :defer nil)
+;;
+;; # Example Usage
+;;
+;; 1. Press ⌘-e on this line, to edit this entire comment.
+;; 2. Press ⌘-e to exit the edit session.
+;;
+;; Since my ⌘-e is context sensitive, to determine whether to continue editing or
+;; exit; you can explicitly request an edit with C-c ' and an exit with C-c C-c.
+;;
+;; ```
+;; ;; 3. Press ⌘-e on this line, to edit this source block!
+;; ;; 4. Press ⌘-e on this line, to edit this inner-most comment!
+;; ;; 5. At start of next line, press “⌘-r ⌘-e” to edit just the source block
+;; ;;
+;; (cl-defun index (&rest args)
+;;   "6. Press ⌘-e to edit this string, \"7. and again in these quotes\""
+;;   "<p>8. Press ⌘-e to edit this <strong> HTML </strong> block, in Web-mode </p>")
+;;
+;; ;; 9. Press C-u ⌘-e to guess the language of the next string (Rust); then ⌘-r C-c C-r to quickly run the code.
+;; "fn main() { println!(\"{}\", \"hello!\"); }"
+;;
+;; ;; 10. Select & press “C-u ⌘-e” on the following, to edit it in whatever mode you want.
+;; ;; select * from table -- Or just press ⌘-e and have the mode detected.
+;;
+;; ```
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setup to make the above ⌘-e behaviour happen.
+
+;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
+(--map (bind-key "s-e" #'separedit it)
+       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
+;; ⌘-e: Edit Everything in a separate buffer:1 ends here
+
+;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:2]]
+;; TODO:Merge these changes upstream
+
+;; I'm focusing on a specific region to edit, so let's not be distracted by anything else.
+;; This makes the “editing stack” feel like a stack, with ⌘-e pushing new editing session buffers,
+;; and C-c C-c, or ⌘-e on non-editable lines, to pop-off the stack.
+;; (advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
+;;
+;; NOTE: This actually breaks the stack nature of popping with ⌘-e; we need to actually save the stack via some list of buffers than push/pop buffers on that variable.
+
+;; I don't want to be bothered for what mode I'm in, when a region is selected using current major mode.
+;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode for my current selected text.
+(advice-add #'separedit--select-mode :before-until
+            (lambda (&rest _)
+              (when (and (not current-prefix-arg) (region-active-p)) (pp-to-string major-mode))))
+
+;; Also: When on a string ∷
+(advice-add #'separedit--select-mode :before-until
+            (lambda (&rest _)
+              "When on a string ∷
++ ⌘-e ⇒ Edit string at point
++ C-u ⌘-e ⇒ Auto-detect my string's major mode
++ C-u C-u ⌘-e ⇒ Let me select a major mode"
+              (-let [str? (ignore-errors (thing-at-point 'string))]
+                (case (car current-prefix-arg)
+                  (4 (when str? (pp-to-string (my/detect-prog-mode str?))))
+                  (_ nil)))))
+
+;; NOTE: By default, separedit provides colouring for 'strings', "strings", and `strings'
+;; This doesn't look very good when I have a single quote within double quotes:
+;; In an Emacs Lisp buffer, editing the string "Bob's Work" gives unexpected highlighting.
+;; ```
+;; (advice-add #'separedit :after
+;;             (lambda (&rest _)
+;;               (when (s-ends-with? "string-mode" (pp-to-string major-mode))
+;;                 (text-mode))))
+;; ```
+;; ⌘-e: Edit Everything in a separate buffer:2 ends here
+
+;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:3]]
+;; In the indirect buffer, make ⌘-e finish editing.
+(use-package edit-indirect
+  :config (bind-key "s-e"
+                    (lambda ()
+                      (interactive)
+                      (or (ignore-errors (call-interactively #'separedit))
+                          (call-interactively #'edit-indirect-commit)))
+                    #'edit-indirect-mode-map))
+
+;; I also have “s-e” bound to `org-edit-src-exit'.
+(advice-add 'org-edit-src-exit :before-until
+            (lambda (&rest r)
+              (when (ignore-errors (separedit)) t)))
+;; ⌘-e: Edit Everything in a separate buffer:3 ends here
+
+;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:4]]
+;; → ⌘-e on an Org paragraph pops-up an edit session in Org mode.
+;; → ⌘-e on a selection in Org mode pops-up an edit session in Org mode.
+;; TODO: Consider forming an alist for special blocks to refer to their preferred
+;; edit mode, defaulting to Org-mode? Perhaps something to consider /after/
+;; addressing the bug below.
+;; (advice-unadvice 'org-edit-special) MA: TODO: FIXME: Delete this?
+(advice-add 'org-edit-special :around
+            (lambda (orginal-function &rest r)
+              (cond
+               ((region-active-p) (call-interactively #'edit-indirect-region) (org-mode))
+               ((equal 'paragraph (car (org-element-at-point)))
+                (mark-paragraph) (call-interactively #'edit-indirect-region) (org-mode))
+               (t (or (ignore-errors (apply orginal-function r))
+                      ;; We try to edit a special block when orginal-function fails.
+                      ;; This way src blocks are not confused with the more generic idea of special blocks.
+                      (when
+                          (my/org-in-any-block-p)
+                        ;; Note using org-element-at-point doesn't work well with special blocks when you're somewhere within the block.
+                        ;; It only works correctly when you're on the boundary of the special block; which is not ideal.
+                        ;; This is why I'm not using: (org-element-property :begin elem).
+                        (-let [(start . end) (my/org-in-any-block-p)]
+                          (set-mark-command start)
+                          (goto-char end) (previous-line 2) (end-of-line) ;; FIXME: Still shows #+end_XXX for some reason.
+                          (call-interactively #'edit-indirect-region) (org-mode))))))))
+;; ⌘-e: Edit Everything in a separate buffer:4 ends here
+
+;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:5]]
+;; where...
+(defun my/org-in-any-block-p ()
+  "Return non-nil if the point is in any Org block.
+
+The Org block can be *any*: src, example, verse, etc., even any
+Org Special block.
+
+This function is heavily adapted from `org-between-regexps-p'.
+
+Src: https://scripter.co/splitting-an-org-block-into-two/"
+  (save-match-data
+    (let ((pos (point))
+          (case-fold-search t)
+          (block-begin-re "^[[:blank:]]*#\\+begin_\\(?1:.+?\\)\\(?: .*\\)*$")
+          (limit-up (save-excursion (outline-previous-heading)))
+          (limit-down (save-excursion (outline-next-heading)))
+          beg end)
+      (save-excursion
+        ;; Point is on a block when on BLOCK-BEGIN-RE or if
+        ;; BLOCK-BEGIN-RE can be found before it...
+        (and (or (org-in-regexp block-begin-re)
+                 (re-search-backward block-begin-re limit-up :noerror))
+             (setq beg (match-beginning 0))
+             ;; ... and BLOCK-END-RE after it...
+             (let ((block-end-re (concat "^[[:blank:]]*#\\+end_"
+                                         (match-string-no-properties 1)
+                                         "\\( .*\\)*$")))
+               (goto-char (match-end 0))
+               (re-search-forward block-end-re limit-down :noerror))
+             (> (setq end (match-end 0)) pos)
+             ;; ... without another BLOCK-BEGIN-RE in-between.
+             (goto-char (match-beginning 0))
+             (not (re-search-backward block-begin-re (1+ beg) :noerror))
+             ;; Return value.
+             (cons beg end))))))
+;; ⌘-e: Edit Everything in a separate buffer:5 ends here
+
+;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:6]]
+(use-package language-detection   :defer nil)
+;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
+;; Also, (language-detection-string "select * from t") ;; ⇒ sql
+
+;; TODO: Push this upstream; https://github.com/andreasjansson/language-detection.el/issues/1
+(cl-defun my/detect-prog-mode (&optional string)
+  "Guess programming mode of the current buffer, or STRING if it is provided.
+
+When called interactively, it enables the mode;
+from Lisp it just returns the name of the associated mode.
+
+    ;; Example Lisp usage
+    (call-interactively #'my/detect-prog-mode)
+
+`language-detection-buffer' returns a string which is not always the name of the
+associated major mode; that's what we aim to do here."
+  (interactive)
+
+  (defvar my/detect-prog-mode/special-names
+    '((c           . c-mode)
+      (cpp         . c++-mode)
+      (emacslisp   . emacs-lisp-mode)
+      (html        . web-mode) ;; I intentionally want to use this alternative.
+      (matlab      . octave-mode)
+      (shell       . shell-script-mode)
+      (visualbasic . visual-basic-mode)
+      (xml         . sgml-mode))
+    "Names in this alist map a language to its mode; all other languages 𝒳 have mode ‘𝒳-mode’ afaik.")
+
+  (let* ((lang (if string (language-detection-string string) (language-detection-buffer)))
+         (mode (or (cdr (assoc lang my/detect-prog-mode/special-names))
+                   (intern (format "%s-mode" lang)))))
+    (if (called-interactively-p 'any)
+        (progn (call-interactively mode) (message "%s enabled!" mode))
+      mode)))
+;; ⌘-e: Edit Everything in a separate buffer:6 ends here
+
+;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:7]]
+(advice-add #'org-edit-special :before-until
+            (lambda (&rest r)
+              (when (equal 'table-row (car (org-element-at-point)))
+                (call-interactively #'org-table-edit-field))))
+;; ⌘-e: Edit Everything in a separate buffer:7 ends here
+
+;; [[file:init.org::#Sleek-Semantic-Selection][⌘-r, ⌘-i, ⌘-o: Sleek Semantic Selection:1]]
+(use-package expand-region
+
+  :bind (("s-r" . #'er/expand-region)))
+;; ⌘-r, ⌘-i, ⌘-o: Sleek Semantic Selection:1 ends here
+
+;; [[file:init.org::#Editor-Documentation-with-Contextual-Information][Editor Documentation with Contextual Information:1]]
+(use-package helpful)
+
+(defun my/describe-symbol (symbol)
+  "A “C-h o” replacement using “helpful”:
+   If there's a thing at point, offer that as default search item.
+
+   If a prefix is provided, i.e., “C-u C-h o” then the built-in
+   “describe-symbol” command is used.
+
+   ⇨ Pretty docstrings, with links and highlighting.
+   ⇨ Source code of symbol.
+   ⇨ Callers of function symbol.
+   ⇨ Key bindings for function symbol.
+   ⇨ Aliases.
+   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
+  "
+  (interactive "p")
+  (let* ((thing (symbol-at-point))
+         (val (completing-read
+               (format "Describe symbol (default %s): " thing)
+               (vconcat (list thing) obarray)
+               (lambda (vv)
+                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
+                          describe-symbol-backends))
+               t nil nil))
+         (it (intern val)))
+    (cond
+     (current-prefix-arg (funcall #'describe-symbol it))
+     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
+     (t (helpful-symbol it)))))
+
+;; Keybindings.
+(global-set-key (kbd "C-h o") #'my/describe-symbol)
+(global-set-key (kbd "C-h k") #'helpful-key)
+;; Editor Documentation with Contextual Information:1 ends here
+
+;; [[file:init.org::#Let's-make-working-with-Emacs-Lisp-even-better][[[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]:1]]
+(use-package elisp-demos
+  :config
+  ;; Show demos when I do a `C-h o'.
+  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)
+  ;; Show demos in tooltips when I pause to select a completion, in Emacs Lisp mode.
+  (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
+;; [[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]:1 ends here
+
+;; [[file:init.org::#Eldoc-for-Lisp-and-Haskell][Elisp live documentation in the mini-buffer:1]]
+(use-package eldoc
+  :hook (emacs-lisp-mode . turn-on-eldoc-mode))
+
+;; Slightly shorten eldoc display delay.
+(setq eldoc-idle-delay 0.4) ;; Default 0.5
+;; Elisp live documentation in the mini-buffer:1 ends here
+
+;; [[file:init.org::#Jumping-to-definitions-references][Jumping to definitions & references:1]]
+(use-package dumb-jump
+    :defer nil
+  :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
+         ("M-g ."     . dumb-jump-go-other-window)
+         ("M-g b"     . dumb-jump-back)
+         ("M-g p"     . dumb-jump-go-prompt)
+         ("M-g a"     . xref-find-apropos)) ;; aka C-M-.
+  :config
+  ;; If source file is visible, just shift focus to it.
+  (setq dumb-jump-use-visible-window t))
+;; Jumping to definitions & references:1 ends here
+
+;; [[file:init.org::#Commenting][Commenting:1]]
+(use-package comment-dwim-2
+  :bind ("M-;" . comment-dwim-2))
+
+ ;; Not ideal: M-; comments a parent Org heading and not the current line.
+ ;; (define-key org-mode-map (kbd "M-;") 'org-comment-dwim-2)
+;; Commenting:1 ends here
+
+;; [[file:init.org::#Emphasised-Comments][Emphasised Comments: Useful for warnings:1]]
+;; In VSCode, with the “Better Comments” extension, comments starting with a “bang” are made to stand out, via bold red.
+;; Let's do the same thing in Emacs.
+;; I did not look around, there might be a package/option for this 🤷
+(add-hook 'prog-mode-hook
+          (defun emphasize-comments-starting-with-! ()
+            (highlight-lines-matching-regexp ".*\\*.*!.*" 'hi-red-b)
+            (highlight-lines-matching-regexp ".*//!.*" 'hi-red-b)
+            (highlight-lines-matching-regexp ";;!.*" 'hi-red-b))) ;;! Look it works (｡◕‿◕｡)
+;; Emphasised Comments: Useful for warnings:1 ends here
+
+;; [[file:init.org::#Comment-boxes-up-to-the-fill-column][Comment-boxes up to the fill-column ---or banner instead?:1]]
+(defun my/comment-box (b e)
+  "Draw a box comment around the region but arrange for the region
+to extend to at least the fill column. Place the point after the
+comment box.
+
+Source: http://irreal.org/blog/?p=374
+
+To do fancy stuff like removing boxes, centering them, etc
+see https://github.com/lewang/rebox2/blob/master/rebox2.el"
+  (interactive "r")
+  (let ((e (copy-marker e t)))
+    (goto-char b)
+    (end-of-line)
+    (insert-char ?  (- fill-column (current-column)))
+    (comment-box b e 1)
+    (goto-char e)
+    (set-marker e nil)))
+;; Comment-boxes up to the fill-column ---or banner instead?:1 ends here
+
+;; [[file:init.org::#Comment-boxes-up-to-the-fill-column][Comment-boxes up to the fill-column ---or banner instead?:2]]
+(use-package banner-comment   :defer nil)
+;; Comment-boxes up to the fill-column ---or banner instead?:2 ends here
+
+;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:1]]
+(require 'cl-lib)
+
+(defun my/disable-hs-hide-all (orig-fun &rest args)
+  "Advise `org-export-dispatch` to disable `hs-hide-all` temporarily."
+  ;; Without this, export hangs “Hiding all blocks...”
+  (cl-letf (((symbol-function 'hs-hide-all) (lambda (&rest _) nil)))
+    ;; Without this, export shows “*hideshowvis*” markers in my exported code blocks.
+    (cl-letf (((symbol-function 'hideshowvis-highlight-hs-regions-in-fringe) (lambda (&rest _) nil)))
+      (apply orig-fun args))))
+
+(advice-add 'org-export-dispatch :around #'my/disable-hs-hide-all)
+;; Text Folding ---Selectively displaying portions of a program:1 ends here
+
+;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:2]]
+(use-package vimish-fold
+
+  :config (vimish-fold-global-mode 1))
+;; Text Folding ---Selectively displaying portions of a program:2 ends here
+
+;; [[file:init.org::#Actual-Setup][Actual Setup:1]]
+(use-package hideshow
+  :defer nil
+  :init
+  ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
+  (quelpa '(hideshowvis :fetcher wiki))
+
+  ;; Press “C-c TAB” to toggle a block's visibility or “C-c f” for my folding hydra.
+  :bind (("C-c TAB" . hs-toggle-hiding))
+
+  ;; https://github.com/shanecelis/hideshow-org/tree/master
+  ;; This extension bring Org-mode tab behaviour to folding, at the block level
+  ;; and buffer level ---but not cycling visibility.
+  ;; (use-package hideshow-org) ;; Disabled as commented below.
+
+  :hook ((prog-mode . (lambda () (hs-minor-mode +1)
+                        (hideshowvis-minor-mode t)
+                        (hideshowvis-symbols)
+                        ;; This hook along with hs-org mode breaks editing of src blocks in Org files.
+                        ;; That's OK, since my folding hydra does a better job for my needs.
+                        ;; (hs-org/minor-mode t)
+                        (hs-hide-all)))))
+;; Actual Setup:1 ends here
+
+;; [[file:init.org::#Actual-Setup][Actual Setup:2]]
+(my/defhydra "C-c f" "Folding text" archive
+  :Current
+  ("h" hs-hide-block "Hide")
+  ("s" hs-show-block "Show")
+  ("t" hs-toggle-hiding "Toggle")
+  ;; "l" hs-hide-level "Hide blocks n levels below this block"; TODO: Enable folding feature
+  :Buffer
+  ("H" hs-hide-all "Hide")
+  ("S" hs-show-all "Show")
+  ("T" my/hs-toggle-buffer "Toggle")
+  :Style
+  ("i" my/clever-selective-display "Fold along current indentation" :toggle selective-display)
+  ("e" auto-set-selective-display-mode  "Explore; walk and see" :toggle t)
+  :Region
+  ("f" (lambda () (interactive) (vimish-fold-toggle) (vimish-fold (region-beginning) (region-end))) "Fold/Toggle")
+  ("d" vimish-fold-delete "Delete fold")
+  ("U" vimish-fold-unfold-all "Unfold all")
+  ("D" vimish-fold-delete-all "Delete all")
+  ("n" vimish-fold-next-fold "Next fold")
+  ("p" vimish-fold-previous-fold "Previous fold")
+  :...
+  ("w" hl-todo-occur "Show WIPs/TODOs" :exit t)
+  ("m" lsp-ui-imenu "Menu of TLIs" :exit t) ;; TLI ≈ Top Level Items
+  ;; ("i" imenu-list "iMenu (General)") ;; It seems the above is enough for both prog and otherwise.
+  ("r" (progn (hs-minor-mode -1) (hs-minor-mode +1)) "Reset Hideshow")  ;; Remove all folds from the buffer and reset all hideshow-mode. Useful if it messes up!
+  ("q" nil "Quit" :color blue))
+
+;; Features from origami/yafolding that maybe I'd like to implement include:
+;; narrowing to block or folding everything except block, navigating back and forth between folded blocks.
+;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
+;; Actual Setup:2 ends here
+
+;; [[file:init.org::#Actual-Setup][Actual Setup:3]]
+(defvar my/hs-hide nil "Current state of hideshow for toggling all.")
+(defun my/hs-toggle-buffer () "Toggle hideshow all."
+       (interactive)
+       (setq my/hs-hide (not my/hs-hide))
+       (if my/hs-hide
+           (hs-hide-all)
+         (hs-show-all)))
+;; Actual Setup:3 ends here
+
+;; [[file:init.org::#Actual-Setup][Actual Setup:4]]
+(defun my/clever-selective-display (&optional level)
+"Fold text indented same of more than the cursor.
+
+This function toggles folding according to the level of
+indentation at point. It's convenient not having to specify a
+number nor move point to the desired column.
+"
+  (interactive "P")
+  (if (eq selective-display (1+ (current-column)))
+      (set-selective-display 0)
+    (set-selective-display (or level (1+ (current-column))))))
+;; Actual Setup:4 ends here
+
+;; [[file:init.org::#Actual-Setup][Actual Setup:5]]
+;; Src: https://emacs.stackexchange.com/questions/52588/dynamically-hide-lines-indented-more-than-current-line
+(define-minor-mode auto-set-selective-display-mode
+  "Automatically apply `set-selective-display' at all times based on current indentation."
+  nil "$" nil
+  (if auto-set-selective-display-mode
+      (add-hook 'post-command-hook #'auto-set-selective-display nil t)
+    (remove-hook 'post-command-hook #'auto-set-selective-display t)
+    (with-temp-message ""
+      (set-selective-display nil))))
+;;
+(defun auto-set-selective-display ()
+  "Apply `set-selective-display' such that current and next line are visible.
+
+Scroll events are excluded in order to prevent wild flickering while navigating."
+  (unless (eq last-command #'mwheel-scroll)
+    (let*((this-line-indent (current-indentation))
+          (next-line-indent (save-excursion (forward-line) (current-indentation))))
+      (with-temp-message "" ; Suppress messages.
+        (set-selective-display (1+ (max this-line-indent next-line-indent)))))))
+;; Actual Setup:5 ends here
+
+;; [[file:init.org::#Actual-Setup][Actual Setup:6]]
+;; Open folded nodes if a search stops there.
+(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
+(defun my/search-hook-function ()
+  (when hs-minor-mode (set-mark-command nil) (hs-show-block) (pop-to-mark-command)))
+;; Actual Setup:6 ends here
+
+;; [[file:init.org::#Aggressive-Indentation][Aggressive Indentation:1]]
+;; Always stay indented: Automatically have blocks reindented after every change.
+(use-package aggressive-indent :config (global-aggressive-indent-mode t))
+
+;; Use 4 spaces in places of tabs when indenting.
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+;; Aggressive Indentation:1 ends here
+
+;; [[file:init.org::#Indentation-Guide][Indentation Guide:1]]
+;; Add a visual indent guide
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-character ?|)
+  (highlight-indent-guides-responsive 'stack))
+;; Indentation Guide:1 ends here
+
+;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:1]]
+(add-hook 'prog-mode-hook #'which-function-mode)
+(add-hook 'org-mode-hook  #'which-function-mode)
+;; Which function are we writing?:1 ends here
+
+;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:2]]
+(add-hook 'emacs-lisp-mode-hook #'check-parens)
+;; Which function are we writing?:2 ends here
+
+;; [[file:init.org::#Coding-with-a-Fruit-Salad-Semantic-Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
+(use-package color-identifiers-mode
+
+  :config (global-color-identifiers-mode))
+
+;; Sometimes just invoke: M-x color-identifiers:refresh
+;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
+
+;; [[file:init.org::#highlight-quoted-symbols][Highlight Quoted Symbols:1]]
 (use-package highlight-quoted
   :defer nil
   :config (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
@@ -1522,7 +2117,47 @@ fonts (•̀ᴗ•́)و"
 (when nil
   (-let [x 'somevar]
     (list x 'b "c" :e)))
-;; highlight quoted symbols:1 ends here
+;; Highlight Quoted Symbols:1 ends here
+
+;; [[file:init.org::#Syntax-highlighting-numbers-and-escape-characters][Highlighting Numbers and Escape Characters:1]]
+(use-package highlight-numbers
+  :hook (prog-mode separedit-double-quote-string-mode)) ;; The latter is for when I do ⌘-e on a quoted string to edit it.
+
+(use-package highlight-escape-sequences
+  :hook ((prog-mode . hes-mode)
+         (separedit-double-quote-string-mode . hes-mode)) ;; Wont work since this mode has no font-lock-builtin-face
+  :config
+  ;; Colour the escapes as if they were builtin keywords.
+  (put 'hes-escape-backslash-face 'face-alias 'font-lock-builtin-face)
+  (put 'hes-escape-sequence-face 'face-alias 'font-lock-builtin-face))
+
+;; If the above two worked fine, then you should see \n and 3 highlighted below
+(when nil "Look: 1 and \\ and \n 2" (setq three 3))
+;; Highlighting Numbers and Escape Characters:1 ends here
+
+;; [[file:init.org::#Highlight-defined-Lisp-symbols][Highlight /defined/ Lisp symbols:1]]
+;; Emacs Lisp specific
+(use-package highlight-defined :hook emacs-lisp-mode)
+;; Highlight /defined/ Lisp symbols:1 ends here
+
+;; [[file:init.org::#Get-nice-child-frames-when-looking-at-completions-candidates-In-particular-when-editing-Lisp-code-the][Get nice child frames when looking at completions candidates:1]]
+(use-package company-posframe :hook prog-mode)
+;; Get nice child frames when looking at completions candidates:1 ends here
+
+;; [[file:init.org::*interactive macro-expander][interactive macro-expander:1]]
+(use-package macrostep)
+(define-key emacs-lisp-mode-map (kbd "C-c e") 'macrostep-expand)
+;; interactive macro-expander:1 ends here
+
+;; [[file:init.org::*Smart jumping to definitions][Smart jumping to definitions:1]]
+(use-package elisp-def)
+(bind-key*  "M-." #'elisp-def emacs-lisp-mode-map)
+
+;; Example usage:
+(when nil
+  (let ((foo 1))
+    (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
+;; Smart jumping to definitions:1 ends here
 
 ;; [[file:init.org::*Bidirectional Text][Bidirectional Text:1]]
 ;; Sometimes I have Arabic in my buffers, however I am an English speaker
@@ -1531,11 +2166,11 @@ fonts (•̀ᴗ•́)و"
 (setq-default bidi-paragraph-direction 'left-to-right)
 ;; Bidirectional Text:1 ends here
 
-;; [[file:init.org::*Whitespace][Whitespace:1]]
+;; [[file:init.org::#Whitespace][Whitespace:1]]
 (add-hook 'before-save-hook 'whitespace-cleanup)
 ;; Whitespace:1 ends here
 
-;; [[file:init.org::*Formatting Text][Formatting Text:1]]
+;; [[file:init.org::#Formatting-Text][Formatting Text:1]]
 (local-set-key (kbd "C-c f") #'my/org-mode-format)
 (defun my/org-mode-format (&optional text)
 "Surround selected region with the given Org emphasises marker.
@@ -1560,25 +2195,25 @@ the character 𝓍 before and after the selected text."
     (insert-pair text kind kind)))
 ;; Formatting Text:1 ends here
 
-;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:1]]
+;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:1]]
 (setq-default fill-column 80          ;; Let's avoid going over 80 columns
               truncate-lines nil      ;; I never want to scroll horizontally
               indent-tabs-mode nil)   ;; Use spaces instead of tabs
 ;; Fill-mode ---Word Wrapping:1 ends here
 
-;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:2]]
+;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:2]]
 ;; Wrap long lines when editing text
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 ;; Fill-mode ---Word Wrapping:2 ends here
 
-;; [[file:init.org::*Fill-mode ---Word Wrapping][Fill-mode ---Word Wrapping:3]]
+;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:3]]
 ;; Bent arrows at the end and start of long lines.
 (setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
 (global-visual-line-mode 1)
 ;; Fill-mode ---Word Wrapping:3 ends here
 
-;; [[file:init.org::*Pretty Lists Markers][Pretty Lists Markers:1]]
+;; [[file:init.org::#Pretty-Lists-Markers][Pretty Lists Markers:1]]
 ;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
 (cl-loop for (x y z) in '(("+" "◦" *)
                        ("-" "•" *)
@@ -1588,49 +2223,49 @@ the character 𝓍 before and after the selected text."
                                     (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
 ;; Pretty Lists Markers:1 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:1]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:1]]
 (system-packages-ensure "aspell")
 (system-packages-ensure "wordnet")
 ;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:2]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:2]]
 (use-package flyspell
 
   :hook ((prog-mode . flyspell-prog-mode)
          ((org-mode text-mode) . flyspell-mode)))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:3]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:3]]
 (setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
 (setq ispell-dictionary "en_GB") ;; set the default dictionary
 ;; Fix spelling as you type ---thesaurus & dictionary too!:3 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:5]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:5]]
 (eval-after-load "flyspell"
   ' (progn
      (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
      (define-key flyspell-mouse-map [mouse-3] #'undefined)))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:5 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:6]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:6]]
 (global-font-lock-mode t)
 (custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:6 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:7]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:7]]
 (setq ispell-silently-savep t)
 ;; Fix spelling as you type ---thesaurus & dictionary too!:7 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:8]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:8]]
 (setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
 ;; Fix spelling as you type ---thesaurus & dictionary too!:8 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:9]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:9]]
 (add-hook          'c-mode-hook 'flyspell-prog-mode)
 (add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
 ;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:10]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:10]]
 (use-package synosaurus
   :defer 100
   :init    (synosaurus-mode)
@@ -1638,12 +2273,12 @@ the character 𝓍 before and after the selected text."
            (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:11]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:11]]
 ;; (shell-command "brew cask install xquartz &") ;; Dependency
 ;; (shell-command "brew install wordnet &")
 ;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
 
-;; [[file:init.org::*Fix spelling as you type ---thesaurus & dictionary too!][Fix spelling as you type ---thesaurus & dictionary too!:12]]
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:12]]
 (use-package wordnut
  :defer 100
  :bind ("M-!" . wordnut-lookup-current-word))
@@ -1651,7 +2286,7 @@ the character 𝓍 before and after the selected text."
 ;; Use M-& for async shell commands.
 ;; Fix spelling as you type ---thesaurus & dictionary too!:12 ends here
 
-;; [[file:init.org::*Lightweight Prose Proofchecking][Lightweight Prose Proofchecking:1]]
+;; [[file:init.org::#Lightweight-Prose-Proofchecking][Lightweight Prose Proofchecking:1]]
 (use-package writegood-mode
   ;; Load this whenver I'm composing prose.
   :hook (text-mode org-mode)
@@ -1670,34 +2305,34 @@ the character 𝓍 before and after the selected text."
            ;; ↯ What is the evidence of highighted phrase? ↯
 ;; Lightweight Prose Proofchecking:1 ends here
 
-;; [[file:init.org::*Placeholder Text ---For Learning & Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
+;; [[file:init.org::#Placeholder-Text-For-Learning-Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
 (use-package lorem-ipsum )
 ;; Placeholder Text ---For Learning & Experimenting:1 ends here
 
-;; [[file:init.org::*Some text to make us smile][Some text to make us smile:1]]
+;; [[file:init.org::#Some-text-to-make-us-smile][Some text to make us smile:1]]
 (use-package dad-joke
 
   :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
 ;; Some text to make us smile:1 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:1]]
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:1]]
 ;; (load (shell-command-to-string "agda-mode locate"))
 ;;
 ;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
 ; (makunbound 'agda2-include-dirs)
 ;; Unicode Input via Agda Input:1 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:2]]
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:2]]
 (system-packages-ensure "agda")
 ;; Unicode Input via Agda Input:2 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:4]]
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:4]]
 (unless noninteractive
   (load-file (let ((coding-system-for-read 'utf-8))
                (shell-command-to-string "agda-mode locate"))))
 ;; Unicode Input via Agda Input:4 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:5]]
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:5]]
 ;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
 ;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
 ;; then loading that!
@@ -1724,15 +2359,15 @@ the character 𝓍 before and after the selected text."
 ;;          (if (equal newvalue "Agda") nil newvalue))))
 ;; Unicode Input via Agda Input:5 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:6]]
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:6]]
 ;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
 ;; Unicode Input via Agda Input:6 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:7]]
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:7]]
 (unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
 ;; Unicode Input via Agda Input:7 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:8]]
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:8]]
 (unless noninteractive
 (cl-loop for item
       in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
@@ -1790,7 +2425,7 @@ the character 𝓍 before and after the selected text."
       do (add-to-list 'agda-input-user-translations item)))
 ;; Unicode Input via Agda Input:8 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:9]]
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:9]]
 (unless noninteractive
 ;; Add to the list of translations using “emot” and the given, more specfic, name.
 ;; Whence, \emot shows all possible emotions.
@@ -1813,33 +2448,33 @@ the character 𝓍 before and after the selected text."
       (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
 ;; Unicode Input via Agda Input:9 ends here
 
-;; [[file:init.org::*Unicode Input via Agda Input][Unicode Input via Agda Input:10]]
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:10]]
 ;; activate translations
 (unless noninteractive (agda-input-setup))
 ;; Unicode Input via Agda Input:10 ends here
 
-;; [[file:init.org::*Increase/decrease text size][Increase/decrease text size:1]]
+;; [[file:init.org::#Increase-decrease-text-size][Increase/decrease text size:1]]
 (global-set-key (kbd "C-+") 'text-scale-increase)
 (global-set-key (kbd "C--") 'text-scale-decrease)
 ;; C-x C-0 restores the default font size
 ;; Increase/decrease text size:1 ends here
 
-;; [[file:init.org::*Moving Text Around][Moving Text Around:1]]
+;; [[file:init.org::#Moving-Text-Around][Moving Text Around:1]]
 ;; M-↑,↓ moves line, or marked region; prefix is how many lines.
 (use-package move-text
 
   :config (move-text-default-bindings))
 ;; Moving Text Around:1 ends here
 
-;; [[file:init.org::*Enabling CamelCase Aware Editing Operations][Enabling CamelCase Aware Editing Operations:1]]
+;; [[file:init.org::#Enabling-CamelCase-Aware-Editing-Operations][Enabling CamelCase Aware Editing Operations:1]]
 (global-subword-mode 1)
 ;; Enabling CamelCase Aware Editing Operations:1 ends here
 
-;; [[file:init.org::*Delete Selection Mode][Delete Selection Mode:1]]
+;; [[file:init.org::#Delete-Selection-Mode][Delete Selection Mode:1]]
 (delete-selection-mode 1)
 ;; Delete Selection Mode:1 ends here
 
-;; [[file:init.org::*visual-regexp][visual-regexp:1]]
+;; [[file:init.org::#visual-regexp][visual-regexp:1]]
 ;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
 ;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
 ;;
@@ -1850,13 +2485,13 @@ the character 𝓍 before and after the selected text."
             (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
 ;; visual-regexp:1 ends here
 
-;; [[file:init.org::*HTML ⇐ Org-mode][HTML ⇐ Org-mode:1]]
+;; [[file:init.org::#HTML-Org-mode][HTML ⇐ Org-mode:1]]
 (use-package htmlize )
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 ;; HTML ⇐ Org-mode:1 ends here
 
-;; [[file:init.org::*HTML “Folded Drawers”][HTML “Folded Drawers”:1]]
+;; [[file:init.org::#HTML-Folded-Drawers][HTML “Folded Drawers”:1]]
 (defun my/org-drawer-format (name contents)
   "Export to HTML the drawers named with prefix ‘fold_’, ignoring case.
 
@@ -1900,13 +2535,13 @@ by spaces.
 (setq org-html-format-drawer-function 'my/org-drawer-format)
 ;; HTML “Folded Drawers”:1 ends here
 
-;; [[file:init.org::*  \[\[https:/revealjs.com/?transition=zoom#/\]\[Reveal.JS\]\] -- The HTML Presentation Framework][  [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
+;; [[file:init.org::#https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework][  [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1]]
 (use-package ox-reveal
 
   :custom (org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
 ;;   [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:1 ends here
 
-;; [[file:init.org::*  \[\[https:/revealjs.com/?transition=zoom#/\]\[Reveal.JS\]\] -- The HTML Presentation Framework][  [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3]]
+;; [[file:init.org::#https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework][  [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3]]
 (setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
 <font size=\"1\">
 <a href=\"?print-pdf&showNotes=true\">
@@ -1915,7 +2550,7 @@ by spaces.
 </font>")
 ;;   [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework:3 ends here
 
-;; [[file:init.org::*C-c C-l Org-mode ⇐ HTML][C-c C-l Org-mode ⇐ HTML:2]]
+;; [[file:init.org::#Org-mode-HTML][C-c C-l Org-mode ⇐ HTML:2]]
 (use-package org-web-tools
 
   :config
@@ -1925,7 +2560,7 @@ by spaces.
   )
 ;; C-c C-l Org-mode ⇐ HTML:2 ends here
 
-;; [[file:init.org::*C-c C-l Org-mode ⇐ HTML][C-c C-l Org-mode ⇐ HTML:3]]
+;; [[file:init.org::#Org-mode-HTML][C-c C-l Org-mode ⇐ HTML:3]]
 ;; C-u C-c C-l ⇒ Paste URL with title, WITHOUT prompting me for anything.
 ;; C-c C-l ⇒ Prompt me for title.
 (bind-key* "C-c C-l"
@@ -1954,688 +2589,33 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
          (region-content (when (region-active-p)
                            (buffer-substring-no-properties (region-beginning)
                                                            (region-end)))))
-    (-let [ (gerrit-title gerrit-url) (ai/extract-title-and-url (current-kill 0)) ] 
-      (cond
-       ((and gerrit-title gerrit-url)  (insert (org-make-link-string gerrit-url gerrit-title)))
-       ((and region-content clipboard-url (not point-in-link))
-        (delete-region (region-beginning) (region-end))
-        (insert (org-make-link-string clipboard-url region-content)))
-       ((and clipboard-url (not point-in-link))
-        (insert (org-make-link-string
-                 clipboard-url
-                 (read-string "title: "
-                              (with-current-buffer (url-retrieve-synchronously clipboard-url)
-                                (dom-text (car
-                                           (dom-by-tag (libxml-parse-html-region
-                                                        (point-min)
-                                                        (point-max))
-                                                       'title))))))))
-       (t
-        (call-interactively 'org-insert-link))))))
-
-
-(defun ai/extract-title-and-url (str)
-  "Extract the title and URL from the given string STR, omitting the leading number and tags in brackets."
-  (if (string-match "\\(?:[0-9]+: \\)?\\(?:\\[[^]]+\\] \\)?\\(.*?\\) | \\(https?://[^\"]+\\)" str)
-      (let ((title (match-string 1 str))
-            (url (match-string 2 str)))
-        (list title url))))
-
+    (cond ((and region-content clipboard-url (not point-in-link))
+           (delete-region (region-beginning) (region-end))
+           (insert (org-make-link-string clipboard-url region-content)))
+          ((and clipboard-url (not point-in-link))
+           (insert (org-make-link-string
+                    clipboard-url
+                    (read-string "title: "
+                                 (with-current-buffer (url-retrieve-synchronously clipboard-url)
+                                   (dom-text (car
+                                              (dom-by-tag (libxml-parse-html-region
+                                                           (point-min)
+                                                           (point-max))
+                                                          'title))))))))
+          (t
+           (call-interactively 'org-insert-link)))))
 ;; C-c C-l Org-mode ⇐ HTML:3 ends here
 
-;; [[file:init.org::*get the pkg][get the pkg:1]]
-(use-package repl-driven-development)
-(setq repl-driven-development-echo-duration 10)
-;; get the pkg:1 ends here
-
-;; [[file:init.org::*terminal][terminal:1]]
-;; Sometimes I see a bunch of shell incantations in a README or something and I'd like to execute them right there and then,
-;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
-;; shell commands from anywhere.
-;; (repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
-(repl-driven-development [C-x C-t] terminal)
-;; terminal:1 ends here
-
-;; [[file:init.org::*jshell][jshell:1]]
-;; Set “C­x C­j” to evaluate Java code in a background REPL.
-(repl-driven-development
- [C-x C-j]
- ;; enable assertions, and add everything installed, via `mvn', in scope.
- (format "jshell --class-path %s --enable-preview -R -ea --feedback silent"
-         (concat ".:" (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f 2>/dev/null | tr '\n' ':'")))
- :prompt "jshell>"
- :init "\n /set mode EmacsJavaMode normal -command
-        \n /set format EmacsJavaMode display \"{pre}added import {name}{post}\" import-added
-        \n /set format EmacsJavaMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
-        \n /set format EmacsJavaMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
-        \n /set truncation EmacsJavaMode 40000
-        \n /set feedback EmacsJavaMode
-        \n System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
-;; TODO [Truncation; Low] https://github.com/xiongtx/eros/blob/master/eros.el#L202
-;; jshell:1 ends here
-
-;; [[file:init.org::*mvn][mvn:1]]
-(defun mvn (groupId artifactId)
-  "Quickly install a library from Maven Central."
-  (async-shell-command (format "mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:get -Dartifact=%s:%s:LATEST:jar:sources" groupId  artifactId)))
-
-(when nil
-  ⨾⨾ Example use of `mvn`
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  ;; First confirm C-x C-j works as intended
-  IntStream.range(0, 15).mapToObj(i -> i % 15 == 0 ? "FizzBuzz" : i % 3 == 0 ? "Fizz" : i % 5 == 0 ? "Buzz" : String.valueOf(i)).toList()
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  (mvn "org.antlr" "antlr4") ;; C-x C-e
-  ;; Now re-start the Java C-x C-j repl via a C-x C-e (lame! not ergonomic!)
-  ;; Now check that you have access to antrl in your repl by importing it and looking at one of its classes:
-  ;; ⦃ jshell --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar ⦄
-  import org.antlr.v4.runtime.*;
-  CommonTokenStream.class
-  ;; NOTE: This is the runtime, to use the actual tool:
-  java -jar /Users/musa/.m2/repository/org/antlr/antlr4/4.13.0/antlr4-4.13.0-complete.jar
-
-  ;; Alternatively,
-  ;; $ jshell
-  ;; > var x = 5
-  ;; > import org.antlr.v4.runtime.*;  // CRASHES since antlr is not in scope
-  ;; > /reset --class-path /Users/musa/.m2/repository/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar
-  ;; > import org.antlr.v4.runtime.*;  // WORKS, yay
-  ;; > x // CRASHES, not in scope
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  import org.apache.commons.lang3.StringUtils;
-  StringUtils.class;
-  /imports  // JShell command to list all imports, it now contains apache!
-
-  // Guava is the Google core libraries for Java
-  import com.google.common.collect.ImmutableMap;
-
-  ImmutableMap.of(1, "A", 2, "B") // ⇒ {1=A, 2=B}
-
-  ;; (mvn "com.google.code.gson" "gson")
-  // Then C-x C-e to update the repl definition of C-x C-j to include the updated gson library.
-  import com.google.gson.*;
-  String json = new Gson().toJson(Map.of("me", List.of(1, 2,3), "you", Map.of("Love", "Lisp", "Hate", "Verbosity")))
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  ;; TestNG is a testing framework; supporting tests configured by annotations, data-driven testing, parametric tests, etc.
-  (mvn "org.testng" "testng")
-  import org.testng.*;
-  /imports  // Now can see org.testng at the end of the list
-
-  ;; ⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾⨾
-  ;; TODO[Low]: For working with Lombok annotations, use the jshell `/reset --class-path` command to include the lombok compiled file into
-  ;; the current Jshell session.
-  ;;
-  ;; See: https://stackoverflow.com/questions/74084364/how-to-use-lombok-in-jshell
-  ;;
-  ;; (mvn "org.projectlombok" "lombok")
-  ;; import lombok.*;
-  ;; @lombok.Data class Test { private String name; }
-  ;; new Test().equals(new Test())
-  )
-;; mvn:1 ends here
-
-;; [[file:init.org::*Adding support for “/!use” & “/!omit” top level repl commands][Adding support for “//!use” & “//!omit” top level repl commands:1]]
-;; Adding support for “//!use” & “//!omit” top level repl commands
-(setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
-(advice-add 'repl/jshell
-            :around (lambda (repl &rest args)
-                      (if (equal nil current-prefix-arg)
-                          ;; No prefix supplied
-                          (progn
-                            (setq rdd---current-input (s-replace-regexp "\n" "" (s-trim-left
-                                                                                 (if (region-active-p) (buffer-substring-no-properties  (region-beginning) (region-end))
-                                                                                   (substring-no-properties (thing-at-point 'line))))))
-                            (if (s-starts-with? "//!use" rdd---current-input)
-                                (-let [jar (s-trim (s-chop-prefix "//!use" rdd---current-input))]
-                                  (repl/top-level//!use jar))
-                              (if (s-starts-with? "//!omit" rdd---current-input)
-                                  (-let [jar (s-trim (s-chop-prefix "//!omit" rdd---current-input))]
-                                    (repl/top-level//!omit jar))
-                                ;; otherwise business as usual
-                                (apply repl args))))
-                        (pcase current-prefix-arg
-                          (-1
-                           ;; reset classpath to default, then business as usual.
-                           (setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
-                           (apply repl args))
-                          (999
-                           (message-box "It worked"))
-                          ;; otherwise business as usual
-                          (t (apply repl args))))))
-
-;; remove all advice
-;; (-let [sym 'repl/jshell] (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
-
-(cl-defun repl/top-level//!omit (str)
-  (with-temp-buffer
-    (setq repl/jshell/classpath (s-replace-regexp (format ":[^:]*%s[^:]*:" str) ":" repl/jshell/classpath))
-    (insert "/env --class-path ")
-    (insert repl/jshell/classpath)
-    (repl/jshell (point-min) (point-max))))
-
-(cl-defun repl/top-level//!use (str)
-  "If the given jar cannot be added successful, the existing classpath remains untouched.
-
-Return to your default classpath by invoking the repl with the -1 prefix.
-
-Example usage:
-
-    //!use ~/path/to/compiled/java/classes
-    import com.x.y.z;
-
-Where directory hierarchy com/x/y/z denotes a Java package under the above //!use path.
-"
-  (with-temp-buffer
-    (setq repl/jshell/classpath (concat (s-trim str) ":" repl/jshell/classpath))
-    (insert "/env --class-path ")
-    (insert repl/jshell/classpath)
-    (repl/jshell (point-min) (point-max))))
-;; Adding support for “//!use” & “//!omit” top level repl commands:1 ends here
-
-;; [[file:init.org::*Don't show updating/installation shell buffers][Don't show updating/installation shell buffers:1]]
-;; By default, say, (async-shell-command "date") produces a buffer
-;; with the result. In general, such commands in my init.el are for
-;; updating/installing things to make sure I have the same up-to-date
-;; setup where-ever I use my Emacs. As such, I don't need to see such buffers.
-(add-to-list 'display-buffer-alist
-             '("\\*Async Shell Command\\*.*" display-buffer-no-window))
-
-;; For an approach that does not inhibit async-shell-command this way,
-;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
-;; Don't show updating/installation shell buffers:1 ends here
-
-;; [[file:init.org::*Programming][Programming:1]]
-(when my/work-machine?
-  (setq doom-modeline-buffer-file-name-style 'truncate-except-project))
-;; Programming:1 ends here
-
-;; [[file:init.org::*Sleek Semantic Selection][Sleek Semantic Selection:1]]
-(use-package expand-region
-
-  :bind (("s-r" . #'er/expand-region)))
-;; Sleek Semantic Selection:1 ends here
-
-;; [[file:init.org::*Project management & navigation][Project management & navigation:1]]
-;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
-(use-package projectile
-
-  :config
-  (projectile-mode +1)
-  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
-
-  ;; Replace usual find-file with a project-wide version :smile:
-  (global-set-key (kbd "C-x f") #'projectile-find-file)
-
-  ;; Makes indexing large projects much faster, after first time.
-  ;; Since its caching, some files may be out of sync; you can delete the cache
-  ;; with: C-u C-x f
-  (setq projectile-enable-caching t))
-
-(use-package projectile
-
-    :config
-  (define-key projectile-mode-map (kbd "C-x p s")
-    ;; I prefer helm-do-grep-ag since it shows me a live search
-    (lambda () (interactive)
-       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
-         ;; (shell-command-to-string "echo $PWD")
-         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
-;; Project management & navigation:1 ends here
-
-;; [[file:init.org::*Project management & navigation][Project management & navigation:2]]
-(use-package projectile
-    :defer nil
-    :config
-(define-key projectile-mode-map (kbd "C-x p c")
-  (defun my/copy-current-file-path ()
-    "Add current file path to kill ring."
-    (interactive)
-    (message (kill-new buffer-file-name)))))
-;; Project management & navigation:2 ends here
-
-;; [[file:init.org::*Projectile][Projectile:1]]
-;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
-;; https://github.com/bbatsov/projectile
-(use-package projectile
-
-:config (projectile-global-mode)
-(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
-;; Projectile:1 ends here
-
-;; [[file:init.org::*Aggressive Indentation][Aggressive Indentation:1]]
-;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent
-    :defer nil
-  :config (global-aggressive-indent-mode t))
-
-;; Use 4 spaces in places of tabs when indenting.
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-;; Aggressive Indentation:1 ends here
-
-;; [[file:init.org::*Coding with a Fruit Salad: Semantic Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
-(use-package color-identifiers-mode
-
-  :config (global-color-identifiers-mode))
-
-;; Sometimes just invoke: M-x color-identifiers:refresh
-;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
-
-;; [[file:init.org::*Text Folding ---Selectively displaying portions of a program][Text Folding ---Selectively displaying portions of a program:1]]
-(use-package vimish-fold
-
-  :config (vimish-fold-global-mode 1))
-;; Text Folding ---Selectively displaying portions of a program:1 ends here
-
-;; [[file:init.org::*Actual Setup][Actual Setup:1]]
-(use-package hideshow
-  :defer nil
-  :init
-  ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
-  (quelpa '(hideshowvis :fetcher wiki))
-
-  ;; Press “C-c TAB” to toggle a block's visibility or “C-c f” for my folding hydra.
-  :bind (("C-c TAB" . hs-toggle-hiding))
-
-  ;; https://github.com/shanecelis/hideshow-org/tree/master
-  ;; This extension bring Org-mode tab behaviour to folding, at the block level
-  ;; and buffer level ---but not cycling visibility.
-  ;; (use-package hideshow-org) ;; Disabled as commented below.
-
-  :hook ((prog-mode . (lambda () (hs-minor-mode +1)
-                        (hideshowvis-minor-mode t)
-                        (hideshowvis-symbols)
-                        ;; This hook along with hs-org mode breaks editing of src blocks in Org files.
-                        ;; That's OK, since my folding hydra does a better job for my needs.
-                        ;; (hs-org/minor-mode t)
-                        (hs-hide-all)))))
-;; Actual Setup:1 ends here
-
-
-;; Features from origami/yafolding that maybe I'd like to implement include:
-;; narrowing to block or folding everything except block, navigating back and forth between folded blocks.
-;; Finally, if we want to cycle the visibility of a block (as in Org-mode), we can use a combination of hs-show-block and hs-hide-level.
-;; Actual Setup:2 ends here
-
-;; [[file:init.org::*Actual Setup][Actual Setup:3]]
-(defvar my/hs-hide nil "Current state of hideshow for toggling all.")
-(defun my/hs-toggle-buffer () "Toggle hideshow all."
-       (interactive)
-       (setq my/hs-hide (not my/hs-hide))
-       (if my/hs-hide
-           (hs-hide-all)
-         (hs-show-all)))
-;; Actual Setup:3 ends here
-
-;; [[file:init.org::*Actual Setup][Actual Setup:4]]
-(defun my/clever-selective-display (&optional level)
-"Fold text indented same of more than the cursor.
-
-This function toggles folding according to the level of
-indentation at point. It's convenient not having to specify a
-number nor move point to the desired column.
-"
-  (interactive "P")
-  (if (eq selective-display (1+ (current-column)))
-      (set-selective-display 0)
-    (set-selective-display (or level (1+ (current-column))))))
-;; Actual Setup:4 ends here
-
-;; [[file:init.org::*Actual Setup][Actual Setup:5]]
-;; Src: https://emacs.stackexchange.com/questions/52588/dynamically-hide-lines-indented-more-than-current-line
-(define-minor-mode auto-set-selective-display-mode
-  "Automatically apply `set-selective-display' at all times based on current indentation."
-  nil "$" nil
-  (if auto-set-selective-display-mode
-      (add-hook 'post-command-hook #'auto-set-selective-display nil t)
-    (remove-hook 'post-command-hook #'auto-set-selective-display t)
-    (with-temp-message ""
-      (set-selective-display nil))))
-;;
-(defun auto-set-selective-display ()
-  "Apply `set-selective-display' such that current and next line are visible.
-
-Scroll events are excluded in order to prevent wild flickering while navigating."
-  (unless (eq last-command #'mwheel-scroll)
-    (let*((this-line-indent (current-indentation))
-          (next-line-indent (save-excursion (forward-line) (current-indentation))))
-      (with-temp-message "" ; Suppress messages.
-        (set-selective-display (1+ (max this-line-indent next-line-indent)))))))
-;; Actual Setup:5 ends here
-
-;; [[file:init.org::*Actual Setup][Actual Setup:6]]
-;; Open folded nodes if a search stops there.
-(add-hook 'helm-swoop-after-goto-line-action-hook #'my/search-hook-function)
-(defun my/search-hook-function ()
-  (when hs-minor-mode (set-mark-command nil) (hs-show-block) (pop-to-mark-command)))
-;; Actual Setup:6 ends here
-
-;; [[file:init.org::*hr: \[\[https:/github.com/LuRsT/hr\]\[A horizontal for your terminal\]\]][hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1]]
-(system-packages-ensure "hr") ;; ≈ brew install hr
-;; hr: [[https://github.com/LuRsT/hr][A horizontal for your terminal]]:1 ends here
-
-;; [[file:init.org::*w-screencapture][w-screencapture:1]]
-(bind-key "C-c s"
-  (cl-defun w-screencapture ()
-    "Interactively capture screen and save to clipboard; then paste in Slack, etc, with ⌘-c.
-
-  After we run this command, we can swipe up on mousepad to select different desktops, then
-  click & drag to select portition of screen to capture.
-
-  Captured screen is NOT saved to disk, only copied to clipboard.
-
-In MacOs,
-+ Command + Shift + 5  ⇒  Select screen record
-+ Command + Shift + 4  ⇒  Selection Screenshot
-+ Command + Shift + 3  ⇒  Screenshot
-
-See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
-    (interactive)
-    (async-shell-command "screencapture -i -c")))
-
-(cl-defun w-delete-all-screenshots ()
-    "Delete all “Screen Shot ⋯” files in ~/Desktop."
-    (interactive)
-    (thread-last (shell-command-to-string "cd ~/Desktop; ls")
-      (s-split "\n")
-      (--filter (s-starts-with-p "Screen Shot" it))
-      (--map (f-delete (format "~/Desktop/%s" it)))))
-;; w-screencapture:1 ends here
-
-;; [[file:init.org::*Comment-boxes up to the fill-column ---or banner instead?][Comment-boxes up to the fill-column ---or banner instead?:1]]
-(defun my/comment-box (b e)
-  "Draw a box comment around the region but arrange for the region
-to extend to at least the fill column. Place the point after the
-comment box.
-
-Source: http://irreal.org/blog/?p=374
-
-To do fancy stuff like removing boxes, centering them, etc
-see https://github.com/lewang/rebox2/blob/master/rebox2.el"
-  (interactive "r")
-  (let ((e (copy-marker e t)))
-    (goto-char b)
-    (end-of-line)
-    (insert-char ?  (- fill-column (current-column)))
-    (comment-box b e 1)
-    (goto-char e)
-    (set-marker e nil)))
-;; Comment-boxes up to the fill-column ---or banner instead?:1 ends here
-
-;; [[file:init.org::*Comment-boxes up to the fill-column ---or banner instead?][Comment-boxes up to the fill-column ---or banner instead?:2]]
-(use-package banner-comment   :defer nil)
-;; Comment-boxes up to the fill-column ---or banner instead?:2 ends here
-
-;; (find-file "/Users/musa/Documents/private-goal-getting/notes.org")
-
-;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:1]]
-(use-package separedit   :defer nil)
-;;
-;; # Example Usage
-;;
-;; 1. Press ⌘-e on this line, to edit this entire comment.
-;; 2. Press ⌘-e to exit the edit session.
-;;
-;; Since my ⌘-e is context sensitive, to determine whether to continue editing or
-;; exit; you can explicitly request an edit with C-c ' and an exit with C-c C-c.
-;;
-;; ```
-;; ;; 3. Press ⌘-e on this line, to edit this source block!
-;; ;; 4. Press ⌘-e on this line, to edit this inner-most comment!
-;; ;; 5. At start of next line, press “⌘-r ⌘-e” to edit just the source block
-;; ;;
-;; (cl-defun index (&rest args)
-;;   "6. Press ⌘-e to edit this string, \"7. and again in these quotes\""
-;;   "<p>8. Press ⌘-e to edit this <strong> HTML </strong> block, in Web-mode </p>")
-;;
-;; ;; 9. Press C-u ⌘-e to guess the language of the next string (Rust); then ⌘-r C-c C-r to quickly run the code.
-;; "fn main() { println!(\"{}\", \"hello!\"); }"
-;;
-;; ;; 10. Select & press “C-u ⌘-e” on the following, to edit it in whatever mode you want.
-;; ;; select * from table -- Or just press ⌘-e and have the mode detected.
-;;
-;; ```
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Setup to make the above ⌘-e behaviour happen.
-
-;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
-(--map (bind-key "s-e" #'separedit it)
-       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
-;; ⌘-e: Edit Everything in a separate buffer:1 ends here
-
-;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:2]]
-;; TODO:Merge these changes upstream
-
-;; I'm focusing on a specific region to edit, so let's not be distracted by anything else.
-;; This makes the “editing stack” feel like a stack, with ⌘-e pushing new editing session buffers,
-;; and C-c C-c, or ⌘-e on non-editable lines, to pop-off the stack.
-;; (advice-add #'separedit :after (lambda (&rest _) (delete-other-windows)))
-;;
-;; NOTE: This actually breaks the stack nature of popping with ⌘-e; we need to actually save the stack via some list of buffers than push/pop buffers on that variable.
-
-;; I don't want to be bothered for what mode I'm in, when a region is selected using current major mode.
-;; I'll use a prefix, “C-u ⌘-e”, if I want to select a mode for my current selected text.
-(advice-add #'separedit--select-mode :before-until
-            (lambda (&rest _)
-              (when (and (not current-prefix-arg) (region-active-p)) (pp-to-string major-mode))))
-
-;; Also: When on a string ∷
-(advice-add #'separedit--select-mode :before-until
-            (lambda (&rest _)
-              "When on a string ∷
-+ ⌘-e ⇒ Edit string at point
-+ C-u ⌘-e ⇒ Auto-detect my string's major mode
-+ C-u C-u ⌘-e ⇒ Let me select a major mode"
-              (-let [str? (ignore-errors (thing-at-point 'string))]
-                (case (car current-prefix-arg)
-                  (4 (when str? (pp-to-string (my/detect-prog-mode str?))))
-                  (_ nil)))))
-
-;; NOTE: By default, separedit provides colouring for 'strings', "strings", and `strings'
-;; This doesn't look very good when I have a single quote within double quotes:
-;; In an Emacs Lisp buffer, editing the string "Bob's Work" gives unexpected highlighting.
-;; ```
-;; (advice-add #'separedit :after
-;;             (lambda (&rest _)
-;;               (when (s-ends-with? "string-mode" (pp-to-string major-mode))
-;;                 (text-mode))))
-;; ```
-;; ⌘-e: Edit Everything in a separate buffer:2 ends here
-
-;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:3]]
-;; In the indirect buffer, make ⌘-e finish editing.
-(use-package edit-indirect
-  :config (bind-key "s-e"
-                    (lambda ()
-                      (interactive)
-                      (or (ignore-errors (call-interactively #'separedit))
-                          (call-interactively #'edit-indirect-commit)))
-                    #'edit-indirect-mode-map))
-
-;; I also have “s-e” bound to `org-edit-src-exit'.
-(advice-add 'org-edit-src-exit :before-until
-            (lambda (&rest r)
-              (when (ignore-errors (separedit)) t)))
-;; ⌘-e: Edit Everything in a separate buffer:3 ends here
-
-;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:4]]
-;; → ⌘-e on an Org paragraph pops-up an edit session in Org mode.
-;; → ⌘-e on a selection in Org mode pops-up an edit session in Org mode.
-;; TODO: Consider forming an alist for special blocks to refer to their preferred
-;; edit mode, defaulting to Org-mode? Perhaps something to consider /after/
-;; addressing the bug below.
-;; (advice-unadvice 'org-edit-special) MA: TODO: FIXME: Delete this?
-(advice-add 'org-edit-special :around
-            (lambda (orginal-function &rest r)
-              (cond
-               ((region-active-p) (call-interactively #'edit-indirect-region) (org-mode))
-               ((equal 'paragraph (car (org-element-at-point)))
-                (mark-paragraph) (call-interactively #'edit-indirect-region) (org-mode))
-               (t (or (ignore-errors (apply orginal-function r))
-                      ;; We try to edit a special block when orginal-function fails.
-                      ;; This way src blocks are not confused with the more generic idea of special blocks.
-                      (when
-                          (my/org-in-any-block-p)
-                        ;; Note using org-element-at-point doesn't work well with special blocks when you're somewhere within the block.
-                        ;; It only works correctly when you're on the boundary of the special block; which is not ideal.
-                        ;; This is why I'm not using: (org-element-property :begin elem).
-                        (-let [(start . end) (my/org-in-any-block-p)]
-                          (set-mark-command start)
-                          (goto-char end) (previous-line 2) (end-of-line) ;; FIXME: Still shows #+end_XXX for some reason.
-                          (call-interactively #'edit-indirect-region) (org-mode))))))))
-;; ⌘-e: Edit Everything in a separate buffer:4 ends here
-
-;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:5]]
-;; where...
-(defun my/org-in-any-block-p ()
-  "Return non-nil if the point is in any Org block.
-
-The Org block can be *any*: src, example, verse, etc., even any
-Org Special block.
-
-This function is heavily adapted from `org-between-regexps-p'.
-
-Src: https://scripter.co/splitting-an-org-block-into-two/"
-  (save-match-data
-    (let ((pos (point))
-          (case-fold-search t)
-          (block-begin-re "^[[:blank:]]*#\\+begin_\\(?1:.+?\\)\\(?: .*\\)*$")
-          (limit-up (save-excursion (outline-previous-heading)))
-          (limit-down (save-excursion (outline-next-heading)))
-          beg end)
-      (save-excursion
-        ;; Point is on a block when on BLOCK-BEGIN-RE or if
-        ;; BLOCK-BEGIN-RE can be found before it...
-        (and (or (org-in-regexp block-begin-re)
-                 (re-search-backward block-begin-re limit-up :noerror))
-             (setq beg (match-beginning 0))
-             ;; ... and BLOCK-END-RE after it...
-             (let ((block-end-re (concat "^[[:blank:]]*#\\+end_"
-                                         (match-string-no-properties 1)
-                                         "\\( .*\\)*$")))
-               (goto-char (match-end 0))
-               (re-search-forward block-end-re limit-down :noerror))
-             (> (setq end (match-end 0)) pos)
-             ;; ... without another BLOCK-BEGIN-RE in-between.
-             (goto-char (match-beginning 0))
-             (not (re-search-backward block-begin-re (1+ beg) :noerror))
-             ;; Return value.
-             (cons beg end))))))
-;; ⌘-e: Edit Everything in a separate buffer:5 ends here
-
-;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:6]]
-(use-package language-detection   :defer nil)
-;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
-;; Also, (language-detection-string "select * from t") ;; ⇒ sql
-
-;; TODO: Push this upstream; https://github.com/andreasjansson/language-detection.el/issues/1
-(cl-defun my/detect-prog-mode (&optional string)
-  "Guess programming mode of the current buffer, or STRING if it is provided.
-
-When called interactively, it enables the mode;
-from Lisp it just returns the name of the associated mode.
-
-    ;; Example Lisp usage
-    (call-interactively #'my/detect-prog-mode)
-
-`language-detection-buffer' returns a string which is not always the name of the
-associated major mode; that's what we aim to do here."
-  (interactive)
-
-  (defvar my/detect-prog-mode/special-names
-    '((c           . c-mode)
-      (cpp         . c++-mode)
-      (emacslisp   . emacs-lisp-mode)
-      (html        . web-mode) ;; I intentionally want to use this alternative.
-      (matlab      . octave-mode)
-      (shell       . shell-script-mode)
-      (visualbasic . visual-basic-mode)
-      (xml         . sgml-mode))
-    "Names in this alist map a language to its mode; all other languages 𝒳 have mode ‘𝒳-mode’ afaik.")
-
-  (let* ((lang (if string (language-detection-string string) (language-detection-buffer)))
-         (mode (or (cdr (assoc lang my/detect-prog-mode/special-names))
-                   (intern (format "%s-mode" lang)))))
-    (if (called-interactively-p 'any)
-        (progn (call-interactively mode) (message "%s enabled!" mode))
-      mode)))
-;; ⌘-e: Edit Everything in a separate buffer:6 ends here
-
-;; [[file:init.org::*⌘-e: Edit Everything in a separate buffer][⌘-e: Edit Everything in a separate buffer:7]]
-(advice-add #'org-edit-special :before-until
-            (lambda (&rest r)
-              (when (equal 'table-row (car (org-element-at-point)))
-                (call-interactively #'org-table-edit-field))))
-;; ⌘-e: Edit Everything in a separate buffer:7 ends here
-
-;; [[file:init.org::*Eldoc for Lisp and Haskell ---documentation in the mini-buffer][Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1]]
-(use-package eldoc
-  :hook (emacs-lisp-mode . turn-on-eldoc-mode)
-        (lisp-interaction-mode . turn-on-eldoc-mode)
-        (haskell-mode . turn-on-haskell-doc-mode)
-        (haskell-mode . turn-on-haskell-indent))
-
-;; Slightly shorten eldoc display delay.
-(setq eldoc-idle-delay 0.4) ;; Default 0.5
-;; Eldoc for Lisp and Haskell ---documentation in the mini-buffer:1 ends here
-
-;; [[file:init.org::*Open PDFs in Emacs][Open PDFs in Emacs:1]]
-    ;; In Org-mode, clicking on PDF should open it in Emacs
-    ;; Example:          [[~/Desktop/stuff-I'm-learning.pdf::12]]       ;; Opens the pdf to page 12
-    ;; Another Example:  docview:~/Desktop/stuff-I'm-learning.pdf::12
-  (ignore-errors (add-to-list 'org-file-apps '("\\.pdf\\'" . emacs)))
-
-    ;; Required code to make the above links work as expected.
-    ;; Source: https://www.reddit.com/r/emacs/comments/re0dx8/how_do_you_link_a_specific_pdf_page_in_org_mode/
-    (defun my-org-docview-open-hack (orig-func &rest args)
-      (let* ((link (car args)) path page)
-        (string-match "\\(.*?\\)\\(?:::\\([0-9]+\\)\\)?$" link)
-        (setq path (match-string 1 link))
-        (setq page (and (match-beginning 2)
-                        (string-to-number (match-string 2 link))))
-        (org-open-file path 1)
-        (when page
-          (cond
-           ((eq major-mode 'pdf-view-mode)
-            (pdf-view-goto-page page))
-           (t
-            (doc-view-goto-page page))))))
-    (advice-add 'org-docview-open :around #'my-org-docview-open-hack)
-
-    ;; Alternatively, there's a dedicated package for this
-    ;; https://github.com/fuxialexander/org-pdftools/tree/967f48fb5038bba32915ee9da8dc4e8b10ba3376
-;; Open PDFs in Emacs:1 ends here
-
-;; [[file:init.org::*empv][empv:1]]
-(use-package empv )
-
-;; Then, M-x empv-play https://invidious.fdn.fr/watch?v=hlTqCmpP5eo, to listen to Dua Ifitiah in the background
-;; Or: M-x empv-play https://invidious.fdn.fr/watch?v=9m9yE7qtq5w
-;; lol maybe make a hydra(ie playlist) of things I commonly listen to in the background while working.
-;; Require: brew install mpv
-;; See also:
-;; Maybe better? https://github.com/spiderbit/ytdious/tree/941460b51e43ef6764e15e2b9c4af54c3e56115f
-;; Maybe better? https://melpa.org/#/yeetube
-;; https://github.com/maximus12793/helm-youtube/tree/e7272f1648c7fa836ea5ac1a61770b4931ab4709
-;; https://github.com/isamert/empv.el/tree/1721a581d68f211a7f0104554858ea2afb1723ff
-;;
-(setq empv-invidious-instance "https://invidious.fdn.fr.com")
-;; empv:1 ends here
-
-;; [[file:init.org::*DONE?][DONE?:1]]
-;; (find-file "~/.emacs.d/init.org")
+;; [[file:init.org::#Let's-jump-to-a-current-Chrome-browser-tab-or-one-from-our-Chrome-history-from-within-Emacs][Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1]]
+;; M-x helm-chrome-history: Open a webpage from my history
+;; [Your Chrome History SQLite database file: helm-chrome-history-file]
+(use-package helm-chrome-history)
+
+;; M-x helm-chrome-control: Jump to an open tab in Chrome
+(use-package helm-chrome-control)
+;; Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1 ends here
+
+;; [[file:init.org::*Done!][Done!:1]]
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
-
-
-
-;; DONE?:1 ends here
-
-
-(set-language-environment "UTF-8")
-(set-default-coding-systems 'utf-8)
-(load-file "/Users/musa/Documents/private-goal-getting/planning.el")
+(message-box "Enjoy life (｡◕‿◕｡))")
+;; Done!:1 ends here
