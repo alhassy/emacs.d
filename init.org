@@ -2928,27 +2928,7 @@ The libraries ~emojify~ and ~emojify-logos~ provides cool items like =:haskell:
 :emacs: :org: :ruby: :python:=.  Unfortunately they do not easily export to html
 with org-mode, so I'm not using them.
 :Alternatives:
-#+BEGIN_SRC emacs-lisp
-(use-package emojify)
 
-
-
-(-let [font-for-emojis "Noto Color Emoji"]
-  (if (member font-for-emojis (font-family-list))
-      (set-fontset-font
-       t 'symbol (font-spec :family font-for-emojis) nil 'prepend)
-    (message-box "Musa: Install the font!")
-    ;; Download font @ https://fonts.google.com/noto/specimen/Noto+Color+Emoji
-    ;; Double-click on the ttf file then select “install” to have it installed on your system
-    ))
-(setq emojify-display-style 'unicode) ;; unicode is the way to go!
-
-
-(setq emojify-emoji-styles '(unicode))
-
-(global-emojify-mode 1) ;; Will install missing images, if need be.
-
-#+END_SRC
 
 (use-package emojify-logos
 :after emojify)
@@ -4107,15 +4087,15 @@ git operations, such as ~git push~, [[https://webkul.com/blog/github-push-with-t
 /instead/ of your password! Also: Install [[https://github.com/sindresorhus/refined-github][refined-github: Browser extension that
 simplifies the GitHub interface and adds useful features]]!)
 
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 ;; Bottom of Emacs will show what branch you're on
 ;; and whether the local file is modified or not.
 (use-package magit
   :bind (("C-c M-g" . magit-file-dispatch))
+  :config (global-set-key (kbd "C-x g") 'magit-status)
   :custom ;; Do not ask about this variable when cloning.
     (magit-clone-set-remote.pushDefault t))
-#+END_SRC
-# :config (global-set-key (kbd "C-x g") 'magit-status)
+#+end_src
 
 Why use ~magit~ as the interface to the git version control system?  In a ~magit~
 buffer nearly everything can be acted upon: Press =return=, or =space=, to see
@@ -4912,6 +4892,26 @@ is found with ~M-x dired~ ---doc:dired.
   :defer nil
   :hook (org-mode . org-bullets-mode))
 #+END_SRC
+** Emojis
+:PROPERTIES:
+:CREATED:  [2024-11-08 Fri 18:16]
+:END:
+
+#+begin_src emacs-lisp
+(if (member "Apple Color Emoji" (font-family-list))
+    (set-fontset-font t 'unicode "Apple Color Emoji" nil 'prepend)
+  (message-box "Musa: Install the font!"))
+;; E.g., Download font such as https://fonts.google.com/noto/specimen/Noto+Color+Emoji
+;; Double-click on the ttf file then select “install” to have it installed on your system
+;; (Note: Noto does not work on my personal machine.)
+
+
+;; Render ASCII such as “ :-) ” as emoji 🙂.
+(use-package emojify)
+(setq emojify-display-style 'unicode) ;; unicode is the way to go!
+(setq emojify-emoji-styles '(unicode))
+(global-emojify-mode 1) ;; Will install missing images, if need be.
+#+end_SRC
 
 ** Startup message: Emacs & Org versions
 :PROPERTIES:
@@ -4968,7 +4968,7 @@ my to-do list and my init file, side-by-side.
 ;; and cosmetics, then open my notes files.
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (load "~/my-life.el")
+            (load-file "~/my-life.el")
             (find-file "~/my-life.org")))
 #+END_SRC
 

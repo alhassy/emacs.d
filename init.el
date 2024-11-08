@@ -902,6 +902,7 @@ The heading remains in view, and so appears in the TOC."
 ;; and whether the local file is modified or not.
 (use-package magit
   :bind (("C-c M-g" . magit-file-dispatch))
+  :config (global-set-key (kbd "C-x g") 'magit-status)
   :custom ;; Do not ask about this variable when cloning.
     (magit-clone-set-remote.pushDefault t))
 ;; Intro:1 ends here
@@ -1144,6 +1145,20 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   :defer nil
   :hook (org-mode . org-bullets-mode))
 
+(if (member "Apple Color Emoji" (font-family-list))
+    (set-fontset-font t 'unicode "Apple Color Emoji" nil 'prepend)
+  (message-box "Musa: Install the font!"))
+;; E.g., Download font such as https://fonts.google.com/noto/specimen/Noto+Color+Emoji
+;; Double-click on the ttf file then select “install” to have it installed on your system
+;; (Note: Noto does not work on my personal machine.)
+
+
+;; Render ASCII such as “ :-) ” as emoji 🙂.
+(use-package emojify)
+(setq emojify-display-style 'unicode) ;; unicode is the way to go!
+(setq emojify-emoji-styles '(unicode))
+(global-emojify-mode 1) ;; Will install missing images, if need be.
+
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
 
@@ -1167,7 +1182,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; and cosmetics, then open my notes files.
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (load "~/my-life.el")
+            (load-file "~/my-life.el")
             (find-file "~/my-life.org")))
 
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
