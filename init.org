@@ -4968,8 +4968,8 @@ my to-do list and my init file, side-by-side.
 ;; and cosmetics, then open my notes files.
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (find-file "~/my-life.org")
-            (load "~/my-life.el")))
+            (load "~/my-life.el")
+            (find-file "~/my-life.org")))
 #+END_SRC
 
 There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile

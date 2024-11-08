@@ -1167,8 +1167,8 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; and cosmetics, then open my notes files.
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (find-file "~/my-life.org")
-            (load "~/my-life.el")))
+            (load "~/my-life.el")
+            (find-file "~/my-life.org")))
 
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
