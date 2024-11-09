@@ -22,12 +22,9 @@
 :END:
 
 #+begin_center
-
 badge:A_Life|Configuring_Emacs|success|https://github.com/alhassy/emacs.d|gnu-emacs
 
 badge:A_Life_Configuring|Emacs|success|https://alhassy.github.io/emacs.d/|gnu
-
-badge:Currently_Reorganising|Not_Polished|yellow
 #+end_center
 
 #+html: <p align="center">
@@ -36,37 +33,20 @@ badge:Currently_Reorganising|Not_Polished|yellow
 #+end_center
 #+html: </p>
 
-[[doc:Hello][Hello!]] Herein I document the configurations I utilise with [[https://gnu.org/s/emacs][Emacs]].
+[[doc:hello][Hello!]] Herein I document the configurations I utilise with [[https://gnu.org/s/emacs][Emacs]].
 # After cloning the file, many packages are automatically installed; usually with
 # little or no trouble.
 
-As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
-through my ever growing configuration files, ease of usability and reference
-for peers, and, most importantly, better maintainability for myself!
-
-Dear reader, when encountering a foregin command ~X~ I encourage you to execute
-~(describe-symbol 'X)~, or press kbd:C-h_o with the cursor on ~X~.  An elementary
-Elisp Cheat Sheet can be found at [[badge:Elisp|CheatSheet|success|https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf|Gnu-Emacs][Elisp cheat sheet]] and
-badge:Lifemacs|CheatSheet|informational|https://alhassy.github.io/emacs.d/CheatSheet.pdf|Gnu-Emacs
-is a 2-page 3-column PDF of the bindings in /this/ configuration.
-+ kbd:C-h_e ⇒ *What'd /Emacs/ do?*
-+ kbd:C-h_o ⇒ *What's this thing?*
-+ kbd:C-h_l ⇒ *What'd /I/ do?*
-+ [[kbd:C-h_?]] ⇒ *What're the help topics?* ---gives possible completions to “C-h ⋯”.
-+ “I accidentally hit a key, which one and what did it do!?” ⇒ kbd:C-h_e and kbd:C-h_l,
-  then use kbd:C-h_o to get more details on the action.
-  ;-)
-
-Finally, kbd:C-h_d asks nicely what ‘d’ocumentation you're interested in.
-After providing a few keywords, the =apropos= tool yields possible functions
-and variables that may accomplish my goal.
+# As a [[https://www.offerzen.com/blog/literate-programming-empower-your-writing-with-emacs-org-mode][literate program]] file with [[http://orgmode.org/][Org-mode]], I am ensured optimal navigation
+# through my ever growing configuration files, ease of usability and reference
+# for peers, and, most importantly, better maintainability for myself!
 
 #+begin_center
-badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
-badge:Org|9.4|blue|https://orgmode.org|gnu
+# badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
+# badge:Org|9.4|blue|https://orgmode.org|gnu
 
 [[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
-tweet:https://github.com/alhassy/org-special-block-extras
+tweet:https://alhassy.com/emacs.d/
 
 badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
 badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
@@ -77,21 +57,26 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 This article is about /how I like/ to do things
 ---/I'm not insisting others should/ do things this way.
 
-#+begin_box
-/Always remember that to argue, and win, is to break down the reality of the
-person you are arguing against. It is painful to lose your reality, so be kind,/
-/even if you are right./ - Haruki Murakami
+#+begin_box "Quick Help"
+Dear reader, when encountering a foregin command ~X~ I encourage you to execute
+~(describe-symbol 'X)~, or press kbd:C-h_o with the cursor on ~X~.  An elementary
+Elisp Cheat Sheet can be found at [[badge:Elisp|CheatSheet|success|https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf|Gnu-Emacs][Elisp cheat sheet]] and
+badge:Lifemacs|CheatSheet|informational|https://alhassy.github.io/emacs.d/CheatSheet.pdf|Gnu-Emacs
+is a 2-page 3-column PDF of the bindings in /this/ configuration.
++ kbd:C-h_e ⇒ *What'd /Emacs/ do?*
++ kbd:C-h_o ⇒ *What's this thing?*
++ kbd:C-h_l ⇒ *What'd /I/ do?*
++ [[kbd:C-h_?]] ⇒ *What're the help topics?* ---gives possible completions to “C-h ⋯”.
 
-/Life is too short to not read the very best book you know of right now./ - Patrick Collison
-
-/Inspiration is for amateurs. The rest of us just show up and get to work./ - Chuck Close
-#+end_box
+“I accidentally hit a key, which one and what did it do!?” ⇒ kbd:C-h_e and kbd:C-h_l,
+  then use kbd:C-h_o to get more details on the action. 😁
+#+end_box 
 
 * Meta-setup                                                         :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Meta-setup
 :END:
-** Blog/HTML Setup                                                   :ignore:
+** Blog/HTML Setup                                                  :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Blog-HTML-Setup
 :END:
@@ -106,7 +91,7 @@ person you are arguing against. It is painful to lose your reality, so be kind,/
 #+html_head: <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
 # The last one has the styling for lists.
 
-** Github Actions                                                  :noexport:
+** Github Actions                                                 :noexport:
 :PROPERTIES:
 :CUSTOM_ID: Github-Actions
 :END:
@@ -193,7 +178,7 @@ TODO: Build HTML export as a minimal test that things work as expected.
 
 (unless noninteractive ...) ;; Use this to omit stuff from the Github Actions test
 
-** Personal instructions for a new machine                           :ignore:
+** Personal instructions for a new machine                          :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Personal-instructions-for-a-new-machine
 :END:
@@ -260,7 +245,7 @@ ln -s /opt/homebrew/opt/emacs-plus@30/Emacs.app /Applications
 
     Note that only the =:width= option is used for in-Org image preview.
 
-5. Why =--with-xwidgets=?
+5. [@5]  Why =--with-xwidgets=?
 
     We get a full-fledged Internet browser /within/ Emacs.
     #+begin_src emacs-lisp
@@ -273,28 +258,28 @@ ln -s /opt/homebrew/opt/emacs-plus@30/Emacs.app /Applications
     Related: doc:goto-address-mode is useful whenever you have a buffer full of "http..." URLs (e.g.., a JSON file):
     It makes them into clickable buttons or via =C-c RET=.
 
-    #+begin_details "How about EAF or nyxt?"
-    An alternative to xwidget-webkit is EAF, sadly this does not work well with MacOS.
-
-    EAF essentially makes Emacs a window manager that runs other GUI apps ---as such, EAF buffers are not classic Emacs
-    buffers (and so your favourite text commands are useless).
-
-    There is also:
-    | nyxt  ≅  the web running common lisp instead of JS  ≅  an Emacs backed-by common lisp |
-    #+end_details
-
-    #+begin_details "Tell me more about xwidget-webkit"
-    I’ve found that the only two applications I regularly have open are Emacs and a browser ---and Emacs has a modern
-    browser, so might as well use that in Emacs.
-    - Downsides of Emacs as a browser: Some webpages, such as Slack, try to be an editor and so I'm using a Slack editor
-      insider a web browser inside an text editor (Emacs). As such, sometimes the lines between editor and browser need to
-      be  explicitly demarcated; e.g., via ~xwidget-webkit-edit-mode~.
-    - *“xwidget ≈ eXternal widget”* lets us embed GTK widgets inside an Emacs window; e.g., we can insert fancy buttons via
-      ~xwidget-insert~, and a browser using doc:xwidget-webkit-browse-url.
-    - For history and info on xwidget, see [[https://github.com/jave/xwidget-emacs][the original patch]];
-      See also: https://webkitgtk.org/
-      #+end_details
-
+   + How about EAF or nyxt?
+      
+      An alternative to xwidget-webkit is EAF, sadly this does not work well with MacOS.
+       
+      EAF essentially makes Emacs a window manager that runs other GUI apps ---as such, EAF buffers are not classic Emacs
+      buffers (and so your favourite text commands are useless).
+       
+      There is also:
+      | nyxt  ≅  the web running common lisp instead of JS  ≅  an Emacs backed-by common lisp |
+       
+   + Tell me more about xwidget-webkit
+      
+      I’ve found that the only two applications I regularly have open are Emacs and a browser ---and Emacs has a modern
+      browser, so might as well use that in Emacs.
+     - Downsides of Emacs as a browser: Some webpages, such as Slack, try to be an editor and so I'm using a Slack editor
+       insider a web browser inside an text editor (Emacs). As such, sometimes the lines between editor and browser need to
+       be  explicitly demarcated; e.g., via ~xwidget-webkit-edit-mode~.
+     - *“xwidget ≈ eXternal widget”* lets us embed GTK widgets inside an Emacs window; e.g., we can insert fancy buttons via
+       ~xwidget-insert~, and a browser using doc:xwidget-webkit-browse-url.
+     - For history and info on xwidget, see [[https://github.com/jave/xwidget-emacs][the original patch]];
+       See also: https://webkitgtk.org/
+        
 6. Install git: =brew install git=
 
 7. Get my Emacs setup: =rm -rf ~/.emacs.d; git clone
@@ -305,14 +290,13 @@ ln -s /opt/homebrew/opt/emacs-plus@30/Emacs.app /Applications
    *This may take ~15 minutes ---we install a massive LaTeX setup.*
 
 We get: Spell checker, dictionary, LaTeX + pygements, Dropbox, AG (for fast system-wide searching
-of a string with doc:helm-do-grep-ag, useful for finding definitions),
-Amethyst window manager.
-
-Amethyst requires some more setup: Open its preferences, then...
-    - Then select: =Mouse: Focus follows mouse=.
-    - Also: =Shortcuts=, then disable ‘increase/decrease main pane count’ bindings
+of a string with doc:helm-do-grep-ag, useful for finding definitions).
+# Amethyst window manager.
+# 
+# Amethyst requires some more setup: Open its preferences, then...
+#     - Then select: =Mouse: Focus follows mouse=.
+#     - Also: =Shortcuts=, then disable ‘increase/decrease main pane count’ bindings
       since they override the beloved Emacs =M-<,>= keys.
-
 
 For convenience, on a Mac, add the home (=~/=) directory to the default file
 navigator: Finder → Preferences → Sidebar, then select home 🏠.
@@ -322,9 +306,7 @@ your files: General Settings → Security & Privacy → Full Disk Access → ~�
 search) then enter =/usr/bin/ruby= ---Emacs is launched via a Ruby script in
 MacOS.
 
---------------------------------------------------------------------------------
-
-/See the Prose/Unicode section, we need to manually install the Symbol font for subscripts./
+Finally, see the Prose/Unicode section, we need to manually install the Symbol font for subscripts.
 
 #+end_details
 * Why Emacs?
