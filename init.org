@@ -1,3 +1,5 @@
+# -*- org-export-use-babel: nil -*-
+
 # السّلام عليكم ─“Hello, and welcome” in Arabic (العربيّة)
 #
 # Over 13k line org file, with over 300 source code blocks.
@@ -10,7 +12,8 @@
 #+startup: indent lognoteclock-out
 #+options: html-postamble:nil toc:2 d:nil num:t broken-links:auto
 # +property: header-args :tangle deferred-init.el :comments link :results none
-#+property: header-args :tangle init.el :comments link :results none
+#+property: header-args :tangle init.el :comments link :results none :cache yes
+#+property: HEADER-ARGS+ :eval no-export
 #+export_file_name: index
 
 * Abstract                                                           :ignore:
@@ -285,9 +288,9 @@ ln -s /opt/homebrew/opt/emacs-plus@30/Emacs.app /Applications
     browser, so might as well use that in Emacs.
     - Downsides of Emacs as a browser: Some webpages, such as Slack, try to be an editor and so I'm using a Slack editor
       insider a web browser inside an text editor (Emacs). As such, sometimes the lines between editor and browser need to
-      be  explicitly demarcated; e.g., via doc:xwidget-webkit-edit-mode.
+      be  explicitly demarcated; e.g., via ~xwidget-webkit-edit-mode~.
     - *“xwidget ≈ eXternal widget”* lets us embed GTK widgets inside an Emacs window; e.g., we can insert fancy buttons via
-      doc:xwidget-insert, and a browser using doc:xwidget-webkit-browse-url.
+      ~xwidget-insert~, and a browser using doc:xwidget-webkit-browse-url.
     - For history and info on xwidget, see [[https://github.com/jave/xwidget-emacs][the original patch]];
       See also: https://webkitgtk.org/
       #+end_details
