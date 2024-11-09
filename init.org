@@ -2828,7 +2828,7 @@ file with =M-x org-md-export-to-markdown=.
 )
 #+END_SRC
 
-** TODO COMMENT Using Emacs in any text area on my OS             :Disabled:
+** TODO COMMENT Using Emacs in any text area on my OS              :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Using-Emacs-in-any-text-area-on-my-OS
 :END:
@@ -4503,7 +4503,7 @@ were regenerated --Emacs should also prompt me if I make any changes!
       auto-revert-verbose nil)
 #+end_src
 
-** DONE COMMENT Compile                                          :posterity:
+** DONE COMMENT Compile                                           :posterity:
 :PROPERTIES:
 :CUSTOM_ID: Compile
 :END:
@@ -6899,7 +6899,7 @@ Example:
 (use-package all-the-icons
     :config (all-the-icons-install-fonts 'install-without-asking))
 #+end_src
-** TODO COMMENT Having a workspace manager in Emacs               :Disabled:
+** TODO COMMENT Having a workspace manager in Emacs                :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
 :END:
@@ -8643,7 +8643,7 @@ This seems like an excellent way to debug macros.
   (let ((foo 1))
     (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
 #+end_src
-** TODO COMMENT Work Programming                                          :Disabled:
+** TODO COMMENT Work Programming                                   :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
@@ -10326,7 +10326,7 @@ extension).
 
 Of-course, to actually do anything with the files (like mass renaming), there's
 Emacs' Dired (the directory editor).
-** TODO COMMENT Web Development                                           :Disabled:
+** TODO COMMENT Web Development                                    :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
 :END:
@@ -12389,7 +12389,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 (use-package copy-as-format   :defer nil)
 #+end_src
 
-** TODO COMMENT Working with PDFs                                 :Disabled:
+** TODO COMMENT Working with PDFs                                  :Disabled:
 *** TODO Open PDFs in Emacs
 #+begin_src emacs-lisp
     ;; In Org-mode, clicking on PDF should open it in Emacs
@@ -12657,7 +12657,7 @@ publish the current article to my blog.
   :hook (writeroom-mode . (lambda () (focus-mode 'toggle))))
 #+end_src
 
-** COMMENT Toggling System                                      :RelocateMe:
+** COMMENT Toggling System                                       :RelocateMe:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Toggling-System
 :END:
