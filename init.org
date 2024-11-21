@@ -7030,6 +7030,10 @@ For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick
 *** get the pkg :ignore:
 #+begin_src emacs-lisp :tangle init.el
 (use-package repl-driven-development)
+;; TODO: rdd.el should (require ⋯) the following!
+(use-package json-navigator)
+(use-package ansi-color)
+
 (setq repl-driven-development-echo-duration 10)
 #+end_src
 
@@ -7044,21 +7048,49 @@ For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick
 
 *** jshell
 #+begin_src emacs-lisp :tangle init.el
+;; TODO: Changes to be pushed to master rdd.el ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; new
+(defun repl-driven-development--main-callback (repl)
+  "Return the callback that works on REPL."
+  `(lambda (process output)
+     ;; This is done to provide a richer, friendlier, interaction.
+     ;; ^M at the end of line in Emacs is indicating a carriage return (\r)
+     ;; followed by a line feed (\n).
+     (setq output (repl-driven-development--ignore-ansi-color-codes output)) ;; ⟵ ⟵ Main change here ⟵ ⟵  ⟵ ⟵ ⟵ ⟵ ⟵ ⟵
+     ;; (message-box "%s" output)
+     (setq output (s-trim (s-replace-regexp ,(rdd@ repl prompt) ""
+                                      (s-replace "\r\n" "" output))))
+     ;; Output is always non-empty
+     (unless (s-blank? (s-trim output))
+       (setf (rdd@ (quote ,repl) output) output))
+     (repl-driven-development--insert-or-echo (quote ,repl) output)))
+
+;; Notice that I've changed :prompt!
+(defun repl-driven-development-preconfiguration:java (keys)
+  "<omitted>"
+  (repl-driven-development
+   keys
+   ;; enable assertions, and add everything installed, via `mvn', in scope.
+   (format "jshell --class-path %s --enable-preview -R -ea --feedback silent"
+    (concat ".:" (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f 2>/dev/null | tr '\n' ':'")))
+   :name 'java-eval
+   :prompt "[^\\n]*=>\\.\\.\\.\\." ;; ⟵ ⟵ Main change here ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵ ⟵
+   :input-rewrite-fn
+   #'repl-driven-development--strip-out-C-style-comments&newlines
+   :init "/set mode EmacsJavaMode normal -command
+/set format EmacsJavaMode display \"{pre}added import {name}{post}\" import-added
+/set format EmacsJavaMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
+/set format EmacsJavaMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
+/set truncation EmacsJavaMode 40000
+/set feedback EmacsJavaMode
+import javax.swing.*;
+System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
+  (defalias 'java-eval-read #'repl-driven-development--java-read))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; Set “C­x C­j” to evaluate Java code in a background REPL.
-(repl-driven-development
- [C-x C-j]
- ;; enable assertions, and add everything installed, via `mvn', in scope.
- (format "jshell --class-path %s --enable-preview -R -ea --feedback silent"
-         (concat ".:" (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f 2>/dev/null | tr '\n' ':'")))
- :prompt "jshell>"
- :init "\n /set mode EmacsJavaMode normal -command
-        \n /set format EmacsJavaMode display \"{pre}added import {name}{post}\" import-added
-        \n /set format EmacsJavaMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
-        \n /set format EmacsJavaMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
-        \n /set truncation EmacsJavaMode 40000
-        \n /set feedback EmacsJavaMode
-        \n System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
-;; TODO [Truncation; Low] https://github.com/xiongtx/eros/blob/master/eros.el#L202
+(repl-driven-development [C-x C-j] java)
 #+end_src
 *** TODO COMMENT mvn
 #+begin_src emacs-lisp :tangle init.el
