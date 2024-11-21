@@ -45,19 +45,14 @@
 
 ;; Making it easier to discover Emacs key presses.
 (use-package which-key
-  :defer nil
   :config (which-key-mode)
           (which-key-setup-side-window-bottom)
           (setq which-key-idle-delay 0.05))
 
-;; Haskell's cool
-(use-package haskell-mode )
+(use-package dash) ;; “A modern list library for Emacs”
+(use-package s)    ;; “The long lost Emacs string manipulation library”.
+(use-package f)    ;; Library for working with system files; ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 
-;; Lisp libraries with Haskell-like naming.
-(use-package dash)    ;; “A modern list library for Emacs”
-(use-package s   )    ;; “The long lost Emacs string manipulation library”.
-
-;; Let's use the “s” library.
 (defvar my/personal-machine?
   (equal "Musa’s MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
   "Is this my personal machine, or my work machine?
@@ -69,13 +64,8 @@
 
 (defvar my/work-machine? (not my/personal-machine?))
 
-;; Library for working with system files;
-;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
-(use-package f)
-
   ;; Allow tree-semantics for undo operations.
   (use-package undo-tree
-    :defer nil
     :bind ("C-x u" . undo-tree-visualize)
     :config
       ;; Each node in the undo tree should have a timestamp.
@@ -151,15 +141,13 @@ installs of packages that are not in our `my/installed-packages' listing.
  (lambda () (kill-matching-buffers ".*system-packages.*" t :kill-without-confirmation)))
 
 ;; Unlike the Helm variant, we need to specify our OS pacman.
-(when (eq system-type 'darwin)
-  (setq system-packages-package-manager 'brew))
+(setq system-packages-package-manager 'brew)
 
 ;; If the given system package doesn't exist; install it.
-(when (eq system-type 'darwin)
-  (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
+;; (system-packages-ensure "amethyst") ;; This is a MacOS specific package.
 
-(ignore-errors (system-packages-ensure "google-chrome")) ;; My choice of web browser
-(system-packages-ensure "microsoft-teams") ;; For remote work meetings
+;; (ignore-errors (system-packages-ensure "google-chrome")) ;; My choice of web browser
+;; (system-packages-ensure "microsoft-teams") ;; For remote work meetings
 
 ;; Gif maker; needs privileges to capture screen.
 ;;
@@ -169,40 +157,22 @@ installs of packages that are not in our `my/installed-packages' listing.
 (system-packages-ensure "licecap") ;; Use: ⌘-SPACE licecap
 
 ;; Pack, ship and run any application as a lightweight container
-(system-packages-ensure "docker")
+;; (system-packages-ensure "docker")
 ;; Free universal database tool and SQL client
-(system-packages-ensure "dbeaver-community")
+;; (system-packages-ensure "dbeaver-community")
 ;; Kubernetes IDE
-(system-packages-ensure "lens")
+;; (system-packages-ensure "lens")
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
 (system-packages-ensure "node") ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
-(shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
+;; (shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
 ;; According to https://github.com/nvm-sh/nvm, nvm shouldn't be installed via brew.
 
 ;; ;; Use “brew cask install” instead of “brew install” for installing programs.;
 ;; (setf (nth 2 (assoc 'brew system-packages-supported-package-managers))
 ;;      '(install . "brew cask install"))
-
-(defun ⌘-quit (app)
-  "Kill application APP; e.g., “amethyst” or “Safari”"
-  (shell-command (format "osascript -e 'quit app \"%s\"'" app)))
-
-(defun ⌘-open (app)
- "Open application APP; e.g., “amethyst” or “Safari”"
-  (async-shell-command (format "osascript -e 'launch app \"%s\"'" app)))
-
-;; (bind-key "???-a r" #'my/relaunch-amethyst)
-(defun my/relaunch-amethyst () (interactive)
-       (⌘-quit "amethyst")
-       (⌘-open "amethyst"))
-
-;; (bind-key "???-a c" #'amethyst/cycle-layout)
-(defun amethyst/cycle-layout ()
-  (interactive)
-  (shell-command "osascript -e 'tell application \"System Events\" to keystroke space using {shift down, option down}'"))
 
 ;; By default, say, (async-shell-command "date") produces a buffer
 ;; with the result. In general, such commands in my init.el are for
@@ -215,14 +185,12 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
 
 (use-package exec-path-from-shell
-  :defer nil
   :init
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))
 
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :defer nil
   ;; If I ever close Emacs, it's likely because I want to restart it.
   :bind ("C-x C-c" . restart-emacs)
   ;; Let's define an alias so there's no need to remember the order.
@@ -232,7 +200,6 @@ installs of packages that are not in our `my/installed-packages' listing.
 (setq save-place-file "~/.emacs.d/etc/saveplace")
 
 (use-package helm
-  :defer nil
  :init (helm-mode t)
  :bind (("M-x"     . helm-M-x)
         ("C-x C-f" . helm-find-files)
@@ -254,12 +221,11 @@ installs of packages that are not in our `my/installed-packages' listing.
 
 ;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
 ;; (use-package helm-icons
-;;   :defer nil
 ;;   :custom (helm-icons-provider 'all-the-icons)
 ;;   :config (helm-icons-enable))
 
 ;; When I want to see the TOC of an Org file, show me down to 3 subheadings.
-(setq org-imenu-depth 3)
+(setq org-imenu-depth 7)
 
 (setq helm-mini-default-sources '(helm-source-buffers-list
                                     helm-source-recentf
@@ -267,11 +233,7 @@ installs of packages that are not in our `my/installed-packages' listing.
                                     helm-source-bookmark-set
                                     helm-source-buffer-not-found))
 
-(system-packages-ensure "surfraw")
-; ⇒  “M-x helm-surfraw” or “C-x c s”
-
 (use-package helm-swoop
-  :defer nil
   :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
           ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
           ;; Go back to last position where ‘helm-swoop’ was called
@@ -294,13 +256,7 @@ installs of packages that are not in our `my/installed-packages' listing.
                (message "[To return to this location, press M-m] ∷ %s"
                         (s-trim (substring-no-properties (thing-at-point 'line)))))))
 
-;; Make `links' from elisp symbols (quoted functions, variables and fonts) in Gnu-Emacs Info viewer to their help documentation.
-(use-package inform
-  :defer nil
-  :config (require 'inform))
-
 (use-package emacs
-    :defer nil
     :ensure org-contrib
     :config (require 'ox-extra)
             (ox-extras-activate '(ignore-headlines)))
@@ -347,7 +303,6 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; TODO org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
 ;;
 (use-package org-special-block-extras
-  :defer nil
   :hook (org-mode . org-special-block-extras-mode)
   :custom
     ;; The places where I keep my ‘#+documentation’
@@ -371,7 +326,7 @@ installs of packages that are not in our `my/installed-packages' listing.
 
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
-(use-package hydra :defer nil)
+(use-package hydra)
 
 ;; Show hydras overlayed in the middle of the frame
 (use-package hydra-posframe
@@ -382,7 +337,7 @@ installs of packages that are not in our `my/installed-packages' listing.
   :custom (hydra-posframe-border-width 5))
 
 ;; Neato doc strings for hydras
-(use-package pretty-hydra :defer nil)
+(use-package pretty-hydra)
 
 ;; TODO convert my existing defhydras to my/defhydra.
 (defmacro my/defhydra (key title icon-name &rest body)
@@ -461,25 +416,6 @@ Is replaced by:
            (-partition-by-header #'keywordp)
            (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
            (-flatten-n 1))))))
-
-(my/defhydra "C-n" "\t\t\t\t\tTextual Navigation" arrows
-   :Line
-   ("n" next-line)
-   ("p" previous-line)
-   ("a" beginning-of-line)
-   ("e" move-end-of-line)
-   ("g" goto-line)
-   :Word
-   ("f" forward-word "Next")
-   ("b" backward-word "Previous")
-   ("{" org-backward-element "Next Element")
-   ("}" org-forward-element "Previous Element")
-   :Screen
-   ("v" scroll-up-command "Scroll Down")
-   ("V" scroll-down-command "Scroll Up")
-   ("l" recenter-top-bottom "Center Page")
-   ("r" move-to-window-line-top-bottom "Relocate Point")
-   ("m" helm-imenu "Textual Menu"))
 
 ;; C-n, next line, inserts newlines when at the end of the buffer
 (setq next-line-add-newlines t)
@@ -766,20 +702,15 @@ Here is the actual implementation:
        )))
 
 
-
-       (-let [(&plist :file) (map-into (map-apply (lambda (k v) (cons (intern (concat ":" (downcase k))) v)) (org-entry-properties (point))) 'plist)]
-         file
-         )
-
-
-       ;; MA: This is new stuff.
-       (put 'org-deflink 'lisp-indent-function 'defun)
-       (put 'org-deftag 'lisp-indent-function 'defun)
+;; MA: This is new stuff.
+(put 'org-deflink 'lisp-indent-function 'defun)
+(put 'org-deftag 'lisp-indent-function 'defun)
 
        ;; Example use
        (org-deftag identity ()
          "Do nothing to Org headings"
          (insert o-heading)) ;; Wait, I think this strips tags?
+
 
        (org-deftag disabled (color)
          "Render the body of a heading in a <details> element, titled “Disabled”.
@@ -839,6 +770,11 @@ The heading remains in view, and so appears in the TOC."
   ;; Only enable this in Emacs Lisp mode, for now.
   (setq orglink-activate-in-modes '(emacs-lisp-mode)))
 ;; Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1 ends here
+
+;; [[file:init.org::*No code evaluation upon export][No code evaluation upon export:1]]
+;; Ignore all header arguments relating to “:eval”. Do not evaluate code when I export to HTML or LaTeX or anything else.
+(setq org-export-use-babel nil)
+;; No code evaluation upon export:1 ends here
 
 ;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
@@ -979,11 +915,11 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
-(maybe-clone "https://github.com/alhassy/holy-books")
+;; (maybe-clone "https://github.com/alhassy/holy-books")
 ;; Maybe clone ... everything?:1 ends here
 
 ;; [[file:init.org::#Maybe-clone-everything][Maybe clone ... everything?:2]]
-(maybe-clone "https://github.com/alhassy/melpa")
+;; (maybe-clone "https://github.com/alhassy/melpa")
 (maybe-clone "https://github.com/alhassy/org-special-block-extras")
 
 
@@ -996,12 +932,12 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols") ;; Deleted?
 
 (maybe-clone "https://github.com/alhassy/islam")
-(maybe-clone "https://github.com/alhassy/CheatSheet")
-(maybe-clone "https://github.com/alhassy/ElispCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/CheatSheet")
+;; (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
-(maybe-clone "https://github.com/alhassy/RubyCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/RubyCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/PrologCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
 
@@ -1141,9 +1077,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets
-  :defer nil
-  :hook (org-mode . org-bullets-mode))
+(use-package org-bullets :hook (org-mode . org-bullets-mode))
 
 (if (member "Apple Color Emoji" (font-family-list))
     (set-fontset-font t 'unicode "Apple Color Emoji" nil 'prepend)
@@ -1182,12 +1116,13 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; and cosmetics, then open my notes files.
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (load-file "~/my-life.el")
-            (find-file "~/my-life.org")))
+            (-let [my-life.el (getenv "MY_LIFE_ELISP")]
+              (unless org-default-notes-file
+                (error "Add to .zshrc “ export MY_LIFE_ELISP=\"/full/path/to/my-life.el\" ”, then load my-life.el"))
+              (load-file my-life.el))))
 
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
-  :defer nil
   :config (doom-modeline-mode))
 
   ;; Use minimal height so icons still fit; modeline gets slightly larger when
@@ -1367,20 +1302,18 @@ fonts (•̀ᴗ•́)و"
 (global-hl-line-mode t)
 
 (use-package beacon
-  :defer nil
   :config (setq beacon-color "#666600")
   :hook   ((org-mode text-mode) . beacon-mode))
 
 (use-package dimmer
-  :defer nil
   :config (dimmer-mode))
 
 ;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
 
 ;; The doom themes package comes with a function to make the mode line flash on error.
-(use-package doom-themes   :defer nil)
-(require 'doom-themes-ext-visual-bell)
-(doom-themes-visual-bell-config)
+;; (use-package doom-themes)
+;; (require 'doom-themes-ext-visual-bell)
+;; (doom-themes-visual-bell-config)
 
 (blink-cursor-mode 1)
 
@@ -1394,7 +1327,6 @@ fonts (•̀ᴗ•́)و"
 (show-paren-mode)
 
 (use-package rainbow-delimiters
-  :disabled
   :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
 
 (electric-pair-mode 1)
@@ -1555,7 +1487,6 @@ fonts (•̀ᴗ•́)و"
 ;; (setq org-use-sub-superscripts (quote {}))
 
 (use-package org-appear
-  :disabled t
   :hook (org-mode . org-appear-mode)
   :init (setq org-appear-autoemphasis  t
               org-appear-autolinks nil
@@ -1566,23 +1497,6 @@ fonts (•̀ᴗ•́)و"
   :disabled t
   :hook (org-mode . org-fragtog-mode))
 
-;; Make previews a bit larger
-(setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
-
-;; I use a lot of Unicode, so let's always include a unicode header.
-(maybe-clone "https://armkeh.github.io/unicode-sty/")
-(setq org-format-latex-header
-      (concat org-format-latex-header
-              "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}"))
-;;
-;; Now this looks nice too!
-;; $\substack{𝔹 \\ ↓ \\ 𝒜}$ and $\mathbb{B}$.
-
-;; Always support unicode upon LaTeX export
-;; No need to explicitly import armkeh's unicode-sty in each org file.
-(add-to-list 'org-latex-packages-alist
-  "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}")
-
 ;; Support “latex-as-png” src blocks, which show LaTeX as PNGs
 (use-package ob-latex-as-png :disabled t)
 
@@ -1590,38 +1504,12 @@ fonts (•̀ᴗ•́)و"
 (setq org-latex-prefer-user-labels t)
 
  (use-package org-sticky-header
-  :defer nil
   :hook (org-mode . org-sticky-header-mode)
   :config
   (setq-default
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " / "))
-
-(use-package persistent-scratch
-
-  ;; In this mode, the usual save key saves to the underlying persistent file.
-  :bind (:map persistent-scratch-mode-map
-              ("C-x C-s" . persistent-scratch-save)))
-
-(defun scratch ()
-   "Recreate the scratch buffer, loading any persistent state."
-   (interactive)
-   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
-   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
-   (org-mode)
-   (persistent-scratch-mode)
-   (persistent-scratch-autosave-mode 1))
-
-;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
-
-;; Upon startup, close the default scratch buffer and open one as specfied above
-(ignore-errors (kill-buffer "*scratch*") (scratch))
-
-(setq initial-scratch-message (concat
-  "#+title: Persistent Scratch Buffer"
-  "\n#\n# Welcome! This’ a place for trying things out."
-  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
+   org-sticky-header-outline-path-separator " ▷ "))
 
   (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
   (require 'org-remoteimg)
@@ -1640,8 +1528,39 @@ fonts (•̀ᴗ•́)و"
 (use-package eros :init (eros-mode t))
 ;; ELisp:1 ends here
 
+;; [[file:init.org::*get the pkg][get the pkg:1]]
+(use-package repl-driven-development)
+(setq repl-driven-development-echo-duration 10)
+;; get the pkg:1 ends here
+
+;; [[file:init.org::*terminal][terminal:1]]
+;; Sometimes I see a bunch of shell incantations in a README or something and I'd like to execute them right there and then,
+;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
+;; shell commands from anywhere.
+;; (repl-driven-development [C-x C-t] "bash"  :prompt "bash-3.2\\$")
+(repl-driven-development [C-x C-t] terminal)
+;; terminal:1 ends here
+
+;; [[file:init.org::*jshell][jshell:1]]
+;; Set “C­x C­j” to evaluate Java code in a background REPL.
+(repl-driven-development
+ [C-x C-j]
+ ;; enable assertions, and add everything installed, via `mvn', in scope.
+ (format "jshell --class-path %s --enable-preview -R -ea --feedback silent"
+         (concat ".:" (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f 2>/dev/null | tr '\n' ':'")))
+ :prompt "jshell>"
+ :init "\n /set mode EmacsJavaMode normal -command
+        \n /set format EmacsJavaMode display \"{pre}added import {name}{post}\" import-added
+        \n /set format EmacsJavaMode display \"{pre}re-added import {name}{post}\" import-modified,replaced
+        \n /set format EmacsJavaMode result \"{type} {name} = {value}{post}\" added,modified,replaced-primary-ok
+        \n /set truncation EmacsJavaMode 40000
+        \n /set feedback EmacsJavaMode
+        \n System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
+;; TODO [Truncation; Low] https://github.com/xiongtx/eros/blob/master/eros.el#L202
+;; jshell:1 ends here
+
 ;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:1]]
-(use-package separedit   :defer nil)
+(use-package separedit)
 ;;
 ;; # Example Usage
 ;;
@@ -1797,7 +1716,7 @@ Src: https://scripter.co/splitting-an-org-block-into-two/"
 ;; ⌘-e: Edit Everything in a separate buffer:5 ends here
 
 ;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:6]]
-(use-package language-detection   :defer nil)
+(use-package language-detection)
 ;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
 ;; Also, (language-detection-string "select * from t") ;; ⇒ sql
 
@@ -1903,7 +1822,6 @@ associated major mode; that's what we aim to do here."
 
 ;; [[file:init.org::#Jumping-to-definitions-references][Jumping to definitions & references:1]]
 (use-package dumb-jump
-    :defer nil
   :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
          ("M-g ."     . dumb-jump-go-other-window)
          ("M-g b"     . dumb-jump-back)
@@ -1954,7 +1872,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Comment-boxes up to the fill-column ---or banner instead?:1 ends here
 
 ;; [[file:init.org::#Comment-boxes-up-to-the-fill-column][Comment-boxes up to the fill-column ---or banner instead?:2]]
-(use-package banner-comment   :defer nil)
+(use-package banner-comment)
 ;; Comment-boxes up to the fill-column ---or banner instead?:2 ends here
 
 ;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:1]]
@@ -1979,7 +1897,6 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 
 ;; [[file:init.org::#Actual-Setup][Actual Setup:1]]
 (use-package hideshow
-  :defer nil
   :init
   ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
   (quelpa '(hideshowvis :fetcher wiki))
@@ -2104,6 +2021,9 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
   (highlight-indent-guides-method 'character)
   (highlight-indent-guides-character ?|)
   (highlight-indent-guides-responsive 'stack))
+
+
+(load-file "~/.emacs.d/elpa/highlight-indent-guides-20200820.2328/highlight-indent-guides.el")
 ;; Indentation Guide:1 ends here
 
 ;; [[file:init.org::#Which-function-are-we-writing][Which function are we writing?:1]]
@@ -2125,7 +2045,6 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
 
 ;; [[file:init.org::#highlight-quoted-symbols][Highlight Quoted Symbols:1]]
 (use-package highlight-quoted
-  :defer nil
   :config (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
 
 ;; If everything worked fine, then “ 'b ” below should be coloured nicely in Emacs Lisp mode.
@@ -2146,6 +2065,14 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
   (put 'hes-escape-backslash-face 'face-alias 'font-lock-builtin-face)
   (put 'hes-escape-sequence-face 'face-alias 'font-lock-builtin-face))
 
+
+;; TODO: My Emacs seems to have trouble loading the following and so I'm doint it manually.
+(load-file "~/.emacs.d/elpa/company-posframe-20230104.1229/company-posframe.el")
+(load-file "~/.emacs.d/elpa/highlight-escape-sequences-20201214.1730/highlight-escape-sequences.el")
+(load-file "~/.emacs.d/elpa/parent-mode-20240210.1906/parent-mode.el")
+(load-file "~/.emacs.d/elpa/highlight-numbers-20181013.1744/highlight-numbers.el")
+
+
 ;; If the above two worked fine, then you should see \n and 3 highlighted below
 (when nil "Look: 1 and \\ and \n 2" (setq three 3))
 ;; Highlighting Numbers and Escape Characters:1 ends here
@@ -2153,10 +2080,14 @@ Scroll events are excluded in order to prevent wild flickering while navigating.
 ;; [[file:init.org::#Highlight-defined-Lisp-symbols][Highlight /defined/ Lisp symbols:1]]
 ;; Emacs Lisp specific
 (use-package highlight-defined :hook emacs-lisp-mode)
+(load-file "~/.emacs.d/elpa/highlight-defined-20210411.222/highlight-defined.el")
 ;; Highlight /defined/ Lisp symbols:1 ends here
 
 ;; [[file:init.org::#Get-nice-child-frames-when-looking-at-completions-candidates-In-particular-when-editing-Lisp-code-the][Get nice child frames when looking at completions candidates:1]]
 (use-package company-posframe :hook prog-mode)
+
+;; I want to see the doc pop-ups nearly instantaneously 😅
+(setq company-posframe-quickhelp-delay 0)
 ;; Get nice child frames when looking at completions candidates:1 ends here
 
 ;; [[file:init.org::*interactive macro-expander][interactive macro-expander:1]]
@@ -2620,15 +2551,6 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
           (t
            (call-interactively 'org-insert-link)))))
 ;; C-c C-l Org-mode ⇐ HTML:3 ends here
-
-;; [[file:init.org::#Let's-jump-to-a-current-Chrome-browser-tab-or-one-from-our-Chrome-history-from-within-Emacs][Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1]]
-;; M-x helm-chrome-history: Open a webpage from my history
-;; [Your Chrome History SQLite database file: helm-chrome-history-file]
-(use-package helm-chrome-history)
-
-;; M-x helm-chrome-control: Jump to an open tab in Chrome
-(use-package helm-chrome-control)
-;; Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.:1 ends here
 
 ;; [[file:init.org::*Done!][Done!:1]]
 (add-to-list 'default-frame-alist '(fullscreen . maximized))

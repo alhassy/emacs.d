@@ -70,7 +70,7 @@ is a 2-page 3-column PDF of the bindings in /this/ configuration.
 
 “I accidentally hit a key, which one and what did it do!?” ⇒ kbd:C-h_e and kbd:C-h_l,
   then use kbd:C-h_o to get more details on the action. 😁
-#+end_box 
+#+end_box
 
 * Meta-setup                                                         :ignore:
 :PROPERTIES:
@@ -259,17 +259,17 @@ ln -s /opt/homebrew/opt/emacs-plus@30/Emacs.app /Applications
     It makes them into clickable buttons or via =C-c RET=.
 
    + How about EAF or nyxt?
-      
+
       An alternative to xwidget-webkit is EAF, sadly this does not work well with MacOS.
-       
+
       EAF essentially makes Emacs a window manager that runs other GUI apps ---as such, EAF buffers are not classic Emacs
       buffers (and so your favourite text commands are useless).
-       
+
       There is also:
       | nyxt  ≅  the web running common lisp instead of JS  ≅  an Emacs backed-by common lisp |
-       
+
    + Tell me more about xwidget-webkit
-      
+
       I’ve found that the only two applications I regularly have open are Emacs and a browser ---and Emacs has a modern
       browser, so might as well use that in Emacs.
      - Downsides of Emacs as a browser: Some webpages, such as Slack, try to be an editor and so I'm using a Slack editor
@@ -279,7 +279,7 @@ ln -s /opt/homebrew/opt/emacs-plus@30/Emacs.app /Applications
        ~xwidget-insert~, and a browser using doc:xwidget-webkit-browse-url.
      - For history and info on xwidget, see [[https://github.com/jave/xwidget-emacs][the original patch]];
        See also: https://webkitgtk.org/
-        
+
 6. Install git: =brew install git=
 
 7. Get my Emacs setup: =rm -rf ~/.emacs.d; git clone
@@ -292,7 +292,7 @@ ln -s /opt/homebrew/opt/emacs-plus@30/Emacs.app /Applications
 We get: Spell checker, dictionary, LaTeX + pygements, Dropbox, AG (for fast system-wide searching
 of a string with doc:helm-do-grep-ag, useful for finding definitions).
 # Amethyst window manager.
-# 
+#
 # Amethyst requires some more setup: Open its preferences, then...
 #     - Then select: =Mouse: Focus follows mouse=.
 #     - Also: =Shortcuts=, then disable ‘increase/decrease main pane count’ bindings
@@ -653,7 +653,6 @@ clipboard that allows undoing to any historical state./
 #+begin_src emacs-lisp :tangle no :noweb-ref undo-tree-setup
 ;; Allow tree-semantics for undo operations.
 (use-package undo-tree
-  :defer nil
   :bind ("C-x u" . undo-tree-visualize)
   :config
     ;; Each node in the undo tree should have a timestamp.
@@ -1325,7 +1324,6 @@ commands I did not know about! Neato :-)
 #+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Making it easier to discover Emacs key presses.
 (use-package which-key
-  :defer nil
   :config (which-key-mode)
           (which-key-setup-side-window-bottom)
           (setq which-key-idle-delay 0.05))
@@ -1335,14 +1333,10 @@ to people when I'm promoting Emacs. ⟩
 
 Here are other packages that I want to be installed onto my machine.
 #+BEGIN_SRC emacs-lisp :tangle init.el
-;; Haskell's cool
-(use-package haskell-mode )
+(use-package dash) ;; “A modern list library for Emacs”
+(use-package s)    ;; “The long lost Emacs string manipulation library”.
+(use-package f)    ;; Library for working with system files; ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 
-;; Lisp libraries with Haskell-like naming.
-(use-package dash)    ;; “A modern list library for Emacs”
-(use-package s   )    ;; “The long lost Emacs string manipulation library”.
-
-;; Let's use the “s” library.
 (defvar my/personal-machine?
   (equal "Musa’s MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
   "Is this my personal machine, or my work machine?
@@ -1353,10 +1347,6 @@ Here are other packages that I want to be installed onto my machine.
      dscacheutil -flushcache")
 
 (defvar my/work-machine? (not my/personal-machine?))
-
-;; Library for working with system files;
-;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
-(use-package f)
 #+END_SRC
 
 Note:
@@ -1514,15 +1504,13 @@ window manager for macOS along the lines of xmonad.”
 
 #+begin_src emacs-lisp :tangle init.el
 ;; Unlike the Helm variant, we need to specify our OS pacman.
-(when (eq system-type 'darwin)
-  (setq system-packages-package-manager 'brew))
+(setq system-packages-package-manager 'brew)
 
 ;; If the given system package doesn't exist; install it.
-(when (eq system-type 'darwin)
-  (system-packages-ensure "amethyst")) ;; This is a MacOS specific package.
+;; (system-packages-ensure "amethyst") ;; This is a MacOS specific package.
 
-(ignore-errors (system-packages-ensure "google-chrome")) ;; My choice of web browser
-(system-packages-ensure "microsoft-teams") ;; For remote work meetings
+;; (ignore-errors (system-packages-ensure "google-chrome")) ;; My choice of web browser
+;; (system-packages-ensure "microsoft-teams") ;; For remote work meetings
 
 ;; Gif maker; needs privileges to capture screen.
 ;;
@@ -1532,17 +1520,17 @@ window manager for macOS along the lines of xmonad.”
 (system-packages-ensure "licecap") ;; Use: ⌘-SPACE licecap
 
 ;; Pack, ship and run any application as a lightweight container
-(system-packages-ensure "docker")
+;; (system-packages-ensure "docker")
 ;; Free universal database tool and SQL client
-(system-packages-ensure "dbeaver-community")
+;; (system-packages-ensure "dbeaver-community")
 ;; Kubernetes IDE
-(system-packages-ensure "lens")
+;; (system-packages-ensure "lens")
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
 (system-packages-ensure "node") ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
-(shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
+;; (shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
 ;; According to https://github.com/nvm-sh/nvm, nvm shouldn't be installed via brew.
 
 ;; ;; Use “brew cask install” instead of “brew install” for installing programs.;
@@ -1565,7 +1553,7 @@ Neato! Now I can live in Emacs even more ^_^
 problem of randomly not working.  Unfortunatley it has no command line
 interface, so let's make one in Emacs: Now kbd:⌘-a_r relaunches Amethyst.
 #+begin_details
-#+begin_src emacs-lisp :tangle init.el
+#+begin_src emacs-lisp :tangle no
 (defun ⌘-quit (app)
   "Kill application APP; e.g., “amethyst” or “Safari”"
   (shell-command (format "osascript -e 'quit app \"%s\"'" app)))
@@ -1574,7 +1562,6 @@ interface, so let's make one in Emacs: Now kbd:⌘-a_r relaunches Amethyst.
  "Open application APP; e.g., “amethyst” or “Safari”"
   (async-shell-command (format "osascript -e 'launch app \"%s\"'" app)))
 
-;; (bind-key "???-a r" #'my/relaunch-amethyst)
 (defun my/relaunch-amethyst () (interactive)
        (⌘-quit "amethyst")
        (⌘-open "amethyst"))
@@ -1584,8 +1571,7 @@ We use the ~osascript~ command to ~tell~ the [[https://en.wikibooks.org/wiki/App
 keystrokes to other applications. I found out about by Googling “How to send
 keystrokes from terminal”.
 
-#+begin_src emacs-lisp  :tangle init.el
-;; (bind-key "???-a c" #'amethyst/cycle-layout)
+#+begin_src emacs-lisp  :tangle no
 (defun amethyst/cycle-layout ()
   (interactive)
   (shell-command "osascript -e 'tell application \"System Events\" to keystroke space using {shift down, option down}'"))
@@ -1633,7 +1619,6 @@ when Org-mode attempts to produce a PDF.
 
 #+begin_src emacs-lisp :tangle init.el
 (use-package exec-path-from-shell
-  :defer nil
   :init
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))
@@ -1668,7 +1653,6 @@ thought of implementing that.
 #+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
-  :defer nil
   ;; If I ever close Emacs, it's likely because I want to restart it.
   :bind ("C-x C-c" . restart-emacs)
   ;; Let's define an alias so there's no need to remember the order.
@@ -1712,7 +1696,6 @@ started, toggle follow-mode with ~C-c C-f~ to obtain contextual-awareness; e.g.,
 /Try and be grateful!/
 #+BEGIN_SRC emacs-lisp :tangle init.el
 (use-package helm
-  :defer nil
  :init (helm-mode t)
  :bind (("M-x"     . helm-M-x)
         ("C-x C-f" . helm-find-files)
@@ -1734,12 +1717,11 @@ started, toggle follow-mode with ~C-c C-f~ to obtain contextual-awareness; e.g.,
 
 ;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
 ;; (use-package helm-icons
-;;   :defer nil
 ;;   :custom (helm-icons-provider 'all-the-icons)
 ;;   :config (helm-icons-enable))
 
 ;; When I want to see the TOC of an Org file, show me down to 3 subheadings.
-(setq org-imenu-depth 3)
+(setq org-imenu-depth 7)
 #+END_SRC
 
 Helm provides generic functions for completions to replace
@@ -1791,7 +1773,7 @@ or find a file with that name.
 Incidentally, Helm even provides an [[http://tuhdo.github.io/helm-intro.html#orgheadline24][interface]] for the ~top~ program via
 ~helm-top~. It also serves as an interface to popular search engines
 and over 100 websites such as ~google, stackoverflow, ctan~, and ~arxiv~.
-#+begin_src emacs-lisp :tangle init.el
+#+begin_src emacs-lisp :tangle no
 (system-packages-ensure "surfraw")
 ; ⇒  “M-x helm-surfraw” or “C-x c s”
 #+end_src
@@ -1807,7 +1789,6 @@ edits by pressing ~C-c C-e~ when a search buffer exists. Incidentally, executing
 changes with ~C-c C-e~ and apply them by ~C-x C-s~.
 #+BEGIN_SRC emacs-lisp :tangle init.el
 (use-package helm-swoop
-  :defer nil
   :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
           ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
           ;; Go back to last position where ‘helm-swoop’ was called
@@ -1901,11 +1882,9 @@ Finally, note that there is now a ~M-x helm-info~ command to show documentation,
 possibly with examples, of the packages installed. For example,
 ~M-x helm-info RET dash RET -parition RET~ to see how the parition function from the
 dash library works via examples ;-)
-#+begin_src emacs-lisp :tangle init.el
+#+begin_src emacs-lisp :tangle no
 ;; Make `links' from elisp symbols (quoted functions, variables and fonts) in Gnu-Emacs Info viewer to their help documentation.
-(use-package inform
-  :defer nil
-  :config (require 'inform))
+(use-package inform :config (require 'inform))
 #+end_src
 ** Org-Mode Administrivia
 :PROPERTIES:
@@ -1942,7 +1921,6 @@ org-mode setup for a file.
 
 #+begin_src emacs-lisp :tangle init.el
 (use-package emacs
-    :defer nil
     :ensure org-contrib
     :config (require 'ox-extra)
             (ox-extras-activate '(ignore-headlines)))
@@ -2010,7 +1988,6 @@ https://alhassy.github.io/org-special-block-extras/
 ;; TODO org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
 ;;
 (use-package org-special-block-extras
-  :defer nil
   :hook (org-mode . org-special-block-extras-mode)
   :custom
     ;; The places where I keep my ‘#+documentation’
@@ -2097,7 +2074,7 @@ shared prefix /only once/ thereby having:
 #+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
-(use-package hydra :defer nil)
+(use-package hydra)
 #+END_SRC
 
 # Outdated image.
@@ -2143,7 +2120,7 @@ trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][format
   :custom (hydra-posframe-border-width 5))
 
 ;; Neato doc strings for hydras
-(use-package pretty-hydra :defer nil)
+(use-package pretty-hydra)
 #+end_src
 
 To /actually/ define hydras, we make a helper function: doc:my/defhydra
@@ -2229,9 +2206,10 @@ Is replaced by:
            (-flatten-n 1))))))
 #+end_src
 #+end_details
-*** Textual Navigation ---“Look Ma, no CTRL key!”
+*** Textual Navigation ---“Look Ma, no CTRL key!” :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Textual-Navigation-Look-Ma-no-CTRL-key
+:header-args: :tangle no
 :END:
 
 Basic movement commands ---without having to hold the control key!
@@ -2240,7 +2218,7 @@ Basic movement commands ---without having to hold the control key!
 =n,p,f,…= for other movement commands. Unlisted keys insert themselves, whereas ~q~
 close the pop-up menu.
 
-#+begin_src emacs-lisp :tangle init.el
+#+begin_src emacs-lisp
 (my/defhydra "C-n" "\t\t\t\t\tTextual Navigation" arrows
    :Line
    ("n" next-line)
@@ -2273,9 +2251,10 @@ Also …
 (setq next-line-add-newlines t)
 #+END_SRC
 
-*** Window Navigation
+*** Window Navigation :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Window-Navigation
+:header-args: :tangle no
 :END:
 It can be difficult to remember the incantations to adjust
 windows, so we can make a hydra to alleviate the trouble.
@@ -3227,8 +3206,9 @@ and so I need only type partial words then tab to get the full word!
 
 #+begin_src emacs-lisp
 (use-package company
-
+  :hook (prog-mode org-mode)
   :config
+
   (global-company-mode 1)
   (setq ;; Only 2 letters required for completion to activate.
    company-minimum-prefix-length 2
@@ -4233,20 +4213,15 @@ Here is the actual implementation:
        )))
 
 
-
-       (-let [(&plist :file) (map-into (map-apply (lambda (k v) (cons (intern (concat ":" (downcase k))) v)) (org-entry-properties (point))) 'plist)]
-         file
-         )
-
-
-       ;; MA: This is new stuff.
-       (put 'org-deflink 'lisp-indent-function 'defun)
-       (put 'org-deftag 'lisp-indent-function 'defun)
+;; MA: This is new stuff.
+(put 'org-deflink 'lisp-indent-function 'defun)
+(put 'org-deftag 'lisp-indent-function 'defun)
 
        ;; Example use
        (org-deftag identity ()
          "Do nothing to Org headings"
          (insert o-heading)) ;; Wait, I think this strips tags?
+
 
        (org-deftag disabled (color)
          "Render the body of a heading in a <details> element, titled “Disabled”.
@@ -4536,6 +4511,12 @@ Let's remove repeated matter.
 (global-set-key (kbd "<f7>") 'recompile)
 #+END_SRC
 
+** No code evaluation upon export
+
+#+begin_src emacs-lisp
+;; Ignore all header arguments relating to “:eval”. Do not evaluate code when I export to HTML or LaTeX or anything else.
+(setq org-export-use-babel nil)
+#+end_src
 * Staying Sane
 :PROPERTIES:
 :CUSTOM_ID: Staying-Safe
@@ -4906,13 +4887,13 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 (maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
 (maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
-(maybe-clone "https://github.com/alhassy/holy-books")
+;; (maybe-clone "https://github.com/alhassy/holy-books")
 #+end_src
 
 #+begin_details Many more repos to clone
 #+begin_src emacs-lisp
 
-(maybe-clone "https://github.com/alhassy/melpa")
+;; (maybe-clone "https://github.com/alhassy/melpa")
 (maybe-clone "https://github.com/alhassy/org-special-block-extras")
 
 
@@ -4925,12 +4906,12 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols") ;; Deleted?
 
 (maybe-clone "https://github.com/alhassy/islam")
-(maybe-clone "https://github.com/alhassy/CheatSheet")
-(maybe-clone "https://github.com/alhassy/ElispCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/CheatSheet")
+;; (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
-(maybe-clone "https://github.com/alhassy/RubyCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/RubyCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/PrologCheatSheet")
 ;; (maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
 
@@ -5410,7 +5391,7 @@ To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to chec
 
 #+begin_src emacs-lisp
 ;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
-(use-package browse-at-remote   :defer nil)
+(use-package browse-at-remote)
 #+end_src
 ** COMMENT Elementary Version Control
 :PROPERTIES:
@@ -5492,9 +5473,7 @@ is found with ~M-x dired~ ---doc:dired.
 #+BEGIN_SRC emacs-lisp  :tangle init.el
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets
-  :defer nil
-  :hook (org-mode . org-bullets-mode))
+(use-package org-bullets :hook (org-mode . org-bullets-mode))
 #+END_SRC
 ** Emojis
 :PROPERTIES:
@@ -5614,7 +5593,6 @@ NOTE: We need to run =M-x= doc:nerd-icons-install-fonts for doom-modeline to use
 #+begin_src emacs-lisp :tangle init.el
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
 (use-package doom-modeline
-  :defer nil
   :config (doom-modeline-mode))
 
   ;; Use minimal height so icons still fit; modeline gets slightly larger when
@@ -5992,7 +5970,6 @@ Moreover, we reduce the mental strain of locating the cursour when navigation ha
 When we switch windows or scroll, for example, we get a wave of light near the cursor.
 #+begin_src emacs-lisp
 (use-package beacon
-  :defer nil
   :config (setq beacon-color "#666600")
   :hook   ((org-mode text-mode) . beacon-mode))
 #+end_src
@@ -6005,14 +5982,13 @@ When we switch windows or scroll, for example, we get a wave of light near the c
 Let's dim windows, and even the whole Emacs frame, when not in use.
 #+BEGIN_SRC emacs-lisp
 (use-package dimmer
-  :defer nil
   :config (dimmer-mode))
 #+END_SRC
 
 A more ‘fine-grained’ [[https://github.com/larstvei/Focus][tool]] dims all text except the ‘paragraph’ you're working
 on. It's nifty, but not for me.
 
-** Flashing when something goes wrong
+** TODO Flashing when something goes wrong
 :PROPERTIES:
 :CUSTOM_ID: Flashing-when-something-goes-wrong
 :END:
@@ -6023,9 +5999,9 @@ sequence, or misspelling a word.
 ;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
 
 ;; The doom themes package comes with a function to make the mode line flash on error.
-(use-package doom-themes   :defer nil)
-(require 'doom-themes-ext-visual-bell)
-(doom-themes-visual-bell-config)
+;; (use-package doom-themes)
+;; (require 'doom-themes-ext-visual-bell)
+;; (doom-themes-visual-bell-config)
 #+END_SRC
 
 --------------------------------------------------------------------------------
@@ -6066,7 +6042,6 @@ Colour parens, and other delimiters, depending on their depth.
 Very useful for parens heavy languages like Lisp.
 #+begin_src emacs-lisp :tangle init.el
 (use-package rainbow-delimiters
-  :disabled
   :hook ((org-mode prog-mode text-mode) . rainbow-delimiters-mode))
 #+end_src
 
@@ -6359,7 +6334,6 @@ Automatically display emphasis markers and links when the cursor is on them.
 (c.f. ~fragtog~ below)
 #+begin_src emacs-lisp
 (use-package org-appear
-  :disabled t
   :hook (org-mode . org-appear-mode)
   :init (setq org-appear-autoemphasis  t
               org-appear-autolinks nil
@@ -6403,7 +6377,8 @@ really nice inline image: $e^{i \pi} + 1 = 0$. It also works for LaTeX
 environments ---for personal environments, just ~(add-to-list
 'org-latex-packages-alist "LaTeX definitions here")~.
 
-#+begin_src emacs-lisp
+[Disabled]
+#+begin_src emacs-lisp :tangle no
 ;; Make previews a bit larger
 (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
 
@@ -6469,13 +6444,12 @@ In case we forgot which heading we're under, let's keep
 the current heading stuck at the top of the window.
 #+BEGIN_SRC emacs-lisp
  (use-package org-sticky-header
-  :defer nil
   :hook (org-mode . org-sticky-header-mode)
   :config
   (setq-default
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " / "))
+   org-sticky-header-outline-path-separator " ▷ "))
 #+END_SRC
 ** Powerful Directory Editing with ~dired :Disabled:~
 :PROPERTIES:
@@ -6512,7 +6486,6 @@ Pressing ~i~ inserts a directory's children under it, indented, in the current
 buffer. Useful to see what's there.
 #+BEGIN_SRC emacs-lisp
 (use-package dired-subtree
-  :defer nil
   :bind (:map dired-mode-map
               ("i" . dired-subtree-toggle)))
 #+END_SRC
@@ -6521,7 +6494,6 @@ When directory ~𝒳~ has only one child ~𝒴~, then in dired, instead of ~𝒳
 with ~𝒳~ greyed out.
 #+BEGIN_SRC emacs-lisp
 (use-package dired-collapse
-  :defer nil
   :hook (dired-mode . dired-collapse-mode))
 #+END_SRC
 
@@ -6530,7 +6502,6 @@ requirement; and with “garbage” files not shown ---i.e., those ending in
 ~.aux, .out~, etc.
 #+BEGIN_SRC emacs-lisp
 (use-package dired-filter
-  :defer nil
   :hook (dired-mode . (lambda () (dired-filter-group-mode)
                                  (dired-filter-by-garbage)))
   :custom
@@ -6584,9 +6555,10 @@ an automatic replacement for nearly all of my uses.
   display of parent directories along with a file preview mechanism.
 #+end_details
 
-** Persistent Scratch Buffer
+** Persistent Scratch Buffer :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Persistent-Scratch-Buffer
+:header-args: :tangle no
 :END:
 
 The ~*scratch*~ buffer is a nice playground for temporary data or experiments.
@@ -6594,16 +6566,14 @@ The ~*scratch*~ buffer is a nice playground for temporary data or experiments.
 However, by default its contents are not saved --which may be an issue if we
 have not relocated our playthings to their appropriate files. Whence let's save
 & restore the scratch buffer by default.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package persistent-scratch
-
   ;; In this mode, the usual save key saves to the underlying persistent file.
-  :bind (:map persistent-scratch-mode-map
-              ("C-x C-s" . persistent-scratch-save)))
-#+END_SRC
+  :bind (:map persistent-scratch-mode-map ("C-x C-s" . persistent-scratch-save)))
+#+end_src
 
 We might accidentally close this buffer, so we could utilise the following.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun scratch ()
    "Recreate the scratch buffer, loading any persistent state."
    (interactive)
@@ -6617,15 +6587,15 @@ We might accidentally close this buffer, so we could utilise the following.
 
 ;; Upon startup, close the default scratch buffer and open one as specfied above
 (ignore-errors (kill-buffer "*scratch*") (scratch))
-#+END_SRC
+#+end_src
 
 I use Org-mode often, so that's how I want things to appear.
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq initial-scratch-message (concat
   "#+title: Persistent Scratch Buffer"
   "\n#\n# Welcome! This’ a place for trying things out."
   "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
-#+END_SRC
+#+end_src
 
 ** Tabs                                                            :Disabled:
 :PROPERTIES:
@@ -6639,7 +6609,6 @@ Something cute to show to others, but not as fast as the keyboard.
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package awesome-tab
-  :disabled t
   :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
   :config (awesome-tab-mode t))
 
@@ -6665,7 +6634,6 @@ are still readable.
 
 #+begin_src emacs-lisp :tangle no
 (use-package golden-ratio
-  :disabled t
   :init (golden-ratio-mode 1))
 #+end_src
 
@@ -6750,7 +6718,6 @@ doc:font-lock-mode, which performs arbitrary syntax highlighting.
 
 #+begin_src emacs-lisp
 (use-package svg-tag-mode
-    :defer nil
   :hook (org-mode prog-mode)
   ;; :config (global-svg-tag-mode) ;; Nope: Breaks xwidget-webkit-browse-url, issue#28.
   :config
@@ -6839,9 +6806,10 @@ Example:
 
 [[https://miro.medium.com/v2/resize:fit:4800/1*bpG6TxN-nS6enHkp-KIZgg.jpeg][1% better everyday, push-ups!]]
 
-** Ibuffer: C-x C-b shows colour-coded buffers, grouped according to their git repos
+** Ibuffer: C-x C-b shows colour-coded buffers, grouped according to their git repos :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Ibuffer
+:header-args: :tangle no
 :END:
 #+begin_src emacs-lisp :tangle no
 ;; Let's use an improved buffer list.
@@ -6886,9 +6854,10 @@ Example:
 (use-package all-the-icons
     :config (all-the-icons-install-fonts 'install-without-asking))
 #+end_src
-** TODO COMMENT Having a workspace manager in Emacs                :Disabled:
+** Having a workspace manager in Emacs                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
+:header-args: :tangle no
 :END:
 
 I've loved using XMonad as a window tiling manager.  I've enjoyed the ability to
@@ -6902,7 +6871,6 @@ achieve the same thing by ‘grouping buffers together’. )
 
 #+begin_src emacs-lisp :tangle no
 (use-package perspective
-
   :config ;; Activate it.
           (persp-mode)
           ;; In the modeline, tell me which workspace I'm in.
@@ -6919,9 +6887,10 @@ All commands are prefixed by ~C-x x~; main commands:
 As always, since we've installed ~which-key~, it suffices to press ~C-x x~ then look
 at the resulting menu 😃
 
-** TODO COMMENT Kill all buffers that are not associated with a file
+** Kill all buffers that are not associated with a file :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
+:header-args: :tangle no
 :END:
 
 #+begin_src emacs-lisp
@@ -7056,9 +7025,9 @@ For that, there are numerous packages:
 
 For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick/issues/8.
 
-** TODO COMMENT RDD
+** TODO RDD
 
-*** get the pkg
+*** get the pkg :ignore:
 #+begin_src emacs-lisp :tangle init.el
 (use-package repl-driven-development)
 (setq repl-driven-development-echo-duration 10)
@@ -7091,7 +7060,7 @@ For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick
         \n System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
 ;; TODO [Truncation; Low] https://github.com/xiongtx/eros/blob/master/eros.el#L202
 #+end_src
-*** mvn
+*** TODO COMMENT mvn
 #+begin_src emacs-lisp :tangle init.el
 (defun mvn (groupId artifactId)
   "Quickly install a library from Maven Central."
@@ -7156,7 +7125,7 @@ For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick
   )
 #+end_src
 
-*** Adding support for “//!use” & “//!omit” top level repl commands
+*** TODO COMMENT Adding support for “//!use” & “//!omit” top level repl commands
 #+begin_src emacs-lisp
 ;; Adding support for “//!use” & “//!omit” top level repl commands
 (setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
@@ -7215,12 +7184,12 @@ Where directory hierarchy com/x/y/z denotes a Java package under the above //!us
     (repl/jshell (point-min) (point-max))))
 #+end_src
 
-*** Misc top level cmds
+*** TODO COMMENT Misc top level cmds
 
 TODO: Make repl load all company class files, that way I have them upon start up.
 OR: Provide a command `//!load ~/dir` which recursively loads/imports all java files? <---Probably this!
 
-*** COMMENT Quickly Run Code Snippets
+*** TODO COMMENT Quickly Run Code Snippets
 :PROPERTIES:
 :CUSTOM_ID: Quickly-Run-Code-Snippets
 :END:
@@ -7243,7 +7212,6 @@ choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-
   ;; ⇒ “C-c C-r” to see output, “q” to close output
   ;; ⇒ “C-u C-c C-r” prompts for a language (Useful when testing snippets different from current programming mode)
   ;; ⇒ In a non-programming buffer, “C-c C-r” runs selected region.
-  :defer nil
   :config (bind-key* "C-c C-r"
                      (lambda (&optional start end)
                        (interactive "r")
@@ -7260,8 +7228,8 @@ Example...
 
 Actually, let's get a [[https://github.com/brotzeit/rustic#intro][full Rust development environment for Emacs]] (which also
 has [[https://github.com/brotzeit/rustic#org-babel][great support for Org-babel]].)
-#+begin_src emacs-lisp
-(use-package rustic   :defer nil)
+#+begin_src emacs-lisp :tangle no
+(use-package rustic)
 ;; Open any Rust file, and run “M-x lsp” which will then prompt you to install
 ;; rust-analyzer, the rust LSP.
 ;;
@@ -7335,7 +7303,7 @@ edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected reg
 😉]
 
 #+begin_src emacs-lisp
-(use-package separedit   :defer nil)
+(use-package separedit)
 ;;
 ;; # Example Usage
 ;;
@@ -7493,7 +7461,7 @@ Src: https://scripter.co/splitting-an-org-block-into-two/"
 
 I'd like to [[https://github.com/andreasjansson/language-detection.el][guess the language]] I'm in, when working with strings.
 #+begin_src emacs-lisp
-(use-package language-detection   :defer nil)
+(use-package language-detection)
 ;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
 ;; Also, (language-detection-string "select * from t") ;; ⇒ sql
 
@@ -7759,7 +7727,6 @@ that it works by brute-force regular-expression lookup of
 pre-defined ‘definitional template’ rules. It “just works” ^_^
 #+BEGIN_SRC emacs-lisp
 (use-package dumb-jump
-    :defer nil
   :bind (("M-g q"     . dumb-jump-quick-look) ;; Show me in a tooltip.
          ("M-g ."     . dumb-jump-go-other-window)
          ("M-g b"     . dumb-jump-back)
@@ -7865,7 +7832,7 @@ A comment box sometimes increases the size of a file more than I'd like, or more
 As such, let's try [[https://github.com/WJCFerguson/banner-comment][banner comments]]:
 - GIF: https://github.com/WJCFerguson/banner-comment/blob/35d3315683d3f97605207691b77e9f447af18fe2/demo.png
 #+begin_src emacs-lisp
-(use-package banner-comment   :defer nil)
+(use-package banner-comment)
 #+end_src
 
 Pretty slick!
@@ -7955,7 +7922,6 @@ presentation which contains a small self-contained introduction, or [[https://gi
 which discuss hooks and support for special modes ([[https://superuser.com/questions/576447/enable-hideshow-for-more-modes-e-g-ruby][like this one]]).
 #+BEGIN_SRC emacs-lisp
 (use-package hideshow
-  :defer nil
   :init
   ;; https://github.com/emacsmirror/emacswiki.org/blob/master/hideshowvis.el
   (quelpa '(hideshowvis :fetcher wiki))
@@ -8255,7 +8221,6 @@ but have not yet enclosed the final parens, I still want nice indentation. So...
 ;; you edit the code. No special key strokes needed.
 ;; Demo: https://www.youtube.com/watch?v=zrFmfFZfj-A&ab_channel=JiahaoLi
 (use-package el-fly-indent-mode
-    :defer nil
   :config (add-hook 'emacs-lisp-mode-hook #'el-fly-indent-mode))
 #+end_src
 *** Indentation Guide
@@ -8272,6 +8237,9 @@ The following is also “OK” in Org-mode ;-)
   (highlight-indent-guides-method 'character)
   (highlight-indent-guides-character ?|)
   (highlight-indent-guides-responsive 'stack))
+
+
+(load-file "~/.emacs.d/elpa/highlight-indent-guides-20200820.2328/highlight-indent-guides.el")
 #+end_src
 *** Being Generous with Whitespace                                 :Disabled:
 :PROPERTIES:
@@ -8317,7 +8285,6 @@ for it to do so “on save”.
 
 #+begin_src emacs-lisp
 (use-package format-all
-    :defer nil
   ;; To enable format on save for most programming language buffers:
   :hook (prog-mode . format-all-mode)
   :config
@@ -8443,7 +8410,6 @@ Here are further reads:
 
 #+begin_src emacs-lisp
 (use-package highlight-quoted
-  :defer nil
   :config (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
 
 ;; If everything worked fine, then “ 'b ” below should be coloured nicely in Emacs Lisp mode.
@@ -8470,6 +8436,14 @@ Lightweight syntax highlighting improvement for numbers and escape sequences (e.
   (put 'hes-escape-backslash-face 'face-alias 'font-lock-builtin-face)
   (put 'hes-escape-sequence-face 'face-alias 'font-lock-builtin-face))
 
+
+;; TODO: My Emacs seems to have trouble loading the following and so I'm doint it manually.
+(load-file "~/.emacs.d/elpa/company-posframe-20230104.1229/company-posframe.el")
+(load-file "~/.emacs.d/elpa/highlight-escape-sequences-20201214.1730/highlight-escape-sequences.el")
+(load-file "~/.emacs.d/elpa/parent-mode-20240210.1906/parent-mode.el")
+(load-file "~/.emacs.d/elpa/highlight-numbers-20181013.1744/highlight-numbers.el")
+
+
 ;; If the above two worked fine, then you should see \n and 3 highlighted below
 (when nil "Look: 1 and \\ and \n 2" (setq three 3))
 #+end_src
@@ -8485,6 +8459,7 @@ blocks we use ~C-c '~.
 #+BEGIN_SRC emacs-lisp
 ;; Emacs Lisp specific
 (use-package highlight-defined :hook emacs-lisp-mode)
+(load-file "~/.emacs.d/elpa/highlight-defined-20210411.222/highlight-defined.el")
 #+END_SRC
 
 Super helpful in making my Emacs configuration: If a name is not highlighted,
@@ -8602,6 +8577,9 @@ In particular, when editing Lisp code, the (company-quickhelp) doc strings
 appear in nice frames when I pause on a completion candidate.
 #+begin_src emacs-lisp
 (use-package company-posframe :hook prog-mode)
+
+;; I want to see the doc pop-ups nearly instantaneously 😅
+(setq company-posframe-quickhelp-delay 0)
 #+end_src
 
 ** interactive macro-expander
@@ -8659,7 +8637,6 @@ and template expansion for inescapably repetitive scenarios.
 ;; 2. Lookup docs: [C-u] M-x devdocs-lookup
 ;; 𝟚. Lookup docs: [C-u] C-c d
 (use-package devdocs
-  :defer nil
   :bind ("C-c d" . #'devdocs-lookup)
   :config
   (when nil ;; “C-x C-e” the following once.
@@ -9108,7 +9085,6 @@ This is so sweet at work (and possibly at home!): From anywhere,
 Let's get the file path of the current file. We bind it and make it a top-level invokable function.
 #+begin_src emacs-lisp
 (use-package projectile
-    :defer nil
     :config
 (define-key projectile-mode-map (kbd "C-x p c")
   (defun my/copy-current-file-path ()
@@ -9142,7 +9118,6 @@ status using cute & compact emoji such as ~😱3~.
 
 #+begin_src emacs-lisp
 (use-package flycheck-status-emoji
-    :defer nil
   :config
   (load-library "flycheck-status-emoji")
   ;; (diminish-undo 'flycheck-mode)
@@ -9151,7 +9126,7 @@ status using cute & compact emoji such as ~😱3~.
 
 Let's also have a nifty modal menu to quickly navigate between errors.
 #+begin_src emacs-lisp
-(use-package helm-flycheck   :defer nil)
+(use-package helm-flycheck)
  (bind-key*
  "C-c !"
  (defhydra my/flycheck-hydra (:color blue :hint nil)
@@ -9189,7 +9164,6 @@ check buffers; which must be installed separately.
 
 #+begin_src emacs-lisp
 (use-package flycheck
-  :defer nil
   :init (global-flycheck-mode)
   :config ;; There may be multiple tools; I have GHC not Stack, so let's avoid that.
   (setq-default flycheck-disabled-checkers '(haskell-stack-ghc emacs-lisp-checkdoc))
@@ -9217,7 +9191,6 @@ I think the built-in [[https://www.gnu.org/software/emacs/manual/html_node/emacs
 so let's use that for ELisp.
 #+BEGIN_SRC emacs-lisp
 (use-package flymake
-  :defer nil
   :hook ((emacs-lisp-mode . (lambda () (flycheck-mode -1)))
          (emacs-lisp-mode . flymake-mode))
   :bind (:map flymake-mode-map
@@ -9239,7 +9212,6 @@ the 𝓃-th next clockwise window, but using ~s-↑,↓,←,→~ may be faster.
 
 #+BEGIN_SRC emacs-lisp
 (use-package windmove
-    :defer nil
   :config ;; use command key on Mac
           (windmove-default-keybindings 'super)
           ;; wrap around at edges
@@ -9249,7 +9221,6 @@ the 𝓃-th next clockwise window, but using ~s-↑,↓,←,→~ may be faster.
 The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, have usage examples.
 #+BEGIN_SRC emacs-lisp
 (use-package buffer-flip
-    :defer nil
   :bind
    (:map buffer-flip-map
     ("M-<tab>"   . buffer-flip-forward)
@@ -9631,7 +9602,7 @@ Let's use [[https://github.com/lighttiger2505/sqls][LSP for SQL]], to get
 ;; TODO: Remove this 'car'!
 (add-hook 'sql-mode-hook 'lsp)
 
-(use-package org-modern   :defer nil)
+(use-package org-modern)
 (defun my/execute-query-at-point ()
   "Execute query at point and make resulting table an Org table and modernise it"
   (interactive)
@@ -9677,7 +9648,6 @@ invoke M-x `lsp-sql-switch-connection'."
 ;; NOTE: You must commented out the (require 'ejc-direx) from ejc-sql.el
 ;; Reason: https://github.com/kostafey/ejc-sql/issues/163
 (use-package ejc-sql
-    :defer nil
   :config
   (require 'ejc-company)
   (push 'ejc-company-backend company-backends)
@@ -9773,7 +9743,6 @@ other connections call with a prefix argument."
 #+begin_src emacs-lisp
 ;; Usage: M-x docker [RET ?]
 (use-package docker
-    :defer nil
   :config
   (my/defaliases docker-containers w-show-docker-containers))
 
@@ -10064,7 +10033,6 @@ Also: TODO. doc.lsp-format-buffer makes the code more readable.
 
 #+begin_src emacs-lisp
 (use-package lsp-mode
-    :defer nil
   :init
   ;; Set prefix for lsp commands
   ;; (setq lsp-keymap-prefix "s-l") ;; default
@@ -10113,16 +10081,16 @@ For JavaScript development, actually install the required servers locally.
 ;;
 ;; You only have to put (use-package lsp-ui) in your config and the package will
 ;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
-(use-package lsp-ui   :defer nil)
+(use-package lsp-ui)
 
 ;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
 ;; call hierarchy, etc.)
-(use-package lsp-treemacs   :defer nil) ;; https://github.com/emacs-lsp/lsp-treemacs
+(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
 ;; M-x lsp-treemacs-errors-list
 
 ;; helm-lsp provides “on type completion” alternative of cross-referencing.
 ;; https://github.com/emacs-lsp/helm-lsp
-(use-package helm-lsp   :defer nil)
+(use-package helm-lsp)
  (require 'lsp-mode)
  (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
 ;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
@@ -10724,7 +10692,7 @@ When we open a JSON file, we are promoted to install an LSP server, which
 - Shows the full path to the cursor's location, at the top of the window.
 
 #+begin_src emacs-lisp
-(use-package json-mode   :defer nil)
+(use-package json-mode)
 #+end_src
 
 Useful bindings are in the docstring of TODO. doc.json-mode.
@@ -10788,7 +10756,6 @@ console.log({ List the variables here whose values you want to log });
 (defun length> (x y) (> (length x) y))
 (defun length= (x y) (= (length x) y))
 (ignore-error (use-package turbo-log
-  :defer nil
   :quelpa (turbo-log :fetcher github :repo "artawower/turbo-log.el")
   :config (setq turbo-console--prefix "✰")))
 (bind-key* "C-x l" #'my/turbo-log-hydra/body)
@@ -10866,7 +10833,6 @@ consists of a big fat DEBUG together with a counter and the current filename).
 ;; Note “5” is the fifth debug message, and “del.js” is the name of the buffer.
 ;; Works with Rust, Java, Lisps, JS, TS, Clojure, C/C++, Ruby, Matlab/Octave, Shell, Perl.
 (use-package ll-debug
-  :defer nil
   :config
   (bind-key "C-x l" (lambda () (interactive) (ll-debug-insert 1)) #'prog-mode-map))
 
@@ -10896,7 +10862,6 @@ doing that.
 ;; Use: Run “M-x jsdoc” on a JS function.
 ;;
 (use-package jsdoc
-    :defer nil
   :quelpa (jsdoc
            :fetcher github
            :repo "isamert/jsdoc.el")
@@ -12167,10 +12132,10 @@ Hey bud, hope you're enjoying this read ^_^
 
 Now that I've written this, I'm thinking it may have been preferably to use an org-block…?
 
-*** Diagrams with Mermaid ---Not Reccommended                      :Disabled:
+*** Diagrams with Mermaid ---Not Recommended                      :Disabled:
 :PROPERTIES:
-:CUSTOM_ID: Diagrams-with-Mermaid-Not-Reccommended
-:header-args: :tangle no
+:CUSTOM_ID: Diagrams-with-Mermaid-Not-Recommended
+:header-args: :tangle no :eval no-export
 :END:
 
 Let's try out an alternative to PlantUML ---covered below in §[[Workflow States]].
@@ -12188,7 +12153,7 @@ Then, let's get the associated ~mermaid~ package.
 #+END_SRC
 
 Then, =C-c C-c= on the following:
-#+BEGIN_SRC mermaid :file test.png :theme neutral :background-color green  :tangle no :results replace :eval never
+#+BEGIN_SRC mermaid :file test.png :theme neutral :background-color green  :tangle no :results replace :eval never-export
 sequenceDiagram
 A-->B: Works!
 #+END_SRC
@@ -12373,7 +12338,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
 ;; With a prefix argument prompt for the format style 𝒮.
 ;; Easy to add more formats.
-(use-package copy-as-format   :defer nil)
+(use-package copy-as-format)
 #+end_src
 
 ** TODO COMMENT Working with PDFs                                  :Disabled:
@@ -12488,7 +12453,7 @@ Dual to ~C-k~,
 ;; M-k kills to the left
 (global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
 #+END_SRC
-* Browsing
+* COMMENT Browsing
 
 ** Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.
 :PROPERTIES:
@@ -12500,9 +12465,11 @@ Dual to ~C-k~,
 ;; M-x helm-chrome-history: Open a webpage from my history
 ;; [Your Chrome History SQLite database file: helm-chrome-history-file]
 (use-package helm-chrome-history)
+(load-file "~/.emacs.d/elpa/helm-chrome-history-20191031.1233/helm-chrome-history.el")
 
 ;; M-x helm-chrome-control: Jump to an open tab in Chrome
 (use-package helm-chrome-control)
+(load-file "~/.emacs.d/elpa/helm-chrome-control-20190707.1807/helm-chrome-control.el")
 #+end_src
 
 ** TODO COMMENT Background audio I want to listen to as I work
@@ -12565,7 +12532,7 @@ publish the current article to my blog.
 )
 #+END_SRC
 
-* Toggles Hydra                                                    :Disabled:
+* COMMENT Toggles Hydra                                                    :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
 :header-args: :tangle no
