@@ -1,7 +1,8 @@
-personal_ws-1.1 en 380
+personal_ws-1.1 en 415 
 ACSII
 AST
 ASTs
+Abeer
 Abu
 Administrivia
 Adulting
@@ -10,6 +11,7 @@ Akram
 AlMahdi
 AlMustafa
 AlWilyah
+Amal
 Anaphoric
 Andi
 Antitonicity
@@ -27,6 +29,7 @@ Declaratively
 Denotational
 Dereference
 Destructuring
+Devlin
 Discovarability
 Distributivity
 Dualise
@@ -130,6 +133,7 @@ Yoneda
 Yoneda's
 Yusuf
 Yusuf's
+Zain
 Zaynab
 absoprtion
 accessor
@@ -174,6 +178,7 @@ colimits
 combinator
 combinatorics
 combinators
+composable
 compositional
 computability
 computable
@@ -195,6 +200,7 @@ definitionaly
 deliverables
 dereference
 dereferencing
+derivability
 destructor
 destructure
 destructuring
@@ -263,6 +269,7 @@ irreflexive
 isomorphisms
 iterable
 iterables
+joinable
 journaling
 jshell
 kubernetes
@@ -353,6 +360,7 @@ semilattice
 serialize
 sessional
 siloed
+stateful
 stepwise
 stringify
 subalgebras
@@ -362,6 +370,7 @@ subexpressions
 subsequence
 substitutivity
 substring
+subtasks
 subtype
 subtyped
 subtyping
@@ -395,6 +404,7 @@ unowned
 unparenthesised
 unquotation
 unrollings
+unsatisfiable
 unsymmetric
 unvisited
 upcasing
