@@ -12690,7 +12690,7 @@ date; smile
 bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w\\n'
 echo "~/.zhrc :: Hello, World!"
 #+end_src
-* TODO COMMENT my/consume-content                                :requires_aql_macro:
+* TODO COMMENT my/consume-content                        :requires_aql_macro:
 :PROPERTIES:
 :CREATED:  [2025-04-09 Wed 16:37]
 :END:
@@ -13619,6 +13619,22 @@ have /fewer choices/ to make and fewer reference materials to find. To decide wh
 see upcoming tasks with due dates, sort tasks by label, or create filters.  (Filters are essentially
 saved searches that sort your list with one click. They are also known as “org-agenda views”.)
 
+
+Org agenda is about collecting and filtering information which may be scattered
+among various org files.  There are two competing implementations: The built-in
+~org-agenda~ module and the external ~org-ql~ module. The former is feature-rich
+but its query syntax is difficult to get right and it lacks a “on-the-fly
+show-me-results-as-I-type” interface; in-contrast ~org-ql~ provides these
+features (and more) but lacks the mature configurability of the built-in module.
+Moreover, ~org-ql~ has a different design than ~org-agenda~, as such the idea of
+“agenda blocks” is present to help users migrate between the two and not a high
+priorty of ~org-ql~.  Anyhow, getting queries right is more important (and
+configurations can always be done with some Lisp Advice), so I'm using ~org-ql~.
+
+The Org Mode agenda is a special kind of buffer that aggregates headings and
+TODO items from your Org Mode files to make it much easier to see and act on
+them all.
+
 ** Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/
 
 Emacs is a powerful note-taking tool, supporting todo-lists, schedule management, code execution and
@@ -13707,7 +13723,10 @@ Here's a few handy filters / agenda reports to try out:
 + [[org-ql-search:Meeting][🤼 All entries that mention “Meeting” anywhere in the entry]]
 + [[org-ql-search:(and "Meeting" (not "Marketing"))][🤼-🗞️ All entries that mention “Meeting” anywhere but not “Marketing” anywhere in the entry]]
   - OR: “ M-x helm-org-ql Meeting !Marketing ”, to see results as you type!
-#+end_src
++ [[org-ql-search:(parent "Work Project")][💼 All sub-items in my Work Project]]
++ [[org-ql-search:(and (parent "Work Project") (not (tags)))][🎟️ All untagged subitems in my Work Project]]
++ [[org-ql-search:(and (priority "A") (not (scheduled)) (not (deadline)))][🔥 Urgent /yet/ unscheduled tasks!]]  
+  #+end_src
 
 Notice that they're in Org link syntax: /They're clickable queries!/
 
@@ -13802,13 +13821,14 @@ method:
   (interactive)
   (let* ((date (org-read-date))
          (org-agenda-buffer-tmp-name (format "*Org Agenda(a:%s)*" date))
-         (org-agenda-sticky nil))
-    (org-agenda-list nil date nil)
-    ;; Putting the agenda in log mode, allows to see the tasks marked as DONE
-    ;; at the corresponding time of closing. If, like me, you clock all your
-    ;; working time, the task will appear also every time it was worked on.
-    ;; This is great to get a sens of what was accomplished.
-    (org-agenda-log-mode)))
+         (org-agenda-sticky nil)
+	 (org-agenda-span 'day)
+	 ;; Putting the agenda in log mode, allows to see the tasks marked as DONE
+	 ;; at the corresponding time of closing. If, like me, you clock all your
+	 ;; working time, the task will appear also every time it was worked on.
+	 ;; This is great to get a sens of what was accomplished.
+	 (org-agenda-start-with-log-mode t))
+    (org-agenda-list nil date nil)))
 #+end_src
 
 Further Reading:
@@ -13833,7 +13853,7 @@ Further Reading:
       '(("t" "My list of all TODO entries" tags-todo "-recurring-someday+LEVEL=3"
          ((org-agenda-overriding-header "\nTODOs sorted by state, priority, effort")
           (org-agenda-sorting-strategy '(todo-state-down priority-down effort-up))
-          (org-super-agenda-groups (progn
+	  (org-super-agenda-groups (progn
                                      (org-super-agenda-mode t)
                                      '((:name "Important" :and (:priority "A" :not (:todo ("DONE" "CANCELLED"))))
                                        (:name "Process your Inbox" :tag "inbox")
@@ -13842,48 +13862,88 @@ Further Reading:
                                        (:name "Waiting" :todo "WAITING")
                                        (:name "Low Priority" :priority "C" :tag "maybe"))))))
 	("a" "Daily Agenda;    Productivity  ≈   ♯DONE / ♯TASKS"
-         ((org-ql-block
+         (
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; New things coming into my life                                         ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  (org-ql-block
 	   '(tags "inbox")
 	   ((org-ql-block-header "\n📩 Process Inbox: “m” to mark then “B r” to refile marked items 📥\n")))
 
-	  ;; `M-x org-copy` is your friend. Archive an entry as is, but copy the useful parts.
-	  ;; Archiving is useful for clocking reports from the past.
+
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; High priority 𝒚𝒆𝒕 unscheduled tasks                                   	   ;;
+	  ;; 										   ;;
+	  ;; Note to self: When I write this query, I thought “I doubt I have		   ;;
+	  ;; any hits, this is too silly”.  I was wrong. I had 300+ hits.		   ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  (org-ql-block
+	   '(and (priority "A") (not (scheduled)) (not (deadline)))
+	   ((org-ql-block-header "\n🔥 High priority 𝒚𝒆𝒕 unscheduled tasks 🚒\n")))
+
+
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; Items to review: Mine for useful info then archieve or delete         	   ;;
+	  ;; 										   ;;
+	  ;; `M-x org-copy` is your friend. Archive an entry as is, but copy the	   ;;
+	  ;; useful parts.  Archiving is useful for clocking reports from the		   ;;
+	  ;; past.									   ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   `(and (done) (not (tags "Top")) (closed :to ,(- (calendar-day-of-week (calendar-current-date))))) ;; i.e.;  :to ,(org-read-date nil nil "-1d")
 	   ((org-ql-block-header (propertize "\n📜 Items to review: Mine for useful info then archieve or delete. ☑️\n"
 					     'help-echo "Press E to toggle seeing ~5 lines of each entry."
 					     ;; Reduce the number of DONE and archived headlines so agenda operations that skip over these can finish faster.
 					     ))))
-	  
+
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; Items explicitly marked as the top focus goals for the month           ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   '(tags-local "Top")
 	   ((org-ql-block-header "\n⚡ Top goals for the month ⚡\n")
 	    (org-agenda-remove-tags t)))
 
 
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; Tasks that would bring me joy                                          ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   '(and (tags-local "Happy") (or (scheduled -7) (deadline -7) (not (done))))
 	   ((org-ql-block-header "\n🤗 I'd be happy if I got the following done this week 🥰\n")
 	    (org-agenda-remove-tags t)))
 
 
-	  ;; What “I've done so far” is all tasks closed this week.
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; What “I've done so far” is all tasks closed this week.                 ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   `(and (not (tags "Recurring")) (or (todo "WAITING" "APPROVED") (and (done) (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)))) ;; “start-of-week” /from today/
 	   ((org-ql-block-header (propertize "\n✅ What I've done so far this week 💯\n" 'help-echo "Press E to toggle seeing ~5 lines of each entry. \n If DONE, mine for useful info then archive or delete."))))
-	  
-	  ;; NOTE: I don't want to use predicate (not (done)) since I want to see the DONE items
-	  ;; as a reminder to myself to actually archive these tasks.
+
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; Deadlines: Upcoming tasks I should prepare for                        	   ;;
+	  ;; 										   ;;
+	  ;; NOTE: I don't want to use predicate (not (done)) since I want to		   ;;
+	  ;; see the DONE items as a reminder to myself to actually archive		   ;;
+	  ;; these tasks.								   ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   '(deadline auto)
 	   ((org-ql-block-header "\n🎯 Deadlines\n")))
 
 
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; Whoops, things that I've missed!                                       ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   '(and (not (habit)) (not (done)) (scheduled :to today) (not (scheduled :on today)))
 	   ((org-ql-block-header "\n📆 Overdue\n")))
 
-	  
+
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; Things loads into my cognitive memory that I should probably continue? ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   '(and
 	     (todo "STARTED")
@@ -13892,13 +13952,22 @@ Further Reading:
 	     (not (scheduled :from today)))
 	   ((org-ql-block-header "\n🤡 Please 𝒓𝒆𝒅𝒖𝒄𝒆 the number of (unscheduled) open loops\n")))
 
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; Stuff I'd like to do today; but do I actually have the time to do so?  ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   '(and (scheduled :on today) (ts :with-time nil))
 	   ((org-ql-block-header "\n😵‍💫 ﴾ Any time ≈ No time﴿ Scheduled today, but not time-blocked\n")))
 
-	  ;; TODO: Use “agenda*” ?
-	  ;; The agenda* view is the same as agenda except that it only considers appointments, i.e., scheduled and deadline items that have a time specification ‘[h]h:mm’ in their timestamps.
-	  ;; https://orgmode.org/manual/Special-Agenda-Views.html#FOOT172
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; What am I doing today, and when?                                      	   ;;
+	  ;; 										   ;;
+	  ;; TODO: Use “agenda*” ?  The agenda* view is the same as agenda		   ;;
+	  ;; except that it only considers appointments, i.e., scheduled and		   ;;
+	  ;; deadline items that have a time specification ‘[h]h:mm’ in their		   ;;
+	  ;; timestamps.								   ;;
+	  ;; https://orgmode.org/manual/Special-Agenda-Views.html#FOOT172		   ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (agenda ""
 		  ((org-agenda-overriding-header
 		    "\n🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")
@@ -13952,15 +14021,23 @@ Further Reading:
 		   (org-agenda-time-grid
 		    '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000)
 		      " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))))
-	  
-	  ;; What I've left to do is all incomplete tasks scheduled within the next 5-𝓃 days, where 𝓃 is the numeral of the current week day.
-	  ;; Mon=1, ⋯, Thu=4, ⋯
-	  ;;
-	  ;; NOTE: org-ql and org-agenda are two implementations of essentially the same idea.
-	  ;; As such, org-ql doesn't honour all of org-agenda's configurations.
-	  ;; E.g., org-agenda-sorting-strategy seems to be honoured when set to todo-state-up, but otherwise ignored.
-	  ;; See https://github.com/alphapapa/org-ql/issues/79, “Sort entries by due date when using org-ql-block #79”.
-	  ;; See also https://github.com/alphapapa/org-ql/issues/370, “Agenda entries are missing properties necessary for view filtering #370”.
+
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; A glimpse into later this week.                                       	   ;;
+	  ;; 										   ;;
+	  ;; What I've left to do is all incomplete tasks scheduled within the		   ;;
+	  ;; next 5-𝓃 days, where 𝓃 is the numeral of the current week day.		   ;;
+	  ;; Mon=1, ⋯, Thu=4, ⋯								   ;;
+	  ;; 										   ;;
+	  ;; NOTE: org-ql and org-agenda are two implementations of essentially		   ;;
+	  ;; the same idea.  As such, org-ql doesn't honour all of org-agenda's		   ;;
+	  ;; configurations.  E.g., org-agenda-sorting-strategy seems to be		   ;;
+	  ;; honoured when set to todo-state-up, but otherwise ignored.  See		   ;;
+	  ;; https://github.com/alphapapa/org-ql/issues/79, “Sort entries by due	   ;;
+	  ;; date when using org-ql-block #79”.  See also				   ;;
+	  ;; https://github.com/alphapapa/org-ql/issues/370, “Agenda entries are	   ;;
+	  ;; missing properties necessary for view filtering #370”.			   ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   (cl-letf (((symbol-function 'org-ql-view--add-todo-face) (lambda (ignored_todo_state))))
 	     `(and (not (tags "Recurring" "Happy")) (not (done)) (scheduled :from 1 :to ,(- 7 (calendar-day-of-week (calendar-current-date)))))) ;; “end-of-week” /from today/
@@ -13970,18 +14047,24 @@ Further Reading:
 				  "\n🗯️ Incomplete tasks scheduled later this week\n"
 				  'help-echo "Be aware!"))))
 
-	  ;; TODO: When I enter the WAITING state, add a property WAITING_SINCE with a timestamp.
-	  ;; Then this query here can inspect that timestamp and see if it's been over a week.
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; Stuff I'm waiting on others to repond to.                             	   ;;
+	  ;; 										   ;;
+	  ;; TODO: When I enter the WAITING state, add a property WAITING_SINCE		   ;;
+	  ;; with a timestamp.  Then this query here can inspect that timestamp		   ;;
+	  ;; and see if it's been over a week.						   ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  (org-ql-block
 	   '(todo "WAITING")
 	   ((org-ql-block-header "\n💢 I've been waiting on these [for over a week?], send reminder!\n")))
 
-	  ;; More items here
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; Add more items here                                                    ;;
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  ))))
 
 
 ;; NOTE: I find these queries by playing with:  (org-ql-search org-agenda-files '(tags-local "Top"))
-
 
 ;; All entries with a timestamp that looks like “<2025-04-16 Wed 18:00-18:30 .+1w>”, the important part is “.+”.
 ;; (org-ql-search org-agenda-files '(and (ts) (regexp "<[[:digit:]]\\{4\\}-[[:digit:]]+-[[:digit:]]+ .*\\.\\+.*>")) :title "All of my recurring events")
@@ -14013,13 +14096,18 @@ Further Reading:
  (defun my/org-ql-omit-priority-for-specific-header-block (orig-fn keyword)
    (unless (string-equal org-ql-block-header my/special-org-ql-header)
      (funcall orig-fn keyword))))
-;; Sort by DATE
+
+
+;; My default sorting strategy
+;; Sort by DATE, for any org-ql-block-header
 (advice-add
  'org-ql-select :around 
  (defun my/org-ql-select--sort-if-needed (orig-fn from query &rest args)
-   "Advice around `org-ql-select` to inject :sort '(date) under special block header."
+   "Advice around `org-ql-select` to inject :sort '(date) under special block headers."
    (apply orig-fn from query
-	  (if (string-equal org-ql-block-header my/special-org-ql-header)
+	  (if (and org-ql-block-header
+		   (not (equal org-agenda-type 'agenda))
+		   (not (equal org-agenda-overriding-header "\n🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")))
 	      (apply #'plist-put args :sort '(date))
 	    args))))
 #+end_src
@@ -14264,7 +14352,7 @@ to refresh the agenda.
       '(""                ;; Don't say “Scheduled ⟨Task⟩”, just show “⟨Task⟩”.
         "Overdue%2dx "))  ;; If something's overdue, say “Overdue 𝓃× ⟨Task⟩”.
 #+end_src
-** COMMENT Pretty Agenda Section Headers :This_is_the_default_behavior:
+** COMMENT Pretty Agenda Section Headers       :This_is_the_default_behavior:
 :PROPERTIES:
 :CREATED:  [2025-04-13 Sun 09:58]
 :END:
@@ -14293,7 +14381,7 @@ to refresh the agenda.
 ;; with value “org-agenda-done”.
 ;; ❌ (face-attribute  'hl-line 'done-face) ;; ⇒ italic
 #+end_src
-** COMMENT Sticky Views :No_thanks__org_ql__is_fast:
+** COMMENT Sticky Views                          :No_thanks__org_ql__is_fast:
 :PROPERTIES:
 :CREATED:  [2025-04-13 Sun 09:58]
 :END:
@@ -14321,7 +14409,6 @@ work, or being suggestive to ensure I'm working on the right thing instead of a 
 #+end_src
 
 This means if I go away for a coffee I'll come back to my agenda reminding what I'm supposed to be working on.
-
 
 
 * --------------------------------------------------------------------------------
