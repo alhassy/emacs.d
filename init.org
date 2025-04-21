@@ -13104,7 +13104,6 @@ I can have that info be shown to be in the minibuffer
 when I'm on the #+begin_src/#+end_src lines by doing
 
 #+begin_src emacs-lisp
-
 (url-copy-file "https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/org-eldoc.el" "~/.emacs.d/elpa/org-eldoc.el" :ok-if-already-exists)
 (load-file "~/.emacs.d/elpa/org-eldoc.el")
 (add-hook 'org-mode-hook 'eldoc-mode)
@@ -14410,7 +14409,6 @@ work, or being suggestive to ensure I'm working on the right thing instead of a 
 
 This means if I go away for a coffee I'll come back to my agenda reminding what I'm supposed to be working on.
 
-
 * --------------------------------------------------------------------------------
 :PROPERTIES:
 :CREATED:  [2025-04-14 Mon 09:43]
@@ -14461,6 +14459,155 @@ Usage:
 :PROPERTIES:
 :CREATED:  [2025-04-09 Wed 16:21]
 :END:
+* “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode      :ATTACH:
+:PROPERTIES:
+:CUSTOM_ID: drag-and-drop-images-into-org-mode
+:ID:       AD6BB33A-C860-45A0-936F-3B59CE4FFA14
+:END:
+
+When I press ~⌘-v~, here's what I'd like to happen to my clipboard contents:
+1. If it's an image, then ‘attach’ it to the current Org section and insert a link to the image.
+2. If it's a Gerrit URL such as
+   ~12345: [foo, bar] OCaml Syntax: Fix foo bar baz | https://gerrit.local.company.com/c/abc/+/12345~
+   then produce a nice Org link to it.
+3. If it's an arbitrary URL, then try to retrive its title and produce a nice Org link to it.
+4. If it's rich text (e.g., something copied from a webpage, including code blocks), then try to
+   preserve the formatting using Org markup.
+5. Otherwise, do a plain-old paste.
+
+For instance, now I can do:
+1. Take a screenshot with ~cmd + space + screenshot~ then take the screenshot, then just drag the result into my note.
+   1. Or just ~M-x org-download-screenshot~
+2. Click “Copy Image” in some app, then in Emacs invoke ~M-x org-download-clipboard~
+3. Find an image in some app, then drag-and-drop it into my note.
+4. Drag a file, such as a PDF, into my note to make it into an attachement! 
+
+Implementation:
+#+begin_src emacs-lisp
+(add-hook
+ 'org-mode-hook
+ (cl-defun my/setup-smart-paste ()
+   (bind-key "s-v"
+	     (cl-defun my/dwim-paste ()
+	       "Call `yank-media', with first possible media-type; ie no prompting.
+
+With “C-u” prefix, or when in minibuffer, this is traditional paste.
+
+Otherwise, if clipboard contains:
++ Rich Text (i.e., copy of HTML text), then it's pasted as Org Markup.
++ Image, then it's attached to the current Org note, via `org-attach', and an “attachement:” link is pasted
+  and the image link is displayed inline.
++ If it's a Gerrit link, “12345: [tags] Fix parsing bug | <url>”, then produce “[[<url>][Fix parsing bug]]”.
++ Otherwise, default string plaintext pasting occurs.
+  - If string is a URL, then insert an Org link whose description is HTML title of that URL webpage.
+    ,* If a region is selected when the yank is performed, then that region becomes the description of the link.
+
+
+TODO:
+⇒ If text is selected when I past an image, then use the text as #+caption, maybe?
+⇒ Define “attachement:” using org-special-block-extras so that it gives me keymap options like
+   delete attachement, rename attachement, open attachement externally, open in emacs. Low priority.
+"
+	       (interactive)
+	       (if (or (minibufferp) current-prefix-arg (null yank-media--registered-handlers))
+		   (yank)
+		 (flet ((length= (&rest _args) 'assume-equality-check-is-true-in-<yank-media>-implementation))
+		   (-let [start (point)]
+		     (ignore-errors (yank-media))
+		     ;; If no media to yank, then do plain old yank
+		     (when (equal start (point)) (yank)))))))
+
+
+   ;; Added to: yank-media--registered-handlers.
+   (yank-media-handler
+    "text/html"
+    (cl-defun my/yank-html-media (_media-type contents)
+      (insert (s-replace " " " " (shell-command-to-string
+				  (-let [delimiter "EOF"] ;; A unique “here-document delimiter”, unlikely to be part of ‘contents’
+				    (format "pandoc -f html -t org <<%s\n%s\n%s" delimiter contents delimiter)))))))
+
+   (yank-media-handler
+    "STRING"
+    (cl-defun my/yank-plaintext-media (_media-type contents)
+      (let* ((url (when (string-match-p "^https?://" contents) contents))
+	     (region-content (when (region-active-p)
+			       (buffer-substring-no-properties (region-beginning)
+							       (region-end)))))
+	(cond ((and region-content url)
+	       (delete-region (region-beginning) (region-end))
+	       (insert (org-make-link-string url region-content)))
+	      (url
+	       ;; Insert Org link to URL using title of HTML page at URL.
+	       (org-web-tools-insert-link-for-url url))
+	      (:otherwise
+	       (-let [ (gerrit-title gerrit-url) (my/extract-gerrit-title-and-url contents) ]
+		 (if (and gerrit-title gerrit-url)
+		     (insert (org-make-link-string gerrit-url gerrit-title))
+		   (insert contents))))))))
+   ;;
+   (defun my/extract-gerrit-title-and-url (str)
+     "Extract the title and URL from the given string STR, omitting the leading number and tags in brackets."
+     (if (string-match "^\\(?:[0-9]+: \\)?\\(?:\\[[^]]+\\] \\)?\\(.*?\\) | \\(https?://[^ \"]+\\) *$" str)
+	 (let ((title (match-string 1 str))
+	       (url (match-string 2 str)))
+	   (list title url))))
+   ;; example usage
+   (when nil
+     (let ((input "12345: [foo, bar] OCaml Syntax: Fix foo bar baz | https://gerrit.local.company.com/c/abc/+/12345"))
+       (-let [ (title url) (my/extract-gerrit-title-and-url input) ]
+	 (message "Title: %s\nURL: %s" title url))))
+
+
+   (yank-media-handler
+    "image/.*"
+    (cl-defun my/yank-image-media (_media-type image)
+      (org--image-yank-media-handler 'image/png image)
+      (my/toggle-display-inline-image-at-point)))
+
+   ;; Used by org--image-yank-media-handler
+   (defun org-yank-image-autogen-filename ()
+     "Autogenerate filename for image in clipboard."
+     (format-time-string "%Y-%m-%d_%I:%M:%S%p"))
+
+
+   (cl-defun my/toggle-display-inline-image-at-point ()
+     "My single notes file is huge, so toggling all images takes a while. Whence this method."
+     (interactive)
+     (-let [inhibit-message t]
+       (beginning-of-line)
+       (push-mark)
+       (end-of-line)
+       (org-toggle-inline-images nil (region-beginning) (region-end))))
+
+   ))
+#+end_src
+
+
+Notes:
+- You can use yank-media to do whatever you want with non-text selections in your clipboard. You can find an example of a function that attaches
+  files copied using a file manager to an org file.
+- Modes that feel that they can do something useful with non-plain-text
+  selections can register themselves as such (and say which types they can
+  handle), and then there's a new ‘M-x yank-media' command the user can
+  use.
+- Files and images can be attached by dropping onto Emacs
+
+  Attachment method other than ~org-attach-method~ for dropped files can
+   be specified using ~org-dnd-default-attach-method~.
+
+   Images dropped also respect the value of ~org-media-image-save-type~.
+- Images and files in clipboard can be attached
+
+  Org can now attach images in clipboard and files copied/cut to the
+  clipboard from file managers using the ~yank-media~ command which also
+  inserts a link to the attached file.
+  
+  Images can be saved to a separate directory instead of being attached,
+  customize ~org-media-image-save-type~.
+- (org-setup-yank-dnd-handlers): Register yank-media-handler and DND (Drag-aNd-Drop) handler.
+- (org-media-image-save-type, org-dnd-default-attach-method): New defcustoms.
+- Add yank-media and DND handlers: (org--image-yank-media-handler, org--copied-files-yank-media-handler) (org--dnd-local-file-handler)
+
 * COMMENT Browsing
 
 ** Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.
@@ -14777,109 +14924,180 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 :WHY:      To gain confidence whenver I make changes
 :END:
 :LOGBOOK:
+CLOCK: [2025-04-21 Mon 06:20]--[2025-04-21 Mon 06:28] =>  0:08
 CLOCK: [2025-04-10 Thu 14:04]--[2025-04-10 Thu 14:17] =>  0:13
 :END:
 
 #+begin_src emacs-lisp
-  (progn
-    ;; TODO: Move the next bunch of lines up somewhere
-    (add-hook 'prog-mode-hook 'company-mode)
-    (add-hook 'org-mode-hook 'company-mode)
-    (add-hook 'org-mode-hook (lambda ()
-                               (org-eldoc-load)
-                               (eldoc-mode)
-                               (eldoc-box-hover-mode)
-                               (require 'org-capture)))
-    (setq browse-url-browser-function 'browse-url-default-browser)
+(progn
+  ;; TODO: Move the next bunch of lines up somewhere
+  (add-hook 'prog-mode-hook 'company-mode)
+  (add-hook 'org-mode-hook 'company-mode)
+  (add-hook 'org-mode-hook (lambda ()
+                             (org-eldoc-load)
+                             (eldoc-mode)
+                             (eldoc-box-hover-mode)
+                             (require 'org-capture)))
+  (setq browse-url-browser-function 'browse-url-default-browser)
 
 
-    (switch-to-buffer "*test*")
-    (require 'cl) ;; get `assert` macro
-    (require 'ert) ;; get `should` macro
+  (switch-to-buffer "*test*")
+  (require 'cl) ;; get `assert` macro
+  (require 'ert) ;; get `should` macro
 
-    ;; When programming, indentation is automatic & I have auto-complete
-    (emacs-lisp-mode)
-    (assert aggressive-indent-mode)
-    (assert company-mode)
-    (assert eldoc-mode)
-    (assert color-identifiers-mode) ;; Semantic colouring
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;                                                                                ;;
+  ;; When programming, indentation is automatic & I have auto-complete              ;;
+  ;;                                                                                ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (emacs-lisp-mode)
+  (assert aggressive-indent-mode)
+  (assert company-mode)
+  (assert eldoc-mode)
+  (assert color-identifiers-mode) ;; Semantic colouring
 
-    ;; When I'm note-taking, I have a nice environment
-    (org-mode)
-    ;; TODO (assert eldoc-mode)
-    (assert company-mode t "Whoops, Org mode does not have Company enabled!")
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;                                                                                ;;
+  ;; When I'm note-taking, I have a nice environment                                ;;
+  ;;                                                                                ;;         
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (org-mode)
+  ;; TODO (assert eldoc-mode)
+  (assert company-mode t "Whoops, Org mode does not have Company enabled!")
+  (assert eldoc-mode)
+  (assert eldoc-box-hover-mode)
+  
+  ;; C-RET makes a new org heading with a pink :CREATED: property
+  (execute-kbd-macro (kbd "C-<return>"))
+  (insert "My neato notes")
+  ;;
+  ;; TODO assert fancy bullets are being used
+  ;; Checks that CREATED equals today's date, and not something arbitrary.
+  (should (s-matches? (format-time-string "\\[%Y-%m-%d %a %H:%M\\]")
+                      (org-entry-get (point) "CREATED")))
+  ;; TODO Assert that the :CREATED: property is a nice pink
+  ;; (assert (progn (beginning-of-buffer) (re-search-forward ":PROPERTIES:") (beginning-of-line)
+  ;;                (should (equal (get-text-property (point) 'face) 'org-drawer))
+  ;;                (should (should (equal (face-attribute 'org-drawer :foreground)  "LightPink1")))
+  ;;                (should (equal (face-attribute 'org-drawer :height) 0.9)))
+  ;;         (should (equal (face-attribute 'org-drawer :slant) 'italic)))
+  ;; TODO assert PROPERTIES, LOGBOOK, word and :END: words are invisible?
+  
+  ;; Let's add a schedule and deadline
+  (execute-kbd-macro (kbd "C-c C-s <return>"))
+  (execute-kbd-macro (kbd "C-c C-d <return>"))
+  ;; Assert the second line, the SCHEDULED: and DEADLINE: have nice icons
+  (should (org-entry-get (point) "SCHEDULED"))
+  (should (org-entry-get (point) "DEADLINE"))
+  ;; TODO (progn (beginning-of-buffer) (re-search-forward "SCHEDULED:") (assert (string-equal (get-text-property (point) 'display) "📆 ")))
+  ;; TODO (progn (beginning-of-buffer) (re-search-forward "DEADLINE:")  (assert (string-equal (get-text-property (point) 'display) "🎯 ")))
+  
+  ;; Speed keys are enabled, so we can start by pressing “t”
+  (assert org-use-speed-commands)
+  (beginning-of-buffer)
+  (execute-kbd-macro (kbd "t i")) ;; Enter “INVESTIGATED” state
+  (should (string-equal (org-entry-get (point) "TODO") "INVESTIGATED"))
+  
+  ;; check all of my workflow states are present
+  (should (equal org-todo-keywords '((sequence "TODO(t)" "INVESTIGATED(i)" "STARTED(s)" "PAUSED(p@/!)" "WAITING(w)" "APPROVED(a)" "|" "DONE(d)" "CANCELLED(c@)"))))
+  (should (equal org-log-done 'time))
+  
+  ;; TODO When I “Clock-In” to a task, I'm in the STARTED state.
+  (execute-kbd-macro (kbd "C-c C-x C-i"))
+  ;; TODO (should (string-equal (org-entry-get (point) "TODO") "STARTED"))
 
-    ;; C-RET makes a new org heading with a pink :CREATED: property
-    (execute-kbd-macro (kbd "C-<return>"))
-    (insert "My neato notes")
-    ;;
-    ;; TODO assert fancy bullets are being used
-    ;; Checks that CREATED equals today's date, and not something arbitrary.
-    (should (s-matches? (format-time-string "\\[%Y-%m-%d %a %H:%M\\]")
-                        (org-entry-get (point) "CREATED")))
-    ;; TODO Assert that the :CREATED: property is a nice pink
-    ;; (assert (progn (beginning-of-buffer) (re-search-forward ":PROPERTIES:") (beginning-of-line)
-    ;;                (should (equal (get-text-property (point) 'face) 'org-drawer))
-    ;;                (should (should (equal (face-attribute 'org-drawer :foreground)  "LightPink1")))
-    ;;                (should (equal (face-attribute 'org-drawer :height) 0.9)))
-    ;;         (should (equal (face-attribute 'org-drawer :slant) 'italic)))
-    ;; TODO assert PROPERTIES, LOGBOOK, word and :END: words are invisible?
+  ;; TODO switch to scratch buffer, then press C-c SPC, then confirm I'm at the currently clocked-in task
+  (scratch-buffer)
+  (should (equal (buffer-name) "*scratch*"))
+  (execute-kbd-macro (kbd "C-c SPC"))
+  (should (equal (buffer-name) "*test*"))
+  (should (equal (org-get-heading) "INVESTIGATED My neato notes"))
+  
+  ;; TODO Make a note, via C-c C-z, and confirm the note icon looks pretty.
+  ;; TODO Finally, clock out and check that the clock icon looks pretty.
+  ;; (progn (beginning-of-buffer) (re-search-forward "CLOCK:") (should (equal (get-text-property (point) 'display) "⏰ ")))
+  (execute-kbd-macro (kbd "C-c C-x C-o"))
 
-    ;; Let's add a schedule and deadline
-    (execute-kbd-macro (kbd "C-c C-s <return>"))
-    (execute-kbd-macro (kbd "C-c C-d <return>"))
-    ;; Assert the second line, the SCHEDULED: and DEADLINE: have nice icons
-    (should (org-entry-get (point) "SCHEDULED"))
-    (should (org-entry-get (point) "DEADLINE"))
-    ;; TODO (progn (beginning-of-buffer) (re-search-forward "SCHEDULED:") (assert (string-equal (get-text-property (point) 'display) "📆 ")))
-    ;; TODO (progn (beginning-of-buffer) (re-search-forward "DEADLINE:")  (assert (string-equal (get-text-property (point) 'display) "🎯 ")))
+  ;; Enter “DONE” state, should now have a CLOSED property
+  (execute-kbd-macro (kbd "t d"))
+  (org-todo "DONE")
+  (should (org-entry-get (point) "CLOSED"))
+  ;; TODO (progn (beginning-of-buffer) (re-search-forward "CLOSED:") (should (equal (get-text-property (point) 'display) "☺️ ")))
+  
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;                                                                              			      ;;
+  ;; Smart Paste: Gerrit Links, Arbitrary URLs, Arbitrary Image Attachements, Arbitrary Rich Text, Plain Text ;;
+  ;; 													      ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    ;; Speed keys are enabled, so we can start by pressing “t”
-    (assert org-use-speed-commands)
-    (beginning-of-buffer)
-    (execute-kbd-macro (kbd "t i")) ;; Enter “INVESTIGATED” state
-    (should (string-equal (org-entry-get (point) "TODO") "INVESTIGATED"))
+  
+  (execute-kbd-macro (kbd "s-a DEL"))
+  (kill-new "Plain text is pasted as is")
+  (execute-kbd-macro (kbd "s-v"))
+  (should (equal (thing-at-point 'line :no-properties) "Plain text is pasted as is"))
+  
+  (execute-kbd-macro (kbd "s-a DEL"))
+  (kill-new "12345: [foo, bar] OCaml Syntax: Fix foo bar baz | https://gerrit.local.company.com/c/abc/+/12345")
+  (execute-kbd-macro (kbd "s-v"))
+  (should (equal (thing-at-point 'line :no-properties)		 
+		 "[[https://gerrit.local.company.com/c/abc/+/12345][OCaml Syntax: Fix foo bar baz]]"))
 
-    ;; check all of my workflow states are present
-    (should (equal org-todo-keywords '((sequence "TODO(t)" "INVESTIGATED(i)" "STARTED(s)" "PAUSED(p@/!)" "WAITING(w)" "APPROVED(a)" "|" "DONE(d)" "CANCELLED(c@)"))))
-    (should (equal org-log-done 'time))
+  (execute-kbd-macro (kbd "s-a DEL"))
+  (kill-new "https://github.com/alphapapa/org-ql/tree/master")
+  (execute-kbd-macro (kbd "s-v"))
+  (should (equal (thing-at-point 'line :no-properties)
+		 (format "[[%s][%s]]"
+			 "https://github.com/alphapapa/org-ql/tree/master"
+			 "GitHub - alphapapa/org-ql: A searching tool for Org-mode, including custom query languages, commands, saved searches and agenda-like views, etc.")))
 
-    ;; TODO When I “Clock-In” to a task, I'm in the STARTED state.
-    (execute-kbd-macro (kbd "C-c C-x C-i"))
-    ;; TODO (should (string-equal (org-entry-get (point) "TODO") "STARTED"))
+  ;; Pressing “C-u ⌘-v” does a plain old paste
+  (execute-kbd-macro (kbd "s-a DEL"))
+  (kill-new "https://github.com/alphapapa/org-ql/tree/master")
+  (execute-kbd-macro (kbd "C-u s-v"))
+  (should (equal (thing-at-point 'line :no-properties) "https://github.com/alphapapa/org-ql/tree/master"))
 
-    ;; TODO switch to scratch buffer, then press C-c SPC, then confirm I'm at the currently clocked-in task
-      (scratch-buffer)
-      (should (equal (buffer-name) "*scratch*"))
-      (execute-kbd-macro (kbd "C-c SPC"))
-      (should (equal (buffer-name) "*test*"))
-      (should (equal (org-get-heading) "INVESTIGATED My neato notes"))
+  (when nil ;; If the above smart paste assertions pass, then likely so do the following (time-consuming!) ones.
+    
+    ;; Copy an image from somewhere
+    (ignore-errors ;; This works when run in init.org, but fails when run programmatically? Perhaps Org hook is not setup correctly?
+      (execute-kbd-macro (kbd "s-a DEL"))
+      (insert "* Example Image\n")
+      (shell-command-to-string "curl -sL https://alhassy.com/images/musa_pink.jpg -o /tmp/musa.jpg \
+       && osascript -e 'set the clipboard to (read (POSIX file \"/tmp/musa.jpg\") as «class JPEG»)'")
+      (execute-kbd-macro (kbd "s-v"))
+      (should (s-matches? "\[\[attachment:.*.png\]\]" (thing-at-point 'line :no-properties))))
 
+    ;; Check that copy-pasting rich html contents actually produces rich Org markup
+    (ignore-errors ;; This works, but consider using xwidget within emacs instead
+      (execute-kbd-macro (kbd "s-a DEL"))
+      (message "Retrieving webpage test data...")
+      (shell-command-to-string
+       "osascript -e 'tell application \"Google Chrome\" to open location \"https://alhassy.com/about\"' \
+        && sleep 0.5 \
+        && osascript -e 'tell application \"System Events\" to keystroke \"a\" using command down' \
+        && osascript -e 'tell application \"System Events\" to keystroke \"c\" using command down' \
+        && osascript -e 'quit app \"Google Chrome\"' \
+        && sleep 0.5 \
+        && osascript -e 'tell application \"Emacs\" to activate' \
+        ")
+      (execute-kbd-macro (kbd "s-v"))
+      ;; Confirm we have a few Org headings corresponding to the HTML headings we copied, also note /italics/ and other markup are rendered nicely.
+      (should (equal 
+	       (org-map-entries (lambda () (substring-no-properties (org-get-heading t t t t))))
+	       '("Musa Al-hassy\\\\" "[[javascript:window.scrollTo(0,0)][Ξ]]" "Quick Facts" "Character" "Goals" "/What do?/")))))
+  
+  (kill-buffer "*scratch*") ;; clean up
+  (kill-buffer "*test*") ;; clean up
+  
+  ;; Finally, open my agenda.
+  (execute-kbd-macro (kbd "C-c a"))
 
-    ;; TODO Make a note, via C-c C-z, and confirm the note icon looks pretty.
-    ;; TODO Finally, clock out and check that the clock icon looks pretty.
-    ;; (progn (beginning-of-buffer) (re-search-forward "CLOCK:") (should (equal (get-text-property (point) 'display) "⏰ ")))
-     (execute-kbd-macro (kbd "C-c C-x C-o"))
-
-    ;; Enter “DONE” state, should now have a CLOSED property
-    (execute-kbd-macro (kbd "t d"))
-    (org-todo "DONE")
-    (should (org-entry-get (point) "CLOSED"))
-   ;; TODO (progn (beginning-of-buffer) (re-search-forward "CLOSED:") (should (equal (get-text-property (point) 'display) "☺️ ")))
-
-    ;; TODO Check my “smart paste” is enabled
-    ;; TODO (kill-new "123456: [org, prog] Allow ⌘-v to be clever | https://gerrit.local.emacs.com/c/el/+/123456")
-    ;; TODO (execute-kbd-macro (kbd "M-> s-v"))
-    ;; TODO Verify result is a nice Org link
-    ;; TODO Low priority: Likewise for images
-
-     (kill-buffer "*scratch*") ;; clean up
-     (kill-buffer "*test*") ;; clean up
-
-     ;; Finally, open my agenda.
-     ;; (execute-kbd-macro (kbd "C-c a"))
-
-    )
+  )
 #+end_src
 
 MA: I've seen people ask how to “unit test their init.el”, this is a nice approach to share.
