@@ -186,10 +186,13 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; For an approach that does not inhibit async-shell-command this way,
 ;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
 
-(use-package exec-path-from-shell
-  :init
-  (when (memq window-system '(mac ns x))
-    (exec-path-from-shell-initialize)))
+(setq org--docs-from-libraries nil)
+(cl-defun org-docs-load-libraries (&rest args) )
+;; MA: this is failing for some reason
+(when nil use-package exec-path-from-shell
+      :init
+      (when (memq window-system '(mac ns x))
+        (exec-path-from-shell-initialize)))
 
 ;; Provides only the command “restart-emacs”.
 (use-package restart-emacs
@@ -296,35 +299,6 @@ installs of packages that are not in our `my/installed-packages' listing.
 (setq org-return-follows-link t)
 
 (setq initial-major-mode 'org-mode)
-
-(defun org-special-block-extras-short-names ())
-;;
-;; org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
-(setq o--supported-blocks nil)
-
-;; TODO org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
-;;
-(use-package org-special-block-extras
-  :hook (org-mode . org-special-block-extras-mode)
-  :custom
-    ;; The places where I keep my ‘#+documentation’
-    (org-special-block-extras--docs-libraries
-     '("~/org-special-block-extras/documentation.org"))
-    ;; Disable the in-Emacs fancy-links feature?
-    (org-special-block-extras-fancy-links
-     '(elisp badge kbd link-here doc tweet))
-    ;; Details heading “flash pink” whenever the user hovers over them?
-    (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
-    ;; The message prefixing a ‘tweet:url’ badge
-    (org-special-block-extras-link-twitter-excitement
-     "This looks super neat (•̀ᴗ•́)و:")
-  :config
-  ;; Use short names like ‘defblock’ instead of the fully qualified name
-  ;; ‘org-special-block-extras--defblock’
-    (org-special-block-extras-short-names))
-
-;; Let's execute Lisp code with links, as in “elisp:view-hello-file”.
-(setq org-confirm-elisp-link-function nil)
 
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
@@ -2982,12 +2956,12 @@ method."
   (let* ((date (org-read-date))
          (org-agenda-buffer-tmp-name (format "*Org Agenda(a:%s)*" date))
          (org-agenda-sticky nil)
-	 (org-agenda-span 'day)
-	 ;; Putting the agenda in log mode, allows to see the tasks marked as DONE
-	 ;; at the corresponding time of closing. If, like me, you clock all your
-	 ;; working time, the task will appear also every time it was worked on.
-	 ;; This is great to get a sens of what was accomplished.
-	 (org-agenda-start-with-log-mode t))
+         (org-agenda-span 'day)
+         ;; Putting the agenda in log mode, allows to see the tasks marked as DONE
+         ;; at the corresponding time of closing. If, like me, you clock all your
+         ;; working time, the task will appear also every time it was worked on.
+         ;; This is great to get a sens of what was accomplished.
+         (org-agenda-start-with-log-mode t))
     (org-agenda-list nil date nil)))
 ;; Timestamps and their uses:2 ends here
 
@@ -3004,7 +2978,7 @@ method."
       '(("t" "My list of all TODO entries" tags-todo "-recurring-someday+LEVEL=3"
          ((org-agenda-overriding-header "\nTODOs sorted by state, priority, effort")
           (org-agenda-sorting-strategy '(todo-state-down priority-down effort-up))
-	  (org-super-agenda-groups (progn
+          (org-super-agenda-groups (progn
                                      (org-super-agenda-mode t)
                                      '((:name "Important" :and (:priority "A" :not (:todo ("DONE" "CANCELLED"))))
                                        (:name "Process your Inbox" :tag "inbox")
@@ -3012,209 +2986,209 @@ method."
                                        (:name "Started" :todo "STARTED")
                                        (:name "Waiting" :todo "WAITING")
                                        (:name "Low Priority" :priority "C" :tag "maybe"))))))
-	("a" "Daily Agenda;    Productivity  ≈   ♯DONE / ♯TASKS"
+        ("a" "Daily Agenda;    Productivity  ≈   ♯DONE / ♯TASKS"
          (
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; New things coming into my life                                         ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   '(tags "inbox")
-	   ((org-ql-block-header "\n📩 Process Inbox: “m” to mark then “B r” to refile marked items 📥\n")))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; New things coming into my life                                         ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           '(tags "inbox")
+           ((org-ql-block-header "\n📩 Process Inbox: “m” to mark then “B r” to refile marked items 📥\n")))
 
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; High priority 𝒚𝒆𝒕 unscheduled tasks                                   	   ;;
-	  ;; 										   ;;
-	  ;; Note to self: When I write this query, I thought “I doubt I have		   ;;
-	  ;; any hits, this is too silly”.  I was wrong. I had 300+ hits.		   ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   '(and (priority "A") (not (scheduled)) (not (deadline)))
-	   ((org-ql-block-header "\n🔥 High priority 𝒚𝒆𝒕 unscheduled tasks 🚒\n")))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; High priority 𝒚𝒆𝒕 unscheduled tasks                                           ;;
+          ;;                                                                               ;;
+          ;; Note to self: When I write this query, I thought “I doubt I have		   ;;
+          ;; any hits, this is too silly”.  I was wrong. I had 300+ hits.		   ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           '(and (priority "A") (not (scheduled)) (not (deadline)))
+           ((org-ql-block-header "\n🔥 High priority 𝒚𝒆𝒕 unscheduled tasks 🚒\n")))
 
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; Items to review: Mine for useful info then archieve or delete         	   ;;
-	  ;; 										   ;;
-	  ;; `M-x org-copy` is your friend. Archive an entry as is, but copy the	   ;;
-	  ;; useful parts.  Archiving is useful for clocking reports from the		   ;;
-	  ;; past.									   ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   `(and (done) (not (tags "Top")) (closed :to ,(- (calendar-day-of-week (calendar-current-date))))) ;; i.e.;  :to ,(org-read-date nil nil "-1d")
-	   ((org-ql-block-header (propertize "\n📜 Items to review: Mine for useful info then archieve or delete. ☑️\n"
-					     'help-echo "Press E to toggle seeing ~5 lines of each entry."
-					     ;; Reduce the number of DONE and archived headlines so agenda operations that skip over these can finish faster.
-					     ))))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Items to review: Mine for useful info then archieve or delete                 ;;
+          ;;                                                                               ;;
+          ;; `M-x org-copy` is your friend. Archive an entry as is, but copy the	   ;;
+          ;; useful parts.  Archiving is useful for clocking reports from the		   ;;
+          ;; past.									   ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           `(and (done) (not (tags "Top")) (closed :to ,(- (calendar-day-of-week (calendar-current-date))))) ;; i.e.;  :to ,(org-read-date nil nil "-1d")
+           ((org-ql-block-header (propertize "\n📜 Items to review: Mine for useful info then archieve or delete. ☑️\n"
+                                             'help-echo "Press E to toggle seeing ~5 lines of each entry."
+                                             ;; Reduce the number of DONE and archived headlines so agenda operations that skip over these can finish faster.
+                                             ))))
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; Items explicitly marked as the top focus goals for the month           ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   '(tags-local "Top")
-	   ((org-ql-block-header "\n⚡ Top goals for the month ⚡\n")
-	    (org-agenda-remove-tags t)))
-
-
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; Tasks that would bring me joy                                          ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   '(and (tags-local "Happy") (or (scheduled -7) (deadline -7) (not (done))))
-	   ((org-ql-block-header "\n🤗 I'd be happy if I got the following done this week 🥰\n")
-	    (org-agenda-remove-tags t)))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Items explicitly marked as the top focus goals for the month           ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           '(tags-local "Top")
+           ((org-ql-block-header "\n⚡ Top goals for the month ⚡\n")
+            (org-agenda-remove-tags t)))
 
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; What “I've done so far” is all tasks closed this week.                 ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   `(and (not (tags "Recurring")) (or (todo "WAITING" "APPROVED") (and (done) (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)))) ;; “start-of-week” /from today/
-	   ((org-ql-block-header (propertize "\n✅ What I've done so far this week 💯\n" 'help-echo "Press E to toggle seeing ~5 lines of each entry. \n If DONE, mine for useful info then archive or delete."))))
-
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; Deadlines: Upcoming tasks I should prepare for                        	   ;;
-	  ;; 										   ;;
-	  ;; NOTE: I don't want to use predicate (not (done)) since I want to		   ;;
-	  ;; see the DONE items as a reminder to myself to actually archive		   ;;
-	  ;; these tasks.								   ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   '(deadline auto)
-	   ((org-ql-block-header "\n🎯 Deadlines\n")))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Tasks that would bring me joy                                          ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           '(and (tags-local "Happy") (or (scheduled -7) (deadline -7) (not (done))))
+           ((org-ql-block-header "\n🤗 I'd be happy if I got the following done this week 🥰\n")
+            (org-agenda-remove-tags t)))
 
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; Whoops, things that I've missed!                                       ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   '(and (not (habit)) (not (done)) (scheduled :to today) (not (scheduled :on today)))
-	   ((org-ql-block-header "\n📆 Overdue\n")))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; What “I've done so far” is all tasks closed this week.                 ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           `(and (not (tags "Recurring")) (or (todo "WAITING" "APPROVED") (and (done) (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)))) ;; “start-of-week” /from today/
+           ((org-ql-block-header (propertize "\n✅ What I've done so far this week 💯\n" 'help-echo "Press E to toggle seeing ~5 lines of each entry. \n If DONE, mine for useful info then archive or delete."))))
+
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Deadlines: Upcoming tasks I should prepare for                                ;;
+          ;;                                                                               ;;
+          ;; NOTE: I don't want to use predicate (not (done)) since I want to		   ;;
+          ;; see the DONE items as a reminder to myself to actually archive		   ;;
+          ;; these tasks.								   ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           '(deadline auto)
+           ((org-ql-block-header "\n🎯 Deadlines\n")))
 
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; Things loads into my cognitive memory that I should probably continue? ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   '(and
-	     (todo "STARTED")
-	     (level '> 1)
-	     (not (tags-local "Someday" "Top" "SocialCredit"))
-	     (not (scheduled :from today)))
-	   ((org-ql-block-header "\n🤡 Please 𝒓𝒆𝒅𝒖𝒄𝒆 the number of (unscheduled) open loops\n")))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Whoops, things that I've missed!                                       ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           '(and (not (habit)) (not (done)) (scheduled :to today) (not (scheduled :on today)))
+           ((org-ql-block-header "\n📆 Overdue\n")))
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; Stuff I'd like to do today; but do I actually have the time to do so?  ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   '(and (scheduled :on today) (ts :with-time nil))
-	   ((org-ql-block-header "\n😵‍💫 ﴾ Any time ≈ No time﴿ Scheduled today, but not time-blocked\n")))
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; What am I doing today, and when?                                      	   ;;
-	  ;; 										   ;;
-	  ;; TODO: Use “agenda*” ?  The agenda* view is the same as agenda		   ;;
-	  ;; except that it only considers appointments, i.e., scheduled and		   ;;
-	  ;; deadline items that have a time specification ‘[h]h:mm’ in their		   ;;
-	  ;; timestamps.								   ;;
-	  ;; https://orgmode.org/manual/Special-Agenda-Views.html#FOOT172		   ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (agenda ""
-		  ((org-agenda-overriding-header
-		    "\n🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")
-		   (org-agenda-format-date "")
-		   (org-agenda-skip-function
-		    (lambda nil (org-back-to-heading t)
-		      (cl-letf*
-			  (((symbol-function 'day)
-			    (lambda (org-date-string)
-			      (cl-fourth (org-parse-time-string org-date-string))))
-			   ((symbol-function 'month)
-			    (lambda (org-date-string)
-			      (cl-fifth (org-parse-time-string org-date-string))))
-			   ((symbol-function 'is-repeating)
-			    (lambda (org-date-string)
-			      (s-matches? "<[^ ]* [^ ]* [^ ]* [^ ]*\\(d\\|m\\)>"
-					  org-date-string)))
-			   ((symbol-function 'before)
-			    (lambda (x y)
-			      (or (< (month x) (month y))
-				  (and (= (month x) (month y)) (<= (day x) (day y))))))
-			   ((symbol-function 'at-least)
-			    (lambda (x y) (or (equal y x) (before y x))))
-			   ((symbol-function 'skip)
-			    (lambda nil (save-excursion (org-end-of-subtree t) (point))))
-			   (scheduled (org-entry-get (point) "SCHEDULED"))
-			   (today (org-read-date nil nil "+0d"))
-			   (non-habit?
-			    (not
-			     (equal "habit"
-				    (ignore-errors
-				      (downcase (org-entry-get (point) "STYLE"))))))
-			   (deadline? (org-entry-get (point) "DEADLINE"))
-			   (overdue? (not (or (not scheduled) (at-least scheduled today))))
-			   (scheduled-without-time
-			    (and scheduled (not (s-matches? "<.* .* .*:.*>" scheduled)))))
-			(when
-			    (and non-habit?
-				 (or deadline? overdue? scheduled-without-time
-				     (and scheduled
-					  (or (s-matches? "<[^ ]* [^ ]*>" scheduled)
-					      (s-matches? "<[^ ]* [^ ]* [^ ]*\\(d\\|m\\)>"
-							  scheduled)))))
-			  (skip)))))
-		   (org-agenda-current-time-string (s-join "\n\t\t" (-repeat 3 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
-		   ;; :org-agenda-remove-tags t
-		   ;; :org-agenda-time-grid nil
-		   ;; :org-use-tag-inheritance nil
-		   (org-agenda-span 'day)
-		   ;; I want work items to automatically have a briefcase next to them.
-		   (org-agenda-prefix-format " ○ %t % i%s") ;; The “%i” is the icon on the next line.
-		   (org-agenda-category-icon-alist '(("\\`work\\'" ("💼") nil nil :ascent center)))
-		   (org-agenda-time-grid
-		    '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000)
-		      " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Things loads into my cognitive memory that I should probably continue? ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           '(and
+             (todo "STARTED")
+             (level '> 1)
+             (not (tags-local "Someday" "Top" "SocialCredit"))
+             (not (scheduled :from today)))
+           ((org-ql-block-header "\n🤡 Please 𝒓𝒆𝒅𝒖𝒄𝒆 the number of (unscheduled) open loops\n")))
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; A glimpse into later this week.                                       	   ;;
-	  ;; 										   ;;
-	  ;; What I've left to do is all incomplete tasks scheduled within the		   ;;
-	  ;; next 5-𝓃 days, where 𝓃 is the numeral of the current week day.		   ;;
-	  ;; Mon=1, ⋯, Thu=4, ⋯								   ;;
-	  ;; 										   ;;
-	  ;; NOTE: org-ql and org-agenda are two implementations of essentially		   ;;
-	  ;; the same idea.  As such, org-ql doesn't honour all of org-agenda's		   ;;
-	  ;; configurations.  E.g., org-agenda-sorting-strategy seems to be		   ;;
-	  ;; honoured when set to todo-state-up, but otherwise ignored.  See		   ;;
-	  ;; https://github.com/alphapapa/org-ql/issues/79, “Sort entries by due	   ;;
-	  ;; date when using org-ql-block #79”.  See also				   ;;
-	  ;; https://github.com/alphapapa/org-ql/issues/370, “Agenda entries are	   ;;
-	  ;; missing properties necessary for view filtering #370”.			   ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   (cl-letf (((symbol-function 'org-ql-view--add-todo-face) (lambda (ignored_todo_state))))
-	     `(and (not (tags "Recurring" "Happy")) (not (done)) (scheduled :from 1 :to ,(- 7 (calendar-day-of-week (calendar-current-date)))))) ;; “end-of-week” /from today/
-	   ((org-agenda-sorting-strategy '(timestamp-up)) ;; Sort by any timestamp, early first. ;; ⟵- Not yet honoured, see #79.
-	    (org-agenda-todo-keyword-format "")  ;; ⟵- Not yet honoured, see #79.
-	    (org-ql-block-header (propertize
-				  "\n🗯️ Incomplete tasks scheduled later this week\n"
-				  'help-echo "Be aware!"))))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Stuff I'd like to do today; but do I actually have the time to do so?  ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           '(and (scheduled :on today) (ts :with-time nil))
+           ((org-ql-block-header "\n😵‍💫 ﴾ Any time ≈ No time﴿ Scheduled today, but not time-blocked\n")))
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; Stuff I'm waiting on others to repond to.                             	   ;;
-	  ;; 										   ;;
-	  ;; TODO: When I enter the WAITING state, add a property WAITING_SINCE		   ;;
-	  ;; with a timestamp.  Then this query here can inspect that timestamp		   ;;
-	  ;; and see if it's been over a week.						   ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  (org-ql-block
-	   '(todo "WAITING")
-	   ((org-ql-block-header "\n💢 I've been waiting on these [for over a week?], send reminder!\n")))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; What am I doing today, and when?                                              ;;
+          ;;                                                                               ;;
+          ;; TODO: Use “agenda*” ?  The agenda* view is the same as agenda		   ;;
+          ;; except that it only considers appointments, i.e., scheduled and		   ;;
+          ;; deadline items that have a time specification ‘[h]h:mm’ in their		   ;;
+          ;; timestamps.								   ;;
+          ;; https://orgmode.org/manual/Special-Agenda-Views.html#FOOT172		   ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (agenda ""
+                  ((org-agenda-overriding-header
+                    "\n🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")
+                   (org-agenda-format-date "")
+                   (org-agenda-skip-function
+                    (lambda nil (org-back-to-heading t)
+                      (cl-letf*
+                          (((symbol-function 'day)
+                            (lambda (org-date-string)
+                              (cl-fourth (org-parse-time-string org-date-string))))
+                           ((symbol-function 'month)
+                            (lambda (org-date-string)
+                              (cl-fifth (org-parse-time-string org-date-string))))
+                           ((symbol-function 'is-repeating)
+                            (lambda (org-date-string)
+                              (s-matches? "<[^ ]* [^ ]* [^ ]* [^ ]*\\(d\\|m\\)>"
+                                          org-date-string)))
+                           ((symbol-function 'before)
+                            (lambda (x y)
+                              (or (< (month x) (month y))
+                                  (and (= (month x) (month y)) (<= (day x) (day y))))))
+                           ((symbol-function 'at-least)
+                            (lambda (x y) (or (equal y x) (before y x))))
+                           ((symbol-function 'skip)
+                            (lambda nil (save-excursion (org-end-of-subtree t) (point))))
+                           (scheduled (org-entry-get (point) "SCHEDULED"))
+                           (today (org-read-date nil nil "+0d"))
+                           (non-habit?
+                            (not
+                             (equal "habit"
+                                    (ignore-errors
+                                      (downcase (org-entry-get (point) "STYLE"))))))
+                           (deadline? (org-entry-get (point) "DEADLINE"))
+                           (overdue? (not (or (not scheduled) (at-least scheduled today))))
+                           (scheduled-without-time
+                            (and scheduled (not (s-matches? "<.* .* .*:.*>" scheduled)))))
+                        (when
+                            (and non-habit?
+                                 (or deadline? overdue? scheduled-without-time
+                                     (and scheduled
+                                          (or (s-matches? "<[^ ]* [^ ]*>" scheduled)
+                                              (s-matches? "<[^ ]* [^ ]* [^ ]*\\(d\\|m\\)>"
+                                                          scheduled)))))
+                          (skip)))))
+                   (org-agenda-current-time-string (s-join "\n\t\t" (-repeat 3 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
+                   ;; :org-agenda-remove-tags t
+                   ;; :org-agenda-time-grid nil
+                   ;; :org-use-tag-inheritance nil
+                   (org-agenda-span 'day)
+                   ;; I want work items to automatically have a briefcase next to them.
+                   (org-agenda-prefix-format " ○ %t % i%s") ;; The “%i” is the icon on the next line.
+                   (org-agenda-category-icon-alist '(("\\`work\\'" ("💼") nil nil :ascent center)))
+                   (org-agenda-time-grid
+                    '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000)
+                      " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))))
 
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ;; Add more items here                                                    ;;
-	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  ))))
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; A glimpse into later this week.                                               ;;
+          ;;                                                                               ;;
+          ;; What I've left to do is all incomplete tasks scheduled within the		   ;;
+          ;; next 5-𝓃 days, where 𝓃 is the numeral of the current week day.		   ;;
+          ;; Mon=1, ⋯, Thu=4, ⋯								   ;;
+          ;;                                                                               ;;
+          ;; NOTE: org-ql and org-agenda are two implementations of essentially		   ;;
+          ;; the same idea.  As such, org-ql doesn't honour all of org-agenda's		   ;;
+          ;; configurations.  E.g., org-agenda-sorting-strategy seems to be		   ;;
+          ;; honoured when set to todo-state-up, but otherwise ignored.  See		   ;;
+          ;; https://github.com/alphapapa/org-ql/issues/79, “Sort entries by due	   ;;
+          ;; date when using org-ql-block #79”.  See also				   ;;
+          ;; https://github.com/alphapapa/org-ql/issues/370, “Agenda entries are	   ;;
+          ;; missing properties necessary for view filtering #370”.			   ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           (cl-letf (((symbol-function 'org-ql-view--add-todo-face) (lambda (ignored_todo_state))))
+             `(and (not (tags "Recurring" "Happy")) (not (done)) (scheduled :from 1 :to ,(- 7 (calendar-day-of-week (calendar-current-date)))))) ;; “end-of-week” /from today/
+           ((org-agenda-sorting-strategy '(timestamp-up)) ;; Sort by any timestamp, early first. ;; ⟵- Not yet honoured, see #79.
+            (org-agenda-todo-keyword-format "")  ;; ⟵- Not yet honoured, see #79.
+            (org-ql-block-header (propertize
+                                  "\n🗯️ Incomplete tasks scheduled later this week\n"
+                                  'help-echo "Be aware!"))))
+
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Stuff I'm waiting on others to repond to.                                     ;;
+          ;;                                                                               ;;
+          ;; TODO: When I enter the WAITING state, add a property WAITING_SINCE		   ;;
+          ;; with a timestamp.  Then this query here can inspect that timestamp		   ;;
+          ;; and see if it's been over a week.						   ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          (org-ql-block
+           '(todo "WAITING")
+           ((org-ql-block-header "\n💢 I've been waiting on these [for over a week?], send reminder!\n")))
+
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Add more items here                                                    ;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ))))
 
 
 
@@ -3255,15 +3229,15 @@ method."
 ;; My default sorting strategy
 ;; Sort by DATE, for any org-ql-block-header
 (advice-add
- 'org-ql-select :around 
+ 'org-ql-select :around
  (defun my/org-ql-select--sort-if-needed (orig-fn from query &rest args)
    "Advice around `org-ql-select` to inject :sort '(date) under special block headers."
    (apply orig-fn from query
-	  (if (and org-ql-block-header
-		   (not (equal org-agenda-type 'agenda))
-		   (not (equal org-agenda-overriding-header "\n🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")))
-	      (apply #'plist-put args :sort '(date))
-	    args))))
+          (if (and org-ql-block-header
+                   (not (equal org-agenda-type 'agenda))
+                   (not (equal org-agenda-overriding-header "\n🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")))
+              (apply #'plist-put args :sort '(date))
+            args))))
 ;; My default ~org-agenda-custom-commands~:2 ends here
 
 ;; [[file:init.org::*My default ~org-agenda-custom-commands~][My default ~org-agenda-custom-commands~:3]]
@@ -3489,167 +3463,167 @@ method."
 (defun my/holiday-islamic (month day event-title url-to-learn-more)
   "Make Islamic holidays clickable, and they open URL-TO-LEARN-MORE."
   (list 'holiday-islamic month day (propertize event-title
-					       'local-map
-					       (let ((keymap (make-sparse-keymap)))
-  (define-key keymap (kbd "<down-mouse-1>") 
+                                               'local-map
+                                               (let ((keymap (make-sparse-keymap)))
+  (define-key keymap (kbd "<down-mouse-1>")
               `(lambda() (interactive) (browse-url ,url-to-learn-more)))
   keymap))))
 
   (setq calendar-holidays
-	`(
-	  ;; Islamic Holy Days :: https://www.webcal.guru/en/event_list/holidays_islamic_shia?year=2025
-	  
-	  ;; ﴾1﴿ Muharram, “The Sacred Month” ⨾⨾ ≈ July ’25, Mid-June ’26, June ’27 
-	  ,(my/holiday-islamic 1 1  "💔🥀 Mourning of Muharram starts" "https://en.wikipedia.org/wiki/Mourning_of_Muharram")
-	  ,(my/holiday-islamic 1 2  "💔🥀 Arrival of Imam Husayn ibn Ali in Karbalā, 61 AH" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
-	  ,(my/holiday-islamic 1 3  "💔🥀 Water supply to the camp of Husayn ibn Ali was stopped" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
-	  ,(my/holiday-islamic 1 7  "💔🥀 Stored water in the tents of the camp of Husayn ibn Ali runs out" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
-	  ,(my/holiday-islamic 1 10 "💔🥀 Day of Ashura" "https://ar.wikipedia.org/wiki/%D8%B9%D8%A7%D8%B4%D9%88%D8%B1%D8%A7%D8%A1")
-	  ,(my/holiday-islamic 1 12 "💔🥀 Burial of the martyrs of Karbala by Bani Asad" "https://en.wikipedia.org/wiki/Banu_Asad_ibn_Khuzaymah")
-	  ,(my/holiday-islamic 1 17 "🐘 Abraha attacked the Kaʿbah in the Year of the Elephant" "https://en.wikipedia.org/wiki/Abraha")
-	  ,(my/holiday-islamic 1 18 "🕌 Changing of the Qibla, the direction of prayer" "https://en.wikipedia.org/wiki/Qibla")
-	  ,(my/holiday-islamic 1 25 "💔🥀 Martyrdom of Imam Ali ibn Husayn Zayn al-Abidin, 95 AH 🖤" "https://en.wikipedia.org/wiki/Ali_ibn_Husayn_Zayn_al-Abidin")
+        `(
+          ;; Islamic Holy Days :: https://www.webcal.guru/en/event_list/holidays_islamic_shia?year=2025
 
-	  ;; ﴾2﴿ Safar, “Void”
-	  ,(my/holiday-islamic 2 1  "💔🥀 Prisoners of Karbalā reach Yazid's palace in Syria" "https://en.wikipedia.org/wiki/Battle_of_Karbala")
-	  ,(my/holiday-islamic 2 1  "⚔️ Battle of Siffin, 37 AH" "https://en.wikipedia.org/wiki/Battle_of_Siffin")
-	  ,(my/holiday-islamic 2 7  "🥳 Birth of Imam Musa al-Kadhim, 128 AH" "https://en.wikipedia.org/wiki/Musa_al-Kadhim")
-	  ,(my/holiday-islamic 2 10 "💔🥀 Martyrdom of Ruqayyah bint Husayn" "https://en.wikipedia.org/wiki/Ruqayyah_bint_Husayn")
-	  ,(my/holiday-islamic 2 10 "⚔️ Victory to Ali in the Battle of Nahrawan" "https://en.wikipedia.org/wiki/Battle_of_Nahrawan")
-	  ,(my/holiday-islamic 2 12 "🥳 Birth of Salman the Persian" "https://en.wikipedia.org/wiki/Salman_the_Persian")
-	  ,(my/holiday-islamic 2 17 "💔🥀 Martyrdom of Imam Ali ar-Ridha, 203 AH" "https://en.wikipedia.org/wiki/Ali_al-Ridha")
-	  ,(my/holiday-islamic 2 20 "💔🥀 Ar'baeen, 40th day after Ashura 🖤" "https://en.wikipedia.org/wiki/Arba%CA%BDeen")
-	  ,(my/holiday-islamic 2 28 "💔🥀 Martyrdom of Imam Hasan ibn Ali, 50 AH" "https://en.wikipedia.org/wiki/Hasan_ibn_Ali")
-	  ,(my/holiday-islamic 2 28 "💔🥀 Martyrdom of Prophet Muhammad, 11 AH" "https://en.wikipedia.org/wiki/Muhammad")
+          ;; ﴾1﴿ Muharram, “The Sacred Month” ⨾⨾ ≈ July ’25, Mid-June ’26, June ’27
+          ,(my/holiday-islamic 1 1  "💔🥀 Mourning of Muharram starts" "https://en.wikipedia.org/wiki/Mourning_of_Muharram")
+          ,(my/holiday-islamic 1 2  "💔🥀 Arrival of Imam Husayn ibn Ali in Karbalā, 61 AH" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
+          ,(my/holiday-islamic 1 3  "💔🥀 Water supply to the camp of Husayn ibn Ali was stopped" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
+          ,(my/holiday-islamic 1 7  "💔🥀 Stored water in the tents of the camp of Husayn ibn Ali runs out" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
+          ,(my/holiday-islamic 1 10 "💔🥀 Day of Ashura" "https://ar.wikipedia.org/wiki/%D8%B9%D8%A7%D8%B4%D9%88%D8%B1%D8%A7%D8%A1")
+          ,(my/holiday-islamic 1 12 "💔🥀 Burial of the martyrs of Karbala by Bani Asad" "https://en.wikipedia.org/wiki/Banu_Asad_ibn_Khuzaymah")
+          ,(my/holiday-islamic 1 17 "🐘 Abraha attacked the Kaʿbah in the Year of the Elephant" "https://en.wikipedia.org/wiki/Abraha")
+          ,(my/holiday-islamic 1 18 "🕌 Changing of the Qibla, the direction of prayer" "https://en.wikipedia.org/wiki/Qibla")
+          ,(my/holiday-islamic 1 25 "💔🥀 Martyrdom of Imam Ali ibn Husayn Zayn al-Abidin, 95 AH 🖤" "https://en.wikipedia.org/wiki/Ali_ibn_Husayn_Zayn_al-Abidin")
 
-	  ;; ﴾3﴿ Rabi' al-Awwal, “The First Spring”
-	  ,(my/holiday-islamic 3 4  "💔🥀 Martyrdom of Fatimah bint Musa" "https://en.wikipedia.org/wiki/Fatimah_bint_Musa")
-	  ,(my/holiday-islamic 3 8  "💔🥀 Martyrdom of Imam Hasan al-Askari, 260 AH" "https://en.wikipedia.org/wiki/Hasan_al-Askari")
-	  ,(my/holiday-islamic 3 9  "🥳 Eid-e-Zahra" "https://en.wikipedia.org/wiki/Eid-e-Shuja%27")
-	  ,(my/holiday-islamic 3 17 "🥳 Birth of Imam Ja'far al-Sadiq, 83 AH" "https://en.wikipedia.org/wiki/Ja%27far_al-Sadiq")
-	  ,(my/holiday-islamic 3 17 "🥳 Mulad-al-Nabi: Birth of Prophet Muhammad, 53 BH" "https://en.wikipedia.org/wiki/Mawlid")
-	  ,(my/holiday-islamic 3 18 "🥳 Birth of Umm Kulthum bint Ali" "https://en.wikipedia.org/wiki/Umm_Kulthum_bint_Ali")
+          ;; ﴾2﴿ Safar, “Void”
+          ,(my/holiday-islamic 2 1  "💔🥀 Prisoners of Karbalā reach Yazid's palace in Syria" "https://en.wikipedia.org/wiki/Battle_of_Karbala")
+          ,(my/holiday-islamic 2 1  "⚔️ Battle of Siffin, 37 AH" "https://en.wikipedia.org/wiki/Battle_of_Siffin")
+          ,(my/holiday-islamic 2 7  "🥳 Birth of Imam Musa al-Kadhim, 128 AH" "https://en.wikipedia.org/wiki/Musa_al-Kadhim")
+          ,(my/holiday-islamic 2 10 "💔🥀 Martyrdom of Ruqayyah bint Husayn" "https://en.wikipedia.org/wiki/Ruqayyah_bint_Husayn")
+          ,(my/holiday-islamic 2 10 "⚔️ Victory to Ali in the Battle of Nahrawan" "https://en.wikipedia.org/wiki/Battle_of_Nahrawan")
+          ,(my/holiday-islamic 2 12 "🥳 Birth of Salman the Persian" "https://en.wikipedia.org/wiki/Salman_the_Persian")
+          ,(my/holiday-islamic 2 17 "💔🥀 Martyrdom of Imam Ali ar-Ridha, 203 AH" "https://en.wikipedia.org/wiki/Ali_al-Ridha")
+          ,(my/holiday-islamic 2 20 "💔🥀 Ar'baeen, 40th day after Ashura 🖤" "https://en.wikipedia.org/wiki/Arba%CA%BDeen")
+          ,(my/holiday-islamic 2 28 "💔🥀 Martyrdom of Imam Hasan ibn Ali, 50 AH" "https://en.wikipedia.org/wiki/Hasan_ibn_Ali")
+          ,(my/holiday-islamic 2 28 "💔🥀 Martyrdom of Prophet Muhammad, 11 AH" "https://en.wikipedia.org/wiki/Muhammad")
 
-	  ;; ﴾4﴿  Rabi' al-Thani, “The Second Spring”
-	  ,(my/holiday-islamic 4 18 "🥳 Birth of Imam Hasan al-Askari, 232 AH" "https://en.wikipedia.org/wiki/Hasan_al-Askari")
+          ;; ﴾3﴿ Rabi' al-Awwal, “The First Spring”
+          ,(my/holiday-islamic 3 4  "💔🥀 Martyrdom of Fatimah bint Musa" "https://en.wikipedia.org/wiki/Fatimah_bint_Musa")
+          ,(my/holiday-islamic 3 8  "💔🥀 Martyrdom of Imam Hasan al-Askari, 260 AH" "https://en.wikipedia.org/wiki/Hasan_al-Askari")
+          ,(my/holiday-islamic 3 9  "🥳 Eid-e-Zahra" "https://en.wikipedia.org/wiki/Eid-e-Shuja%27")
+          ,(my/holiday-islamic 3 17 "🥳 Birth of Imam Ja'far al-Sadiq, 83 AH" "https://en.wikipedia.org/wiki/Ja%27far_al-Sadiq")
+          ,(my/holiday-islamic 3 17 "🥳 Mulad-al-Nabi: Birth of Prophet Muhammad, 53 BH" "https://en.wikipedia.org/wiki/Mawlid")
+          ,(my/holiday-islamic 3 18 "🥳 Birth of Umm Kulthum bint Ali" "https://en.wikipedia.org/wiki/Umm_Kulthum_bint_Ali")
 
-	  ;; ﴾5﴿ Jumada al-Awwal, “The first of parched land”
-	  ,(my/holiday-islamic 5 10 "⚔️ Battle of the Camel" "https://en.wikipedia.org/wiki/Battle_of_the_Camel")
-	  ,(my/holiday-islamic 5 13 "💔🥀 Martyrdom of Sayedda Fatimah bint Muhammad, 11 AH" "https://en.wikipedia.org/wiki/Fatimah")
+          ;; ﴾4﴿  Rabi' al-Thani, “The Second Spring”
+          ,(my/holiday-islamic 4 18 "🥳 Birth of Imam Hasan al-Askari, 232 AH" "https://en.wikipedia.org/wiki/Hasan_al-Askari")
 
-	  ;; ﴾6﴿ Jumada al-Thani, “The second of parched land”
-	  ,(my/holiday-islamic 6 13 "💔🥀 Death of Umm ul-Banin (mother of Abbas ibn Ali)" "https://en.wikipedia.org/wiki/Umm_al-Banin")
-	  ,(my/holiday-islamic 6 20 "🥳 Birth of Sayedda Fatimah bint Muhammad, 8 BH" "https://en.wikipedia.org/wiki/Fatimah")
-	  ,(my/holiday-islamic 6 26 "💔🥀 Martyrdom of Imam Ali al-Hadi" "https://en.wikipedia.org/wiki/Ali_al-Hadi")
+          ;; ﴾5﴿ Jumada al-Awwal, “The first of parched land”
+          ,(my/holiday-islamic 5 10 "⚔️ Battle of the Camel" "https://en.wikipedia.org/wiki/Battle_of_the_Camel")
+          ,(my/holiday-islamic 5 13 "💔🥀 Martyrdom of Sayedda Fatimah bint Muhammad, 11 AH" "https://en.wikipedia.org/wiki/Fatimah")
 
-	  ;; ﴾7﴿ Rajab, “Respect”
-	  ,(my/holiday-islamic 7 1  "🥳 Birth of Imam Muhammad al-Baqir, 57 AH" "https://en.wikipedia.org/wiki/Muhammad_al-Baqir")
-	  ,(my/holiday-islamic 7 10 "🥳 Birth of Imam Muhammad al-Taqi, 195 AH" "https://en.wikipedia.org/wiki/Muhammad_al-Jawad")
-	  ,(my/holiday-islamic 7 13 "🥳 Birth of Imam Ali ibn Abi Talib, 23 BH" "https://en.wikipedia.org/wiki/Ali")
-	  ,(my/holiday-islamic 7 15 "💔🥀 Martyrdom of Imam Ja'far al-Sadiq" "https://en.wikipedia.org/wiki/Ja%27far_al-Sadiq")
-	  ,(my/holiday-islamic 7 18 "💔🥀 Death of Prophet Abraham" "https://en.wikipedia.org/wiki/Abraham")
-	  ,(my/holiday-islamic 7 20 "🥳 Birth of Sukaynah bint Husayn" "https://en.wikipedia.org/wiki/Ruqayyah_bint_Husayn")
-	  ,(my/holiday-islamic 7 24 "🥳 Birth of Ali al-Asghar ibn Husayn" "https://en.wikipedia.org/wiki/Ali_al-Asghar_ibn_Husayn")
-	  ,(my/holiday-islamic 7 25 "💔🥀 Martyrdom of Imam Musa al-Kadhim" "https://en.wikipedia.org/wiki/Musa_al-Kadhim")
-	  ,(my/holiday-islamic 7 26 "💔🥀 Martyrdom of Imam Abu Talib" "https://en.wikipedia.org/wiki/Abu_Talib")
-	  ,(my/holiday-islamic 7 27 "🌟 Miʻrāj & day of Mabʻath" "https://en.wikipedia.org/wiki/Isra_and_Mi%27raj")
-	  ,(my/holiday-islamic 7 28 "💔🥀 Husayn ibn ‘Alī started his journey to Karbalā from Madinah in 60 AH" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
+          ;; ﴾6﴿ Jumada al-Thani, “The second of parched land”
+          ,(my/holiday-islamic 6 13 "💔🥀 Death of Umm ul-Banin (mother of Abbas ibn Ali)" "https://en.wikipedia.org/wiki/Umm_al-Banin")
+          ,(my/holiday-islamic 6 20 "🥳 Birth of Sayedda Fatimah bint Muhammad, 8 BH" "https://en.wikipedia.org/wiki/Fatimah")
+          ,(my/holiday-islamic 6 26 "💔🥀 Martyrdom of Imam Ali al-Hadi" "https://en.wikipedia.org/wiki/Ali_al-Hadi")
 
-	  ;; ﴾8﴿ Sha'aban, “Scattered”
-	  ,(my/holiday-islamic 8 1  "🥳 Birth of Zaynab bint Ali, 6 AH" "https://en.wikipedia.org/wiki/Zaynab_bint_Ali")
-	  ,(my/holiday-islamic 8 3  "🥳 Birth of Imam Husayn ibn Ali, 4 AH" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
-	  ,(my/holiday-islamic 8 4  "🥳 Birth of Abbas ibn Ali, 36 AH" "https://en.wikipedia.org/wiki/Abbas_ibn_Ali")
-	  ,(my/holiday-islamic 8 5  "🥳 Birth of Imam Ali ibn Husayn Zayn al-Abidin, 37 AH" "https://en.wikipedia.org/wiki/Ali_ibn_Husayn_Zayn_al-Abidin")	  
-	  ,(my/holiday-islamic 8 11 "🥳 Birth of Ali al-Akbar ibn Husayn" "https://en.wikipedia.org/wiki/Ali_al-Akbar_ibn_Husayn")
-	  ,(my/holiday-islamic 8 14 "🥳 Birth of Qasim ibn Hasan" "https://en.wikipedia.org/wiki/Qasim_ibn_Hasan")
-	  ,(my/holiday-islamic 8 14 "🌟 Laylat al-Bara'at" "https://en.wikipedia.org/wiki/Mid-Sha%27ban")
-	  ,(my/holiday-islamic 8 14 "🌟 Shab-e-barat" "https://en.wikipedia.org/wiki/Shab-e-barat")
-	  ,(my/holiday-islamic 8 15 "🥳 Birth of Imam Muhammad al-Mahdi" "https://en.wikipedia.org/wiki/Muhammad_al-Mahdi")
+          ;; ﴾7﴿ Rajab, “Respect”
+          ,(my/holiday-islamic 7 1  "🥳 Birth of Imam Muhammad al-Baqir, 57 AH" "https://en.wikipedia.org/wiki/Muhammad_al-Baqir")
+          ,(my/holiday-islamic 7 10 "🥳 Birth of Imam Muhammad al-Taqi, 195 AH" "https://en.wikipedia.org/wiki/Muhammad_al-Jawad")
+          ,(my/holiday-islamic 7 13 "🥳 Birth of Imam Ali ibn Abi Talib, 23 BH" "https://en.wikipedia.org/wiki/Ali")
+          ,(my/holiday-islamic 7 15 "💔🥀 Martyrdom of Imam Ja'far al-Sadiq" "https://en.wikipedia.org/wiki/Ja%27far_al-Sadiq")
+          ,(my/holiday-islamic 7 18 "💔🥀 Death of Prophet Abraham" "https://en.wikipedia.org/wiki/Abraham")
+          ,(my/holiday-islamic 7 20 "🥳 Birth of Sukaynah bint Husayn" "https://en.wikipedia.org/wiki/Ruqayyah_bint_Husayn")
+          ,(my/holiday-islamic 7 24 "🥳 Birth of Ali al-Asghar ibn Husayn" "https://en.wikipedia.org/wiki/Ali_al-Asghar_ibn_Husayn")
+          ,(my/holiday-islamic 7 25 "💔🥀 Martyrdom of Imam Musa al-Kadhim" "https://en.wikipedia.org/wiki/Musa_al-Kadhim")
+          ,(my/holiday-islamic 7 26 "💔🥀 Martyrdom of Imam Abu Talib" "https://en.wikipedia.org/wiki/Abu_Talib")
+          ,(my/holiday-islamic 7 27 "🌟 Miʻrāj & day of Mabʻath" "https://en.wikipedia.org/wiki/Isra_and_Mi%27raj")
+          ,(my/holiday-islamic 7 28 "💔🥀 Husayn ibn ‘Alī started his journey to Karbalā from Madinah in 60 AH" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
 
-	  ;; ﴾9﴿ Ramadan, “Burning Heat; The Month of Fasting”
-	  ,(my/holiday-islamic 9 4  "📜 Descending of the Torah" "https://en.wikipedia.org/wiki/Torah")
-	  ,(my/holiday-islamic 9 10 "💔🥀 Death of Khadijah bint Khuwaylid" "https://en.wikipedia.org/wiki/Khadijah_bint_Khuwaylid")
-	  ,(my/holiday-islamic 9 12 "📜 Descending of the Gospel" "https://en.wikipedia.org/wiki/Gospel")
-	  ,(my/holiday-islamic 9 14 "💔🥀 Martyrdom of Mukhtar ibn Abi Ubayd Al-Thaqafi" "https://en.wikipedia.org/wiki/Mukhtar_al-Thaqafi")
-	  ,(my/holiday-islamic 9 15 "🥳 Birth of Imam Hasan ibn Ali" "https://en.wikipedia.org/wiki/Hasan_ibn_Ali")
-	  ,(my/holiday-islamic 9 17 "⚔️ Battle of Badr" "https://en.wikipedia.org/wiki/Battle_of_Badr")
-	  ,(my/holiday-islamic 9 18 "📜 Descending of the Psalms" "https://en.wikipedia.org/wiki/Psalms")
-	  ,(my/holiday-islamic 9 19 "📜 1st night of Laylat al-Qadr" "https://en.wikipedia.org/wiki/Qadr_Night")
-	  ,(my/holiday-islamic 9 20 "🌟 Victorious Conquest of Mecca" "https://en.wikipedia.org/wiki/Conquest_of_Mecca")
-	  ,(my/holiday-islamic 9 21 "📜 2nd night of Laylat al-Qadr" "https://en.wikipedia.org/wiki/Qadr_Night")
-	  ,(my/holiday-islamic 9 23 "📜 3rd night of Laylat al-Qadr" "https://en.wikipedia.org/wiki/Qadr_Night")
-	  ,(my/holiday-islamic 9 28 "🌟 Jumu'atul-Wida" "https://en.wikipedia.org/wiki/Jumu%27atul-Wida")
+          ;; ﴾8﴿ Sha'aban, “Scattered”
+          ,(my/holiday-islamic 8 1  "🥳 Birth of Zaynab bint Ali, 6 AH" "https://en.wikipedia.org/wiki/Zaynab_bint_Ali")
+          ,(my/holiday-islamic 8 3  "🥳 Birth of Imam Husayn ibn Ali, 4 AH" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
+          ,(my/holiday-islamic 8 4  "🥳 Birth of Abbas ibn Ali, 36 AH" "https://en.wikipedia.org/wiki/Abbas_ibn_Ali")
+          ,(my/holiday-islamic 8 5  "🥳 Birth of Imam Ali ibn Husayn Zayn al-Abidin, 37 AH" "https://en.wikipedia.org/wiki/Ali_ibn_Husayn_Zayn_al-Abidin")
+          ,(my/holiday-islamic 8 11 "🥳 Birth of Ali al-Akbar ibn Husayn" "https://en.wikipedia.org/wiki/Ali_al-Akbar_ibn_Husayn")
+          ,(my/holiday-islamic 8 14 "🥳 Birth of Qasim ibn Hasan" "https://en.wikipedia.org/wiki/Qasim_ibn_Hasan")
+          ,(my/holiday-islamic 8 14 "🌟 Laylat al-Bara'at" "https://en.wikipedia.org/wiki/Mid-Sha%27ban")
+          ,(my/holiday-islamic 8 14 "🌟 Shab-e-barat" "https://en.wikipedia.org/wiki/Shab-e-barat")
+          ,(my/holiday-islamic 8 15 "🥳 Birth of Imam Muhammad al-Mahdi" "https://en.wikipedia.org/wiki/Muhammad_al-Mahdi")
 
-	  ;; ﴾10﴿ Shawwal, “Raised”
-	  ,(my/holiday-islamic 10 1  "🥳 Eid al-Fitr" "https://en.wikipedia.org/wiki/Eid_al-Fitr")
-	  ,(my/holiday-islamic 10 2  "⚔️ Battle of the Trench" "https://en.wikipedia.org/wiki/Battle_of_the_Trench")
-	  ,(my/holiday-islamic 10 8  "💔🥀 Day of Sorrow" "https://en.wikipedia.org/wiki/Day_of_Sorrow")
-	  ,(my/holiday-islamic 10 9  "🥳 Marriage of Khadijah bint Khuwaylid to Muhammad" "https://en.wikipedia.org/wiki/Khadija_bint_Khuwaylid")
-	  ,(my/holiday-islamic 10 10 "🌟 Major Occultation of Muhammad al-Mahdi begins" "https://en.wikipedia.org/wiki/Major_Occultation")
-	  ,(my/holiday-islamic 10 15 "⚔️ Martyrdom of Hamzah in the Battle of Uhud, 3 AH" "https://en.wikipedia.org/wiki/Hamza_ibn_%E2%80%98Abd_al-Muttalib")
-	  ,(my/holiday-islamic 10 29 "🥳 Birth of Abu Talib" "https://en.wikipedia.org/wiki/Abu_Talib_ibn_%E2%80%98Abd_al-Muttalib")
+          ;; ﴾9﴿ Ramadan, “Burning Heat; The Month of Fasting”
+          ,(my/holiday-islamic 9 4  "📜 Descending of the Torah" "https://en.wikipedia.org/wiki/Torah")
+          ,(my/holiday-islamic 9 10 "💔🥀 Death of Khadijah bint Khuwaylid" "https://en.wikipedia.org/wiki/Khadijah_bint_Khuwaylid")
+          ,(my/holiday-islamic 9 12 "📜 Descending of the Gospel" "https://en.wikipedia.org/wiki/Gospel")
+          ,(my/holiday-islamic 9 14 "💔🥀 Martyrdom of Mukhtar ibn Abi Ubayd Al-Thaqafi" "https://en.wikipedia.org/wiki/Mukhtar_al-Thaqafi")
+          ,(my/holiday-islamic 9 15 "🥳 Birth of Imam Hasan ibn Ali" "https://en.wikipedia.org/wiki/Hasan_ibn_Ali")
+          ,(my/holiday-islamic 9 17 "⚔️ Battle of Badr" "https://en.wikipedia.org/wiki/Battle_of_Badr")
+          ,(my/holiday-islamic 9 18 "📜 Descending of the Psalms" "https://en.wikipedia.org/wiki/Psalms")
+          ,(my/holiday-islamic 9 19 "📜 1st night of Laylat al-Qadr" "https://en.wikipedia.org/wiki/Qadr_Night")
+          ,(my/holiday-islamic 9 20 "🌟 Victorious Conquest of Mecca" "https://en.wikipedia.org/wiki/Conquest_of_Mecca")
+          ,(my/holiday-islamic 9 21 "📜 2nd night of Laylat al-Qadr" "https://en.wikipedia.org/wiki/Qadr_Night")
+          ,(my/holiday-islamic 9 23 "📜 3rd night of Laylat al-Qadr" "https://en.wikipedia.org/wiki/Qadr_Night")
+          ,(my/holiday-islamic 9 28 "🌟 Jumu'atul-Wida" "https://en.wikipedia.org/wiki/Jumu%27atul-Wida")
 
-	  ;; ﴾11﴿ Dhu al-Qi'dah, “The Month of Truce”
-	  ,(my/holiday-islamic 11 1  "🥳 Birth of Fatimah bint Musa" "https://en.wikipedia.org/wiki/Fatimah_bint_Musa")
-	  ,(my/holiday-islamic 11 6  "🥳 Treaty of Hudaybiyyah was executed, 6 AH" "https://en.wikipedia.org/wiki/Treaty_of_Hudaybiyyah")
-	  ,(my/holiday-islamic 11 11 "🥳 Birth of Imam Ali ar-Ridha, 148 AH" "https://en.wikipedia.org/wiki/Ali_ar-Ridha")
-	  ,(my/holiday-islamic 11 25 "🌟 Dahwul Ardh" "https://en.wikishia.net/view/Dahw_al-Ard")
-	  ,(my/holiday-islamic 11 29 "💔🥀 Martyrdom of Muhammad al-Taqī, 220 AH" "https://en.wikipedia.org/wiki/Muhammad_al-Taq%C4%AB")
+          ;; ﴾10﴿ Shawwal, “Raised”
+          ,(my/holiday-islamic 10 1  "🥳 Eid al-Fitr" "https://en.wikipedia.org/wiki/Eid_al-Fitr")
+          ,(my/holiday-islamic 10 2  "⚔️ Battle of the Trench" "https://en.wikipedia.org/wiki/Battle_of_the_Trench")
+          ,(my/holiday-islamic 10 8  "💔🥀 Day of Sorrow" "https://en.wikipedia.org/wiki/Day_of_Sorrow")
+          ,(my/holiday-islamic 10 9  "🥳 Marriage of Khadijah bint Khuwaylid to Muhammad" "https://en.wikipedia.org/wiki/Khadija_bint_Khuwaylid")
+          ,(my/holiday-islamic 10 10 "🌟 Major Occultation of Muhammad al-Mahdi begins" "https://en.wikipedia.org/wiki/Major_Occultation")
+          ,(my/holiday-islamic 10 15 "⚔️ Martyrdom of Hamzah in the Battle of Uhud, 3 AH" "https://en.wikipedia.org/wiki/Hamza_ibn_%E2%80%98Abd_al-Muttalib")
+          ,(my/holiday-islamic 10 29 "🥳 Birth of Abu Talib" "https://en.wikipedia.org/wiki/Abu_Talib_ibn_%E2%80%98Abd_al-Muttalib")
 
-	  ;; ﴾12﴿ Dhu al-Hijjah, “The Month of Pilgrimage”
-	  ,(my/holiday-islamic 12 1  "🥳 Marriage of Sayedda Fatimah bint Muhammad to Imam Ali, 2 BH" "https://en.wikipedia.org/wiki/Fatimah_bint_Muhammad")
-	  ,(my/holiday-islamic 12 3  "🥳 Renunciation of Adam accepted" "https://en.wikipedia.org/wiki/Adam_in_Islam")
-	  ,(my/holiday-islamic 12 7  "💔🥀 Martyrdom of Imam Muhammad al-Baqir, 114 AH" "https://en.wikipedia.org/wiki/Muhammad_al-Baqir")
-	  ,(my/holiday-islamic 12 8  "💔🥀 Imam Husayn ibn Ali leaves Makkah for Karbala, 60 AH" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
-	  ,(my/holiday-islamic 12 9  "🌟 Day of Arafah" "https://en.wikipedia.org/wiki/Day_of_Arafat")
-	  ,(my/holiday-islamic 12 9  "💔🥀 Martyrdom of Muslim ibn Aqeel & Hani ibn Urwa in Kufa, 60 AH" "https://en.wikipedia.org/wiki/Muslim_ibn_Aqeel")
-	  ,(my/holiday-islamic 12 10 "🥳 Eid al-Adha" "https://en.wikipedia.org/wiki/Eid_al-Adha")
-	  ,(my/holiday-islamic 12 15 "🥳 Birth of Imam Ali al-Hadi, 212 AH" "https://en.wikipedia.org/wiki/Ali_al-Hadi")
-	  ,(my/holiday-islamic 12 16 "💔🥀 Martyrdom of Sayedda Zaynab bint Ali" "https://en.wikipedia.org/wiki/Zaynab_bint_Ali")
-	  ,(my/holiday-islamic 12 18 "🥳 Eid al-Ghadeer" "https://en.wikipedia.org/wiki/Event_of_Ghadir_Khumm")
-	  ,(my/holiday-islamic 12 23 "💔🥀 Martyrdom of the children of Muslim ibn Aqeel, 60 AH" "https://en.wikipedia.org/wiki/Muslim_ibn_Aqeel")
-	  ,(my/holiday-islamic 12 24 "🥳 Eid al-Mubahalah" "https://en.wikipedia.org/wiki/Event_of_Mubahala")
-	  ,(my/holiday-islamic 12 27 "💔🥀 Martyrdom of Maytham al-Tammar, 60 AH" "https://en.wikipedia.org/wiki/Maytham_al-Tammar")
+          ;; ﴾11﴿ Dhu al-Qi'dah, “The Month of Truce”
+          ,(my/holiday-islamic 11 1  "🥳 Birth of Fatimah bint Musa" "https://en.wikipedia.org/wiki/Fatimah_bint_Musa")
+          ,(my/holiday-islamic 11 6  "🥳 Treaty of Hudaybiyyah was executed, 6 AH" "https://en.wikipedia.org/wiki/Treaty_of_Hudaybiyyah")
+          ,(my/holiday-islamic 11 11 "🥳 Birth of Imam Ali ar-Ridha, 148 AH" "https://en.wikipedia.org/wiki/Ali_ar-Ridha")
+          ,(my/holiday-islamic 11 25 "🌟 Dahwul Ardh" "https://en.wikishia.net/view/Dahw_al-Ard")
+          ,(my/holiday-islamic 11 29 "💔🥀 Martyrdom of Muhammad al-Taqī, 220 AH" "https://en.wikipedia.org/wiki/Muhammad_al-Taq%C4%AB")
 
-	  ;; Canadian Holidays; https://www.canada.ca/en/revenue-agency/services/tax/public-holidays.html
-	  (holiday-fixed 1 1 "🇨🇦 New Year's Day 🇺🇸")
-	  (holiday-float 2 1 3 "🇨🇦 Family Day") ;; Third Monday in February
-	  (holiday-easter-etc) ;; Good Friday and Easter Monday
-	  (holiday-float 5 1 -1 "🇨🇦 Victoria Day" 25) ;; Monday preceding May 25th
-	  (holiday-fixed 6 1 "🇨🇦 Canada Day")
-	  (holiday-float 8 1 1 "🇨🇦 Civic Holiday") ;; First Monday in August
-	  (holiday-float 9 1 1 "🇨🇦 Labour Day 🇺🇸") ;;	First Monday of Septembe
-	  (holiday-fixed 9 30 "🇨🇦 National Day for Truth and Reconciliation")
-	  (holiday-float 10 1 2 "🇨🇦 Canadian Thanksgiving")	;; Second Monday in October
-	  (holiday-fixed 12 25 "🇨🇦 Christmas Day 🇺🇸")
-	  (holiday-fixed 12 26 "🇨🇦 Boxing Day / Day After Christmas 🇺🇸")
+          ;; ﴾12﴿ Dhu al-Hijjah, “The Month of Pilgrimage”
+          ,(my/holiday-islamic 12 1  "🥳 Marriage of Sayedda Fatimah bint Muhammad to Imam Ali, 2 BH" "https://en.wikipedia.org/wiki/Fatimah_bint_Muhammad")
+          ,(my/holiday-islamic 12 3  "🥳 Renunciation of Adam accepted" "https://en.wikipedia.org/wiki/Adam_in_Islam")
+          ,(my/holiday-islamic 12 7  "💔🥀 Martyrdom of Imam Muhammad al-Baqir, 114 AH" "https://en.wikipedia.org/wiki/Muhammad_al-Baqir")
+          ,(my/holiday-islamic 12 8  "💔🥀 Imam Husayn ibn Ali leaves Makkah for Karbala, 60 AH" "https://en.wikipedia.org/wiki/Husayn_ibn_Ali")
+          ,(my/holiday-islamic 12 9  "🌟 Day of Arafah" "https://en.wikipedia.org/wiki/Day_of_Arafat")
+          ,(my/holiday-islamic 12 9  "💔🥀 Martyrdom of Muslim ibn Aqeel & Hani ibn Urwa in Kufa, 60 AH" "https://en.wikipedia.org/wiki/Muslim_ibn_Aqeel")
+          ,(my/holiday-islamic 12 10 "🥳 Eid al-Adha" "https://en.wikipedia.org/wiki/Eid_al-Adha")
+          ,(my/holiday-islamic 12 15 "🥳 Birth of Imam Ali al-Hadi, 212 AH" "https://en.wikipedia.org/wiki/Ali_al-Hadi")
+          ,(my/holiday-islamic 12 16 "💔🥀 Martyrdom of Sayedda Zaynab bint Ali" "https://en.wikipedia.org/wiki/Zaynab_bint_Ali")
+          ,(my/holiday-islamic 12 18 "🥳 Eid al-Ghadeer" "https://en.wikipedia.org/wiki/Event_of_Ghadir_Khumm")
+          ,(my/holiday-islamic 12 23 "💔🥀 Martyrdom of the children of Muslim ibn Aqeel, 60 AH" "https://en.wikipedia.org/wiki/Muslim_ibn_Aqeel")
+          ,(my/holiday-islamic 12 24 "🥳 Eid al-Mubahalah" "https://en.wikipedia.org/wiki/Event_of_Mubahala")
+          ,(my/holiday-islamic 12 27 "💔🥀 Martyrdom of Maytham al-Tammar, 60 AH" "https://en.wikipedia.org/wiki/Maytham_al-Tammar")
 
-	  ;; California Holidays
-	  (holiday-fixed 1 20 "🇺🇸 Martin Luther King Jr. Day")
-	  (holiday-fixed 2 17 "🇺🇸 Presidents’ Day")
-	  (holiday-fixed 5 26 "🇺🇸 Memorial Day")
-	  (holiday-fixed 7 4  "🇺🇸 Independence Day")
-	  (holiday-fixed 11 11 "🇺🇸 Veterans Day")
-	  (holiday-fixed 11 27 "🇺🇸 American Thanksgiving")
-	  (holiday-fixed 11 28 "🇺🇸 Day after Thanksgiving")
-	  
-	  ;; Misc
-	  (holiday-fixed 2 14 "💕 Valentine's Day")
-	  (holiday-float 5 0 2 "🧕 Mother's Day")
-	  (holiday-float 6 0 3 "👴 Father's Day")
-	  (holiday-fixed 10 31 "👻 Halloween")
-	  (holiday-islamic-new-year)	
-	  (solar-equinoxes-solstices)
-	  (holiday-sexp calendar-daylight-savings-starts
-			(format "Daylight Saving Time Begins %s"
-				(solar-time-string
-				 (/ calendar-daylight-savings-starts-time (float 60))
-				 calendar-standard-time-zone-name)))
-	  (holiday-sexp calendar-daylight-savings-ends
-			(format "Daylight Saving Time Ends %s"
-				(solar-time-string
-				 (/ calendar-daylight-savings-ends-time (float 60))
-				 calendar-daylight-time-zone-name)))))
+          ;; Canadian Holidays; https://www.canada.ca/en/revenue-agency/services/tax/public-holidays.html
+          (holiday-fixed 1 1 "🇨🇦 New Year's Day 🇺🇸")
+          (holiday-float 2 1 3 "🇨🇦 Family Day") ;; Third Monday in February
+          (holiday-easter-etc) ;; Good Friday and Easter Monday
+          (holiday-float 5 1 -1 "🇨🇦 Victoria Day" 25) ;; Monday preceding May 25th
+          (holiday-fixed 6 1 "🇨🇦 Canada Day")
+          (holiday-float 8 1 1 "🇨🇦 Civic Holiday") ;; First Monday in August
+          (holiday-float 9 1 1 "🇨🇦 Labour Day 🇺🇸") ;;	First Monday of Septembe
+          (holiday-fixed 9 30 "🇨🇦 National Day for Truth and Reconciliation")
+          (holiday-float 10 1 2 "🇨🇦 Canadian Thanksgiving")	;; Second Monday in October
+          (holiday-fixed 12 25 "🇨🇦 Christmas Day 🇺🇸")
+          (holiday-fixed 12 26 "🇨🇦 Boxing Day / Day After Christmas 🇺🇸")
+
+          ;; California Holidays
+          (holiday-fixed 1 20 "🇺🇸 Martin Luther King Jr. Day")
+          (holiday-fixed 2 17 "🇺🇸 Presidents’ Day")
+          (holiday-fixed 5 26 "🇺🇸 Memorial Day")
+          (holiday-fixed 7 4  "🇺🇸 Independence Day")
+          (holiday-fixed 11 11 "🇺🇸 Veterans Day")
+          (holiday-fixed 11 27 "🇺🇸 American Thanksgiving")
+          (holiday-fixed 11 28 "🇺🇸 Day after Thanksgiving")
+
+          ;; Misc
+          (holiday-fixed 2 14 "💕 Valentine's Day")
+          (holiday-float 5 0 2 "🧕 Mother's Day")
+          (holiday-float 6 0 3 "👴 Father's Day")
+          (holiday-fixed 10 31 "👻 Halloween")
+          (holiday-islamic-new-year)
+          (solar-equinoxes-solstices)
+          (holiday-sexp calendar-daylight-savings-starts
+                        (format "Daylight Saving Time Begins %s"
+                                (solar-time-string
+                                 (/ calendar-daylight-savings-starts-time (float 60))
+                                 calendar-standard-time-zone-name)))
+          (holiday-sexp calendar-daylight-savings-ends
+                        (format "Daylight Saving Time Ends %s"
+                                (solar-time-string
+                                 (/ calendar-daylight-savings-ends-time (float 60))
+                                 calendar-daylight-time-zone-name)))))
 ;; Holy Days & Holidays:2 ends here
 
 ;; [[file:init.org::*Capture: Now that I know how to query my agenda, how do I get things into it efficiently?][Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1]]
@@ -3695,8 +3669,8 @@ Usage:
  'org-mode-hook
  (cl-defun my/setup-smart-paste ()
    (bind-key "s-v"
-	     (cl-defun my/dwim-paste ()
-	       "Call `yank-media', with first possible media-type; ie no prompting.
+             (cl-defun my/dwim-paste ()
+               "Call `yank-media', with first possible media-type; ie no prompting.
 
 With “C-u” prefix, or when in minibuffer, this is traditional paste.
 
@@ -3715,14 +3689,14 @@ TODO:
 ⇒ Define “attachement:” using org-special-block-extras so that it gives me keymap options like
    delete attachement, rename attachement, open attachement externally, open in emacs. Low priority.
 "
-	       (interactive)
-	       (if (or (minibufferp) current-prefix-arg (null yank-media--registered-handlers))
-		   (yank)
-		 (flet ((length= (&rest _args) 'assume-equality-check-is-true-in-<yank-media>-implementation))
-		   (-let [start (point)]
-		     (ignore-errors (yank-media))
-		     ;; If no media to yank, then do plain old yank
-		     (when (equal start (point)) (yank)))))))
+               (interactive)
+               (if (or (minibufferp) current-prefix-arg (null yank-media--registered-handlers))
+                   (yank)
+                 (flet ((length= (&rest _args) 'assume-equality-check-is-true-in-<yank-media>-implementation))
+                   (-let [start (point)]
+                     (ignore-errors (yank-media))
+                     ;; If no media to yank, then do plain old yank
+                     (when (equal start (point)) (yank)))))))
 
 
    ;; Added to: yank-media--registered-handlers.
@@ -3730,39 +3704,39 @@ TODO:
     "text/html"
     (cl-defun my/yank-html-media (_media-type contents)
       (insert (s-replace " " " " (shell-command-to-string
-				  (-let [delimiter "EOF"] ;; A unique “here-document delimiter”, unlikely to be part of ‘contents’
-				    (format "pandoc -f html -t org <<%s\n%s\n%s" delimiter contents delimiter)))))))
+                                  (-let [delimiter "EOF"] ;; A unique “here-document delimiter”, unlikely to be part of ‘contents’
+                                    (format "pandoc -f html -t org <<%s\n%s\n%s" delimiter contents delimiter)))))))
 
    (yank-media-handler
     "STRING"
     (cl-defun my/yank-plaintext-media (_media-type contents)
       (let* ((url (when (string-match-p "^https?://" contents) contents))
-	     (region-content (when (region-active-p)
-			       (buffer-substring-no-properties (region-beginning)
-							       (region-end)))))
-	(cond ((and region-content url)
-	       (delete-region (region-beginning) (region-end))
-	       (insert (org-make-link-string url region-content)))
-	      (url
-	       ;; Insert Org link to URL using title of HTML page at URL.
-	       (org-web-tools-insert-link-for-url url))
-	      (:otherwise
-	       (-let [ (gerrit-title gerrit-url) (my/extract-gerrit-title-and-url contents) ]
-		 (if (and gerrit-title gerrit-url)
-		     (insert (org-make-link-string gerrit-url gerrit-title))
-		   (insert contents))))))))
+             (region-content (when (region-active-p)
+                               (buffer-substring-no-properties (region-beginning)
+                                                               (region-end)))))
+        (cond ((and region-content url)
+               (delete-region (region-beginning) (region-end))
+               (insert (org-make-link-string url region-content)))
+              (url
+               ;; Insert Org link to URL using title of HTML page at URL.
+               (org-web-tools-insert-link-for-url url))
+              (:otherwise
+               (-let [ (gerrit-title gerrit-url) (my/extract-gerrit-title-and-url contents) ]
+                 (if (and gerrit-title gerrit-url)
+                     (insert (org-make-link-string gerrit-url gerrit-title))
+                   (insert contents))))))))
    ;;
    (defun my/extract-gerrit-title-and-url (str)
      "Extract the title and URL from the given string STR, omitting the leading number and tags in brackets."
      (if (string-match "^\\(?:[0-9]+: \\)?\\(?:\\[[^]]+\\] \\)?\\(.*?\\) | \\(https?://[^ \"]+\\) *$" str)
-	 (let ((title (match-string 1 str))
-	       (url (match-string 2 str)))
-	   (list title url))))
+         (let ((title (match-string 1 str))
+               (url (match-string 2 str)))
+           (list title url))))
    ;; example usage
    (when nil
      (let ((input "12345: [foo, bar] OCaml Syntax: Fix foo bar baz | https://gerrit.local.company.com/c/abc/+/12345"))
        (-let [ (title url) (my/extract-gerrit-title-and-url input) ]
-	 (message "Title: %s\nURL: %s" title url))))
+         (message "Title: %s\nURL: %s" title url))))
 
 
    (yank-media-handler
@@ -3805,9 +3779,9 @@ TODO:
 ;; `appt-activate' eagerly runs every minute, slow it down to once every 10 minutes
 ;; Also, don't do anything when I save a file (namely, `appt-update-list').
 (advice-add 'appt-activate :after
-	    (lambda (&rest args)
-	      (remove-hook 'write-file-functions #'appt-update-list)
-	      (timer-set-time appt-timer (current-time) 600)))
+            (lambda (&rest args)
+              (remove-hook 'write-file-functions #'appt-update-list)
+              (timer-set-time appt-timer (current-time) 600)))
 ;; Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1 ends here
 
 ;; [[file:init.org::*Done!][Done!:1]]
@@ -3815,7 +3789,7 @@ TODO:
 (message-box "Enjoy life (｡◕‿◕｡))")
 ;; Done!:1 ends here
 
-;; [[file:init.org::*Testing that things are as they should be][Testing that things are as they should be:1]]
+;; [[file:init.org::*STARTED Testing that things are as they should be][STARTED Testing that things are as they should be:1]]
 (progn
   ;; TODO: Move the next bunch of lines up somewhere
   (add-hook 'prog-mode-hook 'company-mode)
@@ -3832,32 +3806,32 @@ TODO:
   (require 'cl) ;; get `assert` macro
   (require 'ert) ;; get `should` macro
 
-  
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;                                                                                ;;
   ;; When programming, indentation is automatic & I have auto-complete              ;;
   ;;                                                                                ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
+
   (emacs-lisp-mode)
   (assert aggressive-indent-mode)
   (assert company-mode)
   (assert eldoc-mode)
   (assert color-identifiers-mode) ;; Semantic colouring
 
-  
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;                                                                                ;;
   ;; When I'm note-taking, I have a nice environment                                ;;
-  ;;                                                                                ;;         
+  ;;                                                                                ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
+
   (org-mode)
   ;; TODO (assert eldoc-mode)
   (assert company-mode t "Whoops, Org mode does not have Company enabled!")
   (assert eldoc-mode)
   (assert eldoc-box-hover-mode)
-  
+
   ;; C-RET makes a new org heading with a pink :CREATED: property
   (execute-kbd-macro (kbd "C-<return>"))
   (insert "My neato notes")
@@ -3873,7 +3847,7 @@ TODO:
   ;;                (should (equal (face-attribute 'org-drawer :height) 0.9)))
   ;;         (should (equal (face-attribute 'org-drawer :slant) 'italic)))
   ;; TODO assert PROPERTIES, LOGBOOK, word and :END: words are invisible?
-  
+
   ;; Let's add a schedule and deadline
   (execute-kbd-macro (kbd "C-c C-s <return>"))
   (execute-kbd-macro (kbd "C-c C-d <return>"))
@@ -3882,17 +3856,17 @@ TODO:
   (should (org-entry-get (point) "DEADLINE"))
   ;; TODO (progn (beginning-of-buffer) (re-search-forward "SCHEDULED:") (assert (string-equal (get-text-property (point) 'display) "📆 ")))
   ;; TODO (progn (beginning-of-buffer) (re-search-forward "DEADLINE:")  (assert (string-equal (get-text-property (point) 'display) "🎯 ")))
-  
+
   ;; Speed keys are enabled, so we can start by pressing “t”
   (assert org-use-speed-commands)
   (beginning-of-buffer)
   (execute-kbd-macro (kbd "t i")) ;; Enter “INVESTIGATED” state
   (should (string-equal (org-entry-get (point) "TODO") "INVESTIGATED"))
-  
+
   ;; check all of my workflow states are present
   (should (equal org-todo-keywords '((sequence "TODO(t)" "INVESTIGATED(i)" "STARTED(s)" "PAUSED(p@/!)" "WAITING(w)" "APPROVED(a)" "|" "DONE(d)" "CANCELLED(c@)"))))
   (should (equal org-log-done 'time))
-  
+
   ;; TODO When I “Clock-In” to a task, I'm in the STARTED state.
   (execute-kbd-macro (kbd "C-c C-x C-i"))
   ;; TODO (should (string-equal (org-entry-get (point) "TODO") "STARTED"))
@@ -3903,7 +3877,7 @@ TODO:
   (execute-kbd-macro (kbd "C-c SPC"))
   (should (equal (buffer-name) "*test*"))
   (should (equal (org-get-heading) "INVESTIGATED My neato notes"))
-  
+
   ;; TODO Make a note, via C-c C-z, and confirm the note icon looks pretty.
   ;; TODO Finally, clock out and check that the clock icon looks pretty.
   ;; (progn (beginning-of-buffer) (re-search-forward "CLOCK:") (should (equal (get-text-property (point) 'display) "⏰ ")))
@@ -3914,33 +3888,33 @@ TODO:
   (org-todo "DONE")
   (should (org-entry-get (point) "CLOSED"))
   ;; TODO (progn (beginning-of-buffer) (re-search-forward "CLOSED:") (should (equal (get-text-property (point) 'display) "☺️ ")))
-  
-  
+
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;                                                                              			      ;;
+  ;;                                                                                                          ;;
   ;; Smart Paste: Gerrit Links, Arbitrary URLs, Arbitrary Image Attachements, Arbitrary Rich Text, Plain Text ;;
-  ;; 													      ;;
+  ;;                                                                                                          ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  
+
   (execute-kbd-macro (kbd "s-a DEL"))
   (kill-new "Plain text is pasted as is")
   (execute-kbd-macro (kbd "s-v"))
   (should (equal (thing-at-point 'line :no-properties) "Plain text is pasted as is"))
-  
+
   (execute-kbd-macro (kbd "s-a DEL"))
   (kill-new "12345: [foo, bar] OCaml Syntax: Fix foo bar baz | https://gerrit.local.company.com/c/abc/+/12345")
   (execute-kbd-macro (kbd "s-v"))
-  (should (equal (thing-at-point 'line :no-properties)		 
-		 "[[https://gerrit.local.company.com/c/abc/+/12345][OCaml Syntax: Fix foo bar baz]]"))
+  (should (equal (thing-at-point 'line :no-properties)
+                 "[[https://gerrit.local.company.com/c/abc/+/12345][OCaml Syntax: Fix foo bar baz]]"))
 
   (execute-kbd-macro (kbd "s-a DEL"))
   (kill-new "https://github.com/alphapapa/org-ql/tree/master")
   (execute-kbd-macro (kbd "s-v"))
   (should (equal (thing-at-point 'line :no-properties)
-		 (format "[[%s][%s]]"
-			 "https://github.com/alphapapa/org-ql/tree/master"
-			 "GitHub - alphapapa/org-ql: A searching tool for Org-mode, including custom query languages, commands, saved searches and agenda-like views, etc.")))
+                 (format "[[%s][%s]]"
+                         "https://github.com/alphapapa/org-ql/tree/master"
+                         "GitHub - alphapapa/org-ql: A searching tool for Org-mode, including custom query languages, commands, saved searches and agenda-like views, etc.")))
 
   ;; Pressing “C-u ⌘-v” does a plain old paste
   (execute-kbd-macro (kbd "s-a DEL"))
@@ -3949,7 +3923,7 @@ TODO:
   (should (equal (thing-at-point 'line :no-properties) "https://github.com/alphapapa/org-ql/tree/master"))
 
   (when nil ;; If the above smart paste assertions pass, then likely so do the following (time-consuming!) ones.
-    
+
     ;; Copy an image from somewhere
     (ignore-errors ;; This works when run in init.org, but fails when run programmatically? Perhaps Org hook is not setup correctly?
       (execute-kbd-macro (kbd "s-a DEL"))
@@ -3974,15 +3948,15 @@ TODO:
         ")
       (execute-kbd-macro (kbd "s-v"))
       ;; Confirm we have a few Org headings corresponding to the HTML headings we copied, also note /italics/ and other markup are rendered nicely.
-      (should (equal 
-	       (org-map-entries (lambda () (substring-no-properties (org-get-heading t t t t))))
-	       '("Musa Al-hassy\\\\" "[[javascript:window.scrollTo(0,0)][Ξ]]" "Quick Facts" "Character" "Goals" "/What do?/")))))
-  
+      (should (equal
+               (org-map-entries (lambda () (substring-no-properties (org-get-heading t t t t))))
+               '("Musa Al-hassy\\\\" "[[javascript:window.scrollTo(0,0)][Ξ]]" "Quick Facts" "Character" "Goals" "/What do?/")))))
+
   (kill-buffer "*scratch*") ;; clean up
   (kill-buffer "*test*") ;; clean up
-  
+
   ;; Finally, open my agenda.
   (execute-kbd-macro (kbd "C-c a"))
 
   )
-;; Testing that things are as they should be:1 ends here
+;; STARTED Testing that things are as they should be:1 ends here
