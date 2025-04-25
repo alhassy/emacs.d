@@ -3163,12 +3163,14 @@ method."
 					      (s-matches? "<[^ ]* [^ ]* [^ ]*\\(d\\|m\\)>"
 							  scheduled)))))
 			  (skip)))))
-		   (org-agenda-current-time-string "⏰ ⮜┈┈┈┈┈┈┈ now")
+		   (org-agenda-current-time-string (s-join "\n\t\t" (-repeat 3 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
 		   ;; :org-agenda-remove-tags t
 		   ;; :org-agenda-time-grid nil
 		   ;; :org-use-tag-inheritance nil
 		   (org-agenda-span 'day)
-		   (org-agenda-prefix-format " ○ %t %s")
+		   ;; I want work items to automatically have a briefcase next to them.
+		   (org-agenda-prefix-format " ○ %t % i%s") ;; The “%i” is the icon on the next line.
+		   (org-agenda-category-icon-alist '(("\\`work\\'" ("💼") nil nil :ascent center)))
 		   (org-agenda-time-grid
 		    '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000)
 		      " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))))
@@ -3213,6 +3215,7 @@ method."
 	  ;; Add more items here                                                    ;;
 	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  ))))
+
 
 
 ;; NOTE: I find these queries by playing with:  (org-ql-search org-agenda-files '(tags-local "Top"))
@@ -3788,6 +3791,24 @@ TODO:
 ;; I was surprised I needed this; perhaps a system restart will show I don't need it.
 (add-hook 'org-capture-mode-hook #'my/setup-smart-paste)
 ;; “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode:1 ends here
+
+;; [[file:init.org::*Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)][Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1]]
+(setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
+
+(setq appt-message-warning-time 12) ;; Show me a warning 12 minutes before an appointment
+
+(setq appt-display-interval 3) ;; Display warning every 3 minutes
+
+;; Ensure all of my Org entries are part of appt whenever it checks for an appointment
+(advice-add 'appt-check :before (lambda (&rest args) (org-agenda-to-appt t)))
+
+;; `appt-activate' eagerly runs every minute, slow it down to once every 10 minutes
+;; Also, don't do anything when I save a file (namely, `appt-update-list').
+(advice-add 'appt-activate :after
+	    (lambda (&rest args)
+	      (remove-hook 'write-file-functions #'appt-update-list)
+	      (timer-set-time appt-timer (current-time) 600)))
+;; Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1 ends here
 
 ;; [[file:init.org::*Done!][Done!:1]]
 (add-to-list 'default-frame-alist '(fullscreen . maximized))

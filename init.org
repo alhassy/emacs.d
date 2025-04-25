@@ -14019,12 +14019,14 @@ Further Reading:
 					      (s-matches? "<[^ ]* [^ ]* [^ ]*\\(d\\|m\\)>"
 							  scheduled)))))
 			  (skip)))))
-		   (org-agenda-current-time-string "⏰ ⮜┈┈┈┈┈┈┈ now")
+		   (org-agenda-current-time-string (s-join "\n\t\t" (-repeat 3 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
 		   ;; :org-agenda-remove-tags t
 		   ;; :org-agenda-time-grid nil
 		   ;; :org-use-tag-inheritance nil
 		   (org-agenda-span 'day)
-		   (org-agenda-prefix-format " ○ %t %s")
+		   ;; I want work items to automatically have a briefcase next to them.
+		   (org-agenda-prefix-format " ○ %t % i%s") ;; The “%i” is the icon on the next line.
+		   (org-agenda-category-icon-alist '(("\\`work\\'" ("💼") nil nil :ascent center)))
 		   (org-agenda-time-grid
 		    '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000)
 		      " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))))
@@ -14069,6 +14071,7 @@ Further Reading:
 	  ;; Add more items here                                                    ;;
 	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	  ))))
+
 
 
 ;; NOTE: I find these queries by playing with:  (org-ql-search org-agenda-files '(tags-local "Top"))
@@ -14593,7 +14596,6 @@ Which shows the holidays from the list below:
 				 calendar-daylight-time-zone-name)))))
 #+end_src
 
-
 * --------------------------------------------------------------------------------
 :PROPERTIES:
 :CREATED:  [2025-04-14 Mon 09:43]
@@ -14795,6 +14797,66 @@ Notes:
 - (org-setup-yank-dnd-handlers): Register yank-media-handler and DND (Drag-aNd-Drop) handler.
 - (org-media-image-save-type, org-dnd-default-attach-method): New defcustoms.
 - Add yank-media and DND handlers: (org--image-yank-media-handler, org--copied-files-yank-media-handler) (org--dnd-local-file-handler)
+
+* Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)
+
+"Appointments" are [[https://orgmode.org/manual/Special-Agenda-Views.html][defined as]] scheduled tasks with a start time. I occasionally
+check them manually, but they are not part of my daily routine because ~M-x
+org-agenda-to-appt~ lets me be warned about upcoming ones.
+
+For Org entries with a timestamp involving an hour-minute time, Emacs can warn
+you in advance that an appointment is pending. Emacs alerts you to the
+appointment by displaying a message in a window along with a beep sound and even
+shows a helpful “appointment in 𝓍 minutes” message in the modeline; all
+configurable with =appt-display-format= and =appt-audible= and
+=appt-display-mode-line=.
+
+#+begin_src emacs-lisp
+(setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
+
+(setq appt-message-warning-time 12) ;; Show me a warning 12 minutes before an appointment
+
+(setq appt-display-interval 3) ;; Display warning every 3 minutes
+
+;; Ensure all of my Org entries are part of appt whenever it checks for an appointment
+(advice-add 'appt-check :before (lambda (&rest args) (org-agenda-to-appt t)))
+
+;; `appt-activate' eagerly runs every minute, slow it down to once every 10 minutes
+;; Also, don't do anything when I save a file (namely, `appt-update-list').
+(advice-add 'appt-activate :after
+	    (lambda (&rest args)
+	      (remove-hook 'write-file-functions #'appt-update-list)
+	      (timer-set-time appt-timer (current-time) 600)))
+#+end_src
+
+We can modify =appt-disp-window-function= (and =appt-delete-window-function=)
+so that, for example, we use an operating system pop-up instead of an Emacs window as in:
+#+begin_src emacs-lisp :tangle no
+;; (org-show-notification "Attention! You have a meeting in 5 minutes!") ;; Example use.
+;; (org-notify "This message has a sound" t) ;; Show pop-up and play a beep.
+
+;; With this, I now see a pop-up notification every `appt-display-interval' minutes
+(setq appt-disp-window-function
+      (lambda (remaining new-time msg)
+	(org-show-notification (format "⟪In %s minutes⟫ %s" remaining msg))))
+#+end_src
+
+*To add (or update) the appointments of your agenda files, use the command
+=org-agenda-to-appt=.*
+
+You can also use the appointment notification facility like an alarm
+clock. The command M-x appt-add adds entries to the appointment list
+without affecting your diary file. You delete entries from the
+appointment list with M-x appt-delete.
+
+More:
++ [-] [[https://christiantietze.de/posts/2019/12/emacs-notifications/][Native macOS Notifications for Emacs Org Tasks and Appointments • Christian Tietze]]
+  - MA: I already have nearly the same setup somehere. See =my-life.org=.
++ [X] [[https://elpa.gnu.org/packages/org-notify.html][GNU ELPA - org-notify]] :: Gives more messaging schemes; e.g., send a message
+  and an email a few days in advance for deadlines.
++ [ ] [[https://github.com/spegoraro/org-alert][GitHub - spegoraro/org-alert: System notifications of org agenda items]]
++ [ ] [[https://github.com/akhramov/org-wild-notifier.el?tab=readme-ov-file][GitHub - akhramov/org-wild-notifier.el: Alert notifications for org-agenda]]
++ [ ] [[https://github.com/doppelc/org-notifications][GitHub - doppelc/org-notifications: Desktop notifications for your org-agenda/org-mode items]] 
 
 * COMMENT Browsing
 
