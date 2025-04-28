@@ -72,16 +72,16 @@
     :config
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-  
+
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-  
+
   ;; Always have it on
   (global-undo-tree-mode)
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -230,7 +230,7 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;;   :config (helm-icons-enable))
 
 ;; When I want to see the TOC of an Org file, show me down to 3 subheadings.
-(setq org-imenu-depth 7)
+(setq org-imenu-depth 9)
 
 (setq helm-mini-default-sources '(helm-source-buffers-list
                                     helm-source-recentf
@@ -2703,6 +2703,7 @@ method."
 ;; Implementation:1 ends here
 
 ;; [[file:init.org::*Implementation][Implementation:2]]
+(use-package lf)
 ;; TODO: Add the line “(declare (indent defun))” right after the docstring of “lf-define”,
 ;; so that Emacs indents it like a “defun”.
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html

@@ -13151,6 +13151,7 @@ Now we can press ~C-c C-t~ then the letter shortcut to actually make the state o
 
 First, the my/declare-workflow-states abstraction:
 #+begin_src emacs-lisp
+(use-package lf)
 ;; TODO: Add the line “(declare (indent defun))” right after the docstring of “lf-define”,
 ;; so that Emacs indents it like a “defun”.
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
@@ -13886,17 +13887,19 @@ Further Reading:
            ((org-ql-block-header "\n📩 Process Inbox: “m” to mark then “B r” to refile marked items 📥\n")))
 
 
+          ;; MA: Moved this to Weekly Review. ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; High priority 𝒚𝒆𝒕 unscheduled tasks                                           ;;
           ;;                                                                               ;;
           ;; Note to self: When I write this query, I thought “I doubt I have		   ;;
           ;; any hits, this is too silly”.  I was wrong. I had 300+ hits.		   ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-          (org-ql-block
-           '(and (priority "A") (not (scheduled)) (not (deadline)))
-           ((org-ql-block-header "\n🔥 High priority 𝒚𝒆𝒕 unscheduled tasks 🚒\n")))
+          ;; (org-ql-block
+          ;;  '(and (priority "A") (not (scheduled)) (not (deadline)))
+          ;;  ((org-ql-block-header "\n🔥 High priority 𝒚𝒆𝒕 unscheduled tasks 🚒\n")))
 
 
+          ;; MA: Moved this to Weekly Review. ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Items to review: Mine for useful info then archieve or delete                 ;;
           ;;                                                                               ;;
@@ -13904,12 +13907,12 @@ Further Reading:
           ;; useful parts.  Archiving is useful for clocking reports from the		   ;;
           ;; past.									   ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-          (org-ql-block
-           `(and (done) (not (tags "Top")) (closed :to ,(- (calendar-day-of-week (calendar-current-date))))) ;; i.e.;  :to ,(org-read-date nil nil "-1d")
-           ((org-ql-block-header (propertize "\n📜 Items to review: Mine for useful info then archieve or delete. ☑️\n"
-                                             'help-echo "Press E to toggle seeing ~5 lines of each entry."
-                                             ;; Reduce the number of DONE and archived headlines so agenda operations that skip over these can finish faster.
-                                             ))))
+          ;; (org-ql-block
+          ;;  `(and (done) (not (tags "Top")) (closed :to ,(- (calendar-day-of-week (calendar-current-date))))) ;; i.e.;  :to ,(org-read-date nil nil "-1d")
+          ;;  ((org-ql-block-header (propertize "\n📜 Items to review: Mine for useful info then archieve or delete. ☑️\n"
+          ;;                                    'help-echo "Press E to toggle seeing ~5 lines of each entry."
+          ;;                                    ;; Reduce the number of DONE and archived headlines so agenda operations that skip over these can finish faster.
+          ;;                                    ))))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Items explicitly marked as the top focus goals for the month           ;;
@@ -14604,14 +14607,24 @@ Which shows the holidays from the list below:
                                  calendar-daylight-time-zone-name)))))
 #+end_src
 
-* --------------------------------------------------------------------------------
+* Capturing Content: Links, Smart Paste, Attachments, and Org Rifle
 :PROPERTIES:
 :CREATED:  [2025-04-14 Mon 09:43]
 :END:
-* Capture: Now that I know how to query my agenda, how do I get things into it efficiently?
+** Capture: Now that I know how to query my agenda, how do I get things into it efficiently?
 :PROPERTIES:
 :CREATED:  [2025-04-14 Mon 09:29]
 :END:
+
+An important part of any organization system is the ability to quickly /capture/ new ideas and tasks, and to associate
+reference material with them. It also can store files related to a task (/attachments/) in a special directory. Finally,
+it can parse RSS feeds for information.
+
+It is often useful to associate reference material with an outline node.  Small chunks of plain text can simply be
+stored in the subtree of a project. Hyperlinks (see [[https://orgmode.org/manual/Hyperlinks.html][Hyperlinks]]) can establish associations with files that live
+elsewhere on a local, or even remote, computer, like emails or source code files belonging to a project.  Another method
+is [[https://orgmode.org/manual/Attachments.html][/attachments/]], which are files located in a directory belonging to an outline node.
+
 #+begin_src emacs-lisp
 (defmacro def-capture (name location template)
   "Creates a method “my/capture-NAME”, which opens a capture buffer named NAME showing TEMPLATE.
@@ -14638,23 +14651,17 @@ Usage:
            (org-clock-in-hook nil)
            (org-clock-out-hook nil)
            (org-capture-templates
-            ;; I'm using omega 𝓌 as a placeholder; i.e., a gensym-like key.
-            ;;
             ;; Capture mode now handles automatically clocking in and out of a capture task.
             ;; When I start a capture mode task the task is clocked in as specified by :clock-in t
             ;; and when the task is filed with C-c C-c the clock resumes on the original clocking task.
-            `(("𝓌" ,,name entry (file+headline "~/Dropbox/my-life.org" ,,location) ,,template :clock-in t :clock-resume t))))
-       (org-capture (list prefix) "𝓌")
+            `(("𝒞" ,,name entry (file+headline "~/Dropbox/my-life.org" ,,location) ,,template :clock-in t :clock-resume t))))
+       (org-capture (list prefix) "𝒞")
        (unless (> prefix 1) (rename-buffer ,name)))))
 
 (bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))
 #+end_src
 
-* --------------------------------------------------------------------------------
-:PROPERTIES:
-:CREATED:  [2025-04-09 Wed 16:21]
-:END:
-* “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode      :ATTACH:
+** “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode     :ATTACH:
 :PROPERTIES:
 :CUSTOM_ID: drag-and-drop-images-into-org-mode
 :ID:       AD6BB33A-C860-45A0-936F-3B59CE4FFA14
@@ -14806,6 +14813,206 @@ Notes:
 - (org-media-image-save-type, org-dnd-default-attach-method): New defcustoms.
 - Add yank-media and DND handlers: (org--image-yank-media-handler, org--copied-files-yank-media-handler) (org--dnd-local-file-handler)
 
+** Attachments: Making external files into TODOs or Reference Matter :ATTACH:
+:PROPERTIES:
+:CREATED:  [2025-04-27 Sun 05:37]
+:ID:       0F813D85-5001-4AF7-A6C8-A3FFB84409A3
+:END:
+:LOGBOOK:
+CLOCK: [2025-04-27 Sun 08:45]
+CLOCK: [2025-04-27 Sun 08:13]--[2025-04-27 Sun 08:15] =>  0:02
+:END:
+
+I simply take my notes about various activities or projects. When I do something involved, I take notes in a heading,
+add tags to it, and attach relevant files (like document scans or git repos or book/article pdfs). Later, I can recall
+the activity by tags/text and examine the attachments while refreshing the context reading the notes.  As such, file
+search is improved since I have access to a combination of date of creation, topic tags, and comments.
+
+Org mode lets me mix my tasks with my notes, and ~org-attach~ lets me embed my files right into my notes (i.e.,
+contextually: Files are attached to the node to which their content pertains), so that I don't have to even think about
+file-naming conventions and folder directory hierarchies myself.  After all, files are always associated with some note
+or task. Finding files becomes super simple: Do a test search on my Org file for any related descriptive term.
+Importantly, organising your files this way leverages the full power of the org-mode organisational system. E.g., need
+to do some action with the related files at some point? Create a (scheduled) =TODO=.  Want to add meta-data to a file?
+Create a property.
+
++ I use org-attach to simply attach to the relevant node accordingly. Every file is then where it should be based on its
+  conceptual context, rather than its filesystem hierarchy.  No more worrying about filename or directory naming. It's
+  simply attached to the descriptive node making it clear what precisely it is and under what context it is
+  meaningful. I am then easily able to open it from there.
+
+
+
+
+It's often useful to associate reference material---text, files, or folders---with outline nodes. Small notes can live
+in subtrees, while files and external material can be linked via hyperlinks or managed through the powerful =org-attach=
+system.
+
+*Key Points about =org-attach=:*
+- *Storage Model:* Files are attached to Org headings, typically organized using an =ID=-based directory under a =data/=
+  folder near the Org file.
+- *Automation:* Attachments automatically add an =ATTACH= tag to the heading, and links are easy to insert and use anywhere
+  in the subtree. ~C-c C-a~ to add an attachment, then ~C-c C-l~ to insert a link to it.
+  -  There is no decision needed for folder-name or location.
+  # - Attachments are inherited: If a section has an attachment, then a link to it can occur anywhere in that section,
+  # including any sub-sections.
+- *Git Integration:* You can commit attachment changes automatically via =org-attach-git=.
+
+
+*Benefits:*
+- Files become part of your notes, independent of filesystem hierarchies.
+- Attachments support rich metadata: tags, notes, scheduling, TODO states.
+- Searching becomes intuitive: context and tags replace navigating folders.
+- The filesystem becomes a hidden implementation detail, letting you think and organize contextually, not structurally.
+
+
+*Practical Usage:*
+- Attach files with =C-c C-a a=, or save an entire buffer with =C-c C-a b= as a file in the attachment directory.
+- You can attach entire directories too, just as easily as files.
+- Files like PDFs, reviews, documents, and even Git repositories can be integrated seamlessly into your Org workflow.
+- Use tools like =helm-org-ql= or =helm-org-rifle= to rapidly find attached files via contextual search.
+
+
+*Motivation:* This approach transforms isolated files into actionable, contextual knowledge objects. Instead of managing
+folders and filenames manually, I manage ideas, tasks, and references directly within their Org files.  Once my files
+are all in Org attachments, I can use =helm-org-ql= to search them easily (and quickly). Each headline associated with a
+file (or collection of files, like Git repo) can be assigned notes, todo-state, tags, or be scheduled.  That is,
+~org-attach~ allows me to turn ‘files’ into ‘org headlines’!  E.g., either as TODOs or as Reference matter, either way
+files become part of my-life.org and I can “progress” on them or see them when looking up reference matter. 💝
+- E.g., sometimes I have open PDFs that I'd like to get around to reading, but now I can just attach the PDF to an Org
+  headline, schedule it, and make progress on finishing the PDF.
+- I get annual performance reviews, as PDF, so I attach them to a ~* Performance Review~ headline so that I can consult
+  them when it's review time.
+- Note: I can just drag-and-drop the files, but often I just do ~C-c C-a a~ then select a file (or directory!) to have it
+  attached, then press ~C-c C-l~ to paste an Org link to the attachment.
+  + I run =M-x org-lint= to mitigate [[https://en.wikipedia.org/wiki/Link_rot][link rot]] and ensures that when I do bulk find-replace actions that I haven't royally
+    messed things up.
+
+
+
+
+Incidentally, Org-attach solves a few problems:
+1. “Where do I keep a file related to my notes?” ⇒ Right /inside/ your notes! (The filesystem is an implementation
+   detail!)
+   + Org-attach means I can have my files /independent/ of any file/folder hierarchy, and can find them
+     contextually. E.g., use ~M-x helm-org-rifle :ATTACH: any related phrases here~ to quickly look for Org headlines with
+     attachments that match any of my search phrases.
+2. “Should I have a folder hierarchy that matches by Org headlines hierarchy?” ⇒ No, folders are an implementation
+   detail, only worry about your Org headlines.
+3. “Now, I'm too afraid to move a file since it might break Org links to it!”  ⇒ Use ~M-x org-lint~ to ensure there's no
+   link rot, and there's no need to move files since the file system is an implementation detail!
+4. “How do I add notes to a file? Or tags?”  ⇒ Easy! Since your file is not part of an Org heading, just use usual Org
+   tags to tag the heading and add notes in that heading, and even schedule the file (i.e., the Org heading for review).
+   Then, for example, ~M-x helm-org-ql tags:ATTACH,otherTagHere some context phrases here~ the first =ATTACH= part only
+   considers headlines with attachments (i.e., your files), then ~otherTagHere~ is any other tag you might have used for
+   your file/notes, and finally the remaining phrases do a search for the notes associated with your file.
+   + As such, org-attach is more expressive than a bare file system.
+
+Ironically, besides =my-life.org=, I don't have much other files these days, besides the occasional PDF for work or an
+image scan of some policy.  (In contrast, if I were to be a lecturer again, then I might have headlines pertaining to
+individual classes which would have subheadings for individual students and those would have attachments to their work).
+
+Finally, when doing my weekly review, I clean out my =~/Downloads= and =~/Desktop= and ~/emacs.d/ directories and anything
+there that might be useful is attached to a (possibly new) Org headline.
+
+TODO, Low priority: Configure org-babel to produce output files in the attachment dirs of the heading it is ran in.
+
+
+*** [#C] [Super Low Priority] Orphaned attachments --Part of the Weekly Review
+:PROPERTIES:
+:CREATED:  [2025-04-27 Sun 07:00]
+:END:
+
+
+How to delete unused org-mode attachment files from disc
+
+In org-mode, after deleting a lot of headlines that have had attachment files,
+the unrefereced files now remain on the disc in my data subdirectory.
+
+Is there a function or script that finds all unrefereced files and does a cleanup?
+
+TODO: This code erroneously assumes any unmentioned attachment is an
+orphan!  But really, an orphan is an attachment whose parent UUID directory is
+not the UUID of an ~:ID:~ property of some Org headline.
+#+begin_src emacs-lisp
+(defun my/find-orphaned-attachments ()
+  "Shows buffer of clickable “Orphaned Attachment ❓ Verify unused ❌ Delete” rows.
+
+Check for orphaned files in the Org attachment directory.
+
+   NOTE: This implemention assumes all of my attachements are uniquely named,
+   which is not necessairly true! As such, I've added a ‘verify’ button.
+"
+  (interactive)
+  (when (derived-mode-p 'org-mode)
+    (let* ((attach-dir (or (org-attach-dir) ;; try entry-specific attach dir
+                           (when (boundp 'org-attach-id-dir) org-attach-id-dir)
+                           (expand-file-name "data/" (file-name-directory (buffer-file-name))))) ;; fallback default
+           (all-attachments (when (file-directory-p attach-dir)
+                              (directory-files-recursively attach-dir ".*" nil)))
+           ;; Collect all attachment links in all Org files
+           (linked-attachments (-flatten (loop for org-file in (directory-files-recursively default-directory "\\.org$")
+                                               unless (or (s-contains-p ".emacs.d/elpa" org-file) (s-contains-p ".emacs.d/quelpa" org-file))
+                                               collect (with-temp-buffer
+                                                         (insert-file-contents org-file)
+                                                         (org-mode)
+                                                         (org-element-map (org-element-parse-buffer) 'link
+                                                           (lambda (link)
+                                                             (when (string= (org-element-property :type link) "attachment")
+                                                               (org-element-property :path link))))))))
+           ;; Now check for unreferenced files
+           (results (loop for attachment in all-attachments
+                          for att =  (f-base attachment)
+                          unless (member att (--map (f-base it) linked-attachments))
+                          collect (format "- [[file:%s][%s]] ❓ [[elisp:(rgrep \"%s\" \"*.org\")][Verify unused]] ❌  [[elisp:(progn (ignore-errors (f-delete \"%s\")) (kill-whole-line))][Delete!]]"
+                                          attachment att att   (concat default-directory attachment)))))
+      ;; Create and display a new buffer
+      (with-current-buffer (get-buffer-create "*Orphaned Attachments*")
+        (erase-buffer)
+        (insert (string-join results "\n"))
+        (org-mode)
+        (goto-char (point-min))
+        (pop-to-buffer (current-buffer))))))
+#+end_src
+
+** Org-rifle
+:PROPERTIES:
+:CREATED:  [2025-04-27 Sun 06:26]
+:END:
+
+It searches both headings and contents of entries in Org buffers, and it
+displays entries that match all search terms, whether the terms appear
+in the heading, the contents, or both. Matching portions of entries'
+contents are displayed with surrounding context and grouped by buffer to
+make it easy to acquire your target.
+;;
+In contrast with =org-occur= and similar commands, =helm-org-rifle= is
+entry-based (i.e. a heading and all of its contents, not including
+subheadings), while =org-occur= is line-based. So =org-occur= will show
+you entire lines that contain matching words, without any reference to
+the heading the line is under, while =helm-org-rifle= will show the
+heading of the entry that matches, followed by context around each
+matching word in the entry. In other words, =helm-org-rifle= is sort of
+like Google, while =org-occur= is sort of like =grep=.
+;;
+;; 😲 Select multiple results with ~C-SPC~ to display them together in a read-only
+buffer. 💝 Or, just press ~C-s~ to see all results together in such a buffer.
+;;
+;; Tip: Use a word like “TODO, DONE, #A, :MyTag:” in your search to find TODO/DONE/priority-A/:MyTag: tasks．
+;; Negate matches with “!”; e.g., “pizza !mushrooms”.
+#+begin_src emacs-lisp
+;; M-x helm-org-rifle ⇒ Search all open Org files, results are shown with
+;; /context/, not just line-based. ⚠️ This respects narrowing.
+(use-package helm-org-rifle)
+#+end_src
+
+This is a nice complement to helm-org-ql in that it shows me context while I'm searching.
+
+
+* --------------------------------------------------------------------------------
+:PROPERTIES:
+:CREATED:  [2025-04-09 Wed 16:21]
+:END:
 * Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)
 
 "Appointments" are [[https://orgmode.org/manual/Special-Agenda-Views.html][defined as]] scheduled tasks with a start time. I occasionally
@@ -14865,7 +15072,6 @@ More:
 + [ ] [[https://github.com/spegoraro/org-alert][GitHub - spegoraro/org-alert: System notifications of org agenda items]]
 + [ ] [[https://github.com/akhramov/org-wild-notifier.el?tab=readme-ov-file][GitHub - akhramov/org-wild-notifier.el: Alert notifications for org-agenda]]
 + [ ] [[https://github.com/doppelc/org-notifications][GitHub - doppelc/org-notifications: Desktop notifications for your org-agenda/org-mode items]]
-
 * COMMENT Browsing
 
 ** Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.

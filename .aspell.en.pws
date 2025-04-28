@@ -1,4 +1,4 @@
-personal_ws-1.1 en 415 
+personal_ws-1.1 en 418 
 ACSII
 AST
 ASTs
@@ -183,6 +183,7 @@ compositional
 computability
 computable
 concat
+config
 connectedness
 continous
 contrapositive
@@ -371,6 +372,8 @@ subsequence
 substitutivity
 substring
 subtasks
+subtree
+subtrees
 subtype
 subtyped
 subtyping
