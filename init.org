@@ -14030,7 +14030,7 @@ Further Reading:
                                               (s-matches? "<[^ ]* [^ ]* [^ ]*\\(d\\|m\\)>"
                                                           scheduled)))))
                           (skip)))))
-                   (org-agenda-current-time-string (s-join "\n\t\t" (-repeat 3 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
+                   (org-agenda-current-time-string (s-join "\n\t\t\t\t" (-repeat 3 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
                    ;; :org-agenda-remove-tags t
                    ;; :org-agenda-time-grid nil
                    ;; :org-use-tag-inheritance nil
@@ -14039,8 +14039,7 @@ Further Reading:
                    (org-agenda-prefix-format " ○ %t % i%s") ;; The “%i” is the icon on the next line.
                    (org-agenda-category-icon-alist '(("\\`work\\'" ("💼") nil nil :ascent center)))
                    (org-agenda-time-grid
-                    '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000)
-                      " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))))
+                    '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000) "" ""))))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; A glimpse into later this week.                                               ;;
@@ -14607,6 +14606,134 @@ Which shows the holidays from the list below:
                                  calendar-daylight-time-zone-name)))))
 #+end_src
 
+
+Also,
++ I see “event ⟪In 𝓃 days⟫” in my agenda, leading up to the event.
+  - ? (setq org-deadline-warning-days 14)
++ I use the “DEADLINE: ” for dates that I actively want these pre-event reminders; not all holy days.
++ I personally prefer getting advanced warnings of some things coming up that are scheduled, especially if holidays or
+  birthdays or such so I have some planning time. You can un-comment the below if that isn't you.
+  - ? (setq org-agenda-skip-deadline-prewarning-if-scheduled t)
+
+#+begin_src emacs-lisp
+(defun my/today-and-future (sexpr)
+  "Returns a list of SEXPR for today and the next `org-deadline-warning-days' days.
+
+If you would like to see upcoming anniversary SEXPR with a bit of
+forewarning, you can use the `%%(my/today-and-future SEXPR)`
+instead. That will give you `org-deadline-warning-days' days’ warning:
+on the anniversary date itself and the `org-deadline-warning-days' many
+days prior.
+
+
+SEXPR should be an expression you normally use in a Diary Sexpr Entry.
+
+The result should be used in Diary Sexpr entries:
+It expects a DATE argument to be in scope.
+
+E.g.,
+
+    %%(org-calendar-holiday)
+
+Can be replaced by
+
+    %%(my/today-and-future '(org-calendar-holiday))
+"
+  (-let [today date
+               ;; '(month day year)
+               ;; For testing:
+               ;; (calendar-gregorian-from-absolute
+               ;; (org-time-string-to-absolute (org-read-date nil nil "today")))
+               ]
+    (thread-last
+      (cl-loop for date
+               from (calendar-absolute-from-gregorian today)
+               to (+ (calendar-absolute-from-gregorian today) org-deadline-warning-days)
+               collect (calendar-gregorian-from-absolute date))
+      (--map
+       (let* ((agenda-date it)
+              (org-agenda-current-date it)
+              ;; Rebind 'date' so that SEXPR will
+              ;; be fooled into giving us the list for the given
+              ;; date and then annotate the descriptions for that
+              ;; date.
+              (date it)
+              (headline (when-let ((matching-date (eval sexpr))) (or entry matching-date))))
+         ;; Note `org-agenda` strips out text styles, so `propertize` is ignored. Sigh.
+         (when headline (format "%s   ⟪%s⟫" headline (org-bbdb-anniversary-description today date)))))
+      (--filter it))))
+
+
+(defun org-bbdb-anniversary-description (agenda-date anniv-date)
+  "Return a string used to incorporate into an agenda anniversary entry.
+
+The calculation of the anniversary description string is based on
+the difference between the anniversary date, given as ANNIV-DATE,
+and the date on which the entry appears in the agenda, given as
+AGENDA-DATE.  This makes it possible to have different entries
+for the same event depending on if it occurs in the next few days
+or far away in the future.
+
+AGENDA-DATE and ANNIV-DATE are both Gregorian; i.e., of the form '(month day year)."
+  (let ((delta (- (calendar-absolute-from-gregorian anniv-date)
+                  (calendar-absolute-from-gregorian agenda-date))))
+    (cond
+     ((= delta 0) "Today")
+     ((= delta 1) "Tomorrow")
+     ((< delta org-deadline-warning-days) (format (format "In %d days" delta)))
+     (t (eval `(format "%02d-%02d-%02d" ,@anniv-date))))))
+
+
+
+
+(cl-defun dates (&key from to)
+  "Return a list of (month day year) dates from FROM to TO.
+FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
+  (cl-loop for date
+               from (org-time-string-to-absolute (org-read-date nil nil from))
+               to (org-time-string-to-absolute (org-read-date nil nil to))
+               collect (calendar-gregorian-from-absolute date)))
+;;
+;; (should (equal (dates :from "today" :to "+3d") '((4 22 2025) (4 23 2025) (4 24 2025) (4 25 2025))))
+
+;; Example: Gets a (month day year) date.
+;; (calendar-gregorian-from-absolute (org-time-string-to-absolute (org-read-date nil nil "now")))
+#+end_src
+
+Finally,
+#+begin_src emacs-lisp
+(cl-defun date= (month day &optional year)
+"To be used in a sexp, so assumes a `date' in scope."
+  (-let [(m d y) date]
+    (and (= m month) (= d day) (if year (= y year) t))))
+
+(cl-defun birthday (month day)
+  "To be used in a sexp, so assumes a `date' and `entry' in scope."
+  (-let [entry (format "🥳 %s Birthday! 🎂" entry)]
+    (my/today-and-future `(date= ,month ,day))))
+#+end_src
+** Display times in agenda in 12-hour AM/PM format
+:PROPERTIES:
+:CREATED:  [2025-04-28 Mon 15:31]
+:END:
+
+#+begin_src emacs-lisp
+(define-advice org-agenda-format-item (:around (orig &rest args) my/org-agenda-am-pm-time-format)
+  "Display times in agenda in 12-hour AM/PM format."
+  (let ((str (apply orig args)))
+    (replace-regexp-in-string
+     "\\b\\([0-2]?[0-9]\\):\\([0-5][0-9]\\)\\b"
+     (lambda (match)
+       (let* ((hour (string-to-number (match-string 1 match)))
+              (minute (match-string 2 match))
+              (ampm (if (>= hour 12) "PM" "AM"))
+              (hour12 (cond ((= hour 0) 12)
+                            ((> hour 12) (- hour 12))
+                            (t hour))))
+         (format "%d:%s %s" hour12 minute ampm)))
+     str)))
+#+end_src
+
 * Capturing Content: Links, Smart Paste, Attachments, and Org Rifle
 :PROPERTIES:
 :CREATED:  [2025-04-14 Mon 09:43]
@@ -14819,7 +14946,7 @@ Notes:
 :ID:       0F813D85-5001-4AF7-A6C8-A3FFB84409A3
 :END:
 :LOGBOOK:
-CLOCK: [2025-04-27 Sun 08:45]
+CLOCK: [2025-04-27 Sun 08:45]--[2025-04-28 Mon 10:27] => 25:42
 CLOCK: [2025-04-27 Sun 08:13]--[2025-04-27 Sun 08:15] =>  0:02
 :END:
 
@@ -14917,6 +15044,29 @@ there that might be useful is attached to a (possibly new) Org headline.
 
 TODO, Low priority: Configure org-babel to produce output files in the attachment dirs of the heading it is ran in.
 
+
+Misc:
+#+begin_src emacs-lisp
+(defun my/dired-copy-image-to-clipboard ()
+  "Copy the currently selected image file in dired to the clipboard as image data, so that I can paste it with ⌘-v into Slack or other programs.
+
+   Note,
+   1. In dired, “C-u 0 w” copies the absolute file path at point.
+   2. In MacOS finder, press “⌘+Shift+g” and type in or paste a path.
+      (Equivalently, in Finder look at the “Go” menu bar item, then select “Go to folder”.)
+
+"
+  (interactive)
+  (let* ((file (dired-get-file-for-visit))
+         (escaped-file (replace-regexp-in-string "\"" "\\\\\"" file))
+         (script (format "osascript -e 'set the clipboard to (read (POSIX file \"%s\") as {«class PNGf»})'" escaped-file)))
+    (if (and (file-exists-p file)
+             (string-match-p (image-file-name-regexp) file))
+        (progn
+          (shell-command script)
+          (message "Copied image to clipboard: %s" file))
+      (message "Not an image file: %s" file))))
+#+end_src
 
 *** [#C] [Super Low Priority] Orphaned attachments --Part of the Weekly Review
 :PROPERTIES:
