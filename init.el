@@ -72,16 +72,16 @@
     :config
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-
+  
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-
+  
   ;; Always have it on
   (global-undo-tree-mode)
-
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -230,7 +230,7 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;;   :config (helm-icons-enable))
 
 ;; When I want to see the TOC of an Org file, show me down to 3 subheadings.
-(setq org-imenu-depth 9)
+(setq org-imenu-depth 7)
 
 (setq helm-mini-default-sources '(helm-source-buffers-list
                                     helm-source-recentf
@@ -1179,6 +1179,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
                  (espresso-theme espresso)
                  (emacs dichromacy)
                  (nano-theme nano-light nano-dark)
+                 (pink-bliss-uwu-theme pink-bliss-uwu)
                  (modus-themes modus-operandi-tinted))
                do (package-install package)
                append theme-variants-I-like))
@@ -2819,6 +2820,19 @@ method."
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+   ("|")
+   ;; All states after this special marker are “terminal” and so not shown in the org-agenda:
+   ;; (setq org-agenda-skip-scheduled-if-done t)
+   ;;
+   ;; Moreover, they are counted as “done” in the statistics “ [96%] ” count of a parent heading.
+   ;;
+   ;; Finally, I get a “CLOSED: <timestamp>” property on these tasks when
+   ;; (setq org-log-done 'time). This is desirable, since it tells me when I entered these ‘terminal’
+   ;; states: E.g., how long ago a task entered the WAITING state.
+   ;;
+   ;; Also, the definition of “done” in Org-QL includes all terminal states in my workflow, yay.
+
+
    ("PAUSED" :on-entry 'note :on-exit 'timestamp :foreground "magenta") ;; I'm not actively working on this task anymore. I may return to it later.
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; I am choosing to stop work on this task for some reason; e.g., it is no longer a priority    ;;
@@ -2858,11 +2872,6 @@ method."
    ;;                                                                                             ;;
    ;; This is essentially DONE, but there's some blocker.                                         ;;
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-   ("|")
-   ;; All states after this special marker are “terminal” and so not shown in the org-agenda:
-   ;; (setq org-agenda-skip-scheduled-if-done t)
 
 
    ("DONE"  :foreground "forest green") ;; This task is DONE; mine it for useful LOG comments and archive it.
@@ -2997,17 +3006,19 @@ method."
            ((org-ql-block-header "\n📩 Process Inbox: “m” to mark then “B r” to refile marked items 📥\n")))
 
 
+          ;; MA: Moved this to Weekly Review. ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; High priority 𝒚𝒆𝒕 unscheduled tasks                                           ;;
           ;;                                                                               ;;
           ;; Note to self: When I write this query, I thought “I doubt I have		   ;;
           ;; any hits, this is too silly”.  I was wrong. I had 300+ hits.		   ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-          (org-ql-block
-           '(and (priority "A") (not (scheduled)) (not (deadline)))
-           ((org-ql-block-header "\n🔥 High priority 𝒚𝒆𝒕 unscheduled tasks 🚒\n")))
+          ;; (org-ql-block
+          ;;  '(and (priority "A") (not (scheduled)) (not (deadline)))
+          ;;  ((org-ql-block-header "\n🔥 High priority 𝒚𝒆𝒕 unscheduled tasks 🚒\n")))
 
 
+          ;; MA: Moved this to Weekly Review. ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Items to review: Mine for useful info then archieve or delete                 ;;
           ;;                                                                               ;;
@@ -3015,12 +3026,12 @@ method."
           ;; useful parts.  Archiving is useful for clocking reports from the		   ;;
           ;; past.									   ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-          (org-ql-block
-           `(and (done) (not (tags "Top")) (closed :to ,(- (calendar-day-of-week (calendar-current-date))))) ;; i.e.;  :to ,(org-read-date nil nil "-1d")
-           ((org-ql-block-header (propertize "\n📜 Items to review: Mine for useful info then archieve or delete. ☑️\n"
-                                             'help-echo "Press E to toggle seeing ~5 lines of each entry."
-                                             ;; Reduce the number of DONE and archived headlines so agenda operations that skip over these can finish faster.
-                                             ))))
+          ;; (org-ql-block
+          ;;  `(and (done) (not (tags "Top")) (closed :to ,(- (calendar-day-of-week (calendar-current-date))))) ;; i.e.;  :to ,(org-read-date nil nil "-1d")
+          ;;  ((org-ql-block-header (propertize "\n📜 Items to review: Mine for useful info then archieve or delete. ☑️\n"
+          ;;                                    'help-echo "Press E to toggle seeing ~5 lines of each entry."
+          ;;                                    ;; Reduce the number of DONE and archived headlines so agenda operations that skip over these can finish faster.
+          ;;                                    ))))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Items explicitly marked as the top focus goals for the month           ;;
@@ -3043,8 +3054,9 @@ method."
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; What “I've done so far” is all tasks closed this week.                 ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Note the definition of “done” includes all terminal states in my workflow.
           (org-ql-block
-           `(and (not (tags "Recurring")) (or (todo "WAITING" "APPROVED") (and (done) (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)))) ;; “start-of-week” /from today/
+           `(and (not (tags "Recurring")) (done) (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)) ;; “start-of-week” /from today/
            ((org-ql-block-header (propertize "\n✅ What I've done so far this week 💯\n" 'help-echo "Press E to toggle seeing ~5 lines of each entry. \n If DONE, mine for useful info then archive or delete."))))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3138,7 +3150,7 @@ method."
                                               (s-matches? "<[^ ]* [^ ]* [^ ]*\\(d\\|m\\)>"
                                                           scheduled)))))
                           (skip)))))
-                   (org-agenda-current-time-string (s-join "\n\t\t" (-repeat 3 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
+                   (org-agenda-current-time-string (s-join "\n\t\t\t\t" (-repeat 3 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
                    ;; :org-agenda-remove-tags t
                    ;; :org-agenda-time-grid nil
                    ;; :org-use-tag-inheritance nil
@@ -3147,8 +3159,7 @@ method."
                    (org-agenda-prefix-format " ○ %t % i%s") ;; The “%i” is the icon on the next line.
                    (org-agenda-category-icon-alist '(("\\`work\\'" ("💼") nil nil :ascent center)))
                    (org-agenda-time-grid
-                    '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000)
-                      " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))))
+                    '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000) "" ""))))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; A glimpse into later this week.                                               ;;
@@ -3627,6 +3638,120 @@ method."
                                  calendar-daylight-time-zone-name)))))
 ;; Holy Days & Holidays:2 ends here
 
+;; [[file:init.org::*Holy Days & Holidays][Holy Days & Holidays:3]]
+(defun my/today-and-future (sexpr)
+  "Returns a list of SEXPR for today and the next `org-deadline-warning-days' days.
+
+If you would like to see upcoming anniversary SEXPR with a bit of
+forewarning, you can use the `%%(my/today-and-future SEXPR)`
+instead. That will give you `org-deadline-warning-days' days’ warning:
+on the anniversary date itself and the `org-deadline-warning-days' many
+days prior.
+
+
+SEXPR should be an expression you normally use in a Diary Sexpr Entry.
+
+The result should be used in Diary Sexpr entries:
+It expects a DATE argument to be in scope.
+
+E.g.,
+
+    %%(org-calendar-holiday)
+
+Can be replaced by
+
+    %%(my/today-and-future '(org-calendar-holiday))
+"
+  (-let [today date
+               ;; '(month day year)
+               ;; For testing:
+               ;; (calendar-gregorian-from-absolute
+               ;; (org-time-string-to-absolute (org-read-date nil nil "today")))
+               ]
+    (thread-last
+      (cl-loop for date
+               from (calendar-absolute-from-gregorian today)
+               to (+ (calendar-absolute-from-gregorian today) org-deadline-warning-days)
+               collect (calendar-gregorian-from-absolute date))
+      (--map
+       (let* ((agenda-date it)
+              (org-agenda-current-date it)
+              ;; Rebind 'date' so that SEXPR will
+              ;; be fooled into giving us the list for the given
+              ;; date and then annotate the descriptions for that
+              ;; date.
+              (date it)
+              (headline (when-let ((matching-date (eval sexpr))) (or entry matching-date))))
+         ;; Note `org-agenda` strips out text styles, so `propertize` is ignored. Sigh.
+         (when headline (format "%s   ⟪%s⟫" headline (org-bbdb-anniversary-description today date)))))
+      (--filter it))))
+
+
+(defun org-bbdb-anniversary-description (agenda-date anniv-date)
+  "Return a string used to incorporate into an agenda anniversary entry.
+
+The calculation of the anniversary description string is based on
+the difference between the anniversary date, given as ANNIV-DATE,
+and the date on which the entry appears in the agenda, given as
+AGENDA-DATE.  This makes it possible to have different entries
+for the same event depending on if it occurs in the next few days
+or far away in the future.
+
+AGENDA-DATE and ANNIV-DATE are both Gregorian; i.e., of the form '(month day year)."
+  (let ((delta (- (calendar-absolute-from-gregorian anniv-date)
+                  (calendar-absolute-from-gregorian agenda-date))))
+    (cond
+     ((= delta 0) "Today")
+     ((= delta 1) "Tomorrow")
+     ((< delta org-deadline-warning-days) (format (format "In %d days" delta)))
+     (t (eval `(format "%02d-%02d-%02d" ,@anniv-date))))))
+
+
+
+
+(cl-defun dates (&key from to)
+  "Return a list of (month day year) dates from FROM to TO.
+FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
+  (cl-loop for date
+               from (org-time-string-to-absolute (org-read-date nil nil from))
+               to (org-time-string-to-absolute (org-read-date nil nil to))
+               collect (calendar-gregorian-from-absolute date)))
+;;
+;; (should (equal (dates :from "today" :to "+3d") '((4 22 2025) (4 23 2025) (4 24 2025) (4 25 2025))))
+
+;; Example: Gets a (month day year) date.
+;; (calendar-gregorian-from-absolute (org-time-string-to-absolute (org-read-date nil nil "now")))
+;; Holy Days & Holidays:3 ends here
+
+;; [[file:init.org::*Holy Days & Holidays][Holy Days & Holidays:4]]
+(cl-defun date= (month day &optional year)
+"To be used in a sexp, so assumes a `date' in scope."
+  (-let [(m d y) date]
+    (and (= m month) (= d day) (if year (= y year) t))))
+
+(cl-defun birthday (month day)
+  "To be used in a sexp, so assumes a `date' and `entry' in scope."
+  (-let [entry (format "🥳 %s Birthday! 🎂" entry)]
+    (my/today-and-future `(date= ,month ,day))))
+;; Holy Days & Holidays:4 ends here
+
+;; [[file:init.org::*Display times in agenda in 12-hour AM/PM format][Display times in agenda in 12-hour AM/PM format:1]]
+(define-advice org-agenda-format-item (:around (orig &rest args) my/org-agenda-am-pm-time-format)
+  "Display times in agenda in 12-hour AM/PM format."
+  (let ((str (apply orig args)))
+    (replace-regexp-in-string
+     "\\b\\([0-2]?[0-9]\\):\\([0-5][0-9]\\)\\b"
+     (lambda (match)
+       (let* ((hour (string-to-number (match-string 1 match)))
+              (minute (match-string 2 match))
+              (ampm (if (>= hour 12) "PM" "AM"))
+              (hour12 (cond ((= hour 0) 12)
+                            ((> hour 12) (- hour 12))
+                            (t hour))))
+         (format "%d:%s %s" hour12 minute ampm)))
+     str)))
+;; Display times in agenda in 12-hour AM/PM format:1 ends here
+
 ;; [[file:init.org::*Capture: Now that I know how to query my agenda, how do I get things into it efficiently?][Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1]]
 (defmacro def-capture (name location template)
   "Creates a method “my/capture-NAME”, which opens a capture buffer named NAME showing TEMPLATE.
@@ -3653,13 +3778,11 @@ Usage:
            (org-clock-in-hook nil)
            (org-clock-out-hook nil)
            (org-capture-templates
-            ;; I'm using omega 𝓌 as a placeholder; i.e., a gensym-like key.
-            ;;
             ;; Capture mode now handles automatically clocking in and out of a capture task.
             ;; When I start a capture mode task the task is clocked in as specified by :clock-in t
             ;; and when the task is filed with C-c C-c the clock resumes on the original clocking task.
-            `(("𝓌" ,,name entry (file+headline "~/Dropbox/my-life.org" ,,location) ,,template :clock-in t :clock-resume t))))
-       (org-capture (list prefix) "𝓌")
+            `(("𝒞" ,,name entry (file+headline "~/Dropbox/my-life.org" ,,location) ,,template :clock-in t :clock-resume t))))
+       (org-capture (list prefix) "𝒞")
        (unless (> prefix 1) (rename-buffer ,name)))))
 
 (bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))
@@ -3767,6 +3890,75 @@ TODO:
 (add-hook 'org-capture-mode-hook #'my/setup-smart-paste)
 ;; “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode:1 ends here
 
+;; [[file:init.org::*my/dired-copy-image-to-clipboard][my/dired-copy-image-to-clipboard:1]]
+(defun my/dired-copy-image-to-clipboard ()
+  "Copy the currently selected image file in dired to the clipboard as image data, so that I can paste it with ⌘-v into Slack or other programs.
+
+   Note,
+   1. In dired, “C-u 0 w” copies the absolute file path at point.
+   2. In MacOS finder, press “⌘+Shift+g” and type in or paste a path.
+      (Equivalently, in Finder look at the “Go” menu bar item, then select “Go to folder”.)
+
+"
+  (interactive)
+  (let* ((file (dired-get-file-for-visit))
+         (escaped-file (replace-regexp-in-string "\"" "\\\\\"" file))
+         (script (format "osascript -e 'set the clipboard to (read (POSIX file \"%s\") as {«class PNGf»})'" escaped-file)))
+    (if (and (file-exists-p file)
+             (string-match-p (image-file-name-regexp) file))
+        (progn
+          (shell-command script)
+          (message "Copied image to clipboard: %s" file))
+      (message "Not an image file: %s" file))))
+;; my/dired-copy-image-to-clipboard:1 ends here
+
+;; [[file:init.org::*\[Super Low Priority\] Orphaned attachments --Part of the Weekly Review][[Super Low Priority] Orphaned attachments --Part of the Weekly Review:1]]
+(defun my/find-orphaned-attachments ()
+  "Shows buffer of clickable “Orphaned Attachment ❓ Verify unused ❌ Delete” rows.
+
+Check for orphaned files in the Org attachment directory.
+
+   NOTE: This implemention assumes all of my attachements are uniquely named,
+   which is not necessairly true! As such, I've added a ‘verify’ button.
+"
+  (interactive)
+  (when (derived-mode-p 'org-mode)
+    (let* ((attach-dir (or (org-attach-dir) ;; try entry-specific attach dir
+                           (when (boundp 'org-attach-id-dir) org-attach-id-dir)
+                           (expand-file-name "data/" (file-name-directory (buffer-file-name))))) ;; fallback default
+           (all-attachments (when (file-directory-p attach-dir)
+                              (directory-files-recursively attach-dir ".*" nil)))
+           ;; Collect all attachment links in all Org files
+           (linked-attachments (-flatten (loop for org-file in (directory-files-recursively default-directory "\\.org$")
+                                               unless (or (s-contains-p ".emacs.d/elpa" org-file) (s-contains-p ".emacs.d/quelpa" org-file))
+                                               collect (with-temp-buffer
+                                                         (insert-file-contents org-file)
+                                                         (org-mode)
+                                                         (org-element-map (org-element-parse-buffer) 'link
+                                                           (lambda (link)
+                                                             (when (string= (org-element-property :type link) "attachment")
+                                                               (org-element-property :path link))))))))
+           ;; Now check for unreferenced files
+           (results (loop for attachment in all-attachments
+                          for att =  (f-base attachment)
+                          unless (member att (--map (f-base it) linked-attachments))
+                          collect (format "- [[file:%s][%s]] ❓ [[elisp:(rgrep \"%s\" \"*.org\")][Verify unused]] ❌  [[elisp:(progn (ignore-errors (f-delete \"%s\")) (kill-whole-line))][Delete!]]"
+                                          attachment att att   (concat default-directory attachment)))))
+      ;; Create and display a new buffer
+      (with-current-buffer (get-buffer-create "*Orphaned Attachments*")
+        (erase-buffer)
+        (insert (string-join results "\n"))
+        (org-mode)
+        (goto-char (point-min))
+        (pop-to-buffer (current-buffer))))))
+;; [Super Low Priority] Orphaned attachments --Part of the Weekly Review:1 ends here
+
+;; [[file:init.org::*Org-rifle][Org-rifle:1]]
+;; M-x helm-org-rifle ⇒ Search all open Org files, results are shown with
+;; /context/, not just line-based. ⚠️ This respects narrowing.
+(use-package helm-org-rifle)
+;; Org-rifle:1 ends here
+
 ;; [[file:init.org::*Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)][Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1]]
 (setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
 
@@ -3790,7 +3982,7 @@ TODO:
 (message-box "Enjoy life (｡◕‿◕｡))")
 ;; Done!:1 ends here
 
-;; [[file:init.org::*STARTED Testing that things are as they should be][STARTED Testing that things are as they should be:1]]
+;; [[file:init.org::*Testing that things are as they should be][Testing that things are as they should be:1]]
 (progn
   ;; TODO: Move the next bunch of lines up somewhere
   (add-hook 'prog-mode-hook 'company-mode)
@@ -3960,4 +4152,4 @@ TODO:
   (execute-kbd-macro (kbd "C-c a"))
 
   )
-;; STARTED Testing that things are as they should be:1 ends here
+;; Testing that things are as they should be:1 ends here

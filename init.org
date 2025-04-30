@@ -5817,6 +5817,7 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
                  (espresso-theme espresso)
                  (emacs dichromacy)
                  (nano-theme nano-light nano-dark)
+                 (pink-bliss-uwu-theme pink-bliss-uwu)
                  (modus-themes modus-operandi-tinted))
                do (package-install package)
                append theme-variants-I-like))
@@ -13268,6 +13269,19 @@ Then, actually declare my workflow states...
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+   ("|")
+   ;; All states after this special marker are “terminal” and so not shown in the org-agenda:
+   ;; (setq org-agenda-skip-scheduled-if-done t)
+   ;;
+   ;; Moreover, they are counted as “done” in the statistics “ [96%] ” count of a parent heading.
+   ;;
+   ;; Finally, I get a “CLOSED: <timestamp>” property on these tasks when
+   ;; (setq org-log-done 'time). This is desirable, since it tells me when I entered these ‘terminal’
+   ;; states: E.g., how long ago a task entered the WAITING state.
+   ;;
+   ;; Also, the definition of “done” in Org-QL includes all terminal states in my workflow, yay.
+
+
    ("PAUSED" :on-entry 'note :on-exit 'timestamp :foreground "magenta") ;; I'm not actively working on this task anymore. I may return to it later.
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; I am choosing to stop work on this task for some reason; e.g., it is no longer a priority    ;;
@@ -13307,11 +13321,6 @@ Then, actually declare my workflow states...
    ;;                                                                                             ;;
    ;; This is essentially DONE, but there's some blocker.                                         ;;
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-   ("|")
-   ;; All states after this special marker are “terminal” and so not shown in the org-agenda:
-   ;; (setq org-agenda-skip-scheduled-if-done t)
 
 
    ("DONE"  :foreground "forest green") ;; This task is DONE; mine it for useful LOG comments and archive it.
@@ -13935,8 +13944,9 @@ Further Reading:
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; What “I've done so far” is all tasks closed this week.                 ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;; Note the definition of “done” includes all terminal states in my workflow.
           (org-ql-block
-           `(and (not (tags "Recurring")) (or (todo "WAITING" "APPROVED") (and (done) (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)))) ;; “start-of-week” /from today/
+           `(and (not (tags "Recurring")) (done) (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)) ;; “start-of-week” /from today/
            ((org-ql-block-header (propertize "\n✅ What I've done so far this week 💯\n" 'help-echo "Press E to toggle seeing ~5 lines of each entry. \n If DONE, mine for useful info then archive or delete."))))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -15043,9 +15053,10 @@ Finally, when doing my weekly review, I clean out my =~/Downloads= and =~/Deskto
 there that might be useful is attached to a (possibly new) Org headline.
 
 TODO, Low priority: Configure org-babel to produce output files in the attachment dirs of the heading it is ran in.
-
-
-Misc:
+*** my/dired-copy-image-to-clipboard
+:PROPERTIES:
+:CREATED:  [2025-04-28 Mon 20:25]
+:END:
 #+begin_src emacs-lisp
 (defun my/dired-copy-image-to-clipboard ()
   "Copy the currently selected image file in dired to the clipboard as image data, so that I can paste it with ⌘-v into Slack or other programs.
@@ -15124,7 +15135,6 @@ Check for orphaned files in the Org attachment directory.
         (goto-char (point-min))
         (pop-to-buffer (current-buffer))))))
 #+end_src
-
 ** Org-rifle
 :PROPERTIES:
 :CREATED:  [2025-04-27 Sun 06:26]
