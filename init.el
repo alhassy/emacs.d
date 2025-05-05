@@ -66,34 +66,25 @@
 
 (defvar my/work-machine? (not my/personal-machine?))
 
-  ;; Allow tree-semantics for undo operations.
-  (use-package undo-tree
-    :bind ("C-x u" . undo-tree-visualize)
-    :config
-      ;; Each node in the undo tree should have a timestamp.
-      (setq undo-tree-visualizer-timestamps t)
-  
-      ;; Show a diff window displaying changes between undo nodes.
-      (setq undo-tree-visualizer-diff t)
-  
-      ;; Prevent undo tree files from polluting your git repo
-      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-  
-  ;; Always have it on
-  (global-undo-tree-mode)
-  
-  ;; Execute (undo-tree-visualize) then navigate along the tree to witness
-  ;; changes being made to your file live!
-
-(use-package quelpa
-  :custom (quelpa-upgrade-p t "Always try to update packages")
+;; Allow tree-semantics for undo operations.
+(use-package undo-tree
+  :bind ("C-x u" . undo-tree-visualize)
   :config
-  ;; Get ‘quelpa-use-package’ via ‘quelpa’
-  (quelpa
-   '(quelpa-use-package
-     :fetcher git
-     :url "https://github.com/quelpa/quelpa-use-package.git"))
-  (require 'quelpa-use-package))
+  ;; Each node in the undo tree should have a timestamp.
+  (setq undo-tree-visualizer-timestamps t)
+
+  ;; Show a diff window displaying changes between undo nodes.
+  (setq undo-tree-visualizer-diff t)
+
+  ;; Prevent undo tree files from polluting your git repo
+  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
+
+;; Always have it on
+(global-undo-tree-mode)
+
+;; Execute (undo-tree-visualize) then navigate along the tree to witness
+;; changes being made to your file live!
+
 
 ;; Auto installing OS system packages
 (use-package system-packages)
@@ -169,8 +160,6 @@ installs of packages that are not in our `my/installed-packages' listing.
 (system-packages-ensure "node") ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
-;; (shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
-;; According to https://github.com/nvm-sh/nvm, nvm shouldn't be installed via brew.
 
 ;; ;; Use “brew cask install” instead of “brew install” for installing programs.;
 ;; (setf (nth 2 (assoc 'brew system-packages-supported-package-managers))
@@ -303,14 +292,6 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
 (use-package hydra)
-
-;; Show hydras overlayed in the middle of the frame
-(use-package hydra-posframe
-  :disabled "TODO Fix me, breaking Github Actions test setup"
-  :quelpa (hydra-posframe :fetcher git :url
-                          "https://github.com/Ladicle/hydra-posframe.git")
-  :hook (after-init . hydra-posframe-mode)
-  :custom (hydra-posframe-border-width 5))
 
 ;; Neato doc strings for hydras
 (use-package pretty-hydra)
@@ -717,9 +698,6 @@ The heading remains in view, and so appears in the TOC."
 ;; Folding within a subtree:1 ends here
 
 ;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
-(quelpa '(org-pretty-table
-         :repo "Fuco1/org-pretty-table"
-         :fetcher github))
 
 (add-hook 'org-mode-hook 'org-pretty-table-mode)
 ;; Draw pretty unicode tables in org-mode:1 ends here
@@ -1478,18 +1456,13 @@ fonts (•̀ᴗ•́)و"
 ;; Use the “#+name” the user provides, instead of generating label identifiers.
 (setq org-latex-prefer-user-labels t)
 
- (use-package org-sticky-header
+(use-package org-sticky-header
   :hook (org-mode . org-sticky-header-mode)
   :config
   (setq-default
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " ▷ "))
-
-  (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
-  (require 'org-remoteimg)
-  (setq url-cache-directory "~/emacs.d/.cache/")
-  (setq org-display-remote-inline-images 'cache)
 
 (use-package bufler
   :config (bind-key "C-x C-b" #'bufler-list))
@@ -2122,7 +2095,7 @@ the character 𝓍 before and after the selected text."
 ;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
 ;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
 ;; then loading that!
-(url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" "~/.emacs.d/elpa/agda-input.el" :ok-if-already-exists)
+
 (load-file "~/.emacs.d/elpa/agda-input.el")
 
 ;; MA: This results in "Package cl is deprecated" !?
@@ -2529,7 +2502,6 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 (setq org-catch-invisible-edits 'show-and-error)
 
 ;; Require confirmation for large region deletion
-(url-copy-file "https://www.emacswiki.org/emacs/download/wimpy-del.el" "~/.emacs.d/elpa/wimpy-del.el" :ok-if-already-exists)
 (load-file "~/.emacs.d/elpa/wimpy-del.el")
 (bind-key* "C-w" #'kill-region-wimpy)
 (setq wimpy-delete-size 3000)
@@ -2590,14 +2562,11 @@ method."
 ;; Now when I press M-SPC all adjacent blank lines are also removed.
 (advice-add 'cycle-spacing :after
             (defun my/cycle-spacing-then-delete-blank-lines (&rest _args)
-  "Run `delete-blank-lines` after `cycle-spacing`."
-  (delete-blank-lines)))
+              "Run `delete-blank-lines` after `cycle-spacing`."
+              (delete-blank-lines)))
 ;; Press M-SPC so all adjacent blank lines are also removed:1 ends here
 
 ;; [[file:init.org::*\[\[https:/www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/\]\[org-bars\]\]: Indent Org headings with pretty colours][[[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours:1]]
-(url-copy-file "https://raw.githubusercontent.com/tonyaldon/org-bars/refs/heads/master/org-bars.el" "~/.emacs.d/elpa/org-bars.el" :ok-if-already-exists)
-(load-file "~/.emacs.d/elpa/org-bars.el")
-(add-hook 'org-mode-hook 'org-bars-mode)
 ;; [[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours:1 ends here
 
 ;; [[file:init.org::*(setq line-spacing 0.2) ;; Add more line padding for readability][(setq line-spacing 0.2) ;; Add more line padding for readability:1]]
@@ -2690,7 +2659,6 @@ method."
 ;; [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:2 ends here
 
 ;; [[file:init.org::*Eldoc for org-mode][Eldoc for org-mode:1]]
-(url-copy-file "https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/org-eldoc.el" "~/.emacs.d/elpa/org-eldoc.el" :ok-if-already-exists)
 (load-file "~/.emacs.d/elpa/org-eldoc.el")
 (add-hook 'org-mode-hook 'eldoc-mode)
 (add-hook 'org-mode-hook 'eldoc-box-hover-mode)

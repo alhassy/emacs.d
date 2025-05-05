@@ -12902,19 +12902,23 @@ Here are some ideas:
   (delete-blank-lines)))
 #+end_src
 
-* [[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours
+* [[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours               :Posterity:
 :PROPERTIES:
 :CREATED:  [2025-01-20 Mon 12:56]
 :END:
 
-org-bars-mode is a minor mode for org-mode. It adds bars to the virtual indentation provided by the built-in package
-org-indent.
+org-bars-mode is a minor mode for org-mode. It adds bars to the virtual
+indentation provided by the built-in package org-indent.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (url-copy-file "https://raw.githubusercontent.com/tonyaldon/org-bars/refs/heads/master/org-bars.el" "~/.emacs.d/elpa/org-bars.el" :ok-if-already-exists)
 (load-file "~/.emacs.d/elpa/org-bars.el")
 (add-hook 'org-mode-hook 'org-bars-mode)
 #+end_src
+
+I've disabled this since it gets in the way of Org speed keys; e.g., when I
+press ~#~ to comment a heading, it accidentally inserts a literal ‘#’ character.
+
 * [#C] COMMENT show minibuffer in the middle of the screen :OK_but_could_be_better:
 :PROPERTIES:
 :CREATED:  [2025-04-09 Wed 17:34]
@@ -13020,6 +13024,10 @@ press ~RETURN~.
    (local-set-key (kbd "<return>") 'org-return-indent)) ;; Newline with indentation
    (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline)) ;; Newline without indentation
 #+END_SRC
+
+        /Importantly, a ‘task’ is a reminder for me to do something! If a
+            reminder is not required, then perhaps I have a ‘note’./
+                       /Not everything needs to be a task./
 
 * [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.
 :PROPERTIES:
@@ -13510,28 +13518,6 @@ Org-mode may be used with PlantUML:
 You can quickly write and see the resulting UMLs using
 https://liveuml.com/, for the most part.
 
-** Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.
-:LOGBOOK:
-CLOCK: [2025-04-12 Sat 14:38]--[2025-04-12 Sat 14:38] =>  0:00
-CLOCK: [2025-04-12 Sat 14:38]--[2025-04-12 Sat 14:38] =>  0:00
-:END:
-
-#+begin_src emacs-lisp
-(add-hook 'org-clock-in-hook
-          (defun my/say-bismillah-on-clock-in ()
-            (unless org-capture-mode
-              (alert " \nI begin this task in the name of God, the most gracious, the most merciful.\n\nGod please bless the task I'm undertaking."
-                     :title "Bismi Allah ar-rahaman ar-raheem")
-              (async-shell-command "say \"I begin this task in the name of God, the most gracious, the most merciful\""))))
-
-(add-hook 'org-clock-out-hook
-          (defun my/say-alhamudlilah-on-clock-out ()
-            (unless org-capture-mode
-              (async-shell-command "say \"Alhamudllah; praise be to God who has blessed me\""))))
-#+end_src
-
-TODO: Consider using audio files for an improved experience.
-
 ** [#C] COMMENT ON_STARTED, ON_DONE, ON_XYZ
 :PROPERTIES:
 :CREATED:  [2024-05-09 Thu 08:01]
@@ -13609,23 +13595,11 @@ TODO: Consider using audio files for an improved experience.
   videogame or slot machine. Pleasure is a reward, and pleasant sights
   and sounds produce pleasure.
 
-* ~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one
-:PROPERTIES:
-:CREATED:  [2024-05-09 Thu 06:47]
-:END:
-#+begin_src emacs-lisp
-;; With prefix arg, offer recently clocked tasks for selection.
-(bind-key* "C-c SPC"
-           (lambda (&optional prefix)
-             (interactive "P")
-             (org-clock-goto prefix)
-             (org-narrow-to-subtree)))
-#+end_src
 * -------------------------------------------------------------------------------- :ignore:
 :PROPERTIES:
 :CREATED:  [2025-04-12 Sat 16:13]
 :END:
-* ﴾🏃🏾 Engage with org-agenda ﴿ Progressing tasks to completion via org-agenda & note taking & clocking
+* ﴾🏃🏾 Engage with org-agenda ﴿ Progressing tasks to completion via org-agenda & note taking
 
                        /What do I work on today?/
                        /What did I work on last week?/
@@ -14744,7 +14718,7 @@ Finally,
      str)))
 #+end_src
 
-* Capturing Content: Links, Smart Paste, Attachments, and Org Rifle
+* ✏️ Capturing Content: Links, Smart Paste, Attachments, and Org Rifle
 :PROPERTIES:
 :CREATED:  [2025-04-14 Mon 09:43]
 :END:
@@ -15169,6 +15143,586 @@ buffer. 💝 Or, just press ~C-s~ to see all results together in such a buffer.
 This is a nice complement to helm-org-ql in that it shows me context while I'm searching.
 
 
+* ⏰ *“What did I spend my time on today? Last week? Last month? Last Year?”*
+:LOGBOOK:
+CLOCK: [2025-05-04 Sun 21:44]
+CLOCK: [2025-05-04 Sun 21:39]--[2025-05-04 Sun 21:44] =>  0:05
+CLOCK: [2025-05-04 Sun 21:38]--[2025-05-04 Sun 21:39] =>  0:01
+CLOCK: [2025-05-04 Sun 21:34]--[2025-05-04 Sun 21:35] =>  0:01
+CLOCK: [2025-05-04 Sun 21:33]--[2025-05-04 Sun 21:34] =>  0:01
+CLOCK: [2025-05-04 Sun 21:32]--[2025-05-04 Sun 21:33] =>  0:01
+CLOCK: [2025-05-04 Sun 21:31]--[2025-05-04 Sun 21:32] =>  0:01
+:END:
+** Introduction
+:PROPERTIES:
+:CREATED:  [2025-05-04 Sun 19:59]
+:END:
+
+Just as a school-boy must complete a homework assignment by a specific deadline,
+regardless of how many hours it takes; so too as a salary-man, I must complete
+work assignments by specified deadlines, regardless of how many hours it takes.
+- To avoid over-working, or burnout, I intentionally have ‘Project Update’
+  meetings to review progress and possibly reasons for delay or reduction in scope.
+- No one at my work actually cares how many hours I work; they just care that I
+  get a certain amount of work done each sprint.
+
+   /“Whether it takes you 4 hours or 40 hours doesn't matter; what matters is
+                            finishing the project.”/
+
+
+To reduce distraction, I intentionally declare to myself “I am now working on
+this task”. Then I make notes on possible solutions or next steps, as I work on
+the task. Finally, when I need to stop, I declare “I am now done with this task,
+and moving on to something else”. These declarations narrow my attention and
+give me a sense of guilt when I deviate from them. They are reminiscent of my
+bow when I enter a karate dojo, or the /Allah Akbar/, God is Great, declaration
+when beginning prayer: My focus is now narrowed to the task at hand.
+
+
+Such task-related declarations are done with ‘clocks’.
+
+
+I typically work on a task by ‘clocking-into’ it with kbd:C-c_C-x_C-i, then make
+notes of insights I've gained with kbd:C-c_C-z which I can refer to next time I
+work on this task, then finally ‘clock-out’ of the task with kbd:C-c_C-x_C_o.
+This is all seamlessly within Emacs; no external-application data-entry
+required. Moreover, with doc:org-speed-commands, I can simply press ~I~ and ~O~ on a
+headline to clock in and out of it.
+
+To reiterate: It's about personal accountability and personal, objective,
+transparency. When I clock-into a task, [[https://aaronlynn.com/productivity/time-management/time-tracking/][The Hawthorne Effect]] activates: /I modify
+my behaviour in-response to my awareness of being observed;/ even though the
+observer is myself. 🫣 The simple act of tracking our time means that we
+subconsciously improve how we use it.  /That is, time tracking is a “[[https://aaronlynn.com/productivity/true-life-hacks/][life hack]]”
+for personal accountability and transparency!/
+
+🧁 I also like being able to “jump to clocked task” with kbd:C-c_SPC.
+
+
+** Other benefits of clocking are …
+:PROPERTIES:
+:CREATED:  [2025-05-04 Sun 19:58]
+:END:
+
+
+1. 📜 Creating a record of your work ---a way to offset Imposter Syndrome.
+
+   TODO: Org attach the relevant images from Harsh and cite him accordingly. (https://harsh-darji.medium.com/10-powerful-visuals-you-need-to-see-before-you-enter-2024-f7977ae4da4f#:~:text=2.%20It%E2%80%99s%20not%20what%20you%20are%20that%20holds%20you%20back%2C%20it%E2%80%99s%20what%20you%20think%20you%20are%20not.)
+
+   Clocking creates a record of exactly what I worked on.
+
+   So if a client (≈ my manager) asks for a detailed explanation of why
+   something took as long as it did, or remarked that I'm “slow”, then all I
+   have to do is generate report and all the details are there.  Such objective
+   data can make it easier to have a tough discussion, because I can show him
+   exactly how long great work takes. I can also push back against any
+   aggressive or unreasonable expectations.
+
+2. 💢 Prevents Burnout 🔥
+
+   I can “see” how much effort I've exerted towards a task, and so decide (in my
+   weekly/daily review) whether I need to deprioritize the task, pause it, or
+   seek help from others.
+
+   If things are taking longer than expected, I need to voice the concern or
+   otherwise I'll get additional work and have too much on my plate and burn
+   out.
+
+   If I notice that I'm consistently going over forty hours a
+   week, then I need to speak up for myself to reduce my load or communicate
+   prioritise or reduce time spent on low-ROI tasks.
+
+3. 🦜 Time tracking lets me know if I'm profiting on my efforts or not.  (E.g.,
+   Perato Principle: 80% of profits come from 20% efforts. So which efforts are
+   those? Maybe I can better use the rest of my time.)
+
+4. 🙈 Tracks Hidden Tasks
+
+   Hidden tasks are things that need to be done, but aren’t necessarily
+   high-priority. Tracking activities such as general meetings, reviewing
+   other's work, impromptu meetings with a certain colleague, etc mean that I
+   can review where my time went objectively and communicate those concerns to
+   my manager.
+
+5. 🤔 /What did I do today?/
+
+   To see everything I've clocked-into and any remarks I've made with
+   kbd:C-c_C-z, press [[kbd:l]] (i.e., doc:org-agenda-log-mode) from an agenda view;
+   or press kbd:C-c_a_a_v_w_l to open the agenda in logbook mode.
+   - My doc:my/agenda-for-day method also does this for any day I choose.
+   - This view can act as a motivator that I'm doing my best, or as a reprimand
+     that perhaps I need to get my act together and focus on priority tasks.
+
+6. 🤖 💭 Org mode is able to generate detailed time reports based on when you
+   “clock-in” and “clock-out” of tasks. Such reports answer, “How much time, or
+   percentage of time, was spent on task 𝒳?”
+   - I don't share such fine-grained reports: Clocking-in is a much more
+     positive experience when I'm using it to improve my own quality of life,
+     rather than someone else's business metrics.
+
+   As such, clocking answers the following questions:
+
+   a. /What did I spend my time on this month? Last week?/
+      - I use these to help me know what I have done last week so I can report
+        about it in our weekly stand-up meeting at work.
+
+   b. /What's actually the most important thing to me?/
+      - It's whatever I have spent the majority of my time doing.
+      - As such, I can objective review where my time went and whether I'm
+        spending too much time, or not enough, on certain projects.
+      - Perhaps I need to make changes in your health, career, relationships or
+        other [[https://aaronlynn.com/productivity/systems-mental-models/areas-of-life/][areas of life]].
+
+   c. /How long have I been working on this task?/
+      - Without clocking data it's hard to tell how long something took to do
+        after the fact.
+      - Without clocking data, I might thing “It was trivial” or “I worked
+        months on this thing!” Yet in-reality, I don't work on a single task,
+        but rather progressing on a variety of tasks and clocking gives
+        objective evidence rather than subjective, hazy, memory of my experience
+        with a task.
+      - For fun, /How long did it take to write this blog post?/
+
+   d. /Did I have a good day? That is, did I work on the right things, or did I
+      have time sinks?/ (I.e., low-priority tasks that have a lot of time clocked
+      against them.)
+
+      If I can /easily/ identify problem areas, then I can look for more effective
+      ways to perform the tasks that take up a lot of my time. /Don't get
+      discouraged; instead figure out how to do things better./
+
+   e. /Did I overwork today? Under-work?/
+
+      This way, if I’ve worked shorter days, I know I have some catching up to
+      do, and if I’ve had a busy period, I can compensate in the days ahead. I
+      don’t need to worry about whether I’m not working enough or working too
+      much or anything like that.
+
+   When someone (e.g., myself!) wants details of what I've done recently I
+   simple generate a report of tasks I've clocked-into in the past week using
+   doc:my/what-did-i-work-on-this-week
+
+   💼 These are all work-related.
+   ⚽ I don't care too much about time spent on hobbies; though I have started
+   clocking into init.org headlines…
+
+7. ✏️ Since my capture template, kbd:C-c_c, clocks in automatically, I can see that
+   often my captures (of interesting thoughts) take a few minutes to compose.
+   - I also use captures when I deviate from the current task, so that the clock
+     keeps me honest about where my time went. E.g., when I am interrupted with
+     a meeting, or decide to go on a side-quest to learn some niche topic
+     because it's fun and even so tangentially related to the task at hand.
+
+8. 🤔 I can better estimate how long a similar task will be next time.
+   - More usefully, the notes of lessons learned from the task will be reused
+     next time I encounter a problem in the same domain (i.e., code-base).
+     In some circles, such notes are known as “the programmer's notebook”.
+   - To get started, we could estimate how long a task will take and clock-in;
+     then clock-out and see how long it actually took.
+
+     Time estimates and clocks can disabuse myself of unrealistic expectations:
+     When “Oh, this should only take an hour or so” becomes “It took the entire
+     day”. Moreover, a time-blocked agenda helps me to stop work at a reasonable
+     time and go to something else.
+
+   :Posterity_Effort_Properties:
+   Before clocking into a task, add to the properties drawer ~:Effort: 1:25~ or
+   ~C-c C-x C-e~, for a task that you estimate will take an hour and twenty-five
+   minutes, for example. Now the modeline will mention the time elapsed
+   alongside the task name. *Woah!*
+
+   #+begin_src emacs-lisp :tangle no
+    (push '("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
+          org-global-properties)
+   #+end_src
+
+   #+begin_quote org
+   Use speed keys ~e/E~ to insert an effort estimate, with the above being provided
+   options, or to increment the current effort to the next one in the above list.
+   #+end_quote
+
+  This is also useful when you simply want to put a time limit on a task that
+  wont be completed anytime soon, say writing a thesis or a long article, but
+  you still want to work on it for an hour a day and be warned when you exceed
+  such a time constraint. ⟵- MA: Now I time-block, so this is not a major
+  concern.
+
+  # Not_working_for_me
+  Even if you switch tasks then clock into this task again, the alarm will ring
+  again, nagging you to actual listen to yourself and work on other matters.
+  #+begin_src emacs-lisp
+  (setq org-clock-sound "~/.emacs.d/school-bell.wav")
+  #+end_src
+
+  When you've gone above your estimate time, the modeline colours it red.
+ :end:
+
+9. 💰 Just as a company has an accounting department to pay its employees,
+   my life should have “accounting of time paid to my activities”.
+
+   Some activities are worth my life time, others are not.
+
+   (Aside: Other things that a business has are payroll and project management,
+   and since life is a business, it's worth considering where my money goes
+   and how I manage my life.)
+
+*** Further reading
+:PROPERTIES:
+:CREATED:  [2025-05-04 Sun 22:24]
+:END:
+
+1. [ ] It helps you get your goals accomplished; https://aaronlynn.com/productivity/goal-setting/how-to-make-your-new-years-resolutions-actually-happen/
+   + Really, anything by Aaron Lynn 🤩
+
+2. [ ] [[https://swaroopch.com/blog/why-i-do-time-tracking]["Why I Do Time Tracking: Exploring the Benefits and Results of Tracking My Productive Hours"]]
+
+** What to clock-into?
+:PROPERTIES:
+:CREATED:  [2025-05-04 Sun 21:12]
+:END:
+
+Use one of the following options, with the top-most being the first to be tried.
++ From anywhere, ~C-u C-c C-x C-i~ yields a pop-up for recently clocked in tasks.
+  - Even shorter: ~C-u C-c SPC~. With ~C-c SPC~ to narrow to the currently clocked
+    task.
++ Pick something off today's agenda scheduled items.
++ Pick a ~Started~ task from the agenda view, work on this unfinished task.
++ Pick something from the ~TODO~ tasks list in the agenda view.
+
+** Basic Implementation
+:PROPERTIES:
+:CREATED:  [2025-05-04 Sun 20:33]
+:END:
+:LOGBOOK:
+CLOCK: [2025-05-04 Sun 21:35]--[2025-05-04 Sun 21:38] =>  0:03
+:END:
+
++ Clock in :: In an agenda or on a heading with ~I~, or in the subtree with ~C-c C-x C-i~.
++ Clock out :: In an agenda or on a heading with ~O~, or in the subtree with ~C-c C-x C-o~.
++ Clock report :: See clocked times with ~C-c C-x C-r~.
+  - ~C-c C-x C-d~ also provides a quick summary of clocked time for the current org file.
+
+After clocking out, the start and end times, as well as the elapsed time, are
+added to a drawer to the heading. We can punch in and out of tasks as many times
+as desired, say we took a break or switched to another task, and they will all
+be recorded into the drawer.
+
+#+begin_example org
+,* My Task
+:LOGBOOK:
+CLOCK: [2025-05-04 Sun 18:22]--[2025-05-04 Sun 20:22] =>  2:00
+:END:
+#+end_example
+
+[Rarely need to do this] To edit a clock entry, press ~Shift+⇅~ on any part of the
+entry. E.g., if you forgot to clock into a task when you started!
+1. You can use ~Shift+⇅~ on any year, month, day, hour, or minute and see it
+   change. Moreover, that also updates the total clocked time.
+2. You can also, change the date by changing the text manually, then press ~C-c
+   C-c~ anywhere on that line to update the total clocked time. This calls
+   doc:org-evaluate-time-range.
+3. By default, ~Shift+⇅~ changes minutes by increments of 5
+  + I.e., ~(setq org-time-stamp-rounding-minutes '(0 5))~
+4. +Press ~C-c a v c~ to open the clock-check view, which will show you gaps, and+
+   +overlaps, in clocked time. Then add clock-entries to remove gaps; fix
+   clock-times to remove overlaps.+
+
+#+begin_src emacs-lisp
+;; In case my hands slip and I press “C-x C-c”, which saves all buffers and quits Emacs; confirm that's my intention.
+(setq confirm-kill-emacs 'yes-or-no-p)
+
+
+;; Save clock data and state changes and notes in the LOGBOOK drawer
+(setq org-clock-into-drawer t)
+
+
+;; Change task state to STARTED when clocking in, if in an agenda file.
+;; This means I can clock-into tasks in my init.org or into captures “C-c c”
+;; without having them marked STARTED.
+(setq org-clock-in-switch-to-state
+      (defun my/clock-in-to-STARTED-if-in-an-agenda-file (&rest args)
+        (when (member (buffer-file-name) (org-agenda-files))
+          "STARTED")))
+
+
+;; At first, I used to record a note on what was accomplished when clocking out of an item.
+;; Now, I use “C-c C-z” to make notes about insights or blockers or ideas or what to do next time, as I work on a task.
+(setq org-log-note-clock-out nil)
+
+
+;; Show lot of clocking history so it's easy to resume recently clocked items, using the “C-u C-c SPC” clock history list.
+;;
+;; For example, I'm working on task 𝒜, then I need to context-switch to task ℬ (e.g., “meeting”)
+;; so I clock-out of 𝒜 and clock-into ℬ; then when ℬ is done, I press “C-u C-c SPC” and see a list
+;; of tasks I've recently clocked-into, with 𝒜 being at the top, so I select it and now I'm back into 𝓐.
+;;
+;; The clock history is a nice way to quickly see what you've been working on lately.
+(setq org-clock-history-length 23)
+
+
+;; Resume clocking task when emacs is restarted: Save the running clock and all CLOCK HISTORY when exiting Emacs, load it on startup
+(org-clock-persistence-insinuate)
+(setq org-clock-persist t)
+(setq org-clock-persist-query-resume nil) ;; Do not prompt to resume an active clock
+
+;; If I clock into a task, then move to something else before a minute's elapsed, don't keep track of a 0:00 duration.
+;; This is helpful when I capture a note quickly with “C-c c”.
+(setq org-clock-out-remove-zero-time-clocks t)
+
+
+;; When a task enters the DONE state, I don't want to automatically clock-out
+;; because I may not have started another task and don't want to “lose a few
+;; minutes” finding a sibling task to start. Such minutes add up; especially if
+;; I'm taking the time to write good notes.
+(setq org-clock-out-when-done nil)
+;; Alternatively, make this “t” and add the following hook; then even when I
+;; clock-out of a task, I don't lose unlogged minutes before logging into
+;; another task.
+(when nil
+  (add-hook 'org-clock-out-hook
+            (defun my/clock-into-PLANNING-task ()
+              "Look for the task with property “:ID: planning” and clock into it.
+
+              The “** Planning” task is intended for miscellaneous clock time:
+              Reading email, clearing my inbox, reorganising my notes, etc.
+             "
+              (interactive)
+              (org-with-point-at (org-id-find "planning" 'marker)
+                (org-clock-in '(16))))))
+
+
+;; Include current clocking task in clock reports
+(setq org-clock-report-include-clocking-task t)
+#+end_src
+** How should the clock in the modeline look?
+:LOGBOOK:
+CLOCK: [2025-05-04 Sun 21:15]--[2025-05-04 Sun 21:31] =>  0:16
+:END:
+#+begin_src emacs-lisp
+(set-face-attribute
+ 'org-mode-line-clock
+  nil
+  :background "grey75"
+  :foreground "red"
+  :box '(:line-width -1 :style released-button))
+
+;; Conversely, the getter:
+(face-attribute  'org-mode-line-clock :foreground) ;; ⇒ "red"
+#+end_src
+
+***  Highlight Clock When Running Overtime
+:PROPERTIES:
+:CREATED:  [2024-05-08 Wed 14:59]
+:END:
+The current clocking task is displayed on the modeline. If this has an estimated time and we run over the limit I make this stand out on the modeline by changing the background to red as follows
+
+(custom-set-faces
+  ;; custom-set-faces was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
+ '(org-mode-line-clock ((t (:foreground "red" :box (:line-width -1 :style released-button)))) t))
+
+** Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.
+:LOGBOOK:
+CLOCK: [2025-04-12 Sat 14:38]--[2025-04-12 Sat 14:38] =>  0:00
+CLOCK: [2025-04-12 Sat 14:38]--[2025-04-12 Sat 14:38] =>  0:00
+:END:
+
+#+begin_src emacs-lisp
+(add-hook 'org-clock-in-hook
+          (defun my/say-bismillah-on-clock-in ()
+            (unless org-capture-mode
+              (alert " \nI begin this task in the name of God, the most gracious, the most merciful.\n\nGod please bless the task I'm undertaking."
+                     :title "Bismi Allah ar-rahaman ar-raheem")
+              (async-shell-command "say \"I begin this task in the name of God, the most gracious, the most merciful\""))))
+
+(add-hook 'org-clock-out-hook
+          (defun my/say-alhamudlilah-on-clock-out ()
+            (unless org-capture-mode
+              (async-shell-command "say \"Alhamudllah; praise be to God who has blessed me\""))))
+#+end_src
+
+TODO: Consider using audio files for an improved experience.
+
+** Reviewing Progress / Providing Progress Reports To Others / Myself
+:LOGBOOK:
+CLOCK: [2024-05-07 Tue 07:27]--[2024-05-07 Tue 07:28] =>  0:01
+:CAPTURED: [2024-05-07 Tue 07:27]
+:END:
+
+When someone (e.g., myself!) wants details of what I've done recently I simple
+generate a report of tasks I've clocked-into in the past week using
+doc:my/what-did-i-work-on-this-week.
++ I have a ~*** Mid-Week Check-in <2025-05-07 Wed 10:00-11:00 .+1w>~ task, in
+  ~my-life.org~, to run this method and adjust my schedule for the week.
+
+*** org-clock-clocktable-default-properties and “my/what-did-i-work-on-this-week” :details:
+
+#+begin_src emacs-lisp
+;; This only works well if my tasks have timestamps; ie are scheduled ^_^
+(setq org-clock-clocktable-default-properties
+      '(:scope ("./my-life.org")       ;; Consider the current file
+               :hidefiles t      ;; Hide the file column when multiple files are used to produced the table.
+               :maxlevel 5       ;; Consider sub-sub-sections
+               :block lastweek   ;; Only show me what I did last week
+               ;; Other values: 2024-04, lastmonth, yesterday, thisyear, 2024
+               ;; :tstart "<-2w>" :tend "<now>"   ;; Show me the past two weeks
+               ;; :tstart "<2006-08-10 Thu 10:00>" :tend "<2006-08-10 Thu 12:00>" ;; Show me a particular range
+               :step day         ;; Split the report into daily chunks
+               :formula %        ;; Show me the percentage of time a task took relative to my day
+               :link t           ;; Link the item headlines in the table to their origins
+               :narrow 55!       ;; Limit the width of the headline column in the Org table
+               :tcolumns 1       ;; Show only 1 column ---not multiple, for the sections and subsections and etc.
+               :timestamp t      ;; Show the timestamp, if any
+               :tags t        ;; Do not show task tags in a column; I use mostly hierarchies for my tasks right now.
+               ;; :match "billable|notes-travel" ;; ⇒ Includes tags “billable” and “notes”, excludes tag “travel”
+               ;; More examples at: https://orgmode.org/manual/Matching-tags-and-properties.html#Matching-tags-and-properties
+               ;; For example, we can match tags & priority & todo states & property drawer values; “/DONE” matches all tasks with state being ‘DONE’.
+               :match "-Personal" ;; Exclude tasks tagged “OOO”, which means “Out of Office” ---e.g., taking a break, or praying, or out for an appointment.
+               ;; https://stackoverflow.com/a/53684091 for an accessible example use of :formatter
+               ;; :formatter org-clocktable-write-default ;; This is the default way to print a table; it looks very long and annoying to change.
+               ;; :sort (3 . ?N)              ;; Sort descendingly on time. Not ideal, since I'm very hierarchical.
+               :properties ("Effort")
+               ))
+;; More properties at:  https://orgmode.org/manual/The-clock-table.html
+;; [Low Priority] Figure out whether I've underworked or overworked? ⇒ https://www.erichgrunewald.com/posts/how-i-track-my-hour-balance-with-a-custom-org-mode-clock-table/
+
+
+;; I prefer “27h” over “1d 3h”.
+(setq org-duration-format 'h:mm)
+
+
+;; In Org-agenda, press “v r” to view the clock report
+;; (This method is invoked when you hit “v r” in Org-agenda.)
+(defalias 'org-agenda-clockreport-mode 'my/what-did-i-work-on-this-week)
+
+
+
+(defun my/what-did-i-work-on-this-week ()
+  "Show in a dedicated buffer a clock report of the past 7 days."
+  (interactive)
+  (my/what-did-i-work-on
+   "*What Did I Work On This Week?*"
+   org-clock-clocktable-default-properties))
+
+
+
+(defun my/what-did-i-work-on-today ()
+  (interactive)
+  (my/what-did-i-work-on
+   "*What Did I Work on Today?*"
+   (-snoc org-clock-clocktable-default-properties :block 'today)))
+
+
+
+(defun my/what-did-i-work-on (buffer-title clocktable-properties)
+  (switch-to-buffer buffer-title)
+  (org-mode)
+  ;; (org-modern-mode) Tables don't look good with the unicode/timestamp svg
+  (-let [org-clock-clocktable-default-properties clocktable-properties]
+    (org-clock-report))
+  ;; For some reason, some of org-modern carries from the current buffer to the new buffer.
+  (org-modern-mode +1)
+  (org-modern-mode -1)
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "\\\\_" nil t)
+      (replace-match "⇒")
+      (org-table-align))))
+#+end_src
+
+*** Nicer clocktable layout for nested entries                    :details:
+#+begin_src emacs-lisp
+(advice-add 'org-clocktable-indent-string :override
+ (defun my/org-clocktable-indent-string (level)
+  (if (= level 1)
+      ""
+    (let ((str "└"))
+      (while (> level 2)
+        (setq level (1- level)
+              str (concat str "──")))
+      (concat str "─> ")))))
+#+end_src
+
+** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!”          :Posterity:
+
+Effort estimates are for an entire task.
+Yet, sometimes it's hard to even get started on some tasks.
+
++ The code below ensures a 25 minute timer is started whenever clocking in happens.
+
+    - The timer is in the lower right of the modeline.
+
++ When the timer runs out, we get a notification.
+
++ We may have the momentum to continue on the difficult task, or clock-out and
+  take a break after documenting what was accomplished.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Tasks get a 25 minute count down timer
+(setq org-timer-default-timer 25)
+
+;; Use the timer we set when clocking in happens.
+(add-hook 'org-clock-in-hook
+  (lambda () (org-timer-set-timer '(16))))
+
+;; unless we clocked-out with less than a minute left,
+;; show disappointment message.
+;;
+;; (add-hook 'org-clock-out-hook
+;;   (lambda ()
+;;   (unless (s-prefix? "0:00" (org-timer-value-string))
+;;      (message-box "The basic 25 minutes on this difficult task are not up; it's a shame to see you leave."))
+;;      (org-timer-stop)))
+#+END_SRC
+
+Note that this does not conflict with the total effort estimate for the task.
+
+(I'm told there's a package already made for this ---maybe I need to stop writing
+code, and do more searches; then again, I've learned a lot by writing code.)
+
+** Whenever I clock out, update total clocked time property (including times of subtasks) :Posterity:
+
+Abandoned in-favour of using org-eldoc and eldoc-box-hover-mode to show me how
+long I've been working on a task.
+
+#+begin_src elisp :tangle no
+(add-hook 'org-clock-out-hook
+          (defun my/update-total-clocked-time-property ()
+            (ignore-errors ;; e.g.., there's no effort.
+               (unless org-capture-mode
+              (org-entry-put (point) "TOTAL_CLOCKED_TIME"
+                           (-let [mins-worked (org-clock-sum-current-item (org-clock-get-sum-start))]
+                             (format "%s:%s    ⦃ %d%% of estimated effort ⦄"
+                                     (/ mins-worked 60)
+                                     (% mins-worked 60)
+                                     (-let [(hours mins) (mapcar #'string-to-number (s-split ":" (org-entry-get (point) "Effort")))]
+                                       (* 100 (/ mins-worked (+ (* hours 60.0) mins)))))))))))
+#+end_src
+
+See also:
+- (org-clock-sum)
+- (org-clock-sum-today)
+- (org-clock-sum-current-item)
+- C-c C-x C-d ⇒ Show me total time for the (narrowed) buffer
+
+
+** ~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one
+:PROPERTIES:
+:CREATED:  [2024-05-09 Thu 06:47]
+:END:
+#+begin_src emacs-lisp
+(bind-key*
+ "C-c SPC"
+ (defun my/jump-to-clocked-task (&optional prefix)
+   "Jump to the currently clocked-in entry, or to the most recently clocked one.
+
+With prefix arg, offer recently clocked tasks for selection."
+   (interactive "P")
+   (org-clock-goto prefix)
+   (org-narrow-to-subtree)))
+#+end_src
 * --------------------------------------------------------------------------------
 :PROPERTIES:
 :CREATED:  [2025-04-09 Wed 16:21]
