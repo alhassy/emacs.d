@@ -1871,21 +1871,6 @@ Lets also use doc:helm-do-grep-ag ([[kbd:C-x c M-g a]]) *search all files in the
 (system-packages-ensure "ag")
 #+end_src
 
-*Marking my place when I jump around*
-Let's use ~M-m~ to get a nice menu of places we've been recently.
-#+begin_src emacs-lisp :tangle init.el
-;; Save/mark a location with “C-u M-m”, jump back to it with “M-m”.
-(bind-key* "M-m"
-           (lambda ()
-             (interactive)
-             (if (not current-prefix-arg)
-                 (helm-mark-ring)
-               (push-mark)
-               (message "[To return to this location, press M-m] ∷ %s"
-                        (s-trim (substring-no-properties (thing-at-point 'line)))))))
-#+end_src
-
-
 Finally, note that there is now a ~M-x helm-info~ command to show documentation,
 possibly with examples, of the packages installed. For example,
 ~M-x helm-info RET dash RET -parition RET~ to see how the parition function from the
@@ -15516,6 +15501,7 @@ Context: =org-agenda-log-mode= It will display the entries that record the time,
 :PROPERTIES:
 :CREATED:  [2025-05-09 Fri 19:57]
 :END:
+
 #+begin_src emacs-lisp
 (add-hook
  'org-mode-hook
@@ -16150,8 +16136,27 @@ method."
    (widen)
    ;; Then actually go to the desired bookmark
    (bookmark--jump-via bookmark #'pop-to-buffer-same-window)))
-
 #+end_src
+
+
+*Marking my place when I jump around*
+Let's use ~M-m~ to get a nice menu of places we've been recently.
+#+begin_src emacs-lisp :tangle init.el
+;; Save/mark a location with “C-u M-m”, jump back to it with “M-m”.
+(bind-key* "M-m"
+           (lambda ()
+             (interactive)
+             (if (not current-prefix-arg)
+                 (helm-mark-ring)
+               (push-mark)
+               (message "[To return to this location, press M-m] ∷ %s"
+                        (s-trim (substring-no-properties (thing-at-point 'line)))))))
+#+end_src
+
+This is useful for when I'm jumping around between definitions or buffers (e.g.,
+for searching). In some sense, this resembles the built-in ~M-.~ and ~M-,~
+key-presses.
+
 *** [#C] COMMENT DIY Bookmark Handler Ideas
 :PROPERTIES:
 :CREATED:  [2025-04-09 Wed 16:33]
