@@ -12904,7 +12904,7 @@ Further Reading:
           ;; these tasks.								   ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
-           '(deadline auto)
+           '(and (deadline auto) (not (tags "Top")))
            ((org-ql-block-header "\n🎯 Deadlines\n")))
 
 
@@ -12912,7 +12912,7 @@ Further Reading:
           ;; Whoops, things that I've missed!                                       ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
-           '(and (not (habit)) (not (done)) (scheduled :to today) (not (scheduled :on today)))
+           '(and (not (habit)) (not (tags "Top")) (not (done)) (scheduled :to today) (not (scheduled :on today)))
            ((org-ql-block-header "\n📆 Overdue\n")))
 
 
@@ -15447,6 +15447,122 @@ Also,
 ;; Make invisible parts of Org elements appear visible.
 (unless my/personal-machine?
   (use-package org-appear))
+#+end_src
+** Colourise clocking tasks with a block                      :TryingThisOut:
+:PROPERTIES:
+:CREATED:  [2025-05-05 Mon 06:29]
+:END:
+
+Src: https://orgmode.org/worg/org-hacks.html#orgb4eab5c
+
+MA: This seems to look best only if every task is either clocked, or is
+time-blocked.
+
+Context: =org-agenda-log-mode= It will display the entries that record the time,
+   such as 17:00-19:00 Clocked: (2:00) blabla. Although it includes the start
+   and end time and the time spent, I always feel that this function is a bit
+   useless. Because the main purpose of using Clock to record time is to make it
+   convenient for me to see how much time I spent on what things every day, +so
+   that I can regret my day of doing nothing in the dead of night+ . However, in
+   the agenda, the proportion of the page (line height) occupied by each entry
+   is the same. Although you can see the total time spent one by one, it seems
+   that each thing takes up almost the same time intuitively. For example,
+   playing games for ten hours and learning Emacs for five minutes are visually
+   similar, both are one line of text. I hope to be able to visualize the amount
+   of time spent on each thing in the form of time blocks, like Google Calendar
+   or other time recording software.
+
+
+#+begin_src emacs-lisp
+;; work with org-agenda dispatcher [c] "Today Clocked Tasks" to view today's clocked tasks.
+(add-hook 'org-agenda-finalize-hook
+          (defun org-agenda-log-mode-colorize-block ()
+            "Set different line spacing based on clock time duration.
+
+   all the time below 30 minutes is displayed in a normal line, and the line height
+   is proportionally expanded for more than 30 minutes.
+
+   Making the log look better is mainly to stimulate my interest and motivation to
+   record my times.
+"
+            (save-excursion
+              ;; automatic color selection based on whether the theme background is black or white.
+              (let* ((colors (cl-case (alist-get 'background-mode (frame-parameters))
+                               ('light
+                                (list "#F6B1C3" "#FFFF9D" "#BEEB9F" "#ADD5F7"))
+                               ('dark
+                                (list "#aa557f" "DarkGreen" "DarkSlateGray" "DarkSlateBlue"))))
+                     pos
+                     duration)
+                (nconc colors colors)
+                (goto-char (point-min))
+                (while (setq pos (next-single-property-change (point) 'duration))
+                  (goto-char pos)
+                  (when (and (not (equal pos (point-at-eol)))
+                             (setq duration (org-get-at-bol 'duration)))
+                    ;; larger duration bar height
+                    ;;
+                    ;; This means the height is 1 unit within half an hour, and if it exceeds half an hour, it will increase by 0.5 units for every full hour, right?
+                    (let ((line-height (if (< duration 15) 1.0 (+ 0.5 (/ duration 30))))
+                          (ov (make-overlay (point-at-bol) (1+ (point-at-eol)))))
+                      (overlay-put ov 'face `(:background ,(car colors) :foreground "black"))
+                      (setq colors (cdr colors))
+                      (overlay-put ov 'line-height line-height)
+                      (overlay-put ov 'line-spacing (1- line-height)))))))
+            (olivetti-mode -1)))
+#+end_src
+
+** Automatically toggle timestamp prettifications
+:PROPERTIES:
+:CREATED:  [2025-05-09 Fri 19:57]
+:END:
+#+begin_src emacs-lisp
+(add-hook
+ 'org-mode-hook
+ (defun my/setup-toggle-timestamp-fontification ()
+   ;; Disable with: (remove-hook 'post-command-hook #'my/toggle-timestamp-fontification)
+   (add-hook
+    'post-command-hook
+    (defun my/toggle-timestamp-fontification ()
+      "Hook function to check cursor entry/exit into Org timestamps & toggle fontification.
+
+       Note: Since I'm using `org-element-context', this feature will be enabled if there's
+       any timestamp near my point _regardless_ of whitespace. So to “leave”, say, a CLOSED:
+       timestamp, the cursor needs to be on any NON-WHITESPACE outside the timestamp, such as
+       any other text, or introduce a new text.
+"
+      (defvar my/last-ts nil)
+      (defvar my/last-ts-visible nil)
+      (let ((current-ts (my/cursor-in-timestamp-p)))
+        (cond
+         ((and current-ts (equal current-ts my/last-ts))
+          ;; (message-box "Nothing new")
+          (unless my/last-ts-visible
+            (goto-char (org-element-property :begin my/last-ts))
+            (my/toggle-line-fontification)
+            (setq my/last-ts-visible nil)))
+         ;; If I'm looking at a timestamp, and it's different from the last one, then show it.
+         ((and current-ts (not (equal current-ts my/last-ts)))
+          ;; (message-box "Welcome!")
+          (save-excursion
+            (goto-char (org-element-property :begin current-ts))
+            (setq my/last-ts current-ts)
+            (setq my/last-ts-visible t)
+            (my/toggle-line-fontification)))
+         ;; If I'm not looking at a timestamp, ensure the last one is fontified.
+         (my/last-ts
+          ;; (message-box "Bye!")
+          (save-excursion
+                       (goto-char (org-element-property :begin my/last-ts))
+                       (my/toggle-line-fontification)
+                       (setq my/last-ts nil)
+                       (setq my/last-ts-visible nil)))))))
+
+   (defun my/cursor-in-timestamp-p ()
+     "Return Org timestamp if point is inside an Org timestamp; else null."
+     (let ((element (org-element-context)))
+       (when (member (org-element-type element) '(timestamp planning))
+         element)))))
 #+end_src
 
 * --------------------------------------------------------------------------------

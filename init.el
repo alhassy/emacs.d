@@ -66,25 +66,34 @@
 
 (defvar my/work-machine? (not my/personal-machine?))
 
-;; Allow tree-semantics for undo operations.
-(use-package undo-tree
-  :bind ("C-x u" . undo-tree-visualize)
+  ;; Allow tree-semantics for undo operations.
+  (use-package undo-tree
+    :bind ("C-x u" . undo-tree-visualize)
+    :config
+      ;; Each node in the undo tree should have a timestamp.
+      (setq undo-tree-visualizer-timestamps t)
+  
+      ;; Show a diff window displaying changes between undo nodes.
+      (setq undo-tree-visualizer-diff t)
+  
+      ;; Prevent undo tree files from polluting your git repo
+      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
+  
+  ;; Always have it on
+  (global-undo-tree-mode)
+  
+  ;; Execute (undo-tree-visualize) then navigate along the tree to witness
+  ;; changes being made to your file live!
+
+(use-package quelpa
+  :custom (quelpa-upgrade-p t "Always try to update packages")
   :config
-  ;; Each node in the undo tree should have a timestamp.
-  (setq undo-tree-visualizer-timestamps t)
-
-  ;; Show a diff window displaying changes between undo nodes.
-  (setq undo-tree-visualizer-diff t)
-
-  ;; Prevent undo tree files from polluting your git repo
-  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-
-;; Always have it on
-(global-undo-tree-mode)
-
-;; Execute (undo-tree-visualize) then navigate along the tree to witness
-;; changes being made to your file live!
-
+  ;; Get ‘quelpa-use-package’ via ‘quelpa’
+  (quelpa
+   '(quelpa-use-package
+     :fetcher git
+     :url "https://github.com/quelpa/quelpa-use-package.git"))
+  (require 'quelpa-use-package))
 
 ;; Auto installing OS system packages
 (use-package system-packages)
@@ -160,6 +169,8 @@ installs of packages that are not in our `my/installed-packages' listing.
 (system-packages-ensure "node") ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
+;; (shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
+;; According to https://github.com/nvm-sh/nvm, nvm shouldn't be installed via brew.
 
 ;; ;; Use “brew cask install” instead of “brew install” for installing programs.;
 ;; (setf (nth 2 (assoc 'brew system-packages-supported-package-managers))
@@ -292,6 +303,14 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
 (use-package hydra)
+
+;; Show hydras overlayed in the middle of the frame
+(use-package hydra-posframe
+  :disabled "TODO Fix me, breaking Github Actions test setup"
+  :quelpa (hydra-posframe :fetcher git :url
+                          "https://github.com/Ladicle/hydra-posframe.git")
+  :hook (after-init . hydra-posframe-mode)
+  :custom (hydra-posframe-border-width 5))
 
 ;; Neato doc strings for hydras
 (use-package pretty-hydra)
@@ -698,6 +717,9 @@ The heading remains in view, and so appears in the TOC."
 ;; Folding within a subtree:1 ends here
 
 ;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
+(quelpa '(org-pretty-table
+         :repo "Fuco1/org-pretty-table"
+         :fetcher github))
 
 (add-hook 'org-mode-hook 'org-pretty-table-mode)
 ;; Draw pretty unicode tables in org-mode:1 ends here
@@ -1456,13 +1478,18 @@ fonts (•̀ᴗ•́)و"
 ;; Use the “#+name” the user provides, instead of generating label identifiers.
 (setq org-latex-prefer-user-labels t)
 
-(use-package org-sticky-header
+ (use-package org-sticky-header
   :hook (org-mode . org-sticky-header-mode)
   :config
   (setq-default
    org-sticky-header-full-path 'full
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " ▷ "))
+
+  (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
+  (require 'org-remoteimg)
+  (setq url-cache-directory "~/emacs.d/.cache/")
+  (setq org-display-remote-inline-images 'cache)
 
 (use-package bufler
   :config (bind-key "C-x C-b" #'bufler-list))
@@ -1479,6 +1506,50 @@ fonts (•̀ᴗ•́)و"
                              (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
             (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
               (all-the-icons-install-fonts 'install-without-asking))))
+
+(defcustom  my/weather-refresh-interval 60
+  "Number of minutes between refreshes of weather information."
+  :type 'integer)
+;; Use (cancel-timer my/weather--timer) to stop this.
+(setq my/weather--timer
+      (run-with-timer (* 60 5) (* 60  my/weather-refresh-interval)
+                      (defun my/weather-update ()
+                        (interactive)
+                        (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t'"))
+                        ;; (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w'"))
+                        (setq my/weather-full-details (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?T'"))
+                        (force-mode-line-update))))
+;;
+(setq my/weather--indicator
+      `(:eval
+        (propertize (format " %s " my/weather-brief)
+              'face 'mode-line-buffer-id
+                    'help-echo (concat  ;; "Click to see full details"
+                                (propertize "\n" 'face '(:height 0.4))
+                                (propertize "[Click]" 'face `(bold (foreground-color . "green"))) " To see detailed weather report\n"
+                                (propertize "[M-x my/weather-update]" 'face '(bold (foreground-color . "maroon"))) " To fetch latest weather data"
+                                (propertize "\n " 'face '(:height 0.5)))
+                    'local-map my/mode-line-weather-map
+                    'mouse-face 'mode-line-highlight)))
+;;
+(add-to-list 'mode-line-misc-info my/weather--indicator)
+;; (pop mode-line-misc-info) ;; To remove from the modeline.
+
+(setq my/weather-posframe-visible nil)
+(defvar my/mode-line-weather-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mode-line mouse-1]
+                (lambda (_e)
+                  (interactive "e")
+                  (use-package posframe)
+                  (if my/weather-posframe-visible
+                      (posframe-delete "*my/weather-full-details-posframe-buffer*")
+                    (posframe-show "*my/weather-full-details-posframe-buffer*"
+                                   :string my/weather-full-details
+                                   :position (point))
+                    (message "Click on the weather modeline icon to close the posframe."))
+                  (setq my/weather-posframe-visible (not my/weather-posframe-visible))))
+    map))
 
 ;; [[file:init.org::#ELisp][ELisp:1]]
 ;; Evaluation Result OverlayS for Emacs Lisp
@@ -2095,7 +2166,7 @@ the character 𝓍 before and after the selected text."
 ;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
 ;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
 ;; then loading that!
-
+(url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" "~/.emacs.d/elpa/agda-input.el" :ok-if-already-exists)
 (load-file "~/.emacs.d/elpa/agda-input.el")
 
 ;; MA: This results in "Package cl is deprecated" !?
@@ -2306,614 +2377,17 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 ;; C-c C-l Org-mode ⇐ HTML:3 ends here
 
-;; [[file:init.org::*Make Org properties look nice -- pretty emphasis markers][Make Org properties look nice -- pretty emphasis markers:1]]
-(add-hook
- #'org-mode-hook
- (defun my/make-properties-look-nice ()
-   "Make it nice for me to place scheduled markers in an Org heading.
-⇒ Shift-↑↓ continue to work to change dates, and dates are clickable to open the agenda.
-⇒ Create them with “C-c C-s”, get them with “ (org-entry-get (point) \"SCHEDULE\") ”."
-   ;; See changes in buffer: Replace the 2ⁿᵈ arg “ 'org-mode ” with “ nil ”, then “ C-x C-e C-x x f ”.
-   ;; Useful: (pop font-lock-keywords)
-   (font-lock-add-keywords
-    nil ;; 'org-mode
-    `(
-      ;; I don't need to see the year, thanks. Also, use icons for these words.
-      ("\\(CLOSED: *\\[[[:digit:]]\\{4\\}-\\)\\([^]]+\\)\\(\\]\\)"
-       (1 '(face (:inherit (bold)) display "☺️ "))
-       (2 '(face (:weight semi-bold :height 120 :background "SpringGreen1" :family "Source Code Pro Light 14")  help-echo "Well-done, buddo!"))
-       (3 '(face (:inherit (bold)) display "")))
-      ("\\(SCHEDULED: *<[[:digit:]]\\{4\\}-\\)\\([^>]+\\)\\(>\\)"
-       (1 '(face (:inherit (bold)) display "📆 "))
-       (2 '(face (:weight semi-bold :height 120 :background "ivory1" :family "Source Code Pro Light 14")  help-echo "Make progress, buddo!"))
-       (3 '(face (:inherit (bold)) display "")))
-      ("\\(DEADLINE: *<[[:digit:]]\\{4\\}-\\)\\([^>]+\\)\\(>\\)"
-       (1 '(face (:inherit (bold)) display "🎯 "))
-       (2 '(face (:weight semi-bold :height 120 :background "RosyBrown1" :family "Source Code Pro Light 14")  help-echo "Focus, buddo!"))
-       (3 '(face (:inherit (bold)) display "")))
-      ;; Make ALL “ :keyword: ” at the start of the line have their colons be invisible
-      ("^ *\\(:\\)\\([^:]+\\)\\(: \\)"
-       (1 '(face nil display ""))
-       (2 '(face (:foreground  "LightPink1" :height 0.8) help-echo "😉 “C-c C-x p” to set a new property"))
-       (3 '(face nil display " ")))
-      ;; Consider: "\\(:CREATED:\\)" ↦ "📝"; "\\(:LOGBOOK:\\)" ↦ "🪵"
-      ;; Clocking info is great, but it's meta-data useful for org-agenda, not for my naked eyes.
-      ("\\(CLOCK: \\[[[:digit:]]\\{4\\}-\\)[^]]*\\(.*\\)"
-       (1 '(face (:inherit (bold)) display "⏰ "))
-       (2 '(face (:inherit (bold)) display "")))
-      ;; Likewise, I want to see a note, via C-c C-z, but don't care to see it's (important) meta-data.
-      (,(format "^- \\(Note taken on \\)?%s *\\\\*\n *" (org-re-timestamp 'inactive))
-       (0 '(face nil display "📝 ")))))
-
-   ;; [Posterity] Make key-value property names look like pressed buttons? Neat, but no thanks.
-   ;; (set-face-attribute 'org-special-keyword nil :inverse-video nil)
-   ;; (set-face-attribute 'org-special-keyword nil :box '(:line-width (2 . 1) :color "grey75" :style released-button))
-
-   ;; I prefer the following via prettify-symbols-mode so that when my cursour is beside them, the original text disappears.
-   (push (cons ":PROPERTIES:" ? ) prettify-symbols-alist)
-   (push (cons ":END:" ? ) prettify-symbols-alist)
-   (push (cons ":LOGBOOK:" ? ) prettify-symbols-alist)
-   ;; Make “ ∶PROPERTIES∶ , ∶LOG∶ , ∶END∶ ” all look signficinatly different from the surrounding text.
-   ;; These are meta-tokens, not intended for editing by my hands.
-   (set-face-attribute 'org-drawer nil :foreground   "midnight blue")
-   (set-face-attribute 'org-drawer nil :weight 'bold)
-   (set-face-attribute 'org-drawer nil :height  1)
-   (set-face-attribute 'org-drawer nil :slant 'normal)
-   ;; (set-face-attribute 'org-drawer nil  :family  "Savoye LET")
-   ;; (set-face-attribute 'org-drawer nil  :family  "Noteworthy")
-   ;; (set-face-attribute 'org-drawer nil  :family  "Courier New")
-   ;; (set-face-attribute 'org-drawer nil  :family  "Chalkduster")
-   ;; (set-face-attribute 'org-drawer nil  :family  "Bradley Hand")
-   ;; (set-face-attribute 'org-drawer nil  :family  "Papyrus")
-   (set-face-attribute 'org-drawer nil  :family  "Input Mono")
-   ;; [Something to consider] Maybe keep the word present but change height to like 0.5?
-   ;; ❌ (font-lock-add-keywords nil '(("\\(^ *:PROPERTIES: *\\)" 1 '(face nil display "▽"))) t)
-   ;; ❌ (font-lock-add-keywords nil '(("\\(:LOGBOOK:\\)" 1 '(face nil display "▽"))) t)
-   ;; ❌ (font-lock-add-keywords nil '(("\\(^ *:END: *\\)" 1 '(face nil display "△"))) t)
-
-   ;; Note: (add-to-list 'font-lock-extra-managed-props 'display)
-   ))
-;; Make Org properties look nice -- pretty emphasis markers:1 ends here
-
-;; [[file:init.org::*Make Org properties look nice -- pretty emphasis markers][Make Org properties look nice -- pretty emphasis markers:2]]
-(org-indent-mode +1)
-
-;; useful for [link] and *formatted text*.
-;; Make invisible parts of Org elements appear visible.
-(unless my/personal-machine?
-  (use-package org-appear))
-;; Make Org properties look nice -- pretty emphasis markers:2 ends here
-
-;; [[file:init.org::*Highlight in purple and enclose in box the phrases “\[MA|TODO|NOTE\] ⋯”, also use backtick as an alternative to “~” for code font][Highlight in purple and enclose in box the phrases “[MA|TODO|NOTE] ⋯”, also use backtick as an alternative to “~” for code font:1]]
-(setq org-emphasis-alist
-  '(;; ("*" (bold :foreground "Orange"))
-    ("*" bold "<strong>" "</strong>")
-    ("/" italic)
-    ("_" underline)
-    ("=" (:box t :foreground "#AAF") "<code>" "</code>" verbatim)
-    ("~" (:background "deep sky blue" :foreground "MidnightBlue"))
-        ;; ("+"  font-lock-comment-face)
-    ("+" ( org-headline-done :strike-through t :foreground "grey"))))
-
-
-;; Working with others: `This is a piece of code`
-(add-hook 'org-font-lock-set-keywords-hook
-          (defun my/backticks-denote-code ()
-             (add-to-list 'org-font-lock-extra-keywords
-               '("\\(`\\)\\(.*\\)\\(`\\)"
-                 (1 '(face nil invisible t))
-                 (3 '(face nil invisible t))
-                 ;; (2 '(face code))
-                 (2  '(:box t :foreground "#AAF"))))))
-
-
-;; Highlight things I write down, “MA: This is important, it's shown in a box; the period is the terminator.”
-(add-hook 'org-font-lock-set-keywords-hook
-          (defun my/emphasize-MA-sentences ()
-             (add-to-list 'org-font-lock-extra-keywords
-               '("\\b\\(MA\\|TODO\\|NOTE\\).*\\." (0 '(:box t :foreground "#AAF"))))))
-
-;; Text “!This text is in a purple box!”.
-(add-hook 'org-font-lock-set-keywords-hook
-          (defun my/add/highlight-emphasis-via-! ()
-             (add-to-list 'org-font-lock-extra-keywords
-               '("\\(!\\)\\(.*\\)\\(!\\)"
-                 (1 '(face nil invisible t))
-                 (3 '(face nil invisible t))
-                 (2 '(:box t :foreground "#AAF"))))))
-;;
-;;
-;; TODO: Relocate this to org-special-block-extras.
-;; Text “green:this-is-a-green-word”
-(add-hook 'org-font-lock-set-keywords-hook
-          (defun my/add/green-emphasis ()
-             (add-to-list 'org-font-lock-extra-keywords
-               '("\\(green:\\)\\([^ ]*\\)"
-                 (1 '(face nil invisible t))
-                 (2 '(:foreground "green"))))))
-;; Highlight in purple and enclose in box the phrases “[MA|TODO|NOTE] ⋯”, also use backtick as an alternative to “~” for code font:1 ends here
-
-;; [[file:init.org::*Weather in the modeline][Weather in the modeline:1]]
-(defcustom  my/weather-refresh-interval 60
-  "Number of minutes between refreshes of weather information."
-  :type 'integer)
-;; Use (cancel-timer my/weather--timer) to stop this.
-(setq my/weather--timer
-      (run-with-timer (* 60 5) (* 60  my/weather-refresh-interval)
-                      (defun my/weather-update ()
-                        (interactive)
-                        (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t'"))
-                        ;; (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w'"))
-                        (setq my/weather-full-details (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?T'"))
-                        (force-mode-line-update))))
-;;
-(setq my/weather--indicator
-      `(:eval
-        (propertize (format " %s " my/weather-brief)
-              'face 'mode-line-buffer-id
-                    'help-echo (concat  ;; "Click to see full details"
-                                (propertize "\n" 'face '(:height 0.4))
-                                (propertize "[Click]" 'face `(bold (foreground-color . "green"))) " To see detailed weather report\n"
-                                (propertize "[M-x my/weather-update]" 'face '(bold (foreground-color . "maroon"))) " To fetch latest weather data"
-                                (propertize "\n " 'face '(:height 0.5)))
-                    'local-map my/mode-line-weather-map
-                    'mouse-face 'mode-line-highlight)))
-;;
-(add-to-list 'mode-line-misc-info my/weather--indicator)
-;; (pop mode-line-misc-info) ;; To remove from the modeline.
-
-(setq my/weather-posframe-visible nil)
-(defvar my/mode-line-weather-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [mode-line mouse-1]
-                (lambda (_e)
-                  (interactive "e")
-                  (use-package posframe)
-                  (if my/weather-posframe-visible
-                      (posframe-delete "*my/weather-full-details-posframe-buffer*")
-                    (posframe-show "*my/weather-full-details-posframe-buffer*"
-                                   :string my/weather-full-details
-                                   :position (point))
-                    (message "Click on the weather modeline icon to close the posframe."))
-                  (setq my/weather-posframe-visible (not my/weather-posframe-visible))))
-    map))
-;; Weather in the modeline:1 ends here
-
-;; [[file:init.org::*Mitigate accidental deletion of large regions of text][Mitigate accidental deletion of large regions of text:1]]
-;; Note: TAB on a heading is great to cycle, but when there's lots of text /before/ subheadings,
-;; it can be hard to see the outline. Instead on a heading press “C-c C-k” to ‘kill’ (i.e., hide!) such
-;; notes and only show the outline. Very nice.
-
-(setq org-ctrl-k-protect-subtree :please-ask-me-when-deleting-a-collapsed-subtree-with-C-k)
-
-;; When an org heading is folded and I press “C-k”, then only operate on the headline, not the contents!
-;; Pressing “C-k” deletes tags iff cursour is at the end of the headline text and before tags.
-(setq org-special-ctrl-k :please-make-C-k-consider-headline-and-tags-only)
-
-;; Likewise the “k” speed key should also confirm before doing anything.
-(map-put org-speed-commands "k" nil) ;; Orginally: org-cut-subtree
-
-
-;; For any key press, the DELETE key, M-S-RET for creation of new headings, etc.
-;; Note “being next to an invisible region” means cursor is immediately *after* such a region or immediately *before*.
-;; As such, if you press M-DELETE at the end of the line of a folded heading, it's considered an invisible edit.
-;; However, if you press M-DELETE at the start of the line *after* a folded heading, it's not considered an invisible edit! 😲
-;; Instead you end-up deleting some invisible text! This is because of how the method org-fold-check-before-invisible-edit is defined.
-(setq org-catch-invisible-edits 'show-and-error)
-
-;; Require confirmation for large region deletion
-(load-file "~/.emacs.d/elpa/wimpy-del.el")
-(bind-key* "C-w" #'kill-region-wimpy)
-(setq wimpy-delete-size 3000)
-
-;; Note: This has no impact if you select a region, then just press DELETE. Let's fix that:
-;;
-(defun my/confirm-big-deletion (orig-fun &rest args)
-"Ask for confirmation if deleting more than `wimpy-delete-size' characters in `org-delete-backward-char`."
-;; If deletion should not be done, show wimpy msg, otherwise do the deletion.
-(if (and (region-active-p)
-         (-let [size (- (region-end) (region-beginning))]
-           (and (> size wimpy-delete-size) (not (yes-or-no-p (format "Really delete %d characters? " size))))))
-    (message wimpy-delete-dopey-message)
-  (apply orig-fun args)))
-;;
-(advice-add 'org-delete-backward-char :around #'my/confirm-big-deletion) ;; For Org-mode
-(advice-add 'backward-delete-char-untabify :around #'my/confirm-big-deletion) ;; For everywhere else
-;; Mitigate accidental deletion of large regions of text:1 ends here
-
-;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:1]]
-;; Show me file locations alongside named bookmarks, when I press “C-x r b”. (Press C-z to take further actions on a bookmark, such as editing, deleting, etc).
-;; Note: Set a bookmark with “C-x r m”.
-(setq helm-bookmark-show-location t)
-(setq bookmark-save-flag 1)  ;; save bookmarks to “ bookmark-default-file ” after each entry
-
-;; Have “C-x r b” widen when I jump, otherwise it does not actually jump.
-;; Finally, advise Emacs `C-x r b` to clone-indirect-buffer whenever a universal argument is provided.
-;; That is, “C-u C-x r b” jumps to a bookmark in a *new* buffer.
-(bind-key*
- "C-x r b"
- (defun my/bookmark-jump-widen (bookmark)
-   "Jump to a bookmark and widen; when a universal arg is provided, jump in another window.
-
-Adapted from the source of `bookmark-jump'. I intially advised it, but
-the advice did not have access to `current-prefix-arg', so I made my own
-method."
-   (interactive
-    (list (bookmark-completing-read "Jump to bookmark"
-                                                    bookmark-current-bookmark)))
-   (unless bookmark
-     (error "No bookmark specified"))
-   (bookmark-maybe-historicize-string bookmark)
-   ;; First, go the relevant file
-   (bookmark--jump-via bookmark (if current-prefix-arg #'switch-to-buffer-other-window #'pop-to-buffer-same-window ))
-   ;; Then widen
-   (widen)
-   ;; Then actually go to the desired bookmark
-   (bookmark--jump-via bookmark #'pop-to-buffer-same-window)))
-;; Bookmarks: Quick naviagation to commonly visited locations:1 ends here
-
-;; [[file:init.org::*Hide blank lines /between/ headlines][Hide blank lines /between/ headlines:1]]
-(setq org-cycle-separator-lines 0)
-
-(setq org-blank-before-new-entry '((heading) (plain-list-item . auto)))
-;; Hide blank lines /between/ headlines:1 ends here
-
 ;; [[file:init.org::*Press M-SPC so all adjacent blank lines are also removed][Press M-SPC so all adjacent blank lines are also removed:1]]
 ;; Now when I press M-SPC all adjacent blank lines are also removed.
 (advice-add 'cycle-spacing :after
             (defun my/cycle-spacing-then-delete-blank-lines (&rest _args)
-              "Run `delete-blank-lines` after `cycle-spacing`."
-              (delete-blank-lines)))
+  "Run `delete-blank-lines` after `cycle-spacing`."
+  (delete-blank-lines)))
 ;; Press M-SPC so all adjacent blank lines are also removed:1 ends here
-
-;; [[file:init.org::*\[\[https:/www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/\]\[org-bars\]\]: Indent Org headings with pretty colours][[[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours:1]]
-;; [[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours:1 ends here
 
 ;; [[file:init.org::*(setq line-spacing 0.2) ;; Add more line padding for readability][(setq line-spacing 0.2) ;; Add more line padding for readability:1]]
 (setq line-spacing 0.2)
 ;; (setq line-spacing 0.2) ;; Add more line padding for readability:1 ends here
-
-;; [[file:init.org::*Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content][Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:1]]
-(add-hook
- 'org-insert-heading-hook
- (defun my/insert-CREATED-property ()
-   "Insert :CREATED: property upon C-[S]-RET and M-[S]-RET, unless C-u is pressed first."
-   (unless current-prefix-arg
-     (org-set-property "CREATED" (format-time-string "[%Y-%m-%d %a %H:%M]")))))
-
-;; I also have a short cut key defined to invoke this function on demand so that
-;; I can insert the inactive timestamp anywhere on demand.
-;;
-;; I use TAB and S-TAB for cycling - I don't need c and C as well.
-;; Instead use “c” to add the ‘C’reated property.
-(setf (cdr (assoc "c" org-speed-commands)) #'my/insert-CREATED-property)
-;; Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:1 ends here
-
-;; [[file:init.org::*Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content][Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:2]]
-(add-hook 'org-mode-hook '(lambda ()
-   (local-set-key (kbd "<return>") 'org-return-indent)) ;; Newline with indentation
-   (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline)) ;; Newline without indentation
-;; Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:2 ends here
-
-;; [[file:init.org::*\[Planning/Review\] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.][[Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:1]]
-(advice-add 'org-eldoc-get-breadcrumb :around
-            (defun my-org-eldoc-get-breadcrumb-with-created (orig-fun &rest args)
-              "Enhance `org-eldoc-get-breadcrumb` to also include how many days ago the entry was created, and how much “real work time” I've spent on it!"
-              (let ((breadcrumb (or (apply orig-fun args) (org-get-heading t t t t)))) ;; Call the original function, which is non-nil only when cursor is on heading
-                (if-let ((created (org-entry-get (point) "CREATED"))) ;; Get the :CREATED: property
-                    (let* ((created-time (date-to-time created)) ;; Convert :CREATED: to a time value
-                           (days-ago (floor (time-to-number-of-days (time-subtract (current-time) created-time))))  ;; Calculate days
-                           (WHY  (org-entry-get (point) "WHY")) ;; If I have a specific reason, WHY, that I'd like to be echoed, then echo it!
-                           (♯children (length (org-map-entries t (format "LEVEL=%s" (1+ (org-current-level))) 'tree))))
-                      (concat breadcrumb " | Created " (number-to-string days-ago) " days ago" ;; Append days ago
-                              (if (> ♯children 0) (format " | %s children" ♯children) "")
-                              ;; face options: https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
-                              (if WHY (org-add-props (format "\n \n \n﴾%s﴿" WHY) nil 'face '(:slant italic :foreground "SpringGreen4" :weight bold)) "")
-                              "\n\n"
-                              (my/get-real-work-time-for-task-at-point)))
-                  breadcrumb)))) ;; Return breadcrumb unchanged if :CREATED: is not found
-;; [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:1 ends here
-
-;; [[file:init.org::*\[Planning/Review\] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.][[Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:2]]
-;; Suppose I run  (org-duration-from-minutes  (org-clock-sum))  on a task and it reports
-;; 73:20 hours. It doesn't sound like a whole lot, but how much “work time” is that really?
-;;
-;; ⟨Axiom-1⟩ Suppose I work 6 straight hours per work day, with +2hrs for lunch and minor meetings.
-;;           As such, a “work day” is 360=(* 6 60) minutes.
-;;
-;; ⟨Axiom-2⟩ A work-month is 30 days less the weekends, so it's 22 days.
-;;          As such, a “work month” is 7920=(* 22 6 60) minutes.
-;;
-;; Hence, 73:20  hours is 12=(/ 73 6) work days and 1=(% 73 6) hours and 20mins.
-;;
-;; Let's get Org to show me this “real work time” when I pass by a task.
-(defun my/get-real-work-time-for-task-at-point ()
-  (let* (  ;; (total-minutes-worked (+ (* 73 60) 20)) ;; For testing purposes
-               (total-minutes-worked  (org-clock-sum))
-               ;; (total-minutes-worked 4500) ;; For testing purposes, ie 75 hours
-               ;; “𝒽 hours and 𝓂 minutes”
-               (total-hours-worked (/ total-minutes-worked 60)) ;; 𝒽
-               (mins-worked-0 (% total-minutes-worked 60))     ;; 𝓂
-
-               ;; “𝒹 days, 𝒽 hours, and 𝓂 minutes”
-               (work-day-in-minutes (* 6 60))
-               (total-days-worked (/ total-minutes-worked work-day-in-minutes))  ;; 𝒹
-           ;; (hours-worked (/ (% total-minutes-worked work-day-in-minutes) 60)) ;; 𝒽
-           ;; (mins-worked (% (% total-minutes-worked work-day-in-minutes) 60)) ;; 𝓂
-
-               ;; “𝓜 months”
-               (work-month-in-minutes (* 22 6 60)) ;; 22 days of 60 minutes each.
-               (months-worked (/ total-minutes-worked work-month-in-minutes))
-               (days-worked-in-minutes (% total-minutes-worked work-month-in-minutes))
-               (days-worked (/ days-worked-in-minutes work-day-in-minutes))
-               (hours-worked (/ (% days-worked-in-minutes work-day-in-minutes) 60)) ;; 𝒽
-               (mins-worked (% (% days-worked-in-minutes work-day-in-minutes) 60))) ;; 𝓂
-
-    (format "Worked %s%s%s%s mins \n (i.e., %s:%s hours)"
-                (if (zerop months-worked) "" (format "%s months, " months-worked))
-            (if (zerop days-worked) "" (format "%s days, " days-worked))
-            (if (zerop hours-worked) "" (format "%s hours, " hours-worked))
-                mins-worked
-                total-hours-worked
-                mins-worked-0)))
-;; [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:2 ends here
-
-;; [[file:init.org::*Eldoc for org-mode][Eldoc for org-mode:1]]
-(load-file "~/.emacs.d/elpa/org-eldoc.el")
-(add-hook 'org-mode-hook 'eldoc-mode)
-(add-hook 'org-mode-hook 'eldoc-box-hover-mode)
-;; Eldoc for org-mode:1 ends here
-
-;; [[file:init.org::*Implementation][Implementation:1]]
-(setq org-use-fast-todo-selection t) ;; We can also change through states using Shift-⇄.
-(setq org-imenu-depth 7)
-;; Attempting to move a task to a DONE state is blocked if the has a child task that is not marked as DONE
-(setq org-enforce-todo-dependencies t)
-;; Implementation:1 ends here
-
-;; [[file:init.org::*Implementation][Implementation:2]]
-(use-package lf)
-;; TODO: Add the line “(declare (indent defun))” right after the docstring of “lf-define”,
-;; so that Emacs indents it like a “defun”.
-;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
-;;
-;; Until then, use the following incantation:
-(lf-define (get 'lf-define 'lisp-indent-function) 'defun)
-
-;; (MA: Eventually this function can itself become a small albeit useful MELPA ELisp Package ♥‿♥)
-(lf-define my/declare-workflow-states (states)
-  [:requires  (listp states) :ensures (stringp result)]
-  "Declare STATES as todo-states. STATES is a list of (name on-entry on-exit color) lists.
-
-       :on-entry and :on-exit can have the values:
-       ⇒ note       ≈ Request the user to add a timestamped note when entering this state.
-       ⇒ timestamp  ≈ Automatically log the time that this state was entered.
-       ⇒ unschedule ≈ Unschedule the task when entering this state.
-"
-  ;; Declare the keywords and whether they have a note or timestamp on state change
-  (setq org-todo-keywords  (list (cons 'sequence
-                                       (cl-loop for (state . props) in states
-                                                for first-letter = (downcase (substring state 0 1))
-                                                for on-entry = (--when-let (plist-get props :on-entry) (if (listp it) it (list it)))
-                                                for on-exit = (--when-let (plist-get props :on-exit) (if (listp it) it (list it)))
-                                                ;; Assert: on-entry is a list, on-exit is a list
-                                                for entry = (cond ((member 'note on-entry) "@") ((member 'timestamp on-entry) "!") (t ""))
-                                                for exit = (cond ((member 'note on-exit) "/@") ((member 'timestamp on-exit) "/!") (t ""))
-                                                collect (if (equal state "|") state (format "%s(%s%s%s)" state first-letter entry exit))))))
-  ;; Colour the keywords
-  (setq org-todo-keyword-faces
-        (cl-loop for (state . props) in states
-                 collect (list state :foreground (plist-get props :foreground) :weight 'bold)))
-  ;; Account for ‘unschedule’ action
-  ;; When a task goes into the state STATE, please remove its schedule
-  ;; so that it does not appear in my agenda. (However, it's still not “done” and so appears when I do “C-c a t” for example.)
-  ;; Source: https://emacs.stackexchange.com/a/2760
- (cl-loop for (state . props) in states
-  do
-  (when (member 'unschedule (plist-get props :on-entry))
-       ;; TODO: Need to remove-hook “my/remove-schedule--⟨STATE⟩” to account for running this my/declare-workflow multiple times and expecting these hooks to not be present, say the second time around!
-    (add-hook 'org-after-todo-state-change-hook
-              (eval `(defun ,(intern (concat "my/remove-schedule--" state)) ()
-                 "Remove SCHEDULED-cookie when switching state to STATE."
-                 (save-excursion
-                   (and (equal (org-get-todo-state) ,state)
-                        (org-get-scheduled-time (point))
-                        (when (search-forward-regexp org-scheduled-time-regexp nil t)
-                          (or (delete-region (match-beginning 0) (match-end 0)) t))
-                        (get-buffer "*Org Agenda*")
-                        (with-current-buffer "*Org Agenda*"
-                          (org-agenda-redo)))))))))
-  ;; End
-  "✔ Invoke “org-mode-restart” in existing Org buffers for this to take effect.")
-;; Implementation:2 ends here
-
-;; [[file:init.org::*Implementation][Implementation:3]]
-(my/declare-workflow-states
- ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
- ;; (M-q via (setq fill-column 95) and M-x my/comment-box)
- '(
-   ("TODO" :foreground "red") ;; A task was captured into my inbox.
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; Tasks that are not started and not planned. They could be the backlogs or the GTD’s          ;;
-   ;; someday/maybe. These tasks could be converted to NEXT INVESTIGATED during a weekly           ;;
-   ;; review.                                                                                      ;;
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-   ("INVESTIGATED"  :foreground "dark orange") ;; Tasks that are *ready* to be started next.
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; These are tasks that are not started but I plan to do as soon as I can.  When there is no     ;;
-   ;; actionable STARTED task, I start one of the INVESTIGATED and convert it to STARTED.           ;;
-   ;;                                                                                               ;;
-   ;; The problem with most todo-lists is that you get overwhelmed by the amount of stuff to be     ;;
-   ;; done. But in reality, most actions don't need or can't be progressed. So rather than look     ;;
-   ;; at all the TODO tasks, we can limit our view to only the INVESTIGATED tasks.                  ;;
-   ;; 💡 Instead of massive lists of things you'd like to do some day, have concrete NEXT           ;;
-   ;; actions to undertake to achieve your goals. This way, only a subset of realistic              ;;
-   ;; activities is in your consciousness. 💡                                                       ;;
-   ;;                                                                                               ;;
-   ;; Ideally, a task moves from TODO to NEXT only when I've actually split the task into small     ;;
-   ;; achievable chunks; ie i've done some investigation into the task and thought about            ;;
-   ;; what steps I need to do to actually get the task done. With this planning in place, I         ;;
-   ;; can then ensure I allocate sufficient timeblocks to work on the subtasks of this              ;;
-   ;; task. The investigation stage is about clarifying:                                            ;;
-   ;; - What “done” means for the task,                                                             ;;
-   ;; - /why/ am I doing this task; i.e., what are the benefits of the task;                        ;;
-   ;; - Including background information; e.g., external links or a paragraph;                      ;;
-   ;; - Splitting the task into achievable sub-tasks, so that it's not nebulous                     ;;
-   ;; and so too daunting to start.                                                                 ;;
-   ;;                                                                                               ;;
-   ;; 🤔 Tip: Use my 1/1 time with my manager/peers to review my INVESTIGATED/NEXT/READY            ;;
-   ;; findings for the tickets of the current sprint. I just want to make sure I'm on the right     ;;
-   ;; track, before starting to work on them. Or, if a ticket is not investigated, do that with     ;;
-   ;; my manager.  I find that while it might take me half an hour or more, it'll take like 5       ;;
-   ;; minutes with him since he's familiar with the code-base.                                      ;;
-   ;;                                                                                               ;;
-   ;; (Aside: Some people use a “NEXT” state to denote “this task is the /next/ immediate task      ;;
-   ;;         to do in this project”.  Since my tasks are ordered, the NEXT task would be the first ;;
-   ;;         task that is “TODO” or “INVESTIGATED”.)                                               ;;
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-   ("STARTED" :foreground "blue") ;; I've begun this task, and it's loaded into my short-term memory.
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; These are tasks that are working in progress (“open loops”). I work on these tasks before    ;;
-   ;; starting another NEXT task to avoid too many open loops at any moment.                       ;;
-   ;;                                                                                              ;;
-   ;; Whenever I clock-into a task, it is automatically transitioned into this state. As such,     ;;
-   ;; if I want know when I first started on a task, I simply look at the CLOCK entry it has.      ;;
-   ;;                                                                                              ;;
-   ;; Note: “:on-entry timestamp” is not ideal for my current use since my tasks tend to           ;;
-   ;; ping-pong between STARTED ⟷ WAITING.                                                         ;;
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-   ("|")
-   ;; All states after this special marker are “terminal” and so not shown in the org-agenda:
-   ;; (setq org-agenda-skip-scheduled-if-done t)
-   ;;
-   ;; Moreover, they are counted as “done” in the statistics “ [96%] ” count of a parent heading.
-   ;;
-   ;; Finally, I get a “CLOSED: <timestamp>” property on these tasks when
-   ;; (setq org-log-done 'time). This is desirable, since it tells me when I entered these ‘terminal’
-   ;; states: E.g., how long ago a task entered the WAITING state.
-   ;;
-   ;; Also, the definition of “done” in Org-QL includes all terminal states in my workflow, yay.
-
-
-   ("PAUSED" :on-entry 'note :on-exit 'timestamp :foreground "magenta") ;; I'm not actively working on this task anymore. I may return to it later.
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; I am choosing to stop work on this task for some reason; e.g., it is no longer a priority    ;;
-   ;; (i.e., I'm not interested in it, or I realised it does not contribute to my long-term        ;;
-   ;; life goals).                                                                                 ;;
-   ;;                                                                                              ;;
-   ;; When I enter this state, record when & why the task is paused.                               ;;
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-   ("WAITING" :on-entry 'unschedule :foreground "red2") ;; I'm waiting on feedback from others before I can continue.
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; When a task goes into WAITING, I've finished the task as much as possible and now need to      ;;
-   ;; rely on someone else; e.g., for feedback. I'm waiting on *someone else*.                       ;;
-   ;;                                                                                                ;;
-   ;; ⇒ I don't want to see these scheduled tasks in my Agenda.                                      ;;
-   ;; ⇒ If I'm waiting on an email, I can make an Org task to track the fact I'm waiting on it.      ;;
-   ;; ⇒ In the Weekly Review, I will take time to look at my WAITING tasks                           ;;
-   ;; and if they've been waiting ~2 weeks, then I should message the relevant people to unblock it. ;;
-   ;;                                                                                                ;;
-   ;; Waiting = “In progress, but BLOCKED by others”                                                 ;;
-   ;;                                                                                                ;;
-   ;; 🤔 Consider adding a WAITING_SINCE property whenever a task enters this state, so that I       ;;
-   ;; can reach out to others and say “I've been waiting on you since Jan 1, please unblock          ;;
-   ;; me!”                                                                                           ;;
-   ;;                                                                                                ;;
-   ;; “:on-entry timestamp” is not ideal for my current use since my tasks tend to ping-pong         ;;
-   ;; between STARTED ⟷ WAITING.                                                                     ;;
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-   ("APPROVED" :foreground "magenta") ;; Almost done, just needs a quick review.
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; I'm actively working on this task, and not waiting on any one else,                         ;;
-   ;; but there is some blocker; e.g., a merge dependency issue or a conflict to resolve.         ;;
-   ;; Sometimes these are quick to dispatch; other times they're blocked by PAUSED/WAITING tasks. ;;
-   ;;                                                                                             ;;
-   ;; This is essentially DONE, but there's some blocker.                                         ;;
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-   ("DONE"  :foreground "forest green") ;; This task is DONE; mine it for useful LOG comments and archive it.
-
-
-   ("CANCELLED" :on-entry 'note :foreground "saddle brown")  ;; Why was this task cancelled? (Notes come with a timestamp!)
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;; I've started on this task and now realised /I do not want/ continue this approach, and so    ;;
-   ;; will ABANDON it.  This is useful at work to keep track of *why* we have decided against      ;;
-   ;; doing a task; in my Org file there may be more, private, reasons not mentioned in the        ;;
-   ;; company's Jira file. (For example).                                                          ;;
-   ;;                                                                                              ;;
-   ;; Instead of just deleting the task, I document it so that if I have the same idea/task        ;;
-   ;; again then I can see my notes to figure out /why/ I didn't do it last time. Also useful      ;;
-   ;; for when doing Annual Reviews: Why did I quit these tasks.                                   ;;
-   ;;                                                                                              ;;
-   ;; The logging is helpful if others at work want to know why some approach was abandoned, so    ;;
-   ;; TAKE A MINUTE TO FLESH OUT THE REASONS FOR CANCELLATION.                                     ;;
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ))
-;; Implementation:3 ends here
-
-;; [[file:init.org::*Also, logging][Also, logging:1]]
-;; Since DONE is a terminal state, it has no exit-action.
-;; Let's explicitly indicate time should be noted.
-(setq org-log-done 'time)
-;; → Take a look at org-log-done and org-log-into-drawer. These will tell org to log the date and time when an item's status is changed (you can specify).
-;; → When the agenda is built you can show all these logged items on the date they were completed with org-agenda-log-mode, org-agenda-log-mode-items, and org-agenda-start-with-log-mode.
-;; → This allows me to place TODO items anywhere I want (my logbook, notes, and a scratch list) and as I complete them through the week they're all shown in the agenda according to when I completed each.
-;; → I use org-clock-in to the task I'm working on, then a simple clocktable with some dates will show me exactly what I worked on.
-;; → [Weekly Review] which creates a day-by-day summary of the time I worked on what tasks. On Friday, I can look at this and see what I did over the week.
-;;
-;; clocking-in is about the best way to answer that dreaded Friday afternoon question: "WTF did I do with my time this week/month/etc!?"
-
-;; I prefer to log TODO creation also
-(setq org-treat-insert-todo-heading-as-state-change t)
-
-;; Use S-⇆ as a convenient way to select a TODO state and bypass any logging associated with that.
-;; E.g., a task is STARTED and pressing S-→ moves it to PAUSED /without/ having to add a note for why it's now paused.
-(setq org-treat-S-cursor-todo-selection-as-state-change nil)
-;; Also, logging:1 ends here
-
-;; [[file:init.org::*Propagate =STARTED= to parent tasks][Propagate =STARTED= to parent tasks:1]]
-(add-hook 'org-after-todo-state-change-hook
-          (defun my/if-I-am-STARTED-task-so-is-my-project-parent ()
-            (when (equal (org-get-todo-state) "STARTED")
-              (save-excursion
-                ;; Change all parents /that/ have a todo keyword
-                (while (org-up-heading-safe)
-                  (when (org-get-todo-state) (org-todo "STARTED")))))))
-;; Propagate =STARTED= to parent tasks:1 ends here
-
-;; [[file:init.org::*Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.][Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.:1]]
-(add-hook 'org-clock-in-hook
-          (defun my/say-bismillah-on-clock-in ()
-            (unless org-capture-mode
-              (alert " \nI begin this task in the name of God, the most gracious, the most merciful.\n\nGod please bless the task I'm undertaking."
-                     :title "Bismi Allah ar-rahaman ar-raheem")
-              (async-shell-command "say \"I begin this task in the name of God, the most gracious, the most merciful\""))))
-
-(add-hook 'org-clock-out-hook
-          (defun my/say-alhamudlilah-on-clock-out ()
-            (unless org-capture-mode
-              (async-shell-command "say \"Alhamudllah; praise be to God who has blessed me\""))))
-;; Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.:1 ends here
-
-;; [[file:init.org::*~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one][~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one:1]]
-;; With prefix arg, offer recently clocked tasks for selection.
-(bind-key* "C-c SPC"
-           (lambda (&optional prefix)
-             (interactive "P")
-             (org-clock-goto prefix)
-             (org-narrow-to-subtree)))
-;; ~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one:1 ends here
 
 ;; [[file:init.org::*Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/][Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:1]]
 ;; I like to write everything in one massive file, and the agenda should consult it.
@@ -3035,7 +2509,7 @@ method."
           ;; these tasks.								   ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
-           '(deadline auto)
+           '(and (deadline auto) (not (tags "Top")))
            ((org-ql-block-header "\n🎯 Deadlines\n")))
 
 
@@ -3043,7 +2517,7 @@ method."
           ;; Whoops, things that I've missed!                                       ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
-           '(and (not (habit)) (not (done)) (scheduled :to today) (not (scheduled :on today)))
+           '(and (not (habit)) (not (tags "Top")) (not (done)) (scheduled :to today) (not (scheduled :on today)))
            ((org-ql-block-header "\n📆 Overdue\n")))
 
 
@@ -3720,6 +3194,304 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
      str)))
 ;; Display times in agenda in 12-hour AM/PM format:1 ends here
 
+;; [[file:init.org::*🤔 \[Planning/Review\] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.][🤔 [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:1]]
+(advice-add 'org-eldoc-get-breadcrumb :around
+            (defun my-org-eldoc-get-breadcrumb-with-created (orig-fun &rest args)
+              "Enhance `org-eldoc-get-breadcrumb` to also include how many days ago the entry was created, and how much “real work time” I've spent on it!"
+              (let ((breadcrumb (or (apply orig-fun args) (org-get-heading t t t t)))) ;; Call the original function, which is non-nil only when cursor is on heading
+                (if-let ((created (org-entry-get (point) "CREATED"))) ;; Get the :CREATED: property
+                    (let* ((created-time (date-to-time created)) ;; Convert :CREATED: to a time value
+                           (days-ago (floor (time-to-number-of-days (time-subtract (current-time) created-time))))  ;; Calculate days
+                           (WHY  (org-entry-get (point) "WHY")) ;; If I have a specific reason, WHY, that I'd like to be echoed, then echo it!
+                           (♯children (length (org-map-entries t (format "LEVEL=%s" (1+ (org-current-level))) 'tree))))
+                      (concat breadcrumb " | Created " (number-to-string days-ago) " days ago" ;; Append days ago
+                              (if (> ♯children 0) (format " | %s children" ♯children) "")
+                              ;; face options: https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
+                              (if WHY (org-add-props (format "\n \n \n﴾%s﴿" WHY) nil 'face '(:slant italic :foreground "SpringGreen4" :weight bold)) "")
+                              "\n\n"
+                              (my/get-real-work-time-for-task-at-point)))
+                  breadcrumb)))) ;; Return breadcrumb unchanged if :CREATED: is not found
+;; 🤔 [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:1 ends here
+
+;; [[file:init.org::*🤔 \[Planning/Review\] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.][🤔 [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:2]]
+;; Suppose I run  (org-duration-from-minutes  (org-clock-sum))  on a task and it reports
+;; 73:20 hours. It doesn't sound like a whole lot, but how much “work time” is that really?
+;;
+;; ⟨Axiom-1⟩ Suppose I work 6 straight hours per work day, with +2hrs for lunch and minor meetings.
+;;           As such, a “work day” is 360=(* 6 60) minutes.
+;;
+;; ⟨Axiom-2⟩ A work-month is 30 days less the weekends, so it's 22 days.
+;;          As such, a “work month” is 7920=(* 22 6 60) minutes.
+;;
+;; Hence, 73:20  hours is 12=(/ 73 6) work days and 1=(% 73 6) hours and 20mins.
+;;
+;; Let's get Org to show me this “real work time” when I pass by a task.
+(defun my/get-real-work-time-for-task-at-point ()
+  (let* (  ;; (total-minutes-worked (+ (* 73 60) 20)) ;; For testing purposes
+               (total-minutes-worked  (org-clock-sum))
+               ;; (total-minutes-worked 4500) ;; For testing purposes, ie 75 hours
+               ;; “𝒽 hours and 𝓂 minutes”
+               (total-hours-worked (/ total-minutes-worked 60)) ;; 𝒽
+               (mins-worked-0 (% total-minutes-worked 60))     ;; 𝓂
+
+               ;; “𝒹 days, 𝒽 hours, and 𝓂 minutes”
+               (work-day-in-minutes (* 6 60))
+               (total-days-worked (/ total-minutes-worked work-day-in-minutes))  ;; 𝒹
+           ;; (hours-worked (/ (% total-minutes-worked work-day-in-minutes) 60)) ;; 𝒽
+           ;; (mins-worked (% (% total-minutes-worked work-day-in-minutes) 60)) ;; 𝓂
+
+               ;; “𝓜 months”
+               (work-month-in-minutes (* 22 6 60)) ;; 22 days of 60 minutes each.
+               (months-worked (/ total-minutes-worked work-month-in-minutes))
+               (days-worked-in-minutes (% total-minutes-worked work-month-in-minutes))
+               (days-worked (/ days-worked-in-minutes work-day-in-minutes))
+               (hours-worked (/ (% days-worked-in-minutes work-day-in-minutes) 60)) ;; 𝒽
+               (mins-worked (% (% days-worked-in-minutes work-day-in-minutes) 60))) ;; 𝓂
+
+    (format "Worked %s%s%s%s mins \n (i.e., %s:%s hours)"
+                (if (zerop months-worked) "" (format "%s months, " months-worked))
+            (if (zerop days-worked) "" (format "%s days, " days-worked))
+            (if (zerop hours-worked) "" (format "%s hours, " hours-worked))
+                mins-worked
+                total-hours-worked
+                mins-worked-0)))
+;; 🤔 [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:2 ends here
+
+;; [[file:init.org::*Eldoc for org-mode][Eldoc for org-mode:1]]
+(url-copy-file "https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/org-eldoc.el" "~/.emacs.d/elpa/org-eldoc.el" :ok-if-already-exists)
+(load-file "~/.emacs.d/elpa/org-eldoc.el")
+(add-hook 'org-mode-hook 'eldoc-mode)
+(add-hook 'org-mode-hook 'eldoc-box-hover-mode)
+;; Eldoc for org-mode:1 ends here
+
+;; [[file:init.org::*Implementation][Implementation:1]]
+(setq org-use-fast-todo-selection t) ;; We can also change through states using Shift-⇄.
+(setq org-imenu-depth 7)
+;; Attempting to move a task to a DONE state is blocked if the has a child task that is not marked as DONE
+(setq org-enforce-todo-dependencies t)
+;; Implementation:1 ends here
+
+;; [[file:init.org::*Implementation][Implementation:2]]
+(use-package lf)
+;; TODO: Add the line “(declare (indent defun))” right after the docstring of “lf-define”,
+;; so that Emacs indents it like a “defun”.
+;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
+;;
+;; Until then, use the following incantation:
+(lf-define (get 'lf-define 'lisp-indent-function) 'defun)
+
+;; (MA: Eventually this function can itself become a small albeit useful MELPA ELisp Package ♥‿♥)
+(lf-define my/declare-workflow-states (states)
+  [:requires  (listp states) :ensures (stringp result)]
+  "Declare STATES as todo-states. STATES is a list of (name on-entry on-exit color) lists.
+
+       :on-entry and :on-exit can have the values:
+       ⇒ note       ≈ Request the user to add a timestamped note when entering this state.
+       ⇒ timestamp  ≈ Automatically log the time that this state was entered.
+       ⇒ unschedule ≈ Unschedule the task when entering this state.
+"
+  ;; Declare the keywords and whether they have a note or timestamp on state change
+  (setq org-todo-keywords  (list (cons 'sequence
+                                       (cl-loop for (state . props) in states
+                                                for first-letter = (downcase (substring state 0 1))
+                                                for on-entry = (--when-let (plist-get props :on-entry) (if (listp it) it (list it)))
+                                                for on-exit = (--when-let (plist-get props :on-exit) (if (listp it) it (list it)))
+                                                ;; Assert: on-entry is a list, on-exit is a list
+                                                for entry = (cond ((member 'note on-entry) "@") ((member 'timestamp on-entry) "!") (t ""))
+                                                for exit = (cond ((member 'note on-exit) "/@") ((member 'timestamp on-exit) "/!") (t ""))
+                                                collect (if (equal state "|") state (format "%s(%s%s%s)" state first-letter entry exit))))))
+  ;; Colour the keywords
+  (setq org-todo-keyword-faces
+        (cl-loop for (state . props) in states
+                 collect (list state :foreground (plist-get props :foreground) :weight 'bold)))
+  ;; Account for ‘unschedule’ action
+  ;; When a task goes into the state STATE, please remove its schedule
+  ;; so that it does not appear in my agenda. (However, it's still not “done” and so appears when I do “C-c a t” for example.)
+  ;; Source: https://emacs.stackexchange.com/a/2760
+ (cl-loop for (state . props) in states
+  do
+  (when (member 'unschedule (plist-get props :on-entry))
+       ;; TODO: Need to remove-hook “my/remove-schedule--⟨STATE⟩” to account for running this my/declare-workflow multiple times and expecting these hooks to not be present, say the second time around!
+    (add-hook 'org-after-todo-state-change-hook
+              (eval `(defun ,(intern (concat "my/remove-schedule--" state)) ()
+                 "Remove SCHEDULED-cookie when switching state to STATE."
+                 (save-excursion
+                   (and (equal (org-get-todo-state) ,state)
+                        (org-get-scheduled-time (point))
+                        (when (search-forward-regexp org-scheduled-time-regexp nil t)
+                          (or (delete-region (match-beginning 0) (match-end 0)) t))
+                        (get-buffer "*Org Agenda*")
+                        (with-current-buffer "*Org Agenda*"
+                          (org-agenda-redo)))))))))
+  ;; End
+  "✔ Invoke “org-mode-restart” in existing Org buffers for this to take effect.")
+;; Implementation:2 ends here
+
+;; [[file:init.org::*Implementation][Implementation:3]]
+(my/declare-workflow-states
+ ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
+ ;; (M-q via (setq fill-column 95) and M-x my/comment-box)
+ '(
+   ("TODO" :foreground "red") ;; A task was captured into my inbox.
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; Tasks that are not started and not planned. They could be the backlogs or the GTD’s          ;;
+   ;; someday/maybe. These tasks could be converted to NEXT INVESTIGATED during a weekly           ;;
+   ;; review.                                                                                      ;;
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+   ("INVESTIGATED"  :foreground "dark orange") ;; Tasks that are *ready* to be started next.
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; These are tasks that are not started but I plan to do as soon as I can.  When there is no     ;;
+   ;; actionable STARTED task, I start one of the INVESTIGATED and convert it to STARTED.           ;;
+   ;;                                                                                               ;;
+   ;; The problem with most todo-lists is that you get overwhelmed by the amount of stuff to be     ;;
+   ;; done. But in reality, most actions don't need or can't be progressed. So rather than look     ;;
+   ;; at all the TODO tasks, we can limit our view to only the INVESTIGATED tasks.                  ;;
+   ;; 💡 Instead of massive lists of things you'd like to do some day, have concrete NEXT           ;;
+   ;; actions to undertake to achieve your goals. This way, only a subset of realistic              ;;
+   ;; activities is in your consciousness. 💡                                                       ;;
+   ;;                                                                                               ;;
+   ;; Ideally, a task moves from TODO to NEXT only when I've actually split the task into small     ;;
+   ;; achievable chunks; ie i've done some investigation into the task and thought about            ;;
+   ;; what steps I need to do to actually get the task done. With this planning in place, I         ;;
+   ;; can then ensure I allocate sufficient timeblocks to work on the subtasks of this              ;;
+   ;; task. The investigation stage is about clarifying:                                            ;;
+   ;; - What “done” means for the task,                                                             ;;
+   ;; - /why/ am I doing this task; i.e., what are the benefits of the task;                        ;;
+   ;; - Including background information; e.g., external links or a paragraph;                      ;;
+   ;; - Splitting the task into achievable sub-tasks, so that it's not nebulous                     ;;
+   ;; and so too daunting to start.                                                                 ;;
+   ;;                                                                                               ;;
+   ;; 🤔 Tip: Use my 1/1 time with my manager/peers to review my INVESTIGATED/NEXT/READY            ;;
+   ;; findings for the tickets of the current sprint. I just want to make sure I'm on the right     ;;
+   ;; track, before starting to work on them. Or, if a ticket is not investigated, do that with     ;;
+   ;; my manager.  I find that while it might take me half an hour or more, it'll take like 5       ;;
+   ;; minutes with him since he's familiar with the code-base.                                      ;;
+   ;;                                                                                               ;;
+   ;; (Aside: Some people use a “NEXT” state to denote “this task is the /next/ immediate task      ;;
+   ;;         to do in this project”.  Since my tasks are ordered, the NEXT task would be the first ;;
+   ;;         task that is “TODO” or “INVESTIGATED”.)                                               ;;
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+   ("STARTED" :foreground "blue") ;; I've begun this task, and it's loaded into my short-term memory.
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; These are tasks that are working in progress (“open loops”). I work on these tasks before    ;;
+   ;; starting another NEXT task to avoid too many open loops at any moment.                       ;;
+   ;;                                                                                              ;;
+   ;; Whenever I clock-into a task, it is automatically transitioned into this state. As such,     ;;
+   ;; if I want know when I first started on a task, I simply look at the CLOCK entry it has.      ;;
+   ;;                                                                                              ;;
+   ;; Note: “:on-entry timestamp” is not ideal for my current use since my tasks tend to           ;;
+   ;; ping-pong between STARTED ⟷ WAITING.                                                         ;;
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+   ("|")
+   ;; All states after this special marker are “terminal” and so not shown in the org-agenda:
+   ;; (setq org-agenda-skip-scheduled-if-done t)
+   ;;
+   ;; Moreover, they are counted as “done” in the statistics “ [96%] ” count of a parent heading.
+   ;;
+   ;; Finally, I get a “CLOSED: <timestamp>” property on these tasks when
+   ;; (setq org-log-done 'time). This is desirable, since it tells me when I entered these ‘terminal’
+   ;; states: E.g., how long ago a task entered the WAITING state.
+   ;;
+   ;; Also, the definition of “done” in Org-QL includes all terminal states in my workflow, yay.
+
+
+   ("PAUSED" :on-entry 'note :on-exit 'timestamp :foreground "magenta") ;; I'm not actively working on this task anymore. I may return to it later.
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; I am choosing to stop work on this task for some reason; e.g., it is no longer a priority    ;;
+   ;; (i.e., I'm not interested in it, or I realised it does not contribute to my long-term        ;;
+   ;; life goals).                                                                                 ;;
+   ;;                                                                                              ;;
+   ;; When I enter this state, record when & why the task is paused.                               ;;
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+   ("WAITING" :on-entry 'unschedule :foreground "red2") ;; I'm waiting on feedback from others before I can continue.
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; When a task goes into WAITING, I've finished the task as much as possible and now need to      ;;
+   ;; rely on someone else; e.g., for feedback. I'm waiting on *someone else*.                       ;;
+   ;;                                                                                                ;;
+   ;; ⇒ I don't want to see these scheduled tasks in my Agenda.                                      ;;
+   ;; ⇒ If I'm waiting on an email, I can make an Org task to track the fact I'm waiting on it.      ;;
+   ;; ⇒ In the Weekly Review, I will take time to look at my WAITING tasks                           ;;
+   ;; and if they've been waiting ~2 weeks, then I should message the relevant people to unblock it. ;;
+   ;;                                                                                                ;;
+   ;; Waiting = “In progress, but BLOCKED by others”                                                 ;;
+   ;;                                                                                                ;;
+   ;; 🤔 Consider adding a WAITING_SINCE property whenever a task enters this state, so that I       ;;
+   ;; can reach out to others and say “I've been waiting on you since Jan 1, please unblock          ;;
+   ;; me!”                                                                                           ;;
+   ;;                                                                                                ;;
+   ;; “:on-entry timestamp” is not ideal for my current use since my tasks tend to ping-pong         ;;
+   ;; between STARTED ⟷ WAITING.                                                                     ;;
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+   ("APPROVED" :foreground "magenta") ;; Almost done, just needs a quick review.
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; I'm actively working on this task, and not waiting on any one else,                         ;;
+   ;; but there is some blocker; e.g., a merge dependency issue or a conflict to resolve.         ;;
+   ;; Sometimes these are quick to dispatch; other times they're blocked by PAUSED/WAITING tasks. ;;
+   ;;                                                                                             ;;
+   ;; This is essentially DONE, but there's some blocker.                                         ;;
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+   ("DONE"  :foreground "forest green") ;; This task is DONE; mine it for useful LOG comments and archive it.
+
+
+   ("CANCELLED" :on-entry 'note :foreground "saddle brown")  ;; Why was this task cancelled? (Notes come with a timestamp!)
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; I've started on this task and now realised /I do not want/ continue this approach, and so    ;;
+   ;; will ABANDON it.  This is useful at work to keep track of *why* we have decided against      ;;
+   ;; doing a task; in my Org file there may be more, private, reasons not mentioned in the        ;;
+   ;; company's Jira file. (For example).                                                          ;;
+   ;;                                                                                              ;;
+   ;; Instead of just deleting the task, I document it so that if I have the same idea/task        ;;
+   ;; again then I can see my notes to figure out /why/ I didn't do it last time. Also useful      ;;
+   ;; for when doing Annual Reviews: Why did I quit these tasks.                                   ;;
+   ;;                                                                                              ;;
+   ;; The logging is helpful if others at work want to know why some approach was abandoned, so    ;;
+   ;; TAKE A MINUTE TO FLESH OUT THE REASONS FOR CANCELLATION.                                     ;;
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ))
+;; Implementation:3 ends here
+
+;; [[file:init.org::*Also, logging][Also, logging:1]]
+;; Since DONE is a terminal state, it has no exit-action.
+;; Let's explicitly indicate time should be noted.
+(setq org-log-done 'time)
+;; → Take a look at org-log-done and org-log-into-drawer. These will tell org to log the date and time when an item's status is changed (you can specify).
+;; → When the agenda is built you can show all these logged items on the date they were completed with org-agenda-log-mode, org-agenda-log-mode-items, and org-agenda-start-with-log-mode.
+;; → This allows me to place TODO items anywhere I want (my logbook, notes, and a scratch list) and as I complete them through the week they're all shown in the agenda according to when I completed each.
+;; → I use org-clock-in to the task I'm working on, then a simple clocktable with some dates will show me exactly what I worked on.
+;; → [Weekly Review] which creates a day-by-day summary of the time I worked on what tasks. On Friday, I can look at this and see what I did over the week.
+;;
+;; clocking-in is about the best way to answer that dreaded Friday afternoon question: "WTF did I do with my time this week/month/etc!?"
+
+;; I prefer to log TODO creation also
+(setq org-treat-insert-todo-heading-as-state-change t)
+
+;; Use S-⇆ as a convenient way to select a TODO state and bypass any logging associated with that.
+;; E.g., a task is STARTED and pressing S-→ moves it to PAUSED /without/ having to add a note for why it's now paused.
+(setq org-treat-S-cursor-todo-selection-as-state-change nil)
+;; Also, logging:1 ends here
+
+;; [[file:init.org::*Propagate =STARTED= to parent tasks][Propagate =STARTED= to parent tasks:1]]
+(add-hook 'org-after-todo-state-change-hook
+          (defun my/if-I-am-STARTED-task-so-is-my-project-parent ()
+            (when (equal (org-get-todo-state) "STARTED")
+              (save-excursion
+                ;; Change all parents /that/ have a todo keyword
+                (while (org-up-heading-safe)
+                  (when (org-get-todo-state) (org-todo "STARTED")))))))
+;; Propagate =STARTED= to parent tasks:1 ends here
+
 ;; [[file:init.org::*Capture: Now that I know how to query my agenda, how do I get things into it efficiently?][Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1]]
 (defmacro def-capture (name location template)
   "Creates a method “my/capture-NAME”, which opens a capture buffer named NAME showing TEMPLATE.
@@ -3755,6 +3527,34 @@ Usage:
 
 (bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))
 ;; Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1 ends here
+
+;; [[file:init.org::*Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content][Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:1]]
+(add-hook
+ 'org-insert-heading-hook
+ (defun my/insert-CREATED-property ()
+   "Insert :CREATED: property upon C-[S]-RET and M-[S]-RET, unless C-u is pressed first."
+   (unless current-prefix-arg
+     (org-set-property "CREATED" (format-time-string "[%Y-%m-%d %a %H:%M]")))))
+
+;; I also have a short cut key defined to invoke this function on demand so that
+;; I can insert the inactive timestamp anywhere on demand.
+;;
+;; I use TAB and S-TAB for cycling - I don't need c and C as well.
+;; Instead use “c” to add the ‘C’reated property.
+(setf (cdr (assoc "c" org-speed-commands)) #'my/insert-CREATED-property)
+;; Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:1 ends here
+
+;; [[file:init.org::*Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content][Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:2]]
+(add-hook 'org-mode-hook '(lambda ()
+   (local-set-key (kbd "<return>") 'org-return-indent)) ;; Newline with indentation
+   (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline)) ;; Newline without indentation
+;; Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:2 ends here
+
+;; [[file:init.org::*Hide blank lines /between/ headlines][Hide blank lines /between/ headlines:1]]
+(setq org-cycle-separator-lines 0)
+
+(setq org-blank-before-new-entry '((heading) (plain-list-item . auto)))
+;; Hide blank lines /between/ headlines:1 ends here
 
 ;; [[file:init.org::#drag-and-drop-images-into-org-mode][“Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode:1]]
 (add-hook
@@ -3927,6 +3727,410 @@ Check for orphaned files in the Org attachment directory.
 (use-package helm-org-rifle)
 ;; Org-rifle:1 ends here
 
+;; [[file:init.org::*Mitigate accidental deletion of large regions of text][Mitigate accidental deletion of large regions of text:1]]
+;; Note: TAB on a heading is great to cycle, but when there's lots of text /before/ subheadings,
+;; it can be hard to see the outline. Instead on a heading press “C-c C-k” to ‘kill’ (i.e., hide!) such
+;; notes and only show the outline. Very nice.
+
+(setq org-ctrl-k-protect-subtree :please-ask-me-when-deleting-a-collapsed-subtree-with-C-k)
+
+;; When an org heading is folded and I press “C-k”, then only operate on the headline, not the contents!
+;; Pressing “C-k” deletes tags iff cursour is at the end of the headline text and before tags.
+(setq org-special-ctrl-k :please-make-C-k-consider-headline-and-tags-only)
+
+;; Likewise the “k” speed key should also confirm before doing anything.
+(map-put org-speed-commands "k" nil) ;; Orginally: org-cut-subtree
+
+
+;; For any key press, the DELETE key, M-S-RET for creation of new headings, etc.
+;; Note “being next to an invisible region” means cursor is immediately *after* such a region or immediately *before*.
+;; As such, if you press M-DELETE at the end of the line of a folded heading, it's considered an invisible edit.
+;; However, if you press M-DELETE at the start of the line *after* a folded heading, it's not considered an invisible edit! 😲
+;; Instead you end-up deleting some invisible text! This is because of how the method org-fold-check-before-invisible-edit is defined.
+(setq org-catch-invisible-edits 'show-and-error)
+
+;; Require confirmation for large region deletion
+(url-copy-file "https://www.emacswiki.org/emacs/download/wimpy-del.el" "~/.emacs.d/elpa/wimpy-del.el" :ok-if-already-exists)
+(load-file "~/.emacs.d/elpa/wimpy-del.el")
+(bind-key* "C-w" #'kill-region-wimpy)
+(setq wimpy-delete-size 3000)
+
+;; Note: This has no impact if you select a region, then just press DELETE. Let's fix that:
+;;
+(defun my/confirm-big-deletion (orig-fun &rest args)
+"Ask for confirmation if deleting more than `wimpy-delete-size' characters in `org-delete-backward-char`."
+;; If deletion should not be done, show wimpy msg, otherwise do the deletion.
+(if (and (region-active-p)
+         (-let [size (- (region-end) (region-beginning))]
+           (and (> size wimpy-delete-size) (not (yes-or-no-p (format "Really delete %d characters? " size))))))
+    (message wimpy-delete-dopey-message)
+  (apply orig-fun args)))
+;;
+(advice-add 'org-delete-backward-char :around #'my/confirm-big-deletion) ;; For Org-mode
+(advice-add 'backward-delete-char-untabify :around #'my/confirm-big-deletion) ;; For everywhere else
+;; Mitigate accidental deletion of large regions of text:1 ends here
+
+;; [[file:init.org::*Other benefits of clocking are …][Other benefits of clocking are …:2]]
+  (setq org-clock-sound "~/.emacs.d/school-bell.wav")
+;; Other benefits of clocking are …:2 ends here
+
+;; [[file:init.org::*Basic Implementation][Basic Implementation:1]]
+;; In case my hands slip and I press “C-x C-c”, which saves all buffers and quits Emacs; confirm that's my intention.
+(setq confirm-kill-emacs 'yes-or-no-p)
+
+
+;; Save clock data and state changes and notes in the LOGBOOK drawer
+(setq org-clock-into-drawer t)
+
+
+;; Change task state to STARTED when clocking in, if in an agenda file.
+;; This means I can clock-into tasks in my init.org or into captures “C-c c”
+;; without having them marked STARTED.
+(setq org-clock-in-switch-to-state
+      (defun my/clock-in-to-STARTED-if-in-an-agenda-file (&rest args)
+        (when (member (buffer-file-name) (org-agenda-files))
+          "STARTED")))
+
+
+;; At first, I used to record a note on what was accomplished when clocking out of an item.
+;; Now, I use “C-c C-z” to make notes about insights or blockers or ideas or what to do next time, as I work on a task.
+(setq org-log-note-clock-out nil)
+
+
+;; Show lot of clocking history so it's easy to resume recently clocked items, using the “C-u C-c SPC” clock history list.
+;;
+;; For example, I'm working on task 𝒜, then I need to context-switch to task ℬ (e.g., “meeting”)
+;; so I clock-out of 𝒜 and clock-into ℬ; then when ℬ is done, I press “C-u C-c SPC” and see a list
+;; of tasks I've recently clocked-into, with 𝒜 being at the top, so I select it and now I'm back into 𝓐.
+;;
+;; The clock history is a nice way to quickly see what you've been working on lately.
+(setq org-clock-history-length 23)
+
+
+;; Resume clocking task when emacs is restarted: Save the running clock and all CLOCK HISTORY when exiting Emacs, load it on startup
+(org-clock-persistence-insinuate)
+(setq org-clock-persist t)
+(setq org-clock-persist-query-resume nil) ;; Do not prompt to resume an active clock
+
+;; If I clock into a task, then move to something else before a minute's elapsed, don't keep track of a 0:00 duration.
+;; This is helpful when I capture a note quickly with “C-c c”.
+(setq org-clock-out-remove-zero-time-clocks t)
+
+
+;; When a task enters the DONE state, I don't want to automatically clock-out
+;; because I may not have started another task and don't want to “lose a few
+;; minutes” finding a sibling task to start. Such minutes add up; especially if
+;; I'm taking the time to write good notes.
+(setq org-clock-out-when-done nil)
+;; Alternatively, make this “t” and add the following hook; then even when I
+;; clock-out of a task, I don't lose unlogged minutes before logging into
+;; another task.
+(when nil
+  (add-hook 'org-clock-out-hook
+            (defun my/clock-into-PLANNING-task ()
+              "Look for the task with property “:ID: planning” and clock into it.
+
+              The “** Planning” task is intended for miscellaneous clock time:
+              Reading email, clearing my inbox, reorganising my notes, etc.
+             "
+              (interactive)
+              (org-with-point-at (org-id-find "planning" 'marker)
+                (org-clock-in '(16))))))
+
+
+;; Include current clocking task in clock reports
+(setq org-clock-report-include-clocking-task t)
+;; Basic Implementation:1 ends here
+
+;; [[file:init.org::*How should the clock in the modeline look?][How should the clock in the modeline look?:1]]
+(set-face-attribute
+ 'org-mode-line-clock
+  nil
+  :background "grey75"
+  :foreground "red"
+  :box '(:line-width -1 :style released-button))
+
+;; Conversely, the getter:
+(face-attribute  'org-mode-line-clock :foreground) ;; ⇒ "red"
+;; How should the clock in the modeline look?:1 ends here
+
+;; [[file:init.org::*Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.][Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.:1]]
+(add-hook 'org-clock-in-hook
+          (defun my/say-bismillah-on-clock-in ()
+            (unless org-capture-mode
+              (alert " \nI begin this task in the name of God, the most gracious, the most merciful.\n\nGod please bless the task I'm undertaking."
+                     :title "Bismi Allah ar-rahaman ar-raheem")
+              (async-shell-command "say \"I begin this task in the name of God, the most gracious, the most merciful\""))))
+
+(add-hook 'org-clock-out-hook
+          (defun my/say-alhamudlilah-on-clock-out ()
+            (unless org-capture-mode
+              (async-shell-command "say \"Alhamudllah; praise be to God who has blessed me\""))))
+;; Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.:1 ends here
+
+;; [[file:init.org::*org-clock-clocktable-default-properties and “my/what-did-i-work-on-this-week”][org-clock-clocktable-default-properties and “my/what-did-i-work-on-this-week”:1]]
+;; This only works well if my tasks have timestamps; ie are scheduled ^_^
+(setq org-clock-clocktable-default-properties
+      '(:scope ("./my-life.org")       ;; Consider the current file
+               :hidefiles t      ;; Hide the file column when multiple files are used to produced the table.
+               :maxlevel 5       ;; Consider sub-sub-sections
+               :block lastweek   ;; Only show me what I did last week
+               ;; Other values: 2024-04, lastmonth, yesterday, thisyear, 2024
+               ;; :tstart "<-2w>" :tend "<now>"   ;; Show me the past two weeks
+               ;; :tstart "<2006-08-10 Thu 10:00>" :tend "<2006-08-10 Thu 12:00>" ;; Show me a particular range
+               :step day         ;; Split the report into daily chunks
+               :formula %        ;; Show me the percentage of time a task took relative to my day
+               :link t           ;; Link the item headlines in the table to their origins
+               :narrow 55!       ;; Limit the width of the headline column in the Org table
+               :tcolumns 1       ;; Show only 1 column ---not multiple, for the sections and subsections and etc.
+               :timestamp t      ;; Show the timestamp, if any
+               :tags t        ;; Do not show task tags in a column; I use mostly hierarchies for my tasks right now.
+               ;; :match "billable|notes-travel" ;; ⇒ Includes tags “billable” and “notes”, excludes tag “travel”
+               ;; More examples at: https://orgmode.org/manual/Matching-tags-and-properties.html#Matching-tags-and-properties
+               ;; For example, we can match tags & priority & todo states & property drawer values; “/DONE” matches all tasks with state being ‘DONE’.
+               :match "-Personal" ;; Exclude tasks tagged “OOO”, which means “Out of Office” ---e.g., taking a break, or praying, or out for an appointment.
+               ;; https://stackoverflow.com/a/53684091 for an accessible example use of :formatter
+               ;; :formatter org-clocktable-write-default ;; This is the default way to print a table; it looks very long and annoying to change.
+               ;; :sort (3 . ?N)              ;; Sort descendingly on time. Not ideal, since I'm very hierarchical.
+               :properties ("Effort")
+               ))
+;; More properties at:  https://orgmode.org/manual/The-clock-table.html
+;; [Low Priority] Figure out whether I've underworked or overworked? ⇒ https://www.erichgrunewald.com/posts/how-i-track-my-hour-balance-with-a-custom-org-mode-clock-table/
+
+
+;; I prefer “27h” over “1d 3h”.
+(setq org-duration-format 'h:mm)
+
+
+;; In Org-agenda, press “v r” to view the clock report
+;; (This method is invoked when you hit “v r” in Org-agenda.)
+(defalias 'org-agenda-clockreport-mode 'my/what-did-i-work-on-this-week)
+
+
+
+(defun my/what-did-i-work-on-this-week ()
+  "Show in a dedicated buffer a clock report of the past 7 days."
+  (interactive)
+  (my/what-did-i-work-on
+   "*What Did I Work On This Week?*"
+   org-clock-clocktable-default-properties))
+
+
+
+(defun my/what-did-i-work-on-today ()
+  (interactive)
+  (my/what-did-i-work-on
+   "*What Did I Work on Today?*"
+   (-snoc org-clock-clocktable-default-properties :block 'today)))
+
+
+
+(defun my/what-did-i-work-on (buffer-title clocktable-properties)
+  (switch-to-buffer buffer-title)
+  (org-mode)
+  ;; (org-modern-mode) Tables don't look good with the unicode/timestamp svg
+  (-let [org-clock-clocktable-default-properties clocktable-properties]
+    (org-clock-report))
+  ;; For some reason, some of org-modern carries from the current buffer to the new buffer.
+  (org-modern-mode +1)
+  (org-modern-mode -1)
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "\\\\_" nil t)
+      (replace-match "⇒")
+      (org-table-align))))
+;; org-clock-clocktable-default-properties and “my/what-did-i-work-on-this-week”:1 ends here
+
+;; [[file:init.org::*Nicer clocktable layout for nested entries][Nicer clocktable layout for nested entries:1]]
+(advice-add 'org-clocktable-indent-string :override
+ (defun my/org-clocktable-indent-string (level)
+  (if (= level 1)
+      ""
+    (let ((str "└"))
+      (while (> level 2)
+        (setq level (1- level)
+              str (concat str "──")))
+      (concat str "─> ")))))
+;; Nicer clocktable layout for nested entries:1 ends here
+
+;; [[file:init.org::*~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one][~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one:1]]
+(bind-key*
+ "C-c SPC"
+ (defun my/jump-to-clocked-task (&optional prefix)
+   "Jump to the currently clocked-in entry, or to the most recently clocked one.
+
+With prefix arg, offer recently clocked tasks for selection."
+   (interactive "P")
+   (org-clock-goto prefix)
+   (org-narrow-to-subtree)))
+;; ~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one:1 ends here
+
+;; [[file:init.org::*✨ Make Org properties look nice -- pretty emphasis markers][✨ Make Org properties look nice -- pretty emphasis markers:1]]
+(add-hook
+ #'org-mode-hook
+ (defun my/make-properties-look-nice ()
+   "Make it nice for me to place scheduled markers in an Org heading.
+⇒ Shift-↑↓ continue to work to change dates, and dates are clickable to open the agenda.
+⇒ Create them with “C-c C-s”, get them with “ (org-entry-get (point) \"SCHEDULE\") ”."
+   ;; See changes in buffer: Replace the 2ⁿᵈ arg “ 'org-mode ” with “ nil ”, then “ C-x C-e C-x x f ”.
+   ;; Useful: (pop font-lock-keywords)
+   (font-lock-add-keywords
+    nil ;; 'org-mode
+    `(
+      ;; I don't need to see the year, thanks. Also, use icons for these words.
+      ("\\(CLOSED: *\\[[[:digit:]]\\{4\\}-\\)\\([^]]+\\)\\(\\]\\)"
+       (1 '(face (:inherit (bold)) display "☺️ "))
+       (2 '(face (:weight semi-bold :height 120 :background "SpringGreen1" :family "Source Code Pro Light 14")  help-echo "Well-done, buddo!"))
+       (3 '(face (:inherit (bold)) display "")))
+      ("\\(SCHEDULED: *<[[:digit:]]\\{4\\}-\\)\\([^>]+\\)\\(>\\)"
+       (1 '(face (:inherit (bold)) display "📆 "))
+       (2 '(face (:weight semi-bold :height 120 :background "ivory1" :family "Source Code Pro Light 14")  help-echo "Make progress, buddo!"))
+       (3 '(face (:inherit (bold)) display "")))
+      ("\\(DEADLINE: *<[[:digit:]]\\{4\\}-\\)\\([^>]+\\)\\(>\\)"
+       (1 '(face (:inherit (bold)) display "🎯 "))
+       (2 '(face (:weight semi-bold :height 120 :background "RosyBrown1" :family "Source Code Pro Light 14")  help-echo "Focus, buddo!"))
+       (3 '(face (:inherit (bold)) display "")))
+      ;; Make ALL “ :keyword: ” at the start of the line have their colons be invisible
+      ("^ *\\(:\\)\\([^:]+\\)\\(: \\)"
+       (1 '(face nil display ""))
+       (2 '(face (:foreground  "LightPink1" :height 0.8) help-echo "😉 “C-c C-x p” to set a new property"))
+       (3 '(face nil display " ")))
+      ;; Consider: "\\(:CREATED:\\)" ↦ "📝"; "\\(:LOGBOOK:\\)" ↦ "🪵"
+      ;; Clocking info is great, but it's meta-data useful for org-agenda, not for my naked eyes.
+      ("\\(CLOCK: \\[[[:digit:]]\\{4\\}-\\)[^]]*\\(.*\\)"
+       (1 '(face (:inherit (bold)) display "⏰ "))
+       (2 '(face (:inherit (bold)) display "")))
+      ;; Likewise, I want to see a note, via C-c C-z, but don't care to see it's (important) meta-data.
+      (,(format "^- \\(Note taken on \\)?%s *\\\\*\n *" (org-re-timestamp 'inactive))
+       (0 '(face nil display "📝 ")))))
+
+   ;; [Posterity] Make key-value property names look like pressed buttons? Neat, but no thanks.
+   ;; (set-face-attribute 'org-special-keyword nil :inverse-video nil)
+   ;; (set-face-attribute 'org-special-keyword nil :box '(:line-width (2 . 1) :color "grey75" :style released-button))
+
+   ;; I prefer the following via prettify-symbols-mode so that when my cursour is beside them, the original text disappears.
+   (push (cons ":PROPERTIES:" ? ) prettify-symbols-alist)
+   (push (cons ":END:" ? ) prettify-symbols-alist)
+   (push (cons ":LOGBOOK:" ? ) prettify-symbols-alist)
+   ;; Make “ ∶PROPERTIES∶ , ∶LOG∶ , ∶END∶ ” all look signficinatly different from the surrounding text.
+   ;; These are meta-tokens, not intended for editing by my hands.
+   (set-face-attribute 'org-drawer nil :foreground   "midnight blue")
+   (set-face-attribute 'org-drawer nil :weight 'bold)
+   (set-face-attribute 'org-drawer nil :height  1)
+   (set-face-attribute 'org-drawer nil :slant 'normal)
+   ;; (set-face-attribute 'org-drawer nil  :family  "Savoye LET")
+   ;; (set-face-attribute 'org-drawer nil  :family  "Noteworthy")
+   ;; (set-face-attribute 'org-drawer nil  :family  "Courier New")
+   ;; (set-face-attribute 'org-drawer nil  :family  "Chalkduster")
+   ;; (set-face-attribute 'org-drawer nil  :family  "Bradley Hand")
+   ;; (set-face-attribute 'org-drawer nil  :family  "Papyrus")
+   (set-face-attribute 'org-drawer nil  :family  "Input Mono")
+   ;; [Something to consider] Maybe keep the word present but change height to like 0.5?
+   ;; ❌ (font-lock-add-keywords nil '(("\\(^ *:PROPERTIES: *\\)" 1 '(face nil display "▽"))) t)
+   ;; ❌ (font-lock-add-keywords nil '(("\\(:LOGBOOK:\\)" 1 '(face nil display "▽"))) t)
+   ;; ❌ (font-lock-add-keywords nil '(("\\(^ *:END: *\\)" 1 '(face nil display "△"))) t)
+
+   ;; Note: (add-to-list 'font-lock-extra-managed-props 'display)
+   ))
+;; ✨ Make Org properties look nice -- pretty emphasis markers:1 ends here
+
+;; [[file:init.org::*✨ Make Org properties look nice -- pretty emphasis markers][✨ Make Org properties look nice -- pretty emphasis markers:2]]
+(org-indent-mode +1)
+
+;; useful for [link] and *formatted text*.
+;; Make invisible parts of Org elements appear visible.
+(unless my/personal-machine?
+  (use-package org-appear))
+;; ✨ Make Org properties look nice -- pretty emphasis markers:2 ends here
+
+;; [[file:init.org::*Colourise clocking tasks with a block][Colourise clocking tasks with a block:1]]
+;; work with org-agenda dispatcher [c] "Today Clocked Tasks" to view today's clocked tasks.
+(add-hook 'org-agenda-finalize-hook
+          (defun org-agenda-log-mode-colorize-block ()
+            "Set different line spacing based on clock time duration.
+
+   all the time below 30 minutes is displayed in a normal line, and the line height
+   is proportionally expanded for more than 30 minutes.
+
+   Making the log look better is mainly to stimulate my interest and motivation to
+   record my times.
+"
+            (save-excursion
+              ;; automatic color selection based on whether the theme background is black or white.
+              (let* ((colors (cl-case (alist-get 'background-mode (frame-parameters))
+                               ('light
+                                (list "#F6B1C3" "#FFFF9D" "#BEEB9F" "#ADD5F7"))
+                               ('dark
+                                (list "#aa557f" "DarkGreen" "DarkSlateGray" "DarkSlateBlue"))))
+                     pos
+                     duration)
+                (nconc colors colors)
+                (goto-char (point-min))
+                (while (setq pos (next-single-property-change (point) 'duration))
+                  (goto-char pos)
+                  (when (and (not (equal pos (point-at-eol)))
+                             (setq duration (org-get-at-bol 'duration)))
+                    ;; larger duration bar height
+                    ;;
+                    ;; This means the height is 1 unit within half an hour, and if it exceeds half an hour, it will increase by 0.5 units for every full hour, right?
+                    (let ((line-height (if (< duration 15) 1.0 (+ 0.5 (/ duration 30))))
+                          (ov (make-overlay (point-at-bol) (1+ (point-at-eol)))))
+                      (overlay-put ov 'face `(:background ,(car colors) :foreground "black"))
+                      (setq colors (cdr colors))
+                      (overlay-put ov 'line-height line-height)
+                      (overlay-put ov 'line-spacing (1- line-height)))))))
+            (olivetti-mode -1)))
+;; Colourise clocking tasks with a block:1 ends here
+
+;; [[file:init.org::*Automatically toggle timestamp prettifications][Automatically toggle timestamp prettifications:1]]
+(add-hook
+ 'org-mode-hook
+ (defun my/setup-toggle-timestamp-fontification ()
+   ;; Disable with: (remove-hook 'post-command-hook #'my/toggle-timestamp-fontification)
+   (add-hook
+    'post-command-hook
+    (defun my/toggle-timestamp-fontification ()
+      "Hook function to check cursor entry/exit into Org timestamps & toggle fontification.
+
+       Note: Since I'm using `org-element-context', this feature will be enabled if there's
+       any timestamp near my point _regardless_ of whitespace. So to “leave”, say, a CLOSED:
+       timestamp, the cursor needs to be on any NON-WHITESPACE outside the timestamp, such as
+       any other text, or introduce a new text.
+"
+      (defvar my/last-ts nil)
+      (defvar my/last-ts-visible nil)
+      (let ((current-ts (my/cursor-in-timestamp-p)))
+        (cond
+         ((and current-ts (equal current-ts my/last-ts))
+          ;; (message-box "Nothing new")
+          (unless my/last-ts-visible
+            (goto-char (org-element-property :begin my/last-ts))
+            (my/toggle-line-fontification)
+            (setq my/last-ts-visible nil)))
+         ;; If I'm looking at a timestamp, and it's different from the last one, then show it.
+         ((and current-ts (not (equal current-ts my/last-ts)))
+          ;; (message-box "Welcome!")
+          (save-excursion
+            (goto-char (org-element-property :begin current-ts))
+            (setq my/last-ts current-ts)
+            (setq my/last-ts-visible t)
+            (my/toggle-line-fontification)))
+         ;; If I'm not looking at a timestamp, ensure the last one is fontified.
+         (my/last-ts
+          ;; (message-box "Bye!")
+          (save-excursion
+                       (goto-char (org-element-property :begin my/last-ts))
+                       (my/toggle-line-fontification)
+                       (setq my/last-ts nil)
+                       (setq my/last-ts-visible nil)))))))
+
+   (defun my/cursor-in-timestamp-p ()
+     "Return Org timestamp if point is inside an Org timestamp; else null."
+     (let ((element (org-element-context)))
+       (when (member (org-element-type element) '(timestamp planning))
+         element)))))
+;; Automatically toggle timestamp prettifications:1 ends here
+
 ;; [[file:init.org::*Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)][Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1]]
 (setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
 
@@ -3949,6 +4153,37 @@ Check for orphaned files in the Org attachment directory.
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (message-box "Enjoy life (｡◕‿◕｡))")
 ;; Done!:1 ends here
+
+;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:1]]
+;; Show me file locations alongside named bookmarks, when I press “C-x r b”. (Press C-z to take further actions on a bookmark, such as editing, deleting, etc).
+;; Note: Set a bookmark with “C-x r m”.
+(setq helm-bookmark-show-location t)
+(setq bookmark-save-flag 1)  ;; save bookmarks to “ bookmark-default-file ” after each entry
+
+;; Have “C-x r b” widen when I jump, otherwise it does not actually jump.
+;; Finally, advise Emacs `C-x r b` to clone-indirect-buffer whenever a universal argument is provided.
+;; That is, “C-u C-x r b” jumps to a bookmark in a *new* buffer.
+(bind-key*
+ "C-x r b"
+ (defun my/bookmark-jump-widen (bookmark)
+   "Jump to a bookmark and widen; when a universal arg is provided, jump in another window.
+
+Adapted from the source of `bookmark-jump'. I intially advised it, but
+the advice did not have access to `current-prefix-arg', so I made my own
+method."
+   (interactive
+    (list (bookmark-completing-read "Jump to bookmark"
+                                                    bookmark-current-bookmark)))
+   (unless bookmark
+     (error "No bookmark specified"))
+   (bookmark-maybe-historicize-string bookmark)
+   ;; First, go the relevant file
+   (bookmark--jump-via bookmark (if current-prefix-arg #'switch-to-buffer-other-window #'pop-to-buffer-same-window ))
+   ;; Then widen
+   (widen)
+   ;; Then actually go to the desired bookmark
+   (bookmark--jump-via bookmark #'pop-to-buffer-same-window)))
+;; Bookmarks: Quick naviagation to commonly visited locations:1 ends here
 
 ;; [[file:init.org::*Testing that things are as they should be][Testing that things are as they should be:1]]
 (progn
