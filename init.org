@@ -343,7 +343,7 @@ use Emacs (•̀ᴗ•́)و
 Org-mode syntax is very /natural/; e.g., the following is Org-mode!
 ( [[https://karl-voit.at/2017/09/23/orgmode-as-markup-only/][Org Mode Is One of the Most Reasonable Markup Languages to Use for Text]] )
 
-#+begin_src org :noeval
+#+begin_src org :noeval t
 + Numbered and bulleted lists are as expected.
   - Do the things:
     1.  This first
@@ -1031,7 +1031,7 @@ thereby momentarily disabling features.
 There's no point in being modular if there's nothing explaining what's going on,
 so I document.
 
-The [[#Conclusion---Why-Configuration-Files-Should-be-Literate][concluding]] section of this read further argues the benefits of maintaining
+The [[#conclusion----why-configuration-files-should-be-literate][concluding]] section of this read further argues the benefits of maintaining
 literate, and monolithic, configuration files. As a convention, I will try to
 motivate the features I set up and I will prefix my local functions with, well,
 ~my/~ ---this way it's easy to see all my defined functions, and this way I cannot
@@ -4371,9 +4371,6 @@ language.  This saves us a few key strokes.
     C -> C;
   }
  #+END_SRC
-
- #+RESULTS:
- [[file:simple_markov.png]]
 
 ** TODO COMMENT Obtaining Values of ~#+KEYWORD~ Annotations
 :PROPERTIES:
@@ -10069,8 +10066,8 @@ results and show them nicely in our editor (Emacs).
 Further reading:
 + [[https://emacs-lsp.github.io/lsp-mode/page/main-features/][Main features - LSP Mode - LSP support for Emacs]] ⇒ Reasons (with gifs) to use
   lsp-mode ;-)
-+ [[https://emacsconf.org/2019/talks/19/][How Emacs became my awesome Java editing environment [EmacsConf2019]]]
-  is an excellent ~10min video demoing prime features of LSP.
++ [[https://emacsconf.org/2019/talks/19/][How Emacs became my awesome Java editing environment ~ EmacsConf2019]] is an
+  excellent ~10min video demoing prime features of LSP.
 + [[https://www.toptal.com/javascript/language-server-protocol-tutorial][Using Text Editors for Programming with LSP | Toptal]]
 + [[https://microsoft.github.io//language-server-protocol/overviews/lsp/overview/][LSP overview]]
 + :flame: [[https://emacs-lsp.github.io/lsp-mode/tutorials/reactjs-tutorial/][React JavaScript Tutorial in Emacs - LSP Mode]] - Nice walkthrough on
@@ -12779,7 +12776,7 @@ Enjoy time with my family and friends.
 
 *The fundamental feature of timestamps is that we can click them to get the agenda on that day, to
 see all tasks that have (anywhere) an _active_ timestamp for that day.* For example, in Org mode, click
-on <2025-08-16> to see an agenda view specifically for that day. We can also package this into a
+on <2025-08-16 Sat> to see an agenda view specifically for that day. We can also package this into a
 method:
 #+begin_src emacs-lisp
 (defun my/agenda-for-day ()
@@ -13755,11 +13752,11 @@ Also, show real work time:
 
 For example, on one of my tasks now I see:
 
-#+begin_src example :tangle no
+#+begin_example
 Created 29 days ago
 Worked 12 days, 3 hours, 2 mins
  (i.e., 75:2 hours)
-#+end_src
+#+end_example
 
 Indeed 75hours seems like a lot, it seems like I've been working on this task for a month!
 But in reality, I'm not working just on this task, there are other things I have to do.
@@ -14058,16 +14055,16 @@ involved instructions. Read the manual [[http://plantuml.com/guide][here]].
 ; (async-shell-command "brew install plantuml")
 
 ;; Tell emacs where it is.
-;; E.g., (async-shell-command "find / -name plantuml.jar")
-(setq org-plantuml-jar-path
-      "/usr/local/Cellar/plantuml/1.2022.14/libexec/plantuml.jar")
+;; E.g., (shell-command-to-string "find / -name plantuml.jar")
+;; (setq org-plantuml-jar-path "/usr/local/Cellar/plantuml/1.2022.14/libexec/plantuml.jar")
+(setq org-plantuml-jar-path "/opt/homebrew/Cellar/plantuml/1.2025.2/libexec/plantuml.jar")
 
 ;; Enable C-c C-c to generate diagrams from plantuml src blocks.
 (add-to-list 'org-babel-load-languages '(plantuml . t) )
 (require 'ob-plantuml)
 
 ; Use fundamental mode when editing plantuml blocks with C-c '
-(add-to-list 'org-src-lang-modes '("plantuml" . fundamental))
+(add-to-list 'org-src-lang-modes '("plantuml" . fundament
 #+end_src
 #
 # (async-shell-command "cp workflow.png ~/alhassy.github.io/assets/img/")
@@ -14311,29 +14308,73 @@ Usage:
 :CREATED: [2025-05-14 Wed 18:56]
 :END:
 :LOGBOOK:
-CLOCK: [2025-05-19 Mon 08:52]
+CLOCK: [2025-05-19 Mon 08:52]--[2025-05-19 Mon 09:21] =>  0:29
 CLOCK: [2025-05-14 Wed 18:57]--[2025-05-14 Wed 21:57] =>  3:00
 :END:
- 
+
+#+begin_quote
+                     When people say “What are you doing?”,
+                        You say ⟪Things that please me.⟫
+                          They say “Toward what end?”,
+                            and you say ⟪Pleasure.⟫
+                They say “But really, what are you working on?”
+                         You say ⟪Having a good time!⟫
+#+end_quote
+
 /Journaling is supposed to make you more self reflective, to increase meta
 attention./
 
 /I also believe that, just like memories change when you recall them, writing
 down your thoughts will change them./
 
-**** Example use of doc:consult--read:
+**** Why the evening ritual reduces anxiety?
+
+<<<Evening Ritual>>>s are a simple way to finish every single day peacefully, to
+fall asleep easily and to have a great night of sleep.
+
+Here’s my rule: After I’ve finished this “workday shutdown”, if a work-related
+worry pops to mind, I always answer it with the following thought process:
+1. [I completed the workday shutdown]
+2. [I wouldn’t have completed it if I hadn’t checked over all of my tasks, my
+   calendar, and my weekly plan and decided that everything was captured and I
+   was on top of everything.]
+3. *[Therefore, there is no need to worry.]*
+
+I’ve basically eliminated stressful work-related thoughts from my evenings and
+weekends. As you might expect, this has really improved my ability to relax and
+focus on other things.
+
+In ~my-life.org~, I have a daily appointment:
+#+begin_src org
+,*** End-of-workday Shut-down Ritual: ~C-c r d~         <2025-04-14 Mon 15:30-15:45 +1d>
+#+end_src
+
+**** Example use of doc:consult--read
 :PROPERTIES:
 :CREATED:  [2025-05-19 Mon 09:10]
 :END:
-#+begin_src emacs-lisp :tangle no
-(when nil
-  ;; [Example reference for future-Musa] Ask user to pick an option, which has
-  ;; some commentary, and the result is a numeric valuation.
-  (consult--read '("a" "b" "c")
-                 :prompt "Pick one: "
-                 :require-match t ;; User must select one of the given options
-                 :annotate (lambda (x) (format " This is option %s" x))
-                 :lookup (lambda (x _ _ _) (+ 5 (string-to-char x)))))
+#+begin_src emacs-lisp :tangle no 
+;; [Example reference for future-Musa] Ask user to pick an option, which has
+;; some commentary, and the result is a numeric valuation.
+;; Moreover, if the user presses “C-.” they toggle on “note entry”.
+(let (note-has-been-requested
+      (my/note-map (make-sparse-keymap)))
+  (define-key my/note-map (kbd "C-.")
+              (lambda () (interactive)
+                (setq note-has-been-requested (not note-has-been-requested))
+                (message (if note-has-been-requested "[You can enter a note after making a selection!]"
+                           "[No entry note will be requested after selection.]"))))
+  (set-keymap-parent my/note-map minibuffer-local-map) ;; So that ⟨ENTER⟩ finalises the minibuffer, and not a literal new line!
+  (minibuffer-with-setup-hook
+      (lambda () (use-local-map (copy-keymap my/note-map)))
+    (consult--read '("a" "b" "c")
+                   :prompt "Pick one: "
+                   :require-match t ;; User must select one of the given options
+                   :annotate (lambda (x) (format " This is option %s" x))
+                   :lookup (lambda (x _ _ _)
+                             (cons (if prefix-arg 1000 (+ 5 (string-to-char x)))
+                                   (if note-has-been-requested (read-from-minibuffer "Enter a note: ")))))))
+
 #+end_src
 
 **** Questionnaire setup
@@ -14486,7 +14527,9 @@ and 2 of them are randomly selected as part of the daily review.
 (defun my/read-daily-review-properties ()
   "Returns a list of (PROPERTY . VALUE) pairs that could be `org-set-property' on a headline.
 
-Makes use of `my/daily-review-questionnaire'."
+Makes use of `my/daily-review-questionnaire'.
+
+At any time, press `C-.' to toggle adding a customised explanatory note to go along with a selection."
   (-let [(mandatory-questions random-questions) (-split-on :random my/daily-review-questionnaire)] 
     (let* ((max-possible-score 0)
            (properties
@@ -14503,19 +14546,30 @@ Makes use of `my/daily-review-questionnaire'."
                            (if is-open-ended?
                                (read-from-minibuffer prompt)
                              (cl-incf max-possible-score (apply #'max (mapcar #'my/option-score options)))
-                             (consult--read (--map (my/option-label it) options)
-                                            :prompt prompt
-                                            :require-match t
-                                            :annotate (lambda (label)
-                                                        (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))
-                                            :lookup (lambda (label _ _ _)
-                                                      (-let [option (assoc-by-label options label)]
-                                                        ;; If label ends in “…”, prompt for a note.
-                                                        (when (s-ends-with? "…" label)
-                                                          (-let [note (s-trim (read-from-minibuffer "Care to elaborate? [ENTER to skip] "))]
-                                                            (unless (s-blank? note)
-                                                              (setf (my/option-description option) note))))
-                                                        (pretty-print option)))))))))
+                             ;; If the user presses “C-.” they toggle on “note entry”.
+                             (let (note-has-been-requested
+                                   (my/note-map (make-sparse-keymap)))
+                               (define-key my/note-map (kbd "C-.")
+                                           (lambda () (interactive)
+                                             (setq note-has-been-requested (not note-has-been-requested))
+                                             (message (if note-has-been-requested "[You can enter a note after making a selection!]"
+                                                        "[No entry note will be requested after selection.]"))))
+                               (set-keymap-parent my/note-map minibuffer-local-map) ;; So that ⟨ENTER⟩ finalises the minibuffer, and not a literal new line!
+                               (minibuffer-with-setup-hook
+                                   (lambda () (use-local-map (copy-keymap my/note-map)))
+                                 (consult--read (--map (my/option-label it) options)
+                                                :prompt prompt
+                                                :require-match t
+                                                :annotate (lambda (label)
+                                                            (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))                                                
+                                                :lookup (lambda (label _ _ _)
+                                                          (-let [option (assoc-by-label options label)]
+                                                            ;; If label ends in “…” or “C-.” pressed, prompt for a note.
+                                                            (when (or (s-ends-with? "…" label) note-has-been-requested)
+                                                              (-let [note (s-trim (read-from-minibuffer "Enter an explanatory note [ENTER to skip] "))]
+                                                                (unless (s-blank? note)
+                                                                  (setf (my/option-description option) note))))
+                                                            (pretty-print option)))))))))))
       ;; Prepend a computed “daily score” property. Hopefully this value increases with time.
       (cons
        (thread-last properties
@@ -14586,7 +14640,7 @@ Further reading:
               
               (insert (my/fancy-date-string) " ") 
               ;; Let's add some properties by prompting the user, me.
-              (-let [properties (when nil my/read-daily-review-properties)]
+              (-let [properties (my/read-daily-review-properties)]
                 (cl-loop for (property . value) in properties
                          do (org-set-property property value))
                 ;; Add Daily Score to the start of the headline
@@ -14642,10 +14696,13 @@ Further reading:
               
               (insert "\n#+end_stats_of_the_day\n\n")
 
+              (my/show-life-purpose-statement-then-remove-it-after-I-read-it)
 
               (insert "\n💬" (my/word-of-the-day))
+              (org-fill-paragraph)
               
               ;; I think it'd be neat to insert my clocked-in / logs of the day here.
+              ;; Look at what I clocked into this day/week! Get a great idea of what I've done with my time, in detail. Also, see ~C-c a v L~.
               (save-excursion ;; I want cursor to stay here.
                 (let (todays-agenda org-agenda-finalize-hook)
                   (org-agenda-list 1)
@@ -14654,13 +14711,40 @@ Further reading:
                   (org-agenda-quit)
                   (insert "\n\n#+begin_agenda_for_the_day\n")
                   (insert todays-agenda)
-                  (insert "#+end_agenda_for_the_day\n")
-                  (insert "⟨🤔 Did I get everything I wanted done? Perhaps, I underestimated time for things? 🗯️⟩")))
+                  (insert "#+end_agenda_for_the_day")
+                  (insert "\n⟨🤔 Did I get everything I wanted done? Perhaps, I underestimated time for things? 🗯️⟩")
+                  (insert "\n~C-c a w v c~ to check for time gaps and review time for the past week. And to see what I worked on, and where I spent too much time or too little.")))
+              (insert "\nSay, “Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)”")
+
+              
               ;;
               ;; MA: Consider adding other journal prompts here, whose replies may be long-form.
               ;; E.g., pick one, or two, random prompts.
               (message "To journal is to live; congratulations on another entry!")))
 
+
+
+
+
+
+(cl-defun my/show-life-purpose-statement-then-remove-it-after-I-read-it ()
+  (set-mark-command nil)
+  (-let [purpose "                   When people say “What are you doing?”,                   
+                        You say ⟪“Things that please me.”⟫                  
+                          They say “Toward what end?”,                      
+                            and you say ⟪“Pleasure.”⟫                       
+                They say “But really, what are you working on?”             
+                         You say ⟪“Having a good time!”⟫                    
+"]
+    ;; NOTE: explore more faces via M-x highlight-phrase.
+    (insert (propertize purpose 'font-lock-face 'hi-green)))
+  (while (not (equal "yes"
+                     (consult--read '("yes" "no") :prompt "Read “Life Purpose”?"
+                                    :annotate (lambda (it) (format " ⟨%s⟩"
+                                                              (if (equal it "no")
+                                                                  "C'mon man, read it"
+                                                                "That's right, live the good life!")))))))
+  (backward-delete-char 1))
 
 
 
@@ -14816,16 +14900,17 @@ Further reading:
 (load-file "~/Dropbox/private.el") ;; Loads “my\⋯” variables
 ;;
 (cl-defun my/age-in-days-weeks-years (&optional (birthdate my\birthday))
-  "Prompt for birthdate (YYYY-MM-DD) and display age in days, weeks, and years."
+  "Prompt for birthdate (YYYY-MM-DD) and display age in days, weeks, months, and years."
   (interactive)
   (let* ((birth-time (date-to-time (concat birthdate " 00:00:00")))
          (now (current-time))
          (days-old (/ (float-time (time-subtract now birth-time)) 86400))
          (weeks-old (/ days-old 7))
+         (months-old (/ days-old 30.44)) ;; average month length
          (years-old (/ days-old 365.25))) ;; approximate year with leap years
-    (cl-format nil "I am now ~:d days old, which is ~:d weeks old, which is ~,1f years old"
-               (floor days-old) (floor weeks-old) years-old)))
-;;
+    (cl-format nil "I am now ~:d days old; which is ~:d weeks old; which is ~:d months old; which is ~,1f years old."
+               (floor days-old) (floor weeks-old) (floor months-old) years-old)))
+;; 
 ;; Elisp's “format” is not as capable as Common Lisp's “format”.
 ;; E.g., there's no equivalent of (cl-format nil "~:d" 1000000)
 ;; which prints numbers with comma separators.
@@ -14858,7 +14943,7 @@ Further reading:
              years (if (= years 1) "" "s")
              months (if (= months 1) "" "s")
              (substring first-date-str 0 10))))
-#+end_src
+#+end_src 
 
 ** Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content
 
@@ -14933,7 +15018,7 @@ For instance, now I can do:
 2. Click “Copy Image” in some app, then in Emacs invoke ~M-x org-download-clipboard~
 3. Find an image in some app, then drag-and-drop it into my note.
 4. Drag a file, such as a PDF, into my note to make it into an attachement!
-
+                
 Implementation:
 #+begin_src emacs-lisp
 (add-hook
@@ -14976,7 +15061,9 @@ TODO:
     (cl-defun my/yank-html-media (_media-type contents)
       (insert (s-replace " " " " (shell-command-to-string
                                   (-let [delimiter "EOF"] ;; A unique “here-document delimiter”, unlikely to be part of ‘contents’
-                                    (format "pandoc -f html -t org <<%s\n%s\n%s" delimiter contents delimiter)))))))
+                                    ;; NOTE: `shell-quote-argument` does too much here; e.g., copied code blocks wont paste nicely.
+                                    ;; For now, I want $FOO to be pasted as itself, and not interpreted as a Shell variable.
+                                    (format "pandoc -f html -t org <<%s\n%s\n%s" delimiter (s-replace "$" "\\$" contents) delimiter)))))))
 
    (yank-media-handler
     "STRING"
@@ -16351,11 +16438,6 @@ org-agenda-custom-commands
 #+end_src
 
 * --------------------------------------------------------------------------------
-
-
-:PROPERTIES:
-:CREATED:  [2025-04-09 Wed 16:21]
-:END:
 * Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)
 
 <<<Appointments>>>
@@ -16756,7 +16838,7 @@ press ~#~ to comment a heading, it accidentally inserts a literal ‘#’ charac
 
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
-:CUSTOM_ID: Conclusion-Why-Configuration-Files-Should-be-Literate
+:CUSTOM_ID: conclusion----why-configuration-files-should-be-literate
 :END:
 
 A configuration file sets up various features for a tool ---and serves as an
@@ -17198,3 +17280,267 @@ CLOCK: [2025-04-10 Thu 14:04]--[2025-04-10 Thu 14:17] =>  0:13
 #+end_src
 
 MA: I've seen people ask how to “unit test their init.el”, this is a nice approach to share.
+* Hyperbole: “DWIM at point”                                           :tags:
+:PROPERTIES:
+:CREATED:  [2025-05-20 Tue 19:02]
+:END:
+
+Hyperbole automatically turns passive documents into active ones, by associating
+actions with common textual patterns. That is, it turns plain old text into
+links, which are ‘clickable’ via ~M-RET~. As a result, my documents are
+automatically linked (i.e., hypertext) as I type. For instance, below, I enabled
+my Org radio targets to be accessible from all buffers: These are words of
+import to me, so why not be reminded of their definition wherever and whenever I
+encounter them. Consequently, source code buffers become more accessible since
+they automatically link to references, e.g., a variable named ~parser~ now links
+to my radio target note associated with parsers.
+
+#+begin_src emacs-lisp 
+(use-package hyperbole)
+(hyperbole-mode +1)
+(setq hsys-org-enable-smart-keys t)
+#+end_src
+
+*Turn every document into Hypertext --without any markup.*
+#+begin_src plantuml :file images/hyperbole.png :theme neutral :background-color green  :tangle no :results replace :eval never-export
+title Hypebole: Automatically treating structured text as hyper-text
+
+rectangle A [{{
+ title Text Patterns
+ [Email Addresses \nuser@domain.com]
+ [URLs \nhttps://alhassy.com]
+ [Git Commits \nabc123]
+ [Bug References \nbug#456]
+}}]
+
+rectangle B [{{
+ title Actions
+ "Open Email Client"
+ "Launch Browser"
+ "Git Show Command"
+ "Bug Tracker"
+}}]
+
+
+ node "Pattern \nRecognition \nEngine" as P
+ A -> P : "Matches \nPattern"
+ P -> B : "Runs \nAction" 
+#+end_src
+
+#+RESULTS[b1376484b86dc9a3556979618c3ce557bf889ab7]:
+[[file:images/hyperbole.png]]
+
+| Press ~M-ENTER~ on …                                            | ‘smart action’                                                                      |
+|---------------------------------------------------------------+-------------------------------------------------------------------------------------|
+| A file path =~/Dropbox/=                                        | Open the directory in ~dired~ or open the file                                        |
+| Any URL, (even enclosed in quotes in programming)             | Open the URL in your default browser                                                |
+| An org headline                                               | Toggle visibility                                                                   |
+| An org ~TODO~ keyword                                           | Change TODO state                                                                   |
+| On a button ~{M-x animate-birthday-present RETURN Musa RETURN}~ | Execute it                                                                          |
+| Anywhere else in an Org file                                  | Usual ~M-RET~; i.e., org-meta-return                                                  |
+| On a delimiter ~<me and you>~                                   | Highlight delimited contents                                                        |
+| On a shell command =!pwd= or ~"!fortune ∣ cowsay"~                | Actually execute the shell command                                                  |
+| On the phrase ~commit 0014~                                     | See the git log for the commit starting with ~0014~                                   |
+| Email addresses ~me@you.com~                                    | Compose an email to that email address                                              |
+| "~/.emacs.d/init.org#Lisp Programming"                        | Go to heading ~* Lisp Programming~ in the declared Org file                           |
+| =~/.emacs.d/init.org:334=                                       | Go to line 334, also ~L334~ works just as fine                                        |
+| "~/work/CoolStuff.java#interface Foo"                         | Do a regex search for ~interface Foo~ in ~CoolStuff.java~ and place me at the first hit |
+| ~/.bashrc:L20:C5                                              | Open ~/.bashrc to line 20, column 5                                                 |
+| ~/.bashrc:20:5                                                | Open ~/.bashrc to line 20, column 5                                                 |
+| ~facebook@MiyagiGojuRyuKarate~ or ~instagram#food~                | Jump to that social media page, or search                                           |
+|---------------------------------------------------------------+-------------------------------------------------------------------------------------|
+| ~Parser, Semantics, Akrasia, Abstraction, …~                    | Jump to the defining radio ~<<<𝑿>>>~ link /in whatever file defines it/                |
+| ~MyModule::72~                                                  | Find a file ~MyModule.*~ /anywhere/ in my work directory, then jump to line 72          |
+| ~PROJ-1234~                                                     | Open my work's bug tracker for this ticket                                          |
+
+If I want to be presented with options on what to do at point, instead of “the
+smart thing”, then I can use the ~embark-act~ method of the Embark package.  For
+example, on an Org heading ~embark-act~ shows me actions related to headlines:
+Adding tags, cycling visibility, adding properties, etc.
+
+Anyhow, the neato thing here is that a simple string =~/Dropbox/= automatically
+becomes a clickable link (albeit via ~M-RET~). Hyperbole calls such pieces of text
+“implicit buttons” since no effort from the user ---i.e., me!--- is required to
+make them ‘clickable’. In contrast, plain Org mode would have me write
+~file:~/Dropbox~ and now this is clickable ---no ~M-RET~ required, just ~RET~.
+Likewise, Org links ~[[elisp:(message-box "Hello, World")]]~ and
+~[[elisp:(execute-kbd-macro (kbd "C-x 3 C-x o"))]]~ become Hyperbole buttons
+~{message-box "Hello, World"}~ and ~{C-x 3 C-x o}~. Besides the cosmetic, Hyperbole
+buttons work /everywhere/, unlike Org links.
+
++ ~M-RET~ does the “smart thing” at point.
++ ~C-u M-RET~ describes what that “smart thing” is.
+
+Org mode and Hyperbole both target the “personal knowledge management” domain;
+e.g., links to jump around text, outlining, records (Org mode does it via Org
+Properties). For now, I lean mostly on Org mode since it is also task and date
+aware; e.g., ~* STARTED Write Proposal <2025-05-20 Tue .+1d>~.  Respectfully,
+Hyperbole has features that Org mode does not ---namely, implicit buttons.
+#+begin_quote
+Automatically match text in all buffers, to actions; example: if a URL is seen,
+a special action can open a browser to visit it; for files, open the file; for
+org-mode files, open them up and jump to the referred section, etc. No need for
+special markup.
+#+end_quote
+
+Press ~M-RET~ on ~"(hyperbole)Implicit Button Types"~ to learn more about implicit
+buttons ---this itself is an implicit button for Info; i.e., ~(info
+"(hyperbole)Implicit Button Types")~. Note, in Org mode, we can just write:
+<info:Hyperbole # Implicit Button Types>.
+
+⚠️ One thing I currently dislike is that ~M-RET~ in an Org enumeration
+scrolls down a screen-ful rather than introduce a new item. TODO: Fix this.
+For now, ~M-S-RET~ introduces new items, but with a checkbox.
+
+** ~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”
+:PROPERTIES:
+:CREATED:  [2025-05-21 Wed 07:42]
+:END:
+
+In my notes, I often have references of the form ~my-file::interface_foo~ or
+~my-file::123~ to mean “open the file ~my-file.java~, which is nested /somewhere/ in
+my work directory, and jump to the given regex, or line number”.  *I rarely know
+off-the-top of my head where ~my-file~ is located!* It's often unique, so let's
+automate this search ---following [[https://www.beorgapp.com/blog/hyperbole-implicit-buttons/][Teaching Emacs to recognize Jira tickets and
+show them in a browser using Hyperbole implicit buttons]] and [[https://ginabythebay.studio/posts/implicit-buttons-are-cool/][Implicit Buttons Are
+Cool]].
+
+#+begin_src emacs-lisp
+(defun my/open-::-file-path (path)
+  "PATH is something like FooModule::72 or FooModule::interface_bar"
+  ;; (message-box path)
+  (-let [(file regex) (s-split "::" path)]
+    ;; brew install fd
+    ;; NOTE: fd is fast!
+    (-let [results (shell-command-to-string (format "fd \"^%s\\..*$\" %s" file my\work-dir))]
+      ;; (message-box results)
+      (find-file (car (s-split "\n" results)))
+      (-let [line (string-to-number regex)]
+        (if (= 0 line)
+            (progn (beginning-of-buffer) ;; In case file already open
+                   (re-search-forward (s-replace "_" " " regex) nil t))
+          (goto-line line))))))
+
+(defib my/::-file-paths ()
+  "Find the file whose name is at point and jump to the given regex or line number."
+  (let ((case-fold-search t)
+        (path-id nil)
+        (my-regex "\\b\\(\\w+::[^ ]+\\)"))
+    (if (or (looking-at my-regex)
+            (save-excursion
+              (my/move-to-::-phrase-start)
+              (looking-at my-regex)))
+        (progn (setq path-id (match-string-no-properties 1))
+               (ibut:label-set path-id
+                               (match-beginning 1)
+                               (match-end 1))
+               (hact 'my/open-::-file-path path-id)))))
+
+
+(defun my/move-to-::-phrase-start ()
+  "Move cursor to the start of a phrase like MyFile::13."
+  (interactive)
+  (let ((case-fold-search t)
+        (pattern "\\b\\(\\w+::[^ ]+\\)")
+        (max-lookback 20)  ; Maximum distance to look back
+        (pos (point)))
+      (catch 'found
+        (while (and (> pos (point-min))
+                   (<= (- pos (point)) max-lookback))
+          (goto-char pos)
+          (when (looking-at pattern)
+            (goto-char (match-beginning 0))
+            (throw 'found t))
+          (setq pos (1- pos))))))
+
+;; Some highlighting so I'm prompted to use “M-RET”
+(font-lock-add-keywords
+ 'org-mode
+ '(("\\b[^ ]*::[^ ]*" 0 'highlight prepend))
+ t) 
+#+end_src
+
+Now I just write ~MyModule::interface_Foo~ instead of
+=~/work/some/deep/directory/MyModule.java#interface Foo=, and =M-RET= takes me
+there!
+
+** Fontify Org Radio Targets and have ~M-RET~ Jump to Them
+:PROPERTIES:
+:CREATED:  [2025-05-21 Wed 06:49]
+:END:
+
+By default, radio targets ~<<<some phrase>>>~ only work within a single buffer
+file. Below I get them to work for multiple files, so that, for example, /in any
+buffer/ the phrase ~parser~ is highlighted and when I ~M-RET~ on it then I jump to
+the associated definition. Since I use regexes for highlighting and downcase
+everything when doing the actual lookup, variations in capitalisation such as
+~Parser~ or ~pArSeR~ work fine.
+
+#+begin_src emacs-lisp
+(defun get-radio-targets ()
+  "Extract all radio targets from the current Org buffer"
+  (interactive)
+  (let ((targets nil)
+        (case-fold-search t))
+    (cl-loop for file in (cons "~/.emacs.d/init.org" org-agenda-files)
+             do (save-excursion
+                  (find-file file)
+                  (save-restriction
+                    (widen)
+                    (goto-char (point-min))
+                    (while (re-search-forward "<<<\\(.*?\\)>>>" nil t)
+                      (push (list (downcase (substring-no-properties (match-string 1))) file (line-number-at-pos)) targets)))))
+    targets))
+
+(setq my/radio-targets (get-radio-targets))
+(setq my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
+
+(font-lock-add-keywords
+ 'org-mode
+ (--map (list (cl-first it) 0 ''highlight 'prepend) my/radio-targets)
+ t)
+
+
+;; In programming modes, just show an underline.
+(add-hook
+ 'prog-mode-hook
+ (lambda ()
+   (font-lock-add-keywords
+    nil
+    (--map (list (cl-first it) 0 ''(:underline t) 'prepend) my/radio-targets)
+    t)))
+
+
+(defun my/jump-to-radio (radio)
+  "RADIO is a downcased name."
+  (-let [(name file line) (assoc radio my/radio-targets)]
+    (find-file file)
+    (goto-line line)))
+
+
+(defib my/radio-target ()
+  "Jump to the definition of this word, as an Org radio target"
+  (let ((case-fold-search t)
+        (radio nil))
+    (if (or (looking-at my/radio-regex)
+            (save-excursion
+              (re-search-backward "\\b")
+              (looking-at my/radio-regex)))
+        (progn (setq radio (downcase (match-string-no-properties 0)))
+               (ibut:label-set radio
+                               (match-beginning 0)
+                               (match-end 0))
+               (hact 'my/jump-to-radio radio)))))
+#+end_src
+
+** HyRolo: Treating Org files as a rolodex
+:PROPERTIES:
+:CREATED:  [2025-05-21 Wed 07:03]
+:END:
+
+The Hyperbole package “HyRolo” works with semistructured data and recognises Org
+entries, so with ~(setq hyrolo-file-list org-agenda-files)~ we can quickly look
+through our “rolodex entries” with {C-h h r r}. This is neat, but I am not
+actively using this approach since there are more Org-focused tools.  For more
+details, [[https://github.com/termitereform/JunkPile/blob/master/HyperboleNotes2.org#hyperbole-odyssey-two][see this article.]]
+ 

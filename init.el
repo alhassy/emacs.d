@@ -3521,6 +3521,10 @@ Usage:
 (bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))
 ;; Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1 ends here
 
+# [[file:init.org::*Why the evening ritual reduces anxiety?][Why the evening ritual reduces anxiety?:1]]
+*** End-of-workday Shut-down Ritual: ~C-c r d~         <2025-04-14 Mon 15:30-15:45 +1d>
+# Why the evening ritual reduces anxiety?:1 ends here
+
 ;; [[file:init.org::*Questionnaire setup][Questionnaire setup:1]]
 (require 'eieio)
 
@@ -3667,7 +3671,9 @@ and 2 of them are randomly selected as part of the daily review.
 (defun my/read-daily-review-properties ()
   "Returns a list of (PROPERTY . VALUE) pairs that could be `org-set-property' on a headline.
 
-Makes use of `my/daily-review-questionnaire'."
+Makes use of `my/daily-review-questionnaire'.
+
+At any time, press `C-.' to toggle adding a customised explanatory note to go along with a selection."
   (-let [(mandatory-questions random-questions) (-split-on :random my/daily-review-questionnaire)] 
     (let* ((max-possible-score 0)
            (properties
@@ -3684,19 +3690,30 @@ Makes use of `my/daily-review-questionnaire'."
                            (if is-open-ended?
                                (read-from-minibuffer prompt)
                              (cl-incf max-possible-score (apply #'max (mapcar #'my/option-score options)))
-                             (consult--read (--map (my/option-label it) options)
-                                            :prompt prompt
-                                            :require-match t
-                                            :annotate (lambda (label)
-                                                        (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))
-                                            :lookup (lambda (label _ _ _)
-                                                      (-let [option (assoc-by-label options label)]
-                                                        ;; If label ends in “…”, prompt for a note.
-                                                        (when (s-ends-with? "…" label)
-                                                          (-let [note (s-trim (read-from-minibuffer "Care to elaborate? [ENTER to skip] "))]
-                                                            (unless (s-blank? note)
-                                                              (setf (my/option-description option) note))))
-                                                        (pretty-print option)))))))))
+                             ;; If the user presses “C-.” they toggle on “note entry”.
+                             (let (note-has-been-requested
+                                   (my/note-map (make-sparse-keymap)))
+                               (define-key my/note-map (kbd "C-.")
+                                           (lambda () (interactive)
+                                             (setq note-has-been-requested (not note-has-been-requested))
+                                             (message (if note-has-been-requested "[You can enter a note after making a selection!]"
+                                                        "[No entry note will be requested after selection.]"))))
+                               (set-keymap-parent my/note-map minibuffer-local-map) ;; So that ⟨ENTER⟩ finalises the minibuffer, and not a literal new line!
+                               (minibuffer-with-setup-hook
+                                   (lambda () (use-local-map (copy-keymap my/note-map)))
+                                 (consult--read (--map (my/option-label it) options)
+                                                :prompt prompt
+                                                :require-match t
+                                                :annotate (lambda (label)
+                                                            (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))                                                
+                                                :lookup (lambda (label _ _ _)
+                                                          (-let [option (assoc-by-label options label)]
+                                                            ;; If label ends in “…” or “C-.” pressed, prompt for a note.
+                                                            (when (or (s-ends-with? "…" label) note-has-been-requested)
+                                                              (-let [note (s-trim (read-from-minibuffer "Enter an explanatory note [ENTER to skip] "))]
+                                                                (unless (s-blank? note)
+                                                                  (setf (my/option-description option) note))))
+                                                            (pretty-print option)))))))))))
       ;; Prepend a computed “daily score” property. Hopefully this value increases with time.
       (cons
        (thread-last properties
@@ -3763,7 +3780,7 @@ Further reading:
               
               (insert (my/fancy-date-string) " ") 
               ;; Let's add some properties by prompting the user, me.
-              (-let [properties (when nil my/read-daily-review-properties)]
+              (-let [properties (my/read-daily-review-properties)]
                 (cl-loop for (property . value) in properties
                          do (org-set-property property value))
                 ;; Add Daily Score to the start of the headline
@@ -3819,10 +3836,13 @@ Further reading:
               
               (insert "\n#+end_stats_of_the_day\n\n")
 
+              (my/show-life-purpose-statement-then-remove-it-after-I-read-it)
 
               (insert "\n💬" (my/word-of-the-day))
+              (org-fill-paragraph)
               
               ;; I think it'd be neat to insert my clocked-in / logs of the day here.
+              ;; Look at what I clocked into this day/week! Get a great idea of what I've done with my time, in detail. Also, see ~C-c a v L~.
               (save-excursion ;; I want cursor to stay here.
                 (let (todays-agenda org-agenda-finalize-hook)
                   (org-agenda-list 1)
@@ -3831,13 +3851,40 @@ Further reading:
                   (org-agenda-quit)
                   (insert "\n\n#+begin_agenda_for_the_day\n")
                   (insert todays-agenda)
-                  (insert "#+end_agenda_for_the_day\n")
-                  (insert "⟨🤔 Did I get everything I wanted done? Perhaps, I underestimated time for things? 🗯️⟩")))
+                  (insert "#+end_agenda_for_the_day")
+                  (insert "\n⟨🤔 Did I get everything I wanted done? Perhaps, I underestimated time for things? 🗯️⟩")
+                  (insert "\n~C-c a w v c~ to check for time gaps and review time for the past week. And to see what I worked on, and where I spent too much time or too little.")))
+              (insert "\nSay, “Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)”")
+
+              
               ;;
               ;; MA: Consider adding other journal prompts here, whose replies may be long-form.
               ;; E.g., pick one, or two, random prompts.
               (message "To journal is to live; congratulations on another entry!")))
 
+
+
+
+
+
+(cl-defun my/show-life-purpose-statement-then-remove-it-after-I-read-it ()
+  (set-mark-command nil)
+  (-let [purpose "                   When people say “What are you doing?”,                   
+                        You say ⟪“Things that please me.”⟫                  
+                          They say “Toward what end?”,                      
+                            and you say ⟪“Pleasure.”⟫                       
+                They say “But really, what are you working on?”             
+                         You say ⟪“Having a good time!”⟫                    
+"]
+    ;; NOTE: explore more faces via M-x highlight-phrase.
+    (insert (propertize purpose 'font-lock-face 'hi-green)))
+  (while (not (equal "yes"
+                     (consult--read '("yes" "no") :prompt "Read “Life Purpose”?"
+                                    :annotate (lambda (it) (format " ⟨%s⟩"
+                                                              (if (equal it "no")
+                                                                  "C'mon man, read it"
+                                                                "That's right, live the good life!")))))))
+  (backward-delete-char 1))
 
 
 
@@ -3993,16 +4040,17 @@ Further reading:
 (load-file "~/Dropbox/private.el") ;; Loads “my\⋯” variables
 ;;
 (cl-defun my/age-in-days-weeks-years (&optional (birthdate my\birthday))
-  "Prompt for birthdate (YYYY-MM-DD) and display age in days, weeks, and years."
+  "Prompt for birthdate (YYYY-MM-DD) and display age in days, weeks, months, and years."
   (interactive)
   (let* ((birth-time (date-to-time (concat birthdate " 00:00:00")))
          (now (current-time))
          (days-old (/ (float-time (time-subtract now birth-time)) 86400))
          (weeks-old (/ days-old 7))
+         (months-old (/ days-old 30.44)) ;; average month length
          (years-old (/ days-old 365.25))) ;; approximate year with leap years
-    (cl-format nil "I am now ~:d days old, which is ~:d weeks old, which is ~,1f years old"
-               (floor days-old) (floor weeks-old) years-old)))
-;;
+    (cl-format nil "I am now ~:d days old; which is ~:d weeks old; which is ~:d months old; which is ~,1f years old."
+               (floor days-old) (floor weeks-old) (floor months-old) years-old)))
+;; 
 ;; Elisp's “format” is not as capable as Common Lisp's “format”.
 ;; E.g., there's no equivalent of (cl-format nil "~:d" 1000000)
 ;; which prints numbers with comma separators.
@@ -4106,7 +4154,9 @@ TODO:
     (cl-defun my/yank-html-media (_media-type contents)
       (insert (s-replace " " " " (shell-command-to-string
                                   (-let [delimiter "EOF"] ;; A unique “here-document delimiter”, unlikely to be part of ‘contents’
-                                    (format "pandoc -f html -t org <<%s\n%s\n%s" delimiter contents delimiter)))))))
+                                    ;; NOTE: `shell-quote-argument` does too much here; e.g., copied code blocks wont paste nicely.
+                                    ;; For now, I want $FOO to be pasted as itself, and not interpreted as a Shell variable.
+                                    (format "pandoc -f html -t org <<%s\n%s\n%s" delimiter (s-replace "$" "\\$" contents) delimiter)))))))
 
    (yank-media-handler
     "STRING"
@@ -4893,3 +4943,121 @@ method."
 
   )
 ;; Testing that things are as they should be:1 ends here
+
+;; [[file:init.org::*Hyperbole: “DWIM at point”][Hyperbole: “DWIM at point”:1]]
+(use-package hyperbole)
+(hyperbole-mode +1)
+(setq hsys-org-enable-smart-keys t)
+;; Hyperbole: “DWIM at point”:1 ends here
+
+;; [[file:init.org::*~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”][~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1]]
+(defun my/open-::-file-path (path)
+  "PATH is something like FooModule::72 or FooModule::interface_bar"
+  ;; (message-box path)
+  (-let [(file regex) (s-split "::" path)]
+    ;; brew install fd
+    ;; NOTE: fd is fast!
+    (-let [results (shell-command-to-string (format "fd \"^%s\\..*$\" %s" file my\work-dir))]
+      ;; (message-box results)
+      (find-file (car (s-split "\n" results)))
+      (-let [line (string-to-number regex)]
+        (if (= 0 line)
+            (progn (beginning-of-buffer) ;; In case file already open
+                   (re-search-forward (s-replace "_" " " regex) nil t))
+          (goto-line line))))))
+
+(defib my/::-file-paths ()
+  "Find the file whose name is at point and jump to the given regex or line number."
+  (let ((case-fold-search t)
+        (path-id nil)
+        (my-regex "\\b\\(\\w+::[^ ]+\\)"))
+    (if (or (looking-at my-regex)
+            (save-excursion
+              (my/move-to-::-phrase-start)
+              (looking-at my-regex)))
+        (progn (setq path-id (match-string-no-properties 1))
+               (ibut:label-set path-id
+                               (match-beginning 1)
+                               (match-end 1))
+               (hact 'my/open-::-file-path path-id)))))
+
+
+(defun my/move-to-::-phrase-start ()
+  "Move cursor to the start of a phrase like MyFile::13."
+  (interactive)
+  (let ((case-fold-search t)
+        (pattern "\\b\\(\\w+::[^ ]+\\)")
+        (max-lookback 20)  ; Maximum distance to look back
+        (pos (point)))
+      (catch 'found
+        (while (and (> pos (point-min))
+                   (<= (- pos (point)) max-lookback))
+          (goto-char pos)
+          (when (looking-at pattern)
+            (goto-char (match-beginning 0))
+            (throw 'found t))
+          (setq pos (1- pos))))))
+
+;; Some highlighting so I'm prompted to use “M-RET”
+(font-lock-add-keywords
+ 'org-mode
+ '(("\\b[^ ]*::[^ ]*" 0 'highlight prepend))
+ t)
+;; ~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1 ends here
+
+;; [[file:init.org::*Fontify Org Radio Targets and have ~M-RET~ Jump to Them][Fontify Org Radio Targets and have ~M-RET~ Jump to Them:1]]
+(defun get-radio-targets ()
+  "Extract all radio targets from the current Org buffer"
+  (interactive)
+  (let ((targets nil)
+        (case-fold-search t))
+    (cl-loop for file in (cons "~/.emacs.d/init.org" org-agenda-files)
+             do (save-excursion
+                  (find-file file)
+                  (save-restriction
+                    (widen)
+                    (goto-char (point-min))
+                    (while (re-search-forward "<<<\\(.*?\\)>>>" nil t)
+                      (push (list (downcase (substring-no-properties (match-string 1))) file (line-number-at-pos)) targets)))))
+    targets))
+
+(setq my/radio-targets (get-radio-targets))
+(setq my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
+
+(font-lock-add-keywords
+ 'org-mode
+ (--map (list (cl-first it) 0 ''highlight 'prepend) my/radio-targets)
+ t)
+
+
+;; In programming modes, just show an underline.
+(add-hook
+ 'prog-mode-hook
+ (lambda ()
+   (font-lock-add-keywords
+    nil
+    (--map (list (cl-first it) 0 ''(:underline t) 'prepend) my/radio-targets)
+    t)))
+
+
+(defun my/jump-to-radio (radio)
+  "RADIO is a downcased name."
+  (-let [(name file line) (assoc radio my/radio-targets)]
+    (find-file file)
+    (goto-line line)))
+
+
+(defib my/radio-target ()
+  "Jump to the definition of this word, as an Org radio target"
+  (let ((case-fold-search t)
+        (radio nil))
+    (if (or (looking-at my/radio-regex)
+            (save-excursion
+              (re-search-backward "\\b")
+              (looking-at my/radio-regex)))
+        (progn (setq radio (downcase (match-string-no-properties 0)))
+               (ibut:label-set radio
+                               (match-beginning 0)
+                               (match-end 0))
+               (hact 'my/jump-to-radio radio)))))
+;; Fontify Org Radio Targets and have ~M-RET~ Jump to Them:1 ends here

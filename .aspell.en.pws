@@ -1,4 +1,4 @@
-personal_ws-1.1 en 428 
+personal_ws-1.1 en 431 
 ACSII
 AST
 ASTs
@@ -42,6 +42,7 @@ Excerption
 Executables
 Falah
 Fallsview
+Fontify
 GDoc
 Genericity
 Gerrit
@@ -329,6 +330,7 @@ overhwheliming
 parallelize
 parameterisation
 parenthesisation
+parsers
 pointfree
 pointwise
 polymorphism
@@ -355,6 +357,7 @@ rebased
 redistributable
 reduct
 referentially
+regexes
 repl
 representable
 requireds
