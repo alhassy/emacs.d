@@ -15203,6 +15203,69 @@ Notes:
 - (org-media-image-save-type, org-dnd-default-attach-method): New defcustoms.
 - Add yank-media and DND handlers: (org--image-yank-media-handler, org--copied-files-yank-media-handler) (org--dnd-local-file-handler)
 
+** [Conversely,] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=
+:PROPERTIES:
+:CREATED:  [2025-01-20 Mon 11:27]
+:END:
+
+Authoring pretty comments (with colourful code blocks) in Jira can be done
+easily by composing them in Org mode, then invoking ~my/copy-as-jira~.
+
+#+begin_src emacs-lisp
+(cl-defun my/copy-as-jira ()
+  "Export region to Jira markdown, and copy to the kill ring for pasting into other programs."
+  (interactive)
+  (use-package ox-jira)
+  (message "Converting to Jira Markdown...")
+  (kill-new (org-export-as 'jira))
+  (message "Copied as Jira Markdown!"))
+
+
+(cl-defun my/copy-as-reddit ()
+  "Export region to Reddit (i.e., Github Flavoured Markdown), and copy to the kill ring for pasting into other programs.
+
+   “Mode for Reddit”: Conversely, to read Reddit within Emacs,
+   (use-package md4rd :config (setq md4rd-subs-active '(emacs clojure shia)))
+   then “M-x md4rd”."
+  (interactive)
+  (use-package ox-gfm)
+  (message "Converting to Reddit Markdown...")
+  (kill-new (org-export-as 'gfm))
+  (message "Copied as Reddit Markdown!"))
+
+
+(cl-defun my/copy-as-slack ()
+  "Export region to slack, and copy to the kill ring for pasting into other programs."
+  (interactive)
+  (use-package ox-slack)
+  (message "Converting to Slack Markdown...")
+  (kill-new (org-export-as 'slack))
+  (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))
+
+
+(cl-defun my/copy-as-confluence ()
+  "Export region to Confluence, and copy to the kill ring for pasting into other programs.
+
+More precisely, export the selected region to HTML and copy it to the clipboard.
+
+Note: Confluence has no markup language, it's a WYSIWYG editor,
+but it does recognise formatted text, such as what you copy off a webpage."
+  (interactive)
+  (message "Converting to Confluence Markdown...")
+  ;; NOTE: Consider using https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/ox-confluence.el
+  (kill-new (org-export-as 'html))
+  (message "Copied as Confluence Markdown!"))
+#+end_src
+
+
+Note: There is a package [[https://github.com/sshaw/copy-as-format][copy-as-format]] which is an “Emacs function to copy
+buffer locations as GitHub/Slack/JIRA etc... *formatted code*.”  That is, it takes
+my region [[https://github.com/sshaw/copy-as-format/blob/master/copy-as-format.el#L208][and wraps it in ```]], more-or-less. 😦 Not terribly useful.
+
+
+Finally, there is the package [[https://github.com/etern/edit-as-format][edit-as-format]]: It will allow me to edit, say, a
+markdown file using Org syntax 😻
+
 ** Attachments: Making external files into TODOs or Reference Matter :ATTACH:
 :PROPERTIES:
 :CREATED:  [2025-04-27 Sun 05:37]
@@ -16491,75 +16554,6 @@ org-agenda-custom-commands
 #+end_src
 
 * --------------------------------------------------------------------------------
-* Working with others
-:PROPERTIES:
-:CREATED:  [2025-01-20 Mon 11:27]
-:END:
-** Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=
-:LOGBOOK:
-CLOCK: [2024-05-05 Sun 16:01]--[2024-05-05 Sun 16:48] =>  0:47
-:END:
- Captured: [2024-05-05 Sun 16:01]
-
-
-Authoring pretty comments (with colourful code blocks) in Jira can be done
-easily by composing them in Org mode, then invoking ~my/copy-as-jira~.
-
-#+begin_src emacs-lisp
-(cl-defun my/copy-as-jira ()
-  "Export region to Jira markdown, and copy to the kill ring for pasting into other programs."
-  (interactive)
-  (use-package ox-jira)
-  (message "Converting to Jira Markdown...")
-  (kill-new (org-export-as 'jira))
-  (message "Copied as Jira Markdown!"))
-
-
-(cl-defun my/copy-as-reddit ()
-  "Export region to Reddit (i.e., Github Flavoured Markdown), and copy to the kill ring for pasting into other programs.
-
-   “Mode for Reddit”: Conversely, to read Reddit within Emacs,
-   (use-package md4rd :config (setq md4rd-subs-active '(emacs clojure shia)))
-   then “M-x md4rd”."
-  (interactive)
-  (use-package ox-gfm)
-  (message "Converting to Reddit Markdown...")
-  (kill-new (org-export-as 'gfm))
-  (message "Copied as Reddit Markdown!"))
-
-
-(cl-defun my/copy-as-slack ()
-  "Export region to slack, and copy to the kill ring for pasting into other programs."
-  (interactive)
-  (use-package ox-slack)
-  (message "Converting to Slack Markdown...")
-  (kill-new (org-export-as 'slack))
-  (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))
-
-
-(cl-defun my/copy-as-confluence ()
-  "Export region to Confluence, and copy to the kill ring for pasting into other programs.
-
-More precisely, export the selected region to HTML and copy it to the clipboard.
-
-Note: Confluence has no markup language, it's a WYSIWYG editor,
-but it does recognise formatted text, such as what you copy off a webpage."
-  (interactive)
-  (message "Converting to Confluence Markdown...")
-  ;; NOTE: Consider using https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/ox-confluence.el
-  (kill-new (org-export-as 'html))
-  (message "Copied as Confluence Markdown!"))
-#+end_src
-
-
-Note: There is a package [[https://github.com/sshaw/copy-as-format][copy-as-format]] which is an “Emacs function to copy
-buffer locations as GitHub/Slack/JIRA etc... *formatted code*.”  That is, it takes
-my region [[https://github.com/sshaw/copy-as-format/blob/master/copy-as-format.el#L208][and wraps it in ```]], more-or-less. 😦 Not terribly useful.
-
-
-Finally, there is the package [[https://github.com/etern/edit-as-format][edit-as-format]]: It will allow me to edit, say, a
-markdown file using Org syntax 😻
-
 * Hyperbole: “DWIM at point”
 :PROPERTIES:
 :CREATED:  [2025-05-20 Tue 19:02]
