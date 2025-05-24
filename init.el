@@ -444,297 +444,14 @@ Is replaced by:
 (use-package helm-osx-app)
 ;; For non-MacOS, we can use [[https://github.com/d12frosted/counsel-osx-app][counsel-osx-app]], whose name is misleading.
 
-;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:1]]
-(setq org-use-speed-commands t)
-;; Manipulating Sections:1 ends here
-
-;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:2]]
-;; When refiling, only show me top level headings [Default]. Sometimes 2 is useful.
-;; When I'm refiling my TODOS, then give me all the freedom.
-(setq org-refile-targets '((nil :maxlevel . 1)
-                           (org-agenda-files :maxlevel . 9)))
-
-;; Maybe I want to refile into a new heading; confirm with me.
-(setq org-refile-allow-creating-parent-nodes 'confirm)
-
-;; Use full outline paths for refile targets
-;; When refiling, using Helm, show me the hierarchy paths
-(setq org-outline-path-complete-in-steps nil)
-(setq org-refile-use-outline-path 'file-path)
-;; Manipulating Sections:2 ends here
-
-;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:3]]
-;; TODO FIXME Crashes upon startup.
-(when nil (add-to-list 'org-speed-commands (cons "P" #'org-set-property)))
-;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
-;; Manipulating Sections:3 ends here
-
-;; [[file:init.org::#Seamless-Navigation-Between-Source-Blocks][Seamless Navigation Between Source Blocks:1]]
-;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
-;;
-(require 'org)
-(use-package emacs
-  :bind (:map org-mode-map
-              ("s-p" . org-babel-previous-src-block)
-              ("s-n" . org-babel-next-src-block)
-              ("s-e" . org-edit-special)
-              :map org-src-mode-map
-              ("s-e" . org-edit-src-exit)))
-;; Seamless Navigation Between Source Blocks:1 ends here
-
-;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:1]]
-;; Seamless use of babel: No confirmation upon execution.
-;; Downside: Could accidentally evaluate harmful code.
-(setq org-confirm-babel-evaluate nil)
-
-;; Never evaluate code blocks upon export and replace results when evaluation does occur.
-;; For a particular language 𝑳, alter ‘org-babel-default-header-args:𝑳’.
-(setq org-babel-default-header-args
-      '((:results . "replace")
-        (:session . "none")
-        (:exports . "both")
-        (:cache .   "no")
-        (:noweb . "no")
-        (:hlines . "no")
-        (:tangle . "no")
-        (:eval . "never-export")))
-;; Executing code from ~src~ blocks:1 ends here
-
-;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
-(defvar my/programming-languages
-  '(emacs-lisp shell python haskell
-      ;; rust ;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
-    ruby ocaml dot latex org js css
-               sqlite C) ;; Captial “C” gives access to C, C++, D
-  "List of languages I have used in Org-mode, for literate programming.")
-
-;; Load all the languagues
-;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
-(ignore-errors (cl-loop for lang in my/programming-languages
-                        do (require (intern (format "ob-%s" lang)))))
-;;
-(org-babel-do-load-languages
- 'org-babel-load-languages
- (--map (cons it t) my/programming-languages))
-
-;; Preserve my indentation for source code during export.
-(setq org-src-preserve-indentation t)
-
-;; The export process hangs Emacs, let's avoid this.
-;; MA: For one reason or another, this crashes more than I'd like.
-;; (setq org-export-in-background t)
-;; Executing code from ~src~ blocks:2 ends here
-
-;; [[file:init.org::#Executing-all-name-startup-code-for-local-configurations][Executing all =#+name: startup-code= for local configurations:1]]
-(defun my/execute-startup-blocks ()
-  "Execute all startup blocks, those named ‘startup-code’.
-
-I could not use ORG-BABEL-GOTO-NAMED-SRC-BLOCK since it only goes
-to the first source block with the given name, whereas I'd like to
-visit all blocks with such a name."
-  (interactive)
-  (save-excursion
-    (goto-char 0)
-    (while (ignore-errors (re-search-forward "^\\#\\+name: startup-code"))
-      (org-babel-execute-src-block))))
-;; Executing all =#+name: startup-code= for local configurations:1 ends here
-
-;; [[file:init.org::#Executing-all-name-startup-code-for-local-configurations][Executing all =#+name: startup-code= for local configurations:2]]
-;; Please ask me on a file by file basis whether its local variables are ‘safe’
-;; or not. Use ‘!’ to mark them as permanently ‘safe’ to avoid being queried
-;; again for the same file.
-(setq enable-local-variables t)
-;; Executing all =#+name: startup-code= for local configurations:2 ends here
-
-;; [[file:init.org::#Prettify-inline-source-code][Prettify inline source code:1]]
-;; Show “ src_emacs-lisp[:exports results]{ 𝒳 } ” as “ ℰ𝓁𝒾𝓈𝓅﴾ 𝒳 ﴿ ”.
-;;
-(font-lock-add-keywords 'org-mode
-  '(("\\(src_emacs-lisp\\[.*]{\\)\\([^}]*\\)\\(}\\)"
-  (1 '(face (:inherit (bold) :foreground "gray65") display "ℰ𝓁𝒾𝓈𝓅﴾"))
-  (2 '(face (:foreground "blue")))
-  (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
-    )))
-;;
-;; Let's do this for all my languages:
-;; Show “ src_LANGUAGE[…]{ ⋯ } ” as “ ﴾ ⋯ ﴿ ”.
-(cl-loop for lang in my/programming-languages
-         do (font-lock-add-keywords 'org-mode
-               `(( ,(format "\\(src_%s\\[.*]{\\)\\([^}]*\\)\\(}\\)" lang)
-                  (1 '(face (:inherit (bold) :foreground "gray65") display "﴾"))
-                  (2 '(face (:foreground "blue")))
-                  (3 '(face (:inherit (bold) :foreground "gray65") display "﴿"))
-                  ))))
-
-;;
-(defun my/toggle-line-fontification ()
-  "Toggle the fontification of the current line"
-  (interactive)
-  (defvar my/toggle-fontify/current-line -1)
-  (defvar my/toggle-fontify/on? nil)
-  (add-to-list 'font-lock-extra-managed-props 'display)
-  (let ((start (line-beginning-position)) (end (line-end-position)))
-    (cond
-     ;; Are we toggling the current line?
-     ((= (line-number-at-pos) my/toggle-fontify/current-line)
-      (if my/toggle-fontify/on?
-          (font-lock-fontify-region start end)
-        (font-lock-unfontify-region start end))
-      (setq my/toggle-fontify/on? (not my/toggle-fontify/on?)))
-     ;; Nope, we've moved on to another line.
-     (:otherwise
-      (setq my/toggle-fontify/current-line (line-number-at-pos)
-            my/toggle-fontify/on? :yes_please_fontify)
-      (font-lock-unfontify-region  start end)))))
-
-  ;; TODO FIXME; maybe ignore: Wasted too much time here already.
-;; (add-hook 'post-command-hook #'my/toggle-line-fontification nil t)
-;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
-;; Prettify inline source code:1 ends here
-
-;; [[file:init.org::*Unfold Org Headings when I perform a search][Unfold Org Headings when I perform a search:1]]
-(setq org-fold-core-style 'overlays)
-;; Unfold Org Headings when I perform a search:1 ends here
-
-;; [[file:init.org::*The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved][The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved:1]]
-(defmacro org-deftag (name args docstring &rest body)
-  "Re-render an Org section in any way you like, by tagging the section with NAME.
-
-That is to say, we essentially treat tags as functions that act on Org headings:
-We redefine Org sections for the same purposes as Org special blocks.
-
-The “arguments” to the function-tag can be declared as Org properties, then
-the function can access them using the `o-properties' keyword as in
-   (-let [(&plist :file :date :color) o-properties]
-       (insert \"%s: %s\" file date))
-
-Anyhow:
-ARGS are the sequence of items seperated by underscores after the NAME of the new tag.
-BODY is a form that may anaphorically mention:
-- O-BACKEND: The backend we are exporting to, such as `latex' or `html'.
-- O-HEADING: The string denoting the title of the tagged section heading.
-- O-PROPERTIES: A plist of the Org properties at point.
-
-DOCSTRING is mandatory; everything should be documented for future maintainability.
-
-The result of this anaphoric macro is a symbolic function name `org-deftag/NAME',
-which is added to `org-export-before-parsing-hook'.
-
-----------------------------------------------------------------------
-
-Below is the motivating reason for inventing this macro. It is used:
-
-     ** Interesting, but low-priority, content   :details_red:
-     Blah blah blah blah blah blah blah blah blah blah blah.
-     Blah blah blah blah blah blah blah blah blah blah blah.
-
-Here is the actual implementation:
-
-(org-deftag details (color)
-   \"HTML export a heading as if it were a <details> block; COLOR is an optional
-   argument indicating the background colour of the resulting block.\"
-   (insert \"\n#+html:\"
-           (format \"<details style=\\\"background-color: %s\\\">\" color)
-           \"<summary>\" (s-replace-regexp \"^\** \" \"\" o-heading) \"</summary>\")
-   (org-next-visible-heading 1)
-   (insert \"#+html: </details>\"))
-
-"
-  (let ((func-name (intern (format "org-deftag/%s" name))))
-    `(progn
-       (cl-defun ,func-name (o-backend)
-         ,docstring
-         (outline-show-all)
-         (org-map-entries
-          (lambda ()
-            (-let [(&alist ,@ (mapcar #'symbol-name args)) (map-apply (lambda (k v) (cons (downcase k) v)) (org-entry-properties (point)))]
-              ;; MA: Maybe get rid of o-heading and o-properties and let people operate on raw Org secitons
-              ;; as they do with org-agenda. That might provide a more unified approach.
-              (let ((o-properties (map-into (map-apply (lambda (k v) (cons (intern (concat ":" (downcase k))) v)) (org-entry-properties (point))) 'plist))
-                    (o-heading (progn (kill-line) (car kill-ring))))
-                (if (not (s-contains? (format ":%s" (quote ,name)) o-heading 'ignoring-case))
-                    (insert o-heading)
-                  (setq o-heading (s-replace-regexp (format ":%s[^:]*:" (quote ,name)) "" o-heading))
-                  ,@body)
-                ;; Otherwise we impede on the auto-inserted “* footer :ignore:”
-                (insert "\n"))))))
-       (add-hook 'org-export-before-parsing-hook (quote ,func-name))
-       )))
-
-
-;; MA: This is new stuff.
-(put 'org-deflink 'lisp-indent-function 'defun)
-(put 'org-deftag 'lisp-indent-function 'defun)
-
-       ;; Example use
-       (org-deftag identity ()
-         "Do nothing to Org headings"
-         (insert o-heading)) ;; Wait, I think this strips tags?
-
-
-       (org-deftag disabled (color)
-         "Render the body of a heading in a <details> element, titled “Disabled”.
-
-The heading remains in view, and so appears in the TOC."
-         (insert "\n") (insert  o-heading) (insert "\n")
-         (insert "\n#+html:"
-                 (format "<div> <details class=\"float-child\" style=\"background-color: %s\">"
-                         (or color "pink"))
-                 "<summary> <strong> <font face=\"Courier\" size=\"3\" color=\"green\">"
-                 "Details ﴾This is disabled, I'm not actively using it.﴿"
-                 "</font> </strong> </summary>")
-         ;; Something to consider: (org-set-property "UNNUMBERED" "nil")
-         (org-next-visible-heading 1)
-         (insert "#+html: </details> </div>"))
-;; The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved:1 ends here
-
-;; [[file:init.org::#Jumping-to-extreme-semantic-units][Jumping to extreme semantic units:1]]
-;; M-< and M-> jump to first and final semantic units.
-;; If pressed twice, they go to physical first and last positions.
-(use-package beginend
-  :config (beginend-global-mode))
-;; Jumping to extreme semantic units:1 ends here
-
-;; [[file:init.org::#Folding-within-a-subtree][Folding within a subtree:1]]
-(bind-key "C-c C-h"
-          (defun my/org-fold-current-subtree-anywhere-in-it ()
-            (interactive)
-            (save-excursion (save-restriction
-                              (org-narrow-to-subtree)
-                              (org-shifttab)
-                              (widen))))
-          org-mode-map)
-;; Folding within a subtree:1 ends here
-
-;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
-(quelpa '(org-pretty-table
-         :repo "Fuco1/org-pretty-table"
-         :fetcher github))
-
-(add-hook 'org-mode-hook 'org-pretty-table-mode)
-;; Draw pretty unicode tables in org-mode:1 ends here
-
-;; [[file:init.org::#Buffer-defaults][Buffer default mode is org-mode:1]]
-(setq-default major-mode 'org-mode)
-;; Buffer default mode is org-mode:1 ends here
-
-;; [[file:init.org::#Use-Org-Mode-links-in-other-modes-Links-can-be-opened-and-edited-like-in-Org-Mode][Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1]]
-;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
-;;
-;; In particular, when I tangle my init.org into a Lisp file, init.el, it has Org links
-;; back to the original source section in Org, which I can then click to jump to, quickly.
-;;
-(use-package orglink
-  :config
-  (global-orglink-mode)
-  ;; Only enable this in Emacs Lisp mode, for now.
-  (setq orglink-activate-in-modes '(emacs-lisp-mode)))
-;; Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.:1 ends here
-
-;; [[file:init.org::*No code evaluation upon export][No code evaluation upon export:1]]
-;; Ignore all header arguments relating to “:eval”. Do not evaluate code when I export to HTML or LaTeX or anything else.
-(setq org-export-use-babel nil)
-;; No code evaluation upon export:1 ends here
+;; Auto update buffers that change on disk.
+;; Will be prompted if there are changes that could be lost.
+(global-auto-revert-mode 1)
+;; Auto refreshes every 2 seconds. Don’t forget to refresh the version control status as well.
+(setq auto-revert-interval 2
+      auto-revert-check-vc-info t
+      global-auto-revert-non-file-buffers t
+      auto-revert-verbose nil)
 
 ;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
@@ -1036,510 +753,213 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (magit-todos-mode))
 ;; Highlighting TODO-s & Showing them in Magit:4 ends here
 
-;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
-;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets :hook (org-mode . org-bullets-mode))
+;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:1]]
+(setq org-use-speed-commands t)
+;; Manipulating Sections:1 ends here
 
-(if (member "Apple Color Emoji" (font-family-list))
-    (set-fontset-font t 'unicode "Apple Color Emoji" nil 'prepend)
-  (message-box "Musa: Install the font!"))
-;; E.g., Download font such as https://fonts.google.com/noto/specimen/Noto+Color+Emoji
-;; Double-click on the ttf file then select “install” to have it installed on your system
-;; (Note: Noto does not work on my personal machine.)
+;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:2]]
+;; When refiling, only show me top level headings [Default]. Sometimes 2 is useful.
+;; When I'm refiling my TODOS, then give me all the freedom.
+(setq org-refile-targets '((nil :maxlevel . 1)
+                           (org-agenda-files :maxlevel . 9)))
 
+;; Maybe I want to refile into a new heading; confirm with me.
+(setq org-refile-allow-creating-parent-nodes 'confirm)
 
-;; Render ASCII such as “ :-) ” as emoji 🙂.
-(use-package emojify)
-(setq emojify-display-style 'unicode) ;; unicode is the way to go!
-(setq emojify-emoji-styles '(unicode))
-(global-emojify-mode 1) ;; Will install missing images, if need be.
+;; Use full outline paths for refile targets
+;; When refiling, using Helm, show me the hierarchy paths
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-use-outline-path 'file-path)
+;; Manipulating Sections:2 ends here
 
-;; Silence the usual message: Get more info using the about page via C-h C-a.
-(setq inhibit-startup-message t)
+;; [[file:init.org::#Manipulating-Sections][Manipulating Sections:3]]
+;; TODO FIXME Crashes upon startup.
+(when nil (add-to-list 'org-speed-commands (cons "P" #'org-set-property)))
+;; Use ‘:’ and ‘e’ to set tags and effort, respectively.
+;; Manipulating Sections:3 ends here
 
-(defun display-startup-echo-area-message ()
-  "The message that is shown after ‘user-init-file’ is loaded."
-  (message
-      (concat "Welcome "      user-full-name
-              "! Emacs "      emacs-version
-              "; Org-mode "   org-version
-              "; System "     (symbol-name system-type)
-              "/"             (system-name)
-              "; Time "       (emacs-init-time))))
+;; [[file:init.org::#Seamless-Navigation-Between-Source-Blocks][Seamless Navigation Between Source Blocks:1]]
+;; Overriding keys for printing buffer, duplicating gui frame, and isearch-yank-kill.
+;;
+(require 'org)
+(use-package emacs
+  :bind (:map org-mode-map
+              ("s-p" . org-babel-previous-src-block)
+              ("s-n" . org-babel-next-src-block)
+              ("s-e" . org-edit-special)
+              :map org-src-mode-map
+              ("s-e" . org-edit-src-exit)))
+;; Seamless Navigation Between Source Blocks:1 ends here
 
-;; Keep self motivated!
-(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:1]]
+;; Seamless use of babel: No confirmation upon execution.
+;; Downside: Could accidentally evaluate harmful code.
+(setq org-confirm-babel-evaluate nil)
 
-;; I have symlinks for various things, just follow them, do not ask me.
-(setq vc-follow-symlinks t)
+;; Never evaluate code blocks upon export and replace results when evaluation does occur.
+;; For a particular language 𝑳, alter ‘org-babel-default-header-args:𝑳’.
+(setq org-babel-default-header-args
+      '((:results . "replace")
+        (:session . "none")
+        (:exports . "both")
+        (:cache .   "no")
+        (:noweb . "no")
+        (:hlines . "no")
+        (:tangle . "no")
+        (:eval . "never-export")))
+;; Executing code from ~src~ blocks:1 ends here
 
-;; After my settings have been loaded, e.g., fancy priorities
-;; and cosmetics, then open my notes files.
-(add-hook 'emacs-startup-hook
+;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
+(defvar my/programming-languages
+  '(emacs-lisp shell python haskell
+      ;; rust ;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
+    ruby ocaml dot latex org js css
+               sqlite C) ;; Captial “C” gives access to C, C++, D
+  "List of languages I have used in Org-mode, for literate programming.")
+
+;; Load all the languagues
+;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
+(ignore-errors (cl-loop for lang in my/programming-languages
+                        do (require (intern (format "ob-%s" lang)))))
+;;
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ (--map (cons it t) my/programming-languages))
+
+;; Preserve my indentation for source code during export.
+(setq org-src-preserve-indentation t)
+
+;; The export process hangs Emacs, let's avoid this.
+;; MA: For one reason or another, this crashes more than I'd like.
+;; (setq org-export-in-background t)
+;; Executing code from ~src~ blocks:2 ends here
+
+;; [[file:init.org::*Unfold Org Headings when I perform a search][Unfold Org Headings when I perform a search:1]]
+(setq org-fold-core-style 'overlays)
+;; Unfold Org Headings when I perform a search:1 ends here
+
+;; [[file:init.org::*The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved][The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved:1]]
+(defmacro org-deftag (name args docstring &rest body)
+  "Re-render an Org section in any way you like, by tagging the section with NAME.
+
+That is to say, we essentially treat tags as functions that act on Org headings:
+We redefine Org sections for the same purposes as Org special blocks.
+
+The “arguments” to the function-tag can be declared as Org properties, then
+the function can access them using the `o-properties' keyword as in
+   (-let [(&plist :file :date :color) o-properties]
+       (insert \"%s: %s\" file date))
+
+Anyhow:
+ARGS are the sequence of items seperated by underscores after the NAME of the new tag.
+BODY is a form that may anaphorically mention:
+- O-BACKEND: The backend we are exporting to, such as `latex' or `html'.
+- O-HEADING: The string denoting the title of the tagged section heading.
+- O-PROPERTIES: A plist of the Org properties at point.
+
+DOCSTRING is mandatory; everything should be documented for future maintainability.
+
+The result of this anaphoric macro is a symbolic function name `org-deftag/NAME',
+which is added to `org-export-before-parsing-hook'.
+
+----------------------------------------------------------------------
+
+Below is the motivating reason for inventing this macro. It is used:
+
+     ** Interesting, but low-priority, content   :details_red:
+     Blah blah blah blah blah blah blah blah blah blah blah.
+     Blah blah blah blah blah blah blah blah blah blah blah.
+
+Here is the actual implementation:
+
+(org-deftag details (color)
+   \"HTML export a heading as if it were a <details> block; COLOR is an optional
+   argument indicating the background colour of the resulting block.\"
+   (insert \"\n#+html:\"
+           (format \"<details style=\\\"background-color: %s\\\">\" color)
+           \"<summary>\" (s-replace-regexp \"^\** \" \"\" o-heading) \"</summary>\")
+   (org-next-visible-heading 1)
+   (insert \"#+html: </details>\"))
+
+"
+  (let ((func-name (intern (format "org-deftag/%s" name))))
+    `(progn
+       (cl-defun ,func-name (o-backend)
+         ,docstring
+         (outline-show-all)
+         (org-map-entries
           (lambda ()
-            (-let [my-life.el (getenv "MY_LIFE_ELISP")]
-              (unless org-default-notes-file
-                (error "Add to .zshrc “ export MY_LIFE_ELISP=\"/full/path/to/my-life.el\" ”, then load my-life.el"))
-              (load-file my-life.el))))
-
-;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
-(use-package doom-modeline
-  :config (doom-modeline-mode))
-
-  ;; Use minimal height so icons still fit; modeline gets slightly larger when
-  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
-  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
-  (setq doom-modeline-height 21)
-  (setq doom-modeline-buffer-state-icon nil)
-  (setq doom-modeline-hud t)
-  (setq doom-modeline-bar-width 1)
-
-  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
-  ;; we can click to see a listing.
-  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
-  (setq doom-modeline-checker-simple-format nil)
-
-  ;; Don't display the buffer encoding, E.g., “UTF-8”.
-  (setq doom-modeline-buffer-encoding nil)
-
-  ;; Inactive buffers' modeline is greyed out.
-  ;; (let ((it "Source Code Pro Light" ))
-  ;;   (set-face-attribute 'mode-line nil :family it :height 100)
-  ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
-
-  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
-  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
-  ;; We likely want to add this locally, to hooks on major modes.
-
-  (setq doom-modeline-minor-modes t)
-  (use-package minions
-
-    :init (minions-mode 1))
-
-;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
-(display-battery-mode +1)
-
-;; Show date and time as well.
-
-;; [Simple Approach]
-;; (setq display-time-day-and-date t)
-;; (display-time)
-
-;; [More Controlled Approach: Set date&time format]
-;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
-(setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
-(setq display-time-interval 1) ;; Please update the time every second.
-(display-time-mode)
-
-;; I don't need the system load average in the modeline.
-(setq display-time-default-load-average nil)
-(setq display-time-load-average nil)
-
-;; ;; Do not show me line numbers, nor column numbers, in the modeline
-(column-number-mode -1)
-(line-number-mode   -1)
-
-;; Likewise, no need to show me “Top∣Mid∣Bot” in the modeline.
-(setq-default mode-line-percent-position nil)
-
-;; (setq display-line-numbers-width-start t)
-;; (global-display-line-numbers-mode      t)
-
-;; Treat all themes as safe; no query before use.
-(setf custom-safe-themes t)
-
-;; Infinite list of my commonly used themes.
-(setq my/themes
-      (cl-loop for (package . theme-variants-I-like) in
-               ;; I like theme doom-flatwhite <3 It feels “warm”.
-               ;; (I found out thanks to C-u C-c t!)
-               '((doom-themes doom-flatwhite doom-snazzy doom-monokai-ristretto doom-laserwave doom-solarized-light doom-vibrant)
-                 (solarized-theme solarized-gruvbox-dark solarized-gruvbox-light)
-                 (stimmung-themes stimmung-themes-light stimmung-themes-dark)
-                 (shanty-themes shanty-themes-light)
-                 (apropospriate-theme apropospriate-light) ;; /super/ nice! Super “clean”, like writing on paper
-                 (tao-theme tao-yang) ;; nice light theme.
-                 (leuven-theme leuven-dark leuven) ;; Nice minimal variant
-                 (material-theme material-light)
-                 (moe-theme moe-light)
-                 (organic-green-theme organic-green)
-                 (tango-plus-theme tango-plus)
-                 ;; I like all 3 variants.
-                 (minimal-theme minimal minimal-black minimal-light)
-                 (espresso-theme espresso)
-                 (emacs dichromacy)
-                 (nano-theme nano-light nano-dark)
-                 (pink-bliss-uwu-theme pink-bliss-uwu)
-                 (modus-themes modus-operandi-tinted))
-               do (package-install package)
-               append theme-variants-I-like))
-
-(setcdr (last my/themes) my/themes)
-
-(cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
-  "Disable all themes and load the given one ---read from user when called interactively."
-  (interactive)
-  (mapc #'disable-theme custom-enabled-themes)
-  (load-theme new-theme)
-  (message "Theme %s" new-theme))
-
-(cl-defun my/toggle-theme (&optional (new-theme (pop my/themes)))
-  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
-
-When a universal prefix is given, “C-u C-c t”, we load a random
-theme from all possible themes.  Nice way to learn about more
-themes (•̀ᴗ•́)و"
-  (interactive)
-  (-let [theme (if current-prefix-arg
-                   (nth (random (length (custom-available-themes)))
-                        (custom-available-themes))
-                 new-theme)]
-    (my/load-theme theme)))
-
-(global-set-key "\C-c\ t" 'my/toggle-theme)
-
-(my/toggle-theme)
-
-(when my/personal-machine?
-
-  ;; Infinite list of my commonly used fonts
-  (setq my/fonts
-        '(;; NOPE: Breaks Gerrit! "Roboto Mono Light 14" ;; Sleek
-          "Input Mono 14"
-          "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
-          "Papyrus 14"
-          "Bradley Hand Light 12"
-          ;; "Chalkduster 14" ;; Laggy!
-          "Courier Light 12"
-          "Noteworthy 9"
-          "Savoye LET 14"
-          "Fantasque Sans Mono 16"
-          ))
-  (setcdr (last my/fonts) my/fonts)
-
-  ;; Let's ensure they're on our system
-  ;; brew search "/font-/"   # List all fonts
-
-  (shell-command "brew tap homebrew/cask-fonts")
-  (system-packages-ensure "svn") ;; Required for the following font installs
-  ;; No thanks! (system-packages-ensure "font-roboto-mono") ;; Makes Gerrit in Chrome look like Gibberish!
-  (system-packages-ensure "font-input")
-  (system-packages-ensure "font-source-code-pro")
-  (system-packages-ensure "font-fira-mono")
-  (system-packages-ensure "font-mononoki")
-  (system-packages-ensure "font-monoid")
-  (system-packages-ensure "font-menlo-for-powerline")
-  (system-packages-ensure "font-fantasque-sans-mono")
-  (system-packages-ensure "font-ibm-plex")
-
-  ;; Use “M-x set-face-font RET default RET”, or...
-  ;; (set-face-font 'default "Source Code Pro Light14")
-
-  ;; See ~2232 fonts
-  ;; (append (fontset-list) (x-list-fonts "*" nil))
-
-  (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
-    "Load NEW-FONT, which defaults from ‘my/fonts’.
-
-When a universal prefix is given, “C-u C-c F”, we load a random
-font from all possible themes.  Nice way to learn about more
-fonts (•̀ᴗ•́)و"
-    (interactive)
-    (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
-           (font (if current-prefix-arg
-                     (nth (random (length all-fonts)) all-fonts)
-                   new-font)))
-      (set-face-font 'default font)
-      (message "Font: %s" font)))
-
-  (global-set-key "\C-c\ F" 'my/toggle-font)
-
-  ;; Default font; the “ignore-⋯” is for users who may not have the font.
-  (ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
-  (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
-  (ignore-errors (my/toggle-font "IBM Plex Mono 12")))
-
-(unless noninteractive
-  ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
-  (my/toggle-theme 'solarized-gruvbox-light))
-
-;; Make it very easy to see the line with the cursor.
-(global-hl-line-mode t)
-
-(use-package beacon
-  :config (setq beacon-color "#666600")
-  :hook   ((org-mode text-mode) . beacon-mode))
-
-(use-package dimmer
-  :config (dimmer-mode))
-
-;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
-
-;; The doom themes package comes with a function to make the mode line flash on error.
-;; (use-package doom-themes)
-;; (require 'doom-themes-ext-visual-bell)
-;; (doom-themes-visual-bell-config)
-
-(blink-cursor-mode 1)
-
-(unless noninteractive
-  (tool-bar-mode   -1)    ;; No large icons please
-  (scroll-bar-mode -1))   ;; No visual indicator please
-  ;; (menu-bar-mode   -1) ;; The Mac OS top pane has menu options
-
-(setq show-paren-delay  0)
-(setq show-paren-style 'mixed)
-(show-paren-mode)
-
-(use-package rainbow-delimiters
-  :hook prog-mode)
-
-(electric-pair-mode 1)
-
-;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
-(setq electric-pair-inhibit-predicate
-      (lambda (c)
-        (or (member c '(?< ?> ?~)) (electric-pair-default-inhibit c))))
-
-;; Treat ‘<’ and ‘>’ as if they were words, instead of ‘parenthesis’.
-(modify-syntax-entry ?< "w<")
-(modify-syntax-entry ?> "w>")
-
-(set-face-attribute 'org-document-title nil :height 2.0)
-;; (set-face-attribute 'org-level-1 nil :height 1.0)
-;; Remaining org-level-𝒾 have default height 1.0, for 𝒾 : 1..8.
-;;
-;; E.g., reset org-level-1 to default.
-;; (custom-set-faces '(org-level-1 nil))
-
-  (defvar-local rasmus/org-at-src-begin -1
-    "Variable that holds whether last position was a ")
-
-  (defvar rasmus/ob-header-symbol ?☰
-    "Symbol used for babel headers")
-
-  (defun rasmus/org-prettify-src--update ()
-    (let ((case-fold-search t)
-          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
-          found)
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward re nil t)
-          (goto-char (match-end 0))
-          (let ((args (org-trim
-                       (buffer-substring-no-properties (point)
-                                                       (line-end-position)))))
-            (when (org-string-nw-p args)
-              (let ((new-cell (cons args rasmus/ob-header-symbol)))
-                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
-                (cl-pushnew new-cell found :test #'equal)))))
-        (setq prettify-symbols-alist
-              (cl-set-difference prettify-symbols-alist
-                                 (cl-set-difference
-                                  (cl-remove-if-not
-                                   (lambda (elm)
-                                     (eq (cdr elm) rasmus/ob-header-symbol))
-                                   prettify-symbols-alist)
-                                  found :test #'equal)))
-        ;; Clean up old font-lock-keywords.
-        (font-lock-remove-keywords nil prettify-symbols--keywords)
-        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
-        (font-lock-add-keywords nil prettify-symbols--keywords)
-        (while (re-search-forward re nil t)
-          (font-lock-flush (line-beginning-position) (line-end-position))))))
-
-  (defun rasmus/org-prettify-src ()
-    "Hide src options via `prettify-symbols-mode'.
-
-  `prettify-symbols-mode' is used because it has uncollpasing. It's
-  may not be efficient."
-    (let* ((case-fold-search t)
-           (at-src-block (save-excursion
-                           (beginning-of-line)
-                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
-      ;; Test if we moved out of a block.
-      (when (or (and rasmus/org-at-src-begin
-                     (not at-src-block))
-                ;; File was just opened.
-                (eq rasmus/org-at-src-begin -1))
-        (rasmus/org-prettify-src--update))
-      ;; Remove composition if at line; doesn't work properly.
-      ;; (when at-src-block
-      ;;   (with-silent-modifications
-      ;;     (remove-text-properties (match-end 0)
-      ;;                             (1+ (line-end-position))
-      ;;                             '(composition))))
-      (setq rasmus/org-at-src-begin at-src-block)))
-
-  (defun rasmus/org-prettify-symbols ()
-    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
-          (cl-reduce 'append
-                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
-                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
-                               ("#+end_src"   . ?□) ;; ⏹
-                               ("#+header:" . ,rasmus/ob-header-symbol)
-                               ("#+begin_quote" . ?»)
-                               ("#+end_quote" . ?«)))))
-    (turn-on-prettify-symbols-mode)
-    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
-
-
-;; Last up­dated: 2019-06-09
-
-(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
-(org-mode-restart)
-
-(global-prettify-symbols-mode)
-
-(defvar my/prettify-alist nil
-  "Musa's personal prettifications.")
-
-(cl-loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
-                       ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                       ("#+end_example"   . ?⇐)                 ;; ⇐
-                       ;; Actuall beautifications
-                       ("==" . ?≈) ("===" . ?≈) ;; ("=" . ?≔) ;; Programming specific prettifications
-                       ("i32" . ?ℤ) ("u32" . ?ℕ) ("f64" . ?ℝ) ;; Rust specific
-                       ("bool" . ?𝔹)
-                       ;; ("\"\"\"\n" . ?“) ("\"\"\"" . ?”)
-                       ("\"\"\"" . ?“)
-                       ("fn" . ?λ)
-                       ("<=" . ?≤) (">=" . ?≥)
-                       ("->" . ?→) ("-->". ?⟶) ;; threading operators
-                       ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
-         do (push pair my/prettify-alist))
-
-;; Replace all Org [metadata]keywords with the “▷” symbol; e.g., “#+title: Hello” looks like “▷ Hello”.
-(cl-loop for keyword in '(title author email date description options property startup export_file_name html_head fileimage filetags)
-         do (push (cons (format "#+%s:" keyword) ?▷) my/prettify-alist))
-
-(cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
-      do (add-hook hk (lambda ()
-                        (setq prettify-symbols-alist
-                              (append my/prettify-alist prettify-symbols-alist)))))
-
-
-(add-hook 'org-mode-hook (lambda () (push '("# " . (?🎶 (Br . Bl) ?\ )) prettify-symbols-alist)))
-
-;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
-(setq prettify-symbols-unprettify-at-point 'right-edge)
-
-;; org-mode math is now highlighted ;-)
-(setq org-highlight-latex-and-related '(latex))
-
-;; Extra space between text and underline line
-(setq x-underline-at-descent-line t)
-
-;; Hide the *,=,/ markers
-(setq org-hide-emphasis-markers t)
-
-;; Let’s limit the width of images inlined in org buffers to 400px.
-(setq org-image-actual-width 400)
-
-;; Visually, I prefer to hide the markers of macros, so let’s do that:
-;;  {{{go(here)}}} is shown in Emacs as go(here)
-(setq org-hide-macro-markers t)
-
-;; On HTML exports, Org-mode tries to include a validation link for the exported HTML. Let’s disable that since I never use it.
-;; (setq org-html-validation-link nil)
-
-;; Musa: This is super annoying, in practice.
-(setq org-pretty-entities nil) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
-;; to have \alpha, \to and others display as utf8
-;; http://orgmode.org/manual/Special-symbols.html
-;;
-;; Be default, any consectuive string after “_” or “^” will be shown in WYSIWYG fashion; the following requires “^{⋯}” instead.
-;; (setq org-use-sub-superscripts (quote {}))
-
-(use-package org-appear
-  :hook (org-mode . org-appear-mode)
-  :init (setq org-appear-autoemphasis  t
-              org-appear-autolinks nil
-              org-appear-autosubmarkers nil))
-
-;; Automatically toggle LaTeX previews when cursour enters/leaves them
-(use-package org-fragtog
-  :disabled t
-  :hook (org-mode . org-fragtog-mode))
-
-;; Support “latex-as-png” src blocks, which show LaTeX as PNGs
-(use-package ob-latex-as-png :disabled t)
-
-;; Use the “#+name” the user provides, instead of generating label identifiers.
-(setq org-latex-prefer-user-labels t)
-
- (use-package org-sticky-header
-  :hook (org-mode . org-sticky-header-mode)
-  :config
-  (setq-default
-   org-sticky-header-full-path 'full
-   ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " ▷ "))
-
-  (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
-  (require 'org-remoteimg)
-  (setq url-cache-directory "~/emacs.d/.cache/")
-  (setq org-display-remote-inline-images 'cache)
-
-(use-package bufler
-  :config (bind-key "C-x C-b" #'bufler-list))
-;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
-
-(use-package all-the-icons
-  ;; Install fonts only if they're not already installed.
-  ;; Source: https://github.com/domtronn/all-the-icons.el/issues/120#issuecomment-427172073
-  :config (let ((font-dest (cl-case window-system
-                             (x  (concat (or (getenv "XDG_DATA_HOME")            ;; Default Linux install directories
-                                             (concat (getenv "HOME") "/.local/share"))
-                                         "/fonts/"))
-                             (mac (concat (getenv "HOME") "/Library/Fonts/" ))
-                             (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
-            (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
-              (all-the-icons-install-fonts 'install-without-asking))))
-
-(defcustom  my/weather-refresh-interval 60
-  "Number of minutes between refreshes of weather information."
-  :type 'integer)
-;; Use (cancel-timer my/weather--timer) to stop this.
-(setq my/weather--timer
-      (run-with-timer (* 60 5) (* 60  my/weather-refresh-interval)
-                      (defun my/weather-update ()
-                        (interactive)
-                        (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t'"))
-                        ;; (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w'"))
-                        (setq my/weather-full-details (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?T'"))
-                        (force-mode-line-update))))
-;;
-(setq my/weather--indicator
-      `(:eval
-        (propertize (format " %s " my/weather-brief)
-              'face 'mode-line-buffer-id
-                    'help-echo (concat  ;; "Click to see full details"
-                                (propertize "\n" 'face '(:height 0.4))
-                                (propertize "[Click]" 'face `(bold (foreground-color . "green"))) " To see detailed weather report\n"
-                                (propertize "[M-x my/weather-update]" 'face '(bold (foreground-color . "maroon"))) " To fetch latest weather data"
-                                (propertize "\n " 'face '(:height 0.5)))
-                    'local-map my/mode-line-weather-map
-                    'mouse-face 'mode-line-highlight)))
-;;
-(add-to-list 'mode-line-misc-info my/weather--indicator)
-;; (pop mode-line-misc-info) ;; To remove from the modeline.
-
-(setq my/weather-posframe-visible nil)
-(defvar my/mode-line-weather-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [mode-line mouse-1]
-                (lambda (_e)
-                  (interactive "e")
-                  (use-package posframe)
-                  (if my/weather-posframe-visible
-                      (posframe-delete "*my/weather-full-details-posframe-buffer*")
-                    (posframe-show "*my/weather-full-details-posframe-buffer*"
-                                   :string my/weather-full-details
-                                   :position (point))
-                    (message "Click on the weather modeline icon to close the posframe."))
-                  (setq my/weather-posframe-visible (not my/weather-posframe-visible))))
-    map))
+            (-let [(&alist ,@ (mapcar #'symbol-name args)) (map-apply (lambda (k v) (cons (downcase k) v)) (org-entry-properties (point)))]
+              ;; MA: Maybe get rid of o-heading and o-properties and let people operate on raw Org secitons
+              ;; as they do with org-agenda. That might provide a more unified approach.
+              (let ((o-properties (map-into (map-apply (lambda (k v) (cons (intern (concat ":" (downcase k))) v)) (org-entry-properties (point))) 'plist))
+                    (o-heading (progn (kill-line) (car kill-ring))))
+                (if (not (s-contains? (format ":%s" (quote ,name)) o-heading 'ignoring-case))
+                    (insert o-heading)
+                  (setq o-heading (s-replace-regexp (format ":%s[^:]*:" (quote ,name)) "" o-heading))
+                  ,@body)
+                ;; Otherwise we impede on the auto-inserted “* footer :ignore:”
+                (insert "\n"))))))
+       (add-hook 'org-export-before-parsing-hook (quote ,func-name))
+       )))
+
+
+;; MA: This is new stuff.
+(put 'org-deflink 'lisp-indent-function 'defun)
+(put 'org-deftag 'lisp-indent-function 'defun)
+
+       ;; Example use
+       (org-deftag identity ()
+         "Do nothing to Org headings"
+         (insert o-heading)) ;; Wait, I think this strips tags?
+
+
+       (org-deftag disabled (color)
+         "Render the body of a heading in a <details> element, titled “Disabled”.
+
+The heading remains in view, and so appears in the TOC."
+         (insert "\n") (insert  o-heading) (insert "\n")
+         (insert "\n#+html:"
+                 (format "<div> <details class=\"float-child\" style=\"background-color: %s\">"
+                         (or color "pink"))
+                 "<summary> <strong> <font face=\"Courier\" size=\"3\" color=\"green\">"
+                 "Details ﴾This is disabled, I'm not actively using it.﴿"
+                 "</font> </strong> </summary>")
+         ;; Something to consider: (org-set-property "UNNUMBERED" "nil")
+         (org-next-visible-heading 1)
+         (insert "#+html: </details> </div>"))
+;; The “∶Disabled∶” tag ---Stolen from AlBasmala.el, and improved:1 ends here
+
+;; [[file:init.org::#Jumping-to-extreme-semantic-units][Jumping to extreme semantic units:1]]
+;; M-< and M-> jump to first and final semantic units.
+;; If pressed twice, they go to physical first and last positions.
+(use-package beginend
+  :config (beginend-global-mode))
+;; Jumping to extreme semantic units:1 ends here
+
+;; [[file:init.org::#Folding-within-a-subtree][Folding within a subtree:1]]
+(bind-key "C-c C-h"
+          (defun my/org-fold-current-subtree-anywhere-in-it ()
+            (interactive)
+            (save-excursion (save-restriction
+                              (org-narrow-to-subtree)
+                              (org-shifttab)
+                              (widen))))
+          org-mode-map)
+;; Folding within a subtree:1 ends here
+
+;; [[file:init.org::#Buffer-defaults][Buffer default mode is org-mode:1]]
+(setq-default major-mode 'org-mode)
+;; Buffer default mode is org-mode:1 ends here
+
+;; [[file:init.org::#Org-mode's-𝒳-Block-Expansions][Org-mode's ~<𝒳~ Block Expansions:1]]
+(require 'org-tempo)
+;; Org-mode's ~<𝒳~ Block Expansions:1 ends here
+
+;; [[file:init.org::*No code evaluation upon export][No code evaluation upon export:1]]
+;; Ignore all header arguments relating to “:eval”. Do not evaluate code when I export to HTML or LaTeX or anything else.
+(setq org-export-use-babel nil)
+;; No code evaluation upon export:1 ends here
 
 ;; [[file:init.org::#ELisp][ELisp:1]]
 ;; Evaluation Result OverlayS for Emacs Lisp
@@ -1979,405 +1399,327 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
 ;; Smart jumping to definitions:1 ends here
 
-;; [[file:init.org::*Bidirectional Text][Bidirectional Text:1]]
-;; Sometimes I have Arabic in my buffers, however I am an English speaker
-;; and so Left-to-Right is most natural to me. As such, even when Arabic
-;; is present, or any bidirectional text, just use Left-to-Right.
-(setq-default bidi-paragraph-direction 'left-to-right)
-;; Bidirectional Text:1 ends here
+;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
+;; https://github.com/emacsorphanage/org-bullets
+(use-package org-bullets :hook (org-mode . org-bullets-mode))
 
-;; [[file:init.org::#Whitespace][Whitespace:1]]
-(add-hook 'before-save-hook 'whitespace-cleanup)
-;; Whitespace:1 ends here
-
-;; [[file:init.org::#Formatting-Text][Formatting Text:1]]
-(local-set-key (kbd "C-c f") #'my/org-mode-format)
-(defun my/org-mode-format (&optional text)
-"Surround selected region with the given Org emphasises marker.
-
-E.g., if this command is bound to “C-c f” then the sequence
-“C-c f b” would make the currenly selected text be bold.
-Likewise, “C-c f *” would achieve the same goal.
-
-When you press “C-c f”, a message is shown with a list of
-useful single-character completions.
-
-Note: “C-c f 𝓍”, for an unrecognised marker 𝓍, just inserts
-the character 𝓍 before and after the selected text."
-  (interactive "P") ;; Works on a region
-  ; (message "b,* ⟨Bold⟩; i,/ ⟨Italics⟩; u,_ ⟨Underline⟩; c,~ ⟨Monotype⟩")
-  (message "⟨Bold b,*⟩ ⟨Italics i,/⟩ ⟨Underline u,_⟩ ⟨Monotype c,~⟩")
-  (let ((kind (read-char)))
-    ;; Map letters to Org formatting symbols
-    (setq kind (or (plist-get '(b ?\*   i ?\/   u ?\_   c ?\~)
-                              (intern (string kind)))
-                   kind))
-    (insert-pair text kind kind)))
-;; Formatting Text:1 ends here
-
-;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:1]]
-(setq-default fill-column 80          ;; Let's avoid going over 80 columns
-              truncate-lines nil      ;; I never want to scroll horizontally
-              indent-tabs-mode nil)   ;; Use spaces instead of tabs
-;; Fill-mode ---Word Wrapping:1 ends here
-
-;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:2]]
-;; Wrap long lines when editing text
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
-(add-hook 'org-mode-hook 'turn-on-auto-fill)
-;; Fill-mode ---Word Wrapping:2 ends here
-
-;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:3]]
-;; Bent arrows at the end and start of long lines.
-(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
-(global-visual-line-mode 1)
-;; Fill-mode ---Word Wrapping:3 ends here
-
-;; [[file:init.org::#Pretty-Lists-Markers][Pretty Lists Markers:1]]
-;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
-(cl-loop for (x y z) in '(("+" "◦" *)
-                       ("-" "•" *)
-                       ("*" "⋆" +))
-      do (font-lock-add-keywords 'org-mode
-                                 `((,(format "^ %s\\([%s]\\) " z x)
-                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
-;; Pretty Lists Markers:1 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:1]]
-(system-packages-ensure "aspell")
-(system-packages-ensure "wordnet")
-;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:2]]
-(use-package flyspell
-
-  :hook ((prog-mode . flyspell-prog-mode)
-         ((org-mode text-mode) . flyspell-mode)))
-;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:3]]
-(setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
-;; Fix spelling as you type ---thesaurus & dictionary too!:3 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:5]]
-(eval-after-load "flyspell"
-  ' (progn
-     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
-;; Fix spelling as you type ---thesaurus & dictionary too!:5 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:6]]
-(global-font-lock-mode t)
-(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
-;; Fix spelling as you type ---thesaurus & dictionary too!:6 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:7]]
-(setq ispell-silently-savep t)
-;; Fix spelling as you type ---thesaurus & dictionary too!:7 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:8]]
-(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
-;; Fix spelling as you type ---thesaurus & dictionary too!:8 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:9]]
-(add-hook          'c-mode-hook 'flyspell-prog-mode)
-(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
-;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:10]]
-(use-package synosaurus
-  :defer 100
-  :init    (synosaurus-mode)
-  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
-;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:11]]
-;; (shell-command "brew cask install xquartz &") ;; Dependency
-;; (shell-command "brew install wordnet &")
-;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
-
-;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:12]]
-(use-package wordnut
- :defer 100
- :bind ("M-!" . wordnut-lookup-current-word))
-
-;; Use M-& for async shell commands.
-;; Fix spelling as you type ---thesaurus & dictionary too!:12 ends here
-
-;; [[file:init.org::#Lightweight-Prose-Proofchecking][Lightweight Prose Proofchecking:1]]
-(use-package writegood-mode
-  ;; Load this whenver I'm composing prose.
-  :hook (text-mode org-mode)
-  ;; Don't show me the “Wg” marker in the mode line
-
-  :defer 100
-
-  ;; Some additional weasel words.
-  :config
-  (--map (push it writegood-weasel-words)
-         '("some" "simple" "simply" "easy" "often" "easily" "probably"
-           "clearly"               ;; Is the premise undeniably true?
-           "experience shows"      ;; Whose? What kind? How does it do so?
-           "may have"              ;; It may also have not!
-           "it turns out that")))  ;; How does it turn out so?
-           ;; ↯ What is the evidence of highighted phrase? ↯
-;; Lightweight Prose Proofchecking:1 ends here
-
-;; [[file:init.org::#Placeholder-Text-For-Learning-Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
-(use-package lorem-ipsum )
-;; Placeholder Text ---For Learning & Experimenting:1 ends here
-
-;; [[file:init.org::#Some-text-to-make-us-smile][Some text to make us smile:1]]
-(use-package dad-joke
-
-  :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
-;; Some text to make us smile:1 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:1]]
-;; (load (shell-command-to-string "agda-mode locate"))
-;;
-;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
-; (makunbound 'agda2-include-dirs)
-;; Unicode Input via Agda Input:1 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:2]]
-(system-packages-ensure "agda")
-;; Unicode Input via Agda Input:2 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:4]]
-(unless noninteractive
-  (load-file (let ((coding-system-for-read 'utf-8))
-               (shell-command-to-string "agda-mode locate"))))
-;; Unicode Input via Agda Input:4 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:5]]
-;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
-;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
-;; then loading that!
-(url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" "~/.emacs.d/elpa/agda-input.el" :ok-if-already-exists)
-(load-file "~/.emacs.d/elpa/agda-input.el")
-
-;; MA: This results in "Package cl is deprecated" !?
-(unless noninteractive
-  (use-package agda-input
-  :ensure nil ;; I have it locally.
-  :demand t
-  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-  :custom (default-input-method "Agda")))
-  ;; Now C-\ or M-x toggle-input-method turn it on and offers
+(if (member "Apple Color Emoji" (font-family-list))
+    (set-fontset-font t 'unicode "Apple Color Emoji" nil 'prepend)
+  (message-box "Musa: Install the font!"))
+;; E.g., Download font such as https://fonts.google.com/noto/specimen/Noto+Color+Emoji
+;; Double-click on the ttf file then select “install” to have it installed on your system
+;; (Note: Noto does not work on my personal machine.)
 
 
-;; TODO add a hook that when the input method becomes Agda, just don't bother showing me in the modeline.
-;; E.g., "Π" when using unicode input with Agda
-;; Useful to have in the modeline, say when typing in Arabic.
-;; (add-variable-watcher
-;;  'current-input-method
-;;  (lambda (_ newvalue 'set _)
-;;    (setq current-input-method-title
-;;          (if (equal newvalue "Agda") nil newvalue))))
-;; Unicode Input via Agda Input:5 ends here
+;; Render ASCII such as “ :-) ” as emoji 🙂.
+(use-package emojify)
+(setq emojify-display-style 'unicode) ;; unicode is the way to go!
+(setq emojify-emoji-styles '(unicode))
+(global-emojify-mode 1) ;; Will install missing images, if need be.
 
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:6]]
-;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
-;; Unicode Input via Agda Input:6 ends here
+;; Silence the usual message: Get more info using the about page via C-h C-a.
+(setq inhibit-startup-message t)
 
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:7]]
-(unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
-;; Unicode Input via Agda Input:7 ends here
+(defun display-startup-echo-area-message ()
+  "The message that is shown after ‘user-init-file’ is loaded."
+  (message
+      (concat "Welcome "      user-full-name
+              "! Emacs "      emacs-version
+              "; Org-mode "   org-version
+              "; System "     (symbol-name system-type)
+              "/"             (system-name)
+              "; Time "       (emacs-init-time))))
 
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:8]]
-(unless noninteractive
-(cl-loop for item
-      in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
-          ("(" "﴾")
-          (")" "﴿")
-          ("cmd" "⌘")
-           ;; categorial ;;
-           ("alg" "𝒜𝓁ℊ")
-           ("split" "▵")
-           ("join" "▿")
-           ("adj" "⊣")
-           (";;" "﹔")
-           (";;" "⨾")
-           (";;" "∘")
-           ;; logic
-           ("if" "⇐")
-           ("onlyif" "⇒")
-           ;; lattices ;;
-           ("meet" "⊓")
-           ("join" "⊔")
-           ;; tortoise brackets, infix relations
-           ("((" "〔")
-           ("))" "〕")
-           ;; residuals
-           ("syq"  "╳")
-           ("over" "╱")
-           ("under" "╲")
-           ;; Z-quantification range notation ;;
-           ;; e.g., “∀ x ❙ R • P” ;;
-           ("|"    "❙")
-           ("with" "❙")
-           ;; Z relational operators
-           ("domainrestriction" "◁")
-           ("domr" "◁")
-           ("domainantirestriction" "⩤")
-           ("doma" "⩤")
-           ("rangerestriction" "▷")
-           ("ranr" "▷")
-           ("rangeantirestriction" "⩥")
-           ("rana" "⩥")
-           ;; adjunction isomorphism pair ;;
-           ("floor"  "⌊⌋")
-           ("lower"  "⌊⌋")
-           ("lad"    "⌊⌋")
-           ("ceil"   "⌈⌉")
-           ("raise"  "⌈⌉")
-           ("rad"    "⌈⌉")
-           ;; Replies
-           ("yes"  "✔")
-           ("no"    "❌")
-           ;; Arrows
-           ("<=" "⇐")
-        ;; more (key value) pairs here
-        )
-      do (add-to-list 'agda-input-user-translations item)))
-;; Unicode Input via Agda Input:8 ends here
+;; Keep self motivated!
+(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
 
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:9]]
-(unless noninteractive
-;; Add to the list of translations using “emot” and the given, more specfic, name.
-;; Whence, \emot shows all possible emotions.
-(cl-loop for emot
-      in `(;; angry, cry, why-you-no
-           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "ಠ_ಠ" "(╬ ಠ益ಠ)" "･ﾟ(*❦ω❦)*･ﾟ" "(╯°□°）╯︵ ┻━┻") ;; flip the table
-           ;; confused, disapprove, dead, shrug, awkward
-           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"  "(´°ω°`)" "･✧_✧･")
-           ;; dance, csi
-           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
-            ,(s-collapse-whitespace "•_•)
-                                      ( •_•)>⌐■-■
-                                      (⌐■_■)"))
-           ;; love, pleased, success, yesss, smile, excited, yay
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "ᕦ( ᴼ ڡ ᴼ )ᕤ" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "(◕‿◕)" "( ˃ ヮ˂)" "[ ⇀ ‿ ↼ ]" "٩(⁎❛ᴗ❛⁎)۶" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ" "(✿◠‿◠)")
-           ;; flower high-5
-           ("hug" "♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡" "(づ｡◕‿◕｡)づ" "(づ｡◕‿‿‿‿◕｡)づ"))
-      do
-      (add-to-list 'agda-input-user-translations emot)
-      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
-;; Unicode Input via Agda Input:9 ends here
+;; I have symlinks for various things, just follow them, do not ask me.
+(setq vc-follow-symlinks t)
 
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:10]]
-;; activate translations
-(unless noninteractive (agda-input-setup))
-;; Unicode Input via Agda Input:10 ends here
+;; After my settings have been loaded, e.g., fancy priorities
+;; and cosmetics, then open my notes files.
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (-let [my-life.el (getenv "MY_LIFE_ELISP")]
+              (unless org-default-notes-file
+                (error "Add to .zshrc “ export MY_LIFE_ELISP=\"/full/path/to/my-life.el\" ”, then load my-life.el"))
+              (load-file my-life.el))))
 
-;; [[file:init.org::#Increase-decrease-text-size][Increase/decrease text size:1]]
-(global-set-key (kbd "C-+") 'text-scale-increase)
-(global-set-key (kbd "C--") 'text-scale-decrease)
-;; C-x C-0 restores the default font size
-;; Increase/decrease text size:1 ends here
+;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
+(use-package doom-modeline
+  :config (doom-modeline-mode))
 
-;; [[file:init.org::#Moving-Text-Around][Moving Text Around:1]]
-;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(use-package move-text
+  ;; Use minimal height so icons still fit; modeline gets slightly larger when
+  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
+  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
+  (setq doom-modeline-height 21)
+  (setq doom-modeline-buffer-state-icon nil)
+  (setq doom-modeline-hud t)
+  (setq doom-modeline-bar-width 1)
 
-  :config (move-text-default-bindings))
-;; Moving Text Around:1 ends here
+  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
+  ;; we can click to see a listing.
+  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
+  (setq doom-modeline-checker-simple-format nil)
 
-;; [[file:init.org::#Enabling-CamelCase-Aware-Editing-Operations][Enabling CamelCase Aware Editing Operations:1]]
-(global-subword-mode 1)
-;; Enabling CamelCase Aware Editing Operations:1 ends here
+  ;; Don't display the buffer encoding, E.g., “UTF-8”.
+  (setq doom-modeline-buffer-encoding nil)
 
-;; [[file:init.org::#Delete-Selection-Mode][Delete Selection Mode:1]]
-(delete-selection-mode 1)
-;; Delete Selection Mode:1 ends here
+  ;; Inactive buffers' modeline is greyed out.
+  ;; (let ((it "Source Code Pro Light" ))
+  ;;   (set-face-attribute 'mode-line nil :family it :height 100)
+  ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
 
-;; [[file:init.org::#visual-regexp][visual-regexp:1]]
-;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
-;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
-;;
-;; C-u M-%  do to regexp replace, without querying.
-(use-package visual-regexp
+  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
+  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
+  ;; We likely want to add this locally, to hooks on major modes.
 
-  :config (define-key global-map (kbd "M-%")
-            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
-;; visual-regexp:1 ends here
+  (setq doom-modeline-minor-modes t)
+  (use-package minions
 
-;; [[file:init.org::#HTML-Org-mode][HTML ⇐ Org-mode:1]]
-(use-package htmlize )
-;; Main use: Org produced htmls are coloured.
-;; Can be used to export a file into a coloured html.
-;; HTML ⇐ Org-mode:1 ends here
+    :init (minions-mode 1))
 
-;; [[file:init.org::#Org-mode-HTML][C-c C-l Org-mode ⇐ HTML:2]]
-(use-package org-web-tools
+;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
+(display-battery-mode +1)
 
-  :config
-  ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
-  ;; the page to get the HTML title.
-  ;; (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url) ;; Instead, see my/org-insert-link-dwim below.
-  )
-;; C-c C-l Org-mode ⇐ HTML:2 ends here
+;; Show date and time as well.
 
-;; [[file:init.org::#Org-mode-HTML][C-c C-l Org-mode ⇐ HTML:3]]
-;; C-u C-c C-l ⇒ Paste URL with title, WITHOUT prompting me for anything.
-;; C-c C-l ⇒ Prompt me for title.
-(bind-key* "C-c C-l"
-           (lambda () (interactive)
-             (call-interactively
-              (if current-prefix-arg
-                  #'org-web-tools-insert-link-for-url
-                #'my/org-insert-link-dwim))))
-;; From:
-(defun my/org-insert-link-dwim ()
-  "Like `org-insert-link' but with personal dwim preferences.
+;; [Simple Approach]
+;; (setq display-time-day-and-date t)
+;; (display-time)
 
-- When text is selected, use that as the link description --and prompt for link type
-- When a URL is in the clipboard, use that as the link type
-- On an existing Org link, prompt to alter the link then to alter the description
-- With a ‘C-u’ prefix, prompts for a file to link to.
-  - It is relative to the current directory; use ‘C-u C-u’ to get an absolute path.
+;; [More Controlled Approach: Set date&time format]
+;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
+(setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
+(setq display-time-interval 1) ;; Please update the time every second.
+(display-time-mode)
 
-It fallsback to `org-insert-link' when possible.
+;; I don't need the system load average in the modeline.
+(setq display-time-default-load-average nil)
+(setq display-time-load-average nil)
 
-Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
+;; ;; Do not show me line numbers, nor column numbers, in the modeline
+(column-number-mode -1)
+(line-number-mode   -1)
+
+;; Likewise, no need to show me “Top∣Mid∣Bot” in the modeline.
+(setq-default mode-line-percent-position nil)
+
+;; (setq display-line-numbers-width-start t)
+;; (global-display-line-numbers-mode      t)
+
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
+
+;; Infinite list of my commonly used themes.
+(setq my/themes
+      (cl-loop for (package . theme-variants-I-like) in
+               ;; I like theme doom-flatwhite <3 It feels “warm”.
+               ;; (I found out thanks to C-u C-c t!)
+               '((doom-themes doom-flatwhite doom-snazzy doom-monokai-ristretto doom-laserwave doom-solarized-light doom-vibrant)
+                 (solarized-theme solarized-gruvbox-dark solarized-gruvbox-light)
+                 (stimmung-themes stimmung-themes-light stimmung-themes-dark)
+                 (shanty-themes shanty-themes-light)
+                 (apropospriate-theme apropospriate-light) ;; /super/ nice! Super “clean”, like writing on paper
+                 (tao-theme tao-yang) ;; nice light theme.
+                 (leuven-theme leuven-dark leuven) ;; Nice minimal variant
+                 (material-theme material-light)
+                 (moe-theme moe-light)
+                 (organic-green-theme organic-green)
+                 (tango-plus-theme tango-plus)
+                 ;; I like all 3 variants.
+                 (minimal-theme minimal minimal-black minimal-light)
+                 (espresso-theme espresso)
+                 (emacs dichromacy)
+                 (nano-theme nano-light nano-dark)
+                 (pink-bliss-uwu-theme pink-bliss-uwu)
+                 (modus-themes modus-operandi-tinted))
+               do (package-install package)
+               append theme-variants-I-like))
+
+(setcdr (last my/themes) my/themes)
+
+(cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
+  "Disable all themes and load the given one ---read from user when called interactively."
   (interactive)
-  (let* ((point-in-link (org-in-regexp org-link-any-re 1))
-         (clipboard-url (when (string-match-p "^http" (current-kill 0))
-                          (current-kill 0)))
-         (region-content (when (region-active-p)
-                           (buffer-substring-no-properties (region-beginning)
-                                                           (region-end)))))
-    (cond ((and region-content clipboard-url (not point-in-link))
-           (delete-region (region-beginning) (region-end))
-           (insert (org-make-link-string clipboard-url region-content)))
-          ((and clipboard-url (not point-in-link))
-           (insert (org-make-link-string
-                    clipboard-url
-                    (read-string "title: "
-                                 (with-current-buffer (url-retrieve-synchronously clipboard-url)
-                                   (dom-text (car
-                                              (dom-by-tag (libxml-parse-html-region
-                                                           (point-min)
-                                                           (point-max))
-                                                          'title))))))))
-          (t
-           (call-interactively 'org-insert-link)))))
-;; C-c C-l Org-mode ⇐ HTML:3 ends here
+  (mapc #'disable-theme custom-enabled-themes)
+  (load-theme new-theme)
+  (message "Theme %s" new-theme))
 
-;; [[file:init.org::*Press M-SPC so all adjacent blank lines are also removed][Press M-SPC so all adjacent blank lines are also removed:1]]
-;; Now when I press M-SPC all adjacent blank lines are also removed.
-(advice-add 'cycle-spacing :after
-            (defun my/cycle-spacing-then-delete-blank-lines (&rest _args)
-  "Run `delete-blank-lines` after `cycle-spacing`."
-  (delete-blank-lines)))
-;; Press M-SPC so all adjacent blank lines are also removed:1 ends here
+(cl-defun my/toggle-theme (&optional (new-theme (pop my/themes)))
+  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
 
-;; [[file:init.org::*Add more line padding for readability][Add more line padding for readability:1]]
-(setq-default line-spacing 0.2)
-;; Add more line padding for readability:1 ends here
+When a universal prefix is given, “C-u C-c t”, we load a random
+theme from all possible themes.  Nice way to learn about more
+themes (•̀ᴗ•́)و"
+  (interactive)
+  (-let [theme (if current-prefix-arg
+                   (nth (random (length (custom-available-themes)))
+                        (custom-available-themes))
+                 new-theme)]
+    (my/load-theme theme)))
+
+(global-set-key "\C-c\ t" 'my/toggle-theme)
+
+(my/toggle-theme)
+
+(when my/personal-machine?
+
+  ;; Infinite list of my commonly used fonts
+  (setq my/fonts
+        '(;; NOPE: Breaks Gerrit! "Roboto Mono Light 14" ;; Sleek
+          "Input Mono 14"
+          "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
+          "Papyrus 14"
+          "Bradley Hand Light 12"
+          ;; "Chalkduster 14" ;; Laggy!
+          "Courier Light 12"
+          "Noteworthy 9"
+          "Savoye LET 14"
+          "Fantasque Sans Mono 16"
+          ))
+  (setcdr (last my/fonts) my/fonts)
+
+  ;; Let's ensure they're on our system
+  ;; brew search "/font-/"   # List all fonts
+
+  (shell-command "brew tap homebrew/cask-fonts")
+  (system-packages-ensure "svn") ;; Required for the following font installs
+  ;; No thanks! (system-packages-ensure "font-roboto-mono") ;; Makes Gerrit in Chrome look like Gibberish!
+  (system-packages-ensure "font-input")
+  (system-packages-ensure "font-source-code-pro")
+  (system-packages-ensure "font-fira-mono")
+  (system-packages-ensure "font-mononoki")
+  (system-packages-ensure "font-monoid")
+  (system-packages-ensure "font-menlo-for-powerline")
+  (system-packages-ensure "font-fantasque-sans-mono")
+  (system-packages-ensure "font-ibm-plex")
+
+  ;; Use “M-x set-face-font RET default RET”, or...
+  ;; (set-face-font 'default "Source Code Pro Light14")
+
+  ;; See ~2232 fonts
+  ;; (append (fontset-list) (x-list-fonts "*" nil))
+
+  (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
+    "Load NEW-FONT, which defaults from ‘my/fonts’.
+
+When a universal prefix is given, “C-u C-c F”, we load a random
+font from all possible themes.  Nice way to learn about more
+fonts (•̀ᴗ•́)و"
+    (interactive)
+    (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
+           (font (if current-prefix-arg
+                     (nth (random (length all-fonts)) all-fonts)
+                   new-font)))
+      (set-face-font 'default font)
+      (message "Font: %s" font)))
+
+  (global-set-key "\C-c\ F" 'my/toggle-font)
+
+  ;; Default font; the “ignore-⋯” is for users who may not have the font.
+  (ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
+  (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
+  (ignore-errors (my/toggle-font "IBM Plex Mono 12")))
+
+(unless noninteractive
+  ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
+  (my/toggle-theme 'solarized-gruvbox-light))
+
+(use-package dimmer
+  :config (dimmer-mode))
+
+;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
+
+;; The doom themes package comes with a function to make the mode line flash on error.
+;; (use-package doom-themes)
+;; (require 'doom-themes-ext-visual-bell)
+;; (doom-themes-visual-bell-config)
+
+(blink-cursor-mode 1)
+
+(unless noninteractive
+  (tool-bar-mode   -1)    ;; No large icons please
+  (scroll-bar-mode -1))   ;; No visual indicator please
+  ;; (menu-bar-mode   -1) ;; The Mac OS top pane has menu options
+
+(setq show-paren-delay  0)
+(setq show-paren-style 'mixed)
+(show-paren-mode)
+
+(use-package rainbow-delimiters
+  :hook prog-mode)
+
+(electric-pair-mode 1)
+
+;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
+(setq electric-pair-inhibit-predicate
+      (lambda (c)
+        (or (member c '(?< ?> ?~)) (electric-pair-default-inhibit c))))
+
+;; Treat ‘<’ and ‘>’ as if they were words, instead of ‘parenthesis’.
+(modify-syntax-entry ?< "w<")
+(modify-syntax-entry ?> "w>")
+
+(use-package bufler
+  :config (bind-key "C-x C-b" #'bufler-list))
+;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
+
+(use-package all-the-icons
+  ;; Install fonts only if they're not already installed.
+  ;; Source: https://github.com/domtronn/all-the-icons.el/issues/120#issuecomment-427172073
+  :config (let ((font-dest (cl-case window-system
+                             (x  (concat (or (getenv "XDG_DATA_HOME")            ;; Default Linux install directories
+                                             (concat (getenv "HOME") "/.local/share"))
+                                         "/fonts/"))
+                             (mac (concat (getenv "HOME") "/Library/Fonts/" ))
+                             (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
+            (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
+              (all-the-icons-install-fonts 'install-without-asking))))
+
+(defcustom  my/weather-refresh-interval 60
+  "Number of minutes between refreshes of weather information."
+  :type 'integer)
+;; Use (cancel-timer my/weather--timer) to stop this.
+(setq my/weather--timer
+      (run-with-timer (* 60 5) (* 60  my/weather-refresh-interval)
+                      (defun my/weather-update ()
+                        (interactive)
+                        (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t'"))
+                        ;; (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w'"))
+                        (setq my/weather-full-details (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?T'"))
+                        (force-mode-line-update))))
+;;
+(setq my/weather--indicator
+      `(:eval
+        (propertize (format " %s " my/weather-brief)
+              'face 'mode-line-buffer-id
+                    'help-echo (concat  ;; "Click to see full details"
+                                (propertize "\n" 'face '(:height 0.4))
+                                (propertize "[Click]" 'face `(bold (foreground-color . "green"))) " To see detailed weather report\n"
+                                (propertize "[M-x my/weather-update]" 'face '(bold (foreground-color . "maroon"))) " To fetch latest weather data"
+                                (propertize "\n " 'face '(:height 0.5)))
+                    'local-map my/mode-line-weather-map
+                    'mouse-face 'mode-line-highlight)))
+;;
+(add-to-list 'mode-line-misc-info my/weather--indicator)
+;; (pop mode-line-misc-info) ;; To remove from the modeline.
+
+(setq my/weather-posframe-visible nil)
+(defvar my/mode-line-weather-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mode-line mouse-1]
+                (lambda (_e)
+                  (interactive "e")
+                  (use-package posframe)
+                  (if my/weather-posframe-visible
+                      (posframe-delete "*my/weather-full-details-posframe-buffer*")
+                    (posframe-show "*my/weather-full-details-posframe-buffer*"
+                                   :string my/weather-full-details
+                                   :position (point))
+                    (message "Click on the weather modeline icon to close the posframe."))
+                  (setq my/weather-posframe-visible (not my/weather-posframe-visible))))
+    map))
 
 ;; [[file:init.org::*Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/][Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:1]]
 ;; I like to write everything in one massive file, and the agenda should consult it.
@@ -2902,6 +2244,24 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Stop this with:  (cancel-function-timers 'my/pop-up-agenda-timer)
 (setq my/pop-up-agenda-timer (run-with-idle-timer (* 60 30) t 'my/org-agenda))
 ;; Show me the agenda when I've been idle for 10 minutes:1 ends here
+
+;; [[file:init.org::*Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)][Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1]]
+(setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
+
+(setq appt-message-warning-time 12) ;; Show me a warning 12 minutes before an appointment
+
+(setq appt-display-interval 3) ;; Display warning every 3 minutes
+
+;; Ensure all of my Org entries are part of appt whenever it checks for an appointment
+(advice-add 'appt-check :before (lambda (&rest args) (org-agenda-to-appt t)))
+
+;; `appt-activate' eagerly runs every minute, slow it down to once every 10 minutes
+;; Also, don't do anything when I save a file (namely, `appt-update-list').
+(advice-add 'appt-activate :after
+            (lambda (&rest args)
+              (remove-hook 'write-file-functions #'appt-update-list)
+              (timer-set-time appt-timer (current-time) 600)))
+;; Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1 ends here
 
 ;; [[file:init.org::*Holy Days & Holidays][Holy Days & Holidays:2]]
 (defun my/holiday-islamic (month day event-title url-to-learn-more)
@@ -4296,6 +3656,282 @@ TODO:
 (add-hook 'org-capture-mode-hook #'my/setup-smart-paste)
 ;; “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode:1 ends here
 
+;; [[file:init.org::#Org-mode-HTML][C-c C-l Org-mode ⇐ HTML:2]]
+(use-package org-web-tools
+
+  :config
+  ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
+  ;; the page to get the HTML title.
+  ;; (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url) ;; Instead, see my/org-insert-link-dwim below.
+  )
+;; C-c C-l Org-mode ⇐ HTML:2 ends here
+
+;; [[file:init.org::#Org-mode-HTML][C-c C-l Org-mode ⇐ HTML:3]]
+;; C-u C-c C-l ⇒ Paste URL with title, WITHOUT prompting me for anything.
+;; C-c C-l ⇒ Prompt me for title.
+(bind-key* "C-c C-l"
+           (lambda () (interactive)
+             (call-interactively
+              (if current-prefix-arg
+                  #'org-web-tools-insert-link-for-url
+                #'my/org-insert-link-dwim))))
+;; From:
+(defun my/org-insert-link-dwim ()
+  "Like `org-insert-link' but with personal dwim preferences.
+
+- When text is selected, use that as the link description --and prompt for link type
+- When a URL is in the clipboard, use that as the link type
+- On an existing Org link, prompt to alter the link then to alter the description
+- With a ‘C-u’ prefix, prompts for a file to link to.
+  - It is relative to the current directory; use ‘C-u C-u’ to get an absolute path.
+
+It fallsback to `org-insert-link' when possible.
+
+Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
+  (interactive)
+  (let* ((point-in-link (org-in-regexp org-link-any-re 1))
+         (clipboard-url (when (string-match-p "^http" (current-kill 0))
+                          (current-kill 0)))
+         (region-content (when (region-active-p)
+                           (buffer-substring-no-properties (region-beginning)
+                                                           (region-end)))))
+    (cond ((and region-content clipboard-url (not point-in-link))
+           (delete-region (region-beginning) (region-end))
+           (insert (org-make-link-string clipboard-url region-content)))
+          ((and clipboard-url (not point-in-link))
+           (insert (org-make-link-string
+                    clipboard-url
+                    (read-string "title: "
+                                 (with-current-buffer (url-retrieve-synchronously clipboard-url)
+                                   (dom-text (car
+                                              (dom-by-tag (libxml-parse-html-region
+                                                           (point-min)
+                                                           (point-max))
+                                                          'title))))))))
+          (t
+           (call-interactively 'org-insert-link)))))
+;; C-c C-l Org-mode ⇐ HTML:3 ends here
+
+;; [[file:init.org::#Proportional-fonts-for-Headlines][Proportional fonts for Headlines:1]]
+(set-face-attribute 'org-document-title nil :height 2.0)
+;; (set-face-attribute 'org-level-1 nil :height 1.0)
+;; Remaining org-level-𝒾 have default height 1.0, for 𝒾 : 1..8.
+;;
+;; E.g., reset org-level-1 to default.
+;; (custom-set-faces '(org-level-1 nil))
+;; Proportional fonts for Headlines:1 ends here
+
+;; [[file:init.org::#Pretty-Lists-Markers][Pretty Lists Markers:1]]
+;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
+(cl-loop for (x y z) in '(("+" "◦" *)
+                       ("-" "•" *)
+                       ("*" "⋆" +))
+      do (font-lock-add-keywords 'org-mode
+                                 `((,(format "^ %s\\([%s]\\) " z x)
+                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
+;; Pretty Lists Markers:1 ends here
+
+;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:1]]
+  (defvar-local rasmus/org-at-src-begin -1
+    "Variable that holds whether last position was a ")
+
+  (defvar rasmus/ob-header-symbol ?☰
+    "Symbol used for babel headers")
+
+  (defun rasmus/org-prettify-src--update ()
+    (let ((case-fold-search t)
+          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+          found)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward re nil t)
+          (goto-char (match-end 0))
+          (let ((args (org-trim
+                       (buffer-substring-no-properties (point)
+                                                       (line-end-position)))))
+            (when (org-string-nw-p args)
+              (let ((new-cell (cons args rasmus/ob-header-symbol)))
+                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+                (cl-pushnew new-cell found :test #'equal)))))
+        (setq prettify-symbols-alist
+              (cl-set-difference prettify-symbols-alist
+                                 (cl-set-difference
+                                  (cl-remove-if-not
+                                   (lambda (elm)
+                                     (eq (cdr elm) rasmus/ob-header-symbol))
+                                   prettify-symbols-alist)
+                                  found :test #'equal)))
+        ;; Clean up old font-lock-keywords.
+        (font-lock-remove-keywords nil prettify-symbols--keywords)
+        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+        (font-lock-add-keywords nil prettify-symbols--keywords)
+        (while (re-search-forward re nil t)
+          (font-lock-flush (line-beginning-position) (line-end-position))))))
+
+  (defun rasmus/org-prettify-src ()
+    "Hide src options via `prettify-symbols-mode'.
+
+  `prettify-symbols-mode' is used because it has uncollpasing. It's
+  may not be efficient."
+    (let* ((case-fold-search t)
+           (at-src-block (save-excursion
+                           (beginning-of-line)
+                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+      ;; Test if we moved out of a block.
+      (when (or (and rasmus/org-at-src-begin
+                     (not at-src-block))
+                ;; File was just opened.
+                (eq rasmus/org-at-src-begin -1))
+        (rasmus/org-prettify-src--update))
+      ;; Remove composition if at line; doesn't work properly.
+      ;; (when at-src-block
+      ;;   (with-silent-modifications
+      ;;     (remove-text-properties (match-end 0)
+      ;;                             (1+ (line-end-position))
+      ;;                             '(composition))))
+      (setq rasmus/org-at-src-begin at-src-block)))
+
+  (defun rasmus/org-prettify-symbols ()
+    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+          (cl-reduce 'append
+                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
+                               ("#+end_src"   . ?□) ;; ⏹
+                               ("#+header:" . ,rasmus/ob-header-symbol)
+                               ("#+begin_quote" . ?»)
+                               ("#+end_quote" . ?«)))))
+    (turn-on-prettify-symbols-mode)
+    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
+
+
+;; Last up­dated: 2019-06-09
+;; Making Block Delimiters Less Intrusive:1 ends here
+
+;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:2]]
+(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+(org-mode-restart)
+;; Making Block Delimiters Less Intrusive:2 ends here
+
+;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:3]]
+(global-prettify-symbols-mode)
+
+(defvar my/prettify-alist nil
+  "Musa's personal prettifications.")
+
+(cl-loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
+                       ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
+                       ("#+end_example"   . ?⇐)                 ;; ⇐
+                       ;; Actuall beautifications
+                       ("==" . ?≈) ("===" . ?≈) ;; ("=" . ?≔) ;; Programming specific prettifications
+                       ("i32" . ?ℤ) ("u32" . ?ℕ) ("f64" . ?ℝ) ;; Rust specific
+                       ("bool" . ?𝔹)
+                       ;; ("\"\"\"\n" . ?“) ("\"\"\"" . ?”)
+                       ("\"\"\"" . ?“)
+                       ("fn" . ?λ)
+                       ("<=" . ?≤) (">=" . ?≥)
+                       ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                       ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
+         do (push pair my/prettify-alist))
+
+;; Replace all Org [metadata]keywords with the “▷” symbol; e.g., “#+title: Hello” looks like “▷ Hello”.
+(cl-loop for keyword in '(title author email date description options property startup export_file_name html_head fileimage filetags)
+         do (push (cons (format "#+%s:" keyword) ?▷) my/prettify-alist))
+
+(cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
+      do (add-hook hk (lambda ()
+                        (setq prettify-symbols-alist
+                              (append my/prettify-alist prettify-symbols-alist)))))
+
+
+(add-hook 'org-mode-hook (lambda () (push '("# " . (?🎶 (Br . Bl) ?\ )) prettify-symbols-alist)))
+;; Making Block Delimiters Less Intrusive:3 ends here
+
+;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:4]]
+;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
+(setq prettify-symbols-unprettify-at-point 'right-edge)
+;; Making Block Delimiters Less Intrusive:4 ends here
+
+;; [[file:init.org::#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG][Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:1]]
+;; org-mode math is now highlighted ;-)
+(setq org-highlight-latex-and-related '(latex))
+
+;; Extra space between text and underline line
+(setq x-underline-at-descent-line t)
+
+;; Hide the *,=,/ markers
+(setq org-hide-emphasis-markers t)
+
+;; Let’s limit the width of images inlined in org buffers to 400px.
+(setq org-image-actual-width 400)
+
+;; Visually, I prefer to hide the markers of macros, so let’s do that:
+;;  {{{go(here)}}} is shown in Emacs as go(here)
+(setq org-hide-macro-markers t)
+
+;; On HTML exports, Org-mode tries to include a validation link for the exported HTML. Let’s disable that since I never use it.
+;; (setq org-html-validation-link nil)
+
+;; Musa: This is super annoying, in practice.
+(setq org-pretty-entities nil) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
+;; to have \alpha, \to and others display as utf8
+;; http://orgmode.org/manual/Special-symbols.html
+;;
+;; Be default, any consectuive string after “_” or “^” will be shown in WYSIWYG fashion; the following requires “^{⋯}” instead.
+;; (setq org-use-sub-superscripts (quote {}))
+;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:1 ends here
+
+;; [[file:init.org::#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG][Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:2]]
+(use-package org-appear
+  :hook (org-mode . org-appear-mode)
+  :init (setq org-appear-autoemphasis  t
+              org-appear-autolinks nil
+              org-appear-autosubmarkers nil))
+;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:2 ends here
+
+;; [[file:init.org::#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG][Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:4]]
+;; Automatically toggle LaTeX previews when cursour enters/leaves them
+(use-package org-fragtog
+  :disabled t
+  :hook (org-mode . org-fragtog-mode))
+;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:4 ends here
+
+;; [[file:init.org::#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG][Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:7]]
+;; Support “latex-as-png” src blocks, which show LaTeX as PNGs
+(use-package ob-latex-as-png :disabled t)
+;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:7 ends here
+
+;; [[file:init.org::#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG][Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:8]]
+;; Use the “#+name” the user provides, instead of generating label identifiers.
+(setq org-latex-prefer-user-labels t)
+;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:8 ends here
+
+;; [[file:init.org::*Now C-c C-x C-v shows remote images inline, neato!][Now C-c C-x C-v shows remote images inline, neato!:1]]
+  (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
+  (require 'org-remoteimg)
+  (setq url-cache-directory "~/emacs.d/.cache/")
+  (setq org-display-remote-inline-images 'cache)
+;; Now C-c C-x C-v shows remote images inline, neato!:1 ends here
+
+;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
+(quelpa '(org-pretty-table
+         :repo "Fuco1/org-pretty-table"
+         :fetcher github))
+
+(add-hook 'org-mode-hook 'org-pretty-table-mode)
+;; Draw pretty unicode tables in org-mode:1 ends here
+
+;; [[file:init.org::*Use backtick as an alternative to “~” for code font][Use backtick as an alternative to “~” for code font:1]]
+;; Working with others: `This is a piece of code`
+(add-hook 'org-font-lock-set-keywords-hook
+          (defun my/backticks-denote-code ()
+            (add-to-list 'org-font-lock-extra-keywords
+                         '("\\(`\\)\\(.*\\)\\(`\\)"
+                           (1 '(face nil invisible t))
+                           (3 '(face nil invisible t))
+                           ;; (2 '(face code))
+                           (2  '(:box t :foreground "#AAF"))))))
+;; Use backtick as an alternative to “~” for code font:1 ends here
+
 ;; [[file:init.org::*\[Conversely,\] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=][[Conversely,] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=:1]]
 (cl-defun my/copy-as-jira ()
   "Export region to Jira markdown, and copy to the kill ring for pasting into other programs."
@@ -4453,6 +4089,345 @@ Check for orphaned files in the Org attachment directory.
 (advice-add 'org-delete-backward-char :around #'my/confirm-big-deletion) ;; For Org-mode
 (advice-add 'backward-delete-char-untabify :around #'my/confirm-big-deletion) ;; For everywhere else
 ;; Mitigate accidental deletion of large regions of text:1 ends here
+
+;; [[file:init.org::*Bidirectional Text][Bidirectional Text:1]]
+;; Sometimes I have Arabic in my buffers, however I am an English speaker
+;; and so Left-to-Right is most natural to me. As such, even when Arabic
+;; is present, or any bidirectional text, just use Left-to-Right.
+(setq-default bidi-paragraph-direction 'left-to-right)
+;; Bidirectional Text:1 ends here
+
+;; [[file:init.org::#Whitespace][Whitespace:1]]
+(add-hook 'before-save-hook 'whitespace-cleanup)
+;; Whitespace:1 ends here
+
+;; [[file:init.org::#Formatting-Text][Formatting Text:1]]
+(local-set-key (kbd "C-c f") #'my/org-mode-format)
+(defun my/org-mode-format (&optional text)
+"Surround selected region with the given Org emphasises marker.
+
+E.g., if this command is bound to “C-c f” then the sequence
+“C-c f b” would make the currenly selected text be bold.
+Likewise, “C-c f *” would achieve the same goal.
+
+When you press “C-c f”, a message is shown with a list of
+useful single-character completions.
+
+Note: “C-c f 𝓍”, for an unrecognised marker 𝓍, just inserts
+the character 𝓍 before and after the selected text."
+  (interactive "P") ;; Works on a region
+  ; (message "b,* ⟨Bold⟩; i,/ ⟨Italics⟩; u,_ ⟨Underline⟩; c,~ ⟨Monotype⟩")
+  (message "⟨Bold b,*⟩ ⟨Italics i,/⟩ ⟨Underline u,_⟩ ⟨Monotype c,~⟩")
+  (let ((kind (read-char)))
+    ;; Map letters to Org formatting symbols
+    (setq kind (or (plist-get '(b ?\*   i ?\/   u ?\_   c ?\~)
+                              (intern (string kind)))
+                   kind))
+    (insert-pair text kind kind)))
+;; Formatting Text:1 ends here
+
+;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:1]]
+(setq-default fill-column 80          ;; Let's avoid going over 80 columns
+              truncate-lines nil      ;; I never want to scroll horizontally
+              indent-tabs-mode nil)   ;; Use spaces instead of tabs
+;; Fill-mode ---Word Wrapping:1 ends here
+
+;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:2]]
+;; Wrap long lines when editing text
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+(add-hook 'org-mode-hook 'turn-on-auto-fill)
+;; Fill-mode ---Word Wrapping:2 ends here
+
+;; [[file:init.org::#Fill-mode-Word-Wrapping][Fill-mode ---Word Wrapping:3]]
+;; Bent arrows at the end and start of long lines.
+(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(global-visual-line-mode 1)
+;; Fill-mode ---Word Wrapping:3 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:1]]
+(system-packages-ensure "aspell")
+(system-packages-ensure "wordnet")
+;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:2]]
+(use-package flyspell
+
+  :hook ((prog-mode . flyspell-prog-mode)
+         ((org-mode text-mode) . flyspell-mode)))
+;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:3]]
+(setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
+(setq ispell-dictionary "en_GB") ;; set the default dictionary
+;; Fix spelling as you type ---thesaurus & dictionary too!:3 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:5]]
+(eval-after-load "flyspell"
+  ' (progn
+     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
+;; Fix spelling as you type ---thesaurus & dictionary too!:5 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:6]]
+(global-font-lock-mode t)
+(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
+;; Fix spelling as you type ---thesaurus & dictionary too!:6 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:7]]
+(setq ispell-silently-savep t)
+;; Fix spelling as you type ---thesaurus & dictionary too!:7 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:8]]
+(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
+;; Fix spelling as you type ---thesaurus & dictionary too!:8 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:9]]
+(add-hook          'c-mode-hook 'flyspell-prog-mode)
+(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
+;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:10]]
+(use-package synosaurus
+  :defer 100
+  :init    (synosaurus-mode)
+  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
+           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
+;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:11]]
+;; (shell-command "brew cask install xquartz &") ;; Dependency
+;; (shell-command "brew install wordnet &")
+;; Fix spelling as you type ---thesaurus & dictionary too!:11 ends here
+
+;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:12]]
+(use-package wordnut
+ :defer 100
+ :bind ("M-!" . wordnut-lookup-current-word))
+
+;; Use M-& for async shell commands.
+;; Fix spelling as you type ---thesaurus & dictionary too!:12 ends here
+
+;; [[file:init.org::#Lightweight-Prose-Proofchecking][Lightweight Prose Proofchecking:1]]
+(use-package writegood-mode
+  ;; Load this whenver I'm composing prose.
+  :hook (text-mode org-mode)
+  ;; Don't show me the “Wg” marker in the mode line
+
+  :defer 100
+
+  ;; Some additional weasel words.
+  :config
+  (--map (push it writegood-weasel-words)
+         '("some" "simple" "simply" "easy" "often" "easily" "probably"
+           "clearly"               ;; Is the premise undeniably true?
+           "experience shows"      ;; Whose? What kind? How does it do so?
+           "may have"              ;; It may also have not!
+           "it turns out that")))  ;; How does it turn out so?
+           ;; ↯ What is the evidence of highighted phrase? ↯
+;; Lightweight Prose Proofchecking:1 ends here
+
+;; [[file:init.org::#Placeholder-Text-For-Learning-Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
+(use-package lorem-ipsum )
+;; Placeholder Text ---For Learning & Experimenting:1 ends here
+
+;; [[file:init.org::#Some-text-to-make-us-smile][Some text to make us smile:1]]
+(use-package dad-joke
+
+  :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
+;; Some text to make us smile:1 ends here
+
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:1]]
+;; (load (shell-command-to-string "agda-mode locate"))
+;;
+;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
+; (makunbound 'agda2-include-dirs)
+;; Unicode Input via Agda Input:1 ends here
+
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:2]]
+(system-packages-ensure "agda")
+;; Unicode Input via Agda Input:2 ends here
+
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:4]]
+(unless noninteractive
+  (load-file (let ((coding-system-for-read 'utf-8))
+               (shell-command-to-string "agda-mode locate"))))
+;; Unicode Input via Agda Input:4 ends here
+
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:5]]
+;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
+;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
+;; then loading that!
+(url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" "~/.emacs.d/elpa/agda-input.el" :ok-if-already-exists)
+(load-file "~/.emacs.d/elpa/agda-input.el")
+
+;; MA: This results in "Package cl is deprecated" !?
+(unless noninteractive
+  (use-package agda-input
+  :ensure nil ;; I have it locally.
+  :demand t
+  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
+  :custom (default-input-method "Agda")))
+  ;; Now C-\ or M-x toggle-input-method turn it on and offers
+
+
+;; TODO add a hook that when the input method becomes Agda, just don't bother showing me in the modeline.
+;; E.g., "Π" when using unicode input with Agda
+;; Useful to have in the modeline, say when typing in Arabic.
+;; (add-variable-watcher
+;;  'current-input-method
+;;  (lambda (_ newvalue 'set _)
+;;    (setq current-input-method-title
+;;          (if (equal newvalue "Agda") nil newvalue))))
+;; Unicode Input via Agda Input:5 ends here
+
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:6]]
+;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
+;; Unicode Input via Agda Input:6 ends here
+
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:7]]
+(unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
+;; Unicode Input via Agda Input:7 ends here
+
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:8]]
+(unless noninteractive
+(cl-loop for item
+      in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
+          ("(" "﴾")
+          (")" "﴿")
+          ("cmd" "⌘")
+           ;; categorial ;;
+           ("alg" "𝒜𝓁ℊ")
+           ("split" "▵")
+           ("join" "▿")
+           ("adj" "⊣")
+           (";;" "﹔")
+           (";;" "⨾")
+           (";;" "∘")
+           ;; logic
+           ("if" "⇐")
+           ("onlyif" "⇒")
+           ;; lattices ;;
+           ("meet" "⊓")
+           ("join" "⊔")
+           ;; tortoise brackets, infix relations
+           ("((" "〔")
+           ("))" "〕")
+           ;; residuals
+           ("syq"  "╳")
+           ("over" "╱")
+           ("under" "╲")
+           ;; Z-quantification range notation ;;
+           ;; e.g., “∀ x ❙ R • P” ;;
+           ("|"    "❙")
+           ("with" "❙")
+           ;; Z relational operators
+           ("domainrestriction" "◁")
+           ("domr" "◁")
+           ("domainantirestriction" "⩤")
+           ("doma" "⩤")
+           ("rangerestriction" "▷")
+           ("ranr" "▷")
+           ("rangeantirestriction" "⩥")
+           ("rana" "⩥")
+           ;; adjunction isomorphism pair ;;
+           ("floor"  "⌊⌋")
+           ("lower"  "⌊⌋")
+           ("lad"    "⌊⌋")
+           ("ceil"   "⌈⌉")
+           ("raise"  "⌈⌉")
+           ("rad"    "⌈⌉")
+           ;; Replies
+           ("yes"  "✔")
+           ("no"    "❌")
+           ;; Arrows
+           ("<=" "⇐")
+        ;; more (key value) pairs here
+        )
+      do (add-to-list 'agda-input-user-translations item)))
+;; Unicode Input via Agda Input:8 ends here
+
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:9]]
+(unless noninteractive
+;; Add to the list of translations using “emot” and the given, more specfic, name.
+;; Whence, \emot shows all possible emotions.
+(cl-loop for emot
+      in `(;; angry, cry, why-you-no
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "ಠ_ಠ" "(╬ ಠ益ಠ)" "･ﾟ(*❦ω❦)*･ﾟ" "(╯°□°）╯︵ ┻━┻") ;; flip the table
+           ;; confused, disapprove, dead, shrug, awkward
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"  "(´°ω°`)" "･✧_✧･")
+           ;; dance, csi
+           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
+            ,(s-collapse-whitespace "•_•)
+                                      ( •_•)>⌐■-■
+                                      (⌐■_■)"))
+           ;; love, pleased, success, yesss, smile, excited, yay
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "ᕦ( ᴼ ڡ ᴼ )ᕤ" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "(◕‿◕)" "( ˃ ヮ˂)" "[ ⇀ ‿ ↼ ]" "٩(⁎❛ᴗ❛⁎)۶" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ" "(✿◠‿◠)")
+           ;; flower high-5
+           ("hug" "♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡" "(づ｡◕‿◕｡)づ" "(づ｡◕‿‿‿‿◕｡)づ"))
+      do
+      (add-to-list 'agda-input-user-translations emot)
+      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
+;; Unicode Input via Agda Input:9 ends here
+
+;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:10]]
+;; activate translations
+(unless noninteractive (agda-input-setup))
+;; Unicode Input via Agda Input:10 ends here
+
+;; [[file:init.org::#Increase-decrease-text-size][Increase/decrease text size:1]]
+(global-set-key (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
+;; C-x C-0 restores the default font size
+;; Increase/decrease text size:1 ends here
+
+;; [[file:init.org::#Moving-Text-Around][Moving Text Around:1]]
+;; M-↑,↓ moves line, or marked region; prefix is how many lines.
+(use-package move-text
+
+  :config (move-text-default-bindings))
+;; Moving Text Around:1 ends here
+
+;; [[file:init.org::#Enabling-CamelCase-Aware-Editing-Operations][Enabling CamelCase Aware Editing Operations:1]]
+(global-subword-mode 1)
+;; Enabling CamelCase Aware Editing Operations:1 ends here
+
+;; [[file:init.org::#Delete-Selection-Mode][Delete Selection Mode:1]]
+(delete-selection-mode 1)
+;; Delete Selection Mode:1 ends here
+
+;; [[file:init.org::#visual-regexp][visual-regexp:1]]
+;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
+;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
+;;
+;; C-u M-%  do to regexp replace, without querying.
+(use-package visual-regexp
+
+  :config (define-key global-map (kbd "M-%")
+            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+;; visual-regexp:1 ends here
+
+;; [[file:init.org::#HTML-Org-mode][HTML ⇐ Org-mode:1]]
+(use-package htmlize )
+;; Main use: Org produced htmls are coloured.
+;; Can be used to export a file into a coloured html.
+;; HTML ⇐ Org-mode:1 ends here
+
+;; [[file:init.org::*Press M-SPC so all adjacent blank lines are also removed][Press M-SPC so all adjacent blank lines are also removed:1]]
+;; Now when I press M-SPC all adjacent blank lines are also removed.
+(advice-add 'cycle-spacing :after
+            (defun my/cycle-spacing-then-delete-blank-lines (&rest _args)
+  "Run `delete-blank-lines` after `cycle-spacing`."
+  (delete-blank-lines)))
+;; Press M-SPC so all adjacent blank lines are also removed:1 ends here
+
+;; [[file:init.org::*Add more line padding for readability][Add more line padding for readability:1]]
+(setq-default line-spacing 0.2)
+;; Add more line padding for readability:1 ends here
+
+;; [[file:init.org::*Olivetti: A clean writing environment][Olivetti: A clean writing environment:1]]
+(use-package olivetti)
+(setq olivetti-body-width 100)
+;; Olivetti: A clean writing environment:1 ends here
 
 ;; [[file:init.org::*Other benefits of clocking are …][Other benefits of clocking are …:2]]
   (setq org-clock-sound "~/.emacs.d/school-bell.wav")
@@ -4816,11 +4791,6 @@ With prefix arg, offer recently clocked tasks for selection."
          element)))))
 ;; Automatically toggle timestamp prettifications:1 ends here
 
-;; [[file:init.org::*Olivetti: A clean writing environment][Olivetti: A clean writing environment:1]]
-(use-package olivetti)
-(setq olivetti-body-width 100)
-;; Olivetti: A clean writing environment:1 ends here
-
 ;; [[file:init.org::*Working with massive files: my-life∙org][Working with massive files: my-life∙org:1]]
 ;; I ran M-x profiler-start then did a save (C-x C-x) then did M-x profiler-report and noticed that
 ;; whitespace-cleanup was taking a long time on a file with 96k lines. At first I thought this was
@@ -4830,6 +4800,27 @@ With prefix arg, offer recently clocked tasks for selection."
 ;;
 (set-default 'before-save-hook (--remove (equal it 'whitespace-cleanup) before-save-hook))
 ;; Working with massive files: my-life∙org:1 ends here
+
+;; [[file:init.org::#Show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window:1]]
+ (use-package org-sticky-header
+  :hook (org-mode . org-sticky-header-mode)
+  :config
+  (setq-default
+   org-sticky-header-full-path 'full
+   ;; Child and parent headings are seperated by a /.
+   org-sticky-header-outline-path-separator " ▷ "))
+;; Show off-screen heading at the top of the window:1 ends here
+
+;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:1]]
+;; Make it very easy to see the line with the cursor.
+(global-hl-line-mode t)
+;; Never lose the cursor:1 ends here
+
+;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:2]]
+(use-package beacon
+  :config (setq beacon-color "#666600")
+  :hook   ((org-mode text-mode) . beacon-mode))
+;; Never lose the cursor:2 ends here
 
 ;; [[file:init.org::*Hyperbole: “DWIM at point”][Hyperbole: “DWIM at point”:1]]
 (use-package hyperbole)
@@ -4994,23 +4985,62 @@ With prefix arg, offer recently clocked tasks for selection."
                (hact 'my/jump-to-radio radio)))))
 ;; Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/:1 ends here
 
-;; [[file:init.org::*Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)][Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1]]
-(setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
+(defun org-special-block-extras-short-names ())
+;;
+;; org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
+(setq o--supported-blocks nil)
 
-(setq appt-message-warning-time 12) ;; Show me a warning 12 minutes before an appointment
+;; TODO org-special-block-extras.el:681:1:Error: Symbol’s value as variable is void: o--supported-blocks
+;;
+(use-package org-special-block-extras
+  :hook (org-mode . org-special-block-extras-mode)
+  :custom
+    ;; The places where I keep my ‘#+documentation’
+    (org-special-block-extras--docs-libraries
+     '("~/org-special-block-extras/documentation.org"))
+    ;; Disable the in-Emacs fancy-links feature?
+    (org-special-block-extras-fancy-links
+     '(elisp badge kbd link-here doc tweet))
+    ;; Details heading “flash pink” whenever the user hovers over them?
+    (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
+    ;; The message prefixing a ‘tweet:url’ badge
+    (org-special-block-extras-link-twitter-excitement
+     "This looks super neat (•̀ᴗ•́)و:")
+  :config
+  ;; Use short names like ‘defblock’ instead of the fully qualified name
+  ;; ‘org-special-block-extras--defblock’
+    (org-special-block-extras-short-names))
 
-(setq appt-display-interval 3) ;; Display warning every 3 minutes
+;; Let's execute Lisp code with links, as in “elisp:view-hello-file”.
+(setq org-confirm-elisp-link-function nil)
 
-;; Ensure all of my Org entries are part of appt whenever it checks for an appointment
-(advice-add 'appt-check :before (lambda (&rest args) (org-agenda-to-appt t)))
+(defmacro 😴 (&rest sexp)
+  "Defer any sexp.
 
-;; `appt-activate' eagerly runs every minute, slow it down to once every 10 minutes
-;; Also, don't do anything when I save a file (namely, `appt-update-list').
-(advice-add 'appt-activate :after
-            (lambda (&rest args)
-              (remove-hook 'write-file-functions #'appt-update-list)
-              (timer-set-time appt-timer (current-time) 600)))
-;; Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1 ends here
+If you have a call `(f x y)' then `(😴 f x y)' behaves the same but is run
+when Emacs has been idle for 2 seconds.
+
+E.g., (setq hi 12) defines a variable `hi', so `M-: hi' shows a value.
+Whereas (😴 setq hello 12) does not immediately define a variable: `M-: hello' yields an error
+when run immediately, but yields a value when Emacs is idle for 2 seconds.
+
+Save the name of this macro by highlighting it and pressing `C-x r s z', then use it with `C-x r i z'."
+  `(run-with-idle-timer 20 nil (lambda nil ,sexp)))
+
+;; (defmacro when-idle (&rest body)
+   ;; `(run-with-idle-timer 20 nil (lambda () ,@body)))
+;;
+
+;; first this,
+(setq gc-cons-threshold most-positive-fixnum ; 2^61 bytes
+      gc-cons-percentage 0.6)
+;; then
+(😴 load-file "~/.emacs.d/deferred-init.el")
+;; finally [[the following should really be at the end of deferred-init.el]]
+(add-hook 'emacs-startup-hook
+  (lambda ()
+    (setq gc-cons-threshold 16777216 ; 16mb
+          gc-cons-percentage 0.1)))
 
 ;; [[file:init.org::*Done!][Done!:1]]
 (add-to-list 'default-frame-alist '(fullscreen . maximized))

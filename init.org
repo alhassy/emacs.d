@@ -3831,7 +3831,7 @@ language.  This saves us a few key strokes.
 ;; Ignore all header arguments relating to “:eval”. Do not evaluate code when I export to HTML or LaTeX or anything else.
 (setq org-export-use-babel nil)
 #+end_src
-** Snippets ---Template Expansion & Completion :Disabled:I_have_not_used_this_in_some_time:
+** COMMENT Snippets ---Template Expansion & Completion :Disabled:I_have_not_used_this_in_some_time:
 :PROPERTIES:
 :CUSTOM_ID: Snippets-Template-Expansion
 :header-args: :tangle no
