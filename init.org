@@ -2909,6 +2909,32 @@ This results in an interactive shell buffer named “*Playing with Haskell*” w
     (term-send-string
      proc (concat (s-join "\n" more-commands) "\n"))))
 #+end_src
+** Global auto-revert mode
+
+# I do this so often it's not even funny.
+# #+begin_src emacs-lisp :tangle no
+# (global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
+# #+END_SRC
+
+In Mac OS, one uses ~Cmd-r~ to reload a page and Emacs binds buffer reversion to ~Cmd-u~
+--in Emacs, Mac's ~Cmd~ is referred to as the ‘super key’ and denoted ~s~.
+
+Moreover, since I use Org-mode to generate code blocks and occasionally
+inspect them, it would be nice if they automatically reverted when they
+were regenerated --Emacs should also prompt me if I make any changes!
+
+#+begin_src emacs-lisp
+;; Auto update buffers that change on disk.
+;; Will be prompted if there are changes that could be lost.
+(global-auto-revert-mode 1)
+;; Auto refreshes every 2 seconds. Don’t forget to refresh the version control status as well.
+(setq auto-revert-interval 2
+      auto-revert-check-vc-info t
+      global-auto-revert-non-file-buffers t
+      auto-revert-verbose nil)
+#+end_src
+
+
 * Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
@@ -4346,31 +4372,6 @@ language.  This saves us a few key strokes.
     C -> C;
   }
  #+END_SRC
-
-** Global auto-revert mode
-
-# I do this so often it's not even funny.
-# #+begin_src emacs-lisp :tangle no
-# (global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
-# #+END_SRC
-
-In Mac OS, one uses ~Cmd-r~ to reload a page and Emacs binds buffer reversion to ~Cmd-u~
---in Emacs, Mac's ~Cmd~ is referred to as the ‘super key’ and denoted ~s~.
-
-Moreover, since I use Org-mode to generate code blocks and occasionally
-inspect them, it would be nice if they automatically reverted when they
-were regenerated --Emacs should also prompt me if I make any changes!
-
-#+begin_src emacs-lisp
-;; Auto update buffers that change on disk.
-;; Will be prompted if there are changes that could be lost.
-(global-auto-revert-mode 1)
-;; Auto refreshes every 2 seconds. Don’t forget to refresh the version control status as well.
-(setq auto-revert-interval 2
-      auto-revert-check-vc-info t
-      global-auto-revert-non-file-buffers t
-      auto-revert-verbose nil)
-#+end_src
 
 ** Compile                     :posterity:I_have_not_used_this_in_some_time:
 :PROPERTIES:
