@@ -15548,6 +15548,25 @@ with Olivetti and the other is not.
 
 tldr: When this mode is active, and I have a single buffer, my text is
 comfortably centred in the screen.
+*** COMMENT centered-window mode
+
+#+begin_src emacs-lisp
+(use-package centered-window) ;; Makes all windows centered.
+;; (setq cwm-centered-window-width 120)
+(setq cwm-centered-window-width 150)
+(setq fill-column 82)
+(centered-window-mode )
+
+;; Packages for distraction-free writing
+;;
+;; Toggles Hides modeline, org-sticky-hearer, centers text, increses font size.
+;; Other windows are /not/ impacted, nice.
+;; However, we can enable it for multiple windows.
+;; (use-package darkroom)
+;; (use-package writeroom-mode)
+#+end_src
+
+
 * ⏰ “What did I spend my time on today? Last week? Last month? Last Year?”
 :LOGBOOK:
 CLOCK: [2025-05-04 Sun 21:44]--[2025-05-04 Sun 22:53] =>  1:09
@@ -17088,24 +17107,6 @@ e.g., “I use #emacs to write #org for the purposes of configuring my #life and
 
 MA: The main prolem here is likely that helm does not reuse the minibuffer, but instead simulates it.
 Not sure though. Consider using vertico and friends.
-
-* COMMENT centered-window mode
-
-#+begin_src emacs-lisp
-(use-package centered-window) ;; Makes all windows centered.
-;; (setq cwm-centered-window-width 120)
-(setq cwm-centered-window-width 150)
-(setq fill-column 82)
-(centered-window-mode )
-
-;; Packages for distraction-free writing
-;;
-;; Toggles Hides modeline, org-sticky-hearer, centers text, increses font size.
-;; Other windows are /not/ impacted, nice.
-;; However, we can enable it for multiple windows.
-;; (use-package darkroom)
-;; (use-package writeroom-mode)
-#+end_src
 
 * COMMENT Browsing
 
