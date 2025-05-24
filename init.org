@@ -5848,7 +5848,7 @@ mood 😸). [I already use kbd:C-c_f, doc:my/org-mode-format, for the more likel
 operation of formatting text.]
 #+begin_details “my/toggle-font” Implementation
 
-#+begin_src emacs-lisp :tangle init.el
+#+begin_src emacs-lisp :tangle init.el 
 (when my/personal-machine?
 
   ;; Infinite list of my commonly used fonts
@@ -12402,19 +12402,6 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
            (call-interactively 'org-insert-link)))))
 #+end_src
 
-** COMMENT [[https://github.com/sshaw/copy-as-format][copy-as-format:]] Emacs function to copy buffer locations as GitHub/Slack/JIRA etc... formatted code.
-:PROPERTIES:
-:CUSTOM_ID: https-github-com-sshaw-copy-as-format-copy-as-format-Emacs-function-to-copy-buffer-locations-as-GitHub-Slack-JIRA-etc-formatted-code
-:END:
-#+begin_src emacs-lisp
-;; Usage: [C-u] M-x copy-as-format ⇒ Copies selected region, or current line.
-;; Also use: copy-as-format-𝒮, to format to a particular 𝒮tyle.
-;; Without suffix 𝒮, format defaults to `copy-as-format-default`.
-;; With a prefix argument prompt for the format style 𝒮.
-;; Easy to add more formats.
-(use-package copy-as-format)
-#+end_src
-
 ** TODO COMMENT Working with PDFs                                  :Disabled:
 *** TODO Open PDFs in Emacs
 #+begin_src emacs-lisp
@@ -14652,11 +14639,13 @@ Further reading:
               ;; Let's insert a quote
               (end-of-buffer)
               (insert "\n\n#+begin_quote_of_the_day\n")
-              (insert (my/string-fill-column-and-center 70 (my/random-quote)))
-              (insert "\n#+end_quote_of_the_day\n\n")
+              (-let [quote-start (point)]
+                (insert (my/string-fill-column-and-center 70 (my/random-quote)))
+                (insert "\n")
+                (overlay-put (make-overlay quote-start (point)) 'face '(background-color . "#FFB6C1")))
+              (insert "#+end_quote_of_the_day\n\n")
 
               (insert "\n#+begin_stats_of_the_day")
-
               ;; Randomise the order of stats, to keep things interesting.
               (--map (eval it)
                      (--sort (< (random 2) 1)
@@ -14677,6 +14666,8 @@ Further reading:
                                                  my/dawn-prayer-time my/noon-prayer-time my/sunset-prayer-time)))
                                
                                (insert "\n🥳 " (my/age-in-days-weeks-years))
+
+                               (insert "\n" (my/percentage-of-life-spent))
                                
                                (insert "\n🤖 " (my/git-commit-count))
                                
@@ -14943,6 +14934,68 @@ Further reading:
              years (if (= years 1) "" "s")
              months (if (= months 1) "" "s")
              (substring first-date-str 0 10))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun my/percentage-of-life-spent ()
+  (format "⏳ 〔%s life ∣ %s year ∣ %s month ∣ %s week ∣ %s day〕 elapsed"
+          (my/percentage-of-life-elapsed)
+          (my/percentage-of-year-elapsed)
+          (my/percentage-of-month-elapsed)
+          (my/percentage-of-week-elapsed)
+          (my/percentage-of-waking-day-elapsed)))
+
+(defun my/percentage-of-year-elapsed ()
+  "Calculate percentage of current year that has elapsed.
+Returns a float between 0 and 100."
+  ;; (calendar-day-of-year-string) ⇒ "Day 143 of 2025; 222 days remaining in the year"
+  (let* ((date (calendar-current-date))
+         (year (calendar-extract-year date))
+         (day-in-year (calendar-day-number date))
+         (total-days-in-year (calendar-day-number (list 12 31 year)))
+         (days-remaining (- total-days-in-year day-in-year)))
+    (format "%.1f%%" (* 100 (/ (float day-in-year) total-days-in-year)))))
+
+
+(defun my/percentage-of-month-elapsed ()
+  "Calculate percentage of current month that has elapsed.
+Returns a float between 0 and 100."
+  (-let [(month day year) (calendar-current-date)]
+    (format "%.1f%%" (* 100 (/ (float day) (calendar-last-day-of-month month year))))))
+
+
+(defun my/percentage-of-week-elapsed ()
+  "Calculate percentage of current week that has elapsed.
+Returns a float between 0 and 100."
+  (format "%.1f%%" (thread-first (calendar-current-date) calendar-day-of-week float (/ 7) (* 100))))
+
+
+(defun my/percentage-of-waking-day-elapsed ()
+  "Calculate percentage of current (waking) day that has elapsed.
+Returns a float between 0 and 100."
+  (let* ((now (decode-time))
+         ;; (current-hour (nth 2 now))
+         (current-awake-hour (- (nth 2 now) 8))
+         (current-minute (nth 1 now))
+         (current-second (nth 0 now))
+         ;; (total-day-seconds (* 24 3600))
+         (total-day-awake-seconds (* 16 3600))         
+         (elapsed-seconds (+ (* current-awake-hour 3600)
+                             (* current-minute 60)
+                             current-second)))
+    (format "%.1f%%" (* 100 (/ (float elapsed-seconds) total-day-awake-seconds)))))
+
+
+(defun my/percentage-of-life-elapsed ()
+  "Calculate percentage of life elapsed based on birth date (January 1, 1990).
+Returns a float between 0 and 100."
+  (interactive)
+  (let* ((birth-time (date-to-time (concat my\birthday " 00:00:00")))
+         (now (current-time))
+         (days-old (/ (float-time (time-subtract now birth-time)) 86400))
+         (years-old (/ days-old 365.25))) ;; approximate year with leap years)
+    (format "%.2f%%" (* 100 (/ years-old 70)))))
+
 #+end_src 
 
 ** Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content
@@ -16438,6 +16491,368 @@ org-agenda-custom-commands
 #+end_src
 
 * --------------------------------------------------------------------------------
+* Working with others
+:PROPERTIES:
+:CREATED:  [2025-01-20 Mon 11:27]
+:END:
+** Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=
+:LOGBOOK:
+CLOCK: [2024-05-05 Sun 16:01]--[2024-05-05 Sun 16:48] =>  0:47
+:END:
+ Captured: [2024-05-05 Sun 16:01]
+
+
+Authoring pretty comments (with colourful code blocks) in Jira can be done
+easily by composing them in Org mode, then invoking ~my/copy-as-jira~.
+
+#+begin_src emacs-lisp
+(cl-defun my/copy-as-jira ()
+  "Export region to Jira markdown, and copy to the kill ring for pasting into other programs."
+  (interactive)
+  (use-package ox-jira)
+  (message "Converting to Jira Markdown...")
+  (kill-new (org-export-as 'jira))
+  (message "Copied as Jira Markdown!"))
+
+
+(cl-defun my/copy-as-reddit ()
+  "Export region to Reddit (i.e., Github Flavoured Markdown), and copy to the kill ring for pasting into other programs.
+
+   “Mode for Reddit”: Conversely, to read Reddit within Emacs,
+   (use-package md4rd :config (setq md4rd-subs-active '(emacs clojure shia)))
+   then “M-x md4rd”."
+  (interactive)
+  (use-package ox-gfm)
+  (message "Converting to Reddit Markdown...")
+  (kill-new (org-export-as 'gfm))
+  (message "Copied as Reddit Markdown!"))
+
+
+(cl-defun my/copy-as-slack ()
+  "Export region to slack, and copy to the kill ring for pasting into other programs."
+  (interactive)
+  (use-package ox-slack)
+  (message "Converting to Slack Markdown...")
+  (kill-new (org-export-as 'slack))
+  (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))
+
+
+(cl-defun my/copy-as-confluence ()
+  "Export region to Confluence, and copy to the kill ring for pasting into other programs.
+
+More precisely, export the selected region to HTML and copy it to the clipboard.
+
+Note: Confluence has no markup language, it's a WYSIWYG editor,
+but it does recognise formatted text, such as what you copy off a webpage."
+  (interactive)
+  (message "Converting to Confluence Markdown...")
+  ;; NOTE: Consider using https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/ox-confluence.el
+  (kill-new (org-export-as 'html))
+  (message "Copied as Confluence Markdown!"))
+#+end_src
+
+
+Note: There is a package [[https://github.com/sshaw/copy-as-format][copy-as-format]] which is an “Emacs function to copy
+buffer locations as GitHub/Slack/JIRA etc... *formatted code*.”  That is, it takes
+my region [[https://github.com/sshaw/copy-as-format/blob/master/copy-as-format.el#L208][and wraps it in ```]], more-or-less. 😦 Not terribly useful.
+
+
+Finally, there is the package [[https://github.com/etern/edit-as-format][edit-as-format]]: It will allow me to edit, say, a
+markdown file using Org syntax 😻
+
+* Hyperbole: “DWIM at point”
+:PROPERTIES:
+:CREATED:  [2025-05-20 Tue 19:02]
+:END:
+
+Hyperbole automatically turns passive documents into active ones, by associating
+actions with common textual patterns. That is, it turns plain old text into
+links, which are ‘clickable’ via ~M-RET~. As a result, my documents are
+automatically linked (i.e., hypertext) as I type. For instance, below, I enabled
+my Org radio targets to be accessible from all buffers: These are words of
+import to me, so why not be reminded of their definition wherever and whenever I
+encounter them. Consequently, source code buffers become more accessible since
+they automatically link to references, e.g., a variable named ~parser~ now links
+to my radio target note associated with parsers.
+
+#+begin_src emacs-lisp 
+(use-package hyperbole)
+(hyperbole-mode +1)
+(setq hsys-org-enable-smart-keys t)
+#+end_src
+
+*Turn every document into Hypertext --without any markup.*
+#+begin_src plantuml :file images/hyperbole.png :theme neutral :background-color green  :tangle no :results replace :eval never-export
+title Hypebole: Automatically treating structured text as hyper-text
+
+rectangle A [{{
+ title Text Patterns
+ [Email Address \n\nalhassy@gmail.com]
+ [URL \n\nhttps://alhassy.com]
+ [Git Commit \n\nabc123]
+ [Bug Reference \n\nPROJ-1234]
+ [A “defined” word \n\nSemantics]
+ [Name of a file \n\nMyModule::symbolic]
+}}]
+
+rectangle B [{{
+ title Actions
+ "Open Email Client"
+ "Launch Browser"
+ "Git Show Command"
+ "Bug Tracker"
+ "Jump to definition \n≺≺≺Semantics≻≻≻"
+ "Search for file named MyModule \nand jump to regex “symbolic”"
+}}]
+
+
+ node "Pattern \nRecognition \nEngine" as P
+ A -> P : "Matches \nPattern"
+ P -> B : "Runs \nAction" 
+#+end_src
+
+#+RESULTS[c57836928e574f311133b685fbf9cbc177e83323]:
+[[file:images/hyperbole.png]]
+
+| Press ~M-ENTER~ on …                                            | ‘smart action’                                                                      |
+|---------------------------------------------------------------+-------------------------------------------------------------------------------------|
+| A file path =~/Dropbox/=                                        | Open the directory in ~dired~ or open the file                                        |
+| Any URL, (even enclosed in quotes in programming)             | Open the URL in your default browser                                                |
+| An org headline                                               | Toggle visibility                                                                   |
+| An org ~TODO~ keyword                                           | Change TODO state                                                                   |
+| On a button ~{M-x animate-birthday-present RETURN Musa RETURN}~ | Execute it                                                                          |
+| Anywhere else in an Org file                                  | Usual ~M-RET~; i.e., org-meta-return                                                  |
+| On a delimiter ~<me and you>~                                   | Highlight delimited contents                                                        |
+| On a shell command =!pwd= or ~"!fortune ∣ cowsay"~                | Actually execute the shell command                                                  |
+| On the phrase ~commit 0014~                                     | See the git log for the commit starting with ~0014~                                   |
+| Email addresses ~me@you.com~                                    | Compose an email to that email address                                              |
+| "~/.emacs.d/init.org#Lisp Programming"                        | Go to heading ~* Lisp Programming~ in the declared Org file                           |
+| =~/.emacs.d/init.org:334=                                       | Go to line 334, also ~L334~ works just as fine                                        |
+| "~/work/CoolStuff.java#interface Foo"                         | Do a regex search for ~interface Foo~ in ~CoolStuff.java~ and place me at the first hit |
+| ~/.bashrc:L20:C5                                              | Open ~/.bashrc to line 20, column 5                                                 |
+| ~/.bashrc:20:5                                                | Open ~/.bashrc to line 20, column 5                                                 |
+| ~facebook@MiyagiGojuRyuKarate~ or ~instagram#food~                | Jump to that social media page, or search                                           |
+|---------------------------------------------------------------+-------------------------------------------------------------------------------------|
+| ~Parser, Semantics, Akrasia, Abstraction, …~                    | Jump to the defining radio ~<<<𝑿>>>~ link /in whatever file defines it/                |
+| ~MyModule::72~                                                  | Find a file ~MyModule.*~ /anywhere/ in my work directory, then jump to line 72          |
+| ~PROJ-1234~                                                     | Open my work's bug tracker for this ticket                                          |
+
+If I want to be presented with options on what to do at point, instead of “the
+smart thing”, then I can use the ~embark-act~ method of the Embark package.  For
+example, on an Org heading ~embark-act~ shows me actions related to headlines:
+Adding tags, cycling visibility, adding properties, etc.
+
+Anyhow, the neato thing here is that a simple string =~/Dropbox/= automatically
+becomes a clickable link (albeit via ~M-RET~). Hyperbole calls such pieces of text
+“implicit buttons” since no effort from the user ---i.e., me!--- is required to
+make them ‘clickable’. In contrast, plain Org mode would have me write
+~file:~/Dropbox~ and now this is clickable ---no ~M-RET~ required, just ~RET~.
+Likewise, Org links ~[[elisp:(message-box "Hello, World")]]~ and
+~[[elisp:(execute-kbd-macro (kbd "C-x 3 C-x o"))]]~ become Hyperbole buttons
+~{message-box "Hello, World"}~ and ~{C-x 3 C-x o}~. Besides the cosmetic, Hyperbole
+buttons work /everywhere/, unlike Org links.
+
++ ~M-RET~ does the “smart thing” at point.
++ ~C-u M-RET~ describes what that “smart thing” is.
+  - (~C-h A~ to get even more details; e.g., ~C-u M-RET~ on ~{C-x 1}~ is essentially
+    ~C-h k C-x 1~, but ~C-h A~ on ~{C-x 1}~ describes Hyperbole's rule of when the
+    button is active and what action will take place.)
+
+Org mode and Hyperbole both target the “personal knowledge management” domain;
+e.g., links to jump around text, outlining, records (Org mode does it via Org
+Properties). For now, I lean mostly on Org mode since it is also task and date
+aware; e.g., ~* STARTED Write Proposal <2025-05-20 Tue .+1d>~.  Respectfully,
+Hyperbole has features that Org mode does not ---namely, implicit buttons.
+#+begin_quote
+Automatically match text in all buffers, to actions; example: if a URL is seen,
+a special action can open a browser to visit it; for files, open the file; for
+org-mode files, open them up and jump to the referred section, etc. No need for
+special markup.
+#+end_quote
+
+Press ~M-RET~ on ~"(hyperbole)Implicit Button Types"~ to learn more about implicit
+buttons ---this itself is an implicit button for Info; i.e., ~(info
+"(hyperbole)Implicit Button Types")~. Note, in Org mode, we can just write:
+<info:Hyperbole # Implicit Button Types>.
+
+⚠️ One thing I currently dislike is that ~M-RET~ in an Org enumeration
+scrolls down a screen-ful rather than introduce a new item. Let's fix this.
+#+begin_src emacs-lisp
+(advice-add 'hkey-either :around
+(defun my/M-RET-in-enumeration-means-new-item (orig-fn &rest args)
+  "In an Org enumeration, M-[S]-RET anywhere in an item should create a new item.
+
+   However, Hyperbole belives being at the end of the line means M-RET should
+   scroll down a screenful similar to `C-v' and `M-v'. Let's avoid this."
+  (if (and (derived-mode-p 'org-mode) (save-excursion (beginning-of-line) (looking-at "\\([0-9]+\\|[a-zA-Z]\\)[.)].*")))
+        (org-insert-item)
+    (apply orig-fn args))))
+#+end_src
+
+** ~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”
+:PROPERTIES:
+:CREATED:  [2025-05-21 Wed 07:42]
+:END:
+
+In my notes, I often have references of the form ~my-file::interface_foo~ or
+~my-file::123~ to mean “open the file ~my-file.java~, which is nested /somewhere/ in
+my work directory, and jump to the given regex, or line number”.  *I rarely know
+off-the-top of my head where ~my-file~ is located!* It's often unique, so let's
+automate this search ---following [[https://www.beorgapp.com/blog/hyperbole-implicit-buttons/][Teaching Emacs to recognize Jira tickets and
+show them in a browser using Hyperbole implicit buttons]] and [[https://ginabythebay.studio/posts/implicit-buttons-are-cool/][Implicit Buttons Are
+Cool]].
+
+#+begin_src emacs-lisp
+(defun my/open-::-file-path (path)
+  "PATH is something like FooModule::72 or FooModule::interface_bar"
+  (-let [(name regex) (s-split "::" path)]
+    ;; brew install fd
+    ;; NOTE: fd is fast!
+    (-let [file (car (s-split "\n" (shell-command-to-string (format "fd \"^%s\\..*$\" %s" name my\work-dir))))]
+      (if (s-blank? file)
+          (message "😲 There's no file named “%s”; perhaps you're talking about a class/record/interface with that name?" name)
+      (find-file file)
+      (-let [line (string-to-number regex)]
+        (if (= 0 line)            
+            (progn (beginning-of-buffer) ;; In case file already open
+                   (re-search-forward (s-replace "_" " " regex) nil t))
+          (goto-line line)))))))
+
+(defib my/::-file-paths ()
+  "Find the file whose name is at point and jump to the given regex or line number."
+  (let ((case-fold-search t)
+        (path-id nil)
+        (my-regex "\\b\\(\\w+::[^ \n]+\\)"))
+    (if (or (looking-at my-regex)
+            (save-excursion
+              (my/move-to-::-phrase-start)
+              (looking-at my-regex)))
+        (progn (setq path-id (match-string-no-properties 1))
+               (ibut:label-set path-id
+                               (match-beginning 1)
+                               (match-end 1))
+               (hact 'my/open-::-file-path path-id)))))
+
+
+(defun my/move-to-::-phrase-start ()
+  "Move cursor to the start of a :: phrase, like Foo::bar, if point is inside one."
+  (interactive)
+  (let ((case-fold-search t)
+        (pattern "\\b\\(\\w+::[^ \n]+\\)")
+        (max-lookback 20))
+      (catch 'found
+        ;; First check if we're already inside a match
+        (when (looking-at pattern)
+          (goto-char (match-beginning 0))
+          (throw 'found t))
+
+        ;; If not at start of match, look backward
+        (let ((pos (point)))
+          (while (and (> pos (point-min))
+                     (<= (- pos (point)) max-lookback))
+            (goto-char pos)
+            (when (looking-at " ") (throw 'found nil)) ;; It'd be nice if I depended only on PATTERN.
+            (when (looking-at pattern)
+              (goto-char (match-beginning 0))
+              (throw 'found t))
+            (setq pos (1- pos)))))))
+
+
+;; Some highlighting so I'm prompted to use “M-RET”
+(font-lock-add-keywords
+ 'org-mode
+ '(("\\b[^ ]*::[^ \n]*" 0 'highlight prepend))
+ t) 
+#+end_src
+
+Now I just write ~MyModule::interface_Foo~ instead of
+=~/work/some/deep/directory/MyModule.java#interface Foo=, and =M-RET= takes me
+there!
+
+Likewise, I write ~MyModule::MyType.map~ to look for the regex ~MyType.map~ in
+~MyModule~: If ~map~ is a static Java method, I'll get the first occurrence;
+otherwise, I'll hit ~MyType map(⋯) {⋯}~ ---which is what I want.
+
+** Fontify Org Radio Targets and have ~M-RET~ Jump to Them
+:PROPERTIES:
+:CREATED:  [2025-05-21 Wed 06:49]
+:END:
+
+By default, radio targets ~<<<some phrase>>>~ only work within a single buffer
+file. Below I get them to work for multiple files, so that, for example, /in any
+buffer/ the phrase ~parser~ is highlighted and when I ~M-RET~ on it then I jump to
+the associated definition. Since I use regexes for highlighting and downcase
+everything when doing the actual lookup, variations in capitalisation such as
+~Parser~ or ~pArSeR~ work fine.
+
+#+begin_src emacs-lisp
+(defun get-radio-targets ()
+  "Extract all radio targets from the current Org buffer"
+  (interactive)
+  (let ((targets nil)
+        (case-fold-search t))
+    (cl-loop for file in (cons "~/.emacs.d/init.org" org-agenda-files)
+             do (save-excursion
+                  (find-file file)
+                  (save-restriction
+                    (widen)
+                    (goto-char (point-min))
+                    (while (re-search-forward "<<<\\(.*?\\)>>>" nil t)
+                      (push (list (downcase (substring-no-properties (match-string 1))) file (line-number-at-pos)) targets)))))
+    targets))
+
+(setq my/radio-targets (get-radio-targets))
+(setq my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
+
+(font-lock-add-keywords
+ 'org-mode
+ (--map (list (cl-first it) 0 ''highlight 'prepend) my/radio-targets)
+ t)
+
+
+;; In programming modes, just show an underline.
+(add-hook
+ 'prog-mode-hook
+ (lambda ()
+   (font-lock-add-keywords
+    nil
+    (--map (list (cl-first it) 0 ''(:underline t) 'prepend) my/radio-targets)
+    t)))
+
+
+(defun my/jump-to-radio (radio)
+  "RADIO is a downcased name."
+  (-let [(name file line) (assoc radio my/radio-targets)]
+    (find-file file)
+    (goto-line line)))
+
+
+(defib my/radio-target ()
+  "Jump to the definition of this word, as an Org radio target"
+  (let ((case-fold-search t)
+        (radio nil))
+    (if (or (looking-at my/radio-regex)
+            (save-excursion
+              (re-search-backward "\\b")
+              (looking-at my/radio-regex)))
+        (progn (setq radio (downcase (match-string-no-properties 0)))
+               (ibut:label-set radio
+                               (match-beginning 0)
+                               (match-end 0))
+               (hact 'my/jump-to-radio radio)))))
+#+end_src
+
+** HyRolo: Treating Org files as a rolodex
+:PROPERTIES:
+:CREATED:  [2025-05-21 Wed 07:03]
+:END:
+
+The Hyperbole package “HyRolo” works with semistructured data and recognises Org
+entries, so with ~(setq hyrolo-file-list org-agenda-files)~ we can quickly look
+through our “rolodex entries” with {C-h h r r}. This is neat, but I am not
+actively using this approach since there are more Org-focused tools.  For more
+details, [[https://github.com/termitereform/JunkPile/blob/master/HyperboleNotes2.org#hyperbole-odyssey-two][see this article.]]
+ 
 * Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)
 
 <<<Appointments>>>
@@ -17280,267 +17695,3 @@ CLOCK: [2025-04-10 Thu 14:04]--[2025-04-10 Thu 14:17] =>  0:13
 #+end_src
 
 MA: I've seen people ask how to “unit test their init.el”, this is a nice approach to share.
-* Hyperbole: “DWIM at point”                                           :tags:
-:PROPERTIES:
-:CREATED:  [2025-05-20 Tue 19:02]
-:END:
-
-Hyperbole automatically turns passive documents into active ones, by associating
-actions with common textual patterns. That is, it turns plain old text into
-links, which are ‘clickable’ via ~M-RET~. As a result, my documents are
-automatically linked (i.e., hypertext) as I type. For instance, below, I enabled
-my Org radio targets to be accessible from all buffers: These are words of
-import to me, so why not be reminded of their definition wherever and whenever I
-encounter them. Consequently, source code buffers become more accessible since
-they automatically link to references, e.g., a variable named ~parser~ now links
-to my radio target note associated with parsers.
-
-#+begin_src emacs-lisp 
-(use-package hyperbole)
-(hyperbole-mode +1)
-(setq hsys-org-enable-smart-keys t)
-#+end_src
-
-*Turn every document into Hypertext --without any markup.*
-#+begin_src plantuml :file images/hyperbole.png :theme neutral :background-color green  :tangle no :results replace :eval never-export
-title Hypebole: Automatically treating structured text as hyper-text
-
-rectangle A [{{
- title Text Patterns
- [Email Addresses \nuser@domain.com]
- [URLs \nhttps://alhassy.com]
- [Git Commits \nabc123]
- [Bug References \nbug#456]
-}}]
-
-rectangle B [{{
- title Actions
- "Open Email Client"
- "Launch Browser"
- "Git Show Command"
- "Bug Tracker"
-}}]
-
-
- node "Pattern \nRecognition \nEngine" as P
- A -> P : "Matches \nPattern"
- P -> B : "Runs \nAction" 
-#+end_src
-
-#+RESULTS[b1376484b86dc9a3556979618c3ce557bf889ab7]:
-[[file:images/hyperbole.png]]
-
-| Press ~M-ENTER~ on …                                            | ‘smart action’                                                                      |
-|---------------------------------------------------------------+-------------------------------------------------------------------------------------|
-| A file path =~/Dropbox/=                                        | Open the directory in ~dired~ or open the file                                        |
-| Any URL, (even enclosed in quotes in programming)             | Open the URL in your default browser                                                |
-| An org headline                                               | Toggle visibility                                                                   |
-| An org ~TODO~ keyword                                           | Change TODO state                                                                   |
-| On a button ~{M-x animate-birthday-present RETURN Musa RETURN}~ | Execute it                                                                          |
-| Anywhere else in an Org file                                  | Usual ~M-RET~; i.e., org-meta-return                                                  |
-| On a delimiter ~<me and you>~                                   | Highlight delimited contents                                                        |
-| On a shell command =!pwd= or ~"!fortune ∣ cowsay"~                | Actually execute the shell command                                                  |
-| On the phrase ~commit 0014~                                     | See the git log for the commit starting with ~0014~                                   |
-| Email addresses ~me@you.com~                                    | Compose an email to that email address                                              |
-| "~/.emacs.d/init.org#Lisp Programming"                        | Go to heading ~* Lisp Programming~ in the declared Org file                           |
-| =~/.emacs.d/init.org:334=                                       | Go to line 334, also ~L334~ works just as fine                                        |
-| "~/work/CoolStuff.java#interface Foo"                         | Do a regex search for ~interface Foo~ in ~CoolStuff.java~ and place me at the first hit |
-| ~/.bashrc:L20:C5                                              | Open ~/.bashrc to line 20, column 5                                                 |
-| ~/.bashrc:20:5                                                | Open ~/.bashrc to line 20, column 5                                                 |
-| ~facebook@MiyagiGojuRyuKarate~ or ~instagram#food~                | Jump to that social media page, or search                                           |
-|---------------------------------------------------------------+-------------------------------------------------------------------------------------|
-| ~Parser, Semantics, Akrasia, Abstraction, …~                    | Jump to the defining radio ~<<<𝑿>>>~ link /in whatever file defines it/                |
-| ~MyModule::72~                                                  | Find a file ~MyModule.*~ /anywhere/ in my work directory, then jump to line 72          |
-| ~PROJ-1234~                                                     | Open my work's bug tracker for this ticket                                          |
-
-If I want to be presented with options on what to do at point, instead of “the
-smart thing”, then I can use the ~embark-act~ method of the Embark package.  For
-example, on an Org heading ~embark-act~ shows me actions related to headlines:
-Adding tags, cycling visibility, adding properties, etc.
-
-Anyhow, the neato thing here is that a simple string =~/Dropbox/= automatically
-becomes a clickable link (albeit via ~M-RET~). Hyperbole calls such pieces of text
-“implicit buttons” since no effort from the user ---i.e., me!--- is required to
-make them ‘clickable’. In contrast, plain Org mode would have me write
-~file:~/Dropbox~ and now this is clickable ---no ~M-RET~ required, just ~RET~.
-Likewise, Org links ~[[elisp:(message-box "Hello, World")]]~ and
-~[[elisp:(execute-kbd-macro (kbd "C-x 3 C-x o"))]]~ become Hyperbole buttons
-~{message-box "Hello, World"}~ and ~{C-x 3 C-x o}~. Besides the cosmetic, Hyperbole
-buttons work /everywhere/, unlike Org links.
-
-+ ~M-RET~ does the “smart thing” at point.
-+ ~C-u M-RET~ describes what that “smart thing” is.
-
-Org mode and Hyperbole both target the “personal knowledge management” domain;
-e.g., links to jump around text, outlining, records (Org mode does it via Org
-Properties). For now, I lean mostly on Org mode since it is also task and date
-aware; e.g., ~* STARTED Write Proposal <2025-05-20 Tue .+1d>~.  Respectfully,
-Hyperbole has features that Org mode does not ---namely, implicit buttons.
-#+begin_quote
-Automatically match text in all buffers, to actions; example: if a URL is seen,
-a special action can open a browser to visit it; for files, open the file; for
-org-mode files, open them up and jump to the referred section, etc. No need for
-special markup.
-#+end_quote
-
-Press ~M-RET~ on ~"(hyperbole)Implicit Button Types"~ to learn more about implicit
-buttons ---this itself is an implicit button for Info; i.e., ~(info
-"(hyperbole)Implicit Button Types")~. Note, in Org mode, we can just write:
-<info:Hyperbole # Implicit Button Types>.
-
-⚠️ One thing I currently dislike is that ~M-RET~ in an Org enumeration
-scrolls down a screen-ful rather than introduce a new item. TODO: Fix this.
-For now, ~M-S-RET~ introduces new items, but with a checkbox.
-
-** ~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”
-:PROPERTIES:
-:CREATED:  [2025-05-21 Wed 07:42]
-:END:
-
-In my notes, I often have references of the form ~my-file::interface_foo~ or
-~my-file::123~ to mean “open the file ~my-file.java~, which is nested /somewhere/ in
-my work directory, and jump to the given regex, or line number”.  *I rarely know
-off-the-top of my head where ~my-file~ is located!* It's often unique, so let's
-automate this search ---following [[https://www.beorgapp.com/blog/hyperbole-implicit-buttons/][Teaching Emacs to recognize Jira tickets and
-show them in a browser using Hyperbole implicit buttons]] and [[https://ginabythebay.studio/posts/implicit-buttons-are-cool/][Implicit Buttons Are
-Cool]].
-
-#+begin_src emacs-lisp
-(defun my/open-::-file-path (path)
-  "PATH is something like FooModule::72 or FooModule::interface_bar"
-  ;; (message-box path)
-  (-let [(file regex) (s-split "::" path)]
-    ;; brew install fd
-    ;; NOTE: fd is fast!
-    (-let [results (shell-command-to-string (format "fd \"^%s\\..*$\" %s" file my\work-dir))]
-      ;; (message-box results)
-      (find-file (car (s-split "\n" results)))
-      (-let [line (string-to-number regex)]
-        (if (= 0 line)
-            (progn (beginning-of-buffer) ;; In case file already open
-                   (re-search-forward (s-replace "_" " " regex) nil t))
-          (goto-line line))))))
-
-(defib my/::-file-paths ()
-  "Find the file whose name is at point and jump to the given regex or line number."
-  (let ((case-fold-search t)
-        (path-id nil)
-        (my-regex "\\b\\(\\w+::[^ ]+\\)"))
-    (if (or (looking-at my-regex)
-            (save-excursion
-              (my/move-to-::-phrase-start)
-              (looking-at my-regex)))
-        (progn (setq path-id (match-string-no-properties 1))
-               (ibut:label-set path-id
-                               (match-beginning 1)
-                               (match-end 1))
-               (hact 'my/open-::-file-path path-id)))))
-
-
-(defun my/move-to-::-phrase-start ()
-  "Move cursor to the start of a phrase like MyFile::13."
-  (interactive)
-  (let ((case-fold-search t)
-        (pattern "\\b\\(\\w+::[^ ]+\\)")
-        (max-lookback 20)  ; Maximum distance to look back
-        (pos (point)))
-      (catch 'found
-        (while (and (> pos (point-min))
-                   (<= (- pos (point)) max-lookback))
-          (goto-char pos)
-          (when (looking-at pattern)
-            (goto-char (match-beginning 0))
-            (throw 'found t))
-          (setq pos (1- pos))))))
-
-;; Some highlighting so I'm prompted to use “M-RET”
-(font-lock-add-keywords
- 'org-mode
- '(("\\b[^ ]*::[^ ]*" 0 'highlight prepend))
- t) 
-#+end_src
-
-Now I just write ~MyModule::interface_Foo~ instead of
-=~/work/some/deep/directory/MyModule.java#interface Foo=, and =M-RET= takes me
-there!
-
-** Fontify Org Radio Targets and have ~M-RET~ Jump to Them
-:PROPERTIES:
-:CREATED:  [2025-05-21 Wed 06:49]
-:END:
-
-By default, radio targets ~<<<some phrase>>>~ only work within a single buffer
-file. Below I get them to work for multiple files, so that, for example, /in any
-buffer/ the phrase ~parser~ is highlighted and when I ~M-RET~ on it then I jump to
-the associated definition. Since I use regexes for highlighting and downcase
-everything when doing the actual lookup, variations in capitalisation such as
-~Parser~ or ~pArSeR~ work fine.
-
-#+begin_src emacs-lisp
-(defun get-radio-targets ()
-  "Extract all radio targets from the current Org buffer"
-  (interactive)
-  (let ((targets nil)
-        (case-fold-search t))
-    (cl-loop for file in (cons "~/.emacs.d/init.org" org-agenda-files)
-             do (save-excursion
-                  (find-file file)
-                  (save-restriction
-                    (widen)
-                    (goto-char (point-min))
-                    (while (re-search-forward "<<<\\(.*?\\)>>>" nil t)
-                      (push (list (downcase (substring-no-properties (match-string 1))) file (line-number-at-pos)) targets)))))
-    targets))
-
-(setq my/radio-targets (get-radio-targets))
-(setq my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
-
-(font-lock-add-keywords
- 'org-mode
- (--map (list (cl-first it) 0 ''highlight 'prepend) my/radio-targets)
- t)
-
-
-;; In programming modes, just show an underline.
-(add-hook
- 'prog-mode-hook
- (lambda ()
-   (font-lock-add-keywords
-    nil
-    (--map (list (cl-first it) 0 ''(:underline t) 'prepend) my/radio-targets)
-    t)))
-
-
-(defun my/jump-to-radio (radio)
-  "RADIO is a downcased name."
-  (-let [(name file line) (assoc radio my/radio-targets)]
-    (find-file file)
-    (goto-line line)))
-
-
-(defib my/radio-target ()
-  "Jump to the definition of this word, as an Org radio target"
-  (let ((case-fold-search t)
-        (radio nil))
-    (if (or (looking-at my/radio-regex)
-            (save-excursion
-              (re-search-backward "\\b")
-              (looking-at my/radio-regex)))
-        (progn (setq radio (downcase (match-string-no-properties 0)))
-               (ibut:label-set radio
-                               (match-beginning 0)
-                               (match-end 0))
-               (hact 'my/jump-to-radio radio)))))
-#+end_src
-
-** HyRolo: Treating Org files as a rolodex
-:PROPERTIES:
-:CREATED:  [2025-05-21 Wed 07:03]
-:END:
-
-The Hyperbole package “HyRolo” works with semistructured data and recognises Org
-entries, so with ~(setq hyrolo-file-list org-agenda-files)~ we can quickly look
-through our “rolodex entries” with {C-h h r r}. This is neat, but I am not
-actively using this approach since there are more Org-focused tools.  For more
-details, [[https://github.com/termitereform/JunkPile/blob/master/HyperboleNotes2.org#hyperbole-odyssey-two][see this article.]]
- 

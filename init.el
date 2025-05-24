@@ -3792,11 +3792,13 @@ Further reading:
               ;; Let's insert a quote
               (end-of-buffer)
               (insert "\n\n#+begin_quote_of_the_day\n")
-              (insert (my/string-fill-column-and-center 70 (my/random-quote)))
-              (insert "\n#+end_quote_of_the_day\n\n")
+              (-let [quote-start (point)]
+                (insert (my/string-fill-column-and-center 70 (my/random-quote)))
+                (insert "\n")
+                (overlay-put (make-overlay quote-start (point)) 'face '(background-color . "#FFB6C1")))
+              (insert "#+end_quote_of_the_day\n\n")
 
               (insert "\n#+begin_stats_of_the_day")
-
               ;; Randomise the order of stats, to keep things interesting.
               (--map (eval it)
                      (--sort (< (random 2) 1)
@@ -3817,6 +3819,8 @@ Further reading:
                                                  my/dawn-prayer-time my/noon-prayer-time my/sunset-prayer-time)))
                                
                                (insert "\n🥳 " (my/age-in-days-weeks-years))
+
+                               (insert "\n" (my/percentage-of-life-spent))
                                
                                (insert "\n🤖 " (my/git-commit-count))
                                
@@ -4083,6 +4087,67 @@ Further reading:
              years (if (= years 1) "" "s")
              months (if (= months 1) "" "s")
              (substring first-date-str 0 10))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun my/percentage-of-life-spent ()
+  (format "⏳ 〔%s life ∣ %s year ∣ %s month ∣ %s week ∣ %s day〕 elapsed"
+          (my/percentage-of-life-elapsed)
+          (my/percentage-of-year-elapsed)
+          (my/percentage-of-month-elapsed)
+          (my/percentage-of-week-elapsed)
+          (my/percentage-of-waking-day-elapsed)))
+
+(defun my/percentage-of-year-elapsed ()
+  "Calculate percentage of current year that has elapsed.
+Returns a float between 0 and 100."
+  ;; (calendar-day-of-year-string) ⇒ "Day 143 of 2025; 222 days remaining in the year"
+  (let* ((date (calendar-current-date))
+         (year (calendar-extract-year date))
+         (day-in-year (calendar-day-number date))
+         (total-days-in-year (calendar-day-number (list 12 31 year)))
+         (days-remaining (- total-days-in-year day-in-year)))
+    (format "%.1f%%" (* 100 (/ (float day-in-year) total-days-in-year)))))
+
+
+(defun my/percentage-of-month-elapsed ()
+  "Calculate percentage of current month that has elapsed.
+Returns a float between 0 and 100."
+  (-let [(month day year) (calendar-current-date)]
+    (format "%.1f%%" (* 100 (/ (float day) (calendar-last-day-of-month month year))))))
+
+
+(defun my/percentage-of-week-elapsed ()
+  "Calculate percentage of current week that has elapsed.
+Returns a float between 0 and 100."
+  (format "%.1f%%" (thread-first (calendar-current-date) calendar-day-of-week float (/ 7) (* 100))))
+
+
+(defun my/percentage-of-waking-day-elapsed ()
+  "Calculate percentage of current (waking) day that has elapsed.
+Returns a float between 0 and 100."
+  (let* ((now (decode-time))
+         ;; (current-hour (nth 2 now))
+         (current-awake-hour (- (nth 2 now) 8))
+         (current-minute (nth 1 now))
+         (current-second (nth 0 now))
+         ;; (total-day-seconds (* 24 3600))
+         (total-day-awake-seconds (* 16 3600))         
+         (elapsed-seconds (+ (* current-awake-hour 3600)
+                             (* current-minute 60)
+                             current-second)))
+    (format "%.1f%%" (* 100 (/ (float elapsed-seconds) total-day-awake-seconds)))))
+
+
+(defun my/percentage-of-life-elapsed ()
+  "Calculate percentage of life elapsed based on birth date (January 1, 1990).
+Returns a float between 0 and 100."
+  (interactive)
+  (let* ((birth-time (date-to-time (concat my\birthday " 00:00:00")))
+         (now (current-time))
+         (days-old (/ (float-time (time-subtract now birth-time)) 86400))
+         (years-old (/ days-old 365.25))) ;; approximate year with leap years)
+    (format "%.2f%%" (* 100 (/ years-old 70)))))
 ;; Capture method:1 ends here
 
 ;; [[file:init.org::*Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content][Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:1]]
@@ -4706,6 +4771,190 @@ With prefix arg, offer recently clocked tasks for selection."
 (set-default 'before-save-hook (--remove (equal it 'whitespace-cleanup) before-save-hook))
 ;; Working with massive files: my-life∙org:1 ends here
 
+;; [[file:init.org::*Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=][Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=:1]]
+(cl-defun my/copy-as-jira ()
+  "Export region to Jira markdown, and copy to the kill ring for pasting into other programs."
+  (interactive)
+  (use-package ox-jira)
+  (message "Converting to Jira Markdown...")
+  (kill-new (org-export-as 'jira))
+  (message "Copied as Jira Markdown!"))
+
+
+(cl-defun my/copy-as-reddit ()
+  "Export region to Reddit (i.e., Github Flavoured Markdown), and copy to the kill ring for pasting into other programs.
+
+   “Mode for Reddit”: Conversely, to read Reddit within Emacs,
+   (use-package md4rd :config (setq md4rd-subs-active '(emacs clojure shia)))
+   then “M-x md4rd”."
+  (interactive)
+  (use-package ox-gfm)
+  (message "Converting to Reddit Markdown...")
+  (kill-new (org-export-as 'gfm))
+  (message "Copied as Reddit Markdown!"))
+
+
+(cl-defun my/copy-as-slack ()
+  "Export region to slack, and copy to the kill ring for pasting into other programs."
+  (interactive)
+  (use-package ox-slack)
+  (message "Converting to Slack Markdown...")
+  (kill-new (org-export-as 'slack))
+  (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))
+
+
+(cl-defun my/copy-as-confluence ()
+  "Export region to Confluence, and copy to the kill ring for pasting into other programs.
+
+More precisely, export the selected region to HTML and copy it to the clipboard.
+
+Note: Confluence has no markup language, it's a WYSIWYG editor,
+but it does recognise formatted text, such as what you copy off a webpage."
+  (interactive)
+  (message "Converting to Confluence Markdown...")
+  ;; NOTE: Consider using https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/ox-confluence.el
+  (kill-new (org-export-as 'html))
+  (message "Copied as Confluence Markdown!"))
+;; Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=:1 ends here
+
+;; [[file:init.org::*Hyperbole: “DWIM at point”][Hyperbole: “DWIM at point”:1]]
+(use-package hyperbole)
+(hyperbole-mode +1)
+(setq hsys-org-enable-smart-keys t)
+;; Hyperbole: “DWIM at point”:1 ends here
+
+;; [[file:init.org::*Hyperbole: “DWIM at point”][Hyperbole: “DWIM at point”:3]]
+(advice-add 'hkey-either :around
+(defun my/M-RET-in-enumeration-means-new-item (orig-fn &rest args)
+  "In an Org enumeration, M-[S]-RET anywhere in an item should create a new item.
+
+   However, Hyperbole belives being at the end of the line means M-RET should
+   scroll down a screenful similar to `C-v' and `M-v'. Let's avoid this."
+  (if (and (derived-mode-p 'org-mode) (save-excursion (beginning-of-line) (looking-at "\\([0-9]+\\|[a-zA-Z]\\)[.)].*")))
+        (org-insert-item)
+    (apply orig-fn args))))
+;; Hyperbole: “DWIM at point”:3 ends here
+
+;; [[file:init.org::*~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”][~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1]]
+(defun my/open-::-file-path (path)
+  "PATH is something like FooModule::72 or FooModule::interface_bar"
+  (-let [(name regex) (s-split "::" path)]
+    ;; brew install fd
+    ;; NOTE: fd is fast!
+    (-let [file (car (s-split "\n" (shell-command-to-string (format "fd \"^%s\\..*$\" %s" name my\work-dir))))]
+      (if (s-blank? file)
+          (message "😲 There's no file named “%s”; perhaps you're talking about a class/record/interface with that name?" name)
+      (find-file file)
+      (-let [line (string-to-number regex)]
+        (if (= 0 line)            
+            (progn (beginning-of-buffer) ;; In case file already open
+                   (re-search-forward (s-replace "_" " " regex) nil t))
+          (goto-line line)))))))
+
+(defib my/::-file-paths ()
+  "Find the file whose name is at point and jump to the given regex or line number."
+  (let ((case-fold-search t)
+        (path-id nil)
+        (my-regex "\\b\\(\\w+::[^ \n]+\\)"))
+    (if (or (looking-at my-regex)
+            (save-excursion
+              (my/move-to-::-phrase-start)
+              (looking-at my-regex)))
+        (progn (setq path-id (match-string-no-properties 1))
+               (ibut:label-set path-id
+                               (match-beginning 1)
+                               (match-end 1))
+               (hact 'my/open-::-file-path path-id)))))
+
+
+(defun my/move-to-::-phrase-start ()
+  "Move cursor to the start of a :: phrase, like Foo::bar, if point is inside one."
+  (interactive)
+  (let ((case-fold-search t)
+        (pattern "\\b\\(\\w+::[^ \n]+\\)")
+        (max-lookback 20))
+      (catch 'found
+        ;; First check if we're already inside a match
+        (when (looking-at pattern)
+          (goto-char (match-beginning 0))
+          (throw 'found t))
+
+        ;; If not at start of match, look backward
+        (let ((pos (point)))
+          (while (and (> pos (point-min))
+                     (<= (- pos (point)) max-lookback))
+            (goto-char pos)
+            (when (looking-at " ") (throw 'found nil)) ;; It'd be nice if I depended only on PATTERN.
+            (when (looking-at pattern)
+              (goto-char (match-beginning 0))
+              (throw 'found t))
+            (setq pos (1- pos)))))))
+
+
+;; Some highlighting so I'm prompted to use “M-RET”
+(font-lock-add-keywords
+ 'org-mode
+ '(("\\b[^ ]*::[^ \n]*" 0 'highlight prepend))
+ t)
+;; ~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1 ends here
+
+;; [[file:init.org::*Fontify Org Radio Targets and have ~M-RET~ Jump to Them][Fontify Org Radio Targets and have ~M-RET~ Jump to Them:1]]
+(defun get-radio-targets ()
+  "Extract all radio targets from the current Org buffer"
+  (interactive)
+  (let ((targets nil)
+        (case-fold-search t))
+    (cl-loop for file in (cons "~/.emacs.d/init.org" org-agenda-files)
+             do (save-excursion
+                  (find-file file)
+                  (save-restriction
+                    (widen)
+                    (goto-char (point-min))
+                    (while (re-search-forward "<<<\\(.*?\\)>>>" nil t)
+                      (push (list (downcase (substring-no-properties (match-string 1))) file (line-number-at-pos)) targets)))))
+    targets))
+
+(setq my/radio-targets (get-radio-targets))
+(setq my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
+
+(font-lock-add-keywords
+ 'org-mode
+ (--map (list (cl-first it) 0 ''highlight 'prepend) my/radio-targets)
+ t)
+
+
+;; In programming modes, just show an underline.
+(add-hook
+ 'prog-mode-hook
+ (lambda ()
+   (font-lock-add-keywords
+    nil
+    (--map (list (cl-first it) 0 ''(:underline t) 'prepend) my/radio-targets)
+    t)))
+
+
+(defun my/jump-to-radio (radio)
+  "RADIO is a downcased name."
+  (-let [(name file line) (assoc radio my/radio-targets)]
+    (find-file file)
+    (goto-line line)))
+
+
+(defib my/radio-target ()
+  "Jump to the definition of this word, as an Org radio target"
+  (let ((case-fold-search t)
+        (radio nil))
+    (if (or (looking-at my/radio-regex)
+            (save-excursion
+              (re-search-backward "\\b")
+              (looking-at my/radio-regex)))
+        (progn (setq radio (downcase (match-string-no-properties 0)))
+               (ibut:label-set radio
+                               (match-beginning 0)
+                               (match-end 0))
+               (hact 'my/jump-to-radio radio)))))
+;; Fontify Org Radio Targets and have ~M-RET~ Jump to Them:1 ends here
+
 ;; [[file:init.org::*Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)][Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1]]
 (setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
 
@@ -4943,121 +5192,3 @@ method."
 
   )
 ;; Testing that things are as they should be:1 ends here
-
-;; [[file:init.org::*Hyperbole: “DWIM at point”][Hyperbole: “DWIM at point”:1]]
-(use-package hyperbole)
-(hyperbole-mode +1)
-(setq hsys-org-enable-smart-keys t)
-;; Hyperbole: “DWIM at point”:1 ends here
-
-;; [[file:init.org::*~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”][~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1]]
-(defun my/open-::-file-path (path)
-  "PATH is something like FooModule::72 or FooModule::interface_bar"
-  ;; (message-box path)
-  (-let [(file regex) (s-split "::" path)]
-    ;; brew install fd
-    ;; NOTE: fd is fast!
-    (-let [results (shell-command-to-string (format "fd \"^%s\\..*$\" %s" file my\work-dir))]
-      ;; (message-box results)
-      (find-file (car (s-split "\n" results)))
-      (-let [line (string-to-number regex)]
-        (if (= 0 line)
-            (progn (beginning-of-buffer) ;; In case file already open
-                   (re-search-forward (s-replace "_" " " regex) nil t))
-          (goto-line line))))))
-
-(defib my/::-file-paths ()
-  "Find the file whose name is at point and jump to the given regex or line number."
-  (let ((case-fold-search t)
-        (path-id nil)
-        (my-regex "\\b\\(\\w+::[^ ]+\\)"))
-    (if (or (looking-at my-regex)
-            (save-excursion
-              (my/move-to-::-phrase-start)
-              (looking-at my-regex)))
-        (progn (setq path-id (match-string-no-properties 1))
-               (ibut:label-set path-id
-                               (match-beginning 1)
-                               (match-end 1))
-               (hact 'my/open-::-file-path path-id)))))
-
-
-(defun my/move-to-::-phrase-start ()
-  "Move cursor to the start of a phrase like MyFile::13."
-  (interactive)
-  (let ((case-fold-search t)
-        (pattern "\\b\\(\\w+::[^ ]+\\)")
-        (max-lookback 20)  ; Maximum distance to look back
-        (pos (point)))
-      (catch 'found
-        (while (and (> pos (point-min))
-                   (<= (- pos (point)) max-lookback))
-          (goto-char pos)
-          (when (looking-at pattern)
-            (goto-char (match-beginning 0))
-            (throw 'found t))
-          (setq pos (1- pos))))))
-
-;; Some highlighting so I'm prompted to use “M-RET”
-(font-lock-add-keywords
- 'org-mode
- '(("\\b[^ ]*::[^ ]*" 0 'highlight prepend))
- t)
-;; ~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1 ends here
-
-;; [[file:init.org::*Fontify Org Radio Targets and have ~M-RET~ Jump to Them][Fontify Org Radio Targets and have ~M-RET~ Jump to Them:1]]
-(defun get-radio-targets ()
-  "Extract all radio targets from the current Org buffer"
-  (interactive)
-  (let ((targets nil)
-        (case-fold-search t))
-    (cl-loop for file in (cons "~/.emacs.d/init.org" org-agenda-files)
-             do (save-excursion
-                  (find-file file)
-                  (save-restriction
-                    (widen)
-                    (goto-char (point-min))
-                    (while (re-search-forward "<<<\\(.*?\\)>>>" nil t)
-                      (push (list (downcase (substring-no-properties (match-string 1))) file (line-number-at-pos)) targets)))))
-    targets))
-
-(setq my/radio-targets (get-radio-targets))
-(setq my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
-
-(font-lock-add-keywords
- 'org-mode
- (--map (list (cl-first it) 0 ''highlight 'prepend) my/radio-targets)
- t)
-
-
-;; In programming modes, just show an underline.
-(add-hook
- 'prog-mode-hook
- (lambda ()
-   (font-lock-add-keywords
-    nil
-    (--map (list (cl-first it) 0 ''(:underline t) 'prepend) my/radio-targets)
-    t)))
-
-
-(defun my/jump-to-radio (radio)
-  "RADIO is a downcased name."
-  (-let [(name file line) (assoc radio my/radio-targets)]
-    (find-file file)
-    (goto-line line)))
-
-
-(defib my/radio-target ()
-  "Jump to the definition of this word, as an Org radio target"
-  (let ((case-fold-search t)
-        (radio nil))
-    (if (or (looking-at my/radio-regex)
-            (save-excursion
-              (re-search-backward "\\b")
-              (looking-at my/radio-regex)))
-        (progn (setq radio (downcase (match-string-no-properties 0)))
-               (ibut:label-set radio
-                               (match-beginning 0)
-                               (match-end 0))
-               (hact 'my/jump-to-radio radio)))))
-;; Fontify Org Radio Targets and have ~M-RET~ Jump to Them:1 ends here
