@@ -10460,1443 +10460,6 @@ Using ~⌘ j~ then one of the following...
 | ~3i~ | Converts ternary operator to if-statement; nice!                               |
 | ~ss~ | Split a string, at point, into a catenation of strings                         |
 | ~st~ | Convert a string into a `template`.                                            |
-* Prose
-:PROPERTIES:
-:CUSTOM_ID: Prose
-:END:
-
-Emacs can be setup with a spellchecker and other expected features of a word processing tool
----however these features apply Emacs-wide since nearly everything is
-essentially text (•̀ᴗ•́)و
-
-- Org-mode is a writer's best friend; it's large enough to deserve its own sections.
-
-- See [[https://lucidmanager.org/tags/emacs/][Emacs Writing Studio]] for a series of articles on making/using Emacs for writing.
-
-** Bidirectional Text
-#+begin_src emacs-lisp
-;; Sometimes I have Arabic in my buffers, however I am an English speaker
-;; and so Left-to-Right is most natural to me. As such, even when Arabic
-;; is present, or any bidirectional text, just use Left-to-Right.
-(setq-default bidi-paragraph-direction 'left-to-right)
-#+end_src
-** Whitespace
-:PROPERTIES:
-:CUSTOM_ID: Whitespace
-:END:
-Let's start off by cleaning-up any accidental trailing whitespace and in other
-places upon save.
-#+begin_src emacs-lisp
-(add-hook 'before-save-hook 'whitespace-cleanup)
-#+end_src
-
-See [[http://ergoemacs.org/emacs/whitespace-mode.html][here]] for making whitespace visible; including spaces, tabs, and newlines
-
-** Formatting Text
-:PROPERTIES:
-:CUSTOM_ID: Formatting-Text
-:END:
-
-The following incantation, doc:my/org-mode-format, makes it so that we can
-select some text then press kbd:C-c_f (to get a list of possible character
-completions) then press the symbol we want our text to be surrounded with.
-
-#+begin_details
-#+begin_src emacs-lisp
-(local-set-key (kbd "C-c f") #'my/org-mode-format)
-(defun my/org-mode-format (&optional text)
-"Surround selected region with the given Org emphasises marker.
-
-E.g., if this command is bound to “C-c f” then the sequence
-“C-c f b” would make the currenly selected text be bold.
-Likewise, “C-c f *” would achieve the same goal.
-
-When you press “C-c f”, a message is shown with a list of
-useful single-character completions.
-
-Note: “C-c f 𝓍”, for an unrecognised marker 𝓍, just inserts
-the character 𝓍 before and after the selected text."
-  (interactive "P") ;; Works on a region
-  ; (message "b,* ⟨Bold⟩; i,/ ⟨Italics⟩; u,_ ⟨Underline⟩; c,~ ⟨Monotype⟩")
-  (message "⟨Bold b,*⟩ ⟨Italics i,/⟩ ⟨Underline u,_⟩ ⟨Monotype c,~⟩")
-  (let ((kind (read-char)))
-    ;; Map letters to Org formatting symbols
-    (setq kind (or (plist-get '(b ?\*   i ?\/   u ?\_   c ?\~)
-                              (intern (string kind)))
-                   kind))
-    (insert-pair text kind kind)))
-#+end_src
-#+end_details
-
-** Fill-mode ---Word Wrapping
-:PROPERTIES:
-:CUSTOM_ID: Fill-mode-Word-Wrapping
-:END:
-
-In fill mode, when you type past the end of a line, Emacs automatically starts a new line, cleverly formatting
-paragraphs. This is a powerful form of “word wrap”.
-
-#+BEGIN_SRC emacs-lisp
-(setq-default fill-column 80          ;; Let's avoid going over 80 columns
-              truncate-lines nil      ;; I never want to scroll horizontally
-              indent-tabs-mode nil)   ;; Use spaces instead of tabs
-#+END_SRC
-
-Certain variables are sensibly local to a buffer, and so ~setq~ only alters their value for one buffer. Using ~setq-default~
-we change a variable's default value, in every buffer.
-
-#+BEGIN_SRC emacs-lisp
-;; Wrap long lines when editing text
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
-(add-hook 'org-mode-hook 'turn-on-auto-fill)
-#+END_SRC
-
-We may press ~M-q~ to cleverly redistribute the line breaks within any paragraph, thereby making it look better. With a
-prefix argument, it justifies it as well ---i.e., pads extra white space to make the paragraph appear rectangular.
-
-            Note that ~M-o M-s~ centres a line of text ;-) Fun stuff!
-
-Fill-mode is also known as “hard word wrapping”, which has the counterpart “soft word wrapping” …
-
-Visual line mode is built-in and provides support for editing by visual lines: Lines off the screen are visually word
-wrapped, but logically remain one line.  Moreover =C-a,e,k= operate on visual lines rather than logical lines.
-#+begin_src emacs-lisp
-;; Bent arrows at the end and start of long lines.
-(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
-(global-visual-line-mode 1)
-#+end_src
-Visual line mode is useful when I have way too many windows open or when using smaller frames.
-
-** Fix spelling as you type ---thesaurus & dictionary too!
-:PROPERTIES:
-:CUSTOM_ID: Fix-spelling-as-you-type-thesaurus-dictionary-too
-:END:
-
-I would like to check spelling on the fly.
- + ~C-;~ :: Cycle through corrections for word at point.
- + ~M-$~ :: Check and correct spelling of the word at point
- + ~M-x ispell-change-dictionary RET TAB~ :: To see what dictionaries are available.
-
-Install spell-checking application as well as a reliable English
-dictionary, [[https://wordnet.princeton.edu/][WordNet]].
-   #+begin_src emacs-lisp
-(system-packages-ensure "aspell")
-(system-packages-ensure "wordnet")
-   #+end_src
-
-~flyspell-prog-mode~ enables spell checking for programming by only considering
-comments and strings.
-
-#+BEGIN_SRC emacs-lisp
-(use-package flyspell
-
-  :hook ((prog-mode . flyspell-prog-mode)
-         ((org-mode text-mode) . flyspell-mode)))
-#+END_SRC
-
-Enabling fly-spell for text-mode enables it for org and latex modes since they
-derive from text-mode.
-
-Flyspell needs a spell checking tool, which is not included in Emacs.  We
-install ~aspell~ spell checker using, say, homebrew via ~brew install aspell~.  Note
-that Emacs' ~ispell~ is the interface to such a command line spelling utility.
-# See available dictionary via ~aspell dicts~.
-
-#+BEGIN_SRC emacs-lisp
-(setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
-#+END_SRC
-
-[Disabled] Allow spelling support for CamlCase words like “EmacsIsCool”.
-#+BEGIN_SRC emacs-lisp :tangle no
-(setq  ispell-extra-args '("--sug-mode=ultra"
-                            "--run-together"
-                            "--run-together-limit=5"
-                            "--run-together-min=2"))
-#+END_SRC
-
-Let us select a correct spelling merely by clicking on a word
----for the rare days I have a mouse.
-#+begin_src emacs-lisp
-(eval-after-load "flyspell"
-  ' (progn
-     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
-     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
-#+end_src
-
-Colour incorrect works; default is an underline.
-#+BEGIN_SRC emacs-lisp
-(global-font-lock-mode t)
-(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
-#+END_SRC
-
-Finally, save to user dictionary without asking:
-#+BEGIN_SRC emacs-lisp
-(setq ispell-silently-savep t)
-#+END_SRC
-
-Let's keep track of my personal word set by having it be in my version controlled
-.emacs directory. [[http://aspell.net/man-html/Format-of-the-Personal-and-Replacement-Dictionaries.html][Note]] that the default location is ~~/.[i|a]spell.DICT~ for
-a specified dictionary ~DICT~.
-#+BEGIN_SRC emacs-lisp
-(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
-#+END_SRC
-
-Nowadays, I very rarely write non-literate programs, but if I do
-I'd like to check spelling only in comments/strings. E.g.,
-#+BEGIN_SRC emacs-lisp
-(add-hook          'c-mode-hook 'flyspell-prog-mode)
-(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
-#+END_SRC
-
-Use the thesaurus Emacs frontend [[https://github.com/hpdeifel/synosaurus][Synosaurus]] to avoid unwarranted repetition.
-#+begin_src emacs-lisp
-(use-package synosaurus
-  :defer 100
-  :init    (synosaurus-mode)
-  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
-#+end_src
-The thesaurus is powered by the Wordnet ~wn~ tool, which can be invoked without an
-internet connection!
-#+begin_src emacs-lisp
-;; (shell-command "brew cask install xquartz &") ;; Dependency
-;; (shell-command "brew install wordnet &")
-#+end_src
-
-Let's use Wordnet as a dictionary via the [[https://github.com/gromnitsky/wordnut][wordnut]] package.
-#+BEGIN_SRC emacs-lisp
-(use-package wordnut
- :defer 100
- :bind ("M-!" . wordnut-lookup-current-word))
-
-;; Use M-& for async shell commands.
-#+END_SRC
-Use ~M-↑,↓~ to navigate dictionary results, and ~wordnut-search~ for a new search.
-
-An alternative to =wordnut= is to use the lightweight ~define-word~ package; which I
-think is not ideal since it provides way less information.
-
-:PowerthesaurusCurrentlyNotWorking:
-#+BEGIN_SRC emacs-lisp :tangle no
-(load "~/dotfiles/.emacs.d/powerthesaurus.el")
-(global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
-
-;; Website currently down ... https://github.com/SavchenkoValeriy/emacs-powerthesaurus/issues/6
-#+END_SRC
-:End:
-** Touch Typing                                                   :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Touch-Typing
-:header-args: :tangle no
-:END:
-
-Use this game to help you learn to spell words that you're having trouble with;
-e.g., I have a file ~~/Dropbox/spelling.txt~ with words I have trouble spelling,
-which I open then run ~M-x typing-of-emacs~ in order to improve spelling said
-words.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; The Typing Of Emacs, a game.
-(use-package typing-of-emacs
-  :quelpa (typing :fetcher wiki :url "https://www.emacswiki.org/emacs/typing.el"))
-#+END_SRC
-
-Practice touch typing using [[https://github.com/hagleitn/speed-type][speed-type]].
-#+begin_src emacs-lisp
-(use-package speed-type )
-#+end_src
-Running ~M-x speed-type-region~ on a region of text, or ~M-x speed-type-buffer~ on a
-whole buffer, or just ~M-x speed-type-text~ will produce the selected region, buffer,
-or random text for practice. The timer begins when the first key is pressed
-and stats are shown when the last letter is entered.
-
-Other typing resources include:
-+ [[https://www.emacswiki.org/emacs/TypingOfEmacs][Typing of Emacs]] ---an Emacs alternative to speed type, possibly more engaging.
-+ [[https://alternativeto.net/software/klavaro/][Klavaro]] ---a GUI based yet language-independent typing tutor.
-  - I'm enjoying this tool in getting started with Arabic typing.
-+ [[https://typing.io/][Typing.io]] is a tutor for coders: Lessons are based on open source code, such
-  some XMonad written in Haskell or Linux written in C.
-+ [[https://www.gnu.org/software/gtypist/index.html#downloading][GNU Typist]] ---which is interactive in the terminal, so not ideal in Emacs--,
-
-To assist in language learning, it may be nice to have an Emacs
-[[https://github.com/atykhonov/google-translate][interface]] to Google translate ---e.g., invoke ~google-translate-at-point~.
-#+BEGIN_SRC emacs-lisp
-(use-package google-translate
-
- :config
-   (global-set-key "\C-ct" 'google-translate-at-point))
-#+END_SRC
-
-Select the following then ~C-c t~,
-#+begin_quote
-Hey buddy, what're you up to?
-#+end_quote
-Then /detect language/ then /Arabic/ to obtain:
-#+begin_quote
-مرحباً يا صديقي ، ماذا تفعل؟
-#+end_quote
-Neato 😲
-
-** Using a Grammar & Style Checker                                :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Using-a-Grammar-Style-Checker
-:header-args: :tangle no
-:END:
-
-[ A possibly better alternative is [[https://emacstil.com/til/2022/03/05/setting-up-vale-prose-linter-on-emacs/][Vale]]. ]
-
-Let's install [[https://github.com/mhayashi1120/Emacs-langtool][a grammar and style checker]].
-We get the offline tool from the bottom of the [[https://languagetool.org/][LanguageTool]] website, then relocate it
-as follows.
-#+BEGIN_SRC emacs-lisp
-(use-package langtool
-
- :custom
-  (langtool-language-tool-jar
-   "~/Applications/LanguageTool-4.5/languagetool-commandline.jar"))
-#+END_SRC
-
-Now we can run ~langtool-check~ on the subsequent grammatically incorrect
-text ---which is from the LanguageTool website--- which colours errors in red,
-when we click on them we get the reason why; then we may invoke
-~langtool-correct-buffer~ to quickly use the suggestions to fix each correction,
-and finally invoke ~langtool-check-done~ to stop any remaining red colouring.
-
-#+begin_example org
-LanguageTool offers spell and grammar checking. Just paste your text here
-and click the 'Check Text' button. Click the colored phrases for details
-on potential errors. or use this text too see an few of of the problems
-that LanguageTool can detecd. What do you thinks of grammar checkers?
-Please not that they are not perfect. Style issues get a blue marker:
-It's 5 P.M. in the afternoon. The weather was nice on Thursday, 27 June 2017
---uh oh, that's the wrong date ;-)
-#+end_example
-
-By looking around the source code, I can do all three stages smoothly (•̀ᴗ•́)و
-#+BEGIN_SRC emacs-lisp
-;; Quickly check, correct, then clean up /region/ with M-^
-(eval-after-load 'langtool
-(progn
-(add-hook 'langtool-error-exists-hook
-  (lambda ()
-     (langtool-correct-buffer)
-     (langtool-check-done)))
-
-(global-set-key "\M-^"
-                (lambda ()
-                  (interactive)
-                  (message "Grammar checking begun ...")
-                  (langtool-check)))))
-#+END_SRC
-
-The checking command is silent, we added a bit of comforting acknowledgement to the user.
-
-** Lightweight Prose Proofchecking
-:PROPERTIES:
-:CUSTOM_ID: Lightweight-Prose-Proofchecking
-:END:
-
-Let's [[https://github.com/bnbeckwith/writegood-mode][write good]]!
-
-#+BEGIN_SRC emacs-lisp
-(use-package writegood-mode
-  ;; Load this whenver I'm composing prose.
-  :hook (text-mode org-mode)
-  ;; Don't show me the “Wg” marker in the mode line
-
-  :defer 100
-
-  ;; Some additional weasel words.
-  :config
-  (--map (push it writegood-weasel-words)
-         '("some" "simple" "simply" "easy" "often" "easily" "probably"
-           "clearly"               ;; Is the premise undeniably true?
-           "experience shows"      ;; Whose? What kind? How does it do so?
-           "may have"              ;; It may also have not!
-           "it turns out that")))  ;; How does it turn out so?
-           ;; ↯ What is the evidence of highighted phrase? ↯
-#+END_SRC
-
-Inspired by Matt Might's [[http://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/][3 shell scripts to improve your writing, or
-"My Ph.D. advisor rewrote himself in bash"]], this Emacs interface
-emphasises, via underline, the following weaknesses in writing ---so
-that I can fix them or decide that they are appropriate for the
-scenario.
-
-Sentences that cut out the following problems may become stronger
----by being more terse or precise.
-
-+ Weasel Words ::
-  Phrases that sound good without conveying information;
-  such as vague precision or subjective phrases.
-
-  E.g., /a number of, surprisingly, very close/.
-
-  It's okay not to have exact details, but rather than “I don't know”
-  explain why not and what the next steps will be.
-
-+ Passive Voice ::
-  Phrases wherein interest is in the object experiencing an action,
-  rather than the subject that performs the action.
-
-  - Bad: The house /was built by/ my father.
-  - Good: My father /built/ this house.
-
-  Likewise, including relevant or explanatory information as in “X
-  guarantees Y” is an improvement over “Y is guaranteed”.
-
-  Sometimes the subject really is irrelevant, such as
-  “We did X” whereas “X happened” suffices.
-
-  👍 If the relevant subject is unclear and, also, the text reads
-  better in the active, then change a phrase.
-
-+ Duplicated Words :: Occurrences of, say, “the the”.
-
-   Harder to catch manually, but easier mechanically ;-)
-
-** Placeholder Text ---For Learning & Experimenting
-:PROPERTIES:
-:CUSTOM_ID: Placeholder-Text-For-Learning-Experimenting
-:END:
-
-When learning about Emacs formatting commands, such as zap-to-char ~M-z~
-or transpose ~M-t~, it's best to have filler text ---even better when
-it's automatically generated instead of typing it out ourselves. The
-following will give us a series of commands ~lorem-ipsum-insert-⋯~ for
-inserting lists, sentences, paragraphs and using a prefix argument,
-with ~C-u~, we can request to generate any number of them.
-
-#+BEGIN_SRC emacs-lisp
-(use-package lorem-ipsum )
-#+END_SRC
-
-‘Lorem’ is not a word itself, but it comes from the Latin ‘Dolorem Ipsum’
-which means “pain in and of itself”.
-
-See this [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] to try out the textual navigation and formatting
-bindings on lorem ipsum, gibberish text.
-
-** Some text to make us smile
-:PROPERTIES:
-:CUSTOM_ID: Some-text-to-make-us-smile
-:END:
-
-The  [[https://github.com/davep/dad-joke.el][dad-joke]] queries [[https://icanhazdadjoke.com][https://icanhazdadjoke.com]] to bring us some funny.
-#+begin_src emacs-lisp
-(use-package dad-joke
-
-  :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
-#+end_src
-
-For example, ~M-x dad-joke~ now inserts:
-#+begin_quote org
-What are the strongest days of the week? Saturday and Sunday...the rest are
-weekdays.
-#+end_quote
-
-** Unicode Input via Agda Input
-:PROPERTIES:
-:CUSTOM_ID: Unicode-Input-via-Agda-Input
-:END:
-:agda2-include-dirs-Issue:
-#+BEGIN_SRC emacs-lisp
-;; (load (shell-command-to-string "agda-mode locate"))
-;;
-;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
-; (makunbound 'agda2-include-dirs)
-#+END_SRC
-:End:
-
-[[https://mazzo.li/posts/AgdaSort.html][Agda]] is one of my favourite languages, it's like Haskell on steroids.  Let's set
-it up for the main sake of its Unicode input ---you may do likewise using TeX
-input.  ( [[https://www.joelonsoftware.com/2003/10/08/the-absolute-minimum-every-software-developer-absolutely-positively-must-know-about-unicode-and-character-sets-no-excuses/][The Absolute Minimum Every Software Developer Absolutely, Positively
-Must Know About Unicode and Character Sets (No Excuses!)]] )
-
-/Agda input mode makes it extremely easy to use unicode in documents, something I/
-/strongly prefer to do. When I can use symbols directly, instead of (for/
-/instance) LaTeX commands, it makes my plaintext far more readable./ --- [[https://github.com/armkeh/dotfiles/tree/master/emacs][Armkeh
-.emacs config]]
-
-#+begin_src emacs-lisp
-(system-packages-ensure "agda")
-#+end_src
-
-#+begin_details To use the Agda standard library by default
- #+BEGIN_SRC shell :tangle no
-   mkdir -p ~/.agda
-   echo /usr/local/lib/agda/standard-library.agda-lib >>~/.agda/libraries
-   echo standard-library >>~/.agda/defaults
- #+END_SRC
- Invoke ~brew info agda~ to get these instructions and the version of Agda just
-    installed.
-#+end_details
-
-#+begin_details Get font support for subscripts, if need be
-    - Download and unzip the [[https://fontlibrary.org/en/font/symbola][symbola]] font
-    - kbd:CMD_+_SPC ⇒ =font book= ⇒ CMD+O ⇒ select the symbola directory you just
-      unzipped
-
-    (Note: In the before time, you could brew install this font.)
-#+end_details
-
-Executing ~agda-mode setup~ appends the following text to the ~.emacs~ file.
-Let's put it here ourselves.
-#+begin_src emacs-lisp
-(unless noninteractive
-  (load-file (let ((coding-system-for-read 'utf-8))
-               (shell-command-to-string "agda-mode locate"))))
-#+end_src
-
-I almost always want the ~agda-mode~ input method ---it's like the TeX method, but
-better.
-#+BEGIN_SRC emacs-lisp
-
-
-;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
-;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
-;; then loading that!
-(url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" "~/.emacs.d/elpa/agda-input.el" :ok-if-already-exists)
-(load-file "~/.emacs.d/elpa/agda-input.el")
-
-;; MA: This results in "Package cl is deprecated" !?
-(unless noninteractive
-  (use-package agda-input
-  :ensure nil ;; I have it locally.
-  :demand t
-  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-  :custom (default-input-method "Agda")))
-  ;; Now C-\ or M-x toggle-input-method turn it on and offers
-
-
-;; TODO add a hook that when the input method becomes Agda, just don't bother showing me in the modeline.
-;; E.g., "Π" when using unicode input with Agda
-;; Useful to have in the modeline, say when typing in Arabic.
-;; (add-variable-watcher
-;;  'current-input-method
-;;  (lambda (_ newvalue 'set _)
-;;    (setq current-input-method-title
-;;          (if (equal newvalue "Agda") nil newvalue))))
-#+END_SRC
-
-:agda_Command_line_arguments:
-    "+RTS   -H4.5G   -M4.5G   -K256M   -S/tmp/AgdaRTS.log   -A1G   -RTS   -i   ."
-
-Wolfram Kahl has recommended the following settings.
-
-#+begin_src emacs-lisp
-;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
-#+end_src
-
-These arguments specify
-| ~+RTS~, ~-RTS~ | Flags between these are arguments to the ~ghc~ runtime |
-| ~-M[size]~   | Maximum heap size                                    |
-| ~-H[size]~   | Suggested heap size                                  |
-| ~-A[size]~   | Allocation area size used by the garbage collector   |
-
-Full documentation for the ~ghc~ runtime argumentscan be found [[https://downloads.haskell.org/~ghc/7.8.4/docs/html/users_guide/runtime-control.html][here]].
-
-Additional arguments that may be useful include
-| ~-S[file]~ | Produces information about “each and every garbage collection” |
-|          | - Outputs to ~stderr~ by default                               |
-
-:end:
-
-#+begin_quote
-Unicode doesn't intend to cover things that are achievable with markup, so only
-a limited subset of the alphabet is available as subscript; but all is available
-as superscript, except ‘q’.
-
-ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜᵤᵥₓ
-⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁺ ⁻ ⁼ ⁽ ⁾ ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉ ₊ ₋ ₌ ₍ ₎
-ᵃ ᵇ ᶜ ᵈ ᵉ ᶠ ᵍ ʰ ⁱ ʲ ᵏ ˡ ᵐ ⁿ ᵒ ᵖ ʳ ˢ ᵗ ᵘ ᵛ ʷ ˣ ʸ ᶻ
-ᴬ ᴮ ᴰ ᴱ ᴳ ᴴ ᴵ ᴶ ᴷ ᴸ ᴹ ᴺ ᴼ ᴾ ᴿ ᵀ ᵁ ⱽ ᵂ
-ᵅ ᵝ ᵞ ᵟ ᵋ ᶿ ᶥ ᶲ ᵠ ᵡ ᵦ ᵧ ᵨ ᵩ ᵪ
-
-~brew cask install font-symbola~
-⇒ Includes fonts for subscripts; e.g., ₐₙₑₕᵢⱼₖₗₘₙₒₚₜₛ
-#+end_quote
-
-Below are my personal Agda input symbol translations;
-e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX binding
-interactively: ~M-x customize-variable agda-input-user-translations~ then
-~INS~ then for key sequence type ~set~ then ~INS~ and for string paste ~𝒮ℯ𝓉~.
-#+BEGIN_SRC emacs-lisp
-(unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
-#+END_SRC
-Better yet, as a loop:
-#+BEGIN_SRC emacs-lisp
-(unless noninteractive
-(cl-loop for item
-      in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
-          ("(" "﴾")
-          (")" "﴿")
-          ("cmd" "⌘")
-           ;; categorial ;;
-           ("alg" "𝒜𝓁ℊ")
-           ("split" "▵")
-           ("join" "▿")
-           ("adj" "⊣")
-           (";;" "﹔")
-           (";;" "⨾")
-           (";;" "∘")
-           ;; logic
-           ("if" "⇐")
-           ("onlyif" "⇒")
-           ;; lattices ;;
-           ("meet" "⊓")
-           ("join" "⊔")
-           ;; tortoise brackets, infix relations
-           ("((" "〔")
-           ("))" "〕")
-           ;; residuals
-           ("syq"  "╳")
-           ("over" "╱")
-           ("under" "╲")
-           ;; Z-quantification range notation ;;
-           ;; e.g., “∀ x ❙ R • P” ;;
-           ("|"    "❙")
-           ("with" "❙")
-           ;; Z relational operators
-           ("domainrestriction" "◁")
-           ("domr" "◁")
-           ("domainantirestriction" "⩤")
-           ("doma" "⩤")
-           ("rangerestriction" "▷")
-           ("ranr" "▷")
-           ("rangeantirestriction" "⩥")
-           ("rana" "⩥")
-           ;; adjunction isomorphism pair ;;
-           ("floor"  "⌊⌋")
-           ("lower"  "⌊⌋")
-           ("lad"    "⌊⌋")
-           ("ceil"   "⌈⌉")
-           ("raise"  "⌈⌉")
-           ("rad"    "⌈⌉")
-           ;; Replies
-           ("yes"  "✔")
-           ("no"    "❌")
-           ;; Arrows
-           ("<=" "⇐")
-        ;; more (key value) pairs here
-        )
-      do (add-to-list 'agda-input-user-translations item)))
-#+END_SRC
-Also some silly stuff:
-#+begin_src emacs-lisp
-(unless noninteractive
-;; Add to the list of translations using “emot” and the given, more specfic, name.
-;; Whence, \emot shows all possible emotions.
-(cl-loop for emot
-      in `(;; angry, cry, why-you-no
-           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "ಠ_ಠ" "(╬ ಠ益ಠ)" "･ﾟ(*❦ω❦)*･ﾟ" "(╯°□°）╯︵ ┻━┻") ;; flip the table
-           ;; confused, disapprove, dead, shrug, awkward
-           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"  "(´°ω°`)" "･✧_✧･")
-           ;; dance, csi
-           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
-            ,(s-collapse-whitespace "•_•)
-                                      ( •_•)>⌐■-■
-                                      (⌐■_■)"))
-           ;; love, pleased, success, yesss, smile, excited, yay
-           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "ᕦ( ᴼ ڡ ᴼ )ᕤ" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "(◕‿◕)" "( ˃ ヮ˂)" "[ ⇀ ‿ ↼ ]" "٩(⁎❛ᴗ❛⁎)۶" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ" "(✿◠‿◠)")
-           ;; flower high-5
-           ("hug" "♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡" "(づ｡◕‿◕｡)づ" "(づ｡◕‿‿‿‿◕｡)づ"))
-      do
-      (add-to-list 'agda-input-user-translations emot)
-      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
-#+end_src
-
-# If you change this setting manually, without using the
-# customization buffer, you need to call (agda-input-setup) in
-# order for the change to take effect.
-Finally let's effect such translations.
-#+begin_src emacs-lisp
-;; activate translations
-(unless noninteractive (agda-input-setup))
-#+end_src
-
-Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs unicode input]] could be approximated using
-~abbrev-mode~.
-
-:May_need_to_install_stix_font:
-;; install STIX font from Ubuntu store!!
-;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
-:End:
-
-** Increase/decrease text size
-:PROPERTIES:
-:CUSTOM_ID: Increase-decrease-text-size
-:END:
-The ‘usual’ text zoom keys ~C-±~ …
-#+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "C-+") 'text-scale-increase)
-(global-set-key (kbd "C--") 'text-scale-decrease)
-;; C-x C-0 restores the default font size
-#+END_SRC
-
-If thou knowst the ELisp, forgive this shadowing of the ~negative-argument~
-… we've still got ~M--~ though.
-
-Curious, this is one of the very first things I did when
-began using Emacs; yet, perhaps I would not have done
-it if I was simply told the defaults:
-+ ~C-x C-=,+~ increases text size
-+ ~C-x C--~ decreases test size
-+ ~C-x C-0~ restores it to the default size
-
-So, the above snippet seems to save us of the prefix
-~C-x~ and we lose on using ‘=’ for text increase and worse we
-need the shift-key to get access to the ‘+’.
-
-I suppose this is just a habit inherited from using other tools. Fortunately, I
-did not inherit the need for the /common user access/ bindings ~C-x~ kill, ~C-c~ copy,
-~C-v~ paste, nor ~C-z~ undo of other applications. If you're interested, ~M-x
-cua-mode~ to enable [[https://www.gnu.org/software/emacs/manual/html_node/emacs/CUA-Bindings.html][CUA Bindings]].
-
-** Moving Text Around
-:PROPERTIES:
-:CUSTOM_ID: Moving-Text-Around
-:END:
-
-This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
-#+BEGIN_SRC emacs-lisp
-;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(use-package move-text
-
-  :config (move-text-default-bindings))
-#+END_SRC
-
-** Enabling CamelCase Aware Editing Operations
-:PROPERTIES:
-:CUSTOM_ID: Enabling-CamelCase-Aware-Editing-Operations
-:END:
-
-[[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][Subword]] movement lets us treat “EmacsIsAwesome” as three words
-─“Emacs”, “Is”, and “Awesome”─ which is desirable since such naming
-is common among coders. Now, for example, ~M-f~ moves along each subword.
-
-#+begin_src emacs-lisp
-(global-subword-mode 1)
-#+end_src
-
-** Mouse Editing Support                                          :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Mouse-Editing-Support
-:header-args: :tangle no
-:END:
-
-# :Strange:This_Seems_To_Require_Deprecated_CL:Message_show_at_startup:
-
-Text selected with the mouse is automatically copied to clipboard.
-#+begin_src emacs-lisp
-(setq mouse-drag-copy-region t)
-#+end_src
-
-** Delete Selection Mode
-:PROPERTIES:
-:CUSTOM_ID: Delete-Selection-Mode
-:END:
-
-Delete Selection mode lets you treat an Emacs region much like a typical text
-selection outside of Emacs: You can replace the active region.  We can delete
-selected text just by hitting the backspace key.
-
-#+BEGIN_SRC emacs-lisp
-(delete-selection-mode 1)
-#+END_SRC
-**   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: M-n-p-Word-at-Point-Navigation
-:header-args: :tangle no
-:END:
-
-Let's mimic the ~C-n,p~ constructs from line to word, so that unoccupied ~M-n,p~ now
-serve to take us to the next or previous instance of the word under the
-cursor. This is less intrusive than searching ~C-s~ or listing all occurrences ~M-s
-o~. Moreover, let's automaticly highlight current symbols, words under the cursour, and cycle
-quickly between highlkighted locations with
-~ahs-forward~ / [[kbd:M-→]] and
-~ahs-backward~ / [[kbd:M-←]].
-
-#+BEGIN_SRC emacs-lisp
-;; Default: M-→/← moves to the next/previous instance of the currently highlighted word
-;; These are already meaningful commands in Org-mode, so we avoid these key re-bindings in Org-mode; TODO.
-(use-package auto-highlight-symbol)
-;;   :hook ((text-mode . auto-highlight-symbol-mode)
-;;          (prog-mode . auto-highlight-symbol-mode)))
-;;
-;; This breaks Org Exports; e.g.,
-;; C-c C-e h o  ⇒  Match data clobbered by buffer modification hooks
-#+END_SRC
-
-Let's also quickly replace the word at point:
-#+BEGIN_SRC emacs-lisp
-(defun my/symbol-replace (replacement)
-  "Replace all standalone symbols in the buffer matching the one at point."
-  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
-  (save-excursion
-    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
-      (beginning-of-buffer)
-      ;; (query-replace-regexp symbol replacement)
-      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
-#+END_SRC
-
-
-(Unfortunately, as it currently is, there is no universal argument support: ~C-u
-2 M-p~ does /not/ take you to the second previous instance of a word ---the prefix
-is instead ignored. We can quickly form a work-around with doc:defhydra ---which
-gives us temoporary modal modes.)
-
-Finally, let's use [[kbd:M-n ╱ M-p ╱ M-']] to move to the next, previous, and
-replace the word at point /but also/ to give us a meanu to repeat any of these
-actions.
-#+BEGIN_SRC emacs-lisp
-(defmacro my/make-navigation-hydra (initial-action)
-  `(defhydra word-navigation
-    (:body-pre (,initial-action)) "Word-at-point Navigation"
-    ("n" ahs-forward "Next instance")
-    ("p" smartscan-symbol-go-backward "Previous instance")
-    ("r" my/symbol-replace "Replace all occurances")
-    ("s" ahs-display-stat "Stats")))
-
-;; (bind-key* str func) ≈ (global-set-key (kbd str) func)
-(bind-key* "M-n" (my/make-navigation-hydra ahs-forward))
-(bind-key* "M-p" (my/make-navigation-hydra ahs-backward))
-(bind-key* "M-'" (my/make-navigation-hydra my/symbol-replace))
-#+END_SRC
-
-An alternative is the [[https://github.com/mickeynp/smart-scan][smart-scan]] library ---which does the same thing, but does
-not provide the highlighting occurances at point.
-# The default symbol replacement is [[https://github.com/mickeynp/smart-scan/issues/23][over-zealous]] in that it replaces sub-terms
-# occurring as parts of larger words. Let's do something about that.
-** Letter-based Navigation                                        :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Letter-based-Navigation
-:header-args: :tangle no
-:END:
-At a glance of possible positions, across windows,
-and a key to jump there is a feature provided to us by [[https://github.com/winterTTr/ace-jump-mode/wiki/AceJump-FAQ][ace-jump]]
----here is an [[https://www.youtube.com/watch?feature=player_embedded&v=UZkpmegySnc#!][emacs-rocks 2-minute video]].
-
-For example, =C-c SPC m= greys our all windows and places a red
-letter at the start of any word that begins with /m/, then I may
-press a letter to jump to the associated position in the
-associated window. Using ~C-u C-c SPC~ and ~C-u C-u C-c SPC~ let
-me jump to any character or to any visible line.
-
-➩ Super simple use case: Fix your eyes on an occurence of a word, then ~C-c SPC~
-  to quickly jump to it so as to edit the sentence in which it occurs.
-  - It's like ~C-s~ but more lightweight.
-
-#+begin_src emacs-lisp
-(use-package ace-jump-mode
-
-  :config (bind-key* "C-c SPC" 'ace-jump-mode))
-
-;; See ace-jump issues to configure for use of home row keys.
-#+end_src
-
-There is a newer and somewhat more powerful package, [[https://github.com/abo-abo/avy][avy]], which accompishes the
-same goal.  It uses a tree style to jumipng: Locations are given two letter
-combinations, one presses one letter to jump to a group of text, then another
-letter to jump somewhere in that grouping. I prefer ace-jump since it greys
-everthing out, whereas avy surrounds jump locations with a box.
-Here is an [[https://www.youtube.com/watch?v=zar4GsOBU0g][emacs-doom 6-minute video]] for avy.
-
-There is also [[https://github.com/tam17aki/ace-isearch][ace-isearch]] for bridinging different navgiational methods ---one
-begins incremental search, ~s-f~, then according to a pause and length of input,
-one of the navgiational methods, such as isearch or avy or helm-swoop, will be
-begun.  I'm okay with using ~C-s~ for helm-swoop and ~C-c SPC~ for ace-jump, and
-still have ~s-f~ for incremental search, which I hardly use.
-
-*What is bind-keys**?
-
-Major modes provide specfic use and so their bindings always take precedence
-over global bindings ---e.g., the major mode binding may do what the global does
-but with extra mode-specfic behaviour, such as indentation. Other times, a major
-mode's binding simply uses the same key presses with completely unrelated
-behaviour.  If we want to avoid having our global keybindings shadowed by a
-major mode, we may use the ~bind-key*~ /macro/ of ~use-package~, or the ~bind-keys*~
-/macro/ when there are multiple keys; these are macros, not clauses.  ---These
-essentially creates a dedicated minor mode behind the scenes, which saves us the
-work of [[https://emacs.stackexchange.com/a/358/10352][doing it ourselves]].
-
-|   | ~(bind-keys* (k₁ . f₁) … (kₙ . fₙ))~                           |
-| ≈ | These keybindings override all minor modes that use keys =kᵢ=. |
-
-Of course we can also use it without the asterisk; e.g.:
-#+begin_src emacs-lisp
-;; C-x o ⇒ Switch to the other window
-;; C-x O ⇒ Switch back to the previous window
-(bind-key "C-x O" (lambda () (interactive) (other-window -1)))
-#+end_src
-
-Finally, we can use ~M-x describe-personal-keybindings~ to see the keybindings
-we've personally defined in ~init.el~.
-
-**   =C-c e n,p=: Taking a tour of one's edits                      :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: C-c-e-n-p-Taking-a-tour-of-one's-edits
-:header-args: :tangle no
-:END:
-This package allows us to move around the edit points of a buffer /without/
-actually undoing anything. We even obtain a brief description of what happend at
-each edit point.  This seems useful for when I get interrupted or lose my train
-of thought: Just press [[kbd:C-c e p]] to see what I did recently and where ---the
-“e” is for “e”dit.
-
-#+BEGIN_SRC emacs-lisp
-;; Give me a description of the change made at a particular stop.
-(use-package goto-chg
-
-  :custom (glc-default-span 0))
-
-(my/defhydra "C-c e" "Look at them edits!" bus
-  :\  ("p" goto-last-change "Goto nᵗʰ last change")
-      ("n" goto-last-change-reverse "Goto more recent change"))
-#+END_SRC
-
-Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually performed.
-
-Notice, as a hydra, I can use ~C-c e~ followed by any combination of ~p~ and ~n~ to
-navigate my recent edits /without/ having to supply the prefix each time.
-
-** visual-regexp
-:PROPERTIES:
-:CUSTOM_ID: visual-regexp
-:END:
-#+begin_src emacs-lisp
-;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
-;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
-;;
-;; C-u M-%  do to regexp replace, without querying.
-(use-package visual-regexp
-
-  :config (define-key global-map (kbd "M-%")
-            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
-#+end_src
-
-** LaTeX ⇐ Org-Mode                                               :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Org-Mode-PDF-HTML
-:header-args: :tangle no
-:END:
-
-In this section we consider the Org-mode export for PDFs (LaTeX).
-For example, we account for LaTeX citations.
-
-# Installing LaTex
-# $ brew install --cask mactex
-# $ eval "$(/usr/libexec/path_helper)"
-# $ type pdflatex  # => pdflatex is /Library/TeX/texbin/pdflatex
-#
-# The ~minted~ environment can't appear as an argument to another command; a
-# [[https://tex.stackexchange.com/questions/102416/error-when-compiling-a-minted-listings-inside-a-memoir-subfloat][work-around]] is to use a ‘box’.  Learn more about LaTeX boxes [[https://latexref.xyz/Boxes.html][here]].
-
-
-*** Get LaTeX:
-:PROPERTIES:
-:CUSTOM_ID: Get-LaTeX
-:END:
-
-# +begin_src shell
-# time brew cask install mactex-no-gui
-# +end_src
-
-#+begin_src emacs-lisp
-(system-packages-ensure "mactex")
-#+end_src
-
-   - This is a redistribution of TeX Live specifically for macOS.
-   - We get the 4GB version since it has [[https://tex.stackexchange.com/a/1041/69371][everything]] and so
-     do not need to worry about missing style files.
-   - This took about 12 minutes on my machine.
-
-   Restart Emacs, enter =$e^{i \cdot \pi} + 1 = 0$= then press kbd:C-c_C-x_C-l to
-   have it rendered inline.
-
-   + *Minted:* Get tool for colourful code snippets for LaTeX ---see “minted” in
-     the main article.
-
-     #+begin_src emacs-lisp
-(system-packages-ensure "pygments")
-#+end_src
-
-   + *Not anymore:* Get a neato PDF presentation console: =brew install pdfpc=
-     - With =pdfpc myfile.pdf= you get a nice timer and multiple views
-       of the current slide and upcoming slides ---with support for multiple monitors.
-     - Install ScreenBrush, from the Apple Store, for easily drawing/annotating my
-       screen ---e.g., when I'm giving a virtual lecture to my students.
-     - An alternative is =brew install mupdf= then =mupdf-gl myfile.pdf= and press
-       =f= for fullscreen then =a= for adding/adorning drawings ---it was too
-       rough to use live.
-
-     Finally, within Emacs: =M-x pdf-tools-install=
-
-:Possibly_breaking_toc-org:
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Use 3 headlines of export, which is the default
-;; (setq org-export-headline-levels 4)
-
-;; no numbers by default at export
-;; (setq org-export-with-section-numbers nil)
-#+END_SRC
-:End:
-*** Working with Citations                               :Disabled:Not_Used:
-:PROPERTIES:
-:CUSTOM_ID: Working-with-Citations
-:END:
-
-# TODO Fix me, breaking Github Actions test setup
-
- [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
-
- The following entity will display useful data
- when the mouse hovers over it (•̀ᴗ•́)و If you click on it, then you're
- in for a lot of super neat stuff, such as searching for the pdf online!
-
-cite:agda_overview ( In HTML export, the citation doesn't link anywhere. )
-
-    #+BEGIN_SRC emacs-lisp :tangle no
-(unless noninteractive
-
-(use-package org-ref
-  :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
-          ;; Most useful for non-LaTeX files.
-        (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
-        (bibtex-completion-bibliography (car reftex-default-bibliography))
-        (org-ref-default-bibliography reftex-default-bibliography))
-
-;; Quick BibTeX references, sometimes.
-(use-package helm-bibtex)
-(use-package biblio) )
-#+END_SRC
-
-  Execute ~M-x helm-bibtex~ or =C-c ]= and, say, enter =emacs= and you will be
-  presented with all the entries in the bib database that mention ‘emacs’. Super
-  cool stuff. Moreover, if no such entries exist, then we can look some up
-  using the interface!
-
-  Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][online]] or better yet as an org-file with ~M-x org-ref-help~.
-
-  This is an Org-mode application since the citations have tooltips and export
-  nicely to LaTeX & HTML via the Org-mode exporter.
-
-*** Bibliography & Coloured LaTeX using Minted
-:PROPERTIES:
-:CUSTOM_ID: Bibliography-Coloured-LaTeX-using-Minted
-:END:
-
-Execute the following for bibliography references as well as minted Org-mode
-uses the Minted package for source code highlighting in PDF/LaTeX ---which in
-turn requires the pygmentize system tool.
-#+BEGIN_SRC emacs-lisp
-(setq org-latex-listings 'minted
-      org-latex-packages-alist '(("" "minted"))
-      org-latex-pdf-process
-      '("pdflatex -shell-escape -output-directory %o %f"
-        "biber %b"
-        "pdflatex -shell-escape -output-directory %o %f"
-        "pdflatex -shell-escape -output-directory %o %f"))
-#+END_SRC
-
-For faster pdf generation, possibly with errors, consider invoking:
-#+begin_example emacs-lisp
-(setq org-latex-pdf-process
-      '("pdflatex -interaction nonstopmode -output-directory %o %f"))
-#+end_example
-
-By default, Org exports LaTeX using the ~nonstopmode~ option, which tries
-its best to produce a PDF ---which ignores typesetting errors altogether,
-which is not necessary ideal when using LaTeX.
-
-*** COMMENT Excellent PDF Viewer
-:PROPERTIES:
-:CUSTOM_ID: Excellent-PDF-Viewer
-:END:
-
-
-Need to (re)build the epdfinfo program, do it now ? (y or n) n
-
---------------------------------------------------------------------------------
-
-Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library for viewing PDFs in Emacs.
-#+BEGIN_SRC emacs-lisp
-(use-package pdf-tools
-  ; :init   (system-packages-ensure "pdf-tools")
-  :custom (pdf-tools-handle-upgrades nil)
-          (pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
-  :config (pdf-tools-install))
-
-;; Now PDFs opened in Emacs are in pdfview-mode.
-#+END_SRC
-
-Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
-with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
-easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
-** HTML ⇐ Org-mode
-:PROPERTIES:
-:CUSTOM_ID: HTML-Org-mode
-:END:
-
-In this section we consider the Org-mode exporters for PDFs and
-HTMLs. For example, we account for LaTeX citations and reliable HTML
-anchors.
-
-#+BEGIN_SRC emacs-lisp
-(use-package htmlize )
-;; Main use: Org produced htmls are coloured.
-;; Can be used to export a file into a coloured html.
-#+END_SRC
-
-*** HTML “Folded Drawers”                 :Move_to_org_special_block_extras:
-:PROPERTIES:
-:CUSTOM_ID: HTML-Folded-Drawers
-:END:
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(defun my/org-drawer-format (name contents)
-  "Export to HTML the drawers named with prefix ‘fold_’, ignoring case.
-
-The resulting drawer is a ‘code-details’ and so appears folded;
-the user clicks it to see the information therein.
-Henceforth, these are called ‘fold drawers’.
-
-Drawers without such a prefix may be nonetheless exported if their
-body contains ‘:export: t’ ---this switch does not appear in the output.
-Thus, we are biased to generally not exporting non-fold drawers.
-
-One may suspend export of fold drawers by having ‘:export: nil’
-in their body definition.
-
-Fold drawers naturally come with a title.
-Either it is specfied in the drawer body by ‘:title: ⋯’,
-or otherwise the drawer's name is used with all underscores replaced
-by spaces.
-"
-  (let* ((contents′ (replace-regexp-in-string ":export:.*\n?" "" contents))
-         (fold? (s-prefix? "fold_" name 'ignore-case))
-         (export? (string-match ":export:\s+t" contents))
-         (not-export? (string-match ":export:\s+nil" contents))
-         (title′ (and (string-match ":title:\\(.*\\)\n" contents)
-                      (match-string 1 contents))))
-
-    ;; Ensure we have a title.
-    (unless title′ (setq title′ (s-join " " (cdr (s-split "_" name)))))
-
-    ;; Output
-    (cond
-     ((and export? (not fold?)) contents′)
-     (not-export? nil)
-     (fold?
-      (thread-last contents′
-        (replace-regexp-in-string ":title:.*\n" "")
-        (format "<details class=\"code-details\"> <summary> <strong>
-            <font face=\"Courier\" size=\"3\" color=\"green\"> %s
-            </font> </strong> </summary> %s </details>" title′))))))
-
-(setq org-html-format-drawer-function 'my/org-drawer-format)
-
-#+END_SRC
-
-With the following invocations we only see the odd indexed ‘hello’s, where the
-latter two are folded up.
-#+BEGIN_SRC org :tangle no
-:this-drawer-is-exported:
-:export: t
-hello 1
-:End:
-
-:this-drawer-is-NOT-exported:
-hello 2
-:End:
-
-:fold_This_drawer_has_a_title_in_the_body:
-:title: I am the drawer title 0
-
-hello 3
-:End:
-
-:fold_This_drawer_is_NOT_exported:
-:title: Why are we here?
-:export: nil
-
-hello 4
-:End:
-
-:fold_I_am_the_drawer_title_1:
-
-hello 5
-:End:
-#+END_SRC
-
-I doubt I could show an example in the Github README, since no HTML export is
-happening using my setup. In case you're reading this on my blog, which has
-exported HTML. Here's the example:
-:fold_hello_world:
-:title: ¡Hola! Buenas tardes, Amigo
-Hey bud, hope you're enjoying this read ^_^
-:End:
-
-Now that I've written this, I'm thinking it may have been preferably to use an org-block…?
-
-*** Diagrams with Mermaid ---Not Recommended                      :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Diagrams-with-Mermaid-Not-Recommended
-:header-args: :tangle no :eval no-export
-:END:
-
-Let's try out an alternative to PlantUML ---covered below in §[[Workflow States]].
-
-First, let's get the tool.
-#+BEGIN_SRC shell :tangle no
-npm install mermaid.cli
-sudo git clone git@github.com:arnm/mermaid-layer.git ~/.emacs.d/private/mermaid
-#+END_SRC
-
-Then, let's get the associated ~mermaid~ package.
-#+BEGIN_SRC emacs-lisp
-(use-package ob-mermaid
-  :custom ob-mermaid-cli-path "~/node_modules/.bin/mmdc")
-#+END_SRC
-
-Then, =C-c C-c= on the following:
-#+BEGIN_SRC mermaid :file test.png :theme neutral :background-color green  :tangle no :results replace :eval never-export
-sequenceDiagram
-A-->B: Works!
-#+END_SRC
-
-#+RESULTS:
-[[file:test.png]]
-
-+ =C-c C-x C-v= ⇒ Show images inline
-+ Mermaid supported headers:
-  - ~file~ to name the svg/png/pdf output
-  - ~width~ or ~height~ or the resulting image
-  - ~theme~ used, such as ~default, forest, dark, neutral~, for foreground entities
-  - ~background-color~ such as ~transparent, red, #F0F0F0~
-    * The transparent option is nice ^_^
-+ You can insert new lines using ~<br>~ and horizontal rules via ~<hr>~.
-  Similarly you can use other HTML tags such as ~<center>~; if you have too many
-  you can make  CSS file then use the header argument ~:css-file~.
-+ Add “non-breaking space” with ~&nbsp;~. This is a forced extra space and it prevents
-  a line break at its location. You can insert it repeatedly, but for two spaces
-  use ~&ensp;~ and for four spaces use ~&emsp;~.
-
-If link text cuts off prematurely, use extra space /with/ a newline: ~A-- text
-&ensp;<br> -->B~.
-
-*Warning*: JavaScript has some issues when working with Unicode and so, being a
-JavaScript utility, ~mermaid~ hangs when Unicode is used. On the upside, being a
-JavaScript utility, ~mermaid~ entities can have [[https://mermaid-js.github.io/mermaid/#/flowchart?id=interaction][arbitrary code attached]] to them to
-be executed upon clicks ---for use in browsers.
-- However, the Greek letters are supported; e.g., γ and Σ.
-
-See [[https://mermaid-js.github.io/mermaid/#/flowchart?id=nodes-amp-shapes][here]] for possible node shapes.
-
-#+begin_quote
-After forming an intricate diagram of related design patterns, I had to use a
-number of HTML notions, such as =<i>, <strong>, <em>, <h1>, &ensp;, <br>, <pre>,
-<center>= and it was a bit more than I would have liked. In particular, the only
-way to change font size was to use the deprecated HTML tag =<big>= or heading tags
-like =<h1>=; even worse, the resulting PDF image did not look nice ---I had to
-stretch it out.
-
-The command line tool is *lacking functionality* and so the docs are not helpful.
-E.g., I cannot produce pie charts using the command line tool.
-#+end_quote
-
-***   [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework :Disabled:I_enable_this_as_I_need_it:See_also_Dslide:
-:PROPERTIES:
-:CUSTOM_ID: https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework
-:header-args: :tangle no :eval no-export
-:END:
-
-Org-mode documents can be transformed into beautiful slide decks
-with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] with the following two simple lines.
-
-#+BEGIN_SRC emacs-lisp
-(use-package ox-reveal
-
-  :custom (org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
-#+END_SRC
-# MA: ??? It looks like ox-reveal is being abandoned in favor of org-re-reveal,
-# a fork compatible with org-mode 9.2?
-
-For example, execute, ~C-x C-e~ after the closing parenthesis of, the
-following block to see an example slide-deck (─‿‿─)
-#+BEGIN_SRC emacs-lisp :tangle no
-(progn (shell-command "curl https://raw.githubusercontent.com/yjwen/org-reveal/696613edef0fe17a9c53146f79933fe7c4101100/Readme.org >> Trying_out_reveal.org")
-       (switch-to-buffer (find-file "Trying_out_reveal.org"))
-       (org-reveal-export-to-html-and-browse))
-#+END_SRC
-
-Org-mode exporting, ~C-c C-e~, now includes an option ~R~ for such reveal slide decks.
-
-:Hide:
-[[https://alhassy.github.io/next-700-module-systems/proposal/defence-slides.html#/sec-title-slide][Here]] ([[https://raw.githubusercontent.com/alhassy/next-700-module-systems/master/proposal/defence-slides.org][source]]) is an example of org-reveal slides where I add a number to each page,
-use multiple columns, and extend the margins perhaps a bit too much.
-:End:
-
-Two dimensional slides may be a bit new to some people, so I like to
-give viewers an option, in tiny font, to view the slide-deck
-continuously and remind them that ~?~ provides useful shortcuts.
-#+BEGIN_SRC emacs-lisp
-(setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
-<font size=\"1\">
-<a href=\"?print-pdf&showNotes=true\">
-⟪ Flattened View ; Press <code>?</code> for Help ⟫
-</a>
-</font>")
-#+END_SRC
-One should remove the ~&showNotes=true~ if they do not want to include
-speaker notes in the flattened view.
-
-Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
-resulting PDF locally.
-
-** TODO COMMENT Working with PDFs                                 :Disabled:
-*** TODO Open PDFs in Emacs
-#+begin_src emacs-lisp
-    ;; In Org-mode, clicking on PDF should open it in Emacs
-    ;; Example:          [[~/Desktop/stuff-I'm-learning.pdf::12]]       ;; Opens the pdf to page 12
-    ;; Another Example:  docview:~/Desktop/stuff-I'm-learning.pdf::12
-  (ignore-errors (add-to-list 'org-file-apps '("\\.pdf\\'" . emacs)))
-
-    ;; Required code to make the above links work as expected.
-    ;; Source: https://www.reddit.com/r/emacs/comments/re0dx8/how_do_you_link_a_specific_pdf_page_in_org_mode/
-    (defun my-org-docview-open-hack (orig-func &rest args)
-      (let* ((link (car args)) path page)
-        (string-match "\\(.*?\\)\\(?:::\\([0-9]+\\)\\)?$" link)
-        (setq path (match-string 1 link))
-        (setq page (and (match-beginning 2)
-                        (string-to-number (match-string 2 link))))
-        (org-open-file path 1)
-        (when page
-          (cond
-           ((eq major-mode 'pdf-view-mode)
-            (pdf-view-goto-page page))
-           (t
-            (doc-view-goto-page page))))))
-    (advice-add 'org-docview-open :around #'my-org-docview-open-hack)
-
-    ;; Alternatively, there's a dedicated package for this
-    ;; https://github.com/fuxialexander/org-pdftools/tree/967f48fb5038bba32915ee9da8dc4e8b10ba3376
-#+end_src
-
-*** TODO The evils of this world
-:PROPERTIES:
-:CUSTOM_ID: The-evils-of-this-world
-:END:
-#+begin_src emacs-lisp :tangle no
-;; “PDF” stands for Portable Document Format, since you should be able to open
-;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
-;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
-;; them. Unfortunately, various government & insurance forms are only provided in
-;; this format.
-(system-packages-ensure "adobe-acrobat-reader")
-#+end_src
-** TODO COMMENT Makes Org/Markdown previewabvle as we type!!! ♥
-:PROPERTIES:
-:CUSTOM_ID: Makes-Org-Markdown-previewabvle-as-we-type
-:END:
-#+begin_src emacs-lisp :tangle no
-  ;; Shows up as a magnifying glass in doom-modeline.
-  (use-package grip-mode)
-  ;;  :hook ((markdown-mode org-mode) . grip-mode)
-  ;; Pretty annyoning actually; instead we should call it as needed.
-  )
-#+end_src
-
-** COMMENT Makeshift HTML Folded Drawers: Folding-mode & Org-Macros
-:PROPERTIES:
-:CUSTOM_ID: Makeshift-HTML-Folded-Drawers-Folding-mode-Org-Macros
-:END:
-
-My =my/prettify-alist= has the following:
-
-                    ("{{{fold("        . ?↳)
-                    (")}}}"            . ?↲)
-                    ("{{{end-fold}}}"  . ?↺)
-
-The ~↳Title Here↲ Contents ↺~ combination is for my makeshift HTML code
-folding macro ---word-wrapped for readability.
-#+BEGIN_SRC org :tangle no
-,#+MACRO: end-fold  #+HTML: </details>
-,#+MACRO: fold      #+HTML: <details class="code-details"> <summary> <strong>
-                              <font face="Courier" size="3" color="green"> $1
-                              </font> </strong> </summary>
-#+END_SRC
-
-:Example:
-# The (org-mode-restart) invocation actually enables the source block prettifications.
-
-# Empty macros to make the example go through.
-#
-#+MACRO: end-fold
-#+MACRO: fold
-
-{{{fold(nice)}}}
-
-hello
-
-{{{end-fold}}}
-
-:End:
-
-Let's have this fold-away in the source buffer as well by using [[https://www.emacswiki.org/emacs/FoldingMode][folding-mode]];
-with show/hide with ~C-<tab>~ key.
-#+begin_src emacs-lisp :tangle no :tangle no
-(use-package folding
- :init
- (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
- (setq folding-top-mark "{{{fold(")
- (setq folding-bottom-mark "{{{end-fold}}}")
- :config
-  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
-  (add-hook 'org-mode-hook #'folding-mode))
-#+END_SRC
-#  (remove-hook 'org-mode-hook #'folding-mode)
-
-** TODO COMMENT Kill to start of line
-:PROPERTIES:
-:CUSTOM_ID: Kill-to-start-of-line
-:END:
-Dual to ~C-k~,
-#+begin_src emacs-lisp :tangle no
-;; M-k kills to the left
-(global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
-#+END_SRC
-** Press M-SPC so all adjacent blank lines are also removed
-:PROPERTIES:
-:CREATED:  [2025-04-09 Wed 16:54]
-:END:
-
-#+begin_src emacs-lisp
-;; Now when I press M-SPC all adjacent blank lines are also removed.
-(advice-add 'cycle-spacing :after
-            (defun my/cycle-spacing-then-delete-blank-lines (&rest _args)
-  "Run `delete-blank-lines` after `cycle-spacing`."
-  (delete-blank-lines)))
-#+end_src
-
-** Add more line padding for readability
-
-When the text is a bit too compact for your liking, then change the =line-spacing=
-variable. Setting it to =nil= results in a cramped reading space, so best to add
-some whitespace between lines. Space between paragraphs is formed by adding an
-empty line.
-
-#+begin_src emacs-lisp
-(setq-default line-spacing 0.2)
-#+end_src
-
-If the value is an integer, it indicates the number of pixels below each
-line. A decimal number is a scaling factor relative to the current
-window's default line height. The =setq-default= function sets this for
-all buffers. Otherwise, it only applies to the current open buffer. Try
-the value that best suits your preferences.
-
 * -------------------------------------------------------------------------------- :ignore:
 :PROPERTIES:
 :CREATED:  [2025-04-09 Wed 16:21]
@@ -15519,6 +14082,1443 @@ This is a nice complement to helm-org-ql in that it shows me context while I'm s
 (advice-add 'org-delete-backward-char :around #'my/confirm-big-deletion) ;; For Org-mode
 (advice-add 'backward-delete-char-untabify :around #'my/confirm-big-deletion) ;; For everywhere else
 #+end_src
+
+** Prose
+:PROPERTIES:
+:CUSTOM_ID: Prose
+:END:
+
+Emacs can be setup with a spellchecker and other expected features of a word processing tool
+---however these features apply Emacs-wide since nearly everything is
+essentially text (•̀ᴗ•́)و
+
+- Org-mode is a writer's best friend; it's large enough to deserve its own sections.
+
+- See [[https://lucidmanager.org/tags/emacs/][Emacs Writing Studio]] for a series of articles on making/using Emacs for writing.
+
+*** Bidirectional Text
+#+begin_src emacs-lisp
+;; Sometimes I have Arabic in my buffers, however I am an English speaker
+;; and so Left-to-Right is most natural to me. As such, even when Arabic
+;; is present, or any bidirectional text, just use Left-to-Right.
+(setq-default bidi-paragraph-direction 'left-to-right)
+#+end_src
+*** Whitespace
+:PROPERTIES:
+:CUSTOM_ID: Whitespace
+:END:
+Let's start off by cleaning-up any accidental trailing whitespace and in other
+places upon save.
+#+begin_src emacs-lisp
+(add-hook 'before-save-hook 'whitespace-cleanup)
+#+end_src
+
+See [[http://ergoemacs.org/emacs/whitespace-mode.html][here]] for making whitespace visible; including spaces, tabs, and newlines
+
+*** Formatting Text
+:PROPERTIES:
+:CUSTOM_ID: Formatting-Text
+:END:
+
+The following incantation, doc:my/org-mode-format, makes it so that we can
+select some text then press kbd:C-c_f (to get a list of possible character
+completions) then press the symbol we want our text to be surrounded with.
+
+#+begin_details
+#+begin_src emacs-lisp
+(local-set-key (kbd "C-c f") #'my/org-mode-format)
+(defun my/org-mode-format (&optional text)
+"Surround selected region with the given Org emphasises marker.
+
+E.g., if this command is bound to “C-c f” then the sequence
+“C-c f b” would make the currenly selected text be bold.
+Likewise, “C-c f *” would achieve the same goal.
+
+When you press “C-c f”, a message is shown with a list of
+useful single-character completions.
+
+Note: “C-c f 𝓍”, for an unrecognised marker 𝓍, just inserts
+the character 𝓍 before and after the selected text."
+  (interactive "P") ;; Works on a region
+  ; (message "b,* ⟨Bold⟩; i,/ ⟨Italics⟩; u,_ ⟨Underline⟩; c,~ ⟨Monotype⟩")
+  (message "⟨Bold b,*⟩ ⟨Italics i,/⟩ ⟨Underline u,_⟩ ⟨Monotype c,~⟩")
+  (let ((kind (read-char)))
+    ;; Map letters to Org formatting symbols
+    (setq kind (or (plist-get '(b ?\*   i ?\/   u ?\_   c ?\~)
+                              (intern (string kind)))
+                   kind))
+    (insert-pair text kind kind)))
+#+end_src
+#+end_details
+
+*** Fill-mode ---Word Wrapping
+:PROPERTIES:
+:CUSTOM_ID: Fill-mode-Word-Wrapping
+:END:
+
+In fill mode, when you type past the end of a line, Emacs automatically starts a new line, cleverly formatting
+paragraphs. This is a powerful form of “word wrap”.
+
+#+BEGIN_SRC emacs-lisp
+(setq-default fill-column 80          ;; Let's avoid going over 80 columns
+              truncate-lines nil      ;; I never want to scroll horizontally
+              indent-tabs-mode nil)   ;; Use spaces instead of tabs
+#+END_SRC
+
+Certain variables are sensibly local to a buffer, and so ~setq~ only alters their value for one buffer. Using ~setq-default~
+we change a variable's default value, in every buffer.
+
+#+BEGIN_SRC emacs-lisp
+;; Wrap long lines when editing text
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+(add-hook 'org-mode-hook 'turn-on-auto-fill)
+#+END_SRC
+
+We may press ~M-q~ to cleverly redistribute the line breaks within any paragraph, thereby making it look better. With a
+prefix argument, it justifies it as well ---i.e., pads extra white space to make the paragraph appear rectangular.
+
+            Note that ~M-o M-s~ centres a line of text ;-) Fun stuff!
+
+Fill-mode is also known as “hard word wrapping”, which has the counterpart “soft word wrapping” …
+
+Visual line mode is built-in and provides support for editing by visual lines: Lines off the screen are visually word
+wrapped, but logically remain one line.  Moreover =C-a,e,k= operate on visual lines rather than logical lines.
+#+begin_src emacs-lisp
+;; Bent arrows at the end and start of long lines.
+(setq visual-line-fringe-indicators '(left-curly-arrow right-curly-arrow))
+(global-visual-line-mode 1)
+#+end_src
+Visual line mode is useful when I have way too many windows open or when using smaller frames.
+
+*** Fix spelling as you type ---thesaurus & dictionary too!
+:PROPERTIES:
+:CUSTOM_ID: Fix-spelling-as-you-type-thesaurus-dictionary-too
+:END:
+
+I would like to check spelling on the fly.
+ + ~C-;~ :: Cycle through corrections for word at point.
+ + ~M-$~ :: Check and correct spelling of the word at point
+ + ~M-x ispell-change-dictionary RET TAB~ :: To see what dictionaries are available.
+
+Install spell-checking application as well as a reliable English
+dictionary, [[https://wordnet.princeton.edu/][WordNet]].
+   #+begin_src emacs-lisp
+(system-packages-ensure "aspell")
+(system-packages-ensure "wordnet")
+   #+end_src
+
+~flyspell-prog-mode~ enables spell checking for programming by only considering
+comments and strings.
+
+#+BEGIN_SRC emacs-lisp
+(use-package flyspell
+
+  :hook ((prog-mode . flyspell-prog-mode)
+         ((org-mode text-mode) . flyspell-mode)))
+#+END_SRC
+
+Enabling fly-spell for text-mode enables it for org and latex modes since they
+derive from text-mode.
+
+Flyspell needs a spell checking tool, which is not included in Emacs.  We
+install ~aspell~ spell checker using, say, homebrew via ~brew install aspell~.  Note
+that Emacs' ~ispell~ is the interface to such a command line spelling utility.
+# See available dictionary via ~aspell dicts~.
+
+#+BEGIN_SRC emacs-lisp
+(setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
+(setq ispell-dictionary "en_GB") ;; set the default dictionary
+#+END_SRC
+
+[Disabled] Allow spelling support for CamlCase words like “EmacsIsCool”.
+#+BEGIN_SRC emacs-lisp :tangle no
+(setq  ispell-extra-args '("--sug-mode=ultra"
+                            "--run-together"
+                            "--run-together-limit=5"
+                            "--run-together-min=2"))
+#+END_SRC
+
+Let us select a correct spelling merely by clicking on a word
+---for the rare days I have a mouse.
+#+begin_src emacs-lisp
+(eval-after-load "flyspell"
+  ' (progn
+     (define-key flyspell-mouse-map [down-mouse-3] #'flyspell-correct-word)
+     (define-key flyspell-mouse-map [mouse-3] #'undefined)))
+#+end_src
+
+Colour incorrect works; default is an underline.
+#+BEGIN_SRC emacs-lisp
+(global-font-lock-mode t)
+(custom-set-faces '(flyspell-incorrect ((t (:inverse-video t)))))
+#+END_SRC
+
+Finally, save to user dictionary without asking:
+#+BEGIN_SRC emacs-lisp
+(setq ispell-silently-savep t)
+#+END_SRC
+
+Let's keep track of my personal word set by having it be in my version controlled
+.emacs directory. [[http://aspell.net/man-html/Format-of-the-Personal-and-Replacement-Dictionaries.html][Note]] that the default location is ~~/.[i|a]spell.DICT~ for
+a specified dictionary ~DICT~.
+#+BEGIN_SRC emacs-lisp
+(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
+#+END_SRC
+
+Nowadays, I very rarely write non-literate programs, but if I do
+I'd like to check spelling only in comments/strings. E.g.,
+#+BEGIN_SRC emacs-lisp
+(add-hook          'c-mode-hook 'flyspell-prog-mode)
+(add-hook 'emacs-lisp-mode-hook 'flyspell-prog-mode)
+#+END_SRC
+
+Use the thesaurus Emacs frontend [[https://github.com/hpdeifel/synosaurus][Synosaurus]] to avoid unwarranted repetition.
+#+begin_src emacs-lisp
+(use-package synosaurus
+  :defer 100
+  :init    (synosaurus-mode)
+  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
+           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
+#+end_src
+The thesaurus is powered by the Wordnet ~wn~ tool, which can be invoked without an
+internet connection!
+#+begin_src emacs-lisp
+;; (shell-command "brew cask install xquartz &") ;; Dependency
+;; (shell-command "brew install wordnet &")
+#+end_src
+
+Let's use Wordnet as a dictionary via the [[https://github.com/gromnitsky/wordnut][wordnut]] package.
+#+BEGIN_SRC emacs-lisp
+(use-package wordnut
+ :defer 100
+ :bind ("M-!" . wordnut-lookup-current-word))
+
+;; Use M-& for async shell commands.
+#+END_SRC
+Use ~M-↑,↓~ to navigate dictionary results, and ~wordnut-search~ for a new search.
+
+An alternative to =wordnut= is to use the lightweight ~define-word~ package; which I
+think is not ideal since it provides way less information.
+
+:PowerthesaurusCurrentlyNotWorking:
+#+BEGIN_SRC emacs-lisp :tangle no
+(load "~/dotfiles/.emacs.d/powerthesaurus.el")
+(global-set-key (kbd "M-#") 'powerthesaurus-lookup-word-at-point)
+
+;; Website currently down ... https://github.com/SavchenkoValeriy/emacs-powerthesaurus/issues/6
+#+END_SRC
+:End:
+*** Touch Typing                                                   :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Touch-Typing
+:header-args: :tangle no
+:END:
+
+Use this game to help you learn to spell words that you're having trouble with;
+e.g., I have a file ~~/Dropbox/spelling.txt~ with words I have trouble spelling,
+which I open then run ~M-x typing-of-emacs~ in order to improve spelling said
+words.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; The Typing Of Emacs, a game.
+(use-package typing-of-emacs
+  :quelpa (typing :fetcher wiki :url "https://www.emacswiki.org/emacs/typing.el"))
+#+END_SRC
+
+Practice touch typing using [[https://github.com/hagleitn/speed-type][speed-type]].
+#+begin_src emacs-lisp
+(use-package speed-type )
+#+end_src
+Running ~M-x speed-type-region~ on a region of text, or ~M-x speed-type-buffer~ on a
+whole buffer, or just ~M-x speed-type-text~ will produce the selected region, buffer,
+or random text for practice. The timer begins when the first key is pressed
+and stats are shown when the last letter is entered.
+
+Other typing resources include:
++ [[https://www.emacswiki.org/emacs/TypingOfEmacs][Typing of Emacs]] ---an Emacs alternative to speed type, possibly more engaging.
++ [[https://alternativeto.net/software/klavaro/][Klavaro]] ---a GUI based yet language-independent typing tutor.
+  - I'm enjoying this tool in getting started with Arabic typing.
++ [[https://typing.io/][Typing.io]] is a tutor for coders: Lessons are based on open source code, such
+  some XMonad written in Haskell or Linux written in C.
++ [[https://www.gnu.org/software/gtypist/index.html#downloading][GNU Typist]] ---which is interactive in the terminal, so not ideal in Emacs--,
+
+To assist in language learning, it may be nice to have an Emacs
+[[https://github.com/atykhonov/google-translate][interface]] to Google translate ---e.g., invoke ~google-translate-at-point~.
+#+BEGIN_SRC emacs-lisp
+(use-package google-translate
+
+ :config
+   (global-set-key "\C-ct" 'google-translate-at-point))
+#+END_SRC
+
+Select the following then ~C-c t~,
+#+begin_quote
+Hey buddy, what're you up to?
+#+end_quote
+Then /detect language/ then /Arabic/ to obtain:
+#+begin_quote
+مرحباً يا صديقي ، ماذا تفعل؟
+#+end_quote
+Neato 😲
+
+*** Using a Grammar & Style Checker                                :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Using-a-Grammar-Style-Checker
+:header-args: :tangle no
+:END:
+
+[ A possibly better alternative is [[https://emacstil.com/til/2022/03/05/setting-up-vale-prose-linter-on-emacs/][Vale]]. ]
+
+Let's install [[https://github.com/mhayashi1120/Emacs-langtool][a grammar and style checker]].
+We get the offline tool from the bottom of the [[https://languagetool.org/][LanguageTool]] website, then relocate it
+as follows.
+#+BEGIN_SRC emacs-lisp
+(use-package langtool
+
+ :custom
+  (langtool-language-tool-jar
+   "~/Applications/LanguageTool-4.5/languagetool-commandline.jar"))
+#+END_SRC
+
+Now we can run ~langtool-check~ on the subsequent grammatically incorrect
+text ---which is from the LanguageTool website--- which colours errors in red,
+when we click on them we get the reason why; then we may invoke
+~langtool-correct-buffer~ to quickly use the suggestions to fix each correction,
+and finally invoke ~langtool-check-done~ to stop any remaining red colouring.
+
+#+begin_example org
+LanguageTool offers spell and grammar checking. Just paste your text here
+and click the 'Check Text' button. Click the colored phrases for details
+on potential errors. or use this text too see an few of of the problems
+that LanguageTool can detecd. What do you thinks of grammar checkers?
+Please not that they are not perfect. Style issues get a blue marker:
+It's 5 P.M. in the afternoon. The weather was nice on Thursday, 27 June 2017
+--uh oh, that's the wrong date ;-)
+#+end_example
+
+By looking around the source code, I can do all three stages smoothly (•̀ᴗ•́)و
+#+BEGIN_SRC emacs-lisp
+;; Quickly check, correct, then clean up /region/ with M-^
+(eval-after-load 'langtool
+(progn
+(add-hook 'langtool-error-exists-hook
+  (lambda ()
+     (langtool-correct-buffer)
+     (langtool-check-done)))
+
+(global-set-key "\M-^"
+                (lambda ()
+                  (interactive)
+                  (message "Grammar checking begun ...")
+                  (langtool-check)))))
+#+END_SRC
+
+The checking command is silent, we added a bit of comforting acknowledgement to the user.
+
+*** Lightweight Prose Proofchecking
+:PROPERTIES:
+:CUSTOM_ID: Lightweight-Prose-Proofchecking
+:END:
+
+Let's [[https://github.com/bnbeckwith/writegood-mode][write good]]!
+
+#+BEGIN_SRC emacs-lisp
+(use-package writegood-mode
+  ;; Load this whenver I'm composing prose.
+  :hook (text-mode org-mode)
+  ;; Don't show me the “Wg” marker in the mode line
+
+  :defer 100
+
+  ;; Some additional weasel words.
+  :config
+  (--map (push it writegood-weasel-words)
+         '("some" "simple" "simply" "easy" "often" "easily" "probably"
+           "clearly"               ;; Is the premise undeniably true?
+           "experience shows"      ;; Whose? What kind? How does it do so?
+           "may have"              ;; It may also have not!
+           "it turns out that")))  ;; How does it turn out so?
+           ;; ↯ What is the evidence of highighted phrase? ↯
+#+END_SRC
+
+Inspired by Matt Might's [[http://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/][3 shell scripts to improve your writing, or
+"My Ph.D. advisor rewrote himself in bash"]], this Emacs interface
+emphasises, via underline, the following weaknesses in writing ---so
+that I can fix them or decide that they are appropriate for the
+scenario.
+
+Sentences that cut out the following problems may become stronger
+---by being more terse or precise.
+
++ Weasel Words ::
+  Phrases that sound good without conveying information;
+  such as vague precision or subjective phrases.
+
+  E.g., /a number of, surprisingly, very close/.
+
+  It's okay not to have exact details, but rather than “I don't know”
+  explain why not and what the next steps will be.
+
++ Passive Voice ::
+  Phrases wherein interest is in the object experiencing an action,
+  rather than the subject that performs the action.
+
+  - Bad: The house /was built by/ my father.
+  - Good: My father /built/ this house.
+
+  Likewise, including relevant or explanatory information as in “X
+  guarantees Y” is an improvement over “Y is guaranteed”.
+
+  Sometimes the subject really is irrelevant, such as
+  “We did X” whereas “X happened” suffices.
+
+  👍 If the relevant subject is unclear and, also, the text reads
+  better in the active, then change a phrase.
+
++ Duplicated Words :: Occurrences of, say, “the the”.
+
+   Harder to catch manually, but easier mechanically ;-)
+
+*** Placeholder Text ---For Learning & Experimenting
+:PROPERTIES:
+:CUSTOM_ID: Placeholder-Text-For-Learning-Experimenting
+:END:
+
+When learning about Emacs formatting commands, such as zap-to-char ~M-z~
+or transpose ~M-t~, it's best to have filler text ---even better when
+it's automatically generated instead of typing it out ourselves. The
+following will give us a series of commands ~lorem-ipsum-insert-⋯~ for
+inserting lists, sentences, paragraphs and using a prefix argument,
+with ~C-u~, we can request to generate any number of them.
+
+#+BEGIN_SRC emacs-lisp
+(use-package lorem-ipsum )
+#+END_SRC
+
+‘Lorem’ is not a word itself, but it comes from the Latin ‘Dolorem Ipsum’
+which means “pain in and of itself”.
+
+See this [[https://github.com/alhassy/emacs.d/blob/master/CheatSheet.pdf][Emacs Cheat Sheet]] to try out the textual navigation and formatting
+bindings on lorem ipsum, gibberish text.
+
+*** Some text to make us smile
+:PROPERTIES:
+:CUSTOM_ID: Some-text-to-make-us-smile
+:END:
+
+The  [[https://github.com/davep/dad-joke.el][dad-joke]] queries [[https://icanhazdadjoke.com][https://icanhazdadjoke.com]] to bring us some funny.
+#+begin_src emacs-lisp
+(use-package dad-joke
+
+  :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
+#+end_src
+
+For example, ~M-x dad-joke~ now inserts:
+#+begin_quote org
+What are the strongest days of the week? Saturday and Sunday...the rest are
+weekdays.
+#+end_quote
+
+*** Unicode Input via Agda Input
+:PROPERTIES:
+:CUSTOM_ID: Unicode-Input-via-Agda-Input
+:END:
+:agda2-include-dirs-Issue:
+#+BEGIN_SRC emacs-lisp
+;; (load (shell-command-to-string "agda-mode locate"))
+;;
+;; Seeing: One way to avoid seeing this warning is to make sure that agda2-include-dirs is not bound.
+; (makunbound 'agda2-include-dirs)
+#+END_SRC
+:End:
+
+[[https://mazzo.li/posts/AgdaSort.html][Agda]] is one of my favourite languages, it's like Haskell on steroids.  Let's set
+it up for the main sake of its Unicode input ---you may do likewise using TeX
+input.  ( [[https://www.joelonsoftware.com/2003/10/08/the-absolute-minimum-every-software-developer-absolutely-positively-must-know-about-unicode-and-character-sets-no-excuses/][The Absolute Minimum Every Software Developer Absolutely, Positively
+Must Know About Unicode and Character Sets (No Excuses!)]] )
+
+/Agda input mode makes it extremely easy to use unicode in documents, something I/
+/strongly prefer to do. When I can use symbols directly, instead of (for/
+/instance) LaTeX commands, it makes my plaintext far more readable./ --- [[https://github.com/armkeh/dotfiles/tree/master/emacs][Armkeh
+.emacs config]]
+
+#+begin_src emacs-lisp
+(system-packages-ensure "agda")
+#+end_src
+
+#+begin_details To use the Agda standard library by default
+ #+BEGIN_SRC shell :tangle no
+   mkdir -p ~/.agda
+   echo /usr/local/lib/agda/standard-library.agda-lib >>~/.agda/libraries
+   echo standard-library >>~/.agda/defaults
+ #+END_SRC
+ Invoke ~brew info agda~ to get these instructions and the version of Agda just
+    installed.
+#+end_details
+
+#+begin_details Get font support for subscripts, if need be
+    - Download and unzip the [[https://fontlibrary.org/en/font/symbola][symbola]] font
+    - kbd:CMD_+_SPC ⇒ =font book= ⇒ CMD+O ⇒ select the symbola directory you just
+      unzipped
+
+    (Note: In the before time, you could brew install this font.)
+#+end_details
+
+Executing ~agda-mode setup~ appends the following text to the ~.emacs~ file.
+Let's put it here ourselves.
+#+begin_src emacs-lisp
+(unless noninteractive
+  (load-file (let ((coding-system-for-read 'utf-8))
+               (shell-command-to-string "agda-mode locate"))))
+#+end_src
+
+I almost always want the ~agda-mode~ input method ---it's like the TeX method, but
+better.
+#+BEGIN_SRC emacs-lisp
+
+
+;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
+;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
+;; then loading that!
+(url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" "~/.emacs.d/elpa/agda-input.el" :ok-if-already-exists)
+(load-file "~/.emacs.d/elpa/agda-input.el")
+
+;; MA: This results in "Package cl is deprecated" !?
+(unless noninteractive
+  (use-package agda-input
+  :ensure nil ;; I have it locally.
+  :demand t
+  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
+  :custom (default-input-method "Agda")))
+  ;; Now C-\ or M-x toggle-input-method turn it on and offers
+
+
+;; TODO add a hook that when the input method becomes Agda, just don't bother showing me in the modeline.
+;; E.g., "Π" when using unicode input with Agda
+;; Useful to have in the modeline, say when typing in Arabic.
+;; (add-variable-watcher
+;;  'current-input-method
+;;  (lambda (_ newvalue 'set _)
+;;    (setq current-input-method-title
+;;          (if (equal newvalue "Agda") nil newvalue))))
+#+END_SRC
+
+:agda_Command_line_arguments:
+    "+RTS   -H4.5G   -M4.5G   -K256M   -S/tmp/AgdaRTS.log   -A1G   -RTS   -i   ."
+
+Wolfram Kahl has recommended the following settings.
+
+#+begin_src emacs-lisp
+;;(setq agda2-program-args (quote ("RTS" "-M4G" "-H4G" "-A128M" "-RTS")))
+#+end_src
+
+These arguments specify
+| ~+RTS~, ~-RTS~ | Flags between these are arguments to the ~ghc~ runtime |
+| ~-M[size]~   | Maximum heap size                                    |
+| ~-H[size]~   | Suggested heap size                                  |
+| ~-A[size]~   | Allocation area size used by the garbage collector   |
+
+Full documentation for the ~ghc~ runtime argumentscan be found [[https://downloads.haskell.org/~ghc/7.8.4/docs/html/users_guide/runtime-control.html][here]].
+
+Additional arguments that may be useful include
+| ~-S[file]~ | Produces information about “each and every garbage collection” |
+|          | - Outputs to ~stderr~ by default                               |
+
+:end:
+
+#+begin_quote
+Unicode doesn't intend to cover things that are achievable with markup, so only
+a limited subset of the alphabet is available as subscript; but all is available
+as superscript, except ‘q’.
+
+ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜᵤᵥₓ
+⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁺ ⁻ ⁼ ⁽ ⁾ ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉ ₊ ₋ ₌ ₍ ₎
+ᵃ ᵇ ᶜ ᵈ ᵉ ᶠ ᵍ ʰ ⁱ ʲ ᵏ ˡ ᵐ ⁿ ᵒ ᵖ ʳ ˢ ᵗ ᵘ ᵛ ʷ ˣ ʸ ᶻ
+ᴬ ᴮ ᴰ ᴱ ᴳ ᴴ ᴵ ᴶ ᴷ ᴸ ᴹ ᴺ ᴼ ᴾ ᴿ ᵀ ᵁ ⱽ ᵂ
+ᵅ ᵝ ᵞ ᵟ ᵋ ᶿ ᶥ ᶲ ᵠ ᵡ ᵦ ᵧ ᵨ ᵩ ᵪ
+
+~brew cask install font-symbola~
+⇒ Includes fonts for subscripts; e.g., ₐₙₑₕᵢⱼₖₗₘₙₒₚₜₛ
+#+end_quote
+
+Below are my personal Agda input symbol translations;
+e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX binding
+interactively: ~M-x customize-variable agda-input-user-translations~ then
+~INS~ then for key sequence type ~set~ then ~INS~ and for string paste ~𝒮ℯ𝓉~.
+#+BEGIN_SRC emacs-lisp
+(unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
+#+END_SRC
+Better yet, as a loop:
+#+BEGIN_SRC emacs-lisp
+(unless noninteractive
+(cl-loop for item
+      in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
+          ("(" "﴾")
+          (")" "﴿")
+          ("cmd" "⌘")
+           ;; categorial ;;
+           ("alg" "𝒜𝓁ℊ")
+           ("split" "▵")
+           ("join" "▿")
+           ("adj" "⊣")
+           (";;" "﹔")
+           (";;" "⨾")
+           (";;" "∘")
+           ;; logic
+           ("if" "⇐")
+           ("onlyif" "⇒")
+           ;; lattices ;;
+           ("meet" "⊓")
+           ("join" "⊔")
+           ;; tortoise brackets, infix relations
+           ("((" "〔")
+           ("))" "〕")
+           ;; residuals
+           ("syq"  "╳")
+           ("over" "╱")
+           ("under" "╲")
+           ;; Z-quantification range notation ;;
+           ;; e.g., “∀ x ❙ R • P” ;;
+           ("|"    "❙")
+           ("with" "❙")
+           ;; Z relational operators
+           ("domainrestriction" "◁")
+           ("domr" "◁")
+           ("domainantirestriction" "⩤")
+           ("doma" "⩤")
+           ("rangerestriction" "▷")
+           ("ranr" "▷")
+           ("rangeantirestriction" "⩥")
+           ("rana" "⩥")
+           ;; adjunction isomorphism pair ;;
+           ("floor"  "⌊⌋")
+           ("lower"  "⌊⌋")
+           ("lad"    "⌊⌋")
+           ("ceil"   "⌈⌉")
+           ("raise"  "⌈⌉")
+           ("rad"    "⌈⌉")
+           ;; Replies
+           ("yes"  "✔")
+           ("no"    "❌")
+           ;; Arrows
+           ("<=" "⇐")
+        ;; more (key value) pairs here
+        )
+      do (add-to-list 'agda-input-user-translations item)))
+#+END_SRC
+Also some silly stuff:
+#+begin_src emacs-lisp
+(unless noninteractive
+;; Add to the list of translations using “emot” and the given, more specfic, name.
+;; Whence, \emot shows all possible emotions.
+(cl-loop for emot
+      in `(;; angry, cry, why-you-no
+           ("whyme" "ლ(ಠ益ಠ)ლ" "ヽ༼ಢ_ಢ༽ﾉ☂" "щ(゜ロ゜щ)" "‿︵(ಥ﹏ಥ)‿︵" "ಠ_ಠ" "(╬ ಠ益ಠ)" "･ﾟ(*❦ω❦)*･ﾟ" "(╯°□°）╯︵ ┻━┻") ;; flip the table
+           ;; confused, disapprove, dead, shrug, awkward
+           ("what" "「(°ヘ°)" "(ಠ_ಠ)" "(✖╭╮✖)" "¯\\_(ツ)_/¯"  "(´°ω°`)" "･✧_✧･")
+           ;; dance, csi
+           ("cool" "┏(-_-)┓┏(-_-)┛┗(-_-﻿ )┓"
+            ,(s-collapse-whitespace "•_•)
+                                      ( •_•)>⌐■-■
+                                      (⌐■_■)"))
+           ;; love, pleased, success, yesss, smile, excited, yay
+           ("smile" "♥‿♥" "(─‿‿─)" "(•̀ᴗ•́)و" "ᕦ( ᴼ ڡ ᴼ )ᕤ" "(งಠ_ಠ)ง" "(｡◕‿◕｡)" "(◕‿◕)" "( ˃ ヮ˂)" "[ ⇀ ‿ ↼ ]" "٩(⁎❛ᴗ❛⁎)۶" "ᴵ’ᵐ ᵇᵉᵃᵘᵗⁱᶠᵘˡ" "(✿◠‿◠)")
+           ;; flower high-5
+           ("hug" "♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡" "(づ｡◕‿◕｡)づ" "(づ｡◕‿‿‿‿◕｡)づ"))
+      do
+      (add-to-list 'agda-input-user-translations emot)
+      (add-to-list 'agda-input-user-translations (cons "emot" (cdr emot)))))
+#+end_src
+
+# If you change this setting manually, without using the
+# customization buffer, you need to call (agda-input-setup) in
+# order for the change to take effect.
+Finally let's effect such translations.
+#+begin_src emacs-lisp
+;; activate translations
+(unless noninteractive (agda-input-setup))
+#+end_src
+
+Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs unicode input]] could be approximated using
+~abbrev-mode~.
+
+:May_need_to_install_stix_font:
+;; install STIX font from Ubuntu store!!
+;; (set-fontset-font t 'unicode (font-spec :name "STIX") nil 'append)
+:End:
+
+*** Increase/decrease text size
+:PROPERTIES:
+:CUSTOM_ID: Increase-decrease-text-size
+:END:
+The ‘usual’ text zoom keys ~C-±~ …
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
+;; C-x C-0 restores the default font size
+#+END_SRC
+
+If thou knowst the ELisp, forgive this shadowing of the ~negative-argument~
+… we've still got ~M--~ though.
+
+Curious, this is one of the very first things I did when
+began using Emacs; yet, perhaps I would not have done
+it if I was simply told the defaults:
++ ~C-x C-=,+~ increases text size
++ ~C-x C--~ decreases test size
++ ~C-x C-0~ restores it to the default size
+
+So, the above snippet seems to save us of the prefix
+~C-x~ and we lose on using ‘=’ for text increase and worse we
+need the shift-key to get access to the ‘+’.
+
+I suppose this is just a habit inherited from using other tools. Fortunately, I
+did not inherit the need for the /common user access/ bindings ~C-x~ kill, ~C-c~ copy,
+~C-v~ paste, nor ~C-z~ undo of other applications. If you're interested, ~M-x
+cua-mode~ to enable [[https://www.gnu.org/software/emacs/manual/html_node/emacs/CUA-Bindings.html][CUA Bindings]].
+
+*** Moving Text Around
+:PROPERTIES:
+:CUSTOM_ID: Moving-Text-Around
+:END:
+
+This extends Org-mode's ~M-↑,↓~ to other modes, such as when coding.
+#+BEGIN_SRC emacs-lisp
+;; M-↑,↓ moves line, or marked region; prefix is how many lines.
+(use-package move-text
+
+  :config (move-text-default-bindings))
+#+END_SRC
+
+*** Enabling CamelCase Aware Editing Operations
+:PROPERTIES:
+:CUSTOM_ID: Enabling-CamelCase-Aware-Editing-Operations
+:END:
+
+[[https://www.gnu.org/software/emacs/manual/html_node/ccmode/Subword-Movement.html][Subword]] movement lets us treat “EmacsIsAwesome” as three words
+─“Emacs”, “Is”, and “Awesome”─ which is desirable since such naming
+is common among coders. Now, for example, ~M-f~ moves along each subword.
+
+#+begin_src emacs-lisp
+(global-subword-mode 1)
+#+end_src
+
+*** Mouse Editing Support                                          :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Mouse-Editing-Support
+:header-args: :tangle no
+:END:
+
+# :Strange:This_Seems_To_Require_Deprecated_CL:Message_show_at_startup:
+
+Text selected with the mouse is automatically copied to clipboard.
+#+begin_src emacs-lisp
+(setq mouse-drag-copy-region t)
+#+end_src
+
+*** Delete Selection Mode
+:PROPERTIES:
+:CUSTOM_ID: Delete-Selection-Mode
+:END:
+
+Delete Selection mode lets you treat an Emacs region much like a typical text
+selection outside of Emacs: You can replace the active region.  We can delete
+selected text just by hitting the backspace key.
+
+#+BEGIN_SRC emacs-lisp
+(delete-selection-mode 1)
+#+END_SRC
+***   ~M-n,p~: Word-at-Point Navigation ╱╲ Automatic highlighting current symbol/word :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: M-n-p-Word-at-Point-Navigation
+:header-args: :tangle no
+:END:
+
+Let's mimic the ~C-n,p~ constructs from line to word, so that unoccupied ~M-n,p~ now
+serve to take us to the next or previous instance of the word under the
+cursor. This is less intrusive than searching ~C-s~ or listing all occurrences ~M-s
+o~. Moreover, let's automaticly highlight current symbols, words under the cursour, and cycle
+quickly between highlkighted locations with
+~ahs-forward~ / [[kbd:M-→]] and
+~ahs-backward~ / [[kbd:M-←]].
+
+#+BEGIN_SRC emacs-lisp
+;; Default: M-→/← moves to the next/previous instance of the currently highlighted word
+;; These are already meaningful commands in Org-mode, so we avoid these key re-bindings in Org-mode; TODO.
+(use-package auto-highlight-symbol)
+;;   :hook ((text-mode . auto-highlight-symbol-mode)
+;;          (prog-mode . auto-highlight-symbol-mode)))
+;;
+;; This breaks Org Exports; e.g.,
+;; C-c C-e h o  ⇒  Match data clobbered by buffer modification hooks
+#+END_SRC
+
+Let's also quickly replace the word at point:
+#+BEGIN_SRC emacs-lisp
+(defun my/symbol-replace (replacement)
+  "Replace all standalone symbols in the buffer matching the one at point."
+  (interactive  (list (read-from-minibuffer "Replacement for thing at point: " nil)))
+  (save-excursion
+    (let ((symbol (or (thing-at-point 'symbol) (error "No symbol at point!"))))
+      (beginning-of-buffer)
+      ;; (query-replace-regexp symbol replacement)
+      (replace-regexp (format "\\b%s\\b" (regexp-quote symbol)) replacement))))
+#+END_SRC
+
+
+(Unfortunately, as it currently is, there is no universal argument support: ~C-u
+2 M-p~ does /not/ take you to the second previous instance of a word ---the prefix
+is instead ignored. We can quickly form a work-around with doc:defhydra ---which
+gives us temoporary modal modes.)
+
+Finally, let's use [[kbd:M-n ╱ M-p ╱ M-']] to move to the next, previous, and
+replace the word at point /but also/ to give us a meanu to repeat any of these
+actions.
+#+BEGIN_SRC emacs-lisp
+(defmacro my/make-navigation-hydra (initial-action)
+  `(defhydra word-navigation
+    (:body-pre (,initial-action)) "Word-at-point Navigation"
+    ("n" ahs-forward "Next instance")
+    ("p" smartscan-symbol-go-backward "Previous instance")
+    ("r" my/symbol-replace "Replace all occurances")
+    ("s" ahs-display-stat "Stats")))
+
+;; (bind-key* str func) ≈ (global-set-key (kbd str) func)
+(bind-key* "M-n" (my/make-navigation-hydra ahs-forward))
+(bind-key* "M-p" (my/make-navigation-hydra ahs-backward))
+(bind-key* "M-'" (my/make-navigation-hydra my/symbol-replace))
+#+END_SRC
+
+An alternative is the [[https://github.com/mickeynp/smart-scan][smart-scan]] library ---which does the same thing, but does
+not provide the highlighting occurances at point.
+# The default symbol replacement is [[https://github.com/mickeynp/smart-scan/issues/23][over-zealous]] in that it replaces sub-terms
+# occurring as parts of larger words. Let's do something about that.
+*** Letter-based Navigation                                        :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Letter-based-Navigation
+:header-args: :tangle no
+:END:
+At a glance of possible positions, across windows,
+and a key to jump there is a feature provided to us by [[https://github.com/winterTTr/ace-jump-mode/wiki/AceJump-FAQ][ace-jump]]
+---here is an [[https://www.youtube.com/watch?feature=player_embedded&v=UZkpmegySnc#!][emacs-rocks 2-minute video]].
+
+For example, =C-c SPC m= greys our all windows and places a red
+letter at the start of any word that begins with /m/, then I may
+press a letter to jump to the associated position in the
+associated window. Using ~C-u C-c SPC~ and ~C-u C-u C-c SPC~ let
+me jump to any character or to any visible line.
+
+➩ Super simple use case: Fix your eyes on an occurence of a word, then ~C-c SPC~
+  to quickly jump to it so as to edit the sentence in which it occurs.
+  - It's like ~C-s~ but more lightweight.
+
+#+begin_src emacs-lisp
+(use-package ace-jump-mode
+
+  :config (bind-key* "C-c SPC" 'ace-jump-mode))
+
+;; See ace-jump issues to configure for use of home row keys.
+#+end_src
+
+There is a newer and somewhat more powerful package, [[https://github.com/abo-abo/avy][avy]], which accompishes the
+same goal.  It uses a tree style to jumipng: Locations are given two letter
+combinations, one presses one letter to jump to a group of text, then another
+letter to jump somewhere in that grouping. I prefer ace-jump since it greys
+everthing out, whereas avy surrounds jump locations with a box.
+Here is an [[https://www.youtube.com/watch?v=zar4GsOBU0g][emacs-doom 6-minute video]] for avy.
+
+There is also [[https://github.com/tam17aki/ace-isearch][ace-isearch]] for bridinging different navgiational methods ---one
+begins incremental search, ~s-f~, then according to a pause and length of input,
+one of the navgiational methods, such as isearch or avy or helm-swoop, will be
+begun.  I'm okay with using ~C-s~ for helm-swoop and ~C-c SPC~ for ace-jump, and
+still have ~s-f~ for incremental search, which I hardly use.
+
+*What is bind-keys**?
+
+Major modes provide specfic use and so their bindings always take precedence
+over global bindings ---e.g., the major mode binding may do what the global does
+but with extra mode-specfic behaviour, such as indentation. Other times, a major
+mode's binding simply uses the same key presses with completely unrelated
+behaviour.  If we want to avoid having our global keybindings shadowed by a
+major mode, we may use the ~bind-key*~ /macro/ of ~use-package~, or the ~bind-keys*~
+/macro/ when there are multiple keys; these are macros, not clauses.  ---These
+essentially creates a dedicated minor mode behind the scenes, which saves us the
+work of [[https://emacs.stackexchange.com/a/358/10352][doing it ourselves]].
+
+|   | ~(bind-keys* (k₁ . f₁) … (kₙ . fₙ))~                           |
+| ≈ | These keybindings override all minor modes that use keys =kᵢ=. |
+
+Of course we can also use it without the asterisk; e.g.:
+#+begin_src emacs-lisp
+;; C-x o ⇒ Switch to the other window
+;; C-x O ⇒ Switch back to the previous window
+(bind-key "C-x O" (lambda () (interactive) (other-window -1)))
+#+end_src
+
+Finally, we can use ~M-x describe-personal-keybindings~ to see the keybindings
+we've personally defined in ~init.el~.
+
+***   =C-c e n,p=: Taking a tour of one's edits                    :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: C-c-e-n-p-Taking-a-tour-of-one's-edits
+:header-args: :tangle no
+:END:
+This package allows us to move around the edit points of a buffer /without/
+actually undoing anything. We even obtain a brief description of what happend at
+each edit point.  This seems useful for when I get interrupted or lose my train
+of thought: Just press [[kbd:C-c e p]] to see what I did recently and where ---the
+“e” is for “e”dit.
+
+#+BEGIN_SRC emacs-lisp
+;; Give me a description of the change made at a particular stop.
+(use-package goto-chg
+
+  :custom (glc-default-span 0))
+
+(my/defhydra "C-c e" "Look at them edits!" bus
+  :\  ("p" goto-last-change "Goto nᵗʰ last change")
+      ("n" goto-last-change-reverse "Goto more recent change"))
+#+END_SRC
+
+Compare this with ~C-x u~, or ~undo-tree-visualise~, wherein undos are actually performed.
+
+Notice, as a hydra, I can use ~C-c e~ followed by any combination of ~p~ and ~n~ to
+navigate my recent edits /without/ having to supply the prefix each time.
+
+*** visual-regexp
+:PROPERTIES:
+:CUSTOM_ID: visual-regexp
+:END:
+#+begin_src emacs-lisp
+;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
+;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
+;;
+;; C-u M-%  do to regexp replace, without querying.
+(use-package visual-regexp
+
+  :config (define-key global-map (kbd "M-%")
+            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+#+end_src
+
+*** LaTeX ⇐ Org-Mode                                               :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Org-Mode-PDF-HTML
+:header-args: :tangle no
+:END:
+
+In this section we consider the Org-mode export for PDFs (LaTeX).
+For example, we account for LaTeX citations.
+
+# Installing LaTex
+# $ brew install --cask mactex
+# $ eval "$(/usr/libexec/path_helper)"
+# $ type pdflatex  # => pdflatex is /Library/TeX/texbin/pdflatex
+#
+# The ~minted~ environment can't appear as an argument to another command; a
+# [[https://tex.stackexchange.com/questions/102416/error-when-compiling-a-minted-listings-inside-a-memoir-subfloat][work-around]] is to use a ‘box’.  Learn more about LaTeX boxes [[https://latexref.xyz/Boxes.html][here]].
+
+
+**** Get LaTeX:
+:PROPERTIES:
+:CUSTOM_ID: Get-LaTeX
+:END:
+
+# +begin_src shell
+# time brew cask install mactex-no-gui
+# +end_src
+
+#+begin_src emacs-lisp
+(system-packages-ensure "mactex")
+#+end_src
+
+   - This is a redistribution of TeX Live specifically for macOS.
+   - We get the 4GB version since it has [[https://tex.stackexchange.com/a/1041/69371][everything]] and so
+     do not need to worry about missing style files.
+   - This took about 12 minutes on my machine.
+
+   Restart Emacs, enter =$e^{i \cdot \pi} + 1 = 0$= then press kbd:C-c_C-x_C-l to
+   have it rendered inline.
+
+   + *Minted:* Get tool for colourful code snippets for LaTeX ---see “minted” in
+     the main article.
+
+     #+begin_src emacs-lisp
+(system-packages-ensure "pygments")
+#+end_src
+
+   + *Not anymore:* Get a neato PDF presentation console: =brew install pdfpc=
+     - With =pdfpc myfile.pdf= you get a nice timer and multiple views
+       of the current slide and upcoming slides ---with support for multiple monitors.
+     - Install ScreenBrush, from the Apple Store, for easily drawing/annotating my
+       screen ---e.g., when I'm giving a virtual lecture to my students.
+     - An alternative is =brew install mupdf= then =mupdf-gl myfile.pdf= and press
+       =f= for fullscreen then =a= for adding/adorning drawings ---it was too
+       rough to use live.
+
+     Finally, within Emacs: =M-x pdf-tools-install=
+
+:Possibly_breaking_toc-org:
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Use 3 headlines of export, which is the default
+;; (setq org-export-headline-levels 4)
+
+;; no numbers by default at export
+;; (setq org-export-with-section-numbers nil)
+#+END_SRC
+:End:
+**** Working with Citations                               :Disabled:Not_Used:
+:PROPERTIES:
+:CUSTOM_ID: Working-with-Citations
+:END:
+
+# TODO Fix me, breaking Github Actions test setup
+
+ [[https://github.com/jkitchin/org-ref][An exquisite system]] for handling references.
+
+ The following entity will display useful data
+ when the mouse hovers over it (•̀ᴗ•́)و If you click on it, then you're
+ in for a lot of super neat stuff, such as searching for the pdf online!
+
+cite:agda_overview ( In HTML export, the citation doesn't link anywhere. )
+
+    #+BEGIN_SRC emacs-lisp :tangle no
+(unless noninteractive
+
+(use-package org-ref
+  :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.
+          ;; Most useful for non-LaTeX files.
+        (reftex-default-bibliography '("~/thesis-proposal/papers/References.bib"))
+        (bibtex-completion-bibliography (car reftex-default-bibliography))
+        (org-ref-default-bibliography reftex-default-bibliography))
+
+;; Quick BibTeX references, sometimes.
+(use-package helm-bibtex)
+(use-package biblio) )
+#+END_SRC
+
+  Execute ~M-x helm-bibtex~ or =C-c ]= and, say, enter =emacs= and you will be
+  presented with all the entries in the bib database that mention ‘emacs’. Super
+  cool stuff. Moreover, if no such entries exist, then we can look some up
+  using the interface!
+
+  Read the manual [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][online]] or better yet as an org-file with ~M-x org-ref-help~.
+
+  This is an Org-mode application since the citations have tooltips and export
+  nicely to LaTeX & HTML via the Org-mode exporter.
+
+**** Bibliography & Coloured LaTeX using Minted
+:PROPERTIES:
+:CUSTOM_ID: Bibliography-Coloured-LaTeX-using-Minted
+:END:
+
+Execute the following for bibliography references as well as minted Org-mode
+uses the Minted package for source code highlighting in PDF/LaTeX ---which in
+turn requires the pygmentize system tool.
+#+BEGIN_SRC emacs-lisp
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -output-directory %o %f"
+        "biber %b"
+        "pdflatex -shell-escape -output-directory %o %f"
+        "pdflatex -shell-escape -output-directory %o %f"))
+#+END_SRC
+
+For faster pdf generation, possibly with errors, consider invoking:
+#+begin_example emacs-lisp
+(setq org-latex-pdf-process
+      '("pdflatex -interaction nonstopmode -output-directory %o %f"))
+#+end_example
+
+By default, Org exports LaTeX using the ~nonstopmode~ option, which tries
+its best to produce a PDF ---which ignores typesetting errors altogether,
+which is not necessary ideal when using LaTeX.
+
+**** COMMENT Excellent PDF Viewer
+:PROPERTIES:
+:CUSTOM_ID: Excellent-PDF-Viewer
+:END:
+
+
+Need to (re)build the epdfinfo program, do it now ? (y or n) n
+
+--------------------------------------------------------------------------------
+
+Let's install the [[https://github.com/politza/pdf-tools][pdf-tools]] library for viewing PDFs in Emacs.
+#+BEGIN_SRC emacs-lisp
+(use-package pdf-tools
+  ; :init   (system-packages-ensure "pdf-tools")
+  :custom (pdf-tools-handle-upgrades nil)
+          (pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+  :config (pdf-tools-install))
+
+;; Now PDFs opened in Emacs are in pdfview-mode.
+#+END_SRC
+
+Besides the expected PDF viewing utilities, such as search, annotation, and continuous scrolling;
+with a simple mouse right-click, we can even select a ‘midnight’ rendering mode which may be
+easier on the eyes. For more, see the brief [[https://www.dailymotion.com/video/x2bc1is][pdf-tools-tourdeforce]] demo.
+*** HTML ⇐ Org-mode
+:PROPERTIES:
+:CUSTOM_ID: HTML-Org-mode
+:END:
+
+In this section we consider the Org-mode exporters for PDFs and
+HTMLs. For example, we account for LaTeX citations and reliable HTML
+anchors.
+
+#+BEGIN_SRC emacs-lisp
+(use-package htmlize )
+;; Main use: Org produced htmls are coloured.
+;; Can be used to export a file into a coloured html.
+#+END_SRC
+
+**** HTML “Folded Drawers”                 :Move_to_org_special_block_extras:
+:PROPERTIES:
+:CUSTOM_ID: HTML-Folded-Drawers
+:END:
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(defun my/org-drawer-format (name contents)
+  "Export to HTML the drawers named with prefix ‘fold_’, ignoring case.
+
+The resulting drawer is a ‘code-details’ and so appears folded;
+the user clicks it to see the information therein.
+Henceforth, these are called ‘fold drawers’.
+
+Drawers without such a prefix may be nonetheless exported if their
+body contains ‘:export: t’ ---this switch does not appear in the output.
+Thus, we are biased to generally not exporting non-fold drawers.
+
+One may suspend export of fold drawers by having ‘:export: nil’
+in their body definition.
+
+Fold drawers naturally come with a title.
+Either it is specfied in the drawer body by ‘:title: ⋯’,
+or otherwise the drawer's name is used with all underscores replaced
+by spaces.
+"
+  (let* ((contents′ (replace-regexp-in-string ":export:.*\n?" "" contents))
+         (fold? (s-prefix? "fold_" name 'ignore-case))
+         (export? (string-match ":export:\s+t" contents))
+         (not-export? (string-match ":export:\s+nil" contents))
+         (title′ (and (string-match ":title:\\(.*\\)\n" contents)
+                      (match-string 1 contents))))
+
+    ;; Ensure we have a title.
+    (unless title′ (setq title′ (s-join " " (cdr (s-split "_" name)))))
+
+    ;; Output
+    (cond
+     ((and export? (not fold?)) contents′)
+     (not-export? nil)
+     (fold?
+      (thread-last contents′
+        (replace-regexp-in-string ":title:.*\n" "")
+        (format "<details class=\"code-details\"> <summary> <strong>
+            <font face=\"Courier\" size=\"3\" color=\"green\"> %s
+            </font> </strong> </summary> %s </details>" title′))))))
+
+(setq org-html-format-drawer-function 'my/org-drawer-format)
+
+#+END_SRC
+
+With the following invocations we only see the odd indexed ‘hello’s, where the
+latter two are folded up.
+#+BEGIN_SRC org :tangle no
+:this-drawer-is-exported:
+:export: t
+hello 1
+:End:
+
+:this-drawer-is-NOT-exported:
+hello 2
+:End:
+
+:fold_This_drawer_has_a_title_in_the_body:
+:title: I am the drawer title 0
+
+hello 3
+:End:
+
+:fold_This_drawer_is_NOT_exported:
+:title: Why are we here?
+:export: nil
+
+hello 4
+:End:
+
+:fold_I_am_the_drawer_title_1:
+
+hello 5
+:End:
+#+END_SRC
+
+I doubt I could show an example in the Github README, since no HTML export is
+happening using my setup. In case you're reading this on my blog, which has
+exported HTML. Here's the example:
+:fold_hello_world:
+:title: ¡Hola! Buenas tardes, Amigo
+Hey bud, hope you're enjoying this read ^_^
+:End:
+
+Now that I've written this, I'm thinking it may have been preferably to use an org-block…?
+
+**** Diagrams with Mermaid ---Not Recommended                      :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Diagrams-with-Mermaid-Not-Recommended
+:header-args: :tangle no :eval no-export
+:END:
+
+Let's try out an alternative to PlantUML ---covered below in §[[Workflow States]].
+
+First, let's get the tool.
+#+BEGIN_SRC shell :tangle no
+npm install mermaid.cli
+sudo git clone git@github.com:arnm/mermaid-layer.git ~/.emacs.d/private/mermaid
+#+END_SRC
+
+Then, let's get the associated ~mermaid~ package.
+#+BEGIN_SRC emacs-lisp
+(use-package ob-mermaid
+  :custom ob-mermaid-cli-path "~/node_modules/.bin/mmdc")
+#+END_SRC
+
+Then, =C-c C-c= on the following:
+#+BEGIN_SRC mermaid :file test.png :theme neutral :background-color green  :tangle no :results replace :eval never-export
+sequenceDiagram
+A-->B: Works!
+#+END_SRC
+
+#+RESULTS:
+[[file:test.png]]
+
++ =C-c C-x C-v= ⇒ Show images inline
++ Mermaid supported headers:
+  - ~file~ to name the svg/png/pdf output
+  - ~width~ or ~height~ or the resulting image
+  - ~theme~ used, such as ~default, forest, dark, neutral~, for foreground entities
+  - ~background-color~ such as ~transparent, red, #F0F0F0~
+    * The transparent option is nice ^_^
++ You can insert new lines using ~<br>~ and horizontal rules via ~<hr>~.
+  Similarly you can use other HTML tags such as ~<center>~; if you have too many
+  you can make  CSS file then use the header argument ~:css-file~.
++ Add “non-breaking space” with ~&nbsp;~. This is a forced extra space and it prevents
+  a line break at its location. You can insert it repeatedly, but for two spaces
+  use ~&ensp;~ and for four spaces use ~&emsp;~.
+
+If link text cuts off prematurely, use extra space /with/ a newline: ~A-- text
+&ensp;<br> -->B~.
+
+*Warning*: JavaScript has some issues when working with Unicode and so, being a
+JavaScript utility, ~mermaid~ hangs when Unicode is used. On the upside, being a
+JavaScript utility, ~mermaid~ entities can have [[https://mermaid-js.github.io/mermaid/#/flowchart?id=interaction][arbitrary code attached]] to them to
+be executed upon clicks ---for use in browsers.
+- However, the Greek letters are supported; e.g., γ and Σ.
+
+See [[https://mermaid-js.github.io/mermaid/#/flowchart?id=nodes-amp-shapes][here]] for possible node shapes.
+
+#+begin_quote
+After forming an intricate diagram of related design patterns, I had to use a
+number of HTML notions, such as =<i>, <strong>, <em>, <h1>, &ensp;, <br>, <pre>,
+<center>= and it was a bit more than I would have liked. In particular, the only
+way to change font size was to use the deprecated HTML tag =<big>= or heading tags
+like =<h1>=; even worse, the resulting PDF image did not look nice ---I had to
+stretch it out.
+
+The command line tool is *lacking functionality* and so the docs are not helpful.
+E.g., I cannot produce pie charts using the command line tool.
+#+end_quote
+
+****   [[https://revealjs.com/?transition=zoom#/][Reveal.JS]] -- The HTML Presentation Framework :Disabled:I_enable_this_as_I_need_it:See_also_Dslide:
+:PROPERTIES:
+:CUSTOM_ID: https-revealjs-com-transition-zoom-Reveal-JS-The-HTML-Presentation-Framework
+:header-args: :tangle no :eval no-export
+:END:
+
+Org-mode documents can be transformed into beautiful slide decks
+with [[https://github.com/yjwen/org-reveal/blob/master/Readme.org][org-reveal]] with the following two simple lines.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-reveal
+
+  :custom (org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
+#+END_SRC
+# MA: ??? It looks like ox-reveal is being abandoned in favor of org-re-reveal,
+# a fork compatible with org-mode 9.2?
+
+For example, execute, ~C-x C-e~ after the closing parenthesis of, the
+following block to see an example slide-deck (─‿‿─)
+#+BEGIN_SRC emacs-lisp :tangle no
+(progn (shell-command "curl https://raw.githubusercontent.com/yjwen/org-reveal/696613edef0fe17a9c53146f79933fe7c4101100/Readme.org >> Trying_out_reveal.org")
+       (switch-to-buffer (find-file "Trying_out_reveal.org"))
+       (org-reveal-export-to-html-and-browse))
+#+END_SRC
+
+Org-mode exporting, ~C-c C-e~, now includes an option ~R~ for such reveal slide decks.
+
+:Hide:
+[[https://alhassy.github.io/next-700-module-systems/proposal/defence-slides.html#/sec-title-slide][Here]] ([[https://raw.githubusercontent.com/alhassy/next-700-module-systems/master/proposal/defence-slides.org][source]]) is an example of org-reveal slides where I add a number to each page,
+use multiple columns, and extend the margins perhaps a bit too much.
+:End:
+
+Two dimensional slides may be a bit new to some people, so I like to
+give viewers an option, in tiny font, to view the slide-deck
+continuously and remind them that ~?~ provides useful shortcuts.
+#+BEGIN_SRC emacs-lisp
+(setq org-reveal-title-slide "<h1>%t</h1> <h3>%a</h3>
+<font size=\"1\">
+<a href=\"?print-pdf&showNotes=true\">
+⟪ Flattened View ; Press <code>?</code> for Help ⟫
+</a>
+</font>")
+#+END_SRC
+One should remove the ~&showNotes=true~ if they do not want to include
+speaker notes in the flattened view.
+
+Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
+resulting PDF locally.
+
+*** TODO COMMENT Working with PDFs                                 :Disabled:
+**** TODO Open PDFs in Emacs
+#+begin_src emacs-lisp
+    ;; In Org-mode, clicking on PDF should open it in Emacs
+    ;; Example:          [[~/Desktop/stuff-I'm-learning.pdf::12]]       ;; Opens the pdf to page 12
+    ;; Another Example:  docview:~/Desktop/stuff-I'm-learning.pdf::12
+  (ignore-errors (add-to-list 'org-file-apps '("\\.pdf\\'" . emacs)))
+
+    ;; Required code to make the above links work as expected.
+    ;; Source: https://www.reddit.com/r/emacs/comments/re0dx8/how_do_you_link_a_specific_pdf_page_in_org_mode/
+    (defun my-org-docview-open-hack (orig-func &rest args)
+      (let* ((link (car args)) path page)
+        (string-match "\\(.*?\\)\\(?:::\\([0-9]+\\)\\)?$" link)
+        (setq path (match-string 1 link))
+        (setq page (and (match-beginning 2)
+                        (string-to-number (match-string 2 link))))
+        (org-open-file path 1)
+        (when page
+          (cond
+           ((eq major-mode 'pdf-view-mode)
+            (pdf-view-goto-page page))
+           (t
+            (doc-view-goto-page page))))))
+    (advice-add 'org-docview-open :around #'my-org-docview-open-hack)
+
+    ;; Alternatively, there's a dedicated package for this
+    ;; https://github.com/fuxialexander/org-pdftools/tree/967f48fb5038bba32915ee9da8dc4e8b10ba3376
+#+end_src
+
+**** TODO The evils of this world
+:PROPERTIES:
+:CUSTOM_ID: The-evils-of-this-world
+:END:
+#+begin_src emacs-lisp :tangle no
+;; “PDF” stands for Portable Document Format, since you should be able to open
+;; it anywhere. Disgustingly, fillable PDF's made with Adobe can only be
+;; smoothly opened & printed in Adobe ---Chrome can open them, but not print
+;; them. Unfortunately, various government & insurance forms are only provided in
+;; this format.
+(system-packages-ensure "adobe-acrobat-reader")
+#+end_src
+*** TODO COMMENT Makes Org/Markdown previewabvle as we type!!! ♥
+:PROPERTIES:
+:CUSTOM_ID: Makes-Org-Markdown-previewabvle-as-we-type
+:END:
+#+begin_src emacs-lisp :tangle no
+  ;; Shows up as a magnifying glass in doom-modeline.
+  (use-package grip-mode)
+  ;;  :hook ((markdown-mode org-mode) . grip-mode)
+  ;; Pretty annyoning actually; instead we should call it as needed.
+  )
+#+end_src
+
+*** COMMENT Makeshift HTML Folded Drawers: Folding-mode & Org-Macros
+:PROPERTIES:
+:CUSTOM_ID: Makeshift-HTML-Folded-Drawers-Folding-mode-Org-Macros
+:END:
+
+My =my/prettify-alist= has the following:
+
+                    ("{{{fold("        . ?↳)
+                    (")}}}"            . ?↲)
+                    ("{{{end-fold}}}"  . ?↺)
+
+The ~↳Title Here↲ Contents ↺~ combination is for my makeshift HTML code
+folding macro ---word-wrapped for readability.
+#+BEGIN_SRC org :tangle no
+,#+MACRO: end-fold  #+HTML: </details>
+,#+MACRO: fold      #+HTML: <details class="code-details"> <summary> <strong>
+                              <font face="Courier" size="3" color="green"> $1
+                              </font> </strong> </summary>
+#+END_SRC
+
+:Example:
+# The (org-mode-restart) invocation actually enables the source block prettifications.
+
+# Empty macros to make the example go through.
+#
+#+MACRO: end-fold
+#+MACRO: fold
+
+{{{fold(nice)}}}
+
+hello
+
+{{{end-fold}}}
+
+:End:
+
+Let's have this fold-away in the source buffer as well by using [[https://www.emacswiki.org/emacs/FoldingMode][folding-mode]];
+with show/hide with ~C-<tab>~ key.
+#+begin_src emacs-lisp :tangle no :tangle no
+(use-package folding
+ :init
+ (folding-add-to-marks-list 'org-mode               "{{{fold(" "{{{end-fold}}}" nil t)
+ (setq folding-top-mark "{{{fold(")
+ (setq folding-bottom-mark "{{{end-fold}}}")
+ :config
+  (define-key folding-mode-map (kbd "C-<tab>")       #'folding-toggle-show-hide)
+  (add-hook 'org-mode-hook #'folding-mode))
+#+END_SRC
+#  (remove-hook 'org-mode-hook #'folding-mode)
+
+*** TODO COMMENT Kill to start of line
+:PROPERTIES:
+:CUSTOM_ID: Kill-to-start-of-line
+:END:
+Dual to ~C-k~,
+#+begin_src emacs-lisp :tangle no
+;; M-k kills to the left
+(global-set-key "\M-k" '(lambda () (interactive) (kill-line 0)) )
+#+END_SRC
+*** Press M-SPC so all adjacent blank lines are also removed
+:PROPERTIES:
+:CREATED:  [2025-04-09 Wed 16:54]
+:END:
+
+#+begin_src emacs-lisp
+;; Now when I press M-SPC all adjacent blank lines are also removed.
+(advice-add 'cycle-spacing :after
+            (defun my/cycle-spacing-then-delete-blank-lines (&rest _args)
+  "Run `delete-blank-lines` after `cycle-spacing`."
+  (delete-blank-lines)))
+#+end_src
+
+*** Add more line padding for readability
+
+When the text is a bit too compact for your liking, then change the =line-spacing=
+variable. Setting it to =nil= results in a cramped reading space, so best to add
+some whitespace between lines. Space between paragraphs is formed by adding an
+empty line.
+
+#+begin_src emacs-lisp
+(setq-default line-spacing 0.2)
+#+end_src
+
+If the value is an integer, it indicates the number of pixels below each
+line. A decimal number is a scaling factor relative to the current
+window's default line height. The =setq-default= function sets this for
+all buffers. Otherwise, it only applies to the current open buffer. Try
+the value that best suits your preferences.
 
 * ⏰ “What did I spend my time on today? Last week? Last month? Last Year?”
 :LOGBOOK:
