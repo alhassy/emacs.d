@@ -15520,6 +15520,33 @@ window's default line height. The =setq-default= function sets this for
 all buffers. Otherwise, it only applies to the current open buffer. Try
 the value that best suits your preferences.
 
+** Olivetti: A clean writing environment
+:PROPERTIES:
+:CREATED:  [2025-05-10 Sat 12:56]
+:END:
+:LOGBOOK:
+CLOCK: [2025-05-12 Mon 10:00]--[2025-05-12 Mon 10:00] =>  0:00
+CLOCK: [2025-05-10 Sat 12:56]--[2025-05-12 Mon 10:00] => 45:04
+:END:
+
+[[https://github.com/rnkn/olivetti][Olivetti]] is a simple Emacs minor mode that facilities distraction-free
+writing. The name Olivetti derives from the famous typewriter brand.
+
+#+begin_src emacs-lisp
+(use-package olivetti)
+(setq olivetti-body-width 100)
+#+end_src
+
+You activate Olivetti mode with =M-x olivetti-mode=. This minor mode reduces the
+width of the text to seventy characters and centres the text in the middle of
+the window. The width of the text is changeable with the =M-x olivetti-set-with=
+command or =C-c \=.
+
+It is per buffer, so you can have two buffers, side-by-side, and one is centred
+with Olivetti and the other is not.
+
+tldr: When this mode is active, and I have a single buffer, my text is
+comfortably centred in the screen.
 * ⏰ “What did I spend my time on today? Last week? Last month? Last Year?”
 :LOGBOOK:
 CLOCK: [2025-05-04 Sun 21:44]--[2025-05-04 Sun 22:53] =>  1:09
@@ -16313,33 +16340,6 @@ Context: =org-agenda-log-mode= It will display the entries that record the time,
 Note: If I'd like to have certain properties be shown in the agenda, I can use
 the [[https://github.com/Malabarba/org-agenda-property][org-agenda-property]] package.
 
-* Olivetti: A clean writing environment
-:PROPERTIES:
-:CREATED:  [2025-05-10 Sat 12:56]
-:END:
-:LOGBOOK:
-CLOCK: [2025-05-12 Mon 10:00]--[2025-05-12 Mon 10:00] =>  0:00
-CLOCK: [2025-05-10 Sat 12:56]--[2025-05-12 Mon 10:00] => 45:04
-:END:
-
-[[https://github.com/rnkn/olivetti][Olivetti]] is a simple Emacs minor mode that facilities distraction-free
-writing. The name Olivetti derives from the famous typewriter brand.
-
-#+begin_src emacs-lisp
-(use-package olivetti)
-(setq olivetti-body-width 100)
-#+end_src
-
-You activate Olivetti mode with =M-x olivetti-mode=. This minor mode reduces the
-width of the text to seventy characters and centres the text in the middle of
-the window. The width of the text is changeable with the =M-x olivetti-set-with=
-command or =C-c \=.
-
-It is per buffer, so you can have two buffers, side-by-side, and one is centred
-with Olivetti and the other is not.
-
-tldr: When this mode is active, and I have a single buffer, my text is
-comfortably centred in the screen.
 * Working with massive files: my-life∙org
 :PROPERTIES:
 :CREATED:  [2025-05-10 Sat 13:07]
