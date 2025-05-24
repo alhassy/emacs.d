@@ -6073,160 +6073,6 @@ becomes bold; likewise for ~/~ for emphasise.
 
 I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
 Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
-** Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG
-:PROPERTIES:
-:CUSTOM_ID: Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG
-:END:
-
-:yay_it_worked:
-
-$e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
-
-~awkward~ or $not$
-
-:end:
-
-Let's make some things prettier than they appear by default.
-#+BEGIN_SRC emacs-lisp
-;; org-mode math is now highlighted ;-)
-(setq org-highlight-latex-and-related '(latex))
-
-;; Extra space between text and underline line
-(setq x-underline-at-descent-line t)
-
-;; Hide the *,=,/ markers
-(setq org-hide-emphasis-markers t)
-
-;; Let’s limit the width of images inlined in org buffers to 400px.
-(setq org-image-actual-width 400)
-
-;; Visually, I prefer to hide the markers of macros, so let’s do that:
-;;  {{{go(here)}}} is shown in Emacs as go(here)
-(setq org-hide-macro-markers t)
-
-;; On HTML exports, Org-mode tries to include a validation link for the exported HTML. Let’s disable that since I never use it.
-;; (setq org-html-validation-link nil)
-
-;; Musa: This is super annoying, in practice.
-(setq org-pretty-entities nil) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
-;; to have \alpha, \to and others display as utf8
-;; http://orgmode.org/manual/Special-symbols.html
-;;
-;; Be default, any consectuive string after “_” or “^” will be shown in WYSIWYG fashion; the following requires “^{⋯}” instead.
-;; (setq org-use-sub-superscripts (quote {}))
-#+END_SRC
-Org pretty entities seems rather impressive ---=M-x org-entities-help= to see all
-possibilities, or add your own. I'm already using the Agda input method, so I
-wont use Org's ---Agda's gives me a tiny menu narrowing possibilities as I type.
-However, it does make subscripts (x_{sub script}) and superscripts (x^{super script}) appear in Org in a WYSIWYG fashion.
-
---------------------------------------------------------------------------------
-
-Automatically display emphasis markers and links when the cursor is on them.
-(c.f. ~fragtog~ below)
-#+begin_src emacs-lisp
-(use-package org-appear
-  :hook (org-mode . org-appear-mode)
-  :init (setq org-appear-autoemphasis  t
-              org-appear-autolinks nil
-              org-appear-autosubmarkers nil))
-#+end_src
-
---------------------------------------------------------------------------------
-
-The following is now disabled (yet again, as of Dec/31/2020) ---it makes my system slower than I'd like.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Show inline images when loading a new Org file.
-(setq org-startup-with-inline-images t)
-
-;; Whenever a src block is run, redisplay images so they're up-to-date.
-;; Very useful when using ‘ob-latex-as-png’, below.
-(add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images)
-
-;; Automatically convert LaTeX fragments to inline images.
-(setq org-startup-with-latex-preview t)
-#+END_SRC
-
---------------------------------------------------------------------------------
-
-# latex-preview-in-org
-
-Org mode supports inline image previews of LaTeX fragments; e.g., $e^{i \cdot
-\pi} - 1 = 0$ or $\substack{𝔹 \\ ↓ \\ 𝒜}$.  These can be toggled with
-kbd:C-c_C-x_C-l.  [[https://github.com/io12/org-fragtog][Org-fragtog]] automates this, so fragment previews are disabled
-for editing when your cursor steps onto them, and re-enabled when the cursor
-leaves.
-
- #+BEGIN_SRC emacs-lisp
-;; Automatically toggle LaTeX previews when cursour enters/leaves them
-(use-package org-fragtog
-  :disabled t
-  :hook (org-mode . org-fragtog-mode))
- #+END_SRC
-
-doc:org-latex-preview, kbd:C-c_C-x_C-l, renders ~$e^{i \pi} + 1 = 0$~ into a
-really nice inline image: $e^{i \pi} + 1 = 0$. It also works for LaTeX
-environments ---for personal environments, just ~(add-to-list
-'org-latex-packages-alist "LaTeX definitions here")~.
-
-[Disabled]
-#+begin_src emacs-lisp :tangle no
-;; Make previews a bit larger
-(setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
-
-;; I use a lot of Unicode, so let's always include a unicode header.
-(maybe-clone "https://armkeh.github.io/unicode-sty/")
-(setq org-format-latex-header
-      (concat org-format-latex-header
-              "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}"))
-;;
-;; Now this looks nice too!
-;; $\substack{𝔹 \\ ↓ \\ 𝒜}$ and $\mathbb{B}$.
-
-;; Always support unicode upon LaTeX export
-;; No need to explicitly import armkeh's unicode-sty in each org file.
-(add-to-list 'org-latex-packages-alist
-  "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}")
-#+end_src
-
-This approach does not work well for forming diagrams; I've tried to make tikzcd
-work this way and failed.  Using ~ob-latex-as-png~ as a substitute.
-# work this way and failed.  Using [doc : org-babel-execute:latex-as-png][ob-latex-as-png] as a substitute.
-:calc:
-#+begin_src emacs-lisp :tangle no
-;; \step should be local to \begin{calc}⋯\end{calc}!
-(add-to-list 'org-latex-packages-alist
-"\\def\\BEGINstep{ \\{ }
-\\def\\ENDstep{ \\} }
-\\newcommand{\\step}[2][=]{ \\\\ #1 \\;\\; & \\qquad \\color{maroon}{\\BEGINstep \\text{ #2 } \\ENDstep} \\\\ & }
-\\newenvironment{calc}{\\begin{align*} & }{\\end{align*}}")
-
-; (pop org-latex-packages-alist)
-
-;; See also org-format-latex-header
-#+end_src
-:End:
-
-# LaTeX Rendering: Support “latex-as-png” src blocks, which show LaTeX as PNGs
-#    LaTeX-Rendering-Support-latex-as-png-src-blocks-which-show-LaTeX-as-PNGs
-
- #+BEGIN_SRC emacs-lisp
-;; Support “latex-as-png” src blocks, which show LaTeX as PNGs
-(use-package ob-latex-as-png :disabled t)
- #+END_SRC
-
---------------------------------------------------------------------------------
-
-Use ~ref:my-stuff~ to refer to an Org entity with ~#+name: my-stuff~; which must
-have a ~#+caption: ⋯~ as well. Example entities include tables and source
-blocks; as well as figure blocks. For equation blocks, you must use a
-~\label{⋯}~ directly.
-
- #+begin_src emacs-lisp
-;; Use the “#+name” the user provides, instead of generating label identifiers.
-(setq org-latex-prefer-user-labels t)
- #+end_src
-
 ** Show off-screen heading at the top of the window
 :PROPERTIES:
 :CUSTOM_ID: Show-off-screen-heading-at-the-top-of-the-window
@@ -15087,6 +14933,160 @@ A nice sanity:
 #+END_SRC
 
 
+**** Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG
+:PROPERTIES:
+:CUSTOM_ID: Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG
+:END:
+
+:yay_it_worked:
+
+$e^x = \sum_{n = 0}^\infty \frac{x^n}{n!}$
+
+~awkward~ or $not$
+
+:end:
+
+Let's make some things prettier than they appear by default.
+#+BEGIN_SRC emacs-lisp
+;; org-mode math is now highlighted ;-)
+(setq org-highlight-latex-and-related '(latex))
+
+;; Extra space between text and underline line
+(setq x-underline-at-descent-line t)
+
+;; Hide the *,=,/ markers
+(setq org-hide-emphasis-markers t)
+
+;; Let’s limit the width of images inlined in org buffers to 400px.
+(setq org-image-actual-width 400)
+
+;; Visually, I prefer to hide the markers of macros, so let’s do that:
+;;  {{{go(here)}}} is shown in Emacs as go(here)
+(setq org-hide-macro-markers t)
+
+;; On HTML exports, Org-mode tries to include a validation link for the exported HTML. Let’s disable that since I never use it.
+;; (setq org-html-validation-link nil)
+
+;; Musa: This is super annoying, in practice.
+(setq org-pretty-entities nil) ;; Also makes subscripts (x_{sub script}) and superscripts (x^{super script}) appear in org in a WYSIWYG fashion.
+;; to have \alpha, \to and others display as utf8
+;; http://orgmode.org/manual/Special-symbols.html
+;;
+;; Be default, any consectuive string after “_” or “^” will be shown in WYSIWYG fashion; the following requires “^{⋯}” instead.
+;; (setq org-use-sub-superscripts (quote {}))
+#+END_SRC
+Org pretty entities seems rather impressive ---=M-x org-entities-help= to see all
+possibilities, or add your own. I'm already using the Agda input method, so I
+wont use Org's ---Agda's gives me a tiny menu narrowing possibilities as I type.
+However, it does make subscripts (x_{sub script}) and superscripts (x^{super script}) appear in Org in a WYSIWYG fashion.
+
+--------------------------------------------------------------------------------
+
+Automatically display emphasis markers and links when the cursor is on them.
+(c.f. ~fragtog~ below)
+#+begin_src emacs-lisp
+(use-package org-appear
+  :hook (org-mode . org-appear-mode)
+  :init (setq org-appear-autoemphasis  t
+              org-appear-autolinks nil
+              org-appear-autosubmarkers nil))
+#+end_src
+
+--------------------------------------------------------------------------------
+
+The following is now disabled (yet again, as of Dec/31/2020) ---it makes my system slower than I'd like.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Show inline images when loading a new Org file.
+(setq org-startup-with-inline-images t)
+
+;; Whenever a src block is run, redisplay images so they're up-to-date.
+;; Very useful when using ‘ob-latex-as-png’, below.
+(add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images)
+
+;; Automatically convert LaTeX fragments to inline images.
+(setq org-startup-with-latex-preview t)
+#+END_SRC
+
+--------------------------------------------------------------------------------
+
+# latex-preview-in-org
+
+Org mode supports inline image previews of LaTeX fragments; e.g., $e^{i \cdot
+\pi} - 1 = 0$ or $\substack{𝔹 \\ ↓ \\ 𝒜}$.  These can be toggled with
+kbd:C-c_C-x_C-l.  [[https://github.com/io12/org-fragtog][Org-fragtog]] automates this, so fragment previews are disabled
+for editing when your cursor steps onto them, and re-enabled when the cursor
+leaves.
+
+ #+BEGIN_SRC emacs-lisp
+;; Automatically toggle LaTeX previews when cursour enters/leaves them
+(use-package org-fragtog
+  :disabled t
+  :hook (org-mode . org-fragtog-mode))
+ #+END_SRC
+
+doc:org-latex-preview, kbd:C-c_C-x_C-l, renders ~$e^{i \pi} + 1 = 0$~ into a
+really nice inline image: $e^{i \pi} + 1 = 0$. It also works for LaTeX
+environments ---for personal environments, just ~(add-to-list
+'org-latex-packages-alist "LaTeX definitions here")~.
+
+[Disabled]
+#+begin_src emacs-lisp :tangle no
+;; Make previews a bit larger
+(setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+
+;; I use a lot of Unicode, so let's always include a unicode header.
+(maybe-clone "https://armkeh.github.io/unicode-sty/")
+(setq org-format-latex-header
+      (concat org-format-latex-header
+              "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}"))
+;;
+;; Now this looks nice too!
+;; $\substack{𝔹 \\ ↓ \\ 𝒜}$ and $\mathbb{B}$.
+
+;; Always support unicode upon LaTeX export
+;; No need to explicitly import armkeh's unicode-sty in each org file.
+(add-to-list 'org-latex-packages-alist
+  "\n\\usepackage{\\string~\"/unicode-sty/unicode\"}")
+#+end_src
+
+This approach does not work well for forming diagrams; I've tried to make tikzcd
+work this way and failed.  Using ~ob-latex-as-png~ as a substitute.
+# work this way and failed.  Using [doc : org-babel-execute:latex-as-png][ob-latex-as-png] as a substitute.
+:calc:
+#+begin_src emacs-lisp :tangle no
+;; \step should be local to \begin{calc}⋯\end{calc}!
+(add-to-list 'org-latex-packages-alist
+"\\def\\BEGINstep{ \\{ }
+\\def\\ENDstep{ \\} }
+\\newcommand{\\step}[2][=]{ \\\\ #1 \\;\\; & \\qquad \\color{maroon}{\\BEGINstep \\text{ #2 } \\ENDstep} \\\\ & }
+\\newenvironment{calc}{\\begin{align*} & }{\\end{align*}}")
+
+; (pop org-latex-packages-alist)
+
+;; See also org-format-latex-header
+#+end_src
+:End:
+
+# LaTeX Rendering: Support “latex-as-png” src blocks, which show LaTeX as PNGs
+#    LaTeX-Rendering-Support-latex-as-png-src-blocks-which-show-LaTeX-as-PNGs
+
+ #+BEGIN_SRC emacs-lisp
+;; Support “latex-as-png” src blocks, which show LaTeX as PNGs
+(use-package ob-latex-as-png :disabled t)
+ #+END_SRC
+
+--------------------------------------------------------------------------------
+
+Use ~ref:my-stuff~ to refer to an Org entity with ~#+name: my-stuff~; which must
+have a ~#+caption: ⋯~ as well. Example entities include tables and source
+blocks; as well as figure blocks. For equation blocks, you must use a
+~\label{⋯}~ directly.
+
+ #+begin_src emacs-lisp
+;; Use the “#+name” the user provides, instead of generating label identifiers.
+(setq org-latex-prefer-user-labels t)
+ #+end_src
+ 
 **** Org-Emphasise for Parts of Words                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
