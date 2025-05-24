@@ -17073,42 +17073,7 @@ e.g., “I use #emacs to write #org for the purposes of configuring my #life and
   )
 #+end_src
 
-* COMMENT show minibuffer in the middle of the screen :OK_but_could_be_better:
-:PROPERTIES:
-:CREATED:  [2025-04-09 Wed 17:34]
-:END:
-
-#+begin_src emacs-lisp
-(use-package posframe)
-(use-package helm-posframe)
-;; (setq helm-posframe-poshandler #'posframe-poshandler-window-center)
-(setq helm-posframe-poshandler  #'posframe-poshandler-point-frame-center)
-(setq helm-posframe-width 100)
-(helm-posframe-enable)
-(global-set-key (kbd "M-x") 'helm-M-x)
-(setq helm-posframe-parameters '((left-fringe . 10) (right-fringe . 10)))
-
-
-(use-package emacs-mini-frame)
-(mini-frame-mode +1)
-;; cursor-relative positioning
- (setq mini-frame-show-parameters
-          (lambda ()
-     (cl-destructuring-bind
-         ((cursor-x . cursor-y) . (frame-left . frame-top))
-         (cons (window-absolute-pixel-position nil (selected-window))
-               (frame-position))
-       `((top . ,(- (cl-third (window-inside-edges)) frame-top))
-         (width . 95)
-         (height . 0)
-       (background-color . "green")
-         (left . ,(- cursor-x frame-left))))))
-#+end_src
-
-MA: The main prolem here is likely that helm does not reuse the minibuffer, but instead simulates it.
-Not sure though. Consider using vertico and friends.
-
-* 🧟 Graveyard of things I once used, or experiments I've tried    :Disabled:
+* 🧟 Graveyard of things I once used, or experiments I've tried    :Disabled:TODOsHaveUsefulThingsToIncorporate:
 :PROPERTIES:
 :CREATED:  [2025-05-24 Sat 12:03]
 :header-args: :tangle no
@@ -17288,6 +17253,41 @@ publish the current article to my blog.
  ;; Shows a nice sidebar menu of the buffer's contents
 (use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
+
+** Show minibuffer in the middle of the screen      :OK_but_could_be_better:
+:PROPERTIES:
+:CREATED:  [2025-04-09 Wed 17:34]
+:END:
+
+#+begin_src emacs-lisp
+(use-package posframe)
+(use-package helm-posframe)
+;; (setq helm-posframe-poshandler #'posframe-poshandler-window-center)
+(setq helm-posframe-poshandler  #'posframe-poshandler-point-frame-center)
+(setq helm-posframe-width 100)
+(helm-posframe-enable)
+(global-set-key (kbd "M-x") 'helm-M-x)
+(setq helm-posframe-parameters '((left-fringe . 10) (right-fringe . 10)))
+
+
+(use-package emacs-mini-frame)
+(mini-frame-mode +1)
+;; cursor-relative positioning
+ (setq mini-frame-show-parameters
+          (lambda ()
+     (cl-destructuring-bind
+         ((cursor-x . cursor-y) . (frame-left . frame-top))
+         (cons (window-absolute-pixel-position nil (selected-window))
+               (frame-position))
+       `((top . ,(- (cl-third (window-inside-edges)) frame-top))
+         (width . 95)
+         (height . 0)
+       (background-color . "green")
+         (left . ,(- cursor-x frame-left))))))
+#+end_src
+
+MA: The main prolem here is likely that helm does not reuse the minibuffer, but instead simulates it.
+Not sure though. Consider using vertico and friends.
 
 * [[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours               :Posterity:
 :PROPERTIES:
