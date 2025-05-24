@@ -6073,26 +6073,6 @@ becomes bold; likewise for ~/~ for emphasise.
 
 I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
 Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
-** Proportional fonts for Headlines
-:PROPERTIES:
-:CUSTOM_ID: Proportional-fonts-for-Headlines
-:END:
-
-Let's have headings stick out a bit.
-+ The larger headings are cute and reminicint of word processors, but having
-  headings coloured is enough ---the larger size is too much.
-#+BEGIN_SRC emacs-lisp
-(set-face-attribute 'org-document-title nil :height 2.0)
-;; (set-face-attribute 'org-level-1 nil :height 1.0)
-;; Remaining org-level-𝒾 have default height 1.0, for 𝒾 : 1..8.
-;;
-;; E.g., reset org-level-1 to default.
-;; (custom-set-faces '(org-level-1 nil))
-#+END_SRC
-
-Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
----See notes on Custom above.
-
 ** Making Block Delimiters Less Intrusive
 :PROPERTIES:
 :CUSTOM_ID: Making-Block-Delimiters-Less-Intrusive
@@ -15098,7 +15078,29 @@ Notes:
 - (org-media-image-save-type, org-dnd-default-attach-method): New defcustoms.
 - Add yank-media and DND handlers: (org--image-yank-media-handler, org--copied-files-yank-media-handler) (org--dnd-local-file-handler)
 
-** Org-Emphasise for Parts of Words                               :Disabled:
+*** When I “Smart Paste”, let's ensure things look nice!
+**** Proportional fonts for Headlines
+:PROPERTIES:
+:CUSTOM_ID: Proportional-fonts-for-Headlines
+:END:
+
+Let's have headings stick out a bit.
++ The larger headings are cute and reminicint of word processors, but having
+  headings coloured is enough ---the larger size is too much.
+#+BEGIN_SRC emacs-lisp
+(set-face-attribute 'org-document-title nil :height 2.0)
+;; (set-face-attribute 'org-level-1 nil :height 1.0)
+;; Remaining org-level-𝒾 have default height 1.0, for 𝒾 : 1..8.
+;;
+;; E.g., reset org-level-1 to default.
+;; (custom-set-faces '(org-level-1 nil))
+#+END_SRC
+
+Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
+---See notes on Custom above.
+
+
+**** Org-Emphasise for Parts of Words                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
 :header-args: :tangle no
