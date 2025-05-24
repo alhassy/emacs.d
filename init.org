@@ -10567,25 +10567,6 @@ wrapped, but logically remain one line.  Moreover =C-a,e,k= operate on visual li
 #+end_src
 Visual line mode is useful when I have way too many windows open or when using smaller frames.
 
-** Pretty Lists Markers
-:PROPERTIES:
-:CUSTOM_ID: Pretty-Lists-Markers
-:END:
-
-When writing, it's common to use ~+,-,*~ to enumerate unordered lists
----especially so in Org-mode wherein they denote structured text.  Let's render
-them visually as Unicode bullets.
-
-#+begin_src emacs-lisp
-;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
-(cl-loop for (x y z) in '(("+" "◦" *)
-                       ("-" "•" *)
-                       ("*" "⋆" +))
-      do (font-lock-add-keywords 'org-mode
-                                 `((,(format "^ %s\\([%s]\\) " z x)
-                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
-#+end_src
-
 ** Fix spelling as you type ---thesaurus & dictionary too!
 :PROPERTIES:
 :CUSTOM_ID: Fix-spelling-as-you-type-thesaurus-dictionary-too
@@ -14737,6 +14718,26 @@ Let's have headings stick out a bit.
 
 Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
 ---See notes on Custom above.
+
+
+**** Pretty Lists Markers
+:PROPERTIES:
+:CUSTOM_ID: Pretty-Lists-Markers
+:END:
+
+When writing, it's common to use ~+,-,*~ to enumerate unordered lists
+---especially so in Org-mode wherein they denote structured text.  Let's render
+them visually as Unicode bullets.
+
+#+begin_src emacs-lisp
+;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
+(cl-loop for (x y z) in '(("+" "◦" *)
+                       ("-" "•" *)
+                       ("*" "⋆" +))
+      do (font-lock-add-keywords 'org-mode
+                                 `((,(format "^ %s\\([%s]\\) " z x)
+                                    (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
+#+end_src
 
 
 **** Making Block Delimiters Less Intrusive
