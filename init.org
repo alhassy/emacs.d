@@ -5925,25 +5925,6 @@ Let's use the following theme and font, upon startup.
   (my/toggle-theme 'solarized-gruvbox-light))
 #+end_src
 
-** Never lose the cursor
-:PROPERTIES:
-:CUSTOM_ID: Never-lose-the-cursor
-:END:
-
-Let's have the entire line containing the cursour be slightly highlighted.
-#+BEGIN_SRC emacs-lisp
-;; Make it very easy to see the line with the cursor.
-(global-hl-line-mode t)
-#+END_SRC
-
-Moreover, we reduce the mental strain of locating the cursour when navigation happens:
-When we switch windows or scroll, for example, we get a wave of light near the cursor.
-#+begin_src emacs-lisp
-(use-package beacon
-  :config (setq beacon-color "#666600")
-  :hook   ((org-mode text-mode) . beacon-mode))
-#+end_src
-
 ** Dimming Unused Windows
 :PROPERTIES:
 :CUSTOM_ID: Dimming-Unused-Windows
@@ -16390,6 +16371,24 @@ the current heading stuck at the top of the window.
    org-sticky-header-outline-path-separator " ▷ "))
 #+END_SRC
 
+** Never lose the cursor
+:PROPERTIES:
+:CUSTOM_ID: Never-lose-the-cursor
+:END:
+
+Let's have the entire line containing the cursour be slightly highlighted.
+#+BEGIN_SRC emacs-lisp
+;; Make it very easy to see the line with the cursor.
+(global-hl-line-mode t)
+#+END_SRC
+
+Moreover, we reduce the mental strain of locating the cursour when navigation happens:
+When we switch windows or scroll, for example, we get a wave of light near the cursor.
+#+begin_src emacs-lisp
+(use-package beacon
+  :config (setq beacon-color "#666600")
+  :hook   ((org-mode text-mode) . beacon-mode))
+#+end_src
 * TODO COMMENT Trying things out
 :PROPERTIES:
 :CREATED:  [2025-05-10 Sat 12:09]
