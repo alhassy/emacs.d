@@ -13622,7 +13622,7 @@ Example:
 [[https://miro.medium.com/v2/resize:fit:4800/1*bpG6TxN-nS6enHkp-KIZgg.jpeg][1% better everyday, push-ups!]]
 
 
-*** Draw pretty unicode tables in org-mode
+**** Draw pretty unicode tables in org-mode
 :PROPERTIES:
 :CUSTOM_ID: Draw-pretty-unicode-tables-in-org-mode
 :END:
@@ -17185,8 +17185,12 @@ publish the current article to my blog.
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
 )
 #+END_SRC
-
-* COMMENT Toggles Hydra                                            :Disabled:
+* 🧟 Graveyard of things I once used, or experiments I've tried    :Disabled:
+:PROPERTIES:
+:CREATED:  [2025-05-24 Sat 12:03]
+:header-args: :tangle no
+:END:
+** Toggles Hydra                                                   :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
 :header-args: :tangle no
@@ -17265,7 +17269,7 @@ publish the current article to my blog.
   :hook (writeroom-mode . (lambda () (focus-mode 'toggle))))
 #+end_src
 
-** COMMENT Toggling System                                       :RelocateMe:
+*** COMMENT Toggling System                                      :RelocateMe:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Toggling-System
 :END:
