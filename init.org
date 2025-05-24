@@ -4299,24 +4299,6 @@ Ruins Org-mode's M-↑/↓ for moving entire sections around.
 (setq-default major-mode 'org-mode)
 #+end_src
 
-** Use Org Mode links in other modes: Links can be opened and edited like in Org Mode. :Disabled:I_do_not_think_I_have_user_used_this:
-:PROPERTIES:
-:CUSTOM_ID: Use-Org-Mode-links-in-other-modes-Links-can-be-opened-and-edited-like-in-Org-Mode
-:header-args: :tangle no
-:END:
-#+begin_src emacs-lisp
-;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
-;;
-;; In particular, when I tangle my init.org into a Lisp file, init.el, it has Org links
-;; back to the original source section in Org, which I can then click to jump to, quickly.
-;;
-(use-package orglink
-  :config
-  (global-orglink-mode)
-  ;; Only enable this in Emacs Lisp mode, for now.
-  (setq orglink-activate-in-modes '(emacs-lisp-mode)))
-#+end_src
-
 ** ox-pandoc
 :PROPERTIES:
 :CUSTOM_ID: Easy-tasks
@@ -16972,6 +16954,24 @@ entries, so with ~(setq hyrolo-file-list org-agenda-files)~ we can quickly look
 through our “rolodex entries” with {C-h h r r}. This is neat, but I am not
 actively using this approach since there are more Org-focused tools.  For more
 details, [[https://github.com/termitereform/JunkPile/blob/master/HyperboleNotes2.org#hyperbole-odyssey-two][see this article.]]
+
+** Use Org Mode links in other modes: Links can be opened and edited like in Org Mode. :Disabled:I_do_not_think_I_have_user_used_this:
+:PROPERTIES:
+:CUSTOM_ID: Use-Org-Mode-links-in-other-modes-Links-can-be-opened-and-edited-like-in-Org-Mode
+:header-args: :tangle no
+:END:
+#+begin_src emacs-lisp
+;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
+;;
+;; In particular, when I tangle my init.org into a Lisp file, init.el, it has Org links
+;; back to the original source section in Org, which I can then click to jump to, quickly.
+;;
+(use-package orglink
+  :config
+  (global-orglink-mode)
+  ;; Only enable this in Emacs Lisp mode, for now.
+  (setq orglink-activate-in-modes '(emacs-lisp-mode)))
+#+end_src
 
 * 🧟 Graveyard of things I once used, or experiments I've tried :Disabled:TODOsHaveUsefulThingsToIncorporate:
 :PROPERTIES:
