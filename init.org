@@ -6075,32 +6075,6 @@ An alternative, also disabled:
 (use-package zoom :config (zoom-mode t))
 #+end_src
 
-** Preview link under cursor                                       :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Preview-link-under-cursor
-:header-args: :tangle no
-:END:
-When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
-- Useful to quickly preview files and images.
-- See also: https://github.com/jcs-elpa/preview-it
-
-#+begin_src emacs-lisp
-(quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
-;; (global-preview-it-mode)
-#+end_src
-
-This also works nicely when I'm looking to open a file; e.g., ~C-x C-f
-~/.emacs.d/.as TAB~ to preview my ~.aspell.en.pws~ (Emacs personal dictionary) file
-in a tooltip.
-# (Sadly, the preview closes my ~M-x~ session when previewing an org file.)
-# Not entirely true; but it's happened with some org files.
-
-Likewise, I'd like to preview line when executing the doc:goto-line / kbd:M-g_M-g command.
-#+begin_src emacs-lisp
-(quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
-(global-set-key [remap goto-line] 'goto-line-preview)
-#+end_src
-
 ** Replace phrases with nice SVG labels :Disabled:Causes_Org_rendering_issues:
 :PROPERTIES:
 :CUSTOM_ID: Replace-phrases-with-nice-SVG-labels
@@ -10431,10 +10405,7 @@ Using ~⌘ j~ then one of the following...
 | ~3i~ | Converts ternary operator to if-statement; nice!                               |
 | ~ss~ | Split a string, at point, into a catenation of strings                         |
 | ~st~ | Convert a string into a `template`.                                            |
-* -------------------------------------------------------------------------------- :ignore:
-:PROPERTIES:
-:CREATED:  [2025-04-09 Wed 16:21]
-:END:
+* ------------------------------------------------------------------------------------------------------------------------
 * 🏃🏾 Engage with Agenda: Progressing tasks to completion via org-agenda & note taking
 
                        /What do I work on today?/
@@ -10455,7 +10426,6 @@ The time spent clarifying and organizing my tasks means that when it's time to e
 have /fewer choices/ to make and fewer reference materials to find. To decide what to do next, I can
 see upcoming tasks with due dates, sort tasks by label, or create filters.  (Filters are essentially
 saved searches that sort your list with one click. They are also known as “org-agenda views”.)
-
 
 Org agenda is about collecting and filtering information which may be scattered
 among various org files.  There are two competing implementations: The built-in
@@ -15647,6 +15617,33 @@ comfortably centred in the screen.
 #+end_src
 
 
+** Preview link under cursor                                       :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Preview-link-under-cursor
+:header-args: :tangle no
+:END:
+When cursor sits on a URL/Image/File link, try to preview it in a tooltip.
+- Useful to quickly preview files and images.
+- See also: https://github.com/jcs-elpa/preview-it
+
+#+begin_src emacs-lisp
+(quelpa '(preview-it :repo "jcs-elpa/preview-it" :fetcher github))
+;; (global-preview-it-mode)
+#+end_src
+
+This also works nicely when I'm looking to open a file; e.g., ~C-x C-f
+~/.emacs.d/.as TAB~ to preview my ~.aspell.en.pws~ (Emacs personal dictionary) file
+in a tooltip.
+# (Sadly, the preview closes my ~M-x~ session when previewing an org file.)
+# Not entirely true; but it's happened with some org files.
+
+Likewise, I'd like to preview line when executing the doc:goto-line / kbd:M-g_M-g command.
+#+begin_src emacs-lisp
+(quelpa '(goto-line-preview :repo "jcs-elpa/goto-line-preview" :fetcher github))
+(global-set-key [remap goto-line] 'goto-line-preview)
+#+end_src
+
+
 * ⏰ “What did I spend my time on today? Last week? Last month? Last Year?”
 :LOGBOOK:
 CLOCK: [2025-05-04 Sun 21:44]--[2025-05-04 Sun 22:53] =>  1:09
@@ -16678,7 +16675,7 @@ org-agenda-custom-commands
                        (org-agenda-overriding-header "\n Upcoming deadlines\n"))))))
 #+end_src
 
-* --------------------------------------------------------------------------------
+* ------------------------------------------------------------------------------------------------------------------------
 * Hyperbole: “DWIM at point”
 :PROPERTIES:
 :CREATED:  [2025-05-20 Tue 19:02]
