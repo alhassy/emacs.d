@@ -6073,22 +6073,6 @@ becomes bold; likewise for ~/~ for emphasise.
 
 I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
 Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
-** Show off-screen heading at the top of the window
-:PROPERTIES:
-:CUSTOM_ID: Show-off-screen-heading-at-the-top-of-the-window
-:END:
-
-In case we forgot which heading we're under, let's keep
-the current heading stuck at the top of the window.
-#+BEGIN_SRC emacs-lisp
- (use-package org-sticky-header
-  :hook (org-mode . org-sticky-header-mode)
-  :config
-  (setq-default
-   org-sticky-header-full-path 'full
-   ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " ▷ "))
-#+END_SRC
 ** Tabs                                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Tabs
@@ -16389,6 +16373,23 @@ comfortably centred in the screen.
 #+end_src
 
 Note: ~setq-default~ ensures this is the case for all buffers.
+** Show off-screen heading at the top of the window
+:PROPERTIES:
+:CUSTOM_ID: Show-off-screen-heading-at-the-top-of-the-window
+:END:
+
+In case we forgot which heading we're under, let's keep
+the current heading stuck at the top of the window.
+#+BEGIN_SRC emacs-lisp
+ (use-package org-sticky-header
+  :hook (org-mode . org-sticky-header-mode)
+  :config
+  (setq-default
+   org-sticky-header-full-path 'full
+   ;; Child and parent headings are seperated by a /.
+   org-sticky-header-outline-path-separator " ▷ "))
+#+END_SRC
+
 * TODO COMMENT Trying things out
 :PROPERTIES:
 :CREATED:  [2025-05-10 Sat 12:09]
