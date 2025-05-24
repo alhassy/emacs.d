@@ -4849,6 +4849,27 @@ With prefix arg, offer recently clocked tasks for selection."
     (apply orig-fn args))))
 ;; Hyperbole: “DWIM at point”:3 ends here
 
+;; [[file:init.org::*~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property][~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property:1]]
+(defib my/property-button ()
+  "Clicking at the start of the :PROPERTIES: line prompts for adding a new Org property."
+  (let ((case-fold-search t))
+    (when (looking-at org-property-drawer-re)
+      (ibut:label-set (match-string-no-properties 0)
+                      (match-beginning 0)
+                      (match-end 0))
+      (hact (lambda (_current-props) (org-set-property nil nil)) (match-string-no-properties 0)))))
+
+
+(defib my/tag-button ()
+  "Clicking at the start of an Org heading means add a new Org tag."
+  (let ((case-fold-search t))
+    (when (looking-at org-tag-line-re)
+      (ibut:label-set (match-string-no-properties 1)
+                      (match-beginning 1)
+                      (match-end 1))
+      (hact (lambda (_current-tags) (org-set-tags-command)) (match-string-no-properties 1)))))
+;; ~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property:1 ends here
+
 ;; [[file:init.org::*~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”][~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1]]
 (defun my/open-::-file-path (path)
   "PATH is something like FooModule::72 or FooModule::interface_bar"
@@ -4916,7 +4937,7 @@ With prefix arg, offer recently clocked tasks for selection."
  t)
 ;; ~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1 ends here
 
-;; [[file:init.org::*Fontify Org Radio Targets and have ~M-RET~ Jump to Them][Fontify Org Radio Targets and have ~M-RET~ Jump to Them:1]]
+;; [[file:init.org::*Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/][Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/:1]]
 (defun get-radio-targets ()
   "Extract all radio targets from the current Org buffer"
   (interactive)
@@ -4937,9 +4958,8 @@ With prefix arg, offer recently clocked tasks for selection."
 
 (font-lock-add-keywords
  'org-mode
- (--map (list (cl-first it) 0 ''highlight 'prepend) my/radio-targets)
+ (--map (list (format "\\b%s\\b" (cl-first it)) 0 ''highlight 'prepend) my/radio-targets)
  t)
-
 
 ;; In programming modes, just show an underline.
 (add-hook
@@ -4947,7 +4967,7 @@ With prefix arg, offer recently clocked tasks for selection."
  (lambda ()
    (font-lock-add-keywords
     nil
-    (--map (list (cl-first it) 0 ''(:underline t) 'prepend) my/radio-targets)
+    (--map (list (format "\\b%s\\b" (cl-first it)) 0 ''(:underline t) 'prepend) my/radio-targets)
     t)))
 
 
@@ -4955,8 +4975,9 @@ With prefix arg, offer recently clocked tasks for selection."
   "RADIO is a downcased name."
   (-let [(name file line) (assoc radio my/radio-targets)]
     (find-file file)
-    (goto-line line)))
-
+    (goto-line line)
+    ;; Make sure point and context are visible.
+    (org-fold-show-context)))
 
 (defib my/radio-target ()
   "Jump to the definition of this word, as an Org radio target"
@@ -4971,7 +4992,7 @@ With prefix arg, offer recently clocked tasks for selection."
                                (match-beginning 0)
                                (match-end 0))
                (hact 'my/jump-to-radio radio)))))
-;; Fontify Org Radio Targets and have ~M-RET~ Jump to Them:1 ends here
+;; Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/:1 ends here
 
 ;; [[file:init.org::*Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)][Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1]]
 (setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
@@ -5042,7 +5063,7 @@ method."
 ;; [[file:init.org::*Testing that things are as they should be][Testing that things are as they should be:1]]
 (progn
   ;; TODO: Move the next bunch of lines up somewhere
-  (add-hook 'prog-mode-hook 'company-mode)
+  (add-hook 'prog-mode-hook 'company-mode) 
   (add-hook 'org-mode-hook 'company-mode)
   (add-hook 'org-mode-hook (lambda ()
                              (org-eldoc-load)
