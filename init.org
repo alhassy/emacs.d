@@ -4240,35 +4240,6 @@ should jump to the first entry.
           org-mode-map)
 #+END_SRC
 
-** Draw pretty unicode tables in org-mode
-:PROPERTIES:
-:CUSTOM_ID: Draw-pretty-unicode-tables-in-org-mode
-:END:
-This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
-
-|---+---|
-| a | b |
-|---+---|
-| 1 | 2 |
-|---+---|
-|   |   |
-|---+---|
-
-#+begin_src emacs-lisp
-(quelpa '(org-pretty-table
-         :repo "Fuco1/org-pretty-table"
-         :fetcher github))
-
-(add-hook 'org-mode-hook 'org-pretty-table-mode)
-#+END_SRC
-
-Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
-in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
-vertical line.
-
-
-NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
-
 ** Drag Stuff                                                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Drag-Stuff
@@ -12932,7 +12903,7 @@ Returns a float between 0 and 100."
 
 #+end_src
 
-** Persistent Scratch Buffer                                      :Disabled:
+** Persistent Scratch Buffer                                       :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Persistent-Scratch-Buffer
 :header-args: :tangle no
@@ -13025,7 +12996,7 @@ press ~RETURN~.
 
 (setq org-blank-before-new-entry '((heading) (plain-list-item . auto)))
 #+end_src
-** “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode    :ATTACH:
+** “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode     :ATTACH:
 :PROPERTIES:
 :CUSTOM_ID: drag-and-drop-images-into-org-mode
 :ID:       AD6BB33A-C860-45A0-936F-3B59CE4FFA14
@@ -13617,7 +13588,7 @@ blocks; as well as figure blocks. For equation blocks, you must use a
 (setq org-latex-prefer-user-labels t)
  #+end_src
  
-**** Org-Emphasise for Parts of Words                           :Disabled:
+**** Org-Emphasise for Parts of Words                              :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
 :header-args: :tangle no
@@ -13649,6 +13620,36 @@ Example:
 
 
 [[https://miro.medium.com/v2/resize:fit:4800/1*bpG6TxN-nS6enHkp-KIZgg.jpeg][1% better everyday, push-ups!]]
+
+
+*** Draw pretty unicode tables in org-mode
+:PROPERTIES:
+:CUSTOM_ID: Draw-pretty-unicode-tables-in-org-mode
+:END:
+This turns the “---” and other ASCII for tables into ‘smooth’ lines ^_^
+
+|---+---|
+| a | b |
+|---+---|
+| 1 | 2 |
+|---+---|
+|   |   |
+|---+---|
+
+#+begin_src emacs-lisp
+(quelpa '(org-pretty-table
+         :repo "Fuco1/org-pretty-table"
+         :fetcher github))
+
+(add-hook 'org-mode-hook 'org-pretty-table-mode)
+#+END_SRC
+
+Being an ‘on the fly replacement mechanism’, we get that “C-u 80 -” also results
+in one smooth horizontal rule and vertical sequences of ‘|’ results in a smooth
+vertical line.
+
+
+NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
 
 
 ** [Conversely,] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=
