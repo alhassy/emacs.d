@@ -6421,48 +6421,6 @@ the current heading stuck at the top of the window.
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " ▷ "))
 #+END_SRC
-** Persistent Scratch Buffer                                      :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Persistent-Scratch-Buffer
-:header-args: :tangle no
-:END:
-
-The ~*scratch*~ buffer is a nice playground for temporary data or experiments.
-
-However, by default its contents are not saved --which may be an issue if we
-have not relocated our playthings to their appropriate files. Whence let's save
-& restore the scratch buffer by default.
-#+begin_src emacs-lisp
-(use-package persistent-scratch
-  ;; In this mode, the usual save key saves to the underlying persistent file.
-  :bind (:map persistent-scratch-mode-map ("C-x C-s" . persistent-scratch-save)))
-#+end_src
-
-We might accidentally close this buffer, so we could utilise the following.
-#+begin_src emacs-lisp
-(defun scratch ()
-   "Recreate the scratch buffer, loading any persistent state."
-   (interactive)
-   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
-   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
-   (org-mode)
-   (persistent-scratch-mode)
-   (persistent-scratch-autosave-mode 1))
-
-;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
-
-;; Upon startup, close the default scratch buffer and open one as specfied above
-(ignore-errors (kill-buffer "*scratch*") (scratch))
-#+end_src
-
-I use Org-mode often, so that's how I want things to appear.
-#+begin_src emacs-lisp
-(setq initial-scratch-message (concat
-  "#+title: Persistent Scratch Buffer"
-  "\n#\n# Welcome! This’ a place for trying things out."
-  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
-#+end_src
-
 ** Tabs                                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Tabs
@@ -14912,6 +14870,48 @@ Returns a float between 0 and 100."
 
 #+end_src
 
+** Persistent Scratch Buffer                                      :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Persistent-Scratch-Buffer
+:header-args: :tangle no
+:END:
+
+The ~*scratch*~ buffer is a nice playground for temporary data or experiments.
+
+However, by default its contents are not saved --which may be an issue if we
+have not relocated our playthings to their appropriate files. Whence let's save
+& restore the scratch buffer by default.
+#+begin_src emacs-lisp
+(use-package persistent-scratch
+  ;; In this mode, the usual save key saves to the underlying persistent file.
+  :bind (:map persistent-scratch-mode-map ("C-x C-s" . persistent-scratch-save)))
+#+end_src
+
+We might accidentally close this buffer, so we could utilise the following.
+#+begin_src emacs-lisp
+(defun scratch ()
+   "Recreate the scratch buffer, loading any persistent state."
+   (interactive)
+   (switch-to-buffer-other-window (get-buffer-create "*scratch*"))
+   (condition-case nil (persistent-scratch-restore) (insert initial-scratch-message))
+   (org-mode)
+   (persistent-scratch-mode)
+   (persistent-scratch-autosave-mode 1))
+
+;; This doubles as a quick way to avoid the common formula: C-x b RET *scratch*
+
+;; Upon startup, close the default scratch buffer and open one as specfied above
+(ignore-errors (kill-buffer "*scratch*") (scratch))
+#+end_src
+
+I use Org-mode often, so that's how I want things to appear.
+#+begin_src emacs-lisp
+(setq initial-scratch-message (concat
+  "#+title: Persistent Scratch Buffer"
+  "\n#\n# Welcome! This’ a place for trying things out."
+  "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
+#+end_src
+
 ** Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content
 
 New sections can be created conveniently by simply modifying the ~RETURN~ key:
@@ -14963,7 +14963,7 @@ press ~RETURN~.
 
 (setq org-blank-before-new-entry '((heading) (plain-list-item . auto)))
 #+end_src
-** “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode     :ATTACH:
+** “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode    :ATTACH:
 :PROPERTIES:
 :CUSTOM_ID: drag-and-drop-images-into-org-mode
 :ID:       AD6BB33A-C860-45A0-936F-3B59CE4FFA14
