@@ -2630,7 +2630,7 @@ timestamp.
 :CUSTOM_ID: magit-Emacs'-porcelain-interface-to-gitq
 :END:
 
-*** Intro                                                            :ignore:
+*** Intro                                                           :ignore:
 
 Let's setup an Emacs ‘porcelain’ interface to git ---it makes working with
 version control tremendously convenient.
@@ -2936,7 +2936,7 @@ kbd:C-x_C-s as usual! The power of text!
 doc:vc-annotate is also very useful to go through history and work out when
 things went wrong.
 
-*** Jump to a (ma)git repository with ~C-u C-x g~                  :Disabled:
+*** Jump to a (ma)git repository with ~C-u C-x g~                 :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Jump-to-a-ma-git-repository-with-C-u-C-x-g
 :header-args: :tangle no
@@ -3150,7 +3150,7 @@ items there (•̀ᴗ•́)و
 # #+END_SRC
 #
 
-** Silently show me when a line was modified and by whom           :Disabled:
+** Silently show me when a line was modified and by whom          :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Silently-show-me-when-a-line-was-modified-and-by-whom
 :header-args: :tangle no
@@ -3196,7 +3196,7 @@ answers that seamlessly ---almost as if a transient comment 😁
 If we want to see commit messages alongside /all/ code, then we can invoke
 doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
 then we use doc:git-timemachine.
-** Git gutter: Jumping between hunks                               :Disabled:
+** Git gutter: Jumping between hunks                              :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: What's-changed-who's-to-blame
 :END:
@@ -3261,7 +3261,7 @@ Alternatively, we may use [[https://github.com/dgutov/diff-hl][diff-hl]]:
 
 Perhaps ~C-x v b~ will motivate smaller, frequent, commits.
 
-** URLs to git changes                                             :Disabled:
+** URLs to git changes                                            :Disabled:
 :PROPERTIES:
 :header-args: :tangle no
 :END:
@@ -3279,7 +3279,7 @@ points to the version of the file being visited.
 
 Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
 
-** Version Control with SVN ---Using Magit!                        :Disabled:
+** Version Control with SVN ---Using Magit!                       :Disabled:
 :PROPERTIES:
 :header-args: :tangle no
 :END:
@@ -3317,7 +3317,7 @@ For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba0711
 (If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
   utility above to account for them.)
 
-** Github /within/ Emacs                                           :Disabled:
+** Github /within/ Emacs                                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Github-within-Emacs
 :header-args: :tangle no
@@ -3348,9 +3348,10 @@ We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[h
 
 To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
 
-** COMMENT Browse remote files
+** Browse remote files                                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Browse-remote-files
+:header-args: :tangle no
 :END:
 
   Sometimes you want to see the current file in Github; e.g., you select a
@@ -3363,9 +3364,10 @@ To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to chec
 ;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
 (use-package browse-at-remote)
 #+end_src
-** COMMENT Elementary Version Control
+** Elementary Version Control                                     :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Elementary-Version-Control
+:header-args: :tangle no
 :END:
 
 [[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
@@ -3539,7 +3541,7 @@ since, well, look at the tooltip documentation: This allows us to use kbd:⌘+e 
 ‘e’dit all kinds of Org entities ---including footnotes and export blocks.  (
 Footnotes can be quickly produced with doc:org-footnote-new. )
 
-*** COMMENT   ~C-a,e,k~ and Yanking of sections              :Does_not_work:
+*** COMMENT   ~C-a,e,k~ and Yanking of sections               :Does_not_work:
 :PROPERTIES:
 :CUSTOM_ID: C-a-e-k-and-Yanking-of-sections
 :END:
@@ -4508,7 +4510,7 @@ page 3.
 
 Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1 }}@@~.
 
-*** Emojis                                                        :Disabled:
+*** Emojis                                                         :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: emojis
 :END:
@@ -4782,7 +4784,7 @@ should have been loaded.
 # - E.g., this init file has local configuration for making the corresponding
 #  =init.el= file and generating the =README.org= file.
 
-** Drag Stuff                                                     :Disabled:
+** Drag Stuff                                                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Drag-Stuff
 :header-args: :tangle no
@@ -4802,7 +4804,7 @@ should have been loaded.
 
 Ruins Org-mode's M-↑/↓ for moving entire sections around.
 
-** Prettify inline source code  :Disabled:I_have_not_used_this_in_some_time:
+** Prettify inline source code   :Disabled:I_have_not_used_this_in_some_time:
 :PROPERTIES:
 :CUSTOM_ID: Prettify-inline-source-code
 :header-args: :tangle no
@@ -4854,7 +4856,7 @@ Ruins Org-mode's M-↑/↓ for moving entire sections around.
 ;; (font-lock-add-keywords nil '((my/toggle-line-fontification)) t)
 #+end_src
 
-** Compile                     :posterity:I_have_not_used_this_in_some_time:
+** Compile                      :posterity:I_have_not_used_this_in_some_time:
 :PROPERTIES:
 :CUSTOM_ID: Compile
 :header-args: :tangle no
@@ -4933,7 +4935,7 @@ at the end of ~(message-box "hello world")~ press ~C-x C-e~ to see a greeting.
   https://alhassy.com/repl-driven-development, including setup for other
   languages.
 
-*** ELisp                                                            :ignore:
+*** ELisp                                                           :ignore:
 :PROPERTIES:
 :CUSTOM_ID: ELisp
 :END:
@@ -4958,7 +4960,7 @@ rather than forcing their eyes to shift up&down when writing&evaluating.
 # E.g., (eros--eval-overlay "hola" (point-min))
 # Shows a momentary overlay at the first line.
 
-*** COMMENT JavaScript                                             :Disabled:
+*** COMMENT JavaScript                                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: JavaScript
 :END:
@@ -4999,9 +5001,9 @@ For that, there are numerous packages:
 
 For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick/issues/8.
 
-** COMMENT TODO RDD
+*** COMMENT TODO RDD.el for Java
 
-*** get the pkg                                                      :ignore:
+**** get the pkg                                                    :ignore:
 #+begin_src emacs-lisp :tangle init.el
 (use-package repl-driven-development)
 ;; TODO: rdd.el should (require ⋯) the following!
@@ -5011,7 +5013,7 @@ For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick
 (setq repl-driven-development-echo-duration 10)
 #+end_src
 
-*** terminal
+**** terminal
 #+begin_src emacs-lisp :tangle init.el
 ;; Sometimes I see a bunch of shell incantations in a README or something and I'd like to execute them right there and then,
 ;; and not have to bother with copying them over to a terminal and execute there. As such, here's a quick key binding to execute
@@ -5020,7 +5022,7 @@ For more RDD alternatives in Emacs, see https://github.com/anonimitoraf/skerrick
 (repl-driven-development [C-x C-t] terminal)
 #+end_src
 
-*** jshell
+**** jshell
 #+begin_src emacs-lisp :tangle init.el
 ;; TODO: Changes to be pushed to master rdd.el ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new
@@ -5066,7 +5068,7 @@ System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
 ;; Set “C­x C­j” to evaluate Java code in a background REPL.
 (repl-driven-development [C-x C-j] java)
 #+end_src
-*** TODO COMMENT mvn
+**** TODO COMMENT mvn
 #+begin_src emacs-lisp :tangle init.el
 (defun mvn (groupId artifactId)
   "Quickly install a library from Maven Central."
@@ -5131,7 +5133,7 @@ System.out.println(\"Enjoy Java with Emacs (｡◕‿◕｡))\")")
   )
 #+end_src
 
-*** TODO COMMENT Adding support for “//!use” & “//!omit” top level repl commands
+**** TODO COMMENT Adding support for “//!use” & “//!omit” top level repl commands
 #+begin_src emacs-lisp
 ;; Adding support for “//!use” & “//!omit” top level repl commands
 (setq repl/jshell/classpath (shell-command-to-string "find ~/.m2/repository -name \"*.jar\" -type f | tr '\n' ':'"))
@@ -5190,12 +5192,12 @@ Where directory hierarchy com/x/y/z denotes a Java package under the above //!us
     (repl/jshell (point-min) (point-max))))
 #+end_src
 
-*** TODO COMMENT Misc top level cmds
+**** TODO COMMENT Misc top level cmds
 
 TODO: Make repl load all company class files, that way I have them upon start up.
 OR: Provide a command `//!load ~/dir` which recursively loads/imports all java files? <---Probably this!
 
-*** TODO COMMENT Quickly Run Code Snippets
+**** TODO COMMENT Quickly Run Code Snippets
 :PROPERTIES:
 :CUSTOM_ID: Quickly-Run-Code-Snippets
 :END:
@@ -5532,7 +5534,7 @@ That is, /repeated ⌘+r expands the selection to the next logical segment of te
 In writing this means “Word, sentence, paragraph”, and in programming this means
 “identifier, then incrementally larger scopes”.
 
-*** Semantic Change
+*** Semantic Change                                              :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Semantic-Change
 :END:
@@ -5623,7 +5625,7 @@ some example usage of that method.
   (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
 #+end_src
 
-*** Get CheatSheets and view them easily                           :Disabled:
+*** Get CheatSheets and view them easily                          :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Get-CheatSheets-and-view-them-easily
 :header-args: :tangle no
@@ -5649,7 +5651,7 @@ Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the 
                                               ; Clojure Ruby Oz Coq Cats Haskell FSharp OCaml
 #+end_src
 
-*** How do I do something?                                         :Disabled:
+*** How do I do something?                                        :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: How-do-I-do-something
 :header-args: :tangle no
@@ -5915,7 +5917,7 @@ to a programming language's syntactic constructions.
 #+end_src
 #+end_box
 
-*** COMMENT TODO Actual Setup                                        :ignore:
+*** COMMENT TODO Actual Setup                                       :ignore:
 :PROPERTIES:
 :CUSTOM_ID: Actual-Setup
 :END:
@@ -6161,7 +6163,7 @@ I found using yafolding-mode to be way too slow.
   (global-set-key (kbd "s-f") 'yafolding-hydra/body)
 #+end_src
 #+end_details
-*** E2E Test                                                         :ignore:
+*** E2E Test                                                        :ignore:
 :PROPERTIES:
 :CUSTOM_ID: E2E-Test
 :END:
@@ -6244,7 +6246,7 @@ The following is also “OK” in Org-mode ;-)
   (highlight-indent-guides-character ?|)
   (highlight-indent-guides-responsive 'stack))
 #+end_src
-*** Being Generous with Whitespace                                 :Disabled:
+*** Being Generous with Whitespace                                :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Being-Generous-with-Whitespace
 :END:
@@ -6261,7 +6263,7 @@ I dislike it when users write ~x=y+1~ ---whitespace is free and helpful.  ⟨ Al
 languages with arbitrary identifiers, like Lisp and Agda, would accept ~x=y+1~ as
 an identifier, not an expression! ⟩
 
-*** Auto-format on Save                                            :Disabled:
+*** Auto-format on Save                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Auto-format-on-Save
 :header-args: :tangle no
@@ -6467,7 +6469,7 @@ blocks we use ~C-c '~.
 Super helpful in making my Emacs configuration: If a name is not highlighted,
 then I've misspelled it or it doesn't exist! :smile:
 
-** show-me
+** show-me                                                        :Disabled:
 #+begin_src emacs-lisp :tangle no :results replace
 (defun show-me ()
   "Evaluate a Lisp expression and insert its value
@@ -6486,7 +6488,7 @@ then I've misspelled it or it doesn't exist! :smile:
     (insert it)))
 #+END_SRC
 
-** TODO Smartparens
+** Smartparens                                                    :Disabled:
 
 #+begin_src emacs-lisp :tangle no
 (use-package smartparens
@@ -6559,7 +6561,7 @@ a [x y z] b  ⟶“M-) inside [⋯]”⟶  [a x y z] b
 [a x y z b]  ⟶“M-] inside [⋯]”⟶  a [x y z b]
 [a x y z b]  ⟶“M-] inside [⋯]”⟶  [a x y z] b
 #+end_example
-** Column Marker
+** Column Marker                                                  :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Column-Marker
 :END:
@@ -6610,7 +6612,7 @@ This seems like an excellent way to debug macros.
   (let ((foo 1))
     (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
 #+end_src
-** TODO COMMENT Work Programming                                   :Disabled:
+** TODO COMMENT Work Programming                                  :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Programming
 :END:
@@ -6881,7 +6883,7 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
    (beginning-of-buffer)))
 #+end_src
 
-***** COMMENT Old definition with colourful menu                     :ignore:
+***** COMMENT Old definition with colourful menu                    :ignore:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Old-definition-with-colourful-menu
 :END:
@@ -7419,7 +7421,7 @@ my VSCoder counterparts.
 (my/toggle-pair-programming)
 #+end_src
 
-*** Modern Browsing within Emacs                                   :Disabled:
+*** Modern Browsing within Emacs                                  :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Modern-Browsing-within-Emacs
 :END:
@@ -8283,7 +8285,7 @@ extension).
 
 Of-course, to actually do anything with the files (like mass renaming), there's
 Emacs' Dired (the directory editor).
-** TODO COMMENT Web Development                                    :Disabled:
+** TODO COMMENT Web Development                                   :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-Web-Development
 :END:
@@ -8729,7 +8731,7 @@ of JSON]].
 
 Also: [[https://transform.tools/json-to-jsdoc][JSON to X]] is a website to convert JSON to other formats, such as in Rust
 or as JSDoc type annotations.
-*** Turbolog: What's the value of this expression?               :JavaScript:
+*** Turbolog: What's the value of this expression?              :JavaScript:
 :PROPERTIES:
 :CUSTOM_ID: Turbolog-What's-the-value-of-this-expression
 :END:
@@ -8893,7 +8895,7 @@ Other packages to consider looking into include:
 - [[https://github.com/scottaj/mocha.el][mocha.el: Emacs mode for running mocha tests]]
 - [[https://github.com/Emiller88/emacs-jest][emacs-jest: A package to run jest inside emacs]]
 
-*** JavaScript                                      :Does_not_work_with_flow:
+*** JavaScript                                     :Does_not_work_with_flow:
 :PROPERTIES:
 :CUSTOM_ID: COMMENT-JavaScript
 :END:
@@ -16865,7 +16867,7 @@ See [[https://orgmode.org/manual/Org-syntax.html][here]] on how to see the abstr
 and how to manipulate it.
 
 
-** Org-special-block-extras       :Disabled_I_have_not_blogged_in_some_time:
+** Org-special-block-extras        :Disabled_I_have_not_blogged_in_some_time:
 
 MA: Enable this as part of AlBasmala.el, since that's really when I need it?
 
