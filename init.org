@@ -13652,6 +13652,25 @@ vertical line.
 NOTE. This is comparable to ~org-modern-mode~'s pretty table rendering.
 
 
+**** Use backtick as an alternative to “~” for code font
+:PROPERTIES:
+:CREATED:  [2025-04-09 Wed 16:40]
+:RELATED: https://protesilaos.com/codelog/2022-01-05-custom-face-org-emphasis-alist/
+:FOR_HTML_EXPORT_SUPPORT: https://www.gonsie.com/blorg/org-highlight.html
+:END:
+
+#+begin_src emacs-lisp 
+;; Working with others: `This is a piece of code`
+(add-hook 'org-font-lock-set-keywords-hook
+          (defun my/backticks-denote-code ()
+            (add-to-list 'org-font-lock-extra-keywords
+                         '("\\(`\\)\\(.*\\)\\(`\\)"
+                           (1 '(face nil invisible t))
+                           (3 '(face nil invisible t))
+                           ;; (2 '(face code))
+                           (2  '(:box t :foreground "#AAF"))))))
+#+end_src
+
 ** [Conversely,] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=
 :PROPERTIES:
 :CREATED:  [2025-01-20 Mon 11:27]
@@ -16983,67 +17002,6 @@ More:
 + [ ] [[https://github.com/spegoraro/org-alert][GitHub - spegoraro/org-alert: System notifications of org agenda items]]
 + [ ] [[https://github.com/akhramov/org-wild-notifier.el?tab=readme-ov-file][GitHub - akhramov/org-wild-notifier.el: Alert notifications for org-agenda]]
 + [ ] [[https://github.com/doppelc/org-notifications][GitHub - doppelc/org-notifications: Desktop notifications for your org-agenda/org-mode items]]
-* COMMENT Highlight in purple and enclose in box the phrases “[MA|TODO|NOTE] ⋯”, also use backtick as an alternative to “~” for code font
-:PROPERTIES:
-:CREATED:  [2025-04-09 Wed 16:40]
-:RELATED: https://protesilaos.com/codelog/2022-01-05-custom-face-org-emphasis-alist/
-:FOR_HTML_EXPORT_SUPPORT: https://www.gonsie.com/blorg/org-highlight.html
-:END:
-
-MA: This is a test.
-
-#+begin_src emacs-lisp
-(setq org-emphasis-alist
-  '(;; ("*" (bold :foreground "Orange"))
-    ("*" bold "<strong>" "</strong>")
-    ("/" italic)
-    ("_" underline)
-    ("=" (:box t :foreground "#AAF") "<code>" "</code>" verbatim)
-    ("~" (:background "deep sky blue" :foreground "MidnightBlue"))
-        ;; ("+"  font-lock-comment-face)
-    ("+" ( org-headline-done :strike-through t :foreground "grey"))))
-
-
-;; Working with others: `This is a piece of code`
-(add-hook 'org-font-lock-set-keywords-hook
-          (defun my/backticks-denote-code ()
-             (add-to-list 'org-font-lock-extra-keywords
-               '("\\(`\\)\\(.*\\)\\(`\\)"
-                 (1 '(face nil invisible t))
-                 (3 '(face nil invisible t))
-                 ;; (2 '(face code))
-                 (2  '(:box t :foreground "#AAF"))))))
-
-
-;; Highlight things I write down, “MA: This is important, it's shown in a box; the period is the terminator.”
-(add-hook 'org-font-lock-set-keywords-hook
-          (defun my/emphasize-MA-sentences ()
-             (add-to-list 'org-font-lock-extra-keywords
-               '("\\b\\(MA\\|TODO\\|NOTE\\).*\\." (0 '(:box t :foreground "#AAF"))))))
-
-;; Text “!This text is in a purple box!”.
-(add-hook 'org-font-lock-set-keywords-hook
-          (defun my/add/highlight-emphasis-via-! ()
-             (add-to-list 'org-font-lock-extra-keywords
-               '("\\(!\\)\\(.*\\)\\(!\\)"
-                 (1 '(face nil invisible t))
-                 (3 '(face nil invisible t))
-                 (2 '(:box t :foreground "#AAF"))))))
-;;
-;;
-;; TODO: Relocate this to org-special-block-extras.
-;; Text “green:this-is-a-green-word”
-(add-hook 'org-font-lock-set-keywords-hook
-          (defun my/add/green-emphasis ()
-             (add-to-list 'org-font-lock-extra-keywords
-               '("\\(green:\\)\\([^ ]*\\)"
-                 (1 '(face nil invisible t))
-                 (2 '(:foreground "green"))))))
-#+end_src
-
-TODO: Consider following this idea to have “inline tags” so I can easily click on them in a sentence;
-e.g., “I use #emacs to write #org for the purposes of configuring my #life and #faith”.
-
 * 🧟 Graveyard of things I once used, or experiments I've tried    :Disabled:TODOsHaveUsefulThingsToIncorporate:
 :PROPERTIES:
 :CREATED:  [2025-05-24 Sat 12:03]
@@ -17305,6 +17263,54 @@ indentation provided by the built-in package org-indent.
 
 I've disabled this since it gets in the way of Org speed keys; e.g., when I
 press ~#~ to comment a heading, it accidentally inserts a literal ‘#’ character.
+
+** TODO Highlight in purple and enclose in box the phrases “[MA|TODO|NOTE] ⋯”
+:PROPERTIES:
+:CREATED:  [2025-05-24 Sat 12:13]
+:END:
+Disabled:
+- MA: This is a test.
+#+begin_src emacs-lisp :tangle no
+(setq org-emphasis-alist
+      '(;; ("*" (bold :foreground "Orange"))
+        ("*" bold "<strong>" "</strong>")
+        ("/" italic)
+        ("_" underline)
+        ("=" (:box t :foreground "#AAF") "<code>" "</code>" verbatim)
+        ("~" (:background "deep sky blue" :foreground "MidnightBlue"))
+        ;; ("+"  font-lock-comment-face)
+        ("+" ( org-headline-done :strike-through t :foreground "grey"))))
+
+
+
+;; Highlight things I write down, “MA: This is important, it's shown in a box; the period is the terminator.”
+(add-hook 'org-font-lock-set-keywords-hook
+          (defun my/emphasize-MA-sentences ()
+            (add-to-list 'org-font-lock-extra-keywords
+                         '("\\b\\(MA\\|TODO\\|NOTE\\).*\\." (0 '(:box t :foreground "#AAF"))))))
+
+;; Text “!This text is in a purple box!”.
+(add-hook 'org-font-lock-set-keywords-hook
+          (defun my/add/highlight-emphasis-via-! ()
+            (add-to-list 'org-font-lock-extra-keywords
+                         '("\\(!\\)\\(.*\\)\\(!\\)"
+                           (1 '(face nil invisible t))
+                           (3 '(face nil invisible t))
+                           (2 '(:box t :foreground "#AAF"))))))
+;;
+;;
+;; TODO: Relocate this to org-special-block-extras.
+;; Text “green:this-is-a-green-word”
+(add-hook 'org-font-lock-set-keywords-hook
+          (defun my/add/green-emphasis ()
+            (add-to-list 'org-font-lock-extra-keywords
+                         '("\\(green:\\)\\([^ ]*\\)"
+                           (1 '(face nil invisible t))
+                           (2 '(:foreground "green"))))))
+#+end_src
+
+TODO: Consider following this idea to have “inline tags” so I can easily click on them in a sentence;
+e.g., “I use #emacs to write #org for the purposes of configuring my #life and #faith”.
 
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
