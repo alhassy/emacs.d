@@ -6471,25 +6471,6 @@ An alternative, also disabled:
 (use-package zoom :config (zoom-mode t))
 #+end_src
 
-** Org-Emphasise for Parts of Words                               :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
-:header-args: :tangle no
-:END:
-
-From [[https://stackoverflow.com/a/24540651/3550444][stackoverflow]], the following incantation allows us to have
-parts of works emphasied with org-mode; e.g.,
-/half/ed, ~half~ed, and right in the m*idd*le! Super cool stuff!
-#+BEGIN_SRC emacs-lisp :tangle no
-(setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
-(setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
-(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
-#+END_SRC
-
-I've disabled this feature since multiple occurrences
-of an emphasise marker are sometimes treated as one
-lengthy phrase being emphasised.
-
 ** Preview link under cursor                                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Preview-link-under-cursor
@@ -15116,6 +15097,25 @@ Notes:
 - (org-setup-yank-dnd-handlers): Register yank-media-handler and DND (Drag-aNd-Drop) handler.
 - (org-media-image-save-type, org-dnd-default-attach-method): New defcustoms.
 - Add yank-media and DND handlers: (org--image-yank-media-handler, org--copied-files-yank-media-handler) (org--dnd-local-file-handler)
+
+** Org-Emphasise for Parts of Words                               :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
+:header-args: :tangle no
+:END:
+
+From [[https://stackoverflow.com/a/24540651/3550444][stackoverflow]], the following incantation allows us to have
+parts of works emphasied with org-mode; e.g.,
+/half/ed, ~half~ed, and right in the m*idd*le! Super cool stuff!
+#+BEGIN_SRC emacs-lisp :tangle no
+(setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
+(setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
+(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
+#+END_SRC
+
+I've disabled this feature since multiple occurrences
+of an emphasise marker are sometimes treated as one
+lengthy phrase being emphasised.
 
 ** [Conversely,] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=
 :PROPERTIES:
