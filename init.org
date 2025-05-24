@@ -17108,9 +17108,14 @@ e.g., “I use #emacs to write #org for the purposes of configuring my #life and
 MA: The main prolem here is likely that helm does not reuse the minibuffer, but instead simulates it.
 Not sure though. Consider using vertico and friends.
 
-* COMMENT Browsing
+* 🧟 Graveyard of things I once used, or experiments I've tried    :Disabled:
+:PROPERTIES:
+:CREATED:  [2025-05-24 Sat 12:03]
+:header-args: :tangle no
+:END:
+** TODO Browsing
 
-** Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.
+*** Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.
 :PROPERTIES:
 :CUSTOM_ID: Let's-jump-to-a-current-Chrome-browser-tab-or-one-from-our-Chrome-history-from-within-Emacs
 :END:
@@ -17127,7 +17132,7 @@ Not sure though. Consider using vertico and friends.
 (load-file "~/.emacs.d/elpa/helm-chrome-control-20190707.1807/helm-chrome-control.el")
 #+end_src
 
-** TODO COMMENT Background audio I want to listen to as I work
+*** TODO COMMENT Background audio I want to listen to as I work
 #+begin_src emacs-lisp
 (use-package empv )
 
@@ -17143,7 +17148,7 @@ Not sure though. Consider using vertico and friends.
 ;;
 (setq empv-invidious-instance "https://invidious.fdn.fr.com")
 #+end_src
-** TODO COMMENT Publishing articles to my personal blog
+*** TODO COMMENT Publishing articles to my personal blog
 :PROPERTIES:
 :CUSTOM_ID: Publishing-articles-to-my-personal-blog
 :END:
@@ -17186,11 +17191,6 @@ publish the current article to my blog.
     (async-shell-command (concat "open " server NAME "/") "*blog-post-in-browser*"))
 )
 #+END_SRC
-* 🧟 Graveyard of things I once used, or experiments I've tried    :Disabled:
-:PROPERTIES:
-:CREATED:  [2025-05-24 Sat 12:03]
-:header-args: :tangle no
-:END:
 ** Toggles Hydra                                                   :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Toggles-Hydra
