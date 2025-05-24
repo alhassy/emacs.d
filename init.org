@@ -3020,7 +3020,7 @@ since, well, look at the tooltip documentation: This allows us to use kbd:⌘+e 
 ‘e’dit all kinds of Org entities ---including footnotes and export blocks.  (
 Footnotes can be quickly produced with doc:org-footnote-new. )
 
-*** COMMENT   ~C-a,e,k~ and Yanking of sections               :Does_not_work:
+*** COMMENT   ~C-a,e,k~ and Yanking of sections              :Does_not_work:
 :PROPERTIES:
 :CUSTOM_ID: C-a-e-k-and-Yanking-of-sections
 :END:
@@ -3103,9 +3103,10 @@ Some initial languages we want org-babel to support:
 
 More languages can be added using doc:add-to-list.
 
-** Executing all =#+name: startup-code= for local configurations
+** Executing all =#+name: startup-code= for local configurations :Disabled:I_have_not_used_this_in_some_time:
 :PROPERTIES:
 :CUSTOM_ID: Executing-all-name-startup-code-for-local-configurations
+:header-args: :tangle no
 :END:
 
 Sometimes my Org-files contain configurations that are local to the file,
@@ -3146,9 +3147,11 @@ is a nice *[[green:‘in your face’]]* reminder that there is local configurat
 should have been loaded.
 # - E.g., this init file has local configuration for making the corresponding
 #  =init.el= file and generating the =README.org= file.
-** TODO COMMENT Snippets ---Template Expansion & Completion
+
+** Snippets ---Template Expansion & Completion :Disabled:I_have_not_used_this_in_some_time:
 :PROPERTIES:
 :CUSTOM_ID: Snippets-Template-Expansion
+:header-args: :tangle no
 :END:
 
 It is common that there is a sequence of text that we tend to repeat
@@ -3824,7 +3827,7 @@ page 3.
 
 Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1 }}@@~.
 
-*** Emojis                                                         :Disabled:
+*** Emojis                                                        :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: emojis
 :END:
@@ -4053,9 +4056,10 @@ the specified ~:noweb-ref~, not on ~:CUSTOM_ID:~ incidentally having the same
 name.
 #+end_box
 
-** Prettify inline source code
+** Prettify inline source code  :Disabled:I_have_not_used_this_in_some_time:
 :PROPERTIES:
 :CUSTOM_ID: Prettify-inline-source-code
+:header-args: :tangle no
 :END:
 
 #+begin_src emacs-lisp
@@ -4240,7 +4244,7 @@ should jump to the first entry.
           org-mode-map)
 #+END_SRC
 
-** Drag Stuff                                                      :Disabled:
+** Drag Stuff                                                     :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Drag-Stuff
 :header-args: :tangle no
@@ -4269,9 +4273,10 @@ Ruins Org-mode's M-↑/↓ for moving entire sections around.
 (setq-default major-mode 'org-mode)
 #+end_src
 
-** Use Org Mode links in other modes: Links can be opened and edited like in Org Mode.
+** Use Org Mode links in other modes: Links can be opened and edited like in Org Mode. :Disabled:I_do_not_think_I_have_user_used_this:
 :PROPERTIES:
 :CUSTOM_ID: Use-Org-Mode-links-in-other-modes-Links-can-be-opened-and-edited-like-in-Org-Mode
+:header-args: :tangle no
 :END:
 #+begin_src emacs-lisp
 ;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
@@ -4295,16 +4300,15 @@ Ruins Org-mode's M-↑/↓ for moving entire sections around.
 # (shell-command "brew install pandoc")
 # (use-package ox-pandoc)
 
-** TODO COMMENT Org-mode's ~<𝒳~ Block Expansions
+** Org-mode's ~<𝒳~ Block Expansions
 :PROPERTIES:
 :CUSTOM_ID: Org-mode's-𝒳-Block-Expansions
 :END:
-#+begin_quote
-#+end_quote
+
 In org-mode we type ~<X TAB~ to obtain environment templates, such as ~<s~ for
 source blocks or ~<q~ for quote blocks.  It seems recent [[https://orgmode.org/Changes.html#org1b5e967][changes]] to the org-mode
 structure template expansion necessitate explicitly loading ~org-tempo~.
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (require 'org-tempo)
 #+end_src
 
@@ -4325,7 +4329,7 @@ into a new code block! Wow!
 E.g., ~s_em TAB~ to obtain an org-src block marked with ~emacs-lisp~ as the
 language.  This saves us a few key strokes.
 
-*** COMMENT TODO Demoing Dot Graphs
+*** COMMENT Demoing Dot Graphs
 :PROPERTIES:
 :CUSTOM_ID: TODO-Demoing-Dot-Graphs
 :END:
@@ -4343,44 +4347,12 @@ language.  This saves us a few key strokes.
   }
  #+END_SRC
 
-** TODO COMMENT Obtaining Values of ~#+KEYWORD~ Annotations
-:PROPERTIES:
-:CUSTOM_ID: Obtaining-Values-of-KEYWORD-Annotations
-:END:
+** Global auto-revert mode
 
-Org-mode settings are, for the most part, in the form ~#+KEYWORD: VALUE~. Of notable interest
-are the ~TITLE~ and ~NAME~ keywords. We use the following ~org-keywords~ function to obtain
-the values of arbitrary ~#+THIS : THAT~ pairs, which may not necessarily be supported by native
-Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ tags associated with an article.
-
-# Parse org buffer as an elisp structure: https://emacs.stackexchange.com/questions/2869/turn-a-list-or-data-structure-into-an-org-document#
-#+begin_src emacs-lisp :tangle no
-;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
-(defun org-keywords ()
-  "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
-  (org-element-map (org-element-parse-buffer 'element) 'keyword
-                   (lambda (keyword) (cons (org-element-property :key keyword)
-                                           (org-element-property :value keyword)))))
-
-(defun org-keyword (KEYWORD)
-  "Get the value of a KEYWORD in the form of #+KEYWORD: value"
-  (cdr (assoc KEYWORD (org-keywords))))
-#+END_SRC
-
-Note that capitalisation in a ”#+KeyWord” is irrelevant.
-
-See [[https://orgmode.org/manual/Org-syntax.html][here]] on how to see the abstract syntax tree of an org file
-and how to manipulate it.
-
-** TODO COMMENT Global auto-revert mode
-:PROPERTIES:
-:CUSTOM_ID: Reload-buffer-with-f5
-:END:
-
-I do this so often it's not even funny.
-#+begin_src emacs-lisp :tangle no
-(global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
-#+END_SRC
+# I do this so often it's not even funny.
+# #+begin_src emacs-lisp :tangle no
+# (global-set-key [f5] '(lambda () (interactive) (revert-buffer nil t nil)))
+# #+END_SRC
 
 In Mac OS, one uses ~Cmd-r~ to reload a page and Emacs binds buffer reversion to ~Cmd-u~
 --in Emacs, Mac's ~Cmd~ is referred to as the ‘super key’ and denoted ~s~.
@@ -4389,7 +4361,7 @@ Moreover, since I use Org-mode to generate code blocks and occasionally
 inspect them, it would be nice if they automatically reverted when they
 were regenerated --Emacs should also prompt me if I make any changes!
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 ;; Auto update buffers that change on disk.
 ;; Will be prompted if there are changes that could be lost.
 (global-auto-revert-mode 1)
@@ -4400,9 +4372,10 @@ were regenerated --Emacs should also prompt me if I make any changes!
       auto-revert-verbose nil)
 #+end_src
 
-** DONE COMMENT Compile                                           :posterity:
+** Compile                     :posterity:I_have_not_used_this_in_some_time:
 :PROPERTIES:
 :CUSTOM_ID: Compile
+:header-args: :tangle no
 :END:
 
 Emacs' [[https://www.emacswiki.org/emacs/CompileCommand][compile]] command allows us to execute arbitrary Elisp
@@ -16999,12 +16972,12 @@ through our “rolodex entries” with {C-h h r r}. This is neat, but I am not
 actively using this approach since there are more Org-focused tools.  For more
 details, [[https://github.com/termitereform/JunkPile/blob/master/HyperboleNotes2.org#hyperbole-odyssey-two][see this article.]]
 
-* 🧟 Graveyard of things I once used, or experiments I've tried    :Disabled:TODOsHaveUsefulThingsToIncorporate:
+* 🧟 Graveyard of things I once used, or experiments I've tried :Disabled:TODOsHaveUsefulThingsToIncorporate:
 :PROPERTIES:
 :CREATED:  [2025-05-24 Sat 12:03]
 :header-args: :tangle no
 :END:
-** TODO my/consume-content                      :requires_aql_macro:
+** TODO my/consume-content                               :requires_aql_macro:
 :PROPERTIES:
 :CREATED:  [2025-04-09 Wed 16:37]
 :END:
@@ -17209,7 +17182,7 @@ publish the current article to my blog.
 (use-package imenu-list) ;; Main keys: SPC / ENTER / TAB / n / p / q
 #+end_src
 
-** Show minibuffer in the middle of the screen      :OK_but_could_be_better:
+** Show minibuffer in the middle of the screen       :OK_but_could_be_better:
 :PROPERTIES:
 :CREATED:  [2025-04-09 Wed 17:34]
 :END:
@@ -17244,7 +17217,7 @@ publish the current article to my blog.
 MA: The main prolem here is likely that helm does not reuse the minibuffer, but instead simulates it.
 Not sure though. Consider using vertico and friends.
 
-** [[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours              :Posterity:
+** [[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours :Posterity:
 :PROPERTIES:
 :CREATED:  [2025-01-20 Mon 12:56]
 :END:
@@ -17308,6 +17281,37 @@ Disabled:
 
 TODO: Consider following this idea to have “inline tags” so I can easily click on them in a sentence;
 e.g., “I use #emacs to write #org for the purposes of configuring my #life and #faith”.
+
+** TODO Obtaining Values of ~#+KEYWORD~ Annotations :Disabled:MoveToBloggingSetup:AlBasmala:
+:PROPERTIES:
+:CUSTOM_ID: Obtaining-Values-of-KEYWORD-Annotations
+:header-args: :tangle no
+:END:
+
+Org-mode settings are, for the most part, in the form ~#+KEYWORD: VALUE~. Of notable interest
+are the ~TITLE~ and ~NAME~ keywords. We use the following ~org-keywords~ function to obtain
+the values of arbitrary ~#+THIS : THAT~ pairs, which may not necessarily be supported by native
+Org-mode --we do so for the case, for example, of the ~CATEGORIES~ and ~IMAGE~ tags associated with an article.
+
+# Parse org buffer as an elisp structure: https://emacs.stackexchange.com/questions/2869/turn-a-list-or-data-structure-into-an-org-document#
+#+begin_src emacs-lisp :tangle no
+;; Src: http://kitchingroup.cheme.cmu.edu/blog/2013/05/05/Getting-keyword-options-in-org-files/
+(defun org-keywords ()
+  "Parse the buffer and return a cons list of (property . value) from lines like: #+PROPERTY: value"
+  (org-element-map (org-element-parse-buffer 'element) 'keyword
+                   (lambda (keyword) (cons (org-element-property :key keyword)
+                                           (org-element-property :value keyword)))))
+
+(defun org-keyword (KEYWORD)
+  "Get the value of a KEYWORD in the form of #+KEYWORD: value"
+  (cdr (assoc KEYWORD (org-keywords))))
+#+END_SRC
+
+Note that capitalisation in a “#+KeyWord” is irrelevant.
+
+See [[https://orgmode.org/manual/Org-syntax.html][here]] on how to see the abstract syntax tree of an org file
+and how to manipulate it.
+
 
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
