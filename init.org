@@ -17044,7 +17044,12 @@ MA: This is a test.
 TODO: Consider following this idea to have “inline tags” so I can easily click on them in a sentence;
 e.g., “I use #emacs to write #org for the purposes of configuring my #life and #faith”.
 
-* TODO COMMENT my/consume-content                        :requires_aql_macro:
+* 🧟 Graveyard of things I once used, or experiments I've tried    :Disabled:TODOsHaveUsefulThingsToIncorporate:
+:PROPERTIES:
+:CREATED:  [2025-05-24 Sat 12:03]
+:header-args: :tangle no
+:END:
+** TODO my/consume-content                      :requires_aql_macro:
 :PROPERTIES:
 :CREATED:  [2025-04-09 Wed 16:37]
 :END:
@@ -17073,11 +17078,6 @@ e.g., “I use #emacs to write #org for the purposes of configuring my #life and
   )
 #+end_src
 
-* 🧟 Graveyard of things I once used, or experiments I've tried    :Disabled:TODOsHaveUsefulThingsToIncorporate:
-:PROPERTIES:
-:CREATED:  [2025-05-24 Sat 12:03]
-:header-args: :tangle no
-:END:
 ** TODO Browsing
 
 *** Let's jump to a current Chrome browser tab, or one from our Chrome history, from within Emacs.
@@ -17289,7 +17289,7 @@ publish the current article to my blog.
 MA: The main prolem here is likely that helm does not reuse the minibuffer, but instead simulates it.
 Not sure though. Consider using vertico and friends.
 
-* [[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours               :Posterity:
+** [[https://www.reddit.com/r/emacs/comments/qdze6g/new_orgbars_add_bars_to_the_virtual_indentation/][org-bars]]: Indent Org headings with pretty colours              :Posterity:
 :PROPERTIES:
 :CREATED:  [2025-01-20 Mon 12:56]
 :END:
