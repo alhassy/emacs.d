@@ -3521,9 +3521,9 @@ Usage:
 (bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))
 ;; Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1 ends here
 
-# [[file:init.org::*Why the evening ritual reduces anxiety?][Why the evening ritual reduces anxiety?:1]]
-*** End-of-workday Shut-down Ritual: ~C-c r d~         <2025-04-14 Mon 15:30-15:45 +1d>
-# Why the evening ritual reduces anxiety?:1 ends here
+;; [[file:init.org::*Example use of doc:consult--read][Example use of doc:consult--read:1]]
+(use-package consult) ;; To get `consult--read'
+;; Example use of doc:consult--read:1 ends here
 
 ;; [[file:init.org::*Questionnaire setup][Questionnaire setup:1]]
 (require 'eieio)
@@ -3618,33 +3618,33 @@ and 2 of them are randomly selected as part of the daily review.
         ("Relaxation: The most relaxing thing I did was …")
         ("Motivation: Why was I or wasn't motivated for something today?")
 
-        
+
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         :random  ;; 2 questions randomly chosen and asked each day                  ;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;; “Thematic” prompts: Each property acts as a theme.
-        
+
         ("Time: Am I happy with how I am spending my time?") ;; Did I use most of my time wisely?
-        
+
         ("Service: Was there anything I could easily do for someone else that I didn't do? Why not?")
         ("Service₂: Have I done anything to help someone in any way? Because a life lived only for oneself is only partly fulfilling.")
         ("Service₃: Did I wrong anyone who I owe amends to?")
-        
+
         ("Values: What things are most important to me? (both things achieved and not yet achieved)")
         ("Value: Did it (whatever thing happened during the day) matter? To identify recurring things that either need to be dropped or addressed to better facilitate mental health.")
         ("Value₂: Did today matter? i.e., if I had slept all day, would anything really be any different?")
-        
+
         ("GoalGetting: What did I do today to help achieve the things I have not yet achieved?")
         ("GoalGetting₂: What will I do tomorrow to further my achievement of things most important to me?")
 
         ;; ⇒ more positive thoughts, unlocked :)
         ("Gratitude: What am I grateful for today?") ;;  Makes you look at the big picture while appreciating something small that may be otherwise taken for granted.
-        ("Anxiety: What problem is still on your mind, and what needs to be true for you to feel that this problem is resolved?")        
+        ("Anxiety: What problem is still on your mind, and what needs to be true for you to feel that this problem is resolved?")
         ("Worry: What am I worried about?") ;; Really helps clarify what to prioritize the next day, and gets the worries out of my head and onto paper right so I don't have to think about them in bed.
 
         ("Approval: What did I do today that I approve of?") ;; gets you out of all or nothing thinking. Do you approve of getting out of bed? Drinking water?
         ("Approval₂: What did I do well today? What did I do poorly today? What am I most grateful for? What is my goal?")
-        
+
         ("Change: What is 1 thing I will do differently tomorrow?")
         ("Betterment: What can I do to be better tomorrow than I was today?")
         ("Improvement: How can anything I'm doing be improved upon? So that I can grow as a person and have more effectiveness in things I do.")
@@ -3664,7 +3664,7 @@ and 2 of them are randomly selected as part of the daily review.
 
         ("Competence:  What problems did I solve?")
 
-        ("SelfCare: Did I put myself last today?") ;; Did I do myself justice today? If not, what will I do differently tomorrow?        
+        ("SelfCare: Did I put myself last today?") ;; Did I do myself justice today? If not, what will I do differently tomorrow?
         ))
 
 
@@ -3674,7 +3674,7 @@ and 2 of them are randomly selected as part of the daily review.
 Makes use of `my/daily-review-questionnaire'.
 
 At any time, press `C-.' to toggle adding a customised explanatory note to go along with a selection."
-  (-let [(mandatory-questions random-questions) (-split-on :random my/daily-review-questionnaire)] 
+  (-let [(mandatory-questions random-questions) (-split-on :random my/daily-review-questionnaire)]
     (let* ((max-possible-score 0)
            (properties
             ;; Consider mandatory questions and 2 optional questions, chosen at random
@@ -3705,7 +3705,7 @@ At any time, press `C-.' to toggle adding a customised explanatory note to go al
                                                 :prompt prompt
                                                 :require-match t
                                                 :annotate (lambda (label)
-                                                            (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))                                                
+                                                            (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))
                                                 :lookup (lambda (label _ _ _)
                                                           (-let [option (assoc-by-label options label)]
                                                             ;; If label ends in “…” or “C-.” pressed, prompt for a note.
@@ -3760,6 +3760,27 @@ Further reading:
 ;; Questionnaire setup:1 ends here
 
 ;; [[file:init.org::*Capture method][Capture method:1]]
+(cl-defun my/insert-with-bg-colour (colour &rest text)
+  "Inserts all of TEXT with background color COLOUR.
+
+Example use: (my/insert-with-bg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))
+
+😉 If you want the colouring to continue to the end of the line, have a final \"\\n\".
+💡 Use “M-x helm-colours” for inspiration."
+  (-let [start (point)]
+    (mapc #'insert text)
+    (overlay-put (make-overlay start (point)) 'face `(background-color . ,colour))))
+
+
+(cl-defun my/insert-with-fg-colour (colour &rest text)
+  "Inserts all of TEXT with foreground color COLOUR.
+
+Example use: (my/insert-with-fg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))"
+  (-let [start (point)]
+    (mapc #'insert text)
+    (overlay-put (make-overlay start (point)) 'face `(foreground-color . ,colour))))
+
+
 ;; “r”eview for the “d”ay
 (bind-key*
  "C-c r d"
@@ -3777,8 +3798,8 @@ Further reading:
                           (string-to-number (format-time-string "%j" today)))))
               (beginning-of-buffer)
               (org-beginning-of-line)
-              
-              (insert (my/fancy-date-string) " ") 
+
+              (insert (my/fancy-date-string) " ")
               ;; Let's add some properties by prompting the user, me.
               (-let [properties (my/read-daily-review-properties)]
                 (cl-loop for (property . value) in properties
@@ -3790,60 +3811,51 @@ Further reading:
               ;; Let's align them
               (my/org-align-property-values)
               ;; Let's insert a quote
-              (end-of-buffer)
-              (insert "\n\n#+begin_quote_of_the_day\n")
-              (-let [quote-start (point)]
-                (insert (my/string-fill-column-and-center 70 (my/random-quote)))
-                (insert "\n")
-                (overlay-put (make-overlay quote-start (point)) 'face '(background-color . "#FFB6C1")))
-              (insert "#+end_quote_of_the_day\n\n")
-
-              (insert "\n#+begin_stats_of_the_day")
-              ;; Randomise the order of stats, to keep things interesting.
-              (--map (eval it)
-                     (--sort (< (random 2) 1)
-                             '(
-                               (insert "\n"
-                                       (let* ((emacs (car (s-split " " (emacs-uptime))))
-                                              (os-uptime (shell-command-to-string "uptime"))
-                                              (os (when (string-match "\\([0-9]+\\) days" os-uptime)
-                                                    (match-string 1 os-uptime))))
-                                         (format "🆙 Emacs up for %s days; OS up for %s days" emacs os)))
-                               
-                               (insert "\n🌙 " (pp-current-islamic-date) " ⟨Islamic Date⟩")
-
-                               (progn
-                                 ;; Show prayer times
-                                 (ignore-errors  (my/update-prayer-times-task))
-                                 (insert (format "\n📿 الفجر %s ∣ الظهر %s ∣ المغرب %s"
-                                                 my/dawn-prayer-time my/noon-prayer-time my/sunset-prayer-time)))
-                               
-                               (insert "\n🥳 " (my/age-in-days-weeks-years))
-
-                               (insert "\n" (my/percentage-of-life-spent))
-                               
-                               (insert "\n🤖 " (my/git-commit-count))
-                               
-                               (insert "\n💼 " (my/how-long-I-have-been-at-my-job))
-                               
-                               (insert "\n" my/weather-brief)
-                               
-                               ;; If it's much smaller, look at git diff to figure out what happened!
-                               ;; 
-                               ;;
-                               (-let [♯lines
-                                      (with-current-buffer "my-life.org"
-                                        (save-restriction
-                                          (widen)
-                                          (cl-format nil "~:d" (count-lines (point-min) (point-max)))))]
-                                 (insert (format "\n✍️ my-life.org has %s lines" ♯lines))))))
+              (progn
+                (end-of-buffer)
+                (my/insert-with-fg-colour "grey" "\n\n#+begin_quote_of_the_day\n")
+                (my/insert-with-bg-colour "pink" (my/string-fill-column-and-center 70 (my/random-quote)) "\n")
+                (my/insert-with-fg-colour "grey" "#+end_quote_of_the_day\n\n"))
+              ;; Let's see some stats
+              (progn
+                (my/insert-with-fg-colour "grey" "\n#+begin_stats_of_the_day\n")
+                ;; Randomise the order of stats, to keep things interesting.
+                (--map (my/insert-with-bg-colour "aquamarine" (eval it) "\n")
+                       (--sort (< (random 2) 1)
+                               '((my/age-in-days-weeks-years)
+                                 (my/percentage-of-life-spent)
+                                 (my/git-commit-count)
+                                 (my/how-long-I-have-been-at-my-job)
+                                 my/weather-brief
+                                 (pp-current-islamic-date)
+                                 ;; Prayer Times
+                                 (progn
+                                   (ignore-errors  (my/update-prayer-times-task))
+                                   (format "📿 الفجر %s ∣ الظهر %s ∣ المغرب %s"
+                                           my/dawn-prayer-time my/noon-prayer-time my/sunset-prayer-time))
+                                 ;; Emacs & OS up times
+                                 (let* ((emacs (car (s-split " " (emacs-uptime))))
+                                        (os-uptime (shell-command-to-string "uptime"))
+                                        (os (when (string-match "\\([0-9]+\\) days" os-uptime)
+                                              (match-string 1 os-uptime))))
+                                   (format "🆙 Emacs up for %s days; OS up for %s days" emacs os))
+                                 ;; Journal Line Count
+                                 ;; If it's much smaller, look at git diff to figure out what happened!
+                                 (-let [♯lines
+                                        (with-current-buffer "my-life.org"
+                                          (save-restriction
+                                            (widen)
+                                            (cl-format nil "~:d" (count-lines (point-min) (point-max)))))]
+                                   (format "✍️ my-life.org has %s lines" ♯lines)))))
+                (my/insert-with-fg-colour "grey" "#+end_stats_of_the_day\n\n"))
               
-              (insert "\n#+end_stats_of_the_day\n\n")
-
               (my/show-life-purpose-statement-then-remove-it-after-I-read-it)
 
-              (insert "\n💬" (my/word-of-the-day))
-              (org-fill-paragraph)
+              (progn
+                (my/insert-with-fg-colour "grey" "\n#+begin_word_of_the_day\n")
+                (my/insert-with-bg-colour "RosyBrown1" "💬 " (my/word-of-the-day) "\n")
+                (org-fill-paragraph)
+                (my/insert-with-fg-colour "grey" "#+end_word_of_the_day\n\n"))
               
               ;; I think it'd be neat to insert my clocked-in / logs of the day here.
               ;; Look at what I clocked into this day/week! Get a great idea of what I've done with my time, in detail. Also, see ~C-c a v L~.
@@ -3853,14 +3865,15 @@ Further reading:
                   (org-agenda-log-mode '(4))
                   (setq todays-agenda (buffer-string))
                   (org-agenda-quit)
-                  (insert "\n\n#+begin_agenda_for_the_day\n")
-                  (insert todays-agenda)
-                  (insert "#+end_agenda_for_the_day")
+                  (my/insert-with-fg-colour "grey"  "\n\n#+begin_agenda_for_the_day\n")
+                  (my/insert-with-bg-colour "LightBlue1" todays-agenda)                
+                  (my/insert-with-fg-colour "grey" "#+end_agenda_for_the_day")
                   (insert "\n⟨🤔 Did I get everything I wanted done? Perhaps, I underestimated time for things? 🗯️⟩")
                   (insert "\n~C-c a w v c~ to check for time gaps and review time for the past week. And to see what I worked on, and where I spent too much time or too little.")))
-              (insert "\nSay, “Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)”")
 
               
+              (insert "\nSay, “Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)”")
+
               ;;
               ;; MA: Consider adding other journal prompts here, whose replies may be long-form.
               ;; E.g., pick one, or two, random prompts.
@@ -3873,12 +3886,12 @@ Further reading:
 
 (cl-defun my/show-life-purpose-statement-then-remove-it-after-I-read-it ()
   (set-mark-command nil)
-  (-let [purpose "                   When people say “What are you doing?”,                   
-                        You say ⟪“Things that please me.”⟫                  
-                          They say “Toward what end?”,                      
-                            and you say ⟪“Pleasure.”⟫                       
-                They say “But really, what are you working on?”             
-                         You say ⟪“Having a good time!”⟫                    
+  (-let [purpose "                   When people say “What are you doing?”,
+                        You say ⟪“Things that please me.”⟫
+                          They say “Toward what end?”,
+                            and you say ⟪“Pleasure.”⟫
+                They say “But really, what are you working on?”
+                         You say ⟪“Having a good time!”⟫
 "]
     ;; NOTE: explore more faces via M-x highlight-phrase.
     (insert (propertize purpose 'font-lock-face 'hi-green)))
@@ -3896,7 +3909,7 @@ Further reading:
   (let (result)
     (org-web-tools-read-url-as-org "https://www.merriam-webster.com/word-of-the-day")
     (setq result (format
-                  "%s \n#+begin_word\n %s \n#+end_word"
+                  "%s\n%s"
                   (substring-no-properties (org-get-heading t t t t))
                   (progn
                     (org-next-visible-heading 2)
@@ -3911,14 +3924,15 @@ Further reading:
 
 
 (require 'calendar)
-
+(require 'cal-islam)
 (defun pp-current-islamic-date ()
   "Return the current Islamic (Hijri) date as a readable string (e.g., \"21 Ramadan 1445\")."
+  (require 'calendar)
   (let* ((today (calendar-current-date))          ; Gregorian date (MONTH DAY YEAR)
          (abs-date (calendar-absolute-from-gregorian today))) ; Convert to absolute days
     (-let [(month day year) (calendar-islamic-from-absolute abs-date)]  ; Convert to Islamic date
       (let ((month-name (aref calendar-islamic-month-name-array (1- month))))
-        (format "%d %s %d" day month-name year)))))
+        (format "🌙 %d %s %d ⟨Islamic Date⟩" day month-name year)))))
 
 
 (defun my/get-prayer-times ()
@@ -3927,7 +3941,7 @@ Further reading:
   (let* ((json-object-type 'alist)
          (json (json-read-from-string
                 (shell-command-to-string "curl -s https://ipinfo.io/json")))
-         (loc (alist-get 'loc json)) ; loc is "LAT,LON" 
+         (loc (alist-get 'loc json)) ; loc is "LAT,LON"
          (parts (split-string loc ","))
          (lat (car parts))
          (lon (cadr parts))
@@ -4052,9 +4066,9 @@ Further reading:
          (weeks-old (/ days-old 7))
          (months-old (/ days-old 30.44)) ;; average month length
          (years-old (/ days-old 365.25))) ;; approximate year with leap years
-    (cl-format nil "I am now ~:d days old; which is ~:d weeks old; which is ~:d months old; which is ~,1f years old."
+    (cl-format nil "🥳 I am now ~:d days old; which is ~:d weeks old; which is ~:d months old; which is ~,1f years old."
                (floor days-old) (floor weeks-old) (floor months-old) years-old)))
-;; 
+;;
 ;; Elisp's “format” is not as capable as Common Lisp's “format”.
 ;; E.g., there's no equivalent of (cl-format nil "~:d" 1000000)
 ;; which prints numbers with comma separators.
@@ -4066,7 +4080,7 @@ Further reading:
                (format "cd %s; git log --author='%s' --pretty=oneline | wc -l" my\work-dir)
                shell-command-to-string
                string-to-number
-               (cl-format nil "I have made ~:d commits at work")))
+               (cl-format nil "🤖 I have made ~:d commits at work")))
 
 
 (defun my/how-long-I-have-been-at-my-job ()
@@ -4083,7 +4097,7 @@ Further reading:
          (days (/ (float-time diff) 86400))
          (years (floor (/ days 365.25)))
          (months (floor (/ (- days (* years 365.25)) 30.44)))) ; approximate months
-    (message "I've been at my job for %d year%s and %d month%s. I joined %s."
+    (message "💼 I've been at my job for %d year%s and %d month%s. I joined %s."
              years (if (= years 1) "" "s")
              months (if (= months 1) "" "s")
              (substring first-date-str 0 10))))
@@ -4132,7 +4146,7 @@ Returns a float between 0 and 100."
          (current-minute (nth 1 now))
          (current-second (nth 0 now))
          ;; (total-day-seconds (* 24 3600))
-         (total-day-awake-seconds (* 16 3600))         
+         (total-day-awake-seconds (* 16 3600))
          (elapsed-seconds (+ (* current-awake-hour 3600)
                              (* current-minute 60)
                              current-second)))
@@ -4281,6 +4295,52 @@ TODO:
 ;; I was surprised I needed this; perhaps a system restart will show I don't need it.
 (add-hook 'org-capture-mode-hook #'my/setup-smart-paste)
 ;; “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode:1 ends here
+
+;; [[file:init.org::*\[Conversely,\] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=][[Conversely,] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=:1]]
+(cl-defun my/copy-as-jira ()
+  "Export region to Jira markdown, and copy to the kill ring for pasting into other programs."
+  (interactive)
+  (use-package ox-jira)
+  (message "Converting to Jira Markdown...")
+  (kill-new (org-export-as 'jira))
+  (message "Copied as Jira Markdown!"))
+
+
+(cl-defun my/copy-as-reddit ()
+  "Export region to Reddit (i.e., Github Flavoured Markdown), and copy to the kill ring for pasting into other programs.
+
+   “Mode for Reddit”: Conversely, to read Reddit within Emacs,
+   (use-package md4rd :config (setq md4rd-subs-active '(emacs clojure shia)))
+   then “M-x md4rd”."
+  (interactive)
+  (use-package ox-gfm)
+  (message "Converting to Reddit Markdown...")
+  (kill-new (org-export-as 'gfm))
+  (message "Copied as Reddit Markdown!"))
+
+
+(cl-defun my/copy-as-slack ()
+  "Export region to slack, and copy to the kill ring for pasting into other programs."
+  (interactive)
+  (use-package ox-slack)
+  (message "Converting to Slack Markdown...")
+  (kill-new (org-export-as 'slack))
+  (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))
+
+
+(cl-defun my/copy-as-confluence ()
+  "Export region to Confluence, and copy to the kill ring for pasting into other programs.
+
+More precisely, export the selected region to HTML and copy it to the clipboard.
+
+Note: Confluence has no markup language, it's a WYSIWYG editor,
+but it does recognise formatted text, such as what you copy off a webpage."
+  (interactive)
+  (message "Converting to Confluence Markdown...")
+  ;; NOTE: Consider using https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/ox-confluence.el
+  (kill-new (org-export-as 'html))
+  (message "Copied as Confluence Markdown!"))
+;; [Conversely,] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=:1 ends here
 
 ;; [[file:init.org::*my/dired-copy-image-to-clipboard][my/dired-copy-image-to-clipboard:1]]
 (defun my/dired-copy-image-to-clipboard ()
@@ -4771,52 +4831,6 @@ With prefix arg, offer recently clocked tasks for selection."
 (set-default 'before-save-hook (--remove (equal it 'whitespace-cleanup) before-save-hook))
 ;; Working with massive files: my-life∙org:1 ends here
 
-;; [[file:init.org::*Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=][Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=:1]]
-(cl-defun my/copy-as-jira ()
-  "Export region to Jira markdown, and copy to the kill ring for pasting into other programs."
-  (interactive)
-  (use-package ox-jira)
-  (message "Converting to Jira Markdown...")
-  (kill-new (org-export-as 'jira))
-  (message "Copied as Jira Markdown!"))
-
-
-(cl-defun my/copy-as-reddit ()
-  "Export region to Reddit (i.e., Github Flavoured Markdown), and copy to the kill ring for pasting into other programs.
-
-   “Mode for Reddit”: Conversely, to read Reddit within Emacs,
-   (use-package md4rd :config (setq md4rd-subs-active '(emacs clojure shia)))
-   then “M-x md4rd”."
-  (interactive)
-  (use-package ox-gfm)
-  (message "Converting to Reddit Markdown...")
-  (kill-new (org-export-as 'gfm))
-  (message "Copied as Reddit Markdown!"))
-
-
-(cl-defun my/copy-as-slack ()
-  "Export region to slack, and copy to the kill ring for pasting into other programs."
-  (interactive)
-  (use-package ox-slack)
-  (message "Converting to Slack Markdown...")
-  (kill-new (org-export-as 'slack))
-  (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))
-
-
-(cl-defun my/copy-as-confluence ()
-  "Export region to Confluence, and copy to the kill ring for pasting into other programs.
-
-More precisely, export the selected region to HTML and copy it to the clipboard.
-
-Note: Confluence has no markup language, it's a WYSIWYG editor,
-but it does recognise formatted text, such as what you copy off a webpage."
-  (interactive)
-  (message "Converting to Confluence Markdown...")
-  ;; NOTE: Consider using https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/ox-confluence.el
-  (kill-new (org-export-as 'html))
-  (message "Copied as Confluence Markdown!"))
-;; Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=:1 ends here
-
 ;; [[file:init.org::*Hyperbole: “DWIM at point”][Hyperbole: “DWIM at point”:1]]
 (use-package hyperbole)
 (hyperbole-mode +1)
@@ -4846,10 +4860,14 @@ but it does recognise formatted text, such as what you copy off a webpage."
           (message "😲 There's no file named “%s”; perhaps you're talking about a class/record/interface with that name?" name)
       (find-file file)
       (-let [line (string-to-number regex)]
-        (if (= 0 line)            
+        (if (= 0 line)
             (progn (beginning-of-buffer) ;; In case file already open
                    (re-search-forward (s-replace "_" " " regex) nil t))
           (goto-line line)))))))
+
+
+(require 'hbut)
+
 
 (defib my/::-file-paths ()
   "Find the file whose name is at point and jump to the given regex or line number."
