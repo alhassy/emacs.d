@@ -6421,111 +6421,7 @@ the current heading stuck at the top of the window.
    ;; Child and parent headings are seperated by a /.
    org-sticky-header-outline-path-separator " ▷ "))
 #+END_SRC
-** Powerful Directory Editing with ~dired :Disabled:~
-:PROPERTIES:
-:CUSTOM_ID: Powerful-Directory-Editing-with-dired
-:header-args: :tangle no
-:END:
-
-⟨ ~C-x C-v~ to open a file or directory in dired, using the current buffer. ⟩
-
-As mentioned earlier, ~dired~ is Emacs' built-in directory editor; it's opened
-with ~C-x d~.  /Dired let's us treat directories as textual objects!/ In dired,
-press ~h~ to see the many actions available. Here's a few...
-
-#+begin_details Super Terse ‘dired’ Tutorial
-
-+ ~(~ toggles hiding entry details, such as modification date and ownership
-+ ~s~ sort entries; modeline will display “Dired by date” or “Dired by name”.
-+ ~o~ to open entry in anOther window; or ~RET~ to open in place.
-+ ~+~ to create a new directory; or ~M-x make-directory~.
-+ ~/~ to filter entries; with ~which-key~, possible completions pop-up.
-  - E.g., ~/ f~ shows only files or ~/ . png~ to obtain all entries with extension
-    ~png~.
-  - ~/ i g~ to hide git-ignored items ^_^
-  - ~/ /~ to remove all filters.
-+ ~TAB~ to navigate between different groupings of entries.
-  - ~RET~ on a drawer heading toggles folding it ^_^
-#+end_details
-
-The [[https://github.com/Fuco1/dired-hacks#dired-hacks-utils][dired-hacks]] family of packages lets us, say, get a dired buffer out of a shell
-incantation that lists files, or use dired to open files with external tools.
-Below we use three of its packages.
-
-Pressing ~i~ inserts a directory's children under it, indented, in the current
-buffer. Useful to see what's there.
-#+BEGIN_SRC emacs-lisp
-(use-package dired-subtree
-  :bind (:map dired-mode-map
-              ("i" . dired-subtree-toggle)))
-#+END_SRC
-
-When directory ~𝒳~ has only one child ~𝒴~, then in dired, instead of ~𝒳~, show me ~𝒳/𝒴~
-with ~𝒳~ greyed out.
-#+BEGIN_SRC emacs-lisp
-(use-package dired-collapse
-  :hook (dired-mode . dired-collapse-mode))
-#+END_SRC
-
-Begin dired with certain entries grouped together, according to some filtering
-requirement; and with “garbage” files not shown ---i.e., those ending in
-~.aux, .out~, etc.
-#+BEGIN_SRC emacs-lisp
-(use-package dired-filter
-  :hook (dired-mode . (lambda () (dired-filter-group-mode)
-                                 (dired-filter-by-garbage)))
-  :custom
-    (dired-garbage-files-regexp
-      "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
-    (dired-filter-group-saved-groups
-      '(("default"
-         ("Org"    (extension "org"))
-         ("Executables" (exexutable))
-         ("Directories" (directory))
-         ("PDF"    (extension "pdf"))
-         ("LaTeX"  (extension "tex" "bib"))
-         ("Images" (extension "png"))
-         ("Code"   (extension "hs" "agda" "lagda"))
-         ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
-#+END_SRC
-
-#+begin_details [Disabled] Neotree: Traditional Directory Tree Navigation
-link-here:Neotree-Traditional-Directory-Tree-Navigation
-
-We open a nifty file manager upon startup.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Sidebar for project file navigation
-(use-package neotree
-
-  :disabled
-  :config (global-set-key "\C-x\ d" 'neotree-toggle)
-          (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
-
-;; Open it up upon startup.
-;; (neotree-toggle)
-#+END_SRC
-By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file
-management.
-
-  ⟨ Edit: As a naive user, this is what I thought; yet a year later,
-                  I've almost never used neotree. ⟩
-
-Useful navigational commands include
-+ ~U~ to go up a directory.
-+ ~C-c C-c~ to change directory focus; ~C-C c~ to type the directory out.
-+ ~?~ or ~h~ to get help and ~q~ to quit.
-
-As always, to go to the neotree pane when it's the only other window,
-execute ~C-x o~.
-
-I /rarely/ make use of this feature; company mode & Helm together quickly provide
-an automatic replacement for nearly all of my uses.
-
-+ Reminiscent of GUI file managers is [[https://github.com/ralesi/ranger.el#features][ranger]]; e.g., it has multi-column
-  display of parent directories along with a file preview mechanism.
-#+end_details
-
-** Persistent Scratch Buffer                                       :Disabled:
+** Persistent Scratch Buffer                                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Persistent-Scratch-Buffer
 :header-args: :tangle no
@@ -6567,7 +6463,7 @@ I use Org-mode often, so that's how I want things to appear.
   "\n#\n# ⟨ ‘C-x C-s’ here saves to ~/.emacs.d/.persistent-scratch ⟩ \n\n"))
 #+end_src
 
-** Tabs                                                            :Disabled:
+** Tabs                                                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Tabs
 :header-args: :tangle no
@@ -6591,7 +6487,7 @@ It's been less than three days and I've found this utility to be unhelpful, to m
 
 An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
 
-** Window resizing using the golden ratio                          :Disabled:
+** Window resizing using the golden ratio                         :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Window-resizing-using-the-golden-ratio
 :header-args: :tangle no
@@ -6617,7 +6513,7 @@ An alternative, also disabled:
 (use-package zoom :config (zoom-mode t))
 #+end_src
 
-** Org-Emphasise for Parts of Words                                :Disabled:
+** Org-Emphasise for Parts of Words                               :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
 :header-args: :tangle no
@@ -6636,7 +6532,7 @@ I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
 
-** Preview link under cursor                                       :Disabled:
+** Preview link under cursor                                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Preview-link-under-cursor
 :header-args: :tangle no
@@ -6833,7 +6729,7 @@ Example:
             (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
               (all-the-icons-install-fonts 'install-without-asking))))
 #+end_src
-** Having a workspace manager in Emacs                             :Disabled:
+** Having a workspace manager in Emacs                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
 :header-args: :tangle no
@@ -6866,7 +6762,7 @@ All commands are prefixed by ~C-x x~; main commands:
 As always, since we've installed ~which-key~, it suffices to press ~C-x x~ then look
 at the resulting menu 😃
 
-** Kill all buffers that are not associated with a file            :Disabled:
+** Kill all buffers that are not associated with a file           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
 :header-args: :tangle no
@@ -15469,6 +15365,111 @@ Check for orphaned files in the Org attachment directory.
         (goto-char (point-min))
         (pop-to-buffer (current-buffer))))))
 #+end_src
+*** Powerful Directory Editing with ~dired :Disabled:~
+:PROPERTIES:
+:CUSTOM_ID: Powerful-Directory-Editing-with-dired
+:header-args: :tangle no
+:END:
+
+⟨ ~C-x d~ to open a file or directory in dired, using the current buffer. ⟩
+
+As mentioned earlier, ~dired~ is Emacs' built-in directory editor; it's opened
+with ~C-x d~.  /Dired let's us treat directories as textual objects!/ In dired,
+press ~h~ to see the many actions available. Here's a few...
+
+#+begin_details Super Terse ‘dired’ Tutorial
+
++ ~(~ toggles hiding entry details, such as modification date and ownership
++ ~s~ sort entries; modeline will display “Dired by date” or “Dired by name”.
++ ~o~ to open entry in anOther window; or ~RET~ to open in place.
++ ~+~ to create a new directory; or ~M-x make-directory~.
++ ~/~ to filter entries; with ~which-key~, possible completions pop-up.
+  - E.g., ~/ f~ shows only files or ~/ . png~ to obtain all entries with extension
+    ~png~.
+  - ~/ i g~ to hide git-ignored items ^_^
+  - ~/ /~ to remove all filters.
++ ~TAB~ to navigate between different groupings of entries.
+  - ~RET~ on a drawer heading toggles folding it ^_^
+#+end_details
+
+The [[https://github.com/Fuco1/dired-hacks#dired-hacks-utils][dired-hacks]] family of packages lets us, say, get a dired buffer out of a shell
+incantation that lists files, or use dired to open files with external tools.
+Below we use three of its packages.
+
+Pressing ~i~ inserts a directory's children under it, indented, in the current
+buffer. Useful to see what's there.
+#+BEGIN_SRC emacs-lisp
+(use-package dired-subtree
+  :bind (:map dired-mode-map
+              ("i" . dired-subtree-toggle)))
+#+END_SRC
+
+When directory ~𝒳~ has only one child ~𝒴~, then in dired, instead of ~𝒳~, show me ~𝒳/𝒴~
+with ~𝒳~ greyed out.
+#+BEGIN_SRC emacs-lisp
+(use-package dired-collapse
+  :hook (dired-mode . dired-collapse-mode))
+#+END_SRC
+
+Begin dired with certain entries grouped together, according to some filtering
+requirement; and with “garbage” files not shown ---i.e., those ending in
+~.aux, .out~, etc.
+#+BEGIN_SRC emacs-lisp
+(use-package dired-filter
+  :hook (dired-mode . (lambda () (dired-filter-group-mode)
+                                 (dired-filter-by-garbage)))
+  :custom
+    (dired-garbage-files-regexp
+      "\\(?:\\.\\(?:aux\\|bak\\|dvi\\|log\\|orig\\|rej\\|toc\\|out\\)\\)\\'")
+    (dired-filter-group-saved-groups
+      '(("default"
+         ("Org"    (extension "org"))
+         ("Executables" (exexutable))
+         ("Directories" (directory))
+         ("PDF"    (extension "pdf"))
+         ("LaTeX"  (extension "tex" "bib"))
+         ("Images" (extension "png"))
+         ("Code"   (extension "hs" "agda" "lagda"))
+         ("Archives"(extension "zip" "rar" "gz" "bz2" "tar"))))))
+#+END_SRC
+
+#+begin_details [Disabled] Neotree: Traditional Directory Tree Navigation
+link-here:Neotree-Traditional-Directory-Tree-Navigation
+
+We open a nifty file manager upon startup.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Sidebar for project file navigation
+(use-package neotree
+
+  :disabled
+  :config (global-set-key "\C-x\ d" 'neotree-toggle)
+          (setq neo-theme 'icons)) ;; Uses all-the-icons from § Booting Up
+
+;; Open it up upon startup.
+;; (neotree-toggle)
+#+END_SRC
+By default ~C-x d~ invokes ~dired~, but I prefer ~neotree~ for file
+management.
+
+  ⟨ Edit: As a naive user, this is what I thought; yet a year later,
+                  I've almost never used neotree. ⟩
+
+Useful navigational commands include
++ ~U~ to go up a directory.
++ ~C-c C-c~ to change directory focus; ~C-C c~ to type the directory out.
++ ~?~ or ~h~ to get help and ~q~ to quit.
+
+As always, to go to the neotree pane when it's the only other window,
+execute ~C-x o~.
+
+I /rarely/ make use of this feature; company mode & Helm together quickly provide
+an automatic replacement for nearly all of my uses.
+
++ Reminiscent of GUI file managers is [[https://github.com/ralesi/ranger.el#features][ranger]]; e.g., it has multi-column
+  display of parent directories along with a file preview mechanism.
+#+end_details
+
+
 ** Org-rifle
 :PROPERTIES:
 :CREATED:  [2025-04-27 Sun 06:26]
