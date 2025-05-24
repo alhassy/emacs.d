@@ -6054,7 +6054,7 @@ becomes bold; likewise for ~/~ for emphasise.
 
 I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
 Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
-** Tabs                                                           :Disabled:
+** Tabs                                                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Tabs
 :header-args: :tangle no
@@ -6078,7 +6078,7 @@ It's been less than three days and I've found this utility to be unhelpful, to m
 
 An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
 
-** Window resizing using the golden ratio                         :Disabled:
+** Window resizing using the golden ratio                          :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Window-resizing-using-the-golden-ratio
 :header-args: :tangle no
@@ -6104,7 +6104,7 @@ An alternative, also disabled:
 (use-package zoom :config (zoom-mode t))
 #+end_src
 
-** Preview link under cursor                                      :Disabled:
+** Preview link under cursor                                       :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Preview-link-under-cursor
 :header-args: :tangle no
@@ -6287,7 +6287,7 @@ doc:font-lock-mode, which performs arbitrary syntax highlighting.
             (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
               (all-the-icons-install-fonts 'install-without-asking))))
 #+end_src
-** Having a workspace manager in Emacs                            :Disabled:
+** Having a workspace manager in Emacs                             :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Having-a-workspace-manager-in-Emacs
 :header-args: :tangle no
@@ -6320,7 +6320,7 @@ All commands are prefixed by ~C-x x~; main commands:
 As always, since we've installed ~which-key~, it suffices to press ~C-x x~ then look
 at the resulting menu 😃
 
-** Kill all buffers that are not associated with a file           :Disabled:
+** Kill all buffers that are not associated with a file            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
 :header-args: :tangle no
@@ -10685,7 +10685,7 @@ think is not ideal since it provides way less information.
 ;; Website currently down ... https://github.com/SavchenkoValeriy/emacs-powerthesaurus/issues/6
 #+END_SRC
 :End:
-** Touch Typing                                                    :Disabled:
+** Touch Typing                                                   :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Touch-Typing
 :header-args: :tangle no
@@ -10737,7 +10737,7 @@ Then /detect language/ then /Arabic/ to obtain:
 #+end_quote
 Neato 😲
 
-** Using a Grammar & Style Checker                                 :Disabled:
+** Using a Grammar & Style Checker                                :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Using-a-Grammar-Style-Checker
 :header-args: :tangle no
@@ -11179,7 +11179,7 @@ is common among coders. Now, for example, ~M-f~ moves along each subword.
 (global-subword-mode 1)
 #+end_src
 
-** Mouse Editing Support                                           :Disabled:
+** Mouse Editing Support                                          :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Mouse-Editing-Support
 :header-args: :tangle no
@@ -11269,7 +11269,7 @@ An alternative is the [[https://github.com/mickeynp/smart-scan][smart-scan]] lib
 not provide the highlighting occurances at point.
 # The default symbol replacement is [[https://github.com/mickeynp/smart-scan/issues/23][over-zealous]] in that it replaces sub-terms
 # occurring as parts of larger words. Let's do something about that.
-** Letter-based Navigation                                         :Disabled:
+** Letter-based Navigation                                        :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Letter-based-Navigation
 :header-args: :tangle no
@@ -11334,7 +11334,7 @@ Of course we can also use it without the asterisk; e.g.:
 Finally, we can use ~M-x describe-personal-keybindings~ to see the keybindings
 we've personally defined in ~init.el~.
 
-**   =C-c e n,p=: Taking a tour of one's edits                     :Disabled:
+**   =C-c e n,p=: Taking a tour of one's edits                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: C-c-e-n-p-Taking-a-tour-of-one's-edits
 :header-args: :tangle no
@@ -11376,7 +11376,7 @@ navigate my recent edits /without/ having to supply the prefix each time.
             (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
 #+end_src
 
-** LaTeX ⇐ Org-Mode                                                :Disabled:
+** LaTeX ⇐ Org-Mode                                               :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-Mode-PDF-HTML
 :header-args: :tangle no
@@ -11442,7 +11442,7 @@ For example, we account for LaTeX citations.
 ;; (setq org-export-with-section-numbers nil)
 #+END_SRC
 :End:
-*** Working with Citations                                :Disabled:Not_Used:
+*** Working with Citations                               :Disabled:Not_Used:
 :PROPERTIES:
 :CUSTOM_ID: Working-with-Citations
 :END:
@@ -11549,7 +11549,7 @@ anchors.
 ;; Can be used to export a file into a coloured html.
 #+END_SRC
 
-*** HTML “Folded Drawers”                  :Move_to_org_special_block_extras:
+*** HTML “Folded Drawers”                 :Move_to_org_special_block_extras:
 :PROPERTIES:
 :CUSTOM_ID: HTML-Folded-Drawers
 :END:
@@ -11640,7 +11640,7 @@ Hey bud, hope you're enjoying this read ^_^
 
 Now that I've written this, I'm thinking it may have been preferably to use an org-block…?
 
-*** Diagrams with Mermaid ---Not Recommended                       :Disabled:
+*** Diagrams with Mermaid ---Not Recommended                      :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Diagrams-with-Mermaid-Not-Recommended
 :header-args: :tangle no :eval no-export
@@ -11755,89 +11755,7 @@ speaker notes in the flattened view.
 Within the flatenned view, one may wish to ~CTRL/CMD+P~ then save the
 resulting PDF locally.
 
-** C-c C-l Org-mode ⇐ HTML
-:PROPERTIES:
-:CUSTOM_ID: Org-mode-HTML
-:END:
-
-The following let's us copy htlm into org format using eww, Emacs' built-in web browser.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; See: https://emacs.stackexchange.com/questions/7171/paste-html-into-org-mode
-(use-package org-eww
-
- :quelpa (org-eww :fetcher git :url "https://github.com/Fuco1/org-mode.git"))
-#+END_SRC
-
-It does not work as I'd like, but may prove useful to have around.
-
-+ Possibly useful: Open a webpage with ~M-x eww~ then toggle ~M-x read-only-mode~ to
-  edit the text, say for notes or deletions, as you read! No need to copy-paste.
-
---------------------------------------------------------------------------------
-
-[[https://github.com/alphapapa/org-web-tools][org-web-tools]] claims to /view, capture, and archive Web pages in Org-mode/; this
-may be a very useful tool.
-
-#+begin_src emacs-lisp
-(use-package org-web-tools
-
-  :config
-  ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
-  ;; the page to get the HTML title.
-  ;; (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url) ;; Instead, see my/org-insert-link-dwim below.
-  )
-#+end_src
-Other useful functions, needing pandoc:
-+ ~org-web-tools-insert-web-page-as-entry~ and
-+ ~org-web-tools-convert-links-to-page-entries~.
-
-#+begin_src emacs-lisp
-;; C-u C-c C-l ⇒ Paste URL with title, WITHOUT prompting me for anything.
-;; C-c C-l ⇒ Prompt me for title.
-(bind-key* "C-c C-l"
-           (lambda () (interactive)
-             (call-interactively
-              (if current-prefix-arg
-                  #'org-web-tools-insert-link-for-url
-                #'my/org-insert-link-dwim))))
-;; From:
-(defun my/org-insert-link-dwim ()
-  "Like `org-insert-link' but with personal dwim preferences.
-
-- When text is selected, use that as the link description --and prompt for link type
-- When a URL is in the clipboard, use that as the link type
-- On an existing Org link, prompt to alter the link then to alter the description
-- With a ‘C-u’ prefix, prompts for a file to link to.
-  - It is relative to the current directory; use ‘C-u C-u’ to get an absolute path.
-
-It fallsback to `org-insert-link' when possible.
-
-Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
-  (interactive)
-  (let* ((point-in-link (org-in-regexp org-link-any-re 1))
-         (clipboard-url (when (string-match-p "^http" (current-kill 0))
-                          (current-kill 0)))
-         (region-content (when (region-active-p)
-                           (buffer-substring-no-properties (region-beginning)
-                                                           (region-end)))))
-    (cond ((and region-content clipboard-url (not point-in-link))
-           (delete-region (region-beginning) (region-end))
-           (insert (org-make-link-string clipboard-url region-content)))
-          ((and clipboard-url (not point-in-link))
-           (insert (org-make-link-string
-                    clipboard-url
-                    (read-string "title: "
-                                 (with-current-buffer (url-retrieve-synchronously clipboard-url)
-                                   (dom-text (car
-                                              (dom-by-tag (libxml-parse-html-region
-                                                           (point-min)
-                                                           (point-max))
-                                                          'title))))))))
-          (t
-           (call-interactively 'org-insert-link)))))
-#+end_src
-
-** TODO COMMENT Working with PDFs                                  :Disabled:
+** TODO COMMENT Working with PDFs                                 :Disabled:
 *** TODO Open PDFs in Emacs
 #+begin_src emacs-lisp
     ;; In Org-mode, clicking on PDF should open it in Emacs
@@ -14698,6 +14616,89 @@ Notes:
 - (org-media-image-save-type, org-dnd-default-attach-method): New defcustoms.
 - Add yank-media and DND handlers: (org--image-yank-media-handler, org--copied-files-yank-media-handler) (org--dnd-local-file-handler)
 
+*** TODO C-c C-l Org-mode ⇐ HTML
+:PROPERTIES:
+:CUSTOM_ID: Org-mode-HTML
+:END:
+
+The following let's us copy htlm into org format using eww, Emacs' built-in web browser.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; See: https://emacs.stackexchange.com/questions/7171/paste-html-into-org-mode
+(use-package org-eww
+
+ :quelpa (org-eww :fetcher git :url "https://github.com/Fuco1/org-mode.git"))
+#+END_SRC
+
+It does not work as I'd like, but may prove useful to have around.
+
++ Possibly useful: Open a webpage with ~M-x eww~ then toggle ~M-x read-only-mode~ to
+  edit the text, say for notes or deletions, as you read! No need to copy-paste.
+
+--------------------------------------------------------------------------------
+
+[[https://github.com/alphapapa/org-web-tools][org-web-tools]] claims to /view, capture, and archive Web pages in Org-mode/; this
+may be a very useful tool.
+
+#+begin_src emacs-lisp
+(use-package org-web-tools
+
+  :config
+  ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
+  ;; the page to get the HTML title.
+  ;; (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url) ;; Instead, see my/org-insert-link-dwim below.
+  )
+#+end_src
+Other useful functions, needing pandoc:
++ ~org-web-tools-insert-web-page-as-entry~ and
++ ~org-web-tools-convert-links-to-page-entries~.
+
+#+begin_src emacs-lisp
+;; C-u C-c C-l ⇒ Paste URL with title, WITHOUT prompting me for anything.
+;; C-c C-l ⇒ Prompt me for title.
+(bind-key* "C-c C-l"
+           (lambda () (interactive)
+             (call-interactively
+              (if current-prefix-arg
+                  #'org-web-tools-insert-link-for-url
+                #'my/org-insert-link-dwim))))
+;; From:
+(defun my/org-insert-link-dwim ()
+  "Like `org-insert-link' but with personal dwim preferences.
+
+- When text is selected, use that as the link description --and prompt for link type
+- When a URL is in the clipboard, use that as the link type
+- On an existing Org link, prompt to alter the link then to alter the description
+- With a ‘C-u’ prefix, prompts for a file to link to.
+  - It is relative to the current directory; use ‘C-u C-u’ to get an absolute path.
+
+It fallsback to `org-insert-link' when possible.
+
+Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
+  (interactive)
+  (let* ((point-in-link (org-in-regexp org-link-any-re 1))
+         (clipboard-url (when (string-match-p "^http" (current-kill 0))
+                          (current-kill 0)))
+         (region-content (when (region-active-p)
+                           (buffer-substring-no-properties (region-beginning)
+                                                           (region-end)))))
+    (cond ((and region-content clipboard-url (not point-in-link))
+           (delete-region (region-beginning) (region-end))
+           (insert (org-make-link-string clipboard-url region-content)))
+          ((and clipboard-url (not point-in-link))
+           (insert (org-make-link-string
+                    clipboard-url
+                    (read-string "title: "
+                                 (with-current-buffer (url-retrieve-synchronously clipboard-url)
+                                   (dom-text (car
+                                              (dom-by-tag (libxml-parse-html-region
+                                                           (point-min)
+                                                           (point-max))
+                                                          'title))))))))
+          (t
+           (call-interactively 'org-insert-link)))))
+#+end_src
+
+
 *** When I “Smart Paste”, let's ensure things look nice!
 **** Proportional fonts for Headlines
 :PROPERTIES:
@@ -15053,7 +15054,7 @@ blocks; as well as figure blocks. For equation blocks, you must use a
 (setq org-latex-prefer-user-labels t)
  #+end_src
  
-**** Org-Emphasise for Parts of Words                            :Disabled:
+**** Org-Emphasise for Parts of Words                           :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Org-Emphasise-for-Parts-of-Words
 :header-args: :tangle no
