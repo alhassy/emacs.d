@@ -6073,164 +6073,6 @@ becomes bold; likewise for ~/~ for emphasise.
 
 I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
 Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
-** Making Block Delimiters Less Intrusive
-:PROPERTIES:
-:CUSTOM_ID: Making-Block-Delimiters-Less-Intrusive
-:END:
-
-Let us render Org-mode's ~#+begin_src~ and ~#+end_src~ less obtrusively by,
-e.g., having the former render as a pencil marker ~✎~ and the latter as a
-tombstone ~□~ ---reminiscent of Halmos' QED end-of-proof marker.
-# His setup also accounts for quotes.
-
-#+begin_details Rasmus’ Incantation
-This is from [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]].
-#+begin_src emacs-lisp
-  (defvar-local rasmus/org-at-src-begin -1
-    "Variable that holds whether last position was a ")
-
-  (defvar rasmus/ob-header-symbol ?☰
-    "Symbol used for babel headers")
-
-  (defun rasmus/org-prettify-src--update ()
-    (let ((case-fold-search t)
-          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
-          found)
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward re nil t)
-          (goto-char (match-end 0))
-          (let ((args (org-trim
-                       (buffer-substring-no-properties (point)
-                                                       (line-end-position)))))
-            (when (org-string-nw-p args)
-              (let ((new-cell (cons args rasmus/ob-header-symbol)))
-                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
-                (cl-pushnew new-cell found :test #'equal)))))
-        (setq prettify-symbols-alist
-              (cl-set-difference prettify-symbols-alist
-                                 (cl-set-difference
-                                  (cl-remove-if-not
-                                   (lambda (elm)
-                                     (eq (cdr elm) rasmus/ob-header-symbol))
-                                   prettify-symbols-alist)
-                                  found :test #'equal)))
-        ;; Clean up old font-lock-keywords.
-        (font-lock-remove-keywords nil prettify-symbols--keywords)
-        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
-        (font-lock-add-keywords nil prettify-symbols--keywords)
-        (while (re-search-forward re nil t)
-          (font-lock-flush (line-beginning-position) (line-end-position))))))
-
-  (defun rasmus/org-prettify-src ()
-    "Hide src options via `prettify-symbols-mode'.
-
-  `prettify-symbols-mode' is used because it has uncollpasing. It's
-  may not be efficient."
-    (let* ((case-fold-search t)
-           (at-src-block (save-excursion
-                           (beginning-of-line)
-                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
-      ;; Test if we moved out of a block.
-      (when (or (and rasmus/org-at-src-begin
-                     (not at-src-block))
-                ;; File was just opened.
-                (eq rasmus/org-at-src-begin -1))
-        (rasmus/org-prettify-src--update))
-      ;; Remove composition if at line; doesn't work properly.
-      ;; (when at-src-block
-      ;;   (with-silent-modifications
-      ;;     (remove-text-properties (match-end 0)
-      ;;                             (1+ (line-end-position))
-      ;;                             '(composition))))
-      (setq rasmus/org-at-src-begin at-src-block)))
-
-  (defun rasmus/org-prettify-symbols ()
-    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
-          (cl-reduce 'append
-                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
-                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
-                               ("#+end_src"   . ?□) ;; ⏹
-                               ("#+header:" . ,rasmus/ob-header-symbol)
-                               ("#+begin_quote" . ?»)
-                               ("#+end_quote" . ?«)))))
-    (turn-on-prettify-symbols-mode)
-    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
-
-
-;; Last up­dated: 2019-06-09
-#+end_src
-#+end_details
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
-(org-mode-restart)
-#+END_SRC
-
-His development relies on built-in prettify-symbols-mode, which
-disguises strings in a buffer for the sake of readability or
-aesthetics.  Following the example in the documentation, ~C-h f
-prettify-symbols-mode~, we can quickly approximate his efforts for
-~example~ blocks as follows, however a main issue is that source blocks
-have busybodied headers which his setup disguises as ‘≡’.
-#+begin_src emacs-lisp
-(global-prettify-symbols-mode)
-
-(defvar my/prettify-alist nil
-  "Musa's personal prettifications.")
-
-(cl-loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
-                       ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
-                       ("#+end_example"   . ?⇐)                 ;; ⇐
-                       ;; Actuall beautifications
-                       ("==" . ?≈) ("===" . ?≈) ;; ("=" . ?≔) ;; Programming specific prettifications
-                       ("i32" . ?ℤ) ("u32" . ?ℕ) ("f64" . ?ℝ) ;; Rust specific
-                       ("bool" . ?𝔹)
-                       ;; ("\"\"\"\n" . ?“) ("\"\"\"" . ?”)
-                       ("\"\"\"" . ?“)
-                       ("fn" . ?λ)
-                       ("<=" . ?≤) (">=" . ?≥)
-                       ("->" . ?→) ("-->". ?⟶) ;; threading operators
-                       ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
-         do (push pair my/prettify-alist))
-
-;; Replace all Org [metadata]keywords with the “▷” symbol; e.g., “#+title: Hello” looks like “▷ Hello”.
-(cl-loop for keyword in '(title author email date description options property startup export_file_name html_head fileimage filetags)
-         do (push (cons (format "#+%s:" keyword) ?▷) my/prettify-alist))
-
-(cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
-      do (add-hook hk (lambda ()
-                        (setq prettify-symbols-alist
-                              (append my/prettify-alist prettify-symbols-alist)))))
-
-
-(add-hook 'org-mode-hook (lambda () (push '("# " . (?🎶 (Br . Bl) ?\ )) prettify-symbols-alist)))
-#+end_src
-
-For more on prettify-symbols-mode, read the informative [[https://tony-zorman.com/posts/pretty-latex.html][Prettifying LaTeX Buffers]].
-
-#+RESULTS:
-
-:Did_it_work:
-#+begin_example lisp
-(<= (+ 1 1) (--> 2))
-
-1 =
-2 ==
-3 ===
-#+end_example
-:End:
-
-See [[http://www.modernemacs.com/post/prettify-mode/][“Mathematical Notation in Emacs”]] for how such prettifications can
-make verbose (Python) scripts much more readable by employing more
-economical disguises.
-
-A nice sanity:
-#+BEGIN_SRC emacs-lisp
-;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
-(setq prettify-symbols-unprettify-at-point 'right-edge)
-#+END_SRC
-
 ** Hiding Emphasise Markers, Inlining Images, and LaTeX-as-PNG
 :PROPERTIES:
 :CUSTOM_ID: Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG
@@ -15084,6 +14926,165 @@ Let's have headings stick out a bit.
 
 Remember you can always use Emacs' Custom utility to get Lisp incantations ;-)
 ---See notes on Custom above.
+
+
+**** Making Block Delimiters Less Intrusive
+:PROPERTIES:
+:CUSTOM_ID: Making-Block-Delimiters-Less-Intrusive
+:END:
+
+Let us render Org-mode's ~#+begin_src~ and ~#+end_src~ less obtrusively by,
+e.g., having the former render as a pencil marker ~✎~ and the latter as a
+tombstone ~□~ ---reminiscent of Halmos' QED end-of-proof marker.
+# His setup also accounts for quotes.
+
+#+begin_details Rasmus’ Incantation
+This is from [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol][Rasmus Roulund]].
+#+begin_src emacs-lisp
+  (defvar-local rasmus/org-at-src-begin -1
+    "Variable that holds whether last position was a ")
+
+  (defvar rasmus/ob-header-symbol ?☰
+    "Symbol used for babel headers")
+
+  (defun rasmus/org-prettify-src--update ()
+    (let ((case-fold-search t)
+          (re "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*")
+          found)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward re nil t)
+          (goto-char (match-end 0))
+          (let ((args (org-trim
+                       (buffer-substring-no-properties (point)
+                                                       (line-end-position)))))
+            (when (org-string-nw-p args)
+              (let ((new-cell (cons args rasmus/ob-header-symbol)))
+                (cl-pushnew new-cell prettify-symbols-alist :test #'equal)
+                (cl-pushnew new-cell found :test #'equal)))))
+        (setq prettify-symbols-alist
+              (cl-set-difference prettify-symbols-alist
+                                 (cl-set-difference
+                                  (cl-remove-if-not
+                                   (lambda (elm)
+                                     (eq (cdr elm) rasmus/ob-header-symbol))
+                                   prettify-symbols-alist)
+                                  found :test #'equal)))
+        ;; Clean up old font-lock-keywords.
+        (font-lock-remove-keywords nil prettify-symbols--keywords)
+        (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
+        (font-lock-add-keywords nil prettify-symbols--keywords)
+        (while (re-search-forward re nil t)
+          (font-lock-flush (line-beginning-position) (line-end-position))))))
+
+  (defun rasmus/org-prettify-src ()
+    "Hide src options via `prettify-symbols-mode'.
+
+  `prettify-symbols-mode' is used because it has uncollpasing. It's
+  may not be efficient."
+    (let* ((case-fold-search t)
+           (at-src-block (save-excursion
+                           (beginning-of-line)
+                           (looking-at "^[ \t]*#\\+begin_src[ \t]+[^ \f\t\n\r\v]+[ \t]*"))))
+      ;; Test if we moved out of a block.
+      (when (or (and rasmus/org-at-src-begin
+                     (not at-src-block))
+                ;; File was just opened.
+                (eq rasmus/org-at-src-begin -1))
+        (rasmus/org-prettify-src--update))
+      ;; Remove composition if at line; doesn't work properly.
+      ;; (when at-src-block
+      ;;   (with-silent-modifications
+      ;;     (remove-text-properties (match-end 0)
+      ;;                             (1+ (line-end-position))
+      ;;                             '(composition))))
+      (setq rasmus/org-at-src-begin at-src-block)))
+
+  (defun rasmus/org-prettify-symbols ()
+    (mapc (apply-partially 'add-to-list 'prettify-symbols-alist)
+          (cl-reduce 'append
+                     (mapcar (lambda (x) (list x (cons (upcase (car x)) (cdr x))))
+                             `(("#+begin_src" . ?✎) ;; ➤ 🖝 ➟ ➤ ✎
+                               ("#+end_src"   . ?□) ;; ⏹
+                               ("#+header:" . ,rasmus/ob-header-symbol)
+                               ("#+begin_quote" . ?»)
+                               ("#+end_quote" . ?«)))))
+    (turn-on-prettify-symbols-mode)
+    (add-hook 'post-command-hook 'rasmus/org-prettify-src t t))
+
+
+;; Last up­dated: 2019-06-09
+#+end_src
+#+end_details
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
+(org-mode-restart)
+#+END_SRC
+
+His development relies on built-in prettify-symbols-mode, which
+disguises strings in a buffer for the sake of readability or
+aesthetics.  Following the example in the documentation, ~C-h f
+prettify-symbols-mode~, we can quickly approximate his efforts for
+~example~ blocks as follows, however a main issue is that source blocks
+have busybodied headers which his setup disguises as ‘≡’.
+#+begin_src emacs-lisp
+(global-prettify-symbols-mode)
+
+(defvar my/prettify-alist nil
+  "Musa's personal prettifications.")
+
+(cl-loop for pair in '(;; Example of how pairs like this to beautify org block delimiters
+                       ("#+begin_example" . (?ℰ (Br . Bl) ?⇒)) ;; ℰ⇒
+                       ("#+end_example"   . ?⇐)                 ;; ⇐
+                       ;; Actuall beautifications
+                       ("==" . ?≈) ("===" . ?≈) ;; ("=" . ?≔) ;; Programming specific prettifications
+                       ("i32" . ?ℤ) ("u32" . ?ℕ) ("f64" . ?ℝ) ;; Rust specific
+                       ("bool" . ?𝔹)
+                       ;; ("\"\"\"\n" . ?“) ("\"\"\"" . ?”)
+                       ("\"\"\"" . ?“)
+                       ("fn" . ?λ)
+                       ("<=" . ?≤) (">=" . ?≥)
+                       ("->" . ?→) ("-->". ?⟶) ;; threading operators
+                       ("[ ]" . ?□) ("[X]" . ?☑) ("[-]" . ?◐)) ;; Org checkbox symbols
+         do (push pair my/prettify-alist))
+
+;; Replace all Org [metadata]keywords with the “▷” symbol; e.g., “#+title: Hello” looks like “▷ Hello”.
+(cl-loop for keyword in '(title author email date description options property startup export_file_name html_head fileimage filetags)
+         do (push (cons (format "#+%s:" keyword) ?▷) my/prettify-alist))
+
+(cl-loop for hk in '(text-mode-hook prog-mode-hook org-mode-hook)
+      do (add-hook hk (lambda ()
+                        (setq prettify-symbols-alist
+                              (append my/prettify-alist prettify-symbols-alist)))))
+
+
+(add-hook 'org-mode-hook (lambda () (push '("# " . (?🎶 (Br . Bl) ?\ )) prettify-symbols-alist)))
+#+end_src
+
+For more on prettify-symbols-mode, read the informative [[https://tony-zorman.com/posts/pretty-latex.html][Prettifying LaTeX Buffers]].
+
+#+RESULTS:
+
+:Did_it_work:
+#+begin_example lisp
+(<= (+ 1 1) (--> 2))
+
+1 =
+2 ==
+3 ===
+#+end_example
+:End:
+
+See [[http://www.modernemacs.com/post/prettify-mode/][“Mathematical Notation in Emacs”]] for how such prettifications can
+make verbose (Python) scripts much more readable by employing more
+economical disguises.
+
+A nice sanity:
+#+BEGIN_SRC emacs-lisp
+;; Un-disguise a symbol when cursour is inside it or at the right-edge of it.
+(setq prettify-symbols-unprettify-at-point 'right-edge)
+#+END_SRC
 
 
 **** Org-Emphasise for Parts of Words                            :Disabled:
