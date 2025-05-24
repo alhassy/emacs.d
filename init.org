@@ -6577,20 +6577,6 @@ doc:font-lock-mode, which performs arbitrary syntax highlighting.
 ;; NOTE: (my/toggle-line-fontification) works fine with svg-tag-mode :-)
 #+end_src
 
-** Now C-c C-x C-v shows remote images inline, neato!
-#+begin_src emacs-lisp :tangle init.el
-  (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
-  (require 'org-remoteimg)
-  (setq url-cache-directory "~/emacs.d/.cache/")
-  (setq org-display-remote-inline-images 'cache)
-#+end_src
-
-Example:
-[[https://www.javacodegeeks.com/wp-content/uploads/2017/09/lexer-parser-center.png][lexing vs parsing]]
-
-
-[[https://miro.medium.com/v2/resize:fit:4800/1*bpG6TxN-nS6enHkp-KIZgg.jpeg][1% better everyday, push-ups!]]
-
 ** Ibuffer: C-x C-b shows colour-coded buffers, grouped according to their git repos :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Ibuffer
@@ -15118,6 +15104,21 @@ parts of works emphasied with org-mode; e.g.,
 I've disabled this feature since multiple occurrences
 of an emphasise marker are sometimes treated as one
 lengthy phrase being emphasised.
+
+**** Now C-c C-x C-v shows remote images inline, neato!
+#+begin_src emacs-lisp :tangle init.el
+  (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
+  (require 'org-remoteimg)
+  (setq url-cache-directory "~/emacs.d/.cache/")
+  (setq org-display-remote-inline-images 'cache)
+#+end_src
+
+Example:
+[[https://www.javacodegeeks.com/wp-content/uploads/2017/09/lexer-parser-center.png][lexing vs parsing]]
+
+
+[[https://miro.medium.com/v2/resize:fit:4800/1*bpG6TxN-nS6enHkp-KIZgg.jpeg][1% better everyday, push-ups!]]
+
 
 ** [Conversely,] Rich Copy Commands :: =my/copy-as-{jira, slack, reddit, confluence}=
 :PROPERTIES:
