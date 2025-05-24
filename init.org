@@ -2935,6 +2935,948 @@ were regenerated --Emacs should also prompt me if I make any changes!
 #+end_src
 
 
+* Staying Sane
+:PROPERTIES:
+:CUSTOM_ID: Staying-Safe
+:END:
+
+See [[https://jeremykun.com/2020/01/14/the-communicative-value-of-using-git-well/][The Communicative Value of Using Git Well]]
+
+Note: Emacs has built-in version control, e.g., kbd:C-x_v_l to see the change
+log of the repository containing the current file.
+
+** Undo-tree: Very Local Version Control
+:PROPERTIES:
+:CUSTOM_ID: Undo-tree-Very-Local-Version-Control
+:END:
+ doc:undo-tree-visualize, kbd:C-x_u, gives a /visual/ representation of the
+ current buffer's edit history.
+#+BEGIN_SRC emacs-lisp :noweb yes :tangle no
+  <<undo-tree-setup>>
+#+END_SRC
+
+( We're just showing the ~<<undo-tree-setup>>~ from earlier since this is a good
+place for such a setup. More importantly, we are /not/ copy-pasting the setup: /It
+is written only once; in a single source of truth!/ )
+
+#+begin_src emacs-lisp
+;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
+(global-set-key (kbd "C-z")
+  (lambda () (interactive)
+   (undo-tree-mode) ;; Ensure the mode is on
+   (undo-tree-visualize)))
+#+end_src
+
+** Automatic Backups
+:PROPERTIES:
+:CUSTOM_ID: Automatic-Backups
+:END:
+
+By default, Emacs saves backup files ---those ending in =~=--- in the current
+directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in
+case we need to look for a backup; moreover, let's keep old versions since
+there's disk space to go around ---what am I going to do with 500gigs when nearly
+all my ‘software’ is textfiles interpreted within Emacs 😼
+
+#+BEGIN_SRC emacs-lisp
+;; New location for backups.
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+
+;; Silently delete execess backup versions
+(setq delete-old-versions t)
+
+;; Only keep the last 1000 backups of a file.
+(setq kept-old-versions 1000)
+
+;; Even version controlled files get to be backed up.
+(setq vc-make-backup-files t)
+
+;; Use version numbers for backup files.
+(setq version-control t)
+#+END_SRC
+
+Why backups? Sometimes I may forget to submit a file, or edit, to my
+version control system, and it'd be nice to be able to see a local
+automatic backup. Whenever ‘I need space,’ then I simply empty
+the backup directory, if ever. That the backups are numbered is so sweet ^_^
+
+Like package installations, my backups are not kept in any version control
+system, like git; only locally.
+
+Finally, let's not create ~.#~ files nor bother confirming killing processes.
+#+begin_src emacs-lisp
+(setq confirm-kill-processes nil
+      create-lockfiles nil)
+#+end_src
+
+*** What changed? ---Walking through backups
+:PROPERTIES:
+:CUSTOM_ID: What-changed
+:END:
+
+Let's use an elementary diff system for backups: ~backup-walker~ essentially makes
+all our backups behave as if they were (implicitly) version controlled.
+
+#+BEGIN_SRC emacs-lisp
+(use-package backup-walker
+  :commands backup-walker-start)
+#+END_SRC
+
+In a buffer that corresponds to a file, invoke doc:backup-walker-start to see a
+visual diff of changes /between/ versions; then ~n~ and ~p~ to move between diffs.  By
+default, you see the changes ‘backwards’: Red means delete these things to get
+to the older version; i.e., the red ‘-’ are newer items.
+
+There is also doc:diff-backup for comparing a file with its backup.
+
+# To create backups explicitly use save-buffer (C-x C-s) with prefix arguments.
+#
+#          =diff-backup= compares a file with its backup or vice versa.
+# But there is no function to restore backup files.
+
+*** Save ≈ Backup
+:PROPERTIES:
+:CUSTOM_ID: Save-Backup
+:END:
+
+Emacs only makes a backup the very first time a buffer is saved; I'd prefer
+Emacs makes backups everytime I save! ---If I saved, that means I'm at an
+important checkpoint, so please check what I have so far as a backup!
+#+BEGIN_SRC emacs-lisp
+;; Make Emacs backup everytime I save
+
+(defun my/force-backup-of-buffer ()
+  "Lie to Emacs, telling it the curent buffer has yet to be backed up."
+  (setq buffer-backed-up nil))
+
+(add-hook 'before-save-hook  'my/force-backup-of-buffer)
+
+;; [Default settings]
+;; Autosave when idle for 30sec or 300 input events performed
+(setq auto-save-timeout 30
+      auto-save-interval 300)
+#+END_SRC
+# See the name of the latest backup, which is appeneded by a number for each save ;-)
+# (file-newest-backup "~/.emacs.d/init.org")
+
+It is intestesting to note that the above snippet could be modified to [[https://stackoverflow.com/a/6918217/3550444][make our
+own backup system]], were Emacs lacked one, by having our function simply save
+copies of our file ---on each save--- where the filename is augmented with a
+timestamp.
+
+** delete-by-moving-to-trash t
+:PROPERTIES:
+:CUSTOM_ID: delete-by-moving-to-trash-t
+:END:
+#+begin_src emacs-lisp
+;; Move to OS’ trash can when deleting stuff
+;; instead of deleting things outright!
+(setq delete-by-moving-to-trash t
+      trash-directory "~/.Trash/")
+#+end_src
+**   =magit= ---Emacs' porcelain interface to git
+:PROPERTIES:
+:CUSTOM_ID: magit-Emacs'-porcelain-interface-to-gitq
+:END:
+
+*** Intro                                                            :ignore:
+
+Let's setup an Emacs ‘porcelain’ interface to git ---it makes working with
+version control tremendously convenient.
+# Moreover, I add a little pop-up so that I don't forget to commit often!
+
+(Personal reminder: If using 2FA [two factor authentication], then when you do
+git operations, such as ~git push~, [[https://webkul.com/blog/github-push-with-two-factor-authentication/][you must use your PAT]] [personal access token]
+/instead/ of your password! Also: Install [[https://github.com/sindresorhus/refined-github][refined-github: Browser extension that
+simplifies the GitHub interface and adds useful features]]!)
+
+#+begin_src emacs-lisp
+;; Bottom of Emacs will show what branch you're on
+;; and whether the local file is modified or not.
+(use-package magit
+  :bind (("C-c M-g" . magit-file-dispatch))
+  :config (global-set-key (kbd "C-x g") 'magit-status)
+  :custom ;; Do not ask about this variable when cloning.
+    (magit-clone-set-remote.pushDefault t))
+#+end_src
+
+Why use ~magit~ as the interface to the git version control system?  In a ~magit~
+buffer nearly everything can be acted upon: Press =return=, or =space=, to see
+details and =tab= to see children items, usually.
+
++ kbd:C-x_g, doc:magit-status, gives you a nice buffer with an overview
+  of the Git repo that you're buffer is currently visiting.
++ kbd:C-c_M-g, doc:magit-file-dispatch, lets you invoke Git actions on the
+  current file directly; e.g., following up with [[kbd:b]]lame, [[kbd:l]]og, [[kbd:d]]iff,
+  [[kbd:s]]tage, or [[kbd:c]]ommit the current file.
+
+  For ease, above, we have also bound this to kbd:C-c_g ---reminiscent of kbd:C-x_g :smile:
+
+  #+begin_src emacs-lisp
+;; When we invoke magit-status, show green/red the altered lines, with extra
+;; green/red on the subparts of a line that got alerted.
+(system-packages-ensure "git-delta")
+(use-package magit-delta
+  :hook (magit-mode . magit-delta-mode))
+
+;; Don't forget to copy/paste the delta config into the global ~/.gitconfig file.
+;; Copy/paste this: https://github.com/dandavison/delta#get-started
+  #+end_src
+
++ Blame, doc:magit-blame, is super nice: The buffer gets annotations for each chunk
+  of text, regarding who authoured it, when, and their commit title.
+  Then [[kbd:q]] to quit the blame.
+
+  Likewise, doc:magit-log-buffer-file is super neat!
+
+#+begin_details Super Simple ‘magit’ Mini-tutorial
+link-here:Super-Simple-‘magit’-Mini-tutorial
+Below is my personal quick guide to working with magit ---for a full tutorial
+see [[http://jr0cket.co.uk/2012/12/driving-git-with-emacs-pure-magic-with.html.html][jr0cket's blog]].
+
++ ~dired~ :: See the contents of a particular directory.
+
++ ~magit-init~ :: Put a project under version control.
+  The mini-buffer will prompt you for the top level folder version.
+  A ~.git~ folder will be created there.
+
++ ~magit-status~ , ~C-x g~ :: See status in another buffer.
+   Press ~?~ to see options, including:
+  - g :: Refresh the status buffer.
+     # The status buffer may be refereshed using ~g~, and all magit buffers by ~G~.
+  - TAB ::  See collapsed items, such as what text has been changed.
+  - ~q~ :: Quit magit, or go to previous magit screen.
+  - ~s~ :: Stage, i.e., add, a file to version control.
+         Add all untracked files by selecting the /Untracked files/ title.
+
+    [[https://softwareengineering.stackexchange.com/a/119807/185815][The staging area is akin to a pet store; commiting is taking the pet home.]]
+
+  - ~k~ :: Kill, i.e., delete a file locally.
+  - ~K~ :: This' ~(magit-file-untrack)~ which does ~git rm --cached~.
+  - ~i~ :: Add a file to the project ~.gitignore~ file. Nice stuff =)
+  - ~u~ :: Unstage a specfif staged change highlighed by cursor.
+           ~C-u s~ stages everything --tracked or not.
+  - ~c~ :: Commit a change.
+    * A new buffer for the commit message appears, you write it then
+      commit with ~C-c C-c~ or otherwise cancel with ~C-c C-k~.
+      These commands are mentioned to you in the minibuffer when you go to commit.
+    * You can provide a commit to /each/ altered chunk of text!
+      This is super neat, you make a series of local such commits rather
+      than one nebulous global commit for the file. The ~magit~ interface
+      makes this far more accessible than a standard terminal approach!
+    * You can look at the unstaged changes, select a /region/, using ~C-SPC~ as usual,
+      and commit only that if you want!
+    * When looking over a commit, ~M-p/n~ to efficiently go to previous or next altered sections.
+    * Amend a commit by pressing ~a~ on ~HEAD~.
+
+  - ~d~ :: Show differences, another ~d~ or another option.
+    - This is magit! Each hunk can be acted upon; e.g., ~s~ or ~c~ or ~k~ ;-)
+  - ~v~ :: Revert a commit.
+  - ~x~ :: Undo last commit. Tantamount to ~git reset HEAD~~ when cursor is on most recent
+           commit; otherwise resets to whatever commit is under the cursor.
+  - ~l~ :: Show the log, another ~l~ for current branch; other options will be displayed.
+    - Here ~space~ shows details in another buffer while cursour remains in current
+      buffer and, moreover, continuing to press ~space~ scrolls through the other buffer!
+      Neato.
+  - ~P~ :: Push.
+  - ~F~ :: Pull.
+  - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
+
+Notice that every time you press one of these commands, a ‘pop-up’ of realted
+git options appears! Thus not only is there no need to memorise many of them,
+but this approach makes /discovering/ other commands easier.
+
+# Use ~M-x magit-list-repositories RET~ to list local repositories:
+#+end_details
+
+#+begin_details [Disabled] Homemade ‘uncomitted changes’ Notification
+Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/check-uncommitted/][uncommited changes]]
+---we might have had to step away from the computer and forgotten to commit.
+#+begin_src emacs-lisp :tangle no
+(require 'magit-git)
+
+(defun my/magit-check-file-and-popup ()
+  "If the file is version controlled with git
+  and has uncommitted changes, open the magit status popup."
+  (let ((file (buffer-file-name)))
+    (when (and file (magit-anything-modified-p t file))
+      (message "This file has uncommited changes!")
+      (when nil ;; Became annyoying after some time.
+      (split-window-below)
+      (other-window 1)
+      (magit-status)))))
+
+;; I usually have local variables, so I want the message to show
+;; after the locals have been loaded.
+(add-hook 'find-file-hook
+  '(lambda ()
+      (add-hook 'hack-local-variables-hook 'my/magit-check-file-and-popup)))
+#+end_src
+:Lets_try_this_out:
+#+BEGIN_EXAMPLE emacs-lisp
+(progn (eshell-command "echo change-here >> ~/dotfiles/.emacs")
+       (find-file "~/dotfiles/.emacs"))
+#+END_EXAMPLE
+:End:
+# In doubt, execute ~C-h e~ to jump to the ~*Messages*~ buffer.
+#+end_details
+
+*** Credentials: I am who I am
+:PROPERTIES:
+:CUSTOM_ID: Credentials-I-am-who-I-am
+:END:
+First, let's setup our git credentials.
+#+BEGIN_SRC emacs-lisp
+;; Only set these creds up if there is no Git email set up ---ie at work I have an email set up, so don't
+;; override it with my personal creds.
+;;
+;; See here for a short & useful tutorial:
+;; https://alvinalexander.com/git/git-show-change-username-email-address
+(when (equal "" (shell-command-to-string "git config user.email "))
+  (shell-command (format "git config --global user.name \"%s\"" user-full-name))
+  (shell-command (format "git config --global user.email \"%s\"" user-mail-address)))
+#+END_SRC
+
+If we ever need to use Git in the terminal, it should be done with Emacs as the
+underlying editor
+#+BEGIN_SRC emacs-lisp
+;; We want to reuse an existing Emacs process from the command line
+;; E.g.,  emacsclient --eval '(+ 1 2)'    # ⇒ 3
+(require 'server)
+(unless (server-running-p) (server-start))
+
+;; Or use it whenever we are editing a git message from the terminal
+(shell-command "git config --global core.editor 'emacsclient -t -a=\\\"\\\"'")
+#+END_SRC
+This will start a daemon if there is not already one running ---The ~-a~ option---
+and opens a new Emacs frame on the current terminal ---The ~-t~ option.
+
+*** Encouraging useful commit messages
+:PROPERTIES:
+:CUSTOM_ID: Encouraging-useful-commit-messages
+:END:
+Let's try our best to have a [[https://chris.beams.io/posts/git-commit/][useful & consistent commit log]]:
+#+begin_src emacs-lisp
+(defun my/git-commit-reminder ()
+  (insert "\n\n# The commit subject line ought to finish the phrase:
+# “If applied, this commit will ⟪your subject line here⟫.” ")
+  (beginning-of-buffer))
+
+(add-hook 'git-commit-setup-hook 'my/git-commit-reminder)
+#+end_src
+
+Super neat stuff!
+
+*** Maybe clone ... everything?
+:PROPERTIES:
+:CUSTOM_ID: Maybe-clone-everything
+:END:
+
+Below are the git repos I'd like to clone ---along with a function to do so
+quickly.
+#+begin_src emacs-lisp
+;; Clone git repo from clipboard
+(cl-defun maybe-clone (remote &optional local)
+  "Clone a REMOTE repository [from clipboard] if the LOCAL directory does not exist.
+
+If called interactively, clone URL in clipboard into ~/Downloads then open in dired.
+
+Yields ‘repo-already-exists’ when no cloning transpires, otherwise yields ‘cloned-repo’.
+
+LOCAL is optional and defaults to the base name; e.g.,
+if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
+  (interactive "P")
+
+  (when (interactive-p)
+    (setq remote (substring-no-properties (current-kill 0)))
+    (cl-assert (string-match-p "^\\(http\\|https\\|ssh\\)://" remote) nil "No URL in clipboard"))
+
+  (unless local
+    (setq local (concat "~/" (if (interactive-p) "Downloads/" "") (file-name-base remote))))
+
+  ;; (require 'magit-repos) ;; Gets us the magit-repository-directories variable.
+  ;; (add-to-list 'magit-repository-directories `(,local . 0))
+
+  (if (file-directory-p local)
+      'repo-already-exists
+    (shell-command (concat "git clone " remote " " local))
+    (dired local)
+    'cloned-repo))
+
+
+(maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
+(maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
+;; (maybe-clone "https://github.com/alhassy/holy-books")
+#+end_src
+
+#+begin_details Many more repos to clone
+#+begin_src emacs-lisp
+
+;; (maybe-clone "https://github.com/alhassy/melpa")
+(maybe-clone "https://github.com/alhassy/org-special-block-extras")
+
+
+;; (maybe-clone "https://github.com/alhassy/next-700-module-systems-proposal.git" "~/thesis-proposal")
+;; (maybe-clone "https://github.com/JacquesCarette/MathScheme")
+;; (maybe-clone "https://github.com/alhassy/gentle-intro-to-reflection" "~/reflection/")
+;; (maybe-clone "https://github.com/alhassy/org-agda-mode")
+;; (maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/RATH/RATH-Agda"     "~/RATH-Agda")
+;; (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols") ;; Deleted?
+
+(maybe-clone "https://github.com/alhassy/islam")
+;; (maybe-clone "https://github.com/alhassy/CheatSheet")
+;; (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/RubyCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/PrologCheatSheet")
+;; (maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
+
+
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/armstmp/cs3mi3.git" "~/3mi3")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/CAS781" "~/cas781") ;; cat adventures
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/carette/cs3fp3.git" "~/3fp3")
+;; (maybe-clone "https://github.com/alhassy/interactive-way-to-c")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-distribution.git" "~/3ea3/assignment-distribution")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/notes.git" "~/3ea3/notes")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-development.git" "~/3ea3/assignment-development")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/kandeeps.git" "~/3ea3/sujan")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/horsmane.git" "~/3ea3/emily")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/anderj12.git" "~/3ea3/jacob")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/3EA3.git" "~/3ea3/_2018")
+;; (maybe-clone "https://gitlab.cas.mcmaster.ca/2DM3/LectureNotes.git" "~/2dm3")
+#+end_src
+#+end_details
+
+This doc:maybe-clone utility has genuinely
+made it easier for me to learn about new projects and codebases from Github:
+I type it in with the repo's address, then kbd:C-x_C-e ---doc:eval-last-sexp---
+and then I can view it in my beloved Emacs ~(─‿‿─)~.
+
+Moreover, this handy tool makes it so that you can
+list your Git repositories with doc:magit-list-repositories:
+It marks modified repos as “red:dirty”.
+
+It may be useful to know that ~(magit-anything-modified-p t file)~ can be used to
+check if ~file~ has been modified (doc:magit-anything-modified-p), whereas
+~(magit-status repo)~ checks the status of a repository (doc:magit-status).
+# (magit-anything-modified-p t "~/ElispCheatSheet/CheatSheet.org")
+# (magit-status "~/ElispCheatSheet")
+
+*** Gotta love that time machine
+:PROPERTIES:
+:CUSTOM_ID: Gotta-love-that-time-machine
+:END:
+
+Finally, one of the main points for using version control is to have access to
+historic versions of a file. The following utility allows us to
+kbd:M-x_git-timemachine on a file and use kbd:p/n/g/q to look at previous, next,
+goto arbitrary historic versions, or quit.
+#+BEGIN_SRC emacs-lisp
+(use-package git-timemachine )
+#+END_SRC
+If we want to roll back to a previous version, we just doc:write-file or
+kbd:C-x_C-s as usual! The power of text!
+
+--------------------------------------------------------------------------------
+
+doc:vc-annotate is also very useful to go through history and work out when
+things went wrong.
+
+*** Jump to a (ma)git repository with ~C-u C-x g~                  :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Jump-to-a-ma-git-repository-with-C-u-C-x-g
+:header-args: :tangle no
+:END:
+
+#+begin_src emacs-lisp
+;; Jump to a (ma)git repository with C-u C-x g.
+;;
+;; To get a selection of repositories (that have been visited at least once),
+;; call with “C-u M-x magit-status” or “C-u C-x g”; use “C-u C-u C-x g” to
+;; manually enter a path to a repository.
+;;
+;; We use projectile's record of known projects, and keep only projects with
+;; .git directory.
+(with-eval-after-load 'projectile
+  (setq magit-repository-directories
+        (thread-last (projectile-relevant-known-projects)
+          (--filter (unless (file-remote-p it)
+                      (file-directory-p (concat it "/.git/"))))
+          (--map (list (substring it 0 -1) 0)))))
+
+;; Follow-up utility
+(defun my/update-repos ()
+  "Update (git checkout main & pull) recently visited repositories."
+  (interactive)
+  (cl-loop for (repo _depth) in magit-repository-directories
+        ;; Is it “main” or “master”
+        for trunk = (s-trim (shell-command-to-string (format "cd %s; git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" repo)))
+        do (message (format "🤖 %s ∷ Checking out & pulling main" repo))
+           (shell-command (format "cd %s; git checkout %s; git pull" repo trunk)))
+  (message "🥳 Happy coding!"))
+#+end_src
+
+** Pretty Magit Commit Leaders
+:PROPERTIES:
+:CUSTOM_ID: Pretty-Magit-Commit-Leaders
+:END:
+⟨ Following [[http://www.modernemacs.com/post/pretty-magit/][Pretty Magit - Integrating commit leaders | Modern Emacs]] ⨾⨾ Code
+comes from there as well.  Notable alteration: Helm compleition shows
+description of leaders. ⟩
+
+Add faces to Magit to achieve icon and colored commit leaders. I also integrate
+Helm to prompt a leader when committing so there's no need to remember or type
+out completely every leader we choose.
+- /It's not just aesthetics. It's about visual clarity./
+- [[https://www.reddit.com/r/emacs/comments/6jegis/comment/djeo89w/?utm_source=share&utm_medium=web2x&context=3][Here]] is an alternate approach: Add icons based on words mentioned in commit titles ---no leaders required.
+
+#+begin_details "Boring details ~ See linked article instead"
+#+begin_src emacs-lisp
+(cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
+  "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
+  `(prog1
+     (add-to-list 'pretty-magit-alist
+                  (list (rx bow (group ,WORD (eval (if ,NO-PROMPT? "" ":"))))
+                        ,ICON ',PROPS))
+     (unless ,NO-PROMPT?
+       (add-to-list 'pretty-magit-prompt (cons (concat ,WORD ": ") ,description)))))
+
+(setq pretty-magit-alist nil)
+(setq pretty-magit-prompt nil)
+#+end_src
+#+end_details
+
+My personal choices for leaders are:
+#+begin_src emacs-lisp
+(pretty-magit "Add"      ?➕ (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
+(pretty-magit "Delete"   ?❌ (:foreground "#375E97" :height 1.2) "❌ Remove a capability e.g. feature, test, dependency.")
+(pretty-magit "Fix"      ?🔨 (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
+(pretty-magit "Clean"    ?🧹 (:foreground "#FFBB00" :height 1.2) "✂ Refactor code; reformat say by altering whitespace; refactor performance.")
+(pretty-magit "Document" ?📚 (:foreground "#3F681C" :height 1.2) "ℹ Refactor of documentation, e.g. help files.")
+(pretty-magit "Feature"  ?⛲ (:foreground "slate gray" :height 1.2) "⛳ 🇮🇶🇨🇦 A milestone commit - flagpost")
+(pretty-magit "Generate"  ?🔭 (:foreground "slate gray" :height 1.2) "Export PDF/HTML or tangle raw code from a literate program") ;; Generating artefacts
+(pretty-magit "master"   ? (:box t :height 1.2) "" t)
+(pretty-magit "origin"   ?🐙 (:box t :height 1.2) "" t)
+;; Commit leader examples: https://news.ycombinator.com/item?id=13889155.
+;;
+;; Cut ~ Remove a capability e.g. feature, test, dependency.
+;; Bump ~ Increase the version of something e.g. dependency.
+;; Make ~ Change the build process, or tooling, or infra.
+;; Start ~ Begin doing something; e.g. create a feature flag.
+;; Stop ~ End doing something; e.g. remove a feature flag.
+#+end_src
+
+#+begin_details "Boring details ~ See linked article instead"
+#+begin_src emacs-lisp
+(defun add-magit-faces ()
+  "Add face properties and compose symbols for buffer from pretty-magit."
+  (interactive)
+  (with-silent-modifications
+    (--each pretty-magit-alist
+      (-let (((rgx icon props) it))
+        (save-excursion
+          (goto-char (point-min))
+          (while (search-forward-regexp rgx nil t)
+            (compose-region
+             (match-beginning 1) (match-end 1) icon)
+            (when props
+              (add-face-text-property
+               (match-beginning 1) (match-end 1) props))))))))
+
+(advice-add 'magit-status :after 'add-magit-faces)
+(advice-add 'magit-refresh-buffer :after 'add-magit-faces)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq use-magit-commit-prompt-p nil)
+(defun use-magit-commit-prompt (&rest args)
+  (setq use-magit-commit-prompt-p t))
+
+(defun magit-commit-prompt ()
+  "Magit prompt and insert commit header with faces."
+  (interactive)
+  (when use-magit-commit-prompt-p
+    (setq use-magit-commit-prompt-p nil)
+    (thread-last (--map (format "%s %s" (car it) (cdr it)) pretty-magit-prompt)
+      (completing-read "Insert commit leader ∷ ")
+      ;; My “Generate:” commit type has one use case, for now; so let's insert it filled-in.
+      (funcall (lambda (it) (if (s-starts-with? "Generate:" it) it (car (s-split " " it)))))
+      (insert)
+      (end-of-line))
+    (add-magit-faces)))
+
+
+(remove-hook 'git-commit-setup-hook 'with-editor-usage-message)
+(add-hook 'git-commit-setup-hook 'magit-commit-prompt)
+(advice-add 'magit-commit :after 'use-magit-commit-prompt)
+#+end_src
+#+end_details
+
+** Highlighting TODO-s & Showing them in Magit
+:PROPERTIES:
+:CUSTOM_ID: Highlighting-TODO-s-Showing-them-in-Magit
+:END:
+
+Sometimes it's nice to flag a chunk of text by its author, such as ‘ [[color:#dc8cc3][MA]] ’ for
+‘M’usa ‘A’l-hassy, or ‘ [[color:#d0bf8f][HACK]] ’ for text that needs to be improved.  Such flags
+stand out from other text by being coloured and bold.
+
+#+BEGIN_SRC emacs-lisp
+;; NOTE that the highlighting works even in comments.
+(use-package hl-todo
+  ;; I want todo-words highlighted in prose, not just in code fragements.
+  :hook (org-mode . hl-todo-mode)
+  :config
+    ;; Adding new keywords
+    (cl-loop for kw in '("TEST" "MA" "WK" "JC")
+             do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3")))
+    ;; Enable it everywhere.
+    (global-hl-todo-mode))
+#+END_SRC
+
+We've added few to the default flag keywords so that in total we have the
+following flags ---where any sequence of at least 3 [[color:#cc9393][XXX]] are considered flags.
+#+BEGIN_SRC emacs-lisp :results replace raw value :exports results :eval no-export :tangle no
+(cl-loop for (k . f) in hl-todo-keyword-faces
+      collect (format "[[color:%s][%s]]" f k))
+#+END_SRC
+
+#+RESULTS:
+([[color:#dc8cc3][JC]] [[color:#dc8cc3][WK]] [[color:#dc8cc3][MA]] [[color:#dc8cc3][TEST]] [[color:#d0bf8f][HOLD]] [[color:#cc9393][TODO]] [[color:#dca3a3][NEXT]] [[color:#dc8cc3][THEM]] [[color:#7cb8bb][PROG]] [[color:#7cb8bb][OKAY]] [[color:#5f7f5f][DONT]] [[color:#8c5353][FAIL]] [[color:#afd8af][DONE]] [[color:#d0bf8f][NOTE]] [[color:#d0bf8f][KLUDGE]] [[color:#d0bf8f][HACK]] [[color:#d0bf8f][TEMP]] [[color:#cc9393][FIXME]] [[color:#cc9393][XXX+]])
+
+:Alternate_approach_using_font_lock:
+#+begin_src emacs-lisp
+(defun add-watchwords () "Add TODO: words to font-lock keywords."
+  (font-lock-add-keywords nil
+                          '(("\\(\\<TODO\\|\\<FIXME\\|\\<HACK\\|@.+\\):" 1
+                             font-lock-warning-face t))))
+
+(add-hook 'prog-mode-hook #'add-watchwords)
+
+#+end_src
+:End:
+
+Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become mentioned]] in
+a magit status buffer ---which uses the keywords from ~hl-todo~.
+#+BEGIN_SRC emacs-lisp
+;; MA: The todo keywords work in code too!
+(use-package magit-todos
+  :after magit
+  :after hl-todo
+  ;; :hook (org-mode . magit-todos-mode)
+  :config
+  ;; For some reason cannot use :custom with this package.
+  (custom-set-variables
+    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+  ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
+  (setq magit-todos-exclude-globs '("*.html"))
+  (magit-todos-mode))
+#+END_SRC
+
++ Note that such [[color:#cc9393][TODO]] keywords are not propagated from sections that are
+  *[[purple:COMMENT]]*-ed out in org-mode.
++ Ensure you exclude generated files, such as the Emacs backups directory, from
+  being consulted. Using ~magit~, press [[kbd:i]] to mark items to be ignored.
++ This feature also works outside of git repos.
+
+Open a Magit status buffer, or run doc:magit-todos-list to show a dedicated
+to-do list buffer. You can then peek at items with space, or jump to them with
+enter.
+
+#+begin_box
+Seeing the [[color:#cc9393][TODO]] list with each commit is an incentive to actually tackle the
+items there (•̀ᴗ•́)و
+#+end_box
+
+# Add these to the version control hydra.
+# #+BEGIN_SRC emacs-lisp
+# (defhydra hydra-version-control (global-map "C-x v")
+#   ("t" helm-magit-todos "Show TODOs lists for this repo."))
+# #+END_SRC
+#
+
+** Silently show me when a line was modified and by whom           :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Silently-show-me-when-a-line-was-modified-and-by-whom
+:header-args: :tangle no
+:END:
+ Quickly & /automatically/ glimpse who, why, and when a line or code block was
+ changed, using [[https://github.com/Artawower/blamer.el][blamer.el]]. Jump back through history to gain further insights
+ as to how and why the code evolved with kbd:C-x_g_l_l (doc:magit-log-head) or
+ doc:git-timemachine.
+
+#+begin_src emacs-lisp
+(unless noninteractive
+  (use-package blamer
+    :quelpa (blamer :fetcher github :repo "artawower/blamer.el")
+    :custom
+    (blamer-idle-time 0.3)
+    (blamer-min-offset 70)
+    (blamer-max-commit-message-length 80) ;; Show me a lot of the commit title
+    :custom-face
+    (blamer-face ((t :foreground "#7a88cf"
+                      :background nil
+                      :height 140
+                      :italic t)))
+    :config
+    (global-blamer-mode 1)))
+#+end_src
+
+This is /so nice!/. I've enabled it once and then it just “works in the
+background, silently”.
+
+--------------------------------------------------------------------------------
+
+When reading a line and wondering “who changed/wrote this and why”, blamer.el
+answers that seamlessly ---almost as if a transient comment 😁
+
++ The “why” is answered by commit messages; which may lead to improved messages:
+  /“Hey, I was just browsing through the code, and landed on this commit, but the
+  message does not tell me why the change was/ /introduced. Would you please write
+  more detailed commit messages.”/
++ The “when” gives a useful context in time about the change.  For example, when
+  looking for a regression/recent-bug, we can immediately see /“Did this line
+  even change in the past week? No? That must not be it then”/ and we move on.
+
+If we want to see commit messages alongside /all/ code, then we can invoke
+doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
+then we use doc:git-timemachine.
+** Git gutter: Jumping between hunks                               :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: What's-changed-who's-to-blame
+:END:
+
+Let's have, in a fringe, an indicator for altered regions in a version
+controlled file.  The symbols “+, =” appear in a fringe by default for
+alterations ---we may change these if we like.
+# Moreover, let's stage-&-commit straight from a working buffer.
+#+begin_src emacs-lisp :tangle no
+;; Hunk navigation and commiting.
+(use-package git-gutter :config (global-git-gutter-mode))
+;; Diff updates happen in real time according when user is idle.
+#+END_SRC
+# There's a fork, [[https://github.com/nonsequitur/git-gutter-plus][git-gutter+]], which provides additional features but was slow for me on large, 10k, files.
+
+Let's set a hydra so we can press ~C-x v n n p n~ to move the next two
+altered hunks, move back one, then move to the next. This saves me having
+to supply the prefix ~C-x v~ each time I navigate among my alterations.
+At any point we may also press ~u 𝕩~ to denote ~C-u ⟪prefix⟫ 𝕩~.
+#+begin_src emacs-lisp :tangle no
+(defhydra hydra-version-control (global-map "C-x v")
+  "Version control"
+  ;; Syntax: (extension method description)
+  ("n" git-gutter:next-hunk      "Next hunk")
+  ("p" git-gutter:previous-hunk  "Previous hunk")
+  ("d" git-gutter:popup-hunk     "Show hunk diff")
+  ("r" git-gutter:revert-hunk    "Revert hunk\n")
+  ("c" git-gutter:stage-hunk     "Stage hunk")
+  ("s" git-gutter:statistic      "How many added & deleted lines"))
+#+END_SRC
+
+Committing with ~C-x v c~ let's us use ~C-c C-k~ to cancel and ~C-c C-c~ to
+submit the given message; ~C-c C-a~ to amend the previous commit.
+
+Alternatively, we may use [[https://github.com/dgutov/diff-hl][diff-hl]]:
+#+begin_src emacs-lisp :tangle no
+;; Colour fringe to indicate alterations.
+;; (use-package diff-hl)
+;; (global-diff-hl-mode)
+#+END_SRC
+
+#+begin_src emacs-lisp :tangle no
+;; Popup for who's to blame for alterations.
+(use-package git-messenger
+  :custom ;; Always show who authored the commit and when.
+          (git-messenger:show-detail t)
+          ;; Message menu let's us use magit diff to see the commit change.
+          (git-messenger:use-magit-popup t))
+
+;; View current file in browser on github.
+;; More generic is “browse-at-remote”.
+(use-package github-browse-file )
+
+;; Add these to the version control hydra.
+;;
+(defhydra hydra-version-control (global-map "C-x v")
+  ("b" git-messenger:popup-message "Who's to blame?")
+  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
+  ("g" github-browse-file-blame "Show file in browser in github")
+  ("s" magit-status "Git status of current buffer"))
+#+END_SRC
+
+Perhaps ~C-x v b~ will motivate smaller, frequent, commits.
+
+** URLs to git changes                                             :Disabled:
+:PROPERTIES:
+:header-args: :tangle no
+:END:
+
+Obtaining URL links to the current location of a file
+---URLs are added to the kill ring.
+Usefully, if [[https://gitlab.com/pidu/git-timemachine][git-timemachine-mode]] is active, the generated link
+points to the version of the file being visited.
+#+begin_src emacs-lisp :tangle no
+(use-package git-link )
+
+(defhydra hydra-version-control (global-map "C-x v")
+  ("l" git-link "Git URL for current location"))
+#+END_SRC
+
+Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
+
+** Version Control with SVN ---Using Magit!                        :Disabled:
+:PROPERTIES:
+:header-args: :tangle no
+:END:
+
+| /Disabled: I seldom work with SVN anymore./ |
+
+Let's use git as an interface to subversion repositories so that we can continue
+to use =magit= as our version control interface.  The utility to do so is called
+=git svn= ---note =git 𝒳= on a MacOS is the same as =git-𝒳= on other systems.
+
+#+begin_src emacs-lisp  :tangle no
+(use-package magit-svn
+  :hook (magit-mode . magit-svn-mode))
+#+end_src
+
+Here's an example. The following command checksout an SVN repo; afterwhich we may open a file
+there and do =M-x magit-status= to get the expected porcelain git interface  ^_^
+#+begin_src emacs-lisp :tangle no
+(async-shell-command "mkdir ~/2fa3; git svn clone --username alhassm https://websvn.mcmaster.ca/csse2fa3/2019-2020_Term2 ~/2fa3/")
+#+end_src
+
+In the magit buffer, we may now use the ~N~ key which wraps the =git svn=
+subcommands =fetch, rebase, dcommit, branch, tag=. For example:
+
+1. Make changes to a file.
+2. ‘Stage’ them with ~s~ and ‘commit’ them with ~c~.
+3. ‘Push’ changes with ~N c~.
+
+We get to pretend we're using ~git~ even though the underlying mechanism is ~svn~!
+# Indeed, in a terminal ~git svn log~ will show an ~svn~ log with single pushed commits.
+
+For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git with
+  Subversion]].
+
+(If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
+  utility above to account for them.)
+
+** Github /within/ Emacs                                           :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Github-within-Emacs
+:header-args: :tangle no
+:END:
+
+We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[https://github.com/magit/forge][forge]] package.
++ In particular, it adds two new “topics” to the Magit status page: =Issues= and =Pull Requests=.
+  - We can tab on these to see their “posts” ---the contributions to the conversations and /new/ commits.
+  - [[https://magit.vc/manual/forge/Editing-Topics-and-Posts.html][Here]] is a list of actions that can be done on topics and posts.
+
+#+begin_src emacs-lisp
+(use-package forge
+  :after magit)
+#+end_src
+
+1. Make a file =~/.authinfo= whose top-most line is =machine api.github.com login ⟪𝑼𝑺𝑬𝑹𝑵𝑨𝑴𝑬⟫^forge password ⟪𝑻𝑶𝑲𝑬𝑵⟫= where ⟪⋯⟫
+   should be replaced by your Github username and a token ---which can be [[https://github.com/settings/tokens][created from this page]] with [[https://magit.vc/manual/forge/Token-Creation.html][permissions]] for
+   ~repo, user, read:org~ checked-off.
+   - For more detailed information, see [[https://magit.vc/manual/ghub/Creating-and-Storing-a-Token.html][this Forge manual page]].
+
+2. Now open a Magit status buffer for a repository and run ~M-x forge-pull~, after which you should be able to see all issues and pull requests.
+   - Alternatively, press ~N~ to see the forge menu.
+   - Press ~N f f~ to pull latest information from the repository.
+     + Note how pulling data from a forge’s API works the same way as pulling Git data does; you do it explicitly when
+       you want to see the work done by others.
+     + We can also “c”reate a new “p”ull request or a new “i”ssue with ~N c p~ or ~N c i~, respectively.
+     + [[https://www.youtube.com/watch?v=fFuf3hExF5w&ab_channel=ZaisteProgramming][~5 min video]]
+
+To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
+
+** COMMENT Browse remote files
+:PROPERTIES:
+:CUSTOM_ID: Browse-remote-files
+:END:
+
+  Sometimes you want to see the current file in Github; e.g., you select a
+  region and press ~M-x browse-at-remote-kill~ to get the URL for that region in
+  Github then you can send that URL to your peers when referencing something.
+  - Or just ~M-x browse-at-remote~ to see it in Github.
+  - [[https://github.com/rmuslimov/browse-at-remote][browse-at-remote: Browse target page on github/bitbucket from emacs buffers]].
+
+#+begin_src emacs-lisp
+;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
+(use-package browse-at-remote)
+#+end_src
+** COMMENT Elementary Version Control
+:PROPERTIES:
+:CUSTOM_ID: Elementary-Version-Control
+:END:
+
+[[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
+are pointers to memory location of a given filename!
+Soft links are preferable since they defer to the orginal filename
+and can work across servers.
+
+We can declare them as follows,
+#+BEGIN_EXAMPLE shell
+ln -s source_file myfile
+#+END_EXAMPLE
+
+If ~repo~ refers to a directory under version control
+--or Dropbox-- we move our init file and emacs directory to it,
+then make soft links to these locations so that whenever ~~/.emacs~
+is accessed it will refer to ~repo/.emacs~ and likewise for ~.emacs.d~ :-)
+
+On a new machine, copy-paste any existing emacs configs we want
+to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
+links only.
+
+#+BEGIN_EXAMPLE shell
+repo=~/Dropbox     ## or my git repository: ~/dotfiles
+
+cd ~
+
+mv .emacs $repo/
+ln -s $repo/.emacs .emacs
+
+mv .emacs.elc $repo/
+ln -s $repo/.emacs.elc .emacs.elc
+
+mv .emacs.d/ $repo/
+ln -s $repo/.emacs.d/ .emacs.d
+#+END_EXAMPLE
+Note the extra ~/~ after ~.emacs.d~!
+
+You may need to unlink soft links if you already have them;
+e.g., ~unlink .emacs.d~.
+
+To make another softlink to a file, say in a blogging directory,
+we ~cd~ to the location of interest then execute, say:
+~ln -s $repo/.emacs.d/init.org init.org~
+
+While we're at it, let's make this super-duper file (and another) easily
+accessible --since we'll be altering it often--:
+#+BEGIN_EXAMPLE shell
+cd ~
+
+ln -s dotfiles/.emacs.d/init.org init.org
+ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
+#+END_EXAMPLE
+
+Below I'll equip us with an Emacs ‘porcelain’ interface to git
+--it makes working with version control tremendously convenient.
+Moreover, I add a little pop-up so that I don't forget to commit often!
+
+Finally, since I've symlinked my ~.emacs~:
+#+begin_src emacs-lisp :tangle no
+;; Don't ask for confirmation when opening symlinked files.
+(setq vc-follow-symlinks t)
+#+end_src
 * Literate Programming
 :PROPERTIES:
 :CUSTOM_ID: Literate-Programming
@@ -4409,1922 +5351,6 @@ Let's remove repeated matter.
 #+begin_src emacs-lisp
 ;; Ignore all header arguments relating to “:eval”. Do not evaluate code when I export to HTML or LaTeX or anything else.
 (setq org-export-use-babel nil)
-#+end_src
-* Staying Sane
-:PROPERTIES:
-:CUSTOM_ID: Staying-Safe
-:END:
-
-See [[https://jeremykun.com/2020/01/14/the-communicative-value-of-using-git-well/][The Communicative Value of Using Git Well]]
-
-Note: Emacs has built-in version control, e.g., kbd:C-x_v_l to see the change
-log of the repository containing the current file.
-
-** Undo-tree: Very Local Version Control
-:PROPERTIES:
-:CUSTOM_ID: Undo-tree-Very-Local-Version-Control
-:END:
- doc:undo-tree-visualize, kbd:C-x_u, gives a /visual/ representation of the
- current buffer's edit history.
-#+BEGIN_SRC emacs-lisp :noweb yes :tangle no
-  <<undo-tree-setup>>
-#+END_SRC
-
-( We're just showing the ~<<undo-tree-setup>>~ from earlier since this is a good
-place for such a setup. More importantly, we are /not/ copy-pasting the setup: /It
-is written only once; in a single source of truth!/ )
-
-#+begin_src emacs-lisp
-;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
-(global-set-key (kbd "C-z")
-  (lambda () (interactive)
-   (undo-tree-mode) ;; Ensure the mode is on
-   (undo-tree-visualize)))
-#+end_src
-
-** Automatic Backups
-:PROPERTIES:
-:CUSTOM_ID: Automatic-Backups
-:END:
-
-By default, Emacs saves backup files ---those ending in =~=--- in the current
-directory, thereby cluttering it up. Let's place them in ~~/.emacs.d/backups~, in
-case we need to look for a backup; moreover, let's keep old versions since
-there's disk space to go around ---what am I going to do with 500gigs when nearly
-all my ‘software’ is textfiles interpreted within Emacs 😼
-
-#+BEGIN_SRC emacs-lisp
-;; New location for backups.
-(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-
-;; Silently delete execess backup versions
-(setq delete-old-versions t)
-
-;; Only keep the last 1000 backups of a file.
-(setq kept-old-versions 1000)
-
-;; Even version controlled files get to be backed up.
-(setq vc-make-backup-files t)
-
-;; Use version numbers for backup files.
-(setq version-control t)
-#+END_SRC
-
-Why backups? Sometimes I may forget to submit a file, or edit, to my
-version control system, and it'd be nice to be able to see a local
-automatic backup. Whenever ‘I need space,’ then I simply empty
-the backup directory, if ever. That the backups are numbered is so sweet ^_^
-
-Like package installations, my backups are not kept in any version control
-system, like git; only locally.
-
-Finally, let's not create ~.#~ files nor bother confirming killing processes.
-#+begin_src emacs-lisp
-(setq confirm-kill-processes nil
-      create-lockfiles nil)
-#+end_src
-
-*** What changed? ---Walking through backups
-:PROPERTIES:
-:CUSTOM_ID: What-changed
-:END:
-
-Let's use an elementary diff system for backups: ~backup-walker~ essentially makes
-all our backups behave as if they were (implicitly) version controlled.
-
-#+BEGIN_SRC emacs-lisp
-(use-package backup-walker
-  :commands backup-walker-start)
-#+END_SRC
-
-In a buffer that corresponds to a file, invoke doc:backup-walker-start to see a
-visual diff of changes /between/ versions; then ~n~ and ~p~ to move between diffs.  By
-default, you see the changes ‘backwards’: Red means delete these things to get
-to the older version; i.e., the red ‘-’ are newer items.
-
-There is also doc:diff-backup for comparing a file with its backup.
-
-# To create backups explicitly use save-buffer (C-x C-s) with prefix arguments.
-#
-#          =diff-backup= compares a file with its backup or vice versa.
-# But there is no function to restore backup files.
-
-*** Save ≈ Backup
-:PROPERTIES:
-:CUSTOM_ID: Save-Backup
-:END:
-
-Emacs only makes a backup the very first time a buffer is saved; I'd prefer
-Emacs makes backups everytime I save! ---If I saved, that means I'm at an
-important checkpoint, so please check what I have so far as a backup!
-#+BEGIN_SRC emacs-lisp
-;; Make Emacs backup everytime I save
-
-(defun my/force-backup-of-buffer ()
-  "Lie to Emacs, telling it the curent buffer has yet to be backed up."
-  (setq buffer-backed-up nil))
-
-(add-hook 'before-save-hook  'my/force-backup-of-buffer)
-
-;; [Default settings]
-;; Autosave when idle for 30sec or 300 input events performed
-(setq auto-save-timeout 30
-      auto-save-interval 300)
-#+END_SRC
-# See the name of the latest backup, which is appeneded by a number for each save ;-)
-# (file-newest-backup "~/.emacs.d/init.org")
-
-It is intestesting to note that the above snippet could be modified to [[https://stackoverflow.com/a/6918217/3550444][make our
-own backup system]], were Emacs lacked one, by having our function simply save
-copies of our file ---on each save--- where the filename is augmented with a
-timestamp.
-
-** delete-by-moving-to-trash t
-:PROPERTIES:
-:CUSTOM_ID: delete-by-moving-to-trash-t
-:END:
-#+begin_src emacs-lisp
-;; Move to OS’ trash can when deleting stuff
-;; instead of deleting things outright!
-(setq delete-by-moving-to-trash t
-      trash-directory "~/.Trash/")
-#+end_src
-**   =magit= ---Emacs' porcelain interface to git
-:PROPERTIES:
-:CUSTOM_ID: magit-Emacs'-porcelain-interface-to-gitq
-:END:
-
-*** Intro                                                            :ignore:
-
-Let's setup an Emacs ‘porcelain’ interface to git ---it makes working with
-version control tremendously convenient.
-# Moreover, I add a little pop-up so that I don't forget to commit often!
-
-(Personal reminder: If using 2FA [two factor authentication], then when you do
-git operations, such as ~git push~, [[https://webkul.com/blog/github-push-with-two-factor-authentication/][you must use your PAT]] [personal access token]
-/instead/ of your password! Also: Install [[https://github.com/sindresorhus/refined-github][refined-github: Browser extension that
-simplifies the GitHub interface and adds useful features]]!)
-
-#+begin_src emacs-lisp
-;; Bottom of Emacs will show what branch you're on
-;; and whether the local file is modified or not.
-(use-package magit
-  :bind (("C-c M-g" . magit-file-dispatch))
-  :config (global-set-key (kbd "C-x g") 'magit-status)
-  :custom ;; Do not ask about this variable when cloning.
-    (magit-clone-set-remote.pushDefault t))
-#+end_src
-
-Why use ~magit~ as the interface to the git version control system?  In a ~magit~
-buffer nearly everything can be acted upon: Press =return=, or =space=, to see
-details and =tab= to see children items, usually.
-
-+ kbd:C-x_g, doc:magit-status, gives you a nice buffer with an overview
-  of the Git repo that you're buffer is currently visiting.
-+ kbd:C-c_M-g, doc:magit-file-dispatch, lets you invoke Git actions on the
-  current file directly; e.g., following up with [[kbd:b]]lame, [[kbd:l]]og, [[kbd:d]]iff,
-  [[kbd:s]]tage, or [[kbd:c]]ommit the current file.
-
-  For ease, above, we have also bound this to kbd:C-c_g ---reminiscent of kbd:C-x_g :smile:
-
-  #+begin_src emacs-lisp
-;; When we invoke magit-status, show green/red the altered lines, with extra
-;; green/red on the subparts of a line that got alerted.
-(system-packages-ensure "git-delta")
-(use-package magit-delta
-  :hook (magit-mode . magit-delta-mode))
-
-;; Don't forget to copy/paste the delta config into the global ~/.gitconfig file.
-;; Copy/paste this: https://github.com/dandavison/delta#get-started
-  #+end_src
-
-+ Blame, doc:magit-blame, is super nice: The buffer gets annotations for each chunk
-  of text, regarding who authoured it, when, and their commit title.
-  Then [[kbd:q]] to quit the blame.
-
-  Likewise, doc:magit-log-buffer-file is super neat!
-
-#+begin_details Super Simple ‘magit’ Mini-tutorial
-link-here:Super-Simple-‘magit’-Mini-tutorial
-Below is my personal quick guide to working with magit ---for a full tutorial
-see [[http://jr0cket.co.uk/2012/12/driving-git-with-emacs-pure-magic-with.html.html][jr0cket's blog]].
-
-+ ~dired~ :: See the contents of a particular directory.
-
-+ ~magit-init~ :: Put a project under version control.
-  The mini-buffer will prompt you for the top level folder version.
-  A ~.git~ folder will be created there.
-
-+ ~magit-status~ , ~C-x g~ :: See status in another buffer.
-   Press ~?~ to see options, including:
-  - g :: Refresh the status buffer.
-     # The status buffer may be refereshed using ~g~, and all magit buffers by ~G~.
-  - TAB ::  See collapsed items, such as what text has been changed.
-  - ~q~ :: Quit magit, or go to previous magit screen.
-  - ~s~ :: Stage, i.e., add, a file to version control.
-         Add all untracked files by selecting the /Untracked files/ title.
-
-    [[https://softwareengineering.stackexchange.com/a/119807/185815][The staging area is akin to a pet store; commiting is taking the pet home.]]
-
-  - ~k~ :: Kill, i.e., delete a file locally.
-  - ~K~ :: This' ~(magit-file-untrack)~ which does ~git rm --cached~.
-  - ~i~ :: Add a file to the project ~.gitignore~ file. Nice stuff =)
-  - ~u~ :: Unstage a specfif staged change highlighed by cursor.
-           ~C-u s~ stages everything --tracked or not.
-  - ~c~ :: Commit a change.
-    * A new buffer for the commit message appears, you write it then
-      commit with ~C-c C-c~ or otherwise cancel with ~C-c C-k~.
-      These commands are mentioned to you in the minibuffer when you go to commit.
-    * You can provide a commit to /each/ altered chunk of text!
-      This is super neat, you make a series of local such commits rather
-      than one nebulous global commit for the file. The ~magit~ interface
-      makes this far more accessible than a standard terminal approach!
-    * You can look at the unstaged changes, select a /region/, using ~C-SPC~ as usual,
-      and commit only that if you want!
-    * When looking over a commit, ~M-p/n~ to efficiently go to previous or next altered sections.
-    * Amend a commit by pressing ~a~ on ~HEAD~.
-
-  - ~d~ :: Show differences, another ~d~ or another option.
-    - This is magit! Each hunk can be acted upon; e.g., ~s~ or ~c~ or ~k~ ;-)
-  - ~v~ :: Revert a commit.
-  - ~x~ :: Undo last commit. Tantamount to ~git reset HEAD~~ when cursor is on most recent
-           commit; otherwise resets to whatever commit is under the cursor.
-  - ~l~ :: Show the log, another ~l~ for current branch; other options will be displayed.
-    - Here ~space~ shows details in another buffer while cursour remains in current
-      buffer and, moreover, continuing to press ~space~ scrolls through the other buffer!
-      Neato.
-  - ~P~ :: Push.
-  - ~F~ :: Pull.
-  - ~:~ :: Execute a raw git command; e.g., enter ~whatchanged~.
-
-Notice that every time you press one of these commands, a ‘pop-up’ of realted
-git options appears! Thus not only is there no need to memorise many of them,
-but this approach makes /discovering/ other commands easier.
-
-# Use ~M-x magit-list-repositories RET~ to list local repositories:
-#+end_details
-
-#+begin_details [Disabled] Homemade ‘uncomitted changes’ Notification
-Let's always notify ourselves of a file that has [[https://tpapp.github.io/post/check-uncommitted/][uncommited changes]]
----we might have had to step away from the computer and forgotten to commit.
-#+begin_src emacs-lisp :tangle no
-(require 'magit-git)
-
-(defun my/magit-check-file-and-popup ()
-  "If the file is version controlled with git
-  and has uncommitted changes, open the magit status popup."
-  (let ((file (buffer-file-name)))
-    (when (and file (magit-anything-modified-p t file))
-      (message "This file has uncommited changes!")
-      (when nil ;; Became annyoying after some time.
-      (split-window-below)
-      (other-window 1)
-      (magit-status)))))
-
-;; I usually have local variables, so I want the message to show
-;; after the locals have been loaded.
-(add-hook 'find-file-hook
-  '(lambda ()
-      (add-hook 'hack-local-variables-hook 'my/magit-check-file-and-popup)))
-#+end_src
-:Lets_try_this_out:
-#+BEGIN_EXAMPLE emacs-lisp
-(progn (eshell-command "echo change-here >> ~/dotfiles/.emacs")
-       (find-file "~/dotfiles/.emacs"))
-#+END_EXAMPLE
-:End:
-# In doubt, execute ~C-h e~ to jump to the ~*Messages*~ buffer.
-#+end_details
-
-*** Credentials: I am who I am
-:PROPERTIES:
-:CUSTOM_ID: Credentials-I-am-who-I-am
-:END:
-First, let's setup our git credentials.
-#+BEGIN_SRC emacs-lisp
-;; Only set these creds up if there is no Git email set up ---ie at work I have an email set up, so don't
-;; override it with my personal creds.
-;;
-;; See here for a short & useful tutorial:
-;; https://alvinalexander.com/git/git-show-change-username-email-address
-(when (equal "" (shell-command-to-string "git config user.email "))
-  (shell-command (format "git config --global user.name \"%s\"" user-full-name))
-  (shell-command (format "git config --global user.email \"%s\"" user-mail-address)))
-#+END_SRC
-
-If we ever need to use Git in the terminal, it should be done with Emacs as the
-underlying editor
-#+BEGIN_SRC emacs-lisp
-;; We want to reuse an existing Emacs process from the command line
-;; E.g.,  emacsclient --eval '(+ 1 2)'    # ⇒ 3
-(require 'server)
-(unless (server-running-p) (server-start))
-
-;; Or use it whenever we are editing a git message from the terminal
-(shell-command "git config --global core.editor 'emacsclient -t -a=\\\"\\\"'")
-#+END_SRC
-This will start a daemon if there is not already one running ---The ~-a~ option---
-and opens a new Emacs frame on the current terminal ---The ~-t~ option.
-
-*** Encouraging useful commit messages
-:PROPERTIES:
-:CUSTOM_ID: Encouraging-useful-commit-messages
-:END:
-Let's try our best to have a [[https://chris.beams.io/posts/git-commit/][useful & consistent commit log]]:
-#+begin_src emacs-lisp
-(defun my/git-commit-reminder ()
-  (insert "\n\n# The commit subject line ought to finish the phrase:
-# “If applied, this commit will ⟪your subject line here⟫.” ")
-  (beginning-of-buffer))
-
-(add-hook 'git-commit-setup-hook 'my/git-commit-reminder)
-#+end_src
-
-Super neat stuff!
-
-*** Maybe clone ... everything?
-:PROPERTIES:
-:CUSTOM_ID: Maybe-clone-everything
-:END:
-
-Below are the git repos I'd like to clone ---along with a function to do so
-quickly.
-#+begin_src emacs-lisp
-;; Clone git repo from clipboard
-(cl-defun maybe-clone (remote &optional local)
-  "Clone a REMOTE repository [from clipboard] if the LOCAL directory does not exist.
-
-If called interactively, clone URL in clipboard into ~/Downloads then open in dired.
-
-Yields ‘repo-already-exists’ when no cloning transpires, otherwise yields ‘cloned-repo’.
-
-LOCAL is optional and defaults to the base name; e.g.,
-if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
-  (interactive "P")
-
-  (when (interactive-p)
-    (setq remote (substring-no-properties (current-kill 0)))
-    (cl-assert (string-match-p "^\\(http\\|https\\|ssh\\)://" remote) nil "No URL in clipboard"))
-
-  (unless local
-    (setq local (concat "~/" (if (interactive-p) "Downloads/" "") (file-name-base remote))))
-
-  ;; (require 'magit-repos) ;; Gets us the magit-repository-directories variable.
-  ;; (add-to-list 'magit-repository-directories `(,local . 0))
-
-  (if (file-directory-p local)
-      'repo-already-exists
-    (shell-command (concat "git clone " remote " " local))
-    (dired local)
-    'cloned-repo))
-
-
-(maybe-clone "https://github.com/alhassy/emacs.d" "~/.emacs.d")
-(maybe-clone "https://github.com/alhassy/alhassy.github.io" "~/blog")
-;; (maybe-clone "https://github.com/alhassy/holy-books")
-#+end_src
-
-#+begin_details Many more repos to clone
-#+begin_src emacs-lisp
-
-;; (maybe-clone "https://github.com/alhassy/melpa")
-(maybe-clone "https://github.com/alhassy/org-special-block-extras")
-
-
-;; (maybe-clone "https://github.com/alhassy/next-700-module-systems-proposal.git" "~/thesis-proposal")
-;; (maybe-clone "https://github.com/JacquesCarette/MathScheme")
-;; (maybe-clone "https://github.com/alhassy/gentle-intro-to-reflection" "~/reflection/")
-;; (maybe-clone "https://github.com/alhassy/org-agda-mode")
-;; (maybe-clone "https://github.com/JacquesCarette/TheoriesAndDataStructures")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/RATH/RATH-Agda"     "~/RATH-Agda")
-;; (maybe-clone "https://github.com/alhassy/MyUnicodeSymbols") ;; Deleted?
-
-(maybe-clone "https://github.com/alhassy/islam")
-;; (maybe-clone "https://github.com/alhassy/CheatSheet")
-;; (maybe-clone "https://github.com/alhassy/ElispCheatSheet")
-;; (maybe-clone "https://github.com/alhassy/CatsCheatSheet")
-;; (maybe-clone "https://github.com/alhassy/OCamlCheatSheet")
-;; (maybe-clone "https://github.com/alhassy/AgdaCheatSheet")
-;; (maybe-clone "https://github.com/alhassy/RubyCheatSheet")
-;; (maybe-clone "https://github.com/alhassy/PrologCheatSheet")
-;; (maybe-clone "https://github.com/alhassy/FSharpCheatSheet")
-
-
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/armstmp/cs3mi3.git" "~/3mi3")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/CAS781" "~/cas781") ;; cat adventures
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/carette/cs3fp3.git" "~/3fp3")
-;; (maybe-clone "https://github.com/alhassy/interactive-way-to-c")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-distribution.git" "~/3ea3/assignment-distribution")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/notes.git" "~/3ea3/notes")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/assignment-development.git" "~/3ea3/assignment-development")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/kandeeps.git" "~/3ea3/sujan")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/horsmane.git" "~/3ea3/emily")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/3ea3-winter2019/anderj12.git" "~/3ea3/jacob")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/alhassm/3EA3.git" "~/3ea3/_2018")
-;; (maybe-clone "https://gitlab.cas.mcmaster.ca/2DM3/LectureNotes.git" "~/2dm3")
-#+end_src
-#+end_details
-
-This doc:maybe-clone utility has genuinely
-made it easier for me to learn about new projects and codebases from Github:
-I type it in with the repo's address, then kbd:C-x_C-e ---doc:eval-last-sexp---
-and then I can view it in my beloved Emacs ~(─‿‿─)~.
-
-Moreover, this handy tool makes it so that you can
-list your Git repositories with doc:magit-list-repositories:
-It marks modified repos as “red:dirty”.
-
-It may be useful to know that ~(magit-anything-modified-p t file)~ can be used to
-check if ~file~ has been modified (doc:magit-anything-modified-p), whereas
-~(magit-status repo)~ checks the status of a repository (doc:magit-status).
-# (magit-anything-modified-p t "~/ElispCheatSheet/CheatSheet.org")
-# (magit-status "~/ElispCheatSheet")
-
-*** Gotta love that time machine
-:PROPERTIES:
-:CUSTOM_ID: Gotta-love-that-time-machine
-:END:
-
-Finally, one of the main points for using version control is to have access to
-historic versions of a file. The following utility allows us to
-kbd:M-x_git-timemachine on a file and use kbd:p/n/g/q to look at previous, next,
-goto arbitrary historic versions, or quit.
-#+BEGIN_SRC emacs-lisp
-(use-package git-timemachine )
-#+END_SRC
-If we want to roll back to a previous version, we just doc:write-file or
-kbd:C-x_C-s as usual! The power of text!
-
---------------------------------------------------------------------------------
-
-doc:vc-annotate is also very useful to go through history and work out when
-things went wrong.
-
-*** Jump to a (ma)git repository with ~C-u C-x g~                  :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Jump-to-a-ma-git-repository-with-C-u-C-x-g
-:header-args: :tangle no
-:END:
-
-#+begin_src emacs-lisp
-;; Jump to a (ma)git repository with C-u C-x g.
-;;
-;; To get a selection of repositories (that have been visited at least once),
-;; call with “C-u M-x magit-status” or “C-u C-x g”; use “C-u C-u C-x g” to
-;; manually enter a path to a repository.
-;;
-;; We use projectile's record of known projects, and keep only projects with
-;; .git directory.
-(with-eval-after-load 'projectile
-  (setq magit-repository-directories
-        (thread-last (projectile-relevant-known-projects)
-          (--filter (unless (file-remote-p it)
-                      (file-directory-p (concat it "/.git/"))))
-          (--map (list (substring it 0 -1) 0)))))
-
-;; Follow-up utility
-(defun my/update-repos ()
-  "Update (git checkout main & pull) recently visited repositories."
-  (interactive)
-  (cl-loop for (repo _depth) in magit-repository-directories
-        ;; Is it “main” or “master”
-        for trunk = (s-trim (shell-command-to-string (format "cd %s; git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" repo)))
-        do (message (format "🤖 %s ∷ Checking out & pulling main" repo))
-           (shell-command (format "cd %s; git checkout %s; git pull" repo trunk)))
-  (message "🥳 Happy coding!"))
-#+end_src
-
-** Pretty Magit Commit Leaders
-:PROPERTIES:
-:CUSTOM_ID: Pretty-Magit-Commit-Leaders
-:END:
-⟨ Following [[http://www.modernemacs.com/post/pretty-magit/][Pretty Magit - Integrating commit leaders | Modern Emacs]] ⨾⨾ Code
-comes from there as well.  Notable alteration: Helm compleition shows
-description of leaders. ⟩
-
-Add faces to Magit to achieve icon and colored commit leaders. I also integrate
-Helm to prompt a leader when committing so there's no need to remember or type
-out completely every leader we choose.
-- /It's not just aesthetics. It's about visual clarity./
-- [[https://www.reddit.com/r/emacs/comments/6jegis/comment/djeo89w/?utm_source=share&utm_medium=web2x&context=3][Here]] is an alternate approach: Add icons based on words mentioned in commit titles ---no leaders required.
-
-#+begin_details "Boring details ~ See linked article instead"
-#+begin_src emacs-lisp
-(cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
-  "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
-  `(prog1
-     (add-to-list 'pretty-magit-alist
-                  (list (rx bow (group ,WORD (eval (if ,NO-PROMPT? "" ":"))))
-                        ,ICON ',PROPS))
-     (unless ,NO-PROMPT?
-       (add-to-list 'pretty-magit-prompt (cons (concat ,WORD ": ") ,description)))))
-
-(setq pretty-magit-alist nil)
-(setq pretty-magit-prompt nil)
-#+end_src
-#+end_details
-
-My personal choices for leaders are:
-#+begin_src emacs-lisp
-(pretty-magit "Add"      ?➕ (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
-(pretty-magit "Delete"   ?❌ (:foreground "#375E97" :height 1.2) "❌ Remove a capability e.g. feature, test, dependency.")
-(pretty-magit "Fix"      ?🔨 (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
-(pretty-magit "Clean"    ?🧹 (:foreground "#FFBB00" :height 1.2) "✂ Refactor code; reformat say by altering whitespace; refactor performance.")
-(pretty-magit "Document" ?📚 (:foreground "#3F681C" :height 1.2) "ℹ Refactor of documentation, e.g. help files.")
-(pretty-magit "Feature"  ?⛲ (:foreground "slate gray" :height 1.2) "⛳ 🇮🇶🇨🇦 A milestone commit - flagpost")
-(pretty-magit "Generate"  ?🔭 (:foreground "slate gray" :height 1.2) "Export PDF/HTML or tangle raw code from a literate program") ;; Generating artefacts
-(pretty-magit "master"   ? (:box t :height 1.2) "" t)
-(pretty-magit "origin"   ?🐙 (:box t :height 1.2) "" t)
-;; Commit leader examples: https://news.ycombinator.com/item?id=13889155.
-;;
-;; Cut ~ Remove a capability e.g. feature, test, dependency.
-;; Bump ~ Increase the version of something e.g. dependency.
-;; Make ~ Change the build process, or tooling, or infra.
-;; Start ~ Begin doing something; e.g. create a feature flag.
-;; Stop ~ End doing something; e.g. remove a feature flag.
-#+end_src
-
-#+begin_details "Boring details ~ See linked article instead"
-#+begin_src emacs-lisp
-(defun add-magit-faces ()
-  "Add face properties and compose symbols for buffer from pretty-magit."
-  (interactive)
-  (with-silent-modifications
-    (--each pretty-magit-alist
-      (-let (((rgx icon props) it))
-        (save-excursion
-          (goto-char (point-min))
-          (while (search-forward-regexp rgx nil t)
-            (compose-region
-             (match-beginning 1) (match-end 1) icon)
-            (when props
-              (add-face-text-property
-               (match-beginning 1) (match-end 1) props))))))))
-
-(advice-add 'magit-status :after 'add-magit-faces)
-(advice-add 'magit-refresh-buffer :after 'add-magit-faces)
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(setq use-magit-commit-prompt-p nil)
-(defun use-magit-commit-prompt (&rest args)
-  (setq use-magit-commit-prompt-p t))
-
-(defun magit-commit-prompt ()
-  "Magit prompt and insert commit header with faces."
-  (interactive)
-  (when use-magit-commit-prompt-p
-    (setq use-magit-commit-prompt-p nil)
-    (thread-last (--map (format "%s %s" (car it) (cdr it)) pretty-magit-prompt)
-      (completing-read "Insert commit leader ∷ ")
-      ;; My “Generate:” commit type has one use case, for now; so let's insert it filled-in.
-      (funcall (lambda (it) (if (s-starts-with? "Generate:" it) it (car (s-split " " it)))))
-      (insert)
-      (end-of-line))
-    (add-magit-faces)))
-
-
-(remove-hook 'git-commit-setup-hook 'with-editor-usage-message)
-(add-hook 'git-commit-setup-hook 'magit-commit-prompt)
-(advice-add 'magit-commit :after 'use-magit-commit-prompt)
-#+end_src
-#+end_details
-
-** Highlighting TODO-s & Showing them in Magit
-:PROPERTIES:
-:CUSTOM_ID: Highlighting-TODO-s-Showing-them-in-Magit
-:END:
-
-Sometimes it's nice to flag a chunk of text by its author, such as ‘ [[color:#dc8cc3][MA]] ’ for
-‘M’usa ‘A’l-hassy, or ‘ [[color:#d0bf8f][HACK]] ’ for text that needs to be improved.  Such flags
-stand out from other text by being coloured and bold.
-
-#+BEGIN_SRC emacs-lisp
-;; NOTE that the highlighting works even in comments.
-(use-package hl-todo
-  ;; I want todo-words highlighted in prose, not just in code fragements.
-  :hook (org-mode . hl-todo-mode)
-  :config
-    ;; Adding new keywords
-    (cl-loop for kw in '("TEST" "MA" "WK" "JC")
-             do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3")))
-    ;; Enable it everywhere.
-    (global-hl-todo-mode))
-#+END_SRC
-
-We've added few to the default flag keywords so that in total we have the
-following flags ---where any sequence of at least 3 [[color:#cc9393][XXX]] are considered flags.
-#+BEGIN_SRC emacs-lisp :results replace raw value :exports results :eval no-export :tangle no
-(cl-loop for (k . f) in hl-todo-keyword-faces
-      collect (format "[[color:%s][%s]]" f k))
-#+END_SRC
-
-#+RESULTS:
-([[color:#dc8cc3][JC]] [[color:#dc8cc3][WK]] [[color:#dc8cc3][MA]] [[color:#dc8cc3][TEST]] [[color:#d0bf8f][HOLD]] [[color:#cc9393][TODO]] [[color:#dca3a3][NEXT]] [[color:#dc8cc3][THEM]] [[color:#7cb8bb][PROG]] [[color:#7cb8bb][OKAY]] [[color:#5f7f5f][DONT]] [[color:#8c5353][FAIL]] [[color:#afd8af][DONE]] [[color:#d0bf8f][NOTE]] [[color:#d0bf8f][KLUDGE]] [[color:#d0bf8f][HACK]] [[color:#d0bf8f][TEMP]] [[color:#cc9393][FIXME]] [[color:#cc9393][XXX+]])
-
-:Alternate_approach_using_font_lock:
-#+begin_src emacs-lisp
-(defun add-watchwords () "Add TODO: words to font-lock keywords."
-  (font-lock-add-keywords nil
-                          '(("\\(\\<TODO\\|\\<FIXME\\|\\<HACK\\|@.+\\):" 1
-                             font-lock-warning-face t))))
-
-(add-hook 'prog-mode-hook #'add-watchwords)
-
-#+end_src
-:End:
-
-Lest these get buried in mountains of text, let's have them [[https://github.com/alphapapa/magit-todos][become mentioned]] in
-a magit status buffer ---which uses the keywords from ~hl-todo~.
-#+BEGIN_SRC emacs-lisp
-;; MA: The todo keywords work in code too!
-(use-package magit-todos
-  :after magit
-  :after hl-todo
-  ;; :hook (org-mode . magit-todos-mode)
-  :config
-  ;; For some reason cannot use :custom with this package.
-  (custom-set-variables
-    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
-  ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
-  (setq magit-todos-exclude-globs '("*.html"))
-  (magit-todos-mode))
-#+END_SRC
-
-+ Note that such [[color:#cc9393][TODO]] keywords are not propagated from sections that are
-  *[[purple:COMMENT]]*-ed out in org-mode.
-+ Ensure you exclude generated files, such as the Emacs backups directory, from
-  being consulted. Using ~magit~, press [[kbd:i]] to mark items to be ignored.
-+ This feature also works outside of git repos.
-
-Open a Magit status buffer, or run doc:magit-todos-list to show a dedicated
-to-do list buffer. You can then peek at items with space, or jump to them with
-enter.
-
-#+begin_box
-Seeing the [[color:#cc9393][TODO]] list with each commit is an incentive to actually tackle the
-items there (•̀ᴗ•́)و
-#+end_box
-
-# Add these to the version control hydra.
-# #+BEGIN_SRC emacs-lisp
-# (defhydra hydra-version-control (global-map "C-x v")
-#   ("t" helm-magit-todos "Show TODOs lists for this repo."))
-# #+END_SRC
-#
-
-** Silently show me when a line was modified and by whom           :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Silently-show-me-when-a-line-was-modified-and-by-whom
-:header-args: :tangle no
-:END:
- Quickly & /automatically/ glimpse who, why, and when a line or code block was
- changed, using [[https://github.com/Artawower/blamer.el][blamer.el]]. Jump back through history to gain further insights
- as to how and why the code evolved with kbd:C-x_g_l_l (doc:magit-log-head) or
- doc:git-timemachine.
-
-#+begin_src emacs-lisp
-(unless noninteractive
-  (use-package blamer
-    :quelpa (blamer :fetcher github :repo "artawower/blamer.el")
-    :custom
-    (blamer-idle-time 0.3)
-    (blamer-min-offset 70)
-    (blamer-max-commit-message-length 80) ;; Show me a lot of the commit title
-    :custom-face
-    (blamer-face ((t :foreground "#7a88cf"
-                      :background nil
-                      :height 140
-                      :italic t)))
-    :config
-    (global-blamer-mode 1)))
-#+end_src
-
-This is /so nice!/. I've enabled it once and then it just “works in the
-background, silently”.
-
---------------------------------------------------------------------------------
-
-When reading a line and wondering “who changed/wrote this and why”, blamer.el
-answers that seamlessly ---almost as if a transient comment 😁
-
-+ The “why” is answered by commit messages; which may lead to improved messages:
-  /“Hey, I was just browsing through the code, and landed on this commit, but the
-  message does not tell me why the change was/ /introduced. Would you please write
-  more detailed commit messages.”/
-+ The “when” gives a useful context in time about the change.  For example, when
-  looking for a regression/recent-bug, we can immediately see /“Did this line
-  even change in the past week? No? That must not be it then”/ and we move on.
-
-If we want to see commit messages alongside /all/ code, then we can invoke
-doc:magit-blame-addition or doc:vc-annotate. If we want to “walk-along changes”
-then we use doc:git-timemachine.
-** Git gutter: Jumping between hunks                               :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: What's-changed-who's-to-blame
-:END:
-
-Let's have, in a fringe, an indicator for altered regions in a version
-controlled file.  The symbols “+, =” appear in a fringe by default for
-alterations ---we may change these if we like.
-# Moreover, let's stage-&-commit straight from a working buffer.
-#+begin_src emacs-lisp :tangle no
-;; Hunk navigation and commiting.
-(use-package git-gutter :config (global-git-gutter-mode))
-;; Diff updates happen in real time according when user is idle.
-#+END_SRC
-# There's a fork, [[https://github.com/nonsequitur/git-gutter-plus][git-gutter+]], which provides additional features but was slow for me on large, 10k, files.
-
-Let's set a hydra so we can press ~C-x v n n p n~ to move the next two
-altered hunks, move back one, then move to the next. This saves me having
-to supply the prefix ~C-x v~ each time I navigate among my alterations.
-At any point we may also press ~u 𝕩~ to denote ~C-u ⟪prefix⟫ 𝕩~.
-#+begin_src emacs-lisp :tangle no
-(defhydra hydra-version-control (global-map "C-x v")
-  "Version control"
-  ;; Syntax: (extension method description)
-  ("n" git-gutter:next-hunk      "Next hunk")
-  ("p" git-gutter:previous-hunk  "Previous hunk")
-  ("d" git-gutter:popup-hunk     "Show hunk diff")
-  ("r" git-gutter:revert-hunk    "Revert hunk\n")
-  ("c" git-gutter:stage-hunk     "Stage hunk")
-  ("s" git-gutter:statistic      "How many added & deleted lines"))
-#+END_SRC
-
-Committing with ~C-x v c~ let's us use ~C-c C-k~ to cancel and ~C-c C-c~ to
-submit the given message; ~C-c C-a~ to amend the previous commit.
-
-Alternatively, we may use [[https://github.com/dgutov/diff-hl][diff-hl]]:
-#+begin_src emacs-lisp :tangle no
-;; Colour fringe to indicate alterations.
-;; (use-package diff-hl)
-;; (global-diff-hl-mode)
-#+END_SRC
-
-#+begin_src emacs-lisp :tangle no
-;; Popup for who's to blame for alterations.
-(use-package git-messenger
-  :custom ;; Always show who authored the commit and when.
-          (git-messenger:show-detail t)
-          ;; Message menu let's us use magit diff to see the commit change.
-          (git-messenger:use-magit-popup t))
-
-;; View current file in browser on github.
-;; More generic is “browse-at-remote”.
-(use-package github-browse-file )
-
-;; Add these to the version control hydra.
-;;
-(defhydra hydra-version-control (global-map "C-x v")
-  ("b" git-messenger:popup-message "Who's to blame?")
-  ;; C-u C-x b ╱ u b ∷ Also show who authored the change and when.
-  ("g" github-browse-file-blame "Show file in browser in github")
-  ("s" magit-status "Git status of current buffer"))
-#+END_SRC
-
-Perhaps ~C-x v b~ will motivate smaller, frequent, commits.
-
-** URLs to git changes                                             :Disabled:
-:PROPERTIES:
-:header-args: :tangle no
-:END:
-
-Obtaining URL links to the current location of a file
----URLs are added to the kill ring.
-Usefully, if [[https://gitlab.com/pidu/git-timemachine][git-timemachine-mode]] is active, the generated link
-points to the version of the file being visited.
-#+begin_src emacs-lisp :tangle no
-(use-package git-link )
-
-(defhydra hydra-version-control (global-map "C-x v")
-  ("l" git-link "Git URL for current location"))
-#+END_SRC
-
-Read [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Version-Control.html#Version-Control][here]] for more about version control in general.
-
-** Version Control with SVN ---Using Magit!                        :Disabled:
-:PROPERTIES:
-:header-args: :tangle no
-:END:
-
-| /Disabled: I seldom work with SVN anymore./ |
-
-Let's use git as an interface to subversion repositories so that we can continue
-to use =magit= as our version control interface.  The utility to do so is called
-=git svn= ---note =git 𝒳= on a MacOS is the same as =git-𝒳= on other systems.
-
-#+begin_src emacs-lisp  :tangle no
-(use-package magit-svn
-  :hook (magit-mode . magit-svn-mode))
-#+end_src
-
-Here's an example. The following command checksout an SVN repo; afterwhich we may open a file
-there and do =M-x magit-status= to get the expected porcelain git interface  ^_^
-#+begin_src emacs-lisp :tangle no
-(async-shell-command "mkdir ~/2fa3; git svn clone --username alhassm https://websvn.mcmaster.ca/csse2fa3/2019-2020_Term2 ~/2fa3/")
-#+end_src
-
-In the magit buffer, we may now use the ~N~ key which wraps the =git svn=
-subcommands =fetch, rebase, dcommit, branch, tag=. For example:
-
-1. Make changes to a file.
-2. ‘Stage’ them with ~s~ and ‘commit’ them with ~c~.
-3. ‘Push’ changes with ~N c~.
-
-We get to pretend we're using ~git~ even though the underlying mechanism is ~svn~!
-# Indeed, in a terminal ~git svn log~ will show an ~svn~ log with single pushed commits.
-
-For move on =git svn=, see [[https://gist.github.com/rickyah/7bc2de953ce42ba07116][A simple guide to git-svn]] or [[https://www.viget.com/articles/effectively-using-git-with-subversion/][Effectively using Git with
-  Subversion]].
-
-(If I need to work with svn repos often enough, I'd extend my ~maybe-clone~
-  utility above to account for them.)
-
-** Github /within/ Emacs                                           :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Github-within-Emacs
-:header-args: :tangle no
-:END:
-
-We can work with Github/Gitlab/etc from the comfort of Emacs Magit using the [[https://github.com/magit/forge][forge]] package.
-+ In particular, it adds two new “topics” to the Magit status page: =Issues= and =Pull Requests=.
-  - We can tab on these to see their “posts” ---the contributions to the conversations and /new/ commits.
-  - [[https://magit.vc/manual/forge/Editing-Topics-and-Posts.html][Here]] is a list of actions that can be done on topics and posts.
-
-#+begin_src emacs-lisp
-(use-package forge
-  :after magit)
-#+end_src
-
-1. Make a file =~/.authinfo= whose top-most line is =machine api.github.com login ⟪𝑼𝑺𝑬𝑹𝑵𝑨𝑴𝑬⟫^forge password ⟪𝑻𝑶𝑲𝑬𝑵⟫= where ⟪⋯⟫
-   should be replaced by your Github username and a token ---which can be [[https://github.com/settings/tokens][created from this page]] with [[https://magit.vc/manual/forge/Token-Creation.html][permissions]] for
-   ~repo, user, read:org~ checked-off.
-   - For more detailed information, see [[https://magit.vc/manual/ghub/Creating-and-Storing-a-Token.html][this Forge manual page]].
-
-2. Now open a Magit status buffer for a repository and run ~M-x forge-pull~, after which you should be able to see all issues and pull requests.
-   - Alternatively, press ~N~ to see the forge menu.
-   - Press ~N f f~ to pull latest information from the repository.
-     + Note how pulling data from a forge’s API works the same way as pulling Git data does; you do it explicitly when
-       you want to see the work done by others.
-     + We can also “c”reate a new “p”ull request or a new “i”ssue with ~N c p~ or ~N c i~, respectively.
-     + [[https://www.youtube.com/watch?v=fFuf3hExF5w&ab_channel=ZaisteProgramming][~5 min video]]
-
-To *review a pull request* press tab on ~Pull Requests~ then press ~b y~ to checkout that branch locally.
-
-** COMMENT Browse remote files
-:PROPERTIES:
-:CUSTOM_ID: Browse-remote-files
-:END:
-
-  Sometimes you want to see the current file in Github; e.g., you select a
-  region and press ~M-x browse-at-remote-kill~ to get the URL for that region in
-  Github then you can send that URL to your peers when referencing something.
-  - Or just ~M-x browse-at-remote~ to see it in Github.
-  - [[https://github.com/rmuslimov/browse-at-remote][browse-at-remote: Browse target page on github/bitbucket from emacs buffers]].
-
-#+begin_src emacs-lisp
-;; Usage: [Optionally select a region then] M-x browse-at-remote[-kill]
-(use-package browse-at-remote)
-#+end_src
-** COMMENT Elementary Version Control
-:PROPERTIES:
-:CUSTOM_ID: Elementary-Version-Control
-:END:
-
-[[http://www.linfo.org/hard_link.html][Soft links]] are pointers to other filenames, whereas hardlinks
-are pointers to memory location of a given filename!
-Soft links are preferable since they defer to the orginal filename
-and can work across servers.
-
-We can declare them as follows,
-#+BEGIN_EXAMPLE shell
-ln -s source_file myfile
-#+END_EXAMPLE
-
-If ~repo~ refers to a directory under version control
---or Dropbox-- we move our init file and emacs directory to it,
-then make soft links to these locations so that whenever ~~/.emacs~
-is accessed it will refer to ~repo/.emacs~ and likewise for ~.emacs.d~ :-)
-
-On a new machine, copy-paste any existing emacs configs we want
-to the ~repo~ folder then ~rm -rf ~~/.emacs*~ and then make the soft
-links only.
-
-#+BEGIN_EXAMPLE shell
-repo=~/Dropbox     ## or my git repository: ~/dotfiles
-
-cd ~
-
-mv .emacs $repo/
-ln -s $repo/.emacs .emacs
-
-mv .emacs.elc $repo/
-ln -s $repo/.emacs.elc .emacs.elc
-
-mv .emacs.d/ $repo/
-ln -s $repo/.emacs.d/ .emacs.d
-#+END_EXAMPLE
-Note the extra ~/~ after ~.emacs.d~!
-
-You may need to unlink soft links if you already have them;
-e.g., ~unlink .emacs.d~.
-
-To make another softlink to a file, say in a blogging directory,
-we ~cd~ to the location of interest then execute, say:
-~ln -s $repo/.emacs.d/init.org init.org~
-
-While we're at it, let's make this super-duper file (and another) easily
-accessible --since we'll be altering it often--:
-#+BEGIN_EXAMPLE shell
-cd ~
-
-ln -s dotfiles/.emacs.d/init.org init.org
-ln -s alhassy.github.io/content/AlBasmala.org AlBasmala.org
-#+END_EXAMPLE
-
-Below I'll equip us with an Emacs ‘porcelain’ interface to git
---it makes working with version control tremendously convenient.
-Moreover, I add a little pop-up so that I don't forget to commit often!
-
-Finally, since I've symlinked my ~.emacs~:
-#+begin_src emacs-lisp :tangle no
-;; Don't ask for confirmation when opening symlinked files.
-(setq vc-follow-symlinks t)
-#+end_src
-* Cosmetics
-:PROPERTIES:
-:CUSTOM_ID: Cosmetics
-:header-args: :tangle init.el
-:END:
-
-Upon startup, we want to be greeted with a useful, yet unobtrusive, message
-briefly detailing major system details. Moreover, the bottom-most area of the
-screen should display battery life, data, & time. Likewise, we may have a casual
-file explorer ---primarily to show-off to newcomers, since great functionality
-is found with ~M-x dired~ ---doc:dired.
-
-#+BEGIN_SRC emacs-lisp  :tangle init.el
-;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
-;; https://github.com/emacsorphanage/org-bullets
-(use-package org-bullets :hook (org-mode . org-bullets-mode))
-#+END_SRC
-** Emojis
-:PROPERTIES:
-:CREATED:  [2024-11-08 Fri 18:16]
-:END:
-
-#+begin_src emacs-lisp
-(if (member "Apple Color Emoji" (font-family-list))
-    (set-fontset-font t 'unicode "Apple Color Emoji" nil 'prepend)
-  (message-box "Musa: Install the font!"))
-;; E.g., Download font such as https://fonts.google.com/noto/specimen/Noto+Color+Emoji
-;; Double-click on the ttf file then select “install” to have it installed on your system
-;; (Note: Noto does not work on my personal machine.)
-
-
-;; Render ASCII such as “ :-) ” as emoji 🙂.
-(use-package emojify)
-(setq emojify-display-style 'unicode) ;; unicode is the way to go!
-(setq emojify-emoji-styles '(unicode))
-(global-emojify-mode 1) ;; Will install missing images, if need be.
-#+end_SRC
-
-** Startup message: Emacs & Org versions
-:PROPERTIES:
-:CUSTOM_ID: Startup-message-Emacs-Org-versions
-:END:
-
-Let's always welcome ourselves when Emacs begins with a helpful message.  For
-example, which user account is running and what are the version numbers of our
-primary tools.
-
-#+begin_src emacs-lisp
-;; Silence the usual message: Get more info using the about page via C-h C-a.
-(setq inhibit-startup-message t)
-
-(defun display-startup-echo-area-message ()
-  "The message that is shown after ‘user-init-file’ is loaded."
-  (message
-      (concat "Welcome "      user-full-name
-              "! Emacs "      emacs-version
-              "; Org-mode "   org-version
-              "; System "     (symbol-name system-type)
-              "/"             (system-name)
-              "; Time "       (emacs-init-time))))
-#+end_src
-Now my startup message is,
-#+begin_example
-Welcome Musa Al-hassy! Emacs 27.1; Org-mode 9.4.4; System darwin/Musas-MacBook-Air.local; Time 13.331914 seconds
-#+end_example
-:Manually_Computing_Init_Time:
-#+BEGIN_SRC emacs-lisp :tangle no
-(format "; Time %.3fs"
-        (float-time (time-subtract (current-time) before-init-time)))
-#+END_SRC
-:End:
-
-Let's change the Emacs frame to mention the name of the buffer in focus,
-as well as a nice ‘motto’:
-#+begin_src emacs-lisp
-;; Keep self motivated!
-(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
-#+end_src
-** My to-do list: The initial buffer when Emacs opens up
-:PROPERTIES:
-:CUSTOM_ID: My-to-do-list-The-initial-buffer-when-Emacs-opens-up
-:END:
-
-I almost always have Emacs open; I don't need a dashboard, but would like to see
-my to-do list and my init file, side-by-side.
-#+BEGIN_SRC emacs-lisp
-;; I have symlinks for various things, just follow them, do not ask me.
-(setq vc-follow-symlinks t)
-
-;; After my settings have been loaded, e.g., fancy priorities
-;; and cosmetics, then open my notes files.
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (-let [my-life.el (getenv "MY_LIFE_ELISP")]
-              (unless org-default-notes-file
-                (error "Add to .zshrc “ export MY_LIFE_ELISP=\"/full/path/to/my-life.el\" ”, then load my-life.el"))
-              (load-file my-life.el))))
-#+END_SRC
-
-There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile
-yet minimalist splash screen showing recent files, projects, and bookmarks.
-
-** A sleek, informative, & fancy mode line
-:PROPERTIES:
-:CUSTOM_ID: A-sleek-informative-and-fancy-mode-line
-:END:
-
-The ‘modeline’ is a part near the bottom of Emacs that gives information about
-the current buffer, such as its file-type/‘major-mode’ and enabled
-extensions/‘minor-modes’.  Let's use the [[https://github.com/seagle0128/doom-modeline][doom-modeline]], which is a /sleek &
-minimalistic, yet fancy/ setup with the following notable perks:
-
-+ Gives each buffer a nice icon in the modeline (denoting its major mode; e.g.,
-  Lisp/JavaScript/Org/etc each get a cool icon).
-
-+ Name of file becomes red when unsaved/modified.
-
-+ Nice version control icon, with branch name.
-
-+ Name of file is of the shape is shown as “project/file.ext”, when a project
- is detected using ~projectile.el~.
-
-+ Flycheck error reporting is ugly by default, and one would consider using
-  flycheck-status-emojis to make things look better in a simple modeline, but
-  Doom-modeline gives a nice status indicators for Flycheck.
-
-+ Shows “+2” when the text scale is two above usual.
-
-For fine-grained control on what/how things appear, there is
-doc:doom-modeline-def-modeline and doc:doom-modeline-set-modeline.
-
-NOTE: We need to run =M-x= doc:nerd-icons-install-fonts for doom-modeline to use pretty icons ---then restart Emacs.
-#+begin_src emacs-lisp :tangle init.el
-;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
-(use-package doom-modeline
-  :config (doom-modeline-mode))
-
-  ;; Use minimal height so icons still fit; modeline gets slightly larger when
-  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
-  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
-  (setq doom-modeline-height 21)
-  (setq doom-modeline-buffer-state-icon nil)
-  (setq doom-modeline-hud t)
-  (setq doom-modeline-bar-width 1)
-
-  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
-  ;; we can click to see a listing.
-  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
-  (setq doom-modeline-checker-simple-format nil)
-
-  ;; Don't display the buffer encoding, E.g., “UTF-8”.
-  (setq doom-modeline-buffer-encoding nil)
-
-  ;; Inactive buffers' modeline is greyed out.
-  ;; (let ((it "Source Code Pro Light" ))
-  ;;   (set-face-attribute 'mode-line nil :family it :height 100)
-  ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
-
-  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
-  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
-  ;; We likely want to add this locally, to hooks on major modes.
-#+end_src
-
-:Disabled__spaceline_modeline:
-
-[[https://github.com/TheBB/spaceline][Spaceline]]
-
-# I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I find spacemacs to “hide things”
-# from me ---whereas Emacs “encourages” me to learn more---, however it is a
-# configuration and I enjoy reading Emacs configs in order to improve my own
-# setup. From Spacemacs I've adopted Helm for list completion, its sleek light &
-# dark themes, and its modified powerline setup.
-
-#+begin_src emacs-lisp :tangle no
-;; When using helm & info & default, mode line looks prettier.
-(use-package spaceline
-  :custom (spaceline-buffer-encoding-abbrev-p nil)
-          ;; Use an arrow to seperate modeline information
-          (powerline-default-separator 'arrow)
-          ;; Show “line-number : column-number” in modeline.
-          (spaceline-line-column-p t)
-          ;; Use two colours to indicate whether a buffer is modified or not.
-          (spaceline-highlight-face-func 'spaceline-highlight-face-modified)
-  :config (custom-set-faces '(spaceline-unmodified ((t (:foreground "black" :background "gold")))))
-          (custom-set-faces '(spaceline-modified   ((t (:foreground "black" :background "cyan")))))
-          (require 'spaceline-config)
-          (spaceline-helm-mode)
-          (spaceline-info-mode)
-          (spaceline-emacs-theme))
-
-(spaceline-toggle-buffer-size-off) ;; Not interested in how large a buffer is.
-(spaceline-toggle-input-method-off) ;; Usually a “Π” symbol in the modeline, since I use Unicode input with Agda, denoting the current language environment, buffer coding system, and current input method.
-(spaceline-toggle-buffer-encoding-abbrev-off) ;; buffer-encoding-abbrev: the line ending convention used in the current buffer (unix, dos or mac).
-(spaceline-toggle-hud-off) ;; A tiny “progress bar”; shows the currently visible part of the buffer.
-(spaceline-toggle-helm-buffer-id-off) ;; I don't need to see “Helm M-x” whenever I press “M-x” or other Helm-powered commands.
-#+end_src
-
-Other separators ---of modeline information--- that I've considered include
-~'brace~ instead of an arrow, and ~'contour, 'chamfer, 'wave, 'zigzag~ which look
-like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
-:End:
-
-*** Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled
-:PROPERTIES:
-:CUSTOM_ID: Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled
-:END:
-
-Enabled minor modes clutter up the modeline with their names, albeit some have
-useful status information shown. We can either selectively pick which
-names/status are shown using diminish.el, possibly forgetting which minor modes
-are enabled or we can use minions.el to “gather up” all enabled minor modes, and
-recently enabled ones, under a single menu which doom-modeline shows as a simple
-configurations gear icon. ⚙. :gear:
-
-#+begin_src emacs-lisp
-  (setq doom-modeline-minor-modes t)
-  (use-package minions
-
-    :init (minions-mode 1))
-#+end_src
-
-*** Nice battery icon alongside with percentage, in doom-modeline
-:PROPERTIES:
-:CUSTOM_ID: Nice-battery-icon-alongside-with-percentage-in-doom-modeline
-:END:
-#+begin_src emacs-lisp  :tangle init.el
-;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
-(display-battery-mode +1)
-#+end_src
-
-#+begin_details [Posterity / Disabled] Fancy Battery Setup
-Let's have it also show remaining battery life, coloured green if charging and
-coloured yellow otherwise.  It is important to note that this package is no
-longer maintained. It works on my machine.
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Let's use a fancy indicator …
-(use-package fancy-battery
-  :custom (fancy-battery-show-percentage  t)
-          (battery-update-interval       15)
-  :config (fancy-battery-mode))
-#+END_SRC
-#+end_details
-
-*** Time & date
-:PROPERTIES:
-:CUSTOM_ID: Time-date
-:END:
-Let’s display the current time, with updates every second.
-
-#+begin_src emacs-lisp  :tangle init.el
-;; Show date and time as well.
-
-;; [Simple Approach]
-;; (setq display-time-day-and-date t)
-;; (display-time)
-
-;; [More Controlled Approach: Set date&time format]
-;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
-(setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
-(setq display-time-interval 1) ;; Please update the time every second.
-(display-time-mode)
-#+end_src
-
-But doc:display-time-mode shows me a bit more info that I actually don't care
-for; so let's disable those.
-#+begin_src emacs-lisp  :tangle init.el
-;; I don't need the system load average in the modeline.
-(setq display-time-default-load-average nil)
-(setq display-time-load-average nil)
-#+end_src
-
-*** No Line, nor Column, Numbers  ---and no buffer percentage
-Likewise, let's have the modeline display column numbers, but not line numbers.
-Instead, let's have line numbers on the side of the buffer; moreover let's have
-a uniform width for displaying line numbers, rather than having the width grow
-as necessary.
-#+BEGIN_SRC emacs-lisp  :tangle init.el
-;; ;; Do not show me line numbers, nor column numbers, in the modeline
-(column-number-mode -1)
-(line-number-mode   -1)
-
-;; Likewise, no need to show me “Top∣Mid∣Bot” in the modeline.
-(setq-default mode-line-percent-position nil)
-#+END_SRC
-
-Line numbers are a /conventionally expected/ part of a user interface, but I've
-realised that I seldom /need to see/ them. I can still jump to a line number
-provided by a compilation error with kbd:M-g_g; and toggle line numbers on when
-I'm pair programming with doc:display-line-numbers-mode.
-- In Emacs, there are /buffer/ which exist and contain textual data, but to
-  actually see them one requires a /window/. In the same vein, there are line
-  numbers but I don't need to always see them.
-- If I need an indication of ‘progress’, the modeline contains a percentage of
-  how far I am in a buffer.
-#+BEGIN_SRC emacs-lisp  :tangle init.el
-;; (setq display-line-numbers-width-start t)
-;; (global-display-line-numbers-mode      t)
-#+END_SRC
-*** Buffer names are necessarily injective :No_longer_needed_due_to_doom:Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Buffer-names-are-necessarily-injective
-:header-args: :tangle no
-:END:
-
-By default when multiple files sharing the same name are opened, say for
-comparison from different directories, their buffers are named uniquely by
-having the format “⟨file-name⟩ <𝓃>”, for numbers 𝓃. It'd be more helpful
-to have the buffer names reflect their location.
-#+BEGIN_SRC emacs-lisp
-;; Note that ‘uniquify’ is builtin.
-(require 'uniquify)
-(setq uniquify-separator "/"               ;; The separator in buffer names.
-      uniquify-buffer-name-style 'forward) ;; names/in/this/style
-#+END_SRC
-
-            Note that this does not affect cloning buffers, kbd:C-x_4_c.
-
-( A function /f/ is /injective/ precisely when it's /distinction-preserving/; i.e.,
-  /x ≠ y ≡ f x ≠ f y/. We can tell whether two things are the same or not, by
-  ‘zooming in’ on their particular property ‘f’, which may be easier to compare.
-  E.g., object IDs, hashcodes, unique keys in database tables. )
-
-( Why am I bringing this up? I like math and seldom get to use it; so why not! )
-
-** Exquisite Fonts and Themes
-:PROPERTIES:
-:CUSTOM_ID: Exquisite-Fonts-and-Themes
-:END:
-
-Emacs' default theme leaves much to be desired: It does not look sleek and
-shiny, which usually leaves first-timers with a poor, shallow, impression of the
-system. Below we install a few themes that make Emacs look exquisite.  We cycle
-between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
-
-#+begin_details “my/toggle-theme” Implementation
-+ ~M-x load-theme RET TAB~ shows all themes, including built-in ones,
-  that may be loaded.
-+ Loading multiple themes results in their pallets mixed.
-  - ~M-x disable-theme~ to remove a theme from the current pallet.
-
---------------------------------------------------------------------------------
-
-#+begin_src emacs-lisp :tangle init.el
-;; Treat all themes as safe; no query before use.
-(setf custom-safe-themes t)
-#+end_src
-
-+ The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
-+ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
-
---------------------------------------------------------------------------------
-
-#+BEGIN_SRC emacs-lisp :tangle init.el
-;; Infinite list of my commonly used themes.
-(setq my/themes
-      (cl-loop for (package . theme-variants-I-like) in
-               ;; I like theme doom-flatwhite <3 It feels “warm”.
-               ;; (I found out thanks to C-u C-c t!)
-               '((doom-themes doom-flatwhite doom-snazzy doom-monokai-ristretto doom-laserwave doom-solarized-light doom-vibrant)
-                 (solarized-theme solarized-gruvbox-dark solarized-gruvbox-light)
-                 (stimmung-themes stimmung-themes-light stimmung-themes-dark)
-                 (shanty-themes shanty-themes-light)
-                 (apropospriate-theme apropospriate-light) ;; /super/ nice! Super “clean”, like writing on paper
-                 (tao-theme tao-yang) ;; nice light theme.
-                 (leuven-theme leuven-dark leuven) ;; Nice minimal variant
-                 (material-theme material-light)
-                 (moe-theme moe-light)
-                 (organic-green-theme organic-green)
-                 (tango-plus-theme tango-plus)
-                 ;; I like all 3 variants.
-                 (minimal-theme minimal minimal-black minimal-light)
-                 (espresso-theme espresso)
-                 (emacs dichromacy)
-                 (nano-theme nano-light nano-dark)
-                 (pink-bliss-uwu-theme pink-bliss-uwu)
-                 (modus-themes modus-operandi-tinted))
-               do (package-install package)
-               append theme-variants-I-like))
-
-(setcdr (last my/themes) my/themes)
-#+END_SRC
-
-kbd:C-c_t to toggle between the personal themes.
-#+BEGIN_SRC emacs-lisp :tangle init.el
-(cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
-  "Disable all themes and load the given one ---read from user when called interactively."
-  (interactive)
-  (mapc #'disable-theme custom-enabled-themes)
-  (load-theme new-theme)
-  (message "Theme %s" new-theme))
-
-(cl-defun my/toggle-theme (&optional (new-theme (pop my/themes)))
-  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
-
-When a universal prefix is given, “C-u C-c t”, we load a random
-theme from all possible themes.  Nice way to learn about more
-themes (•̀ᴗ•́)و"
-  (interactive)
-  (-let [theme (if current-prefix-arg
-                   (nth (random (length (custom-available-themes)))
-                        (custom-available-themes))
-                 new-theme)]
-    (my/load-theme theme)))
-
-(global-set-key "\C-c\ t" 'my/toggle-theme)
-
-(my/toggle-theme)
-#+END_SRC
-
-Apparently, there's already a package that accomplishes these goals and more:
-[[https://github.com/myTerminal/theme-looper][theme-looper]]. I may switch to it, but for now my simple function above is
-slightly informative, to me at least, about how themes work and it does what I
-want.
-
-...Actually, the above learning adventure has made it easy to provide a similar setup
-for fonts 😁
-#+end_details
-
-Likewise, kbd:C-c_F, doc:my/toggle-font, to quickly change fonts (according to
-mood 😸). [I already use kbd:C-c_f, doc:my/org-mode-format, for the more likely
-operation of formatting text.]
-#+begin_details “my/toggle-font” Implementation
-
-#+begin_src emacs-lisp :tangle init.el
-(when my/personal-machine?
-
-  ;; Infinite list of my commonly used fonts
-  (setq my/fonts
-        '(;; NOPE: Breaks Gerrit! "Roboto Mono Light 14" ;; Sleek
-          "Input Mono 14"
-          "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
-          "Papyrus 14"
-          "Bradley Hand Light 12"
-          ;; "Chalkduster 14" ;; Laggy!
-          "Courier Light 12"
-          "Noteworthy 9"
-          "Savoye LET 14"
-          "Fantasque Sans Mono 16"
-          ))
-  (setcdr (last my/fonts) my/fonts)
-
-  ;; Let's ensure they're on our system
-  ;; brew search "/font-/"   # List all fonts
-
-  (shell-command "brew tap homebrew/cask-fonts")
-  (system-packages-ensure "svn") ;; Required for the following font installs
-  ;; No thanks! (system-packages-ensure "font-roboto-mono") ;; Makes Gerrit in Chrome look like Gibberish!
-  (system-packages-ensure "font-input")
-  (system-packages-ensure "font-source-code-pro")
-  (system-packages-ensure "font-fira-mono")
-  (system-packages-ensure "font-mononoki")
-  (system-packages-ensure "font-monoid")
-  (system-packages-ensure "font-menlo-for-powerline")
-  (system-packages-ensure "font-fantasque-sans-mono")
-  (system-packages-ensure "font-ibm-plex")
-
-  ;; Use “M-x set-face-font RET default RET”, or...
-  ;; (set-face-font 'default "Source Code Pro Light14")
-
-  ;; See ~2232 fonts
-  ;; (append (fontset-list) (x-list-fonts "*" nil))
-
-  (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
-    "Load NEW-FONT, which defaults from ‘my/fonts’.
-
-When a universal prefix is given, “C-u C-c F”, we load a random
-font from all possible themes.  Nice way to learn about more
-fonts (•̀ᴗ•́)و"
-    (interactive)
-    (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
-           (font (if current-prefix-arg
-                     (nth (random (length all-fonts)) all-fonts)
-                   new-font)))
-      (set-face-font 'default font)
-      (message "Font: %s" font)))
-
-  (global-set-key "\C-c\ F" 'my/toggle-font)
-
-  ;; Default font; the “ignore-⋯” is for users who may not have the font.
-  (ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
-  (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
-  (ignore-errors (my/toggle-font "IBM Plex Mono 12")))
-#+end_src
-
-#+end_details
-
-In any Org file, type ~elisp:menu-set-font~; then you can click on this link to
-get a nice font selection menu ---this can be useful for your own ‘personal startup buffer’.
-
-# Finally, for fun, let's colour all source blocks, in Org mode, by the background colour pink.
-# (set-face-attribute 'org-block nil :background "pink")
-# MA: This does not work well with dark themes; should use a theme-based setting.
-
-Let's use the following theme and font, upon startup.
-#+begin_src emacs-lisp :tangle init.el
-(unless noninteractive
-  ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
-  (my/toggle-theme 'solarized-gruvbox-light))
-#+end_src
-
-** Dimming Unused Windows
-:PROPERTIES:
-:CUSTOM_ID: Dimming-Unused-Windows
-:END:
-
-Let's dim windows, and even the whole Emacs frame, when not in use.
-#+BEGIN_SRC emacs-lisp
-(use-package dimmer
-  :config (dimmer-mode))
-#+END_SRC
-
-A more ‘fine-grained’ [[https://github.com/larstvei/Focus][tool]] dims all text except the ‘paragraph’ you're working
-on. It's nifty, but not for me.
-
-** TODO Flashing when something goes wrong
-:PROPERTIES:
-:CUSTOM_ID: Flashing-when-something-goes-wrong
-:END:
-
-Enable flashing mode-line on errors. E.g., ~C-g~, or calling an unbound key
-sequence, or misspelling a word.
-#+BEGIN_SRC emacs-lisp
-;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
-
-;; The doom themes package comes with a function to make the mode line flash on error.
-;; (use-package doom-themes)
-;; (require 'doom-themes-ext-visual-bell)
-;; (doom-themes-visual-bell-config)
-#+END_SRC
-
---------------------------------------------------------------------------------
-
-+A blinking cursor rushes me to type; let's slow down.+ Recently I'm thinking that
-a blinking cursours prompts me to continue upwards and onwards.
-#+BEGIN_SRC emacs-lisp
-(blink-cursor-mode 1)
-#+END_SRC
-
-** Hiding Scrollbar, tool bar, and menu
-:PROPERTIES:
-:CUSTOM_ID: Hiding-Scrollbar-tool-bar-and-menu
-:END:
-
-As a laptop user, screen space is important, so let's remove rarely used visual
-items.
-#+BEGIN_SRC emacs-lisp :tangle init.el
-(unless noninteractive
-  (tool-bar-mode   -1)    ;; No large icons please
-  (scroll-bar-mode -1))   ;; No visual indicator please
-  ;; (menu-bar-mode   -1) ;; The Mac OS top pane has menu options
-#+END_SRC
-
-** Highlight & complete parenthesis pair when cursor is near ;-)
-:PROPERTIES:
-:CUSTOM_ID: Highlight-complete-parenthesis-pair-when-cursor-is-near
-:END:
-
-Highlight matching ‘parenthesis’ when near one of them.
-#+begin_src emacs-lisp :tangle init.el
-(setq show-paren-delay  0)
-(setq show-paren-style 'mixed)
-(show-paren-mode)
-#+end_src
-
-Colour parens, and other delimiters, depending on their depth.
-Very useful for parens heavy languages like Lisp.
-#+begin_src emacs-lisp :tangle init.el
-(use-package rainbow-delimiters
-  :hook prog-mode)
-#+end_src
-
-For example:
-#+begin_src emacs-lisp :tangle no
-(blue (purple (forest (green (yellow (blue))))))
-#+end_src
-
-There is a powerful package called ‘smartparens’ for working with pair-able
-characters, but I've found it to be too much for my uses. Instead I'll utilise
-the lightweight package ~electric~, which Emacs provides out of the box.
-#+BEGIN_SRC emacs-lisp :tangle init.el
-(electric-pair-mode 1)
-#+END_SRC
-It supports, by default, ACSII pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
-
-When writing Lisp, it is annoyong to have ‘<’ and ‘>’ be completed
-/and/ considered as pairs.  Let's disassociate them from both notions.
-#+BEGIN_SRC emacs-lisp :tangle init.el
-;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
-(setq electric-pair-inhibit-predicate
-      (lambda (c)
-        (or (member c '(?< ?> ?~)) (electric-pair-default-inhibit c))))
-
-;; Treat ‘<’ and ‘>’ as if they were words, instead of ‘parenthesis’.
-(modify-syntax-entry ?< "w<")
-(modify-syntax-entry ?> "w>")
-#+END_SRC
-
-:Rainbow_delims:
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Act as usual unless a ‘<’ or ‘>’ is encountered.
-;; ( char-at is really “character at poisition”; C-h o! )
-(setq rainbow-delimiters-pick-face-function
-      (lambda (depth match loc)
-        (unless (member (char-after loc) '(?< ?>))
-          (rainbow-delimiters-default-pick-face depth match loc))))
-#+END_SRC
-:End:
-
-*Adding Org-emphasise markers for pair completion ---Disabled.*
-
-Let's add the org-emphasises markers: If we select a word then press =*=, it
-becomes bold; likewise for ~/~ for emphasise.
-#+BEGIN_SRC emacs-lisp :tangle no
-(setq electric-pair-pairs
-         '((?~ . ?~)
-           (?* . ?*)
-           (?/ . ?/)))
-
-;; Let's also, for example, avoid obtaining double ‘~’ and ‘/’ when searching for a file.
-
-;; Disable pairs when entering minibuffer
-(add-hook 'minibuffer-setup-hook (lambda () (electric-pair-mode 0)))
-
-;; Renable pairs when existing minibuffer
-(add-hook 'minibuffer-exit-hook (lambda () (electric-pair-mode 1)))
-#+END_SRC
-
-I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
-Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
-** Tabs                                                            :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Tabs
-:header-args: :tangle no
-:END:
-
-I really like my Helm-supported ~C-x b~, but the visial appeal of a [[https://github.com/manateelazycat/awesome-tab][tab bar]] for Emacs
-is interesting. Let's try it out and see how long this lasts ---it may be like Neotree:
-Something cute to show to others, but not as fast as the keyboard.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package awesome-tab
-  :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
-  :config (awesome-tab-mode t))
-
-;; Show me /all/ the tabs at once, in one group.
-(defun awesome-tab-buffer-groups ()
-  (list (awesome-tab-get-group-name (current-buffer))))
-#+END_SRC
-
-It's been less than three days and I've found this utility to be unhelpful, to me anyhow.
-
-An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
-
-** Window resizing using the golden ratio                          :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Window-resizing-using-the-golden-ratio
-:header-args: :tangle no
-:END:
-
-Let's load the following package, which automatically resizes windows so that
-the window containing the cursor is the largest, according to the golden ratio.
-Consequently, the window we're working with is nice and large yet the other windows
-are still readable.
-
-#+begin_src emacs-lisp :tangle no
-(use-package golden-ratio
-  :init (golden-ratio-mode 1))
-#+end_src
-
-After some time this got a bit annoying and I'm no longer  using this.
-
-An alternative, also disabled:
-#+begin_src emacs-lisp :tangle no
-;; An automatic window-resizing mechanism.
-;; A “calmer” alternative to golden-ratio.
-;; https://github.com/cyrus-and/zoom
-(use-package zoom :config (zoom-mode t))
-#+end_src
-
-** Replace phrases with nice SVG labels :Disabled:Causes_Org_rendering_issues:
-:PROPERTIES:
-:CUSTOM_ID: Replace-phrases-with-nice-SVG-labels
-:header-args: :tangle no
-:END:
-
-:TODO_What_kind_of_Org_rendering_issues_are_caused:
-Some org headings are not fontified, and Org links are not fontified; e.g.,
-
-  📆 [[https://calendar.google.com/calendar/u/0/r][Calendar]] ✉️
-
-+ I have to copy-paste it to get it to fontify.
-+ Likewise, Org headings need to be modified (e.g. pressing `t` to make them todo) to get them fontified.
-:End:
-
-[[ https://github.com/rougier/svg-tag-mode][SVG tags mode]] let's us replase arbitrary regular expressions with beautiful SVG
-images that can be /clicked/ to produce an action, and may have a tooltip to
-provide contextual information. Essentially an alternative to the built-in
-doc:font-lock-mode, which performs arbitrary syntax highlighting.
-- For more power, use the ~svg-lib~ package.
-- The docs have nice examples. [[https://github.com/rougier/svg-tag-mode/blob/main/examples/example-2.el][Here]] are more useful examples.
-
-# Below I setup a function, doc : my/svg-tag-declare-badge to /declaratively/ produce SVG badges.
-
-#+begin_src emacs-lisp
-(use-package svg-tag-mode
-  :hook (org-mode prog-mode)
-  ;; :config (global-svg-tag-mode) ;; Nope: Breaks xwidget-webkit-browse-url, issue#28.
-  :config
-  (cl-defun my/svg-tag-declare-badge (template face &optional tooltip-message-upon-hover)
-    ;; Example faces: 'org-level-1 'org-todo 'font-lock-doc-face
-    "Given a TEMPLATE of the shape \"𝑿❙𝒀\", make SVG badge whose tag is 𝑿 and label is 𝒀.
-
-     When `svg-tags-mode' is enabled, every occurence of  \"\\(𝑿\\)\\(𝒀\\)\"
-     is replaced by an SVG image essentially displaying “[𝑿∣𝒀]” using the given FACE.
-     This badge can be clicked to show all instances in the buffer.
-     You can see the badges documentation / intentions / help-message when you hover over it;
-     to see TOOLTIP-MESSAGE-UPON-HOVER.
-
-     Both 𝑿 and 𝒀 are regeular expressions; “❙” serves as the SVG tag-label delimiter
-     ---i.e., it saves as from writing \"\\(𝑿\\)\\(𝒀\\)\". Moreover, the SVG is only active
-     when regexp \"\\(𝑿\\)\\(𝒀\\)\" matches an instance."
-
-    ;; Append tooltip message with a notice on what happens upon click.
-    (--> "Click on me to all see occurrences of this badge, in the current buffer!"
-         (if tooltip-message-upon-hover (concat tooltip-message-upon-hover "\n\n" it) it)
-         (setq tooltip-message-upon-hover it))
-
-    (-let [(tag label) (s-split "❙" template)]
-      (-let [click-to-show-all-buffer-occurrences `(lambda () (interactive) (occur (concat ,tag ,label)))]
-       ;; Make an SVG for the tag.
-       (push
-        (cons (format "\\(%s\\)%s" tag label) `((lambda (tag) (svg-tag-make (s-chop-suffix ":" (s-chop-prefixes '("[" "<" "/*")  tag))    :face (quote ,face) :inverse t :margin 0 :crop-right t :crop-left nil))
-                                                ,click-to-show-all-buffer-occurrences
-                                                ,tooltip-message-upon-hover))
-        svg-tag-tags)
-       ;; Make an SVG for the label.
-       (push
-        (cons (format "%s\\(%s\\)" tag label) `((lambda (label) (svg-tag-make (s-chop-suffixes '("]" ">" "*/") label) :face (quote ,face) :crop-left t))
-                                                ,click-to-show-all-buffer-occurrences
-                                                ,tooltip-message-upon-hover))
-        svg-tag-tags))))
-
-  ;; Let's start off empty; then declare badges below.
-  (setq svg-tag-tags nil)
-
-  ;; Using caps so that these stick-out somewhat even when svg-tags-mode is not present.
-  (my/svg-tag-declare-badge "TODO:❙.*" 'org-todo "This is something I would like to do, in the future.")
-  (my/svg-tag-declare-badge "SILLY:❙.*" 'error "I’m experimenting; don't forget to clean-up when you’re done!")
-  (my/svg-tag-declare-badge "HACK:❙.*" 'error "This works, but it’s far from ideal. Plan to clean this in the future.")
-  (my/svg-tag-declare-badge "FIXME:❙.*" 'org-todo "This is busted! Plan to fix this in the future.")
-  (my/svg-tag-declare-badge "NOTE:❙.*" 'org-done "Something to be aware of; to keep in mind.")
-
-  ;; [In]Active Time stamps --- M-x org-time-stamp
-  (my/svg-tag-declare-badge "\\[2022-.* ❙.*]" 'org-done "This is an inactive time stamp. It does not trigger the parent entry to appear in the agenda.")
-  (my/svg-tag-declare-badge "<2022-.* ❙.*>" 'org-todo "This is an active time stamp. It causes the parent Org entry to appear in the agenda.")
-
-  ;; JavaScript Lint Rules: \* eslint (.*) */
-  (my/svg-tag-declare-badge "/\\* eslint ❙.* \\*/" 'org-done "It looks like you’ deviating from common conventions: Tread cautiously!")
-
-  ;; TODO: Make SVG tags for other interesting “2-part” pieces of textual information
-  )
-
-;; If everything is setup, the following examples should look like SVGs.
-;; NOTE: Do something
-;; TODO: fix me later
-;; HACK: hiya
-;; FIXME: this thing is busted 🎭
-;; SILLY: start
-;; SILLY: end
-;; [2022-04-20 Sun 16:30]
-;; <2022-04-20 Sun 16:30>
-;; /* eslint eqeqeq: 0, curly: 2 */
-
-;; NOTE: Toggle svg-tags-mode; useful when experimenting with new tags.
-;; (progn (svg-tag-mode-off) (svg-tag-mode-on))
-
-;; NOTE: (my/toggle-line-fontification) works fine with svg-tag-mode :-)
-#+end_src
-
-** Ibuffer: C-x C-b shows colour-coded buffers, grouped according to their git repos :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Ibuffer
-:header-args: :tangle no
-:END:
-#+begin_src emacs-lisp :tangle no
-;; Let's use an improved buffer list.
-(use-package ibuffer ;; This is built-into Emacs.
-  :bind ("C-x C-b" . ibuffer))
-;; It uses similar commands as does dired; e.g.,
-;; / . org
-;; This filters (“/”) the list with extensions (“.”) being “org”.
-
-(use-package ibuffer-vc
-  :hook (ibuffer . (lambda ()
-                     (ibuffer-vc-set-filter-groups-by-vc-root)
-                     (unless (eq ibuffer-sorting-mode 'alphabetic)
-                       (ibuffer-do-sort-by-alphabetic))))
-  :custom
-  (ibuffer-formats '((mark modified read-only " "
-                           (name 18 18 :left :elide) " "
-                           (size 9 -1 :right) " "
-                           (mode 16 16 :left :elide) " "
-                           (vc-status 16 16 :left) " "
-                      (vc-relative-file)))))
- #+end_src
-+ [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
-+ (~10 minute video) [[https://cestlaz.github.io/posts/using-emacs-34-ibuffer-emmet/][Using Emacs - 34 - ibuffer and emmet - C'est la Z]]
-+ (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
-
-** [better than ibuffer!] [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]
-:PROPERTIES:
-:CUSTOM_ID: https-github-com-alphapapa-bufler-el-A-butler-for-your-buffers-Group-buffers-into-workspaces-with-programmable-rules-and-easily-switch-to-and-manipulate-them
-:END:
-#+begin_src emacs-lisp
-(use-package bufler
-  :config (bind-key "C-x C-b" #'bufler-list))
-;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
-#+end_src
-** all-the-icons
-:PROPERTIES:
-:CUSTOM_ID: all-the-icons
-:END:
-
-#+begin_src emacs-lisp :tangle init.el
-(use-package all-the-icons
-  ;; Install fonts only if they're not already installed.
-  ;; Source: https://github.com/domtronn/all-the-icons.el/issues/120#issuecomment-427172073
-  :config (let ((font-dest (cl-case window-system
-                             (x  (concat (or (getenv "XDG_DATA_HOME")            ;; Default Linux install directories
-                                             (concat (getenv "HOME") "/.local/share"))
-                                         "/fonts/"))
-                             (mac (concat (getenv "HOME") "/Library/Fonts/" ))
-                             (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
-            (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
-              (all-the-icons-install-fonts 'install-without-asking))))
-#+end_src
-** Having a workspace manager in Emacs                             :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Having-a-workspace-manager-in-Emacs
-:header-args: :tangle no
-:END:
-
-I've loved using XMonad as a window tiling manager.  I've enjoyed the ability to
-segregate my tasks according to what ‘project’ I'm working on; such as research,
-marking, Emacs play, etc.  With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
-
-That is, I can have a million buffers, but only those that belong to a workspace
-will be visible when I'm switching between buffers, for example.
-( The awesome-tab and centaur-tab, mentioned elsewhere here, can be used to
-achieve the same thing by ‘grouping buffers together’. )
-
-#+begin_src emacs-lisp :tangle no
-(use-package perspective
-  :config ;; Activate it.
-          (persp-mode)
-          ;; In the modeline, tell me which workspace I'm in.
-          (persp-turn-on-modestring))
-#+END_SRC
-
-All commands are prefixed by ~C-x x~; main commands:
-+ ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext
-  one, or go to ‘p’revious one.
-+ ~c~ :: Query a perspective to kill.
-+ ~r~ :: Rename a perspective.
-+ ~A~ :: Add buffer to current perspective & remove it from all others.
-
-As always, since we've installed ~which-key~, it suffices to press ~C-x x~ then look
-at the resulting menu 😃
-
-** Kill all buffers that are not associated with a file            :Disabled:
-:PROPERTIES:
-:CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
-:header-args: :tangle no
-:END:
-
-#+begin_src emacs-lisp
-(cl-defun my/clean-buffers ()
-  "Kill all buffers that are not associated with a file.
-  By convention, such files are named in *earmuffs* style."
-  (interactive)
-  (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list))))))
-#+end_src
-
-** TODO [#A] COMMENT When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
-- If I want to see a particular buffer, I'll summon it explicitly.
-  + E.g., Messages with ~C-h e~, Magit with ~C-x g~, Server Status with ~M-S-SPC~, etc.
-#+begin_src emacs-lisp
-(defun my/buffer-predicate (buffer)
-  "Run `C-u 0 C-x C-e' on the following form to see all buffer names and find the
-   ones annyoning you, then place those in the function body below
-
-        (mapcar #'buffer-name (buffer-list))
-"
-  ;; First let's kill a bunch of buffers
-  ;; (my/clean-buffers) ;; TODO: Bad idea?
-
-  ;; Next let's filter out any remaining ones [Redundant?]
-  (defvar my/ignore/buffer/name '("*Quail Completions*" "*Backtrace*" "*Help*" "*agda2*" "*sqls*" "*which-key*" "*Warnings*" "*Messages*" "Status of Services"))
-  (defvar my/ignore/buffer/prefix '("*helm" "*Helm"  "*quelpa" "*lsp" "*Occur" "magit" "*Flymake" "*format" "*Shell" "*Async"
-                                    "*org-src-fontification:" "*Server:"))
-  (defvar my/ignore/buffer/suffix  '("stderr*" "log*" "-ls*"))
-
-  (-let [name (buffer-name buffer)]
-    (not (or (member name my/ignore/buffer/name)
-             (--any? (s-starts-with? it name) my/ignore/buffer/prefix)
-             (--any? (s-ends-with? it name) my/ignore/buffer/suffix)))))
-
-(set-frame-parameter nil 'buffer-predicate 'my/buffer-predicate)
-#+end_src
-
-Note: ~C-x C-r~ is very useful for jumping to recently visited files.
-** Weather in the modeline
-:PROPERTIES:
-:CREATED:  [2025-04-07 Mon 13:05]
-:END:
-#+begin_src emacs-lisp
-(defcustom  my/weather-refresh-interval 60
-  "Number of minutes between refreshes of weather information."
-  :type 'integer)
-;; Use (cancel-timer my/weather--timer) to stop this.
-(setq my/weather--timer
-      (run-with-timer (* 60 5) (* 60  my/weather-refresh-interval)
-                      (defun my/weather-update ()
-                        (interactive)
-                        (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t'"))
-                        ;; (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w'"))
-                        (setq my/weather-full-details (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?T'"))
-                        (force-mode-line-update))))
-;;
-(setq my/weather--indicator
-      `(:eval
-        (propertize (format " %s " my/weather-brief)
-              'face 'mode-line-buffer-id
-                    'help-echo (concat  ;; "Click to see full details"
-                                (propertize "\n" 'face '(:height 0.4))
-                                (propertize "[Click]" 'face `(bold (foreground-color . "green"))) " To see detailed weather report\n"
-                                (propertize "[M-x my/weather-update]" 'face '(bold (foreground-color . "maroon"))) " To fetch latest weather data"
-                                (propertize "\n " 'face '(:height 0.5)))
-                    'local-map my/mode-line-weather-map
-                    'mouse-face 'mode-line-highlight)))
-;;
-(add-to-list 'mode-line-misc-info my/weather--indicator)
-;; (pop mode-line-misc-info) ;; To remove from the modeline.
-
-(setq my/weather-posframe-visible nil)
-(defvar my/mode-line-weather-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [mode-line mouse-1]
-                (lambda (_e)
-                  (interactive "e")
-                  (use-package posframe)
-                  (if my/weather-posframe-visible
-                      (posframe-delete "*my/weather-full-details-posframe-buffer*")
-                    (posframe-show "*my/weather-full-details-posframe-buffer*"
-                                   :string my/weather-full-details
-                                   :position (point))
-                    (message "Click on the weather modeline icon to close the posframe."))
-                  (setq my/weather-posframe-visible (not my/weather-posframe-visible))))
-    map))
-#+end_src
-
-TODO: Besides modeline, have this info show up in the agenda :-)
-
-Also, I have this in my ~/zshrc:
-#+begin_src bash :tangle no
-alias smile="emacsclient --eval '(dad-joke-get)' | cowsay | lolcat"
-
-# Welcome message for new shells (also jump to emacs, maybe that's better than the shell)
-date; smile
-# See the weather when I open a terminal
-# emacsclient --eval 'my/weather-brief' | lolcat # Alternatively, use cached value.
-bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w\\n'
-echo "~/.zhrc :: Hello, World!"
 #+end_src
 * Lisp Programming
 :PROPERTIES:
@@ -10361,6 +9387,980 @@ Using ~⌘ j~ then one of the following...
 | ~3i~ | Converts ternary operator to if-statement; nice!                               |
 | ~ss~ | Split a string, at point, into a catenation of strings                         |
 | ~st~ | Convert a string into a `template`.                                            |
+* Cosmetics
+:PROPERTIES:
+:CUSTOM_ID: Cosmetics
+:header-args: :tangle init.el
+:END:
+
+Upon startup, we want to be greeted with a useful, yet unobtrusive, message
+briefly detailing major system details. Moreover, the bottom-most area of the
+screen should display battery life, data, & time. Likewise, we may have a casual
+file explorer ---primarily to show-off to newcomers, since great functionality
+is found with ~M-x dired~ ---doc:dired.
+
+#+BEGIN_SRC emacs-lisp  :tangle init.el
+;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
+;; https://github.com/emacsorphanage/org-bullets
+(use-package org-bullets :hook (org-mode . org-bullets-mode))
+#+END_SRC
+** Emojis
+:PROPERTIES:
+:CREATED:  [2024-11-08 Fri 18:16]
+:END:
+
+#+begin_src emacs-lisp
+(if (member "Apple Color Emoji" (font-family-list))
+    (set-fontset-font t 'unicode "Apple Color Emoji" nil 'prepend)
+  (message-box "Musa: Install the font!"))
+;; E.g., Download font such as https://fonts.google.com/noto/specimen/Noto+Color+Emoji
+;; Double-click on the ttf file then select “install” to have it installed on your system
+;; (Note: Noto does not work on my personal machine.)
+
+
+;; Render ASCII such as “ :-) ” as emoji 🙂.
+(use-package emojify)
+(setq emojify-display-style 'unicode) ;; unicode is the way to go!
+(setq emojify-emoji-styles '(unicode))
+(global-emojify-mode 1) ;; Will install missing images, if need be.
+#+end_SRC
+
+** Startup message: Emacs & Org versions
+:PROPERTIES:
+:CUSTOM_ID: Startup-message-Emacs-Org-versions
+:END:
+
+Let's always welcome ourselves when Emacs begins with a helpful message.  For
+example, which user account is running and what are the version numbers of our
+primary tools.
+
+#+begin_src emacs-lisp
+;; Silence the usual message: Get more info using the about page via C-h C-a.
+(setq inhibit-startup-message t)
+
+(defun display-startup-echo-area-message ()
+  "The message that is shown after ‘user-init-file’ is loaded."
+  (message
+      (concat "Welcome "      user-full-name
+              "! Emacs "      emacs-version
+              "; Org-mode "   org-version
+              "; System "     (symbol-name system-type)
+              "/"             (system-name)
+              "; Time "       (emacs-init-time))))
+#+end_src
+Now my startup message is,
+#+begin_example
+Welcome Musa Al-hassy! Emacs 27.1; Org-mode 9.4.4; System darwin/Musas-MacBook-Air.local; Time 13.331914 seconds
+#+end_example
+:Manually_Computing_Init_Time:
+#+BEGIN_SRC emacs-lisp :tangle no
+(format "; Time %.3fs"
+        (float-time (time-subtract (current-time) before-init-time)))
+#+END_SRC
+:End:
+
+Let's change the Emacs frame to mention the name of the buffer in focus,
+as well as a nice ‘motto’:
+#+begin_src emacs-lisp
+;; Keep self motivated!
+(setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
+#+end_src
+** My to-do list: The initial buffer when Emacs opens up
+:PROPERTIES:
+:CUSTOM_ID: My-to-do-list-The-initial-buffer-when-Emacs-opens-up
+:END:
+
+I almost always have Emacs open; I don't need a dashboard, but would like to see
+my to-do list and my init file, side-by-side.
+#+BEGIN_SRC emacs-lisp
+;; I have symlinks for various things, just follow them, do not ask me.
+(setq vc-follow-symlinks t)
+
+;; After my settings have been loaded, e.g., fancy priorities
+;; and cosmetics, then open my notes files.
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (-let [my-life.el (getenv "MY_LIFE_ELISP")]
+              (unless org-default-notes-file
+                (error "Add to .zshrc “ export MY_LIFE_ELISP=\"/full/path/to/my-life.el\" ”, then load my-life.el"))
+              (load-file my-life.el))))
+#+END_SRC
+
+There is the neat-looking [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]] package that provides an extensbile
+yet minimalist splash screen showing recent files, projects, and bookmarks.
+
+** A sleek, informative, & fancy mode line
+:PROPERTIES:
+:CUSTOM_ID: A-sleek-informative-and-fancy-mode-line
+:END:
+
+The ‘modeline’ is a part near the bottom of Emacs that gives information about
+the current buffer, such as its file-type/‘major-mode’ and enabled
+extensions/‘minor-modes’.  Let's use the [[https://github.com/seagle0128/doom-modeline][doom-modeline]], which is a /sleek &
+minimalistic, yet fancy/ setup with the following notable perks:
+
++ Gives each buffer a nice icon in the modeline (denoting its major mode; e.g.,
+  Lisp/JavaScript/Org/etc each get a cool icon).
+
++ Name of file becomes red when unsaved/modified.
+
++ Nice version control icon, with branch name.
+
++ Name of file is of the shape is shown as “project/file.ext”, when a project
+ is detected using ~projectile.el~.
+
++ Flycheck error reporting is ugly by default, and one would consider using
+  flycheck-status-emojis to make things look better in a simple modeline, but
+  Doom-modeline gives a nice status indicators for Flycheck.
+
++ Shows “+2” when the text scale is two above usual.
+
+For fine-grained control on what/how things appear, there is
+doc:doom-modeline-def-modeline and doc:doom-modeline-set-modeline.
+
+NOTE: We need to run =M-x= doc:nerd-icons-install-fonts for doom-modeline to use pretty icons ---then restart Emacs.
+#+begin_src emacs-lisp :tangle init.el
+;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
+(use-package doom-modeline
+  :config (doom-modeline-mode))
+
+  ;; Use minimal height so icons still fit; modeline gets slightly larger when
+  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
+  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
+  (setq doom-modeline-height 21)
+  (setq doom-modeline-buffer-state-icon nil)
+  (setq doom-modeline-hud t)
+  (setq doom-modeline-bar-width 1)
+
+  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
+  ;; we can click to see a listing.
+  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
+  (setq doom-modeline-checker-simple-format nil)
+
+  ;; Don't display the buffer encoding, E.g., “UTF-8”.
+  (setq doom-modeline-buffer-encoding nil)
+
+  ;; Inactive buffers' modeline is greyed out.
+  ;; (let ((it "Source Code Pro Light" ))
+  ;;   (set-face-attribute 'mode-line nil :family it :height 100)
+  ;;   (set-face-attribute 'mode-line-inactive nil :family it :height 100))
+
+  ;; A quick hacky way to add stuff to doom-modeline is to add to the mode-line-process list.
+  ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
+  ;; We likely want to add this locally, to hooks on major modes.
+#+end_src
+
+:Disabled__spaceline_modeline:
+
+[[https://github.com/TheBB/spaceline][Spaceline]]
+
+# I may not use the spacemacs [[https://www.emacswiki.org/emacs/StarterKits][starter kit]], since I find spacemacs to “hide things”
+# from me ---whereas Emacs “encourages” me to learn more---, however it is a
+# configuration and I enjoy reading Emacs configs in order to improve my own
+# setup. From Spacemacs I've adopted Helm for list completion, its sleek light &
+# dark themes, and its modified powerline setup.
+
+#+begin_src emacs-lisp :tangle no
+;; When using helm & info & default, mode line looks prettier.
+(use-package spaceline
+  :custom (spaceline-buffer-encoding-abbrev-p nil)
+          ;; Use an arrow to seperate modeline information
+          (powerline-default-separator 'arrow)
+          ;; Show “line-number : column-number” in modeline.
+          (spaceline-line-column-p t)
+          ;; Use two colours to indicate whether a buffer is modified or not.
+          (spaceline-highlight-face-func 'spaceline-highlight-face-modified)
+  :config (custom-set-faces '(spaceline-unmodified ((t (:foreground "black" :background "gold")))))
+          (custom-set-faces '(spaceline-modified   ((t (:foreground "black" :background "cyan")))))
+          (require 'spaceline-config)
+          (spaceline-helm-mode)
+          (spaceline-info-mode)
+          (spaceline-emacs-theme))
+
+(spaceline-toggle-buffer-size-off) ;; Not interested in how large a buffer is.
+(spaceline-toggle-input-method-off) ;; Usually a “Π” symbol in the modeline, since I use Unicode input with Agda, denoting the current language environment, buffer coding system, and current input method.
+(spaceline-toggle-buffer-encoding-abbrev-off) ;; buffer-encoding-abbrev: the line ending convention used in the current buffer (unix, dos or mac).
+(spaceline-toggle-hud-off) ;; A tiny “progress bar”; shows the currently visible part of the buffer.
+(spaceline-toggle-helm-buffer-id-off) ;; I don't need to see “Helm M-x” whenever I press “M-x” or other Helm-powered commands.
+#+end_src
+
+Other separators ---of modeline information--- that I've considered include
+~'brace~ instead of an arrow, and ~'contour, 'chamfer, 'wave, 'zigzag~ which look
+like browser tabs that are curved, boxed, wavy, or in the style of driftwood.
+:End:
+
+*** Menu to Toggle Minor Modes: A quick way to see all of my modes, and which are enabled
+:PROPERTIES:
+:CUSTOM_ID: Menu-to-Toggle-Minor-Modes-A-quick-way-to-see-all-of-my-modes-and-which-are-enabled
+:END:
+
+Enabled minor modes clutter up the modeline with their names, albeit some have
+useful status information shown. We can either selectively pick which
+names/status are shown using diminish.el, possibly forgetting which minor modes
+are enabled or we can use minions.el to “gather up” all enabled minor modes, and
+recently enabled ones, under a single menu which doom-modeline shows as a simple
+configurations gear icon. ⚙. :gear:
+
+#+begin_src emacs-lisp
+  (setq doom-modeline-minor-modes t)
+  (use-package minions
+
+    :init (minions-mode 1))
+#+end_src
+
+*** Nice battery icon alongside with percentage, in doom-modeline
+:PROPERTIES:
+:CUSTOM_ID: Nice-battery-icon-alongside-with-percentage-in-doom-modeline
+:END:
+#+begin_src emacs-lisp  :tangle init.el
+;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
+(display-battery-mode +1)
+#+end_src
+
+#+begin_details [Posterity / Disabled] Fancy Battery Setup
+Let's have it also show remaining battery life, coloured green if charging and
+coloured yellow otherwise.  It is important to note that this package is no
+longer maintained. It works on my machine.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Let's use a fancy indicator …
+(use-package fancy-battery
+  :custom (fancy-battery-show-percentage  t)
+          (battery-update-interval       15)
+  :config (fancy-battery-mode))
+#+END_SRC
+#+end_details
+
+*** Time & date
+:PROPERTIES:
+:CUSTOM_ID: Time-date
+:END:
+Let’s display the current time, with updates every second.
+
+#+begin_src emacs-lisp  :tangle init.el
+;; Show date and time as well.
+
+;; [Simple Approach]
+;; (setq display-time-day-and-date t)
+;; (display-time)
+
+;; [More Controlled Approach: Set date&time format]
+;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
+(setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
+(setq display-time-interval 1) ;; Please update the time every second.
+(display-time-mode)
+#+end_src
+
+But doc:display-time-mode shows me a bit more info that I actually don't care
+for; so let's disable those.
+#+begin_src emacs-lisp  :tangle init.el
+;; I don't need the system load average in the modeline.
+(setq display-time-default-load-average nil)
+(setq display-time-load-average nil)
+#+end_src
+
+*** No Line, nor Column, Numbers  ---and no buffer percentage
+Likewise, let's have the modeline display column numbers, but not line numbers.
+Instead, let's have line numbers on the side of the buffer; moreover let's have
+a uniform width for displaying line numbers, rather than having the width grow
+as necessary.
+#+BEGIN_SRC emacs-lisp  :tangle init.el
+;; ;; Do not show me line numbers, nor column numbers, in the modeline
+(column-number-mode -1)
+(line-number-mode   -1)
+
+;; Likewise, no need to show me “Top∣Mid∣Bot” in the modeline.
+(setq-default mode-line-percent-position nil)
+#+END_SRC
+
+Line numbers are a /conventionally expected/ part of a user interface, but I've
+realised that I seldom /need to see/ them. I can still jump to a line number
+provided by a compilation error with kbd:M-g_g; and toggle line numbers on when
+I'm pair programming with doc:display-line-numbers-mode.
+- In Emacs, there are /buffer/ which exist and contain textual data, but to
+  actually see them one requires a /window/. In the same vein, there are line
+  numbers but I don't need to always see them.
+- If I need an indication of ‘progress’, the modeline contains a percentage of
+  how far I am in a buffer.
+#+BEGIN_SRC emacs-lisp  :tangle init.el
+;; (setq display-line-numbers-width-start t)
+;; (global-display-line-numbers-mode      t)
+#+END_SRC
+*** Buffer names are necessarily injective :No_longer_needed_due_to_doom:Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Buffer-names-are-necessarily-injective
+:header-args: :tangle no
+:END:
+
+By default when multiple files sharing the same name are opened, say for
+comparison from different directories, their buffers are named uniquely by
+having the format “⟨file-name⟩ <𝓃>”, for numbers 𝓃. It'd be more helpful
+to have the buffer names reflect their location.
+#+BEGIN_SRC emacs-lisp
+;; Note that ‘uniquify’ is builtin.
+(require 'uniquify)
+(setq uniquify-separator "/"               ;; The separator in buffer names.
+      uniquify-buffer-name-style 'forward) ;; names/in/this/style
+#+END_SRC
+
+            Note that this does not affect cloning buffers, kbd:C-x_4_c.
+
+( A function /f/ is /injective/ precisely when it's /distinction-preserving/; i.e.,
+  /x ≠ y ≡ f x ≠ f y/. We can tell whether two things are the same or not, by
+  ‘zooming in’ on their particular property ‘f’, which may be easier to compare.
+  E.g., object IDs, hashcodes, unique keys in database tables. )
+
+( Why am I bringing this up? I like math and seldom get to use it; so why not! )
+
+** Exquisite Fonts and Themes
+:PROPERTIES:
+:CUSTOM_ID: Exquisite-Fonts-and-Themes
+:END:
+
+Emacs' default theme leaves much to be desired: It does not look sleek and
+shiny, which usually leaves first-timers with a poor, shallow, impression of the
+system. Below we install a few themes that make Emacs look exquisite.  We cycle
+between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
+
+#+begin_details “my/toggle-theme” Implementation
++ ~M-x load-theme RET TAB~ shows all themes, including built-in ones,
+  that may be loaded.
++ Loading multiple themes results in their pallets mixed.
+  - ~M-x disable-theme~ to remove a theme from the current pallet.
+
+--------------------------------------------------------------------------------
+
+#+begin_src emacs-lisp :tangle init.el
+;; Treat all themes as safe; no query before use.
+(setf custom-safe-themes t)
+#+end_src
+
++ The [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][Doom Themes]] also look rather appealing.
++ A showcase of many themes can be found [[https://emacsthemes.com/][here]].
+
+--------------------------------------------------------------------------------
+
+#+BEGIN_SRC emacs-lisp :tangle init.el
+;; Infinite list of my commonly used themes.
+(setq my/themes
+      (cl-loop for (package . theme-variants-I-like) in
+               ;; I like theme doom-flatwhite <3 It feels “warm”.
+               ;; (I found out thanks to C-u C-c t!)
+               '((doom-themes doom-flatwhite doom-snazzy doom-monokai-ristretto doom-laserwave doom-solarized-light doom-vibrant)
+                 (solarized-theme solarized-gruvbox-dark solarized-gruvbox-light)
+                 (stimmung-themes stimmung-themes-light stimmung-themes-dark)
+                 (shanty-themes shanty-themes-light)
+                 (apropospriate-theme apropospriate-light) ;; /super/ nice! Super “clean”, like writing on paper
+                 (tao-theme tao-yang) ;; nice light theme.
+                 (leuven-theme leuven-dark leuven) ;; Nice minimal variant
+                 (material-theme material-light)
+                 (moe-theme moe-light)
+                 (organic-green-theme organic-green)
+                 (tango-plus-theme tango-plus)
+                 ;; I like all 3 variants.
+                 (minimal-theme minimal minimal-black minimal-light)
+                 (espresso-theme espresso)
+                 (emacs dichromacy)
+                 (nano-theme nano-light nano-dark)
+                 (pink-bliss-uwu-theme pink-bliss-uwu)
+                 (modus-themes modus-operandi-tinted))
+               do (package-install package)
+               append theme-variants-I-like))
+
+(setcdr (last my/themes) my/themes)
+#+END_SRC
+
+kbd:C-c_t to toggle between the personal themes.
+#+BEGIN_SRC emacs-lisp :tangle init.el
+(cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
+  "Disable all themes and load the given one ---read from user when called interactively."
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes)
+  (load-theme new-theme)
+  (message "Theme %s" new-theme))
+
+(cl-defun my/toggle-theme (&optional (new-theme (pop my/themes)))
+  "Disable all themes and load NEW-THEME, which defaults from ‘my/themes’.
+
+When a universal prefix is given, “C-u C-c t”, we load a random
+theme from all possible themes.  Nice way to learn about more
+themes (•̀ᴗ•́)و"
+  (interactive)
+  (-let [theme (if current-prefix-arg
+                   (nth (random (length (custom-available-themes)))
+                        (custom-available-themes))
+                 new-theme)]
+    (my/load-theme theme)))
+
+(global-set-key "\C-c\ t" 'my/toggle-theme)
+
+(my/toggle-theme)
+#+END_SRC
+
+Apparently, there's already a package that accomplishes these goals and more:
+[[https://github.com/myTerminal/theme-looper][theme-looper]]. I may switch to it, but for now my simple function above is
+slightly informative, to me at least, about how themes work and it does what I
+want.
+
+...Actually, the above learning adventure has made it easy to provide a similar setup
+for fonts 😁
+#+end_details
+
+Likewise, kbd:C-c_F, doc:my/toggle-font, to quickly change fonts (according to
+mood 😸). [I already use kbd:C-c_f, doc:my/org-mode-format, for the more likely
+operation of formatting text.]
+#+begin_details “my/toggle-font” Implementation
+
+#+begin_src emacs-lisp :tangle init.el
+(when my/personal-machine?
+
+  ;; Infinite list of my commonly used fonts
+  (setq my/fonts
+        '(;; NOPE: Breaks Gerrit! "Roboto Mono Light 14" ;; Sleek
+          "Input Mono 14"
+          "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
+          "Papyrus 14"
+          "Bradley Hand Light 12"
+          ;; "Chalkduster 14" ;; Laggy!
+          "Courier Light 12"
+          "Noteworthy 9"
+          "Savoye LET 14"
+          "Fantasque Sans Mono 16"
+          ))
+  (setcdr (last my/fonts) my/fonts)
+
+  ;; Let's ensure they're on our system
+  ;; brew search "/font-/"   # List all fonts
+
+  (shell-command "brew tap homebrew/cask-fonts")
+  (system-packages-ensure "svn") ;; Required for the following font installs
+  ;; No thanks! (system-packages-ensure "font-roboto-mono") ;; Makes Gerrit in Chrome look like Gibberish!
+  (system-packages-ensure "font-input")
+  (system-packages-ensure "font-source-code-pro")
+  (system-packages-ensure "font-fira-mono")
+  (system-packages-ensure "font-mononoki")
+  (system-packages-ensure "font-monoid")
+  (system-packages-ensure "font-menlo-for-powerline")
+  (system-packages-ensure "font-fantasque-sans-mono")
+  (system-packages-ensure "font-ibm-plex")
+
+  ;; Use “M-x set-face-font RET default RET”, or...
+  ;; (set-face-font 'default "Source Code Pro Light14")
+
+  ;; See ~2232 fonts
+  ;; (append (fontset-list) (x-list-fonts "*" nil))
+
+  (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
+    "Load NEW-FONT, which defaults from ‘my/fonts’.
+
+When a universal prefix is given, “C-u C-c F”, we load a random
+font from all possible themes.  Nice way to learn about more
+fonts (•̀ᴗ•́)و"
+    (interactive)
+    (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
+           (font (if current-prefix-arg
+                     (nth (random (length all-fonts)) all-fonts)
+                   new-font)))
+      (set-face-font 'default font)
+      (message "Font: %s" font)))
+
+  (global-set-key "\C-c\ F" 'my/toggle-font)
+
+  ;; Default font; the “ignore-⋯” is for users who may not have the font.
+  (ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
+  (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
+  (ignore-errors (my/toggle-font "IBM Plex Mono 12")))
+#+end_src
+
+#+end_details
+
+In any Org file, type ~elisp:menu-set-font~; then you can click on this link to
+get a nice font selection menu ---this can be useful for your own ‘personal startup buffer’.
+
+# Finally, for fun, let's colour all source blocks, in Org mode, by the background colour pink.
+# (set-face-attribute 'org-block nil :background "pink")
+# MA: This does not work well with dark themes; should use a theme-based setting.
+
+Let's use the following theme and font, upon startup.
+#+begin_src emacs-lisp :tangle init.el
+(unless noninteractive
+  ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
+  (my/toggle-theme 'solarized-gruvbox-light))
+#+end_src
+
+** Dimming Unused Windows
+:PROPERTIES:
+:CUSTOM_ID: Dimming-Unused-Windows
+:END:
+
+Let's dim windows, and even the whole Emacs frame, when not in use.
+#+BEGIN_SRC emacs-lisp
+(use-package dimmer
+  :config (dimmer-mode))
+#+END_SRC
+
+A more ‘fine-grained’ [[https://github.com/larstvei/Focus][tool]] dims all text except the ‘paragraph’ you're working
+on. It's nifty, but not for me.
+
+** TODO Flashing when something goes wrong
+:PROPERTIES:
+:CUSTOM_ID: Flashing-when-something-goes-wrong
+:END:
+
+Enable flashing mode-line on errors. E.g., ~C-g~, or calling an unbound key
+sequence, or misspelling a word.
+#+BEGIN_SRC emacs-lisp
+;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
+
+;; The doom themes package comes with a function to make the mode line flash on error.
+;; (use-package doom-themes)
+;; (require 'doom-themes-ext-visual-bell)
+;; (doom-themes-visual-bell-config)
+#+END_SRC
+
+--------------------------------------------------------------------------------
+
++A blinking cursor rushes me to type; let's slow down.+ Recently I'm thinking that
+a blinking cursours prompts me to continue upwards and onwards.
+#+BEGIN_SRC emacs-lisp
+(blink-cursor-mode 1)
+#+END_SRC
+
+** Hiding Scrollbar, tool bar, and menu
+:PROPERTIES:
+:CUSTOM_ID: Hiding-Scrollbar-tool-bar-and-menu
+:END:
+
+As a laptop user, screen space is important, so let's remove rarely used visual
+items.
+#+BEGIN_SRC emacs-lisp :tangle init.el
+(unless noninteractive
+  (tool-bar-mode   -1)    ;; No large icons please
+  (scroll-bar-mode -1))   ;; No visual indicator please
+  ;; (menu-bar-mode   -1) ;; The Mac OS top pane has menu options
+#+END_SRC
+
+** Highlight & complete parenthesis pair when cursor is near ;-)
+:PROPERTIES:
+:CUSTOM_ID: Highlight-complete-parenthesis-pair-when-cursor-is-near
+:END:
+
+Highlight matching ‘parenthesis’ when near one of them.
+#+begin_src emacs-lisp :tangle init.el
+(setq show-paren-delay  0)
+(setq show-paren-style 'mixed)
+(show-paren-mode)
+#+end_src
+
+Colour parens, and other delimiters, depending on their depth.
+Very useful for parens heavy languages like Lisp.
+#+begin_src emacs-lisp :tangle init.el
+(use-package rainbow-delimiters
+  :hook prog-mode)
+#+end_src
+
+For example:
+#+begin_src emacs-lisp :tangle no
+(blue (purple (forest (green (yellow (blue))))))
+#+end_src
+
+There is a powerful package called ‘smartparens’ for working with pair-able
+characters, but I've found it to be too much for my uses. Instead I'll utilise
+the lightweight package ~electric~, which Emacs provides out of the box.
+#+BEGIN_SRC emacs-lisp :tangle init.el
+(electric-pair-mode 1)
+#+END_SRC
+It supports, by default, ACSII pairs ~{}, [], ()~ and Unicode ~‘’, “”, ⟪⟫, ⟨⟩~.
+
+When writing Lisp, it is annoyong to have ‘<’ and ‘>’ be completed
+/and/ considered as pairs.  Let's disassociate them from both notions.
+#+BEGIN_SRC emacs-lisp :tangle init.el
+;; The ‘<’ and ‘>’ are not ‘parenthesis’, so give them no compleition.
+(setq electric-pair-inhibit-predicate
+      (lambda (c)
+        (or (member c '(?< ?> ?~)) (electric-pair-default-inhibit c))))
+
+;; Treat ‘<’ and ‘>’ as if they were words, instead of ‘parenthesis’.
+(modify-syntax-entry ?< "w<")
+(modify-syntax-entry ?> "w>")
+#+END_SRC
+
+:Rainbow_delims:
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Act as usual unless a ‘<’ or ‘>’ is encountered.
+;; ( char-at is really “character at poisition”; C-h o! )
+(setq rainbow-delimiters-pick-face-function
+      (lambda (depth match loc)
+        (unless (member (char-after loc) '(?< ?>))
+          (rainbow-delimiters-default-pick-face depth match loc))))
+#+END_SRC
+:End:
+
+*Adding Org-emphasise markers for pair completion ---Disabled.*
+
+Let's add the org-emphasises markers: If we select a word then press =*=, it
+becomes bold; likewise for ~/~ for emphasise.
+#+BEGIN_SRC emacs-lisp :tangle no
+(setq electric-pair-pairs
+         '((?~ . ?~)
+           (?* . ?*)
+           (?/ . ?/)))
+
+;; Let's also, for example, avoid obtaining double ‘~’ and ‘/’ when searching for a file.
+
+;; Disable pairs when entering minibuffer
+(add-hook 'minibuffer-setup-hook (lambda () (electric-pair-mode 0)))
+
+;; Renable pairs when existing minibuffer
+(add-hook 'minibuffer-exit-hook (lambda () (electric-pair-mode 1)))
+#+END_SRC
+
+I use ‘~’ and ‘/’ too much during file navigation, and ‘*’ when marking numerous
+Org headers, for which the ‘completed closing pair’ must tiresomely be deleted.
+** Tabs                                                            :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Tabs
+:header-args: :tangle no
+:END:
+
+I really like my Helm-supported ~C-x b~, but the visial appeal of a [[https://github.com/manateelazycat/awesome-tab][tab bar]] for Emacs
+is interesting. Let's try it out and see how long this lasts ---it may be like Neotree:
+Something cute to show to others, but not as fast as the keyboard.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package awesome-tab
+  :quelpa (awesome-tab :fetcher git :url "https://github.com/manateelazycat/awesome-tab.git")
+  :config (awesome-tab-mode t))
+
+;; Show me /all/ the tabs at once, in one group.
+(defun awesome-tab-buffer-groups ()
+  (list (awesome-tab-get-group-name (current-buffer))))
+#+END_SRC
+
+It's been less than three days and I've found this utility to be unhelpful, to me anyhow.
+
+An alternative is [[https://github.com/ema2159/centaur-tabs][centaur-tabs.]]
+
+** Window resizing using the golden ratio                          :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Window-resizing-using-the-golden-ratio
+:header-args: :tangle no
+:END:
+
+Let's load the following package, which automatically resizes windows so that
+the window containing the cursor is the largest, according to the golden ratio.
+Consequently, the window we're working with is nice and large yet the other windows
+are still readable.
+
+#+begin_src emacs-lisp :tangle no
+(use-package golden-ratio
+  :init (golden-ratio-mode 1))
+#+end_src
+
+After some time this got a bit annoying and I'm no longer  using this.
+
+An alternative, also disabled:
+#+begin_src emacs-lisp :tangle no
+;; An automatic window-resizing mechanism.
+;; A “calmer” alternative to golden-ratio.
+;; https://github.com/cyrus-and/zoom
+(use-package zoom :config (zoom-mode t))
+#+end_src
+
+** Replace phrases with nice SVG labels :Disabled:Causes_Org_rendering_issues:
+:PROPERTIES:
+:CUSTOM_ID: Replace-phrases-with-nice-SVG-labels
+:header-args: :tangle no
+:END:
+
+:TODO_What_kind_of_Org_rendering_issues_are_caused:
+Some org headings are not fontified, and Org links are not fontified; e.g.,
+
+  📆 [[https://calendar.google.com/calendar/u/0/r][Calendar]] ✉️
+
++ I have to copy-paste it to get it to fontify.
++ Likewise, Org headings need to be modified (e.g. pressing `t` to make them todo) to get them fontified.
+:End:
+
+[[ https://github.com/rougier/svg-tag-mode][SVG tags mode]] let's us replase arbitrary regular expressions with beautiful SVG
+images that can be /clicked/ to produce an action, and may have a tooltip to
+provide contextual information. Essentially an alternative to the built-in
+doc:font-lock-mode, which performs arbitrary syntax highlighting.
+- For more power, use the ~svg-lib~ package.
+- The docs have nice examples. [[https://github.com/rougier/svg-tag-mode/blob/main/examples/example-2.el][Here]] are more useful examples.
+
+# Below I setup a function, doc : my/svg-tag-declare-badge to /declaratively/ produce SVG badges.
+
+#+begin_src emacs-lisp
+(use-package svg-tag-mode
+  :hook (org-mode prog-mode)
+  ;; :config (global-svg-tag-mode) ;; Nope: Breaks xwidget-webkit-browse-url, issue#28.
+  :config
+  (cl-defun my/svg-tag-declare-badge (template face &optional tooltip-message-upon-hover)
+    ;; Example faces: 'org-level-1 'org-todo 'font-lock-doc-face
+    "Given a TEMPLATE of the shape \"𝑿❙𝒀\", make SVG badge whose tag is 𝑿 and label is 𝒀.
+
+     When `svg-tags-mode' is enabled, every occurence of  \"\\(𝑿\\)\\(𝒀\\)\"
+     is replaced by an SVG image essentially displaying “[𝑿∣𝒀]” using the given FACE.
+     This badge can be clicked to show all instances in the buffer.
+     You can see the badges documentation / intentions / help-message when you hover over it;
+     to see TOOLTIP-MESSAGE-UPON-HOVER.
+
+     Both 𝑿 and 𝒀 are regeular expressions; “❙” serves as the SVG tag-label delimiter
+     ---i.e., it saves as from writing \"\\(𝑿\\)\\(𝒀\\)\". Moreover, the SVG is only active
+     when regexp \"\\(𝑿\\)\\(𝒀\\)\" matches an instance."
+
+    ;; Append tooltip message with a notice on what happens upon click.
+    (--> "Click on me to all see occurrences of this badge, in the current buffer!"
+         (if tooltip-message-upon-hover (concat tooltip-message-upon-hover "\n\n" it) it)
+         (setq tooltip-message-upon-hover it))
+
+    (-let [(tag label) (s-split "❙" template)]
+      (-let [click-to-show-all-buffer-occurrences `(lambda () (interactive) (occur (concat ,tag ,label)))]
+       ;; Make an SVG for the tag.
+       (push
+        (cons (format "\\(%s\\)%s" tag label) `((lambda (tag) (svg-tag-make (s-chop-suffix ":" (s-chop-prefixes '("[" "<" "/*")  tag))    :face (quote ,face) :inverse t :margin 0 :crop-right t :crop-left nil))
+                                                ,click-to-show-all-buffer-occurrences
+                                                ,tooltip-message-upon-hover))
+        svg-tag-tags)
+       ;; Make an SVG for the label.
+       (push
+        (cons (format "%s\\(%s\\)" tag label) `((lambda (label) (svg-tag-make (s-chop-suffixes '("]" ">" "*/") label) :face (quote ,face) :crop-left t))
+                                                ,click-to-show-all-buffer-occurrences
+                                                ,tooltip-message-upon-hover))
+        svg-tag-tags))))
+
+  ;; Let's start off empty; then declare badges below.
+  (setq svg-tag-tags nil)
+
+  ;; Using caps so that these stick-out somewhat even when svg-tags-mode is not present.
+  (my/svg-tag-declare-badge "TODO:❙.*" 'org-todo "This is something I would like to do, in the future.")
+  (my/svg-tag-declare-badge "SILLY:❙.*" 'error "I’m experimenting; don't forget to clean-up when you’re done!")
+  (my/svg-tag-declare-badge "HACK:❙.*" 'error "This works, but it’s far from ideal. Plan to clean this in the future.")
+  (my/svg-tag-declare-badge "FIXME:❙.*" 'org-todo "This is busted! Plan to fix this in the future.")
+  (my/svg-tag-declare-badge "NOTE:❙.*" 'org-done "Something to be aware of; to keep in mind.")
+
+  ;; [In]Active Time stamps --- M-x org-time-stamp
+  (my/svg-tag-declare-badge "\\[2022-.* ❙.*]" 'org-done "This is an inactive time stamp. It does not trigger the parent entry to appear in the agenda.")
+  (my/svg-tag-declare-badge "<2022-.* ❙.*>" 'org-todo "This is an active time stamp. It causes the parent Org entry to appear in the agenda.")
+
+  ;; JavaScript Lint Rules: \* eslint (.*) */
+  (my/svg-tag-declare-badge "/\\* eslint ❙.* \\*/" 'org-done "It looks like you’ deviating from common conventions: Tread cautiously!")
+
+  ;; TODO: Make SVG tags for other interesting “2-part” pieces of textual information
+  )
+
+;; If everything is setup, the following examples should look like SVGs.
+;; NOTE: Do something
+;; TODO: fix me later
+;; HACK: hiya
+;; FIXME: this thing is busted 🎭
+;; SILLY: start
+;; SILLY: end
+;; [2022-04-20 Sun 16:30]
+;; <2022-04-20 Sun 16:30>
+;; /* eslint eqeqeq: 0, curly: 2 */
+
+;; NOTE: Toggle svg-tags-mode; useful when experimenting with new tags.
+;; (progn (svg-tag-mode-off) (svg-tag-mode-on))
+
+;; NOTE: (my/toggle-line-fontification) works fine with svg-tag-mode :-)
+#+end_src
+
+** Ibuffer: C-x C-b shows colour-coded buffers, grouped according to their git repos :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Ibuffer
+:header-args: :tangle no
+:END:
+#+begin_src emacs-lisp :tangle no
+;; Let's use an improved buffer list.
+(use-package ibuffer ;; This is built-into Emacs.
+  :bind ("C-x C-b" . ibuffer))
+;; It uses similar commands as does dired; e.g.,
+;; / . org
+;; This filters (“/”) the list with extensions (“.”) being “org”.
+
+(use-package ibuffer-vc
+  :hook (ibuffer . (lambda ()
+                     (ibuffer-vc-set-filter-groups-by-vc-root)
+                     (unless (eq ibuffer-sorting-mode 'alphabetic)
+                       (ibuffer-do-sort-by-alphabetic))))
+  :custom
+  (ibuffer-formats '((mark modified read-only " "
+                           (name 18 18 :left :elide) " "
+                           (size 9 -1 :right) " "
+                           (mode 16 16 :left :elide) " "
+                           (vc-status 16 16 :left) " "
+                      (vc-relative-file)))))
+ #+end_src
++ [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
++ (~10 minute video) [[https://cestlaz.github.io/posts/using-emacs-34-ibuffer-emmet/][Using Emacs - 34 - ibuffer and emmet - C'est la Z]]
++ (~10 minute video) [[https://www.youtube.com/watch?v=6KN_oSLFf-k&ab_channel=ProtesilaosStavrou][Emacs: introduction to IBUFFER - YouTube]]
+
+** [better than ibuffer!] [[https://github.com/alphapapa/bufler.el][A butler for your buffers. Group buffers into workspaces with programmable rules, and easily switch to and manipulate them.]]
+:PROPERTIES:
+:CUSTOM_ID: https-github-com-alphapapa-bufler-el-A-butler-for-your-buffers-Group-buffers-into-workspaces-with-programmable-rules-and-easily-switch-to-and-manipulate-them
+:END:
+#+begin_src emacs-lisp
+(use-package bufler
+  :config (bind-key "C-x C-b" #'bufler-list))
+;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
+#+end_src
+** all-the-icons
+:PROPERTIES:
+:CUSTOM_ID: all-the-icons
+:END:
+
+#+begin_src emacs-lisp :tangle init.el
+(use-package all-the-icons
+  ;; Install fonts only if they're not already installed.
+  ;; Source: https://github.com/domtronn/all-the-icons.el/issues/120#issuecomment-427172073
+  :config (let ((font-dest (cl-case window-system
+                             (x  (concat (or (getenv "XDG_DATA_HOME")            ;; Default Linux install directories
+                                             (concat (getenv "HOME") "/.local/share"))
+                                         "/fonts/"))
+                             (mac (concat (getenv "HOME") "/Library/Fonts/" ))
+                             (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
+            (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
+              (all-the-icons-install-fonts 'install-without-asking))))
+#+end_src
+** Having a workspace manager in Emacs                             :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Having-a-workspace-manager-in-Emacs
+:header-args: :tangle no
+:END:
+
+I've loved using XMonad as a window tiling manager.  I've enjoyed the ability to
+segregate my tasks according to what ‘project’ I'm working on; such as research,
+marking, Emacs play, etc.  With [[https://github.com/nex3/perspective-el][perspective]], I can do the same thing :-)
+
+That is, I can have a million buffers, but only those that belong to a workspace
+will be visible when I'm switching between buffers, for example.
+( The awesome-tab and centaur-tab, mentioned elsewhere here, can be used to
+achieve the same thing by ‘grouping buffers together’. )
+
+#+begin_src emacs-lisp :tangle no
+(use-package perspective
+  :config ;; Activate it.
+          (persp-mode)
+          ;; In the modeline, tell me which workspace I'm in.
+          (persp-turn-on-modestring))
+#+END_SRC
+
+All commands are prefixed by ~C-x x~; main commands:
++ ~s, n/→, p/←~ :: ‘S’elect a workspace to go to or create it, or go to ‘n’ext
+  one, or go to ‘p’revious one.
++ ~c~ :: Query a perspective to kill.
++ ~r~ :: Rename a perspective.
++ ~A~ :: Add buffer to current perspective & remove it from all others.
+
+As always, since we've installed ~which-key~, it suffices to press ~C-x x~ then look
+at the resulting menu 😃
+
+** Kill all buffers that are not associated with a file            :Disabled:
+:PROPERTIES:
+:CUSTOM_ID: Lisp-Helpers-Kill-all-buffers-that-are-not-associated-with-a-file
+:header-args: :tangle no
+:END:
+
+#+begin_src emacs-lisp
+(cl-defun my/clean-buffers ()
+  "Kill all buffers that are not associated with a file.
+  By convention, such files are named in *earmuffs* style."
+  (interactive)
+  (ignore-errors (mapcar #'kill-buffer (--filter (s-matches? "\\*.*\\*" it) (mapcar #'buffer-name (buffer-list))))))
+#+end_src
+
+** TODO [#A] COMMENT When I press ~C-x ←/→~ I'd like to ignore some silly buffers.
+- If I want to see a particular buffer, I'll summon it explicitly.
+  + E.g., Messages with ~C-h e~, Magit with ~C-x g~, Server Status with ~M-S-SPC~, etc.
+#+begin_src emacs-lisp
+(defun my/buffer-predicate (buffer)
+  "Run `C-u 0 C-x C-e' on the following form to see all buffer names and find the
+   ones annyoning you, then place those in the function body below
+
+        (mapcar #'buffer-name (buffer-list))
+"
+  ;; First let's kill a bunch of buffers
+  ;; (my/clean-buffers) ;; TODO: Bad idea?
+
+  ;; Next let's filter out any remaining ones [Redundant?]
+  (defvar my/ignore/buffer/name '("*Quail Completions*" "*Backtrace*" "*Help*" "*agda2*" "*sqls*" "*which-key*" "*Warnings*" "*Messages*" "Status of Services"))
+  (defvar my/ignore/buffer/prefix '("*helm" "*Helm"  "*quelpa" "*lsp" "*Occur" "magit" "*Flymake" "*format" "*Shell" "*Async"
+                                    "*org-src-fontification:" "*Server:"))
+  (defvar my/ignore/buffer/suffix  '("stderr*" "log*" "-ls*"))
+
+  (-let [name (buffer-name buffer)]
+    (not (or (member name my/ignore/buffer/name)
+             (--any? (s-starts-with? it name) my/ignore/buffer/prefix)
+             (--any? (s-ends-with? it name) my/ignore/buffer/suffix)))))
+
+(set-frame-parameter nil 'buffer-predicate 'my/buffer-predicate)
+#+end_src
+
+Note: ~C-x C-r~ is very useful for jumping to recently visited files.
+** Weather in the modeline
+:PROPERTIES:
+:CREATED:  [2025-04-07 Mon 13:05]
+:END:
+#+begin_src emacs-lisp
+(defcustom  my/weather-refresh-interval 60
+  "Number of minutes between refreshes of weather information."
+  :type 'integer)
+;; Use (cancel-timer my/weather--timer) to stop this.
+(setq my/weather--timer
+      (run-with-timer (* 60 5) (* 60  my/weather-refresh-interval)
+                      (defun my/weather-update ()
+                        (interactive)
+                        (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t'"))
+                        ;; (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w'"))
+                        (setq my/weather-full-details (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?T'"))
+                        (force-mode-line-update))))
+;;
+(setq my/weather--indicator
+      `(:eval
+        (propertize (format " %s " my/weather-brief)
+              'face 'mode-line-buffer-id
+                    'help-echo (concat  ;; "Click to see full details"
+                                (propertize "\n" 'face '(:height 0.4))
+                                (propertize "[Click]" 'face `(bold (foreground-color . "green"))) " To see detailed weather report\n"
+                                (propertize "[M-x my/weather-update]" 'face '(bold (foreground-color . "maroon"))) " To fetch latest weather data"
+                                (propertize "\n " 'face '(:height 0.5)))
+                    'local-map my/mode-line-weather-map
+                    'mouse-face 'mode-line-highlight)))
+;;
+(add-to-list 'mode-line-misc-info my/weather--indicator)
+;; (pop mode-line-misc-info) ;; To remove from the modeline.
+
+(setq my/weather-posframe-visible nil)
+(defvar my/mode-line-weather-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mode-line mouse-1]
+                (lambda (_e)
+                  (interactive "e")
+                  (use-package posframe)
+                  (if my/weather-posframe-visible
+                      (posframe-delete "*my/weather-full-details-posframe-buffer*")
+                    (posframe-show "*my/weather-full-details-posframe-buffer*"
+                                   :string my/weather-full-details
+                                   :position (point))
+                    (message "Click on the weather modeline icon to close the posframe."))
+                  (setq my/weather-posframe-visible (not my/weather-posframe-visible))))
+    map))
+#+end_src
+
+TODO: Besides modeline, have this info show up in the agenda :-)
+
+Also, I have this in my ~/zshrc:
+#+begin_src bash :tangle no
+alias smile="emacsclient --eval '(dad-joke-get)' | cowsay | lolcat"
+
+# Welcome message for new shells (also jump to emacs, maybe that's better than the shell)
+date; smile
+# See the weather when I open a terminal
+# emacsclient --eval 'my/weather-brief' | lolcat # Alternatively, use cached value.
+bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w\\n'
+echo "~/.zhrc :: Hello, World!"
+#+end_src
 * ------------------------------------------------------------------------------------------------------------------------
 * 🏃🏾 Engage with Agenda: Progressing tasks to completion via org-agenda & note taking
 
