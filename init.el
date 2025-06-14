@@ -453,6 +453,8 @@ Is replaced by:
       global-auto-revert-non-file-buffers t
       auto-revert-verbose nil)
 
+(bind-key* "M-i" (lambda () (interactive) (find-file "~/.emacs.d/init.org")))
+
 ;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
 (global-set-key (kbd "C-z")
@@ -1841,9 +1843,8 @@ fonts (•̀ᴗ•́)و"
           ;; these tasks.								   ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
-           '(and (deadline auto) (not (tags "Top")))
+           '(and (deadline auto) (not (tags "Top")) (not (done)))
            ((org-ql-block-header "\n🎯 Deadlines\n")))
-
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Whoops, things that I've missed!                                       ;;
@@ -2210,6 +2211,33 @@ fonts (•̀ᴗ•́)و"
         (kill-buffer)
         quote))))
 ;; Agenda Dashboard: Buttons & Random Quote:1 ends here
+
+;; [[file:init.org::*my/consume-content][my/consume-content:1]]
+(defun my/consume-content ()
+  "This agenda block should display 5 entries, selected uniformly at random
+from those entries meeting your selection criteria. Refreshing the
+agenda will reshuffle.
+
+Note: Use “g” to refresh and see 5 (new) random entries;
+or press “v l 30 RET r” to view 30 entries."
+  (interactive)
+  (find-file org-default-notes-file)
+  (widen)
+  (beginning-of-buffer)
+  (search-forward  (car (org-ql-query
+                          :select (lambda () (substring-no-properties (thing-at-point 'line)))
+                          :from org-agenda-files
+                          :where '(tags "ConsumeContent")
+                          :order-by (lambda (x y) (pcase (random 3)
+                                               (0 nil)
+                                               (1 1)
+                                               (2 -1)))
+                          ;; PR open to get :limit support https://github.com/alphapapa/org-ql/pull/495
+                          ;; Note to self: I used https://github.com/emacs-eldev/eldev to run the org-ql tests.
+                          :limit 1))) ;; ⟵ Much faster since I only want 1.
+  ;; (org-tree-to-indirect-buffer) (other-window 1)
+  (org-narrow-to-subtree))
+;; my/consume-content:1 ends here
 
 ;; [[file:init.org::*Agenda Variables][Agenda Variables:1]]
 ;; When I clock into a tasg, a “:LOGBOOK:” drawer is created to hold the timing meta-data for the task.
@@ -3994,13 +4022,27 @@ the character 𝓍 before and after the selected text."
 A special entry is “ :random ”. All entries after it are considered optional
 and 2 of them are randomly selected as part of the daily review.
 
-⚠️ ⟨Org Property⟩ parts should be unique!
+😲 ⟨Org Property⟩ names need not be unique:
+If there are multiple entries sharing the same Org Property name,
+then only one of them is randomly selected in the questionnaire.
+
+😲 Moreover, ⟨Org Property⟩ names may be space-separated strings:
+Spaces are replaced with a visual space “␣”. It seems Org Property
+syntax allows some Unicode to appear as part of the name; but not
+the Unicode space “ ”. For example, the following runs with no problem:
+
+   (org-set-property  \"look-ma-∀␣p∈People␣•␣∃q␣•␣q␣𝑳𝒪𝓋𝐸𝔖␣p\" \"😲\")
+
 ")
 
 
 ;; NOTE: Consider using an Org file as a data source.
 (setq my/daily-review-questionnaire
       '(
+        ;; TODO: Make Weekly review get trend insights
+        ;; ⇒ “Average Stress this week: +0.5”
+        ;; ⇒ “Exercise streak: 3/5 days”
+        ;; ⇒ Notes on emotional patterns?
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;; Mandatory questions asked each day                                       ;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4015,18 +4057,21 @@ and 2 of them are randomly selected as part of the daily review.
         ("Stress: How high are the demands upon me? Am I managing everything well?"
          " 2  --  Low             --  Things are chill; I'm gonna spend the day with my kids"
          " 1  --  Medium          --  Things are OK. It's just another day."
-         " 0  --  High            --  People are getting on my nerves."
+         " 0  --  High            --  People are getting on my nerves. ⚠️ Stress ≡ Pot Belly!"
          "-1  --  Extremely High  --  I have so much to do; I'm freaking out!")
         ("Energy: How high is my capacity to do work? To be around others? Around myself?"
          "-1 --  Abysmal Low / Drained / Lacking Motivation  --  I need coffee and sleep."
          "0  --  Low / Sluggish                              --  I need coffee"
          "1  --  Medium / Calm                               --  I'm chill, doing my thing."
          "2  --  High / Enthusiastic                         --  I'm king of the world!")
-        ("HoursSlept: How was my sleep last night?"
-         "0  --  I slept                                     --  Man, I need to get my life together!"
+        ("Energy Window: When was I most focused or energised?"
+         "0  --  Morning   --  6am-12pm"
+         "0  --  Afternoon --  12pm-3pm")
+        ("Hours Slept: How was my sleep last night?"
+         "0  --  I slept                                     --  Man, I need to get my life together! ⚠️ Poor Sleep ≡ Pot Belly!"
          "1  --  I slept before midnight and awoke at ~7am   --  Good, but I can do better!"
          "2  --  I slept around 10pm and awoke at ~5am       --  Nice! Living the best life! Getting things done!" )
-        ("HowISlept: How did I fall asleep last night?"
+        ("How I Slept: How did I fall asleep last night?"
          "0  --  On my phone till exhaustion                 --  Man, I need to get my life together!"
          "1  --  My phone was on the other side of the room  --  Good, but I can do better!"
          "2  --  Cuddling my wife                            --  Nice! Living the best life!")
@@ -4039,32 +4084,84 @@ and 2 of them are randomly selected as part of the daily review.
          " 0  --   Zero   --  Nice! Exercise gives me energy!"
          "-1  --   One    --  I want to get things done."
          "-2  --   Two    --  I didn't eat well today, nor drink enough water."
-         "-3  --   Three  --   Man, I need to get my life together!")
-
+         "-3  --   Three  --  Man, I need to get my life together!")
+        ;; Exercise questions. TODO: Make Weekly Review remind me to increment exercise duration
+        ("Water: Did I drink an entire bottle of water today?"
+         "-1  --  Nope! Coffee, sugar, pop!     --  Fatigue! Low Energy! Headaches! Dry Mouth! Mood swings!"
+         "1   --  Yup                           --  Optimal brain! Mood stability! Support weight management!")
+        ("Running: Did I go for a  ﴾7-minute﴿  run today?"
+         "-1  --  Nope    --  Why!? Don't you want to love your body! 💢 Be better, man!"
+         "1   --  Yup     --  Nice! Lose the pot belly! 🫖")
+        ("Push ups: Did I do  ﴾12﴿  push-ups today?"
+         "-1  --  Nope    --  Why!? Don't you want to love your body! 💢 Be better, man!"
+         "1   --  Yup     --  Nice! Lose the pot belly! 🫖")
+        ("Jump Rope: Did I do  ﴾30﴿  skips today?"
+         "-1  --  Nope    --  Why!? Don't you want to love your body! 💢 Be better, man!"
+         "1   --  Yup     --  Nice! Lose the pot belly! 🫖")
+        ("Bicep Curls: Did I do  ﴾10﴿  curls today?"
+         "-1  --  Nope    --  Why!? Don't you want to love your body! 💢 Be better, man!"
+         "1   --  Yup     --  Nice! Lose the pot belly! 🫖")
+        ;; In due time: HIIT via Youtube; e.g., Crunches, Mountain Climbers, Russian Twists?
+        ;; Also: Cycling? Karate Kata? Full Strength Training?
+        ;; Did I stay within my calorie range?
+        ;; Did I eat balanced meals (protein, fiber, healthy fats)?
+        ;; Did I snack out of hunger, boredom, or habit?
+        ;; +Did I emotionally eat today? If so, why?+
+        ;;
+        ;; /Consistency beats perfection!/
+        ;; ("Calories: Did I stay within my calorie range?"
+        ;;  "-1  --  Overeating / Snacking Mindlessly"
+        ;;  " 0  --  Ate more than planned"
+        ;;  " 1  --  Stayed within limits!"
+        ;;  " 2  --  Tracked & ate healthy meals!")
+        ("Nutrition: Did I eat balanced meals (protein, fiber, healthy fats)?"
+         "-1  --  No idea / Ate junk -- Meal prep reduces unhealthy food reliance."
+         " 0  --  Kinda tried -- ? "
+         " 1  --  Well-balanced meals! -- ? ")
+        ;; ("Snacking: Did I snack out of hunger, boredom, or habit?"
+        ;;  "-1  --  Boredom / Emotion"
+        ;;  " 0  --  Minor grazing"
+        ;;  " 1  --  No snacking or only fruit/nuts!")
+        ;; ("WaistMeasurement: What's my current wasit measure in cm?")
+        ;; ("Fullness: Did I stop eating when satisfied?"
+        ;;  "-1 -- Ate until overstuffed"
+        ;;  " 0  -- Ate a bit much"
+        ;;  " 1  -- Ate to satisfaction")
+        
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;; Open ended questions (i.e., no options)                                  ;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ("Relaxation: The most relaxing thing I did was …")
+        ;; When did I feel drained, frustrated, or stressed?
         ("Motivation: Why was I or wasn't motivated for something today?")
+        ("Tomorrow: What’s the one thing I must do tomorrow to feel accomplished?")
 
-
+        
+        
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         :random  ;; 2 questions randomly chosen and asked each day                  ;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;; “Thematic” prompts: Each property acts as a theme.
 
         ("Time: Am I happy with how I am spending my time?") ;; Did I use most of my time wisely?
+        ("Time: Where did most of my time go today?")
+        ("Time: Did I control my schedule, or did my schedule control me?")
 
+        ("Closure:  What can I let go of today?")
+        ("Closure: What am I carrying into tomorrow?")
+        
+        ;; NOTE: These all use the “same” key, so only one of them will randomly be selected.
         ("Service: Was there anything I could easily do for someone else that I didn't do? Why not?")
-        ("Service₂: Have I done anything to help someone in any way? Because a life lived only for oneself is only partly fulfilling.")
-        ("Service₃: Did I wrong anyone who I owe amends to?")
+        ("Service: Have I done anything to help someone in any way? Because a life lived only for oneself is only partly fulfilling.")
+        ("Service: Did I wrong anyone who I owe amends to?")
 
         ("Values: What things are most important to me? (both things achieved and not yet achieved)")
-        ("Value: Did it (whatever thing happened during the day) matter? To identify recurring things that either need to be dropped or addressed to better facilitate mental health.")
-        ("Value₂: Did today matter? i.e., if I had slept all day, would anything really be any different?")
+        ("Values: Did it (whatever thing happened during the day) matter? To identify recurring things that either need to be dropped or addressed to better facilitate mental health.")
+        ("Values: Did today matter? i.e., if I had slept all day, would anything really be any different?")
 
-        ("GoalGetting: What did I do today to help achieve the things I have not yet achieved?")
-        ("GoalGetting₂: What will I do tomorrow to further my achievement of things most important to me?")
+        ("Goal Getting: What did I do today to help achieve the things I have not yet achieved?")
+        ("Goal Getting: What will I do tomorrow to further my achievement of things most important to me?")
+        ("Goal Getting: Was I working on what truly matters, or just staying busy?")
 
         ;; ⇒ more positive thoughts, unlocked :)
         ("Gratitude: What am I grateful for today?") ;;  Makes you look at the big picture while appreciating something small that may be otherwise taken for granted.
@@ -4072,15 +4169,19 @@ and 2 of them are randomly selected as part of the daily review.
         ("Worry: What am I worried about?") ;; Really helps clarify what to prioritize the next day, and gets the worries out of my head and onto paper right so I don't have to think about them in bed.
 
         ("Approval: What did I do today that I approve of?") ;; gets you out of all or nothing thinking. Do you approve of getting out of bed? Drinking water?
-        ("Approval₂: What did I do well today? What did I do poorly today? What am I most grateful for? What is my goal?")
+        ("Approval: What did I do well today? What did I do poorly today? What am I most grateful for? What is my goal?")
+        ("Pride: What am I proud of?")
 
+        ("Fall Short: Where did I fall short?")
+        ("Distraction: What distracted me or slowed me down?")
+        ("Procrastination: Was I procrastinating? Why?")
         ("Change: What is 1 thing I will do differently tomorrow?")
         ("Betterment: What can I do to be better tomorrow than I was today?")
         ("Improvement: How can anything I'm doing be improved upon? So that I can grow as a person and have more effectiveness in things I do.")
 
         ("Direction: Where am i going? What did i learn? What did i do that i liked? What can i do better?")
         ("Growth: What did I learn today?")
-        ("Growth₂: Who do I need to be in order to master the day I had today. And how can I challenge myself to be that tomorrow.") ;; It helps with perspective, integrity and accountability.
+        ("Growth: Who do I need to be in order to master the day I had today. And how can I challenge myself to be that tomorrow.") ;; It helps with perspective, integrity and accountability.
 
         ("Annoyance: Of the things that happened to me today, what made me go “what the fuck?”")
         ("Joy: Of the things that happened to me today, what made me go “fuck yeah!”")
@@ -4093,69 +4194,128 @@ and 2 of them are randomly selected as part of the daily review.
 
         ("Competence:  What problems did I solve?")
 
-        ("SelfCare: Did I put myself last today?") ;; Did I do myself justice today? If not, what will I do differently tomorrow?
+        ("Self-Care: Did I put myself last today?") ;; Did I do myself justice today? If not, what will I do differently tomorrow?
         ))
 
 
-(defun my/read-daily-review-properties ()
+
+(defun my/randomize (list)
+  "Shuffle the elements in LIST."
+  (--sort (< (random 2) 1) list))
+
+
+(when nil 
+  ;; Sometimes I'll get the first "Approval" (an open-ended question) and other times I'll get the second one "Approval" (a choice-delimited question) 😁
+  (my/read-daily-review-properties :questionnaire
+                                   '(("Approval: What did I do today that I approve of?")
+                                     ("Pride: What am I proud of?")
+                                     ("Approval: What did I do well today? What did I do poorly today? What am I most grateful for? What is my goal?")
+                                     ("Approval: Did I eat balanced meals (protein, fiber, healthy fats)?"
+                                      "0  --  Nope -- Pro tip: Meal prep reduces unhealthy food reliance."
+                                      "1  --  Yup  -- Yay, good job! ")
+                                     ("Fall short: Where did I fall short?"))
+                                   ;; :prop-val-action (lambda (property value) (progn (org-set-property property value) (save-buffer)))
+                                   )
+  
+  )
+
+
+;; DONE: Make this take 2 keyword args:
+;; ⇒ :questions
+;; ⇒ :action, a function to run on each property-value pair; e.g., (progn (org-set-property property value) (save-buffer))
+;;            This is useful since then the Daily Review immediately adds a property whenever I've answered it, not at the very end.
+;;            And the (save-buffer) part saves everything in-case a disaster occurs (eg one of my Lisp methods crashes).
+;;            ↑ Make this the default, then I can change it when I write a test against this method.
+(cl-defun my/read-daily-review-properties (&key (questionnaire my/daily-review-questionnaire)
+                                                (prop-val-action #'cons))
   "Returns a list of (PROPERTY . VALUE) pairs that could be `org-set-property' on a headline.
 
 Makes use of `my/daily-review-questionnaire'.
 
+PROP-VAL-ACTION is run on each property-value pair, including the “Daily␣score”.
+The list of such results is returned from this method.
+
 At any time, press `C-.' to toggle adding a customised explanatory note to go along with a selection."
-  (-let [(mandatory-questions random-questions) (-split-on :random my/daily-review-questionnaire)]
+  (-let [(mandatory-questions random-questions) (-split-on :random questionnaire)]
     (let* ((max-possible-score 0)
+           (daily-score 0)
            (properties
-            ;; Consider mandatory questions and 2 optional questions, chosen at random
-            (cl-loop for (heading . option-strings) in (-concat mandatory-questions (-take 2 (--sort (< (random 2) 1) random-questions)))
-                     for heading-info = (s-split ":" heading)
-                     for property = (cl-first heading-info)
-                     for prompt₀ = (cl-second heading-info)
-                     for prompt = (if (s-ends-with? " " prompt₀) prompt₀ (concat prompt₀ " "))
-                     for options = (--map (make-my/option-from-string it) option-strings)
-                     for is-open-ended? = (null options)
-                     collect
-                     (cons property
-                           (if is-open-ended?
-                               (read-from-minibuffer prompt)
-                             (cl-incf max-possible-score (apply #'max (mapcar #'my/option-score options)))
-                             ;; If the user presses “C-.” they toggle on “note entry”.
-                             (let (note-has-been-requested
-                                   (my/note-map (make-sparse-keymap)))
-                               (define-key my/note-map (kbd "C-.")
-                                           (lambda () (interactive)
-                                             (setq note-has-been-requested (not note-has-been-requested))
-                                             (message (if note-has-been-requested "[You can enter a note after making a selection!]"
-                                                        "[No entry note will be requested after selection.]"))))
-                               (set-keymap-parent my/note-map minibuffer-local-map) ;; So that ⟨ENTER⟩ finalises the minibuffer, and not a literal new line!
-                               (minibuffer-with-setup-hook
-                                   (lambda () (use-local-map (copy-keymap my/note-map)))
-                                 (consult--read (--map (my/option-label it) options)
-                                                :prompt prompt
-                                                :require-match t
-                                                :annotate (lambda (label)
-                                                            (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))
-                                                :lookup (lambda (label _ _ _)
-                                                          (-let [option (assoc-by-label options label)]
-                                                            ;; If label ends in “…” or “C-.” pressed, prompt for a note.
-                                                            (when (or (s-ends-with? "…" label) note-has-been-requested)
-                                                              (-let [note (s-trim (read-from-minibuffer "Enter an explanatory note [ENTER to skip] "))]
-                                                                (unless (s-blank? note)
-                                                                  (setf (my/option-description option) note))))
-                                                            (pretty-print option)))))))))))
+            (cl-loop
+             ;; questionnaire may use the same property name for different questions, so avoid
+             ;; prompting user for the same property value, since later ones override earlier
+             ;; ones when added to an Org Heading. Note that this questions are chosen randomly
+             ;; we do not always select the first “property: prompt” pair  in the questionnaire
+             ;; when there are multiple such pairs having the same property name.
+             with seen-properties = '()
+             ;; Consider mandatory questions and 2 optional questions, chosen at random
+             for (heading . option-strings) in (-concat
+                                                (my/randomize mandatory-questions)
+                                                (-take 2 (my/randomize random-questions)))
+             for heading-info = (s-split ":" heading)             
+             ;; Org Properties cannot use Unicode space “ ” in their names, but it seems
+             ;; that they can use the visual space “␣” in their name (among other Unicode).
+             ;; E.g., "how i slept amigo" ⇒ "how␣i␣slept␣amigo"
+             ;; NOTE: Org-ql with “ (regexp "\n.*amigo") ” will find such an entry.
+             for property = (s-replace " " "␣" (cl-first heading-info))
+             for prompt₀ = (cl-second heading-info)
+             for prompt = (if (s-ends-with? " " prompt₀) prompt₀ (concat prompt₀ " "))
+             for options = (--map (make-my/option-from-string it) option-strings)
+             for is-open-ended? = (null options)
+             unless (member property seen-properties)
+             collect                     
+             (funcall prop-val-action
+                      (progn (push property seen-properties) property)
+                      (if is-open-ended?
+                          (read-from-minibuffer prompt)
+                        (cl-incf max-possible-score (apply #'max (mapcar #'my/option-score options)))
+                        ;; If the user presses “C-.” they toggle on “note entry”.
+                        (let (note-has-been-requested
+                              (my/note-map (make-sparse-keymap)))
+                          (define-key my/note-map (kbd "C-.")
+                                      (lambda () (interactive)
+                                        (setq note-has-been-requested (not note-has-been-requested))
+                                        (message (if note-has-been-requested "[You can enter a note after making a selection!]"
+                                                   "[No entry note will be requested after selection.]"))))
+                          (set-keymap-parent my/note-map minibuffer-local-map) ;; So that ⟨ENTER⟩ finalises the minibuffer, and not a literal new line!
+                          (setq my/show_C-._message t)
+                          (minibuffer-with-setup-hook
+                              (lambda () (use-local-map (copy-keymap my/note-map)))
+                            (consult--read (--map (my/option-label it) options)
+                                           :prompt prompt
+                                           :require-match t                                                
+                                           :annotate (lambda (label)
+                                                       (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))
+                                           ;; Initial message shown in minibuffer: This is a message, not default input string.
+                                           :state (lambda (action candidate)
+                                                    (when my/show_C-._message
+                                                      ;; Note: Did not work as expected: (equal action 'setup)
+                                                      (message (concat 
+                                                                (propertize "Press" 'face `(bold (foreground-color . "grey")))
+                                                                (propertize " C-. " 'face '(bold (foreground-color . "maroon")))
+                                                                (propertize "to toggle entering a note after making a selection" 'face `(bold (foreground-color . "grey")))))))                                                
+                                           :lookup (lambda (label _ _ _)
+                                                     (-let [option (assoc-by-label options label)]
+                                                       (cl-incf daily-score (my/option-score option))
+                                                       ;; If label ends in “…” or “C-.” pressed, prompt for a note.
+                                                       (when (or (s-ends-with? "…" label) note-has-been-requested)
+                                                         (setq my/show_C-._message nil)
+                                                         (-let [note (s-trim (read-from-minibuffer "Enter an explanatory note [ENTER to skip] "))]
+                                                           (unless (s-blank? note)
+                                                             (setf (my/option-description option) note))))
+                                                       (pretty-print option)))))))))))
       ;; Prepend a computed “daily score” property. Hopefully this value increases with time.
       (cons
-       (thread-last properties
-                    ;; The “ignore-errors” is here since some values are open ended, and so have no score.
-                    (--map (or (ignore-errors (my/option-score (make-my/option-from-string (cdr it)))) 0))
-                    (apply #'+)
-                    float
-                    ;; Note:  (thread-last x (/ max) (/ 100)) = (/ 100 (/ max x)) = (* 100 (/ x max))
-                    (/ max-possible-score)
-                    (/ 100)
-                    (format "%.2f%%")
-                    (cons "DailyScore"))
+       (funcall prop-val-action "Daily␣score"
+                (thread-last daily-score
+                             float
+                             ;; Note:  (thread-last x (/ max) (/ 100)) = (/ 100 (/ max x)) = (* 100 (/ x max))
+                             (/ max-possible-score)
+                             (/ 100)
+                             (format "%.2f%%")))
        properties))))
+
+
+
 
 
 
@@ -4219,24 +4379,15 @@ Example use: (my/insert-with-fg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))
               ;; that looks at that day. That is, my review are personal appointments.
               "* :Daily:Review: \n:PROPERTIES:\n:CREATED: %T\n:END:\n"
               ;; Insert fancy date in header
-              (defun my/fancy-date-string ()
-                "Return a string like 'Saturday, May 17, 2025 – Day 137 of the year'."
-                (let ((today (current-time)))
-                  (format "%s – Day %d of the year"
-                          (format-time-string "%A, %B %e, %Y" today)
-                          (string-to-number (format-time-string "%j" today)))))
               (beginning-of-buffer)
               (org-beginning-of-line)
-
-              (insert (my/fancy-date-string) " ")
+              (insert (ts-format "%A, %B %e, %Y – Day %j of the year ")) ;; ⇒ E.g., “Saturday, June 14, 2025 – Day 165 of the year”
               ;; Let's add some properties by prompting the user, me.
-              (-let [properties (my/read-daily-review-properties)]
-                (cl-loop for (property . value) in properties
-                         do (org-set-property property value))
-                ;; Add Daily Score to the start of the headline
-                (beginning-of-buffer)
-                (org-beginning-of-line)
-                (insert (format "﴾%s﴿ " (cdr (assoc "DailyScore" properties)))))
+              (my/read-daily-review-properties :prop-val-action (lambda (property value) (org-set-property property value)))
+              ;; Add Daily Score to the start of the headline
+              (beginning-of-buffer)
+              (org-beginning-of-line)
+              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
               ;; Let's align them
               (my/org-align-property-values)
               ;; Let's insert a quote
@@ -4286,7 +4437,7 @@ Example use: (my/insert-with-fg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))
                 (org-fill-paragraph)
                 (my/insert-with-fg-colour "grey" "#+end_word_of_the_day\n\n"))
 
-  (my/insert-with-bg-colour "chartreuse" (lf-string "
+              (my/insert-with-bg-colour "chartreuse" (lf-string "
                      ** Clean your inboxes!      [0%]
                      
                      Empty all your physical and digital workspaces. Move things to their
@@ -4328,18 +4479,18 @@ Example use: (my/insert-with-fg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))
                       "))
 
               ;; ⇒ 🤔 What did I do today? ⇐
-               (when nil save-excursion
-              (insert 
-               ;; TODO: Make `my/what-did-i-work-on-today' tag an optional arg to just retrive the string instead of putting it in a buffer
-               (save-excursion
-                 (let (result)
-                   (my/what-did-i-work-on-today)
-                   (setq result (buffer-substring-no-properties (point-min) (point-max)))
-                   (kill-buffer)
-                   result))))
-               
-               (insert
-"
+              (when nil save-excursion
+                    (insert 
+                     ;; TODO: Make `my/what-did-i-work-on-today' tag an optional arg to just retrive the string instead of putting it in a buffer
+                     (save-excursion
+                       (let (result)
+                         (my/what-did-i-work-on-today)
+                         (setq result (buffer-substring-no-properties (point-min) (point-max)))
+                         (kill-buffer)
+                         result))))
+              
+              (insert
+               "
 Write a short story for the day.
 
                      # Use Clock-info to see where I clocked-in.
@@ -4681,49 +4832,40 @@ Returns a float between 0 and 100."
                   (format "* Weekly Review ♯%s ---/“go from chaos to clarity”!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
                           week♯
                           month-name)))
-
               ;; Let's add some properties by prompting the user, me.
-              (-let
-                  [my/daily-review-questionnaire
-                   '(
-                     ("SocialScore: Did I see family *and* did I call or message a friend?"
-                      " 0  --  No             --  What am I doing with my life?"
-                      " 1  --  Yes…           --  Sweet, who was it? What did you do?")
-                     ("FaithScore: Did I go to this Mosque this week? Or read passages from the Quran?"
-                      " 0  --  No             --  What am I doing with my life?"
-                      " 1  --  Yes…           --  Sweet, what did you do?")
-                     ("MarriageScore: How are things with my wife?"
-                      "-1  --  Abysmal Low     --  I hate life."
-                      " 0  --  Low             --  What am I doing with my life?"
-                      " 1  --  Medium          --  Things are OK."
-                      " 2  --  High            --  I love my life ᕦ( ᴼ ڡ ᴼ )ᕤ"
-                      " 3  --  Extremely High  --  I'm king of the world!")
-                     ("HealthScore: Did I go for a run or do a workout this week?"
-                      " 0  --  No             --  What am I doing with my life?"
-                      " 1  --  Yes…           --  Sweet, what did you do?"))]
-                ;; 📊 Other metrics to consider keeping track of:
-                ;; ⇒ Hours worked
-                ;; ⇒ Tasks completed
-
-                (-let [properties (my/read-daily-review-properties)]
-                  (cl-loop for (property . value) in properties
-                           do (org-set-property property value))
-                  ;; TODO: Make my/read-daily-review-⋯ attach a WeeklyScore, not a
-                  ;; DailyScore? Maybe keep the latter for easy reference? E.g.,
-                  ;; next line is copy/pasted from Daily Review.
-                  ;;
-                  ;; Add Daily Score to the start of the headline
-                  (beginning-of-buffer)
-                  (org-beginning-of-line)
-                  (insert (format "﴾%s﴿ " (cdr (assoc "DailyScore" properties)))))
-                ;; Let's align them
-                (my/org-align-property-values))
-
+              (my/read-daily-review-properties
+               :questionnaire '(("SocialScore: Did I see family *and* did I call or message a friend?"
+                                 " 0  --  No             --  What am I doing with my life?"
+                                 " 1  --  Yes…           --  Sweet, who was it? What did you do?")
+                                ("FaithScore: Did I go to this Mosque this week? Or read passages from the Quran?"
+                                 " 0  --  No             --  What am I doing with my life?"
+                                 " 1  --  Yes…           --  Sweet, what did you do?")
+                                ("MarriageScore: How are things with my wife?"
+                                 "-1  --  Abysmal Low     --  I hate life."
+                                 " 0  --  Low             --  What am I doing with my life?"
+                                 " 1  --  Medium          --  Things are OK."
+                                 " 2  --  High            --  I love my life ᕦ( ᴼ ڡ ᴼ )ᕤ"
+                                 " 3  --  Extremely High  --  I'm king of the world!")
+                                ("HealthScore: Did I go for a run or do a workout this week?"
+                                 " 0  --  No             --  What am I doing with my life?"
+                                 " 1  --  Yes…           --  Sweet, what did you do?"))
+                                        ; 📊 Other metrics to consider keeping track of:
+                                        ; ⇒ Hours worked
+                                        ; ⇒ Tasks completed               
+               :prop-val-action (lambda (property value) (org-set-property property value)))
+              ;; TODO: Make my/read-daily-review-⋯ attach a WeeklyScore, not a
+              ;; DailyScore? Maybe keep the latter for easy reference? E.g.,
+              ;; next line is copy/pasted from Daily Review.
+              ;;              
+              ;; Add Daily Score to the start of the headline
+              (beginning-of-buffer)
+              (org-beginning-of-line)
+              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))              
+              ;; Let's align them
+              (my/org-align-property-values)
+              ;; Add a special property for this review
               (org-set-property "WHY" "Ensure everything is on track! Be proactive, not reactive! Be in control of my life! 😌 Have a sense of closure and wrap-up before the weekend! ☺️")
-              
               (end-of-buffer)
-
-
               (insert
                (let* ((♯lines (save-restriction (widen) (count-lines (point-min) (point-max))))
                       (last-time (s-trim (shell-command-to-string "git log -1 --pretty=%s")))
@@ -4816,7 +4958,7 @@ Returns a float between 0 and 100."
               for the week to come? Think about which tasks will
               have the highest value in me reaching my potential
               and being successful.")))              
-              
+
               (insert              "
 ****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
 
@@ -5006,6 +5148,68 @@ Returns a float between 0 and 100."
                   misplaced-heading))
  org-lint--checkers))
 ;; M-x org-lint:1 ends here
+
+;; [[file:init.org::*<<<Monthly Review>>>][<<<Monthly Review>>>:1]]
+;; “r”eview for the “m”onth
+(bind-key*
+ "C-c r m"
+ (def-capture "🔄 Monthly Review 😊"
+              "🌿 Reviews 🌱"
+              ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
+              ;; that looks at that day. That is, my review are personal appointments.
+              "* :Monthly:Review: \n:PROPERTIES:\n:CREATED: %T\n:END:\n"
+              ;; Insert fancy date in header
+              (beginning-of-buffer)
+              (org-beginning-of-line)
+              (insert (ts-format "%B %Y Monthly Review "))             
+              ;; Let's add some properties by prompting the user, me.
+              (my/read-daily-review-properties
+               :questionnaire '(
+                                ("Happy: Are you happy?"
+                                 "0 -- Nope… -- Why not?"
+                                 "1 -- Yup…  -- Yay, share a happy moment from this month")
+                                ("Work Brag: What's something you did at work that you can brag about this month?")
+                                ("Personal Brag: What's something you did in your personal life that you can brag about this month?"))
+               :prop-val-action (lambda (property value) (org-set-property property value)))
+              ;; Add Daily Score to the start of the headline
+              (beginning-of-buffer)
+              (org-beginning-of-line)
+              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))              
+              ;; Let's align them
+              (my/org-align-property-values)
+              ;; Let's insert a quote
+              (progn
+                (end-of-buffer)
+                (my/insert-with-fg-colour "grey" "\n\n#+begin_quote_of_the_day\n")
+                (my/insert-with-bg-colour "pink" (my/string-fill-column-and-center 70 (my/random-quote)) "\n")
+                (my/insert-with-fg-colour "grey" "#+end_quote_of_the_day\n\n"))
+              ;;              
+              ;; Use this query to see what I've done since the last review, to get a good idea
+              ;; of my contributions.
+              (my/insert-with-fg-colour "grey" "\n\n#+begin_contributions_this_month\n")
+              (thread-last
+                ;; “nl” stands for "number lines": It automatically prepends each line of input with a line number.
+                "cd ${my\work-dir}; git log --since='1 month ago' --author='${my\work-email}' --oneline --reverse --pretty=format:'%ad %h %s' --date=short | nl"
+                lf-string
+                shell-command-to-string
+                insert)
+              (my/insert-with-fg-colour "grey" "\n#+end_contributions_this_month\n")
+
+              (insert "\n🤔 What are some of my non-Git contributions this month? Reviews? Design Docs? Talks given?")
+
+              ;; Use this info to answer the following questions
+              (insert (lf-string "              
+              \n\n+ What accomplishments are you most proud of?
+              \n\n+ To what extent are you meeting your commitments?
+              \n\n+ What area would you most like to improve on in the coming months?
+              \n\n+ Feedback for manager: Does he hold the team accountable for producing work on time?
+                    He accepts feedback? He communicates well? He supports my professional growth?
+                    /Do I have any constructive feedback for him?/
+              \n\n+ What beneficial refactors have I done this month, eg to reduce tech debt or to clarify APIs.
+              "))
+              
+              (message "To journal is to live; congratulations on another entry!")))
+;; <<<Monthly Review>>>:1 ends here
 
 ;; [[file:init.org::*Other benefits of clocking are …][Other benefits of clocking are …:2]]
   (setq org-clock-sound "~/.emacs.d/school-bell.wav")
