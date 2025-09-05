@@ -1,4 +1,4 @@
-personal_ws-1.1 en 433 
+personal_ws-1.1 en 445 
 ACSII
 AST
 ASTs
@@ -36,6 +36,7 @@ Dualise
 Dually
 Eglot
 Eid
+Elisp
 Eman
 Equipollence
 Excerption
@@ -51,6 +52,7 @@ Hamid
 Hassan
 Hawah
 Hemi
+Himanshu
 Hoare
 Husayn
 IPv
@@ -67,7 +69,9 @@ Kata
 Knowns
 LaTeX
 Lekhani
+Lexing
 Liam
+Listify
 Lvalues
 Löf's
 Malak
@@ -114,6 +118,7 @@ Quran
 ROI
 Ramda
 Readably
+Rebase
 Reducts
 Refactorings
 Runnable
@@ -164,6 +169,8 @@ automata
 axiomatised
 backend
 backends
+backfilled
+backfilling
 backticks
 bifunctor
 bijective
@@ -287,6 +294,7 @@ leptin
 lexemes
 lexicographically
 logics
+lossy
 macOS
 magit
 mariam
@@ -303,6 +311,7 @@ metatheorem
 metatheorems
 metavariables
 microservices
+minibuffer
 mixfix
 modularisation
 modus
@@ -327,6 +336,7 @@ observationally
 oolean
 optionality
 orchestrator
+orderedness
 overhwheliming
 parallelize
 parameterisation
@@ -341,6 +351,7 @@ positivity
 postcondition
 precedences
 prepending
+preprocess
 preprocessor
 prettifications
 programmability
@@ -430,5 +441,6 @@ upcast
 usepackage
 variational
 variationals
+verifications
 webscraping
 whitespace

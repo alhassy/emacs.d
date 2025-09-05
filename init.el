@@ -1,5 +1,5 @@
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:4]]
-    (setq org-image-actual-width nil)
+(setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:5]]
@@ -15,6 +15,34 @@
 (setq user-full-name    "Musa Al-hassy"
       user-mail-address "alhassy@gmail.com")
 
+(defmacro 😴 (&rest sexp)
+  "Defer any sexp.
+
+If you have a call `(f x y)' then `(😴 f x y)' behaves the same but is run
+when Emacs has been idle for 10 seconds.
+
+E.g., (setq hi 12) defines a variable `hi', so `M-: hi' shows a value.
+Whereas (😴 setq hello 12) does not immediately define a variable: `M-: hello' yields an error
+when run immediately, but yields a value when Emacs is idle for 2 seconds.
+
+Save the name of this macro by highlighting it and pressing `C-x r s z', then use it with `C-x r i z'."
+  `(run-with-idle-timer 10 nil (lambda nil ,sexp)))
+
+;; ;; (defmacro when-idle (&rest body)
+;;    ;; `(run-with-idle-timer 20 nil (lambda () ,@body)))
+;; ;;
+;; 
+;; ;; first this,
+;; (setq gc-cons-threshold most-positive-fixnum ; 2^61 bytes
+;;       gc-cons-percentage 0.6)
+;; ;; then
+;; (😴 load-file "~/.emacs.d/deferred-init.el")
+;; ;; finally [[the following should really be at the end of deferred-init.el]]
+;; (add-hook 'emacs-startup-hook
+;;   (lambda ()
+;;     (setq gc-cons-threshold 16777216 ; 16mb
+;;           gc-cons-percentage 0.1)))
+
 ;; Make all commands of the “package” module present.
 (require 'package)
 
@@ -26,7 +54,7 @@
 ;; Update local list of available packages:
 ;; Get descriptions of all configured ELPA packages,
 ;; and make them available for download.
-(package-refresh-contents)
+(😴 package-refresh-contents)
 
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
@@ -34,9 +62,13 @@
 
 (setq use-package-always-ensure t)
 
-(setq use-package-compute-statistics t) ;; So that I can use M-x use-package-report to see how long things take to load.
+;; “C-h e” to see how long it took to load each package with use-package.
+(setq use-package-verbose t)
 
-(use-package auto-package-update
+ ;; So that I can use M-x ‘use-package-report’ to see how long things take to load.
+(setq use-package-compute-statistics t)
+
+(😴 use-package auto-package-update
   :config
   ;; Delete residual old versions
   (setq auto-package-update-delete-old-versions t)
@@ -85,7 +117,7 @@
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
-(use-package quelpa
+(😴 use-package quelpa
   :custom (quelpa-upgrade-p t "Always try to update packages")
   :config
   ;; Get ‘quelpa-use-package’ via ‘quelpa’
@@ -103,7 +135,7 @@
 ;; It happens in the background ^_^
 ;;
 ;; After 5 seconds of being idle, after starting up.
-(run-with-idle-timer 5 nil #'system-packages-update) ;; ≈ (async-shell-command "brew update && brew upgrade")
+(😴 run-with-idle-timer 5 nil #'system-packages-update) ;; ≈ (async-shell-command "brew update && brew upgrade")
 
 (defvar my/installed-packages
   (shell-command-to-string "brew list")
@@ -133,7 +165,7 @@ installs of packages that are not in our `my/installed-packages' listing.
             kill-buffer-query-functions))
 
 ;; An Emacs-based interface to the package manager of your operating system.
-(use-package helm-system-packages)
+(😴 use-package helm-system-packages)
 
 (setq system-packages-noconfirm :do-not-prompt-me-about-confirms)
 
@@ -186,16 +218,8 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; For an approach that does not inhibit async-shell-command this way,
 ;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
 
-(setq org--docs-from-libraries nil)
-(cl-defun org-docs-load-libraries (&rest args) )
-;; MA: this is failing for some reason
-(when nil use-package exec-path-from-shell
-      :init
-      (when (memq window-system '(mac ns x))
-        (exec-path-from-shell-initialize)))
-
 ;; Provides only the command “restart-emacs”.
-(use-package restart-emacs
+(😴 use-package restart-emacs
   ;; If I ever close Emacs, it's likely because I want to restart it.
   :bind ("C-x C-c" . restart-emacs)
   ;; Let's define an alias so there's no need to remember the order.
@@ -238,16 +262,9 @@ installs of packages that are not in our `my/installed-packages' listing.
                                     helm-source-bookmark-set
                                     helm-source-buffer-not-found))
 
-(use-package helm-swoop
-  :bind  (("C-s"     . 'helm-swoop)           ;; search current buffer
-          ("C-M-s"   . 'helm-multi-swoop-all) ;; Search all buffer
-          ;; Go back to last position where ‘helm-swoop’ was called
-          ("C-S-s" . 'helm-swoop-back-to-last-point)
-          ;; swoop doesn't work with PDFs, use Emacs' default isearch instead.
-          ; :map pdf-view-mode-map ("C-s" . isearch-forward)
-          )
-  :custom (helm-swoop-speed-or-color nil "Give up colour for speed.")
-          (helm-swoop-split-with-multiple-windows nil "Do not split window inside the current window."))
+(use-package helm
+  :bind  (("C-s"     . #'helm-occur)           ;; search current buffer
+          ("C-M-s"   . 'helm-multi-occur-from-isearch))) ;; Search all buffer
 
 (system-packages-ensure "ag")
 
@@ -292,10 +309,10 @@ installs of packages that are not in our `my/installed-packages' listing.
 
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
-(use-package hydra)
+(😴 use-package hydra)
 
 ;; Show hydras overlayed in the middle of the frame
-(use-package hydra-posframe
+(😴 use-package hydra-posframe
   :disabled "TODO Fix me, breaking Github Actions test setup"
   :quelpa (hydra-posframe :fetcher git :url
                           "https://github.com/Ladicle/hydra-posframe.git")
@@ -303,11 +320,11 @@ installs of packages that are not in our `my/installed-packages' listing.
   :custom (hydra-posframe-border-width 5))
 
 ;; Neato doc strings for hydras
-(use-package pretty-hydra)
+(😴 use-package pretty-hydra)
 
 ;; TODO convert my existing defhydras to my/defhydra.
-(defmacro my/defhydra (key title icon-name &rest body)
-"Make a hydra whose heads appear in a pretty pop-up window.
+(😴 defmacro my/defhydra (key title icon-name &rest body)
+    "Make a hydra whose heads appear in a pretty pop-up window.
 Heads are signalled by keywords and the hydra has an icon in its title.
 
 KEY [String]: Global keybinding for the new hydra.
@@ -358,36 +375,36 @@ Is replaced by:
        :Horizontal_adjustment
        (\"n\" shrink-window-horizontally      \"narrow\")
        (\"w\" enlarge-window-horizontally     \"widen\"))"
-  (let* ((name (intern (concat "my/hydra/"
-                              (if (stringp title)
-                                  title
-                                (plist-get title :title)))))
-         (icon-face `(:foreground ,(face-background 'highlight)))
-         (iconised-title
-          (concat
-           (when icon-name
-                 (require 'all-the-icons)
-             (concat
-              (all-the-icons-faicon (format "%s" icon-name) :face icon-face :height 1.0 :v-adjust -0.1)
-              " "))
-           (propertize title 'face icon-face))))
-    `(global-set-key
-      (kbd ,key)
-      (pretty-hydra-define ,name
-        ,(if (stringp title)
-             (list :title iconised-title
-                   :quit-key "q")
-           title)
-        ,(thread-last body
-           (-partition-by-header #'keywordp)
-           (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
-           (-flatten-n 1))))))
+    (let* ((name (intern (concat "my/hydra/"
+                                 (if (stringp title)
+                                     title
+                                   (plist-get title :title)))))
+           (icon-face `(:foreground ,(face-background 'highlight)))
+           (iconised-title
+            (concat
+             (when icon-name
+               (require 'all-the-icons)
+               (concat
+                (all-the-icons-faicon (format "%s" icon-name) :face icon-face :height 1.0 :v-adjust -0.1)
+                " "))
+             (propertize title 'face icon-face))))
+      `(global-set-key
+        (kbd ,key)
+        (pretty-hydra-define ,name
+          ,(if (stringp title)
+               (list :title iconised-title
+                     :quit-key "q")
+             title)
+          ,(thread-last body
+                        (-partition-by-header #'keywordp)
+                        (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
+                        (-flatten-n 1))))))
 
 ;; C-n, next line, inserts newlines when at the end of the buffer
 (setq next-line-add-newlines t)
 
 ;; Use ijkl to denote ↑←↓→ arrows.
-(my/defhydra "C-c w" "\t\tWindow Adjustment" windows
+(😴 my/defhydra "C-c w" "\t\tWindow Adjustment" windows
    :Both
    ("b" balance-windows                 "balance")
    ("s" switch-window-then-swap-buffer  "swap")
@@ -417,11 +434,16 @@ Is replaced by:
 ;; initially-worrisome “narrow-to-region”, C-x n n.
 (setq-default disabled-command-function nil)
 
+(😴 progn
 (use-package vterm) ;; Shell with a nearly universal compatibility with terminal applications 💝
+
+;; Easily paste in VTerm
+(bind-key "s-v" #'vterm-yank vterm-mode-map)
+(bind-key "M-y" #'vterm-yank vterm-mode-map)
 
 ;; "Intelligent" switching to vterm; eg creates it if it's not open, non-intrusive windowing, saves window setup, etc.
 (use-package vterm-toggle
-    :bind* ("C-t" . vterm-toggle))
+    :bind* ("C-t" . vterm-toggle)))
 
 ;; Be default, Emacs please use zsh
 ;; E.g., M-x shell
@@ -431,8 +453,10 @@ Is replaced by:
 
 (system-packages-ensure "hr") ;; ≈ brew install hr
 
+(advice-add #'view-echo-area-messages :after (lambda (&rest _) (other-window 1)))
+
 ;; Usage: M-x helm-shell-history
-(use-package helm-shell-history
+(😴 use-package helm-shell-history
   :config
   (setq helm-shell-history-file "~/.zsh_history")
   (bind-key "M-r" #'helm-shell-history shell-mode-map))
@@ -441,7 +465,7 @@ Is replaced by:
 ;; Usage: M-x helm-osx-app RET preferences bat RET ⇒ See battery preferences settings
 ;; Another Usage: M-x helm-osx-app RET ⇒ See all apps, maybe we forgot about one of them from an install a long time ago, and open it
 ;; See https://www.alfredapp.com/ as an alternative (for non-Emacs users), which can do more.
-(use-package helm-osx-app)
+(😴 use-package helm-osx-app)
 ;; For non-MacOS, we can use [[https://github.com/d12frosted/counsel-osx-app][counsel-osx-app]], whose name is misleading.
 
 ;; Auto update buffers that change on disk.
@@ -720,7 +744,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 
 ;; [[file:init.org::#Highlighting-TODO-s-Showing-them-in-Magit][Highlighting TODO-s & Showing them in Magit:1]]
 ;; NOTE that the highlighting works even in comments.
-(use-package hl-todo
+(😴 use-package hl-todo
   ;; I want todo-words highlighted in prose, not just in code fragements.
   :hook (org-mode . hl-todo-mode)
   :config
@@ -1299,14 +1323,13 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Text Folding ---Selectively displaying portions of a program:1 ends here
 
 ;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:2]]
-(use-package vimish-fold
-
+(😴 use-package vimish-fold
   :config (vimish-fold-global-mode 1))
 ;; Text Folding ---Selectively displaying portions of a program:2 ends here
 
 ;; [[file:init.org::#Aggressive-Indentation][Aggressive Indentation:1]]
 ;; Always stay indented: Automatically have blocks reindented after every change.
-(use-package aggressive-indent :config (global-aggressive-indent-mode t))
+(😴 use-package aggressive-indent :config (global-aggressive-indent-mode t))
 
 ;; Use 4 spaces in places of tabs when indenting.
 (setq-default indent-tabs-mode nil)
@@ -1387,11 +1410,13 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Get nice child frames when looking at completions candidates:1 ends here
 
 ;; [[file:init.org::*interactive macro-expander][interactive macro-expander:1]]
-(use-package macrostep)
+(😴 progn (use-package macrostep)
 (define-key emacs-lisp-mode-map (kbd "C-c e") 'macrostep-expand)
+)
 ;; interactive macro-expander:1 ends here
 
 ;; [[file:init.org::*Smart jumping to definitions][Smart jumping to definitions:1]]
+(😴 progn 
 (use-package elisp-def)
 (bind-key*  "M-." #'elisp-def emacs-lisp-mode-map)
 
@@ -1399,7 +1424,85 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 (when nil
   (let ((foo 1))
     (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
+)
 ;; Smart jumping to definitions:1 ends here
+
+;; [[file:init.org::*Outshine: Org outlining everywhere][Outshine: Org outlining everywhere:1]]
+(use-package outshine
+  :hook emacs-lisp-mode
+  ;; Press “?” on a heading to see what you can do with it.
+  ;; ⇒ “n/p/f/b” to navigate; “r/w” to restrict/widen; “j/J” to navigate in-detail.
+  ;; Also note: M-x outline-show-entry
+  :custom (outshine-use-speed-commands t)
+  ;; Make “⌘-e” enter “Edit as Org”
+  ;; Note: “C-u ⌘-e” transforms the entire code buffer into an Org buffer. Nice if you want to export code to, say, an Org blog article 😉
+  :bind (:map emacs-lisp-mode-map
+              ("s-e" . outorg-edit-as-org)
+              ;; “C-x n d” narrows to defun; “C-x n s” narrows to subtree (from anywhere inside it)
+              ("C-x n s" . (lambda () (interactive) (unless (outline-on-heading-p) (outline-previous-heading)) (outshine-narrow-to-subtree)))
+        :map outorg-edit-minor-mode-map
+              ("C-x C-s" . outorg-copy-edits-and-exit)))
+
+;; 😲 Very useful:
+;; M-⇆ is used to incrementally show (→) or hide (←) content of the current heading.
+;; M-↕ is used to navigate between headings
+;; M-S-⇆ is used to demote/promote headings
+;; M-S-↕ is used to move headings
+;; S-TAB cycle through entire buffer visibility
+;; TAB cycle though visibility of current heading
+
+;; Get a birds’ eye view (when I open a file).
+(add-hook 'outline-minor-mode-hook
+          (defun my/outline-overview ()
+            "Show all headings but no content in Outline mode."
+            (interactive)
+            ;; (outline-show-all) (outline-hide-body)
+            (unless (or (s-starts-with? "*Org Src init.org[ emacs-lisp ]*" (buffer-name))
+                        (equal default-directory (f-expand user-emacs-directory)))
+              (-let [current-prefix-arg 16] (outshine-cycle-buffer)))))
+;; Outshine: Org outlining everywhere:1 ends here
+
+;; [[file:init.org::*Slick selection of items from lists][Slick selection of items from lists:1]]
+  ;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
+  ;; Since the hook fires on C-g but by then Helm's already tears it down so
+  ;; it fails buffer-live-p.
+  (with-eval-after-load 'helm
+  (defun my/helm-kill-session-buffers-safe ()
+    "Kill stray *helm…* buffers after a Helm session ends."
+    ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
+    (run-at-time 0 nil                   ; defer until after Helm cleanup
+                 (lambda ()
+                   (let ((kill-buffer-query-functions nil))
+                     (dolist (b (buffer-list))
+                       (when (and (buffer-live-p b)
+                                  (string-match-p "\\`\\*helm" (buffer-name b)))
+                         (with-demoted-errors "helm-kill: %S"
+                           (kill-buffer b))))))))
+  (add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe))
+;; Slick selection of items from lists:1 ends here
+
+;; [[file:init.org::*Reduce cognitive attention from Lisp parentheses][Reduce cognitive attention from Lisp parentheses:1]]
+;; By default parentheses and brackets are dimmed, customize option `paren-face-regexp' if you also want to dim braces or don't want to dim brackets.
+(😴 use-package paren-face)
+(😴 add-hook 'emacs-lisp-mode-hook
+            (defun my/dim-parens-instead-of-drawing-attention-to-them-via-rainbow-colouring ()
+              (rainbow-delimiters-mode -1)
+              (paren-face-mode +1)))
+;; Reduce cognitive attention from Lisp parentheses:1 ends here
+
+;; [[file:init.org::*Finally, for authoring to MELPA][Finally, for authoring to MELPA:1]]
+(😴 use-package flycheck)
+;; Checker for ELisp package meta-data.
+;; This makes use of “package-lint”, which is a prerequisite for MELPA.
+(😴 use-package flycheck-package)
+
+(😴 add-hook 'emacs-lisp-mode-hook
+          (defun my/enable-flycheck-when-I-am-authoring-for-MELPA ()
+            (unless (or (s-starts-with? "*Org Src init.org[ emacs-lisp ]*" (buffer-name))
+                        (equal default-directory (f-expand user-emacs-directory)))
+              (flycheck-package-setup)
+              (flycheck-mode +1))))
+;; Finally, for authoring to MELPA:1 ends here
 
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
 ;; https://github.com/emacsorphanage/org-bullets
@@ -1440,7 +1543,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 
 ;; After my settings have been loaded, e.g., fancy priorities
 ;; and cosmetics, then open my notes files.
-(add-hook 'emacs-startup-hook
+(when nil add-hook 'emacs-startup-hook
           (lambda ()
             (-let [my-life.el (getenv "MY_LIFE_ELISP")]
               (unless org-default-notes-file
@@ -1477,8 +1580,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
   ;; We likely want to add this locally, to hooks on major modes.
 
   (setq doom-modeline-minor-modes t)
-  (use-package minions
-
+  (😴 use-package minions
     :init (minions-mode 1))
 
 ;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
@@ -1628,7 +1730,7 @@ fonts (•̀ᴗ•́)و"
   ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
   (my/toggle-theme 'solarized-gruvbox-light))
 
-(use-package dimmer
+(😴 use-package dimmer
   :config (dimmer-mode))
 
 ;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
@@ -1663,7 +1765,7 @@ fonts (•̀ᴗ•́)و"
 (modify-syntax-entry ?< "w<")
 (modify-syntax-entry ?> "w>")
 
-(use-package bufler
+(😴 use-package bufler
   :config (bind-key "C-x C-b" #'bufler-list))
 ;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 
@@ -1683,6 +1785,7 @@ fonts (•̀ᴗ•́)و"
   "Number of minutes between refreshes of weather information."
   :type 'integer)
 ;; Use (cancel-timer my/weather--timer) to stop this.
+(defvar my/weather-brief "")
 (setq my/weather--timer
       (run-with-timer (* 60 5) (* 60  my/weather-refresh-interval)
                       (defun my/weather-update ()
@@ -1732,7 +1835,7 @@ fonts (•̀ᴗ•́)و"
 ;; `org-ql' is a Lispy query language for Org files.  It allows you to find Org
 ;; entries matching certain criteria and return a list of them or perform
 ;; actions on them.
-(use-package org-ql)
+(😴 use-package org-ql)
 ;; Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:2 ends here
 
 ;; [[file:init.org::*Timestamps and their uses][Timestamps and their uses:2]]
@@ -2053,7 +2156,7 @@ fonts (•̀ᴗ•́)و"
 (add-hook 'org-agenda-finalize-hook
           (defun my/agenda-look-nice ()
             (-let [fill-column 120]
-              (olivetti-mode))
+              (perfect-margin-mode))
             (message "Press “/ -Work” to hide all :Work: entries.")))
 
 
@@ -2871,6 +2974,8 @@ Usage:
 (add-hook
  'org-mode-hook
  (cl-defun my/setup-smart-paste ()
+   (interactive)
+   (require 'cl)
    (bind-key "s-v"
              (cl-defun my/dwim-paste ()
                "Call `yank-media', with first possible media-type; ie no prompting.
@@ -2910,7 +3015,13 @@ TODO:
                                   (-let [delimiter "EOF"] ;; A unique “here-document delimiter”, unlikely to be part of ‘contents’
                                     ;; NOTE: `shell-quote-argument` does too much here; e.g., copied code blocks wont paste nicely.
                                     ;; For now, I want $FOO to be pasted as itself, and not interpreted as a Shell variable.
-                                    (format "pandoc -f html -t org <<%s\n%s\n%s" delimiter (s-replace "$" "\\$" contents) delimiter)))))))
+                                    (format "pandoc -f html -t org <<%s\n%s\n%s" delimiter
+                                            ;; Often at work people use backticks as code markers, so transform that to
+                                            ;; ~org syntax~. This also avoids breaking the shell call, since backquote means
+                                            ;; inline-eval in shell; e.g., echo `echo hello`world ⇒ helloworld
+                                            ;; likewise:  echo `pwd`world ⇒ ⟨current directory⟩world
+                                         (s-replace "`" "~"  (s-replace "$" "\\$" contents))
+                                            delimiter)))))))
 
    (yank-media-handler
     "STRING"
@@ -2964,7 +3075,7 @@ TODO:
        (push-mark)
        (end-of-line)
        (org-toggle-inline-images nil (region-beginning) (region-end))))
-
+   
    ))
 
 ;; I was surprised I needed this; perhaps a system restart will show I don't need it.
@@ -2972,8 +3083,7 @@ TODO:
 ;; “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode:1 ends here
 
 ;; [[file:init.org::#Org-mode-HTML][C-c C-l Org-mode ⇐ HTML:2]]
-(use-package org-web-tools
-
+(😴 use-package org-web-tools
   :config
   ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
   ;; the page to get the HTML title.
@@ -3196,7 +3306,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:1 ends here
 
 ;; [[file:init.org::#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG][Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:2]]
-(use-package org-appear
+(😴 use-package org-appear
   :hook (org-mode . org-appear-mode)
   :init (setq org-appear-autoemphasis  t
               org-appear-autolinks nil
@@ -3221,18 +3331,17 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:8 ends here
 
 ;; [[file:init.org::*Now C-c C-x C-v shows remote images inline, neato!][Now C-c C-x C-v shows remote images inline, neato!:1]]
-  (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
-  (require 'org-remoteimg)
-  (setq url-cache-directory "~/emacs.d/.cache/")
-  (setq org-display-remote-inline-images 'cache)
+  (😴 progn
+      (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
+      (require 'org-remoteimg)
+      (setq url-cache-directory "~/emacs.d/.cache/")
+      (setq org-display-remote-inline-images 'cache))
 ;; Now C-c C-x C-v shows remote images inline, neato!:1 ends here
 
 ;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
-(quelpa '(org-pretty-table
-         :repo "Fuco1/org-pretty-table"
-         :fetcher github))
-
-(add-hook 'org-mode-hook 'org-pretty-table-mode)
+(😴 progn
+    (quelpa '(org-pretty-table :repo "Fuco1/org-pretty-table" :fetcher github))
+    (add-hook 'org-mode-hook 'org-pretty-table-mode))
 ;; Draw pretty unicode tables in org-mode:1 ends here
 
 ;; [[file:init.org::*Use backtick as an alternative to “~” for code font][Use backtick as an alternative to “~” for code font:1]]
@@ -3359,7 +3468,7 @@ Check for orphaned files in the Org attachment directory.
 ;; [[file:init.org::*Org-rifle][Org-rifle:1]]
 ;; M-x helm-org-rifle ⇒ Search all open Org files, results are shown with
 ;; /context/, not just line-based. ⚠️ This respects narrowing.
-(use-package helm-org-rifle)
+(😴 use-package helm-org-rifle)
 ;; Org-rifle:1 ends here
 
 ;; [[file:init.org::*Mitigate accidental deletion of large regions of text][Mitigate accidental deletion of large regions of text:1]]
@@ -3385,10 +3494,12 @@ Check for orphaned files in the Org attachment directory.
 (setq org-catch-invisible-edits 'show-and-error)
 
 ;; Require confirmation for large region deletion
-(url-copy-file "https://www.emacswiki.org/emacs/download/wimpy-del.el" "~/.emacs.d/elpa/wimpy-del.el" :ok-if-already-exists)
-(load-file "~/.emacs.d/elpa/wimpy-del.el")
-(bind-key* "C-w" #'kill-region-wimpy)
-(setq wimpy-delete-size 3000)
+(😴 -let [wimpy-del.el "~/.emacs.d/elpa/wimpy-del.el"]
+    (unless (f-exists? wimpy-del.el)
+      (url-copy-file "https://www.emacswiki.org/emacs/download/wimpy-del.el" wimpy-del.el))
+    (load-file wimpy-del.el)
+    (setq wimpy-delete-size 3000)
+    (bind-key* "C-w" #'kill-region-wimpy))
 
 ;; Note: This has no impact if you select a region, then just press DELETE. Let's fix that:
 ;;
@@ -3502,7 +3613,7 @@ the character 𝓍 before and after the selected text."
 ;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:10]]
-(use-package synosaurus
+(😴 use-package synosaurus
   :defer 100
   :init    (synosaurus-mode)
   :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
@@ -3523,7 +3634,7 @@ the character 𝓍 before and after the selected text."
 ;; Fix spelling as you type ---thesaurus & dictionary too!:12 ends here
 
 ;; [[file:init.org::#Lightweight-Prose-Proofchecking][Lightweight Prose Proofchecking:1]]
-(use-package writegood-mode
+(😴 use-package writegood-mode
   ;; Load this whenver I'm composing prose.
   :hook (text-mode org-mode)
   ;; Don't show me the “Wg” marker in the mode line
@@ -3542,12 +3653,11 @@ the character 𝓍 before and after the selected text."
 ;; Lightweight Prose Proofchecking:1 ends here
 
 ;; [[file:init.org::#Placeholder-Text-For-Learning-Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
-(use-package lorem-ipsum )
+(😴 use-package lorem-ipsum )
 ;; Placeholder Text ---For Learning & Experimenting:1 ends here
 
 ;; [[file:init.org::#Some-text-to-make-us-smile][Some text to make us smile:1]]
-(use-package dad-joke
-
+(😴 use-package dad-joke
   :config (defun dad-joke () (interactive) (insert (dad-joke-get))))
 ;; Some text to make us smile:1 ends here
 
@@ -3558,22 +3668,14 @@ the character 𝓍 before and after the selected text."
 ; (makunbound 'agda2-include-dirs)
 ;; Unicode Input via Agda Input:1 ends here
 
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:2]]
-(system-packages-ensure "agda")
-;; Unicode Input via Agda Input:2 ends here
-
-;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:4]]
-(unless noninteractive
-  (load-file (let ((coding-system-for-read 'utf-8))
-               (shell-command-to-string "agda-mode locate"))))
-;; Unicode Input via Agda Input:4 ends here
-
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:5]]
 ;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
 ;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
 ;; then loading that!
-(url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" "~/.emacs.d/elpa/agda-input.el" :ok-if-already-exists)
-(load-file "~/.emacs.d/elpa/agda-input.el")
+(-let [agda-input.el "~/.emacs.d/elpa/agda-input.el"]
+  (unless (f-exists? agda-input.el)
+    (url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" agda-input.el))
+  (load-file agda-input.el))
 
 ;; MA: This results in "Package cl is deprecated" !?
 (unless noninteractive
@@ -3697,8 +3799,7 @@ the character 𝓍 before and after the selected text."
 
 ;; [[file:init.org::#Moving-Text-Around][Moving Text Around:1]]
 ;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(use-package move-text
-
+(😴 use-package move-text
   :config (move-text-default-bindings))
 ;; Moving Text Around:1 ends here
 
@@ -3715,14 +3816,14 @@ the character 𝓍 before and after the selected text."
 ;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
 ;;
 ;; C-u M-%  do to regexp replace, without querying.
-(use-package visual-regexp
+(😴 use-package visual-regexp
 
   :config (define-key global-map (kbd "M-%")
             (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
 ;; visual-regexp:1 ends here
 
 ;; [[file:init.org::#HTML-Org-mode][HTML ⇐ Org-mode:1]]
-(use-package htmlize )
+(😴 use-package htmlize )
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 ;; HTML ⇐ Org-mode:1 ends here
@@ -3739,10 +3840,23 @@ the character 𝓍 before and after the selected text."
 (setq-default line-spacing 0.2)
 ;; Add more line padding for readability:1 ends here
 
-;; [[file:init.org::*Olivetti: A clean writing environment][Olivetti: A clean writing environment:1]]
-(use-package olivetti)
-(setq olivetti-body-width 100)
-;; Olivetti: A clean writing environment:1 ends here
+;; [[file:init.org::*Perfect-Margin: A clean writing environment][Perfect-Margin: A clean writing environment:1]]
+(use-package perfect-margin
+  :custom (perfect-margin-visible-width 128)
+  :config
+  ;; enable perfect-mode
+  (perfect-margin-mode t)
+  ;; auto-center everything --i.e., do not ignore any kind of windows
+  (setq perfect-margin-ignore-filters nil)
+  (setq perfect-margin-ignore-regexps nil))
+
+;; (use-package olivetti)
+;; ;; NOTE: “setq-default” sets this buffer-local variable in all buffers
+;; (setq-default olivetti-body-width 100)
+;;
+;; Olivetti is buffer-specific, but I want to be enabled for all buffers.
+;; As such, I'm using perfect-margin.el.
+;; Perfect-Margin: A clean writing environment:1 ends here
 
 ;; [[file:init.org::*✨ Make Org properties look nice -- pretty emphasis markers][✨ Make Org properties look nice -- pretty emphasis markers:1]]
 (add-hook
@@ -3837,9 +3951,9 @@ the character 𝓍 before and after the selected text."
             (save-excursion
               ;; automatic color selection based on whether the theme background is black or white.
               (let* ((colors (cl-case (alist-get 'background-mode (frame-parameters))
-                               ('light
+                               (light
                                 (list "#F6B1C3" "#FFFF9D" "#BEEB9F" "#ADD5F7"))
-                               ('dark
+                               (dark
                                 (list "#aa557f" "DarkGreen" "DarkSlateGray" "DarkSlateBlue"))))
                      pos
                      duration)
@@ -3858,7 +3972,7 @@ the character 𝓍 before and after the selected text."
                       (setq colors (cdr colors))
                       (overlay-put ov 'line-height line-height)
                       (overlay-put ov 'line-spacing (1- line-height)))))))
-            (olivetti-mode -1)))
+            (perfect-margin-mode -1)))
 ;; Colourise clocking tasks with a block:1 ends here
 
 ;; [[file:init.org::*Automatically toggle timestamp prettifications][Automatically toggle timestamp prettifications:1]]
@@ -3916,45 +4030,45 @@ the character 𝓍 before and after the selected text."
   "Beautify keywords"
   (setq prettify-symbols-alist
         ;; Use both upcase and lowercase variations
-		(mapcan (lambda (pair) (list pair (cons (upcase (car pair)) (cdr pair))))
-				'(;; Org headers
-				  ("#+title:"  . "")
-				  ("#+author:" . "")
+                (mapcan (lambda (pair) (list pair (cons (upcase (car pair)) (cdr pair))))
+                                '(;; Org headers
+                                  ("#+title:"  . "")
+                                  ("#+author:" . "")
                   ("#+date:"   . "")
                   ;; Checkboxes
-				  ("[ ]" . "") ;; TODO
+                                  ("[ ]" . "") ;; TODO
                   ("[-]" . "") ;;  STARTED
-				  ("[X]" . "") ;;  DONE
+                                  ("[X]" . "") ;;  DONE
                   ;; Blocks
-				  ("#+begin_src"   . "")
-				  ("#+end_src"     . "")
-				  ("#+begin_QUOTE" . "‟")
-				  ("#+begin_QUOTE" . "”")
+                                  ("#+begin_src"   . "")
+                                  ("#+end_src"     . "")
+                                  ("#+begin_QUOTE" . "‟")
+                                  ("#+begin_QUOTE" . "”")
                   ;; Drawers
                   ;;    ⚙️
-				  (":properties:" . "")
+                                  (":properties:" . "")
                   ;; Agenda scheduling
-				  ("SCHEDULED:"   . "🕘")
-				  ("DEADLINE:"    . "⏰")
+                                  ("SCHEDULED:"   . "🕘")
+                                  ("DEADLINE:"    . "⏰")
                   ;; Agenda tags
-				  (":project:"  . "☕")
-				  (":work:"       . "🚀")
-				  (":inbox:"     . "✉️")
-				  (":goal:"       . "🎯")
-				  (":task:"       . "📋")
-				  (":thesis:"     . "📝")
-				  (":uio:"        . "🏛️")
-				  (":emacs:"      . "")
-				  (":learn:"      . "🌱")
-				  (":code:"       . "💻")
-				  (":fix:"        . "🛠️")
-				  (":bug:"        . "🚩")
-				  (":read:"       . "📚")
-				  ("#+filetags:"  . "📎")
-				  (":wip:"        . "🏗️")
-				  (":ct:"         . "😸") ;; Category Theory
+                                  (":project:"  . "☕")
+                                  (":work:"       . "🚀")
+                                  (":inbox:"     . "✉️")
+                                  (":goal:"       . "🎯")
+                                  (":task:"       . "📋")
+                                  (":thesis:"     . "📝")
+                                  (":uio:"        . "🏛️")
+                                  (":emacs:"      . "")
+                                  (":learn:"      . "🌱")
+                                  (":code:"       . "💻")
+                                  (":fix:"        . "🛠️")
+                                  (":bug:"        . "🚩")
+                                  (":read:"       . "📚")
+                                  ("#+filetags:"  . "📎")
+                                  (":wip:"        . "🏗️")
+                                  (":ct:"         . "😸") ;; Category Theory
                   (":verb:"       . "🌐") ;; HTTP Requests in Org mode
-				  )))
+                                  )))
   (prettify-symbols-mode))
 
 (add-hook 'org-mode-hook        #'my/prettify-symbols-setup)
@@ -3979,21 +4093,20 @@ the character 𝓍 before and after the selected text."
 ;; Org-superstar:1 ends here
 
 ;; [[file:init.org::*Example use of doc:consult--read][Example use of doc:consult--read:1]]
-(use-package consult) ;; To get `consult--read'
+(😴 use-package consult) ;; To get `consult--read'
 ;; Example use of doc:consult--read:1 ends here
 
 ;; [[file:init.org::*Questionnaire setup][Questionnaire setup:1]]
 (require 'eieio)
 
 ;; See https://alhassy.com/ElispCheatSheet/#org71dcb45 for info on “defstruct”
-(defstruct my/option
+(cl-defstruct my/option
   "An option for use with my End of Day Review."
   label score description)
 
 (defun assoc-by-label (options label)
   "Find the first `my/option' value in a list OPTIONS whose `my/option-label' is LABEL."
   (cl-find label options :key #'my/option-label :test #'string=))
-
 
 (cl-defmethod pretty-print ((it my/option))
   (format "%d  --  %s  --  %s" (my/option-score it) (my/option-label it) (my/option-description it)))
@@ -4127,7 +4240,7 @@ the Unicode space “ ”. For example, the following runs with no problem:
         ;;  "-1 -- Ate until overstuffed"
         ;;  " 0  -- Ate a bit much"
         ;;  " 1  -- Ate to satisfaction")
-        
+
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         ;; Open ended questions (i.e., no options)                                  ;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4136,8 +4249,8 @@ the Unicode space “ ”. For example, the following runs with no problem:
         ("Motivation: Why was I or wasn't motivated for something today?")
         ("Tomorrow: What’s the one thing I must do tomorrow to feel accomplished?")
 
-        
-        
+
+
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         :random  ;; 2 questions randomly chosen and asked each day                  ;;
         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4149,7 +4262,7 @@ the Unicode space “ ”. For example, the following runs with no problem:
 
         ("Closure:  What can I let go of today?")
         ("Closure: What am I carrying into tomorrow?")
-        
+
         ;; NOTE: These all use the “same” key, so only one of them will randomly be selected.
         ("Service: Was there anything I could easily do for someone else that I didn't do? Why not?")
         ("Service: Have I done anything to help someone in any way? Because a life lived only for oneself is only partly fulfilling.")
@@ -4204,7 +4317,7 @@ the Unicode space “ ”. For example, the following runs with no problem:
   (--sort (< (random 2) 1) list))
 
 
-(when nil 
+(when nil
   ;; Sometimes I'll get the first "Approval" (an open-ended question) and other times I'll get the second one "Approval" (a choice-delimited question) 😁
   (my/read-daily-review-properties :questionnaire
                                    '(("Approval: What did I do today that I approve of?")
@@ -4216,7 +4329,7 @@ the Unicode space “ ”. For example, the following runs with no problem:
                                      ("Fall short: Where did I fall short?"))
                                    ;; :prop-val-action (lambda (property value) (progn (org-set-property property value) (save-buffer)))
                                    )
-  
+
   )
 
 
@@ -4251,7 +4364,7 @@ At any time, press `C-.' to toggle adding a customised explanatory note to go al
              for (heading . option-strings) in (-concat
                                                 (my/randomize mandatory-questions)
                                                 (-take 2 (my/randomize random-questions)))
-             for heading-info = (s-split ":" heading)             
+             for heading-info = (s-split ":" heading)
              ;; Org Properties cannot use Unicode space “ ” in their names, but it seems
              ;; that they can use the visual space “␣” in their name (among other Unicode).
              ;; E.g., "how i slept amigo" ⇒ "how␣i␣slept␣amigo"
@@ -4262,7 +4375,7 @@ At any time, press `C-.' to toggle adding a customised explanatory note to go al
              for options = (--map (make-my/option-from-string it) option-strings)
              for is-open-ended? = (null options)
              unless (member property seen-properties)
-             collect                     
+             collect
              (funcall prop-val-action
                       (progn (push property seen-properties) property)
                       (if is-open-ended?
@@ -4282,17 +4395,17 @@ At any time, press `C-.' to toggle adding a customised explanatory note to go al
                               (lambda () (use-local-map (copy-keymap my/note-map)))
                             (consult--read (--map (my/option-label it) options)
                                            :prompt prompt
-                                           :require-match t                                                
+                                           :require-match t
                                            :annotate (lambda (label)
                                                        (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))
                                            ;; Initial message shown in minibuffer: This is a message, not default input string.
                                            :state (lambda (action candidate)
                                                     (when my/show_C-._message
                                                       ;; Note: Did not work as expected: (equal action 'setup)
-                                                      (message (concat 
+                                                      (message (concat
                                                                 (propertize "Press" 'face `(bold (foreground-color . "grey")))
                                                                 (propertize " C-. " 'face '(bold (foreground-color . "maroon")))
-                                                                (propertize "to toggle entering a note after making a selection" 'face `(bold (foreground-color . "grey")))))))                                                
+                                                                (propertize "to toggle entering a note after making a selection" 'face `(bold (foreground-color . "grey")))))))
                                            :lookup (lambda (label _ _ _)
                                                      (-let [option (assoc-by-label options label)]
                                                        (cl-incf daily-score (my/option-score option))
@@ -4313,8 +4426,6 @@ At any time, press `C-.' to toggle adding a customised explanatory note to go al
                              (/ 100)
                              (format "%.2f%%")))
        properties))))
-
-
 
 
 
@@ -4345,7 +4456,19 @@ Further reading:
       (execute-kbd-macro (kbd "C-u M-x align-regexp RET :\\(\\s-*\\) [-]?[0-9]+ RET RET RET n"))
       (align-regexp beg end ":\\(\\s-*\\) [-]?[0-9]+")
       ;; Pass 2: Align on all `--`
-      (execute-kbd-macro (kbd "C-u M-x align-regexp RET \\(\\s-*\\)-- RET RET RET y")))))
+      (execute-kbd-macro (kbd "C-u M-x align-regexp RET \\(\\s-*\\)-- RET RET RET y"))
+
+      (my/org-sort-properties))))
+
+(defun my/org-sort-properties ()
+  "To be used in my ‘review’ captures."
+  (beginning-of-buffer)
+  (search-forward ":CREATED:")
+  (forward-line)
+  (-let [start (point)]
+    (search-forward ":END:")
+    (beginning-of-line)
+    (sort-lines nil start (point))))
 ;; Questionnaire setup:1 ends here
 
 ;; [[file:init.org::*Capture method][Capture method:1]]
@@ -4428,7 +4551,7 @@ Example use: (my/insert-with-fg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))
                                             (cl-format nil "~:d" (count-lines (point-min) (point-max)))))]
                                    (format "✍️ my-life.org has %s lines" ♯lines)))))
                 (my/insert-with-fg-colour "grey" "#+end_stats_of_the_day\n\n"))
-              
+
               (my/show-life-purpose-statement-then-remove-it-after-I-read-it)
 
               (progn
@@ -4439,23 +4562,23 @@ Example use: (my/insert-with-fg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))
 
               (my/insert-with-bg-colour "chartreuse" (lf-string "
                      ** Clean your inboxes!      [0%]
-                     
+
                      Empty all your physical and digital workspaces. Move things to their
                      place and delete everything that can distract work in the upcoming week.
-                     
-                     
+
+
                                     /A cluttered workspace leads to an anxious mind!/
-                     
-                     
+
+
                      1. [ ] 🍽️🪑📚 *Clean Desk*. Clear off your desk from clutter and papers, receipts,
                         and miscellaneous paper-based materials. Wipe down your desk if you want.
-                     
+
                      2. [ ] 🗑️ *Disable Youtube & Chrome* :: They needlessly suck-up my time. 📱
-                     
+
                      3. [ ] *Empty Desktop & Download folders.* Move files to their appropriate
                         location. Both locations should be empty when you're done.
                         - Consider attaching files to Org headlines.
-                          
+
                      4. [ ] 📭  💬 🌐 *Empty out inboxes: Clear Email, Org, Slack Read Later, Browser Tabs*
                         - [ ] 📧 Convert all emails to tasks. /Do not reply to emails right /now/.
                         - [ ] ✉️ Open unopened letters & make tasks for required follow-ups, and discard old ones; finances as well.
@@ -4465,22 +4588,22 @@ Example use: (my/insert-with-fg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))
                           otherwise they can be reference matter.
                         - [ ] Do a search for “unsubscribe” in my email and unsubscribe from newsletters I don't read anymore. [MONTHLY?]
                            + it’s looking for any email that contains the word “unsubscribe,” which is required of all emails that are sent from a mailing list
-                     
+
                      5. [ ] 💼 *Clean up Work Notes.* Look at my =Work= headline in Org and ensure it's not
                         messy; e.g., references are in the right place.
-                     
+
                         🧹 Visit each of my buckets and clean it out: Ensure things are hierarchical,
                         archive done things, move useful notes to References. Reduce anxiety from
                         mess so that each headline is nice and tidy and useful.
-                     
-                     
+
+
                            /“Be regular and orderly in your life so that you may be violent and
                                        original in your work.” /--- Gustav Flaubert
                       "))
 
               ;; ⇒ 🤔 What did I do today? ⇐
               (when nil save-excursion
-                    (insert 
+                    (insert
                      ;; TODO: Make `my/what-did-i-work-on-today' tag an optional arg to just retrive the string instead of putting it in a buffer
                      (save-excursion
                        (let (result)
@@ -4488,7 +4611,7 @@ Example use: (my/insert-with-fg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))
                          (setq result (buffer-substring-no-properties (point-min) (point-max)))
                          (kill-buffer)
                          result))))
-              
+
               (insert
                "
 Write a short story for the day.
@@ -4507,12 +4630,12 @@ Write a short story for the day.
                   (setq todays-agenda (buffer-string))
                   (org-agenda-quit)
                   (my/insert-with-fg-colour "grey"  "\n\n#+begin_agenda_for_the_day\n")
-                  (my/insert-with-bg-colour "LightBlue1" todays-agenda)                
+                  (my/insert-with-bg-colour "LightBlue1" todays-agenda)
                   (my/insert-with-fg-colour "grey" "#+end_agenda_for_the_day")
                   (insert "\n⟨🤔 Did I get everything I wanted done? Perhaps, I underestimated time for things? 🗯️⟩")
                   (insert "\n~C-c a w v c~ to check for time gaps and review time for the past week. And to see what I worked on, and where I spent too much time or too little.")))
 
-              
+
               (insert "\nSay, “Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)”")
 
               ;;
@@ -4714,7 +4837,7 @@ Write a short story for the day.
 ;; E.g., there's no equivalent of (cl-format nil "~:d" 1000000)
 ;; which prints numbers with comma separators.
 ;; See https://gigamonkeys.com/book/a-few-format-recipes for more uses.
-(use-package cl-format)
+(😴 use-package cl-format)
 
 (defun my/git-commit-count ()
   (thread-last user-full-name
@@ -4807,11 +4930,11 @@ Returns a float between 0 and 100."
 
 ;; [[file:init.org::*Implementation][Implementation:1]]
 ;; “r”eview for the “w”ay
-;; 
+;;
 ;; Reflect on what went well and what could have gone better. Update your
 ;; to-do and projects list. Remove unimportant tasks and update your
 ;; calendar with any new relevant information.
-;; 
+;;
 ;;  Prepend a new section to “Weekly Log” listing what I've done in the
 ;;                        past week; useful for standups, syncs, and performance reviews.
 (bind-key*
@@ -4820,7 +4943,7 @@ Returns a float between 0 and 100."
               "🌿 Reviews 🌱"
               ;; tldr on “ts.el”:
               ;; Today           = (ts-format) ;; ⇒ "2025-05-26 16:46:52 -0400"
-              ;; Today + 10years = (ts-format (ts-adjust 'year 10 (ts-now))) 
+              ;; Today + 10years = (ts-format (ts-adjust 'year 10 (ts-now)))
               ;; Day of the week 2 days ago = (ts-day-name (ts-dec 'day 2 (ts-now))) ;; ⇒ "Saturday"
               ;; “What day was 2 days ago, Saturday? What day will it be in 10 years and 3 months?”
               ;; See https://github.com/alphapapa/ts.el, which has excellent examples.
@@ -4851,16 +4974,16 @@ Returns a float between 0 and 100."
                                  " 1  --  Yes…           --  Sweet, what did you do?"))
                                         ; 📊 Other metrics to consider keeping track of:
                                         ; ⇒ Hours worked
-                                        ; ⇒ Tasks completed               
+                                        ; ⇒ Tasks completed
                :prop-val-action (lambda (property value) (org-set-property property value)))
               ;; TODO: Make my/read-daily-review-⋯ attach a WeeklyScore, not a
               ;; DailyScore? Maybe keep the latter for easy reference? E.g.,
               ;; next line is copy/pasted from Daily Review.
-              ;;              
+              ;;
               ;; Add Daily Score to the start of the headline
               (beginning-of-buffer)
               (org-beginning-of-line)
-              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))              
+              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
               ;; Let's align them
               (my/org-align-property-values)
               ;; Add a special property for this review
@@ -4893,16 +5016,16 @@ Returns a float between 0 and 100."
                      :PROPERTIES:
                      :WHY: Recognise accomplishments, express self-gratitude, and debug!
                      :END:
-                     
+
 
                      1️⃣ First, write a short story recapping the week.
-                     
 
 
-                     2️⃣ Reflect on what went well and what could have gone better. 
+
+                     2️⃣ Reflect on what went well and what could have gone better.
                      Answer [[https://nesslabs.com/plus-minus-next][the following 3 questions]]:
                      # (♯1 & ♯2 useful for bragging about yourself when it's time to do performance reviews!)
-                     
+
                      1. [ ] ➕ Wins: What went well and why? ✅
                         # What could have caused things to go so well? Maybe I can duplicate this next week!
                         # Re-read [[https://jvns.ca/blog/brag-documents/][Get your work recognized: write a brag document]]
@@ -4920,7 +5043,7 @@ Returns a float between 0 and 100."
 
                      4. [ ] 🔀 Super briefly: What will you focus on next week?
                         # Did I get any “$10k” tasks done? Why or why not?
-                                         
+
 
                      # Use Clock-info to see where I clocked-in.
                      #                    [[elisp:(save-restriction (widen) (my/what-did-i-work-on-this-week))][⇒ 🤔 What did I do in the past 7 days? ⇐]]
@@ -4929,7 +5052,7 @@ Returns a float between 0 and 100."
 
 
                     3️⃣ One More Question to reflect on...
-"))) ;; TODO: 
+"))) ;; TODO:
 
               (insert "\n + [ ] "
                       (seq-random-elt
@@ -4939,7 +5062,7 @@ Returns a float between 0 and 100."
                          "🔧 Adjustments: What to stop? What to start? What to continue?"
                          "🟢 What should I continue doing?"
                          "🔴 What should I stop or change?"
-                         "🧪 What's one small experiment to try next week?" 
+                         "🧪 What's one small experiment to try next week?"
                          "😁 What are your biggest and most exciting challenges for the week to come?
                           What do you need to get there?"
                          "💭 Thoughts for the week to come: What are you thinking about for next week?"
@@ -4953,11 +5076,11 @@ Returns a float between 0 and 100."
                          "🕰️ Was my time aligned with my goals?"
                          "👀 What distracted me?"
                          "🎇 What energized me?"
-                         "📚 What did I learn?"                         
+                         "📚 What did I learn?"
                          "🪨 What are my biggest challenges (or “boulders”)
               for the week to come? Think about which tasks will
               have the highest value in me reaching my potential
-              and being successful.")))              
+              and being successful.")))
 
               (insert              "
 ****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
@@ -5010,7 +5133,7 @@ Returns a float between 0 and 100."
 4. [ ] To ensure the week is doable, add efforts to tasks for the week
    then ensure the effort estimate is actually realistic. Also check each
    day and ensure it's realistic!
- 
+
    # You can also add that to the column-mode (org-columns) to get a quick overview for a file (leave with org-columns-quit). Customize:
    # (org-columns-default-format \"%25ITEM %TODO %3PRIORITY %TAGS %17Effort(Estimated Effort){:} %CLOCKSUM\")
 
@@ -5074,7 +5197,7 @@ Returns a float between 0 and 100."
   ;; Do a modification
   (org-ql-query
     ;; Called with point at the start of each note (ie Org headline).
-    ;; SELECT is a function which is called on each matching entry with point at the beginning of its heading.  
+    ;; SELECT is a function which is called on each matching entry with point at the beginning of its heading.
     :select (lambda () (org-set-property "Edited_Date" (ts-format)))
     :from org-agenda-files
     ;; Daily Reviews Created in Last Week
@@ -5094,12 +5217,12 @@ Returns a float between 0 and 100."
     :select (lambda () (org-get-heading 'no-tags 'no-todo))
     :from org-agenda-files)
 
-  )  
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun my/get-table-of-daily-scores-for-last-week ()
-  (thread-last      
+  (thread-last
     (org-ql-query
       ;; Called with point at the start of each note (ie Org headline).
       :select (lambda ()
@@ -5149,7 +5272,7 @@ Returns a float between 0 and 100."
  org-lint--checkers))
 ;; M-x org-lint:1 ends here
 
-;; [[file:init.org::*<<<Monthly Review>>>][<<<Monthly Review>>>:1]]
+;; [[file:init.org::*🤖 <<<Monthly Review>>>][🤖 <<<Monthly Review>>>:1]]
 ;; “r”eview for the “m”onth
 (bind-key*
  "C-c r m"
@@ -5161,7 +5284,7 @@ Returns a float between 0 and 100."
               ;; Insert fancy date in header
               (beginning-of-buffer)
               (org-beginning-of-line)
-              (insert (ts-format "%B %Y Monthly Review "))             
+              (insert (ts-format "%B %Y Monthly Review "))
               ;; Let's add some properties by prompting the user, me.
               (my/read-daily-review-properties
                :questionnaire '(
@@ -5174,7 +5297,7 @@ Returns a float between 0 and 100."
               ;; Add Daily Score to the start of the headline
               (beginning-of-buffer)
               (org-beginning-of-line)
-              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))              
+              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
               ;; Let's align them
               (my/org-align-property-values)
               ;; Let's insert a quote
@@ -5183,7 +5306,7 @@ Returns a float between 0 and 100."
                 (my/insert-with-fg-colour "grey" "\n\n#+begin_quote_of_the_day\n")
                 (my/insert-with-bg-colour "pink" (my/string-fill-column-and-center 70 (my/random-quote)) "\n")
                 (my/insert-with-fg-colour "grey" "#+end_quote_of_the_day\n\n"))
-              ;;              
+              ;;
               ;; Use this query to see what I've done since the last review, to get a good idea
               ;; of my contributions.
               (my/insert-with-fg-colour "grey" "\n\n#+begin_contributions_this_month\n")
@@ -5198,7 +5321,7 @@ Returns a float between 0 and 100."
               (insert "\n🤔 What are some of my non-Git contributions this month? Reviews? Design Docs? Talks given?")
 
               ;; Use this info to answer the following questions
-              (insert (lf-string "              
+              (insert (lf-string "
               \n\n+ What accomplishments are you most proud of?
               \n\n+ To what extent are you meeting your commitments?
               \n\n+ What area would you most like to improve on in the coming months?
@@ -5207,9 +5330,9 @@ Returns a float between 0 and 100."
                     /Do I have any constructive feedback for him?/
               \n\n+ What beneficial refactors have I done this month, eg to reduce tech debt or to clarify APIs.
               "))
-              
+
               (message "To journal is to live; congratulations on another entry!")))
-;; <<<Monthly Review>>>:1 ends here
+;; 🤖 <<<Monthly Review>>>:1 ends here
 
 ;; [[file:init.org::*Other benefits of clocking are …][Other benefits of clocking are …:2]]
   (setq org-clock-sound "~/.emacs.d/school-bell.wav")
@@ -5526,6 +5649,18 @@ method."
                         (s-trim (substring-no-properties (thing-at-point 'line)))))))
 ;; Bookmarks: Quick naviagation to commonly visited locations:2 ends here
 
+;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:3]]
+(😴 use-package backward-forward
+  :ensure t
+  :demand t
+  :config
+  (backward-forward-mode t)
+  :bind
+  (:map backward-forward-mode-map
+        ("M-[" . backward-forward-previous-location)
+        ("M-]" . backward-forward-next-location)))
+;; Bookmarks: Quick naviagation to commonly visited locations:3 ends here
+
 ;; [[file:init.org::*Working with massive files: my-life∙org][Working with massive files: my-life∙org:1]]
 ;; I ran M-x profiler-start then did a save (C-x C-x) then did M-x profiler-report and noticed that
 ;; whitespace-cleanup was taking a long time on a file with 96k lines. At first I thought this was
@@ -5552,19 +5687,20 @@ method."
 ;; Never lose the cursor:1 ends here
 
 ;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:2]]
-(use-package beacon
+(😴 use-package beacon
   :config (setq beacon-color "#666600")
   :hook   ((org-mode text-mode) . beacon-mode))
 ;; Never lose the cursor:2 ends here
 
 ;; [[file:init.org::*Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”][Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:1]]
+(😴 progn 
 (use-package hyperbole :demand t)
 (hyperbole-mode +1)
-(setq hsys-org-enable-smart-keys t)
+(setq hsys-org-enable-smart-keys t))
 ;; Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:1 ends here
 
 ;; [[file:init.org::*Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”][Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:3]]
-(advice-add 'hkey-either :around
+(😴 advice-add 'hkey-either :around
 (defun my/M-RET-in-enumeration-means-new-item (orig-fn &rest args)
   "In an Org enumeration, M-[S]-RET anywhere in an item should create a new item.
 
@@ -5576,6 +5712,7 @@ method."
 ;; Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:3 ends here
 
 ;; [[file:init.org::*~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property][~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property:1]]
+(😴 progn 
 (defib my/property-button ()
   "Clicking at the start of the :PROPERTIES: line prompts for adding a new Org property."
   (let ((case-fold-search t))
@@ -5593,10 +5730,12 @@ method."
       (ibut:label-set (match-string-no-properties 1)
                       (match-beginning 1)
                       (match-end 1))
-      (hact (lambda (_current-tags) (org-set-tags-command)) (match-string-no-properties 1)))))
+      (hact (lambda (_current-tags) (org-set-tags-command)) (match-string-no-properties 1))))))
 ;; ~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property:1 ends here
 
 ;; [[file:init.org::*~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”][~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1]]
+(😴 progn
+    
 (defun my/open-::-file-path (path)
   "PATH is something like FooModule::72 or FooModule::interface_bar"
   (-let [(name regex) (s-split "::" path)]
@@ -5661,6 +5800,8 @@ method."
  'org-mode
  '(("\\b[^ ]*::[^ \n]*" 0 'highlight prepend))
  t)
+
+)
 ;; ~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1 ends here
 
 ;; [[file:init.org::*Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/][Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/:1]]
@@ -5679,8 +5820,10 @@ method."
                       (push (list (downcase (substring-no-properties (match-string 1))) file (line-number-at-pos)) targets)))))
     targets))
 
-(setq my/radio-targets (get-radio-targets))
-(setq my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
+(😴 progn
+    
+(setq my/radio-targets (get-radio-targets)
+    my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
 
 (font-lock-add-keywords
  'org-mode
@@ -5695,6 +5838,8 @@ method."
     nil
     (--map (list (format "\\b%s\\b" (cl-first it)) 0 ''(:underline t) 'prepend) my/radio-targets)
     t)))
+
+)
 
 
 (defun my/jump-to-radio (radio)
@@ -5721,9 +5866,9 @@ method."
 ;; Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/:1 ends here
 
 ;; [[file:init.org::*Testing that things are as they should be][Testing that things are as they should be:1]]
-(progn
+(😴 progn
   ;; TODO: Move the next bunch of lines up somewhere
-  (add-hook 'prog-mode-hook 'company-mode) 
+  (add-hook 'prog-mode-hook 'company-mode)
   (add-hook 'org-mode-hook 'company-mode)
   (add-hook 'org-mode-hook (lambda ()
                              (org-eldoc-load)
