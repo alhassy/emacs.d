@@ -1,5 +1,5 @@
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:4]]
-(setq org-image-actual-width nil)
+    (setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:5]]
@@ -25,7 +25,23 @@ E.g., (setq hi 12) defines a variable `hi', so `M-: hi' shows a value.
 Whereas (😴 setq hello 12) does not immediately define a variable: `M-: hello' yields an error
 when run immediately, but yields a value when Emacs is idle for 2 seconds.
 
-Save the name of this macro by highlighting it and pressing `C-x r s z', then use it with `C-x r i z'."
+Save the name of this macro by highlighting it and pressing `C-x r s z', then use it with `C-x r i z'.
+
+================================================================================
+
+This should be used as a last resort. Instead prefer `use-pacakge' lazy loading instead.
+
+❌ Avoid :preface, :config, and :init since they unconditionally load the package immediately.
+   ⇒ Favour :custom over :init; i.e., replace (use-package foo :init (setq x y)) with (use-pacakge foo :custom (x y)).
+   ⇒ If you must use :init, add a “:defer t” clause as well, to load it when it's needed.
+   ⇒ If your :config only sets keybindings, then prefer :bind or :bind-keymap.
+✅ Prefer auto-loading keywords :bind, :hook, and :mode since they defer loading a package until it's needed.
+  ⇒ These all imply “:defer t”.
+✅ Prefer loading modes only after Emacs’ initialisation has finished.
+  ⇒ Replace (use-package foo :config (foo-mode + 1)) with (use-package foo :hook after-init)
+  ⇒ Note (use-package foo :defer t :config (foo-mode + 1)) isn't lazy even though there's a :defer, since
+    the :config clause forces the mode to load.
+"
   `(run-with-idle-timer 10 nil (lambda nil ,sexp)))
 
 ;; ;; (defmacro when-idle (&rest body)
@@ -68,14 +84,11 @@ Save the name of this macro by highlighting it and pressing `C-x r s z', then us
  ;; So that I can use M-x ‘use-package-report’ to see how long things take to load.
 (setq use-package-compute-statistics t)
 
-(😴 use-package auto-package-update
-  :config
-  ;; Delete residual old versions
-  (setq auto-package-update-delete-old-versions t)
-  ;; Do not bother me when updates have taken place.
-  (setq auto-package-update-hide-results t)
+(use-package auto-package-update
+  :custom ((auto-package-update-delete-old-versions t) ;; Delete residual old versions
+           (auto-package-update-hide-results t)) ;; Do not bother me when updates have taken place.
   ;; Update installed packages at startup if there is an update pending.
-  (auto-package-update-maybe))
+  :hook (after-init . auto-package-update-maybe))
 
 ;; Making it easier to discover Emacs key presses.
 (use-package which-key
@@ -117,16 +130,6 @@ Save the name of this macro by highlighting it and pressing `C-x r s z', then us
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
-(😴 use-package quelpa
-  :custom (quelpa-upgrade-p t "Always try to update packages")
-  :config
-  ;; Get ‘quelpa-use-package’ via ‘quelpa’
-  (quelpa
-   '(quelpa-use-package
-     :fetcher git
-     :url "https://github.com/quelpa/quelpa-use-package.git"))
-  (require 'quelpa-use-package))
-
 ;; Auto installing OS system packages
 (use-package system-packages)
 
@@ -163,9 +166,6 @@ installs of packages that are not in our `my/installed-packages' listing.
 (setq kill-buffer-query-functions
       (remq 'process-kill-buffer-query-function
             kill-buffer-query-functions))
-
-;; An Emacs-based interface to the package manager of your operating system.
-(😴 use-package helm-system-packages)
 
 (setq system-packages-noconfirm :do-not-prompt-me-about-confirms)
 
@@ -219,11 +219,11 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; see https://emacs.stackexchange.com/questions/299/how-can-i-run-an-async-process-in-the-background-without-popping-up-a-buffer
 
 ;; Provides only the command “restart-emacs”.
-(😴 use-package restart-emacs
+(use-package restart-emacs
   ;; If I ever close Emacs, it's likely because I want to restart it.
-  :bind ("C-x C-c" . restart-emacs)
+  :bind ("C-x C-c" . restart-emacs))
   ;; Let's define an alias so there's no need to remember the order.
-  :config (defalias 'emacs-restart #'restart-emacs))
+  ;; :config (defalias 'emacs-restart #'restart-emacs)
 
 (setq-default save-place  t)
 (setq save-place-file "~/.emacs.d/etc/saveplace")
@@ -309,18 +309,17 @@ installs of packages that are not in our `my/installed-packages' listing.
 
 ;; Invoke all possible key extensions having a common prefix by
 ;; supplying the prefix only once.
-(😴 use-package hydra)
+(use-package hydra :defer t)
 
 ;; Show hydras overlayed in the middle of the frame
-(😴 use-package hydra-posframe
+(use-package hydra-posframe
   :disabled "TODO Fix me, breaking Github Actions test setup"
-  :quelpa (hydra-posframe :fetcher git :url
-                          "https://github.com/Ladicle/hydra-posframe.git")
-  :hook (after-init . hydra-posframe-mode)
+  :vc (:url "https://github.com/Ladicle/hydra-posframe.git")
+  :hook after-init
   :custom (hydra-posframe-border-width 5))
 
 ;; Neato doc strings for hydras
-(😴 use-package pretty-hydra)
+(use-package pretty-hydra :defer t)
 
 ;; TODO convert my existing defhydras to my/defhydra.
 (😴 defmacro my/defhydra (key title icon-name &rest body)
@@ -434,16 +433,15 @@ Is replaced by:
 ;; initially-worrisome “narrow-to-region”, C-x n n.
 (setq-default disabled-command-function nil)
 
-(😴 progn
-(use-package vterm) ;; Shell with a nearly universal compatibility with terminal applications 💝
-
-;; Easily paste in VTerm
-(bind-key "s-v" #'vterm-yank vterm-mode-map)
-(bind-key "M-y" #'vterm-yank vterm-mode-map)
+;; Shell with a nearly universal compatibility with terminal applications 💝
+(use-package vterm
+  ;; Easily paste in VTerm
+  :bind (("s-v" . vterm-yank)
+         ("M-y" . vterm-yank)))
 
 ;; "Intelligent" switching to vterm; eg creates it if it's not open, non-intrusive windowing, saves window setup, etc.
 (use-package vterm-toggle
-    :bind* ("C-t" . vterm-toggle)))
+    :bind* ("C-t" . vterm-toggle))
 
 ;; Be default, Emacs please use zsh
 ;; E.g., M-x shell
@@ -454,19 +452,6 @@ Is replaced by:
 (system-packages-ensure "hr") ;; ≈ brew install hr
 
 (advice-add #'view-echo-area-messages :after (lambda (&rest _) (other-window 1)))
-
-;; Usage: M-x helm-shell-history
-(😴 use-package helm-shell-history
-  :config
-  (setq helm-shell-history-file "~/.zsh_history")
-  (bind-key "M-r" #'helm-shell-history shell-mode-map))
-
-;; MacOS's default ⌘-SPC does not let us do either of the following scenarios:
-;; Usage: M-x helm-osx-app RET preferences bat RET ⇒ See battery preferences settings
-;; Another Usage: M-x helm-osx-app RET ⇒ See all apps, maybe we forgot about one of them from an install a long time ago, and open it
-;; See https://www.alfredapp.com/ as an alternative (for non-Emacs users), which can do more.
-(😴 use-package helm-osx-app)
-;; For non-MacOS, we can use [[https://github.com/d12frosted/counsel-osx-app][counsel-osx-app]], whose name is misleading.
 
 ;; Auto update buffers that change on disk.
 ;; Will be prompted if there are changes that could be lost.
@@ -607,7 +592,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   (unless local
     (setq local (concat "~/" (if (interactive-p) "Downloads/" "") (file-name-base remote))))
 
-  ;; (require 'magit-repos) ;; Gets us the magit-repository-directories variable.
+  ;; (use-package magit-repos) ;; Gets us the magit-repository-directories variable.
   ;; (add-to-list 'magit-repository-directories `(,local . 0))
 
   (if (file-directory-p local)
@@ -664,95 +649,24 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 (use-package git-timemachine )
 ;; Gotta love that time machine:1 ends here
 
-;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:1]]
-(cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
-  "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
-  `(prog1
-     (add-to-list 'pretty-magit-alist
-                  (list (rx bow (group ,WORD (eval (if ,NO-PROMPT? "" ":"))))
-                        ,ICON ',PROPS))
-     (unless ,NO-PROMPT?
-       (add-to-list 'pretty-magit-prompt (cons (concat ,WORD ": ") ,description)))))
-
-(setq pretty-magit-alist nil)
-(setq pretty-magit-prompt nil)
-;; Pretty Magit Commit Leaders:1 ends here
-
-;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:2]]
-(pretty-magit "Add"      ?➕ (:foreground "#375E97" :height 1.2) "✅ Create a capability e.g. feature, test, dependency.")
-(pretty-magit "Delete"   ?❌ (:foreground "#375E97" :height 1.2) "❌ Remove a capability e.g. feature, test, dependency.")
-(pretty-magit "Fix"      ?🔨 (:foreground "#FB6542" :height 1.2) "🐛 Fix an issue e.g. bug, typo, accident, misstatement.")
-(pretty-magit "Clean"    ?🧹 (:foreground "#FFBB00" :height 1.2) "✂ Refactor code; reformat say by altering whitespace; refactor performance.")
-(pretty-magit "Document" ?📚 (:foreground "#3F681C" :height 1.2) "ℹ Refactor of documentation, e.g. help files.")
-(pretty-magit "Feature"  ?⛲ (:foreground "slate gray" :height 1.2) "⛳ 🇮🇶🇨🇦 A milestone commit - flagpost")
-(pretty-magit "Generate"  ?🔭 (:foreground "slate gray" :height 1.2) "Export PDF/HTML or tangle raw code from a literate program") ;; Generating artefacts
-(pretty-magit "master"   ? (:box t :height 1.2) "" t)
-(pretty-magit "origin"   ?🐙 (:box t :height 1.2) "" t)
-;; Commit leader examples: https://news.ycombinator.com/item?id=13889155.
-;;
-;; Cut ~ Remove a capability e.g. feature, test, dependency.
-;; Bump ~ Increase the version of something e.g. dependency.
-;; Make ~ Change the build process, or tooling, or infra.
-;; Start ~ Begin doing something; e.g. create a feature flag.
-;; Stop ~ End doing something; e.g. remove a feature flag.
-;; Pretty Magit Commit Leaders:2 ends here
-
-;; [[file:init.org::#Pretty-Magit-Commit-Leaders][Pretty Magit Commit Leaders:3]]
-(defun add-magit-faces ()
-  "Add face properties and compose symbols for buffer from pretty-magit."
-  (interactive)
-  (with-silent-modifications
-    (--each pretty-magit-alist
-      (-let (((rgx icon props) it))
-        (save-excursion
-          (goto-char (point-min))
-          (while (search-forward-regexp rgx nil t)
-            (compose-region
-             (match-beginning 1) (match-end 1) icon)
-            (when props
-              (add-face-text-property
-               (match-beginning 1) (match-end 1) props))))))))
-
-(advice-add 'magit-status :after 'add-magit-faces)
-(advice-add 'magit-refresh-buffer :after 'add-magit-faces)
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(setq use-magit-commit-prompt-p nil)
-(defun use-magit-commit-prompt (&rest args)
-  (setq use-magit-commit-prompt-p t))
-
-(defun magit-commit-prompt ()
-  "Magit prompt and insert commit header with faces."
-  (interactive)
-  (when use-magit-commit-prompt-p
-    (setq use-magit-commit-prompt-p nil)
-    (thread-last (--map (format "%s %s" (car it) (cdr it)) pretty-magit-prompt)
-      (completing-read "Insert commit leader ∷ ")
-      ;; My “Generate:” commit type has one use case, for now; so let's insert it filled-in.
-      (funcall (lambda (it) (if (s-starts-with? "Generate:" it) it (car (s-split " " it)))))
-      (insert)
-      (end-of-line))
-    (add-magit-faces)))
-
-
-(remove-hook 'git-commit-setup-hook 'with-editor-usage-message)
-(add-hook 'git-commit-setup-hook 'magit-commit-prompt)
-(advice-add 'magit-commit :after 'use-magit-commit-prompt)
-;; Pretty Magit Commit Leaders:3 ends here
-
 ;; [[file:init.org::#Highlighting-TODO-s-Showing-them-in-Magit][Highlighting TODO-s & Showing them in Magit:1]]
 ;; NOTE that the highlighting works even in comments.
-(😴 use-package hl-todo
-  ;; I want todo-words highlighted in prose, not just in code fragements.
-  :hook (org-mode . hl-todo-mode)
-  :config
-    ;; Adding new keywords
-    (cl-loop for kw in '("TEST" "MA" "WK" "JC")
-             do (add-to-list 'hl-todo-keyword-faces (cons kw "#dc8cc3")))
-    ;; Enable it everywhere.
-    (global-hl-todo-mode))
+(use-package hl-todo
+  :custom (hl-todo-keyword-faces
+           '(("MA" . "#dc8cc3")
+             ("TEST" . "#dc8cc3")
+             ("HOLD" . "#d0bf8f")
+             ("TODO" . "#cc9393")
+             ("NEXT" . "#dca3a3")
+             ("FAIL" . "#8c5353")
+             ("DONE" . "#afd8af")
+             ("NOTE" . "#d0bf8f")
+             ("HACK" . "#d0bf8f")
+             ("TEMP" . "#d0bf8f")
+             ("FIXME" . "#cc9393")
+             ("XXXX*" . "#cc9393")))
+  ;; Enable it everywhere: I want todo-words highlighted in prose, not just in code fragments.
+  :hook (after-init . global-hl-todo-mode))
 ;; Highlighting TODO-s & Showing them in Magit:1 ends here
 
 ;; [[file:init.org::#Highlighting-TODO-s-Showing-them-in-Magit][Highlighting TODO-s & Showing them in Magit:3]]
@@ -834,31 +748,6 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
         (:tangle . "no")
         (:eval . "never-export")))
 ;; Executing code from ~src~ blocks:1 ends here
-
-;; [[file:init.org::#Executing-code-from-src-blocks][Executing code from ~src~ blocks:2]]
-(defvar my/programming-languages
-  '(emacs-lisp shell python haskell
-      ;; rust ;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
-    ruby ocaml dot latex org js css
-               sqlite C) ;; Captial “C” gives access to C, C++, D
-  "List of languages I have used in Org-mode, for literate programming.")
-
-;; Load all the languagues
-;; FIXME: There's an error wrt ob-rust: Cannot open load file: No such file or directory, ob-rust
-(ignore-errors (cl-loop for lang in my/programming-languages
-                        do (require (intern (format "ob-%s" lang)))))
-;;
-(org-babel-do-load-languages
- 'org-babel-load-languages
- (--map (cons it t) my/programming-languages))
-
-;; Preserve my indentation for source code during export.
-(setq org-src-preserve-indentation t)
-
-;; The export process hangs Emacs, let's avoid this.
-;; MA: For one reason or another, this crashes more than I'd like.
-;; (setq org-export-in-background t)
-;; Executing code from ~src~ blocks:2 ends here
 
 ;; [[file:init.org::*Unfold Org Headings when I perform a search][Unfold Org Headings when I perform a search:1]]
 (setq org-fold-core-style 'overlays)
@@ -979,7 +868,7 @@ The heading remains in view, and so appears in the TOC."
 ;; Buffer default mode is org-mode:1 ends here
 
 ;; [[file:init.org::#Org-mode's-𝒳-Block-Expansions][Org-mode's ~<𝒳~ Block Expansions:1]]
-(require 'org-tempo)
+(use-package org-tempo :defer t :ensure emacs)
 ;; Org-mode's ~<𝒳~ Block Expansions:1 ends here
 
 ;; [[file:init.org::*No code evaluation upon export][No code evaluation upon export:1]]
@@ -1323,13 +1212,14 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Text Folding ---Selectively displaying portions of a program:1 ends here
 
 ;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:2]]
-(😴 use-package vimish-fold
-  :config (vimish-fold-global-mode 1))
+(use-package vimish-fold
+  :hook (after-init . vimish-fold-global-mode))
 ;; Text Folding ---Selectively displaying portions of a program:2 ends here
 
 ;; [[file:init.org::#Aggressive-Indentation][Aggressive Indentation:1]]
 ;; Always stay indented: Automatically have blocks reindented after every change.
-(😴 use-package aggressive-indent :config (global-aggressive-indent-mode t))
+(use-package aggressive-indent
+  :hook (after-init . global-aggressive-indent-mode))
 
 ;; Use 4 spaces in places of tabs when indenting.
 (setq-default indent-tabs-mode nil)
@@ -1410,9 +1300,8 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Get nice child frames when looking at completions candidates:1 ends here
 
 ;; [[file:init.org::*interactive macro-expander][interactive macro-expander:1]]
-(😴 progn (use-package macrostep)
-(define-key emacs-lisp-mode-map (kbd "C-c e") 'macrostep-expand)
-)
+(use-package macrostep
+  :bind (:map emacs-lisp-mode-map ("C-c e" . macrostep-expand)))
 ;; interactive macro-expander:1 ends here
 
 ;; [[file:init.org::*Smart jumping to definitions][Smart jumping to definitions:1]]
@@ -1483,25 +1372,27 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 
 ;; [[file:init.org::*Reduce cognitive attention from Lisp parentheses][Reduce cognitive attention from Lisp parentheses:1]]
 ;; By default parentheses and brackets are dimmed, customize option `paren-face-regexp' if you also want to dim braces or don't want to dim brackets.
-(😴 use-package paren-face)
-(😴 add-hook 'emacs-lisp-mode-hook
-            (defun my/dim-parens-instead-of-drawing-attention-to-them-via-rainbow-colouring ()
-              (rainbow-delimiters-mode -1)
-              (paren-face-mode +1)))
+(use-package paren-face
+  :hook (emacs-lisp . my/dim-parens-instead-of-drawing-attention-to-them-via-rainbow-colouring))
+
+(defun my/dim-parens-instead-of-drawing-attention-to-them-via-rainbow-colouring ()
+  (rainbow-delimiters-mode -1)
+  (paren-face-mode +1))
 ;; Reduce cognitive attention from Lisp parentheses:1 ends here
 
 ;; [[file:init.org::*Finally, for authoring to MELPA][Finally, for authoring to MELPA:1]]
-(😴 use-package flycheck)
+(use-package flycheck :defer t)
+
 ;; Checker for ELisp package meta-data.
 ;; This makes use of “package-lint”, which is a prerequisite for MELPA.
-(😴 use-package flycheck-package)
+(use-package flycheck-package
+  :hook (emacs-lisp . my/enable-flycheck-when-I-am-authoring-for-MELPA))
 
-(😴 add-hook 'emacs-lisp-mode-hook
-          (defun my/enable-flycheck-when-I-am-authoring-for-MELPA ()
-            (unless (or (s-starts-with? "*Org Src init.org[ emacs-lisp ]*" (buffer-name))
-                        (equal default-directory (f-expand user-emacs-directory)))
-              (flycheck-package-setup)
-              (flycheck-mode +1))))
+(cl-defun my/enable-flycheck-when-I-am-authoring-for-MELPA ()
+  (unless (or (s-starts-with? "*Org Src init.org[ emacs-lisp ]*" (buffer-name))
+              (equal default-directory (f-expand user-emacs-directory)))
+    (flycheck-package-setup)
+    (flycheck-mode +1)))
 ;; Finally, for authoring to MELPA:1 ends here
 
 ;; Get org-headers to look pretty! E.g., * → ⊙, ** ↦ ◯, *** ↦ ★
@@ -1579,9 +1470,9 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
   ;; E.g.:  (add-to-list 'mode-line-process '(:eval (format "%s" (count-words (point-min) (point-max)))))
   ;; We likely want to add this locally, to hooks on major modes.
 
-  (setq doom-modeline-minor-modes t)
-  (😴 use-package minions
-    :init (minions-mode 1))
+(use-package minions
+  :custom (doom-modeline-minor-modes t)
+  :hook (after-init . minions-mode))
 
 ;; If not for doom-modeline, we'd need to use fancy-battery-mode.el.
 (display-battery-mode +1)
@@ -1730,8 +1621,8 @@ fonts (•̀ᴗ•́)و"
   ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
   (my/toggle-theme 'solarized-gruvbox-light))
 
-(😴 use-package dimmer
-  :config (dimmer-mode))
+(use-package dimmer
+  :hook after-init)
 
 ;; (setq visible-bell 1) ;; On MacOS, this shows a caution symbol ^_^
 
@@ -1765,8 +1656,8 @@ fonts (•̀ᴗ•́)و"
 (modify-syntax-entry ?< "w<")
 (modify-syntax-entry ?> "w>")
 
-(😴 use-package bufler
-  :config (bind-key "C-x C-b" #'bufler-list))
+(use-package bufler
+  :bind* ("C-x C-b" . bufler-list))
 ;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 
 (use-package all-the-icons
@@ -1835,7 +1726,7 @@ fonts (•̀ᴗ•́)و"
 ;; `org-ql' is a Lispy query language for Org files.  It allows you to find Org
 ;; entries matching certain criteria and return a list of them or perform
 ;; actions on them.
-(😴 use-package org-ql)
+(use-package org-ql :defer t)
 ;; Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:2 ends here
 
 ;; [[file:init.org::*Timestamps and their uses][Timestamps and their uses:2]]
@@ -3083,12 +2974,11 @@ TODO:
 ;; “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode:1 ends here
 
 ;; [[file:init.org::#Org-mode-HTML][C-c C-l Org-mode ⇐ HTML:2]]
-(😴 use-package org-web-tools
-  :config
+(use-package org-web-tools :defer t)
+  ;; :config
   ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
   ;; the page to get the HTML title.
   ;; (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url) ;; Instead, see my/org-insert-link-dwim below.
-  )
 ;; C-c C-l Org-mode ⇐ HTML:2 ends here
 
 ;; [[file:init.org::#Org-mode-HTML][C-c C-l Org-mode ⇐ HTML:3]]
@@ -3306,11 +3196,11 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:1 ends here
 
 ;; [[file:init.org::#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG][Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:2]]
-(😴 use-package org-appear
-  :hook (org-mode . org-appear-mode)
-  :init (setq org-appear-autoemphasis  t
-              org-appear-autolinks nil
-              org-appear-autosubmarkers nil))
+(use-package org-appear
+  :hook org-mode
+  :custom ((org-appear-autoemphasis  t)
+           (org-appear-autolinks nil)
+           (org-appear-autosubmarkers nil)))
 ;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:2 ends here
 
 ;; [[file:init.org::#Hiding-Emphasise-Markers-Inlining-Images-and-LaTeX-as-PNG][Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:4]]
@@ -3331,17 +3221,17 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Hiding Emphasis Markers, Inlining Images, and LaTeX-as-PNG:8 ends here
 
 ;; [[file:init.org::*Now C-c C-x C-v shows remote images inline, neato!][Now C-c C-x C-v shows remote images inline, neato!:1]]
-  (😴 progn
-      (quelpa '(org-remoteimg :fetcher github :repo "gaoDean/org-remoteimg"))
-      (require 'org-remoteimg)
-      (setq url-cache-directory "~/emacs.d/.cache/")
-      (setq org-display-remote-inline-images 'cache))
+(use-package org-remoteimg
+  :vc (:url "https://github.com/gaoDean/org-remoteimg")
+  :custom ((url-cache-directory "~/emacs.d/.cache/")
+           (url-automatic-caching t)
+           (org-display-remote-inline-images 'cache)))
 ;; Now C-c C-x C-v shows remote images inline, neato!:1 ends here
 
 ;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
-(😴 progn
-    (quelpa '(org-pretty-table :repo "Fuco1/org-pretty-table" :fetcher github))
-    (add-hook 'org-mode-hook 'org-pretty-table-mode))
+(use-package org-pretty-table
+  :vc (:url "https://github.com/Fuco1/org-pretty-table")
+  :hook org-mode)
 ;; Draw pretty unicode tables in org-mode:1 ends here
 
 ;; [[file:init.org::*Use backtick as an alternative to “~” for code font][Use backtick as an alternative to “~” for code font:1]]
@@ -3468,7 +3358,7 @@ Check for orphaned files in the Org attachment directory.
 ;; [[file:init.org::*Org-rifle][Org-rifle:1]]
 ;; M-x helm-org-rifle ⇒ Search all open Org files, results are shown with
 ;; /context/, not just line-based. ⚠️ This respects narrowing.
-(😴 use-package helm-org-rifle)
+(use-package helm-org-rifle :defer t)
 ;; Org-rifle:1 ends here
 
 ;; [[file:init.org::*Mitigate accidental deletion of large regions of text][Mitigate accidental deletion of large regions of text:1]]
@@ -3613,11 +3503,9 @@ the character 𝓍 before and after the selected text."
 ;; Fix spelling as you type ---thesaurus & dictionary too!:9 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:10]]
-(😴 use-package synosaurus
-  :defer 100
-  :init    (synosaurus-mode)
-  :config  (setq synosaurus-choose-method 'popup) ;; 'ido is default.
-           (global-set-key (kbd "M-#") 'synosaurus-choose-and-replace))
+(use-package synosaurus
+  :custom (synosaurus-choose-method 'popup)
+  :bind* ("M-#" . synosaurus-choose-and-replace))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:10 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:11]]
@@ -3634,26 +3522,62 @@ the character 𝓍 before and after the selected text."
 ;; Fix spelling as you type ---thesaurus & dictionary too!:12 ends here
 
 ;; [[file:init.org::#Lightweight-Prose-Proofchecking][Lightweight Prose Proofchecking:1]]
-(😴 use-package writegood-mode
-  ;; Load this whenver I'm composing prose.
-  :hook (text-mode org-mode)
-  ;; Don't show me the “Wg” marker in the mode line
-
-  :defer 100
-
-  ;; Some additional weasel words.
-  :config
-  (--map (push it writegood-weasel-words)
-         '("some" "simple" "simply" "easy" "often" "easily" "probably"
-           "clearly"               ;; Is the premise undeniably true?
-           "experience shows"      ;; Whose? What kind? How does it do so?
-           "may have"              ;; It may also have not!
-           "it turns out that")))  ;; How does it turn out so?
-           ;; ↯ What is the evidence of highighted phrase? ↯
+(use-package writegood-mode
+  :hook (text-mode org-mode) ;; Load this whenver I'm composing prose.
+  :config (cons writegood-weasel-words
+                '("it turns out that" ;; How does it turn out so? ;; ↯ What is the evidence of highighted phrase? ↯
+                  "may have"
+                  "experience shows"
+                  "clearly"
+                  "probably"
+                  "easily"
+                  "often"
+                  "easy"
+                  "simply"
+                  "simple"
+                  "some"
+                  "many"
+                  "various"
+                  "very"
+                  "fairly"
+                  "several"
+                  "extremely"
+                  "exceedingly"
+                  "quite"
+                  "remarkably"
+                  "few"
+                  "surprisingly"
+                  "mostly"
+                  "largely"
+                  "huge"
+                  "tiny"
+                  "are a number"
+                  "is a number"
+                  "excellent"
+                  "interestingly"
+                  "significantly"
+                  "substantially"
+                  "clearly"
+                  "vast"
+                  "relatively"
+                  "completely"
+                  "literally"
+                  "not rocket science"
+                  "outside the box"               
+                  "some"
+                  "simple"
+                  "simply"
+                  "easy"
+                  "often"
+                  "easily"
+                  "probably"
+                  "clearly"               ;; Is the premise undeniably true?
+                  "experience shows"      ;; Whose? What kind? How does it do so?
+                  "may have")))           ;; It may also have not!
 ;; Lightweight Prose Proofchecking:1 ends here
 
 ;; [[file:init.org::#Placeholder-Text-For-Learning-Experimenting][Placeholder Text ---For Learning & Experimenting:1]]
-(😴 use-package lorem-ipsum )
+(use-package lorem-ipsum :defer t)
 ;; Placeholder Text ---For Learning & Experimenting:1 ends here
 
 ;; [[file:init.org::#Some-text-to-make-us-smile][Some text to make us smile:1]]
@@ -3799,8 +3723,8 @@ the character 𝓍 before and after the selected text."
 
 ;; [[file:init.org::#Moving-Text-Around][Moving Text Around:1]]
 ;; M-↑,↓ moves line, or marked region; prefix is how many lines.
-(😴 use-package move-text
-  :config (move-text-default-bindings))
+(use-package move-text
+    :hook (after-init . move-text-default-bindings))
 ;; Moving Text Around:1 ends here
 
 ;; [[file:init.org::#Enabling-CamelCase-Aware-Editing-Operations][Enabling CamelCase Aware Editing Operations:1]]
@@ -3815,15 +3739,15 @@ the character 𝓍 before and after the selected text."
 ;; While constructing the regexp in the minibuffer, get live visual feedback for the (group) matches.
 ;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
 ;;
-;; C-u M-%  do to regexp replace, without querying.
-(😴 use-package visual-regexp
-
-  :config (define-key global-map (kbd "M-%")
-            (lambda (&optional prefix) (interactive "P") (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+(use-package visual-regexp
+  :bind* ("M-%" . (lambda (&optional prefix)
+                    "C-u M-% to do regexp replace, without querying."
+                    (interactive "P")
+                    (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
 ;; visual-regexp:1 ends here
 
 ;; [[file:init.org::#HTML-Org-mode][HTML ⇐ Org-mode:1]]
-(😴 use-package htmlize )
+(use-package htmlize :defer t)
 ;; Main use: Org produced htmls are coloured.
 ;; Can be used to export a file into a coloured html.
 ;; HTML ⇐ Org-mode:1 ends here
@@ -4093,7 +4017,7 @@ the character 𝓍 before and after the selected text."
 ;; Org-superstar:1 ends here
 
 ;; [[file:init.org::*Example use of doc:consult--read][Example use of doc:consult--read:1]]
-(😴 use-package consult) ;; To get `consult--read'
+(use-package consult :defer t) ;; To get `consult--read'
 ;; Example use of doc:consult--read:1 ends here
 
 ;; [[file:init.org::*Questionnaire setup][Questionnaire setup:1]]
@@ -4837,7 +4761,7 @@ Write a short story for the day.
 ;; E.g., there's no equivalent of (cl-format nil "~:d" 1000000)
 ;; which prints numbers with comma separators.
 ;; See https://gigamonkeys.com/book/a-few-format-recipes for more uses.
-(😴 use-package cl-format)
+(use-package cl-format :defer t)
 
 (defun my/git-commit-count ()
   (thread-last user-full-name
@@ -5650,15 +5574,9 @@ method."
 ;; Bookmarks: Quick naviagation to commonly visited locations:2 ends here
 
 ;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:3]]
-(😴 use-package backward-forward
-  :ensure t
-  :demand t
-  :config
-  (backward-forward-mode t)
-  :bind
-  (:map backward-forward-mode-map
-        ("M-[" . backward-forward-previous-location)
-        ("M-]" . backward-forward-next-location)))
+(use-package backward-forward
+  :bind (("M-[" . backward-forward-previous-location)
+         ("M-]" . backward-forward-next-location)))
 ;; Bookmarks: Quick naviagation to commonly visited locations:3 ends here
 
 ;; [[file:init.org::*Working with massive files: my-life∙org][Working with massive files: my-life∙org:1]]
@@ -5687,16 +5605,15 @@ method."
 ;; Never lose the cursor:1 ends here
 
 ;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:2]]
-(😴 use-package beacon
-  :config (setq beacon-color "#666600")
-  :hook   ((org-mode text-mode) . beacon-mode))
+(use-package beacon
+  :hook   (org-mode text-mode)
+  :custom (beacon-color "#666600"))
 ;; Never lose the cursor:2 ends here
 
 ;; [[file:init.org::*Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”][Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:1]]
-(😴 progn 
-(use-package hyperbole :demand t)
-(hyperbole-mode +1)
-(setq hsys-org-enable-smart-keys t))
+(use-package hyperbole
+  :custom (hsys-org-enable-smart-keys t)
+  :hook after-init)
 ;; Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:1 ends here
 
 ;; [[file:init.org::*Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”][Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:3]]
