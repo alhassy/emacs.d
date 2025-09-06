@@ -1286,8 +1286,8 @@ that defines it./
 
    As always, inspect the generated code (via ~macrostep-expand~) to see that it does what you expect:
    #+begin_src emacs-lisp :tangle no
-     (use-package annotation :commands annotation-annotate)
-   ≈ (autoload (function annotation-annotate) "annotation" nil t)
+     (use-package helpful :commands helpful-callable)
+   ≈ (autoload (function helpful-callable) "helpful" nil t)
    #+end_src
 
 ** Emacs Package Manager
@@ -5726,40 +5726,46 @@ Let's use a helpful Emacs /documentation/ system that cleanly shows a lot of
 contextual information ---then let's /extend/ that to work as we want it to:
 ~C-h o~ to describe the symbol at point.
 #+begin_src emacs-lisp
-(use-package helpful)
+(use-package helpful
+  :commands (helpful-callable helpful-symbol)
+  :bind (("C-h k" . #'helpful-key)
+         ("C-h o" . #'my/describe-symbol)))
 
 (defun my/describe-symbol (symbol)
-  "A “C-h o” replacement using “helpful”:
-   If there's a thing at point, offer that as default search item.
+  "A “C-h o” replacement using “helpful”.
 
-   If a prefix is provided, i.e., “C-u C-h o” then the built-in
-   “describe-symbol” command is used.
+If there's a thing at point, offer that as default search item.
 
-   ⇨ Pretty docstrings, with links and highlighting.
-   ⇨ Source code of symbol.
-   ⇨ Callers of function symbol.
-   ⇨ Key bindings for function symbol.
-   ⇨ Aliases.
-   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
-  "
-  (interactive "p")
-  (let* ((thing (symbol-at-point))
-         (val (completing-read
-               (format "Describe symbol (default %s): " thing)
-               (vconcat (list thing) obarray)
-               (lambda (vv)
-                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
-                          describe-symbol-backends))
-               t nil nil))
-         (it (intern val)))
-    (cond
-     (current-prefix-arg (funcall #'describe-symbol it))
-     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
-     (t (helpful-symbol it)))))
+If a prefix is provided, i.e., “C-u C-h o” then the built-in
+“describe-symbol” command is used.
 
-;; Keybindings.
-(global-set-key (kbd "C-h o") #'my/describe-symbol)
-(global-set-key (kbd "C-h k") #'helpful-key)
+⇨ Pretty docstrings, with links and highlighting.
+⇨ Source code of symbol.
+⇨ Callers of function symbol.
+⇨ Key bindings for function symbol.
+⇨ Aliases.
+⇨ Options to enable tracing, dissable, and forget/unbind the symbol!"
+  (interactive "P")
+  (let* ((sym-at-pt (symbol-at-point))
+         (default   (and (symbolp sym-at-pt) (symbol-name sym-at-pt)))
+         (prompt    (if default
+                        (format "Describe symbol (default %s): " default)
+                      "Describe symbol: "))
+         (pred      (lambda (sym)  ; SYM is a symbol when COLLECTION is an obarray
+                      (cl-some (lambda (x) (funcall (cadr x) sym))
+                               describe-symbol-backends)))
+         (name      (completing-read prompt
+                                     obarray         ; ← use obarray directly
+                                     pred
+                                     t               ; require-match
+                                     nil nil
+                                     default))       ; ← default goes here
+         (sym (intern name)))
+    (if current-prefix-arg
+        (describe-symbol sym)        ; C-u C-h o → built-in
+      (if (or (functionp sym) (macrop sym) (commandp sym))
+          (helpful-callable sym)
+        (helpful-symbol sym)))))
 #+END_SRC
 
 I like [[https://github.com/Wilfred/helpful][helpful]] and wanted it to have the same behaviour as ~C-h o~, which

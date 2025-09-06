@@ -1122,40 +1122,46 @@ associated major mode; that's what we aim to do here."
 ;; ⌘-r, ⌘-i, ⌘-o: Sleek Semantic Selection:1 ends here
 
 ;; [[file:init.org::#Editor-Documentation-with-Contextual-Information][Editor Documentation with Contextual Information:1]]
-(use-package helpful)
+(use-package helpful
+  :commands (helpful-callable helpful-symbol)
+  :bind (("C-h k" . #'helpful-key)
+         ("C-h o" . #'my/describe-symbol)))
 
 (defun my/describe-symbol (symbol)
-  "A “C-h o” replacement using “helpful”:
-   If there's a thing at point, offer that as default search item.
+  "A “C-h o” replacement using “helpful”.
 
-   If a prefix is provided, i.e., “C-u C-h o” then the built-in
-   “describe-symbol” command is used.
+If there's a thing at point, offer that as default search item.
 
-   ⇨ Pretty docstrings, with links and highlighting.
-   ⇨ Source code of symbol.
-   ⇨ Callers of function symbol.
-   ⇨ Key bindings for function symbol.
-   ⇨ Aliases.
-   ⇨ Options to enable tracing, dissable, and forget/unbind the symbol!
-  "
-  (interactive "p")
-  (let* ((thing (symbol-at-point))
-         (val (completing-read
-               (format "Describe symbol (default %s): " thing)
-               (vconcat (list thing) obarray)
-               (lambda (vv)
-                 (cl-some (lambda (x) (funcall (nth 1 x) vv))
-                          describe-symbol-backends))
-               t nil nil))
-         (it (intern val)))
-    (cond
-     (current-prefix-arg (funcall #'describe-symbol it))
-     ((or (functionp it) (macrop it) (commandp it)) (helpful-callable it))
-     (t (helpful-symbol it)))))
+If a prefix is provided, i.e., “C-u C-h o” then the built-in
+“describe-symbol” command is used.
 
-;; Keybindings.
-(global-set-key (kbd "C-h o") #'my/describe-symbol)
-(global-set-key (kbd "C-h k") #'helpful-key)
+⇨ Pretty docstrings, with links and highlighting.
+⇨ Source code of symbol.
+⇨ Callers of function symbol.
+⇨ Key bindings for function symbol.
+⇨ Aliases.
+⇨ Options to enable tracing, dissable, and forget/unbind the symbol!"
+  (interactive "P")
+  (let* ((sym-at-pt (symbol-at-point))
+         (default   (and (symbolp sym-at-pt) (symbol-name sym-at-pt)))
+         (prompt    (if default
+                        (format "Describe symbol (default %s): " default)
+                      "Describe symbol: "))
+         (pred      (lambda (sym)  ; SYM is a symbol when COLLECTION is an obarray
+                      (cl-some (lambda (x) (funcall (cadr x) sym))
+                               describe-symbol-backends)))
+         (name      (completing-read prompt
+                                     obarray         ; ← use obarray directly
+                                     pred
+                                     t               ; require-match
+                                     nil nil
+                                     default))       ; ← default goes here
+         (sym (intern name)))
+    (if current-prefix-arg
+        (describe-symbol sym)        ; C-u C-h o → built-in
+      (if (or (functionp sym) (macrop sym) (commandp sym))
+          (helpful-callable sym)
+        (helpful-symbol sym)))))
 ;; Editor Documentation with Contextual Information:1 ends here
 
 ;; [[file:init.org::#Let's-make-working-with-Emacs-Lisp-even-better][[[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]:1]]
