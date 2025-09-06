@@ -7185,81 +7185,6 @@ In my private ~work.el~ I have declarations of the form ~(my/defservice ⟨direc
 #+end_src
 
 
-*** TODO Pair Programming
-:PROPERTIES:
-:CUSTOM_ID: Pair-Programming
-:END:
-
-# Add: Quickly toggle my Emacs for when doing pair programming
-
-I try to make my Emacs look more predictable for my colleagues, by introducing a bunch of UI elements that I normally
-have off by default but would otherwise serve as useful aids when working together or provide a sense of familiarity for
-my VSCoder counterparts.
-
-#+begin_src emacs-lisp :tangle ~/Desktop/work.el
-(defun my/toggle-pair-programming ()
-  "Toggle enabling features that might aid communication when sharing screen, or pair programming
-
-- Full screen mode
-- Line numbers, and column numbers, and cat progress bar
-- Blamer overlays
-- Dark theme
-- Tabs
-- Folder navigator
-"
-  (interactive)
-  (defvar my/sharing-screen? +1)
-  (setq my/sharing-screen? (- my/sharing-screen?)) ;; Toggle between +1 and -1.
-
-  ;; When pair programming, exit full screen mode so others can “draw” on my screen, eg using Slack
-  (toggle-frame-fullscreen)
-
-  ;; Line numbers in the left margin
-  (setq display-line-numbers-width-start t)
-  (global-display-line-numbers-mode my/sharing-screen?)
-
-  ;; Column & line numbers in the modeline; always want these on?
-  (column-number-mode                 +1) ;; Enabled in doom-modeline by default?
-  (line-number-mode                   +1) ;; Enabled in doom-modeline by default?
-
-  ;; Progress bar, graphic and percentage
-  (use-package nyan-mode )
-  (nyan-mode my/sharing-screen?)
-
-  ;; Who did what and when?
-  (global-blamer-mode my/sharing-screen?)
-
-  ;; Make things look like VSCode; reduce friction with others
-  ;; → Dark theme, tabs, and clickable folder navigation
-  (if (= +1 my/sharing-screen?)
-      (my/toggle-theme 'doom-dracula)
-    (my/toggle-theme 'doom-solarized-light))
-
-  (use-package centaur-tabs)
-  (setq centaur-tabs-set-icons t)
-  (setq centaur-tabs-gray-out-icons 'buffer)
-  (setq centaur-tabs-set-bar 'over)
-  (centaur-tabs-mode my/sharing-screen?)
-
-  ;; Treemacs is feature-right; e.g. highlights file associated to current buffer automatically and fully mouse-complaint.
-  ;;  press ? to summon a helpful hydra
-  (use-package treemacs)
-  (if (= +1 my/sharing-screen?) ;; Toggle showing treemacs window
-      (treemacs)
-    (ignore-errors (delete-window (treemacs-get-local-window))))
-  ;; Press “C-e” to see the end of length file names, or use the mouse to widen treemacs
-  (treemacs-toggle-fixed-width)
-  (ignore-errors (treemacs-indent-guide-mode +1))
-  (treemacs-resize-icons 18)
-  (other-window -1)
-
-  ;; Kickoff message
-  (if (= +1 my/sharing-screen?)
-      (message "Pair programming provides an excellent test of technical and social skills")))
-
-(my/toggle-pair-programming)
-#+end_src
-
 *** TODO See all company related PRs
 :PROPERTIES:
 :CUSTOM_ID: See-all-company-related-PRs
@@ -7663,296 +7588,6 @@ Below is a detailed checklist of what I went through.
     ,#+html: </details>
 #+end_src
 
-*** TODO LSP and Eglot Experiments
-**** TODO Eglot ----Fancy IDE Features that Just Workᵀᴹ
-
-For JavaScript:
-#+begin_src emacs-lisp
-;; Get the language server for JavaScript
-;; $ npm install -g javascript-typescript-langserver
-
-;; Now open an empty buffer, switch to JS mode, M-x eglot, M-x company-mode,
-;; then enter “console.” and see the completion of possibilities! <3
-#+end_src
-
-For Java, install doc:eglot-java-mode and activate that in a Java file ---it automatically installs the required
-language server. 🚀
-
-**** TODO LSP: Making Emacs into a generic full-featured programming IDE
-:PROPERTIES:
-:CUSTOM_ID: LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE
-:END:
-
-(TLDR: LSP gives Emacs a uniform way to deal with programming languages, such as
-highlighting and refactoring.)
-
-[[https://microsoft.github.io/language-server-protocol/][Language Server Protocol (LSP)]] was created by Microsoft to define a common
-standard for providing editor-agnostic code intelligence support. It has become
-widely popular since its creation. Emacs support for lsp comes with the [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]]
-and the [[https://github.com/joaotavora/eglot][eglot]] (‘E’macs poly‘glot’) packages; let's use the first one since it
-comes with all features enabled by default (which increases discoverability).
-[ See also: [[https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/][A guide on disabling/enabling lsp-mode features - LSP Mode - LSP support for Emacs]]. ]
-
-Essentially how it works is that LSP defines a bunch of useful requests
----such as code completion, types, etc--- and our editor (Emacs) makes these
-requests to a server (a process that knows how to handle them) then we get the
-results and show them nicely in our editor (Emacs).
-
-Further reading:
-+ [[https://emacs-lsp.github.io/lsp-mode/page/main-features/][Main features - LSP Mode - LSP support for Emacs]] ⇒ Reasons (with gifs) to use
-  lsp-mode ;-)
-+ [[https://emacsconf.org/2019/talks/19/][How Emacs became my awesome Java editing environment ~ EmacsConf2019]] is an
-  excellent ~10min video demoing prime features of LSP.
-+ [[https://www.toptal.com/javascript/language-server-protocol-tutorial][Using Text Editors for Programming with LSP | Toptal]]
-+ [[https://microsoft.github.io//language-server-protocol/overviews/lsp/overview/][LSP overview]]
-+ :flame: [[https://emacs-lsp.github.io/lsp-mode/tutorials/reactjs-tutorial/][React JavaScript Tutorial in Emacs - LSP Mode]] - Nice walkthrough on
-  setting-up LSP for JavaScript (along with ESlint) and trying it out.
-
-*Super simple setup for lsp-mode*: Install lsp-mode with [[kbd:][M-x package-install
-⟨return⟩ lsp-mode]] then open, say, a JavaScript file and press <kbd:M-x lsp>. It
-will ask you to download a server, such as ~jsts-ls~ for “JavaScript-TypeScript
-Language Server”. /[You may need to restart Emacs; when you open a file, LSP
-needs to know what ‘workspace’ it belongs to!]/ Now you can, for example, perform
-<kbd:s-l g r> to see all references of the name under the cursour, or <kbd:s-l g
-d> to go to its definition, or <kbd:s-l g t> to see its type (which already
-shows in the mode line).  In your JS file, write the errenous line ~let a == 1;~
-then with your cursour on that line you'll see some info to the side about the
-error (thanks to ~lsp-ui-mode~) and if you invoke ~lsp-treemacs-errors-list~
-then you get a nice hierarchical, ⟨tab⟩-ful, list of errors.  To find symbol
-names, with autocompletion of all names in your workspace, use <kbd:s-l g a>
-(thanks to ~helm-lsp~), for the current file TODO. doc.lsp-ui-imenu (or more simply,
-<kbd:C-c i>) is nice.  As the LSP server runs it can even detect JSON objects
-and show their values in the mode line when the cursour is above them; which can
-also be requested with <kbd:s-l h h>.  (TODO. doc.lsp-describe-thing-at-point).  /That
-is all!/
-
-| [[kbd:][s-l g g]] | Find definitions of the symbol under point                         |
-| [[kbd:][s-l g r]] | Find references of the symbol under point                          |
-| [[kbd:][s-l g t]] | Find type definitions of the symbol under point                    |
-| [[kbd:][s-l g a]] | Find all meaningful symbols that match pattern (project wide)      |
-| [[kbd:][s-l h h]] | :fire: Display the type signature and documentation of the thing at point |
-| [[kbd:][s-l h g]] | Trigger display hover information popup and hide it on next typing |
-| [[kbd:][s-l r r]] | Rename the symbol (and all references to it)                       |
-
-Also: TODO. doc.lsp-format-buffer makes the code more readable.
-
-#+begin_src emacs-lisp
-(use-package lsp-mode
-  :init
-  ;; Set prefix for lsp commands
-  ;; (setq lsp-keymap-prefix "s-l") ;; default
-  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
-  ;; (setq lsp-idle-delay 0.500) ;; default
-  :hook  ;; Every programming mode should enter & start LSP, with which-key support
-  (js-mode . lsp-mode) ;; Enter LSP mode
-  (js-mode . lsp)      ;; Start LSP server
-  (lsp-mode . lsp-enable-which-key-integration)
-  ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
-  :bind ("C-x y" . #'yankpad-insert)
-  ;; When I'm typing and possible completitions appear, I can press M-! to see their docstrings in a temporary buffer.
-  ;; But on already written words, I'll use “C-u M-.” to toggle having their docstrings in a scrollable&growable tooltip-like-overlay-window.
-  ;; Use “bind*” to override Js-mode's dumbjump, which is useless for me
-  :bind* ("M-." . (lambda () (interactive)
-                    (if (not current-prefix-arg)
-                        (call-interactively #'lsp-ui-peek-find-definitions)
-                      (if (lsp-ui-doc--visible-p)
-                          (lsp-ui-doc-hide)
-                        (lsp-ui-doc-show)))))
-  :commands lsp)
-
-;; If a server crashes, restart it without asking me.
-(setq lsp-restart 'auto-restart)
-#+end_src
-
-#+begin_src emacs-lisp
-;; https://emacs-lsp.github.io/lsp-mode/page/languages/
-;; M-x lsp-install-server ⟨return⟩ jsts-ls
-;; M-x lsp-install-server ⟨return⟩ json-ls
-;; M-x lsp-install-server ⟨return⟩ eslint
-;; M-x lsp-install-server ⟨return⟩ css-ls
-;; M-x lsp-install-server ⟨return⟩ html-ls
-#+end_src
-
-For JavaScript development, actually install the required servers locally.
-- Otherwise, tooltips with documentation on hover, args info echoed in mode
-  line, jump to definition, and etc wont work.
-#+begin_src emacs-lisp
-(shell-command "npm i -g typescript-language-server; npm i -g typescript")
-#+end_src
-
-#+begin_src emacs-lisp
-;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
-;; https://emacs-lsp.github.io/lsp-ui/#intro
-;;
-;; You only have to put (use-package lsp-ui) in your config and the package will
-;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
-(use-package lsp-ui)
-
-;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
-;; call hierarchy, etc.)
-(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
-;; M-x lsp-treemacs-errors-list
-
-;; helm-lsp provides “on type completion” alternative of cross-referencing.
-;; https://github.com/emacs-lsp/helm-lsp
-(use-package helm-lsp)
- (require 'lsp-mode)
- (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
-;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
-;; a” (The 'a' stands for apropos, which means appropriate nature)
-
-;; Set the amount of data which Emacs reads from a process.
-;; Some LSP responses are in the 8k-3MB range.
-;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
-;; NO! (setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
-;; NO! (setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
-;; A large gc-cons-threshold will cause freezing and stuttering during long-term
-;; interactive use. This one seems to be a good default.
-#+end_src
-
-:flame: If you leave your cursour on a name, all other occurances are
-highlighted /and/ you get to see its (type) description in the mode line.
-
-🔥 As you begin to type, all variable/function names /loosely/ matching what you
-type will be shown, along with their (type) descriptions.
-
-🚁 If you see an error ~“LSP :: Could not connect to 𝒳 server”~, then run
-TODO. doc.lsp-doctor and look at the buffer ~𝒳::stderr~ for hints on what the cause
-could have been; [[https://emacs-lsp.github.io/lsp-mode/page/faq/][FAQ]].
-
-The Language Server protocol is used between a tool (the client) and a language
-smartness provider (the server) to integrate features like auto complete, go to
-definition, find all references and alike into the tool.
-
-LSP, more or less, reduces the linear problem of language-specific-IDE into a
-constant problem: Each language implements an LSP program which is then used by
-an LSP-enabled editor to provide an IDE experience.
-
-LSP mode supports the following Features:
-
-+ As you type reporting of parsing and compilation errors (via flycheck/lsp-ui)
-+ Code completion - using company-mode
-+ doc hovers - using lsp-ui
-+ Code actions - using lsp-ui
-+ Code outline - using builtin [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Imenu.html][imenu]]
-+ Code navigation - using builtin xref
-+ Code lens (references/implementations) - using builtin [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html][xref]]
-+ Highlights
-+ Code formatting
-+ Visual debugger - [[https://github.com/emacs-lsp/dap-mode][dap-mode]]
-+ Test runner - dap-mode
-+ Project explorer integration - treemacs
-
-#+begin_src emacs-lisp
-;; Load the various useful utils
-(require 'lsp-ui-peek)
-(require 'lsp-ui-sideline)
-(require 'lsp-ui-doc)
-(require 'lsp-ui-imenu)
-
-; (setq lsp-mode-hook nil)
-(add-hook 'lsp-mode-hook
-          (lambda ()
-            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
-            ;; TODO: (shell-command "rm ~/wxPortal/.flowconfig")
-            ;; Load the various useful utils
-            (require 'lsp-ui)
-            (lsp-ui-peek-enable t)
-            (lsp-ui-doc-enable t)
-            (lsp-ui-sideline-enable t)
-            (lsp-ui-imenu-buffer--enable)
-            ;; Set ⌘-l as the main mini-menu for LSP commands
-            (bind-key* "s-l" #'my/lsp-hydra/body)))
-
-(defun my/helm-lsp-workspace-symbol-at-point ()
-    (interactive)
-    (let ((current-prefix-arg t))
-      (call-interactively #'helm-lsp-workspace-symbol)))
-
-  (defun my/helm-lsp-global-workspace-symbol-at-point ()
-    (interactive)
-    (let ((current-prefix-arg t))
-      (call-interactively #'helm-lsp-global-workspace-symbol)))
-
-;; TODO: Add other cool features discussed/loaded above into this hydra!
-(defhydra my/lsp-hydra (:color blue :hint nil)
-  ;; Xref
-  ("d" xref-find-definitions "Definitions" :column "Xref")
-  ("D" xref-find-definitions-other-window "-> other win")
-  ("r" xref-find-references "References")
-  ("s" my/helm-lsp-workspace-symbol-at-point "Helm search")
-  ("S" my/helm-lsp-global-workspace-symbol-at-point "Helm global search")
-
-  ;; Peek
-  ("C-d" lsp-ui-peek-find-definitions "Definitions" :column "Peek")
-  ("C-r" lsp-ui-peek-find-references "References")
-  ("C-i" lsp-ui-peek-find-implementation "Implementation")
-
-  ;; LSP
-  ("p" lsp-describe-thing-at-point "Describe at point" :column "LSP")
-  ("C-a" lsp-execute-code-action "Execute code action")
-  ("R" lsp-rename "Rename")
-  ("t" lsp-goto-type-definition "Type definition")
-  ("i" lsp-goto-implementation "Implementation")
-  ("f" helm-imenu "Filter funcs/classes (Helm)")
-  ("C-c" lsp-describe-session "Describe session")
-
-  ;; Flycheck ---my “C-c !” flycheck hydra is much better than this simple lsp one.
-  ;; ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
-  ("l" my/flycheck-hydra/body "List errs/warns/notes" :column "Flycheck")
-
-  ;; Misc
-  ("q" nil "Cancel" :column "Misc")
-  ("b" pop-tag-mark "Back"))
-#+end_src
-
-#+begin_details End-to-end Test
-#+begin_src emacs-lisp :tangle init-test.el
-(ert-deftest lsp-hover-shows-type-signature ()
-  ;; Make a temporary scratch.js file with the given contents.
-  (-let [scratch.js (make-temp-file "scratch" nil ".js" "const first = (x, y) => 3")]
-    (find-file scratch.js)
-    (lsp-workspace-folders-add (f-parent scratch.js))
-    (lsp)
-
-    ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
-    (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (substring-no-properties (car msg)))))
-
-    (end-of-buffer)
-    (insert "\n first")
-    (lsp-hover)  ;; Alternatively: (lsp-describe-thing-at-point)
-    (should (equal "const first: (x: any, y: any) => number" my/lsp-hover-message))
-
-    (save-buffer)
-    (kill-buffer)))
-#+end_src
-#+end_details
-
-***** Types as comments in JavaScript via LSP && Using LSP for Org-Src Blocks
-:PROPERTIES:
-:CUSTOM_ID: Types-as-comments-in-JavaScript-via-LSP
-:END:
-#+begin_src js :tangle "~/.emacs.d/scratch.js"
-// The following enables typechecking via LSP.
-// @ts-check
-
-/**
- ,*
- ,* @param {number} x -
- ,* @param {number} y -
- ,* @returns {number} -
- ,*/
-// function add(x, y) {return "x + y";} // ⚠ Faulty implementation!
-function add(x, y) {return x + y;}
-
-// add("a", 1) // ⚠ Erroneous call!
-add(1, 2)
-#+end_src
-
-For more on this idea on types, see [[https://github.com/BeyondCodeBootcamp/jsdoc-typescript-starter][A simple, but non-trivial example of getting the most from JSDoc + tsserver (Type Linting without TypeScript)]].
-
-Within Org-mode, at the start of the above ~src~ block, execute ~M-x lsp-org~ to [[https://emacs-lsp.github.io/lsp-mode/manual-language-docs/lsp-org/][get
-some LSP]] working even though you're in Org-mode.
 ** COMMENT w-screencapture
 :PROPERTIES:
 :CUSTOM_ID: w-screencapture
@@ -18290,6 +17925,375 @@ I like using Chrome ---I like the integration of all things Google.
           do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
 #+end_src
 
+** Pair Programming
+:PROPERTIES:
+:CUSTOM_ID: Pair-Programming
+:END:
+
+# Add: Quickly toggle my Emacs for when doing pair programming
+
+I try to make my Emacs look more predictable for my colleagues, by introducing a
+bunch of UI elements that I normally have off by default but would otherwise
+serve as useful aids when working together or provide a sense of familiarity for
+my VSCoder counterparts.
+
+#+begin_src emacs-lisp :tangle ~/Desktop/work.el
+(defun my/toggle-pair-programming ()
+  "Toggle enabling features that might aid communication when sharing screen, or pair programming
+
+- Full screen mode
+- Line numbers, and column numbers, and cat progress bar
+- Blamer overlays
+- Dark theme
+- Tabs
+- Folder navigator
+"
+  (interactive)
+  (defvar my/sharing-screen? +1)
+  (setq my/sharing-screen? (- my/sharing-screen?)) ;; Toggle between +1 and -1.
+
+  ;; When pair programming, exit full screen mode so others can “draw” on my screen, eg using Slack
+  (toggle-frame-fullscreen)
+
+  ;; Line numbers in the left margin
+  (setq display-line-numbers-width-start t)
+  (global-display-line-numbers-mode my/sharing-screen?)
+
+  ;; Column & line numbers in the modeline; always want these on?
+  (column-number-mode                 +1) ;; Enabled in doom-modeline by default?
+  (line-number-mode                   +1) ;; Enabled in doom-modeline by default?
+
+  ;; Progress bar, graphic and percentage
+  (use-package nyan-mode )
+  (nyan-mode my/sharing-screen?)
+
+  ;; Who did what and when?
+  ;; (use-package blamer-mode)  
+  (global-blamer-mode my/sharing-screen?)
+
+  ;; Make things look like VSCode; reduce friction with others
+  ;; → Dark theme, tabs, and clickable folder navigation
+  (if (= +1 my/sharing-screen?)
+      (my/toggle-theme 'doom-dracula)
+    (my/toggle-theme 'doom-solarized-light))
+
+  (use-package centaur-tabs)
+  (setq centaur-tabs-set-icons t)
+  (setq centaur-tabs-gray-out-icons 'buffer)
+  (setq centaur-tabs-set-bar 'over)
+  (centaur-tabs-mode my/sharing-screen?)
+
+  ;; Treemacs is feature-right; e.g. highlights file associated to current buffer automatically and fully mouse-complaint.
+  ;;  press ? to summon a helpful hydra
+  (use-package treemacs)
+  (if (= +1 my/sharing-screen?) ;; Toggle showing treemacs window
+      (treemacs)
+    (ignore-errors (delete-window (treemacs-get-local-window))))
+  ;; Press “C-e” to see the end of length file names, or use the mouse to widen treemacs
+  (treemacs-toggle-fixed-width)
+  (ignore-errors (treemacs-indent-guide-mode +1))
+  (treemacs-resize-icons 18)
+  (other-window -1)
+
+  ;; Kickoff message
+  (if (= +1 my/sharing-screen?)
+      (message "Pair programming provides an excellent test of technical and social skills")))
+
+(my/toggle-pair-programming)
+#+end_src
+
+** LSP and Eglot Experiments
+*** Eglot ----Fancy IDE Features that Just Workᵀᴹ
+
+For JavaScript:
+#+begin_src emacs-lisp
+;; Get the language server for JavaScript
+;; $ npm install -g javascript-typescript-langserver
+
+;; Now open an empty buffer, switch to JS mode, M-x eglot, M-x company-mode,
+;; then enter “console.” and see the completion of possibilities! <3
+#+end_src
+
+For Java, install doc:eglot-java-mode and activate that in a Java file ---it
+automatically installs the required language server. 🚀
+
+*** LSP: Making Emacs into a generic full-featured programming IDE
+:PROPERTIES:
+:CUSTOM_ID: LSP-Making-Emacs-into-a-generic-full-featured-programming-IDE
+:END:
+
+| /I work with Java: The people making Java also make IntelliJ, so it's bleeding-edge!/ |
+
+(TLDR: LSP gives Emacs a uniform way to deal with programming languages, such as
+highlighting and refactoring.)
+
+[[https://microsoft.github.io/language-server-protocol/][Language Server Protocol (LSP)]] was created by Microsoft to define a common
+standard for providing editor-agnostic code intelligence support. It has become
+widely popular since its creation. Emacs support for lsp comes with the [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]]
+and the [[https://github.com/joaotavora/eglot][eglot]] (‘E’macs poly‘glot’) packages; let's use the first one since it
+comes with all features enabled by default (which increases discoverability).
+[ See also: [[https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/][A guide on disabling/enabling lsp-mode features - LSP Mode - LSP support for Emacs]]. ]
+
+Essentially how it works is that LSP defines a bunch of useful requests
+---such as code completion, types, etc--- and our editor (Emacs) makes these
+requests to a server (a process that knows how to handle them) then we get the
+results and show them nicely in our editor (Emacs).
+
+Further reading:
++ [[https://emacs-lsp.github.io/lsp-mode/page/main-features/][Main features - LSP Mode - LSP support for Emacs]] ⇒ Reasons (with gifs) to use
+  lsp-mode ;-)
++ [[https://emacsconf.org/2019/talks/19/][How Emacs became my awesome Java editing environment ~ EmacsConf2019]] is an
+  excellent ~10min video demoing prime features of LSP.
++ [[https://www.toptal.com/javascript/language-server-protocol-tutorial][Using Text Editors for Programming with LSP | Toptal]]
++ [[https://microsoft.github.io//language-server-protocol/overviews/lsp/overview/][LSP overview]]
++ :flame: [[https://emacs-lsp.github.io/lsp-mode/tutorials/reactjs-tutorial/][React JavaScript Tutorial in Emacs - LSP Mode]] - Nice walkthrough on
+  setting-up LSP for JavaScript (along with ESlint) and trying it out.
+
+*Super simple setup for lsp-mode*: Install lsp-mode with [[kbd:][M-x package-install
+⟨return⟩ lsp-mode]] then open, say, a JavaScript file and press <kbd:M-x lsp>. It
+will ask you to download a server, such as ~jsts-ls~ for “JavaScript-TypeScript
+Language Server”. /[You may need to restart Emacs; when you open a file, LSP
+needs to know what ‘workspace’ it belongs to!]/ Now you can, for example, perform
+<kbd:s-l g r> to see all references of the name under the cursour, or <kbd:s-l g
+d> to go to its definition, or <kbd:s-l g t> to see its type (which already
+shows in the mode line).  In your JS file, write the errenous line ~let a == 1;~
+then with your cursour on that line you'll see some info to the side about the
+error (thanks to ~lsp-ui-mode~) and if you invoke ~lsp-treemacs-errors-list~
+then you get a nice hierarchical, ⟨tab⟩-ful, list of errors.  To find symbol
+names, with autocompletion of all names in your workspace, use <kbd:s-l g a>
+(thanks to ~helm-lsp~), for the current file TODO. doc.lsp-ui-imenu (or more simply,
+<kbd:C-c i>) is nice.  As the LSP server runs it can even detect JSON objects
+and show their values in the mode line when the cursour is above them; which can
+also be requested with <kbd:s-l h h>.  (TODO. doc.lsp-describe-thing-at-point).  /That
+is all!/
+
+| [[kbd:][s-l g g]] | Find definitions of the symbol under point                         |
+| [[kbd:][s-l g r]] | Find references of the symbol under point                          |
+| [[kbd:][s-l g t]] | Find type definitions of the symbol under point                    |
+| [[kbd:][s-l g a]] | Find all meaningful symbols that match pattern (project wide)      |
+| [[kbd:][s-l h h]] | :fire: Display the type signature and documentation of the thing at point |
+| [[kbd:][s-l h g]] | Trigger display hover information popup and hide it on next typing |
+| [[kbd:][s-l r r]] | Rename the symbol (and all references to it)                       |
+
+Also: TODO. doc.lsp-format-buffer makes the code more readable.
+
+#+begin_src emacs-lisp
+(use-package lsp-mode
+  :init
+  ;; Set prefix for lsp commands
+  ;; (setq lsp-keymap-prefix "s-l") ;; default
+  ;; Set how often highlights, lenses, links, etc will be refreshed while you type
+  ;; (setq lsp-idle-delay 0.500) ;; default
+  :hook  ;; Every programming mode should enter & start LSP, with which-key support
+  (js-mode . lsp-mode) ;; Enter LSP mode
+  (js-mode . lsp)      ;; Start LSP server
+  (lsp-mode . lsp-enable-which-key-integration)
+  ;; For some reason, my usual snippet setup does not work with LSP, so using “C-x y”
+  :bind ("C-x y" . #'yankpad-insert)
+  ;; When I'm typing and possible completitions appear, I can press M-! to see their docstrings in a temporary buffer.
+  ;; But on already written words, I'll use “C-u M-.” to toggle having their docstrings in a scrollable&growable tooltip-like-overlay-window.
+  ;; Use “bind*” to override Js-mode's dumbjump, which is useless for me
+  :bind* ("M-." . (lambda () (interactive)
+                    (if (not current-prefix-arg)
+                        (call-interactively #'lsp-ui-peek-find-definitions)
+                      (if (lsp-ui-doc--visible-p)
+                          (lsp-ui-doc-hide)
+                        (lsp-ui-doc-show)))))
+  :commands lsp)
+
+;; If a server crashes, restart it without asking me.
+(setq lsp-restart 'auto-restart)
+#+end_src
+
+#+begin_src emacs-lisp
+;; https://emacs-lsp.github.io/lsp-mode/page/languages/
+;; M-x lsp-install-server ⟨return⟩ jsts-ls
+;; M-x lsp-install-server ⟨return⟩ json-ls
+;; M-x lsp-install-server ⟨return⟩ eslint
+;; M-x lsp-install-server ⟨return⟩ css-ls
+;; M-x lsp-install-server ⟨return⟩ html-ls
+#+end_src
+
+For JavaScript development, actually install the required servers locally.
+- Otherwise, tooltips with documentation on hover, args info echoed in mode
+  line, jump to definition, and etc wont work.
+#+begin_src emacs-lisp
+(shell-command "npm i -g typescript-language-server; npm i -g typescript")
+#+end_src
+
+#+begin_src emacs-lisp
+;; lsp-ui for fancy sideline, popup documentation, VScode-like peek UI, etc.
+;; https://emacs-lsp.github.io/lsp-ui/#intro
+;;
+;; You only have to put (use-package lsp-ui) in your config and the package will
+;; work out of the box: By default, lsp-mode automatically activates lsp-ui.
+(use-package lsp-ui)
+
+;; lsp-treemacs for various tree based UI controls (symbols, errors overview,
+;; call hierarchy, etc.)
+(use-package lsp-treemacs) ;; https://github.com/emacs-lsp/lsp-treemacs
+;; M-x lsp-treemacs-errors-list
+
+;; helm-lsp provides “on type completion” alternative of cross-referencing.
+;; https://github.com/emacs-lsp/helm-lsp
+(use-package helm-lsp)
+ (require 'lsp-mode)
+ (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+;; Jump to a symbol's definition in the current workspace with “s-l g a” or “M-g
+;; a” (The 'a' stands for apropos, which means appropriate nature)
+
+;; Set the amount of data which Emacs reads from a process.
+;; Some LSP responses are in the 8k-3MB range.
+;; ⟦ 1 megabyte ≈ 1 million bytes ≈ 1 000 000 bytes ⟧
+;; NO! (setq read-process-output-max (* 1024 1024)) ;; ~1mb; [default 4k]
+;; NO! (setq gc-cons-threshold (* 2 8 1000 1024)) ;;; ~16mb; default is: 800 000
+;; A large gc-cons-threshold will cause freezing and stuttering during long-term
+;; interactive use. This one seems to be a good default.
+#+end_src
+
+:flame: If you leave your cursour on a name, all other occurances are
+highlighted /and/ you get to see its (type) description in the mode line.
+
+🔥 As you begin to type, all variable/function names /loosely/ matching what you
+type will be shown, along with their (type) descriptions.
+
+🚁 If you see an error ~“LSP :: Could not connect to 𝒳 server”~, then run
+TODO. doc.lsp-doctor and look at the buffer ~𝒳::stderr~ for hints on what the cause
+could have been; [[https://emacs-lsp.github.io/lsp-mode/page/faq/][FAQ]].
+
+The Language Server protocol is used between a tool (the client) and a language
+smartness provider (the server) to integrate features like auto complete, go to
+definition, find all references and alike into the tool.
+
+LSP, more or less, reduces the linear problem of language-specific-IDE into a
+constant problem: Each language implements an LSP program which is then used by
+an LSP-enabled editor to provide an IDE experience.
+
+LSP mode supports the following Features:
+
++ As you type reporting of parsing and compilation errors (via flycheck/lsp-ui)
++ Code completion - using company-mode
++ doc hovers - using lsp-ui
++ Code actions - using lsp-ui
++ Code outline - using builtin [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Imenu.html][imenu]]
++ Code navigation - using builtin xref
++ Code lens (references/implementations) - using builtin [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html][xref]]
++ Highlights
++ Code formatting
++ Visual debugger - [[https://github.com/emacs-lsp/dap-mode][dap-mode]]
++ Test runner - dap-mode
++ Project explorer integration - treemacs
+
+#+begin_src emacs-lisp
+;; Load the various useful utils
+(require 'lsp-ui-peek)
+(require 'lsp-ui-sideline)
+(require 'lsp-ui-doc)
+(require 'lsp-ui-imenu)
+
+; (setq lsp-mode-hook nil)
+(add-hook 'lsp-mode-hook
+          (lambda ()
+            ;; Locally delete a file needed for work, but it's outdated and clashes with LSP.
+            ;; TODO: (shell-command "rm ~/wxPortal/.flowconfig")
+            ;; Load the various useful utils
+            (require 'lsp-ui)
+            (lsp-ui-peek-enable t)
+            (lsp-ui-doc-enable t)
+            (lsp-ui-sideline-enable t)
+            (lsp-ui-imenu-buffer--enable)
+            ;; Set ⌘-l as the main mini-menu for LSP commands
+            (bind-key* "s-l" #'my/lsp-hydra/body)))
+
+(defun my/helm-lsp-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-workspace-symbol)))
+
+  (defun my/helm-lsp-global-workspace-symbol-at-point ()
+    (interactive)
+    (let ((current-prefix-arg t))
+      (call-interactively #'helm-lsp-global-workspace-symbol)))
+
+;; TODO: Add other cool features discussed/loaded above into this hydra!
+(defhydra my/lsp-hydra (:color blue :hint nil)
+  ;; Xref
+  ("d" xref-find-definitions "Definitions" :column "Xref")
+  ("D" xref-find-definitions-other-window "-> other win")
+  ("r" xref-find-references "References")
+  ("s" my/helm-lsp-workspace-symbol-at-point "Helm search")
+  ("S" my/helm-lsp-global-workspace-symbol-at-point "Helm global search")
+
+  ;; Peek
+  ("C-d" lsp-ui-peek-find-definitions "Definitions" :column "Peek")
+  ("C-r" lsp-ui-peek-find-references "References")
+  ("C-i" lsp-ui-peek-find-implementation "Implementation")
+
+  ;; LSP
+  ("p" lsp-describe-thing-at-point "Describe at point" :column "LSP")
+  ("C-a" lsp-execute-code-action "Execute code action")
+  ("R" lsp-rename "Rename")
+  ("t" lsp-goto-type-definition "Type definition")
+  ("i" lsp-goto-implementation "Implementation")
+  ("f" helm-imenu "Filter funcs/classes (Helm)")
+  ("C-c" lsp-describe-session "Describe session")
+
+  ;; Flycheck ---my “C-c !” flycheck hydra is much better than this simple lsp one.
+  ;; ("l" lsp-ui-flycheck-list "List errs/warns/notes" :column "Flycheck")
+  ("l" my/flycheck-hydra/body "List errs/warns/notes" :column "Flycheck")
+
+  ;; Misc
+  ("q" nil "Cancel" :column "Misc")
+  ("b" pop-tag-mark "Back"))
+#+end_src
+
+#+begin_details End-to-end Test
+#+begin_src emacs-lisp :tangle init-test.el
+(ert-deftest lsp-hover-shows-type-signature ()
+  ;; Make a temporary scratch.js file with the given contents.
+  (-let [scratch.js (make-temp-file "scratch" nil ".js" "const first = (x, y) => 3")]
+    (find-file scratch.js)
+    (lsp-workspace-folders-add (f-parent scratch.js))
+    (lsp)
+
+    ;; lsp-hover uses lsp--eldoc-message, so let's save the hover info.
+    (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (substring-no-properties (car msg)))))
+
+    (end-of-buffer)
+    (insert "\n first")
+    (lsp-hover)  ;; Alternatively: (lsp-describe-thing-at-point)
+    (should (equal "const first: (x: any, y: any) => number" my/lsp-hover-message))
+
+    (save-buffer)
+    (kill-buffer)))
+#+end_src
+#+end_details
+
+*** Types as comments in JavaScript via LSP && Using LSP for Org-Src Blocks
+:PROPERTIES:
+:CUSTOM_ID: Types-as-comments-in-JavaScript-via-LSP
+:END:
+#+begin_src js :tangle "~/.emacs.d/scratch.js"
+// The following enables typechecking via LSP.
+// @ts-check
+
+/**
+ ,*
+ ,* @param {number} x -
+ ,* @param {number} y -
+ ,* @returns {number} -
+ ,*/
+// function add(x, y) {return "x + y";} // ⚠ Faulty implementation!
+function add(x, y) {return x + y;}
+
+// add("a", 1) // ⚠ Erroneous call!
+add(1, 2)
+#+end_src
+
+For more on this idea on types, see [[https://github.com/BeyondCodeBootcamp/jsdoc-typescript-starter][A simple, but non-trivial example of getting the most from JSDoc + tsserver (Type Linting without TypeScript)]].
+
+Within Org-mode, at the start of the above ~src~ block, execute ~M-x lsp-org~ to [[https://emacs-lsp.github.io/lsp-mode/manual-language-docs/lsp-org/][get
+some LSP]] working even though you're in Org-mode.
 * Conclusion ---Why Configuration Files Should be Literate
 :PROPERTIES:
 :CUSTOM_ID: conclusion----why-configuration-files-should-be-literate
