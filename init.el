@@ -29,6 +29,16 @@ Save the name of this macro by highlighting it and pressing `C-x r s z', then us
 
 ================================================================================
 
+Using `macrostep-expand' we can verify the following approximations:
+
+⇒ (use-package foo) ≈ (require 'foo)
+⇒ (😴 use-package foo) ≈ (use-pacakge foo :defer 10)
+⇒ (use-pacakge foo :defer t) ≈ nil ;; It doesn't load the package!
+  ⭆ Of-course, since I have “:ensure t” implicitly, such declaration ensures
+    package foo is installed.
+
+================================================================================
+
 This should be used as a last resort. Instead prefer `use-pacakge' lazy loading instead.
 
 ❌ Avoid :preface, :config, and :init since they unconditionally load the package immediately.
@@ -83,6 +93,9 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 
  ;; So that I can use M-x ‘use-package-report’ to see how long things take to load.
 (setq use-package-compute-statistics t)
+
+;; Avoid garbage collection during Emacs Startup phase
+(use-package gcmh :config (gcmh-mode 1)) ;; “the Garbage Collector Magic Hack”
 
 (use-package auto-package-update
   :custom ((auto-package-update-delete-old-versions t) ;; Delete residual old versions
@@ -227,6 +240,24 @@ installs of packages that are not in our `my/installed-packages' listing.
 
 (setq-default save-place  t)
 (setq save-place-file "~/.emacs.d/etc/saveplace")
+
+  ;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
+  ;; Since the hook fires on C-g but by then Helm's already tears it down so
+  ;; it fails buffer-live-p.
+  (with-eval-after-load 'helm
+  (defun my/helm-kill-session-buffers-safe ()
+    "Kill stray *helm…* buffers after a Helm session ends."
+    ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
+    (run-at-time 5 nil                   ; defer until after Helm cleanup
+                 (lambda ()
+                   (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
+                   (let ((kill-buffer-query-functions nil))
+                     (dolist (b (buffer-list))
+                       (when (and (buffer-live-p b)                                  
+                                  (string-match-p "\\`\\*helm" (buffer-name b)))
+                         (with-demoted-errors "helm-kill: %S"
+                           (kill-buffer b))))))))))
+  (add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
 
 (use-package helm
  :init (helm-mode t)
@@ -1350,25 +1381,6 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
                         (equal default-directory (f-expand user-emacs-directory)))
               (-let [current-prefix-arg 16] (outshine-cycle-buffer)))))
 ;; Outshine: Org outlining everywhere:1 ends here
-
-;; [[file:init.org::*Slick selection of items from lists][Slick selection of items from lists:1]]
-  ;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
-  ;; Since the hook fires on C-g but by then Helm's already tears it down so
-  ;; it fails buffer-live-p.
-  (with-eval-after-load 'helm
-  (defun my/helm-kill-session-buffers-safe ()
-    "Kill stray *helm…* buffers after a Helm session ends."
-    ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
-    (run-at-time 0 nil                   ; defer until after Helm cleanup
-                 (lambda ()
-                   (let ((kill-buffer-query-functions nil))
-                     (dolist (b (buffer-list))
-                       (when (and (buffer-live-p b)
-                                  (string-match-p "\\`\\*helm" (buffer-name b)))
-                         (with-demoted-errors "helm-kill: %S"
-                           (kill-buffer b))))))))
-  (add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe))
-;; Slick selection of items from lists:1 ends here
 
 ;; [[file:init.org::*Reduce cognitive attention from Lisp parentheses][Reduce cognitive attention from Lisp parentheses:1]]
 ;; By default parentheses and brackets are dimmed, customize option `paren-face-regexp' if you also want to dim braces or don't want to dim brackets.
@@ -5757,7 +5769,6 @@ method."
     t)))
 
 )
-
 
 (defun my/jump-to-radio (radio)
   "RADIO is a downcased name."
