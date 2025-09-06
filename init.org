@@ -6779,9 +6779,75 @@ This seems like an excellent way to debug macros.
     (setq foo 2))) ;; “M-.” on this “foo” will now take us to the start of the let-clause.
 )
 #+end_src
-** TODO COMMENT Work Programming                                  :Disabled:
+** Projectile: Project management & navigation              :MostlyDisabled:
+:PROPERTIES:
+:CUSTOM_ID: Project-management-navigation
+:END:
+
+Version controlled repositories are considered “projects” ---no setup needed---,
+but you can declare your own too.
+
+Videos:
++ ~5mins: https://youtu.be/bFS0V_4YfhY
++ ~1hr:  https://www.youtube.com/watch?v=INTu30BHZGk
+
+This is so sweet at work (and possibly at home!): From anywhere,
++ [[kbd:C-x p p]] ⟨select your project⟩ RET ⟨start typing to see any file anywhere in the project⟩
+
++ [[kbd:C-x p b ]] ⇒ Switch to buffers only in the current “stream of thought” (project).
++ [[kbd:C-x p f ]] ⇒ Find files only in the current “stream of thought” (project).
++ [[kbd:C-x p s g ]] ⇒ Search the project using grep; TAB in the resulting buffer to
+  open files.
++ [[kbd:C-x p S ]] ⇒ Save all project buffers
++ [[kbd:C-x p k ]] ⇒ Kill all buffers relating to the parent project
+
++ [[kbd:C-x p & ]] ⇒ Runs an async-shell-command in the project's root directory
++ [[kbd:C-x p x s ]] ⇒ Start or visit a shell for the project
++ [[kbd:C-x p r ]] ⇒ Runs interactive query-replace on all files in the projects
++ [[kbd:C-x p e ]] ⇒ Show a list of recently visited files, in the current project
++ [[kbd:C-x p V ]] ⇒ Open a project that has been modified, but not pushed with version control.
+
+  
+/It can also jump to associated test files and run tests on a project./
+
+#+begin_src emacs-lisp :tangle no
+;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
+(use-package projectile
+  :bind (("C-x p" . #'projectile-command-map)
+  ;; Replace usual find-file with a project-wide version 😄
+         ("C-x f" . #'projectile-find-file)
+         ("C-x p c" . #'my/copy-current-file-path))
+  ;; Makes indexing large projects much faster, after first time.
+  ;; Since its caching, some files may be out of sync; you can delete the cache
+  ;; with: C-u C-x f
+  :custom (projectile-enable-caching t)
+  :hook (after-init . projectile-mode))
+
+
+;; “p”roject “s”earch
+(define-key projectile-mode-map (kbd "C-x p s")
+    ;; I prefer helm-do-grep-ag since it shows me a live search
+    (lambda () (interactive)
+       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
+         ;; (shell-command-to-string "echo $PWD")
+         (helm-do-grep-ag nil))))
+#+end_src
+
+*[Only Non-Disabled Part]*
+Let's get the file path of the current file. We bind it and make it a top-level invokable function.
+#+begin_src emacs-lisp :tangle init.el
+(defun my/copy-current-file-path ()
+  "Add current file path to kill ring."
+  (interactive)
+  (kill-new buffer-file-name)
+  (message "Copied path “%s” to clipboard" buffer-file-name))
+#+end_src
+
+** Work Programming                                               :Disabled:
+
 :PROPERTIES:
 :CUSTOM_ID: Programming
+:header-args: :tangle no
 :END:
 
 | Disabled: At work I program in Java, and IntelliJ is better than Emacs out-of-the-box. |
@@ -6789,17 +6855,7 @@ This seems like an excellent way to debug macros.
 Herein we configure utilites for version control, function and variable lookup,
 and template expansion for inescapably repetitive scenarios.
 
-# TODO: Fix these docs
-#  TODO: + Checkout branches/PRs with doc : my/gh-checkout
-#  + See all company related PRs with doc : w-PRs
-# + Quickly look up language/library docs /within/ Emacs with kbd:C-c_d.
-
-#+begin_src emacs-lisp
-(when my/work-machine?
-  (setq doom-modeline-buffer-file-name-style 'truncate-except-project))
-#+end_src
-
-*** devdocs
+*** DevDocs
 :PROPERTIES:
 :CUSTOM_ID: devdocs
 :END:
@@ -6826,7 +6882,7 @@ and template expansion for inescapably repetitive scenarios.
           do (devdocs-install (list (cons 'slug (format "%s" lang)))))))
 #+end_src
 
-*** Managing Processes/Servers from within Emacs ---Work-specific functions
+*** TODO Managing Processes/Servers from within Emacs ---Work-specific functions
 :PROPERTIES:
 :CUSTOM_ID: Managing-Processes-Servers-from-within-Emacs-Work-specific-functions
 :END:
@@ -7198,85 +7254,7 @@ In my private ~work.el~ I have declarations of the form ~(my/defservice ⟨direc
   (load-file "~/Desktop/work.el"))
 #+end_src
 
-*** Project management & navigation
-:PROPERTIES:
-:CUSTOM_ID: Project-management-navigation
-:END:
-
-Version controlled repositories are considered “projects” ---no setup needed---,
-but you can declare your own too.
-
-Videos:
-+ ~5mins: https://youtu.be/bFS0V_4YfhY
-+ ~1hr:  https://www.youtube.com/watch?v=INTu30BHZGk
-
-This is so sweet at work (and possibly at home!): From anywhere,
-+ [[kbd:C-x p p]] ⟨select your project⟩ RET ⟨start typing to see any file anywhere in the project⟩
-
-+ [[kbd:C-x p b ]] ⇒ Switch to buffers only in the current “stream of thought” (project).
-+ [[kbd:C-x p f ]] ⇒ Find files only in the current “stream of thought” (project).
-+ [[kbd:C-x p s g ]] ⇒ Search the project using grep; TAB in the resulting buffer to
-  open files.
-+ [[kbd:C-x p S ]] ⇒ Save all project buffers
-+ [[kbd:C-x p k ]] ⇒ Kill all buffers relating to the parent project
-
-+ [[kbd:C-x p & ]] ⇒ Runs an async-shell-command in the project's root directory
-+ [[kbd:C-x p x s ]] ⇒ Start or visit a shell for the project
-+ [[kbd:C-x p r ]] ⇒ Runs interactive query-replace on all files in the projects
-+ [[kbd:C-x p e ]] ⇒ Show a list of recently visited files, in the current project
-+ [[kbd:C-x p V ]] ⇒ Open a project that has been modified, but not pushed with version control.
-
-#+begin_src emacs-lisp
-;; More info & key bindings: https://docs.projectile.mx/projectile/usage.html
-(use-package projectile
-
-  :config
-  (projectile-mode +1)
-  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
-
-  ;; Replace usual find-file with a project-wide version :smile:
-  (global-set-key (kbd "C-x f") #'projectile-find-file)
-
-  ;; Makes indexing large projects much faster, after first time.
-  ;; Since its caching, some files may be out of sync; you can delete the cache
-  ;; with: C-u C-x f
-  (setq projectile-enable-caching t))
-
-(use-package projectile
-
-    :config
-  (define-key projectile-mode-map (kbd "C-x p s")
-    ;; I prefer helm-do-grep-ag since it shows me a live search
-    (lambda () (interactive)
-       (let ((default-directory (car (projectile-get-project-directories (projectile-acquire-root)))))
-         ;; (shell-command-to-string "echo $PWD")
-         (helm-do-grep-ag nil))))) ;; “p”roject “s”earch
-#+end_src
-
-Let's get the file path of the current file. We bind it and make it a top-level invokable function.
-#+begin_src emacs-lisp
-(use-package projectile
-    :config
-(define-key projectile-mode-map (kbd "C-x p c")
-  (defun my/copy-current-file-path ()
-    "Add current file path to kill ring."
-    (interactive)
-    (message (kill-new buffer-file-name)))))
-#+end_src
-
-*** Projectile
-:PROPERTIES:
-:CUSTOM_ID: Projectile
-:END:
-#+begin_src emacs-lisp
-;; https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/
-;; https://github.com/bbatsov/projectile
-(use-package projectile
-
-:config (projectile-global-mode)
-(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
-#+end_src
-*** Are there any errors in my code?
+*** TODO COMMENT Are there any errors in my code?
 :PROPERTIES:
 :CUSTOM_ID: Are-there-any-errors-in-my-code
 :END:
@@ -7374,7 +7352,7 @@ Try it out:
 (setq 1 2) ;; Error: ‘1’ is not a variable.
 #+end_src
 
-*** Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab :relocate:
+*** TODO Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab :relocate:
 :PROPERTIES:
 :CUSTOM_ID: Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab
 :END:
@@ -7407,7 +7385,7 @@ The [[https://github.com/killdash9/buffer-flip.el][docs]], for the following, ha
 See [[https://www.emacswiki.org/emacs/buffer-move.el][buffer-move]] if you're interested in moving the buffers, and their windows,
 into new configurations.
 
-*** w-screencapture
+*** TODO w-screencapture
 :PROPERTIES:
 :CUSTOM_ID: w-screencapture
 :END:
@@ -7438,7 +7416,7 @@ See: https://osxdaily.com/2011/08/11/take-screen-shots-terminal-mac-os-x"
       (--filter (s-starts-with-p "Screen Shot" it))
       (--map (f-delete (format "~/Desktop/%s" it)))))
 #+end_src
-*** Screencapturing the Current Emacs Frame
+*** TODO Screencapturing the Current Emacs Frame
 :PROPERTIES:
 :CUSTOM_ID: Screencapturing-the-Current-Emacs-Frame
 :END:
@@ -7489,7 +7467,7 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 
 + ~C-c C-x C-v~ ⇒ Toggle inline images!
 
-*** Searching Hydra
+*** TODO Searching Hydra
 :PROPERTIES:
 :CUSTOM_ID: Searching-Hydra
 :END:
@@ -7513,7 +7491,7 @@ simple if I just wrote it out myself rather than tweaking an existing system.
    ("d" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag nil)))  "Directory")
    ("D" (lambda () (interactive) (-let [default-directory (read-directory-name "Where do you want to search? ")] (helm-do-grep-ag t)))  "Directory & type"))
 #+end_src
-*** Pair Programming
+*** TODO Pair Programming
 :PROPERTIES:
 :CUSTOM_ID: Pair-Programming
 :END:
@@ -7588,7 +7566,7 @@ my VSCoder counterparts.
 (my/toggle-pair-programming)
 #+end_src
 
-*** Modern Browsing within Emacs                                  :Disabled:
+*** TODO Modern Browsing within Emacs                            :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Modern-Browsing-within-Emacs
 :END:

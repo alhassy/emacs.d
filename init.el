@@ -1355,6 +1355,12 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 )
 ;; Smart jumping to definitions:1 ends here
 
+(defun my/copy-current-file-path ()
+  "Add current file path to kill ring."
+  (interactive)
+  (kill-new buffer-file-name)
+  (message "Copied path “%s” to clipboard" buffer-file-name))
+
 ;; [[file:init.org::*Outshine: Org outlining everywhere][Outshine: Org outlining everywhere:1]]
 (use-package outshine
   :hook emacs-lisp-mode
