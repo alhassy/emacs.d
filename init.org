@@ -1257,8 +1257,7 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 ;;     (setq gc-cons-threshold 16777216 ; 16mb
 ;;           gc-cons-percentage 0.1)))
 #+end_src
-
-
+ 
 [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Autoload.html][Autoloading]]: /Register the existence of a function, but put off loading the file
 that defines it./
 
@@ -1852,24 +1851,26 @@ started, toggle follow-mode with ~C-c C-f~ to obtain contextual-awareness; e.g.,
 /Try and be grateful!/
 #+BEGIN_SRC emacs-lisp :tangle init.el
 (use-package helm
- :init (helm-mode t)
- :bind (("M-x"     . helm-M-x)
-        ("C-x C-f" . helm-find-files)
-        ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
-        ("C-x r b" . helm-filtered-bookmarks)
-        ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
-        ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
-        ;; ("C-u C-c i" . imenu-list)  ;; TODO FIXME  Key sequence C-u C-c i starts with non-prefix key C-u
-        ("C-h a"   . helm-apropos)
-        ;; Look at what was cut recently & paste it in.
-        ("M-y" . helm-show-kill-ring)
-        ("C-x C-x" . helm-all-mark-rings)
-        :map helm-map
-        ;; We can list ‘actions’ on the currently selected item by C-z.
-        ("C-z" . helm-select-action)
-        ;; Let's keep tab-completetion anyhow.
-        ("TAB"   . helm-execute-persistent-action)
-        ("<tab>" . helm-execute-persistent-action)))
+  :hook (after-init . helm-mode)
+  :custom ((helm-completion-style 'emacs)
+           (completion-styles '(basic partial-completion emacs22 initials flex)))
+  :bind (("M-x"     . helm-M-x)
+         ("C-x C-f" . helm-find-files)
+         ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
+         ("C-x r b" . helm-filtered-bookmarks)
+         ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
+         ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
+         ;; ("C-u C-c i" . imenu-list)  ;; TODO FIXME  Key sequence C-u C-c i starts with non-prefix key C-u
+         ("C-h a"   . helm-apropos)
+         ;; Look at what was cut recently & paste it in.
+         ("M-y" . helm-show-kill-ring)
+         ("C-x C-x" . helm-all-mark-rings)
+         :map helm-map
+         ;; We can list ‘actions’ on the currently selected item by C-z.
+         ("C-z" . helm-select-action)
+         ;; Let's keep tab-completetion anyhow.
+         ("TAB"   . helm-execute-persistent-action)
+         ("<tab>" . helm-execute-persistent-action)))
 
 ;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
 ;; (use-package helm-icons
@@ -9175,7 +9176,7 @@ being ‘literate’.
             (interactive)
             ;; (outline-show-all) (outline-hide-body)
             (unless (or (s-starts-with? "*Org Src init.org[ emacs-lisp ]*" (buffer-name))
-                        (equal default-directory (f-expand user-emacs-directory)))
+                        (s-contains? (f-expand user-emacs-directory) default-directory))
               (-let [current-prefix-arg 16] (outshine-cycle-buffer)))))
 #+end_src
 
@@ -9214,6 +9215,7 @@ An alternative stack includes:
 + [[https://github.com/tarsius/bicycle][GitHub - tarsius/bicycle: Cycle outline and code visibility]]
 + [[https://github.com/tarsius/backline][GitHub - tarsius/backline: Preserve appearance of collapsed outline headings until right window edge]]
 + [[https://github.com/tarsius/outline-minor-faces][GitHub - tarsius/outline-minor-faces: Heading faces for outline-minor-mode]]
++ 🤔 [[https://stackoverflow.com/a/1211325][Folding is generally unnecessary with Emacs - Stack Overflow]]
 
 Also to be aware of:
 + [[https://elpa.gnu.org/packages/orgalist.html][GNU ELPA - orgalist]] Manage Org-like lists in non-Org buffers

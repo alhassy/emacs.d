@@ -260,24 +260,26 @@ installs of packages that are not in our `my/installed-packages' listing.
   (add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
 
 (use-package helm
- :init (helm-mode t)
- :bind (("M-x"     . helm-M-x)
-        ("C-x C-f" . helm-find-files)
-        ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
-        ("C-x r b" . helm-filtered-bookmarks)
-        ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
-        ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
-        ;; ("C-u C-c i" . imenu-list)  ;; TODO FIXME  Key sequence C-u C-c i starts with non-prefix key C-u
-        ("C-h a"   . helm-apropos)
-        ;; Look at what was cut recently & paste it in.
-        ("M-y" . helm-show-kill-ring)
-        ("C-x C-x" . helm-all-mark-rings)
-        :map helm-map
-        ;; We can list ‘actions’ on the currently selected item by C-z.
-        ("C-z" . helm-select-action)
-        ;; Let's keep tab-completetion anyhow.
-        ("TAB"   . helm-execute-persistent-action)
-        ("<tab>" . helm-execute-persistent-action)))
+  :hook (after-init . helm-mode)
+  :custom ((helm-completion-style 'emacs)
+           (completion-styles '(basic partial-completion emacs22 initials flex)))
+  :bind (("M-x"     . helm-M-x)
+         ("C-x C-f" . helm-find-files)
+         ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
+         ("C-x r b" . helm-filtered-bookmarks)
+         ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
+         ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
+         ;; ("C-u C-c i" . imenu-list)  ;; TODO FIXME  Key sequence C-u C-c i starts with non-prefix key C-u
+         ("C-h a"   . helm-apropos)
+         ;; Look at what was cut recently & paste it in.
+         ("M-y" . helm-show-kill-ring)
+         ("C-x C-x" . helm-all-mark-rings)
+         :map helm-map
+         ;; We can list ‘actions’ on the currently selected item by C-z.
+         ("C-z" . helm-select-action)
+         ;; Let's keep tab-completetion anyhow.
+         ("TAB"   . helm-execute-persistent-action)
+         ("<tab>" . helm-execute-persistent-action)))
 
 ;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
 ;; (use-package helm-icons
@@ -1378,7 +1380,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
             (interactive)
             ;; (outline-show-all) (outline-hide-body)
             (unless (or (s-starts-with? "*Org Src init.org[ emacs-lisp ]*" (buffer-name))
-                        (equal default-directory (f-expand user-emacs-directory)))
+                        (s-contains? (f-expand user-emacs-directory) default-directory))
               (-let [current-prefix-arg 16] (outshine-cycle-buffer)))))
 ;; Outshine: Org outlining everywhere:1 ends here
 
