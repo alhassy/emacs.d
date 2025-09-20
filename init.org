@@ -1771,7 +1771,7 @@ place where it was when you previously visited the same file.
 #+END_SRC
 
 
-** Completion
+** Auto-Complete
 :PROPERTIES:
 :CREATED:  [2025-09-18 Thu 09:17]
 :END:
@@ -1781,14 +1781,14 @@ minibuffer (e.g., when you press ~M-x~ and any kind of prompting command), and
 ~completion-at-point~ which is traditional auto-complete (e.g., complete the
 current word being written by using all other words already written in the
 buffer, or “complete this function name” in a programming mode).  By default,
-these occur in dedicated buffers, but it's nice to have them appear in pop-up dropdown
-UIs:
+these occur in dedicated buffers, but it's nice to have them appear in pop-up
+dropdown UIs:
 | Complete text in a buffer with ~corfu~ and complete text in the minibuffer with ~Helm~. |
 
 This is best understood by actually running a few small examples 😁 Try them
 out!
 #+begin_src emacs-lisp :tangle no
-;; Complete a selection from the minibuffer prompts
+;; Complete a selection from the minibuffer prompt
 (completing-read "Pick one:" '("Islam" "is hard" "is easy"))
 
 ;; Complete the text in the region between START and END with the list of completion candidates
@@ -1807,13 +1807,11 @@ additional completion functions, we can use ~cape~.
 Note: I previously used ~company~, which is both a completion provider and a pop-up
 user interface.
 
-
 *** Word Completion and Documentation Pop-ups
 :PROPERTIES:
 :CUSTOM_ID: Word-Completion
 :END:
-  
-
+ 
 #+begin_src emacs-lisp
 ;; In programming modes, M-g on a pop-up candidate to peek at its source code.
 ;; (Also, M-h to show its docs. Should be seldom needed, since docs pop-up by default.)
@@ -1880,21 +1878,17 @@ user interface.
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 #+end_src
-
-
-friendlily
-
-friend
-
----------------------------------------------------------------------------------
-
+**** Previous Company Setup and personal unit tests for it       :Disabled:
+:PROPERTIES:
+:CREATED:  [2025-09-20 Sat 05:56]
+:header-args: :tangle no
+:END:
 
 Let's enable [[https://company-mode.github.io/][“complete anything” mode]] ---it ought to start in half a second and
 only need two characters to get going, which means word suggestions are provided
 and so I need only type partial words then tab to get the full word!
 
-
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp 
 (use-package company
   :hook (prog-mode org-mode)
   :config
@@ -2044,7 +2038,7 @@ All emoji names are lowercase. ◀
   textual areas.
 + The MacOS app Rocket enables emoji completion after entering the ~:~ key.
 
-**** Documentation Pop-Ups
+***** Documentation Pop-Ups
 :PROPERTIES:
 :CUSTOM_ID: Documentation-Pop-Ups
 :END:
