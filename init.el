@@ -241,6 +241,71 @@ installs of packages that are not in our `my/installed-packages' listing.
 (setq-default save-place  t)
 (setq save-place-file "~/.emacs.d/etc/saveplace")
 
+;; In programming modes, M-g on a pop-up candidate to peek at its source code.
+;; (Also, M-h to show its docs. Should be seldom needed, since docs pop-up by default.)
+;;
+;; Moreover, I also get completion for the special minibuffer sessions “M-:” or “M-&” *with* pop-up docs!
+(use-package corfu
+  :bind (:map corfu-map
+              ("<escape>" . corfu-quit)
+              ;; If there's a candidate you don't see (e.g., writing “corfu-” but
+              ;; looking for the face symbol “corfu-bar” then “. s” will expose it)
+              ;; or if you want to restrict the list of candidates (e.g., to see only
+              ;; dictionary items use “.+ w” and to see only file paths use “. f”;
+              ;; or to limit to emojis use “. :”.)
+              ;; Finally, use “. l” to complete the current line based on /previous/ lines.
+              ("." .  cape-prefix-map))
+  :custom
+  (corfu-auto t "Automatically enable corfu pop-ups")
+  (corfu-auto-prefix 1 "Show me the completions asap")
+  (corfu-auto-delay 0.02 "ASAP!")
+  (corfu-popupinfo-delay 0.01 "Show extra info (e.g., docs) immediately")
+  (corfu-min-width 15)
+  (corfu-max-width corfu-min-width "Always have the same width")
+  (corfu-count 14 "Show me 14 items in completion; ↑↓ keys or C-n/p let me navigate")
+  (corfu-cycle nil "Do not cycle when I reach the end/start")
+  :hook ((after-init . global-corfu-mode)
+         (global-corfu-mode . corfu-popupinfo-mode)
+         ;; corfu-history-mode remembers selected candidates and sorts the candidates by their history position and frequency.
+         ;; In order to save the history across Emacs sessions, enable `savehist-mode'.
+         (global-corfu-mode . corfu-history-mode)
+         (corfu-history-mode . savehist-mode)))
+
+
+;; Add CAPFs to buffers where you want them
+(add-hook 'prog-mode-hook  #'my/extra-completion-candidates)
+(add-hook 'text-mode-hook  #'my/extra-completion-candidates)
+(defun my/extra-completion-candidates ()
+  "Add extra CAPFs in this buffer, after existing CAPFs."
+  ;; Completion At Point Extensions (This is the “.” key mentioned above.)
+  (use-package cape)  
+  ;; Append, don’t clobber. Order matters: first CAPF that returns wins; and the later Capfs may not get a chance to run.
+  ;;
+  (setq-local completion-at-point-functions
+              (append completion-at-point-functions
+                      (list
+                       ;; Whenever I type “~/” or “./”, complete a file path
+                       #'cape-file
+                       ;; Fuzzy-ish words from this / other buffers.
+                       ;; At the end, if there's no match, look around and see if there's similar words lying around.
+                       ;; E.g., in an Elisp comment, typing “comm” should finish to “comment”.
+                       #'cape-dabbrev
+                       ;; Abbreviation expansions 
+                       #'cape-abbrev
+                       ;; Eventually, give up and try the dictionary 
+                       #'cape-dict))))
+
+
+;; Add icons to the completions 
+(use-package kind-icon
+  :disabled "Cute, but will ignore for now. It does look nice when completing paths."
+  :after corfu
+  :custom
+  (kind-icon-blend-background nil)
+  (kind-icon-default-face 'corfu-default) 
+  :config
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
   ;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
   ;; Since the hook fires on C-g but by then Helm's already tears it down so
   ;; it fails buffer-live-p.
@@ -260,31 +325,45 @@ installs of packages that are not in our `my/installed-packages' listing.
   (add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
 
 (use-package helm
-  :hook (after-init . helm-mode)
+  :hook ((after-init . helm-mode) ;; Enable Helm completion for common Emacs commands.
+         (after-init . helm-autoresize-mode))
   :custom ((helm-completion-style 'emacs)
-           (completion-styles '(basic partial-completion emacs22 initials flex)))
+           (completion-styles '(basic partial-completion emacs22 initials flex))
+           (helm-M-x-show-short-doc t)) ;; Show docstrings when I press “M-x”
+  ;; Helm also has optimized Helm completions for some commands, so let's use those instead of the defaults:
   :bind (("M-x"     . helm-M-x)
+         ;; ⇒ After “M-x” press “C-h m” to see how Helm improves the default M-x command.
+         ;; ⇒ For example, “M-x C-]” toggles docstrings to appear.
+         ;; ⇒ Or, “RET” on any candidate after “M-x” to see entire docstrings! 💝
          ("C-x C-f" . helm-find-files)
-         ("C-x b"   . helm-mini)     ;; See buffers & recent files; more useful.
+         ;; Do “C-x b C-h m” to learn more about what Helm's “C-x b” can do for you!
+         ;; ⟨📚 In general, after any Helm command, do “C-h m” to get rich info about what you can do!⟩
+         ("C-x b"   . helm-mini)     ;; See buffers & recent files & bookmarks; more useful.
          ("C-x r b" . helm-filtered-bookmarks)
          ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
-         ("C-c i"   . helm-imenu) ;; C.f. “C-x t m” (imenu-list)
-         ;; ("C-u C-c i" . imenu-list)  ;; TODO FIXME  Key sequence C-u C-c i starts with non-prefix key C-u
-         ("C-h a"   . helm-apropos)
+         ("C-c i"   . helm-imenu) ;; C.f. M-x imenu-list 👀
          ;; Look at what was cut recently & paste it in.
          ("M-y" . helm-show-kill-ring)
-         ("C-x C-x" . helm-all-mark-rings)
+         ;; “C-x r s 𝓍” temporarily save regions of text to character 𝓍 and paste them with “C-x r i”
+         ("C-x r i" . helm-register)
+         ;; When I run one-off ELisp expressions, show me function signatures and get immediate /live/ results
+         ("M-:" . helm-eval-expression-with-eldoc)
          :map helm-map
          ;; We can list ‘actions’ on the currently selected item by C-z.
          ("C-z" . helm-select-action)
-         ;; Let's keep tab-completetion anyhow.
+         ;; A “persistent action” is an action that you use in a Helm session that does not quit the session.
+         ;; E.g., “M-x TAB” shows the docstring ---a persistent action-- of the currently selected command.
          ("TAB"   . helm-execute-persistent-action)
          ("<tab>" . helm-execute-persistent-action)))
 
+
+;; Note M-x `helm-packages' is a browser for packages to install or upgrade.
+
+
 ;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
-;; (use-package helm-icons
-;;   :custom (helm-icons-provider 'all-the-icons)
-;;   :config (helm-icons-enable))
+(use-package all-the-icons-completion
+  :custom (helm-x-icons-provider 'all-the-icons)
+  :hook (after-init . helm-ff-icon-mode))
 
 ;; When I want to see the TOC of an Org file, show me down to 3 subheadings.
 (setq org-imenu-depth 7)
@@ -1117,8 +1196,7 @@ associated major mode; that's what we aim to do here."
 
 ;; [[file:init.org::#Sleek-Semantic-Selection][⌘-r, ⌘-i, ⌘-o: Sleek Semantic Selection:1]]
 (use-package expand-region
-
-  :bind (("s-r" . #'er/expand-region)))
+  :bind ("s-r" . #'er/expand-region))
 ;; ⌘-r, ⌘-i, ⌘-o: Sleek Semantic Selection:1 ends here
 
 ;; [[file:init.org::#Editor-Documentation-with-Contextual-Information][Editor Documentation with Contextual Information:1]]
@@ -1315,11 +1393,9 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 
 
 ;; TODO: My Emacs seems to have trouble loading the following and so I'm doint it manually.
-(load-file "~/.emacs.d/elpa/company-posframe-20230104.1229/company-posframe.el")
 (load-file "~/.emacs.d/elpa/highlight-escape-sequences-20201214.1730/highlight-escape-sequences.el")
 (load-file "~/.emacs.d/elpa/parent-mode-20240210.1906/parent-mode.el")
 (load-file "~/.emacs.d/elpa/highlight-numbers-20181013.1744/highlight-numbers.el")
-
 
 ;; If the above two worked fine, then you should see \n and 3 highlighted below
 (when nil "Look: 1 and \\ and \n 2" (setq three 3))
@@ -1330,13 +1406,6 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 (use-package highlight-defined :hook emacs-lisp-mode)
 (load-file "~/.emacs.d/elpa/highlight-defined-20210411.222/highlight-defined.el")
 ;; Highlight /defined/ Lisp symbols:1 ends here
-
-;; [[file:init.org::#Get-nice-child-frames-when-looking-at-completions-candidates-In-particular-when-editing-Lisp-code-the][Get nice child frames when looking at completions candidates:1]]
-(use-package company-posframe :hook prog-mode)
-
-;; I want to see the doc pop-ups nearly instantaneously 😅
-(setq company-posframe-quickhelp-delay 0)
-;; Get nice child frames when looking at completions candidates:1 ends here
 
 ;; [[file:init.org::*interactive macro-expander][interactive macro-expander:1]]
 (use-package macrostep
@@ -1355,11 +1424,45 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 )
 ;; Smart jumping to definitions:1 ends here
 
+;; [[file:init.org::#Project-management-navigation][Projectile: Project management & navigation:2]]
 (defun my/copy-current-file-path ()
   "Add current file path to kill ring."
   (interactive)
   (kill-new buffer-file-name)
   (message "Copied path “%s” to clipboard" buffer-file-name))
+;; Projectile: Project management & navigation:2 ends here
+
+;; [[file:init.org::*Tree cmd, also treemacs for navigating a new repository][Tree cmd, also treemacs for navigating a new repository:1]]
+(defun my/explore-directory ()
+  "Run “tree | less” for `default-directory'."
+  (interactive)
+  (vterm-toggle)
+  (vterm-send-string "tree|less")
+  (vterm-send-return)
+  (message "Press “/ 𝒳” to narrow to files with 𝒳 in their path."))
+;; Tree cmd, also treemacs for navigating a new repository:1 ends here
+
+;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
+(use-package windmove
+  :config ;; use command key on Mac
+          (windmove-default-keybindings 'super)
+          ;; wrap around at edges
+          (setq windmove-wrap-around t))
+;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
+
+;; [[file:init.org::*\[C-u\]-M-TAB to move between buffers][[C-u]-M-TAB to move between buffers:1]]
+(use-package buffer-flip
+  :bind
+   (:map buffer-flip-map
+    ("M-<tab>"   . buffer-flip-forward)
+    ("M-S-<tab>" . buffer-flip-backward)
+    ("C-g"       . buffer-flip-abort))
+  :config
+    (setq buffer-flip-skip-patterns
+        '("^\\*helm\\b")))
+;; key to begin cycling buffers.
+(global-set-key (kbd "M-<tab>") 'buffer-flip)
+;; [C-u]-M-TAB to move between buffers:1 ends here
 
 ;; [[file:init.org::*Outshine: Org outlining everywhere][Outshine: Org outlining everywhere:1]]
 (use-package outshine
@@ -1405,6 +1508,228 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
   (rainbow-delimiters-mode -1)
   (paren-face-mode +1))
 ;; Reduce cognitive attention from Lisp parentheses:1 ends here
+
+;; [[file:init.org::*Refactoring: Rename fun, inline fun, extract fun, extract constant, etc][Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:1]]
+(use-package emr ;; 𝑬𝑴acs 𝑹refactor
+  ;; Press “⌘-ENTER” to get a drop-down of relevant refactors. Select a region or else use thing at point.
+  ;; NOTE: With hyperbole enabled in prog-mode, M-RET is “/smart/ jump to definition”:
+  ;; This is like “M-.” but is smart enough to realize 'foo should jump to the form (defun foo …).
+  :bind (:map prog-mode-map              
+              ("s-<return>" . emr-show-refactor-menu)))
+
+;; Useful refactors
+;; ⇒ delete unused let binding form
+;; ⇒ eval and replace
+;; ⇒ extract constant ★
+;; ⇒ extract function / inline function
+;; ⇒ extract to let ★★ / inline let variable
+;; ⇒ extract variable / inline variable
+;; ⇒ implement function ★
+;; ⇒ comment / uncomment region
+
+;; ★ Some refactors need to be rigged via M-x; e.g., on a symbol run “M-x emr
+;; impl” to get a template to implement it as a function.
+;; ★★ Some need to be against a form: Either before the starting paren, or else a selected region.
+
+(😴 progn
+    ;; It seems easy to add more refactorings:
+    ;; https://github.com/Wilfred/emacs-refactor?tab=readme-ov-file#user-content-extension
+    ;;
+    ;; Let's add one!
+    ;;
+    (emr-declare-command 'emr-el-tidy-requires 
+      :title "tidy"
+      :description "require"
+      :modes 'emacs-lisp-mode
+      :predicate (lambda ()
+                   (thing-at-point-looking-at
+                    (rx bol (* space) "(require " (* nonl)))))
+
+    (defun emr-el-tidy-requires ()
+      "Consolidate and reorder requires in the current buffer.
+
+Order requires alphabetically and remove duplicates."
+      (interactive "*")
+      (let (requires
+            (rx-require (rx bol (* space) "(require" (+ space)
+                            (group-n 1 (+ (not space)))
+                            ")")))
+        (save-excursion
+          (when (emr-el:goto-first-match rx-require)
+            (beginning-of-line)
+            (forward-line)
+
+            ;; Collect requires in buffer.
+            (save-excursion
+              (goto-char (point-min))
+              (while (search-forward-regexp rx-require nil t)
+                (push (substring-no-properties (match-string 1))
+                      requires)
+                (replace-match "")
+                (when (emr-blank-line?)
+                  (ignore-errors
+                    (kill-line)))))
+
+            (->> (emr-el:sort-requires requires)
+                 (s-join "\n")
+                 (s-append "\n")
+                 (insert))))))
+
+    (defun emr-el:sort-requires (requires)
+      (->> (sort requires (lambda (L R) (string< L R)))
+           (-distinct)
+           (--map (s-trim it))
+           (--map (format "(require %s)" it))))
+
+    ;; Let's provide an alias for a useful method.
+    (defalias 'emr-el-rename-in-file 'emr-iedit-global)
+
+    ;; More Lisp-specific refactoring ideas ---such as changing “if” to “cond”---
+    ;; can be found by looking at RedShank:
+    ;; https://github.com/emacsattic/redshank/blob/d059c5841044aa163664f8bf87c1d981bf0a04fe/redshank.el#L745
+    ;; WAIT, it seems that these work fine with Emacs Lisp, not just Common Lisp! 😲
+
+    ;; NOTE: Lispy already includes some common refactorings like extract function and cond<->if out of the box.
+    )
+;; Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:1 ends here
+
+;; [[file:init.org::*Refactoring: Rename fun, inline fun, extract fun, extract constant, etc][Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:2]]
+(use-package erefactor)
+
+;;* Level 1
+;;** Level 2
+;;*** Level 3
+
+;; https://melpa.org/#/redshank
+;; Redshank is a collection of code-wrangling Emacs macros mostly geared towards
+;; Common Lisp, but some are useful for other Lisp dialects, too. It's built on top of Paraedit.
+;;
+;; Some mild (Common Lisp) refactoring support:
+;; ⇒ Semantics-preserving rewriting of forms (IF to COND, WHEN NOT to UNLESS, etc.)
+;; ⇒ Extracting marked regions to DEFUNs, with free variables becoming arguments of the extracted function
+;; ⇒ Extracting forms to LET-bound variables of the nearest enclosing LET block
+;;
+;; There's a lot of cool stuff in here. I especially like "redshank-align-forms-as-columns"; it's really useful for all lisps.
+(use-package redshank)
+
+;; ⇒ (redshank-align-forms-as-columns BEG END)
+;; ⇒ redshank-condify-form  Transform a Common Lisp IF form into an equivalent COND form.
+;; ⇒ redshank-enclose-form-with-lambda Enclose form with lambda expression with parameter VAR.
+;;   Cursor should be inside a form.
+;; ⇒ redshank-extract-to-defun     Extracts region from START to END as new defun NAME.
+;; ⇒ redshank-rewrite-negated-predicate Rewrite the negated predicate of a WHEN or UNLESS form at point.
+
+
+(use-package lispy
+  :hook emacs-lisp)
+
+
+;;; The price for these short bindings is that they are only active when point is before/after a parens, or when the region is active.
+;;;
+;; The advantage of short bindings is that you are more likely to use them. As you use them more, you learn how to combine them, increasing your editing efficiency.
+
+;; Select a region then press ", it's smart enough to escape any quotes inside the region or to escape new quotes if we're already in a string.
+;; Use C-u " on a region to remove the quotes.
+
+;; Select a region then press ( or ) to enclose it in parens, then use / at a parens to remove them.
+;; In Lisp jargon, this is “splicing”.
+
+;; C-k now means “kill until end of form”; e.g., (f x | y z) ⇒ (f x)
+;; DEL means delete form
+;; “ ; ” now means comment current (possibly multi-line) expression
+
+;;;  c ⇒ clone form
+;;;  e ⇒ eval form
+;;; E ⇒ eval & insert
+
+;; d ⇒ jump to different side of from, i.e., exchange mark. Quickly jump between start & end of form.
+
+;;; F/D ⇒ jump to definition of form head; e.g., (f x y)|F ⇒ jumps to definition of f
+;;; C-1 ⇒ Toggle inline docstring for form head 💝
+;;;            (Use “xh” to get the docstring in a help buffer)
+;;; C-2 ⇒ Toggle inline argslist for form head 💝
+
+;; xk/xd ⇒ Extract form to new ‘d’efun bloc‘k’ 💝
+;; xb ⇒ ‘b’ind form to new let clause
+;; x? ⇒ See possible completions
+;; xs ⇒ C-x C-s
+
+
+;;;  C ⇒ Convolute: (f (g ∣(h x)))  ⇒ (g (f ∣(h x)))
+
+
+;;;  There's a lot to remember, so make “x” show me what I can do!
+(lispy-define-key lispy-mode-map "x"
+                  (pretty-hydra-define my/hydra-lispy-x (:exit t)
+                    ("Refactor"
+                     (("b" lispy-bind-variable "bind variable")
+                      ("u" lispy-unbind-variable "unbind let-var")                      
+                      ("c" lispy-to-cond "if → cond")
+                      ("i" lispy-to-ifs "cond → if")                      
+                      ("d" lispy-to-defun "λ → 𝑓")
+                      ("l" lispy-to-lambda "𝑓 → λ")
+                      ("D" lispy-extract-defun "extract defun") 
+                      (">" lispy-toggle-thread-last "toggle last-threaded form")
+                      ;; ("t" lispy-toggle-thread-last "toggle last-threaded form")                      
+                      ;; ("k" lispy-extract-block "extract block")
+                      ("f" lispy-flatten "flatten")
+                      ("F" lispy-let-flatten "let-flatten"))
+                     "Evaluate"
+                     (("v" lispy-eval-expression "eval")
+                      ("r" lispy-eval-and-replace "eval and replace")
+                      ("H" lispy-describe "describe in *help*")
+                      ("h" lispy-describe-inline "describe inline")
+                      ;; ("j" lispy-debug-step-in "debug step in")                      
+                      ("m" lispy-cursor-ace "multi cursor")
+                      ("s" save-buffer)
+                      ("t" lispy-view-test "view test")
+                      ("T" lispy-ert "ert")
+                      ;; ("w" lispy-show-top-level "where")                      
+                      ;; ("B" lispy-store-region-and-buffer "store list bounds")
+                      ;; ("R" lispy-reverse "reverse")
+                      ))))
+
+; (my/hydra-lispy-x/body)
+
+
+; (cl-inspect '(+ 2 (print 40)))
+
+
+;;  “a 𝓍” to mark a subform, or “𝓃 m”, then “C-1” to toggle its docs inline. Only one doc visible at a time.
+; (list #'message #'identity #'mapcar)
+
+;; f/b ⇒ move forward/backward between forms
+;; f/b ⇒ move forward/backard between forms
+;;; xd ⇒ replace lambda with defun (saved to kill ring!)
+;;; xc ⇒ replace arbitrarly nested IFs to COND 😻
+;;; xi ⇒ replace COND with nested IFs
+;;;  x> ⇒ toggle between `thread-last` and equivalent expression
+;;; xf ⇒ inline macro call, e.g., (thread-last f e) ⇒ (f e)
+;;; xr ⇒ eval form & replace
+;; ;;; M/O ⇒ format into multiple / One line
+;; ;;; i ⇒ prettify code; e.g., removing extra whitespace
+;; ;;; w/s ⇒ move a form left/right
+;; ;;; a ⇒ jump to a subform
+;; ;;; t ⇒ “teelport” / relocate current form to a specific location, tt to teleport anywhere in buffer
+
+;; ;;; N/W ⇒ narrow/widen to form
+;; v ⇒ view current form at top of screen, this is a toggle
+
+;; Slurp & barf:
+;; Slurp >: Current form slurps up the next form, i.e., (f)| (x) ⇒ (f (x))
+;; and (f) |(x) ⇒ (f (x)). That is, slurping at a boundary means use this form as the enclosing form
+;; and so the other argument of the slurp retains its parens.
+;;
+;; Barf: Throw out the first/last sexp in a form, depending on whether < is pressed at the start or end of the form.
+;; |(a b c) ⇒ a (b c)  &  (a b c)| ⇒ (a b) c
+;;
+;; Barf is useful in conjunction with `d`.
+
+;; xT ⇒ run all tests; i.e., “M-x ert t”
+;;  u ⇒ undo most recent change to buffer.
+
+;; Full docs @ https://web.archive.org/web/20190924092330/http://oremacs.com/lispy/#lispy-shifttab
+;; Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:2 ends here
 
 ;; [[file:init.org::*Finally, for authoring to MELPA][Finally, for authoring to MELPA:1]]
 (use-package flycheck :defer t)
@@ -1583,6 +1908,8 @@ themes (•̀ᴗ•́)و"
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
 (my/toggle-theme)
+
+(my/load-theme 'pink-bliss-uwu)
 
 (when my/personal-machine?
 
@@ -4422,6 +4749,9 @@ Further reading:
 ;; Questionnaire setup:1 ends here
 
 ;; [[file:init.org::*Capture method][Capture method:1]]
+(😴 progn
+
+    
 (cl-defun my/insert-with-bg-colour (colour &rest text)
   "Inserts all of TEXT with background color COLOUR.
 
@@ -4769,7 +5099,7 @@ Write a short story for the day.
 
   )
 
-(load-file "~/Dropbox/private.el") ;; Loads “my\⋯” variables
+(😴 (load-file "~/Dropbox/private.el")) ;; Loads “my\⋯” variables
 ;;
 (cl-defun my/age-in-days-weeks-years (&optional (birthdate my\birthday))
   "Prompt for birthdate (YYYY-MM-DD) and display age in days, weeks, months, and years."
@@ -4876,6 +5206,9 @@ Returns a float between 0 and 100."
          (days-old (/ (float-time (time-subtract now birth-time)) 86400))
          (years-old (/ days-old 365.25))) ;; approximate year with leap years)
     (format "%.2f%%" (* 100 (/ years-old 70)))))
+
+
+) ;; End 😴
 ;; Capture method:1 ends here
 
 ;; [[file:init.org::*Implementation][Implementation:1]]
@@ -5224,54 +5557,54 @@ Returns a float between 0 and 100."
 
 ;; [[file:init.org::*🤖 <<<Monthly Review>>>][🤖 <<<Monthly Review>>>:1]]
 ;; “r”eview for the “m”onth
-(bind-key*
- "C-c r m"
- (def-capture "🔄 Monthly Review 😊"
-              "🌿 Reviews 🌱"
-              ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
-              ;; that looks at that day. That is, my review are personal appointments.
-              "* :Monthly:Review: \n:PROPERTIES:\n:CREATED: %T\n:END:\n"
-              ;; Insert fancy date in header
-              (beginning-of-buffer)
-              (org-beginning-of-line)
-              (insert (ts-format "%B %Y Monthly Review "))
-              ;; Let's add some properties by prompting the user, me.
-              (my/read-daily-review-properties
-               :questionnaire '(
-                                ("Happy: Are you happy?"
-                                 "0 -- Nope… -- Why not?"
-                                 "1 -- Yup…  -- Yay, share a happy moment from this month")
-                                ("Work Brag: What's something you did at work that you can brag about this month?")
-                                ("Personal Brag: What's something you did in your personal life that you can brag about this month?"))
-               :prop-val-action (lambda (property value) (org-set-property property value)))
-              ;; Add Daily Score to the start of the headline
-              (beginning-of-buffer)
-              (org-beginning-of-line)
-              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
-              ;; Let's align them
-              (my/org-align-property-values)
-              ;; Let's insert a quote
-              (progn
-                (end-of-buffer)
-                (my/insert-with-fg-colour "grey" "\n\n#+begin_quote_of_the_day\n")
-                (my/insert-with-bg-colour "pink" (my/string-fill-column-and-center 70 (my/random-quote)) "\n")
-                (my/insert-with-fg-colour "grey" "#+end_quote_of_the_day\n\n"))
-              ;;
-              ;; Use this query to see what I've done since the last review, to get a good idea
-              ;; of my contributions.
-              (my/insert-with-fg-colour "grey" "\n\n#+begin_contributions_this_month\n")
-              (thread-last
-                ;; “nl” stands for "number lines": It automatically prepends each line of input with a line number.
-                "cd ${my\work-dir}; git log --since='1 month ago' --author='${my\work-email}' --oneline --reverse --pretty=format:'%ad %h %s' --date=short | nl"
-                lf-string
-                shell-command-to-string
-                insert)
-              (my/insert-with-fg-colour "grey" "\n#+end_contributions_this_month\n")
+(😴 bind-key*
+    "C-c r m"
+    (def-capture "🔄 Monthly Review 😊"
+                 "🌿 Reviews 🌱"
+                 ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
+                 ;; that looks at that day. That is, my review are personal appointments.
+                 "* :Monthly:Review: \n:PROPERTIES:\n:CREATED: %T\n:END:\n"
+                 ;; Insert fancy date in header
+                 (beginning-of-buffer)
+                 (org-beginning-of-line)
+                 (insert (ts-format "%B %Y Monthly Review "))
+                 ;; Let's add some properties by prompting the user, me.
+                 (my/read-daily-review-properties
+                  :questionnaire '(
+                                   ("Happy: Are you happy?"
+                                    "0 -- Nope… -- Why not?"
+                                    "1 -- Yup…  -- Yay, share a happy moment from this month")
+                                   ("Work Brag: What's something you did at work that you can brag about this month?")
+                                   ("Personal Brag: What's something you did in your personal life that you can brag about this month?"))
+                  :prop-val-action (lambda (property value) (org-set-property property value)))
+                 ;; Add Daily Score to the start of the headline
+                 (beginning-of-buffer)
+                 (org-beginning-of-line)
+                 (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
+                 ;; Let's align them
+                 (my/org-align-property-values)
+                 ;; Let's insert a quote
+                 (progn
+                   (end-of-buffer)
+                   (my/insert-with-fg-colour "grey" "\n\n#+begin_quote_of_the_day\n")
+                   (my/insert-with-bg-colour "pink" (my/string-fill-column-and-center 70 (my/random-quote)) "\n")
+                   (my/insert-with-fg-colour "grey" "#+end_quote_of_the_day\n\n"))
+                 ;;
+                 ;; Use this query to see what I've done since the last review, to get a good idea
+                 ;; of my contributions.
+                 (my/insert-with-fg-colour "grey" "\n\n#+begin_contributions_this_month\n")
+                 (thread-last
+                   ;; “nl” stands for "number lines": It automatically prepends each line of input with a line number.
+                   "cd ${my\work-dir}; git log --since='1 month ago' --author='${my\work-email}' --oneline --reverse --pretty=format:'%ad %h %s' --date=short | nl"
+                   lf-string
+                   shell-command-to-string
+                   insert)
+                 (my/insert-with-fg-colour "grey" "\n#+end_contributions_this_month\n")
 
-              (insert "\n🤔 What are some of my non-Git contributions this month? Reviews? Design Docs? Talks given?")
+                 (insert "\n🤔 What are some of my non-Git contributions this month? Reviews? Design Docs? Talks given?")
 
-              ;; Use this info to answer the following questions
-              (insert (lf-string "
+                 ;; Use this info to answer the following questions
+                 (insert (lf-string "
               \n\n+ What accomplishments are you most proud of?
               \n\n+ To what extent are you meeting your commitments?
               \n\n+ What area would you most like to improve on in the coming months?
@@ -5281,7 +5614,7 @@ Returns a float between 0 and 100."
               \n\n+ What beneficial refactors have I done this month, eg to reduce tech debt or to clarify APIs.
               "))
 
-              (message "To journal is to live; congratulations on another entry!")))
+                 (message "To journal is to live; congratulations on another entry!")))
 ;; 🤖 <<<Monthly Review>>>:1 ends here
 
 ;; [[file:init.org::*Other benefits of clocking are …][Other benefits of clocking are …:2]]
@@ -5588,22 +5921,46 @@ method."
 ;; Bookmarks: Quick naviagation to commonly visited locations:1 ends here
 
 ;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:2]]
+* A
+* B
+#+end_src Then I invoke ~C-x r m B~ on the second line. Then, ~C-x r b B~ jumps to the
+correct location 😁 Then, I add some content under heading ~A~, save and close the
+file. Then, ~C-x r b B~ jumps to the wrong location 😧
+
+The following package fixes this issue:
+#+begin_src emacs-lisp
+(use-package org-bookmark-heading)
+;; Bookmarks: Quick naviagation to commonly visited locations:2 ends here
+
+;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:3]]
+* A
+* B
+#+end_src Then I invoke ~C-x r m B~ on the second line. Then, ~C-x r b B~ jumps to the
+correct location 😁 Then, I add some content under heading ~A~, save and close the
+file. Then, ~C-x r b B~ jumps to the wrong location 😧
+
+The following package fixes this issue:
+#+begin_src emacs-lisp
+(use-package org-bookmark-heading)
+;; Bookmarks: Quick naviagation to commonly visited locations:3 ends here
+
+;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:4]]
 ;; Save/mark a location with “C-u M-m”, jump back to it with “M-m”.
 (bind-key* "M-m"
            (lambda ()
              (interactive)
              (if (not current-prefix-arg)
-                 (helm-mark-ring)
+                 (helm-all-mark-rings)
                (push-mark)
                (message "[To return to this location, press M-m] ∷ %s"
                         (s-trim (substring-no-properties (thing-at-point 'line)))))))
-;; Bookmarks: Quick naviagation to commonly visited locations:2 ends here
+;; Bookmarks: Quick naviagation to commonly visited locations:4 ends here
 
-;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:3]]
+;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:5]]
 (use-package backward-forward
   :bind (("M-[" . backward-forward-previous-location)
          ("M-]" . backward-forward-next-location)))
-;; Bookmarks: Quick naviagation to commonly visited locations:3 ends here
+;; Bookmarks: Quick naviagation to commonly visited locations:5 ends here
 
 ;; [[file:init.org::*Working with massive files: my-life∙org][Working with massive files: my-life∙org:1]]
 ;; I ran M-x profiler-start then did a save (C-x C-x) then did M-x profiler-report and noticed that
@@ -5810,8 +6167,8 @@ method."
 ;; [[file:init.org::*Testing that things are as they should be][Testing that things are as they should be:1]]
 (😴 progn
   ;; TODO: Move the next bunch of lines up somewhere
-  (add-hook 'prog-mode-hook 'company-mode)
-  (add-hook 'org-mode-hook 'company-mode)
+  (add-hook 'prog-mode-hook 'corfu-mode)
+  (add-hook 'org-mode-hook 'corfu-mode)
   (add-hook 'org-mode-hook (lambda ()
                              (org-eldoc-load)
                              (eldoc-mode)
@@ -5833,7 +6190,7 @@ method."
 
   (emacs-lisp-mode)
   (assert aggressive-indent-mode)
-  (assert company-mode)
+  (assert corfu-mode)
   (assert eldoc-mode)
   (assert color-identifiers-mode) ;; Semantic colouring
 
@@ -5846,7 +6203,7 @@ method."
 
   (org-mode)
   ;; TODO (assert eldoc-mode)
-  (assert company-mode t "Whoops, Org mode does not have Company enabled!")
+  (assert corfu-mode t "Whoops, Org mode does not have Corfu enabled!")
   (assert eldoc-mode)
   (assert eldoc-box-hover-mode)
 

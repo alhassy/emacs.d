@@ -2042,8 +2042,7 @@ All emoji names are lowercase. ◀
 :PROPERTIES:
 :CUSTOM_ID: Documentation-Pop-Ups
 :END:
-
-
+ 
 Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
 + For example, open an ELisp buffer and enter =s-j= and see a list of completions, including =s-join=,
   pause for a sec and a documentation tooltip appears.
@@ -2053,17 +2052,22 @@ This is very useful when editing in a particular coding language, say via
 (use-package company-quickhelp
   :config
   (setq company-quickhelp-delay 0.1)
-  (company-quickhelp-mode)
-  ;; Especially when learning a new language, looking up its definition/docstring can be helpful.
-  ;; Note: I use “M-!” everywhere else to mean “define word at point”.
-  )
-
-;; TODO: Consider adding a hook to company mode to immediately call (company-quickhelp--show), in prog-modes
+  (company-quickhelp-mode))
+  ;; Especially when learning a new language, looking up its definition/docstring can be helpful.  
 #+END_SRC
 
-This ~M-!~ is from plain ~company~, but I wanted to define it here beside the
-quickhelp setup since they're related utilities.
+***** Get nice child frames when looking at completions candidates
+:PROPERTIES:
+:CUSTOM_ID: Get-nice-child-frames-when-looking-at-completions-candidates-In-particular-when-editing-Lisp-code-the
+:END:
+In particular, when editing Lisp code, the (company-quickhelp) doc strings
+appear in nice frames when I pause on a completion candidate.
+#+begin_src emacs-lisp
+(use-package company-posframe :hook prog-mode)
 
+;; I want to see the doc pop-ups nearly instantaneously 😅
+(setq company-posframe-quickhelp-delay 0)
+#+end_src
 
 *** Slick selection of items from lists
 
@@ -6673,11 +6677,9 @@ Lightweight syntax highlighting improvement for numbers and escape sequences (e.
 
 
 ;; TODO: My Emacs seems to have trouble loading the following and so I'm doint it manually.
-(load-file "~/.emacs.d/elpa/company-posframe-20230104.1229/company-posframe.el")
 (load-file "~/.emacs.d/elpa/highlight-escape-sequences-20201214.1730/highlight-escape-sequences.el")
 (load-file "~/.emacs.d/elpa/parent-mode-20240210.1906/parent-mode.el")
 (load-file "~/.emacs.d/elpa/highlight-numbers-20181013.1744/highlight-numbers.el")
-
 
 ;; If the above two worked fine, then you should see \n and 3 highlighted below
 (when nil "Look: 1 and \\ and \n 2" (setq three 3))
@@ -6803,19 +6805,6 @@ Have a thin line to the right to ensure I don't write “off the page”.
   :hook (prog-mode . fci-mode))
 ;; (setq fill-column 120)
 #+END_SRC
-
-** Get nice child frames when looking at completions candidates
-:PROPERTIES:
-:CUSTOM_ID: Get-nice-child-frames-when-looking-at-completions-candidates-In-particular-when-editing-Lisp-code-the
-:END:
-In particular, when editing Lisp code, the (company-quickhelp) doc strings
-appear in nice frames when I pause on a completion candidate.
-#+begin_src emacs-lisp
-(use-package company-posframe :hook prog-mode)
-
-;; I want to see the doc pop-ups nearly instantaneously 😅
-(setq company-posframe-quickhelp-delay 0)
-#+end_src
 
 ** interactive macro-expander
 
@@ -8831,10 +8820,6 @@ extract function and cond<->if out of the box.
 ;; x? ⇒ See possible completions
 ;; xs ⇒ C-x C-s
 
-(f (let ((a (x)))
-     a) (y))
-
-(f (x) (y))
 
 ;;;  C ⇒ Convolute: (f (g ∣(h x)))  ⇒ (g (f ∣(h x)))
 
@@ -8870,34 +8855,14 @@ extract function and cond<->if out of the box.
                       ;; ("R" lispy-reverse "reverse")
                       ))))
 
-(my/hydra-lispy-x/body)
+; (my/hydra-lispy-x/body)
 
 
-(cl-inspect '(+ 2 (print 40)))
+; (cl-inspect '(+ 2 (print 40)))
 
-
-(f (x) (let ((a (y)))
-         a))
-
-(defun f (args) (list args))
 
 ;;  “a 𝓍” to mark a subform, or “𝓃 m”, then “C-1” to toggle its docs inline. Only one doc visible at a time.
-(list #'message #'identity #'mapcar)
-
-(if (= (weight person) standard-duck-weight)
-    (unless (sinks-in-water person)
-      (message "Burn her!")))
-
-(let ((h (unless (sinks-in-water person)
-           (message "Burn her!"))))
-  h)
-
-(should (string= (identity "G") (upcase user-full-name) ))
-
-(defun hi (x y) (message "%s" (upcase x)))
-#'hi
-(m/f (+ 2 3) (length user-full-name))
-
+; (list #'message #'identity #'mapcar)
 
 ;; f/b ⇒ move forward/backward between forms
 ;; f/b ⇒ move forward/backard between forms
@@ -8932,13 +8897,10 @@ extract function and cond<->if out of the box.
 ;; Full docs @ https://web.archive.org/web/20190924092330/http://oremacs.com/lispy/#lispy-shifttab
 
 
-
 #+end_src
 
 
 + I would suggest just using =projectile-replace=.
-
-+ [ ] ?
 
 
   
@@ -12889,8 +12851,8 @@ Useful navigational commands include
 As always, to go to the neotree pane when it's the only other window,
 execute ~C-x o~.
 
-I /rarely/ make use of this feature; company mode & Helm together quickly provide
-an automatic replacement for nearly all of my uses.
+I /rarely/ make use of this feature; auto-complete (via company mode & Helm
+together) quickly provide an automatic replacement for nearly all of my uses.
 
 + Reminiscent of GUI file managers is [[https://github.com/ralesi/ranger.el#features][ranger]]; e.g., it has multi-column
   display of parent directories along with a file preview mechanism.
@@ -19399,8 +19361,8 @@ CLOCK: [2025-04-10 Thu 14:04]--[2025-04-10 Thu 14:17] =>  0:13
 #+begin_src emacs-lisp
 (😴 progn
   ;; TODO: Move the next bunch of lines up somewhere
-  (add-hook 'prog-mode-hook 'company-mode)
-  (add-hook 'org-mode-hook 'company-mode)
+  (add-hook 'prog-mode-hook 'corfu-mode)
+  (add-hook 'org-mode-hook 'corfu-mode)
   (add-hook 'org-mode-hook (lambda ()
                              (org-eldoc-load)
                              (eldoc-mode)
@@ -19422,7 +19384,7 @@ CLOCK: [2025-04-10 Thu 14:04]--[2025-04-10 Thu 14:17] =>  0:13
 
   (emacs-lisp-mode)
   (assert aggressive-indent-mode)
-  (assert company-mode)
+  (assert corfu-mode)
   (assert eldoc-mode)
   (assert color-identifiers-mode) ;; Semantic colouring
 
@@ -19435,7 +19397,7 @@ CLOCK: [2025-04-10 Thu 14:04]--[2025-04-10 Thu 14:17] =>  0:13
 
   (org-mode)
   ;; TODO (assert eldoc-mode)
-  (assert company-mode t "Whoops, Org mode does not have Company enabled!")
+  (assert corfu-mode t "Whoops, Org mode does not have Corfu enabled!")
   (assert eldoc-mode)
   (assert eldoc-box-hover-mode)
 
