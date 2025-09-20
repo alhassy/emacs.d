@@ -1,396 +1,133 @@
-#+Description: This is file is generated from my init.org; do not edit.
-
-* Default                                           :global:
-
-** my_org_insert_link: cleverly insert a link copied to clipboard
- [[${1:`(clipboard-yank)`}][$2]] $0
-
-** begin: produce an org-mode block
-#+begin_${1:environment$(let*
-    ((block '("src" "example" "quote" "verse" "center" "latex" "html" "ascii"))
-     (langs '("c" "emacs-lisp" "lisp" "latex" "python" "sh" "haskell" "plantuml" "prolog"))
-     (type (yas-choose-value block)))
-     (concat type (when (equal type "src") (concat " " (yas-choose-value langs)))))}
- $0
-#+end_${1:$(car (split-string yas-text))}
-
-** s_org: src for org
-#+begin_src org
-$0
-#+end_src
-
-** s_agda2: src for agda2
-#+begin_src agda2
-$0
-#+end_src
-
-** s_any: src for any
-#+begin_src any
-$0
-#+end_src
-
-** s_emacs-lisp: src for emacs-lisp
-#+begin_src emacs-lisp
-$0
-#+end_src
-
-** s_shell: src for shell
-#+begin_src shell
-$0
-#+end_src
-
-** s_python: src for python
-#+begin_src python
-$0
-#+end_src
-
-** s_haskell: src for haskell
-#+begin_src haskell
-$0
-#+end_src
-
-** s_ruby: src for ruby
-#+begin_src ruby
-$0
-#+end_src
-
-** s_ocaml: src for ocaml
-#+begin_src ocaml
-$0
-#+end_src
-
-** s_dot: src for dot
-#+begin_src dot
-$0
-#+end_src
-
-** s_latex: src for latex
-#+begin_src latex
-$0
-#+end_src
-
-** s_org: src for org
-#+begin_src org
-$0
-#+end_src
-
-** s_js: src for js
-#+begin_src js
-$0
-#+end_src
-
-** s_css: src for css
-#+begin_src css
-$0
-#+end_src
-
-** s_sqlite: src for sqlite
-#+begin_src sqlite
-$0
-#+end_src
-
-** s_C: src for C
-#+begin_src C
-$0
-#+end_src
-
-** is_org: inline source for org
-src_org[:exports code]{$1} $0
-** is_agda2: inline source for agda2
-src_agda2[:exports code]{$1} $0
-** is_any: inline source for any
-src_any[:exports code]{$1} $0
-** is_emacs-lisp: inline source for emacs-lisp
-src_emacs-lisp[:exports code]{$1} $0
-** is_shell: inline source for shell
-src_shell[:exports code]{$1} $0
-** is_python: inline source for python
-src_python[:exports code]{$1} $0
-** is_haskell: inline source for haskell
-src_haskell[:exports code]{$1} $0
-** is_ruby: inline source for ruby
-src_ruby[:exports code]{$1} $0
-** is_ocaml: inline source for ocaml
-src_ocaml[:exports code]{$1} $0
-** is_dot: inline source for dot
-src_dot[:exports code]{$1} $0
-** is_latex: inline source for latex
-src_latex[:exports code]{$1} $0
-** is_org: inline source for org
-src_org[:exports code]{$1} $0
-** is_js: inline source for js
-src_js[:exports code]{$1} $0
-** is_css: inline source for css
-src_css[:exports code]{$1} $0
-** is_sqlite: inline source for sqlite
-src_sqlite[:exports code]{$1} $0
-** is_C: inline source for C
-src_C[:exports code]{$1} $0
-** e_org: example for org
-#+begin_example org
-$0
-#+end_example
-
-** e_agda2: example for agda2
-#+begin_example agda2
-$0
-#+end_example
-
-** e_any: example for any
-#+begin_example any
-$0
-#+end_example
-
-** e_emacs-lisp: example for emacs-lisp
-#+begin_example emacs-lisp
-$0
-#+end_example
-
-** e_shell: example for shell
-#+begin_example shell
-$0
-#+end_example
-
-** e_python: example for python
-#+begin_example python
-$0
-#+end_example
-
-** e_haskell: example for haskell
-#+begin_example haskell
-$0
-#+end_example
-
-** e_ruby: example for ruby
-#+begin_example ruby
-$0
-#+end_example
-
-** e_ocaml: example for ocaml
-#+begin_example ocaml
-$0
-#+end_example
-
-** e_dot: example for dot
-#+begin_example dot
-$0
-#+end_example
-
-** e_latex: example for latex
-#+begin_example latex
-$0
-#+end_example
-
-** e_org: example for org
-#+begin_example org
-$0
-#+end_example
-
-** e_js: example for js
-#+begin_example js
-$0
-#+end_example
-
-** e_css: example for css
-#+begin_example css
-$0
-#+end_example
-
-** e_sqlite: example for sqlite
-#+begin_example sqlite
-$0
-#+end_example
-
-** e_C: example for C
-#+begin_example C
-$0
-#+end_example
-
-** q_quote: quote
-#+begin_quote 
-$0
-#+end_quote
-
-** v_verse: verse
-#+begin_verse 
-$0
-#+end_verse
-
-** c_center: center
-#+begin_center 
-$0
-#+end_center
-
-** ex_export: export
-#+begin_export 
-$0
-#+end_export
-
-** p_parallel: parallel
-#+begin_parallel 
-$0
-#+columnbreak:
-
-#+end_parallel
-
-** d_details: details
-#+begin_details ${1:title}
-$0
-#+end_details
-
-** ed_edcomm: edcomm
-#+begin_edcomm ${1:editor}
-$0
-#+end_edcomm
-
-** doc_documentation: documentation
-#+begin_documentation ${1: mandatory entry name}
-$0
-#+end_documentation
-
-** def_latex-definitions: latex-definitions
-#+begin_latex-definitions 
-$0
-#+end_latex-definitions
-
-** ll_make_a_link: insert a link template
-${1:`(let* ((τ (read-string "Link type: "))
-            (δ (read-string "Link Description: "))
-            (⊤ (if (s-contains? ":" τ) τ (s-concat τ ":"))))
-       (format "[[%s][%s]]" ⊤ δ))`} $0
-
-** os-command: ⌘ Operating System Keyboard Symbol
-⌘
-** os_option: ⌥ Operating System Keyboard Symbol
-⌥
-** os_alt: ⌥ Operating System Keyboard Symbol
-⌥
-** os_control: ⌃ Operating System Keyboard Symbol
-⌃
-** os_shift: ⇧ Operating System Keyboard Symbol
-⇧
-** os_backspace: ⌫ Operating System Keyboard Symbol
-⌫
-** os_delete: ⌫ Operating System Keyboard Symbol
-⌫
-** os_delete_forward: ⌦ Operating System Keyboard Symbol
-⌦
-** os_enter: ⏎ Operating System Keyboard Symbol
-⏎
-** os_return: ⏎ Operating System Keyboard Symbol
-⏎
-** os_escape: ⎋ Operating System Keyboard Symbol
-⎋
-** os_tab_right: ⇥ Operating System Keyboard Symbol
-⇥
-** os_tab_left: ⇤ Operating System Keyboard Symbol
-⇤
-** os_caps_lock: ⇪ Operating System Keyboard Symbol
-⇪
-** os_eject: ⏏ Operating System Keyboard Symbol
-⏏
-
-** ll_console_log: Log some JS variables
-
-console.log("%c ******* LOOK HERE *******", "color: green; font-weight: bold;");
-console.log({ ${1:List the variables here whose values you want to log} });
-$0
-
-** uuidgen: Insert the result of “uuidgen” and copy it to the clipboard
-
-${1:`(-let [it (shell-command-to-string "uuidgen | tr '[:upper:]' '[:lower:]' |
-pbcopy; pbpaste")] (message "Copied to clipboard, uuid: %s" it) it)`}
-
-** loop:  Elisp's for each loop
-(dolist (${1:var} ${2:list-form})
-        ${3:body})
-
-** defun: Lisp functions
-(cl-defun ${1:fun-name} (${2:arguments})
-  "${3:documentation}"
-  $0)
-
-** cond: Elisp conditionals
-(cond (${1:scenario₁} ${2:response₁})
-      (${3:scenario₂} ${4:response₂}))
-
-** fun: Function declaration with type signature
-
-${1:fun-name} : ${2:arguments}
-$1 ${3:args} = ?$0
-
-** eqn_begin: Start a ≡-Reasoning block in Agda
-
-begin
-  ${1:complicated-side}
-$0≡⟨ ${3:reason-for-the-equality} ⟩
- ${2:simpler-side}
-∎
-
-** eqn_step: Insert a step in a ≡-Reasoning block in Agda
-≡⟨ ${2:reason-for-the-equality} ⟩
-  ${1:new-expression}
-$0
-
-** reply_opinionated_pantomath: What to say to, e.g., an arrogant academic
-
-Your certainty inspires me to continuing exploring, and I may arrive at your
-point of view, but I'm going to need more evidence first.
-
-** reply_em_dashes: Why use em dashes for parenthetical remarks?
-
-According to the “Canadian Style Guide” (CSG):
-
-   The em is an expansive, attention-seeking dash. It supplies much stronger
-   emphasis than the comma, colon or semicolon it often replaces. Positioned
-   around interrupting elements, em dashes have the opposite effect of
-   parentheses—em dashes emphasize; parentheses minimize.
-
-From “A Logical Approach to Discrete Math” (LADM), page ix:
-
-   We place a space on one side of an em dash ---here are examples--- in
-   order to help the reader determine whether the em dash begins or ends
-   a parenthetical remark. In effect, we are creating two symbols from one.
-   In longer sentences---and we do write long sentences from time to time---the
-   lack of space can make it difficult to see the sentence structure---especially
-   if the em dash is used too often in one sentence. Parenthetical remarks
-   delimited by parentheses (like this one) have a space on one side of each
-   parenthesis, so why not parenthetical remarks delimited by em dashes?
-
-Interestingly, according to the CSG, there should be no space before or after an
-em dash.  As such, it appears that the spacing is mostly stylistic; e.g., some
-people surround em-s with spaces on both sides.  In particular, when em-s are
-unmatched, I make no use of additional space ---indeed this form of one-sided
-parentheses without a space is how LADM is written, as can be seen at the top of
-page 3.
-
-** remark: top-level literate comment
-
-{{{remark(${1:thoughts})}}} $0
-
-** my_name: User's name
-`user-full-name`
-
-** my_email: User's email address
-`user-mail-address`
-
-** my_github: User's Github repoistory link
-https://github.com/alhassy/
-
-** my_emacsdrepo: User's version controlled Emacs init file
-https://github.com/alhassy/emacs.d
-
-** my_blog: User's blog website
-https://alhassy.github.io/
-
-** my_webpage: User's organisation website
-http://www.cas.mcmaster.ca/~alhassm/
-
-** my_twitter: User's Twitter profile
-https://twitter.com/musa314
-
-** my_masters_thesis
-A Mechanisation of Internal Galois Connections In Order Theory Formalised Without Meets
-https://macsphere.mcmaster.ca/bitstream/11375/17276/2/thesis.pdf
-
-
+** w-pr-template: Peer Review / Pull Request Template for Work
+I followed the testing instructions and everything look's good 😁
+
+Below is a detailed checklist of what I went through.
+
+--------------------------------------------------------------------------------
+
+1. [ ] Pull Request: The PR template was fully filled out.
+   - [ ] Clear description of the problem and how it was solved.
+   - [ ] I've cross-checked the description with the associated Jira ticket; and
+     everything is implemented.
+   - [ ] I've ticked-off the PR's check-boxes.
+   - [ ] Good use of bullet points (-) and code font (‵, ‷) to make the prose
+     easier to read.
+   - [ ] The commit messages are well-written.
+   - [ ] Travis CI succeeds.
+   - [ ] PR author annotated source code, with Github comments, before the review.
+     - Annotations guide the reviewer through the changes, showing which files to look at first and defending the reason behind each code modification.
+
+2. [ ] Functionality: The code behaves as the author intended.
+   - [ ] I was able to reproduce the bug on ~main~.
+   - [ ] Ran the code and used it as an end-user would.
+       Namely, I made a new form, submitted an instance, checked ~In-Progress~,
+     & ~Form Reports~.
+   - [ ]  I've tried all kinds of quotes and unicode, "𝒰"\‘ℕ’/𝒊′ℭ″𝑂؛𝒟⨾'∃',
+        input for text inputs; as well as special chars: +-_)(*&^%$#@!~`'".;><?/}{}[]|\.
+   - [ ] Followed the happy path in the provided testing instructions.
+     - Nope; none provided.
+   - [ ] Also tried the following edge case: ⋯ ⁉ ⋯
+
+3. [ ] Tests: There are new unit tests (but sadly no E2Es/integration).
+   - [ ] Meaningful: Tests actually test that the code is performing the
+     intended functionality.
+   - [ ] Ran associated E2Es / unit tests with the incantation: ⋯ ⁉ ⋯.
+   - [ ] I looked at the associated migrations file and ran the following SQL
+     query after running migrations and it works fine; then I ran the query
+     after running rollbacks and everything is as expected.
+     #+begin_src sql
+     ???
+     #+end_src
+   - [ ] Avoid global test fixtures and seeds, add data per-test.
+       TL;DR: To prevent test coupling and easily reason about the test flow, each test
+       should add and act on its own set of DB rows.
+
+4. [ ] Naming: Clear and informative names were chosen for top-level-items/variables/methods.
+
+5. [ ] Comments: New top-level-items/variables/methods have clear and useful
+   documentation.
+   - [ ] Sometimes the code is clear ---e.g., 5 lines perform a toggle---
+     but we can improve readability by providing a “comment as function”
+     ---e.g., making a ~toggle~ function, then calling it where it is used;
+     this new function is likely to be smaller than the original inlined use.
+
+     Some comments-as-functions have been suggested.
+
+6. [ ] Being Neighbourly: There was nearby code that could have been
+   improved/update, and suggestions have been left as to how to do so.
+   - We're likely to touch these files again in the future, so why not leave
+     things better than we found them 🚀
+
+7. [ ] Code Smells: Are there any [[https://blog.codinghorror.com/code-smells/][code smells?]]
+
+8. [ ] Syntax: I've read every line.
+   - Nope, there was some stuff I'm not familair with. If the PR authour can
+     jump on a call and walk me through them, that'd be awesome!
+   - [ ] I've left various suggestions and feedback, against specific lines
+     of code. Happy to discuss these further!
+   - [ ] I took my time while reviewing your code, and I'm not depending on
+     others to catch errors.
+
+9. [ ] Complexity: Another developer can easily understand and use this code when
+   they come across it in the future :-)
+
+10. [ ] Modulairty: Is there any redundant or duplicate code? Is the code as modular as possible?
+
+11. [ ] Backwards Compatiable: I made a form in ~main~, involving the work in
+    this branch, and it worked fine in this branch.
+    - I was able to edit the form, submit it, and checked that it looked find in ~Form Reports~.
+
+12. [ ] Best Practices: The following rules-of-thumb are adhered to, more or less.
+      #+html: <details>
+    - Remove some redundancy using a bit of laws of algorithmics, namely
+      + ~[𝒆𝒕𝒂-𝒓𝒆𝒅𝒖𝒄𝒕𝒊𝒐𝒏] ⋯(x => f(x))⋯  ≡ ⋯f⋯~
+      + ~[𝒊𝒇-𝒅𝒊𝒔𝒕𝒓𝒊𝒃𝒖𝒕𝒊𝒗𝒊𝒕𝒚] (a ? f(b) : f(c)) ≡ f(a ? b : c)~
+      which increase readability a tad.
+      # Especially when “f” is a lengthy expression; it may also be ideal to give
+      # “a ? b : c” a local name.
+    - Fail fast, validate arguments [we have some in-house validation util libraries]
+    - Be aware that ~0, "", []~ are all falsey values in JS: If a variable ~x~
+      can be one of those things, then ~if (x)~ is not always approriate; better
+      may be ~if(typeof x === 'integer')~ since this communicates two things (1)
+      the variable is defined, and (2) what it's type expected is.
+      + Likewise, better use ~typeof~ instead of ~x !== null~.
+    - You have variables declared a bit from their use sites; the distance
+      creates an unnecessary disconnect ---especially since you don't use these
+      variables elsewhere. Please relocate them to be closer to their use sites.
+    - Strings are sanitised
+    - Errors are caught; with ~try/catch~
+    - Global variables are avoided, when possible.
+    - ~const~ is preferred to ~let~; ~var~ should seldom be used.
+      - Use ~var~ and ~function~ when you want definitions hoisted to the top of
+        their enclosing scope.
+    - ~===~ is preferred to ~==~.
+    - Use default arguments instead of short-circuiting or conditionals
+      - ~f (x) { x = x || defaultValue; ⋯ }~ ≡ ~f (x = defaultValue) { ⋯ }~.
+      - Named parameters can also be optional, with default values:
+        ~f(obj) { let prop = obj.prop || defaultProp; ⋯}~ ≣ ~f ({prop =
+        defaultProp}) { ⋯ }~
+    - Unless you really need an array,  handled an indefinite number of
+      arguments using rest parameters: ~function f(...args) {⋯ // use ‘args’ as
+      an array}~ can be invoked ~f(x₁, x₂, …)~ _without_ array brackets; or as
+      ~f(...arr)~ if you have an array in-hand.
+    - Function arguments: 3 or fewer ideally
+    - If you need to declare an argument but are not using it, prefix it's name
+      with an underscore.
+    - Encapsulate conditionals in a separate _well-named_ function, if possible
+    - Avoid negative conditionals; e.g., by making use of well-choosen names.
+    - Use Demorgan's rules: ~!x && !y ≣ !(x || y)~ and ~!x || !y ≣ !(x && y)~.
+    - Use ~try/catch~ with ~async/await~; or promises with both ~then~ and ~catch~.
+    - Don't ignore rejected promises, log it to external logging service
+    - Related chunks of code are clearly demarcated.
+    - If an anonymous function is too long, more than 2 lines, give it a name:
+      E.g., in JS, ~arr.map(x => ...) ≣ arr.map( function
+      doingSomeComplexStuff(x) { return ...} )~.  The name aids in communicating
+      the intent, and is useful for debugging.
+    - [ES6] Braces are used for block scope, and not simulated using IIFEs.
+    - Avoid explicit newlines with ~+ "\n" +~ in-favour of Template Literals, which preserve line
+      breaks.
+    - Use Destructuring instead of explicit projections; aids in readability.
+      - Note∶ ~let y = x.y~ ≡ ~let {y} = x~ only holds when ~x~ is not ~null~
+        (and so when ~x~ is not a expression involving ~?.~).
+
+    #+html: </details>
