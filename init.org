@@ -13,7 +13,7 @@
 #+property: header-args :tangle init.el :comments link :results none :cache yes
 #+property: HEADER-ARGS+ :eval no-export
 #+export_file_name: index
- 
+
 In Emacs, I am only constrained by the limits of my imagination.  With
 extensibility hooks and Lisp, I am allowed to think and realise any thoughts. In
 contrast, dedicated apps may have constrained forms of extensibility out of
@@ -22,6 +22,17 @@ thoughts one can have./ For example, I am able to start doing a Weekly Review
 with a simple textual template but, with Lisp in-hand, I can move to an involved
 data-driven review that aggregates daily review data, compares it, and presents
 me with interactive prompts.
+
+* TODO COMMENT Pomodoro: Staying on track 🤔
+
+I love pomodoro, I've been using it for couple of years and I think it
+is my biggest productivity improvement. Some people might say that it is
+an overkill but for me is a huge success because of two main reasons:
+
+1. I get up, move around, stretch and relax my eyes every 30 minutes
+2. it forces me to focus a lot better, get into the zone faster and time
+   box every task
+3. 🔥 Ask myself: /Is what I'm doing important work? Or should I change gears?/
 
 * Abstract                                                           :ignore:
 :PROPERTIES:
@@ -1245,7 +1256,7 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 ;; ;; (defmacro when-idle (&rest body)
 ;;    ;; `(run-with-idle-timer 20 nil (lambda () ,@body)))
 ;; ;;
-;; 
+;;
 ;; ;; first this,
 ;; (setq gc-cons-threshold most-positive-fixnum ; 2^61 bytes
 ;;       gc-cons-percentage 0.6)
@@ -1257,7 +1268,7 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 ;;     (setq gc-cons-threshold 16777216 ; 16mb
 ;;           gc-cons-percentage 0.1)))
 #+end_src
- 
+
 [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Autoload.html][Autoloading]]: /Register the existence of a function, but put off loading the file
 that defines it./
 
@@ -1278,7 +1289,7 @@ that defines it./
 3. It normally causes a bunch of calls to the Emacs built-in function =autoload=,
    which creates stub functions that, when called, causes the /actual/ file to be
    loaded.
-   
+
 4. When a package is /activated/, this autoloads file is loaded.
 
 5. With =use-package=, we can use the =:commands= keyword to generate (autoload)
@@ -1775,7 +1786,7 @@ place where it was when you previously visited the same file.
 :PROPERTIES:
 :CREATED:  [2025-09-18 Thu 09:17]
 :END:
- 
+
 Emacs has two kinds of completion: ~completing-read~ which occurs in the
 minibuffer (e.g., when you press ~M-x~ and any kind of prompting command), and
 ~completion-at-point~ which is traditional auto-complete (e.g., complete the
@@ -1797,10 +1808,10 @@ out!
 ;; ★ While completing-read activates the minibuffer, completion-in-region displays a child frame at point.
 
 ;; A fun example: Get the name of a supported colour AND see the colour at the same time!
-(completing-read "Pick a colour:" (defined-colors-with-face-attributes))          ;; ⟵ In minibuffer 
+(completing-read "Pick a colour:" (defined-colors-with-face-attributes))          ;; ⟵ In minibuffer
 (completion-in-region (point) (1+ (point)) (defined-colors-with-face-attributes)) ;; ⟵ Right here, at point!
 #+end_src
- 
+
 😯 ~corfu~ is just a frontend for the built-in ~completion-at-point~; to get
 additional completion functions, we can use ~cape~.
 
@@ -1811,7 +1822,7 @@ user interface.
 :PROPERTIES:
 :CUSTOM_ID: Word-Completion
 :END:
- 
+
 #+begin_src emacs-lisp
 ;; In programming modes, M-g on a pop-up candidate to peek at its source code.
 ;; (Also, M-h to show its docs. Should be seldom needed, since docs pop-up by default.)
@@ -1850,7 +1861,7 @@ user interface.
 (defun my/extra-completion-candidates ()
   "Add extra CAPFs in this buffer, after existing CAPFs."
   ;; Completion At Point Extensions (This is the “.” key mentioned above.)
-  (use-package cape)  
+  (use-package cape)
   ;; Append, don’t clobber. Order matters: first CAPF that returns wins; and the later Capfs may not get a chance to run.
   ;;
   (setq-local completion-at-point-functions
@@ -1862,19 +1873,19 @@ user interface.
                        ;; At the end, if there's no match, look around and see if there's similar words lying around.
                        ;; E.g., in an Elisp comment, typing “comm” should finish to “comment”.
                        #'cape-dabbrev
-                       ;; Abbreviation expansions 
+                       ;; Abbreviation expansions
                        #'cape-abbrev
-                       ;; Eventually, give up and try the dictionary 
+                       ;; Eventually, give up and try the dictionary
                        #'cape-dict))))
 
 
-;; Add icons to the completions 
+;; Add icons to the completions
 (use-package kind-icon
   :disabled "Cute, but will ignore for now. It does look nice when completing paths."
   :after corfu
   :custom
   (kind-icon-blend-background nil)
-  (kind-icon-default-face 'corfu-default) 
+  (kind-icon-default-face 'corfu-default)
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 #+end_src
@@ -1888,13 +1899,13 @@ Let's enable [[https://company-mode.github.io/][“complete anything” mode]] -
 only need two characters to get going, which means word suggestions are provided
 and so I need only type partial words then tab to get the full word!
 
-#+begin_src emacs-lisp 
+#+begin_src emacs-lisp
 (use-package company
   :hook (prog-mode org-mode)
   :config
 
   (global-company-mode 1)
-  
+
    ;; Only 2 letters required for completion to activate.
    company-minimum-prefix-length 2
 
@@ -1913,7 +1924,7 @@ and so I need only type partial words then tab to get the full word!
 
    ;; Allow (lengthy) numbers to be eligible for completion.
    company-complete-number t
-   
+
    ;; M-⟪num⟫ to select an option according to its number.
    company-show-numbers t
 
@@ -2042,7 +2053,7 @@ All emoji names are lowercase. ◀
 :PROPERTIES:
 :CUSTOM_ID: Documentation-Pop-Ups
 :END:
- 
+
 Let [[https://github.com/expez/company-quickhelp][documentation pop-up]] when we pause on a completion.
 + For example, open an ELisp buffer and enter =s-j= and see a list of completions, including =s-join=,
   pause for a sec and a documentation tooltip appears.
@@ -2053,7 +2064,7 @@ This is very useful when editing in a particular coding language, say via
   :config
   (setq company-quickhelp-delay 0.1)
   (company-quickhelp-mode))
-  ;; Especially when learning a new language, looking up its definition/docstring can be helpful.  
+  ;; Especially when learning a new language, looking up its definition/docstring can be helpful.
 #+END_SRC
 
 ***** Get nice child frames when looking at completions candidates
@@ -2113,7 +2124,7 @@ them when we're done with them.
                    (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
                    (let ((kill-buffer-query-functions nil))
                      (dolist (b (buffer-list))
-                       (when (and (buffer-live-p b)                                  
+                       (when (and (buffer-live-p b)
                                   (string-match-p "\\`\\*helm" (buffer-name b)))
                          (with-demoted-errors "helm-kill: %S"
                            (kill-buffer b))))))))))
@@ -2131,7 +2142,7 @@ Test this works:
 :PROPERTIES:
 :CUSTOM_ID: Being-at-the-Helm-Completion-Narrowing-Framework
 :END:
- 
+
 Whenever we have a choice to make from a list, [[http://tuhdo.github.io/helm-intro.html][Helm]] provides possible
 completions and narrows the list of choices as we type.  This is extremely
 helpful for when switching between buffers, =C-x b=, and discovering & learning
@@ -3417,7 +3428,7 @@ out completely every leader we choose.
 - /It's not just aesthetics. It's about visual clarity./
 - [[https://www.reddit.com/r/emacs/comments/6jegis/comment/djeo89w/?utm_source=share&utm_medium=web2x&context=3][Here]] is an alternate approach: Add icons based on words mentioned in commit titles ---no leaders required.
 
-#+begin_details "Boring details ~ See linked article instead" 
+#+begin_details "Boring details ~ See linked article instead"
 #+begin_src emacs-lisp :tangle no
 (cl-defmacro pretty-magit (WORD ICON PROPS &optional (description "") NO-PROMPT?)
   "Replace sanitized WORD with ICON, PROPS and by default add to prompts."
@@ -6824,7 +6835,7 @@ This seems like an excellent way to debug macros.
 # By default ~M-.~ only works on definitions that live in files: If you press ~C-x
 # C-e~ at the end of ~(setq foo 1)~ then invoke ~M-.~ on “ foo ”
 #+begin_src emacs-lisp
-(😴 progn 
+(😴 progn
 (use-package elisp-def)
 (bind-key*  "M-." #'elisp-def emacs-lisp-mode-map)
 
@@ -6862,7 +6873,7 @@ This is so sweet at work (and possibly at home!): From anywhere,
 + [[kbd:C-x p e ]] ⇒ Show a list of recently visited files, in the current project
 + [[kbd:C-x p V ]] ⇒ Open a project that has been modified, but not pushed with version control.
 
-  
+
 /It can also jump to associated test files and run tests on a project./
 
 #+begin_src emacs-lisp :tangle no
@@ -8651,12 +8662,12 @@ don't need to be constantly made aware of the existence of the parentheses.
 :CREATED:  [2025-09-09 Tue 05:20]
 :END:
 
-#+begin_src emacs-lisp 
+#+begin_src emacs-lisp
 (use-package emr ;; 𝑬𝑴acs 𝑹refactor
   ;; Press “⌘-ENTER” to get a drop-down of relevant refactors. Select a region or else use thing at point.
   ;; NOTE: With hyperbole enabled in prog-mode, M-RET is “/smart/ jump to definition”:
   ;; This is like “M-.” but is smart enough to realize 'foo should jump to the form (defun foo …).
-  :bind (:map prog-mode-map              
+  :bind (:map prog-mode-map
               ("s-<return>" . emr-show-refactor-menu)))
 
 ;; Useful refactors
@@ -8679,7 +8690,7 @@ don't need to be constantly made aware of the existence of the parentheses.
     ;;
     ;; Let's add one!
     ;;
-    (emr-declare-command 'emr-el-tidy-requires 
+    (emr-declare-command 'emr-el-tidy-requires
       :title "tidy"
       :description "require"
       :modes 'emacs-lisp-mode
@@ -8824,19 +8835,20 @@ extract function and cond<->if out of the box.
 ;;;  C ⇒ Convolute: (f (g ∣(h x)))  ⇒ (g (f ∣(h x)))
 
 
+(use-package lispy)
 ;;;  There's a lot to remember, so make “x” show me what I can do!
 (lispy-define-key lispy-mode-map "x"
                   (pretty-hydra-define my/hydra-lispy-x (:exit t)
                     ("Refactor"
                      (("b" lispy-bind-variable "bind variable")
-                      ("u" lispy-unbind-variable "unbind let-var")                      
+                      ("u" lispy-unbind-variable "unbind let-var")
                       ("c" lispy-to-cond "if → cond")
-                      ("i" lispy-to-ifs "cond → if")                      
+                      ("i" lispy-to-ifs "cond → if")
                       ("d" lispy-to-defun "λ → 𝑓")
                       ("l" lispy-to-lambda "𝑓 → λ")
-                      ("D" lispy-extract-defun "extract defun") 
+                      ("D" lispy-extract-defun "extract defun")
                       (">" lispy-toggle-thread-last "toggle last-threaded form")
-                      ;; ("t" lispy-toggle-thread-last "toggle last-threaded form")                      
+                      ;; ("t" lispy-toggle-thread-last "toggle last-threaded form")
                       ;; ("k" lispy-extract-block "extract block")
                       ("f" lispy-flatten "flatten")
                       ("F" lispy-let-flatten "let-flatten"))
@@ -8845,12 +8857,12 @@ extract function and cond<->if out of the box.
                       ("r" lispy-eval-and-replace "eval and replace")
                       ("H" lispy-describe "describe in *help*")
                       ("h" lispy-describe-inline "describe inline")
-                      ;; ("j" lispy-debug-step-in "debug step in")                      
+                      ;; ("j" lispy-debug-step-in "debug step in")
                       ("m" lispy-cursor-ace "multi cursor")
                       ("s" save-buffer)
                       ("t" lispy-view-test "view test")
                       ("T" lispy-ert "ert")
-                      ;; ("w" lispy-show-top-level "where")                      
+                      ;; ("w" lispy-show-top-level "where")
                       ;; ("B" lispy-store-region-and-buffer "store list bounds")
                       ;; ("R" lispy-reverse "reverse")
                       ))))
@@ -8903,7 +8915,7 @@ extract function and cond<->if out of the box.
 + I would suggest just using =projectile-replace=.
 
 
-  
+
 ** COMMENT Are there any errors in my code?
 :PROPERTIES:
 :CUSTOM_ID: Are-there-any-errors-in-my-code
@@ -10000,6 +10012,29 @@ date; smile
 bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t+and+windy:+%w\\n'
 echo "~/.zhrc :: Hello, World!"
 #+end_src
+* Show me the diff!
+:PROPERTIES:
+:CREATED:  [2025-09-30 Tue 11:58]
+:END:
+
+#+begin_src emacs-lisp
+(defun my/show-string-diff (string1 string2)
+  "Show the difference between STRING1 and STRING2 using `diff` in Emacs."
+  (interactive "sEnter first string: \nsEnter second string: ")
+  (let ((temp-buffer1 (get-buffer-create "*Diff String 1*"))
+        (temp-buffer2 (get-buffer-create "*Diff String 2*")))
+    ;; Fill the first buffer with string1
+    (with-current-buffer temp-buffer1
+      (erase-buffer)
+      (insert string1))
+    ;; Fill the second buffer with string2
+    (with-current-buffer temp-buffer2
+      (erase-buffer)
+      (insert string2))
+    ;; Call the diff command on the two buffers
+    (diff temp-buffer1 temp-buffer2)))
+#+end_src
+
 * ------------------------------------------------------------------------------------------------------------------------
 * 🏃🏾 Engage with Agenda: Progressing tasks to completion via org-agenda & note taking
 
@@ -10864,6 +10899,8 @@ configurable with =appt-display-format= and =appt-audible= and
 =appt-display-mode-line=.
 
 #+begin_src emacs-lisp
+(require 'appt)
+
 (setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
 
 (setq appt-message-warning-time 12) ;; Show me a warning 12 minutes before an appointment
@@ -10872,18 +10909,19 @@ configurable with =appt-display-format= and =appt-audible= and
 
 ;; Ensure all of my Org entries are part of appt whenever it checks for an appointment
 (advice-add 'appt-check :before (lambda (&rest args) (org-agenda-to-appt t)))
+;; Alterantively: (add-hook 'org-finalize-agenda-hook #'org-agenda-to-appt)
 
-;; `appt-activate' eagerly runs every minute, slow it down to once every 10 minutes
+;; `appt-activate' eagerly runs every minute, slow it down to once every 60 minutes
 ;; Also, don't do anything when I save a file (namely, `appt-update-list').
 (advice-add 'appt-activate :after
             (lambda (&rest args)
               (remove-hook 'write-file-functions #'appt-update-list)
-              (timer-set-time appt-timer (current-time) 600)))
+              (timer-set-time appt-timer (current-time) (* 60 60))))
 #+end_src
 
 We can modify =appt-disp-window-function= (and =appt-delete-window-function=)
 so that, for example, we use an operating system pop-up instead of an Emacs window as in:
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 ;; (org-show-notification "Attention! You have a meeting in 5 minutes!") ;; Example use.
 ;; (org-notify "This message has a sound" t) ;; Show pop-up and play a beep.
 
@@ -10896,19 +10934,39 @@ so that, for example, we use an operating system pop-up instead of an Emacs wind
 *To add (or update) the appointments of your agenda files, use the command
 =org-agenda-to-appt=.*
 
-You can also use the appointment notification facility like an alarm
-clock. The command M-x appt-add adds entries to the appointment list
-without affecting your diary file. You delete entries from the
-appointment list with M-x appt-delete.
+You can also use the appointment notification facility like an alarm clock. The
+command =M-x appt-add= adds entries to the appointment list without affecting your
+diary file. You delete entries from the appointment list with =M-x appt-delete=.
 
 More:
 + [-] [[https://christiantietze.de/posts/2019/12/emacs-notifications/][Native macOS Notifications for Emacs Org Tasks and Appointments • Christian Tietze]]
   - MA: I already have nearly the same setup somehere. See =my-life.org=.
 + [X] [[https://elpa.gnu.org/packages/org-notify.html][GNU ELPA - org-notify]] :: Gives more messaging schemes; e.g., send a message
   and an email a few days in advance for deadlines.
++ [ ] [[https://github.com/legalnonsense/org-timed-alerts][GitHub - legalnonsense/org-timed-alerts: Orgmode notification warnings of
+  upcoming events]]
+
+  [[https://www.reddit.com/r/emacs/comments/k0kyi4/comment/gdjyw2w/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button][Author:]] “With regard to other packages, as far as I can tell, org-alert just
+  bombs alerts about upcoming deadlines. Org-notify doesn't use
+  libnotify/growl-type notifications and requires setting special
+  properties. Org-wild-notify is the closest but requires todo keywords or tags,
+  and doesn't allow much customization of the alert message (e.g., setting the
+  title or the alert string). For example, I want to know how much time I have
+  until the event, not just that the event is approaching. I also don't want to
+  worry about whether I set the proper TODO (or any TODO, really) or tag to get
+  alerts, hence relying solely on finding timestamps.”
+
+  MA: Whereas the built-in ~appt~ works against “appointments”, i.e., scheduled
+  and timestamped entries, this package only requires a timestamp.
+
 + [ ] [[https://github.com/spegoraro/org-alert][GitHub - spegoraro/org-alert: System notifications of org agenda items]]
 + [ ] [[https://github.com/akhramov/org-wild-notifier.el?tab=readme-ov-file][GitHub - akhramov/org-wild-notifier.el: Alert notifications for org-agenda]]
 + [ ] [[https://github.com/doppelc/org-notifications][GitHub - doppelc/org-notifications: Desktop notifications for your org-agenda/org-mode items]]
++ [ ] [[https://github.com/unhammer/org-upcoming-modeline/][GitHub - unhammer/org-upcoming-modeline: 📅 Show upcoming org event in modeline]]
+
+  MA: Same as ~appt~'s modeline behaviour, but provides additional Org-mode
+  specific behaivour such as jumping to the task by clicking on the modeline.
+
 ** Holy Days & Holidays
 In my agenda file, I have
 #+begin_src org :tangle no
@@ -11849,7 +11907,7 @@ For instance, now I can do:
 3. Find an image in some app, then drag-and-drop it into my note.
 4. Drag a file, such as a PDF, into my note to make it into an attachement!
 
-   
+
 Implementation:
 #+begin_src emacs-lisp
 (add-hook
@@ -11956,7 +12014,7 @@ TODO:
        (push-mark)
        (end-of-line)
        (org-toggle-inline-images nil (region-beginning) (region-end))))
-   
+
    ))
 
 ;; I was surprised I needed this; perhaps a system restart will show I don't need it.
@@ -12016,7 +12074,7 @@ may be a very useful tool.
   ;; :config
   ;; Insert an Org-mode link to the URL in the clipboard or kill-ring. Downloads
   ;; the page to get the HTML title.
-  ;; (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url) ;; Instead, see my/org-insert-link-dwim below. 
+  ;; (bind-key* "C-c C-l" #'org-web-tools-insert-link-for-url) ;; Instead, see my/org-insert-link-dwim below.
 #+end_src
 Other useful functions, needing pandoc:
 + ~org-web-tools-insert-web-page-as-entry~ and
@@ -13320,7 +13378,7 @@ Let's [[https://github.com/bnbeckwith/writegood-mode][write good]]!
                   "completely"
                   "literally"
                   "not rocket science"
-                  "outside the box"               
+                  "outside the box"
                   "some"
                   "simple"
                   "simply"
@@ -15284,7 +15342,7 @@ Further reading:
 #+begin_src emacs-lisp
 (😴 progn
 
-    
+
 (cl-defun my/insert-with-bg-colour (colour &rest text)
   "Inserts all of TEXT with background color COLOUR.
 
@@ -17306,6 +17364,45 @@ org-agenda-custom-commands
 :CREATED:  [2025-05-24 Sat 12:03]
 :header-args: :tangle no
 :END:
+** [[https://github.com/Duncan-Britt/emacs-archiver][Archiving org mode subtrees such that the branch and subtree is mirrored within the archive file.]]
+:PROPERTIES:
+:CREATED:  [2025-10-02 Thu 18:46]
+:END:
+
+When archiving, it can be nice to mirror the existing structure in the archive,
+however this package has some shortcomings. E.g., Consider ~*A \n Hello \n ** B \** C~.
+If I archive ~B~ and then archive ~C~, they will be archived under a parent called
+~A~. However, if I then archive ~A~, then a new node ~A~ is created rather than
+updating the existing one. I've reported this issue and will check back when
+it's resolved.
+#+begin_src emacs-lisp :tangle no
+(use-package archiver
+  :vc (:url "https://github.com/Duncan-Britt/emacs-archiver")
+  :custom (*archiver-agenda-archive-location*
+           (expand-file-name "~/path/to/your/agenda_file.org_archive"))
+  :bind (:map org-mode-map ("C-c C-x C-a" . archiver-archive-heading)))
+
+;; MA: Ignore a check, since symlinks are not accounted for correctly.
+(defun “archiver-archive-heading” ()
+  "Write the current Org subtree to the archive file.
+Merge it with the existing tree."
+  (interactive)
+  (save-excursion
+    (let ((open-file (buffer-file-name (window-buffer (minibuffer-selected-window)))))
+      ;; (when (not (member open-file org-agenda-files))
+      ;; (error "Cannot archive outside of agenda file"))
+      (let ((tree-to-archive (archiver-get-ancestry-and-subtree)))
+        (with-current-buffer (find-file-noselect (get-archive-location))
+          (let ((archive-tree (archiver-parse-buffer)))
+            (erase-buffer)
+            (goto-char (point-min))
+            (insert (tree--to-org-string (tree--merge-subtree archive-tree
+                                                              tree-to-archive))))))))
+  (archiver--delete-subheading))
+
+
+;; C-c C-x C-a ⇒ (org-archive-subtree-default)
+#+end_src
 
 ** TODO Browsing
 
@@ -18154,7 +18251,7 @@ I always want to be in Org-mode and input unicode:
   (-let [process (shell-command-to-string (format "lsof -i :%s +c0" port))]
     (-let [pid (ignore-errors (cl-second (s-split " " (cl-second (s-split "\n" process)))))]
       (shell-command (format "kill %s" pid))
-      (message process)))) 
+      (message process))))
 #+end_src
 
 *** my/docker-stop: Stop all containers that mention CTR in their name, image, command, or container id
@@ -18332,7 +18429,7 @@ my VSCoder counterparts.
   (nyan-mode my/sharing-screen?)
 
   ;; Who did what and when?
-  ;; (use-package blamer-mode)  
+  ;; (use-package blamer-mode)
   (global-blamer-mode my/sharing-screen?)
 
   ;; Make things look like VSCode; reduce friction with others
@@ -19133,7 +19230,7 @@ scrolls down a screen-ful rather than introduce a new item. Let's fix this.
 :END:
 
 #+begin_src emacs-lisp
-(😴 progn 
+(😴 progn
 (defib my/property-button ()
   "Clicking at the start of the :PROPERTIES: line prompts for adding a new Org property."
   (let ((case-fold-search t))
@@ -19169,7 +19266,7 @@ Cool]].
 
 #+begin_src emacs-lisp
 (😴 progn
-    
+
 (defun my/open-::-file-path (path)
   "PATH is something like FooModule::72 or FooModule::interface_bar"
   (-let [(name regex) (s-split "::" path)]
@@ -19276,7 +19373,7 @@ everything when doing the actual lookup, variations in capitalisation such as
     targets))
 
 (😴 progn
-    
+
 (setq my/radio-targets (get-radio-targets)
     my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
 
@@ -19337,7 +19434,7 @@ details, [[https://github.com/termitereform/JunkPile/blob/master/HyperboleNotes2
 :END:
 #+begin_src emacs-lisp
 ;; E.g., in ELisp mode, the following is clickable and looks nice: [[info:man][Read the docs!]]
-;; 
+;;
 ;; In particular, when I tangle my init.org into a Lisp file, init.el, it has Org links
 ;; back to the original source section in Org, which I can then click to jump to, quickly.
 ;;

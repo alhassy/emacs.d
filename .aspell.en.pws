@@ -1,4 +1,4 @@
-personal_ws-1.1 en 455 
+personal_ws-1.1 en 460 
 ACSII
 AST
 ASTs
@@ -6,6 +6,7 @@ Abeer
 Abu
 Administrivia
 Adulting
+Aeroplan
 Agda's
 Akram
 AlMahdi
@@ -18,6 +19,7 @@ Antitonicity
 Autoloading
 Booleans
 Bruijn
+CDN
 CHECKBOXES
 Carette
 Classpath
@@ -142,6 +144,7 @@ Tcl
 Templating
 TypeScript
 Typecheck
+USD
 Unbundling
 Uncomment
 Yay
@@ -207,6 +210,7 @@ config
 connectedness
 continous
 contrapositive
+customisations
 datatypes
 deallocate
 deallocated
@@ -320,6 +324,7 @@ metatheorems
 metavariables
 microservices
 minibuffer
+mins
 mixfix
 modularisation
 modus

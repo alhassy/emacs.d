@@ -57,7 +57,7 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 ;; ;; (defmacro when-idle (&rest body)
 ;;    ;; `(run-with-idle-timer 20 nil (lambda () ,@body)))
 ;; ;;
-;; 
+;;
 ;; ;; first this,
 ;; (setq gc-cons-threshold most-positive-fixnum ; 2^61 bytes
 ;;       gc-cons-percentage 0.6)
@@ -130,16 +130,16 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
     :config
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-  
+
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-  
+
       ;; Prevent undo tree files from polluting your git repo
       (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-  
+
   ;; Always have it on
   (global-undo-tree-mode)
-  
+
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -278,7 +278,7 @@ installs of packages that are not in our `my/installed-packages' listing.
 (defun my/extra-completion-candidates ()
   "Add extra CAPFs in this buffer, after existing CAPFs."
   ;; Completion At Point Extensions (This is the “.” key mentioned above.)
-  (use-package cape)  
+  (use-package cape)
   ;; Append, don’t clobber. Order matters: first CAPF that returns wins; and the later Capfs may not get a chance to run.
   ;;
   (setq-local completion-at-point-functions
@@ -290,19 +290,19 @@ installs of packages that are not in our `my/installed-packages' listing.
                        ;; At the end, if there's no match, look around and see if there's similar words lying around.
                        ;; E.g., in an Elisp comment, typing “comm” should finish to “comment”.
                        #'cape-dabbrev
-                       ;; Abbreviation expansions 
+                       ;; Abbreviation expansions
                        #'cape-abbrev
-                       ;; Eventually, give up and try the dictionary 
+                       ;; Eventually, give up and try the dictionary
                        #'cape-dict))))
 
 
-;; Add icons to the completions 
+;; Add icons to the completions
 (use-package kind-icon
   :disabled "Cute, but will ignore for now. It does look nice when completing paths."
   :after corfu
   :custom
   (kind-icon-blend-background nil)
-  (kind-icon-default-face 'corfu-default) 
+  (kind-icon-default-face 'corfu-default)
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
@@ -318,7 +318,7 @@ installs of packages that are not in our `my/installed-packages' listing.
                    (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
                    (let ((kill-buffer-query-functions nil))
                      (dolist (b (buffer-list))
-                       (when (and (buffer-live-p b)                                  
+                       (when (and (buffer-live-p b)
                                   (string-match-p "\\`\\*helm" (buffer-name b)))
                          (with-demoted-errors "helm-kill: %S"
                            (kill-buffer b))))))))))
@@ -1413,7 +1413,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; interactive macro-expander:1 ends here
 
 ;; [[file:init.org::*Smart jumping to definitions][Smart jumping to definitions:1]]
-(😴 progn 
+(😴 progn
 (use-package elisp-def)
 (bind-key*  "M-." #'elisp-def emacs-lisp-mode-map)
 
@@ -1514,7 +1514,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
   ;; Press “⌘-ENTER” to get a drop-down of relevant refactors. Select a region or else use thing at point.
   ;; NOTE: With hyperbole enabled in prog-mode, M-RET is “/smart/ jump to definition”:
   ;; This is like “M-.” but is smart enough to realize 'foo should jump to the form (defun foo …).
-  :bind (:map prog-mode-map              
+  :bind (:map prog-mode-map
               ("s-<return>" . emr-show-refactor-menu)))
 
 ;; Useful refactors
@@ -1537,7 +1537,7 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
     ;;
     ;; Let's add one!
     ;;
-    (emr-declare-command 'emr-el-tidy-requires 
+    (emr-declare-command 'emr-el-tidy-requires
       :title "tidy"
       :description "require"
       :modes 'emacs-lisp-mode
@@ -1658,19 +1658,20 @@ Order requires alphabetically and remove duplicates."
 ;;;  C ⇒ Convolute: (f (g ∣(h x)))  ⇒ (g (f ∣(h x)))
 
 
+(use-package lispy)
 ;;;  There's a lot to remember, so make “x” show me what I can do!
 (lispy-define-key lispy-mode-map "x"
                   (pretty-hydra-define my/hydra-lispy-x (:exit t)
                     ("Refactor"
                      (("b" lispy-bind-variable "bind variable")
-                      ("u" lispy-unbind-variable "unbind let-var")                      
+                      ("u" lispy-unbind-variable "unbind let-var")
                       ("c" lispy-to-cond "if → cond")
-                      ("i" lispy-to-ifs "cond → if")                      
+                      ("i" lispy-to-ifs "cond → if")
                       ("d" lispy-to-defun "λ → 𝑓")
                       ("l" lispy-to-lambda "𝑓 → λ")
-                      ("D" lispy-extract-defun "extract defun") 
+                      ("D" lispy-extract-defun "extract defun")
                       (">" lispy-toggle-thread-last "toggle last-threaded form")
-                      ;; ("t" lispy-toggle-thread-last "toggle last-threaded form")                      
+                      ;; ("t" lispy-toggle-thread-last "toggle last-threaded form")
                       ;; ("k" lispy-extract-block "extract block")
                       ("f" lispy-flatten "flatten")
                       ("F" lispy-let-flatten "let-flatten"))
@@ -1679,12 +1680,12 @@ Order requires alphabetically and remove duplicates."
                       ("r" lispy-eval-and-replace "eval and replace")
                       ("H" lispy-describe "describe in *help*")
                       ("h" lispy-describe-inline "describe inline")
-                      ;; ("j" lispy-debug-step-in "debug step in")                      
+                      ;; ("j" lispy-debug-step-in "debug step in")
                       ("m" lispy-cursor-ace "multi cursor")
                       ("s" save-buffer)
                       ("t" lispy-view-test "view test")
                       ("T" lispy-ert "ert")
-                      ;; ("w" lispy-show-top-level "where")                      
+                      ;; ("w" lispy-show-top-level "where")
                       ;; ("B" lispy-store-region-and-buffer "store list bounds")
                       ;; ("R" lispy-reverse "reverse")
                       ))))
@@ -2070,9 +2071,27 @@ fonts (•̀ᴗ•́)و"
                   (setq my/weather-posframe-visible (not my/weather-posframe-visible))))
     map))
 
+;; [[file:init.org::*Show me the diff!][Show me the diff!:1]]
+(defun my/show-string-diff (string1 string2)
+  "Show the difference between STRING1 and STRING2 using `diff` in Emacs."
+  (interactive "sEnter first string: \nsEnter second string: ")
+  (let ((temp-buffer1 (get-buffer-create "*Diff String 1*"))
+        (temp-buffer2 (get-buffer-create "*Diff String 2*")))
+    ;; Fill the first buffer with string1
+    (with-current-buffer temp-buffer1
+      (erase-buffer)
+      (insert string1))
+    ;; Fill the second buffer with string2
+    (with-current-buffer temp-buffer2
+      (erase-buffer)
+      (insert string2))
+    ;; Call the diff command on the two buffers
+    (diff temp-buffer1 temp-buffer2)))
+;; Show me the diff!:1 ends here
+
 ;; [[file:init.org::*Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/][Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:1]]
 ;; I like to write everything in one massive file, and the agenda should consult it.
-(setq org-agenda-files (list "~/Dropbox/my-life.org"))
+(setq org-agenda-files (list (f-expand "~/Dropbox/my-life.org")))
 ;; Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:1 ends here
 
 ;; [[file:init.org::*Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/][Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:2]]
@@ -2621,6 +2640,8 @@ or press “v l 30 RET r” to view 30 entries."
 ;; Show me the agenda when I've been idle for 10 minutes:1 ends here
 
 ;; [[file:init.org::*Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)][Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1]]
+(require 'appt)
+
 (setq appt-display-duration 30) ;; Show reminder window for 30 seconds please
 
 (setq appt-message-warning-time 12) ;; Show me a warning 12 minutes before an appointment
@@ -2629,14 +2650,25 @@ or press “v l 30 RET r” to view 30 entries."
 
 ;; Ensure all of my Org entries are part of appt whenever it checks for an appointment
 (advice-add 'appt-check :before (lambda (&rest args) (org-agenda-to-appt t)))
+;; Alterantively: (add-hook 'org-finalize-agenda-hook #'org-agenda-to-appt)
 
-;; `appt-activate' eagerly runs every minute, slow it down to once every 10 minutes
+;; `appt-activate' eagerly runs every minute, slow it down to once every 60 minutes
 ;; Also, don't do anything when I save a file (namely, `appt-update-list').
 (advice-add 'appt-activate :after
             (lambda (&rest args)
               (remove-hook 'write-file-functions #'appt-update-list)
-              (timer-set-time appt-timer (current-time) 600)))
+              (timer-set-time appt-timer (current-time) (* 60 60))))
 ;; Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):1 ends here
+
+;; [[file:init.org::*Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt)][Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):2]]
+;; (org-show-notification "Attention! You have a meeting in 5 minutes!") ;; Example use.
+;; (org-notify "This message has a sound" t) ;; Show pop-up and play a beep.
+
+;; With this, I now see a pop-up notification every `appt-display-interval' minutes
+(setq appt-disp-window-function
+      (lambda (remaining new-time msg)
+        (org-show-notification (format "⟪In %s minutes⟫ %s" remaining msg))))
+;; Get in-Emacs notifications of upcoming appointments by running (org-agenda-to-appt):2 ends here
 
 ;; [[file:init.org::*Holy Days & Holidays][Holy Days & Holidays:2]]
 (defun my/holiday-islamic (month day event-title url-to-learn-more)
@@ -3319,7 +3351,7 @@ TODO:
        (push-mark)
        (end-of-line)
        (org-toggle-inline-images nil (region-beginning) (region-end))))
-   
+
    ))
 
 ;; I was surprised I needed this; perhaps a system restart will show I don't need it.
@@ -3916,7 +3948,7 @@ the character 𝓍 before and after the selected text."
                   "completely"
                   "literally"
                   "not rocket science"
-                  "outside the box"               
+                  "outside the box"
                   "some"
                   "simple"
                   "simply"
@@ -4751,7 +4783,7 @@ Further reading:
 ;; [[file:init.org::*Capture method][Capture method:1]]
 (😴 progn
 
-    
+
 (cl-defun my/insert-with-bg-colour (colour &rest text)
   "Inserts all of TEXT with background color COLOUR.
 
@@ -6012,7 +6044,7 @@ The following package fixes this issue:
 ;; Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:3 ends here
 
 ;; [[file:init.org::*~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property][~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property:1]]
-(😴 progn 
+(😴 progn
 (defib my/property-button ()
   "Clicking at the start of the :PROPERTIES: line prompts for adding a new Org property."
   (let ((case-fold-search t))
@@ -6035,7 +6067,7 @@ The following package fixes this issue:
 
 ;; [[file:init.org::*~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”][~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1]]
 (😴 progn
-    
+
 (defun my/open-::-file-path (path)
   "PATH is something like FooModule::72 or FooModule::interface_bar"
   (-let [(name regex) (s-split "::" path)]
@@ -6121,7 +6153,7 @@ The following package fixes this issue:
     targets))
 
 (😴 progn
-    
+
 (setq my/radio-targets (get-radio-targets)
     my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
 
