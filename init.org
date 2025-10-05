@@ -8915,6 +8915,27 @@ extract function and cond<->if out of the box.
 + I would suggest just using =projectile-replace=.
 
 
+--------------------------------------------------------------------------------
+
+TODO Things to read
++ [ ] [[https://lispcookbook.github.io/cl-cookbook/debugging.html][CL Debugging]]
++ [ ] [[https://lispcookbook.github.io/cl-cookbook/emacs-ide.html#editing-with-parentheses][Using Emacs as an IDE]]
++ [ ] [[https://github.com/Fuco1/smartparens][GitHub - Fuco1/smartparens: Minor mode for Emacs that deals with parens pairs and tries to be smart about it.]]
++ [ ] [[https://github.com/promethial/paxedit/tree/48df0a26285f68cd20ea64368e7bf2a5fbf13135][GitHub - promethial/paxedit at 48df0a26285f68cd20ea64368e7bf2a5fbf13135]]
++ [ ] [[https://howardabrams.com/hamacs/ha-programming-elisp.html#org0313769][Lispy Configuration]]
++ [ ] [[https://emacs.stackexchange.com/questions/32733/emacs-lisp-refactoring-add-variable-to-surrounding-let][Emacs lisp refactoring - add variable to surrounding let - Emacs Stack Exchange]]
++ [ ] [[https://thewanderingcoder.com/2015/02/refactoring-beginning-emacs-lisp-i-adding-tests/][Refactoring “Beginning Emacs Lisp”: I: Adding Tests | Sean Miller: The Wandering Coder]]
++ [ ] [[https://thewanderingcoder.com/2015/02/refactoring-beginning-emacs-lisp-ii/][Refactoring “Beginning Emacs Lisp”: II | Sean Miller: The Wandering Coder]]
++ [ ] [[https://thewanderingcoder.com/2015/02/emacs-lisp-adding-tests-ert-runner-and-overseer/][Emacs Lisp: Adding Tests: ert-runner and overseer | Sean Miller: The Wandering Coder]]
++ [ ] [[https://github.com/emacs-elsa/Elsa?tab=readme-ov-file][GitHub - emacs-elsa/Elsa: Emacs Lisp Static Analyzer and gradual type system.]]
++ [ ] [[https://isamert.net/2023/08/14/elisp-editing-development-tips.html#m-x-ielm][Elisp editing/development tips | isamert.net]]
++ [ ] [[https://github.com/alphapapa/emacs-package-dev-handbook?tab=readme-ov-file#debugging][@ #debugging - alphapapa/emacs-package-dev-handbook: An Emacs package development handbook. Built with Emacs, by Emacs package developers, for Emacs package developers.]]
++ [ ] [[https://200ok.ch/posts/2020-10-01_introduction_to_profiling_in_emacs.html][Introduction to profiling in Emacs]]
++ [ ] [[https://www.dotemacs.de/recovery.html][How to avoid errors in your dotfile]]
++ [ ] [[https://irreal.org/blog/?p=6508][Emacs Lisp Development Tools | Irreal]]
++ [ ] https://www.reddit.com/r/emacs/comments/10bcvkk/elisp_language_server/
++ [ ] [[https://emacs.stackexchange.com/questions/2949/what-are-good-tools-for-emacs-package-development][elisp - What are good tools for Emacs package development? - Emacs Stack Exchange]]
+
 
 ** COMMENT Are there any errors in my code?
 :PROPERTIES:

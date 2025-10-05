@@ -1690,17 +1690,19 @@ Order requires alphabetically and remove duplicates."
                       ;; ("R" lispy-reverse "reverse")
                       ))))
 
-; (my/hydra-lispy-x/body)
+;; (my/hydra-lispy-x/body)
 
 
-; (cl-inspect '(+ 2 (print 40)))
+;; (cl-inspect '(+ 2 (print 40)))
 
 
 ;;  “a 𝓍” to mark a subform, or “𝓃 m”, then “C-1” to toggle its docs inline. Only one doc visible at a time.
-; (list #'message #'identity #'mapcar)
+;; (list #'message #'identity #'mapcar)
 
 ;; f/b ⇒ move forward/backward between forms
 ;; f/b ⇒ move forward/backard between forms
+
+
 ;;; xd ⇒ replace lambda with defun (saved to kill ring!)
 ;;; xc ⇒ replace arbitrarly nested IFs to COND 😻
 ;;; xi ⇒ replace COND with nested IFs
