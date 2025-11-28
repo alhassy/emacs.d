@@ -9,8 +9,8 @@
     ;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
 ;; Personal instructions for a new machine:5 ends here
 
-(setq custom-file "~/.emacs.d/custom.el")
-(ignore-errors (load custom-file)) ;; It may not yet exist.
+;; Disable custom-file - all settings managed in init.el/init.org
+(setq custom-file (make-temp-file "emacs-custom-"))
 
 (setq user-full-name    "Musa Al-hassy"
       user-mail-address "alhassy@gmail.com")
@@ -109,11 +109,13 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
           (which-key-setup-side-window-bottom)
           (setq which-key-idle-delay 0.05))
 
+(eval-and-compile (require 'dash nil t)) ;; Needed at compile-time for anaphoric macros
 (use-package dash :demand t) ;; "A modern list library for Emacs"
 (use-package s :demand t)    ;; "The long lost Emacs string manipulation library".
 (use-package f :demand t)    ;; Library for working with system files; ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 
 (require 's nil t) ;; Ensure s is loaded before using s-collapse-whitespace
+(declare-function s-collapse-whitespace "s" (s))
 (defvar my/personal-machine?
   (if (fboundp 's-collapse-whitespace)
       (equal "Musa's MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
@@ -1772,6 +1774,14 @@ Order requires alphabetically and remove duplicates."
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
 
+;; Open my-life.org on startup instead of *scratch*
+(setq initial-buffer-choice
+      (lambda ()
+        (let ((buf (find-file-noselect "~/Dropbox/my-life.org")))
+          (with-current-buffer buf
+            (font-lock-update))
+          buf)))
+
 (defun display-startup-echo-area-message ()
   "The message that is shown after ‘user-init-file’ is loaded."
   (message
@@ -3188,6 +3198,10 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
 
 ;; [[file:init.org::*Capture: Now that I know how to query my agenda, how do I get things into it efficiently?][Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1]]
 (eval-and-compile (require 's nil t)) ;; Needed for s-replace-regexp in def-capture macro
+(declare-function s-replace-regexp "s" (regexp replacement s &optional literal))
+(declare-function s-contains\? "s" (needle s &optional ignore-case))
+(declare-function s-replace "s" (old new s))
+(declare-function s-trim "s" (s))
 (cl-defmacro def-capture (name location template &rest forms)
   "Creates a method “my/capture-NAME”, which opens a capture buffer named NAME showing TEMPLATE.
 When you press `C-c C-c`, the note is saved as an entry (ie TEMPLATE should start with “* ”.)
@@ -3210,7 +3224,7 @@ Usage:
 2.     C-u M-x my/capture-NAME  ⇒ Jump to my LOCATION.
 3. C-u C-u M-x my/capture-NAME  ⇒ Goto last note stored (by any my/capture-* method).
 "
-  `(defun ,(intern (concat "my/capture-" (s-replace-regexp " " "-" (downcase name)))) (&optional prefix)
+  `(defun ,(intern (concat "my/capture-" (replace-regexp-in-string " " "-" (downcase name)))) (&optional prefix)
      (interactive "p")
      (let (;; Temporarily pause any clocking hooks
            (org-clock-in-hook nil)
@@ -3432,9 +3446,9 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 
 ;; [[file:init.org::#Pretty-Lists-Markers][Pretty Lists Markers:1]]
 ;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
-(cl-loop for (x y z) in '(("+" "◦" *)
-                       ("-" "•" *)
-                       ("*" "⋆" +))
+(cl-loop for (x y z) in '(("+" "◦" "*")
+                       ("-" "•" "*")
+                       ("*" "⋆" "+"))
       do (font-lock-add-keywords 'org-mode
                                  `((,(format "^ %s\\([%s]\\) " z x)
                                     (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
@@ -3518,7 +3532,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 
 ;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:2]]
 (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
-(org-mode-restart)
+;; Note: org-mode-restart only works in org buffers, not at init time
 ;; Making Block Delimiters Less Intrusive:2 ends here
 
 ;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:3]]
@@ -6042,27 +6056,7 @@ method."
    (bookmark--jump-via bookmark #'pop-to-buffer-same-window)))
 ;; Bookmarks: Quick naviagation to commonly visited locations:1 ends here
 
-;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:2]]
-* A
-* B
-#+end_src Then I invoke ~C-x r m B~ on the second line. Then, ~C-x r b B~ jumps to the
-correct location 😁 Then, I add some content under heading ~A~, save and close the
-file. Then, ~C-x r b B~ jumps to the wrong location 😧
-
-The following package fixes this issue:
-#+begin_src emacs-lisp
-(use-package org-bookmark-heading)
-;; Bookmarks: Quick naviagation to commonly visited locations:2 ends here
-
 ;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:3]]
-* A
-* B
-#+end_src Then I invoke ~C-x r m B~ on the second line. Then, ~C-x r b B~ jumps to the
-correct location 😁 Then, I add some content under heading ~A~, save and close the
-file. Then, ~C-x r b B~ jumps to the wrong location 😧
-
-The following package fixes this issue:
-#+begin_src emacs-lisp
 (use-package org-bookmark-heading)
 ;; Bookmarks: Quick naviagation to commonly visited locations:3 ends here
 
@@ -6271,189 +6265,18 @@ The following package fixes this issue:
     ;; Make sure point and context are visible.
     (org-fold-show-context)))
 
-(defib my/radio-target ()
-  "Jump to the definition of this word, as an Org radio target"
-  (let ((case-fold-search t)
-        (radio nil))
-    (if (or (looking-at my/radio-regex)
-            (save-excursion
-              (re-search-backward "\\b")
-              (looking-at my/radio-regex)))
-        (progn (setq radio (downcase (match-string-no-properties 0)))
-               (ibut:label-set radio
-                               (match-beginning 0)
-                               (match-end 0))
-               (hact 'my/jump-to-radio radio)))))
+(with-eval-after-load 'hyperbole
+  (defib my/radio-target ()
+    "Jump to the definition of this word, as an Org radio target"
+    (let ((case-fold-search t)
+          (radio nil))
+      (if (or (looking-at my/radio-regex)
+              (save-excursion
+                (re-search-backward "\\b")
+                (looking-at my/radio-regex)))
+          (progn (setq radio (downcase (match-string-no-properties 0)))
+                 (ibut:label-set radio
+                                 (match-beginning 0)
+                                 (match-end 0))
+                 (hact 'my/jump-to-radio radio))))))
 ;; Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/:1 ends here
-
-;; [[file:init.org::*Testing that things are as they should be][Testing that things are as they should be:1]]
-(😴 progn
-  ;; TODO: Move the next bunch of lines up somewhere
-  (add-hook 'prog-mode-hook 'corfu-mode)
-  (add-hook 'org-mode-hook 'corfu-mode)
-  (add-hook 'org-mode-hook (lambda ()
-                             (org-eldoc-load)
-                             (eldoc-mode)
-                             (eldoc-box-hover-mode)
-                             (require 'org-capture)))
-  (setq browse-url-browser-function 'browse-url-default-browser)
-
-
-  (switch-to-buffer "*test*")
-  (require 'cl) ;; get `assert` macro
-  (require 'ert) ;; get `should` macro
-
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;                                                                                ;;
-  ;; When programming, indentation is automatic & I have auto-complete              ;;
-  ;;                                                                                ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-  (emacs-lisp-mode)
-  (assert aggressive-indent-mode)
-  (assert corfu-mode)
-  (assert eldoc-mode)
-  (assert color-identifiers-mode) ;; Semantic colouring
-
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;                                                                                ;;
-  ;; When I'm note-taking, I have a nice environment                                ;;
-  ;;                                                                                ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-  (org-mode)
-  ;; TODO (assert eldoc-mode)
-  (assert corfu-mode t "Whoops, Org mode does not have Corfu enabled!")
-  (assert eldoc-mode)
-  (assert eldoc-box-hover-mode)
-
-  ;; C-RET makes a new org heading with a pink :CREATED: property
-  (execute-kbd-macro (kbd "C-<return>"))
-  (insert "My neato notes")
-  ;;
-  ;; TODO assert fancy bullets are being used
-  ;; Checks that CREATED equals today's date, and not something arbitrary.
-  (should (s-matches? (format-time-string "\\[%Y-%m-%d %a %H:%M\\]")
-                      (org-entry-get (point) "CREATED")))
-  ;; TODO Assert that the :CREATED: property is a nice pink
-  ;; (assert (progn (beginning-of-buffer) (re-search-forward ":PROPERTIES:") (beginning-of-line)
-  ;;                (should (equal (get-text-property (point) 'face) 'org-drawer))
-  ;;                (should (should (equal (face-attribute 'org-drawer :foreground)  "LightPink1")))
-  ;;                (should (equal (face-attribute 'org-drawer :height) 0.9)))
-  ;;         (should (equal (face-attribute 'org-drawer :slant) 'italic)))
-  ;; TODO assert PROPERTIES, LOGBOOK, word and :END: words are invisible?
-
-  ;; Let's add a schedule and deadline
-  (execute-kbd-macro (kbd "C-c C-s <return>"))
-  (execute-kbd-macro (kbd "C-c C-d <return>"))
-  ;; Assert the second line, the SCHEDULED: and DEADLINE: have nice icons
-  (should (org-entry-get (point) "SCHEDULED"))
-  (should (org-entry-get (point) "DEADLINE"))
-  ;; TODO (progn (beginning-of-buffer) (re-search-forward "SCHEDULED:") (assert (string-equal (get-text-property (point) 'display) "📆 ")))
-  ;; TODO (progn (beginning-of-buffer) (re-search-forward "DEADLINE:")  (assert (string-equal (get-text-property (point) 'display) "🎯 ")))
-
-  ;; Speed keys are enabled, so we can start by pressing “t”
-  (assert org-use-speed-commands)
-  (beginning-of-buffer)
-  (execute-kbd-macro (kbd "t i")) ;; Enter “INVESTIGATED” state
-  (should (string-equal (org-entry-get (point) "TODO") "INVESTIGATED"))
-
-  ;; check all of my workflow states are present
-  (should (equal org-todo-keywords '((sequence "TODO(t)" "INVESTIGATED(i)" "STARTED(s)" "|" "PAUSED(p@/!)" "WAITING(w)" "APPROVED(a)" "DONE(d)" "CANCELLED(c@)"))))
-  (should (equal org-log-done 'time))
-
-  ;; TODO When I “Clock-In” to a task, I'm in the STARTED state.
-  (execute-kbd-macro (kbd "C-c C-x C-i"))
-  ;; TODO (should (string-equal (org-entry-get (point) "TODO") "STARTED"))
-
-  ;; TODO switch to scratch buffer, then press C-c SPC, then confirm I'm at the currently clocked-in task
-  (scratch-buffer)
-  (should (equal (buffer-name) "*scratch*"))
-  (execute-kbd-macro (kbd "C-c SPC"))
-  (should (equal (buffer-name) "*test*"))
-  (should (equal (org-get-heading) "INVESTIGATED My neato notes"))
-
-  ;; TODO Make a note, via C-c C-z, and confirm the note icon looks pretty.
-  ;; TODO Finally, clock out and check that the clock icon looks pretty.
-  ;; (progn (beginning-of-buffer) (re-search-forward "CLOCK:") (should (equal (get-text-property (point) 'display) "⏰ ")))
-  (execute-kbd-macro (kbd "C-c C-x C-o"))
-
-  ;; Enter “DONE” state, should now have a CLOSED property
-  (execute-kbd-macro (kbd "t d"))
-  (org-todo "DONE")
-  (should (org-entry-get (point) "CLOSED"))
-  ;; TODO (progn (beginning-of-buffer) (re-search-forward "CLOSED:") (should (equal (get-text-property (point) 'display) "☺️ ")))
-
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;                                                                                                          ;;
-  ;; Smart Paste: Gerrit Links, Arbitrary URLs, Arbitrary Image Attachements, Arbitrary Rich Text, Plain Text ;;
-  ;;                                                                                                          ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-  (execute-kbd-macro (kbd "s-a DEL"))
-  (kill-new "Plain text is pasted as is")
-  (execute-kbd-macro (kbd "s-v"))
-  (should (equal (thing-at-point 'line :no-properties) "Plain text is pasted as is"))
-
-  (execute-kbd-macro (kbd "s-a DEL"))
-  (kill-new "12345: [foo, bar] OCaml Syntax: Fix foo bar baz | https://gerrit.local.company.com/c/abc/+/12345")
-  (execute-kbd-macro (kbd "s-v"))
-  (should (equal (thing-at-point 'line :no-properties)
-                 "[[https://gerrit.local.company.com/c/abc/+/12345][OCaml Syntax: Fix foo bar baz]]"))
-
-  (execute-kbd-macro (kbd "s-a DEL"))
-  (kill-new "https://github.com/alphapapa/org-ql/tree/master")
-  (execute-kbd-macro (kbd "s-v"))
-  (should (equal (thing-at-point 'line :no-properties)
-                 (format "[[%s][%s]]"
-                         "https://github.com/alphapapa/org-ql/tree/master"
-                         "GitHub - alphapapa/org-ql: A searching tool for Org-mode, including custom query languages, commands, saved searches and agenda-like views, etc.")))
-
-  ;; Pressing “C-u ⌘-v” does a plain old paste
-  (execute-kbd-macro (kbd "s-a DEL"))
-  (kill-new "https://github.com/alphapapa/org-ql/tree/master")
-  (execute-kbd-macro (kbd "C-u s-v"))
-  (should (equal (thing-at-point 'line :no-properties) "https://github.com/alphapapa/org-ql/tree/master"))
-
-  (when nil ;; If the above smart paste assertions pass, then likely so do the following (time-consuming!) ones.
-
-    ;; Copy an image from somewhere
-    (ignore-errors ;; This works when run in init.org, but fails when run programmatically? Perhaps Org hook is not setup correctly?
-      (execute-kbd-macro (kbd "s-a DEL"))
-      (insert "* Example Image\n")
-      (shell-command-to-string "curl -sL https://alhassy.com/images/musa_pink.jpg -o /tmp/musa.jpg \
-       && osascript -e 'set the clipboard to (read (POSIX file \"/tmp/musa.jpg\") as «class JPEG»)'")
-      (execute-kbd-macro (kbd "s-v"))
-      (should (s-matches? "\[\[attachment:.*.png\]\]" (thing-at-point 'line :no-properties))))
-
-    ;; Check that copy-pasting rich html contents actually produces rich Org markup
-    (ignore-errors ;; This works, but consider using xwidget within emacs instead
-      (execute-kbd-macro (kbd "s-a DEL"))
-      (message "Retrieving webpage test data...")
-      (shell-command-to-string
-       "osascript -e 'tell application \"Google Chrome\" to open location \"https://alhassy.com/about\"' \
-        && sleep 0.5 \
-        && osascript -e 'tell application \"System Events\" to keystroke \"a\" using command down' \
-        && osascript -e 'tell application \"System Events\" to keystroke \"c\" using command down' \
-        && osascript -e 'quit app \"Google Chrome\"' \
-        && sleep 0.5 \
-        && osascript -e 'tell application \"Emacs\" to activate' \
-        ")
-      (execute-kbd-macro (kbd "s-v"))
-      ;; Confirm we have a few Org headings corresponding to the HTML headings we copied, also note /italics/ and other markup are rendered nicely.
-      (should (equal
-               (org-map-entries (lambda () (substring-no-properties (org-get-heading t t t t))))
-               '("Musa Al-hassy\\\\" "[[javascript:window.scrollTo(0,0)][Ξ]]" "Quick Facts" "Character" "Goals" "/What do?/")))))
-
-  (kill-buffer "*scratch*") ;; clean up
-  (kill-buffer "*test*") ;; clean up
-
-  ;; Finally, open my agenda.
-  (execute-kbd-macro (kbd "C-c a"))
-
-  )
-;; Testing that things are as they should be:1 ends here

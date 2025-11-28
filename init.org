@@ -1182,8 +1182,8 @@ variables to produce ~README.org~'s and other matters, so Emacs' Custom utility
 will remember to not prompt me each time for the safety of such local variables.
 
 #+begin_src emacs-lisp
-(setq custom-file "~/.emacs.d/custom.el")
-(ignore-errors (load custom-file)) ;; It may not yet exist.
+;; Disable custom-file - all settings managed in init.el/init.org
+(setq custom-file (make-temp-file "emacs-custom-"))
 #+end_src
 
 :No_longer_true:
@@ -1471,11 +1471,13 @@ to people when I'm promoting Emacs. ⟩
 
 Here are other packages that I want to be installed onto my machine.
 #+BEGIN_SRC emacs-lisp :tangle init.el
+(eval-and-compile (require 'dash nil t)) ;; Needed at compile-time for anaphoric macros
 (use-package dash :demand t) ;; "A modern list library for Emacs"
 (use-package s :demand t)    ;; "The long lost Emacs string manipulation library".
 (use-package f :demand t)    ;; Library for working with system files; ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 
 (require 's nil t) ;; Ensure s is loaded before using s-collapse-whitespace
+(declare-function s-collapse-whitespace "s" (s))
 (defvar my/personal-machine?
   (if (fboundp 's-collapse-whitespace)
       (equal "Musa's MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
@@ -7286,8 +7288,8 @@ In my private ~work.el~ I have declarations of the form ~(my/defservice ⟨direc
 :cmd "npm run dev" :example "Example URL to try out for this server")~.
 
 #+begin_src emacs-lisp
-(when my/work-machine?
-  (load-file "~/Desktop/work.el"))
+;; (when my/work-machine?
+;;  (load-file "~/Desktop/work.el"))
 #+end_src
 
 
@@ -9110,6 +9112,14 @@ primary tools.
 #+begin_src emacs-lisp
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
+
+;; Open my-life.org on startup instead of *scratch*
+(setq initial-buffer-choice
+      (lambda ()
+        (let ((buf (find-file-noselect "~/Dropbox/my-life.org")))
+          (with-current-buffer buf
+            (font-lock-update))
+          buf)))
 
 (defun display-startup-echo-area-message ()
   "The message that is shown after ‘user-init-file’ is loaded."
@@ -11780,6 +11790,10 @@ is [[https://orgmode.org/manual/Attachments.html][/attachments/]], which are fil
 
 #+begin_src emacs-lisp
 (eval-and-compile (require 's nil t)) ;; Needed for s-replace-regexp in def-capture macro
+(declare-function s-replace-regexp "s" (regexp replacement s &optional literal))
+(declare-function s-contains\? "s" (needle s &optional ignore-case))
+(declare-function s-replace "s" (old new s))
+(declare-function s-trim "s" (s))
 (cl-defmacro def-capture (name location template &rest forms)
   "Creates a method “my/capture-NAME”, which opens a capture buffer named NAME showing TEMPLATE.
 When you press `C-c C-c`, the note is saved as an entry (ie TEMPLATE should start with “* ”.)
@@ -11802,7 +11816,7 @@ Usage:
 2.     C-u M-x my/capture-NAME  ⇒ Jump to my LOCATION.
 3. C-u C-u M-x my/capture-NAME  ⇒ Goto last note stored (by any my/capture-* method).
 "
-  `(defun ,(intern (concat "my/capture-" (s-replace-regexp " " "-" (downcase name)))) (&optional prefix)
+  `(defun ,(intern (concat "my/capture-" (replace-regexp-in-string " " "-" (downcase name)))) (&optional prefix)
      (interactive "p")
      (let (;; Temporarily pause any clocking hooks
            (org-clock-in-hook nil)
@@ -12190,9 +12204,9 @@ them visually as Unicode bullets.
 
 #+begin_src emacs-lisp
 ;; (x y z) ≈ (existing-item replacement-item positivity-of-preceding-spaces)
-(cl-loop for (x y z) in '(("+" "◦" *)
-                       ("-" "•" *)
-                       ("*" "⋆" +))
+(cl-loop for (x y z) in '(("+" "◦" "*")
+                       ("-" "•" "*")
+                       ("*" "⋆" "+"))
       do (font-lock-add-keywords 'org-mode
                                  `((,(format "^ %s\\([%s]\\) " z x)
                                     (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) ,y)))))))
@@ -12290,7 +12304,7 @@ This is from [[https://pank.eu/blog/pretty-babel-src-blocks.html#coderef-symbol]
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-mode-hook #'rasmus/org-prettify-symbols)
-(org-mode-restart)
+;; Note: org-mode-restart only works in org buffers, not at init time
 #+END_SRC
 
 His development relies on built-in prettify-symbols-mode, which
@@ -18509,7 +18523,7 @@ bunch of UI elements that I normally have off by default but would otherwise
 serve as useful aids when working together or provide a sense of familiarity for
 my VSCoder counterparts.
 
-#+begin_src emacs-lisp :tangle ~/Desktop/work.el
+#+begin_src emacs-lisp
 (defun my/toggle-pair-programming ()
   "Toggle enabling features that might aid communication when sharing screen, or pair programming
 
@@ -19056,10 +19070,11 @@ method."
 --------------------------------------------------------------------------------
 
 Suppose I have the following Org document,
-#+begin_src Org
+#+begin_src Org :tangle no
 ,* A
 ,* B
-#+end_src Then I invoke ~C-x r m B~ on the second line. Then, ~C-x r b B~ jumps to the
+#+end_src
+Then I invoke ~C-x r m B~ on the second line. Then, ~C-x r b B~ jumps to the
 correct location 😁 Then, I add some content under heading ~A~, save and close the
 file. Then, ~C-x r b B~ jumps to the wrong location 😧
 
@@ -19512,19 +19527,20 @@ everything when doing the actual lookup, variations in capitalisation such as
     ;; Make sure point and context are visible.
     (org-fold-show-context)))
 
-(defib my/radio-target ()
-  "Jump to the definition of this word, as an Org radio target"
-  (let ((case-fold-search t)
-        (radio nil))
-    (if (or (looking-at my/radio-regex)
-            (save-excursion
-              (re-search-backward "\\b")
-              (looking-at my/radio-regex)))
-        (progn (setq radio (downcase (match-string-no-properties 0)))
-               (ibut:label-set radio
-                               (match-beginning 0)
-                               (match-end 0))
-               (hact 'my/jump-to-radio radio)))))
+(with-eval-after-load 'hyperbole
+  (defib my/radio-target ()
+    "Jump to the definition of this word, as an Org radio target"
+    (let ((case-fold-search t)
+          (radio nil))
+      (if (or (looking-at my/radio-regex)
+              (save-excursion
+                (re-search-backward "\\b")
+                (looking-at my/radio-regex)))
+          (progn (setq radio (downcase (match-string-no-properties 0)))
+                 (ibut:label-set radio
+                                 (match-beginning 0)
+                                 (match-end 0))
+                 (hact 'my/jump-to-radio radio))))))
 #+end_src
 
 *** HyRolo: Treating Org files as a rolodex
@@ -19556,7 +19572,7 @@ details, [[https://github.com/termitereform/JunkPile/blob/master/HyperboleNotes2
     ;; Only enable this in Emacs Lisp mode, for now.
     (setq orglink-activate-in-modes '(emacs-lisp-mode)))
 #+end_src
-* Testing that things are as they should be                        :noexport:
+* COMMENT Testing that things are as they should be                        :noexport:
 :PROPERTIES:
 :CREATED:  [2025-04-12 Sat 15:22]
 :WHY:      To gain confidence whenver I make changes
