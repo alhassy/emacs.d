@@ -109,12 +109,15 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
           (which-key-setup-side-window-bottom)
           (setq which-key-idle-delay 0.05))
 
-(use-package dash) ;; “A modern list library for Emacs”
-(use-package s)    ;; “The long lost Emacs string manipulation library”.
-(use-package f)    ;; Library for working with system files; ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
+(use-package dash :demand t) ;; "A modern list library for Emacs"
+(use-package s :demand t)    ;; "The long lost Emacs string manipulation library".
+(use-package f :demand t)    ;; Library for working with system files; ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 
+(require 's nil t) ;; Ensure s is loaded before using s-collapse-whitespace
 (defvar my/personal-machine?
-  (equal "Musa’s MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
+  (if (fboundp 's-collapse-whitespace)
+      (equal "Musa's MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
+    nil)
   "Is this my personal machine, or my work machine?
 
  At one point, on my work machine I run the following command to give the machine a sensible name.
@@ -130,16 +133,16 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
     :config
       ;; Each node in the undo tree should have a timestamp.
       (setq undo-tree-visualizer-timestamps t)
-
+  
       ;; Show a diff window displaying changes between undo nodes.
       (setq undo-tree-visualizer-diff t)
-
+  
       ;; Prevent undo tree files from polluting your git repo
-      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
-
-  ;; Always have it on
-  (global-undo-tree-mode)
-
+      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
+  
+      ;; Always have it on
+      (global-undo-tree-mode))
+  
   ;; Execute (undo-tree-visualize) then navigate along the tree to witness
   ;; changes being made to your file live!
 
@@ -201,7 +204,7 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; ⇒ Move the screen capture frame while recording.
 ;; ⇒ Pause and restart recording, with optional inserted text messages.
 ;; ⇒ Global hotkey (shift+space) to toggle pausing while recording
-(system-packages-ensure "licecap") ;; Use: ⌘-SPACE licecap
+(unless noninteractive (system-packages-ensure "licecap")) ;; Use: ⌘-SPACE licecap
 
 ;; Pack, ship and run any application as a lightweight container
 ;; (system-packages-ensure "docker")
@@ -211,7 +214,7 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; (system-packages-ensure "lens")
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
-(system-packages-ensure "node") ;; https://nodejs.org/
+(unless noninteractive (system-packages-ensure "node")) ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
 ;; (shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
@@ -378,7 +381,7 @@ installs of packages that are not in our `my/installed-packages' listing.
   :bind  (("C-s"     . #'helm-occur)           ;; search current buffer
           ("C-M-s"   . 'helm-multi-occur-from-isearch))) ;; Search all buffer
 
-(system-packages-ensure "ag")
+(unless noninteractive (system-packages-ensure "ag"))
 
 (use-package emacs
     :ensure org-contrib
@@ -559,9 +562,9 @@ Is replaced by:
 ;; E.g., M-x shell
 (unless noninteractive (setq shell-file-name "/bin/zsh"))
 
-(system-packages-ensure "tldr")
+(unless noninteractive (system-packages-ensure "tldr"))
 
-(system-packages-ensure "hr") ;; ≈ brew install hr
+(unless noninteractive (system-packages-ensure "hr")) ;; ≈ brew install hr
 
 (advice-add #'view-echo-area-messages :after (lambda (&rest _) (other-window 1)))
 
@@ -646,7 +649,7 @@ Is replaced by:
 ;; [[file:init.org::*Intro][Intro:2]]
 ;; When we invoke magit-status, show green/red the altered lines, with extra
 ;; green/red on the subparts of a line that got alerted.
-(system-packages-ensure "git-delta")
+(unless noninteractive (system-packages-ensure "git-delta"))
 (use-package magit-delta
   :hook (magit-mode . magit-delta-mode))
 
@@ -797,9 +800,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
   :after hl-todo
   ;; :hook (org-mode . magit-todos-mode)
   :config
-  ;; For some reason cannot use :custom with this package.
-  (custom-set-variables
-    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+  (setq magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC"))
   ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
   (setq magit-todos-exclude-globs '("*.html"))
   (magit-todos-mode))
@@ -1024,9 +1025,10 @@ The heading remains in view, and so appears in the TOC."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Setup to make the above ⌘-e behaviour happen.
 
-;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
-(--map (bind-key "s-e" #'separedit it)
-       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
+;; Make "⌘-e" toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
+(when (fboundp '--map)
+  (--map (bind-key "s-e" #'separedit it)
+         '(prog-mode-map minibuffer-local-map help-mode-map))) ;; TODO: helpful-mode-map
 ;; ⌘-e: Edit Everything in a separate buffer:1 ends here
 
 ;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:2]]
@@ -1659,9 +1661,10 @@ Order requires alphabetically and remove duplicates."
 
 
 (use-package lispy)
-;;;  There's a lot to remember, so make “x” show me what I can do!
-(lispy-define-key lispy-mode-map "x"
-                  (pretty-hydra-define my/hydra-lispy-x (:exit t)
+;;;  There's a lot to remember, so make "x" show me what I can do!
+(when (fboundp 'lispy-define-key)
+  (lispy-define-key lispy-mode-map "x"
+                    (pretty-hydra-define my/hydra-lispy-x (:exit t)
                     ("Refactor"
                      (("b" lispy-bind-variable "bind variable")
                       ("u" lispy-unbind-variable "unbind let-var")
@@ -1688,21 +1691,19 @@ Order requires alphabetically and remove duplicates."
                       ;; ("w" lispy-show-top-level "where")
                       ;; ("B" lispy-store-region-and-buffer "store list bounds")
                       ;; ("R" lispy-reverse "reverse")
-                      ))))
+                      )))))
 
-;; (my/hydra-lispy-x/body)
+; (my/hydra-lispy-x/body)
 
 
-;; (cl-inspect '(+ 2 (print 40)))
+; (cl-inspect '(+ 2 (print 40)))
 
 
 ;;  “a 𝓍” to mark a subform, or “𝓃 m”, then “C-1” to toggle its docs inline. Only one doc visible at a time.
-;; (list #'message #'identity #'mapcar)
+; (list #'message #'identity #'mapcar)
 
 ;; f/b ⇒ move forward/backward between forms
 ;; f/b ⇒ move forward/backard between forms
-
-
 ;;; xd ⇒ replace lambda with defun (saved to kill ring!)
 ;;; xc ⇒ replace arbitrarly nested IFs to COND 😻
 ;;; xi ⇒ replace COND with nested IFs
@@ -1761,11 +1762,12 @@ Order requires alphabetically and remove duplicates."
 ;; (Note: Noto does not work on my personal machine.)
 
 
-;; Render ASCII such as “ :-) ” as emoji 🙂.
+;; Render ASCII such as " :-) " as emoji 🙂.
 (use-package emojify)
-(setq emojify-display-style 'unicode) ;; unicode is the way to go!
-(setq emojify-emoji-styles '(unicode))
-(global-emojify-mode 1) ;; Will install missing images, if need be.
+(when (fboundp 'global-emojify-mode)
+  (setq emojify-display-style 'unicode) ;; unicode is the way to go!
+  (setq emojify-emoji-styles '(unicode))
+  (global-emojify-mode 1)) ;; Will install missing images, if need be.
 
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
@@ -1910,9 +1912,9 @@ themes (•̀ᴗ•́)و"
 
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-(my/toggle-theme)
+(unless noninteractive (my/toggle-theme))
 
-(my/load-theme 'pink-bliss-uwu)
+(unless noninteractive (my/load-theme 'pink-bliss-uwu))
 
 (when my/personal-machine?
 
@@ -2093,7 +2095,7 @@ fonts (•̀ᴗ•́)و"
 
 ;; [[file:init.org::*Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/][Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:1]]
 ;; I like to write everything in one massive file, and the agenda should consult it.
-(setq org-agenda-files (list (f-expand "~/Dropbox/my-life.org")))
+(setq org-agenda-files (list "~/Dropbox/my-life.org"))
 ;; Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:1 ends here
 
 ;; [[file:init.org::*Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/][Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:2]]
@@ -2523,7 +2525,7 @@ fonts (•̀ᴗ•́)و"
     (buffer-string)))
 ;;
 ;; Example usage:
-(my/string-fill-column-and-center 27 "“We don't think about sinning as you don't think about eating rotten food.” ---Imam As-Sadiq")
+;; (my/string-fill-column-and-center 27 ""We don't think about sinning as you don't think about eating rotten food." ---Imam As-Sadiq")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2967,10 +2969,12 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
 ;;
 ;; Until then, use the following incantation:
-(lf-define (get 'lf-define 'lisp-indent-function) 'defun)
+(when (fboundp 'lf-define)
+  (lf-define (get 'lf-define 'lisp-indent-function) 'defun))
 
 ;; (MA: Eventually this function can itself become a small albeit useful MELPA ELisp Package ♥‿♥)
-(lf-define my/declare-workflow-states (states)
+(when (fboundp 'lf-define)
+  (lf-define my/declare-workflow-states (states)
   [:requires  (listp states) :ensures (stringp result)]
   "Declare STATES as todo-states. STATES is a list of (name on-entry on-exit color) lists.
 
@@ -3013,11 +3017,12 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
                         (with-current-buffer "*Org Agenda*"
                           (org-agenda-redo)))))))))
   ;; End
-  "✔ Invoke “org-mode-restart” in existing Org buffers for this to take effect.")
+  "✔ Invoke "org-mode-restart" in existing Org buffers for this to take effect."))
 ;; Implementation:2 ends here
 
 ;; [[file:init.org::*Implementation][Implementation:3]]
-(my/declare-workflow-states
+(when (fboundp 'my/declare-workflow-states)
+  (my/declare-workflow-states
  ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
  ;; (M-q via (setq fill-column 95) and M-x my/comment-box)
  '(
@@ -3148,7 +3153,7 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
    ;; The logging is helpful if others at work want to know why some approach was abandoned, so    ;;
    ;; TAKE A MINUTE TO FLESH OUT THE REASONS FOR CANCELLATION.                                     ;;
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ))
+   )))
 ;; Implementation:3 ends here
 
 ;; [[file:init.org::*Also, logging][Also, logging:1]]
@@ -3182,6 +3187,7 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
 ;; Propagate =STARTED= to parent tasks:1 ends here
 
 ;; [[file:init.org::*Capture: Now that I know how to query my agenda, how do I get things into it efficiently?][Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1]]
+(eval-and-compile (require 's nil t)) ;; Needed for s-replace-regexp in def-capture macro
 (cl-defmacro def-capture (name location template &rest forms)
   "Creates a method “my/capture-NAME”, which opens a capture buffer named NAME showing TEMPLATE.
 When you press `C-c C-c`, the note is saved as an entry (ie TEMPLATE should start with “* ”.)
@@ -3217,7 +3223,8 @@ Usage:
        (org-capture (list prefix) "𝒞")
        (unless (> prefix 1) (rename-buffer ,name))
        ,@forms)))
-(bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))
+(unless noninteractive
+  (eval '(bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))))
 ;; Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1 ends here
 
 ;; [[file:init.org::*Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content][Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:1]]
@@ -3661,8 +3668,89 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
   (interactive)
   (use-package ox-slack)
   (message "Converting to Slack Markdown...")
-  (kill-new (org-export-as 'slack))
+  (kill-new (org-export-as 'slack nil nil :body-only-please))
   (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))
+;;
+;; For links to display nicely, I need this code:
+;; https://github.com/titaniumbones/ox-slack/pull/9
+(defun org-slack-link (link contents info)
+  "Transcode LINK object into Markdown format.
+  CONTENTS is the link's description.  INFO is a plist used as
+  a communication channel."
+  (let ((link-org-files-as-md
+         (lambda (raw-path)
+           ;; Treat links to `file.org' as links to `file.md'.
+           (if (string= ".org" (downcase (file-name-extension raw-path ".")))
+               (concat (file-name-sans-extension raw-path) ".md")
+             raw-path)))
+        (type (org-element-property :type link)))
+    (cond
+     ;; Link type is handled by a special function.
+     ((org-export-custom-protocol-maybe link contents 'md))
+     ((member type '("custom-id" "id" "fuzzy"))
+      (let ((destination (if (string= type "fuzzy")
+                             (org-export-resolve-fuzzy-link link info)
+                           (org-export-resolve-id-link link info))))
+        (pcase (org-element-type destination)
+          (`plain-text			; External file.
+           (let ((path (funcall link-org-files-as-md destination)))
+             (if (not contents) (format "%s>" path)
+               (format "[%s](%s)" contents path))))
+          (`headline
+           (format
+            ;; "[%s](#%s)"
+            "[%s]"
+            ;; Description.
+            (cond ((org-string-nw-p contents))
+                  ((org-export-numbered-headline-p destination info)
+                   (mapconcat #'number-to-string
+                              (org-export-get-headline-number destination info)
+                              "."))
+                  (t (org-export-data (org-element-property :title destination)
+                                      info)))
+            ;; Reference.
+            ;; (or (org-element-property :CUSTOM_ID destination)
+            ;;     (org-export-get-reference destination info))
+            ))
+          (_
+           (let ((description
+                  (or (org-string-nw-p contents)
+                      (let ((number (org-export-get-ordinal destination info)))
+                        (cond
+                         ((not number) nil)
+                         ((atom number) (number-to-string number))
+                         (t (mapconcat #'number-to-string number ".")))))))
+             (when description
+               (format "[%s]"
+                       description
+                       ;; (org-export-get-reference destination info)
+                       )))))))
+     ((org-export-inline-image-p link org-html-inline-image-rules)
+      (let ((path (let ((raw-path (org-element-property :path link)))
+                    (cond ((not (equal "file" type)) (concat type ":" raw-path))
+                          ((not (file-name-absolute-p raw-path)) raw-path)
+                          (t (expand-file-name raw-path)))))
+            (caption (org-export-data
+                      (org-export-get-caption
+                       (org-export-get-parent-element link)) info)))
+        (format "![img](%s)"
+                (if (not (org-string-nw-p caption)) path
+                  (format "%s \"%s\"" path caption)))))
+     ((string= type "coderef")
+      (let ((ref (org-element-property :path link)))
+        (format (org-export-get-coderef-format ref contents)
+                (org-export-resolve-coderef ref info))))
+     ((equal type "radio") contents)
+     (t (let* ((raw-path (org-element-property :path link))
+               (path
+                (cond
+                 ((member type '("http" "https" "ftp" "mailto"))
+                  (concat type ":" raw-path))
+                 ((string= type "file")
+                  (org-export-file-uri (funcall link-org-files-as-md raw-path)))
+                 (t raw-path))))
+          (if (not contents) (format "%s" path)
+            (format "[%s](%s)" contents path)))))))
 
 
 (cl-defun my/copy-as-confluence ()
@@ -3848,8 +3936,8 @@ the character 𝓍 before and after the selected text."
 ;; Fill-mode ---Word Wrapping:3 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:1]]
-(system-packages-ensure "aspell")
-(system-packages-ensure "wordnet")
+(unless noninteractive (system-packages-ensure "aspell"))
+(unless noninteractive (system-packages-ensure "wordnet"))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:2]]

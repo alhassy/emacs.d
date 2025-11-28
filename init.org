@@ -692,10 +692,10 @@ clipboard that allows undoing to any historical state./
     (setq undo-tree-visualizer-diff t)
 
     ;; Prevent undo tree files from polluting your git repo
-    (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
+    (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
 
-;; Always have it on
-(global-undo-tree-mode)
+    ;; Always have it on
+    (global-undo-tree-mode))
 
 ;; Execute (undo-tree-visualize) then navigate along the tree to witness
 ;; changes being made to your file live!
@@ -1471,12 +1471,15 @@ to people when I'm promoting Emacs. ⟩
 
 Here are other packages that I want to be installed onto my machine.
 #+BEGIN_SRC emacs-lisp :tangle init.el
-(use-package dash) ;; “A modern list library for Emacs”
-(use-package s)    ;; “The long lost Emacs string manipulation library”.
-(use-package f)    ;; Library for working with system files; ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
+(use-package dash :demand t) ;; "A modern list library for Emacs"
+(use-package s :demand t)    ;; "The long lost Emacs string manipulation library".
+(use-package f :demand t)    ;; Library for working with system files; ;; e.g., f-delete, f-mkdir, f-move, f-exists?, f-hidden?
 
+(require 's nil t) ;; Ensure s is loaded before using s-collapse-whitespace
 (defvar my/personal-machine?
-  (equal "Musa’s MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
+  (if (fboundp 's-collapse-whitespace)
+      (equal "Musa's MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
+    nil)
   "Is this my personal machine, or my work machine?
 
  At one point, on my work machine I run the following command to give the machine a sensible name.
@@ -1626,7 +1629,7 @@ window manager for macOS along the lines of xmonad.”
 ;; ⇒ Move the screen capture frame while recording.
 ;; ⇒ Pause and restart recording, with optional inserted text messages.
 ;; ⇒ Global hotkey (shift+space) to toggle pausing while recording
-(system-packages-ensure "licecap") ;; Use: ⌘-SPACE licecap
+(unless noninteractive (system-packages-ensure "licecap")) ;; Use: ⌘-SPACE licecap
 
 ;; Pack, ship and run any application as a lightweight container
 ;; (system-packages-ensure "docker")
@@ -1636,7 +1639,7 @@ window manager for macOS along the lines of xmonad.”
 ;; (system-packages-ensure "lens")
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
-(system-packages-ensure "node") ;; https://nodejs.org/
+(unless noninteractive (system-packages-ensure "node")) ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
 ;; (shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
@@ -2328,7 +2331,7 @@ Lets also use doc:helm-do-grep-ag ([[kbd:C-x c M-g a]]) *search all files in the
    - Shows matches live as you type
    - Very helpful when looking for a definition of something
 #+begin_src emacs-lisp :tangle init.el
-(system-packages-ensure "ag")
+(unless noninteractive (system-packages-ensure "ag"))
 #+end_src
 
 Note: If I want to do “find matches of a regex, then replace them like so” I
@@ -2751,7 +2754,7 @@ Also, there's the [[https://tldr.sh/][tldr]] tool which aims to be like terse ma
 commandline-tools in the style of practical example uses cases: ~tldr 𝒳~ yields a
 number of ways you'd actually use 𝒳. ( In Emacs, [[kbd:C-t tldr 𝒳 ⟨return⟩]]. )
 #+BEGIN_SRC emacs-lisp
-(system-packages-ensure "tldr")
+(unless noninteractive (system-packages-ensure "tldr"))
 #+END_SRC
 *** COMMENT Homemade attempt before learning about shell-pop
 :PROPERTIES:
@@ -2792,7 +2795,7 @@ more generally =hr p₁ p₂ … pₙ= will produce /n/-many horizontal lines wi
 $i^{th}$-line having pattern =pᵢ=.
 
 #+begin_src emacs-lisp
-(system-packages-ensure "hr") ;; ≈ brew install hr
+(unless noninteractive (system-packages-ensure "hr")) ;; ≈ brew install hr
 #+end_src
 
 ** Summary of Utilities Provided
@@ -3110,7 +3113,7 @@ details and =tab= to see children items, usually.
   #+begin_src emacs-lisp
 ;; When we invoke magit-status, show green/red the altered lines, with extra
 ;; green/red on the subparts of a line that got alerted.
-(system-packages-ensure "git-delta")
+(unless noninteractive (system-packages-ensure "git-delta"))
 (use-package magit-delta
   :hook (magit-mode . magit-delta-mode))
 
@@ -3571,9 +3574,7 @@ a magit status buffer ---which uses the keywords from ~hl-todo~.
   :after hl-todo
   ;; :hook (org-mode . magit-todos-mode)
   :config
-  ;; For some reason cannot use :custom with this package.
-  (custom-set-variables
-    '(magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC")))
+  (setq magit-todos-keywords (list "TODO" "FIXME" "MA" "WK" "JC"))
   ;; Ignore TODOs mentioned in exported HTML files; they're duplicated from org src.
   (setq magit-todos-exclude-globs '("*.html"))
   (magit-todos-mode))
@@ -5584,9 +5585,10 @@ edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected reg
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Setup to make the above ⌘-e behaviour happen.
 
-;; Make “⌘-e” toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
-(--map (bind-key "s-e" #'separedit it)
-       '(prog-mode-map minibuffer-local-map help-mode-map)) ;; TODO: helpful-mode-map
+;; Make "⌘-e" toggle editing string literals / select region / [Org/markdown] code block / comment block when programming.
+(when (fboundp '--map)
+  (--map (bind-key "s-e" #'separedit it)
+         '(prog-mode-map minibuffer-local-map help-mode-map))) ;; TODO: helpful-mode-map
 
 #+end_src
 
@@ -8836,9 +8838,10 @@ extract function and cond<->if out of the box.
 
 
 (use-package lispy)
-;;;  There's a lot to remember, so make “x” show me what I can do!
-(lispy-define-key lispy-mode-map "x"
-                  (pretty-hydra-define my/hydra-lispy-x (:exit t)
+;;;  There's a lot to remember, so make "x" show me what I can do!
+(when (fboundp 'lispy-define-key)
+  (lispy-define-key lispy-mode-map "x"
+                    (pretty-hydra-define my/hydra-lispy-x (:exit t)
                     ("Refactor"
                      (("b" lispy-bind-variable "bind variable")
                       ("u" lispy-unbind-variable "unbind let-var")
@@ -8865,7 +8868,7 @@ extract function and cond<->if out of the box.
                       ;; ("w" lispy-show-top-level "where")
                       ;; ("B" lispy-store-region-and-buffer "store list bounds")
                       ;; ("R" lispy-reverse "reverse")
-                      ))))
+                      )))))
 
 ; (my/hydra-lispy-x/body)
 
@@ -9087,11 +9090,12 @@ is found with ~M-x dired~ ---doc:dired.
 ;; (Note: Noto does not work on my personal machine.)
 
 
-;; Render ASCII such as “ :-) ” as emoji 🙂.
+;; Render ASCII such as " :-) " as emoji 🙂.
 (use-package emojify)
-(setq emojify-display-style 'unicode) ;; unicode is the way to go!
-(setq emojify-emoji-styles '(unicode))
-(global-emojify-mode 1) ;; Will install missing images, if need be.
+(when (fboundp 'global-emojify-mode)
+  (setq emojify-display-style 'unicode) ;; unicode is the way to go!
+  (setq emojify-emoji-styles '(unicode))
+  (global-emojify-mode 1)) ;; Will install missing images, if need be.
 #+end_SRC
 
 ** Startup message: Emacs & Org versions
@@ -9462,9 +9466,9 @@ themes (•̀ᴗ•́)و"
 
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-(my/toggle-theme)
+(unless noninteractive (my/toggle-theme))
 
-(my/load-theme 'pink-bliss-uwu)
+(unless noninteractive (my/load-theme 'pink-bliss-uwu))
 #+END_SRC
 
 Apparently, there's already a package that accomplishes these goals and more:
@@ -10722,7 +10726,7 @@ to refresh the agenda.
     (buffer-string)))
 ;;
 ;; Example usage:
-(my/string-fill-column-and-center 27 "“We don't think about sinning as you don't think about eating rotten food.” ---Imam As-Sadiq")
+;; (my/string-fill-column-and-center 27 ""We don't think about sinning as you don't think about eating rotten food." ---Imam As-Sadiq")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -11324,10 +11328,12 @@ First, the my/declare-workflow-states abstraction:
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
 ;;
 ;; Until then, use the following incantation:
-(lf-define (get 'lf-define 'lisp-indent-function) 'defun)
+(when (fboundp 'lf-define)
+  (lf-define (get 'lf-define 'lisp-indent-function) 'defun))
 
 ;; (MA: Eventually this function can itself become a small albeit useful MELPA ELisp Package ♥‿♥)
-(lf-define my/declare-workflow-states (states)
+(when (fboundp 'lf-define)
+  (lf-define my/declare-workflow-states (states)
   [:requires  (listp states) :ensures (stringp result)]
   "Declare STATES as todo-states. STATES is a list of (name on-entry on-exit color) lists.
 
@@ -11370,12 +11376,13 @@ First, the my/declare-workflow-states abstraction:
                         (with-current-buffer "*Org Agenda*"
                           (org-agenda-redo)))))))))
   ;; End
-  "✔ Invoke “org-mode-restart” in existing Org buffers for this to take effect.")
+  "✔ Invoke "org-mode-restart" in existing Org buffers for this to take effect."))
 #+end_src
 
 Then, actually declare my workflow states...
 #+begin_src emacs-lisp
-(my/declare-workflow-states
+(when (fboundp 'my/declare-workflow-states)
+  (my/declare-workflow-states
  ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
  ;; (M-q via (setq fill-column 95) and M-x my/comment-box)
  '(
@@ -11506,7 +11513,7 @@ Then, actually declare my workflow states...
    ;; The logging is helpful if others at work want to know why some approach was abandoned, so    ;;
    ;; TAKE A MINUTE TO FLESH OUT THE REASONS FOR CANCELLATION.                                     ;;
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ))
+   )))
 #+end_src
 
 *** Also, logging
@@ -11772,6 +11779,7 @@ elsewhere on a local, or even remote, computer, like emails or source code files
 is [[https://orgmode.org/manual/Attachments.html][/attachments/]], which are files located in a directory belonging to an outline node.
 
 #+begin_src emacs-lisp
+(eval-and-compile (require 's nil t)) ;; Needed for s-replace-regexp in def-capture macro
 (cl-defmacro def-capture (name location template &rest forms)
   "Creates a method “my/capture-NAME”, which opens a capture buffer named NAME showing TEMPLATE.
 When you press `C-c C-c`, the note is saved as an entry (ie TEMPLATE should start with “* ”.)
@@ -11807,7 +11815,8 @@ Usage:
        (org-capture (list prefix) "𝒞")
        (unless (> prefix 1) (rename-buffer ,name))
        ,@forms)))
-(bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))
+(unless noninteractive
+  (eval '(bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))))
 #+end_src
 
 My other primary use of ~def-capture~ is for 〔Daily ∣ Weekly ∣ Monthly ∣ Bi-Annual〕reviews.
@@ -12621,8 +12630,89 @@ easily by composing them in Org mode, then invoking ~my/copy-as-jira~.
   (interactive)
   (use-package ox-slack)
   (message "Converting to Slack Markdown...")
-  (kill-new (org-export-as 'slack))
+  (kill-new (org-export-as 'slack nil nil :body-only-please))
   (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))
+;;
+;; For links to display nicely, I need this code:
+;; https://github.com/titaniumbones/ox-slack/pull/9
+(defun org-slack-link (link contents info)
+  "Transcode LINK object into Markdown format.
+  CONTENTS is the link's description.  INFO is a plist used as
+  a communication channel."
+  (let ((link-org-files-as-md
+         (lambda (raw-path)
+           ;; Treat links to `file.org' as links to `file.md'.
+           (if (string= ".org" (downcase (file-name-extension raw-path ".")))
+               (concat (file-name-sans-extension raw-path) ".md")
+             raw-path)))
+        (type (org-element-property :type link)))
+    (cond
+     ;; Link type is handled by a special function.
+     ((org-export-custom-protocol-maybe link contents 'md))
+     ((member type '("custom-id" "id" "fuzzy"))
+      (let ((destination (if (string= type "fuzzy")
+                             (org-export-resolve-fuzzy-link link info)
+                           (org-export-resolve-id-link link info))))
+        (pcase (org-element-type destination)
+          (`plain-text			; External file.
+           (let ((path (funcall link-org-files-as-md destination)))
+             (if (not contents) (format "%s>" path)
+               (format "[%s](%s)" contents path))))
+          (`headline
+           (format
+            ;; "[%s](#%s)"
+            "[%s]"
+            ;; Description.
+            (cond ((org-string-nw-p contents))
+                  ((org-export-numbered-headline-p destination info)
+                   (mapconcat #'number-to-string
+                              (org-export-get-headline-number destination info)
+                              "."))
+                  (t (org-export-data (org-element-property :title destination)
+                                      info)))
+            ;; Reference.
+            ;; (or (org-element-property :CUSTOM_ID destination)
+            ;;     (org-export-get-reference destination info))
+            ))
+          (_
+           (let ((description
+                  (or (org-string-nw-p contents)
+                      (let ((number (org-export-get-ordinal destination info)))
+                        (cond
+                         ((not number) nil)
+                         ((atom number) (number-to-string number))
+                         (t (mapconcat #'number-to-string number ".")))))))
+             (when description
+               (format "[%s]"
+                       description
+                       ;; (org-export-get-reference destination info)
+                       )))))))
+     ((org-export-inline-image-p link org-html-inline-image-rules)
+      (let ((path (let ((raw-path (org-element-property :path link)))
+                    (cond ((not (equal "file" type)) (concat type ":" raw-path))
+                          ((not (file-name-absolute-p raw-path)) raw-path)
+                          (t (expand-file-name raw-path)))))
+            (caption (org-export-data
+                      (org-export-get-caption
+                       (org-export-get-parent-element link)) info)))
+        (format "![img](%s)"
+                (if (not (org-string-nw-p caption)) path
+                  (format "%s \"%s\"" path caption)))))
+     ((string= type "coderef")
+      (let ((ref (org-element-property :path link)))
+        (format (org-export-get-coderef-format ref contents)
+                (org-export-resolve-coderef ref info))))
+     ((equal type "radio") contents)
+     (t (let* ((raw-path (org-element-property :path link))
+               (path
+                (cond
+                 ((member type '("http" "https" "ftp" "mailto"))
+                  (concat type ":" raw-path))
+                 ((string= type "file")
+                  (org-export-file-uri (funcall link-org-files-as-md raw-path)))
+                 (t raw-path))))
+          (if (not contents) (format "%s" path)
+            (format "[%s](%s)" contents path)))))))
 
 
 (cl-defun my/copy-as-confluence ()
@@ -13137,8 +13227,8 @@ I would like to check spelling on the fly.
 Install spell-checking application as well as a reliable English
 dictionary, [[https://wordnet.princeton.edu/][WordNet]].
    #+begin_src emacs-lisp
-(system-packages-ensure "aspell")
-(system-packages-ensure "wordnet")
+(unless noninteractive (system-packages-ensure "aspell"))
+(unless noninteractive (system-packages-ensure "wordnet"))
    #+end_src
 
 ~flyspell-prog-mode~ enables spell checking for programming by only considering
