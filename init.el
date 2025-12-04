@@ -1,12 +1,12 @@
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:4]]
-    (setq org-image-actual-width nil)
+(setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:5]]
-    ;; Clicking on a URL, or running M-x browse-url, should open the URL *within* Emacs.
-    (setq browse-url-browser-function #'xwidget-webkit-browse-url)
+;; Clicking on a URL, or running M-x browse-url, should open the URL *within* Emacs.
+(setq browse-url-browser-function #'browse-url-default-browser)
 
-    ;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
+;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
 ;; Personal instructions for a new machine:5 ends here
 
 ;; Disable custom-file - all settings managed in init.el/init.org
@@ -3027,7 +3027,7 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
                         (with-current-buffer "*Org Agenda*"
                           (org-agenda-redo)))))))))
   ;; End
-  "✔ Invoke "org-mode-restart" in existing Org buffers for this to take effect."))
+  "✔ Invoke `org-mode-restart` in existing Org buffers for this to take effect."))
 ;; Implementation:2 ends here
 
 ;; [[file:init.org::*Implementation][Implementation:3]]

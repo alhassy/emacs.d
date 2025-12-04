@@ -11386,7 +11386,7 @@ First, the my/declare-workflow-states abstraction:
                         (with-current-buffer "*Org Agenda*"
                           (org-agenda-redo)))))))))
   ;; End
-  "✔ Invoke "org-mode-restart" in existing Org buffers for this to take effect."))
+  "✔ Invoke `org-mode-restart` in existing Org buffers for this to take effect."))
 #+end_src
 
 Then, actually declare my workflow states...
