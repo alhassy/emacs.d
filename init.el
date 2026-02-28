@@ -1,12 +1,12 @@
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:4]]
-(setq org-image-actual-width nil)
+    (setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:5]]
-;; Clicking on a URL, or running M-x browse-url, should open the URL *within* Emacs.
-(setq browse-url-browser-function #'browse-url-default-browser)
+    ;; Clicking on a URL, or running M-x browse-url, should open the URL *within* Emacs.
+    (setq browse-url-browser-function #'xwidget-webkit-browse-url)
 
-;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
+    ;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
 ;; Personal instructions for a new machine:5 ends here
 
 ;; Disable custom-file - all settings managed in init.el/init.org
@@ -1946,7 +1946,8 @@ themes (•̀ᴗ•́)و"
   ;; Let's ensure they're on our system
   ;; brew search "/font-/"   # List all fonts
 
-  (shell-command "brew tap homebrew/cask-fonts")
+  ;; NOTE: No longer needed - fonts are now available directly in homebrew/cask
+  ;; (shell-command "brew tap homebrew/cask-fonts")
   (system-packages-ensure "svn") ;; Required for the following font installs
   ;; No thanks! (system-packages-ensure "font-roboto-mono") ;; Makes Gerrit in Chrome look like Gibberish!
   (system-packages-ensure "font-input")
@@ -3145,6 +3146,7 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
    ;; This is essentially DONE, but there's some blocker.                                         ;;
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+   ("REFERENCE"  :foreground "purple2") ;; The task was to ditigize some info and keep it around
 
    ("DONE"  :foreground "forest green") ;; This task is DONE; mine it for useful LOG comments and archive it.
 

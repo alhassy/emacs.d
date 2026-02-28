@@ -1,3 +1,4 @@
+#+TITLE: init
 # -*- org-export-use-babel: nil -*-
 
 # السّلام عليكم ≈ “Hello, and welcome” in Arabic (العربيّة)
@@ -9516,7 +9517,8 @@ operation of formatting text.]
   ;; Let's ensure they're on our system
   ;; brew search "/font-/"   # List all fonts
 
-  (shell-command "brew tap homebrew/cask-fonts")
+  ;; NOTE: No longer needed - fonts are now available directly in homebrew/cask
+  ;; (shell-command "brew tap homebrew/cask-fonts")
   (system-packages-ensure "svn") ;; Required for the following font installs
   ;; No thanks! (system-packages-ensure "font-roboto-mono") ;; Makes Gerrit in Chrome look like Gibberish!
   (system-packages-ensure "font-input")
@@ -11505,6 +11507,7 @@ Then, actually declare my workflow states...
    ;; This is essentially DONE, but there's some blocker.                                         ;;
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+   ("REFERENCE"  :foreground "purple2") ;; The task was to ditigize some info and keep it around
 
    ("DONE"  :foreground "forest green") ;; This task is DONE; mine it for useful LOG comments and archive it.
 
@@ -12556,7 +12559,6 @@ lengthy phrase being emphasised.
 
 Example:
 [[https://www.javacodegeeks.com/wp-content/uploads/2017/09/lexer-parser-center.png][lexing vs parsing]]
-
 
 [[https://miro.medium.com/v2/resize:fit:4800/1*bpG6TxN-nS6enHkp-KIZgg.jpeg][1% better everyday, push-ups!]]
 
