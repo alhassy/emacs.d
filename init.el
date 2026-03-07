@@ -259,7 +259,7 @@ installs of packages that are not in our `my/installed-packages' listing.
               ;; dictionary items use “.+ w” and to see only file paths use “. f”;
               ;; or to limit to emojis use “. :”.)
               ;; Finally, use “. l” to complete the current line based on /previous/ lines.
-              ("." .  cape-prefix-map))
+              ("C-." .  cape-prefix-map))
   :custom
   (corfu-auto t "Automatically enable corfu pop-ups")
   (corfu-auto-prefix 1 "Show me the completions asap")
@@ -275,6 +275,105 @@ installs of packages that are not in our `my/installed-packages' listing.
          ;; In order to save the history across Emacs sessions, enable `savehist-mode'.
          (global-corfu-mode . corfu-history-mode)
          (corfu-history-mode . savehist-mode)))
+
+
+(defun seq-empty-p (sequence)
+  "Return non-nil if SEQUENCE is empty."
+  (= 0 (seq-length sequence)))
+
+(delete-directory "~/.emacs.d/elpa/agent-shell-20260302.1640" t)
+(delete-directory "~/.emacs.d/elpa/shell-maker-20260303.1342" t)
+(package-refresh-contents)
+(package-install 'agent-shell)
+
+(use-package agent-shell                                                                                                          :ensure t                                                                                                                       :custom                                                                                                                         (agent-shell-anthropic-authentication                                                                                            (agent-shell-anthropic-make-authentication :login t)))  
+
+
+;; “k” for claude ---I use “C-c c” for my Org-capture, to quickly capture a note.
+(global-set-key (kbd "C-c k")
+                (defun my/claude-code (&optional arg)
+                  "DWIM entry point for Claude Code via agent-shell.
+
+   1.         C-c k  ⇒  Toggle between here and Claude buffer, or open AI buffer if need be.
+                        {If a region is active, carry it as context to the AI}
+   2.     C-u C-c k  ⇒  Switch to an AI buffer by name
+   3. C-u C-u C-c k  ⇒  Start a new AI buffer and name it
+   
+   This delegates to the existing =agent-shell= DWIM machinery
+   (=agent-shell= already handles region context, toggling, and shell
+   creation) while ensuring =default-directory= is always =~/fwd/=. The
+   =C-u C-u= case calls =agent-shell-anthropic-start-claude-code= directly
+   to force a new Claude Code shell without an agent selection prompt.
+
+   When I have one session and start a new one, the new one gets a name.
+   I can always ‘name’ session via ‘M-x rename-buffer’ and ‘C-u C-u C-c k’ will
+   know that they're AI buffers.
+"
+                  (interactive "P")
+                  (let ((default-directory "~/fwd/"))
+                    (cond
+                     ((equal arg '(16))
+                      ;; Make an additional AI buffer with a given name.
+                      ;; Since AI buffers are created async, we snapshot =agent-shell-buffers= before starting,
+                      ;; then diff after to find the newly created buffer, and rename /that/ buffer with =with-current-buffer=.      
+                      (let ((existing (agent-shell-buffers)))
+                        (agent-shell-anthropic-start-claude-code)
+                        (when existing
+                          (let ((name (read-string "Name this session: ")))
+                            (when-let* (((not (string-empty-p name)))
+                                        (new-buf (seq-find (lambda (b) (not (memq b existing)))
+                                                           (agent-shell-buffers))))
+                              (with-current-buffer new-buf
+                                (rename-buffer (format "*Claude Code: %s*" name) t)))))))
+                     ((equal arg '(4))
+                      (agent-shell '(16)))
+                     (t
+                      (agent-shell))))))
+
+;; When I copy test from Agent-Shell, it's read-only since it's shell text, but I don't want read-only text.
+;; Moreover, when I copy prose, please give it to me in Org-mode format, not markdown.
+;;
+;; If you accidentaly have read-only text in your buffer, make it editable with:
+;; (let ((inhibit-read-only t)) (remove-text-properties (point-min) (point-max) '(read-only nil)))
+;;
+(defun my/make-agent-shell-copy-be-editable-org-mode (orig-fn start end &optional delete)
+  "Convert copied agent-shell text from Markdown to Org via pandoc.
+
+Also strips read-only text properties that leak from comint output.
+
+Code block copies are detected and returned as-is: markdown-overlays
+places an invisible overlay on the closing ``` fence, which sits
+right after the code body. When the copy icon fires kill-ring-save,
+END lands just before that invisible overlay, so we check
+overlays-in END..(+END 3) to skip pandoc for code blocks."
+  (let ((text (funcall orig-fn start end delete)))
+    (remove-text-properties 0 (length text) '(read-only nil) text)
+    (if (cl-some (lambda (ov) (overlay-get ov 'invisible))
+                 (overlays-in end (min (+ end 3) (point-max))))
+        text
+      (with-temp-buffer
+        (insert text)
+        (call-process-region (point-min) (point-max)
+                             "pandoc" t t nil
+                             "-f" "markdown" "-t" "org")
+        (buffer-string)))))
+
+(advice-add 'agent-shell--filter-buffer-substring :around #'my/make-agent-shell-copy-be-editable-org-mode)
+
+;; Some useful info in the AI buffer header: [Agent | Model | Thinking Mode | Directory ]
+(setq agent-shell-header-style 'text)
+
+;; Don't confirm when I interrupt, just stop.
+(define-key agent-shell-mode-map (kbd "C-c C-c")
+            (lambda () (interactive) (agent-shell-interrupt t)))
+
+;; Expand tool use / thought process by default (instead of collapsed)
+(setq agent-shell-tool-use-expand-by-default nil)
+(setq agent-shell-thought-process-expand-by-default nil)
+
+;; Expand tool use / thought process by default (instead of collapsed)
+;; (setq agent-shell-tool-use-expand-by-default t)
+;; (setq agent-shell-thought-process-expand-by-default t)
 
 
 ;; Add CAPFs to buffers where you want them
@@ -299,6 +398,7 @@ installs of packages that are not in our `my/installed-packages' listing.
                        #'cape-abbrev
                        ;; Eventually, give up and try the dictionary
                        #'cape-dict))))
+
 
 
 ;; Add icons to the completions
