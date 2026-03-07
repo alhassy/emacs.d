@@ -17520,35 +17520,51 @@ org-agenda-custom-commands
    creation) while ensuring =default-directory= is always =~/fwd/=. The
    =C-u C-u= case calls =agent-shell-anthropic-start-claude-code= directly
    to force a new Claude Code shell without an agent selection prompt.
-
-   When I have one session and start a new one, the new one gets a name.
-   I can always ‘name’ session via ‘M-x rename-buffer’ and ‘C-u C-u C-c k’ will
-   know that they're AI buffers.
 "
   (interactive "P")
-  (let ((default-directory "~/fwd/"))
+ (let ((default-directory "~/fwd/"))
     (cond
      ((equal arg '(16))
-      ;; Make an additional AI buffer with a given name.
-      ;; Since AI buffers are created async, we snapshot =agent-shell-buffers= before starting,
-      ;; then diff after to find the newly created buffer, and rename /that/ buffer with =with-current-buffer=.      
       (let ((existing (agent-shell-buffers)))
         (agent-shell-anthropic-start-claude-code)
         (when existing
-          (let ((name (read-string "Name this session: ")))
+          (let ((name (read-string "Label this session: ")))
             (when-let* (((not (string-empty-p name)))
                         (new-buf (seq-find (lambda (b) (not (memq b existing)))
                                            (agent-shell-buffers))))
               (with-current-buffer new-buf
-                (rename-buffer (format "*Claude Code: %s*" name) t)))))))
+                (setq my/claude-session-label name)))))))
      ((equal arg '(4))
-      (agent-shell '(16)))
+      (let* ((bufs (or (agent-shell-buffers)
+                       (user-error "No Claude shells available")))
+             (labeled (mapcar (lambda (b)
+                                (let ((label (buffer-local-value 'my/claude-session-label b)))
+                                  (cons (if label
+                                            (format "%s [%s]" (buffer-name b) label)
+                                          (buffer-name b))
+                                        b)))
+                              bufs))
+             (choice (completing-read "Switch to shell: "
+                                      (mapcar #'car labeled) nil t))
+             (buf (cdr (assoc choice labeled))))
+        (agent-shell--display-buffer buf)))
      (t
       (agent-shell))))))
+
+;; The names of the AI buffers seem to be tied to the AI processes, so we can't just rename buffers.
+;; However, after any interaction, AI buffer headers are updated, so we hook into that mechanism to
+;; provide a label for them. We also propogate that label to the agent-shell buffers menu.
+
+(defvar-local my/claude-session-label nil "Custom label for this Claude Code session, shown in the header.")
+
+(advice-add 'agent-shell--make-header-model :filter-return
+            (lambda (model) (when my/claude-session-label
+                              (setf (alist-get :buffer-name model)
+                                    (format "Claude Code: %s" my/claude-session-label))) model))
 #+end_src
 *** Copy AI Text As Org
 #+begin_src emacs-lisp
-;; When I copy test from Agent-Shell, it's read-only since it's shell text, but I don't want read-only text.
+;; When I copy text from Agent-Shell, it's read-only since it's shell text, but I don't want read-only text.
 ;; Moreover, when I copy prose, please give it to me in Org-mode format, not markdown.
 ;;
 ;; If you accidentaly have read-only text in your buffer, make it editable with:
