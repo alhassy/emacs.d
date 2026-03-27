@@ -8776,7 +8776,7 @@ extract function and cond<->if out of the box.
   search outside the current buffer. It's smart, but not perfect. It will ask
   you to confirm each occurance to ensure the end result is sanitary.
 
-  #+begin_src emacs-lisp
+  #+begin_src emacs-lisp :tangle no
 (use-package erefactor)
 
 ;;* Level 1
@@ -17647,8 +17647,9 @@ overlays-in END..(+END 3) to skip pandoc for code blocks."
 (setq agent-shell-header-style 'text)
 
 ;; Don't confirm when I interrupt, just stop.
-(define-key agent-shell-mode-map (kbd "C-c C-c")
-  (lambda () (interactive) (agent-shell-interrupt t)))
+(with-eval-after-load 'agent-shell
+  (define-key agent-shell-mode-map (kbd "C-c C-c")
+    (lambda () (interactive) (agent-shell-interrupt t))))
 
 ;; Expand tool use / thought process by default (instead of collapsed)
 (setq agent-shell-tool-use-expand-by-default nil)

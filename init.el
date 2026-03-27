@@ -281,12 +281,6 @@ installs of packages that are not in our `my/installed-packages' listing.
   "Return non-nil if SEQUENCE is empty."
   (= 0 (seq-length sequence)))
 
-(delete-directory "~/.emacs.d/elpa/agent-shell-20260302.1640" t)
-(delete-directory "~/.emacs.d/elpa/shell-maker-20260303.1342" t)
-(package-refresh-contents)
-(package-install 'agent-shell)
-
-
 ;; agent-shell expects the claude-agent-acp binary, which is  provided by the @zed-industries/claude-agent-acp npm package.
 (unless (executable-find "claude-agent-acp")
   (shell-command "/opt/homebrew/bin/npm install -g @zed-industries/claude-agent-acp"))
@@ -386,8 +380,9 @@ overlays-in END..(+END 3) to skip pandoc for code blocks."
 (setq agent-shell-header-style 'text)
 
 ;; Don't confirm when I interrupt, just stop.
-(define-key agent-shell-mode-map (kbd "C-c C-c")
-            (lambda () (interactive) (agent-shell-interrupt t)))
+(with-eval-after-load 'agent-shell
+  (define-key agent-shell-mode-map (kbd "C-c C-c")
+              (lambda () (interactive) (agent-shell-interrupt t))))
 
 ;; Expand tool use / thought process by default (instead of collapsed)
 (setq agent-shell-tool-use-expand-by-default nil)
@@ -1720,7 +1715,7 @@ Order requires alphabetically and remove duplicates."
 ;; Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:1 ends here
 
 ;; [[file:init.org::*Refactoring: Rename fun, inline fun, extract fun, extract constant, etc][Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:2]]
-(use-package erefactor)
+;; (use-package erefactor) ;; Disabled: not actively used, causes obsolete-function warnings
 
 ;;* Level 1
 ;;** Level 2
