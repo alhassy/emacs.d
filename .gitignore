@@ -53,3 +53,4 @@ _minted-*
 /vimish-fold/
 scratch.*
 /projects
+/.agent-shell/

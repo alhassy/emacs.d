@@ -17491,17 +17491,23 @@ org-agenda-custom-commands
 #+begin_src emacs-lisp
 ;; M-x agent-shell: Chat with Claude Code inside an Emacs buffer.
 ;; Uses browser login, so no API key needed — works with Claude Pro/Max subscription.
-;; Requires: npm install -g @zed-industries/claude-agent-acp
+;; Requires: brew install node && npm install -g @zed-industries/claude-agent-acp
 
 ;; The `acp` dependency needs seq-empty-p (Emacs 31+); polyfill it for Emacs 30.
   (defun seq-empty-p (sequence)
     "Return non-nil if SEQUENCE is empty."
     (= 0 (seq-length sequence)))
 
+;; agent-shell expects the claude-agent-acp binary, which is  provided by the @zed-industries/claude-agent-acp npm package.
+(unless (executable-find "claude-agent-acp")
+  (shell-command "/opt/homebrew/bin/npm install -g @zed-industries/claude-agent-acp"))
+
 (use-package agent-shell
   :custom
   (agent-shell-anthropic-authentication
    (agent-shell-anthropic-make-authentication :login t)))
+
+;; ⚙️ Add “ .agent-shell/ ” to “ ~/.gitignore_global” to ignore the transcripts of your conversations from Git
 #+end_src
 *** Opening Claude AI
 #+begin_src emacs-lisp
@@ -17522,11 +17528,13 @@ org-agenda-custom-commands
    to force a new Claude Code shell without an agent selection prompt.
 "
   (interactive "P")
+  
  (let ((default-directory "~/fwd/"))
     (cond
      ((equal arg '(16))
       (let ((existing (agent-shell-buffers)))
-        (agent-shell-anthropic-start-claude-code)
+        ;; (agent-shell-anthropic-start-claude-code)
+        (agent-shell-start :config my/custom-claude-config)
         (when existing
           (let ((name (read-string "Label this session: ")))
             (when-let* (((not (string-empty-p name)))
@@ -17551,11 +17559,33 @@ org-agenda-custom-commands
      (t
       (agent-shell))))))
 
+;; I dislike the “Claude Code>” prompt, it's kinda ugly, so my above command calls on this config:
+(-let [my/custom-claude-prompt "λ🤖λ "]
+  (setq my/custom-claude-config
+        (agent-shell-make-agent-config
+         :identifier 'claude-code
+         :mode-line-name "Claude Code"
+         :buffer-name "Claude Code"
+         :shell-prompt my/custom-claude-prompt
+         :shell-prompt-regexp my/custom-claude-prompt
+         :icon-name "anthropic.png"
+         :client-maker (lambda (buffer)
+                         (agent-shell-anthropic-make-claude-client :buffer buffer))
+         :install-instructions "See https://github.com/zed-industries/claude-agent-acp for installation.")))
+  
 ;; The names of the AI buffers seem to be tied to the AI processes, so we can't just rename buffers.
 ;; However, after any interaction, AI buffer headers are updated, so we hook into that mechanism to
 ;; provide a label for them. We also propogate that label to the agent-shell buffers menu.
 
 (defvar-local my/claude-session-label nil "Custom label for this Claude Code session, shown in the header.")
+
+(defun my/claude-label-session (label)
+  "Set or update the session LABEL for the current agent-shell buffer.
+The label is shown in the header and the session switch menu."
+  (interactive "sLabel this session: ")
+  (unless (derived-mode-p 'agent-shell-mode)
+    (user-error "Not in an agent-shell buffer"))
+  (setq my/claude-session-label (if (string-empty-p label) nil label)))
 
 (advice-add 'agent-shell--make-header-model :filter-return
             (lambda (model) (when my/claude-session-label

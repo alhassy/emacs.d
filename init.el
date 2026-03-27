@@ -286,6 +286,12 @@ installs of packages that are not in our `my/installed-packages' listing.
 (package-refresh-contents)
 (package-install 'agent-shell)
 
+
+;; agent-shell expects the claude-agent-acp binary, which is  provided by the @zed-industries/claude-agent-acp npm package.
+(unless (executable-find "claude-agent-acp")
+  (shell-command "/opt/homebrew/bin/npm install -g @zed-industries/claude-agent-acp"))
+
+
 (use-package agent-shell                                                                                                          :ensure t                                                                                                                       :custom                                                                                                                         (agent-shell-anthropic-authentication                                                                                            (agent-shell-anthropic-make-authentication :login t)))  
 
 
