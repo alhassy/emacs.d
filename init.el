@@ -5351,7 +5351,8 @@ we stared at the dialog before clicking OK."
                                       (process-get proc :handlers) nil nil #'string=)))
               (when handler (eval handler t)))))))))
 
-(non-blocking-message-box :title "Emacs" :content "Enjoy life (｡◕‿◕｡)" :buttons '(:♥))
+(when (eq system-type 'darwin) ;; osascript is macOS-only; skip on Linux CI runners
+  (non-blocking-message-box :title "Emacs" :content "Enjoy life (｡◕‿◕｡)" :buttons '(:♥)))
 ;; Done!:1 ends here
 
 ;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:1]]
