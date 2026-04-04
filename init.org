@@ -9996,14 +9996,37 @@ Note: ~C-x C-r~ is very useful for jumping to recently visited files.
   :type 'integer)
 ;; Use (cancel-timer my/weather--timer) to stop this.
 (defvar my/weather-brief "")
+;; We use async `start-process' instead of blocking `shell-command-to-string'
+;; because the latter calls `call-process', which cannot be invoked recursively.
+;; When this timer fires while another `call-process' is already running
+;; (e.g., Gerrit/Jira queries in standup.el, or corfu's ispell completion),
+;; Emacs throws "call-process invoked recursively" errors.
+;; Async processes avoid this entirely since they don't block the event loop.
 (setq my/weather--timer
       (run-with-timer (* 60 5) (* 60  my/weather-refresh-interval)
                       (defun my/weather-update ()
                         (interactive)
-                        (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t'"))
-                        ;; (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Toronto+Canada?format=%c%C+%t+and+windy:+%w'"))
-                        (setq my/weather-full-details (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?T'"))
-                        (force-mode-line-update))))
+                        (let ((brief-buf (generate-new-buffer " *weather-brief*"))
+                              (full-buf (generate-new-buffer " *weather-full*")))
+                          (set-process-sentinel
+                           (start-process "weather-brief" brief-buf
+                                          "bash" "-c" "curl -s 'wttr.in/Niagara+Falls+Canada?format=%c%C+%t'")
+                           (lambda (proc _event)
+                             (when (eq (process-status proc) 'exit)
+                               (setq my/weather-brief
+                                     (string-trim (with-current-buffer (process-buffer proc)
+                                                    (buffer-string))))
+                               (kill-buffer (process-buffer proc))
+                               (force-mode-line-update))))
+                          (set-process-sentinel
+                           (start-process "weather-full" full-buf
+                                          "bash" "-c" "curl -s 'wttr.in/Niagara+Falls+Canada?T'")
+                           (lambda (proc _event)
+                             (when (eq (process-status proc) 'exit)
+                               (setq my/weather-full-details
+                                     (with-current-buffer (process-buffer proc)
+                                       (buffer-string)))
+                               (kill-buffer (process-buffer proc)))))))))
 ;;
 (setq my/weather--indicator
       `(:eval
