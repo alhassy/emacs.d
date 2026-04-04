@@ -2067,6 +2067,243 @@ fonts (•̀ᴗ•́)و"
 ;; Alternatives: my/auto-set-selective-display-mode or (set-selective-display 1)
 ;; My default ~org-agenda-custom-commands~:3 ends here
 
+;; [[file:init.org::*Getting Started with org-agenda][Getting Started with org-agenda:1]]
+;; Jump straight to my 𝓪genda dashboard ---no dispatch menu please!
+(bind-key
+ "C-c a"
+ (defun my/org-agenda ()
+   (interactive)
+   (org-agenda nil "a")
+   (when org-super-agenda-mode
+     (org-super-agenda-mode -1)
+     (org-agenda-redo))
+   (beginning-of-buffer)))
+
+;; I want the following to happen whenever I do “g” or “/” in the agenda.
+(add-hook 'org-agenda-finalize-hook
+          (defun my/agenda-look-nice ()
+            (-let [fill-column 120]
+              (perfect-margin-mode))
+            (message "Press “/ -Work” to hide all :Work: entries.")))
+
+
+;; Reduce unhelpful visual clutter.
+;;
+;; Everything in my agenda is something I need to do, so no need to show me the actual todo state.
+;; The TODO state is useful for filters, but after the filter it's not useful to see.
+;; (To hide priorities as well, maybe not advisble, see https://emacs.stackexchange.com/a/61451)
+(setq org-agenda-todo-keyword-format "")
+;; Getting Started with org-agenda:1 ends here
+
+;; [[file:init.org::*Agenda Dashboard: Buttons & Random Quote][Agenda Dashboard: Buttons & Random Quote:1]]
+;; For testing:
+;; (aql "hola" :query [(= TODO "I don't care, just show me the dashboard please")] :interactive t)
+;;
+(cl-defun my/insert-button (label action &key (foreground "white") (background "blue") (echo "This is a custom button"))
+  "Insert a styled button at point"
+  ;; Example Use:
+  ;; (my/insert-button "Hello" (lambda (pos) (message (format "Hello at %s" pos))) :foreground "cyan" :background nil :echo "Press me!!")
+  (interactive)
+  ;; TODO: Use lf-define instead
+  (cl-assert (stringp label) t "my/agenda-button: First arg should be a string")
+  (cl-assert (functionp action) t "my/agenda-button: Second arg should be a lambda")
+  (let ((start (point)))
+    (insert-text-button
+     label
+     'action action
+     'follow-link t
+     :type (define-button-type 'custom-button
+             ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
+             'face (list :foreground foreground
+                         :background background
+                         :slant 'italic
+                         :weight 'bold
+                         :box '(:line-width 2 :style released-button))
+             'help-echo echo))))
+
+(add-to-list
+ 'org-agenda-finalize-hook
+ (cl-defun my/extra-agenda-prose ()
+
+   (goto-char 1) ;; Sometimes this is not honoured by org-agenda, e.g., when changing state of a task
+   (when (= (point) 1) ;; i.e., only do this once, when the buffer was created.
+     (my/insert-button "New Journal Entry"
+                       (lambda (pos) (my/capture-journal-entry))
+                       :foreground "cyan"
+                       :background nil
+                       :echo "I enjoy rereading my journal and reliving nice memories ᕦ( ᴼ ڡ ᴼ )ᕤ")
+     ;; TODO:? “See all `:Work:` open loops” button?
+     (insert "\t")
+     (my/insert-button "Consume Content"
+                       (lambda (pos) (my/consume-content))
+                       :foreground "cyan" :background nil
+                       :echo "Get a random subtree from “Consume Content”")
+     (insert "\t")
+     (my/insert-button "Tell me a funny!"
+                       (lambda (pos) (message (dad-joke-get)))
+                       :foreground "cyan"
+                       :background nil
+                       :echo "Smile, it's a form of charity!")
+     (insert "\t")
+     (my/insert-button "Random WikiShia"
+                       (lambda (pos) (browse-url "https://en.wikishia.net/view/Special:Random"))
+                       :foreground "cyan"
+                       :background nil
+                       :echo "Learn, grow!")
+     (insert "\t")
+     (my/insert-button "Search" ;; TODO: As I learn more agenda search features, I'll make this into a completing-read menu?
+                       (lambda (pos) (org-agenda nil "t"))
+                       :foreground "pink"
+                       :background nil
+                       :echo "All TODOs I'd like to actually work on, so as to have a meaningful life")
+     (insert "\t")
+     (my/insert-button "Refresh Work"
+                       (lambda (pos) (my/agenda-work-refresh))
+                       :foreground "orange"
+                       :background nil
+                       :echo "Re-fetch Gerrit/Jira data for the work sections below")
+     ;;
+     ;; NOTE: ‘someday’ things sometimes go into my quote system so that I run into them sometime; lol likewise for things I want to remember
+     ;;
+     (insert "\n")
+     (setq my/quote-start (point))
+     (setq my/quote-end nil)
+     (insert-text-button
+      " " ;; Populated via “ display ”; but must be non-empty.
+      'action (lambda (&rest args)
+                (read-only-mode -1)
+                (put-text-property my/quote-start my/quote-end 'display (my/string-fill-column-and-center 70 (my/random-quote)))
+                (read-only-mode +1))
+      'display (format "\n%s\n" (my/string-fill-column-and-center 70 (my/random-quote)))
+      'follow-link t
+      :type (define-button-type 'custom-button
+              ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
+              'face (list :foreground  "forest green" :slant 'italic)
+              'help-echo "Click to see another random quote!"))
+     (setq my/quote-end (point))
+     (insert "\n\n"))))
+
+(defun my/string-fill-column-and-center (width str)
+  (with-temp-buffer
+    (insert str)
+    (-let [fill-column width] (fill-paragraph))
+    (center-region (point-min) (point-max))
+    (buffer-string)))
+;;
+;; Example usage:
+;; (my/string-fill-column-and-center 27 ""We don't think about sinning as you don't think about eating rotten food." ---Imam As-Sadiq")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MY RANDOM QUOTE                                                                  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; TODO: When :use_body: is present, get the body but also split the body by “\n\s*-----*”, a line of at least 5 dashes.
+(defun my/org-get-title-or-body ()
+  "Get the title of an Org heading, or its body if tagged with :use_body:."
+  (interactive)
+  (save-excursion
+    (when (org-at-heading-p)
+      (let ((tags (org-get-tags))
+            (title (substring-no-properties (org-get-heading t t t t))) ;; Get clean title without keywords or tags
+            (body (progn
+                    (org-end-of-meta-data)
+                    (buffer-substring-no-properties
+                     (point)
+                     (org-end-of-subtree t t)))))
+        (if (member "use_body" tags)
+            (string-trim body)
+          title)))))
+
+
+(defun org-get-random-leaf-headline-or-body ()
+  "
++ Org headlines that have no nested items are called `leaf nodes'.
++ Nesting of sections does not matter.
++ Items marked :use_body: have their body returned instead of title.
++ Sections with children have only their children consulted, as such we can nest arbitrarily without any issues.
++ COMMENTED-out headlines will not be considered
+"
+  (interactive)
+  (let ((headlines '()))
+    (org-map-entries
+     (lambda ()
+       (unless (org-goto-first-child) ;; Check if the heading has no children
+         (push (my/org-get-title-or-body) headlines)))
+     nil       ; no tag search, default is nil
+     nil       ; use entire buffer for search, default is nil
+     'comment) ; skip commented headlines
+    (seq-random-elt headlines)))
+
+
+(defun my/random-quote ()
+  (interactive)
+  (save-excursion
+    (save-restriction
+      ;;
+      (find-file "~/.emacs.d/quotes.org")
+      (widen)
+      (-let [quote (org-get-random-leaf-headline-or-body)]
+        (kill-buffer)
+        quote))))
+;; Agenda Dashboard: Buttons & Random Quote:1 ends here
+
+;; [[file:init.org::*my/consume-content][my/consume-content:1]]
+(defun my/consume-content ()
+  "This agenda block should display 5 entries, selected uniformly at random
+from those entries meeting your selection criteria. Refreshing the
+agenda will reshuffle.
+
+Note: Use “g” to refresh and see 5 (new) random entries;
+or press “v l 30 RET r” to view 30 entries."
+  (interactive)
+  (find-file org-default-notes-file)
+  (widen)
+  (beginning-of-buffer)
+  (search-forward  (car (org-ql-query
+                          :select (lambda () (substring-no-properties (thing-at-point 'line)))
+                          :from org-agenda-files
+                          :where '(tags "ConsumeContent")
+                          :order-by (lambda (x y) (pcase (random 3)
+                                               (0 nil)
+                                               (1 1)
+                                               (2 -1)))
+                          ;; PR open to get :limit support https://github.com/alphapapa/org-ql/pull/495
+                          ;; Note to self: I used https://github.com/emacs-eldev/eldev to run the org-ql tests.
+                          :limit 1))) ;; ⟵ Much faster since I only want 1.
+  ;; (org-tree-to-indirect-buffer) (other-window 1)
+  (org-narrow-to-subtree))
+;; my/consume-content:1 ends here
+
+;; [[file:init.org::*Agenda Variables][Agenda Variables:1]]
+;; When I clock into a tasg, a “:LOGBOOK:” drawer is created to hold the timing meta-data for the task.
+;; When I make document something I've learned with “C-c C-z”, the resulting note should also go into “:LOGBOOK:”.
+(setq org-log-into-drawer t)
+
+(setq org-agenda-span 'day)
+
+(setq  org-fold-catch-invisible-edits 'show-and-error ;; Avoid accidental edits to folded sections
+       org-special-ctrl-a/e t ;; C-a/C-e know about leading “*” and ending :tags:
+       ;; Agenda styling
+       org-agenda-tags-column -80
+       org-agenda-time-grid '((daily today require-timed)
+                              (800 1000 1200 1400 1600 1800 2000)
+                              " ───── " "───────────────")
+       org-agenda-current-time-string "◀── now ─────────────────────────────────────────────────")
+;; Agenda Variables:1 ends here
+
+;; [[file:init.org::*How tasks look in org agenda][How tasks look in org agenda:1]]
+;; Start each agenda item with ‘○’, then show me it's %timestamp and how many
+;; times it's been re-%scheduled.
+(setq org-agenda-prefix-format " ○ %?-12t%-6e%s ")
+
+(setq org-agenda-deadline-leaders '("DUE:       " "In %3d d.: " "%2d d. ago:  "))
+
+(setq org-agenda-scheduled-leaders
+      '(""                ;; Don't say “Scheduled ⟨Task⟩”, just show “⟨Task⟩”.
+        "Overdue%2dx "))  ;; If something's overdue, say “Overdue 𝓃× ⟨Task⟩”.
+;; How tasks look in org agenda:1 ends here
+
 ;; [[file:init.org::*Configuration][Configuration:1]]
 ;; These defvars provide safe empty defaults.  The real values are
 ;; set by private.el (loaded via idle timer or on-demand).
@@ -2106,10 +2343,49 @@ When nil, ticket extraction is disabled.")
 ;; Configuration:1 ends here
 
 ;; [[file:init.org::*Cache variables][Cache variables:1]]
+(cl-defstruct (work-item (:constructor work-item-create))
+  "A single unit of work displayed in the agenda.
+Each instance represents either a Gerrit dependency stack or a
+Jira ticket (possibly both — a Gerrit stack whose Jira ticket is
+flagged urgent).  Created by `work-item-from-stack' or
+`work-item-from-jira-issue'; rendered by
+`work-item-to-string'.
+
+The `urgent' flag is orthogonal to `status': an item can be both
+`:urgent t' and `:status \\='wip', meaning it is urgent AND work-in-
+progress.  The finalize hook uses this to place urgent items into
+dedicated sections at the top of the agenda.
+
+Example:
+  (work-item-create :jira \"BUG-1234\"
+                    :title \"Fix frobnicate\"
+                    :tip-url \"https://…/+/101\"
+                    :reviewers \\='(\"Alice\" \"Bob\")
+                    :author \"Musa\"
+                    :status \\='my-needing-action
+                    :urgent t)"
+  (jira nil
+        :documentation "Jira ticket ID string, eg `Bug-1234', or nil for one-off commits.")
+  (title nil
+         :documentation "Jira summary, or commit subject when no Jira ticket.")
+  (tip-url nil
+           :documentation "Gerrit URL for the topmost change in the stack, or nil for not-yet-started urgent Jira items.")
+  (reviewers nil
+             :documentation "List of reviewer name strings (Code-Review voters).")
+  (author nil
+          :documentation "Display name of the stack owner.")
+  ;; Whether this item is urgent, WIP, something for me to review, something I
+  ;; should ping others to review, or if it's feedback I need to address on my
+  ;; own work.
+  (status nil
+          :documentation "Symbol: todo | wip | please-review | reviews-needed | my-needing-action.
+`todo' means the Jira ticket exists but no Gerrit work has started.")
+  (urgent nil
+          :documentation "Non-nil if this item is flagged urgent by Jira (Urgency = 1 month or upcoming fixVersion)."))
+
 (defvar my/agenda-work-data nil
-  "Cached plist of rendered Gerrit/Jira agenda sections.
-Keys: `:please-review' `:wip' `:reviews-needed' `:my-needing-action'
-`:urgent-jira' `:timestamp'.")
+  "Cached plist holding structured Gerrit/Jira agenda data.
+Keys: `:items' (list of `work-item' instances), `:timestamp'.")
 
 (defvar my/agenda-work-fetching nil
   "Non-nil while an async Gerrit/Jira fetch cycle is in progress.
@@ -2469,7 +2745,71 @@ Example:
       (append (alist-get 'issues json-obj) nil))))
 ;; Jira helpers:1 ends here
 
-;; [[file:init.org::*Formatting stacks as Org text][Formatting stacks as Org text:1]]
+;; [[file:init.org::*Conversion: raw alists → =work-item= instances][Conversion: raw alists → =work-item= instances:1]]
+(defun work-item--strip-commit-tags (subject)
+  "Strip leading bracketed module tags from SUBJECT.
+Commit subjects often begin with \"[module]\" or \"[a, b]\" prefixes
+that are noise in the agenda context.
+
+Example:
+  (work-item--strip-commit-tags \"[gui, css] Align button spacing\")
+  → \"Align button spacing\""
+  (if (string-match "\\`\\[.*?\\] *" subject)
+      (substring subject (match-end 0))
+    subject))
+
+(defun work-item-from-stack (stack status)
+  "Convert a Gerrit dependency STACK into a `work-item' with STATUS.
+STACK is a list of change alists (base-first, as produced by
+`my/gerrit--group-into-stacks').  STATUS is one of the symbols:
+  wip, please-review, reviews-needed, my-needing-action.
+
+The Jira title cache must already be populated (via
+`my/gerrit--fetch-jira-titles') before calling this function.
+
+Example:
+  (work-item-from-stack some-stack \\='my-needing-action)
+  → #s(work-item :jira \"BUG-1234\" :title \"Fix it\" ...)"
+  (let* ((tip (car (last stack)))
+         (jira (car (my/gerrit--stack-jira-tickets stack)))
+         (jira-title (when jira (my/gerrit--get-jira-title jira))))
+    (work-item-create
+     :jira jira
+     :title (or jira-title
+                (when-let ((subj (alist-get 'subject tip)))
+                  (work-item--strip-commit-tags subj))
+                "untitled")
+     :tip-url (format "%s%s%s"
+                      my\gerrit-base-url my\gerrit-project-path
+                      (alist-get 'number tip))
+     :reviewers (my/gerrit--extract-reviewer-names stack)
+     :author (alist-get 'name (alist-get 'owner tip))
+     :status status)))
+
+(defun work-item-from-jira-issue (issue)
+  "Convert a Jira REST API ISSUE alist into a `work-item'.
+Status is `todo' (no Gerrit work has started), and `urgent' is t.
+ISSUE has the shape returned by `my/gerrit--query-jira':
+  ((key . \"BUG-1234\") (fields . ((summary . \"Fix frobnicate\") ...)))
+
+Example:
+  (work-item-from-jira-issue
+   \\='((key . \"BUG-99\") (fields . ((summary . \"Urgent thing\")))))
+  → #s(work-item :jira \"BUG-99\" :title \"Urgent thing\"
+                 :status todo :urgent t)"
+  (let ((key (alist-get 'key issue))
+        (summary (alist-get 'summary (alist-get 'fields issue))))
+    (work-item-create
+     :jira key
+     :title (or summary "untitled")
+     :tip-url nil
+     :reviewers nil
+     :author nil
+     :status 'todo
+     :urgent t)))
+;; Conversion: raw alists → =work-item= instances:1 ends here
+
+;; [[file:init.org::*Rendering =work-item= instances][Rendering =work-item= instances:1]]
 (cl-defun my/gerrit--extract-reviewer-names (stack)
   "Extract unique human names of Code-Review voters from STACK.
 Walks the `approvals' list in each change's `currentPatchSet',
@@ -2508,90 +2848,66 @@ Examples:
                (s-join ", " (butlast names))
                (car (last names))))))
 
-(cl-defun my/gerrit--format-stack-as-org (stack mine-p)
-  "Format STACK as a single-line Org entry for attention-set sections.
-The phrasing depends on MINE-P:
+(cl-defgeneric work-item-to-string (item)
+  "Render ITEM as a single-line string for display in the agenda.")
 
-When MINE-P is non-nil (I own the change, it is in my attention set):
-  → \"Address [[url][latest feedback]] from Alice and Bob\"
-  The call to action is: something needs my response.
+(cl-defmethod work-item-to-string ((item work-item))
+  "Render a `work-item' ITEM as a single-line Org string for the agenda.
+Dispatches on `work-item-status':
+  todo              → JIRA-LINK + title (no Gerrit work yet)
+  my-needing-action → Address latest feedback from REVIEWERS
+  reviews-needed    → Review AUTHOR's latest efforts
+  please-review     → REVIEWERS please review this work
+  wip               → Resume or abandon this work
+Each line is optionally prefixed with a Jira link + title when
+the work-item has a non-nil `jira' slot.
 
-When MINE-P is nil (someone else's change, in my attention set):
-  → \"Review Alice's [[url][latest efforts]]\"
-  The call to action is: I am blocking someone's review.
+The `urgent' flag is orthogonal — it affects section placement in
+the finalize hook, not rendering."
+  (let* ((jira        (work-item-jira item))
+         (title       (work-item-title item))
+         (url         (work-item-tip-url item))
+         (reviewers   (work-item-reviewers item))
+         (author      (work-item-author item))
+         (status      (work-item-status item))
+         (jira-link   (when jira (my/gerrit--format-jira-link jira)))
+         (jira-prefix (when jira-link
+                        (if title
+                            (format "%s \"%s\" :: " jira-link title)
+                          (format "%s :: " jira-link))))
+         (rv-str      (when reviewers
+                        (my/gerrit--format-reviewer-names reviewers))))
+    (pcase status
+      ('todo
+       (if title (format "%s \"%s\"" (or jira-link "") title)
+         (or jira-link "")))
 
-If the stack shares a common Jira ticket, it appears as a prefix:
-  → \"BUG-101 \\\"Fix routing\\\" :: Address [[url][latest feedback]]\""
-  (let* ((tip (car (last stack)))
-         (base (car stack))
-         (tip-url (format "%s%s%s"
-                          my\gerrit-base-url my\gerrit-project-path
-                          (alist-get 'number tip)))
-         (base-url (format "%s%s%s"
-                           my\gerrit-base-url my\gerrit-project-path
-                           (alist-get 'number base)))
-         (tickets (my/gerrit--stack-jira-tickets stack))
-         (ticket (car tickets))
-         (jira-part
-          (when ticket
-            (let ((title (my/gerrit--get-jira-title ticket)))
-              (if title
-                  (format "%s \"%s\""
-                          (my/gerrit--format-jira-link ticket) title)
-                (my/gerrit--format-jira-link ticket))))))
-    (if jira-part
-        (format "%s :: %s" jira-part
-                (if mine-p
-                    (let* ((rvs (my/gerrit--extract-reviewer-names stack))
-                           (from (when rvs (format " from %s"
-                                                   (my/gerrit--format-reviewer-names rvs)))))
-                      (format "Address [[%s][latest feedback]]%s"
-                              base-url (or from "")))
-                  (format "Review %s's [[%s][latest efforts]]"
-                          (alist-get 'name (alist-get 'owner tip))
-                          tip-url)))
-      (if mine-p
-          (let* ((rvs (my/gerrit--extract-reviewer-names stack))
-                 (from (when rvs (format " from %s"
-                                         (my/gerrit--format-reviewer-names rvs)))))
-            (format "Address [[%s][latest feedback]] on \"%s\"%s"
-                    base-url (alist-get 'subject tip) (or from "")))
-        (format "Review %s's [[%s][%s]]"
-                (alist-get 'name (alist-get 'owner tip))
-                tip-url (alist-get 'subject tip))))))
+      ('my-needing-action
+       (concat jira-prefix
+               (format "Address [[%s][latest feedback]]" url)
+               (when rv-str (format " from %s" rv-str))))
 
-(cl-defun my/gerrit--format-stale-stack-as-org (stack)
-  "Format STACK as a single-line Org entry for \"please review\" / WIP sections.
-The phrasing is: \"Alice and Bob please review this [[url][work]]\"
-— the call to action is directed at the reviewers, not at me.
+      ('reviews-needed
+       (concat jira-prefix
+               (format "Review %s's [[%s][latest efforts]]"
+                       (or author "someone") url)))
 
-If a shared Jira ticket exists, it appears as a prefix:
-  → \"BUG-101 \\\"Fix routing\\\" :: Alice please review this [[url][work]]\""
-  (let* ((base (car stack))
-         (base-url (format "%s%s%s"
-                           my\gerrit-base-url my\gerrit-project-path
-                           (alist-get 'number base)))
-         (tip (car (last stack)))
-         (tickets (my/gerrit--stack-jira-tickets stack))
-         (ticket (car tickets))
-         (jira-part
-          (when ticket
-            (let ((title (my/gerrit--get-jira-title ticket)))
-              (if title
-                  (format "%s \"%s\""
-                          (my/gerrit--format-jira-link ticket) title)
-                (my/gerrit--format-jira-link ticket)))))
-         (rvs (my/gerrit--extract-reviewer-names stack))
-         (rv-str (if rvs
-                     (my/gerrit--format-reviewer-names rvs)
-                   "Reviewers"))
-         (action (format "%s please review this [[%s][work]]"
-                         rv-str base-url)))
-    (if jira-part
-        (format "%s :: %s" jira-part action)
-      (format "%s please review [[%s][%s]]"
-              rv-str base-url (alist-get 'subject tip)))))
+      ('please-review
+       (if jira-prefix
+           (format "%s%s please review this [[%s][work]]"
+                   jira-prefix (or rv-str "Reviewers") url)
+         (format "%s please review [[%s][%s]]"
+                 (or rv-str "Reviewers") url title)))
 
+      ('wip
+       (if jira-prefix
+           (concat (format "%sResume or abandon this [[%s][work]]"
+                           jira-prefix url) "?")
+         (concat (format "Resume or abandon [[%s][%s]]"
+                         url title) "?"))))))
+;; Rendering =work-item= instances:1 ends here
+
+;; [[file:init.org::*Ticket collection helper][Ticket collection helper:1]]
 (cl-defun my/gerrit--collect-all-tickets (stacks)
   "Collect all unique Jira ticket IDs across all STACKS.
 Used before `my/gerrit--fetch-jira-titles' to batch-fetch every
@@ -2601,58 +2917,7 @@ will appear in.  Returns a flat deduplicated list of ID strings."
        (-mapcat (lambda (s)
                   (-mapcat #'my/gerrit--extract-jira-tickets s)))
        -uniq))
-;; Formatting stacks as Org text:1 ends here
-
-;; [[file:init.org::*Rendering helpers][Rendering helpers:1]]
-(defun my/agenda--render-stacks (stacks format-fn)
-  "Render STACKS as a numbered list string, one line per stack.
-FORMAT-FN is called with each stack and should return the text
-for that entry (e.g. `my/gerrit--format-stack-as-org').  Returns
-a string like \"1. Review Alice's latest efforts\\n2. ...\", or
-the empty string if STACKS is nil."
-  (if (null stacks) ""
-    (with-temp-buffer
-      (let ((n 0))
-        (dolist (stack stacks)
-          (cl-incf n)
-          (insert (format "%d. %s\n" n
-                          (funcall format-fn stack)))))
-      (buffer-string))))
-
-(defun my/agenda--render-urgent-jira ()
-  "Query Jira for urgent tickets assigned to me and render as a numbered list.
-\"Urgent\" means: Urgency = \"1 month\" OR fixVersion = the upcoming
-release (computed as next-month in YY.MM format).  Only unresolved
-tickets are returned.  Returns a string ready for insertion into
-the agenda, or the empty string if nothing is urgent."
-  (let* ((now (decode-time))
-         (mon (nth 4 now))
-         (yr  (mod (nth 5 now) 100))
-         (next-mon (1+ mon))
-         (next-yr  (if (> next-mon 12) (1+ yr) yr))
-         (next-mon (if (> next-mon 12) 1 next-mon))
-         (fix-ver  (format "%d.%d" next-yr next-mon))
-         (jql (format (concat "(Urgency = \"1 month\""
-                              " OR fixVersion = \"%s\")"
-                              " AND resolution = Unresolved"
-                              " AND assignee = %s")
-                      fix-ver my\gerrit-user))
-         (issues (my/gerrit--query-jira jql)))
-    (if (null issues) ""
-      (with-temp-buffer
-        (let ((n 0))
-          (dolist (issue issues)
-            (cl-incf n)
-            (let* ((key (alist-get 'key issue))
-                   (summary (alist-get 'summary
-                                       (alist-get 'fields issue))))
-              (insert (format "%d. %s%s\n" n
-                              (my/gerrit--format-jira-link key)
-                              (if summary
-                                  (format " \"%s\"" summary)
-                                ""))))))
-        (buffer-string)))))
-;; Rendering helpers:1 ends here
+;; Ticket collection helper:1 ends here
 
 ;; [[file:init.org::*Async fetch machinery][Async fetch machinery:1]]
 (defun my/agenda--async-gerrit-query (query-string store-var)
@@ -2755,7 +3020,7 @@ heavy synchronous work:
   2. Split attention-set stacks into mine vs. others.
   3. Batch-fetch Jira titles for all referenced tickets.
   4. Query for urgent Jira tickets (Urgency = 1 month / next release).
-  5. Render each section to a string and store in `my/agenda-work-data'.
+  5. Convert each stack to a `work-item' and store in `my/agenda-work-data'.
   6. Trigger `org-agenda-redo-all' if the agenda buffer is live.
 Wrapped in `condition-case' so a failure does not leave
 `my/agenda-work-fetching' stuck at t."
@@ -2816,38 +3081,70 @@ Wrapped in `condition-case' so a failure does not leave
                     (message "Gerrit/Jira: fetching titles for %d Jira tickets…"
                              (length tix))
                     (my/gerrit--fetch-jira-titles tix))))
-             ;; Render each section to a string
-             (pr-text (my/agenda--render-stacks
-                       stale-stacks
-                       #'my/gerrit--format-stale-stack-as-org))
-             (wip-text (my/agenda--render-stacks
-                        wip-stacks
-                        #'my/gerrit--format-stale-stack-as-org))
-             (rv-text (my/agenda--render-stacks
-                       others
-                       (lambda (s)
-                         (my/gerrit--format-stack-as-org s nil))))
-             (my-text (my/agenda--render-stacks
-                       mine
-                       (lambda (s)
-                         (my/gerrit--format-stack-as-org s t))))
+             ;; Convert stacks → work-item instances
+             (stale-items (-map (lambda (s)
+                                  (work-item-from-stack s 'please-review))
+                                stale-stacks))
+             (wip-items   (-map (lambda (s)
+                                  (work-item-from-stack s 'wip))
+                                wip-stacks))
+             (rv-items    (-map (lambda (s)
+                                  (work-item-from-stack s 'reviews-needed))
+                                others))
+             (my-items    (-map (lambda (s)
+                                  (work-item-from-stack s 'my-needing-action))
+                                mine))
+             (gerrit-items (append stale-items wip-items rv-items my-items))
+             ;; Urgent Jira tickets (separate JQL query)
              (_ (message "Gerrit/Jira: checking for urgent Jira tickets…"))
-             (urgent (my/agenda--render-urgent-jira)))
+             (urgent-jql
+              (let* ((now (decode-time))
+                     (mon (nth 4 now))
+                     (yr  (mod (nth 5 now) 100))
+                     (next-mon (1+ mon))
+                     (next-yr  (if (> next-mon 12) (1+ yr) yr))
+                     (next-mon (if (> next-mon 12) 1 next-mon))
+                     (fix-ver  (format "%d.%d" next-yr next-mon)))
+                (format (concat "(Urgency = \"1 month\""
+                                " OR fixVersion = \"%s\")"
+                                " AND resolution = Unresolved"
+                                " AND assignee = %s")
+                        fix-ver my\gerrit-user)))
+             (urgent-issues (my/gerrit--query-jira urgent-jql))
+             ;; Build set of urgent Jira ticket IDs
+             (urgent-ids
+              (let ((ht (make-hash-table :test 'equal)))
+                (dolist (issue urgent-issues)
+                  (puthash (alist-get 'key issue) t ht))
+                ht))
+             ;; Mark Gerrit work-items as urgent if their Jira ticket
+             ;; appears in the urgent query results
+             (_ (dolist (it gerrit-items)
+                  (when (and (work-item-jira it)
+                             (gethash (work-item-jira it) urgent-ids))
+                    (setf (work-item-urgent it) t))))
+             ;; Tickets that are urgent but have no Gerrit work yet
+             (covered-ids
+              (let ((ht (make-hash-table :test 'equal)))
+                (dolist (it gerrit-items)
+                  (when (work-item-jira it)
+                    (puthash (work-item-jira it) t ht)))
+                ht))
+             (todo-items
+              (-map #'work-item-from-jira-issue
+                    (-filter (lambda (issue)
+                               (not (gethash (alist-get 'key issue)
+                                             covered-ids)))
+                             urgent-issues)))
+             ;; Combine all items
+             (all-items (append todo-items gerrit-items)))
         (setq my/agenda-work-data
-              (list :please-review pr-text
-                    :wip wip-text
-                    :reviews-needed rv-text
-                    :my-needing-action my-text
-                    :urgent-jira urgent
+              (list :items all-items
                     :timestamp (current-time))
               my/agenda-work-fetching nil)
-        (message "Gerrit/Jira: cached %d attn, %d mine (%s/%s/%s/%s/%s non-empty)"
+        (message "Gerrit/Jira: cached %d attn, %d mine, %d work-items"
                  (length attention) (length all-mine)
-                 (if (s-present? pr-text) "PR" "-")
-                 (if (s-present? wip-text) "WIP" "-")
-                 (if (s-present? rv-text) "RV" "-")
-                 (if (s-present? my-text) "MY" "-")
-                 (if (s-present? urgent) "URG" "-"))
+                 (length all-items))
         ;; Refresh agenda if the buffer exists
         (when-let ((buf (get-buffer "*Org Agenda*")))
           (when (buffer-live-p buf)
@@ -2861,31 +3158,37 @@ Wrapped in `condition-case' so a failure does not leave
 
 ;; [[file:init.org::*Link activation][Link activation:1]]
 (defun my/agenda--activate-org-links (start end)
-  "Convert Org-style [[url][desc]] links to clickable text buttons.
+  "Make [[url][desc]] links clickable while preserving raw markup.
 The agenda buffer is not in `org-mode', so raw bracket links would
 display as literal text.  This post-processes the region between
-START and END, replacing each [[url][desc]] with a clickable button
-that opens URL via `browse-url' on click or RET."
+START and END, adding text properties to each [[url][desc]] so that:
+
+- Visually, only DESC is shown (via the `display' property).
+- Clicking or pressing RET opens URL via `browse-url'.
+- Hovering shows the full URL as a tooltip.
+- Copy/paste preserves the raw [[url][desc]] Org link syntax,
+  so pasting into an Org buffer yields a working link."
   (save-excursion
     (goto-char start)
-    (while (re-search-forward
-            "\\[\\[\\([^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" end t)
-      (let* ((url (match-string 1))
-             (desc (match-string 2))
-             (beg (match-beginning 0))
-             (fin (match-end 0))
-             (shrink (- fin beg (length desc))))
-        (delete-region beg fin)
-        (goto-char beg)
-        (insert-text-button
-         desc
-         'action (lambda (btn)
-                   (browse-url (button-get btn 'my-url)))
-         'my-url url
-         'follow-link t
-         'face 'link
-         'help-echo url)
-        (setq end (- end shrink))))))
+    (let ((map (make-sparse-keymap)))
+      (define-key map [mouse-1]
+        (lambda (e) (interactive "e")
+          (browse-url (get-text-property (posn-point (event-start e)) 'my-url))))
+      (define-key map (kbd "RET")
+        (lambda () (interactive)
+          (browse-url (get-text-property (point) 'my-url))))
+      (while (re-search-forward
+              "\\[\\[\\(.+?\\)\\]\\[\\(.+?\\)\\]\\]" end t)
+        (let ((url  (match-string 1))
+              (desc (match-string 2))
+              (beg  (match-beginning 0))
+              (fin  (match-end 0)))
+          (put-text-property beg fin 'display desc)
+          (put-text-property beg fin 'face 'link)
+          (put-text-property beg fin 'mouse-face 'highlight)
+          (put-text-property beg fin 'help-echo url)
+          (put-text-property beg fin 'my-url url)
+          (put-text-property beg fin 'keymap map))))))
 ;; Link activation:1 ends here
 
 ;; [[file:init.org::*Finalize hook + once-daily auto-fetch][Finalize hook + once-daily auto-fetch:1]]
@@ -2898,8 +3201,27 @@ A nil cache (never fetched) is also considered stale."
            (today       (format-time-string "%Y-%m-%d")))
       (not (string= cached-day today)))))
 
+(defun work-item-insert-as-agenda-section (heading items)
+  "Insert HEADING and a numbered list of rendered ITEMS into the agenda buffer.
+Each item is rendered via `work-item-to-string'."
+  (when items
+    (insert "\n"
+            (propertize heading 'face 'org-agenda-structure)
+            "\n")
+    (let ((n 0))
+      (dolist (it items)
+        (cl-incf n)
+        (insert (format "%d. %s\n" n
+                        (work-item-to-string it)))))))
+
 (defun my/agenda-insert-work-sections ()
-  "Insert cached Gerrit/Jira sections at the end of the daily agenda.
+  "Insert cached `work-item' sections at the end of the daily agenda.
+Section ordering:
+  1. Urgent in-progress items (`:urgent t' with a non-`todo' status)
+  2. Urgent not-yet-started items (`:urgent t :status \\='todo')
+  3. Remaining sections by status (reviews-needed, my-needing-action,
+     please-review, wip) — excluding items already shown as urgent.
+
 On first agenda open each calendar day, automatically triggers a
 background fetch.  Subsequent opens reuse the cache.  To force a
 manual refresh at any time, use the \"Refresh Work\" button or press
@@ -2908,26 +3230,44 @@ manual refresh at any time, use the \"Refresh Work\" button or press
     (let ((inhibit-read-only t))
       (goto-char (point-max))
       (if my/agenda-work-data
-          (let ((start (point)))
-            (dolist (section
-                     '((:urgent-jira
-                        "🔴 Urgent Jira Tickets")
-                       (:reviews-needed
-                        "👀 Reviews Needed (I'm blocking someone)")
-                       (:my-needing-action
-                        "🔧 My Changes Needing Action")
-                       (:please-review
-                        "⏳ Please Review My Work")
-                       (:wip
-                        "🚧 Work In Progress")))
-              (let ((text (plist-get my/agenda-work-data
-                                     (car section))))
-                (when (and text (not (string-empty-p text)))
-                  (insert "\n"
-                          (propertize (cadr section)
-                                     'face 'org-agenda-structure)
-                          "\n")
-                  (insert text))))
+          (let* ((start (point))
+                 (items (plist-get my/agenda-work-data :items))
+                 ;; Urgent items split by in-progress vs not-yet-started
+                 (urgent-in-progress
+                  (-filter (lambda (it)
+                             (and (work-item-urgent it)
+                                  (not (eq (work-item-status it) 'todo))))
+                           items))
+                 (urgent-todo
+                  (-filter (lambda (it)
+                             (and (work-item-urgent it)
+                                  (eq (work-item-status it) 'todo)))
+                           items))
+                 ;; Non-urgent items by status
+                 (non-urgent
+                  (-filter (lambda (it) (not (work-item-urgent it)))
+                           items))
+                 (status-sections
+                  '((reviews-needed    "👀 Reviews Needed (I'm blocking someone)")
+                    (my-needing-action "🔧 My Changes Needing Action")
+                    (please-review     "⏳ Please Review My Work")
+                    (wip               "🚧 Work In Progress"))))
+            ;; Urgent sections first
+            (work-item-insert-as-agenda-section
+             "🔴 Urgent In-Progress Jira Tickets"
+             urgent-in-progress)
+            (work-item-insert-as-agenda-section
+             "🔴 Urgent Jira Tickets — Not yet started!"
+             urgent-todo)
+            ;; Remaining sections by status
+            (dolist (sec status-sections)
+              (let* ((status (car sec))
+                     (heading (cadr sec))
+                     (matching (-filter
+                                (lambda (it)
+                                  (eq (work-item-status it) status))
+                                non-urgent)))
+                (work-item-insert-as-agenda-section heading matching)))
             (my/agenda--activate-org-links start (point))
             ;; If the cache is from yesterday, silently refresh in the background
             (when (and (my/agenda--cache-stale-p)
@@ -2944,243 +3284,6 @@ manual refresh at any time, use the \"Refresh Work\" button or press
 
 (add-hook 'org-agenda-finalize-hook #'my/agenda-insert-work-sections)
 ;; Finalize hook + once-daily auto-fetch:1 ends here
-
-;; [[file:init.org::*Getting Started with org-agenda][Getting Started with org-agenda:1]]
-;; Jump straight to my 𝓪genda dashboard ---no dispatch menu please!
-(bind-key
- "C-c a"
- (defun my/org-agenda ()
-   (interactive)
-   (org-agenda nil "a")
-   (when org-super-agenda-mode
-     (org-super-agenda-mode -1)
-     (org-agenda-redo))
-   (beginning-of-buffer)))
-
-;; I want the following to happen whenever I do “g” or “/” in the agenda.
-(add-hook 'org-agenda-finalize-hook
-          (defun my/agenda-look-nice ()
-            (-let [fill-column 120]
-              (perfect-margin-mode))
-            (message "Press “/ -Work” to hide all :Work: entries.")))
-
-
-;; Reduce unhelpful visual clutter.
-;;
-;; Everything in my agenda is something I need to do, so no need to show me the actual todo state.
-;; The TODO state is useful for filters, but after the filter it's not useful to see.
-;; (To hide priorities as well, maybe not advisble, see https://emacs.stackexchange.com/a/61451)
-(setq org-agenda-todo-keyword-format "")
-;; Getting Started with org-agenda:1 ends here
-
-;; [[file:init.org::*Agenda Dashboard: Buttons & Random Quote][Agenda Dashboard: Buttons & Random Quote:1]]
-;; For testing:
-;; (aql "hola" :query [(= TODO "I don't care, just show me the dashboard please")] :interactive t)
-;;
-(cl-defun my/insert-button (label action &key (foreground "white") (background "blue") (echo "This is a custom button"))
-  "Insert a styled button at point"
-  ;; Example Use:
-  ;; (my/insert-button "Hello" (lambda (pos) (message (format "Hello at %s" pos))) :foreground "cyan" :background nil :echo "Press me!!")
-  (interactive)
-  ;; TODO: Use lf-define instead
-  (cl-assert (stringp label) t "my/agenda-button: First arg should be a string")
-  (cl-assert (functionp action) t "my/agenda-button: Second arg should be a lambda")
-  (let ((start (point)))
-    (insert-text-button
-     label
-     'action action
-     'follow-link t
-     :type (define-button-type 'custom-button
-             ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
-             'face (list :foreground foreground
-                         :background background
-                         :slant 'italic
-                         :weight 'bold
-                         :box '(:line-width 2 :style released-button))
-             'help-echo echo))))
-
-(add-to-list
- 'org-agenda-finalize-hook
- (cl-defun my/extra-agenda-prose ()
-
-   (goto-char 1) ;; Sometimes this is not honoured by org-agenda, e.g., when changing state of a task
-   (when (= (point) 1) ;; i.e., only do this once, when the buffer was created.
-     (my/insert-button "New Journal Entry"
-                       (lambda (pos) (my/capture-journal-entry))
-                       :foreground "cyan"
-                       :background nil
-                       :echo "I enjoy rereading my journal and reliving nice memories ᕦ( ᴼ ڡ ᴼ )ᕤ")
-     ;; TODO:? “See all `:Work:` open loops” button?
-     (insert "\t")
-     (my/insert-button "Consume Content"
-                       (lambda (pos) (my/consume-content))
-                       :foreground "cyan" :background nil
-                       :echo "Get a random subtree from “Consume Content”")
-     (insert "\t")
-     (my/insert-button "Tell me a funny!"
-                       (lambda (pos) (message (dad-joke-get)))
-                       :foreground "cyan"
-                       :background nil
-                       :echo "Smile, it's a form of charity!")
-     (insert "\t")
-     (my/insert-button "Random WikiShia"
-                       (lambda (pos) (browse-url "https://en.wikishia.net/view/Special:Random"))
-                       :foreground "cyan"
-                       :background nil
-                       :echo "Learn, grow!")
-     (insert "\t")
-     (my/insert-button "Search" ;; TODO: As I learn more agenda search features, I'll make this into a completing-read menu?
-                       (lambda (pos) (org-agenda nil "t"))
-                       :foreground "pink"
-                       :background nil
-                       :echo "All TODOs I'd like to actually work on, so as to have a meaningful life")
-     (insert "\t")
-     (my/insert-button "Refresh Work"
-                       (lambda (pos) (my/agenda-work-refresh))
-                       :foreground "orange"
-                       :background nil
-                       :echo "Re-fetch Gerrit/Jira data for the work sections below")
-     ;;
-     ;; NOTE: ‘someday’ things sometimes go into my quote system so that I run into them sometime; lol likewise for things I want to remember
-     ;;
-     (insert "\n")
-     (setq my/quote-start (point))
-     (setq my/quote-end nil)
-     (insert-text-button
-      " " ;; Populated via “ display ”; but must be non-empty.
-      'action (lambda (&rest args)
-                (read-only-mode -1)
-                (put-text-property my/quote-start my/quote-end 'display (my/string-fill-column-and-center 70 (my/random-quote)))
-                (read-only-mode +1))
-      'display (format "\n%s\n" (my/string-fill-column-and-center 70 (my/random-quote)))
-      'follow-link t
-      :type (define-button-type 'custom-button
-              ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
-              'face (list :foreground  "forest green" :slant 'italic)
-              'help-echo "Click to see another random quote!"))
-     (setq my/quote-end (point))
-     (insert "\n\n"))))
-
-(defun my/string-fill-column-and-center (width str)
-  (with-temp-buffer
-    (insert str)
-    (-let [fill-column width] (fill-paragraph))
-    (center-region (point-min) (point-max))
-    (buffer-string)))
-;;
-;; Example usage:
-;; (my/string-fill-column-and-center 27 ""We don't think about sinning as you don't think about eating rotten food." ---Imam As-Sadiq")
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; MY RANDOM QUOTE                                                                  ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO: When :use_body: is present, get the body but also split the body by “\n\s*-----*”, a line of at least 5 dashes.
-(defun my/org-get-title-or-body ()
-  "Get the title of an Org heading, or its body if tagged with :use_body:."
-  (interactive)
-  (save-excursion
-    (when (org-at-heading-p)
-      (let ((tags (org-get-tags))
-            (title (substring-no-properties (org-get-heading t t t t))) ;; Get clean title without keywords or tags
-            (body (progn
-                    (org-end-of-meta-data)
-                    (buffer-substring-no-properties
-                     (point)
-                     (org-end-of-subtree t t)))))
-        (if (member "use_body" tags)
-            (string-trim body)
-          title)))))
-
-
-(defun org-get-random-leaf-headline-or-body ()
-  "
-+ Org headlines that have no nested items are called `leaf nodes'.
-+ Nesting of sections does not matter.
-+ Items marked :use_body: have their body returned instead of title.
-+ Sections with children have only their children consulted, as such we can nest arbitrarily without any issues.
-+ COMMENTED-out headlines will not be considered
-"
-  (interactive)
-  (let ((headlines '()))
-    (org-map-entries
-     (lambda ()
-       (unless (org-goto-first-child) ;; Check if the heading has no children
-         (push (my/org-get-title-or-body) headlines)))
-     nil       ; no tag search, default is nil
-     nil       ; use entire buffer for search, default is nil
-     'comment) ; skip commented headlines
-    (seq-random-elt headlines)))
-
-
-(defun my/random-quote ()
-  (interactive)
-  (save-excursion
-    (save-restriction
-      ;;
-      (find-file "~/.emacs.d/quotes.org")
-      (widen)
-      (-let [quote (org-get-random-leaf-headline-or-body)]
-        (kill-buffer)
-        quote))))
-;; Agenda Dashboard: Buttons & Random Quote:1 ends here
-
-;; [[file:init.org::*my/consume-content][my/consume-content:1]]
-(defun my/consume-content ()
-  "This agenda block should display 5 entries, selected uniformly at random
-from those entries meeting your selection criteria. Refreshing the
-agenda will reshuffle.
-
-Note: Use “g” to refresh and see 5 (new) random entries;
-or press “v l 30 RET r” to view 30 entries."
-  (interactive)
-  (find-file org-default-notes-file)
-  (widen)
-  (beginning-of-buffer)
-  (search-forward  (car (org-ql-query
-                          :select (lambda () (substring-no-properties (thing-at-point 'line)))
-                          :from org-agenda-files
-                          :where '(tags "ConsumeContent")
-                          :order-by (lambda (x y) (pcase (random 3)
-                                               (0 nil)
-                                               (1 1)
-                                               (2 -1)))
-                          ;; PR open to get :limit support https://github.com/alphapapa/org-ql/pull/495
-                          ;; Note to self: I used https://github.com/emacs-eldev/eldev to run the org-ql tests.
-                          :limit 1))) ;; ⟵ Much faster since I only want 1.
-  ;; (org-tree-to-indirect-buffer) (other-window 1)
-  (org-narrow-to-subtree))
-;; my/consume-content:1 ends here
-
-;; [[file:init.org::*Agenda Variables][Agenda Variables:1]]
-;; When I clock into a tasg, a “:LOGBOOK:” drawer is created to hold the timing meta-data for the task.
-;; When I make document something I've learned with “C-c C-z”, the resulting note should also go into “:LOGBOOK:”.
-(setq org-log-into-drawer t)
-
-(setq org-agenda-span 'day)
-
-(setq  org-fold-catch-invisible-edits 'show-and-error ;; Avoid accidental edits to folded sections
-       org-special-ctrl-a/e t ;; C-a/C-e know about leading “*” and ending :tags:
-       ;; Agenda styling
-       org-agenda-tags-column -80
-       org-agenda-time-grid '((daily today require-timed)
-                              (800 1000 1200 1400 1600 1800 2000)
-                              " ───── " "───────────────")
-       org-agenda-current-time-string "◀── now ─────────────────────────────────────────────────")
-;; Agenda Variables:1 ends here
-
-;; [[file:init.org::*How tasks look in org agenda][How tasks look in org agenda:1]]
-;; Start each agenda item with ‘○’, then show me it's %timestamp and how many
-;; times it's been re-%scheduled.
-(setq org-agenda-prefix-format " ○ %?-12t%-6e%s ")
-
-(setq org-agenda-deadline-leaders '("DUE:       " "In %3d d.: " "%2d d. ago:  "))
-
-(setq org-agenda-scheduled-leaders
-      '(""                ;; Don't say “Scheduled ⟨Task⟩”, just show “⟨Task⟩”.
-        "Overdue%2dx "))  ;; If something's overdue, say “Overdue 𝓃× ⟨Task⟩”.
-;; How tasks look in org agenda:1 ends here
 
 ;; [[file:init.org::*Show me the agenda when I've been idle for 10 minutes][Show me the agenda when I've been idle for 10 minutes:1]]
 ;; Stop this with:  (cancel-function-timers 'my/pop-up-agenda-timer)
