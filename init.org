@@ -1,4 +1,3 @@
-#+TITLE: init
 # -*- org-export-use-babel: nil -*-
 
 # السّلام عليكم ≈ “Hello, and welcome” in Arabic (العربيّة)
@@ -10365,6 +10364,7 @@ Further Reading:
 (setq org-agenda-span 'day)
 
 (setq org-agenda-sticky nil)
+(setq org-agenda-block-separator "") ;; one blank line between blocks (no ugly horizontal rule)
 #+end_src
 
 #+begin_src emacs-lisp
@@ -10387,7 +10387,7 @@ Further Reading:
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
            '(tags "inbox")
-           ((org-ql-block-header "\n📩 Process Inbox: “m” to mark then “B r” to refile marked items 📥\n")))
+           ((org-ql-block-header "📩 Process Inbox: 'm' to mark then 'B r' to refile marked items 📥")))
 
 
           ;; MA: Moved this to Weekly Review. ;;
@@ -10422,7 +10422,7 @@ Further Reading:
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
            '(tags-local "Top")
-           ((org-ql-block-header "\n⚡ Top goals for the month ⚡\n")
+           ((org-ql-block-header "⚡ Top goals for the month ⚡")
             (org-agenda-remove-tags t)))
 
 
@@ -10431,7 +10431,7 @@ Further Reading:
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
            '(and (tags-local "Happy") (or (scheduled -7) (deadline -7) (not (done))))
-           ((org-ql-block-header "\n🤗 I'd be happy if I got the following done this week 🥰\n")
+           ((org-ql-block-header "🤗 I'd be happy if I got the following done this week 🥰")
             (org-agenda-remove-tags t)))
 
 
@@ -10441,7 +10441,8 @@ Further Reading:
           ;; Note the definition of “done” includes all terminal states in my workflow.
           (org-ql-block
            `(and (not (tags "Recurring")) (done) (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)) ;; “start-of-week” /from today/
-           ((org-ql-block-header (propertize "\n✅ What I've done so far this week 💯\n" 'help-echo "Press E to toggle seeing ~5 lines of each entry. \n If DONE, mine for useful info then archive or delete."))))
+           ((org-ql-block-header (propertize "✅ What I've done so far this week 💯" 'help-echo "Press E to toggle seeing ~5 lines of each entry. \n If DONE, mine for useful info then archive or delete.")))
+)
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Deadlines: Upcoming tasks I should prepare for                                ;;
@@ -10452,14 +10453,14 @@ Further Reading:
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
            '(and (deadline auto) (not (tags "Top")) (not (done)))
-           ((org-ql-block-header "\n🎯 Deadlines\n")))
+           ((org-ql-block-header "🎯 Deadlines")))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Whoops, things that I've missed!                                       ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
            '(and (not (habit)) (not (tags "Top")) (not (done)) (scheduled :to today) (not (scheduled :on today)))
-           ((org-ql-block-header "\n📆 Overdue\n")))
+           ((org-ql-block-header "📆 Overdue")))
 
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -10471,14 +10472,14 @@ Further Reading:
              (level '> 1)
              (not (tags-local "Someday" "Top" "SocialCredit"))
              (not (scheduled :from today)))
-           ((org-ql-block-header "\n🤡 Please 𝒓𝒆𝒅𝒖𝒄𝒆 the number of (unscheduled) open loops\n")))
+           ((org-ql-block-header "🤡 Please 𝒓𝒆𝒅𝒖𝒄𝒆 the number of (unscheduled) open loops")))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Stuff I'd like to do today; but do I actually have the time to do so?  ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
            '(and (scheduled :on today) (ts :with-time nil))
-           ((org-ql-block-header "\n😵‍💫 ﴾ Any time ≈ No time﴿ Scheduled today, but not time-blocked\n")))
+           ((org-ql-block-header "😵‍💫 ﴾ Any time ≈ No time﴿ Scheduled today, but not time-blocked")))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; What am I doing today, and when?                                              ;;
@@ -10491,7 +10492,7 @@ Further Reading:
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (agenda ""
                   ((org-agenda-overriding-header
-                    "\n🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")
+                    "🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")
                    (org-agenda-format-date "")
                    (org-agenda-skip-function
                     (lambda nil (org-back-to-heading t)
@@ -10566,7 +10567,7 @@ Further Reading:
            ((org-agenda-sorting-strategy '(timestamp-up)) ;; Sort by any timestamp, early first. ;; ⟵- Not yet honoured, see #79.
             (org-agenda-todo-keyword-format "")  ;; ⟵- Not yet honoured, see #79.
             (org-ql-block-header (propertize
-                                  "\n🗯️ Incomplete tasks scheduled later this week\n"
+                                  "🗯️ Incomplete tasks scheduled later this week"
                                   'help-echo "Be aware!"))))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -10578,7 +10579,7 @@ Further Reading:
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
            '(todo "WAITING")
-           ((org-ql-block-header "\n💢 I've been waiting on these [for over a week?], send reminder!\n")))
+           ((org-ql-block-header "💢 I've been waiting on these [for over a week?], send reminder!")))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Add more items here                                                    ;;
@@ -10604,7 +10605,7 @@ Further Reading:
 ;; https://github.com/alphapapa/org-ql/issues/79#issuecomment-2360241077]
 ;;
 ;;
-(setq my/special-org-ql-header "\n🗯️ Incomplete tasks scheduled later this week\n")
+(setq my/special-org-ql-header "🗯️ Incomplete tasks scheduled later this week")
 ;; Hide TODO keyword
 (advice-add
  'org-ql-view--add-todo-face
@@ -10630,7 +10631,7 @@ Further Reading:
    (apply orig-fn from query
           (if (and org-ql-block-header
                    (not (equal org-agenda-type 'agenda))
-                   (not (equal org-agenda-overriding-header "\n🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")))
+                   (not (equal org-agenda-overriding-header "🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!")))
               (apply #'plist-put args :sort '(date))
             args))))
 #+end_src
@@ -10651,6 +10652,983 @@ visible so I can TAB to unfold.
 ;; Alternatives: my/auto-set-selective-display-mode or (set-selective-display 1)
 #+end_src
 Goal: I'm focusing on keeping my agenda view from getting too lengthy.
+
+** Work Tools in Agenda (Gerrit / Jira)
+:PROPERTIES:
+:CREATED:  [2026-04-04 Sat]
+:END:
+
+When you press ~C-c a~, the Gerrit/Jira sections are /not/ available
+yet --- the agenda renders immediately with a "Loading..." placeholder
+at the bottom.  Behind the scenes, two asynchronous SSH queries fire
+off to Gerrit (one for your attention set, one for all your open
+changes).  Once both complete, a coordinator groups them into
+dependency stacks, fetches Jira ticket titles, queries for urgent
+tickets, and caches everything.  The agenda then auto-refreshes and
+the real sections appear.
+
+On subsequent ~C-c a~ calls (or ~g~ to refresh), the cached data is
+inserted instantly --- no network delay.  The cache auto-refreshes
+once per calendar day: ~my/agenda--cache-stale-p~ compares today's
+date against the cache's ~:timestamp~, so even if Emacs has been open
+for weeks, the first agenda open on a new calendar day triggers a
+background fetch while still showing yesterday's data immediately (no
+hang).  To force a manual refresh at any time, click the "Refresh
+Work" button in the agenda toolbar or run ~M-x my/agenda-work-refresh~.
+
+All endpoints and credentials come from =private.el=, named
+with the backslash convention (=my\X=).  Empty defaults ensure the
+code is harmless if =private.el= is absent.
+
+*** Configuration
+#+begin_src emacs-lisp
+;; These defvars provide safe empty defaults.  The real values are
+;; set by private.el (loaded via idle timer or on-demand).
+;; See `my/private-file' for the path to private.el.
+
+(defvar my/private-file
+  (expand-file-name "../Dropbox/private.el" user-emacs-directory)
+  "Absolute path to the private configuration file.
+Resolved relative to `user-emacs-directory' so it works regardless
+of `default-directory'.  Loaded on-demand by the Gerrit/Jira agenda
+integration and at startup via idle timer.")
+
+(defvar my\gerrit-ssh-command "/usr/bin/ssh"
+  "Path to the SSH binary used for Gerrit queries.")
+
+(defvar my\gerrit-ssh-host "gerrit"
+  "SSH host alias for Gerrit, as defined in ~/.ssh/config.")
+
+(defvar my\gerrit-base-url ""
+  "Base URL for Gerrit web UI links.")
+
+(defvar my\jira-base-url ""
+  "Base URL for Jira ticket links (the /browse endpoint).")
+
+(defvar my\gerrit-user user-login-name
+  "Gerrit/Jira username for ownership queries.")
+
+(defvar my\gerrit-project-path "/c/+/"
+  "Gerrit URL path template between the base URL and the change number.
+Used to construct clickable change
+links, e.g. BASE-URL + PROJECT-PATH + CHANGE-NUMBER.")
+
+(defvar my\jira-ticket-regex nil
+  "Regex to extract Jira ticket IDs from Gerrit commit messages.
+Must have one capture group (\\\\1) yielding the ticket ID string.
+When nil, ticket extraction is disabled.")
+#+end_src
+
+*** Cache variables
+#+begin_src emacs-lisp
+(defvar my/agenda-work-data nil
+  "Cached plist of rendered Gerrit/Jira agenda sections.
+Keys: `:please-review' `:wip' `:reviews-needed' `:my-needing-action'
+`:urgent-jira' `:timestamp'.")
+
+(defvar my/agenda-work-fetching nil
+  "Non-nil while an async Gerrit/Jira fetch cycle is in progress.
+
+Guards against double-fetching: `my/agenda-work-refresh' is a
+no-op when this is non-nil.  Reset to nil by the coordinator
+`my/agenda--format-and-cache' (or on error).")
+
+(defvar my/agenda--pending-queries 0
+  "Number of async Gerrit SSH queries still in flight.
+
+Set to 2 at the start of a refresh (attention + all-mine).
+Each sentinel decrements it; when it hits zero, the coordinator
+fires.")
+
+(defvar my/agenda--attention-changes nil
+  "Parsed change alists from the \"attention:self\" Gerrit query.
+
+These are changes in my attention set — either others' changes
+I need to review, or my own changes that need my response.")
+
+(defvar my/agenda--all-mine-changes nil
+  "Parsed change alists from the \"owner:self\" Gerrit query.
+
+All my open, non-abandoned changes.  Combined with the attention
+set to derive the \"please review\" and WIP sections (changes I
+own that are NOT in my attention set).")
+#+end_src
+
+*** Gerrit SSH query (synchronous)
+
+The top-level queries use =start-process= (async), but bridge
+resolution --- discovering intermediate changes that connect two
+changes in a dependency stack --- needs synchronous SSH calls.
+These are safe because they only run from =run-at-time= callbacks,
+never from idle timers or sentinels directly.
+
+#+begin_src emacs-lisp
+(defvar my/gerrit--bridge-max-depth 5
+  "Maximum BFS depth when discovering intermediate bridge changes.
+During stack grouping, BFS walks outward from known changes along
+dependsOn/neededBy edges.  Each depth level fires a synchronous
+SSH query to Gerrit for any unseen neighbors.  Setting this too
+high can be slow; 5 covers the deepest stacks we encounter in
+practice.")
+(defvar my/gerrit--jira-title-cache (make-hash-table :test 'equal)
+  "Hash-table mapping Jira ticket ID (string) → summary title (string).
+Populated lazily by `my/gerrit--fetch-jira-titles' and read by
+`my/gerrit--get-jira-title'.  Survives across agenda refreshes
+so we do not re-fetch titles for tickets we have already seen.")
+
+(cl-defun my/gerrit--query (query-string &optional extra-flags)
+  "Run a synchronous Gerrit SSH query and return a list of change alists.
+Calls `my\\gerrit-ssh-command' via `call-process', parsing each
+line of the output as JSON.  The final stats line (with key `type')
+is filtered out.  Temporarily binds `timer-idle-list' and
+`timer-list' to nil to suppress idle timers — this prevents
+recursive `call-process' errors when called from a `run-at-time'
+callback.
+
+QUERY-STRING is the Gerrit query, e.g.:
+  \"status:open owner:self -is:abandoned\"
+
+EXTRA-FLAGS overrides the default flags (--current-patch-set,
+--dependencies, --commit-message).  By way of example, bridge
+resolution passes \\='(\"--dependencies\") since it only needs edges.
+
+Example:
+  (my/gerrit--query \"change:123456\")
+  → (((number . 123456) (subject . \"Fix frobnicate\") ...))"
+  (let* ((default-flags '("--current-patch-set" "--dependencies"
+                           "--commit-message"))
+         (flags (or extra-flags default-flags))
+         (args `(,my\gerrit-ssh-host "gerrit" "query" "--format=JSON"
+                 ,@flags "--" ,query-string))
+         (timer-idle-list nil) (timer-list nil)
+         (raw (with-output-to-string
+                (with-current-buffer standard-output
+                  (apply #'call-process
+                         my\gerrit-ssh-command nil t nil args)))))
+    (->> (s-lines raw)
+         (-filter #'s-present?)
+         (-map (lambda (line)
+                 (ignore-errors (json-read-from-string line))))
+         (-filter #'identity)
+         (-filter (lambda (obj) (not (assoc 'type obj)))))))
+
+(defun my/agenda--parse-gerrit-json (raw)
+  "Parse RAW (a string of newline-delimited JSON) into change alists.
+Each line from Gerrit SSH is a standalone JSON object.  The final
+line is a stats summary (containing key `type') which we discard.
+Lines that fail `json-read-from-string' are silently skipped.
+
+This is the async counterpart to `my/gerrit--query': the latter
+calls `call-process' directly, whereas this function operates on
+a pre-collected output string from a process sentinel.
+
+Example:
+  (my/agenda--parse-gerrit-json
+   \"{\\\"number\\\":42,\\\"subject\\\":\\\"Fix it\\\"}\\n{\\\"type\\\":\\\"stats\\\"}\\n\")
+  → (((number . 42) (subject . \"Fix it\")))"
+  (->> (s-lines raw)
+       (-filter #'s-present?)
+       (-map (lambda (line)
+               (ignore-errors (json-read-from-string line))))
+       (-filter #'identity)
+       (-filter (lambda (obj) (not (assoc 'type obj))))))
+#+end_src
+
+*** Stack grouping (Union-Find + BFS)
+
+Gerrit changes that depend on each other form "stacks" (dependency
+chains).  We group them so the agenda shows one line per stack rather
+than one per change.  The algorithm:
+
+1. Build an edge map from =dependsOn= / =neededBy= fields.
+2. BFS outward to discover intermediate changes that bridge gaps.
+3. Union-Find to merge transitively connected changes.
+4. Topo-sort each group (base first, tip last).
+
+#+begin_src emacs-lisp
+(cl-defun my/gerrit--collect-neighbor-numbers (change)
+  "Return a deduplicated list of change numbers adjacent to CHANGE.
+Walks both the `dependsOn' and `neededBy' fields of the Gerrit
+change alist, extracting the `number' from each entry.
+
+Example (given a change that depends on 111 and is needed by 222):
+  (my/gerrit--collect-neighbor-numbers
+   \\='((number . 100)
+     (dependsOn . [((number . 111))])
+     (neededBy  . [((number . 222))])))
+  → (222 111)"
+  (let (nums)
+    (dolist (dep (append (alist-get 'dependsOn change) nil))
+      (push (alist-get 'number dep) nums))
+    (dolist (nb (append (alist-get 'neededBy change) nil))
+      (push (alist-get 'number nb) nums))
+    (-uniq nums)))
+
+(cl-defun my/gerrit--build-full-edge-map (changes)
+  "Build a complete edge map via BFS, discovering bridge changes.
+Starting from CHANGES (the known result set), walk outward along
+dependsOn/neededBy edges up to `my/gerrit--bridge-max-depth' hops.
+At each depth, fire a synchronous Gerrit SSH query to fetch any
+unseen neighbors — these are the \"bridges\" that connect two known
+changes through an intermediate that was not in the original query.
+
+Returns a two-element list (EDGES PRESENT) where:
+  EDGES   — hash-table: change-number → list of neighbor numbers
+  PRESENT — hash-table: change-number → t, for numbers in CHANGES
+
+Only PRESENT numbers participate in Union-Find merging later; bridge
+changes appear in EDGES but not in PRESENT."
+  (let* ((present (make-hash-table :test 'eql))
+         (edges   (make-hash-table :test 'eql))
+         (visited (make-hash-table :test 'eql)))
+    (dolist (c changes)
+      (let ((n (alist-get 'number c)))
+        (puthash n t present)
+        (puthash n t visited)
+        (puthash n (my/gerrit--collect-neighbor-numbers c) edges)))
+    (cl-loop
+     repeat my/gerrit--bridge-max-depth
+     do (let ((frontier
+               (let (nums)
+                 (maphash (lambda (_n nbrs)
+                            (dolist (nb nbrs) (push nb nums)))
+                          edges)
+                 (->> nums -uniq
+                      (-filter (lambda (n)
+                                 (not (gethash n visited))))))))
+          (when (null frontier) (cl-return))
+          (let ((intermediates
+                 (my/gerrit--query
+                  (s-join " OR "
+                          (-map (lambda (n) (format "change:%d" n))
+                                frontier))
+                  '("--dependencies"))))
+            (dolist (c intermediates)
+              (let ((n (alist-get 'number c)))
+                (puthash n t visited)
+                (puthash n (my/gerrit--collect-neighbor-numbers c)
+                         edges))))))
+    (list edges present)))
+
+(cl-defun my/gerrit--group-into-stacks (changes)
+  "Group CHANGES into dependency stacks using Union-Find over BFS edges.
+Two changes land in the same stack if they are transitively connected
+via dependsOn/neededBy edges — even through intermediate \"bridge\"
+changes not in CHANGES themselves.
+
+Returns a list of stacks, each stack being a list of change alists
+sorted base-first (ascending change number).  Stacks are ordered
+by the tip's change number (most recent first), so the agenda
+shows the freshest work at the top.
+
+Example (conceptual):
+  Given changes A→B→C (a linear chain) and D (standalone):
+  (my/gerrit--group-into-stacks (list A B C D))
+  → ((A B C) (D))"
+  (if (null changes) nil
+    (-let* (((edges present)
+             (my/gerrit--build-full-edge-map changes))
+            (parent (make-hash-table :test 'eql)))
+      (dolist (c changes)
+        (puthash (alist-get 'number c)
+                 (alist-get 'number c) parent))
+      (cl-labels
+          ((find (x)
+             (let ((p (gethash x parent x)))
+               (if (eql p x) x
+                 (let ((root (find p)))
+                   (puthash x root parent) root))))
+           (union (a b)
+             (let ((ra (find a)) (rb (find b)))
+               (unless (eql ra rb) (puthash ra rb parent)))))
+        (dolist (c changes)
+          (let* ((start (alist-get 'number c))
+                 (queue (list start))
+                 (seen (make-hash-table :test 'eql)))
+            (puthash start t seen)
+            (while queue
+              (let* ((cur (pop queue))
+                     (neighbors (gethash cur edges)))
+                (dolist (nb neighbors)
+                  (unless (gethash nb seen)
+                    (puthash nb t seen)
+                    (when (gethash nb present)
+                      (union start nb))
+                    (unless (gethash nb present)
+                      (push nb queue))))))))
+        (let ((groups (make-hash-table :test 'eql)))
+          (dolist (c changes)
+            (let* ((n (alist-get 'number c))
+                   (root (find n)))
+              (puthash root
+                       (cons c (gethash root groups))
+                       groups)))
+          (let (stacks)
+            (maphash
+             (lambda (_root members)
+               (push (my/gerrit--topo-sort-stack members)
+                     stacks))
+             groups)
+            (sort stacks
+                  (lambda (a b)
+                    (> (alist-get 'number (-last-item a))
+                       (alist-get 'number
+                                  (-last-item b)))))))))))
+
+(cl-defun my/gerrit--topo-sort-stack (changes &rest _ignored)
+  "Sort CHANGES base-first by ascending change number.
+In a Gerrit dependency chain, lower change numbers are created
+first and sit at the base of the stack.  This ordering ensures
+the agenda renders the chain from bottom to top — matching the
+order you would cherry-pick or submit them."
+  (sort (copy-sequence changes)
+        (lambda (a b)
+          (< (alist-get 'number a) (alist-get 'number b)))))
+#+end_src
+
+*** Jira helpers
+
+Extract ticket IDs from commit messages, format links, fetch titles
+via the REST API, and query JQL for urgent tickets.
+
+#+begin_src emacs-lisp
+(cl-defun my/gerrit--extract-jira-tickets (change)
+  "Extract Jira ticket IDs from CHANGE's commit message.
+Uses `my\\jira-ticket-regex' (set in private.el) to scan the
+commit message.  The regex must have one capture group (\\\\1)
+yielding the ticket ID.  Returns nil if the regex is not configured.
+
+Returns a deduplicated list of ticket ID strings."
+  (when my\jira-ticket-regex
+    (let ((msg (or (alist-get 'commitMessage change) "")))
+      (->> (s-match-strings-all my\jira-ticket-regex msg)
+           (-map #'cadr) -uniq))))
+
+(cl-defun my/gerrit--stack-jira-tickets (stack)
+  "Return Jira tickets shared by every change in STACK.
+We intersect (not union) because a ticket that appears in all
+changes of a stack is the \"theme\" of that stack — suitable for
+display as a prefix.  A ticket mentioned in only one change is
+likely incidental and would clutter the summary.
+
+Example:
+  ;; Change A references BUG-1, BUG-2; change B references BUG-1, BUG-3
+  (my/gerrit--stack-jira-tickets (list A B))
+  → (\"BUG-1\")"
+  (let ((all (-map #'my/gerrit--extract-jira-tickets stack)))
+    (when all
+      (-reduce-from
+       (lambda (acc tix) (-intersection acc tix))
+       (car all) (cdr all)))))
+
+(cl-defun my/gerrit--format-jira-link (ticket)
+  "Format TICKET as an Org-style bracketed link using `my\\jira-base-url'.
+
+Example:
+  (let ((my\\jira-base-url \"https://bugs.example.com/browse\"))
+    (my/gerrit--format-jira-link \"BUG-101\"))
+  → \"[[https://bugs.example.com/browse/BUG-101][BUG-101]]\""
+  (format "[[%s/%s][%s]]" my\jira-base-url ticket ticket))
+
+(cl-defun my/gerrit--jira-rest-base ()
+  "Derive the Jira REST API base URL from `my\\jira-base-url'.
+Strips the trailing \"/browse\" path component, since the REST API
+lives at /rest/api/2/... on the same host.
+
+Example:
+  (let ((my\\jira-base-url \"https://bugs.example.com/browse\"))
+    (my/gerrit--jira-rest-base))
+  → \"https://bugs.example.com\""
+  (replace-regexp-in-string "/browse\\'" "" my\jira-base-url))
+
+(cl-defun my/gerrit--fetch-jira-titles (tickets)
+  "Batch-fetch Jira summaries for TICKETS into `my/gerrit--jira-title-cache'.
+Only fetches tickets not already cached, so repeated calls are cheap.
+Uses `curl -sn' (silent, read ~/.netrc for auth) to hit the Jira
+REST API with a JQL `key in (...)' query.
+
+TICKETS is a list of ticket ID strings, e.g. (\"BUG-101\" \"BUG-202\").
+After this call, `my/gerrit--get-jira-title' returns the summary
+for each successfully fetched ticket."
+  (let ((uncached (-filter
+                   (lambda (tk)
+                     (not (gethash tk my/gerrit--jira-title-cache)))
+                   tickets)))
+    (when uncached
+      (let* ((jql (format "key in (%s)" (s-join "," uncached)))
+             (url (format "%s/rest/api/2/search?jql=%s&fields=summary&maxResults=%d"
+                          (my/gerrit--jira-rest-base)
+                          (url-hexify-string jql)
+                          (length uncached)))
+             (timer-idle-list nil) (timer-list nil)
+             (raw (with-output-to-string
+                    (with-current-buffer standard-output
+                      (call-process "curl" nil t nil "-sn" url))))
+             (json-obj (ignore-errors (json-read-from-string raw))))
+        (when json-obj
+          (dolist (issue (append (alist-get 'issues json-obj) nil))
+            (let ((key (alist-get 'key issue))
+                  (summary (alist-get 'summary
+                                      (alist-get 'fields issue))))
+              (when (and key summary)
+                (puthash key summary
+                         my/gerrit--jira-title-cache)))))))))
+
+(cl-defun my/gerrit--get-jira-title (ticket)
+  "Return the cached Jira summary string for TICKET, or nil if unknown.
+The cache is populated by `my/gerrit--fetch-jira-titles'.
+
+Example:
+  (my/gerrit--get-jira-title \"BUG-101\")
+  → \"Optimize OSPF route computation\"  ; or nil if not yet fetched"
+  (gethash ticket my/gerrit--jira-title-cache))
+
+(cl-defun my/gerrit--query-jira (jql &optional fields)
+  "Run a JQL query against Jira and return a list of issue alists.
+Uses `curl -sn' (reading ~/.netrc for auth) to call the REST API.
+FIELDS defaults to \"summary\"; pass a comma-separated string for
+additional fields (e.g. \"summary,status,assignee\").  Returns up
+to 50 results.
+
+Example:
+  (my/gerrit--query-jira
+   \"assignee = musa AND resolution = Unresolved\"
+   \"summary,priority\")
+  → (((key . \"BUG-101\") (fields . ((summary . \"Fix it\") ...))) ...)"
+  (let* ((url (format "%s/rest/api/2/search?jql=%s&fields=%s&maxResults=50"
+                      (my/gerrit--jira-rest-base)
+                      (url-hexify-string jql)
+                      (or fields "summary")))
+         (timer-idle-list nil) (timer-list nil)
+         (raw (with-output-to-string
+                (with-current-buffer standard-output
+                  (call-process "curl" nil t nil "-sn" url))))
+         (json-obj (ignore-errors (json-read-from-string raw))))
+    (when json-obj
+      (append (alist-get 'issues json-obj) nil))))
+#+end_src
+
+*** Formatting stacks as Org text
+
+Each stack is rendered as a single numbered list item.  The format
+varies by section:
+- *Attention set (others' changes)*: =Review Alice's latest efforts=
+- *Attention set (my changes)*: =Address latest feedback from Bob=
+- *Please review / WIP*: =Bob please review this work=
+
+When a Jira ticket is shared across all changes in the stack, it
+appears as a prefix: =BUG-123 "Title" :: Review ...=
+
+#+begin_src emacs-lisp
+(cl-defun my/gerrit--extract-reviewer-names (stack)
+  "Extract unique human names of Code-Review voters from STACK.
+Walks the `approvals' list in each change's `currentPatchSet',
+keeping only entries where type = \"Code-Review\", and returns
+the `name' field of each reviewer's `by' alist — deduplicated.
+
+Example:
+  (my/gerrit--extract-reviewer-names stack)
+  → (\"Alice Smith\" \"Bob Jones\")"
+  (->> stack
+       (-mapcat
+        (lambda (c)
+          (->> (append (alist-get 'approvals
+                                  (alist-get 'currentPatchSet c))
+                       nil)
+               (-filter (lambda (a)
+                          (equal "Code-Review" (alist-get 'type a))))
+               (-map (lambda (a)
+                       (alist-get 'name (alist-get 'by a)))))))
+       (-filter #'identity) -uniq))
+
+(cl-defun my/gerrit--format-reviewer-names (names)
+  "Format a list of NAMES into natural English with Oxford comma.
+
+Examples:
+  (my/gerrit--format-reviewer-names \\='(\"Alice\"))
+  → \"Alice\"
+  (my/gerrit--format-reviewer-names \\='(\"Alice\" \"Bob\"))
+  → \"Alice and Bob\"
+  (my/gerrit--format-reviewer-names \\='(\"Alice\" \"Bob\" \"Carol\"))
+  → \"Alice, Bob, and Carol\""
+  (pcase (length names)
+    (1 (car names))
+    (2 (format "%s and %s" (car names) (cadr names)))
+    (_ (format "%s, and %s"
+               (s-join ", " (butlast names))
+               (car (last names))))))
+
+(cl-defun my/gerrit--format-stack-as-org (stack mine-p)
+  "Format STACK as a single-line Org entry for attention-set sections.
+The phrasing depends on MINE-P:
+
+When MINE-P is non-nil (I own the change, it is in my attention set):
+  → \"Address [[url][latest feedback]] from Alice and Bob\"
+  The call to action is: something needs my response.
+
+When MINE-P is nil (someone else's change, in my attention set):
+  → \"Review Alice's [[url][latest efforts]]\"
+  The call to action is: I am blocking someone's review.
+
+If the stack shares a common Jira ticket, it appears as a prefix:
+  → \"BUG-101 \\\"Fix routing\\\" :: Address [[url][latest feedback]]\""
+  (let* ((tip (car (last stack)))
+         (base (car stack))
+         (tip-url (format "%s%s%s"
+                          my\gerrit-base-url my\gerrit-project-path
+                          (alist-get 'number tip)))
+         (base-url (format "%s%s%s"
+                           my\gerrit-base-url my\gerrit-project-path
+                           (alist-get 'number base)))
+         (tickets (my/gerrit--stack-jira-tickets stack))
+         (ticket (car tickets))
+         (jira-part
+          (when ticket
+            (let ((title (my/gerrit--get-jira-title ticket)))
+              (if title
+                  (format "%s \"%s\""
+                          (my/gerrit--format-jira-link ticket) title)
+                (my/gerrit--format-jira-link ticket))))))
+    (if jira-part
+        (format "%s :: %s" jira-part
+                (if mine-p
+                    (let* ((rvs (my/gerrit--extract-reviewer-names stack))
+                           (from (when rvs (format " from %s"
+                                                   (my/gerrit--format-reviewer-names rvs)))))
+                      (format "Address [[%s][latest feedback]]%s"
+                              base-url (or from "")))
+                  (format "Review %s's [[%s][latest efforts]]"
+                          (alist-get 'name (alist-get 'owner tip))
+                          tip-url)))
+      (if mine-p
+          (let* ((rvs (my/gerrit--extract-reviewer-names stack))
+                 (from (when rvs (format " from %s"
+                                         (my/gerrit--format-reviewer-names rvs)))))
+            (format "Address [[%s][latest feedback]] on \"%s\"%s"
+                    base-url (alist-get 'subject tip) (or from "")))
+        (format "Review %s's [[%s][%s]]"
+                (alist-get 'name (alist-get 'owner tip))
+                tip-url (alist-get 'subject tip))))))
+
+(cl-defun my/gerrit--format-stale-stack-as-org (stack)
+  "Format STACK as a single-line Org entry for \"please review\" / WIP sections.
+The phrasing is: \"Alice and Bob please review this [[url][work]]\"
+— the call to action is directed at the reviewers, not at me.
+
+If a shared Jira ticket exists, it appears as a prefix:
+  → \"BUG-101 \\\"Fix routing\\\" :: Alice please review this [[url][work]]\""
+  (let* ((base (car stack))
+         (base-url (format "%s%s%s"
+                           my\gerrit-base-url my\gerrit-project-path
+                           (alist-get 'number base)))
+         (tip (car (last stack)))
+         (tickets (my/gerrit--stack-jira-tickets stack))
+         (ticket (car tickets))
+         (jira-part
+          (when ticket
+            (let ((title (my/gerrit--get-jira-title ticket)))
+              (if title
+                  (format "%s \"%s\""
+                          (my/gerrit--format-jira-link ticket) title)
+                (my/gerrit--format-jira-link ticket)))))
+         (rvs (my/gerrit--extract-reviewer-names stack))
+         (rv-str (if rvs
+                     (my/gerrit--format-reviewer-names rvs)
+                   "Reviewers"))
+         (action (format "%s please review this [[%s][work]]"
+                         rv-str base-url)))
+    (if jira-part
+        (format "%s :: %s" jira-part action)
+      (format "%s please review [[%s][%s]]"
+              rv-str base-url (alist-get 'subject tip)))))
+
+(cl-defun my/gerrit--collect-all-tickets (stacks)
+  "Collect all unique Jira ticket IDs across all STACKS.
+Used before `my/gerrit--fetch-jira-titles' to batch-fetch every
+ticket referenced by any change, regardless of which section it
+will appear in.  Returns a flat deduplicated list of ID strings."
+  (->> stacks
+       (-mapcat (lambda (s)
+                  (-mapcat #'my/gerrit--extract-jira-tickets s)))
+       -uniq))
+#+end_src
+
+*** Rendering helpers
+
+Convert stacks and Jira query results into plain strings for caching.
+
+#+begin_src emacs-lisp
+(defun my/agenda--render-stacks (stacks format-fn)
+  "Render STACKS as a numbered list string, one line per stack.
+FORMAT-FN is called with each stack and should return the text
+for that entry (e.g. `my/gerrit--format-stack-as-org').  Returns
+a string like \"1. Review Alice's latest efforts\\n2. ...\", or
+the empty string if STACKS is nil."
+  (if (null stacks) ""
+    (with-temp-buffer
+      (let ((n 0))
+        (dolist (stack stacks)
+          (cl-incf n)
+          (insert (format "%d. %s\n" n
+                          (funcall format-fn stack)))))
+      (buffer-string))))
+
+(defun my/agenda--render-urgent-jira ()
+  "Query Jira for urgent tickets assigned to me and render as a numbered list.
+\"Urgent\" means: Urgency = \"1 month\" OR fixVersion = the upcoming
+release (computed as next-month in YY.MM format).  Only unresolved
+tickets are returned.  Returns a string ready for insertion into
+the agenda, or the empty string if nothing is urgent."
+  (let* ((now (decode-time))
+         (mon (nth 4 now))
+         (yr  (mod (nth 5 now) 100))
+         (next-mon (1+ mon))
+         (next-yr  (if (> next-mon 12) (1+ yr) yr))
+         (next-mon (if (> next-mon 12) 1 next-mon))
+         (fix-ver  (format "%d.%d" next-yr next-mon))
+         (jql (format (concat "(Urgency = \"1 month\""
+                              " OR fixVersion = \"%s\")"
+                              " AND resolution = Unresolved"
+                              " AND assignee = %s")
+                      fix-ver my\gerrit-user))
+         (issues (my/gerrit--query-jira jql)))
+    (if (null issues) ""
+      (with-temp-buffer
+        (let ((n 0))
+          (dolist (issue issues)
+            (cl-incf n)
+            (let* ((key (alist-get 'key issue))
+                   (summary (alist-get 'summary
+                                       (alist-get 'fields issue))))
+              (insert (format "%d. %s%s\n" n
+                              (my/gerrit--format-jira-link key)
+                              (if summary
+                                  (format " \"%s\"" summary)
+                                ""))))))
+        (buffer-string)))))
+#+end_src
+
+*** Async fetch machinery
+
+Two SSH queries run in parallel via =start-process=.  Each sentinel
+stores parsed changes into a global variable and decrements a counter.
+When both are done, the coordinator runs from a =run-at-time 0=
+callback --- escaping sentinel context so =call-process= is safe for
+bridge resolution and Jira title fetching.
+
+#+begin_src emacs-lisp
+(defun my/agenda--async-gerrit-query (query-string store-var)
+  "Run Gerrit QUERY-STRING asynchronously via `start-process'.
+When the SSH process exits, the sentinel parses the JSON output
+and stores the resulting list of change alists into STORE-VAR
+(a symbol, e.g. \\='my/agenda--attention-changes).  The symbol is
+attached to the process via `process-put' so the sentinel can
+retrieve it — we cannot use closures since init.el has no
+lexical binding.
+
+Example:
+  (my/agenda--async-gerrit-query
+   \"attention:self status:open -is:abandoned\"
+   \\='my/agenda--attention-changes)"
+  (let* ((buf (generate-new-buffer " *gerrit-agenda-query*"))
+         (args (list my\gerrit-ssh-host "gerrit" "query"
+                     "--format=JSON"
+                     "--current-patch-set" "--dependencies"
+                     "--commit-message" "--" query-string))
+         (proc (apply #'start-process "gerrit-agenda" buf
+                      my\gerrit-ssh-command args)))
+    (process-put proc :store-var store-var)
+    (set-process-sentinel proc #'my/agenda--gerrit-sentinel)))
+
+(defun my/agenda--gerrit-sentinel (proc _event)
+  "Process sentinel for async Gerrit SSH queries.
+Fires when PROC exits or is signalled.  Parses the accumulated
+buffer output via `my/agenda--parse-gerrit-json', stores the
+result into the symbol stashed in PROC's :store-var property,
+and decrements `my/agenda--pending-queries'.  When the counter
+hits zero (both queries done), schedules the coordinator
+`my/agenda--format-and-cache' via `run-at-time 0' — escaping
+sentinel context so that the coordinator's synchronous
+`call-process' calls (bridge resolution, Jira fetching) are safe."
+  (when (memq (process-status proc) '(exit signal))
+    (let* ((buf (process-buffer proc))
+           (raw (when (buffer-live-p buf)
+                  (with-current-buffer buf (buffer-string))))
+           (changes (when raw
+                      (my/agenda--parse-gerrit-json raw)))
+           (store-var (process-get proc :store-var))
+           (exit-code (process-exit-status proc)))
+      (when (buffer-live-p buf) (kill-buffer buf))
+      (set store-var changes)
+      (message "Gerrit/Jira: query for %s done (exit=%d, %d changes, pending=%d)"
+               store-var exit-code (length changes)
+               (1- my/agenda--pending-queries))
+      (cl-decf my/agenda--pending-queries)
+      (when (zerop my/agenda--pending-queries)
+        ;; Escape sentinel context before heavy sync processing
+        (run-at-time 0 nil #'my/agenda--format-and-cache)))))
+
+(cl-defun my/agenda-work-refresh ()
+  "Kick off a full Gerrit/Jira refresh cycle (async).
+Fires two parallel SSH queries to Gerrit (attention set + all my
+open changes).  When both complete, the coordinator groups them
+into stacks, fetches Jira titles, checks for urgent tickets, and
+caches the rendered output.  If the agenda buffer is live, it
+auto-refreshes to show the new data.
+
+Guards against double-fetching: if a fetch is already in progress,
+this is a no-op.  Also force-loads private.el if the Gerrit URL
+is still empty (handles the case where the agenda opens before
+the idle-timer-loaded private.el has run).
+
+Can be called interactively via M-x or from the \"Refresh Work\"
+agenda button."
+  (interactive)
+  (when my/agenda-work-fetching
+    (message "Gerrit/Jira: fetch already in progress (fetching=%s)"
+             my/agenda-work-fetching)
+    (cl-return-from my/agenda-work-refresh))
+  (when (s-blank? my\gerrit-base-url)
+    (load my/private-file t t) ;; noerror + nomessage
+    (when (s-blank? my\gerrit-base-url)
+      (message "Gerrit/Jira: my\\gerrit-base-url still empty after loading private.el")
+      (cl-return-from my/agenda-work-refresh)))
+  (message "Gerrit/Jira: starting async queries against %s..."
+           my\gerrit-ssh-host)
+  (setq my/agenda-work-fetching t
+        my/agenda--pending-queries 2
+        my/agenda--attention-changes nil
+        my/agenda--all-mine-changes nil)
+  (my/agenda--async-gerrit-query
+   "attention:self status:open -is:abandoned"
+   'my/agenda--attention-changes)
+  (my/agenda--async-gerrit-query
+   "status:open owner:self -is:abandoned"
+   'my/agenda--all-mine-changes))
+#+end_src
+
+*** Coordinator
+
+Runs once both async queries have completed.  Performs all the heavy
+synchronous work: stack grouping (which may do additional SSH queries
+for bridge resolution), Jira title batch-fetch, urgent ticket query,
+and rendering each section to a string.  Finally, caches the results
+and triggers an agenda refresh if the buffer is live.
+
+#+begin_src emacs-lisp
+(defun my/agenda--format-and-cache ()
+  "Coordinator: process fetched Gerrit/Jira data and update the cache.
+Runs after both async SSH queries have completed.  Performs all
+heavy synchronous work:
+  1. Group changes into dependency stacks (may fire additional
+     synchronous SSH queries for bridge resolution).
+  2. Split attention-set stacks into mine vs. others.
+  3. Batch-fetch Jira titles for all referenced tickets.
+  4. Query for urgent Jira tickets (Urgency = 1 month / next release).
+  5. Render each section to a string and store in `my/agenda-work-data'.
+  6. Trigger `org-agenda-redo-all' if the agenda buffer is live.
+Wrapped in `condition-case' so a failure does not leave
+`my/agenda-work-fetching' stuck at t."
+  (condition-case err
+      (let* ((attention my/agenda--attention-changes)
+             (all-mine  my/agenda--all-mine-changes)
+             ;; Attention-set number lookup
+             (attn-nums
+              (let ((ht (make-hash-table :test 'eql)))
+                (dolist (c attention)
+                  (puthash (alist-get 'number c) t ht))
+                ht))
+             ;; Stale = my open changes NOT in the attention set
+             (stale (-filter
+                     (lambda (c)
+                       (not (gethash (alist-get 'number c) attn-nums)))
+                     all-mine))
+             (wip     (-filter (lambda (c)
+                                 (eq (alist-get 'wip c) t))
+                               stale))
+             (non-wip (-filter (lambda (c)
+                                 (not (eq (alist-get 'wip c) t)))
+                               stale))
+             ;; Group into stacks (sync bridge resolution is safe
+             ;; here --- we are in a run-at-time callback, not a
+             ;; sentinel or idle timer)
+             (_ (message "Gerrit/Jira: grouping %d + %d changes into stacks…"
+                         (length attention) (length all-mine)))
+             (stale-stacks (my/gerrit--group-into-stacks non-wip))
+             (wip-stacks   (my/gerrit--group-into-stacks wip))
+             (attn-stacks  (my/gerrit--group-into-stacks attention))
+             ;; Split attention stacks by ownership
+             (mine
+              (-filter
+               (lambda (s)
+                 (-every-p
+                  (lambda (c)
+                    (equal my\gerrit-user
+                           (alist-get 'username
+                                      (alist-get 'owner c))))
+                  s))
+               attn-stacks))
+             (others
+              (-filter
+               (lambda (s)
+                 (not
+                  (-every-p
+                   (lambda (c)
+                     (equal my\gerrit-user
+                            (alist-get 'username
+                                       (alist-get 'owner c))))
+                   s)))
+               attn-stacks))
+             ;; Batch-fetch Jira titles for every ticket
+             (all-stacks (append stale-stacks wip-stacks attn-stacks))
+             (_ (let ((tix (my/gerrit--collect-all-tickets all-stacks)))
+                  (when tix
+                    (message "Gerrit/Jira: fetching titles for %d Jira tickets…"
+                             (length tix))
+                    (my/gerrit--fetch-jira-titles tix))))
+             ;; Render each section to a string
+             (pr-text (my/agenda--render-stacks
+                       stale-stacks
+                       #'my/gerrit--format-stale-stack-as-org))
+             (wip-text (my/agenda--render-stacks
+                        wip-stacks
+                        #'my/gerrit--format-stale-stack-as-org))
+             (rv-text (my/agenda--render-stacks
+                       others
+                       (lambda (s)
+                         (my/gerrit--format-stack-as-org s nil))))
+             (my-text (my/agenda--render-stacks
+                       mine
+                       (lambda (s)
+                         (my/gerrit--format-stack-as-org s t))))
+             (_ (message "Gerrit/Jira: checking for urgent Jira tickets…"))
+             (urgent (my/agenda--render-urgent-jira)))
+        (setq my/agenda-work-data
+              (list :please-review pr-text
+                    :wip wip-text
+                    :reviews-needed rv-text
+                    :my-needing-action my-text
+                    :urgent-jira urgent
+                    :timestamp (current-time))
+              my/agenda-work-fetching nil)
+        (message "Gerrit/Jira: cached %d attn, %d mine (%s/%s/%s/%s/%s non-empty)"
+                 (length attention) (length all-mine)
+                 (if (s-present? pr-text) "PR" "-")
+                 (if (s-present? wip-text) "WIP" "-")
+                 (if (s-present? rv-text) "RV" "-")
+                 (if (s-present? my-text) "MY" "-")
+                 (if (s-present? urgent) "URG" "-"))
+        ;; Refresh agenda if the buffer exists
+        (when-let ((buf (get-buffer "*Org Agenda*")))
+          (when (buffer-live-p buf)
+            (with-current-buffer buf
+              (org-agenda-redo-all)))))
+    (error
+     (setq my/agenda-work-fetching nil)
+     (message "Gerrit/Jira agenda update failed: %s"
+              (error-message-string err)))))
+#+end_src
+
+*** Link activation
+
+The agenda buffer is not in =org-mode=, so =[[url][desc]]= links
+would appear as raw bracket syntax.  We post-process the inserted
+text to convert them into clickable text buttons.
+
+#+begin_src emacs-lisp
+(defun my/agenda--activate-org-links (start end)
+  "Convert Org-style [[url][desc]] links to clickable text buttons.
+The agenda buffer is not in `org-mode', so raw bracket links would
+display as literal text.  This post-processes the region between
+START and END, replacing each [[url][desc]] with a clickable button
+that opens URL via `browse-url' on click or RET."
+  (save-excursion
+    (goto-char start)
+    (while (re-search-forward
+            "\\[\\[\\([^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" end t)
+      (let* ((url (match-string 1))
+             (desc (match-string 2))
+             (beg (match-beginning 0))
+             (fin (match-end 0))
+             (shrink (- fin beg (length desc))))
+        (delete-region beg fin)
+        (goto-char beg)
+        (insert-text-button
+         desc
+         'action (lambda (btn)
+                   (browse-url (button-get btn 'my-url)))
+         'my-url url
+         'follow-link t
+         'face 'link
+         'help-echo url)
+        (setq end (- end shrink))))))
+#+end_src
+
+*** Finalize hook + once-daily auto-fetch
+
+The finalize hook runs every time the agenda buffer is (re)built.  If
+we have cached data, inject it; otherwise show a placeholder and kick
+off the first fetch.  The cache auto-refreshes once per calendar day
+(on first agenda open) --- subsequent opens reuse the cache.  To force
+a fresh fetch at any time, click "Refresh Work" in the agenda toolbar
+or press ~g~.
+
+#+begin_src emacs-lisp
+(defun my/agenda--cache-stale-p ()
+  "Return non-nil if the cached work data is from a previous calendar day.
+A nil cache (never fetched) is also considered stale."
+  (if (null my/agenda-work-data) t
+    (let* ((cached-time (plist-get my/agenda-work-data :timestamp))
+           (cached-day  (format-time-string "%Y-%m-%d" cached-time))
+           (today       (format-time-string "%Y-%m-%d")))
+      (not (string= cached-day today)))))
+
+(defun my/agenda-insert-work-sections ()
+  "Insert cached Gerrit/Jira sections at the end of the daily agenda.
+On first agenda open each calendar day, automatically triggers a
+background fetch.  Subsequent opens reuse the cache.  To force a
+manual refresh at any time, use the \"Refresh Work\" button or press
+\\='g' in the agenda buffer."
+  (when (string-prefix-p "*Org Agenda" (buffer-name))
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (if my/agenda-work-data
+          (let ((start (point)))
+            (dolist (section
+                     '((:urgent-jira
+                        "🔴 Urgent Jira Tickets")
+                       (:reviews-needed
+                        "👀 Reviews Needed (I'm blocking someone)")
+                       (:my-needing-action
+                        "🔧 My Changes Needing Action")
+                       (:please-review
+                        "⏳ Please Review My Work")
+                       (:wip
+                        "🚧 Work In Progress")))
+              (let ((text (plist-get my/agenda-work-data
+                                     (car section))))
+                (when (and text (not (string-empty-p text)))
+                  (insert "\n"
+                          (propertize (cadr section)
+                                     'face 'org-agenda-structure)
+                          "\n")
+                  (insert text))))
+            (my/agenda--activate-org-links start (point))
+            ;; If the cache is from yesterday, silently refresh in the background
+            (when (and (my/agenda--cache-stale-p)
+                       (not my/agenda-work-fetching))
+              (my/agenda-work-refresh)))
+        ;; No cache yet — placeholder + trigger fetch
+        (insert "\n"
+                (propertize
+                 "⏳ Loading Gerrit/Jira data… press 'g' to refresh"
+                 'face 'org-agenda-structure)
+                "\n")
+        (unless my/agenda-work-fetching
+          (my/agenda-work-refresh))))))
+
+(add-hook 'org-agenda-finalize-hook #'my/agenda-insert-work-sections)
+#+end_src
 
 ** Getting Started with org-agenda
 
@@ -10756,6 +11734,12 @@ to refresh the agenda.
                        :foreground "pink"
                        :background nil
                        :echo "All TODOs I'd like to actually work on, so as to have a meaningful life")
+     (insert "\t")
+     (my/insert-button "Refresh Work"
+                       (lambda (pos) (my/agenda-work-refresh))
+                       :foreground "orange"
+                       :background nil
+                       :echo "Re-fetch Gerrit/Jira data for the work sections below")
      ;;
      ;; NOTE: ‘someday’ things sometimes go into my quote system so that I run into them sometime; lol likewise for things I want to remember
      ;;
@@ -15868,7 +16852,7 @@ Write a short story for the day.
 
   )
 
-(😴 (load-file "~/Dropbox/private.el")) ;; Loads “my\⋯” variables
+(😴 (load my/private-file t t)) ;; Loads “my\⋯” variables
 ;;
 (cl-defun my/age-in-days-weeks-years (&optional (birthdate my\birthday))
   "Prompt for birthdate (YYYY-MM-DD) and display age in days, weeks, months, and years."
@@ -17573,13 +18557,13 @@ org-agenda-custom-commands
    
    This delegates to the existing =agent-shell= DWIM machinery
    (=agent-shell= already handles region context, toggling, and shell
-   creation) while ensuring =default-directory= is always =~/fwd/=. The
+   creation) while ensuring =default-directory= is always =my\work-dir=. The
    =C-u C-u= case calls =agent-shell-anthropic-start-claude-code= directly
    to force a new Claude Code shell without an agent selection prompt.
 "
   (interactive "P")
   
- (let ((default-directory "~/fwd/"))
+ (let ((default-directory my\work-dir))
     (cond
      ((equal arg '(16))
       (let ((existing (agent-shell-buffers)))
@@ -19295,7 +20279,7 @@ we stared at the dialog before clicking OK."
                                       (process-get proc :handlers) nil nil #'string=)))
               (when handler (eval handler t)))))))))
 
-(non-blocking-message-box :title "Emacs" :content "Enjoy life (｡◕‿◕｡))" :buttons '(:♥ nil))
+(non-blocking-message-box :title "Emacs" :content "Enjoy life (｡◕‿◕｡)" :buttons '(:♥))
 #+end_src
 ** Bookmarks: Quick naviagation to commonly visited locations
 :PROPERTIES:
