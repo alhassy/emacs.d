@@ -281,8 +281,9 @@ ln -s /opt/homebrew/opt/emacs-plus@30/Emacs.app /Applications
 
     We get a full-fledged Internet browser /within/ Emacs.
     #+begin_src emacs-lisp
-    ;; Clicking on a URL, or running M-x browse-url, should open the URL *within* Emacs.
-    (setq browse-url-browser-function #'xwidget-webkit-browse-url)
+    ;; Day-to-day, open URLs in the system browser (Arc, Chrome, etc.).
+    ;; When blogging, we can temporarily switch to xwidget-webkit-browse-url.
+    (setq browse-url-browser-function 'browse-url-default-browser)
 
     ;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
     #+end_src
@@ -1186,6 +1187,13 @@ will remember to not prompt me each time for the safety of such local variables.
 #+begin_src emacs-lisp
 ;; Disable custom-file - all settings managed in init.el/init.org
 (setq custom-file (make-temp-file "emacs-custom-"))
+
+;; Kill noisy buffers that accumulate during init.
+(add-hook 'emacs-startup-hook
+  (lambda ()
+    (dolist (buf '("*Shell Command Output*" "*Quail Completions*" "*Compile-Log*"))
+      (when (get-buffer buf)
+        (kill-buffer buf)))))
 #+end_src
 
 :No_longer_true:
@@ -1461,8 +1469,9 @@ Here's another example use of ~use-package~.  Later on, I have a “show recent 
 pop-up” command set to ~C-x C-r~; but what if I forget? This mode shows me all key
 completions when I type ~C-x~, for example.  Moreover, I will be shown other
 commands I did not know about! Neato :-)
-#+BEGIN_SRC emacs-lisp :tangle init.el
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; Making it easier to discover Emacs key presses.
+;; Disabled: Seldom acknowledged, fires constantly at 50ms idle, adds timer overhead.
 (use-package which-key
   :config (which-key-mode)
           (which-key-setup-side-window-bottom)
@@ -1502,9 +1511,17 @@ Note:
 
 Remember that snippet for ~undo-tree~ in the introductory section?
 Let's activate it now, after ~use-package~ has been setup.
-#+BEGIN_SRC emacs-lisp :noweb yes :tangle init.el
+#+BEGIN_SRC emacs-lisp :noweb yes :tangle no
   <<undo-tree-setup>>
 #+END_SRC
+
+#+begin_src emacs-lisp
+;; Lightweight undo visualiser — replaces undo-tree (which caused
+;; corrupt history files and recursive-timer errors).
+(use-package vundo
+  :bind ("C-x u" . vundo)
+  :custom (vundo-glyph-alist vundo-unicode-symbols))
+#+end_src
 
 #+begin_box DRY: Don't Repeat Yourself!
 In the HTML export, above it /looks/ like I just copy-pasted the undo tree setup
@@ -1541,8 +1558,17 @@ Let's obtain the extension.
 ;; This is run whenever we open Emacs & so wont take long if we're up to date.
 ;; It happens in the background ^_^
 ;;
-;; After 5 seconds of being idle, after starting up.
-(😴 run-with-idle-timer 5 nil #'system-packages-update) ;; ≈ (async-shell-command "brew update && brew upgrade")
+;; After 5 minutes of being idle (i.e., you're likely away or reading).
+;; Kill the output buffer once the update finishes — no stale *system-packages* lying around.
+(run-with-idle-timer 300 nil
+  (lambda ()
+    (system-packages-update)
+    (when-let ((buf (get-buffer "*system-packages*")))
+      (when-let ((proc (get-buffer-process buf)))
+        (set-process-sentinel proc
+          (lambda (_proc _event)
+            (when (get-buffer "*system-packages*")
+              (kill-buffer "*system-packages*"))))))))
 
 (defvar my/installed-packages
   (shell-command-to-string "brew list")
@@ -2458,9 +2484,8 @@ shared prefix /only once/ thereby having:
 - The [[https://github.com/abo-abo/hydra#the-one-with-the-least-amount-of-code][“hydra-zoom”]] example from the documentation really showcases this utility.
 - After the prefix is supplied, all extensions are shown in a minibuffer.
 
-#+BEGIN_SRC emacs-lisp :tangle init.el
-;; Invoke all possible key extensions having a common prefix by
-;; supplying the prefix only once.
+#+BEGIN_SRC emacs-lisp :tangle no
+;; Disabled: Hydra menus are unused in daily workflow.
 (use-package hydra :defer t)
 #+END_SRC
 
@@ -2497,22 +2522,22 @@ occur at the line level or word level or screen level--- we obtain a nice
 interface by declaraing hydras using [[https://github.com/jerrypnz/major-mode-hydra.el#get-started][pretty-hydra-define]] ---this saves us the
 trouble of [[https://github.com/abo-abo/hydra#the-impressive-looking-one][formating docstrings using classic hydra]].
 
-#+begin_src emacs-lisp :tangle init.el
-;; Show hydras overlayed in the middle of the frame
+#+begin_src emacs-lisp :tangle no
+;; Disabled: Hydra menus are unused in daily workflow.
 (use-package hydra-posframe
   :disabled "TODO Fix me, breaking Github Actions test setup"
   :vc (:url "https://github.com/Ladicle/hydra-posframe.git")
   :hook after-init
   :custom (hydra-posframe-border-width 5))
 
-;; Neato doc strings for hydras
-(use-package pretty-hydra :defer t)
+;; (use-package pretty-hydra :defer t)
 #+end_src
 
 To /actually/ define hydras, we make a helper function: doc:my/defhydra
 ---which combines doc:defhydra and doc:pretty-hydra-define.
 #+begin_details Implementation
-#+begin_src emacs-lisp  :tangle init.el
+#+begin_src emacs-lisp  :tangle no
+;; Disabled: Hydra menus are unused in daily workflow.
 ;; TODO convert my existing defhydras to my/defhydra.
 (😴 defmacro my/defhydra (key title icon-name &rest body)
     "Make a hydra whose heads appear in a pretty pop-up window.
@@ -2644,7 +2669,7 @@ Also …
 :END:
 It can be difficult to remember the incantations to adjust
 windows, so we can make a hydra to alleviate the trouble.
-#+begin_src emacs-lisp :tangle init.el
+#+begin_src emacs-lisp :tangle no
 ;; Use ijkl to denote ↑←↓→ arrows.
 (😴 my/defhydra "C-c w" "\t\tWindow Adjustment" windows
    :Both
@@ -2963,10 +2988,7 @@ is written only once; in a single source of truth!/ )
 
 #+begin_src emacs-lisp
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
-(global-set-key (kbd "C-z")
-  (lambda () (interactive)
-   (undo-tree-mode) ;; Ensure the mode is on
-   (undo-tree-visualize)))
+(global-set-key (kbd "C-z") #'vundo)
 #+end_src
 
 ** Automatic Backups
@@ -8550,7 +8572,8 @@ being ‘literate’.
   want to edit the /docstring/ of a method in Org-mode. I already do this with ~⌘-e~
   using ~separedit~.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
+;; Disabled: Minimal Elisp programming these days; outshine gets in the way.
 (use-package outshine
   :hook emacs-lisp-mode
   ;; Press “?” on a heading to see what you can do with it.
@@ -8651,8 +8674,8 @@ prose support.
 Make parentheses less visible in Lisp code by dimming them. We lispers probably
 don't need to be constantly made aware of the existence of the parentheses.
 
-#+begin_src emacs-lisp
-;; By default parentheses and brackets are dimmed, customize option `paren-face-regexp' if you also want to dim braces or don't want to dim brackets.
+#+begin_src emacs-lisp :tangle no
+;; Disabled: With outshine gone and minimal Elisp work, this is dead weight.
 (use-package paren-face
   :hook (emacs-lisp . my/dim-parens-instead-of-drawing-attention-to-them-via-rainbow-colouring))
 
@@ -9094,12 +9117,10 @@ is found with ~M-x dired~ ---doc:dired.
 ;; (Note: Noto does not work on my personal machine.)
 
 
-;; Render ASCII such as " :-) " as emoji 🙂.
-(use-package emojify)
-(when (fboundp 'global-emojify-mode)
-  (setq emojify-display-style 'unicode) ;; unicode is the way to go!
-  (setq emojify-emoji-styles '(unicode))
-  (global-emojify-mode 1)) ;; Will install missing images, if need be.
+;; Disabled: We use native Unicode emoji via Apple Color Emoji fontset above.
+;; No need for ASCII→emoji conversion overhead on every buffer.
+;; (use-package emojify)
+;; (global-emojify-mode 1)
 #+end_SRC
 
 ** Startup message: Emacs & Org versions
@@ -9330,7 +9351,7 @@ Let’s display the current time, with updates every second.
 ;; [More Controlled Approach: Set date&time format]
 ;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
 (setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
-(setq display-time-interval 1) ;; Please update the time every second.
+(setq display-time-interval 60) ;; Once per minute suffices; every-second redraws waste CPU.
 (display-time-mode)
 #+end_src
 
@@ -9888,9 +9909,10 @@ doc:font-lock-mode, which performs arbitrary syntax highlighting.
 :PROPERTIES:
 :CUSTOM_ID: https-github-com-alphapapa-bufler-el-A-butler-for-your-buffers-Group-buffers-into-workspaces-with-programmable-rules-and-easily-switch-to-and-manipulate-them
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
+;; Disabled: helm-mini via “C-x b” is the primary buffer switcher.
 (use-package bufler
-  :bind* ("C-x C-b" . bufler-list))
+  :bind* (“C-x C-b” . bufler-list))
 ;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
 #+end_src
 ** all-the-icons
@@ -9990,7 +10012,8 @@ Note: ~C-x C-r~ is very useful for jumping to recently visited files.
 :PROPERTIES:
 :CREATED:  [2025-04-07 Mon 13:05]
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
+;; Disabled: Fun but unnoticed — and runs curl every 60 minutes plus a posframe dependency.
 (defcustom  my/weather-refresh-interval 60
   "Number of minutes between refreshes of weather information."
   :type 'integer)
@@ -15006,7 +15029,11 @@ TODO: How does this compare with org-bullets?
 * Recaps, reviews, introspections, retrospections
 :PROPERTIES:
 :CREATED:  [2025-05-30 Fri 05:59]
+:header-args: :tangle no
 :END:
+
+Disabled from tangling: These review rituals are mostly unused. Enable
+individual blocks as needed by adding ~:tangle init.el~ to them.
 
 A recap is a look back. At your week. At the last month. At a project or a stage
 of a project you've just wrapped up. It can look at:
@@ -18148,7 +18175,7 @@ TODO: There's some TODOs below; are things not being defined at the right time?
 Finally, let's get some extra Org-mode mark-up goodies, such as ~kbd:C-c_C-e~
 which renders as kbd:C-c_C-e.  Documentations and screenshots at:
 https://alhassy.github.io/org-special-block-extras/
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 
 (defun org-special-block-extras-short-names ())
 ;;
@@ -19217,7 +19244,58 @@ would be if I did not have a literate programming environment; i.e., Org-mode.
 
 #+begin_src emacs-lisp :tangle "init.el"
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
-(message-box "Enjoy life (｡◕‿◕｡))")
+
+(cl-defun non-blocking-message-box (&key (title "Emacs") content (buttons '(:OK nil)))
+  "Show a macOS dialog asynchronously — Emacs keeps loading.
+TITLE is the window title, CONTENT the body text, and BUTTONS a
+plist mapping labels to handler forms (or nil to ignore).  Labels
+can be any type — keywords, symbols, strings — they are converted
+to title-case strings for display:
+
+  ;; Fire-and-forget:
+  (non-blocking-message-box :content \"Hello!\" :buttons \\='(:OK nil))
+
+  ;; With handlers:
+  (non-blocking-message-box
+    :content \"Save before quitting?\"
+    :buttons \\='(:Cancel  (message \"Cancelled\")
+               :Discard (kill-emacs)
+               :Save    (save-some-buffers t)))
+
+The last label in the plist is the default button.
+
+Unlike `message-box', this spawns an external osascript process,
+so Emacs never blocks.  By way of example, a `message-box' call
+at the end of init.el skewed `emacs-init-time' by however long
+we stared at the dialog before clicking OK."
+  (let* ((to-string (lambda (x)
+                      (let ((s (format "%s" x)))
+                        (if (string-prefix-p ":" s) (substring s 1) s))))
+         (labels (cl-loop for (label _) on buttons by #'cddr
+                          collect (funcall to-string label)))
+         (handlers (cl-loop for (label handler) on buttons by #'cddr
+                            collect (cons (funcall to-string label) handler)))
+         (proc (start-process "non-blocking-message-box" nil "osascript" "-e"
+                 (format "display dialog %S with title %S buttons {%s} default button %d"
+                         content title
+                         (mapconcat (lambda (b) (format "%S" b)) labels ", ")
+                         (length labels)))))
+    ;; Stash handler alist and accumulated output on the process itself,
+    ;; since init.el lacks lexical-binding.
+    (process-put proc :handlers handlers)
+    (process-put proc :output "")
+    (set-process-filter proc
+      (lambda (proc text)
+        (process-put proc :output (concat (process-get proc :output) text))))
+    (set-process-sentinel proc
+      (lambda (proc _event)
+        (let ((out (process-get proc :output)))
+          (when (string-match "button returned:\\(.+\\)" out)
+            (let ((handler (alist-get (string-trim (match-string 1 out))
+                                      (process-get proc :handlers) nil nil #'string=)))
+              (when handler (eval handler t)))))))))
+
+(non-blocking-message-box :title "Emacs" :content "Enjoy life (｡◕‿◕｡))" :buttons '(:♥ nil))
 #+end_src
 ** Bookmarks: Quick naviagation to commonly visited locations
 :PROPERTIES:
@@ -19442,7 +19520,8 @@ encounter them. Consequently, source code buffers become more accessible since
 they automatically link to references, e.g., a variable named ~parser~ now links
 to my radio target note associated with parsers.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
+;; Disabled: The cool linking features are almost never used in practice.
 (use-package hyperbole
   :custom (hsys-org-enable-smart-keys t)
   :hook after-init)
@@ -19544,7 +19623,7 @@ buttons ---this itself is an implicit button for Info; i.e., ~(info
 
 ⚠️ One thing I currently dislike is that ~M-RET~ in an Org enumeration
 scrolls down a screen-ful rather than introduce a new item. Let's fix this.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (😴 advice-add 'hkey-either :around
 (defun my/M-RET-in-enumeration-means-new-item (orig-fn &rest args)
   "In an Org enumeration, M-[S]-RET anywhere in an item should create a new item.
@@ -19561,7 +19640,7 @@ scrolls down a screen-ful rather than introduce a new item. Let's fix this.
 :CREATED:  [2025-05-24 Sat 10:55]
 :END:
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (😴 progn
 (defib my/property-button ()
   "Clicking at the start of the :PROPERTIES: line prompts for adding a new Org property."
@@ -19596,7 +19675,7 @@ automate this search ---following [[https://www.beorgapp.com/blog/hyperbole-impl
 show them in a browser using Hyperbole implicit buttons]] and [[https://ginabythebay.studio/posts/implicit-buttons-are-cool/][Implicit Buttons Are
 Cool]].
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (😴 progn
 
 (defun my/open-::-file-path (path)
@@ -19688,7 +19767,7 @@ the associated definition. Since I use regexes for highlighting and downcase
 everything when doing the actual lookup, variations in capitalisation such as
 ~Parser~ or ~pArSeR~ work fine.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defun get-radio-targets ()
   "Extract all radio targets from the current Org buffer"
   (interactive)

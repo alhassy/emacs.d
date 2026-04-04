@@ -1,16 +1,24 @@
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:4]]
-    (setq org-image-actual-width nil)
+(setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:5]]
-    ;; Clicking on a URL, or running M-x browse-url, should open the URL *within* Emacs.
-    (setq browse-url-browser-function #'xwidget-webkit-browse-url)
+;; Day-to-day, open URLs in the system browser (Arc, Chrome, etc.).
+;; When blogging, we can temporarily switch to xwidget-webkit-browse-url.
+(setq browse-url-browser-function 'browse-url-default-browser)
 
-    ;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
+;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
 ;; Personal instructions for a new machine:5 ends here
 
 ;; Disable custom-file - all settings managed in init.el/init.org
 (setq custom-file (make-temp-file "emacs-custom-"))
+
+;; Kill noisy buffers that accumulate during init.
+(add-hook 'emacs-startup-hook
+  (lambda ()
+    (dolist (buf '("*Shell Command Output*" "*Quail Completions*" "*Compile-Log*"))
+      (when (get-buffer buf)
+        (kill-buffer buf)))))
 
 (setq user-full-name    "Musa Al-hassy"
       user-mail-address "alhassy@gmail.com")
@@ -103,12 +111,6 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
   ;; Update installed packages at startup if there is an update pending.
   :hook (after-init . auto-package-update-maybe))
 
-;; Making it easier to discover Emacs key presses.
-(use-package which-key
-  :config (which-key-mode)
-          (which-key-setup-side-window-bottom)
-          (setq which-key-idle-delay 0.05))
-
 (eval-and-compile (require 'dash nil t)) ;; Needed at compile-time for anaphoric macros
 (use-package dash :demand t) ;; "A modern list library for Emacs"
 (use-package s :demand t)    ;; "The long lost Emacs string manipulation library".
@@ -129,24 +131,11 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 
 (defvar my/work-machine? (not my/personal-machine?))
 
-  ;; Allow tree-semantics for undo operations.
-  (use-package undo-tree
-    :bind ("C-x u" . undo-tree-visualize)
-    :config
-      ;; Each node in the undo tree should have a timestamp.
-      (setq undo-tree-visualizer-timestamps t)
-  
-      ;; Show a diff window displaying changes between undo nodes.
-      (setq undo-tree-visualizer-diff t)
-  
-      ;; Prevent undo tree files from polluting your git repo
-      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
-  
-      ;; Always have it on
-      (global-undo-tree-mode))
-  
-  ;; Execute (undo-tree-visualize) then navigate along the tree to witness
-  ;; changes being made to your file live!
+;; Lightweight undo visualiser — replaces undo-tree (which caused
+;; corrupt history files and recursive-timer errors).
+(use-package vundo
+  :bind ("C-x u" . vundo)
+  :custom (vundo-glyph-alist vundo-unicode-symbols))
 
 ;; Auto installing OS system packages
 (use-package system-packages)
@@ -155,8 +144,17 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 ;; This is run whenever we open Emacs & so wont take long if we're up to date.
 ;; It happens in the background ^_^
 ;;
-;; After 5 seconds of being idle, after starting up.
-(😴 run-with-idle-timer 5 nil #'system-packages-update) ;; ≈ (async-shell-command "brew update && brew upgrade")
+;; After 5 minutes of being idle (i.e., you're likely away or reading).
+;; Kill the output buffer once the update finishes — no stale *system-packages* lying around.
+(run-with-idle-timer 300 nil
+  (lambda ()
+    (system-packages-update)
+    (when-let ((buf (get-buffer "*system-packages*")))
+      (when-let ((proc (get-buffer-process buf)))
+        (set-process-sentinel proc
+          (lambda (_proc _event)
+            (when (get-buffer "*system-packages*")
+              (kill-buffer "*system-packages*"))))))))
 
 (defvar my/installed-packages
   (shell-command-to-string "brew list")
@@ -277,122 +275,6 @@ installs of packages that are not in our `my/installed-packages' listing.
          (corfu-history-mode . savehist-mode)))
 
 
-(defun seq-empty-p (sequence)
-  "Return non-nil if SEQUENCE is empty."
-  (= 0 (seq-length sequence)))
-
-;; agent-shell expects the claude-agent-acp binary, which is  provided by the @zed-industries/claude-agent-acp npm package.
-(unless (executable-find "claude-agent-acp")
-  (shell-command "/opt/homebrew/bin/npm install -g @zed-industries/claude-agent-acp"))
-
-
-(use-package agent-shell                                                                                                          :ensure t                                                                                                                       :custom                                                                                                                         (agent-shell-anthropic-authentication                                                                                            (agent-shell-anthropic-make-authentication :login t)))  
-
-
-(global-set-key (kbd "C-c k")
-                (defun my/claude-code (&optional arg)
-                  "DWIM entry point for Claude Code via agent-shell.
-
-   1.         C-c k  ⇒  Toggle between here and Claude buffer, or open AI buffer if need be.
-                        {If a region is active, carry it as context to the AI}
-   2.     C-u C-c k  ⇒  Switch to an AI buffer by name
-   3. C-u C-u C-c k  ⇒  Start a new AI buffer and name it
-   
-   This delegates to the existing =agent-shell= DWIM machinery
-   (=agent-shell= already handles region context, toggling, and shell
-   creation) while ensuring =default-directory= is always =~/fwd/=. The
-   =C-u C-u= case calls =agent-shell-anthropic-start-claude-code= directly
-   to force a new Claude Code shell without an agent selection prompt.
-"
-                  (interactive "P")
-                  (let ((default-directory "~/fwd/"))
-                    (cond
-                     ((equal arg '(16))
-                      (let ((existing (agent-shell-buffers)))
-                        (agent-shell-anthropic-start-claude-code)
-                        (when existing
-                          (let ((name (read-string "Label this session: ")))
-                            (when-let* (((not (string-empty-p name)))
-                                        (new-buf (seq-find (lambda (b) (not (memq b existing)))
-                                                           (agent-shell-buffers))))
-                              (with-current-buffer new-buf
-                                (setq my/claude-session-label name)))))))
-                     ((equal arg '(4))
-                      (let* ((bufs (or (agent-shell-buffers)
-                                       (user-error "No Claude shells available")))
-                             (labeled (mapcar (lambda (b)
-                                                (let ((label (buffer-local-value 'my/claude-session-label b)))
-                                                  (cons (if label
-                                                            (format "%s [%s]" (buffer-name b) label)
-                                                          (buffer-name b))
-                                                        b)))
-                                              bufs))
-                             (choice (completing-read "Switch to shell: "
-                                                      (mapcar #'car labeled) nil t))
-                             (buf (cdr (assoc choice labeled))))
-                        (agent-shell--display-buffer buf)))
-                     (t
-                      (agent-shell))))))
-
-;; The names of the AI buffers seem to be tied to the AI processes, so we can't just rename buffers.
-;; However, after any interaction, AI buffer headers are updated, so we hook into that mechanism to
-;; provide a label for them. We also propogate that label to the agent-shell buffers menu.
-
-(defvar-local my/claude-session-label nil "Custom label for this Claude Code session, shown in the header.")
-
-(advice-add 'agent-shell--make-header-model :filter-return
-            (lambda (model) (when my/claude-session-label
-                         (setf (alist-get :buffer-name model)
-                               (format "Claude Code: %s" my/claude-session-label))) model))
-
-
-;; When I copy test from Agent-Shell, it's read-only since it's shell text, but I don't want read-only text.
-;; Moreover, when I copy prose, please give it to me in Org-mode format, not markdown.
-;;
-;; If you accidentaly have read-only text in your buffer, make it editable with:
-;; (let ((inhibit-read-only t)) (remove-text-properties (point-min) (point-max) '(read-only nil)))
-;;
-(defun my/make-agent-shell-copy-be-editable-org-mode (orig-fn start end &optional delete)
-  "Convert copied agent-shell text from Markdown to Org via pandoc.
-
-Also strips read-only text properties that leak from comint output.
-
-Code block copies are detected and returned as-is: markdown-overlays
-places an invisible overlay on the closing ``` fence, which sits
-right after the code body. When the copy icon fires kill-ring-save,
-END lands just before that invisible overlay, so we check
-overlays-in END..(+END 3) to skip pandoc for code blocks."
-  (let ((text (funcall orig-fn start end delete)))
-    (remove-text-properties 0 (length text) '(read-only nil) text)
-    (if (cl-some (lambda (ov) (overlay-get ov 'invisible))
-                 (overlays-in end (min (+ end 3) (point-max))))
-        text
-      (with-temp-buffer
-        (insert text)
-        (call-process-region (point-min) (point-max)
-                             "pandoc" t t nil
-                             "-f" "markdown" "-t" "org")
-        (buffer-string)))))
-
-(advice-add 'agent-shell--filter-buffer-substring :around #'my/make-agent-shell-copy-be-editable-org-mode)
-
-;; Some useful info in the AI buffer header: [Agent | Model | Thinking Mode | Directory ]
-(setq agent-shell-header-style 'text)
-
-;; Don't confirm when I interrupt, just stop.
-(with-eval-after-load 'agent-shell
-  (define-key agent-shell-mode-map (kbd "C-c C-c")
-              (lambda () (interactive) (agent-shell-interrupt t))))
-
-;; Expand tool use / thought process by default (instead of collapsed)
-(setq agent-shell-tool-use-expand-by-default nil)
-(setq agent-shell-thought-process-expand-by-default nil)
-
-;; Expand tool use / thought process by default (instead of collapsed)
-;; (setq agent-shell-tool-use-expand-by-default t)
-;; (setq agent-shell-thought-process-expand-by-default t)
-
-
 ;; Add CAPFs to buffers where you want them
 (add-hook 'prog-mode-hook  #'my/extra-completion-candidates)
 (add-hook 'text-mode-hook  #'my/extra-completion-candidates)
@@ -417,7 +299,6 @@ overlays-in END..(+END 3) to skip pandoc for code blocks."
                        #'cape-dict))))
 
 
-
 ;; Add icons to the completions
 (use-package kind-icon
   :disabled "Cute, but will ignore for now. It does look nice when completing paths."
@@ -428,23 +309,23 @@ overlays-in END..(+END 3) to skip pandoc for code blocks."
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
-  ;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
-  ;; Since the hook fires on C-g but by then Helm's already tears it down so
-  ;; it fails buffer-live-p.
-  (with-eval-after-load 'helm
-  (defun my/helm-kill-session-buffers-safe ()
-    "Kill stray *helm…* buffers after a Helm session ends."
-    ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
-    (run-at-time 5 nil                   ; defer until after Helm cleanup
-                 (lambda ()
-                   (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
-                   (let ((kill-buffer-query-functions nil))
-                     (dolist (b (buffer-list))
-                       (when (and (buffer-live-p b)
-                                  (string-match-p "\\`\\*helm" (buffer-name b)))
-                         (with-demoted-errors "helm-kill: %S"
-                           (kill-buffer b))))))))))
-  (add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
+;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
+;; Since the hook fires on C-g but by then Helm's already tears it down so
+;; it fails buffer-live-p.
+(with-eval-after-load 'helm
+(defun my/helm-kill-session-buffers-safe ()
+  "Kill stray *helm…* buffers after a Helm session ends."
+  ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
+  (run-at-time 5 nil                   ; defer until after Helm cleanup
+               (lambda ()
+                 (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
+                 (let ((kill-buffer-query-functions nil))
+                   (dolist (b (buffer-list))
+                     (when (and (buffer-live-p b)
+                                (string-match-p "\\`\\*helm" (buffer-name b)))
+                       (with-demoted-errors "helm-kill: %S"
+                         (kill-buffer b))))))))))
+(add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
 
 (use-package helm
   :hook ((after-init . helm-mode) ;; Enable Helm completion for common Emacs commands.
@@ -541,120 +422,8 @@ overlays-in END..(+END 3) to skip pandoc for code blocks."
 
 (setq initial-major-mode 'org-mode)
 
-;; Invoke all possible key extensions having a common prefix by
-;; supplying the prefix only once.
-(use-package hydra :defer t)
-
-;; Show hydras overlayed in the middle of the frame
-(use-package hydra-posframe
-  :disabled "TODO Fix me, breaking Github Actions test setup"
-  :vc (:url "https://github.com/Ladicle/hydra-posframe.git")
-  :hook after-init
-  :custom (hydra-posframe-border-width 5))
-
-;; Neato doc strings for hydras
-(use-package pretty-hydra :defer t)
-
-;; TODO convert my existing defhydras to my/defhydra.
-(😴 defmacro my/defhydra (key title icon-name &rest body)
-    "Make a hydra whose heads appear in a pretty pop-up window.
-Heads are signalled by keywords and the hydra has an icon in its title.
-
-KEY [String]: Global keybinding for the new hydra.
-
-TITLE [String]: Either a string or a plist, as specified for pretty-hydra-define.
-       The underlying Lisp function's name is derived from the TITLE;
-       which is intentional since hydra's are for interactive, pretty, use.
-
-       One uses a plist TITLE to specify what a hydra should do *before*
-       any options, or to specify an alternate quit key (:q by default).
-
-ICON-NAME [Symbol]: Possible FontAwesome icon-types: C-h v `all-the-icons-data/fa-icon-alist'.
-
-BODY: A list of columns and entries. Keywords indicate the title
-      of a column; 3-lists (triples) indicate an entry key and
-      the associated operation to perform and, optionally, a name
-      to be shown in the pop-up. See DEFHYDRA for more details.
-
-
-For instance, the verbose mess:
-
-    ;; Use ijkl to denote ↑←↓→ arrows.
-    (global-set-key
-     (kbd \"C-c w\")
-     (pretty-hydra-define my/hydra/\\t\\tWindow\\ Adjustment
-       ;; Omitting extra work to get an icon into the title.
-       (:title \"\t\tWindow Adjustment\" :quit-key \"q\")
-       (\"Both\"
-        ((\"b\" balance-windows                 \"balance\")
-         (\"s\" switch-window-then-swap-buffer  \"swap\"))
-        \"Vertical adjustment\"
-        ((\"h\" enlarge-window                  \"heighten\")
-         (\"l\" shrink-window                   \"lower\"))
-        \"Horizontal adjustment\"
-        ((\"n\" shrink-window-horizontally      \"narrow\")
-         (\"w\" enlarge-window-horizontally \"widen\" )))))
-
-Is replaced by:
-
-    ;; Use ijkl to denote ↑←↓→ arrows.
-    (my/defhydra \"C-c w\" \"\t\tWindow Adjustment\" windows
-       :Both
-       (\"b\" balance-windows                 \"balance\")
-       (\"s\" switch-window-then-swap-buffer  \"swap\")
-       :Vertical_adjustment
-       (\"h\" enlarge-window                  \"heighten\")
-       (\"l\" shrink-window                   \"lower\")
-       :Horizontal_adjustment
-       (\"n\" shrink-window-horizontally      \"narrow\")
-       (\"w\" enlarge-window-horizontally     \"widen\"))"
-    (let* ((name (intern (concat "my/hydra/"
-                                 (if (stringp title)
-                                     title
-                                   (plist-get title :title)))))
-           (icon-face `(:foreground ,(face-background 'highlight)))
-           (iconised-title
-            (concat
-             (when icon-name
-               (require 'all-the-icons)
-               (concat
-                (all-the-icons-faicon (format "%s" icon-name) :face icon-face :height 1.0 :v-adjust -0.1)
-                " "))
-             (propertize title 'face icon-face))))
-      `(global-set-key
-        (kbd ,key)
-        (pretty-hydra-define ,name
-          ,(if (stringp title)
-               (list :title iconised-title
-                     :quit-key "q")
-             title)
-          ,(thread-last body
-                        (-partition-by-header #'keywordp)
-                        (--map (cons (s-replace "_" " " (s-chop-prefix ":" (symbol-name (car it)))) (list (cdr it))))
-                        (-flatten-n 1))))))
-
 ;; C-n, next line, inserts newlines when at the end of the buffer
 (setq next-line-add-newlines t)
-
-;; Use ijkl to denote ↑←↓→ arrows.
-(😴 my/defhydra "C-c w" "\t\tWindow Adjustment" windows
-   :Both
-   ("b" balance-windows                 "balance")
-   ("s" switch-window-then-swap-buffer  "swap")
-   :Vertical_adjustment
-   ("h" enlarge-window                  "heighten")
-   ("l" shrink-window                   "lower")
-   :Horizontal_adjustment
-   ("n" shrink-window-horizontally      "narrow")
-   ("w" enlarge-window-horizontally     "widen"))
-
-;; Provides a *visual* way to choose a window to switch to.
-;; (use-package switch-window )
-;; :bind (("C-x o" . switch-window)
-;;        ("C-x w" . switch-window-then-swap-buffer))
-
-;; Have a thick ruler between vertical windows
-(window-divider-mode)
 
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -700,10 +469,7 @@ Is replaced by:
 
 ;; [[file:init.org::#Undo-tree-Very-Local-Version-Control][Undo-tree: Very Local Version Control:2]]
 ;; By default C-z is suspend-frame, i.e., minimise, which I seldom use.
-(global-set-key (kbd "C-z")
-  (lambda () (interactive)
-   (undo-tree-mode) ;; Ensure the mode is on
-   (undo-tree-visualize)))
+(global-set-key (kbd "C-z") #'vundo)
 ;; Undo-tree: Very Local Version Control:2 ends here
 
 ;; [[file:init.org::#Automatic-Backups][Automatic Backups:1]]
@@ -1585,51 +1351,6 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 (global-set-key (kbd "M-<tab>") 'buffer-flip)
 ;; [C-u]-M-TAB to move between buffers:1 ends here
 
-;; [[file:init.org::*Outshine: Org outlining everywhere][Outshine: Org outlining everywhere:1]]
-(use-package outshine
-  :hook emacs-lisp-mode
-  ;; Press “?” on a heading to see what you can do with it.
-  ;; ⇒ “n/p/f/b” to navigate; “r/w” to restrict/widen; “j/J” to navigate in-detail.
-  ;; Also note: M-x outline-show-entry
-  :custom (outshine-use-speed-commands t)
-  ;; Make “⌘-e” enter “Edit as Org”
-  ;; Note: “C-u ⌘-e” transforms the entire code buffer into an Org buffer. Nice if you want to export code to, say, an Org blog article 😉
-  :bind (:map emacs-lisp-mode-map
-              ("s-e" . outorg-edit-as-org)
-              ;; “C-x n d” narrows to defun; “C-x n s” narrows to subtree (from anywhere inside it)
-              ("C-x n s" . (lambda () (interactive) (unless (outline-on-heading-p) (outline-previous-heading)) (outshine-narrow-to-subtree)))
-        :map outorg-edit-minor-mode-map
-              ("C-x C-s" . outorg-copy-edits-and-exit)))
-
-;; 😲 Very useful:
-;; M-⇆ is used to incrementally show (→) or hide (←) content of the current heading.
-;; M-↕ is used to navigate between headings
-;; M-S-⇆ is used to demote/promote headings
-;; M-S-↕ is used to move headings
-;; S-TAB cycle through entire buffer visibility
-;; TAB cycle though visibility of current heading
-
-;; Get a birds’ eye view (when I open a file).
-(add-hook 'outline-minor-mode-hook
-          (defun my/outline-overview ()
-            "Show all headings but no content in Outline mode."
-            (interactive)
-            ;; (outline-show-all) (outline-hide-body)
-            (unless (or (s-starts-with? "*Org Src init.org[ emacs-lisp ]*" (buffer-name))
-                        (s-contains? (f-expand user-emacs-directory) default-directory))
-              (-let [current-prefix-arg 16] (outshine-cycle-buffer)))))
-;; Outshine: Org outlining everywhere:1 ends here
-
-;; [[file:init.org::*Reduce cognitive attention from Lisp parentheses][Reduce cognitive attention from Lisp parentheses:1]]
-;; By default parentheses and brackets are dimmed, customize option `paren-face-regexp' if you also want to dim braces or don't want to dim brackets.
-(use-package paren-face
-  :hook (emacs-lisp . my/dim-parens-instead-of-drawing-attention-to-them-via-rainbow-colouring))
-
-(defun my/dim-parens-instead-of-drawing-attention-to-them-via-rainbow-colouring ()
-  (rainbow-delimiters-mode -1)
-  (paren-face-mode +1))
-;; Reduce cognitive attention from Lisp parentheses:1 ends here
-
 ;; [[file:init.org::*Refactoring: Rename fun, inline fun, extract fun, extract constant, etc][Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:1]]
 (use-package emr ;; 𝑬𝑴acs 𝑹refactor
   ;; Press “⌘-ENTER” to get a drop-down of relevant refactors. Select a region or else use thing at point.
@@ -1714,146 +1435,6 @@ Order requires alphabetically and remove duplicates."
     )
 ;; Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:1 ends here
 
-;; [[file:init.org::*Refactoring: Rename fun, inline fun, extract fun, extract constant, etc][Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:2]]
-;; (use-package erefactor) ;; Disabled: not actively used, causes obsolete-function warnings
-
-;;* Level 1
-;;** Level 2
-;;*** Level 3
-
-;; https://melpa.org/#/redshank
-;; Redshank is a collection of code-wrangling Emacs macros mostly geared towards
-;; Common Lisp, but some are useful for other Lisp dialects, too. It's built on top of Paraedit.
-;;
-;; Some mild (Common Lisp) refactoring support:
-;; ⇒ Semantics-preserving rewriting of forms (IF to COND, WHEN NOT to UNLESS, etc.)
-;; ⇒ Extracting marked regions to DEFUNs, with free variables becoming arguments of the extracted function
-;; ⇒ Extracting forms to LET-bound variables of the nearest enclosing LET block
-;;
-;; There's a lot of cool stuff in here. I especially like "redshank-align-forms-as-columns"; it's really useful for all lisps.
-(use-package redshank)
-
-;; ⇒ (redshank-align-forms-as-columns BEG END)
-;; ⇒ redshank-condify-form  Transform a Common Lisp IF form into an equivalent COND form.
-;; ⇒ redshank-enclose-form-with-lambda Enclose form with lambda expression with parameter VAR.
-;;   Cursor should be inside a form.
-;; ⇒ redshank-extract-to-defun     Extracts region from START to END as new defun NAME.
-;; ⇒ redshank-rewrite-negated-predicate Rewrite the negated predicate of a WHEN or UNLESS form at point.
-
-
-(use-package lispy
-  :hook emacs-lisp)
-
-
-;;; The price for these short bindings is that they are only active when point is before/after a parens, or when the region is active.
-;;;
-;; The advantage of short bindings is that you are more likely to use them. As you use them more, you learn how to combine them, increasing your editing efficiency.
-
-;; Select a region then press ", it's smart enough to escape any quotes inside the region or to escape new quotes if we're already in a string.
-;; Use C-u " on a region to remove the quotes.
-
-;; Select a region then press ( or ) to enclose it in parens, then use / at a parens to remove them.
-;; In Lisp jargon, this is “splicing”.
-
-;; C-k now means “kill until end of form”; e.g., (f x | y z) ⇒ (f x)
-;; DEL means delete form
-;; “ ; ” now means comment current (possibly multi-line) expression
-
-;;;  c ⇒ clone form
-;;;  e ⇒ eval form
-;;; E ⇒ eval & insert
-
-;; d ⇒ jump to different side of from, i.e., exchange mark. Quickly jump between start & end of form.
-
-;;; F/D ⇒ jump to definition of form head; e.g., (f x y)|F ⇒ jumps to definition of f
-;;; C-1 ⇒ Toggle inline docstring for form head 💝
-;;;            (Use “xh” to get the docstring in a help buffer)
-;;; C-2 ⇒ Toggle inline argslist for form head 💝
-
-;; xk/xd ⇒ Extract form to new ‘d’efun bloc‘k’ 💝
-;; xb ⇒ ‘b’ind form to new let clause
-;; x? ⇒ See possible completions
-;; xs ⇒ C-x C-s
-
-
-;;;  C ⇒ Convolute: (f (g ∣(h x)))  ⇒ (g (f ∣(h x)))
-
-
-(use-package lispy)
-;;;  There's a lot to remember, so make "x" show me what I can do!
-(when (fboundp 'lispy-define-key)
-  (lispy-define-key lispy-mode-map "x"
-                    (pretty-hydra-define my/hydra-lispy-x (:exit t)
-                    ("Refactor"
-                     (("b" lispy-bind-variable "bind variable")
-                      ("u" lispy-unbind-variable "unbind let-var")
-                      ("c" lispy-to-cond "if → cond")
-                      ("i" lispy-to-ifs "cond → if")
-                      ("d" lispy-to-defun "λ → 𝑓")
-                      ("l" lispy-to-lambda "𝑓 → λ")
-                      ("D" lispy-extract-defun "extract defun")
-                      (">" lispy-toggle-thread-last "toggle last-threaded form")
-                      ;; ("t" lispy-toggle-thread-last "toggle last-threaded form")
-                      ;; ("k" lispy-extract-block "extract block")
-                      ("f" lispy-flatten "flatten")
-                      ("F" lispy-let-flatten "let-flatten"))
-                     "Evaluate"
-                     (("v" lispy-eval-expression "eval")
-                      ("r" lispy-eval-and-replace "eval and replace")
-                      ("H" lispy-describe "describe in *help*")
-                      ("h" lispy-describe-inline "describe inline")
-                      ;; ("j" lispy-debug-step-in "debug step in")
-                      ("m" lispy-cursor-ace "multi cursor")
-                      ("s" save-buffer)
-                      ("t" lispy-view-test "view test")
-                      ("T" lispy-ert "ert")
-                      ;; ("w" lispy-show-top-level "where")
-                      ;; ("B" lispy-store-region-and-buffer "store list bounds")
-                      ;; ("R" lispy-reverse "reverse")
-                      )))))
-
-; (my/hydra-lispy-x/body)
-
-
-; (cl-inspect '(+ 2 (print 40)))
-
-
-;;  “a 𝓍” to mark a subform, or “𝓃 m”, then “C-1” to toggle its docs inline. Only one doc visible at a time.
-; (list #'message #'identity #'mapcar)
-
-;; f/b ⇒ move forward/backward between forms
-;; f/b ⇒ move forward/backard between forms
-;;; xd ⇒ replace lambda with defun (saved to kill ring!)
-;;; xc ⇒ replace arbitrarly nested IFs to COND 😻
-;;; xi ⇒ replace COND with nested IFs
-;;;  x> ⇒ toggle between `thread-last` and equivalent expression
-;;; xf ⇒ inline macro call, e.g., (thread-last f e) ⇒ (f e)
-;;; xr ⇒ eval form & replace
-;; ;;; M/O ⇒ format into multiple / One line
-;; ;;; i ⇒ prettify code; e.g., removing extra whitespace
-;; ;;; w/s ⇒ move a form left/right
-;; ;;; a ⇒ jump to a subform
-;; ;;; t ⇒ “teelport” / relocate current form to a specific location, tt to teleport anywhere in buffer
-
-;; ;;; N/W ⇒ narrow/widen to form
-;; v ⇒ view current form at top of screen, this is a toggle
-
-;; Slurp & barf:
-;; Slurp >: Current form slurps up the next form, i.e., (f)| (x) ⇒ (f (x))
-;; and (f) |(x) ⇒ (f (x)). That is, slurping at a boundary means use this form as the enclosing form
-;; and so the other argument of the slurp retains its parens.
-;;
-;; Barf: Throw out the first/last sexp in a form, depending on whether < is pressed at the start or end of the form.
-;; |(a b c) ⇒ a (b c)  &  (a b c)| ⇒ (a b) c
-;;
-;; Barf is useful in conjunction with `d`.
-
-;; xT ⇒ run all tests; i.e., “M-x ert t”
-;;  u ⇒ undo most recent change to buffer.
-
-;; Full docs @ https://web.archive.org/web/20190924092330/http://oremacs.com/lispy/#lispy-shifttab
-;; Refactoring: Rename fun, inline fun, extract fun, extract constant, etc:2 ends here
-
 ;; [[file:init.org::*Finally, for authoring to MELPA][Finally, for authoring to MELPA:1]]
 (use-package flycheck :defer t)
 
@@ -1881,12 +1462,10 @@ Order requires alphabetically and remove duplicates."
 ;; (Note: Noto does not work on my personal machine.)
 
 
-;; Render ASCII such as " :-) " as emoji 🙂.
-(use-package emojify)
-(when (fboundp 'global-emojify-mode)
-  (setq emojify-display-style 'unicode) ;; unicode is the way to go!
-  (setq emojify-emoji-styles '(unicode))
-  (global-emojify-mode 1)) ;; Will install missing images, if need be.
+;; Disabled: We use native Unicode emoji via Apple Color Emoji fontset above.
+;; No need for ASCII→emoji conversion overhead on every buffer.
+;; (use-package emojify)
+;; (global-emojify-mode 1)
 
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
@@ -1969,7 +1548,7 @@ Order requires alphabetically and remove duplicates."
 ;; [More Controlled Approach: Set date&time format]
 ;; a ≈ weekday; b ≈ month; d ≈ numeric day, R ≈ 24hr:minute.
 (setq display-time-format "%a %b %d ╱ %r") ;; E.g.,:  Fri Mar 04 ╱ 03:42:08 pm
-(setq display-time-interval 1) ;; Please update the time every second.
+(setq display-time-interval 60) ;; Once per minute suffices; every-second redraws waste CPU.
 (display-time-mode)
 
 ;; I don't need the system load average in the modeline.
@@ -2142,10 +1721,6 @@ fonts (•̀ᴗ•́)و"
 (modify-syntax-entry ?< "w<")
 (modify-syntax-entry ?> "w>")
 
-(use-package bufler
-  :bind* ("C-x C-b" . bufler-list))
-;; I still prefer “C-x b” to be “helm-mini”, since when looking for a buffer it also shows me recently visited files.
-
 (use-package all-the-icons
   ;; Install fonts only if they're not already installed.
   ;; Source: https://github.com/domtronn/all-the-icons.el/issues/120#issuecomment-427172073
@@ -2157,51 +1732,6 @@ fonts (•̀ᴗ•́)و"
                              (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
             (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
               (all-the-icons-install-fonts 'install-without-asking))))
-
-(defcustom  my/weather-refresh-interval 60
-  "Number of minutes between refreshes of weather information."
-  :type 'integer)
-;; Use (cancel-timer my/weather--timer) to stop this.
-(defvar my/weather-brief "")
-(setq my/weather--timer
-      (run-with-timer (* 60 5) (* 60  my/weather-refresh-interval)
-                      (defun my/weather-update ()
-                        (interactive)
-                        (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?format=%c%C+%t'"))
-                        ;; (setq my/weather-brief (shell-command-to-string "bash -c 'curl -s wttr.in/Toronto+Canada?format=%c%C+%t+and+windy:+%w'"))
-                        (setq my/weather-full-details (shell-command-to-string "bash -c 'curl -s wttr.in/Niagara+Falls+Canada?T'"))
-                        (force-mode-line-update))))
-;;
-(setq my/weather--indicator
-      `(:eval
-        (propertize (format " %s " my/weather-brief)
-              'face 'mode-line-buffer-id
-                    'help-echo (concat  ;; "Click to see full details"
-                                (propertize "\n" 'face '(:height 0.4))
-                                (propertize "[Click]" 'face `(bold (foreground-color . "green"))) " To see detailed weather report\n"
-                                (propertize "[M-x my/weather-update]" 'face '(bold (foreground-color . "maroon"))) " To fetch latest weather data"
-                                (propertize "\n " 'face '(:height 0.5)))
-                    'local-map my/mode-line-weather-map
-                    'mouse-face 'mode-line-highlight)))
-;;
-(add-to-list 'mode-line-misc-info my/weather--indicator)
-;; (pop mode-line-misc-info) ;; To remove from the modeline.
-
-(setq my/weather-posframe-visible nil)
-(defvar my/mode-line-weather-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [mode-line mouse-1]
-                (lambda (_e)
-                  (interactive "e")
-                  (use-package posframe)
-                  (if my/weather-posframe-visible
-                      (posframe-delete "*my/weather-full-details-posframe-buffer*")
-                    (posframe-show "*my/weather-full-details-posframe-buffer*"
-                                   :string my/weather-full-details
-                                   :position (point))
-                    (message "Click on the weather modeline icon to close the posframe."))
-                  (setq my/weather-posframe-visible (not my/weather-posframe-visible))))
-    map))
 
 ;; [[file:init.org::*Show me the diff!][Show me the diff!:1]]
 (defun my/show-string-diff (string1 string2)
@@ -3574,7 +3104,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Pretty Lists Markers:1 ends here
 
 ;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:1]]
-  (defvar-local rasmus/org-at-src-begin -1
+(defvar-local rasmus/org-at-src-begin -1
     "Variable that holds whether last position was a ")
 
   (defvar rasmus/ob-header-symbol ?☰
@@ -4624,1524 +4154,215 @@ the character 𝓍 before and after the selected text."
   :hook (org-mode . org-superstar-mode))
 ;; Org-superstar:1 ends here
 
-;; [[file:init.org::*Example use of doc:consult--read][Example use of doc:consult--read:1]]
-(use-package consult :defer t) ;; To get `consult--read'
-;; Example use of doc:consult--read:1 ends here
+;; [[file:init.org::*Install][Install:1]]
+;; M-x agent-shell: Chat with Claude Code inside an Emacs buffer.
+;; Uses browser login, so no API key needed — works with Claude Pro/Max subscription.
+;; Requires: brew install node && npm install -g @zed-industries/claude-agent-acp
 
-;; [[file:init.org::*Questionnaire setup][Questionnaire setup:1]]
-(require 'eieio)
+;; The `acp` dependency needs seq-empty-p (Emacs 31+); polyfill it for Emacs 30.
+  (defun seq-empty-p (sequence)
+    "Return non-nil if SEQUENCE is empty."
+    (= 0 (seq-length sequence)))
 
-;; See https://alhassy.com/ElispCheatSheet/#org71dcb45 for info on “defstruct”
-(cl-defstruct my/option
-  "An option for use with my End of Day Review."
-  label score description)
+;; agent-shell expects the claude-agent-acp binary, which is  provided by the @zed-industries/claude-agent-acp npm package.
+(unless (executable-find "claude-agent-acp")
+  (shell-command "/opt/homebrew/bin/npm install -g @zed-industries/claude-agent-acp"))
 
-(defun assoc-by-label (options label)
-  "Find the first `my/option' value in a list OPTIONS whose `my/option-label' is LABEL."
-  (cl-find label options :key #'my/option-label :test #'string=))
+(use-package agent-shell
+  :custom
+  (agent-shell-anthropic-authentication
+   (agent-shell-anthropic-make-authentication :login t)))
 
-(cl-defmethod pretty-print ((it my/option))
-  (format "%d  --  %s  --  %s" (my/option-score it) (my/option-label it) (my/option-description it)))
+;; ⚙️ Add “ .agent-shell/ ” to “ ~/.gitignore_global” to ignore the transcripts of your conversations from Git
+;; Install:1 ends here
 
-(cl-defgeneric my-method (it)) ;; Need this to dispatch against primitive types, like “string” and “number”
-(cl-defmethod  make-my/option-from-string ((it string))
-  "Parse a “⟨score⟩ -- ⟨label⟩ -- ⟨description⟩” string into a `my/option' value."
-  (-let [(score label description) (s-split "--"  it)]
-    (make-my/option :score (string-to-number (s-trim score))
-                    :label (s-trim label)
-                    :description (s-trim description))))
+;; [[file:init.org::*Opening Claude AI][Opening Claude AI:1]]
+;; “k” for claude ---I use “C-c c” for my Org-capture, to quickly capture a note.
+(global-set-key (kbd "C-c k")
+   (defun my/claude-code (&optional arg)
+   "DWIM entry point for Claude Code via agent-shell.
 
-
-(lf-documentation
- 'my/daily-review-questionnaire
- 'variable
- "
- Entries are of the form (headline . options)
- → HEADLINE is a string of the shape “⟨Org Property⟩:⟨Prompt⟩”.
- → OPTIONS are strings of the shape “⟨Numeric Score⟩ -- ⟨Label⟩ -- ⟨Note⟩”.
-   ⇒ When omitted, we have an open-ended question.
-   ⇒ If ⟨Label⟩ ends in “…”, then when it is chosen, a follow-up prompt starts to allow
-     me to provide an alternate ⟨Note⟩ value. The entire option, including the new ⟨Note⟩,
-    is then written as the value of ⟨Org Property⟩ in an Org heading.
-
-A special entry is “ :random ”. All entries after it are considered optional
-and 2 of them are randomly selected as part of the daily review.
-
-😲 ⟨Org Property⟩ names need not be unique:
-If there are multiple entries sharing the same Org Property name,
-then only one of them is randomly selected in the questionnaire.
-
-😲 Moreover, ⟨Org Property⟩ names may be space-separated strings:
-Spaces are replaced with a visual space “␣”. It seems Org Property
-syntax allows some Unicode to appear as part of the name; but not
-the Unicode space “ ”. For example, the following runs with no problem:
-
-   (org-set-property  \"look-ma-∀␣p∈People␣•␣∃q␣•␣q␣𝑳𝒪𝓋𝐸𝔖␣p\" \"😲\")
-
-")
-
-
-;; NOTE: Consider using an Org file as a data source.
-(setq my/daily-review-questionnaire
-      '(
-        ;; TODO: Make Weekly review get trend insights
-        ;; ⇒ “Average Stress this week: +0.5”
-        ;; ⇒ “Exercise streak: 3/5 days”
-        ;; ⇒ Notes on emotional patterns?
-        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-        ;; Mandatory questions asked each day                                       ;;
-        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-        ("Happiness: Am I at peace with where I am right now?"
-         ;; Am I happy? To find what's not making me happy and to prioritize what I should do because everything emanates from me and my internal state
-         ;; Consider adding note follow-ups via “…” to some of these options. In the future, after I've used this often enough!
-         "-1  --  Abysmal Low     --  I hate life."
-         " 0  --  Low             --  What am I doing with my life?"
-         " 1  --  Medium          --  Things are OK."
-         " 2  --  High            --  I love my life ᕦ( ᴼ ڡ ᴼ )ᕤ"
-         " 3  --  Extremely High  --  I'm king of the world!")
-        ("Stress: How high are the demands upon me? Am I managing everything well?"
-         " 2  --  Low             --  Things are chill; I'm gonna spend the day with my kids"
-         " 1  --  Medium          --  Things are OK. It's just another day."
-         " 0  --  High            --  People are getting on my nerves. ⚠️ Stress ≡ Pot Belly!"
-         "-1  --  Extremely High  --  I have so much to do; I'm freaking out!")
-        ("Energy: How high is my capacity to do work? To be around others? Around myself?"
-         "-1 --  Abysmal Low / Drained / Lacking Motivation  --  I need coffee and sleep."
-         "0  --  Low / Sluggish                              --  I need coffee"
-         "1  --  Medium / Calm                               --  I'm chill, doing my thing."
-         "2  --  High / Enthusiastic                         --  I'm king of the world!")
-        ("Energy Window: When was I most focused or energised?"
-         "0  --  Morning   --  6am-12pm"
-         "0  --  Afternoon --  12pm-3pm")
-        ("Hours Slept: How was my sleep last night?"
-         "0  --  I slept                                     --  Man, I need to get my life together! ⚠️ Poor Sleep ≡ Pot Belly!"
-         "1  --  I slept before midnight and awoke at ~7am   --  Good, but I can do better!"
-         "2  --  I slept around 10pm and awoke at ~5am       --  Nice! Living the best life! Getting things done!" )
-        ("How I Slept: How did I fall asleep last night?"
-         "0  --  On my phone till exhaustion                 --  Man, I need to get my life together!"
-         "1  --  My phone was on the other side of the room  --  Good, but I can do better!"
-         "2  --  Cuddling my wife                            --  Nice! Living the best life!")
-        ("Accomplished: I feel like I got done today what I set out to do?"
-         "0  --  Nope…     --  Review my schedule in the morning and ensure it's a doable day!"
-         "1  --  Almost…   --  Focus on the important tasks"
-         "2  --  Yup…      --  Nice! Living the best life! Getting things done!"
-         )
-        ("Coffee: How many cups of coffee did I drink?"
-         " 0  --   Zero   --  Nice! Exercise gives me energy!"
-         "-1  --   One    --  I want to get things done."
-         "-2  --   Two    --  I didn't eat well today, nor drink enough water."
-         "-3  --   Three  --  Man, I need to get my life together!")
-        ;; Exercise questions. TODO: Make Weekly Review remind me to increment exercise duration
-        ("Water: Did I drink an entire bottle of water today?"
-         "-1  --  Nope! Coffee, sugar, pop!     --  Fatigue! Low Energy! Headaches! Dry Mouth! Mood swings!"
-         "1   --  Yup                           --  Optimal brain! Mood stability! Support weight management!")
-        ("Running: Did I go for a  ﴾7-minute﴿  run today?"
-         "-1  --  Nope    --  Why!? Don't you want to love your body! 💢 Be better, man!"
-         "1   --  Yup     --  Nice! Lose the pot belly! 🫖")
-        ("Push ups: Did I do  ﴾12﴿  push-ups today?"
-         "-1  --  Nope    --  Why!? Don't you want to love your body! 💢 Be better, man!"
-         "1   --  Yup     --  Nice! Lose the pot belly! 🫖")
-        ("Jump Rope: Did I do  ﴾30﴿  skips today?"
-         "-1  --  Nope    --  Why!? Don't you want to love your body! 💢 Be better, man!"
-         "1   --  Yup     --  Nice! Lose the pot belly! 🫖")
-        ("Bicep Curls: Did I do  ﴾10﴿  curls today?"
-         "-1  --  Nope    --  Why!? Don't you want to love your body! 💢 Be better, man!"
-         "1   --  Yup     --  Nice! Lose the pot belly! 🫖")
-        ;; In due time: HIIT via Youtube; e.g., Crunches, Mountain Climbers, Russian Twists?
-        ;; Also: Cycling? Karate Kata? Full Strength Training?
-        ;; Did I stay within my calorie range?
-        ;; Did I eat balanced meals (protein, fiber, healthy fats)?
-        ;; Did I snack out of hunger, boredom, or habit?
-        ;; +Did I emotionally eat today? If so, why?+
-        ;;
-        ;; /Consistency beats perfection!/
-        ;; ("Calories: Did I stay within my calorie range?"
-        ;;  "-1  --  Overeating / Snacking Mindlessly"
-        ;;  " 0  --  Ate more than planned"
-        ;;  " 1  --  Stayed within limits!"
-        ;;  " 2  --  Tracked & ate healthy meals!")
-        ("Nutrition: Did I eat balanced meals (protein, fiber, healthy fats)?"
-         "-1  --  No idea / Ate junk -- Meal prep reduces unhealthy food reliance."
-         " 0  --  Kinda tried -- ? "
-         " 1  --  Well-balanced meals! -- ? ")
-        ;; ("Snacking: Did I snack out of hunger, boredom, or habit?"
-        ;;  "-1  --  Boredom / Emotion"
-        ;;  " 0  --  Minor grazing"
-        ;;  " 1  --  No snacking or only fruit/nuts!")
-        ;; ("WaistMeasurement: What's my current wasit measure in cm?")
-        ;; ("Fullness: Did I stop eating when satisfied?"
-        ;;  "-1 -- Ate until overstuffed"
-        ;;  " 0  -- Ate a bit much"
-        ;;  " 1  -- Ate to satisfaction")
-
-        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-        ;; Open ended questions (i.e., no options)                                  ;;
-        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-        ("Relaxation: The most relaxing thing I did was …")
-        ;; When did I feel drained, frustrated, or stressed?
-        ("Motivation: Why was I or wasn't motivated for something today?")
-        ("Tomorrow: What’s the one thing I must do tomorrow to feel accomplished?")
-
-
-
-        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-        :random  ;; 2 questions randomly chosen and asked each day                  ;;
-        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-        ;; “Thematic” prompts: Each property acts as a theme.
-
-        ("Time: Am I happy with how I am spending my time?") ;; Did I use most of my time wisely?
-        ("Time: Where did most of my time go today?")
-        ("Time: Did I control my schedule, or did my schedule control me?")
-
-        ("Closure:  What can I let go of today?")
-        ("Closure: What am I carrying into tomorrow?")
-
-        ;; NOTE: These all use the “same” key, so only one of them will randomly be selected.
-        ("Service: Was there anything I could easily do for someone else that I didn't do? Why not?")
-        ("Service: Have I done anything to help someone in any way? Because a life lived only for oneself is only partly fulfilling.")
-        ("Service: Did I wrong anyone who I owe amends to?")
-
-        ("Values: What things are most important to me? (both things achieved and not yet achieved)")
-        ("Values: Did it (whatever thing happened during the day) matter? To identify recurring things that either need to be dropped or addressed to better facilitate mental health.")
-        ("Values: Did today matter? i.e., if I had slept all day, would anything really be any different?")
-
-        ("Goal Getting: What did I do today to help achieve the things I have not yet achieved?")
-        ("Goal Getting: What will I do tomorrow to further my achievement of things most important to me?")
-        ("Goal Getting: Was I working on what truly matters, or just staying busy?")
-
-        ;; ⇒ more positive thoughts, unlocked :)
-        ("Gratitude: What am I grateful for today?") ;;  Makes you look at the big picture while appreciating something small that may be otherwise taken for granted.
-        ("Anxiety: What problem is still on your mind, and what needs to be true for you to feel that this problem is resolved?")
-        ("Worry: What am I worried about?") ;; Really helps clarify what to prioritize the next day, and gets the worries out of my head and onto paper right so I don't have to think about them in bed.
-
-        ("Approval: What did I do today that I approve of?") ;; gets you out of all or nothing thinking. Do you approve of getting out of bed? Drinking water?
-        ("Approval: What did I do well today? What did I do poorly today? What am I most grateful for? What is my goal?")
-        ("Pride: What am I proud of?")
-
-        ("Fall Short: Where did I fall short?")
-        ("Distraction: What distracted me or slowed me down?")
-        ("Procrastination: Was I procrastinating? Why?")
-        ("Change: What is 1 thing I will do differently tomorrow?")
-        ("Betterment: What can I do to be better tomorrow than I was today?")
-        ("Improvement: How can anything I'm doing be improved upon? So that I can grow as a person and have more effectiveness in things I do.")
-
-        ("Direction: Where am i going? What did i learn? What did i do that i liked? What can i do better?")
-        ("Growth: What did I learn today?")
-        ("Growth: Who do I need to be in order to master the day I had today. And how can I challenge myself to be that tomorrow.") ;; It helps with perspective, integrity and accountability.
-
-        ("Annoyance: Of the things that happened to me today, what made me go “what the fuck?”")
-        ("Joy: Of the things that happened to me today, what made me go “fuck yeah!”")
-        ("Stress: Of the things that happened to me today, what made me go “oh fuck!”")
-
-        ("Discomfort: What’s the most uncomfortable thing you encountered today?")
-        ("Authenticity: What’s the most uncomfortable truth you said out loud today?")
-        ("Inauthenticity: What did you mentally push aside today instead of thinking it through and openly saying your conclusions?")
-        ("Rumination: What did you think about most today?")
-
-        ("Competence:  What problems did I solve?")
-
-        ("Self-Care: Did I put myself last today?") ;; Did I do myself justice today? If not, what will I do differently tomorrow?
-        ))
-
-
-
-(defun my/randomize (list)
-  "Shuffle the elements in LIST."
-  (--sort (< (random 2) 1) list))
-
-
-(when nil
-  ;; Sometimes I'll get the first "Approval" (an open-ended question) and other times I'll get the second one "Approval" (a choice-delimited question) 😁
-  (my/read-daily-review-properties :questionnaire
-                                   '(("Approval: What did I do today that I approve of?")
-                                     ("Pride: What am I proud of?")
-                                     ("Approval: What did I do well today? What did I do poorly today? What am I most grateful for? What is my goal?")
-                                     ("Approval: Did I eat balanced meals (protein, fiber, healthy fats)?"
-                                      "0  --  Nope -- Pro tip: Meal prep reduces unhealthy food reliance."
-                                      "1  --  Yup  -- Yay, good job! ")
-                                     ("Fall short: Where did I fall short?"))
-                                   ;; :prop-val-action (lambda (property value) (progn (org-set-property property value) (save-buffer)))
-                                   )
-
-  )
-
-
-;; DONE: Make this take 2 keyword args:
-;; ⇒ :questions
-;; ⇒ :action, a function to run on each property-value pair; e.g., (progn (org-set-property property value) (save-buffer))
-;;            This is useful since then the Daily Review immediately adds a property whenever I've answered it, not at the very end.
-;;            And the (save-buffer) part saves everything in-case a disaster occurs (eg one of my Lisp methods crashes).
-;;            ↑ Make this the default, then I can change it when I write a test against this method.
-(cl-defun my/read-daily-review-properties (&key (questionnaire my/daily-review-questionnaire)
-                                                (prop-val-action #'cons))
-  "Returns a list of (PROPERTY . VALUE) pairs that could be `org-set-property' on a headline.
-
-Makes use of `my/daily-review-questionnaire'.
-
-PROP-VAL-ACTION is run on each property-value pair, including the “Daily␣score”.
-The list of such results is returned from this method.
-
-At any time, press `C-.' to toggle adding a customised explanatory note to go along with a selection."
-  (-let [(mandatory-questions random-questions) (-split-on :random questionnaire)]
-    (let* ((max-possible-score 0)
-           (daily-score 0)
-           (properties
-            (cl-loop
-             ;; questionnaire may use the same property name for different questions, so avoid
-             ;; prompting user for the same property value, since later ones override earlier
-             ;; ones when added to an Org Heading. Note that this questions are chosen randomly
-             ;; we do not always select the first “property: prompt” pair  in the questionnaire
-             ;; when there are multiple such pairs having the same property name.
-             with seen-properties = '()
-             ;; Consider mandatory questions and 2 optional questions, chosen at random
-             for (heading . option-strings) in (-concat
-                                                (my/randomize mandatory-questions)
-                                                (-take 2 (my/randomize random-questions)))
-             for heading-info = (s-split ":" heading)
-             ;; Org Properties cannot use Unicode space “ ” in their names, but it seems
-             ;; that they can use the visual space “␣” in their name (among other Unicode).
-             ;; E.g., "how i slept amigo" ⇒ "how␣i␣slept␣amigo"
-             ;; NOTE: Org-ql with “ (regexp "\n.*amigo") ” will find such an entry.
-             for property = (s-replace " " "␣" (cl-first heading-info))
-             for prompt₀ = (cl-second heading-info)
-             for prompt = (if (s-ends-with? " " prompt₀) prompt₀ (concat prompt₀ " "))
-             for options = (--map (make-my/option-from-string it) option-strings)
-             for is-open-ended? = (null options)
-             unless (member property seen-properties)
-             collect
-             (funcall prop-val-action
-                      (progn (push property seen-properties) property)
-                      (if is-open-ended?
-                          (read-from-minibuffer prompt)
-                        (cl-incf max-possible-score (apply #'max (mapcar #'my/option-score options)))
-                        ;; If the user presses “C-.” they toggle on “note entry”.
-                        (let (note-has-been-requested
-                              (my/note-map (make-sparse-keymap)))
-                          (define-key my/note-map (kbd "C-.")
-                                      (lambda () (interactive)
-                                        (setq note-has-been-requested (not note-has-been-requested))
-                                        (message (if note-has-been-requested "[You can enter a note after making a selection!]"
-                                                   "[No entry note will be requested after selection.]"))))
-                          (set-keymap-parent my/note-map minibuffer-local-map) ;; So that ⟨ENTER⟩ finalises the minibuffer, and not a literal new line!
-                          (setq my/show_C-._message t)
-                          (minibuffer-with-setup-hook
-                              (lambda () (use-local-map (copy-keymap my/note-map)))
-                            (consult--read (--map (my/option-label it) options)
-                                           :prompt prompt
-                                           :require-match t
-                                           :annotate (lambda (label)
-                                                       (format "\t ⟨ %s ⟩" (my/option-description (assoc-by-label options label))))
-                                           ;; Initial message shown in minibuffer: This is a message, not default input string.
-                                           :state (lambda (action candidate)
-                                                    (when my/show_C-._message
-                                                      ;; Note: Did not work as expected: (equal action 'setup)
-                                                      (message (concat
-                                                                (propertize "Press" 'face `(bold (foreground-color . "grey")))
-                                                                (propertize " C-. " 'face '(bold (foreground-color . "maroon")))
-                                                                (propertize "to toggle entering a note after making a selection" 'face `(bold (foreground-color . "grey")))))))
-                                           :lookup (lambda (label _ _ _)
-                                                     (-let [option (assoc-by-label options label)]
-                                                       (cl-incf daily-score (my/option-score option))
-                                                       ;; If label ends in “…” or “C-.” pressed, prompt for a note.
-                                                       (when (or (s-ends-with? "…" label) note-has-been-requested)
-                                                         (setq my/show_C-._message nil)
-                                                         (-let [note (s-trim (read-from-minibuffer "Enter an explanatory note [ENTER to skip] "))]
-                                                           (unless (s-blank? note)
-                                                             (setf (my/option-description option) note))))
-                                                       (pretty-print option)))))))))))
-      ;; Prepend a computed “daily score” property. Hopefully this value increases with time.
-      (cons
-       (funcall prop-val-action "Daily␣score"
-                (thread-last daily-score
-                             float
-                             ;; Note:  (thread-last x (/ max) (/ 100)) = (/ 100 (/ max x)) = (* 100 (/ x max))
-                             (/ max-possible-score)
-                             (/ 100)
-                             (format "%.2f%%")))
-       properties))))
-
-
-
-
-(defun my/org-align-property-values ()
-  "Align Org property drawer by property name, then a digit, then on “--” markers.
-
-Further reading:
-→ https://pragmaticemacs.wordpress.com/2016/01/16/aligning-text/
-→ https://blog.lambda.cx/posts/emacs-align-columns/
+   1.         C-c k  ⇒  Toggle between here and Claude buffer, or open AI buffer if need be.
+                        {If a region is active, carry it as context to the AI}
+   2.     C-u C-c k  ⇒  Switch to an AI buffer by name
+   3. C-u C-u C-c k  ⇒  Start a new AI buffer and name it
+   
+   This delegates to the existing =agent-shell= DWIM machinery
+   (=agent-shell= already handles region context, toggling, and shell
+   creation) while ensuring =default-directory= is always =~/fwd/=. The
+   =C-u C-u= case calls =agent-shell-anthropic-start-claude-code= directly
+   to force a new Claude Code shell without an agent selection prompt.
 "
-  (interactive)
-  (save-excursion
-    ;; Restrict to active region or current drawer
-    (let* ((beg (if (use-region-p)
-                    (region-beginning)
-                  (save-excursion
-                    (re-search-backward "^:PROPERTIES:" nil t)
-                    (point))))
-           (end (if (use-region-p)
-                    (region-end)
-                  (save-excursion
-                    (re-search-forward "^:END:" nil t)
-                    (point)))))
-      ;; Pass 0: Align on property key, ie according to the first space
-      (align-regexp beg end " " 0) ;; This works in general, to align Org properties: “M-x align-regexp ⟨RET⟩ ⟨SPACE⟩ ⟨RET⟩”
-      ;; Pass 1: Align on the first ‘score value’: The first possibly negative number after a colon and whitespace.
-      (execute-kbd-macro (kbd "C-u M-x align-regexp RET :\\(\\s-*\\) [-]?[0-9]+ RET RET RET n"))
-      (align-regexp beg end ":\\(\\s-*\\) [-]?[0-9]+")
-      ;; Pass 2: Align on all `--`
-      (execute-kbd-macro (kbd "C-u M-x align-regexp RET \\(\\s-*\\)-- RET RET RET y"))
+  (interactive "P")
+  
+ (let ((default-directory "~/fwd/"))
+    (cond
+     ((equal arg '(16))
+      (let ((existing (agent-shell-buffers)))
+        ;; (agent-shell-anthropic-start-claude-code)
+        (agent-shell-start :config my/custom-claude-config)
+        (when existing
+          (let ((name (read-string "Label this session: ")))
+            (when-let* (((not (string-empty-p name)))
+                        (new-buf (seq-find (lambda (b) (not (memq b existing)))
+                                           (agent-shell-buffers))))
+              (with-current-buffer new-buf
+                (setq my/claude-session-label name)))))))
+     ((equal arg '(4))
+      (let* ((bufs (or (agent-shell-buffers)
+                       (user-error "No Claude shells available")))
+             (labeled (mapcar (lambda (b)
+                                (let ((label (buffer-local-value 'my/claude-session-label b)))
+                                  (cons (if label
+                                            (format "%s [%s]" (buffer-name b) label)
+                                          (buffer-name b))
+                                        b)))
+                              bufs))
+             (choice (completing-read "Switch to shell: "
+                                      (mapcar #'car labeled) nil t))
+             (buf (cdr (assoc choice labeled))))
+        (agent-shell--display-buffer buf)))
+     (t
+      (agent-shell))))))
 
-      (my/org-sort-properties))))
+;; I dislike the “Claude Code>” prompt, it's kinda ugly, so my above command calls on this config:
+(-let [my/custom-claude-prompt "λ🤖λ "]
+  (setq my/custom-claude-config
+        (agent-shell-make-agent-config
+         :identifier 'claude-code
+         :mode-line-name "Claude Code"
+         :buffer-name "Claude Code"
+         :shell-prompt my/custom-claude-prompt
+         :shell-prompt-regexp my/custom-claude-prompt
+         :icon-name "anthropic.png"
+         :client-maker (lambda (buffer)
+                         (agent-shell-anthropic-make-claude-client :buffer buffer))
+         :install-instructions "See https://github.com/zed-industries/claude-agent-acp for installation.")))
+  
+;; The names of the AI buffers seem to be tied to the AI processes, so we can't just rename buffers.
+;; However, after any interaction, AI buffer headers are updated, so we hook into that mechanism to
+;; provide a label for them. We also propogate that label to the agent-shell buffers menu.
 
-(defun my/org-sort-properties ()
-  "To be used in my ‘review’ captures."
-  (beginning-of-buffer)
-  (search-forward ":CREATED:")
-  (forward-line)
-  (-let [start (point)]
-    (search-forward ":END:")
-    (beginning-of-line)
-    (sort-lines nil start (point))))
-;; Questionnaire setup:1 ends here
+(defvar-local my/claude-session-label nil "Custom label for this Claude Code session, shown in the header.")
 
-;; [[file:init.org::*Capture method][Capture method:1]]
-(😴 progn
+(defun my/claude-label-session (label)
+  "Set or update the session LABEL for the current agent-shell buffer.
+The label is shown in the header and the session switch menu."
+  (interactive "sLabel this session: ")
+  (unless (derived-mode-p 'agent-shell-mode)
+    (user-error "Not in an agent-shell buffer"))
+  (setq my/claude-session-label (if (string-empty-p label) nil label)))
 
+(advice-add 'agent-shell--make-header-model :filter-return
+            (lambda (model) (when my/claude-session-label
+                              (setf (alist-get :buffer-name model)
+                                    (format "Claude Code: %s" my/claude-session-label))) model))
+;; Opening Claude AI:1 ends here
 
-(cl-defun my/insert-with-bg-colour (colour &rest text)
-  "Inserts all of TEXT with background color COLOUR.
-
-Example use: (my/insert-with-bg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))
-
-😉 If you want the colouring to continue to the end of the line, have a final \"\\n\".
-💡 Use “M-x helm-colours” for inspiration."
-  (-let [start (point)]
-    (mapc #'insert text)
-    (overlay-put (make-overlay start (point)) 'face `(background-color . ,colour))))
-
-
-(cl-defun my/insert-with-fg-colour (colour &rest text)
-  "Inserts all of TEXT with foreground color COLOUR.
-
-Example use: (my/insert-with-fg-colour \"pink\" \"Hello\\n\" (upcase \"world\"))"
-  (-let [start (point)]
-    (mapc #'insert text)
-    (overlay-put (make-overlay start (point)) 'face `(foreground-color . ,colour))))
-
-
-;; “r”eview for the “d”ay
-(bind-key*
- "C-c r d"
- (def-capture "🔄 Daily Review 😊"
-              "🌿 Reviews 🌱"
-              ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
-              ;; that looks at that day. That is, my review are personal appointments.
-              "* :Daily:Review: \n:PROPERTIES:\n:CREATED: %T\n:END:\n"
-              ;; Insert fancy date in header
-              (beginning-of-buffer)
-              (org-beginning-of-line)
-              (insert (ts-format "%A, %B %e, %Y – Day %j of the year ")) ;; ⇒ E.g., “Saturday, June 14, 2025 – Day 165 of the year”
-              ;; Let's add some properties by prompting the user, me.
-              (my/read-daily-review-properties :prop-val-action (lambda (property value) (org-set-property property value)))
-              ;; Add Daily Score to the start of the headline
-              (beginning-of-buffer)
-              (org-beginning-of-line)
-              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
-              ;; Let's align them
-              (my/org-align-property-values)
-              ;; Let's insert a quote
-              (progn
-                (end-of-buffer)
-                (my/insert-with-fg-colour "grey" "\n\n#+begin_quote_of_the_day\n")
-                (my/insert-with-bg-colour "pink" (my/string-fill-column-and-center 70 (my/random-quote)) "\n")
-                (my/insert-with-fg-colour "grey" "#+end_quote_of_the_day\n\n"))
-              ;; Let's see some stats
-              (progn
-                (my/insert-with-fg-colour "grey" "\n#+begin_stats_of_the_day\n")
-                ;; Randomise the order of stats, to keep things interesting.
-                (--map (my/insert-with-bg-colour "aquamarine" (eval it) "\n")
-                       (--sort (< (random 2) 1)
-                               '((my/age-in-days-weeks-years)
-                                 (my/percentage-of-life-spent)
-                                 (my/git-commit-count)
-                                 (my/how-long-I-have-been-at-my-job)
-                                 my/weather-brief
-                                 (pp-current-islamic-date)
-                                 ;; Prayer Times
-                                 (progn
-                                   (ignore-errors  (my/update-prayer-times-task))
-                                   (format "📿 الفجر %s ∣ الظهر %s ∣ المغرب %s"
-                                           my/dawn-prayer-time my/noon-prayer-time my/sunset-prayer-time))
-                                 ;; Emacs & OS up times
-                                 (let* ((emacs (car (s-split " " (emacs-uptime))))
-                                        (os-uptime (shell-command-to-string "uptime"))
-                                        (os (when (string-match "\\([0-9]+\\) days" os-uptime)
-                                              (match-string 1 os-uptime))))
-                                   (format "🆙 Emacs up for %s days; OS up for %s days" emacs os))
-                                 ;; Journal Line Count
-                                 ;; If it's much smaller, look at git diff to figure out what happened!
-                                 (-let [♯lines
-                                        (with-current-buffer "my-life.org"
-                                          (save-restriction
-                                            (widen)
-                                            (cl-format nil "~:d" (count-lines (point-min) (point-max)))))]
-                                   (format "✍️ my-life.org has %s lines" ♯lines)))))
-                (my/insert-with-fg-colour "grey" "#+end_stats_of_the_day\n\n"))
-
-              (my/show-life-purpose-statement-then-remove-it-after-I-read-it)
-
-              (progn
-                (my/insert-with-fg-colour "grey" "\n#+begin_word_of_the_day\n")
-                (my/insert-with-bg-colour "RosyBrown1" "💬 " (my/word-of-the-day) "\n")
-                (org-fill-paragraph)
-                (my/insert-with-fg-colour "grey" "#+end_word_of_the_day\n\n"))
-
-              (my/insert-with-bg-colour "chartreuse" (lf-string "
-                     ** Clean your inboxes!      [0%]
-
-                     Empty all your physical and digital workspaces. Move things to their
-                     place and delete everything that can distract work in the upcoming week.
-
-
-                                    /A cluttered workspace leads to an anxious mind!/
-
-
-                     1. [ ] 🍽️🪑📚 *Clean Desk*. Clear off your desk from clutter and papers, receipts,
-                        and miscellaneous paper-based materials. Wipe down your desk if you want.
-
-                     2. [ ] 🗑️ *Disable Youtube & Chrome* :: They needlessly suck-up my time. 📱
-
-                     3. [ ] *Empty Desktop & Download folders.* Move files to their appropriate
-                        location. Both locations should be empty when you're done.
-                        - Consider attaching files to Org headlines.
-
-                     4. [ ] 📭  💬 🌐 *Empty out inboxes: Clear Email, Org, Slack Read Later, Browser Tabs*
-                        - [ ] 📧 Convert all emails to tasks. /Do not reply to emails right /now/.
-                        - [ ] ✉️ Open unopened letters & make tasks for required follow-ups, and discard old ones; finances as well.
-                        - [ ] Convert all Slack “read later” bookmarks and all open browser tabs into
-                          tasks marked ~:ConsumeContent:~, then schedule the 𝓃-th article 𝓃 Tuesday's
-                          from now, so that I'm making progress on them if I need to be doing so;
-                          otherwise they can be reference matter.
-                        - [ ] Do a search for “unsubscribe” in my email and unsubscribe from newsletters I don't read anymore. [MONTHLY?]
-                           + it’s looking for any email that contains the word “unsubscribe,” which is required of all emails that are sent from a mailing list
-
-                     5. [ ] 💼 *Clean up Work Notes.* Look at my =Work= headline in Org and ensure it's not
-                        messy; e.g., references are in the right place.
-
-                        🧹 Visit each of my buckets and clean it out: Ensure things are hierarchical,
-                        archive done things, move useful notes to References. Reduce anxiety from
-                        mess so that each headline is nice and tidy and useful.
-
-
-                           /“Be regular and orderly in your life so that you may be violent and
-                                       original in your work.” /--- Gustav Flaubert
-                      "))
-
-              ;; ⇒ 🤔 What did I do today? ⇐
-              (when nil save-excursion
-                    (insert
-                     ;; TODO: Make `my/what-did-i-work-on-today' tag an optional arg to just retrive the string instead of putting it in a buffer
-                     (save-excursion
-                       (let (result)
-                         (my/what-did-i-work-on-today)
-                         (setq result (buffer-substring-no-properties (point-min) (point-max)))
-                         (kill-buffer)
-                         result))))
-
-              (insert
-               "
-Write a short story for the day.
-
-                     # Use Clock-info to see where I clocked-in.
-                     #                    [[elisp:(save-restriction (widen) (my/what-did-i-work-on-this-week))][⇒ 🤔 What did I do today? ⇐]]
-                     # Also consider looking at the “log view”, via the C-c C-z notes #
- "               )
-
-              ;; I think it'd be neat to insert my clocked-in / logs of the day here.
-              ;; Look at what I clocked into this day/week! Get a great idea of what I've done with my time, in detail. Also, see ~C-c a v L~.
-              (save-excursion ;; I want cursor to stay here.
-                (let (todays-agenda org-agenda-finalize-hook)
-                  (org-agenda-list 1)
-                  (org-agenda-log-mode '(4))
-                  (setq todays-agenda (buffer-string))
-                  (org-agenda-quit)
-                  (my/insert-with-fg-colour "grey"  "\n\n#+begin_agenda_for_the_day\n")
-                  (my/insert-with-bg-colour "LightBlue1" todays-agenda)
-                  (my/insert-with-fg-colour "grey" "#+end_agenda_for_the_day")
-                  (insert "\n⟨🤔 Did I get everything I wanted done? Perhaps, I underestimated time for things? 🗯️⟩")
-                  (insert "\n~C-c a w v c~ to check for time gaps and review time for the past week. And to see what I worked on, and where I spent too much time or too little.")))
-
-
-              (insert "\nSay, “Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)”")
-
-              ;;
-              ;; MA: Consider adding other journal prompts here, whose replies may be long-form.
-              ;; E.g., pick one, or two, random prompts.
-              (message "To journal is to live; congratulations on another entry!")))
-
-
-
-
-
-
-(cl-defun my/show-life-purpose-statement-then-remove-it-after-I-read-it ()
-  (set-mark-command nil)
-  (-let [purpose "                   When people say “What are you doing?”,
-                        You say ⟪“Things that please me.”⟫
-                          They say “Toward what end?”,
-                            and you say ⟪“Pleasure.”⟫
-                They say “But really, what are you working on?”
-                         You say ⟪“Having a good time!”⟫
-"]
-    ;; NOTE: explore more faces via M-x highlight-phrase.
-    (insert (propertize purpose 'font-lock-face 'hi-green)))
-  (while (not (equal "yes"
-                     (consult--read '("yes" "no") :prompt "Read “Life Purpose”?"
-                                    :annotate (lambda (it) (format " ⟨%s⟩"
-                                                              (if (equal it "no")
-                                                                  "C'mon man, read it"
-                                                                "That's right, live the good life!")))))))
-  (backward-delete-char 1))
-
-
-
-(defun my/word-of-the-day ()
-  (let (result)
-    (org-web-tools-read-url-as-org "https://www.merriam-webster.com/word-of-the-day")
-    (setq result (format
-                  "%s\n%s"
-                  (substring-no-properties (org-get-heading t t t t))
-                  (progn
-                    (org-next-visible-heading 2)
-                    (end-of-line)
-                    (thread-last
-                      (buffer-substring-no-properties (point) (progn (org-next-visible-heading 1) (point)))
-                      (s-replace-regexp ".*See the entry.*" "")
-                      (s-replace-regexp "^//" "Example: ")
-                      s-trim))))
-    (kill-buffer)
-    result))
-
-
-(require 'calendar)
-(require 'cal-islam)
-(defun pp-current-islamic-date ()
-  "Return the current Islamic (Hijri) date as a readable string (e.g., \"21 Ramadan 1445\")."
-  (require 'calendar)
-  (let* ((today (calendar-current-date))          ; Gregorian date (MONTH DAY YEAR)
-         (abs-date (calendar-absolute-from-gregorian today))) ; Convert to absolute days
-    (-let [(month day year) (calendar-islamic-from-absolute abs-date)]  ; Convert to Islamic date
-      (let ((month-name (aref calendar-islamic-month-name-array (1- month))))
-        (format "🌙 %d %s %d ⟨Islamic Date⟩" day month-name year)))))
-
-
-(defun my/get-prayer-times ()
-  "Fetch and display prayer times for the given LAT and LON using AlAdhan API."
-  ;;  Get (LAT . LON) based on IP geolocation via ipinfo.io.
-  (let* ((json-object-type 'alist)
-         (json (json-read-from-string
-                (shell-command-to-string "curl -s https://ipinfo.io/json")))
-         (loc (alist-get 'loc json)) ; loc is "LAT,LON"
-         (parts (split-string loc ","))
-         (lat (car parts))
-         (lon (cadr parts))
-         (url (format "http://api.aladhan.com/v1/timings?latitude=%s&longitude=%s&method=0"
-                      lat lon)))
-    (with-current-buffer (url-retrieve-synchronously url t t 5)
-      (goto-char url-http-end-of-headers)
-      (let* ((json-object-type 'alist)
-             (json-array-type 'list)
-             (json-key-type 'symbol)
-             (data (json-read))
-             (timings (alist-get 'timings (alist-get 'data data))))
-        (kill-buffer) ;; clean up the temp buffer
-        (setq my/dawn-prayer-time (alist-get 'Fajr timings)
-              my/noon-prayer-time (alist-get 'Dhuhr timings)
-              my/sunset-prayer-time (alist-get 'Maghrib timings))))))
+;; [[file:init.org::*Copy AI Text As Org][Copy AI Text As Org:1]]
+;; When I copy text from Agent-Shell, it's read-only since it's shell text, but I don't want read-only text.
+;; Moreover, when I copy prose, please give it to me in Org-mode format, not markdown.
 ;;
-(defun my/update-prayer-times-task ()
-  (my/get-prayer-times)
-  (save-excursion
-    (with-current-buffer "my-life.org"
-      ;; (org-id-goto "prayer-times") ⟵ Does not honour with-current-buffer
-      (save-restriction
-        (widen)
-        (beginning-of-buffer)
-        (re-search-forward ":ID: prayer-times")
-        (while (re-search-forward "^<%%" nil t)
-          (beginning-of-line)
-          (kill-line))
-        (thread-last
-          (list my/dawn-prayer-time my/noon-prayer-time my/sunset-prayer-time)
-          (--map (format "<%%%%(progn 'everyday \"%s\")>" it))
-          (s-join "\n")
-          insert)))))
-
-
-
-;; MA: Maybe add another arg to denote flip a coin, and either emit poetically or else plainly.
-(when nil cl-defun my/age-in-days-weeks-years (&optional (birthdate my\birthday))
-  "Prompt for birthdate (YYYY-MM-DD) and display age in days, weeks, and years — poetically."
-  (interactive)
-  (let* ((birth-time (date-to-time (concat birthdate " 00:00:00")))
-         (now (current-time))
-         (days-old (/ (float-time (time-subtract now birth-time)) 86400))
-         (weeks-old (/ days-old 7))
-         (years-old (/ days-old 365.25)) ;; Approximate with leap years
-         (message
-          (format (concat
-                   "🌞 Since the moment of your arrival on this plane:\n\n"
-                   "🗓️  You have walked the earth for %d days\n"
-                   "📅  Which is roughly %d weeks of stories\n"
-                   "🌀  Or %.1f full solar revolutions\n\n"
-                   "⏳ Time has shaped you across %d sunsets and %d moonrises.\n"
-                   "✨ You are the sum of every breath taken since then.")
-                  (floor days-old)
-                  (floor weeks-old)
-                  years-old
-                  (floor days-old)
-                  (floor (* 12.37 years-old))))) ;; Roughly average moonrises per year
-    (message "%s" message)))
-
-;; (my/age-in-days-weeks-years)
-
-(when nil
-  (cl-defun my/age-in-days-weeks-years (&optional (birthdate my\birthday))
-    "Reveal the user's age with poetic, symbolic flair and mystic metaphors."
-    (interactive)
-    (let* ((birth-time (date-to-time (concat birthdate " 00:00:00")))
-           (now (current-time))
-           (days-old (/ (float-time (time-subtract now birth-time)) 86400))
-           (weeks-old (/ days-old 7))
-           (years-old (/ days-old 365.25))
-           (sun-orbits (floor years-old))
-           (moon-dances (floor (* 12.37 years-old)))
-           (heartbeats-est (floor (* years-old 365.25 24 60 72))) ;; ~72 BPM
-           (blinks-est (floor (* years-old 365.25 1440 15))) ;; ~15 blinks/min
-           (soul-animal (seq-random-elt '("a moth with a crystal spine"
-                                          "an eel made of memory"
-                                          "a fox that speaks in riddles"
-                                          "a library built from your dreams"
-                                          "a crow carrying your name in code"
-                                          "a jellyfish who remembers you"
-                                          "a mirror that looks back differently each year")))
-           (cipher (char-to-string (+ 9472 (random 40)))))
-      (message
-       (format (concat
-                "━━━━━━━━━━━━━━━ 🕰️  𝒯𝒽𝑒 𝒞𝒽𝓇𝑜𝓃𝑜-𝒜𝒸𝒸𝑜𝓊𝓃𝓉 ━━━━━━━━━━━━━━━
-
-☼ You have orbited the sun %d times.
-🌘 The moon has danced overhead %d nights.
-💓 Your heart has whispered its rhythm ~%d times.
-👁️ Your eyes have blinked through ~%d moments.
-
-🦴 Time has carved %d days into your bones,
-   etched %d weeks across your skin.
-
-🧬 Your soul currently takes the form of: %s
-
-✶ Secret cipher for today: [%s]
-   (Deciphering it may unlock an ancient memory.)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-               sun-orbits
-               moon-dances
-               heartbeats-est
-               blinks-est
-               (floor days-old)
-               (floor weeks-old)
-               soul-animal
-               cipher))))
-
-  )
-
-(😴 (load-file "~/Dropbox/private.el")) ;; Loads “my\⋯” variables
+;; If you accidentaly have read-only text in your buffer, make it editable with:
+;; (let ((inhibit-read-only t)) (remove-text-properties (point-min) (point-max) '(read-only nil)))
 ;;
-(cl-defun my/age-in-days-weeks-years (&optional (birthdate my\birthday))
-  "Prompt for birthdate (YYYY-MM-DD) and display age in days, weeks, months, and years."
-  (interactive)
-  (let* ((birth-time (date-to-time (concat birthdate " 00:00:00")))
-         (now (current-time))
-         (days-old (/ (float-time (time-subtract now birth-time)) 86400))
-         (weeks-old (/ days-old 7))
-         (months-old (/ days-old 30.44)) ;; average month length
-         (years-old (/ days-old 365.25))) ;; approximate year with leap years
-    (cl-format nil "🥳 I am now ~:d days old; which is ~:d weeks old; which is ~:d months old; which is ~,1f years old."
-               (floor days-old) (floor weeks-old) (floor months-old) years-old)))
-;;
-;; Elisp's “format” is not as capable as Common Lisp's “format”.
-;; E.g., there's no equivalent of (cl-format nil "~:d" 1000000)
-;; which prints numbers with comma separators.
-;; See https://gigamonkeys.com/book/a-few-format-recipes for more uses.
-(use-package cl-format :defer t)
-
-(defun my/git-commit-count ()
-  (thread-last user-full-name
-               (format "cd %s; git log --author='%s' --pretty=oneline | wc -l" my\work-dir)
-               shell-command-to-string
-               string-to-number
-               (cl-format nil "🤖 I have made ~:d commits at work")))
-
-
-(defun my/how-long-I-have-been-at-my-job ()
-  "Show how long ago I've been at my job, based on when I made my first Git commit."
-  (interactive)
-  (let* ((author (string-trim (shell-command-to-string "git config user.name")))
-         (first-date-str
-          (string-trim
-           (shell-command-to-string
-            (format "cd %s; git log --author='%s' --reverse --pretty='%%ad' --date=iso | head -n 1" my\work-dir author))))
-         (first-time (date-to-time first-date-str))
-         (now (current-time))
-         (diff (time-subtract now first-time))
-         (days (/ (float-time diff) 86400))
-         (years (floor (/ days 365.25)))
-         (months (floor (/ (- days (* years 365.25)) 30.44)))) ; approximate months
-    (message "💼 I've been at my job for %d year%s and %d month%s. I joined %s."
-             years (if (= years 1) "" "s")
-             months (if (= months 1) "" "s")
-             (substring first-date-str 0 10))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun my/percentage-of-life-spent ()
-  (format "⏳ 〔%s life ∣ %s year ∣ %s month ∣ %s week ∣ %s day〕 elapsed"
-          (my/percentage-of-life-elapsed)
-          (my/percentage-of-year-elapsed)
-          (my/percentage-of-month-elapsed)
-          (my/percentage-of-week-elapsed)
-          (my/percentage-of-waking-day-elapsed)))
-
-(defun my/percentage-of-year-elapsed ()
-  "Calculate percentage of current year that has elapsed.
-Returns a float between 0 and 100."
-  ;; (calendar-day-of-year-string) ⇒ "Day 143 of 2025; 222 days remaining in the year"
-  (let* ((date (calendar-current-date))
-         (year (calendar-extract-year date))
-         (day-in-year (calendar-day-number date))
-         (total-days-in-year (calendar-day-number (list 12 31 year)))
-         (days-remaining (- total-days-in-year day-in-year)))
-    (format "%.1f%%" (* 100 (/ (float day-in-year) total-days-in-year)))))
-
-
-(defun my/percentage-of-month-elapsed ()
-  "Calculate percentage of current month that has elapsed.
-Returns a float between 0 and 100."
-  (-let [(month day year) (calendar-current-date)]
-    (format "%.1f%%" (* 100 (/ (float day) (calendar-last-day-of-month month year))))))
-
-
-(defun my/percentage-of-week-elapsed ()
-  "Calculate percentage of current week that has elapsed.
-Returns a float between 0 and 100."
-  (format "%.1f%%" (thread-first (calendar-current-date) calendar-day-of-week float (/ 7) (* 100))))
-
-
-(defun my/percentage-of-waking-day-elapsed ()
-  "Calculate percentage of current (waking) day that has elapsed.
-Returns a float between 0 and 100."
-  (let* ((now (decode-time))
-         ;; (current-hour (nth 2 now))
-         (current-awake-hour (- (nth 2 now) 8))
-         (current-minute (nth 1 now))
-         (current-second (nth 0 now))
-         ;; (total-day-seconds (* 24 3600))
-         (total-day-awake-seconds (* 16 3600))
-         (elapsed-seconds (+ (* current-awake-hour 3600)
-                             (* current-minute 60)
-                             current-second)))
-    (format "%.1f%%" (* 100 (/ (float elapsed-seconds) total-day-awake-seconds)))))
-
-
-(defun my/percentage-of-life-elapsed ()
-  "Calculate percentage of life elapsed based on birth date (January 1, 1990).
-Returns a float between 0 and 100."
-  (interactive)
-  (let* ((birth-time (date-to-time (concat my\birthday " 00:00:00")))
-         (now (current-time))
-         (days-old (/ (float-time (time-subtract now birth-time)) 86400))
-         (years-old (/ days-old 365.25))) ;; approximate year with leap years)
-    (format "%.2f%%" (* 100 (/ years-old 70)))))
-
-
-) ;; End 😴
-;; Capture method:1 ends here
-
-;; [[file:init.org::*Implementation][Implementation:1]]
-;; “r”eview for the “w”ay
-;;
-;; Reflect on what went well and what could have gone better. Update your
-;; to-do and projects list. Remove unimportant tasks and update your
-;; calendar with any new relevant information.
-;;
-;;  Prepend a new section to “Weekly Log” listing what I've done in the
-;;                        past week; useful for standups, syncs, and performance reviews.
-(bind-key*
- "C-c r w"
- (def-capture "🔄 Weekly Review 😊"
-              "🌿 Reviews 🌱"
-              ;; tldr on “ts.el”:
-              ;; Today           = (ts-format) ;; ⇒ "2025-05-26 16:46:52 -0400"
-              ;; Today + 10years = (ts-format (ts-adjust 'year 10 (ts-now)))
-              ;; Day of the week 2 days ago = (ts-day-name (ts-dec 'day 2 (ts-now))) ;; ⇒ "Saturday"
-              ;; “What day was 2 days ago, Saturday? What day will it be in 10 years and 3 months?”
-              ;; See https://github.com/alphapapa/ts.el, which has excellent examples.
-              ;; 😲 Nice human formatting functions too!
-              (-let [week♯ (ts-week-of-year (ts-now))]
-                (-let [month-name (ts-month-name (ts-now))]
-                  ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
-                  ;; that looks at that day. That is, my review are personal appointments.
-                  (format "* Weekly Review ♯%s ---/“go from chaos to clarity”!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
-                          week♯
-                          month-name)))
-              ;; Let's add some properties by prompting the user, me.
-              (my/read-daily-review-properties
-               :questionnaire '(("SocialScore: Did I see family *and* did I call or message a friend?"
-                                 " 0  --  No             --  What am I doing with my life?"
-                                 " 1  --  Yes…           --  Sweet, who was it? What did you do?")
-                                ("FaithScore: Did I go to this Mosque this week? Or read passages from the Quran?"
-                                 " 0  --  No             --  What am I doing with my life?"
-                                 " 1  --  Yes…           --  Sweet, what did you do?")
-                                ("MarriageScore: How are things with my wife?"
-                                 "-1  --  Abysmal Low     --  I hate life."
-                                 " 0  --  Low             --  What am I doing with my life?"
-                                 " 1  --  Medium          --  Things are OK."
-                                 " 2  --  High            --  I love my life ᕦ( ᴼ ڡ ᴼ )ᕤ"
-                                 " 3  --  Extremely High  --  I'm king of the world!")
-                                ("HealthScore: Did I go for a run or do a workout this week?"
-                                 " 0  --  No             --  What am I doing with my life?"
-                                 " 1  --  Yes…           --  Sweet, what did you do?"))
-                                        ; 📊 Other metrics to consider keeping track of:
-                                        ; ⇒ Hours worked
-                                        ; ⇒ Tasks completed
-               :prop-val-action (lambda (property value) (org-set-property property value)))
-              ;; TODO: Make my/read-daily-review-⋯ attach a WeeklyScore, not a
-              ;; DailyScore? Maybe keep the latter for easy reference? E.g.,
-              ;; next line is copy/pasted from Daily Review.
-              ;;
-              ;; Add Daily Score to the start of the headline
-              (beginning-of-buffer)
-              (org-beginning-of-line)
-              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
-              ;; Let's align them
-              (my/org-align-property-values)
-              ;; Add a special property for this review
-              (org-set-property "WHY" "Ensure everything is on track! Be proactive, not reactive! Be in control of my life! 😌 Have a sense of closure and wrap-up before the weekend! ☺️")
-              (end-of-buffer)
-              (insert
-               (let* ((♯lines (save-restriction (widen) (count-lines (point-min) (point-max))))
-                      (last-time (s-trim (shell-command-to-string "git log -1 --pretty=%s")))
-                      ;; Note that there's no `git push' since this is local ---Github may expose my notes to AI, no thank-you.
-                      (save-incantation (format "git add .; git commit -m 'Weekly Review Start, save %s lines on %s'" ♯lines  (ts-format))))
-                 (lf-string "
-                     ***** Closing up last week
-
-                     ****** TODO ⟨0⟩ Commit last week         [0%]
-
-                     + [ ] Commit & push all the changes before the review
-
-                       \t 🤖 Last time ∷ “ ${last-time} ”
-                       \t 🛋️ my-life.org line count ∷ ${♯lines}
-                       \t   # If it's significantly less, then look at diff to ensure I didn't lose anything important.
-                       \t ⁉️ [[elisp:(shell-command-to-string \"${save-incantation}\")][Click to commit!]]
-
-                     + [ ] ⁉️ [[elisp:(progn (widen) (funcall-interactively #'org-lint))][Lint my-life.org]]
-
-                       \t Importantly this mitigates [[https://en.wikipedia.org/wiki/Link_rot][link rot]]
-                       \t and ensures that when I do bulk find-replace actions that I haven't
-                       \t royally messed things up.
-
-                     ****** TODO ⟨1⟩ Friday Recap: What's the story of the past week?  [0%] :Standups:
-                     :PROPERTIES:
-                     :WHY: Recognise accomplishments, express self-gratitude, and debug!
-                     :END:
-
-
-                     1️⃣ First, write a short story recapping the week.
-
-
-
-                     2️⃣ Reflect on what went well and what could have gone better.
-                     Answer [[https://nesslabs.com/plus-minus-next][the following 3 questions]]:
-                     # (♯1 & ♯2 useful for bragging about yourself when it's time to do performance reviews!)
-
-                     1. [ ] ➕ Wins: What went well and why? ✅
-                        # What could have caused things to go so well? Maybe I can duplicate this next week!
-                        # Re-read [[https://jvns.ca/blog/brag-documents/][Get your work recognized: write a brag document]]
-
-
-
-                     2. [ ] ➖ Challenges: What didn't go well? ⚠️
-                        # How can I improve to mitigate bad weeks?
-
-
-                     3. [ ] 🔁 Trends: Are there any recurring patterns (positive or negative)?
-                        # Consider looking at previous Weekly Review if you need insight.
-                        # [[elisp:(org-ql-search org-agenda-files '(and (tags \"Weekly\") (tags \"Review\") (ts :from -30)))][🤖 WRs of the month]]
-
-
-                     4. [ ] 🔀 Super briefly: What will you focus on next week?
-                        # Did I get any “$10k” tasks done? Why or why not?
-
-
-                     # Use Clock-info to see where I clocked-in.
-                     #                    [[elisp:(save-restriction (widen) (my/what-did-i-work-on-this-week))][⇒ 🤔 What did I do in the past 7 days? ⇐]]
-                     # Also consider looking at the “log view”, via the C-c C-z notes
-                     # Look at where all my time went, and think about whether things could’ve gone better.
-
-
-                    3️⃣ One More Question to reflect on...
-"))) ;; TODO:
-
-              (insert "\n + [ ] "
-                      (seq-random-elt
-                       '(
-                         "😄 What was the most enjoyable work activity of the last week?"
-                         "🤦‍♂️ What were some frustrating or boring moments you had? How can you avoid that going forward?"
-                         "🔧 Adjustments: What to stop? What to start? What to continue?"
-                         "🟢 What should I continue doing?"
-                         "🔴 What should I stop or change?"
-                         "🧪 What's one small experiment to try next week?"
-                         "😁 What are your biggest and most exciting challenges for the week to come?
-                          What do you need to get there?"
-                         "💭 Thoughts for the week to come: What are you thinking about for next week?"
-                         "🖼️ Memories of the Amazing, Interesting and Unique:
-              Share a photo, quote, line, or something from the
-              previous week."
-                         "🎯 Did you accomplish your goals? Which ones and how
-              did it go? Share your goal tracking and record you
-              progress"
-                         "🐾 How did I feel this week overall?"
-                         "🕰️ Was my time aligned with my goals?"
-                         "👀 What distracted me?"
-                         "🎇 What energized me?"
-                         "📚 What did I learn?"
-                         "🪨 What are my biggest challenges (or “boulders”)
-              for the week to come? Think about which tasks will
-              have the highest value in me reaching my potential
-              and being successful.")))
-
-              (insert              "
-****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
-
-1. [ ] Look through the ~:LOG:~ for useful information to file away into my
-   References.
-   - If there's useful info, capture it with ~C-c C-c~, then archive the original
-     tree for clocking purposes.
-   - If clocking purposes do not matter, say for personal or trivial tasks, then just delete the tree.
-
-
-     TODO: Agenda view: The list of completed and cancelled tasks to archive
-     [[org-ql-search:(and (done) (not (tags \"Top\")) (closed :to ,(- (calendar-day-of-week (calendar-current-date)))))][📜 Items to review: Mine for useful info then archieve or delete. ☑️]]
-
-***** Looking forward to next week ---/mentally try to see where I should be going/
-
-****** TODO ⟨3⟩ Prioritize and schedule!    [0%]
-
-0. [ ] For the “Waiting” list, have others completed their tasks?
-
-   - Agenda view: The list of to-do or waiting tasks without SCHEDULED or DEADLINE
-
-
-1. [ ] *Check Calendar*. Look at company calendar for the upcoming 2 weeks;
-   add items to your todo list if needed.
-
-2. [ ] Find relevant tasks: What are my “sprint goals” and “quarterly goals”?
-   - What is assigned to me in Jira /for this sprint/?
-   - Any upcoming deadlines?
-   - Look at your “Someday/Maybe” list to see if there's anything worth doing.
-   - get an overview about what you want to achieve in near future: your time
-     and energy are finite, tasks are not
-     - /Getting a sight of the forest can be very energizing and inspiring too,
-       while the endless trees can feel overwhelming or pointless./
-     - Relook some of the more recently processed tasks. Task priorities may change
-       as time progresses, and it is possible that with a huge onslaught of new
-       tasks, some important, older tasks may be left incubating. It’s also possible
-       that some tasks are no longer necessary.
-
-
-3. [ ] Assign a [[https://radreads.co/10k-work/][dollar value]] to your work: $10 (low skill, not important), $100, $1k, and $10k (high skill, prized effort).
-   (MA: Aside: Change priorities to be render like this?)
-
-   The Zen To Done system recommends scheduling your Most Important Tasks ($10k)
-   on your calendar each week so that by the end of the week you have completed
-   something of significance. It ensures that the more important things get
-   done.
-
-
-4. [ ] To ensure the week is doable, add efforts to tasks for the week
-   then ensure the effort estimate is actually realistic. Also check each
-   day and ensure it's realistic!
-
-   # You can also add that to the column-mode (org-columns) to get a quick overview for a file (leave with org-columns-quit). Customize:
-   # (org-columns-default-format \"%25ITEM %TODO %3PRIORITY %TAGS %17Effort(Estimated Effort){:} %CLOCKSUM\")
-
-   - [ ] Look at daily agenda view for the next week and make sure it'd doable and not
-         overloaded! I don't want to keep pushing things since my days are unrealistic!
-
-
-5. [ ] Decide your tasks for the week and time block your calendar.
-
-     *Focus on important tasks! Not low priority no-one-cares ‘fun’ efforts!*
-
-     *Embrace trade-offs.* You can't do it all. Realize that when you're
-      choosing to do one task, you're saying “no” to many other tasks. And
-                              that's a good thing
-
-     Finally, schedule time on your calendar to work on your tasks. This is
-       called [[https://dansilvestre.com/time-blocking/][time blocking]]. Set alerts for critical tasks.
-       - Look at all items with a deadline in the next month:
-         Are they realistically broken down into doable tasks and scheduled?
-
-
-6. [ ] Study the next week’s agenda: look at any important scheduled tasks or
-      deadlines, and decide whether any preparatory work will need to be done.
-
-
- /By [[https://dansilvestre.com/weekly-planning/][planning your week]] in advance, you prevent distractions from ruining your
-             day. You remain focused on your most important tasks./
-
-****** TODO ⟨4⟩ Commit planning    [0%]
-
-+ [ ] ⁉️ [[elisp:(shell-command-to-string \"git add .; git commit -m 'End Weekly Review'\")][Click to commit all the changes /after/ the review]]
-
-****** TODO ⟨5⟩ Am I getting happier? [0%]
-
-")
-              (-let [start (point)]
-                (insert (my/get-table-of-daily-scores-for-last-week))
-                (center-region start (point)))
-              (insert "\n" (my/percentage-of-life-spent) "\n")
-              (org-update-statistics-cookies 'all)
-              (insert "\nSay, “Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)”")
-              ;; Show todo sparse tree. (See also: org-ql-sparse-tree)
-              (execute-kbd-macro (kbd "C-c / t"))
-              (message "To journal is to live; congratulations on another entry!")))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Looping through Org headlines; i.e., iterating over my notes
-;;
-;; I got a lot of Org-Mode headings and I want to modify their properties (add,
-;; remove, edit). Is there a function to do the same modifications on each
-;; heading?
-;;
-;; \=>
-;;
-;; Adds an Edited_Date property to org headings matching the given condition.
-;; Alternatively one could use `org-map-entries', however the filtering syntax is less than ideal.
-(when nil
-
-  ;; Do a modification
-  (org-ql-query
-    ;; Called with point at the start of each note (ie Org headline).
-    ;; SELECT is a function which is called on each matching entry with point at the beginning of its heading.
-    :select (lambda () (org-set-property "Edited_Date" (ts-format)))
-    :from org-agenda-files
-    ;; Daily Reviews Created in Last Week
-    :where   '(and (tags "Daily") (tags "Review") (ts :from -5)))
-
-  ;; See the changes.
-  (org-ql-search org-agenda-files '(and (tags "Daily") (tags "Review") (ts :from -5)))
-
-  ;; The org-ql-query function iterates through all the headings meeting the WHERE criteria in the determined FROM scope, and then calls the specified function SELECT function at each of those headings.
-
-  ;; The SELECT function accepts no arguments and is called at the beginning of each Org heading.
-  ;; If the optional WHERE argument is present, the headings will first be filtered based on it and then the SELECT will be called on only those.
-
-  ;; Get all titles
-  (org-ql-query
-    ;; :select (lambda () (thing-at-point 'line)) ;; Also, OK.
-    :select (lambda () (org-get-heading 'no-tags 'no-todo))
-    :from org-agenda-files)
-
-  )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun my/get-table-of-daily-scores-for-last-week ()
-  (thread-last
-    (org-ql-query
-      ;; Called with point at the start of each note (ie Org headline).
-      :select (lambda ()
-                (list
-                 (ts-format "%A %Y-%m-%d" (ts-parse-org (org-entry-get nil "CREATED")))
-                 (org-entry-get nil "DailyScore")))
-      :from org-agenda-files
-      ;; Daily Reviews Created in Last Week
-      :where   '(and (tags "Daily") (tags "Review") (ts :from -5)))
-    (cons '("Date" "Daily Score"))
-    my/pp-list-of-lists-as-table
-    (concat "Daily Scores for last week \n\n")))
-
-
-(defun my/pp-list-of-lists-as-table (lol &optional justify min-cell-width columns)
-  "Convert a list of lists to a pretty `table.el' table, editable with ⌘-e."
-  (let ((buf (get-buffer-create "*org-tb*")))
-    (with-current-buffer buf
-      (erase-buffer)
-      (mapcar (lambda (x)
-                (mapcar (lambda (y) (insert (format "%s&" y))) x)(insert "\n")) lol)
-      (table-capture 1 (point-max) "&" "\n" justify min-cell-width columns)
-      (buffer-substring-no-properties (point-min) (point-max)))))
-;;
-;; (my/pp-list-of-lists-as-table '((Abc Def "xyz") (1 1 X1) (2 4 X2) (3 9 X3) (4 16 X4)))
-;; Implementation:1 ends here
-
-;; [[file:init.org::*M-x org-lint][M-x org-lint:1]]
-;; Checkers I'm interested in, for my review.
-(require 'org-lint)
-(setq org-lint--checkers
-       (--filter
-        (member (org-lint-checker-name it)
-                '(planning-inactive
-                  timestamp-syntax
-                  spurious-colons
-                  incomplete-drawer
-                  misplaced-planning-info
-                  mismatched-planning-repeaters
-                  invalid-id-property
-                  invalid-effort-property
-                  ;; obsolete-properties-drawer
-                  special-property-in-properties-drawer
-                  ;; link-to-local-file
-                  duplicate-custom-id
-                  misplaced-heading))
- org-lint--checkers))
-;; M-x org-lint:1 ends here
-
-;; [[file:init.org::*🤖 <<<Monthly Review>>>][🤖 <<<Monthly Review>>>:1]]
-;; “r”eview for the “m”onth
-(😴 bind-key*
-    "C-c r m"
-    (def-capture "🔄 Monthly Review 😊"
-                 "🌿 Reviews 🌱"
-                 ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
-                 ;; that looks at that day. That is, my review are personal appointments.
-                 "* :Monthly:Review: \n:PROPERTIES:\n:CREATED: %T\n:END:\n"
-                 ;; Insert fancy date in header
-                 (beginning-of-buffer)
-                 (org-beginning-of-line)
-                 (insert (ts-format "%B %Y Monthly Review "))
-                 ;; Let's add some properties by prompting the user, me.
-                 (my/read-daily-review-properties
-                  :questionnaire '(
-                                   ("Happy: Are you happy?"
-                                    "0 -- Nope… -- Why not?"
-                                    "1 -- Yup…  -- Yay, share a happy moment from this month")
-                                   ("Work Brag: What's something you did at work that you can brag about this month?")
-                                   ("Personal Brag: What's something you did in your personal life that you can brag about this month?"))
-                  :prop-val-action (lambda (property value) (org-set-property property value)))
-                 ;; Add Daily Score to the start of the headline
-                 (beginning-of-buffer)
-                 (org-beginning-of-line)
-                 (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
-                 ;; Let's align them
-                 (my/org-align-property-values)
-                 ;; Let's insert a quote
-                 (progn
-                   (end-of-buffer)
-                   (my/insert-with-fg-colour "grey" "\n\n#+begin_quote_of_the_day\n")
-                   (my/insert-with-bg-colour "pink" (my/string-fill-column-and-center 70 (my/random-quote)) "\n")
-                   (my/insert-with-fg-colour "grey" "#+end_quote_of_the_day\n\n"))
-                 ;;
-                 ;; Use this query to see what I've done since the last review, to get a good idea
-                 ;; of my contributions.
-                 (my/insert-with-fg-colour "grey" "\n\n#+begin_contributions_this_month\n")
-                 (thread-last
-                   ;; “nl” stands for "number lines": It automatically prepends each line of input with a line number.
-                   "cd ${my\work-dir}; git log --since='1 month ago' --author='${my\work-email}' --oneline --reverse --pretty=format:'%ad %h %s' --date=short | nl"
-                   lf-string
-                   shell-command-to-string
-                   insert)
-                 (my/insert-with-fg-colour "grey" "\n#+end_contributions_this_month\n")
-
-                 (insert "\n🤔 What are some of my non-Git contributions this month? Reviews? Design Docs? Talks given?")
-
-                 ;; Use this info to answer the following questions
-                 (insert (lf-string "
-              \n\n+ What accomplishments are you most proud of?
-              \n\n+ To what extent are you meeting your commitments?
-              \n\n+ What area would you most like to improve on in the coming months?
-              \n\n+ Feedback for manager: Does he hold the team accountable for producing work on time?
-                    He accepts feedback? He communicates well? He supports my professional growth?
-                    /Do I have any constructive feedback for him?/
-              \n\n+ What beneficial refactors have I done this month, eg to reduce tech debt or to clarify APIs.
-              "))
-
-                 (message "To journal is to live; congratulations on another entry!")))
-;; 🤖 <<<Monthly Review>>>:1 ends here
-
-;; [[file:init.org::*Other benefits of clocking are …][Other benefits of clocking are …:2]]
-  (setq org-clock-sound "~/.emacs.d/school-bell.wav")
-;; Other benefits of clocking are …:2 ends here
-
-;; [[file:init.org::*Basic Implementation][Basic Implementation:1]]
-;; In case my hands slip and I press “C-x C-c”, which saves all buffers and quits Emacs; confirm that's my intention.
-(setq confirm-kill-emacs 'yes-or-no-p)
-
-
-;; Save clock data and state changes and notes in the LOGBOOK drawer
-(setq org-clock-into-drawer t)
-
-
-;; Change task state to STARTED when clocking in, if in an agenda file.
-;; This means I can clock-into tasks in my init.org or into captures “C-c c”
-;; without having them marked STARTED.
-(setq org-clock-in-switch-to-state
-      (defun my/clock-in-to-STARTED-if-in-an-agenda-file (&rest args)
-        (when (member (buffer-file-name) (org-agenda-files))
-          "STARTED")))
-
-
-;; At first, I used to record a note on what was accomplished when clocking out of an item.
-;; Now, I use “C-c C-z” to make notes about insights or blockers or ideas or what to do next time, as I work on a task.
-(setq org-log-note-clock-out nil)
-
-
-;; Show lot of clocking history so it's easy to resume recently clocked items, using the “C-u C-c SPC” clock history list.
-;;
-;; For example, I'm working on task 𝒜, then I need to context-switch to task ℬ (e.g., “meeting”)
-;; so I clock-out of 𝒜 and clock-into ℬ; then when ℬ is done, I press “C-u C-c SPC” and see a list
-;; of tasks I've recently clocked-into, with 𝒜 being at the top, so I select it and now I'm back into 𝓐.
-;;
-;; The clock history is a nice way to quickly see what you've been working on lately.
-(setq org-clock-history-length 23)
-
-
-;; Resume clocking task when emacs is restarted: Save the running clock and all CLOCK HISTORY when exiting Emacs, load it on startup
-(org-clock-persistence-insinuate)
-(setq org-clock-persist t)
-(setq org-clock-persist-query-resume nil) ;; Do not prompt to resume an active clock
-
-;; If I clock into a task, then move to something else before a minute's elapsed, don't keep track of a 0:00 duration.
-;; This is helpful when I capture a note quickly with “C-c c”.
-(setq org-clock-out-remove-zero-time-clocks t)
-
-
-;; When a task enters the DONE state, I don't want to automatically clock-out
-;; because I may not have started another task and don't want to “lose a few
-;; minutes” finding a sibling task to start. Such minutes add up; especially if
-;; I'm taking the time to write good notes.
-(setq org-clock-out-when-done nil)
-;; Alternatively, make this “t” and add the following hook; then even when I
-;; clock-out of a task, I don't lose unlogged minutes before logging into
-;; another task.
-(when nil
-  (add-hook 'org-clock-out-hook
-            (defun my/clock-into-PLANNING-task ()
-              "Look for the task with property “:ID: planning” and clock into it.
-
-              The “** Planning” task is intended for miscellaneous clock time:
-              Reading email, clearing my inbox, reorganising my notes, etc.
-             "
-              (interactive)
-              (org-with-point-at (org-id-find "planning" 'marker)
-                (org-clock-in '(16))))))
-
-
-;; Include current clocking task in clock reports
-(setq org-clock-report-include-clocking-task t)
-;; Basic Implementation:1 ends here
-
-;; [[file:init.org::*How should the clock in the modeline look?][How should the clock in the modeline look?:1]]
-(set-face-attribute
- 'org-mode-line-clock
-  nil
-  :background "grey75"
-  :foreground "red"
-  :box '(:line-width -1 :style released-button))
-
-;; Conversely, the getter:
-(face-attribute  'org-mode-line-clock :foreground) ;; ⇒ "red"
-;; How should the clock in the modeline look?:1 ends here
-
-;; [[file:init.org::*Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.][Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.:1]]
-(add-hook 'org-clock-in-hook
-          (defun my/say-bismillah-on-clock-in ()
-            (unless org-capture-mode
-              (alert " \nI begin this task in the name of God, the most gracious, the most merciful.\n\nGod please bless the task I'm undertaking."
-                     :title "Bismi Allah ar-rahaman ar-raheem")
-              (async-shell-command "say \"I begin this task in the name of God, the most gracious, the most merciful\""))))
-
-(add-hook 'org-clock-out-hook
-          (defun my/say-alhamudlilah-on-clock-out ()
-            (unless org-capture-mode
-              (async-shell-command "say \"Alhamudllah; praise be to God who has blessed me\""))))
-;; Say out loud “I begin this task in the name of God, the most gracious, the most merciful” and “ ﷽ ”, so that God may bless the task I'm undertaking.:1 ends here
-
-;; [[file:init.org::*org-clock-clocktable-default-properties and “my/what-did-i-work-on-this-week”][org-clock-clocktable-default-properties and “my/what-did-i-work-on-this-week”:1]]
-;; This only works well if my tasks have timestamps; ie are scheduled ^_^
-(setq org-clock-clocktable-default-properties
-      '(:scope ("./my-life.org")       ;; Consider the current file
-               :hidefiles t      ;; Hide the file column when multiple files are used to produced the table.
-               :maxlevel 5       ;; Consider sub-sub-sections
-               :block lastweek   ;; Only show me what I did last week
-               ;; Other values: 2024-04, lastmonth, yesterday, thisyear, 2024
-               ;; :tstart "<-2w>" :tend "<now>"   ;; Show me the past two weeks
-               ;; :tstart "<2006-08-10 Thu 10:00>" :tend "<2006-08-10 Thu 12:00>" ;; Show me a particular range
-               :step day         ;; Split the report into daily chunks
-               :formula %        ;; Show me the percentage of time a task took relative to my day
-               :link t           ;; Link the item headlines in the table to their origins
-               :narrow 55!       ;; Limit the width of the headline column in the Org table
-               :tcolumns 1       ;; Show only 1 column ---not multiple, for the sections and subsections and etc.
-               :timestamp t      ;; Show the timestamp, if any
-               :tags t        ;; Do not show task tags in a column; I use mostly hierarchies for my tasks right now.
-               ;; :match "billable|notes-travel" ;; ⇒ Includes tags “billable” and “notes”, excludes tag “travel”
-               ;; More examples at: https://orgmode.org/manual/Matching-tags-and-properties.html#Matching-tags-and-properties
-               ;; For example, we can match tags & priority & todo states & property drawer values; “/DONE” matches all tasks with state being ‘DONE’.
-               :match "-Personal" ;; Exclude tasks tagged “OOO”, which means “Out of Office” ---e.g., taking a break, or praying, or out for an appointment.
-               ;; https://stackoverflow.com/a/53684091 for an accessible example use of :formatter
-               ;; :formatter org-clocktable-write-default ;; This is the default way to print a table; it looks very long and annoying to change.
-               ;; :sort (3 . ?N)              ;; Sort descendingly on time. Not ideal, since I'm very hierarchical.
-               :properties ("Effort")
-               ))
-;; More properties at:  https://orgmode.org/manual/The-clock-table.html
-;; [Low Priority] Figure out whether I've underworked or overworked? ⇒ https://www.erichgrunewald.com/posts/how-i-track-my-hour-balance-with-a-custom-org-mode-clock-table/
-
-
-;; I prefer “27h” over “1d 3h”.
-(setq org-duration-format 'h:mm)
-
-
-;; In Org-agenda, press “v r” to view the clock report
-;; (This method is invoked when you hit “v r” in Org-agenda.)
-(defalias 'org-agenda-clockreport-mode 'my/what-did-i-work-on-this-week)
-
-
-
-(defun my/what-did-i-work-on-this-week ()
-  "Show in a dedicated buffer a clock report of the past 7 days."
-  (interactive)
-  (my/what-did-i-work-on
-   "*What Did I Work On This Week?*"
-   org-clock-clocktable-default-properties))
-
-
-
-(defun my/what-did-i-work-on-today ()
-  (interactive)
-  (my/what-did-i-work-on
-   "*What Did I Work on Today?*"
-   (-snoc org-clock-clocktable-default-properties :block 'today)))
-
-
-
-(defun my/what-did-i-work-on (buffer-title clocktable-properties)
-  (switch-to-buffer buffer-title)
-  (org-mode)
-  ;; (org-modern-mode) Tables don't look good with the unicode/timestamp svg
-  (-let [org-clock-clocktable-default-properties clocktable-properties]
-    (org-clock-report))
-  ;; For some reason, some of org-modern carries from the current buffer to the new buffer.
-  (org-modern-mode +1)
-  (org-modern-mode -1)
-  (save-excursion
-    (goto-char (point-min))
-    (while (re-search-forward "\\\\_" nil t)
-      (replace-match "⇒")
-      (org-table-align))))
-;; org-clock-clocktable-default-properties and “my/what-did-i-work-on-this-week”:1 ends here
-
-;; [[file:init.org::*Nicer clocktable layout for nested entries][Nicer clocktable layout for nested entries:1]]
-(advice-add 'org-clocktable-indent-string :override
- (defun my/org-clocktable-indent-string (level)
-  (if (= level 1)
-      ""
-    (let ((str "└"))
-      (while (> level 2)
-        (setq level (1- level)
-              str (concat str "──")))
-      (concat str "─> ")))))
-;; Nicer clocktable layout for nested entries:1 ends here
-
-;; [[file:init.org::*~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one][~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one:1]]
-(bind-key*
- "C-c SPC"
- (defun my/jump-to-clocked-task (&optional prefix)
-   "Jump to the currently clocked-in entry, or to the most recently clocked one.
-
-With prefix arg, offer recently clocked tasks for selection."
-   (interactive "P")
-   (org-clock-goto prefix)
-   (org-narrow-to-subtree)))
-;; ~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one:1 ends here
-
-;; [[file:init.org::*🤔 \[Planning/Review\] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.][🤔 [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:1]]
-(advice-add 'org-eldoc-get-breadcrumb :around
-            (defun my-org-eldoc-get-breadcrumb-with-created (orig-fun &rest args)
-              "Enhance `org-eldoc-get-breadcrumb` to also include how many days ago the entry was created, and how much “real work time” I've spent on it!"
-              (let ((breadcrumb (or (apply orig-fun args) (org-get-heading t t t t)))) ;; Call the original function, which is non-nil only when cursor is on heading
-                (if-let ((created (org-entry-get (point) "CREATED"))) ;; Get the :CREATED: property
-                    (let* ((created-time (date-to-time created)) ;; Convert :CREATED: to a time value
-                           (days-ago (floor (time-to-number-of-days (time-subtract (current-time) created-time))))  ;; Calculate days
-                           (WHY  (org-entry-get (point) "WHY")) ;; If I have a specific reason, WHY, that I'd like to be echoed, then echo it!
-                           (♯children (length (org-map-entries t (format "LEVEL=%s" (1+ (org-current-level))) 'tree))))
-                      (concat breadcrumb " | Created " (number-to-string days-ago) " days ago" ;; Append days ago
-                              (if (> ♯children 0) (format " | %s children" ♯children) "")
-                              ;; face options: https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
-                              (if WHY
-                                  (org-add-props (format "\n \n \n﴾%s﴿" WHY) nil 'face '(:slant italic :foreground "SpringGreen4" :weight bold))
-                                (org-add-props "\n \n \n﴾No clue why I'm doing this task! 💢 Just wasting my life? ⏳﴿" nil 'face '(:slant italic :foreground "firebrick1" :weight bold)))
-                              "\n\n"
-                              (my/get-real-work-time-for-task-at-point)))
-                  breadcrumb)))) ;; Return breadcrumb unchanged if :CREATED: is not found
-;; 🤔 [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:1 ends here
-
-;; [[file:init.org::*🤔 \[Planning/Review\] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.][🤔 [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:2]]
-;; Suppose I run  (org-duration-from-minutes  (org-clock-sum))  on a task and it reports
-;; 73:20 hours. It doesn't sound like a whole lot, but how much “work time” is that really?
-;;
-;; ⟨Axiom-1⟩ Suppose I work 6 straight hours per work day, with +2hrs for lunch and minor meetings.
-;;           As such, a “work day” is 360=(* 6 60) minutes.
-;;
-;; ⟨Axiom-2⟩ A work-month is 30 days less the weekends, so it's 22 days.
-;;          As such, a “work month” is 7920=(* 22 6 60) minutes.
-;;
-;; Hence, 73:20  hours is 12=(/ 73 6) work days and 1=(% 73 6) hours and 20mins.
-;;
-;; Let's get Org to show me this “real work time” when I pass by a task.
-(defun my/get-real-work-time-for-task-at-point ()
-  (let* (  ;; (total-minutes-worked (+ (* 73 60) 20)) ;; For testing purposes
-               (total-minutes-worked  (org-clock-sum))
-               ;; (total-minutes-worked 4500) ;; For testing purposes, ie 75 hours
-               ;; “𝒽 hours and 𝓂 minutes”
-               (total-hours-worked (/ total-minutes-worked 60)) ;; 𝒽
-               (mins-worked-0 (% total-minutes-worked 60))     ;; 𝓂
-
-               ;; “𝒹 days, 𝒽 hours, and 𝓂 minutes”
-               (work-day-in-minutes (* 6 60))
-               (total-days-worked (/ total-minutes-worked work-day-in-minutes))  ;; 𝒹
-           ;; (hours-worked (/ (% total-minutes-worked work-day-in-minutes) 60)) ;; 𝒽
-           ;; (mins-worked (% (% total-minutes-worked work-day-in-minutes) 60)) ;; 𝓂
-
-               ;; “𝓜 months”
-               (work-month-in-minutes (* 22 6 60)) ;; 22 days of 60 minutes each.
-               (months-worked (/ total-minutes-worked work-month-in-minutes))
-               (days-worked-in-minutes (% total-minutes-worked work-month-in-minutes))
-               (days-worked (/ days-worked-in-minutes work-day-in-minutes))
-               (hours-worked (/ (% days-worked-in-minutes work-day-in-minutes) 60)) ;; 𝒽
-               (mins-worked (% (% days-worked-in-minutes work-day-in-minutes) 60))) ;; 𝓂
-
-    (format "Worked %s%s%s%s mins \n (i.e., %s:%s hours)"
-                (if (zerop months-worked) "" (format "%s months, " months-worked))
-            (if (zerop days-worked) "" (format "%s days, " days-worked))
-            (if (zerop hours-worked) "" (format "%s hours, " hours-worked))
-                mins-worked
-                total-hours-worked
-                mins-worked-0)))
-;; 🤔 [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.:2 ends here
-
-;; [[file:init.org::*Eldoc for org-mode][Eldoc for org-mode:1]]
-(url-copy-file "https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/org-eldoc.el" "~/.emacs.d/elpa/org-eldoc.el" :ok-if-already-exists)
-(load-file "~/.emacs.d/elpa/org-eldoc.el")
-(add-hook 'org-mode-hook 'eldoc-mode)
-(add-hook 'org-mode-hook 'eldoc-box-hover-mode)
-;; Eldoc for org-mode:1 ends here
+(defun my/make-agent-shell-copy-be-editable-org-mode (orig-fn start end &optional delete)
+  "Convert copied agent-shell text from Markdown to Org via pandoc.
+
+Also strips read-only text properties that leak from comint output.
+
+Code block copies are detected and returned as-is: markdown-overlays
+places an invisible overlay on the closing ``` fence, which sits
+right after the code body. When the copy icon fires kill-ring-save,
+END lands just before that invisible overlay, so we check
+overlays-in END..(+END 3) to skip pandoc for code blocks."
+  (let ((text (funcall orig-fn start end delete)))
+    (remove-text-properties 0 (length text) '(read-only nil) text)
+    (if (cl-some (lambda (ov) (overlay-get ov 'invisible))
+                 (overlays-in end (min (+ end 3) (point-max))))
+        text
+      (with-temp-buffer
+        (insert text)
+        (call-process-region (point-min) (point-max)
+                             "pandoc" t t nil
+                             "-f" "markdown" "-t" "org")
+        (buffer-string)))))
+
+(advice-add 'agent-shell--filter-buffer-substring :around #'my/make-agent-shell-copy-be-editable-org-mode)
+;; Copy AI Text As Org:1 ends here
+
+;; [[file:init.org::*Agent-Shell Buffer Cheatsheet][Agent-Shell Buffer Cheatsheet:1]]
+;; Some useful info in the AI buffer header: [Agent | Model | Thinking Mode | Directory ]
+(setq agent-shell-header-style 'text)
+
+;; Don't confirm when I interrupt, just stop.
+(with-eval-after-load 'agent-shell
+  (define-key agent-shell-mode-map (kbd "C-c C-c")
+    (lambda () (interactive) (agent-shell-interrupt t))))
+
+;; Expand tool use / thought process by default (instead of collapsed)
+(setq agent-shell-tool-use-expand-by-default nil)
+(setq agent-shell-thought-process-expand-by-default nil)
+
+;; Expand tool use / thought process by default (instead of collapsed)
+;; (setq agent-shell-tool-use-expand-by-default t)
+;; (setq agent-shell-thought-process-expand-by-default t)
+;; Agent-Shell Buffer Cheatsheet:1 ends here
 
 ;; [[file:init.org::*Done!][Done!:1]]
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
-(message-box "Enjoy life (｡◕‿◕｡))")
+
+(cl-defun non-blocking-message-box (&key (title "Emacs") content (buttons '(:OK nil)))
+  "Show a macOS dialog asynchronously — Emacs keeps loading.
+TITLE is the window title, CONTENT the body text, and BUTTONS a
+plist mapping labels to handler forms (or nil to ignore).  Labels
+can be any type — keywords, symbols, strings — they are converted
+to title-case strings for display:
+
+  ;; Fire-and-forget:
+  (non-blocking-message-box :content \"Hello!\" :buttons \\='(:OK nil))
+
+  ;; With handlers:
+  (non-blocking-message-box
+    :content \"Save before quitting?\"
+    :buttons \\='(:Cancel  (message \"Cancelled\")
+               :Discard (kill-emacs)
+               :Save    (save-some-buffers t)))
+
+The last label in the plist is the default button.
+
+Unlike `message-box', this spawns an external osascript process,
+so Emacs never blocks.  By way of example, a `message-box' call
+at the end of init.el skewed `emacs-init-time' by however long
+we stared at the dialog before clicking OK."
+  (let* ((to-string (lambda (x)
+                      (let ((s (format "%s" x)))
+                        (if (string-prefix-p ":" s) (substring s 1) s))))
+         (labels (cl-loop for (label _) on buttons by #'cddr
+                          collect (funcall to-string label)))
+         (handlers (cl-loop for (label handler) on buttons by #'cddr
+                            collect (cons (funcall to-string label) handler)))
+         (proc (start-process "non-blocking-message-box" nil "osascript" "-e"
+                 (format "display dialog %S with title %S buttons {%s} default button %d"
+                         content title
+                         (mapconcat (lambda (b) (format "%S" b)) labels ", ")
+                         (length labels)))))
+    ;; Stash handler alist and accumulated output on the process itself,
+    ;; since init.el lacks lexical-binding.
+    (process-put proc :handlers handlers)
+    (process-put proc :output "")
+    (set-process-filter proc
+      (lambda (proc text)
+        (process-put proc :output (concat (process-get proc :output) text))))
+    (set-process-sentinel proc
+      (lambda (proc _event)
+        (let ((out (process-get proc :output)))
+          (when (string-match "button returned:\\(.+\\)" out)
+            (let ((handler (alist-get (string-trim (match-string 1 out))
+                                      (process-get proc :handlers) nil nil #'string=)))
+              (when handler (eval handler t)))))))))
+
+(non-blocking-message-box :title "Emacs" :content "Enjoy life (｡◕‿◕｡))" :buttons '(:♥ nil))
 ;; Done!:1 ends here
 
 ;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:1]]
@@ -6208,13 +4429,13 @@ method."
 ;; Working with massive files: my-life∙org:1 ends here
 
 ;; [[file:init.org::#Show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window:1]]
- (use-package org-sticky-header
-  :hook (org-mode . org-sticky-header-mode)
-  :config
-  (setq-default
-   org-sticky-header-full-path 'full
-   ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " ▷ "))
+(use-package org-sticky-header
+ :hook (org-mode . org-sticky-header-mode)
+ :config
+ (setq-default
+  org-sticky-header-full-path 'full
+  ;; Child and parent headings are seperated by a /.
+  org-sticky-header-outline-path-separator " ▷ "))
 ;; Show off-screen heading at the top of the window:1 ends here
 
 ;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:1]]
@@ -6227,175 +4448,3 @@ method."
   :hook   (org-mode text-mode)
   :custom (beacon-color "#666600"))
 ;; Never lose the cursor:2 ends here
-
-;; [[file:init.org::*Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”][Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:1]]
-(use-package hyperbole
-  :custom (hsys-org-enable-smart-keys t)
-  :hook after-init)
-;; Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:1 ends here
-
-;; [[file:init.org::*Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”][Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:3]]
-(😴 advice-add 'hkey-either :around
-(defun my/M-RET-in-enumeration-means-new-item (orig-fn &rest args)
-  "In an Org enumeration, M-[S]-RET anywhere in an item should create a new item.
-
-   However, Hyperbole belives being at the end of the line means M-RET should
-   scroll down a screenful similar to `C-v' and `M-v'. Let's avoid this."
-  (if (and (derived-mode-p 'org-mode) (save-excursion (beginning-of-line) (looking-at "\\([0-9]+\\|[a-zA-Z]\\)[.)].*")))
-        (org-insert-item)
-    (apply orig-fn args))))
-;; Automatically Exposing Knowledge Elsewhere ---Hyperbole: “DWIM at point”:3 ends here
-
-;; [[file:init.org::*~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property][~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property:1]]
-(😴 progn
-(defib my/property-button ()
-  "Clicking at the start of the :PROPERTIES: line prompts for adding a new Org property."
-  (let ((case-fold-search t))
-    (when (looking-at org-property-drawer-re)
-      (ibut:label-set (match-string-no-properties 0)
-                      (match-beginning 0)
-                      (match-end 0))
-      (hact (lambda (_current-props) (org-set-property nil nil)) (match-string-no-properties 0)))))
-
-
-(defib my/tag-button ()
-  "Clicking at the start of an Org heading means add a new Org tag."
-  (let ((case-fold-search t))
-    (when (looking-at org-tag-line-re)
-      (ibut:label-set (match-string-no-properties 1)
-                      (match-beginning 1)
-                      (match-end 1))
-      (hact (lambda (_current-tags) (org-set-tags-command)) (match-string-no-properties 1))))))
-;; ~M-RET~ on an Org line sets tags, and on ~∶PROPERTIES∶~ adds a new property:1 ends here
-
-;; [[file:init.org::*~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”][~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1]]
-(😴 progn
-
-(defun my/open-::-file-path (path)
-  "PATH is something like FooModule::72 or FooModule::interface_bar"
-  (-let [(name regex) (s-split "::" path)]
-    ;; brew install fd
-    ;; NOTE: fd is fast!
-    (-let [file (car (s-split "\n" (shell-command-to-string (format "fd \"^%s\\..*$\" %s" name my\work-dir))))]
-      (if (s-blank? file)
-          (message "😲 There's no file named “%s”; perhaps you're talking about a class/record/interface with that name?" name)
-      (find-file file)
-      (-let [line (string-to-number regex)]
-        (if (= 0 line)
-            (progn (beginning-of-buffer) ;; In case file already open
-                   (re-search-forward (s-replace "_" " " regex) nil t))
-          (goto-line line)))))))
-
-
-(require 'hbut)
-
-
-(defib my/::-file-paths ()
-  "Find the file whose name is at point and jump to the given regex or line number."
-  (let ((case-fold-search t)
-        (path-id nil)
-        (my-regex "\\b\\(\\w+::[^ \n]+\\)"))
-    (if (or (looking-at my-regex)
-            (save-excursion
-              (my/move-to-::-phrase-start)
-              (looking-at my-regex)))
-        (progn (setq path-id (match-string-no-properties 1))
-               (ibut:label-set path-id
-                               (match-beginning 1)
-                               (match-end 1))
-               (hact 'my/open-::-file-path path-id)))))
-
-
-(defun my/move-to-::-phrase-start ()
-  "Move cursor to the start of a :: phrase, like Foo::bar, if point is inside one."
-  (interactive)
-  (let ((case-fold-search t)
-        (pattern "\\b\\(\\w+::[^ \n]+\\)")
-        (max-lookback 20))
-      (catch 'found
-        ;; First check if we're already inside a match
-        (when (looking-at pattern)
-          (goto-char (match-beginning 0))
-          (throw 'found t))
-
-        ;; If not at start of match, look backward
-        (let ((pos (point)))
-          (while (and (> pos (point-min))
-                     (<= (- pos (point)) max-lookback))
-            (goto-char pos)
-            (when (looking-at " ") (throw 'found nil)) ;; It'd be nice if I depended only on PATTERN.
-            (when (looking-at pattern)
-              (goto-char (match-beginning 0))
-              (throw 'found t))
-            (setq pos (1- pos)))))))
-
-
-;; Some highlighting so I'm prompted to use “M-RET”
-(font-lock-add-keywords
- 'org-mode
- '(("\\b[^ ]*::[^ \n]*" 0 'highlight prepend))
- t)
-
-)
-;; ~MyModule::72~ means “find the file named ~MyModule~, somewhere, and jump to line 72”:1 ends here
-
-;; [[file:init.org::*Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/][Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/:1]]
-(defun get-radio-targets ()
-  "Extract all radio targets from the current Org buffer"
-  (interactive)
-  (let ((targets nil)
-        (case-fold-search t))
-    (cl-loop for file in (cons "~/.emacs.d/init.org" org-agenda-files)
-             do (save-excursion
-                  (find-file file)
-                  (save-restriction
-                    (widen)
-                    (goto-char (point-min))
-                    (while (re-search-forward "<<<\\(.*?\\)>>>" nil t)
-                      (push (list (downcase (substring-no-properties (match-string 1))) file (line-number-at-pos)) targets)))))
-    targets))
-
-(😴 progn
-
-(setq my/radio-targets (get-radio-targets)
-    my/radio-regex (eval `(rx (or ,@(mapcar #'cl-first my/radio-targets)))))
-
-(font-lock-add-keywords
- 'org-mode
- (--map (list (format "\\b%s\\b" (cl-first it)) 0 ''highlight 'prepend) my/radio-targets)
- t)
-
-;; In programming modes, just show an underline.
-(add-hook
- 'prog-mode-hook
- (lambda ()
-   (font-lock-add-keywords
-    nil
-    (--map (list (format "\\b%s\\b" (cl-first it)) 0 ''(:underline t) 'prepend) my/radio-targets)
-    t)))
-
-)
-
-(defun my/jump-to-radio (radio)
-  "RADIO is a downcased name."
-  (-let [(name file line) (assoc radio my/radio-targets)]
-    (find-file file)
-    (goto-line line)
-    ;; Make sure point and context are visible.
-    (org-fold-show-context)))
-
-(with-eval-after-load 'hyperbole
-  (defib my/radio-target ()
-    "Jump to the definition of this word, as an Org radio target"
-    (let ((case-fold-search t)
-          (radio nil))
-      (if (or (looking-at my/radio-regex)
-              (save-excursion
-                (re-search-backward "\\b")
-                (looking-at my/radio-regex)))
-          (progn (setq radio (downcase (match-string-no-properties 0)))
-                 (ibut:label-set radio
-                                 (match-beginning 0)
-                                 (match-end 0))
-                 (hact 'my/jump-to-radio radio))))))
-;; Fontify Org Radio Targets /everywhere/ and have ~M-RET~ Jump to Them /from anywhere/:1 ends here
