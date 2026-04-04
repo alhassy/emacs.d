@@ -1569,32 +1569,34 @@ Order requires alphabetically and remove duplicates."
 (setf custom-safe-themes t)
 
 ;; Infinite list of my commonly used themes.
-(setq my/themes
-      (cl-loop for (package . theme-variants-I-like) in
-               ;; I like theme doom-flatwhite <3 It feels “warm”.
-               ;; (I found out thanks to C-u C-c t!)
-               '((doom-themes doom-flatwhite doom-snazzy doom-monokai-ristretto doom-laserwave doom-solarized-light doom-vibrant)
-                 (solarized-theme solarized-gruvbox-dark solarized-gruvbox-light)
-                 (stimmung-themes stimmung-themes-light stimmung-themes-dark)
-                 (shanty-themes shanty-themes-light)
-                 (apropospriate-theme apropospriate-light) ;; /super/ nice! Super “clean”, like writing on paper
-                 (tao-theme tao-yang) ;; nice light theme.
-                 (leuven-theme leuven-dark leuven) ;; Nice minimal variant
-                 (material-theme material-light)
-                 (moe-theme moe-light)
-                 (organic-green-theme organic-green)
-                 (tango-plus-theme tango-plus)
-                 ;; I like all 3 variants.
-                 (minimal-theme minimal minimal-black minimal-light)
-                 (espresso-theme espresso)
-                 (emacs dichromacy)
-                 (nano-theme nano-light nano-dark)
-                 (pink-bliss-uwu-theme pink-bliss-uwu)
-                 (modus-themes modus-operandi-tinted))
-               do (package-install package)
-               append theme-variants-I-like))
+;; We skip theme installation in batch mode (e.g., CI) — no display, no point.
+(unless noninteractive
+  (setq my/themes
+        (cl-loop for (package . theme-variants-I-like) in
+                 ;; I like theme doom-flatwhite <3 It feels “warm”.
+                 ;; (I found out thanks to C-u C-c t!)
+                 '((doom-themes doom-flatwhite doom-snazzy doom-monokai-ristretto doom-laserwave doom-solarized-light doom-vibrant)
+                   (solarized-theme solarized-gruvbox-dark solarized-gruvbox-light)
+                   (stimmung-themes stimmung-themes-light stimmung-themes-dark)
+                   (shanty-themes shanty-themes-light)
+                   (apropospriate-theme apropospriate-light) ;; /super/ nice! Super “clean”, like writing on paper
+                   (tao-theme tao-yang) ;; nice light theme.
+                   (leuven-theme leuven-dark leuven) ;; Nice minimal variant
+                   (material-theme material-light)
+                   (moe-theme moe-light)
+                   (organic-green-theme organic-green)
+                   (tango-plus-theme tango-plus)
+                   ;; I like all 3 variants.
+                   (minimal-theme minimal minimal-black minimal-light)
+                   (espresso-theme espresso)
+                   (emacs dichromacy)
+                   (nano-theme nano-light nano-dark)
+                   (pink-bliss-uwu-theme pink-bliss-uwu)
+                   (modus-themes modus-operandi-tinted))
+                 do (package-install package)
+                 append theme-variants-I-like))
 
-(setcdr (last my/themes) my/themes)
+  (setcdr (last my/themes) my/themes))
 
 (cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
   "Disable all themes and load the given one ---read from user when called interactively."
