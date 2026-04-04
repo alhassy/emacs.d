@@ -25,13 +25,12 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Emacs
-        uses: purcell/setup-emacs@v3.0
+        uses: purcell/setup-emacs@v6.0
         with:
-          # The version of Emacs to install, e.g. "24.3", or "snapshot" for a recent development version.
-          version: 27.1 # optional
+          version: 29.4
 
       # Runs a single command using the runners shell
       # - name: Run a one-line script
