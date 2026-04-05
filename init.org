@@ -9186,7 +9186,9 @@ primary tools.
 (setq initial-buffer-choice
       (lambda ()
         (let ((buf (find-file-noselect "~/Dropbox/my-life.org")))
-          (with-current-buffer buf (font-lock-update))
+          (with-current-buffer buf
+            (org-superstar-mode +1)
+            (font-lock-update))
           buf)))
 
 (defun display-startup-echo-area-message ()
@@ -16411,6 +16413,24 @@ TODO: How does this compare with org-bullets?
                                           ("QUESTION" . 9744)
                                           ("DONE"     . 9745)))
   :hook (org-mode . org-superstar-mode))
+
+;; On massive buffers (e.g., my-life.org at 145k lines / 7 MB),
+;; org-superstar--fontify-buffer calls font-lock-ensure on the *entire*
+;; widened buffer — bypassing jit-lock's lazy fontification.  The
+;; combined font-lock regexps (nested groups + \\**?) overflow the
+;; C-level regexp matcher stack.  On large buffers we call only
+;; font-lock-flush (cheap: marks the buffer dirty) so jit-lock
+;; re-fontifies the visible window lazily — skipping font-lock-ensure
+;; (expensive: fontifies the entire widened buffer).
+;;                                                                                                                                                     
+;; If I do a ⟨Tab⟩ on an org heading, then that heading's content becomes visible and so JIT fontlocking                                                                                                                         
+;; activites and so I get nice Org stars for that heading and its children! Lovely!  
+(define-advice org-superstar--fontify-buffer
+    (:around (orig-fn &rest args) skip-large-buffers)
+  "Skip eager fontification on buffers larger than 1 MB."
+  (if (> (buffer-size) (* 1024 1024))
+      (when font-lock-mode (font-lock-flush))
+    (apply orig-fn args)))
 #+end_src
 * Recaps, reviews, introspections, retrospections
 :PROPERTIES:
