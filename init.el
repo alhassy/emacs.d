@@ -3666,11 +3666,11 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
 ;;
 ;; Until then, use the following incantation:
-(when (fboundp 'lf-define)
+(with-eval-after-load 'lf
   (lf-define (get 'lf-define 'lisp-indent-function) 'defun))
 
 ;; (MA: Eventually this function can itself become a small albeit useful MELPA ELisp Package ♥‿♥)
-(when (fboundp 'lf-define)
+(with-eval-after-load 'lf
   (lf-define my/declare-workflow-states (states)
   [:requires  (listp states) :ensures (stringp result)]
   "Declare STATES as todo-states. STATES is a list of (name on-entry on-exit color) lists.
@@ -3718,7 +3718,13 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
 ;; Implementation:2 ends here
 
 ;; [[file:init.org::*Implementation][Implementation:3]]
-(when (fboundp 'my/declare-workflow-states)
+;; Auto-load workflow states on first C-c C-t (org-todo) invocation:
+;; We keep `lf' deferred, so the definition of `my/declare-workflow-states'
+;; only exists after `lf' loads. This advice forces `lf' to load, declares
+;; the states, restarts org-mode in the current buffer, then removes itself.
+(defun my/ensure-workflow-states (&rest _)
+  "Load `lf', declare workflow states, then self-destruct."
+  (require 'lf)
   (my/declare-workflow-states
  ;; Transitions: TODO → INVESTIGATED → STARTED ⟷ {AWAITING_REVIEW | PAUSED} → {DONE | CANCELLED}
  ;; (M-q via (setq fill-column 95) and M-x my/comment-box)
@@ -3851,7 +3857,14 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
    ;; The logging is helpful if others at work want to know why some approach was abandoned, so    ;;
    ;; TAKE A MINUTE TO FLESH OUT THE REASONS FOR CANCELLATION.                                     ;;
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   )))
+   ))
+  (advice-remove 'org-todo #'my/ensure-workflow-states)
+  ;; Refresh todo keyword data in all open Org buffers — lightweight
+  ;; alternative to `org-mode-restart', which chokes on large files.
+  (dolist (buf (org-buffer-list))
+    (with-current-buffer buf
+      (org-set-regexps-and-options))))
+(advice-add 'org-todo :before #'my/ensure-workflow-states)
 ;; Implementation:3 ends here
 
 ;; [[file:init.org::*Also, logging][Also, logging:1]]
