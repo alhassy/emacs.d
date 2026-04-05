@@ -1,13 +1,13 @@
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:4]]
-(setq org-image-actual-width nil)
+    (setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:5]]
-;; Day-to-day, open URLs in the system browser (Arc, Chrome, etc.).
-;; When blogging, we can temporarily switch to xwidget-webkit-browse-url.
-(setq browse-url-browser-function 'browse-url-default-browser)
+    ;; Day-to-day, open URLs in the system browser (Arc, Chrome, etc.).
+    ;; When blogging, we can temporarily switch to xwidget-webkit-browse-url.
+    (setq browse-url-browser-function 'browse-url-default-browser)
 
-;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
+    ;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
 ;; Personal instructions for a new machine:5 ends here
 
 ;; Disable custom-file - all settings managed in init.el/init.org
@@ -19,6 +19,8 @@
     (dolist (buf '("*Shell Command Output*" "*Quail Completions*" "*Compile-Log*"))
       (when (get-buffer buf)
         (kill-buffer buf)))))
+
+(load "~/Dropbox/private.el" 'no-error 'no-message)
 
 (setq user-full-name    "Musa Al-hassy"
       user-mail-address "alhassy@gmail.com")
@@ -138,7 +140,7 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
   :custom (vundo-glyph-alist vundo-unicode-symbols))
 
 ;; Auto installing OS system packages
-(use-package system-packages)
+(use-package system-packages :defer t)
 
 ;; Ensure our operating system is always up to date.
 ;; This is run whenever we open Emacs & so wont take long if we're up to date.
@@ -204,7 +206,8 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; ⇒ Move the screen capture frame while recording.
 ;; ⇒ Pause and restart recording, with optional inserted text messages.
 ;; ⇒ Global hotkey (shift+space) to toggle pausing while recording
-(unless noninteractive (system-packages-ensure "licecap")) ;; Use: ⌘-SPACE licecap
+;; Idempotent install check — no need to block startup for it.
+(😴 system-packages-ensure "licecap") ;; Use: ⌘-SPACE licecap
 
 ;; Pack, ship and run any application as a lightweight container
 ;; (system-packages-ensure "docker")
@@ -214,7 +217,8 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; (system-packages-ensure "lens")
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
-(unless noninteractive (system-packages-ensure "node")) ;; https://nodejs.org/
+;; Idempotent install check — no need to block startup for it.
+(😴 system-packages-ensure "node") ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
 ;; (shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
@@ -309,23 +313,23 @@ installs of packages that are not in our `my/installed-packages' listing.
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
-;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
-;; Since the hook fires on C-g but by then Helm's already tears it down so
-;; it fails buffer-live-p.
-(with-eval-after-load 'helm
-(defun my/helm-kill-session-buffers-safe ()
-  "Kill stray *helm…* buffers after a Helm session ends."
-  ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
-  (run-at-time 5 nil                   ; defer until after Helm cleanup
-               (lambda ()
-                 (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
-                 (let ((kill-buffer-query-functions nil))
-                   (dolist (b (buffer-list))
-                     (when (and (buffer-live-p b)
-                                (string-match-p "\\`\\*helm" (buffer-name b)))
-                       (with-demoted-errors "helm-kill: %S"
-                         (kill-buffer b))))))))))
-(add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
+  ;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
+  ;; Since the hook fires on C-g but by then Helm's already tears it down so
+  ;; it fails buffer-live-p.
+  (with-eval-after-load 'helm
+  (defun my/helm-kill-session-buffers-safe ()
+    "Kill stray *helm…* buffers after a Helm session ends."
+    ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
+    (run-at-time 5 nil                   ; defer until after Helm cleanup
+                 (lambda ()
+                   (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
+                   (let ((kill-buffer-query-functions nil))
+                     (dolist (b (buffer-list))
+                       (when (and (buffer-live-p b)
+                                  (string-match-p "\\`\\*helm" (buffer-name b)))
+                         (with-demoted-errors "helm-kill: %S"
+                           (kill-buffer b))))))))))
+  (add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
 
 (use-package helm
   :hook ((after-init . helm-mode) ;; Enable Helm completion for common Emacs commands.
@@ -381,12 +385,19 @@ installs of packages that are not in our `my/installed-packages' listing.
   :bind  (("C-s"     . #'helm-occur)           ;; search current buffer
           ("C-M-s"   . 'helm-multi-occur-from-isearch))) ;; Search all buffer
 
-(unless noninteractive (system-packages-ensure "ag"))
+;; Idempotent install check — ag is already on the system; defer the verification.
+(😴 system-packages-ensure "ag")
 
 (use-package emacs
-    :ensure org-contrib
-    :config (require 'ox-extra)
-            (ox-extras-activate '(ignore-headlines)))
+    :ensure org-contrib)
+
+;; ox-extra is only needed during Org export — the `ignore-headlines'
+;; feature strips headings tagged :ignore: at export time.  Loading it
+;; eagerly pulls in org-contrib and Org itself (~0.9s).  Deferring to
+;; first export is safe since no startup code depends on it.
+(with-eval-after-load 'ox
+  (require 'ox-extra)
+  (ox-extras-activate '(ignore-headlines)))
 
 ;; Replace the content marker, “⋯”, with a nice unicode arrow.
 (setq org-ellipsis "  ⮛")
@@ -450,9 +461,11 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; E.g., M-x shell
 (unless noninteractive (setq shell-file-name "/bin/zsh"))
 
-(unless noninteractive (system-packages-ensure "tldr"))
+;; Idempotent install check — defer since tldr is never needed at startup.
+(😴 system-packages-ensure "tldr")
 
-(unless noninteractive (system-packages-ensure "hr")) ;; ≈ brew install hr
+;; Idempotent install check — defer since hr is a shell utility, not needed at startup.
+(😴 system-packages-ensure "hr") ;; ≈ brew install hr
 
 (advice-add #'view-echo-area-messages :after (lambda (&rest _) (other-window 1)))
 
@@ -534,7 +547,8 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; [[file:init.org::*Intro][Intro:2]]
 ;; When we invoke magit-status, show green/red the altered lines, with extra
 ;; green/red on the subparts of a line that got alerted.
-(unless noninteractive (system-packages-ensure "git-delta"))
+;; Idempotent install check — magit-delta is lazy-loaded via :hook anyway.
+(😴 system-packages-ensure "git-delta")
 (use-package magit-delta
   :hook (magit-mode . magit-delta-mode))
 
@@ -546,9 +560,12 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; Only set these creds up if there is no Git email set up ---ie at work I have an email set up, so don't
 ;; override it with my personal creds.
 ;;
+;; Deferred: These write to ~/.gitconfig which persists across sessions,
+;; so the check is almost always a no-op.  No reason to block startup.
+;;
 ;; See here for a short & useful tutorial:
 ;; https://alvinalexander.com/git/git-show-change-username-email-address
-(when (equal "" (shell-command-to-string "git config user.email "))
+(😴 when (equal "" (shell-command-to-string "git config user.email "))
   (shell-command (format "git config --global user.name \"%s\"" user-full-name))
   (shell-command (format "git config --global user.email \"%s\"" user-mail-address)))
 ;; Credentials: I am who I am:1 ends here
@@ -559,8 +576,10 @@ installs of packages that are not in our `my/installed-packages' listing.
 (require 'server)
 (unless (server-running-p) (server-start))
 
-;; Or use it whenever we are editing a git message from the terminal
-(shell-command "git config --global core.editor 'emacsclient -t -a=\\\"\\\"'")
+;; Or use it whenever we are editing a git message from the terminal.
+;; Deferred: This is idempotent (same value every time) and persists
+;; in ~/.gitconfig, so it only matters on a fresh machine.
+;; Diabled: (😴 shell-command "git config --global core.editor 'emacsclient -t -a=\\\"\\\"'")
 ;; Credentials: I am who I am:2 ends here
 
 ;; [[file:init.org::#Encouraging-useful-commit-messages][Encouraging useful commit messages:1]]
@@ -646,7 +665,7 @@ if REMOTE is https://github.com/X/Y then LOCAL becomes ∼/Y."
 ;; Maybe clone ... everything?:2 ends here
 
 ;; [[file:init.org::#Gotta-love-that-time-machine][Gotta love that time machine:1]]
-(use-package git-timemachine )
+(use-package git-timemachine :defer t)
 ;; Gotta love that time machine:1 ends here
 
 ;; [[file:init.org::#Highlighting-TODO-s-Showing-them-in-Magit][Highlighting TODO-s & Showing them in Magit:1]]
@@ -847,7 +866,7 @@ The heading remains in view, and so appears in the TOC."
 ;; M-< and M-> jump to first and final semantic units.
 ;; If pressed twice, they go to physical first and last positions.
 (use-package beginend
-  :config (beginend-global-mode))
+  :hook (after-init . beginend-global-mode))
 ;; Jumping to extreme semantic units:1 ends here
 
 ;; [[file:init.org::#Folding-within-a-subtree][Folding within a subtree:1]]
@@ -876,11 +895,11 @@ The heading remains in view, and so appears in the TOC."
 
 ;; [[file:init.org::#ELisp][ELisp:1]]
 ;; Evaluation Result OverlayS for Emacs Lisp
-(use-package eros :init (eros-mode t))
+(use-package eros :hook (after-init . eros-mode))
 ;; ELisp:1 ends here
 
 ;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:1]]
-(use-package separedit)
+(use-package separedit :defer t)
 ;;
 ;; # Example Usage
 ;;
@@ -958,12 +977,12 @@ The heading remains in view, and so appears in the TOC."
 ;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:3]]
 ;; In the indirect buffer, make ⌘-e finish editing.
 (use-package edit-indirect
-  :config (bind-key "s-e"
-                    (lambda ()
-                      (interactive)
-                      (or (ignore-errors (call-interactively #'separedit))
-                          (call-interactively #'edit-indirect-commit)))
-                    #'edit-indirect-mode-map))
+  :defer t
+  :bind (:map edit-indirect-mode-map
+         ("s-e" . (lambda ()
+                    (interactive)
+                    (or (ignore-errors (call-interactively #'separedit))
+                        (call-interactively #'edit-indirect-commit))))))
 
 ;; I also have “s-e” bound to `org-edit-src-exit'.
 (advice-add 'org-edit-src-exit :before-until
@@ -1037,7 +1056,7 @@ Src: https://scripter.co/splitting-an-org-block-into-two/"
 ;; ⌘-e: Edit Everything in a separate buffer:5 ends here
 
 ;; [[file:init.org::#e-Edit-Everything-in-a-separate-buffer][⌘-e: Edit Everything in a separate buffer:6]]
-(use-package language-detection)
+(use-package language-detection :defer t)
 ;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
 ;; Also, (language-detection-string "select * from t") ;; ⇒ sql
 
@@ -1083,7 +1102,8 @@ associated major mode; that's what we aim to do here."
 
 ;; [[file:init.org::#Sleek-Semantic-Selection][⌘-r, ⌘-i, ⌘-o: Sleek Semantic Selection:1]]
 (use-package expand-region
-  :bind ("s-r" . #'er/expand-region))
+  :defer t
+  :bind ("s-r" . er/expand-region))
 ;; ⌘-r, ⌘-i, ⌘-o: Sleek Semantic Selection:1 ends here
 
 ;; [[file:init.org::#Editor-Documentation-with-Contextual-Information][Editor Documentation with Contextual Information:1]]
@@ -1131,10 +1151,11 @@ If a prefix is provided, i.e., “C-u C-h o” then the built-in
 
 ;; [[file:init.org::#Let's-make-working-with-Emacs-Lisp-even-better][[[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]:1]]
 (use-package elisp-demos
-  :config
-  ;; Show demos when I do a `C-h o'.
-  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)
-  ;; Show demos in tooltips when I pause to select a completion, in Emacs Lisp mode.
+  :defer t
+  :init
+  ;; Advice wrappers load elisp-demos on first C-h o / describe-function.
+  (with-eval-after-load 'helpful
+    (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
   (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
 ;; [[https://github.com/xuchunyang/elisp-demos][Append existing ELisp docstrings with example use and actual output.]]:1 ends here
 
@@ -1198,27 +1219,8 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Comment-boxes up to the fill-column ---or banner instead?:1 ends here
 
 ;; [[file:init.org::#Comment-boxes-up-to-the-fill-column][Comment-boxes up to the fill-column ---or banner instead?:2]]
-(use-package banner-comment)
+(use-package banner-comment :defer t)
 ;; Comment-boxes up to the fill-column ---or banner instead?:2 ends here
-
-;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:1]]
-(require 'cl-lib)
-
-(defun my/disable-hs-hide-all (orig-fun &rest args)
-  "Advise `org-export-dispatch` to disable `hs-hide-all` temporarily."
-  ;; Without this, export hangs “Hiding all blocks...”
-  (cl-letf (((symbol-function 'hs-hide-all) (lambda (&rest _) nil)))
-    ;; Without this, export shows “*hideshowvis*” markers in my exported code blocks.
-    (cl-letf (((symbol-function 'hideshowvis-highlight-hs-regions-in-fringe) (lambda (&rest _) nil)))
-      (apply orig-fun args))))
-
-(advice-add 'org-export-dispatch :around #'my/disable-hs-hide-all)
-;; Text Folding ---Selectively displaying portions of a program:1 ends here
-
-;; [[file:init.org::#Text-Folding][Text Folding ---Selectively displaying portions of a program:2]]
-(use-package vimish-fold
-  :hook (after-init . vimish-fold-global-mode))
-;; Text Folding ---Selectively displaying portions of a program:2 ends here
 
 ;; [[file:init.org::#Aggressive-Indentation][Aggressive Indentation:1]]
 ;; Always stay indented: Automatically have blocks reindented after every change.
@@ -1251,14 +1253,14 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 
 ;; [[file:init.org::#Coding-with-a-Fruit-Salad-Semantic-Highlighting][Coding with a Fruit Salad: Semantic Highlighting:1]]
 (use-package color-identifiers-mode
-  :config (global-color-identifiers-mode))
+  :hook (after-init . global-color-identifiers-mode))
 
 ;; Sometimes just invoke: M-x color-identifiers:refresh
 ;; Coding with a Fruit Salad: Semantic Highlighting:1 ends here
 
 ;; [[file:init.org::#highlight-quoted-symbols][Highlight Quoted Symbols:1]]
 (use-package highlight-quoted
-  :config (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
+  :hook (emacs-lisp-mode . highlight-quoted-mode))
 
 ;; If everything worked fine, then “ 'b ” below should be coloured nicely in Emacs Lisp mode.
 (when nil
@@ -1273,16 +1275,15 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 (use-package highlight-escape-sequences
   :hook ((prog-mode . hes-mode)
          (separedit-double-quote-string-mode . hes-mode)) ;; Wont work since this mode has no font-lock-builtin-face
-  :config
+  :init
   ;; Colour the escapes as if they were builtin keywords.
+  ;; Plain `put` — no package load needed.
   (put 'hes-escape-backslash-face 'face-alias 'font-lock-builtin-face)
   (put 'hes-escape-sequence-face 'face-alias 'font-lock-builtin-face))
 
 
-;; TODO: My Emacs seems to have trouble loading the following and so I'm doint it manually.
-(load-file "~/.emacs.d/elpa/highlight-escape-sequences-20201214.1730/highlight-escape-sequences.el")
-(load-file "~/.emacs.d/elpa/parent-mode-20240210.1906/parent-mode.el")
-(load-file "~/.emacs.d/elpa/highlight-numbers-20181013.1744/highlight-numbers.el")
+;; The use-package :hook declarations above already autoload these
+;; packages when prog-mode activates — no manual load-file needed.
 
 ;; If the above two worked fine, then you should see \n and 3 highlighted below
 (when nil "Look: 1 and \\ and \n 2" (setq three 3))
@@ -1291,7 +1292,6 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; [[file:init.org::#Highlight-defined-Lisp-symbols][Highlight /defined/ Lisp symbols:1]]
 ;; Emacs Lisp specific
 (use-package highlight-defined :hook emacs-lisp-mode)
-(load-file "~/.emacs.d/elpa/highlight-defined-20210411.222/highlight-defined.el")
 ;; Highlight /defined/ Lisp symbols:1 ends here
 
 ;; [[file:init.org::*interactive macro-expander][interactive macro-expander:1]]
@@ -1330,11 +1330,14 @@ see https://github.com/lewang/rebox2/blob/master/rebox2.el"
 ;; Tree cmd, also treemacs for navigating a new repository:1 ends here
 
 ;; [[file:init.org::#Jump-between-windows-using-Cmd-Arrow-between-recent-buffers-with-Meta-Tab][Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1]]
-(use-package windmove
-  :config ;; use command key on Mac
-          (windmove-default-keybindings 'super)
-          ;; wrap around at edges
-          (setq windmove-wrap-around t))
+;; Disabled: s-←/→/↑/↓ window switching — not actively used.
+;; Re-enable by uncommenting:
+;; (use-package windmove
+;;   :bind (("s-<up>" . windmove-up)
+;;          ("s-<down>" . windmove-down)
+;;          ("s-<left>" . windmove-left)
+;;          ("s-<right>" . windmove-right))
+;;   :init (setq windmove-wrap-around t))
 ;; Jump between windows using Cmd+Arrow & between recent buffers with Meta-Tab:1 ends here
 
 ;; [[file:init.org::*\[C-u\]-M-TAB to move between buffers][[C-u]-M-TAB to move between buffers:1]]
@@ -1470,12 +1473,11 @@ Order requires alphabetically and remove duplicates."
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
 
-;; Open my-life.org on startup instead of *scratch*
+;; Open my-life.org on startup.
 (setq initial-buffer-choice
       (lambda ()
         (let ((buf (find-file-noselect "~/Dropbox/my-life.org")))
-          (with-current-buffer buf
-            (font-lock-update))
+          (with-current-buffer buf (font-lock-update))
           buf)))
 
 (defun display-startup-echo-area-message ()
@@ -1504,24 +1506,17 @@ Order requires alphabetically and remove duplicates."
               (load-file my-life.el))))
 
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
+;; doom-modeline must load eagerly — deferring via :hook after-init
+;; triggers a SIGSEGV in face_for_font (Emacs 30.1 bug: the font
+;; subsystem isn't ready when after-init hooks fire).
 (use-package doom-modeline
-  :config (doom-modeline-mode))
-
-  ;; Use minimal height so icons still fit; modeline gets slightly larger when
-  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
-  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
+  :config (doom-modeline-mode)
   (setq doom-modeline-height 21)
   (setq doom-modeline-buffer-state-icon nil)
   (setq doom-modeline-hud t)
   (setq doom-modeline-bar-width 1)
-
-  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
-  ;; we can click to see a listing.
-  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
   (setq doom-modeline-checker-simple-format nil)
-
-  ;; Don't display the buffer encoding, E.g., “UTF-8”.
-  (setq doom-modeline-buffer-encoding nil)
+  (setq doom-modeline-buffer-encoding nil))
 
   ;; Inactive buffers' modeline is greyed out.
   ;; (let ((it "Source Code Pro Light" ))
@@ -1569,7 +1564,14 @@ Order requires alphabetically and remove duplicates."
 (setf custom-safe-themes t)
 
 ;; Infinite list of my commonly used themes.
-;; We skip theme installation in batch mode (e.g., CI) — no display, no point.
+;; We skip theme setup in batch mode (e.g., CI) — no display, no point.
+(defvar my/theme-packages
+  '(doom-themes solarized-theme stimmung-themes shanty-themes
+    apropospriate-theme tao-theme leuven-theme material-theme
+    moe-theme organic-green-theme tango-plus-theme minimal-theme
+    espresso-theme nano-theme pink-bliss-uwu-theme modus-themes)
+  "Packages that provide the themes in `my/themes'.")
+
 (unless noninteractive
   (setq my/themes
         (cl-loop for (package . theme-variants-I-like) in
@@ -1593,10 +1595,21 @@ Order requires alphabetically and remove duplicates."
                    (nano-theme nano-light nano-dark)
                    (pink-bliss-uwu-theme pink-bliss-uwu)
                    (modus-themes modus-operandi-tinted))
-                 do (package-install package)
+                 ;; Build the list but do NOT call package-install here.
                  append theme-variants-I-like))
 
-  (setcdr (last my/themes) my/themes))
+  (setcdr (last my/themes) my/themes)
+
+  ;; Idempotent install checks — these 17 calls each spawn a subprocess
+  ;; just to confirm the package is already present.  Deferring is safe
+  ;; because the themes are already on disk; this only matters on a
+  ;; fresh machine.  Run (my/ensure-theme-packages) manually if needed.
+  (defun my/ensure-theme-packages ()
+    “Ensure all theme packages in `my/theme-packages' are installed.”
+    (interactive)
+    (dolist (pkg my/theme-packages)
+      (package-install pkg)))
+  (😴 my/ensure-theme-packages))
 
 (cl-defun my/load-theme (&optional (new-theme (completing-read "Theme: " (custom-available-themes))))
   "Disable all themes and load the given one ---read from user when called interactively."
@@ -1620,9 +1633,7 @@ themes (•̀ᴗ•́)و"
 
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-(unless noninteractive (my/toggle-theme))
-
-(unless noninteractive (my/load-theme 'pink-bliss-uwu))
+;; Startup theme is set further below (currently solarized-gruvbox-light).
 
 (when my/personal-machine?
 
@@ -1644,6 +1655,10 @@ themes (•̀ᴗ•́)و"
   ;; Let's ensure they're on our system
   ;; brew search "/font-/"   # List all fonts
 
+  ;; Idempotent install checks — fonts are already on the system; these 9
+  ;; subprocess calls just verify presence.  Safe to defer since the default
+  ;; font is set separately (below) and Emacs falls back gracefully.
+  (😴 progn
   ;; NOTE: No longer needed - fonts are now available directly in homebrew/cask
   ;; (shell-command "brew tap homebrew/cask-fonts")
   (system-packages-ensure "svn") ;; Required for the following font installs
@@ -1655,7 +1670,7 @@ themes (•̀ᴗ•́)و"
   (system-packages-ensure "font-monoid")
   (system-packages-ensure "font-menlo-for-powerline")
   (system-packages-ensure "font-fantasque-sans-mono")
-  (system-packages-ensure "font-ibm-plex")
+  (system-packages-ensure "font-ibm-plex"))
 
   ;; Use “M-x set-face-font RET default RET”, or...
   ;; (set-face-font 'default "Source Code Pro Light14")
@@ -1680,9 +1695,10 @@ fonts (•̀ᴗ•́)و"
   (global-set-key "\C-c\ F" 'my/toggle-font)
 
   ;; Default font; the “ignore-⋯” is for users who may not have the font.
-  (ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
-  (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
-  (ignore-errors (my/toggle-font "IBM Plex Mono 12")))
+;; (my/toggle-font "Fantasque Sans Mono 12")
+;; (my/toggle-font "Source Code Pro Light 14")
+(my/toggle-font "IBM Plex Mono 12")
+)
 
 (unless noninteractive
   ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
@@ -1724,16 +1740,18 @@ fonts (•̀ᴗ•́)و"
 (modify-syntax-entry ?> "w>")
 
 (use-package all-the-icons
-  ;; Install fonts only if they're not already installed.
-  ;; Source: https://github.com/domtronn/all-the-icons.el/issues/120#issuecomment-427172073
-  :config (let ((font-dest (cl-case window-system
-                             (x  (concat (or (getenv "XDG_DATA_HOME")            ;; Default Linux install directories
-                                             (concat (getenv "HOME") "/.local/share"))
-                                         "/fonts/"))
-                             (mac (concat (getenv "HOME") "/Library/Fonts/" ))
-                             (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
-            (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
-              (all-the-icons-install-fonts 'install-without-asking))))
+  :defer t
+  :config
+  ;; Idempotent font install — runs when the package eventually loads
+  ;; (e.g., via doom-modeline). Only matters on a fresh machine.
+  (let ((font-dest (cl-case window-system
+                     (x  (concat (or (getenv "XDG_DATA_HOME")
+                                     (concat (getenv "HOME") "/.local/share"))
+                                 "/fonts/"))
+                     (mac (concat (getenv "HOME") "/Library/Fonts/" ))
+                     (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
+    (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
+      (all-the-icons-install-fonts 'install-without-asking))))
 
 ;; [[file:init.org::*Show me the diff!][Show me the diff!:1]]
 (defun my/show-string-diff (string1 string2)
@@ -2308,15 +2326,7 @@ or press “v l 30 RET r” to view 30 entries."
 
 ;; [[file:init.org::*Configuration][Configuration:1]]
 ;; These defvars provide safe empty defaults.  The real values are
-;; set by private.el (loaded via idle timer or on-demand).
-;; See `my/private-file' for the path to private.el.
-
-(defvar my/private-file
-  (expand-file-name "../Dropbox/private.el" user-emacs-directory)
-  "Absolute path to the private configuration file.
-Resolved relative to `user-emacs-directory' so it works regardless
-of `default-directory'.  Loaded on-demand by the Gerrit/Jira agenda
-integration and at startup via idle timer.")
+;; set by private.el (loaded eagerly at startup; see §Separating Secrets).
 
 (defvar my\gerrit-ssh-command "/usr/bin/ssh"
   "Path to the SSH binary used for Gerrit queries.")
@@ -2395,6 +2405,10 @@ Keys: `:items' (list of `work-item' instances), `:timestamp'.")
 Guards against double-fetching: `my/agenda-work-refresh' is a
 no-op when this is non-nil.  Reset to nil by the coordinator
 `my/agenda--format-and-cache' (or on error).")
+
+(defvar my/agenda-work--on-complete nil
+  "One-shot callback invoked after the work-item cache is populated.
+Set before calling `my/agenda-work-refresh'; cleared after invocation.")
 
 (defvar my/agenda--pending-queries 0
   "Number of async Gerrit SSH queries still in flight.
@@ -2982,9 +2996,7 @@ caches the rendered output.  If the agenda buffer is live, it
 auto-refreshes to show the new data.
 
 Guards against double-fetching: if a fetch is already in progress,
-this is a no-op.  Also force-loads private.el if the Gerrit URL
-is still empty (handles the case where the agenda opens before
-the idle-timer-loaded private.el has run).
+this is a no-op.
 
 Can be called interactively via M-x or from the \"Refresh Work\"
 agenda button."
@@ -2994,12 +3006,9 @@ agenda button."
              my/agenda-work-fetching)
     (cl-return-from my/agenda-work-refresh))
   (when (s-blank? my\gerrit-base-url)
-    (load my/private-file t t) ;; noerror + nomessage
-    (when (s-blank? my\gerrit-base-url)
-      (message "Gerrit/Jira: my\\gerrit-base-url still empty after loading private.el")
-      (cl-return-from my/agenda-work-refresh)))
-  (message "Gerrit/Jira: starting async queries against %s..."
-           my\gerrit-ssh-host)
+    (message "Gerrit/Jira: my\\gerrit-base-url is empty — check private.el")
+    (cl-return-from my/agenda-work-refresh))
+  (message "Fetching Gerrit/Jira data — you'll see a dialog box when this time-consuming task is done…")
   (setq my/agenda-work-fetching t
         my/agenda--pending-queries 2
         my/agenda--attention-changes nil
@@ -3147,13 +3156,22 @@ Wrapped in `condition-case' so a failure does not leave
         (message "Gerrit/Jira: cached %d attn, %d mine, %d work-items"
                  (length attention) (length all-mine)
                  (length all-items))
+        (non-blocking-message-box
+         :title "Standup"
+         :content "Gerrit/Jira ready for your consumption!")
         ;; Refresh agenda if the buffer exists
         (when-let ((buf (get-buffer "*Org Agenda*")))
           (when (buffer-live-p buf)
             (with-current-buffer buf
-              (org-agenda-redo-all)))))
+              (org-agenda-redo-all))))
+        ;; Fire one-shot callback (e.g. my/standup opening the agenda)
+        (when my/agenda-work--on-complete
+          (let ((cb my/agenda-work--on-complete))
+            (setq my/agenda-work--on-complete nil)
+            (funcall cb))))
     (error
-     (setq my/agenda-work-fetching nil)
+     (setq my/agenda-work-fetching nil
+           my/agenda-work--on-complete nil)
      (message "Gerrit/Jira agenda update failed: %s"
               (error-message-string err)))))
 ;; Coordinator:1 ends here
@@ -3286,6 +3304,49 @@ manual refresh at any time, use the \"Refresh Work\" button or press
 
 (add-hook 'org-agenda-finalize-hook #'my/agenda-insert-work-sections)
 ;; Finalize hook + once-daily auto-fetch:1 ends here
+
+;; [[file:init.org::*Standup command][Standup command:1]]
+(defun my/standup ()
+  "Begin the workday: clock into standup, refresh work data, open agenda."
+  (interactive)
+  ;; 1. Open my-life.org and navigate to "Daily Standup Planning"
+  (find-file "~/Dropbox/my-life.org")
+  (widen)
+  (goto-char (point-min))
+  (unless (re-search-forward
+           "^\\*\\* .*Daily Standup Planning" nil t)
+    (error "Could not find '** ... Daily Standup Planning' heading"))
+  ;; 2. Clock in at the ** Daily Standup Planning heading
+  (beginning-of-line)
+  (org-clock-in)
+  (org-narrow-to-subtree)
+  ;; 3. Move past metadata to the first child heading
+  (org-end-of-meta-data t)
+  (unless (re-search-forward "^\\*\\*\\* " nil t)
+    (error "No child headings found under Daily Standup Planning"))
+  (goto-char (match-beginning 0))
+  ;; 4. Prepend today's entry
+  (insert (format-time-string "*** <%Y-%m-%d %a>\n\n\n"))
+  ;; 5. Refresh work-item cache; open agenda when done
+  (setq my/agenda-work--on-complete #'my/org-agenda)
+  (my/agenda-work-refresh))
+;; Standup command:1 ends here
+
+;; [[file:init.org::*Colleague Meeting Shortcuts][Colleague Meeting Shortcuts:1]]
+(setq org-default-notes-file my\notes-file)
+(setq org-agenda-files (list my\notes-file))
+(cl-loop for colleague in my\colleagues
+         for function-name = (intern (format "meet-with-%s" colleague))
+         for colleague-str = (symbol-name colleague)
+         for first-letter = (substring colleague-str 0 1)
+         do (eval `(bind-key ,(format "C-c m %s" first-letter)
+                             (defun ,function-name () (interactive)
+                               (find-file org-default-notes-file)
+                               (widen)
+                               (org-id-goto ,colleague-str)
+                               (org-clock-in)
+                               (org-narrow-to-subtree)))))
+;; Colleague Meeting Shortcuts:1 ends here
 
 ;; [[file:init.org::*Show me the agenda when I've been idle for 10 minutes][Show me the agenda when I've been idle for 10 minutes:1]]
 ;; Stop this with:  (cancel-function-timers 'my/pop-up-agenda-timer)
@@ -3612,7 +3673,7 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
 ;; Implementation:1 ends here
 
 ;; [[file:init.org::*Implementation][Implementation:2]]
-(use-package lf)
+(use-package lf :defer t)
 ;; TODO: Add the line “(declare (indent defun))” right after the docstring of “lf-define”,
 ;; so that Emacs indents it like a “defun”.
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
@@ -4095,7 +4156,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Pretty Lists Markers:1 ends here
 
 ;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:1]]
-(defvar-local rasmus/org-at-src-begin -1
+  (defvar-local rasmus/org-at-src-begin -1
     "Variable that holds whether last position was a ")
 
   (defvar rasmus/ob-header-symbol ?☰
@@ -4271,9 +4332,12 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; [[file:init.org::*Now C-c C-x C-v shows remote images inline, neato!][Now C-c C-x C-v shows remote images inline, neato!:1]]
 (use-package org-remoteimg
   :vc (:url "https://github.com/gaoDean/org-remoteimg")
-  :custom ((url-cache-directory "~/emacs.d/.cache/")
-           (url-automatic-caching t)
-           (org-display-remote-inline-images 'cache)))
+  :defer t
+  :init
+  ;; These are plain global vars — no package load needed.
+  (setq url-cache-directory "~/emacs.d/.cache/")
+  (setq url-automatic-caching t)
+  (setq org-display-remote-inline-images 'cache))
 ;; Now C-c C-x C-v shows remote images inline, neato!:1 ends here
 
 ;; [[file:init.org::#Draw-pretty-unicode-tables-in-org-mode][Draw pretty unicode tables in org-mode:1]]
@@ -4590,8 +4654,10 @@ the character 𝓍 before and after the selected text."
 ;; Fill-mode ---Word Wrapping:3 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:1]]
-(unless noninteractive (system-packages-ensure "aspell"))
-(unless noninteractive (system-packages-ensure "wordnet"))
+;; Idempotent install checks — flyspell is lazy-loaded via hooks,
+;; so aspell/wordnet are never needed at startup.
+(😴 system-packages-ensure "aspell")
+(😴 system-packages-ensure "wordnet")
 ;; Fix spelling as you type ---thesaurus & dictionary too!:1 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:2]]
@@ -4602,8 +4668,11 @@ the character 𝓍 before and after the selected text."
 ;; Fix spelling as you type ---thesaurus & dictionary too!:2 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:3]]
-(setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
+;; Defer ispell setup — the `which aspell` subprocess is ~50ms and
+;; flyspell only activates on text/org/prog-mode hooks, never at startup.
+(with-eval-after-load 'ispell
+  (setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
+  (setq ispell-dictionary "en_GB"))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:3 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:5]]
@@ -4619,11 +4688,13 @@ the character 𝓍 before and after the selected text."
 ;; Fix spelling as you type ---thesaurus & dictionary too!:6 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:7]]
-(setq ispell-silently-savep t)
+(with-eval-after-load 'ispell
+  (setq ispell-silently-savep t))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:7 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:8]]
-(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
+(with-eval-after-load 'ispell
+  (setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws"))
 ;; Fix spelling as you type ---thesaurus & dictionary too!:8 ends here
 
 ;; [[file:init.org::#Fix-spelling-as-you-type-thesaurus-dictionary-too][Fix spelling as you type ---thesaurus & dictionary too!:9]]
@@ -4725,18 +4796,23 @@ the character 𝓍 before and after the selected text."
 ;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
 ;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
 ;; then loading that!
+;; Defer agda-input loading — the load-file + quail/latin-ltx cascade
+;; costs ~150ms.  The input method is only needed once we're actually
+;; typing in a buffer, so we load the file lazily via the hook.
 (-let [agda-input.el "~/.emacs.d/elpa/agda-input.el"]
   (unless (f-exists? agda-input.el)
-    (url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" agda-input.el))
-  (load-file agda-input.el))
+    (url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" agda-input.el)))
 
 ;; MA: This results in "Package cl is deprecated" !?
 (unless noninteractive
-  (use-package agda-input
-  :ensure nil ;; I have it locally.
-  :demand t
-  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-  :custom (default-input-method "Agda")))
+  (setq default-input-method "Agda")
+  (defun my/setup-agda-input ()
+    "Load agda-input on first text/prog buffer, then activate it."
+    (unless (featurep 'agda-input)
+      (load-file "~/.emacs.d/elpa/agda-input.el"))
+    (set-input-method "Agda"))
+  (add-hook 'text-mode-hook #'my/setup-agda-input)
+  (add-hook 'prog-mode-hook #'my/setup-agda-input))
   ;; Now C-\ or M-x toggle-input-method turn it on and offers
 
 
@@ -4755,11 +4831,12 @@ the character 𝓍 before and after the selected text."
 ;; Unicode Input via Agda Input:6 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:7]]
-(unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
+(with-eval-after-load 'agda-input
+  (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
 ;; Unicode Input via Agda Input:7 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:8]]
-(unless noninteractive
+(with-eval-after-load 'agda-input
 (cl-loop for item
       in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
           ("(" "﴾")
@@ -4817,7 +4894,7 @@ the character 𝓍 before and after the selected text."
 ;; Unicode Input via Agda Input:8 ends here
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:9]]
-(unless noninteractive
+(with-eval-after-load 'agda-input
 ;; Add to the list of translations using “emot” and the given, more specfic, name.
 ;; Whence, \emot shows all possible emotions.
 (cl-loop for emot
@@ -4841,7 +4918,7 @@ the character 𝓍 before and after the selected text."
 
 ;; [[file:init.org::#Unicode-Input-via-Agda-Input][Unicode Input via Agda Input:10]]
 ;; activate translations
-(unless noninteractive (agda-input-setup))
+(with-eval-after-load 'agda-input (agda-input-setup))
 ;; Unicode Input via Agda Input:10 ends here
 
 ;; [[file:init.org::#Increase-decrease-text-size][Increase/decrease text size:1]]
@@ -4869,10 +4946,11 @@ the character 𝓍 before and after the selected text."
 ;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
 ;;
 (use-package visual-regexp
-  :bind* ("M-%" . (lambda (&optional prefix)
-                    "C-u M-% to do regexp replace, without querying."
-                    (interactive "P")
-                    (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+  :defer t
+  :bind ("M-%" . (lambda (&optional prefix)
+                   "C-u M-% to do regexp replace, without querying."
+                   (interactive "P")
+                   (call-interactively (if prefix #'vr/replace #'vr/query-replace)))))
 ;; visual-regexp:1 ends here
 
 ;; [[file:init.org::#HTML-Org-mode][HTML ⇐ Org-mode:1]]
@@ -4895,11 +4973,9 @@ the character 𝓍 before and after the selected text."
 
 ;; [[file:init.org::*Perfect-Margin: A clean writing environment][Perfect-Margin: A clean writing environment:1]]
 (use-package perfect-margin
-  :custom (perfect-margin-visible-width 128)
-  :config
-  ;; enable perfect-mode
-  (perfect-margin-mode t)
-  ;; auto-center everything --i.e., do not ignore any kind of windows
+  :hook (after-init . perfect-margin-mode)
+  :init
+  (setq perfect-margin-visible-width 128)
   (setq perfect-margin-ignore-filters nil)
   (setq perfect-margin-ignore-regexps nil))
 
@@ -4985,8 +5061,7 @@ the character 𝓍 before and after the selected text."
 
 ;; useful for [link] and *formatted text*.
 ;; Make invisible parts of Org elements appear visible.
-(unless my/personal-machine?
-  (use-package org-appear))
+;; org-appear is already configured via use-package :hook org-mode above.
 ;; ✨ Make Org properties look nice -- pretty emphasis markers:2 ends here
 
 ;; [[file:init.org::*Colourise clocking tasks with a block][Colourise clocking tasks with a block:1]]
@@ -5145,6 +5220,16 @@ the character 𝓍 before and after the selected text."
   :hook (org-mode . org-superstar-mode))
 ;; Org-superstar:1 ends here
 
+(bind-key*
+ "C-c SPC"
+ (defun my/jump-to-clocked-task (&optional prefix)
+   "Jump to the currently clocked-in entry, or to the most recently clocked one.
+
+With prefix arg, offer recently clocked tasks for selection."
+   (interactive "P")
+   (org-clock-goto prefix)
+   (org-narrow-to-subtree)))
+
 ;; [[file:init.org::*Install][Install:1]]
 ;; M-x agent-shell: Chat with Claude Code inside an Emacs buffer.
 ;; Uses browser login, so no API key needed — works with Claude Pro/Max subscription.
@@ -5155,14 +5240,20 @@ the character 𝓍 before and after the selected text."
     "Return non-nil if SEQUENCE is empty."
     (= 0 (seq-length sequence)))
 
-;; agent-shell expects the claude-agent-acp binary, which is  provided by the @zed-industries/claude-agent-acp npm package.
-(unless (executable-find "claude-agent-acp")
+;; agent-shell expects the claude-agent-acp binary, which is provided by the
+;; @zed-industries/claude-agent-acp npm package.
+;; Deferred: The `executable-find' guard makes this a no-op once installed,
+;; but npm startup overhead is ~200ms even for a no-op.  agent-shell is
+;; interactive-only, so deferring is safe.
+(😴 unless (executable-find "claude-agent-acp")
   (shell-command "/opt/homebrew/bin/npm install -g @zed-industries/claude-agent-acp"))
 
 (use-package agent-shell
-  :custom
-  (agent-shell-anthropic-authentication
-   (agent-shell-anthropic-make-authentication :login t)))
+  :defer t
+  :config
+  ;; Authentication setup — runs when agent-shell first loads.
+  (setq agent-shell-anthropic-authentication
+        (agent-shell-anthropic-make-authentication :login t)))
 
 ;; ⚙️ Add “ .agent-shell/ ” to “ ~/.gitignore_global” to ignore the transcripts of your conversations from Git
 ;; Install:1 ends here
@@ -5217,18 +5308,20 @@ the character 𝓍 before and after the selected text."
       (agent-shell))))))
 
 ;; I dislike the “Claude Code>” prompt, it's kinda ugly, so my above command calls on this config:
-(-let [my/custom-claude-prompt "λ🤖λ "]
-  (setq my/custom-claude-config
-        (agent-shell-make-agent-config
-         :identifier 'claude-code
-         :mode-line-name "Claude Code"
-         :buffer-name "Claude Code"
-         :shell-prompt my/custom-claude-prompt
-         :shell-prompt-regexp my/custom-claude-prompt
-         :icon-name "anthropic.png"
-         :client-maker (lambda (buffer)
-                         (agent-shell-anthropic-make-claude-client :buffer buffer))
-         :install-instructions "See https://github.com/zed-industries/claude-agent-acp for installation.")))
+;; Wrapped in with-eval-after-load to avoid triggering agent-shell autoload at startup.
+(with-eval-after-load 'agent-shell
+  (-let [my/custom-claude-prompt “λ🤖λ “]
+    (setq my/custom-claude-config
+          (agent-shell-make-agent-config
+           :identifier 'claude-code
+           :mode-line-name “Claude Code”
+           :buffer-name “Claude Code”
+           :shell-prompt my/custom-claude-prompt
+           :shell-prompt-regexp my/custom-claude-prompt
+           :icon-name “anthropic.png”
+           :client-maker (lambda (buffer)
+                           (agent-shell-anthropic-make-claude-client :buffer buffer))
+           :install-instructions “See https://github.com/zed-industries/claude-agent-acp for installation.”))))
   
 ;; The names of the AI buffers seem to be tied to the AI processes, so we can't just rename buffers.
 ;; However, after any interaction, AI buffer headers are updated, so we hook into that mechanism to
@@ -5244,10 +5337,11 @@ The label is shown in the header and the session switch menu."
     (user-error "Not in an agent-shell buffer"))
   (setq my/claude-session-label (if (string-empty-p label) nil label)))
 
-(advice-add 'agent-shell--make-header-model :filter-return
-            (lambda (model) (when my/claude-session-label
-                              (setf (alist-get :buffer-name model)
-                                    (format "Claude Code: %s" my/claude-session-label))) model))
+(with-eval-after-load 'agent-shell
+  (advice-add 'agent-shell--make-header-model :filter-return
+              (lambda (model) (when my/claude-session-label
+                                (setf (alist-get :buffer-name model)
+                                      (format "Claude Code: %s" my/claude-session-label))) model)))
 ;; Opening Claude AI:1 ends here
 
 ;; [[file:init.org::*Copy AI Text As Org][Copy AI Text As Org:1]]
@@ -5279,25 +5373,24 @@ overlays-in END..(+END 3) to skip pandoc for code blocks."
                              "-f" "markdown" "-t" "org")
         (buffer-string)))))
 
-(advice-add 'agent-shell--filter-buffer-substring :around #'my/make-agent-shell-copy-be-editable-org-mode)
+(with-eval-after-load 'agent-shell
+  (advice-add 'agent-shell--filter-buffer-substring :around #'my/make-agent-shell-copy-be-editable-org-mode))
 ;; Copy AI Text As Org:1 ends here
 
 ;; [[file:init.org::*Agent-Shell Buffer Cheatsheet][Agent-Shell Buffer Cheatsheet:1]]
-;; Some useful info in the AI buffer header: [Agent | Model | Thinking Mode | Directory ]
-(setq agent-shell-header-style 'text)
-
-;; Don't confirm when I interrupt, just stop.
+;; All agent-shell config deferred — the bare setq of agent-shell-*
+;; variables would trigger autoloading the package at startup.
 (with-eval-after-load 'agent-shell
+  ;; Some useful info in the AI buffer header: [Agent | Model | Thinking Mode | Directory ]
+  (setq agent-shell-header-style 'text)
+
+  ;; Don't confirm when I interrupt, just stop.
   (define-key agent-shell-mode-map (kbd "C-c C-c")
-    (lambda () (interactive) (agent-shell-interrupt t))))
+    (lambda () (interactive) (agent-shell-interrupt t)))
 
-;; Expand tool use / thought process by default (instead of collapsed)
-(setq agent-shell-tool-use-expand-by-default nil)
-(setq agent-shell-thought-process-expand-by-default nil)
-
-;; Expand tool use / thought process by default (instead of collapsed)
-;; (setq agent-shell-tool-use-expand-by-default t)
-;; (setq agent-shell-thought-process-expand-by-default t)
+  ;; Expand tool use / thought process by default (instead of collapsed)
+  (setq agent-shell-tool-use-expand-by-default nil)
+  (setq agent-shell-thought-process-expand-by-default nil))
 ;; Agent-Shell Buffer Cheatsheet:1 ends here
 
 ;; [[file:init.org::*Done!][Done!:1]]
@@ -5389,7 +5482,7 @@ method."
 ;; Bookmarks: Quick naviagation to commonly visited locations:1 ends here
 
 ;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:3]]
-(use-package org-bookmark-heading)
+(use-package org-bookmark-heading :defer t)
 ;; Bookmarks: Quick naviagation to commonly visited locations:3 ends here
 
 ;; [[file:init.org::*Bookmarks: Quick naviagation to commonly visited locations][Bookmarks: Quick naviagation to commonly visited locations:4]]
@@ -5421,13 +5514,13 @@ method."
 ;; Working with massive files: my-life∙org:1 ends here
 
 ;; [[file:init.org::#Show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window:1]]
-(use-package org-sticky-header
- :hook (org-mode . org-sticky-header-mode)
- :config
- (setq-default
-  org-sticky-header-full-path 'full
-  ;; Child and parent headings are seperated by a /.
-  org-sticky-header-outline-path-separator " ▷ "))
+ (use-package org-sticky-header
+  :hook (org-mode . org-sticky-header-mode)
+  :config
+  (setq-default
+   org-sticky-header-full-path 'full
+   ;; Child and parent headings are seperated by a /.
+   org-sticky-header-outline-path-separator " ▷ "))
 ;; Show off-screen heading at the top of the window:1 ends here
 
 ;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:1]]

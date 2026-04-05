@@ -1204,6 +1204,47 @@ Speaking of local variables, let's always load ones we've already marked as safe
 :End:
 #+end_details
 
+** Separating Secrets from Configuration: =private.el=
+:PROPERTIES:
+:CUSTOM_ID: Separating-Secrets-from-Configuration
+:END:
+
+A public-facing config inevitably needs confidential data: API tokens, OAuth
+secrets (e.g., ~my\gcal-personal-client-id~), internal URLs (e.g.,
+~my\jira-base-url~), colleague names for meeting-shortcut keybindings (e.g.,
+~my\colleagues~) work-specific paths.  We keep all of that in a companion file
+---=~/Dropbox/private.el=--- that is *not* checked into version control.  We load it
+eagerly at startup:
+
+#+begin_src emacs-lisp
+(load "~/Dropbox/private.el" 'no-error 'no-message)
+#+end_src
+
+Because =private.el= contains *only variable assignments* (~setq~ / ~defvar~)
+--- no heavy packages, no network calls, no side-effects beyond binding symbols
+--- loading it eagerly is safe and essentially instant.  This way every section
+that follows can reference private variables without deferral gymnastics.
+
+*Naming convention:*  Public symbols defined in this file use a forward-slash
+prefix --- ~my/weather~, ~my/jump-to-clocked-task~.  Private variables set by
+=private.el= use a *backslash* prefix instead --- ~my\birthday~, ~my\gerrit-base-url~.
+The visual distinction makes it immediately obvious, at any call site, whether a
+value is public (defined here in =init.org=) or confidential (injected by
+=private.el=).
+
+#+begin_box "Cautionary tale: private code rots"
+It is tempting to stash entire functions, ~use-package~ blocks, and transient
+menus in the private file --- "it has secrets, so the whole thing goes there."
+We have transpired through exactly this:  =private.el= ballooned to 300+ lines
+of logic that was invisible to the literate org file, never documented, rarely
+reviewed, and increasingly stale.  The fix was to extract every secret into a
+terse variable and move the logic back into =init.org= where it benefits from
+headings, prose, and the discipline of tangling.
+
+*Rule of thumb:*  If a block of code contains one secret, don't exile the
+whole block.  Extract the secret into a variable, keep the logic public.
+#+end
+
 ** Who am I?
 :PROPERTIES:
 :CUSTOM_ID: Who-am-I
@@ -1550,7 +1591,7 @@ us ensure these exist using the ~:ensure-system-package~ keyword extension.
 Let's obtain the extension.
 #+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Auto installing OS system packages
-(use-package system-packages)
+(use-package system-packages :defer t)
 
 ;; Ensure our operating system is always up to date.
 ;; This is run whenever we open Emacs & so wont take long if we're up to date.
@@ -1657,7 +1698,8 @@ window manager for macOS along the lines of xmonad.”
 ;; ⇒ Move the screen capture frame while recording.
 ;; ⇒ Pause and restart recording, with optional inserted text messages.
 ;; ⇒ Global hotkey (shift+space) to toggle pausing while recording
-(unless noninteractive (system-packages-ensure "licecap")) ;; Use: ⌘-SPACE licecap
+;; Idempotent install check — no need to block startup for it.
+(😴 system-packages-ensure "licecap") ;; Use: ⌘-SPACE licecap
 
 ;; Pack, ship and run any application as a lightweight container
 ;; (system-packages-ensure "docker")
@@ -1667,7 +1709,8 @@ window manager for macOS along the lines of xmonad.”
 ;; (system-packages-ensure "lens")
 ;; Platform built on V8 to build network applications
 ;; Also known as: node.js, node@16, nodejs, npm
-(unless noninteractive (system-packages-ensure "node")) ;; https://nodejs.org/
+;; Idempotent install check — no need to block startup for it.
+(😴 system-packages-ensure "node") ;; https://nodejs.org/
 ;; Nice: https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm/
 ;; Manage multiple Node.js versions
 ;; (shell-command "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash")
@@ -2359,7 +2402,8 @@ Lets also use doc:helm-do-grep-ag ([[kbd:C-x c M-g a]]) *search all files in the
    - Shows matches live as you type
    - Very helpful when looking for a definition of something
 #+begin_src emacs-lisp :tangle init.el
-(unless noninteractive (system-packages-ensure "ag"))
+;; Idempotent install check — ag is already on the system; defer the verification.
+(😴 system-packages-ensure "ag")
 #+end_src
 
 Note: If I want to do “find matches of a regex, then replace them like so” I
@@ -2414,9 +2458,15 @@ org-mode setup for a file.
 
 #+begin_src emacs-lisp :tangle init.el
 (use-package emacs
-    :ensure org-contrib
-    :config (require 'ox-extra)
-            (ox-extras-activate '(ignore-headlines)))
+    :ensure org-contrib)
+
+;; ox-extra is only needed during Org export — the `ignore-headlines'
+;; feature strips headings tagged :ignore: at export time.  Loading it
+;; eagerly pulls in org-contrib and Org itself (~0.9s).  Deferring to
+;; first export is safe since no startup code depends on it.
+(with-eval-after-load 'ox
+  (require 'ox-extra)
+  (ox-extras-activate '(ignore-headlines)))
 #+end_src
 
 ~org-plus-contrib~ contain the files that are included with Emacs plus all
@@ -2781,7 +2831,8 @@ Also, there's the [[https://tldr.sh/][tldr]] tool which aims to be like terse ma
 commandline-tools in the style of practical example uses cases: ~tldr 𝒳~ yields a
 number of ways you'd actually use 𝒳. ( In Emacs, [[kbd:C-t tldr 𝒳 ⟨return⟩]]. )
 #+BEGIN_SRC emacs-lisp
-(unless noninteractive (system-packages-ensure "tldr"))
+;; Idempotent install check — defer since tldr is never needed at startup.
+(😴 system-packages-ensure "tldr")
 #+END_SRC
 *** COMMENT Homemade attempt before learning about shell-pop
 :PROPERTIES:
@@ -2822,7 +2873,8 @@ more generally =hr p₁ p₂ … pₙ= will produce /n/-many horizontal lines wi
 $i^{th}$-line having pattern =pᵢ=.
 
 #+begin_src emacs-lisp
-(unless noninteractive (system-packages-ensure "hr")) ;; ≈ brew install hr
+;; Idempotent install check — defer since hr is a shell utility, not needed at startup.
+(😴 system-packages-ensure "hr") ;; ≈ brew install hr
 #+end_src
 
 ** Summary of Utilities Provided
@@ -3137,7 +3189,8 @@ details and =tab= to see children items, usually.
   #+begin_src emacs-lisp
 ;; When we invoke magit-status, show green/red the altered lines, with extra
 ;; green/red on the subparts of a line that got alerted.
-(unless noninteractive (system-packages-ensure "git-delta"))
+;; Idempotent install check — magit-delta is lazy-loaded via :hook anyway.
+(😴 system-packages-ensure "git-delta")
 (use-package magit-delta
   :hook (magit-mode . magit-delta-mode))
 
@@ -3252,9 +3305,12 @@ First, let's setup our git credentials.
 ;; Only set these creds up if there is no Git email set up ---ie at work I have an email set up, so don't
 ;; override it with my personal creds.
 ;;
+;; Deferred: These write to ~/.gitconfig which persists across sessions,
+;; so the check is almost always a no-op.  No reason to block startup.
+;;
 ;; See here for a short & useful tutorial:
 ;; https://alvinalexander.com/git/git-show-change-username-email-address
-(when (equal "" (shell-command-to-string "git config user.email "))
+(😴 when (equal "" (shell-command-to-string "git config user.email "))
   (shell-command (format "git config --global user.name \"%s\"" user-full-name))
   (shell-command (format "git config --global user.email \"%s\"" user-mail-address)))
 #+END_SRC
@@ -3267,8 +3323,10 @@ underlying editor
 (require 'server)
 (unless (server-running-p) (server-start))
 
-;; Or use it whenever we are editing a git message from the terminal
-(shell-command "git config --global core.editor 'emacsclient -t -a=\\\"\\\"'")
+;; Or use it whenever we are editing a git message from the terminal.
+;; Deferred: This is idempotent (same value every time) and persists
+;; in ~/.gitconfig, so it only matters on a fresh machine.
+;; Diabled: (😴 shell-command "git config --global core.editor 'emacsclient -t -a=\\\"\\\"'")
 #+END_SRC
 This will start a daemon if there is not already one running ---The ~-a~ option---
 and opens a new Emacs frame on the current terminal ---The ~-t~ option.
@@ -3397,7 +3455,7 @@ historic versions of a file. The following utility allows us to
 kbd:M-x_git-timemachine on a file and use kbd:p/n/g/q to look at previous, next,
 goto arbitrary historic versions, or quit.
 #+BEGIN_SRC emacs-lisp
-(use-package git-timemachine )
+(use-package git-timemachine :defer t)
 #+END_SRC
 If we want to roll back to a previous version, we just doc:write-file or
 kbd:C-x_C-s as usual! The power of text!
@@ -4215,7 +4273,7 @@ should jump to the first entry.
 ;; M-< and M-> jump to first and final semantic units.
 ;; If pressed twice, they go to physical first and last positions.
 (use-package beginend
-  :config (beginend-global-mode))
+  :hook (after-init . beginend-global-mode))
 #+END_SRC
 ** Folding within a subtree
 :PROPERTIES:
@@ -5219,7 +5277,7 @@ rather than forcing their eyes to shift up&down when writing&evaluating.
 
 #+begin_src emacs-lisp
 ;; Evaluation Result OverlayS for Emacs Lisp
-(use-package eros :init (eros-mode t))
+(use-package eros :hook (after-init . eros-mode))
 #+end_src
 
 # In particular, this gives us the Lisp function
@@ -5498,7 +5556,8 @@ choice does not exist, we can [[https://github.com/emacsorphanage/quickrun#user-
 
 Example...
 #+begin_src emacs-lisp
-(system-packages-ensure "rust") ;; Rust Compiler
+;; Idempotent install check — Rust is rarely used interactively at startup.
+(😴 system-packages-ensure "rust") ;; Rust Compiler
 ;; Select the following then press C-c C-r: fn main() { println!("Hello, World!"); }
 #+end_src
 
@@ -5579,7 +5638,7 @@ edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected reg
 😉]
 
 #+begin_src emacs-lisp
-(use-package separedit)
+(use-package separedit :defer t)
 ;;
 ;; # Example Usage
 ;;
@@ -5658,12 +5717,12 @@ edit. Actually, I've altered by ~⌘-e~ setup to also account for a selected reg
 #+begin_src emacs-lisp
 ;; In the indirect buffer, make ⌘-e finish editing.
 (use-package edit-indirect
-  :config (bind-key "s-e"
-                    (lambda ()
-                      (interactive)
-                      (or (ignore-errors (call-interactively #'separedit))
-                          (call-interactively #'edit-indirect-commit)))
-                    #'edit-indirect-mode-map))
+  :defer t
+  :bind (:map edit-indirect-mode-map
+         ("s-e" . (lambda ()
+                    (interactive)
+                    (or (ignore-errors (call-interactively #'separedit))
+                        (call-interactively #'edit-indirect-commit))))))
 
 ;; I also have “s-e” bound to `org-edit-src-exit'.
 (advice-add 'org-edit-src-exit :before-until
@@ -5738,7 +5797,7 @@ Src: https://scripter.co/splitting-an-org-block-into-two/"
 
 I'd like to [[https://github.com/andreasjansson/language-detection.el][guess the language]] I'm in, when working with strings.
 #+begin_src emacs-lisp
-(use-package language-detection)
+(use-package language-detection :defer t)
 ;; Usage: M-x language-detection-buffer ⇒ Get programming language of current buffer
 ;; Also, (language-detection-string "select * from t") ;; ⇒ sql
 
@@ -5793,7 +5852,8 @@ then more to get the current section.
 
 #+begin_src emacs-lisp
 (use-package expand-region
-  :bind ("s-r" . #'er/expand-region))
+  :defer t
+  :bind ("s-r" . er/expand-region))
 #+end_src
 
 You can watch an introductory ~3 minute video to expand-region at [[http://emacsrocks.com/e09.html][Emacs Rocks!]].
@@ -5891,10 +5951,11 @@ some example usage of that method.
 
 #+begin_src emacs-lisp
 (use-package elisp-demos
-  :config
-  ;; Show demos when I do a `C-h o'.
-  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update)
-  ;; Show demos in tooltips when I pause to select a completion, in Emacs Lisp mode.
+  :defer t
+  :init
+  ;; Advice wrappers load elisp-demos on first C-h o / describe-function.
+  (with-eval-after-load 'helpful
+    (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
   (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1))
 #+end_src
 
@@ -5945,7 +6006,8 @@ Let's actually get some repos locally, and use: ~M-x my/cheatsheet~ to view the 
     | /⚡ Never open your browser to look for help again ⚡/ |
 
 #+begin_src emacs-lisp
-(system-packages-ensure "howdoi")
+;; Idempotent install check — howdoi is invoked interactively, never at startup.
+(😴 system-packages-ensure "howdoi")
 
 (cl-defun howdoi (&optional show-full-answer)
   "Instantly insert coding answers.
@@ -6113,12 +6175,12 @@ A comment box sometimes increases the size of a file more than I'd like, or more
 As such, let's try [[https://github.com/WJCFerguson/banner-comment][banner comments]]:
 - GIF: https://github.com/WJCFerguson/banner-comment/blob/35d3315683d3f97605207691b77e9f447af18fe2/demo.png
 #+begin_src emacs-lisp
-(use-package banner-comment)
+(use-package banner-comment :defer t)
 #+end_src
 
 Pretty slick!
 
-** Text Folding ---Selectively displaying portions of a program
+** COMMENT Text Folding ---Selectively displaying portions of a program :Disabled:
 :PROPERTIES:
 :CUSTOM_ID: Text-Folding
 :END:
@@ -6575,7 +6637,9 @@ including JS, TS, HTML, CSS, JSON, Vue, Markdown, and YAML.
 #+begin_src emacs-lisp
 ;; For JavaScript prettification: It automatically inserts semicolons, forces newlines, inserts parens, etc.
 ;; Lots of redundant stuff, but stuff to make it easy to work with others.
-(shell-command "npm install --global prettier")
+;; Deferred: npm startup is ~200ms even when prettier is already installed.
+;; Prettier is only used on-save or on-demand, never at startup.
+(😴 shell-command "npm install --global prettier")
 ;; Specific package to do only JS prettification: https://github.com/prettier/prettier-emacs
 #+end_src
 
@@ -6657,7 +6721,7 @@ For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifi
 
 #+begin_src emacs-lisp
 (use-package color-identifiers-mode
-  :config (global-color-identifiers-mode))
+  :hook (after-init . global-color-identifiers-mode))
 
 ;; Sometimes just invoke: M-x color-identifiers:refresh
 #+END_SRC
@@ -6686,7 +6750,7 @@ Here are further reads:
 
 #+begin_src emacs-lisp
 (use-package highlight-quoted
-  :config (add-hook 'emacs-lisp-mode-hook 'highlight-quoted-mode))
+  :hook (emacs-lisp-mode . highlight-quoted-mode))
 
 ;; If everything worked fine, then “ 'b ” below should be coloured nicely in Emacs Lisp mode.
 (when nil
@@ -6707,16 +6771,15 @@ Lightweight syntax highlighting improvement for numbers and escape sequences (e.
 (use-package highlight-escape-sequences
   :hook ((prog-mode . hes-mode)
          (separedit-double-quote-string-mode . hes-mode)) ;; Wont work since this mode has no font-lock-builtin-face
-  :config
+  :init
   ;; Colour the escapes as if they were builtin keywords.
+  ;; Plain `put` — no package load needed.
   (put 'hes-escape-backslash-face 'face-alias 'font-lock-builtin-face)
   (put 'hes-escape-sequence-face 'face-alias 'font-lock-builtin-face))
 
 
-;; TODO: My Emacs seems to have trouble loading the following and so I'm doint it manually.
-(load-file "~/.emacs.d/elpa/highlight-escape-sequences-20201214.1730/highlight-escape-sequences.el")
-(load-file "~/.emacs.d/elpa/parent-mode-20240210.1906/parent-mode.el")
-(load-file "~/.emacs.d/elpa/highlight-numbers-20181013.1744/highlight-numbers.el")
+;; The use-package :hook declarations above already autoload these
+;; packages when prog-mode activates — no manual load-file needed.
 
 ;; If the above two worked fine, then you should see \n and 3 highlighted below
 (when nil "Look: 1 and \\ and \n 2" (setq three 3))
@@ -6733,7 +6796,6 @@ blocks we use ~C-c '~.
 #+BEGIN_SRC emacs-lisp
 ;; Emacs Lisp specific
 (use-package highlight-defined :hook emacs-lisp-mode)
-(load-file "~/.emacs.d/elpa/highlight-defined-20210411.222/highlight-defined.el")
 #+END_SRC
 
 Super helpful in making my Emacs configuration: If a name is not highlighted,
@@ -7802,7 +7864,8 @@ simple if I just wrote it out myself rather than tweaking an existing system.
 
 
 ** Tree cmd, also treemacs for navigating a new repository :RelocateToDiredSection:
-(system-packages-ensure "tree")
+;; Idempotent install check — tree is a shell utility, not needed at startup.
+(😴 system-packages-ensure "tree")
 - A useful way to get an overview of a new repository.
 - Alternatively, a nice way to quickly see what's at the current level and all subdirectories.
 - =tree | ls=
@@ -7842,11 +7905,14 @@ We can use ~C-x o~ to switch to the ‘o’ther window, and ~C-u 𝓃 C-x o~ to 
 the 𝓃-th next clockwise window, but using ~s-↑,↓,←,→~ may be faster.
 
 #+BEGIN_SRC emacs-lisp
-(use-package windmove
-  :config ;; use command key on Mac
-          (windmove-default-keybindings 'super)
-          ;; wrap around at edges
-          (setq windmove-wrap-around t))
+;; Disabled: s-←/→/↑/↓ window switching — not actively used.
+;; Re-enable by uncommenting:
+;; (use-package windmove
+;;   :bind (("s-<up>" . windmove-up)
+;;          ("s-<down>" . windmove-down)
+;;          ("s-<left>" . windmove-left)
+;;          ("s-<right>" . windmove-right))
+;;   :init (setq windmove-wrap-around t))
   #+END_SRC
 *** [C-u]-M-TAB to move between buffers
 :PROPERTIES:
@@ -9134,12 +9200,11 @@ primary tools.
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
 
-;; Open my-life.org on startup instead of *scratch*
+;; Open my-life.org on startup.
 (setq initial-buffer-choice
       (lambda ()
         (let ((buf (find-file-noselect "~/Dropbox/my-life.org")))
-          (with-current-buffer buf
-            (font-lock-update))
+          (with-current-buffer buf (font-lock-update))
           buf)))
 
 (defun display-startup-echo-area-message ()
@@ -9225,24 +9290,17 @@ doc:doom-modeline-def-modeline and doc:doom-modeline-set-modeline.
 NOTE: We need to run =M-x= doc:nerd-icons-install-fonts for doom-modeline to use pretty icons ---then restart Emacs.
 #+begin_src emacs-lisp :tangle init.el
 ;; The modeline looks really nice with doom-themes, e.g., doom-solarised-light.
+;; doom-modeline must load eagerly — deferring via :hook after-init
+;; triggers a SIGSEGV in face_for_font (Emacs 30.1 bug: the font
+;; subsystem isn't ready when after-init hooks fire).
 (use-package doom-modeline
-  :config (doom-modeline-mode))
-
-  ;; Use minimal height so icons still fit; modeline gets slightly larger when
-  ;; buffer is modified since the "save icon" shows up.  Let's disable the icon.
-  ;; Let's also essentially disable the hud bar, a sort of progress-bar on where we are in the buffer.
+  :config (doom-modeline-mode)
   (setq doom-modeline-height 21)
   (setq doom-modeline-buffer-state-icon nil)
   (setq doom-modeline-hud t)
   (setq doom-modeline-bar-width 1)
-
-  ;; Show 3 Flycheck numbers: “red-error / yellow-warning / green-info”, which
-  ;; we can click to see a listing.
-  ;; If not for doom-modeline, we'd need to use flycheck-status-emoji.el.
   (setq doom-modeline-checker-simple-format nil)
-
-  ;; Don't display the buffer encoding, E.g., “UTF-8”.
-  (setq doom-modeline-buffer-encoding nil)
+  (setq doom-modeline-buffer-encoding nil))
 
   ;; Inactive buffers' modeline is greyed out.
   ;; (let ((it "Source Code Pro Light" ))
@@ -9445,7 +9503,14 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
 
 #+BEGIN_SRC emacs-lisp :tangle init.el
 ;; Infinite list of my commonly used themes.
-;; We skip theme installation in batch mode (e.g., CI) — no display, no point.
+;; We skip theme setup in batch mode (e.g., CI) — no display, no point.
+(defvar my/theme-packages
+  '(doom-themes solarized-theme stimmung-themes shanty-themes
+    apropospriate-theme tao-theme leuven-theme material-theme
+    moe-theme organic-green-theme tango-plus-theme minimal-theme
+    espresso-theme nano-theme pink-bliss-uwu-theme modus-themes)
+  "Packages that provide the themes in `my/themes'.")
+
 (unless noninteractive
   (setq my/themes
         (cl-loop for (package . theme-variants-I-like) in
@@ -9469,10 +9534,21 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
                    (nano-theme nano-light nano-dark)
                    (pink-bliss-uwu-theme pink-bliss-uwu)
                    (modus-themes modus-operandi-tinted))
-                 do (package-install package)
+                 ;; Build the list but do NOT call package-install here.
                  append theme-variants-I-like))
 
-  (setcdr (last my/themes) my/themes))
+  (setcdr (last my/themes) my/themes)
+
+  ;; Idempotent install checks — these 17 calls each spawn a subprocess
+  ;; just to confirm the package is already present.  Deferring is safe
+  ;; because the themes are already on disk; this only matters on a
+  ;; fresh machine.  Run (my/ensure-theme-packages) manually if needed.
+  (defun my/ensure-theme-packages ()
+    “Ensure all theme packages in `my/theme-packages' are installed.”
+    (interactive)
+    (dolist (pkg my/theme-packages)
+      (package-install pkg)))
+  (😴 my/ensure-theme-packages))
 #+END_SRC
 
 kbd:C-c_t to toggle between the personal themes.
@@ -9499,9 +9575,7 @@ themes (•̀ᴗ•́)و"
 
 (global-set-key "\C-c\ t" 'my/toggle-theme)
 
-(unless noninteractive (my/toggle-theme))
-
-(unless noninteractive (my/load-theme 'pink-bliss-uwu))
+;; Startup theme is set further below (currently solarized-gruvbox-light).
 #+END_SRC
 
 Apparently, there's already a package that accomplishes these goals and more:
@@ -9518,7 +9592,7 @@ mood 😸). [I already use kbd:C-c_f, doc:my/org-mode-format, for the more likel
 operation of formatting text.]
 #+begin_details “my/toggle-font” Implementation
 
-#+begin_src emacs-lisp :tangle init.el
+#+begin_src emacs-lisp :tangle init.el 
 (when my/personal-machine?
 
   ;; Infinite list of my commonly used fonts
@@ -9539,6 +9613,10 @@ operation of formatting text.]
   ;; Let's ensure they're on our system
   ;; brew search "/font-/"   # List all fonts
 
+  ;; Idempotent install checks — fonts are already on the system; these 9
+  ;; subprocess calls just verify presence.  Safe to defer since the default
+  ;; font is set separately (below) and Emacs falls back gracefully.
+  (😴 progn
   ;; NOTE: No longer needed - fonts are now available directly in homebrew/cask
   ;; (shell-command "brew tap homebrew/cask-fonts")
   (system-packages-ensure "svn") ;; Required for the following font installs
@@ -9550,7 +9628,7 @@ operation of formatting text.]
   (system-packages-ensure "font-monoid")
   (system-packages-ensure "font-menlo-for-powerline")
   (system-packages-ensure "font-fantasque-sans-mono")
-  (system-packages-ensure "font-ibm-plex")
+  (system-packages-ensure "font-ibm-plex"))
 
   ;; Use “M-x set-face-font RET default RET”, or...
   ;; (set-face-font 'default "Source Code Pro Light14")
@@ -9575,9 +9653,10 @@ fonts (•̀ᴗ•́)و"
   (global-set-key "\C-c\ F" 'my/toggle-font)
 
   ;; Default font; the “ignore-⋯” is for users who may not have the font.
-  (ignore-errors (my/toggle-font "Fantasque Sans Mono 12"))
-  (ignore-errors (my/toggle-font "Source Code Pro Light 14"))
-  (ignore-errors (my/toggle-font "IBM Plex Mono 12")))
+;; (my/toggle-font "Fantasque Sans Mono 12")
+;; (my/toggle-font "Source Code Pro Light 14")
+(my/toggle-font "IBM Plex Mono 12")
+)
 #+end_src
 
 #+end_details
@@ -9922,16 +10001,18 @@ doc:font-lock-mode, which performs arbitrary syntax highlighting.
 
 #+begin_src emacs-lisp :tangle init.el
 (use-package all-the-icons
-  ;; Install fonts only if they're not already installed.
-  ;; Source: https://github.com/domtronn/all-the-icons.el/issues/120#issuecomment-427172073
-  :config (let ((font-dest (cl-case window-system
-                             (x  (concat (or (getenv "XDG_DATA_HOME")            ;; Default Linux install directories
-                                             (concat (getenv "HOME") "/.local/share"))
-                                         "/fonts/"))
-                             (mac (concat (getenv "HOME") "/Library/Fonts/" ))
-                             (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
-            (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
-              (all-the-icons-install-fonts 'install-without-asking))))
+  :defer t
+  :config
+  ;; Idempotent font install — runs when the package eventually loads
+  ;; (e.g., via doom-modeline). Only matters on a fresh machine.
+  (let ((font-dest (cl-case window-system
+                     (x  (concat (or (getenv "XDG_DATA_HOME")
+                                     (concat (getenv "HOME") "/.local/share"))
+                                 "/fonts/"))
+                     (mac (concat (getenv "HOME") "/Library/Fonts/" ))
+                     (ns (concat (getenv "HOME") "/Library/Fonts/" )))))
+    (unless (file-exists-p (concat font-dest "all-the-icons.ttf"))
+      (all-the-icons-install-fonts 'install-without-asking))))
 #+end_src
 ** Having a workspace manager in Emacs                             :Disabled:
 :PROPERTIES:
@@ -10940,22 +11021,14 @@ background fetch while still showing yesterday's data immediately (no
 hang).  To force a manual refresh at any time, click the "Refresh
 Work" button in the agenda toolbar or run ~M-x my/agenda-work-refresh~.
 
-All endpoints and credentials come from =private.el=, named
-with the backslash convention (=my\X=).  Empty defaults ensure the
-code is harmless if =private.el= is absent.
+All endpoints and credentials come from =private.el= (loaded eagerly
+at startup; see [[#Separating-Secrets-from-Configuration][§Separating Secrets]]), named with the backslash
+convention (=my\X=).
 
 *** Configuration
 #+begin_src emacs-lisp
 ;; These defvars provide safe empty defaults.  The real values are
-;; set by private.el (loaded via idle timer or on-demand).
-;; See `my/private-file' for the path to private.el.
-
-(defvar my/private-file
-  (expand-file-name "../Dropbox/private.el" user-emacs-directory)
-  "Absolute path to the private configuration file.
-Resolved relative to `user-emacs-directory' so it works regardless
-of `default-directory'.  Loaded on-demand by the Gerrit/Jira agenda
-integration and at startup via idle timer.")
+;; set by private.el (loaded eagerly at startup; see §Separating Secrets).
 
 (defvar my\gerrit-ssh-command "/usr/bin/ssh"
   "Path to the SSH binary used for Gerrit queries.")
@@ -11035,6 +11108,10 @@ Keys: `:items' (list of `work-item' instances), `:timestamp'.")
 Guards against double-fetching: `my/agenda-work-refresh' is a
 no-op when this is non-nil.  Reset to nil by the coordinator
 `my/agenda--format-and-cache' (or on error).")
+
+(defvar my/agenda-work--on-complete nil
+  "One-shot callback invoked after the work-item cache is populated.
+Set before calling `my/agenda-work-refresh'; cleared after invocation.")
 
 (defvar my/agenda--pending-queries 0
   "Number of async Gerrit SSH queries still in flight.
@@ -11671,9 +11748,7 @@ caches the rendered output.  If the agenda buffer is live, it
 auto-refreshes to show the new data.
 
 Guards against double-fetching: if a fetch is already in progress,
-this is a no-op.  Also force-loads private.el if the Gerrit URL
-is still empty (handles the case where the agenda opens before
-the idle-timer-loaded private.el has run).
+this is a no-op.
 
 Can be called interactively via M-x or from the \"Refresh Work\"
 agenda button."
@@ -11683,12 +11758,9 @@ agenda button."
              my/agenda-work-fetching)
     (cl-return-from my/agenda-work-refresh))
   (when (s-blank? my\gerrit-base-url)
-    (load my/private-file t t) ;; noerror + nomessage
-    (when (s-blank? my\gerrit-base-url)
-      (message "Gerrit/Jira: my\\gerrit-base-url still empty after loading private.el")
-      (cl-return-from my/agenda-work-refresh)))
-  (message "Gerrit/Jira: starting async queries against %s..."
-           my\gerrit-ssh-host)
+    (message "Gerrit/Jira: my\\gerrit-base-url is empty — check private.el")
+    (cl-return-from my/agenda-work-refresh))
+  (message "Fetching Gerrit/Jira data — you'll see a dialog box when this time-consuming task is done…")
   (setq my/agenda-work-fetching t
         my/agenda--pending-queries 2
         my/agenda--attention-changes nil
@@ -11844,13 +11916,22 @@ Wrapped in `condition-case' so a failure does not leave
         (message "Gerrit/Jira: cached %d attn, %d mine, %d work-items"
                  (length attention) (length all-mine)
                  (length all-items))
+        (non-blocking-message-box
+         :title "Standup"
+         :content "Gerrit/Jira ready for your consumption!")
         ;; Refresh agenda if the buffer exists
         (when-let ((buf (get-buffer "*Org Agenda*")))
           (when (buffer-live-p buf)
             (with-current-buffer buf
-              (org-agenda-redo-all)))))
+              (org-agenda-redo-all))))
+        ;; Fire one-shot callback (e.g. my/standup opening the agenda)
+        (when my/agenda-work--on-complete
+          (let ((cb my/agenda-work--on-complete))
+            (setq my/agenda-work--on-complete nil)
+            (funcall cb))))
     (error
-     (setq my/agenda-work-fetching nil)
+     (setq my/agenda-work-fetching nil
+           my/agenda-work--on-complete nil)
      (message "Gerrit/Jira agenda update failed: %s"
               (error-message-string err)))))
 #+end_src
@@ -12002,6 +12083,40 @@ manual refresh at any time, use the \"Refresh Work\" button or press
 (add-hook 'org-agenda-finalize-hook #'my/agenda-insert-work-sections)
 #+end_src
 
+*** Standup command
+
+Begin the workday in one keystroke: open =my-life.org=, clock
+into the "Daily Standup Planning" heading, prepend today's child
+entry, kick off an async work-item refresh, and — only once the
+cache is populated — open the agenda with full Gerrit/Jira data.
+
+#+begin_src emacs-lisp
+(defun my/standup ()
+  "Begin the workday: clock into standup, refresh work data, open agenda."
+  (interactive)
+  ;; 1. Open my-life.org and navigate to "Daily Standup Planning"
+  (find-file "~/Dropbox/my-life.org")
+  (widen)
+  (goto-char (point-min))
+  (unless (re-search-forward
+           "^\\*\\* .*Daily Standup Planning" nil t)
+    (error "Could not find '** ... Daily Standup Planning' heading"))
+  ;; 2. Clock in at the ** Daily Standup Planning heading
+  (beginning-of-line)
+  (org-clock-in)
+  (org-narrow-to-subtree)
+  ;; 3. Move past metadata to the first child heading
+  (org-end-of-meta-data t)
+  (unless (re-search-forward "^\\*\\*\\* " nil t)
+    (error "No child headings found under Daily Standup Planning"))
+  (goto-char (match-beginning 0))
+  ;; 4. Prepend today's entry
+  (insert (format-time-string "*** <%Y-%m-%d %a>\n\n\n"))
+  ;; 5. Refresh work-item cache; open agenda when done
+  (setq my/agenda-work--on-complete #'my/org-agenda)
+  (my/agenda-work-refresh))
+#+end_src
+
 ** COMMENT Pretty Agenda Section Headers       :This_is_the_default_behavior:
 :PROPERTIES:
 :CREATED:  [2025-04-13 Sun 09:58]
@@ -12031,6 +12146,189 @@ manual refresh at any time, use the \"Refresh Work\" button or press
 ;; with value “org-agenda-done”.
 ;; ❌ (face-attribute  'hl-line 'done-face) ;; ⇒ italic
 #+end_src
+** Colleague Meeting Shortcuts
+:PROPERTIES:
+:CREATED:  [2026-04-04 Sat]
+:END:
+
+For each colleague 𝒞 in ~my\colleagues~ (set in =private.el=), we create a
+command ~meet-with-𝒞~ and bind it to ~C-c m 𝒾~ where 𝒾 is the first letter of
+𝒞's name.  The command opens the notes file, jumps to the colleague's heading
+(by Org ID), clocks in, and narrows.
+
+#+begin_src emacs-lisp
+(setq org-default-notes-file my\notes-file)
+(setq org-agenda-files (list my\notes-file))
+(cl-loop for colleague in my\colleagues
+         for function-name = (intern (format "meet-with-%s" colleague))
+         for colleague-str = (symbol-name colleague)
+         for first-letter = (substring colleague-str 0 1)
+         do (eval `(bind-key ,(format "C-c m %s" first-letter)
+                             (defun ,function-name () (interactive)
+                               (find-file org-default-notes-file)
+                               (widen)
+                               (org-id-goto ,colleague-str)
+                               (org-clock-in)
+                               (org-narrow-to-subtree)))))
+#+end_src
+
+** Google Calendar Sync (org-gcal)                                :Disabled:
+:PROPERTIES:
+:CREATED:  [2026-04-04 Sat]
+:END:
+
+Bidirectional sync between Org Mode and Google Calendar via [[https://github.com/kidd/org-gcal.el][org-gcal]].
+All OAuth credentials live in =private.el= as ~my\gcal-*~ variables.
+
+-;; TODO: OrgMode E07S03: Google Calendar integration Rainer König
+-;; https://www.youtube.com/watch?v=cIzzjSaq2N8
+-
+-;; Using emacs 26 - Google Calendar and Org Agenda (good version)
+-;; Mike Zamansky
+-;; https://www.youtube.com/watch?v=vO_RF2dK7M0
+-
+-;; https://github.com/kidd/org-gcal.el/tree/c7ad854ee44e88a55db74269d53819c931d55b8e
+
+
+*** Obtaining Google credentials                                    :Details:
+
+1. Go to [[https://console.developers.google.com/project][Google Developers Console]]
+2. Create a project (with any name)
+3. Click on the project
+4. Click on *APIs & Services* then *Credentials*
+5. Click on *Create credentials* and select *OAuth Client ID*
+6. Select Application type /Desktop/ and give a name (e.g. /emacs/)
+7. Click on *Create*
+8. Copy the /Client ID/ and /Client secret/ into the relevant fields
+   in =private.el= (the ~my\gcal-*~ variables)
+9. Under the same *APIs & Services* menu section, select *Library*
+10. Search for *Tasks API*, click on it and click *Enable*
+11. Add yourself as /Test users/ in *OAuth consent screen*.
+
+See also: [[https://git.sr.ht/~jmasson/org-gtasks#obtaining-google-credentials][org-gtasks]] for an analogous package for Google Tasks.
+
+*** Setup and initial fetch
+
+#+begin_src emacs-lisp :tangle no
+(use-package org-gcal
+  :custom
+  (org-gcal-client-id my\gcal-personal-client-id)
+  (org-gcal-client-secret my\gcal-personal-client-secret)
+  (org-gcal-fetch-file-alist `((,my\gcal-personal-email . "~/.emacs.d/gmail.org")))
+  ;; Avoid repeated password prompts for the plstore OAuth token cache.
+  (epg-pinentry-mode 'loopback)
+  (plstore-cache-passphrase-for-symmetric-encryption t)
+  ;; Place recurring events under a common Org heading
+  (org-gcal-recurring-events-mode 'nested)
+  ;; Only consider events between 0 days before today and 60 days after today
+  (org-gcal-up-days 1)
+  (org-gcal-down-days 60))
+
+(😴 org-gcal-fetch)
+#+end_src
+  
+*** Sanity check                                                  :Details:
+
+⟨1⟩ Make an event for today, an hour from now.  Then ~M-x org-gcal-fetch~ to
+see it in Emacs.
+
+⟨2⟩ Use ~Shift-↑~ on the Org timestamp to move the event to the next day;
+then ~M-x org-gcal-post-at-point~ to push it to Gmail.
+
+⟨3⟩ Verify in Gmail web app that the event you created in ⟨1⟩ has moved to
+the next day 😁
+
+⟨4⟩ Go to any Org file, make a heading, then run ~M-x org-gcal-post-at-point~
+and see it pushed to Gmail.  ~org-gcal-post-at-point~ ⇒ Create an event.
+
+After editing an event in Org mode, you can also run ~org-gcal-post-at-point~
+to update the event on Google Calendar.  The command ~org-gcal-sync~ does what
+~org-gcal-fetch~ does, but also runs ~org-gcal-post-at-point~ on all events that
+you've edited in Org mode to update the corresponding events in Google
+Calendar.
+
+*** Transient menu (~M-x my/org-gmail~)
+
+A [[https://github.com/positron-solutions/transient-showcase][Transient]]-powered keyboard-driven menu for syncing with Google Calendar.
+Press ~t~ to toggle between personal and work calendars.
+
+#+begin_src emacs-lisp  :tangle no
+;; https://github.com/positron-solutions/transient-showcase ⇒ useful examples
+(defvar my/work-flag nil "Whether the work-calendar should be used.")
+
+(defun my/current-calendar-description ()
+  "Dynamic label showing which calendar is currently in use."
+  (format "Calendar: %s" (propertize (if my/work-flag "Work" "Personal") 'face 'transient-value)))
+
+(transient-define-suffix my/work-calendar-toggle ()
+  "Toggle between personal and work Google Calendar."
+  :description #'my/current-calendar-description
+  :transient t
+  (interactive)
+  (setq my/work-flag (not my/work-flag))
+  (if my/work-flag
+      (use-package org-gcal
+        :custom
+        (org-gcal-client-id my\gcal-work-client-id)
+        (org-gcal-client-secret my\gcal-work-client-secret)
+        (org-gcal-fetch-file-alist `((,my\gcal-work-email . "~/.emacs.d/gmail-work.org"))))
+    (use-package org-gcal
+      :custom
+      (org-gcal-client-id my\gcal-personal-client-id)
+      (org-gcal-client-secret my\gcal-personal-client-secret)
+      (org-gcal-fetch-file-alist `((,my\gcal-personal-email . "~/.emacs.d/gmail.org"))))))
+
+(transient-define-prefix my/org-gmail ()
+  ["🦄 ⟺ 📧"
+   ["Sync 🔄"
+    ;; Whoever's out of date gets updated.  Determined by the ETAG
+    ;; property on a heading, which tracks event update times.
+    ;; If an event is removed from the server, the update adds
+    ;; the CANCELLED keyword to the Org headline.
+    ("u" "Update/Create Org Event to/from Gmail Server" org-gcal-post-at-point)
+    ;; All Org headlines, in any file, that have the :calendar-id:
+    ;; property are updated!
+    ;; ⚠️ Less reliable compared to "u" above for comparing.
+    ("s" "Fetch new events from Gmail Server, and (Both ways) update existing events" org-gcal-sync)
+    ;; Delete the event from the server.  Does not delete the Org headline.
+    ("r" "Remove Org headline from Gmail Server" org-gcal-delete-at-point)]
+   ["Miscellaneous"
+    ("t" my/work-calendar-toggle)
+    ("q" "Quit" transient-quit-one)]])
+#+end_src
+
+*** Effort & attendees hook
+
+When org-gcal updates an entry, automatically set the ~Effort~ property
+(from the event's start/end times) and the ~Attendees~ property.
+
+#+begin_src emacs-lisp  :tangle no
+(add-hook 'org-gcal-after-update-entry-functions
+          (defun my/gmail⇒org/set-effort-and-attendees (_calendar-id event _update-mode)
+            "Set Effort property based on EVENT if not already set. Also set ATTENDEES."
+            (when-let (attendees (--map (plist-get it :email)
+                                        (--reject (plist-get it :self)
+                                                  (seq--into-list (plist-get _event :attendees)))))
+              (org-entry-put (point)
+                             "Attendees"
+                             (s-join " " attendees)))
+            (when-let* ((stime (plist-get (plist-get event :start) :dateTime))
+                        (etime (plist-get (plist-get event :end) :dateTime))
+                        (diff (float-time
+                               (time-subtract (org-gcal--parse-calendar-time-string etime)
+                                              (org-gcal--parse-calendar-time-string stime))))
+                        (minutes (floor (/ diff 60))))
+              (setq _event event)
+              (let ((effort (org-entry-get (point) org-effort-property)))
+                (unless effort
+                  (message "need to set effort - minutes %S" minutes)
+                  (org-entry-put (point)
+                                 org-effort-property
+                                 (apply #'format "%d:%02d" (cl-floor minutes 60))))))))
+#+end_src
+
+
+
 ** COMMENT Sticky Views                          :No_thanks__org_ql__is_fast:
 :PROPERTIES:
 :CREATED:  [2025-04-13 Sun 09:58]
@@ -12474,7 +12772,7 @@ Now we can press ~C-c C-t~ then the letter shortcut to actually make the state o
 
 First, the my/declare-workflow-states abstraction:
 #+begin_src emacs-lisp
-(use-package lf)
+(use-package lf :defer t)
 ;; TODO: Add the line “(declare (indent defun))” right after the docstring of “lf-define”,
 ;; so that Emacs indents it like a “defun”.
 ;; See https://www.gnu.org/software/emacs/manual/html_node/elisp/Indenting-Macros.html
@@ -13692,9 +13990,12 @@ lengthy phrase being emphasised.
 #+begin_src emacs-lisp :tangle init.el
 (use-package org-remoteimg
   :vc (:url "https://github.com/gaoDean/org-remoteimg")
-  :custom ((url-cache-directory "~/emacs.d/.cache/")
-           (url-automatic-caching t)
-           (org-display-remote-inline-images 'cache)))
+  :defer t
+  :init
+  ;; These are plain global vars — no package load needed.
+  (setq url-cache-directory "~/emacs.d/.cache/")
+  (setq url-automatic-caching t)
+  (setq org-display-remote-inline-images 'cache))
 #+end_src
 
 Example:
@@ -14383,8 +14684,10 @@ I would like to check spelling on the fly.
 Install spell-checking application as well as a reliable English
 dictionary, [[https://wordnet.princeton.edu/][WordNet]].
    #+begin_src emacs-lisp
-(unless noninteractive (system-packages-ensure "aspell"))
-(unless noninteractive (system-packages-ensure "wordnet"))
+;; Idempotent install checks — flyspell is lazy-loaded via hooks,
+;; so aspell/wordnet are never needed at startup.
+(😴 system-packages-ensure "aspell")
+(😴 system-packages-ensure "wordnet")
    #+end_src
 
 ~flyspell-prog-mode~ enables spell checking for programming by only considering
@@ -14406,8 +14709,11 @@ that Emacs' ~ispell~ is the interface to such a command line spelling utility.
 # See available dictionary via ~aspell dicts~.
 
 #+BEGIN_SRC emacs-lisp
-(setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
-(setq ispell-dictionary "en_GB") ;; set the default dictionary
+;; Defer ispell setup — the `which aspell` subprocess is ~50ms and
+;; flyspell only activates on text/org/prog-mode hooks, never at startup.
+(with-eval-after-load 'ispell
+  (setq ispell-program-name (s-trim (shell-command-to-string "which aspell")))
+  (setq ispell-dictionary "en_GB"))
 #+END_SRC
 
 [Disabled] Allow spelling support for CamlCase words like “EmacsIsCool”.
@@ -14435,14 +14741,16 @@ Colour incorrect works; default is an underline.
 
 Finally, save to user dictionary without asking:
 #+BEGIN_SRC emacs-lisp
-(setq ispell-silently-savep t)
+(with-eval-after-load 'ispell
+  (setq ispell-silently-savep t))
 #+END_SRC
 
 Let's keep track of my personal word set by having it be in my version controlled
 .emacs directory. [[http://aspell.net/man-html/Format-of-the-Personal-and-Replacement-Dictionaries.html][Note]] that the default location is ~~/.[i|a]spell.DICT~ for
 a specified dictionary ~DICT~.
 #+BEGIN_SRC emacs-lisp
-(setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws")
+(with-eval-after-load 'ispell
+  (setq ispell-personal-dictionary "~/.emacs.d/.aspell.en.pws"))
 #+END_SRC
 
 Nowadays, I very rarely write non-literate programs, but if I do
@@ -14794,18 +15102,23 @@ better.
 ;; TODO: Maybe don't bother installing Agda, and just get agda-input.el
 ;; from: https://github.com/agda/agda/blob/master/src/data/emacs-mode/agda-input.el
 ;; then loading that!
+;; Defer agda-input loading — the load-file + quail/latin-ltx cascade
+;; costs ~150ms.  The input method is only needed once we're actually
+;; typing in a buffer, so we load the file lazily via the hook.
 (-let [agda-input.el "~/.emacs.d/elpa/agda-input.el"]
   (unless (f-exists? agda-input.el)
-    (url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" agda-input.el))
-  (load-file agda-input.el))
+    (url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" agda-input.el)))
 
 ;; MA: This results in "Package cl is deprecated" !?
 (unless noninteractive
-  (use-package agda-input
-  :ensure nil ;; I have it locally.
-  :demand t
-  :hook ((text-mode prog-mode) . (lambda () (set-input-method "Agda")))
-  :custom (default-input-method "Agda")))
+  (setq default-input-method "Agda")
+  (defun my/setup-agda-input ()
+    "Load agda-input on first text/prog buffer, then activate it."
+    (unless (featurep 'agda-input)
+      (load-file "~/.emacs.d/elpa/agda-input.el"))
+    (set-input-method "Agda"))
+  (add-hook 'text-mode-hook #'my/setup-agda-input)
+  (add-hook 'prog-mode-hook #'my/setup-agda-input))
   ;; Now C-\ or M-x toggle-input-method turn it on and offers
 
 
@@ -14862,11 +15175,12 @@ e.g., ~\set → 𝒮ℯ𝓉~. Note that we could give a symbol new Agda TeX bind
 interactively: ~M-x customize-variable agda-input-user-translations~ then
 ~INS~ then for key sequence type ~set~ then ~INS~ and for string paste ~𝒮ℯ𝓉~.
 #+BEGIN_SRC emacs-lisp
-(unless noninteractive (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
+(with-eval-after-load 'agda-input
+  (add-to-list 'agda-input-user-translations '("set" "𝒮ℯ𝓉")))
 #+END_SRC
 Better yet, as a loop:
 #+BEGIN_SRC emacs-lisp
-(unless noninteractive
+(with-eval-after-load 'agda-input
 (cl-loop for item
       in '(;; Arabic ornate parenthesis U+FD3E / U+FD3F
           ("(" "﴾")
@@ -14924,7 +15238,7 @@ Better yet, as a loop:
 #+END_SRC
 Also some silly stuff:
 #+begin_src emacs-lisp
-(unless noninteractive
+(with-eval-after-load 'agda-input
 ;; Add to the list of translations using “emot” and the given, more specfic, name.
 ;; Whence, \emot shows all possible emotions.
 (cl-loop for emot
@@ -14952,7 +15266,7 @@ Also some silly stuff:
 Finally let's effect such translations.
 #+begin_src emacs-lisp
 ;; activate translations
-(unless noninteractive (agda-input-setup))
+(with-eval-after-load 'agda-input (agda-input-setup))
 #+end_src
 
 Note that the effect of [[http://ergoemacs.org/emacs/emacs_n_unicode.html][Emacs unicode input]] could be approximated using
@@ -15209,10 +15523,11 @@ navigate my recent edits /without/ having to supply the prefix each time.
 ;; E.g., try: M-% use-\(.+?\) \(.+\)\b ENTER woah \1 and \2
 ;;
 (use-package visual-regexp
-  :bind* ("M-%" . (lambda (&optional prefix)
-                    "C-u M-% to do regexp replace, without querying."
-                    (interactive "P")
-                    (call-interactively (if prefix  #'vr/replace #'vr/query-replace)))))
+  :defer t
+  :bind ("M-%" . (lambda (&optional prefix)
+                   "C-u M-% to do regexp replace, without querying."
+                   (interactive "P")
+                   (call-interactively (if prefix #'vr/replace #'vr/query-replace)))))
 #+end_src
 
 *** LaTeX ⇐ Org-Mode                                               :Disabled:
@@ -15243,7 +15558,8 @@ For example, we account for LaTeX citations.
 # +end_src
 
 #+begin_src emacs-lisp
-(system-packages-ensure "mactex")
+;; Idempotent install check — LaTeX is only needed when exporting, not at startup.
+(😴 system-packages-ensure "mactex")
 #+end_src
 
    - This is a redistribution of TeX Live specifically for macOS.
@@ -15258,7 +15574,8 @@ For example, we account for LaTeX citations.
      the main article.
 
      #+begin_src emacs-lisp
-(system-packages-ensure "pygments")
+;; Idempotent install check — only needed for LaTeX minted exports.
+(😴 system-packages-ensure "pygments")
 #+end_src
 
    + *Not anymore:* Get a neato PDF presentation console: =brew install pdfpc=
@@ -15752,11 +16069,9 @@ simple Emacs minor mode that facilities distraction-free writing.
 # The name Olivetti derives from the famous typewriter brand.
 #+begin_src emacs-lisp
 (use-package perfect-margin
-  :custom (perfect-margin-visible-width 128)
-  :config
-  ;; enable perfect-mode
-  (perfect-margin-mode t)
-  ;; auto-center everything --i.e., do not ignore any kind of windows
+  :hook (after-init . perfect-margin-mode)
+  :init
+  (setq perfect-margin-visible-width 128)
   (setq perfect-margin-ignore-filters nil)
   (setq perfect-margin-ignore-regexps nil))
 
@@ -15910,8 +16225,7 @@ Also,
 
 ;; useful for [link] and *formatted text*.
 ;; Make invisible parts of Org elements appear visible.
-(unless my/personal-machine?
-  (use-package org-appear))
+;; org-appear is already configured via use-package :hook org-mode above.
 #+end_src
 *** Colourise clocking tasks with a block                     :TryingThisOut:
 :PROPERTIES:
@@ -16961,8 +17275,6 @@ Write a short story for the day.
 
   )
 
-(😴 (load my/private-file t t)) ;; Loads “my\⋯” variables
-;;
 (cl-defun my/age-in-days-weeks-years (&optional (birthdate my\birthday))
   "Prompt for birthdate (YYYY-MM-DD) and display age in days, weeks, months, and years."
   (interactive)
@@ -18324,7 +18636,7 @@ See also:
 :PROPERTIES:
 :CREATED:  [2024-05-09 Thu 06:47]
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle init.el
 (bind-key*
  "C-c SPC"
  (defun my/jump-to-clocked-task (&optional prefix)
@@ -18641,14 +18953,20 @@ org-agenda-custom-commands
     "Return non-nil if SEQUENCE is empty."
     (= 0 (seq-length sequence)))
 
-;; agent-shell expects the claude-agent-acp binary, which is  provided by the @zed-industries/claude-agent-acp npm package.
-(unless (executable-find "claude-agent-acp")
+;; agent-shell expects the claude-agent-acp binary, which is provided by the
+;; @zed-industries/claude-agent-acp npm package.
+;; Deferred: The `executable-find' guard makes this a no-op once installed,
+;; but npm startup overhead is ~200ms even for a no-op.  agent-shell is
+;; interactive-only, so deferring is safe.
+(😴 unless (executable-find "claude-agent-acp")
   (shell-command "/opt/homebrew/bin/npm install -g @zed-industries/claude-agent-acp"))
 
 (use-package agent-shell
-  :custom
-  (agent-shell-anthropic-authentication
-   (agent-shell-anthropic-make-authentication :login t)))
+  :defer t
+  :config
+  ;; Authentication setup — runs when agent-shell first loads.
+  (setq agent-shell-anthropic-authentication
+        (agent-shell-anthropic-make-authentication :login t)))
 
 ;; ⚙️ Add “ .agent-shell/ ” to “ ~/.gitignore_global” to ignore the transcripts of your conversations from Git
 #+end_src
@@ -18703,18 +19021,20 @@ org-agenda-custom-commands
       (agent-shell))))))
 
 ;; I dislike the “Claude Code>” prompt, it's kinda ugly, so my above command calls on this config:
-(-let [my/custom-claude-prompt "λ🤖λ "]
-  (setq my/custom-claude-config
-        (agent-shell-make-agent-config
-         :identifier 'claude-code
-         :mode-line-name "Claude Code"
-         :buffer-name "Claude Code"
-         :shell-prompt my/custom-claude-prompt
-         :shell-prompt-regexp my/custom-claude-prompt
-         :icon-name "anthropic.png"
-         :client-maker (lambda (buffer)
-                         (agent-shell-anthropic-make-claude-client :buffer buffer))
-         :install-instructions "See https://github.com/zed-industries/claude-agent-acp for installation.")))
+;; Wrapped in with-eval-after-load to avoid triggering agent-shell autoload at startup.
+(with-eval-after-load 'agent-shell
+  (-let [my/custom-claude-prompt “λ🤖λ “]
+    (setq my/custom-claude-config
+          (agent-shell-make-agent-config
+           :identifier 'claude-code
+           :mode-line-name “Claude Code”
+           :buffer-name “Claude Code”
+           :shell-prompt my/custom-claude-prompt
+           :shell-prompt-regexp my/custom-claude-prompt
+           :icon-name “anthropic.png”
+           :client-maker (lambda (buffer)
+                           (agent-shell-anthropic-make-claude-client :buffer buffer))
+           :install-instructions “See https://github.com/zed-industries/claude-agent-acp for installation.”))))
   
 ;; The names of the AI buffers seem to be tied to the AI processes, so we can't just rename buffers.
 ;; However, after any interaction, AI buffer headers are updated, so we hook into that mechanism to
@@ -18730,10 +19050,11 @@ The label is shown in the header and the session switch menu."
     (user-error "Not in an agent-shell buffer"))
   (setq my/claude-session-label (if (string-empty-p label) nil label)))
 
-(advice-add 'agent-shell--make-header-model :filter-return
-            (lambda (model) (when my/claude-session-label
-                              (setf (alist-get :buffer-name model)
-                                    (format "Claude Code: %s" my/claude-session-label))) model))
+(with-eval-after-load 'agent-shell
+  (advice-add 'agent-shell--make-header-model :filter-return
+              (lambda (model) (when my/claude-session-label
+                                (setf (alist-get :buffer-name model)
+                                      (format "Claude Code: %s" my/claude-session-label))) model)))
 #+end_src
 *** Copy AI Text As Org
 #+begin_src emacs-lisp
@@ -18765,7 +19086,8 @@ overlays-in END..(+END 3) to skip pandoc for code blocks."
                              "-f" "markdown" "-t" "org")
         (buffer-string)))))
 
-(advice-add 'agent-shell--filter-buffer-substring :around #'my/make-agent-shell-copy-be-editable-org-mode)
+(with-eval-after-load 'agent-shell
+  (advice-add 'agent-shell--filter-buffer-substring :around #'my/make-agent-shell-copy-be-editable-org-mode))
 #+end_src
 
 *** Agent-Shell Buffer Cheatsheet
@@ -18786,21 +19108,19 @@ overlays-in END..(+END 3) to skip pandoc for code blocks."
 |---------------------+-------------------------------------------------------------------------|
 
 #+begin_src emacs-lisp
-;; Some useful info in the AI buffer header: [Agent | Model | Thinking Mode | Directory ]
-(setq agent-shell-header-style 'text)
-
-;; Don't confirm when I interrupt, just stop.
+;; All agent-shell config deferred — the bare setq of agent-shell-*
+;; variables would trigger autoloading the package at startup.
 (with-eval-after-load 'agent-shell
+  ;; Some useful info in the AI buffer header: [Agent | Model | Thinking Mode | Directory ]
+  (setq agent-shell-header-style 'text)
+
+  ;; Don't confirm when I interrupt, just stop.
   (define-key agent-shell-mode-map (kbd "C-c C-c")
-    (lambda () (interactive) (agent-shell-interrupt t))))
+    (lambda () (interactive) (agent-shell-interrupt t)))
 
-;; Expand tool use / thought process by default (instead of collapsed)
-(setq agent-shell-tool-use-expand-by-default nil)
-(setq agent-shell-thought-process-expand-by-default nil)
-
-;; Expand tool use / thought process by default (instead of collapsed)
-;; (setq agent-shell-tool-use-expand-by-default t)
-;; (setq agent-shell-thought-process-expand-by-default t)
+  ;; Expand tool use / thought process by default (instead of collapsed)
+  (setq agent-shell-tool-use-expand-by-default nil)
+  (setq agent-shell-thought-process-expand-by-default nil))
 #+end_src
 
 ⭐ Use =M-x agent-shell-send-dwim= to send a region, file, screenshot, image to an
@@ -19314,7 +19634,8 @@ time ---i.e., it's cached, saved, for your current computing session until
 logout--- or force authentication by invoking ~gpgconf --kill gpg-agent~.
 
 #+begin_src emacs-lisp
-(system-packages-ensure "gnupg") ;; i.e.,  brew install gnupg
+;; Idempotent install check — GPG is only needed when encrypting/signing.
+(😴 system-packages-ensure "gnupg") ;; i.e.,  brew install gnupg
 
 ;; “epa” ≈ EasyPG Assistant
 
@@ -20458,7 +20779,7 @@ file. Then, ~C-x r b B~ jumps to the wrong location 😧
 
 The following package fixes this issue:
 #+begin_src emacs-lisp
-(use-package org-bookmark-heading)
+(use-package org-bookmark-heading :defer t)
 #+end_src
 
 --------------------------------------------------------------------------------
@@ -20619,6 +20940,41 @@ to my radio target note associated with parsers.
 (use-package hyperbole
   :custom (hsys-org-enable-smart-keys t)
   :hook after-init)
+#+end_src
+
+*** Jira ticket clickable links
+
+Make pieces of text like ~PROJ-1234~ all ~M-RET~ clickable — opening the
+ticket in Jira.  The list of recognised project prefixes comes from
+~my\jira-project-prefixes~ and the base URL from ~my\jira-base-url~
+(both set in =private.el=).
+
+#+begin_src emacs-lisp :tangle no
+(use-package hyperbole :demand t)
+(hyperbole-mode +1)
+
+(defun my/jira-cs-reference (jira-id)
+  "Open ticket in Jira"
+  (browse-url-default-browser (concat my\jira-base-url "/" jira-id)))
+
+(defib my/jira-cs ()
+  "Get the Jira ticket identifier at point and load ticket in browser.
+Builds the regex dynamically from `my\\jira-project-prefixes'."
+  (let* ((case-fold-search t)
+         (jira-id nil)
+         (prefix-alt (mapconcat #'identity my\jira-project-prefixes "\\|"))
+         (jira-regex (format "\\(\\(?:%s\\)-[0-9]+\\)" prefix-alt)))
+    (if (or (looking-at jira-regex)
+            (save-excursion
+              (skip-chars-backward "0-9")
+              (skip-chars-backward "-")
+              (skip-chars-backward "A-Z")
+              (looking-at jira-regex)))
+        (progn (setq jira-id (match-string-no-properties 1))
+               (ibut:label-set jira-id
+                               (match-beginning 1)
+                               (match-end 1))
+               (hact 'my/jira-cs-reference jira-id)))))
 #+end_src
 
 *Turn every document into Hypertext --without any markup.*
