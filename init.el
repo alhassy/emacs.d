@@ -120,18 +120,6 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 
 (require 's nil t) ;; Ensure s is loaded before using s-collapse-whitespace
 (declare-function s-collapse-whitespace "s" (s))
-(defvar my/personal-machine?
-  (if (fboundp 's-collapse-whitespace)
-      (equal "Musa's MacBook Air " (s-collapse-whitespace (shell-command-to-string "scutil --get ComputerName")))
-    nil)
-  "Is this my personal machine, or my work machine?
-
- At one point, on my work machine I run the following command to give the machine a sensible name.
-
-     sudo scutil --set ComputerName work-machine
-     dscacheutil -flushcache")
-
-(defvar my/work-machine? (not my/personal-machine?))
 
 ;; Lightweight undo visualiser — replaces undo-tree (which caused
 ;; corrupt history files and recursive-timer errors).
@@ -1635,70 +1623,67 @@ themes (•̀ᴗ•́)و"
 
 ;; Startup theme is set further below (currently solarized-gruvbox-light).
 
-(when my/personal-machine?
+;; Infinite list of my commonly used fonts
+(setq my/fonts
+      '(;; NOPE: Breaks Gerrit! "Roboto Mono Light 14" ;; Sleek
+        "Input Mono 14"
+        "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
+        "Papyrus 14"
+        "Bradley Hand Light 12"
+        ;; "Chalkduster 14" ;; Laggy!
+        "Courier Light 12"
+        "Noteworthy 9"
+        "Savoye LET 14"
+        "Fantasque Sans Mono 16"
+        ))
+(setcdr (last my/fonts) my/fonts)
 
-  ;; Infinite list of my commonly used fonts
-  (setq my/fonts
-        '(;; NOPE: Breaks Gerrit! "Roboto Mono Light 14" ;; Sleek
-          "Input Mono 14"
-          "Source Code Pro Light 14" ;; thin, similar to Inconsolata Light
-          "Papyrus 14"
-          "Bradley Hand Light 12"
-          ;; "Chalkduster 14" ;; Laggy!
-          "Courier Light 12"
-          "Noteworthy 9"
-          "Savoye LET 14"
-          "Fantasque Sans Mono 16"
-          ))
-  (setcdr (last my/fonts) my/fonts)
+;; Let's ensure they're on our system
+;; brew search "/font-/"   # List all fonts
 
-  ;; Let's ensure they're on our system
-  ;; brew search "/font-/"   # List all fonts
+;; Idempotent install checks — fonts are already on the system; these 9
+;; subprocess calls just verify presence.  Safe to defer since the default
+;; font is set separately (below) and Emacs falls back gracefully.
+(😴 progn
+    ;; NOTE: No longer needed - fonts are now available directly in homebrew/cask
+    ;; (shell-command "brew tap homebrew/cask-fonts")
+    (system-packages-ensure "svn") ;; Required for the following font installs
+    ;; No thanks! (system-packages-ensure "font-roboto-mono") ;; Makes Gerrit in Chrome look like Gibberish!
+    (system-packages-ensure "font-input")
+    (system-packages-ensure "font-source-code-pro")
+    (system-packages-ensure "font-fira-mono")
+    (system-packages-ensure "font-mononoki")
+    (system-packages-ensure "font-monoid")
+    (system-packages-ensure "font-menlo-for-powerline")
+    (system-packages-ensure "font-fantasque-sans-mono")
+    (system-packages-ensure "font-ibm-plex"))
 
-  ;; Idempotent install checks — fonts are already on the system; these 9
-  ;; subprocess calls just verify presence.  Safe to defer since the default
-  ;; font is set separately (below) and Emacs falls back gracefully.
-  (😴 progn
-  ;; NOTE: No longer needed - fonts are now available directly in homebrew/cask
-  ;; (shell-command "brew tap homebrew/cask-fonts")
-  (system-packages-ensure "svn") ;; Required for the following font installs
-  ;; No thanks! (system-packages-ensure "font-roboto-mono") ;; Makes Gerrit in Chrome look like Gibberish!
-  (system-packages-ensure "font-input")
-  (system-packages-ensure "font-source-code-pro")
-  (system-packages-ensure "font-fira-mono")
-  (system-packages-ensure "font-mononoki")
-  (system-packages-ensure "font-monoid")
-  (system-packages-ensure "font-menlo-for-powerline")
-  (system-packages-ensure "font-fantasque-sans-mono")
-  (system-packages-ensure "font-ibm-plex"))
+;; Use “M-x set-face-font RET default RET”, or...
+;; (set-face-font 'default "Source Code Pro Light14")
 
-  ;; Use “M-x set-face-font RET default RET”, or...
-  ;; (set-face-font 'default "Source Code Pro Light14")
+;; See ~2232 fonts
+;; (append (fontset-list) (x-list-fonts "*" nil))
 
-  ;; See ~2232 fonts
-  ;; (append (fontset-list) (x-list-fonts "*" nil))
-
-  (cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
-    "Load NEW-FONT, which defaults from ‘my/fonts’.
+(cl-defun my/toggle-font (&optional (new-font (pop my/fonts)))
+  "Load NEW-FONT, which defaults from ‘my/fonts’.
 
 When a universal prefix is given, “C-u C-c F”, we load a random
 font from all possible themes.  Nice way to learn about more
 fonts (•̀ᴗ•́)و"
-    (interactive)
-    (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
-           (font (if current-prefix-arg
-                     (nth (random (length all-fonts)) all-fonts)
-                   new-font)))
-      (set-face-font 'default font)
-      (message "Font: %s" font)))
+  (interactive)
+  (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
+         (font (if current-prefix-arg
+                   (nth (random (length all-fonts)) all-fonts)
+                 new-font)))
+    (set-face-font 'default font)
+    (message "Font: %s" font)))
 
-  (global-set-key "\C-c\ F" 'my/toggle-font)
+(global-set-key "\C-c\ F" 'my/toggle-font)
 
-  ;; Default font; the “ignore-⋯” is for users who may not have the font.
-;; (my/toggle-font "Fantasque Sans Mono 12")
+;; Default font; the “ignore-⋯” is for users who may not have the font.
+(my/toggle-font "Fantasque Sans Mono 12")
 ;; (my/toggle-font "Source Code Pro Light 14")
-(my/toggle-font "IBM Plex Mono 12")
-)
+;; (my/toggle-font "IBM Plex Mono 12")
 
 (unless noninteractive
   ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
