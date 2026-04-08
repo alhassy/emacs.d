@@ -136,15 +136,24 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 ;;
 ;; After 5 minutes of being idle (i.e., you're likely away or reading).
 ;; Kill the output buffer once the update finishes — no stale *system-packages* lying around.
-(run-with-idle-timer 300 nil
-  (lambda ()
-    (system-packages-update)
-    (when-let ((buf (get-buffer "*system-packages*")))
-      (when-let ((proc (get-buffer-process buf)))
-        (set-process-sentinel proc
-          (lambda (_proc _event)
-            (when (get-buffer "*system-packages*")
-              (kill-buffer "*system-packages*"))))))))
+(run-with-idle-timer
+ 300
+ nil
+ (lambda ()
+   (system-packages-update)
+   (when-let ((buf (get-buffer "*system-packages*")))
+     (when-let ((proc (get-buffer-process buf)))
+       (set-process-sentinel proc
+                             (lambda (_proc _event)
+                               (when (get-buffer "*system-packages*")
+                                 (kill-buffer "*system-packages*"))))))))
+
+
+;; I seldom need more than the default 64KB response read size, but if I use
+;; LSP/Eglot (which send multi-megabyte responses) then I'd like Emacs to reduce
+;; the number of reads. A slight performance increase!
+(setq read-process-output-max (* 4 1024 1024)) ; 4MB
+
 
 (defvar my/installed-packages
   (shell-command-to-string "brew list")
@@ -233,8 +242,13 @@ installs of packages that are not in our `my/installed-packages' listing.
   ;; Let's define an alias so there's no need to remember the order.
   ;; :config (defalias 'emacs-restart #'restart-emacs)
 
-(setq-default save-place  t)
+;; Remember where I am in each file and jump back there when I reopen it.
+(use-package emacs :hook (after-init . save-place-mode))
 (setq save-place-file "~/.emacs.d/etc/saveplace")
+;; When I reopen a file, plz recenter the view.
+(advice-add 'save-place-find-file-hook :after
+            (lambda (&rest _)
+              (when buffer-file-name (ignore-errors (recenter)))))
 
 ;; In programming modes, M-g on a pop-up candidate to peek at its source code.
 ;; (Also, M-h to show its docs. Should be seldom needed, since docs pop-up by default.)
@@ -326,34 +340,32 @@ installs of packages that are not in our `my/installed-packages' listing.
            (completion-styles '(basic partial-completion emacs22 initials flex))
            (helm-M-x-show-short-doc t)) ;; Show docstrings when I press “M-x”
   ;; Helm also has optimized Helm completions for some commands, so let's use those instead of the defaults:
-  :bind (("M-x"     . helm-M-x)
-         ;; ⇒ After “M-x” press “C-h m” to see how Helm improves the default M-x command.
-         ;; ⇒ For example, “M-x C-]” toggles docstrings to appear.
-         ;; ⇒ Or, “RET” on any candidate after “M-x” to see entire docstrings! 💝
-         ("C-x C-f" . helm-find-files)
-         ;; Do “C-x b C-h m” to learn more about what Helm's “C-x b” can do for you!
-         ;; ⟨📚 In general, after any Helm command, do “C-h m” to get rich info about what you can do!⟩
-         ("C-x b"   . helm-mini)     ;; See buffers & recent files & bookmarks; more useful.
-         ("C-x r b" . helm-filtered-bookmarks)
-         ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
-         ("C-c i"   . helm-imenu) ;; C.f. M-x imenu-list 👀
-         ;; Look at what was cut recently & paste it in.
-         ("M-y" . helm-show-kill-ring)
-         ;; “C-x r s 𝓍” temporarily save regions of text to character 𝓍 and paste them with “C-x r i”
-         ("C-x r i" . helm-register)
-         ;; When I run one-off ELisp expressions, show me function signatures and get immediate /live/ results
-         ("M-:" . helm-eval-expression-with-eldoc)
-         :map helm-map
-         ;; We can list ‘actions’ on the currently selected item by C-z.
-         ("C-z" . helm-select-action)
-         ;; A “persistent action” is an action that you use in a Helm session that does not quit the session.
-         ;; E.g., “M-x TAB” shows the docstring ---a persistent action-- of the currently selected command.
-         ("TAB"   . helm-execute-persistent-action)
-         ("<tab>" . helm-execute-persistent-action)))
-
+  :bind* (("M-x"     . helm-M-x)
+          ;; ⇒ After “M-x” press “C-h m” to see how Helm improves the default M-x command.
+          ;; ⇒ For example, “M-x C-]” toggles docstrings to appear.
+          ;; ⇒ Or, “RET” on any candidate after “M-x” to see entire docstrings! 💝
+          ("C-x C-f" . helm-find-files)
+          ;; Do “C-x b C-h m” to learn more about what Helm's “C-x b” can do for you!
+          ;; ⟨📚 In general, after any Helm command, do “C-h m” to get rich info about what you can do!⟩
+          ("C-x b"   . helm-mini)     ;; See buffers & recent files & bookmarks; more useful.
+          ("C-x r b" . helm-filtered-bookmarks)
+          ("C-x C-r" . helm-recentf)  ;; Search for recently edited files
+          ("C-c i"   . helm-imenu) ;; C.f. M-x imenu-list 👀
+          ;; Look at what was cut recently & paste it in.
+          ("M-y" . helm-show-kill-ring)
+          ;; “C-x r s 𝓍” temporarily save regions of text to character 𝓍 and paste them with “C-x r i”
+          ("C-x r i" . helm-register)
+          ;; When I run one-off ELisp expressions, show me function signatures and get immediate /live/ results
+          ("M-:" . helm-eval-expression-with-eldoc)
+          :map helm-map
+          ;; We can list ‘actions’ on the currently selected item by C-z.
+          ("C-z" . helm-select-action)
+          ;; A “persistent action” is an action that you use in a Helm session that does not quit the session.
+          ;; E.g., “M-x TAB” shows the docstring ---a persistent action-- of the currently selected command.
+          ("TAB"   . helm-execute-persistent-action)
+          ("<tab>" . helm-execute-persistent-action)))
 
 ;; Note M-x `helm-packages' is a browser for packages to install or upgrade.
-
 
 ;; Show me nice file icons when using, say, “C-x C-f” or “C-x b”
 (use-package all-the-icons-completion
@@ -362,6 +374,46 @@ installs of packages that are not in our `my/installed-packages' listing.
 
 ;; When I want to see the TOC of an Org file, show me down to 3 subheadings.
 (setq org-imenu-depth 7)
+
+
+;; More Clipboard (“Kill ring”) Settings
+;;
+;; If I copy something while in another program, then kill some text in Emacs
+;; via “C-k” then please ensure whatever I copied is first saved to the kill
+;; ring and so accessible via “M-y”. I also use the app “Flycut” so that I get
+;; to “keep a history of everything I've copied” so that I can easily
+;; copy/paste/modify text ---which is surprisingly more often than you'd think!
+;; (Emacs' kill-ring does not replace Flycut since Emacs' only saves copied text
+;; from other apps before I perform an Emacs kill command, whereas FlyCut saves
+;; every copy from anywhere.)
+(setq save-interprogram-paste-before-kill t)
+
+;; Kill the same line 3 times and you'll see (-take 3 kill-ring) has the same
+;; line repeated 3 times. Let's avoid such waste!  (Note: This avoids adjacent
+;; duplicates; it does not turn the kill-ring into a “set”.  The structure where
+;; adjacent *sublists*, not items, is known as a Idempotent List, see §4.6 of
+;; “The Boom Hierarchy”
+;; https://web.archive.org/web/20150322051225/http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.49.3252&rep=rep1&type=pdf
+;; )
+(setq kill-do-not-save-duplicates t)
+
+;; Persist the Kill Ring Across Sessions
+;;
+;; The built-in savehist-mode can be used to save any variable to survive across
+;; restarts; let's save the kill ring ---and clocking history so that I know
+;; what I was working on previously.
+
+(use-package emacs :hook (after-init . savehist-mode))
+
+(setq savehist-additional-variables
+      '(search-ring regexp-search-ring kill-ring org-clock-history))
+
+;; However, let's miniify the kill-ring before saving by removing text properties.
+(add-hook 'savehist-save-hook
+          (lambda ()
+            (setq kill-ring
+                  (mapcar #'substring-no-properties
+                          (cl-remove-if-not #'stringp kill-ring)))))
 
 (setq helm-mini-default-sources '(helm-source-buffers-list
                                     helm-source-recentf
@@ -1473,12 +1525,18 @@ Order requires alphabetically and remove duplicates."
 (defun display-startup-echo-area-message ()
   "The message that is shown after ‘user-init-file’ is loaded."
   (message
-      (concat "Welcome "      user-full-name
-              "! Emacs "      emacs-version
-              "; Org-mode "   org-version
-              "; System "     (symbol-name system-type)
-              "/"             (system-name)
-              "; Time "       (emacs-init-time))))
+   (concat "Welcome "      user-full-name
+           "! Emacs "      emacs-version
+           "; Org-mode "   org-version
+           "; System "     (symbol-name system-type)
+           "/"             (system-name)
+           "; Time "       (emacs-init-time))))
+
+;; Ensure I'm notified if startup suddenly gets slower!
+(unless noninteractive
+  (cl-assert (< (string-to-number (emacs-init-time "%d")) 5)
+             'show-args
+             "Whoops, things got slower! 😲 Or is this a fresh install?"))
 
 ;; Keep self motivated!
 (setq frame-title-format '("" "%b - Living The Dream (•̀ᴗ•́)و"))
@@ -1702,6 +1760,10 @@ fonts (•̀ᴗ•́)و"
 ;; (doom-themes-visual-bell-config)
 
 (blink-cursor-mode 1)
+
+;; Phantom cursors are a minor visual annoyance, but they also have a small rendering cost.
+(setq-default cursor-in-non-selected-windows nil)
+(setq highlight-nonselected-windows nil)
 
 (unless noninteractive
   (tool-bar-mode   -1)    ;; No large icons please
@@ -4604,6 +4666,11 @@ Check for orphaned files in the Org attachment directory.
 ;; and so Left-to-Right is most natural to me. As such, even when Arabic
 ;; is present, or any bidirectional text, just use Left-to-Right.
 (setq-default bidi-paragraph-direction 'left-to-right)
+
+;; Also, please avoid doing a bunch of work on every redisplay cycle for right-to-left languages!
+;; So don't do the Bidirectional Parentheses Algorithm (“bpa”) to make redisplay faster!
+(setq bidi-inhibit-bpa t)
+(setq-default bidi-display-reordering 'left-to-right)
 ;; Bidirectional Text:1 ends here
 
 ;; [[file:init.org::#Whitespace][Whitespace:1]]
