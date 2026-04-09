@@ -9642,7 +9642,7 @@ mood 😸). [I already use kbd:C-c_f, doc:my/org-mode-format, for the more likel
 operation of formatting text.]
 #+begin_details “my/toggle-font” Implementation
 
-#+begin_src emacs-lisp :tangle init.el 
+#+begin_src emacs-lisp :tangle init.el
 ;; Infinite list of my commonly used fonts
 (setq my/fonts
       '(;; NOPE: Breaks Gerrit! "Roboto Mono Light 14" ;; Sleek
@@ -12148,29 +12148,47 @@ cache is populated — open the agenda with full Gerrit/Jira data.
 
 #+begin_src emacs-lisp
 (defun my/standup ()
-  "Begin the workday: clock into standup, refresh work data, open agenda."
+  "Begin the workday: clock into standup, refresh work data, open agenda.
+On Mondays, gate on the weekly review — you don't get to start the week
+without reflecting on the last one."
   (interactive)
-  ;; 1. Open my-life.org and navigate to "Daily Standup Planning"
-  (find-file org-default-notes-file)
-  (widen)
-  (goto-char (point-min))
-  (unless (re-search-forward
-           "^\\*\\* .*Daily Standup Planning" nil t)
-    (error "Could not find '** ... Daily Standup Planning' heading"))
-  ;; 2. Clock in at the ** Daily Standup Planning heading
-  (beginning-of-line)
-  (org-clock-in)
-  (org-narrow-to-subtree)
-  ;; 3. Move past metadata to the first child heading
-  (org-end-of-meta-data t)
-  (unless (re-search-forward "^\\*\\*\\* " nil t)
-    (error "No child headings found under Daily Standup Planning"))
-  (goto-char (match-beginning 0))
-  ;; 4. Prepend today's entry
-  (insert (format-time-string "*** <%Y-%m-%d %a>\n\n\n"))
-  ;; 5. Refresh work-item cache; open agenda when done
-  (setq my/agenda-work--on-complete #'my/org-agenda)
-  (my/agenda-work-refresh))
+  ;; 0. Monday gate: force weekly review before the week begins.
+  ;;    The review is a capture buffer; when the user presses C-c C-c to
+  ;;    finalise, they call my/standup again to proceed normally.
+  (if (and (= (nth 6 (decode-time)) 1) ;; Monday
+           (fboundp 'my/weekly-review-done-this-week-p)
+           (not (my/weekly-review-done-this-week-p)))
+      (progn
+        (message "🔄 It's Monday! Let's start the week with a review.")
+        (when (eq system-type 'darwin)
+          (non-blocking-message-box
+           :title "Weekly Review"
+           :content "Seven days without a review makes one weak! Start your week by reflecting on the last one."
+           :buttons '(:OK nil)))
+        (call-interactively #'my/capture-🔄-weekly-review-😊))
+    ;; else: Normal standup flow
+    (progn
+      ;; 1. Open my-life.org and navigate to "Daily Standup Planning"
+      (find-file org-default-notes-file)
+      (widen)
+      (goto-char (point-min))
+      (unless (re-search-forward
+               "^\\*\\* .*Daily Standup Planning" nil t)
+        (error "Could not find '** ... Daily Standup Planning' heading"))
+      ;; 2. Clock in at the ** Daily Standup Planning heading
+      (beginning-of-line)
+      (org-clock-in)
+      (org-narrow-to-subtree)
+      ;; 3. Move past metadata to the first child heading
+      (org-end-of-meta-data t)
+      (unless (re-search-forward "^\\*\\*\\* " nil t)
+        (error "No child headings found under Daily Standup Planning"))
+      (goto-char (match-beginning 0))
+      ;; 4. Prepend today's entry
+      (insert (format-time-string "*** <%Y-%m-%d %a>\n\n\n"))
+      ;; 5. Refresh work-item cache; open agenda when done
+      (setq my/agenda-work--on-complete #'my/org-agenda)
+      (my/agenda-work-refresh))))
 #+end_src
 
 ** COMMENT Pretty Agenda Section Headers       :This_is_the_default_behavior:
@@ -12280,7 +12298,7 @@ See also: [[https://git.sr.ht/~jmasson/org-gtasks#obtaining-google-credentials][
 
 (😴 org-gcal-fetch)
 #+end_src
-  
+
 *** Sanity check                                                  :Details:
 
 ⟨1⟩ Make an event for today, an hour from now.  Then ~M-x org-gcal-fetch~ to
@@ -16513,9 +16531,9 @@ TODO: How does this compare with org-bullets?
 ;; font-lock-flush (cheap: marks the buffer dirty) so jit-lock
 ;; re-fontifies the visible window lazily — skipping font-lock-ensure
 ;; (expensive: fontifies the entire widened buffer).
-;;                                                                                                                                                     
-;; If I do a ⟨Tab⟩ on an org heading, then that heading's content becomes visible and so JIT fontlocking                                                                                                                         
-;; activites and so I get nice Org stars for that heading and its children! Lovely!  
+;;
+;; If I do a ⟨Tab⟩ on an org heading, then that heading's content becomes visible and so JIT fontlocking
+;; activites and so I get nice Org stars for that heading and its children! Lovely!
 (define-advice org-superstar--fontify-buffer
     (:around (orig-fn &rest args) skip-large-buffers)
   "Skip eager fontification on buffers larger than 1 MB."
@@ -16550,6 +16568,12 @@ job well done.
 :PROPERTIES:
 :CREATED: [2025-05-14 Wed 18:56]
 :END:
+
+# NOTE [2026-04-09]: Daily Review stays DISABLED for now.
+# The 20-question evening ritual is too much friction for a habit that hasn't
+# formed yet. We start with the Weekly Review only (C-c r w) — anchored to
+# Monday's my/standup — and graduate to daily reviews once the weekly habit
+# sticks. See the Weekly Review section below for the progressive plan.
 :LOGBOOK:
 CLOCK: [2025-05-19 Mon 08:52]--[2025-05-19 Mon 09:21] =>  0:29
 CLOCK: [2025-05-14 Wed 18:57]--[2025-05-14 Wed 21:57] =>  3:00
@@ -16634,7 +16658,9 @@ my “C-c r d” capture.
 :PROPERTIES:
 :CREATED:  [2025-05-19 Mon 09:10]
 :END:
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle init.el
+(😴 progn ;; Defer: Only needed when a review is performed (C-c r w/d/m).
+
 (require 'eieio)
 
 ;; See https://alhassy.com/ElispCheatSheet/#org71dcb45 for info on “defstruct”
@@ -17007,6 +17033,8 @@ Further reading:
     (search-forward ":END:")
     (beginning-of-line)
     (sort-lines nil start (point))))
+
+) ;; End 😴 — deferred questionnaire infrastructure
 
 #+end_src
 
@@ -17721,8 +17749,67 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
 :PROPERTIES:
 :CREATED:  [2025-06-04 Wed 18:51]
 :END:
-#+begin_src emacs-lisp
-;; “r”eview for the “w”ay
+#+begin_src emacs-lisp :tangle init.el
+;; ═══════════════════════════════════════════════════════════════════════
+;; Weekly Review — Progressive Phases
+;; ═══════════════════════════════════════════════════════════════════════
+;;
+;; Phase 1 (reviews 0–3): Starter — clock report, 3 reflections, L5
+;;                         check, archive nudge. Just enough to build
+;;                         the habit.
+;; Phase 2 (reviews 4–7): Add life scores (Social, Faith, Marriage,
+;;                         Health) and a random reflection question.
+;; Phase 3 (reviews 8+):  Full template with forward planning,
+;;                         commit steps, and daily score table.
+;;
+;; The counter persists via savehist so it survives restarts.
+
+(defvar my/weekly-review-count 0
+  "How many weekly reviews we’ve completed. Drives progressive unlocks.")
+
+(defvar my/weekly-review-last-week nil
+  "ISO week number of the last completed review, to avoid double-counting.")
+
+;; Persist the counter across Emacs restarts.
+(with-eval-after-load 'savehist
+  (add-to-list 'savehist-additional-variables 'my/weekly-review-count)
+  (add-to-list 'savehist-additional-variables 'my/weekly-review-last-week))
+
+(defun my/weekly-review-phase ()
+  "Return the current review phase (1, 2, or 3)."
+  (cond ((< my/weekly-review-count 4) 1)
+        ((< my/weekly-review-count 8) 2)
+        (t 3)))
+
+(defun my/weekly-review-done-this-week-p ()
+  "Non-nil if a weekly review was already completed this ISO week."
+  (equal my/weekly-review-last-week (ts-week-of-year (ts-now))))
+
+(defun my/weekly-review--increment-counter ()
+  "Bump the review counter and record the current week.
+Also, at phase boundaries, nudge the user to unlock more."
+  (let ((week♯ (ts-week-of-year (ts-now))))
+    (unless (equal my/weekly-review-last-week week♯)
+      (cl-incf my/weekly-review-count)
+      (setq my/weekly-review-last-week week♯)
+      ;; Phase-boundary nudges
+      (when (eq system-type 'darwin)
+        (cond
+         ((= my/weekly-review-count 4)
+          (non-blocking-message-box
+           :title "Weekly Review"
+           :content "You’ve completed 4 reviews — nice streak! Phase 2 unlocked: life scores (Social, Faith, Marriage, Health) will appear next week."
+           :buttons '(:Sweet! nil)))
+         ((= my/weekly-review-count 8)
+          (non-blocking-message-box
+           :title "Weekly Review"
+           :content "8 reviews done! Phase 3 unlocked: the full review template with forward planning, commit steps, and daily score trends. You’ve built the habit."
+           :buttons '(:Let’s\ go! nil))))))))
+
+
+(😴 progn ;; Defer the keybinding and capture template — not needed at startup.
+
+;; “r”eview for the “w”eek
 ;;
 ;; Reflect on what went well and what could have gone better. Update your
 ;; to-do and projects list. Remove unimportant tasks and update your
@@ -17748,46 +17835,49 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
                   (format "* Weekly Review ♯%s ---/“go from chaos to clarity”!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
                           week♯
                           month-name)))
+
+              ;; ─── Phase 2+: Life score questionnaire ────────────────────────
               ;; Let's add some properties by prompting the user, me.
-              (my/read-daily-review-properties
-               :questionnaire '(("SocialScore: Did I see family *and* did I call or message a friend?"
-                                 " 0  --  No             --  What am I doing with my life?"
-                                 " 1  --  Yes…           --  Sweet, who was it? What did you do?")
-                                ("FaithScore: Did I go to this Mosque this week? Or read passages from the Quran?"
-                                 " 0  --  No             --  What am I doing with my life?"
-                                 " 1  --  Yes…           --  Sweet, what did you do?")
-                                ("MarriageScore: How are things with my wife?"
-                                 "-1  --  Abysmal Low     --  I hate life."
-                                 " 0  --  Low             --  What am I doing with my life?"
-                                 " 1  --  Medium          --  Things are OK."
-                                 " 2  --  High            --  I love my life ᕦ( ᴼ ڡ ᴼ )ᕤ"
-                                 " 3  --  Extremely High  --  I'm king of the world!")
-                                ("HealthScore: Did I go for a run or do a workout this week?"
-                                 " 0  --  No             --  What am I doing with my life?"
-                                 " 1  --  Yes…           --  Sweet, what did you do?"))
+              (when (>= (my/weekly-review-phase) 2)
+                (my/read-daily-review-properties
+                 :questionnaire '(("SocialScore: Did I see family *and* did I call or message a friend?"
+                                   " 0  --  No             --  What am I doing with my life?"
+                                   " 1  --  Yes…           --  Sweet, who was it? What did you do?")
+                                  ("FaithScore: Did I go to this Mosque this week? Or read passages from the Quran?"
+                                   " 0  --  No             --  What am I doing with my life?"
+                                   " 1  --  Yes…           --  Sweet, what did you do?")
+                                  ("MarriageScore: How are things with my wife?"
+                                   "-1  --  Abysmal Low     --  I hate life."
+                                   " 0  --  Low             --  What am I doing with my life?"
+                                   " 1  --  Medium          --  Things are OK."
+                                   " 2  --  High            --  I love my life ᕦ( ᴼ ڡ ᴼ )ᕤ"
+                                   " 3  --  Extremely High  --  I’m king of the world!")
+                                  ("HealthScore: Did I go for a run or do a workout this week?"
+                                   " 0  --  No             --  What am I doing with my life?"
+                                   " 1  --  Yes…           --  Sweet, what did you do?"))
                                         ; 📊 Other metrics to consider keeping track of:
                                         ; ⇒ Hours worked
                                         ; ⇒ Tasks completed
-               :prop-val-action (lambda (property value) (org-set-property property value)))
-              ;; TODO: Make my/read-daily-review-⋯ attach a WeeklyScore, not a
-              ;; DailyScore? Maybe keep the latter for easy reference? E.g.,
-              ;; next line is copy/pasted from Daily Review.
-              ;;
-              ;; Add Daily Score to the start of the headline
-              (beginning-of-buffer)
-              (org-beginning-of-line)
-              (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
-              ;; Let's align them
-              (my/org-align-property-values)
-              ;; Add a special property for this review
+                 :prop-val-action (lambda (property value) (org-set-property property value)))
+                ;; Add Daily Score to the start of the headline
+                (beginning-of-buffer)
+                (org-beginning-of-line)
+                (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
+                (my/org-align-property-values))
+
+              ;; ─── All phases: WHY property ──────────────────────────────────
               (org-set-property "WHY" "Ensure everything is on track! Be proactive, not reactive! Be in control of my life! 😌 Have a sense of closure and wrap-up before the weekend! ☺️")
+              (org-set-property "Phase" (number-to-string (my/weekly-review-phase)))
               (end-of-buffer)
-              (insert
-               (let* ((♯lines (save-restriction (widen) (count-lines (point-min) (point-max))))
-                      (last-time (s-trim (shell-command-to-string "git log -1 --pretty=%s")))
-                      ;; Note that there's no `git push' since this is local ---Github may expose my notes to AI, no thank-you.
-                      (save-incantation (format "git add .; git commit -m 'Weekly Review Start, save %s lines on %s'" ♯lines  (ts-format))))
-                 (lf-string "
+
+              ;; ─── Phase 3: Commit & lint steps ──────────────────────────────
+              (when (>= (my/weekly-review-phase) 3)
+                (insert
+                 (let* ((♯lines (save-restriction (widen) (count-lines (point-min) (point-max))))
+                        (last-time (s-trim (shell-command-to-string "git log -1 --pretty=%s")))
+                        ;; Note that there's no `git push' since this is local ---Github may expose my notes to AI, no thank-you.
+                        (save-incantation (format "git add .; git commit -m 'Weekly Review Start, save %s lines on %s'" ♯lines  (ts-format))))
+                   (lf-string "
                      ,***** Closing up last week
 
                      ,****** TODO ⟨0⟩ Commit last week         [0%]
@@ -17796,98 +17886,107 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
 
                        \t 🤖 Last time ∷ “ ${last-time} ”
                        \t 🛋️ my-life.org line count ∷ ${♯lines}
-                       \t   # If it's significantly less, then look at diff to ensure I didn't lose anything important.
+                       \t   # If it’s significantly less, then look at diff to ensure I didn’t lose anything important.
                        \t ⁉️ [[elisp:(shell-command-to-string \"${save-incantation}\")][Click to commit!]]
 
                      + [ ] ⁉️ [[elisp:(progn (widen) (funcall-interactively #'org-lint))][Lint my-life.org]]
 
                        \t Importantly this mitigates [[https://en.wikipedia.org/wiki/Link_rot][link rot]]
-                       \t and ensures that when I do bulk find-replace actions that I haven't
+                       \t and ensures that when I do bulk find-replace actions that I haven’t
                        \t royally messed things up.
+"))))
 
-                     ,****** TODO ⟨1⟩ Friday Recap: What's the story of the past week?  [0%] :Standups:
+              ;; ─── All phases: Core reflection ───────────────────────────────
+              ;; This is the heart of the review. Even Phase 1 gets this.
+              (insert (lf-string "
+                     ,****** TODO ⟨1⟩ What did I ship this week?  [0%] :Standups:
                      :PROPERTIES:
                      :WHY: Recognise accomplishments, express self-gratitude, and debug!
                      :END:
 
-
-                     1️⃣ First, write a short story recapping the week.
-
-
-
-                     2️⃣ Reflect on what went well and what could have gone better.
-                     Answer [[https://nesslabs.com/plus-minus-next][the following 3 questions]]:
-                     # (♯1 & ♯2 useful for bragging about yourself when it's time to do performance reviews!)
+                     [[elisp:(save-restriction (widen) (my/what-did-i-work-on-this-week))][⇒ 🤔 What did I do in the past 7 days? ⇐]]
 
                      1. [ ] ➕ Wins: What went well and why? ✅
                         # What could have caused things to go so well? Maybe I can duplicate this next week!
                         # Re-read [[https://jvns.ca/blog/brag-documents/][Get your work recognized: write a brag document]]
 
 
-
-                     2. [ ] ➖ Challenges: What didn't go well? ⚠️
+                     2. [ ] ➖ Challenges: What didn’t go well? ⚠️
                         # How can I improve to mitigate bad weeks?
 
-
-                     3. [ ] 🔁 Trends: Are there any recurring patterns (positive or negative)?
-                        # Consider looking at previous Weekly Review if you need insight.
-                        # [[elisp:(org-ql-search org-agenda-files '(and (tags \"Weekly\") (tags \"Review\") (ts :from -30)))][🤖 WRs of the month]]
-
-
-                     4. [ ] 🔀 Super briefly: What will you focus on next week?
+                     3. [ ] 🔀 What will I focus on next week?
                         # Did I get any “$10k” tasks done? Why or why not?
 
+"))
+              ;; ─── All phases: L5 Competency check ───────────────────────────
+              ;; “Am I operating at L5?” — a gentle, structured self-check.
+              (insert "
+,****** TODO ⟨L5⟩ Am I growing as a senior engineer?  [0%]
 
-                     # Use Clock-info to see where I clocked-in.
-                     #                    [[elisp:(save-restriction (widen) (my/what-did-i-work-on-this-week))][⇒ 🤔 What did I do in the past 7 days? ⇐]]
-                     # Also consider looking at the “log view”, via the C-c C-z notes
-                     # Look at where all my time went, and think about whether things could’ve gone better.
+1. [ ] 🏗️ *Ownership*: Did I take responsibility for something beyond
+       my immediate task? (unowned work, tech debt, test gaps, a
+       design doc, a code review for someone outside my team)
 
+2. [ ] 🧑‍🏫 *Collaboration*: Did I help another engineer learn something,
+       or unblock them? (pairing, review feedback, a Slack explanation)
 
-                    3️⃣ One More Question to reflect on...
-"))) ;; TODO:
+3. [ ] 📐 *Scope*: Am I independently driving a project or feature
+       through its full lifecycle? (design → implement → test → ship)
 
-              (insert "\n + [ ] "
-                      (seq-random-elt
-                       '(
-                         "😄 What was the most enjoyable work activity of the last week?"
-                         "🤦‍♂️ What were some frustrating or boring moments you had? How can you avoid that going forward?"
-                         "🔧 Adjustments: What to stop? What to start? What to continue?"
-                         "🟢 What should I continue doing?"
-                         "🔴 What should I stop or change?"
-                         "🧪 What's one small experiment to try next week?"
-                         "😁 What are your biggest and most exciting challenges for the week to come?
-                          What do you need to get there?"
-                         "💭 Thoughts for the week to come: What are you thinking about for next week?"
-                         "🖼️ Memories of the Amazing, Interesting and Unique:
+")
+              ;; ─── Phase 2+: Random reflection question ──────────────────────
+              (when (>= (my/weekly-review-phase) 2)
+                (insert "\n + [ ] "
+                        (seq-random-elt
+                         '(
+                           "😄 What was the most enjoyable work activity of the last week?"
+                           "🤦‍♂️ What were some frustrating or boring moments you had? How can you avoid that going forward?"
+                           "🔧 Adjustments: What to stop? What to start? What to continue?"
+                           "🟢 What should I continue doing?"
+                           "🔴 What should I stop or change?"
+                           "🧪 What’s one small experiment to try next week?"
+                           "😁 What are your biggest and most exciting challenges for the week to come?
+                            What do you need to get there?"
+                           "💭 Thoughts for the week to come: What are you thinking about for next week?"
+                           "🖼️ Memories of the Amazing, Interesting and Unique:
               Share a photo, quote, line, or something from the
               previous week."
-                         "🎯 Did you accomplish your goals? Which ones and how
+                           "🎯 Did you accomplish your goals? Which ones and how
               did it go? Share your goal tracking and record you
               progress"
-                         "🐾 How did I feel this week overall?"
-                         "🕰️ Was my time aligned with my goals?"
-                         "👀 What distracted me?"
-                         "🎇 What energized me?"
-                         "📚 What did I learn?"
-                         "🪨 What are my biggest challenges (or “boulders”)
+                           "🐾 How did I feel this week overall?"
+                           "🕰️ Was my time aligned with my goals?"
+                           "👀 What distracted me?"
+                           "🎇 What energized me?"
+                           "📚 What did I learn?"
+                           "🪨 What are my biggest challenges (or "boulders")
               for the week to come? Think about which tasks will
               have the highest value in me reaching my potential
-              and being successful.")))
+              and being successful."))))
 
+              ;; ─── All phases: Archive as closure ────────────────────────────
+              ;; Archiving DONE tasks is a small ritual of /completion/. The task
+              ;; moves from "active" to "history." Your task list gets shorter.
+              ;; You can /see/ progress because the list shrinks. The problem
+              ;; isn’t productivity — it’s that you never close the loop.
               (insert              "
 ,****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
 
+/Archiving is an act of closure. It says: “this is finished.”/
+/A clean task list is a calm mind./
+
 1. [ ] Look through the ~:LOG:~ for useful information to file away into my
    References.
-   - If there's useful info, capture it with ~C-c C-c~, then archive the original
+   - If there’s useful info, capture it with ~C-c C-c~, then archive the original
      tree for clocking purposes.
    - If clocking purposes do not matter, say for personal or trivial tasks, then just delete the tree.
 
-
-     TODO: Agenda view: The list of completed and cancelled tasks to archive
      [[org-ql-search:(and (done) (not (tags \"Top\")) (closed :to ,(- (calendar-day-of-week (calendar-current-date)))))][📜 Items to review: Mine for useful info then archieve or delete. ☑️]]
+")
 
+              ;; ─── Phase 3: Forward planning ─────────────────────────────────
+              (when (>= (my/weekly-review-phase) 3)
+                (insert "
 ,***** Looking forward to next week ---/mentally try to see where I should be going/
 
 ,****** TODO ⟨3⟩ Prioritize and schedule!    [0%]
@@ -17903,7 +18002,7 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
 2. [ ] Find relevant tasks: What are my “sprint goals” and “quarterly goals”?
    - What is assigned to me in Jira /for this sprint/?
    - Any upcoming deadlines?
-   - Look at your “Someday/Maybe” list to see if there's anything worth doing.
+   - Look at your “Someday/Maybe” list to see if there’s anything worth doing.
    - get an overview about what you want to achieve in near future: your time
      and energy are finite, tasks are not
      - /Getting a sight of the forest can be very energizing and inspiring too,
@@ -17915,7 +18014,6 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
 
 
 3. [ ] Assign a [[https://radreads.co/10k-work/][dollar value]] to your work: $10 (low skill, not important), $100, $1k, and $10k (high skill, prized effort).
-   (MA: Aside: Change priorities to be render like this?)
 
    The Zen To Done system recommends scheduling your Most Important Tasks ($10k)
    on your calendar each week so that by the end of the week you have completed
@@ -17925,22 +18023,19 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
 
 4. [ ] To ensure the week is doable, add efforts to tasks for the week
    then ensure the effort estimate is actually realistic. Also check each
-   day and ensure it's realistic!
+   day and ensure it’s realistic!
 
-   # You can also add that to the column-mode (org-columns) to get a quick overview for a file (leave with org-columns-quit). Customize:
-   # (org-columns-default-format \"%25ITEM %TODO %3PRIORITY %TAGS %17Effort(Estimated Effort){:} %CLOCKSUM\")
-
-   - [ ] Look at daily agenda view for the next week and make sure it'd doable and not
-         overloaded! I don't want to keep pushing things since my days are unrealistic!
+   - [ ] Look at daily agenda view for the next week and make sure it’d doable and not
+         overloaded! I don’t want to keep pushing things since my days are unrealistic!
 
 
 5. [ ] Decide your tasks for the week and time block your calendar.
 
      ,*Focus on important tasks! Not low priority no-one-cares ‘fun’ efforts!*
 
-     ,*Embrace trade-offs.* You can't do it all. Realize that when you're
-      choosing to do one task, you're saying “no” to many other tasks. And
-                              that's a good thing
+     ,*Embrace trade-offs.* You can’t do it all. Realize that when you’re
+      choosing to do one task, you’re saying “no” to many other tasks. And
+                              that’s a good thing
 
      Finally, schedule time on your calendar to work on your tasks. This is
        called [[https://dansilvestre.com/time-blocking/][time blocking]]. Set alerts for critical tasks.
@@ -17962,15 +18057,17 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
 ,****** TODO ⟨5⟩ Am I getting happier? [0%]
 
 ")
-              (-let [start (point)]
-                (insert (my/get-table-of-daily-scores-for-last-week))
-                (center-region start (point)))
-              (insert "\n" (my/percentage-of-life-spent) "\n")
+                (-let [start (point)]
+                  (insert (my/get-table-of-daily-scores-for-last-week))
+                  (center-region start (point)))
+                (insert "\n" (my/percentage-of-life-spent) "\n"))
+
+              ;; ─── All phases: Wrap up ───────────────────────────────────────
               (org-update-statistics-cookies 'all)
-              (insert "\nSay, “Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)”")
-              ;; Show todo sparse tree. (See also: org-ql-sparse-tree)
-              (execute-kbd-macro (kbd "C-c / t"))
-              (message "To journal is to live; congratulations on another entry!")))
+              (insert "\nSay, \"Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)\"")
+              (my/weekly-review--increment-counter)
+              (message "Review ♯%d complete! (Phase %d) 🎉 To journal is to live!"
+                       my/weekly-review-count (my/weekly-review-phase))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -17984,7 +18081,7 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
 ;; \=>
 ;;
 ;; Adds an Edited_Date property to org headings matching the given condition.
-;; Alternatively one could use `org-map-entries', however the filtering syntax is less than ideal.
+;; Alternatively one could use `org-map-entries’, however the filtering syntax is less than ideal.
 (when nil
 
   ;; Do a modification
@@ -18031,7 +18128,7 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
 
 
 (defun my/pp-list-of-lists-as-table (lol &optional justify min-cell-width columns)
-  "Convert a list of lists to a pretty `table.el' table, editable with ⌘-e."
+  "Convert a list of lists to a pretty `table.el’ table, editable with ⌘-e."
   (let ((buf (get-buffer-create "*org-tb*")))
     (with-current-buffer buf
       (erase-buffer)
@@ -18040,7 +18137,9 @@ Sure, I put in 60+ hours at work. Yet, I have this feeling I’ve got nothing im
       (table-capture 1 (point-max) "&" "\n" justify min-cell-width columns)
       (buffer-substring-no-properties (point-min) (point-max)))))
 ;;
-;; (my/pp-list-of-lists-as-table '((Abc Def "xyz") (1 1 X1) (2 4 X2) (3 9 X3) (4 16 X4)))
+;; (my/pp-list-of-lists-as-table ‘((Abc Def "xyz") (1 1 X1) (2 4 X2) (3 9 X3) (4 16 X4)))
+
+) ;; End 😴 — deferred weekly review keybinding and helpers
 #+end_src
 
 *** M-x org-lint
@@ -18580,7 +18679,9 @@ doc:my/what-did-i-work-on-this-week.
 
 **** org-clock-clocktable-default-properties and “my/what-did-i-work-on-this-week” :details:
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle init.el
+(😴 progn ;; Defer: clock report functions are only needed on demand.
+
 ;; This only works well if my tasks have timestamps; ie are scheduled ^_^
 (setq org-clock-clocktable-default-properties
       '(:scope ("./my-life.org")       ;; Consider the current file
@@ -18651,11 +18752,13 @@ doc:my/what-did-i-work-on-this-week.
     (while (re-search-forward "\\\\_" nil t)
       (replace-match "⇒")
       (org-table-align))))
+
+) ;; End 😴 — deferred clock report functions
 #+end_src
 
 **** Nicer clocktable layout for nested entries                     :details:
-#+begin_src emacs-lisp
-(advice-add 'org-clocktable-indent-string :override
+#+begin_src emacs-lisp :tangle init.el
+(😴 advice-add 'org-clocktable-indent-string :override
  (defun my/org-clocktable-indent-string (level)
   (if (= level 1)
       ""
@@ -19086,7 +19189,7 @@ org-agenda-custom-commands
                         {If a region is active, carry it as context to the AI}
    2.     C-u C-c k  ⇒  Switch to an AI buffer by name
    3. C-u C-u C-c k  ⇒  Start a new AI buffer and name it
-   
+
    This delegates to the existing =agent-shell= DWIM machinery
    (=agent-shell= already handles region context, toggling, and shell
    creation) while ensuring =default-directory= is always =my\work-dir=. The
@@ -19094,7 +19197,7 @@ org-agenda-custom-commands
    to force a new Claude Code shell without an agent selection prompt.
 "
   (interactive "P")
-  
+
  (let ((default-directory my\work-dir))
     (cond
      ((equal arg '(16))
@@ -19140,7 +19243,7 @@ org-agenda-custom-commands
            :client-maker (lambda (buffer)
                            (agent-shell-anthropic-make-claude-client :buffer buffer))
            :install-instructions “See https://github.com/zed-industries/claude-agent-acp for installation.”))))
-  
+
 ;; The names of the AI buffers seem to be tied to the AI processes, so we can't just rename buffers.
 ;; However, after any interaction, AI buffer headers are updated, so we hook into that mechanism to
 ;; provide a label for them. We also propogate that label to the agent-shell buffers menu.
