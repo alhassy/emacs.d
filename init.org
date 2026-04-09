@@ -9688,12 +9688,13 @@ When a universal prefix is given, “C-u C-c F”, we load a random
 font from all possible themes.  Nice way to learn about more
 fonts (•̀ᴗ•́)و"
   (interactive)
-  (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
-         (font (if current-prefix-arg
-                   (nth (random (length all-fonts)) all-fonts)
-                 new-font)))
-    (set-face-font 'default font)
-    (message "Font: %s" font)))
+  (when (display-graphic-p) ;; i.e., do nothing when run in CI for github verifications
+    (let* ((all-fonts (append (fontset-list) (x-list-fonts "*" nil)))
+           (font (if current-prefix-arg
+                     (nth (random (length all-fonts)) all-fonts)
+                   new-font)))
+      (set-face-font 'default font)
+      (message "Font: %s" font))))
 
 (global-set-key "\C-c\ F" 'my/toggle-font)
 
