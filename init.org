@@ -9239,10 +9239,13 @@ primary tools.
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
 
+(setq org-default-notes-file "~/Dropbox/my-life.org")
+(setq org-agenda-files (list org-default-notes-file))
+
 ;; Open my-life.org on startup.
 (setq initial-buffer-choice
       (lambda ()
-        (let ((buf (find-file-noselect "~/Dropbox/my-life.org")))
+        (let ((buf (find-file-noselect org-default-notes-file)))
           (with-current-buffer buf
             (org-superstar-mode +1)
             (font-lock-update))
@@ -10341,7 +10344,7 @@ etc directly from the view itself.
 
 #+begin_src emacs-lisp
 ;; I like to write everything in one massive file, and the agenda should consult it.
-(setq org-agenda-files (list "~/Dropbox/my-life.org"))
+(setq org-agenda-files (list org-default-notes-file))
 #+end_src
 
 | 🥰 I am using ~org-ql~ to generate my agenda: It is more expressive /and/ more performant than the built-in ~org-agenda~. |
@@ -12148,7 +12151,7 @@ cache is populated — open the agenda with full Gerrit/Jira data.
   "Begin the workday: clock into standup, refresh work data, open agenda."
   (interactive)
   ;; 1. Open my-life.org and navigate to "Daily Standup Planning"
-  (find-file "~/Dropbox/my-life.org")
+  (find-file org-default-notes-file)
   (widen)
   (goto-char (point-min))
   (unless (re-search-forward
@@ -12210,8 +12213,6 @@ command ~meet-with-𝒞~ and bind it to ~C-c m 𝒾~ where 𝒾 is the first let
 (by Org ID), clocks in, and narrows.
 
 #+begin_src emacs-lisp
-(setq org-default-notes-file my\notes-file)
-(setq org-agenda-files (list my\notes-file))
 (cl-loop for colleague in my\colleagues
          for function-name = (intern (format "meet-with-%s" colleague))
          for colleague-str = (symbol-name colleague)
@@ -13332,7 +13333,7 @@ Usage:
             ;; Capture mode now handles automatically clocking in and out of a capture task.
             ;; When I start a capture mode task the task is clocked in as specified by :clock-in t
             ;; and when the task is filed with C-c C-c the clock resumes on the original clocking task.
-            `(("𝒞" ,,name entry (file+headline "~/Dropbox/my-life.org" ,,location) ,,template :clock-in t :clock-resume t))))
+            `(("𝒞" ,,name entry (file+headline org-default-notes-file ,,location) ,,template :clock-in t :clock-resume t))))
        (org-capture (list prefix) "𝒞")
        (unless (> prefix 1) (rename-buffer ,name))
        ,@forms)))

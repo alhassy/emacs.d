@@ -1513,10 +1513,13 @@ Order requires alphabetically and remove duplicates."
 ;; Silence the usual message: Get more info using the about page via C-h C-a.
 (setq inhibit-startup-message t)
 
+(setq org-default-notes-file "~/Dropbox/my-life.org")
+(setq org-agenda-files (list org-default-notes-file))
+
 ;; Open my-life.org on startup.
 (setq initial-buffer-choice
       (lambda ()
-        (let ((buf (find-file-noselect "~/Dropbox/my-life.org")))
+        (let ((buf (find-file-noselect org-default-notes-file)))
           (with-current-buffer buf
             (org-superstar-mode +1)
             (font-lock-update))
@@ -1823,7 +1826,7 @@ fonts (•̀ᴗ•́)و"
 
 ;; [[file:init.org::*Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/][Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:1]]
 ;; I like to write everything in one massive file, and the agenda should consult it.
-(setq org-agenda-files (list "~/Dropbox/my-life.org"))
+(setq org-agenda-files (list org-default-notes-file))
 ;; Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:1 ends here
 
 ;; [[file:init.org::*Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/][Why Emacs? Because of Org-agenda: /“Write fragmentarily, read collectively”/:2]]
@@ -3360,7 +3363,7 @@ manual refresh at any time, use the \"Refresh Work\" button or press
   "Begin the workday: clock into standup, refresh work data, open agenda."
   (interactive)
   ;; 1. Open my-life.org and navigate to "Daily Standup Planning"
-  (find-file "~/Dropbox/my-life.org")
+  (find-file org-default-notes-file)
   (widen)
   (goto-char (point-min))
   (unless (re-search-forward
@@ -3383,8 +3386,6 @@ manual refresh at any time, use the \"Refresh Work\" button or press
 ;; Standup command:1 ends here
 
 ;; [[file:init.org::*Colleague Meeting Shortcuts][Colleague Meeting Shortcuts:1]]
-(setq org-default-notes-file my\notes-file)
-(setq org-agenda-files (list my\notes-file))
 (cl-loop for colleague in my\colleagues
          for function-name = (intern (format "meet-with-%s" colleague))
          for colleague-str = (symbol-name colleague)
@@ -3997,7 +3998,7 @@ Usage:
             ;; Capture mode now handles automatically clocking in and out of a capture task.
             ;; When I start a capture mode task the task is clocked in as specified by :clock-in t
             ;; and when the task is filed with C-c C-c the clock resumes on the original clocking task.
-            `(("𝒞" ,,name entry (file+headline "~/Dropbox/my-life.org" ,,location) ,,template :clock-in t :clock-resume t))))
+            `(("𝒞" ,,name entry (file+headline org-default-notes-file ,,location) ,,template :clock-in t :clock-resume t))))
        (org-capture (list prefix) "𝒞")
        (unless (> prefix 1) (rename-buffer ,name))
        ,@forms)))
