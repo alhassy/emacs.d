@@ -18157,6 +18157,9 @@ encountered this once and it took me a while to figure out this solution.
 #+end_src
 
 ** ⏰ “What did I spend my time on today? Last week? Last month? Last Year?”
+:PROPERTIES:
+:header-args: :tangle yes
+:END:
 :LOGBOOK:
 CLOCK: [2025-05-04 Sun 21:44]--[2025-05-04 Sun 22:53] =>  1:09
 CLOCK: [2025-05-04 Sun 21:39]--[2025-05-04 Sun 21:44] =>  0:05
@@ -18440,7 +18443,7 @@ entry. E.g., if you forgot to clock into a task when you started!
    +overlaps, in clocked time. Then add clock-entries to remove gaps; fix
    clock-times to remove overlaps.+
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle init.el
 ;; In case my hands slip and I press “C-x C-c”, which saves all buffers and quits Emacs; confirm that's my intention.
 (setq confirm-kill-emacs 'yes-or-no-p)
 
@@ -18559,6 +18562,9 @@ CLOCK: [2025-04-12 Sat 14:38]--[2025-04-12 Sat 14:38] =>  0:00
 TODO: Consider using audio files for an improved experience.
 
 *** Reviewing Progress / Providing Progress Reports To Others / Myself
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 :LOGBOOK:
 CLOCK: [2024-05-07 Tue 07:27]--[2024-05-07 Tue 07:28] =>  0:01
 :CAPTURED: [2024-05-07 Tue 07:27]
@@ -18659,6 +18665,9 @@ doc:my/what-did-i-work-on-this-week.
 #+end_src
 
 *** Automating [[https://en.wikipedia.org/wiki/Pomodoro_Technique][Pomodoro]] ---“Commit for only 25 minutes!” :Posterity:
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 
 Effort estimates are for an entire task.
 Yet, sometimes it's hard to even get started on some tasks.
@@ -18696,6 +18705,9 @@ Note that this does not conflict with the total effort estimate for the task.
 code, and do more searches; then again, I've learned a lot by writing code.)
 
 *** Whenever I clock out, update total clocked time property (including times of subtasks) :Posterity:
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 
 Abandoned in-favour of using org-eldoc and eldoc-box-hover-mode to show me how
 long I've been working on a task.
@@ -18723,8 +18735,10 @@ See also:
 *** ~C-c SPC~: Quick key to go to the currently clocked-in entry, or to the most recently clocked one
 :PROPERTIES:
 :CREATED:  [2024-05-09 Thu 06:47]
+:header-args: :tangle yes
 :END:
-#+begin_src emacs-lisp :tangle init.el
+
+#+begin_src emacs-lisp
 (bind-key*
  "C-c SPC"
  (defun my/jump-to-clocked-task (&optional prefix)
@@ -18739,6 +18753,7 @@ With prefix arg, offer recently clocked tasks for selection."
 :PROPERTIES:
 :CREATED:  [2025-01-05 Sun 11:37]
 :WHY:      To bring me joy, a smile on my face
+:header-args: :tangle no
 :END:
 #+begin_src emacs-lisp
 (advice-add 'org-eldoc-get-breadcrumb :around

@@ -5305,6 +5305,96 @@ the character 𝓍 before and after the selected text."
     (apply orig-fn args)))
 ;; Org-superstar:1 ends here
 
+  (setq org-clock-sound "~/.emacs.d/school-bell.wav")
+
+;; In case my hands slip and I press “C-x C-c”, which saves all buffers and quits Emacs; confirm that's my intention.
+(setq confirm-kill-emacs 'yes-or-no-p)
+
+
+;; Save clock data and state changes and notes in the LOGBOOK drawer
+(setq org-clock-into-drawer t)
+
+
+;; Change task state to STARTED when clocking in, if in an agenda file.
+;; This means I can clock-into tasks in my init.org or into captures “C-c c”
+;; without having them marked STARTED.
+(setq org-clock-in-switch-to-state
+      (defun my/clock-in-to-STARTED-if-in-an-agenda-file (&rest args)
+        (when (member (buffer-file-name) (org-agenda-files))
+          "STARTED")))
+
+
+;; At first, I used to record a note on what was accomplished when clocking out of an item.
+;; Now, I use “C-c C-z” to make notes about insights or blockers or ideas or what to do next time, as I work on a task.
+(setq org-log-note-clock-out nil)
+
+
+;; Show lot of clocking history so it's easy to resume recently clocked items, using the “C-u C-c SPC” clock history list.
+;;
+;; For example, I'm working on task 𝒜, then I need to context-switch to task ℬ (e.g., “meeting”)
+;; so I clock-out of 𝒜 and clock-into ℬ; then when ℬ is done, I press “C-u C-c SPC” and see a list
+;; of tasks I've recently clocked-into, with 𝒜 being at the top, so I select it and now I'm back into 𝓐.
+;;
+;; The clock history is a nice way to quickly see what you've been working on lately.
+(setq org-clock-history-length 23)
+
+
+;; Resume clocking task when emacs is restarted: Save the running clock and all CLOCK HISTORY when exiting Emacs, load it on startup
+(org-clock-persistence-insinuate)
+(setq org-clock-persist t)
+(setq org-clock-persist-query-resume nil) ;; Do not prompt to resume an active clock
+
+;; If I clock into a task, then move to something else before a minute's elapsed, don't keep track of a 0:00 duration.
+;; This is helpful when I capture a note quickly with “C-c c”.
+(setq org-clock-out-remove-zero-time-clocks t)
+
+
+;; When a task enters the DONE state, I don't want to automatically clock-out
+;; because I may not have started another task and don't want to “lose a few
+;; minutes” finding a sibling task to start. Such minutes add up; especially if
+;; I'm taking the time to write good notes.
+(setq org-clock-out-when-done nil)
+;; Alternatively, make this “t” and add the following hook; then even when I
+;; clock-out of a task, I don't lose unlogged minutes before logging into
+;; another task.
+(when nil
+  (add-hook 'org-clock-out-hook
+            (defun my/clock-into-PLANNING-task ()
+              "Look for the task with property “:ID: planning” and clock into it.
+
+              The “** Planning” task is intended for miscellaneous clock time:
+              Reading email, clearing my inbox, reorganising my notes, etc.
+             "
+              (interactive)
+              (org-with-point-at (org-id-find "planning" 'marker)
+                (org-clock-in '(16))))))
+
+
+;; Include current clocking task in clock reports
+(setq org-clock-report-include-clocking-task t)
+
+(set-face-attribute
+ 'org-mode-line-clock
+  nil
+  :background "grey75"
+  :foreground "red"
+  :box '(:line-width -1 :style released-button))
+
+;; Conversely, the getter:
+(face-attribute  'org-mode-line-clock :foreground) ;; ⇒ "red"
+
+(add-hook 'org-clock-in-hook
+          (defun my/say-bismillah-on-clock-in ()
+            (unless org-capture-mode
+              (alert " \nI begin this task in the name of God, the most gracious, the most merciful.\n\nGod please bless the task I'm undertaking."
+                     :title "Bismi Allah ar-rahaman ar-raheem")
+              (async-shell-command "say \"I begin this task in the name of God, the most gracious, the most merciful\""))))
+
+(add-hook 'org-clock-out-hook
+          (defun my/say-alhamudlilah-on-clock-out ()
+            (unless org-capture-mode
+              (async-shell-command "say \"Alhamudllah; praise be to God who has blessed me\""))))
+
 (bind-key*
  "C-c SPC"
  (defun my/jump-to-clocked-task (&optional prefix)

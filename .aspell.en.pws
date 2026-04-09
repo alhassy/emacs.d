@@ -1,4 +1,4 @@
-personal_ws-1.1 en 468 
+personal_ws-1.1 en 469 
 ACSII
 AST
 ASTs
@@ -314,6 +314,7 @@ logics
 lossy
 macOS
 magit
+magmas
 mariam
 matcher
 matchers
