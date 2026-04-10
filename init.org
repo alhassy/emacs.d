@@ -11152,7 +11152,12 @@ Example:
           :documentation "Symbol: todo | wip | please-review | reviews-needed | my-needing-action.
 `todo' means the Jira ticket exists but no Gerrit work has started.")
   (urgent nil
-          :documentation "Non-nil if this item is flagged urgent by Jira (Urgency = 1 month or upcoming fixVersion)."))
+          :documentation "Non-nil if this item is flagged urgent by Jira (Urgency = 1 month or upcoming fixVersion).")
+  (org-tree nil
+            :documentation "Marker to the corresponding Org heading in
+`org-default-notes-file', or nil.  Set by `work-item--resolve-org-trees'
+during cache build.  Enables `org-marker'/`org-hd-marker' text properties
+so standard agenda commands (RET, TAB, I, o) work on work-item lines."))
 
 (defvar my/agenda-work-data nil
   "Cached plist holding structured Gerrit/Jira agenda data.
@@ -11188,6 +11193,57 @@ I need to review, or my own changes that need my response.")
 All my open, non-abandoned changes.  Combined with the attention
 set to derive the \"please review\" and WIP sections (changes I
 own that are NOT in my attention set).")
+#+end_src
+
+*** Resolving work-items to Org headings
+
+After the cache is built, we scan =my-life.org= to find the Org
+heading for each work-item.  Pass 1 matches Jira IDs in heading
+titles; Pass 2 matches colleague names (for =reviews-needed= items
+with no Jira) via ~my\colleagues~ Org IDs.
+
+#+begin_src emacs-lisp
+(defun work-item--resolve-org-trees (items)
+  "Populate the `org-tree' slot for each item in ITEMS.
+Pass 1: match Jira IDs against headings in `org-default-notes-file'.
+Pass 2: match colleague names for reviews-needed items without Jira."
+  (let ((resolved 0))
+    ;; Pass 1: Jira-ID heading search
+    (let ((jira-items (-filter #'work-item-jira items))
+          (buf (find-file-noselect org-default-notes-file)))
+      (when (and jira-items (buffer-live-p buf))
+        (with-current-buffer buf
+          (org-with-wide-buffer
+           (dolist (it jira-items)
+             (goto-char (point-min))
+             (let ((re (concat "^\\*+ .*"
+                               (regexp-quote (work-item-jira it)))))
+               (if (re-search-forward re nil t)
+                   (progn
+                     (org-back-to-heading t)
+                     (setf (work-item-org-tree it) (point-marker))
+                     (cl-incf resolved))
+                 (message "work-item--resolve: no heading found for %s"
+                          (work-item-jira it)))))))))
+    ;; Pass 2: colleague Org-ID lookup for reviews-needed sans Jira
+    (when (boundp 'my\colleagues)
+      (dolist (it items)
+        (when (and (eq (work-item-status it) 'reviews-needed)
+                   (not (work-item-org-tree it))
+                   (work-item-author it))
+          (let* ((first-name (downcase (car (split-string
+                                             (work-item-author it)))))
+                 (match (cl-find-if
+                         (lambda (c)
+                           (string-prefix-p first-name
+                                            (downcase (symbol-name c))))
+                         my\colleagues)))
+            (when match
+              (when-let ((loc (org-id-find (symbol-name match) 'marker)))
+                (setf (work-item-org-tree it) loc)
+                (cl-incf resolved)))))))
+    (message "work-item--resolve: %d/%d items linked to Org headings"
+             resolved (length items))))
 #+end_src
 
 *** Gerrit SSH query (synchronous)
@@ -11964,7 +12020,9 @@ Wrapped in `condition-case' so a failure does not leave
                                              covered-ids)))
                              urgent-issues)))
              ;; Combine all items
-             (all-items (append todo-items gerrit-items)))
+             (all-items (append todo-items gerrit-items))
+             ;; Resolve Org-tree markers for agenda navigation
+             (_ (work-item--resolve-org-trees all-items)))
         (setq my/agenda-work-data
               (list :items all-items
                     :timestamp (current-time))
@@ -12057,7 +12115,10 @@ A nil cache (never fetched) is also considered stale."
 
 (defun work-item-insert-as-agenda-section (heading items)
   "Insert HEADING and a numbered list of rendered ITEMS into the agenda buffer.
-Each item is rendered via `work-item-to-string'."
+Each item is rendered via `work-item-to-string'.  When an item has
+a non-nil `org-tree' marker, `org-marker' and `org-hd-marker' text
+properties are set on the line so that standard org-agenda commands
+\(RET, TAB, I, o, etc.) work."
   (when items
     (insert "\n"
             (propertize heading 'face 'org-agenda-structure)
@@ -12065,8 +12126,16 @@ Each item is rendered via `work-item-to-string'."
     (let ((n 0))
       (dolist (it items)
         (cl-incf n)
-        (insert (format "%d. %s\n" n
-                        (work-item-to-string it)))))))
+        (let ((line-start (point)))
+          (insert (format "%d. %s\n" n (work-item-to-string it)))
+          ;; When the item has an Org tree, make the line behave like
+          ;; a real agenda entry.
+          (when-let ((marker (work-item-org-tree it)))
+            (when (marker-buffer marker)
+              (put-text-property line-start (1- (point))
+                                 'org-marker marker)
+              (put-text-property line-start (1- (point))
+                                 'org-hd-marker marker))))))))
 
 (defun my/agenda-insert-work-sections ()
   "Insert cached `work-item' sections at the end of the daily agenda.
