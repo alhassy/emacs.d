@@ -14237,94 +14237,59 @@ easily by composing them in Org mode, then invoking ~my/copy-as-jira~.
 
 
 (cl-defun my/copy-as-slack ()
-  "Export region to slack, and copy to the kill ring for pasting into other programs."
+  "Convert the region (or buffer) from Org markup to Slack mrkdwn and copy it.
+No external dependency -- handles the subset of Org that appears in
+standup messages: inline markup, links, and lists."
   (interactive)
-  (use-package ox-slack)
-  (message "Converting to Slack Markdown...")
-  (kill-new (org-export-as 'slack nil nil :body-only-please))
-  (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))
-;;
-;; For links to display nicely, I need this code:
-;; https://github.com/titaniumbones/ox-slack/pull/9
-(defun org-slack-link (link contents info)
-  "Transcode LINK object into Markdown format.
-  CONTENTS is the link's description.  INFO is a plist used as
-  a communication channel."
-  (let ((link-org-files-as-md
-         (lambda (raw-path)
-           ;; Treat links to `file.org' as links to `file.md'.
-           (if (string= ".org" (downcase (file-name-extension raw-path ".")))
-               (concat (file-name-sans-extension raw-path) ".md")
-             raw-path)))
-        (type (org-element-property :type link)))
-    (cond
-     ;; Link type is handled by a special function.
-     ((org-export-custom-protocol-maybe link contents 'md))
-     ((member type '("custom-id" "id" "fuzzy"))
-      (let ((destination (if (string= type "fuzzy")
-                             (org-export-resolve-fuzzy-link link info)
-                           (org-export-resolve-id-link link info))))
-        (pcase (org-element-type destination)
-          (`plain-text			; External file.
-           (let ((path (funcall link-org-files-as-md destination)))
-             (if (not contents) (format "%s>" path)
-               (format "[%s](%s)" contents path))))
-          (`headline
-           (format
-            ;; "[%s](#%s)"
-            "[%s]"
-            ;; Description.
-            (cond ((org-string-nw-p contents))
-                  ((org-export-numbered-headline-p destination info)
-                   (mapconcat #'number-to-string
-                              (org-export-get-headline-number destination info)
-                              "."))
-                  (t (org-export-data (org-element-property :title destination)
-                                      info)))
-            ;; Reference.
-            ;; (or (org-element-property :CUSTOM_ID destination)
-            ;;     (org-export-get-reference destination info))
-            ))
-          (_
-           (let ((description
-                  (or (org-string-nw-p contents)
-                      (let ((number (org-export-get-ordinal destination info)))
-                        (cond
-                         ((not number) nil)
-                         ((atom number) (number-to-string number))
-                         (t (mapconcat #'number-to-string number ".")))))))
-             (when description
-               (format "[%s]"
-                       description
-                       ;; (org-export-get-reference destination info)
-                       )))))))
-     ((org-export-inline-image-p link org-html-inline-image-rules)
-      (let ((path (let ((raw-path (org-element-property :path link)))
-                    (cond ((not (equal "file" type)) (concat type ":" raw-path))
-                          ((not (file-name-absolute-p raw-path)) raw-path)
-                          (t (expand-file-name raw-path)))))
-            (caption (org-export-data
-                      (org-export-get-caption
-                       (org-export-get-parent-element link)) info)))
-        (format "![img](%s)"
-                (if (not (org-string-nw-p caption)) path
-                  (format "%s \"%s\"" path caption)))))
-     ((string= type "coderef")
-      (let ((ref (org-element-property :path link)))
-        (format (org-export-get-coderef-format ref contents)
-                (org-export-resolve-coderef ref info))))
-     ((equal type "radio") contents)
-     (t (let* ((raw-path (org-element-property :path link))
-               (path
-                (cond
-                 ((member type '("http" "https" "ftp" "mailto"))
-                  (concat type ":" raw-path))
-                 ((string= type "file")
-                  (org-export-file-uri (funcall link-org-files-as-md raw-path)))
-                 (t raw-path))))
-          (if (not contents) (format "%s" path)
-            (format "[%s](%s)" contents path)))))))
-
+  (let* ((beg (if (use-region-p) (region-beginning) (point-min)))
+         (end (if (use-region-p) (region-end) (point-max)))
+         (text (buffer-substring-no-properties beg end))
+         (links '())
+         (counter 0))
+    ;; 1. Stash Org links as opaque tokens so URL slashes
+    ;;    cannot collide with the italics pass.
+    (while (string-match
+            "\\[\\[\\([^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" text)
+      (cl-incf counter)
+      (let ((token (format "\x01LINK%d\x01" counter)))
+        (push (cons token
+                    (format "[%s](%s)"
+                            (match-string 2 text)
+                            (match-string 1 text)))
+              links)
+        (setq text (replace-match token t t text))))
+    (while (string-match "\\[\\[\\([^]]+\\)\\]\\]" text)
+      (cl-incf counter)
+      (let ((token (format "\x01LINK%d\x01" counter)))
+        (push (cons token (match-string 1 text)) links)
+        (setq text (replace-match token t t text))))
+    ;; 2. Inline markup
+    ;; Code: ~code~ or =code= -> `code`
+    (setq text (replace-regexp-in-string
+                "[~=]\\([^ ~=\n][^~=\n]*?\\)[~=]"
+                "`\\1`" text))
+    ;; Bold: *bold* -> *bold* (same in Slack; protect from italics)
+    (setq text (replace-regexp-in-string
+                "\\*\\([^ *\n][^*\n]*?\\)\\*"
+                "\x03\\1\x03" text))
+    ;; Italics: /italics/ -> _italics_
+    (setq text (replace-regexp-in-string
+                "/\\([^ /\n][^/\n]*?\\)/"
+                "_\\1_" text))
+    ;; Restore bold markers
+    (setq text (replace-regexp-in-string "\x03" "*" text))
+    ;; 3. Restore stashed links
+    (dolist (pair links)
+      (setq text (replace-regexp-in-string
+                  (regexp-quote (car pair)) (cdr pair) text nil t)))
+    ;; 4. Normalise ordered lists: "1) " -> "1. "
+    (setq text (replace-regexp-in-string
+                "^\\( *\\)\\([0-9]+\\)) " "\\1\\2. " text))
+    ;; 5. Strip Org heading stars
+    (setq text (replace-regexp-in-string
+                "^\\*+ " "" text))
+    (kill-new text)
+    (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting.")))
 
 (cl-defun my/copy-as-confluence ()
   "Export region to Confluence, and copy to the kill ring for pasting into other programs.
