@@ -2826,8 +2826,11 @@ Let's save a few precious seconds,
 /Pop up a terminal, do some work, then close it using the same command./
 
 #+begin_src emacs-lisp
+(defvar running-tests noninteractive "Code executed in headless Github CI.")
+
 ;; Shell with a nearly universal compatibility with terminal applications 💝
 (use-package vterm
+  :if (not running-tests) ;; Avoid vterm package initialization when in headless github CI
   ;; Easily paste in VTerm
   :bind (("s-v" . vterm-yank)
          ("M-y" . vterm-yank)))

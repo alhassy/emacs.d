@@ -487,8 +487,11 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; initially-worrisome “narrow-to-region”, C-x n n.
 (setq-default disabled-command-function nil)
 
+(defvar running-tests noninteractive "Code executed in headless Github CI.")
+
 ;; Shell with a nearly universal compatibility with terminal applications 💝
 (use-package vterm
+  :if (not running-tests) ;; Avoid vterm package initialization when in headless github CI
   ;; Easily paste in VTerm
   :bind (("s-v" . vterm-yank)
          ("M-y" . vterm-yank)))
