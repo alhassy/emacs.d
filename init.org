@@ -12337,7 +12337,7 @@ command ~meet-with-𝒞~ and bind it to ~C-c m 𝒾~ where 𝒾 is the first let
 (by Org ID), clocks in, and narrows.
 
 #+begin_src emacs-lisp
-(cl-loop for colleague in my\colleagues
+(cl-loop for colleague in (and (boundp 'my\colleagues) my\colleagues)
          for function-name = (intern (format "meet-with-%s" colleague))
          for colleague-str = (symbol-name colleague)
          for first-letter = (substring colleague-str 0 1)

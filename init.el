@@ -3483,7 +3483,7 @@ without reflecting on the last one."
 ;; Standup command:1 ends here
 
 ;; [[file:init.org::*Colleague Meeting Shortcuts][Colleague Meeting Shortcuts:1]]
-(cl-loop for colleague in my\colleagues
+(cl-loop for colleague in (and (boundp 'my\colleagues) my\colleagues)
          for function-name = (intern (format "meet-with-%s" colleague))
          for colleague-str = (symbol-name colleague)
          for first-letter = (substring colleague-str 0 1)
