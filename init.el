@@ -6491,62 +6491,6 @@ With prefix arg, offer recently clocked tasks for selection."
    (org-clock-goto prefix)
    (org-narrow-to-subtree)))
 
-# [[file:init.org::*Hierarchical Archive][Hierarchical Archive:1]]
-* A
-Some useful context
-** B
-More Info
-** C
-Bye!
-# Hierarchical Archive:1 ends here
-
-# [[file:init.org::*Hierarchical Archive][Hierarchical Archive:2]]
-* B
-:PROPERTIES:
-:ARCHIVE_OLPATH: A
-:END:
-More Info
-# Hierarchical Archive:2 ends here
-
-# [[file:init.org::*Hierarchical Archive][Hierarchical Archive:3]]
-* B
-:PROPERTIES:
-:ARCHIVE_OLPATH: A
-:END:
-More Info
-
-* A
-Some useful context
-** C
-Bye!
-# Hierarchical Archive:3 ends here
-
-# [[file:init.org::*Hierarchical re-filing][Hierarchical re-filing:1]]
-* A
-** B
-More Info
-# Hierarchical re-filing:1 ends here
-
-# [[file:init.org::*The duplicate-heading problem][The duplicate-heading problem:1]]
-* A
-** B
-More Info
-
-* A
-Some useful context
-** C
-Bye!
-# The duplicate-heading problem:1 ends here
-
-# [[file:init.org::*The fix: post-archive merge][The fix: post-archive merge:1]]
-* A
-Some useful context
-** B
-More Info
-** C
-Bye!
-# The fix: post-archive merge:1 ends here
-
 ;; [[file:init.org::*Implementation][Implementation:1]]
 (setq org-archive-default-command #'my/org-archive-subtree-hierarchically)
 

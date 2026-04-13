@@ -19216,6 +19216,7 @@ Note: This looks nice with eldoc-box mode enabled, as do all eldoc features :-)
 * Hierarchical Archive
 :PROPERTIES:
 :CREATED:  [2026-04-13 Mon 10:58]
+:header-args:org: :tangle no
 :END:
 
 Org's default archiving flattens the tree: every archived entry lands in the
