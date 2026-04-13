@@ -206,7 +206,7 @@ TODO: Build HTML export as a minimal test that things work as expected.
                               (org-html-export-to-html)
                               (message "\n 🤤 HTML Export Successful! 🤩")
 
-(unless noninteractive ...) ;; Use this to omit stuff from the Github Actions test
+(unless running-tests ...) ;; Use this to omit stuff from the Github Actions test
 
 ** Personal instructions for a new machine                           :ignore:
 :PROPERTIES:
@@ -2876,7 +2876,7 @@ practical shell: [[https://www.howtogeek.com/362409/what-is-zsh-and-why-should-y
 #+BEGIN_SRC emacs-lisp
 ;; Be default, Emacs please use zsh
 ;; E.g., M-x shell
-(unless noninteractive (setq shell-file-name "/bin/zsh"))
+(unless running-tests (setq shell-file-name "/bin/zsh"))
 #+END_SRC
 
 Out of the box, zsh comes with
@@ -3759,7 +3759,7 @@ items there (•̀ᴗ•́)و
  doc:git-timemachine.
 
 #+begin_src emacs-lisp
-(unless noninteractive
+(unless running-tests
   (use-package blamer
     :quelpa (blamer :fetcher github :repo "artawower/blamer.el")
     :custom
@@ -5043,7 +5043,7 @@ Where my local use contains ~#+MACRO: remark  @@latex: \fbox{\textbf{Comment: $1
 #+begin_src emacs-lisp
 ;; Get all unicode emojis to appear within Emacs
 ;; See also: https://emacs.stackexchange.com/questions/5689/force-a-single-font-for-all-unicode-glyphs?rq=1
-;; (unless noninteractive (set-fontset-font t nil "Apple Color Emoji"))
+;; (unless running-tests (set-fontset-font t nil "Apple Color Emoji"))
 #+end_src
 
 #+begin_src org :tangle "~/.emacs.d/yankpad.org" :noweb yes :exports none
@@ -8468,7 +8468,7 @@ console.log({ List the variables here whose values you want to log });
 :END:
 
 #+begin_src emacs-lisp
-(unless noninteractive
+(unless running-tests
 
 (setq turbo-log--prefix "%c ******* LOOK HERE *******")
 (defun length> (x y) (> (length x) y))
@@ -9285,7 +9285,7 @@ primary tools.
            "; Time "       (emacs-init-time))))
 
 ;; Ensure I'm notified if startup suddenly gets slower!
-(unless noninteractive
+(unless running-tests
   (cl-assert (< (string-to-number (emacs-init-time "%d")) 5)
              'show-args
              "Whoops, things got slower! 😲 Or is this a fresh install?"))
@@ -9584,7 +9584,7 @@ between the chosen themes with kbd:C-c_t, doc:my/toggle-theme.
     espresso-theme nano-theme pink-bliss-uwu-theme modus-themes)
   "Packages that provide the themes in `my/themes'.")
 
-(unless noninteractive
+(unless running-tests
   (setq my/themes
         (cl-loop for (package . theme-variants-I-like) in
                  ;; I like theme doom-flatwhite <3 It feels “warm”.
@@ -9741,7 +9741,7 @@ get a nice font selection menu ---this can be useful for your own ‘personal st
 
 Let's use the following theme and font, upon startup.
 #+begin_src emacs-lisp :tangle init.el
-(unless noninteractive
+(unless running-tests
   ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
   (my/toggle-theme 'solarized-gruvbox-light))
 #+end_src
@@ -9800,7 +9800,7 @@ Don’t Render Cursors in Non-Focused Windows: If I'm not currently in a window
 As a laptop user, screen space is important, so let's remove rarely used visual
 items.
 #+BEGIN_SRC emacs-lisp :tangle init.el
-(unless noninteractive
+(unless running-tests
   (tool-bar-mode   -1)    ;; No large icons please
   (scroll-bar-mode -1))   ;; No visual indicator please
   ;; (menu-bar-mode   -1) ;; The Mac OS top pane has menu options
@@ -13463,7 +13463,7 @@ Usage:
        (org-capture (list prefix) "𝒞")
        (unless (> prefix 1) (rename-buffer ,name))
        ,@forms)))
-(unless noninteractive
+(unless running-tests
   (eval '(bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))))
 #+end_src
 
@@ -15270,7 +15270,7 @@ Must Know About Unicode and Character Sets (No Excuses!)]] )
 Executing ~agda-mode setup~ appends the following text to the ~.emacs~ file.
 Let's put it here ourselves.
 #+begin_src emacs-lisp :tangle no
-(unless noninteractive
+(unless running-tests
   (load-file (let ((coding-system-for-read 'utf-8))
                (shell-command-to-string "agda-mode locate"))))
 #+end_src
@@ -15289,7 +15289,7 @@ better.
     (url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" agda-input.el)))
 
 ;; MA: This results in "Package cl is deprecated" !?
-(unless noninteractive
+(unless running-tests
   (setq default-input-method "Agda")
   (defun my/setup-agda-input ()
     "Load agda-input on first text/prog buffer, then activate it."
@@ -15793,7 +15793,7 @@ For example, we account for LaTeX citations.
 cite:agda_overview ( In HTML export, the citation doesn't link anywhere. )
 
     #+BEGIN_SRC emacs-lisp :tangle no
-(unless noninteractive
+(unless running-tests
 
 (use-package org-ref
   :custom ;; Files to look at when no “╲bibliography{⋯}” is not present in a file.

@@ -502,7 +502,7 @@ installs of packages that are not in our `my/installed-packages' listing.
 
 ;; Be default, Emacs please use zsh
 ;; E.g., M-x shell
-(unless noninteractive (setq shell-file-name "/bin/zsh"))
+(unless running-tests (setq shell-file-name "/bin/zsh"))
 
 ;; Idempotent install check — defer since tldr is never needed at startup.
 (😴 system-packages-ensure "tldr")
@@ -1539,7 +1539,7 @@ Order requires alphabetically and remove duplicates."
            "; Time "       (emacs-init-time))))
 
 ;; Ensure I'm notified if startup suddenly gets slower!
-(unless noninteractive
+(unless running-tests
   (cl-assert (< (string-to-number (emacs-init-time "%d")) 5)
              'show-args
              "Whoops, things got slower! 😲 Or is this a fresh install?"))
@@ -1626,7 +1626,7 @@ Order requires alphabetically and remove duplicates."
     espresso-theme nano-theme pink-bliss-uwu-theme modus-themes)
   "Packages that provide the themes in `my/themes'.")
 
-(unless noninteractive
+(unless running-tests
   (setq my/themes
         (cl-loop for (package . theme-variants-I-like) in
                  ;; I like theme doom-flatwhite <3 It feels “warm”.
@@ -1752,7 +1752,7 @@ fonts (•̀ᴗ•́)و"
 ;; (my/toggle-font "Source Code Pro Light 14")
 ;; (my/toggle-font "IBM Plex Mono 12")
 
-(unless noninteractive
+(unless running-tests
   ;; Breaks Gerrit: (my/toggle-font "Roboto Mono Light 14")
   (my/toggle-theme 'solarized-gruvbox-light))
 
@@ -1772,7 +1772,7 @@ fonts (•̀ᴗ•́)و"
 (setq-default cursor-in-non-selected-windows nil)
 (setq highlight-nonselected-windows nil)
 
-(unless noninteractive
+(unless running-tests
   (tool-bar-mode   -1)    ;; No large icons please
   (scroll-bar-mode -1))   ;; No visual indicator please
   ;; (menu-bar-mode   -1) ;; The Mac OS top pane has menu options
@@ -4102,7 +4102,7 @@ Usage:
        (org-capture (list prefix) "𝒞")
        (unless (> prefix 1) (rename-buffer ,name))
        ,@forms)))
-(unless noninteractive
+(unless running-tests
   (eval '(bind-key* "C-c c" (def-capture "Inbox Entry 📩" "Inbox 📩 \t\t\t:inbox:" "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n"))))
 ;; Capture: Now that I know how to query my agenda, how do I get things into it efficiently?:1 ends here
 
@@ -4954,7 +4954,7 @@ the character 𝓍 before and after the selected text."
     (url-copy-file "https://raw.githubusercontent.com/agda/agda/master/src/data/emacs-mode/agda-input.el" agda-input.el)))
 
 ;; MA: This results in "Package cl is deprecated" !?
-(unless noninteractive
+(unless running-tests
   (setq default-input-method "Agda")
   (defun my/setup-agda-input ()
     "Load agda-input on first text/prog buffer, then activate it."
