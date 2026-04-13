@@ -14272,18 +14272,16 @@ easily by composing them in Org mode, then invoking ~my/copy-as-jira~.
   (message "Copied as Reddit Markdown!"))
 
 
-(cl-defun my/copy-as-slack ()
-  "Convert the region (or buffer) from Org markup to Slack mrkdwn and copy it.
-No external dependency -- handles the subset of Org that appears in
-standup messages: inline markup, links, and lists."
-  (interactive)
-  (let* ((beg (if (use-region-p) (region-beginning) (point-min)))
-         (end (if (use-region-p) (region-end) (point-max)))
-         (text (buffer-substring-no-properties beg end))
-         (links '())
-         (counter 0))
-    ;; 1. Stash Org links as opaque tokens so URL slashes
-    ;;    cannot collide with the italics pass.
+(cl-defun my/org-links-stash (text)
+  "Replace Org links in TEXT with opaque \\x01LINKn\\x01 tokens.
+Returns (SANITISED-TEXT . ALIST) where each ALIST entry maps a
+token to its Slack mrkdwn replacement:
+  [[url][desc]] --> [desc](url)   (described link)
+  [[url]]       --> url           (bare link)
+The tokens are inert under every subsequent regex pass (italics,
+bold, code) because \\x01 never appears in natural Org text.
+Use `my/org-links-restore' to rehydrate the tokens afterwards."
+  (let ((links '()) (counter 0))
     (while (string-match
             "\\[\\[\\([^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" text)
       (cl-incf counter)
@@ -14299,33 +14297,51 @@ standup messages: inline markup, links, and lists."
       (let ((token (format "\x01LINK%d\x01" counter)))
         (push (cons token (match-string 1 text)) links)
         (setq text (replace-match token t t text))))
-    ;; 2. Inline markup
-    ;; Code: ~code~ or =code= -> `code`
-    (setq text (replace-regexp-in-string
-                "[~=]\\([^ ~=\n][^~=\n]*?\\)[~=]"
-                "`\\1`" text))
-    ;; Bold: *bold* -> *bold* (same in Slack; protect from italics)
-    (setq text (replace-regexp-in-string
-                "\\*\\([^ *\n][^*\n]*?\\)\\*"
-                "\x03\\1\x03" text))
-    ;; Italics: /italics/ -> _italics_
-    (setq text (replace-regexp-in-string
-                "/\\([^ /\n][^/\n]*?\\)/"
-                "_\\1_" text))
-    ;; Restore bold markers
-    (setq text (replace-regexp-in-string "\x03" "*" text))
-    ;; 3. Restore stashed links
-    (dolist (pair links)
-      (setq text (replace-regexp-in-string
-                  (regexp-quote (car pair)) (cdr pair) text t t)))
-    ;; 4. Normalise ordered lists: "1) " -> "1. "
-    (setq text (replace-regexp-in-string
-                "^\\( *\\)\\([0-9]+\\)) " "\\1\\2. " text))
-    ;; 5. Strip Org heading stars
-    (setq text (replace-regexp-in-string
-                "^\\*+ " "" text))
-    (kill-new text)
-    (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting.")))
+    (cons text links)))
+
+(cl-defun my/org-links-restore (links text)
+  "Replace opaque tokens in TEXT with their Slack mrkdwn forms.
+LINKS is the alist returned by `my/org-links-stash' -- each
+entry is (TOKEN . REPLACEMENT).  FIXEDCASE is t so Emacs does
+not apply its case-adjustment heuristics on the replacement.
+Argument order is (LINKS TEXT) so the function threads naturally
+with `->>': the text flows in as the last argument."
+  (cl-reduce (lambda (s pair)
+               (replace-regexp-in-string
+                (regexp-quote (car pair)) (cdr pair) s t t))
+             links :initial-value text))
+
+(cl-defun my/copy-as-slack ()
+  "Convert the region (or buffer) from Org markup to Slack mrkdwn and copy it.
+No external dependency -- handles the subset of Org that appears in
+standup messages: inline markup, links, and lists."
+  (interactive)
+  (let* ((beg (if (use-region-p) (region-beginning) (point-min)))
+         (end (if (use-region-p) (region-end) (point-max)))
+         (text (buffer-substring-no-properties beg end)))
+    (-let [(text . links) (my/org-links-stash text)]
+      (kill-new
+       (->> text
+            ;; Code: ~code~ or =code= -> `code`
+            (replace-regexp-in-string
+             "[~=]\\([^ ~=\n][^~=\n]*?\\)[~=]" "`\\1`")
+            ;; Bold: *bold* -> protect from italics pass
+            (replace-regexp-in-string
+             "\\*\\([^ *\n][^*\n]*?\\)\\*" "\x03\\1\x03")
+            ;; Italics: /italics/ -> _italics_
+            (replace-regexp-in-string
+             "/\\([^ /\n][^/\n]*?\\)/" "_\\1_")
+            ;; Restore bold markers
+            (replace-regexp-in-string "\x03" "*")
+            ;; Restore stashed links
+            (my/org-links-restore links)
+            ;; Normalise ordered lists: "1) " -> "1. "
+            (replace-regexp-in-string
+             "^\\( *\\)\\([0-9]+\\)) " "\\1\\2. ")
+            ;; Strip Org heading stars
+            (replace-regexp-in-string "^\\*+ " "")))
+      (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))))
+
 
 (cl-defun my/copy-as-confluence ()
   "Export region to Confluence, and copy to the kill ring for pasting into other programs.
