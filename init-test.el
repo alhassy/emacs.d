@@ -50,6 +50,51 @@
 
   (kill-buffer))
 
+;; [[file:init.org::*Implementation][Implementation:2]]
+(ert-deftest hierarchical-archive-merges-duplicate-headings ()
+  "Archiving a child, then its parent, produces a single merged heading."
+  :tags '(archive)
+  (let* ((src-file (make-temp-file "archive-src" nil ".org"
+                                   "* A\nSome useful context\n** B\nMore Info\n** C\nBye!\n"))
+         (archive-file (concat (file-name-sans-extension src-file) "_archive.org"))
+         (org-archive-location (concat archive-file "::"))
+         ;; Suppress prompts and messages during the test.
+         (inhibit-message t))
+    (unwind-protect
+        (progn
+          ;; Archive ** B
+          (find-file src-file)
+          (goto-char (point-min))
+          (search-forward "** B")
+          (my/org-archive-subtree-hierarchically)
+
+          ;; Archive * A (which still carries ** C)
+          (goto-char (point-min))
+          (search-forward "* A")
+          (my/org-archive-subtree-hierarchically)
+
+          ;; Verify: the archive should contain a single * A with
+          ;; body text, ** B, and ** C --- no duplicates.
+          (with-current-buffer (find-file-noselect archive-file)
+            (let ((contents (buffer-string)))
+              ;; Exactly one "* A" heading.
+              (should (= 1 (s-count-matches "^\\* A$" contents)))
+              ;; Body text from the parent is present.
+              (should (s-contains-p "Some useful context" contents))
+              ;; Both children are present.
+              (should (s-contains-p "** B" contents))
+              (should (s-contains-p "More Info" contents))
+              (should (s-contains-p "** C" contents))
+              (should (s-contains-p "Bye!" contents)))))
+
+      ;; Cleanup: silence kill-buffer prompts for modified buffers.
+      (--each (list src-file archive-file)
+        (-when-let (buf (get-file-buffer it))
+          (with-current-buffer buf (set-buffer-modified-p nil))
+          (kill-buffer buf))
+        (when (file-exists-p it) (delete-file it))))))
+;; Implementation:2 ends here
+
 (ert-deftest lsp-hover-shows-type-signature ()
   ;; Make a temporary scratch.js file with the given contents.
   (-let [scratch.js (make-temp-file "scratch" nil ".js" "const first = (x, y) => 3")]

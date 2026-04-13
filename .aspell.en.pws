@@ -1,4 +1,4 @@
-personal_ws-1.1 en 469 
+personal_ws-1.1 en 475 
 ACSII
 AST
 ASTs
@@ -104,6 +104,7 @@ Multimethod
 Multimethods
 Musa
 Musa's
+NQE's
 Nasriyah
 Neato
 Netmask
@@ -277,6 +278,8 @@ homomorphisms
 homomrphism
 iRule
 iRules
+idempotency
+idempotently
 imamah
 implementers
 incentivize
@@ -403,7 +406,9 @@ scalability
 scalable
 schemas
 semantical
+semigroup
 semilattice
+semilattices
 serialize
 sessional
 siloed
@@ -414,6 +419,7 @@ subalgebras
 subclasses
 subexpression
 subexpressions
+sublists
 subsequence
 substitutivity
 substring

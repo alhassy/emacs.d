@@ -2861,6 +2861,23 @@ Example:
          (json-obj (ignore-errors (json-read-from-string raw))))
     (when json-obj
       (append (alist-get 'issues json-obj) nil))))
+
+(cl-defun my/jira-post-comment (ticket comment)
+  "Post COMMENT string as a comment on Jira TICKET via REST API.
+Uses `curl -sn' (silent, read ~/.netrc for auth).  Returns the
+comment ID string on success, nil on failure."
+  (let* ((url (format "%s/rest/api/2/issue/%s/comment"
+                      (my/gerrit--jira-rest-base) ticket))
+         (payload (json-encode `((body . ,comment))))
+         (timer-idle-list nil) (timer-list nil)
+         (raw (with-output-to-string
+                (with-current-buffer standard-output
+                  (call-process "curl" nil t nil
+                                "-sn" "-X" "POST"
+                                "-H" "Content-Type: application/json"
+                                "-d" payload url))))
+         (json-obj (ignore-errors (json-read-from-string raw))))
+    (and json-obj (alist-get 'id json-obj))))
 ;; Jira helpers:1 ends here
 
 ;; [[file:init.org::*Conversion: raw alists → =work-item= instances][Conversion: raw alists → =work-item= instances:1]]
@@ -4570,7 +4587,7 @@ standup messages: inline markup, links, and lists."
     ;; 3. Restore stashed links
     (dolist (pair links)
       (setq text (replace-regexp-in-string
-                  (regexp-quote (car pair)) (cdr pair) text nil t)))
+                  (regexp-quote (car pair)) (cdr pair) text t t)))
     ;; 4. Normalise ordered lists: "1) " -> "1. "
     (setq text (replace-regexp-in-string
                 "^\\( *\\)\\([0-9]+\\)) " "\\1\\2. " text))
@@ -5883,7 +5900,37 @@ Also, at phase boundaries, nudge the user to unlock more."
                      :WHY: Recognise accomplishments, express self-gratitude, and debug!
                      :END:
 
-                     [[elisp:(save-restriction (widen) (my/what-did-i-work-on-this-week))][⇒ 🤔 What did I do in the past 7 days? ⇐]]
+"))
+              ;; Insert the clock report inline — no link-clicking needed.
+              (save-restriction
+                (widen)
+                (org-clock-report))
+
+              ;; Insert git log of merged commits from ~/fwd.
+              ;; Each line: "HASH\tSubject" — we split and build an Org
+              ;; link so clicking [Details] shows the full commit.
+              (-let [raw (string-trim
+                          (shell-command-to-string
+                           (concat "git -C ~/fwd log"
+                                   " --author=\"Musa\""
+                                   " --since=\"7 days ago\""
+                                   " --format=\"%h\t%s\""
+                                   " --no-merges")))]
+                (insert "\n\n*Commits merged into =~/fwd= this week:*\n"
+                        (if (string-empty-p raw)
+                            "/(None yet — keep shipping!)/\n"
+                          (-let [n 0]
+                            (concat
+                             "#+begin_quote\n"
+                             (mapconcat
+                              (lambda (line)
+                                (-let [(hash subject) (s-split-up-to "\t" line 1)]
+                                  (format "%d. %s 📚 [[elisp:(let ((default-directory \"~/fwd/\")) (magit-show-commit \"%s\"))][Details]]"
+                                          (cl-incf n) subject hash)))
+                              (s-lines raw) "\n")
+                             "\n#+end_quote\n")))))
+
+              (insert (lf-string "
 
                      1. [ ] ➕ Wins: What went well and why? ✅
                         # What could have caused things to go so well? Maybe I can duplicate this next week!
@@ -5893,8 +5940,8 @@ Also, at phase boundaries, nudge the user to unlock more."
                      2. [ ] ➖ Challenges: What didn’t go well? ⚠️
                         # How can I improve to mitigate bad weeks?
 
-                     3. [ ] 🔀 What will I focus on next week?
-                        # Did I get any “$10k” tasks done? Why or why not?
+                     3. [ ] 🔀 What will I focus on this week?
+                        # What “$10k” tasks do I want done? Why or why not?
 
 "))
               ;; ─── All phases: L5 Competency check ───────────────────────────
@@ -5960,7 +6007,8 @@ Also, at phase boundaries, nudge the user to unlock more."
      tree for clocking purposes.
    - If clocking purposes do not matter, say for personal or trivial tasks, then just delete the tree.
 
-     [[org-ql-search:(and (done) (not (tags \"Top\")) (closed :to ,(- (calendar-day-of-week (calendar-current-date)))))][📜 Items to review: Mine for useful info then archieve or delete. ☑️]]
+     [[elisp:(org-ql-search org-agenda-files '(and (done) (not (tags "Top")) (closed :to (-
+     (calendar-day-of-week (calendar-current-date))))))][📜 Items to review: Mine for useful info then archieve or delete. ☑️]]
 ")
 
               ;; ─── Phase 3: Forward planning ─────────────────────────────────
@@ -6295,6 +6343,125 @@ Also, at phase boundaries, nudge the user to unlock more."
               str (concat str "──")))
       (concat str "─> ")))))
 
+(defun my/jira-tickets-clocked-today ()
+  "Return alist of (TICKET . ((heading . STR) (minutes . N) (entries . LINES))).
+Scans `org-default-notes-file' for CLOCK entries dated today, groups
+by Jira ticket ID extracted from ancestor headings using
+`my\\jira-project-prefixes'."
+  (let* ((today (format-time-string "%Y-%m-%d"))
+         (prefix-alt (mapconcat #'identity my\jira-project-prefixes "\\|"))
+         (jira-re (format "\\(%s\\)-[0-9]+" prefix-alt))
+         result)
+    (with-current-buffer (find-file-noselect org-default-notes-file)
+      (org-with-wide-buffer
+       (goto-char (point-min))
+       (while (re-search-forward (concat "CLOCK: \\[" today) nil t)
+         ;; Grab the clock line before moving to the heading.
+         (let ((clock-line (string-trim
+                            (buffer-substring-no-properties
+                             (line-beginning-position)
+                             (line-end-position)))))
+           (save-excursion
+             (org-back-to-heading t)
+             (let ((heading (org-get-heading t t t t))
+                   ticket)
+               ;; Walk up ancestor headings until we find a Jira ID.
+               (while (and (not (string-match jira-re heading))
+                           (org-up-heading-safe))
+                 (setq heading (org-get-heading t t t t)))
+               (when (string-match jira-re heading)
+                 (setq ticket (match-string 0 heading))
+                 (let* ((minutes
+                         (if (string-match "=> +\\([0-9]+\\):\\([0-9]+\\)" clock-line)
+                             (+ (* 60 (string-to-number (match-string 1 clock-line)))
+                                (string-to-number (match-string 2 clock-line)))
+                           0))
+                        (existing (assoc ticket result)))
+                   (if existing
+                       (progn
+                         (cl-incf (alist-get 'minutes (cdr existing)) minutes)
+                         (push clock-line (alist-get 'entries (cdr existing))))
+                     (push (cons ticket
+                                 `((heading . ,heading)
+                                   (minutes . ,minutes)
+                                   (entries . (,clock-line))))
+                           result))))))))))
+    (nreverse result)))
+
+(defun my/end-of-day-jira-comments ()
+  "Open a buffer to write end-of-day comments for today's Jira tickets.
+Scans clock entries, shows each ticket with clock context, and
+provides \\[my/end-of-day--publish] to publish all comments to Jira."
+  (interactive)
+  (let ((tickets (my/jira-tickets-clocked-today)))
+    (if (null tickets)
+        (message "No Jira tickets clocked today.")
+      ;; Batch-fetch titles for display.
+      (my/gerrit--fetch-jira-titles (mapcar #'car tickets))
+      (let ((buf (get-buffer-create "*End-of-Day Comments*")))
+        (switch-to-buffer buf)
+        (erase-buffer)
+        (org-mode)
+        (insert (format "* End-of-Day Comments — %s\n"
+                        (format-time-string "%A, %B %e %Y")))
+        (insert "Press =C-c C-c= to publish all comments to Jira.\n\n")
+        (dolist (entry tickets)
+          (let* ((ticket (car entry))
+                 (info (cdr entry))
+                 (heading (alist-get 'heading info))
+                 (minutes (alist-get 'minutes info))
+                 (entries (alist-get 'entries info))
+                 (title (or (my/gerrit--get-jira-title ticket) heading))
+                 (hours (/ minutes 60))
+                 (mins (% minutes 60)))
+            (insert (format "** %s: %s\n" ticket title))
+            (insert (format "Clock: %dh %02dm today\n\n" hours mins))
+            (dolist (cl (reverse entries))
+              (insert (format "- =%s=\n" cl)))
+            (insert "\nYour comment below this line:\n\n\n")))
+        ;; Buffer-local C-c C-c to publish.
+        (local-set-key (kbd "C-c C-c") #'my/end-of-day--publish)
+        ;; Position cursor at the first comment area.
+        (goto-char (point-min))
+        (re-search-forward "Your comment below this line:" nil t)
+        (forward-line 1)))))
+
+(defun my/end-of-day--publish ()
+  "Parse the *End-of-Day Comments* buffer and post comments to Jira."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (let (results
+          (ticket-re "^\\*\\* \\([A-Z]+-[0-9]+\\):"))
+      (while (re-search-forward ticket-re nil t)
+        (let* ((ticket (match-string 1))
+               (section-start (point))
+               (section-end (or (save-excursion
+                                  (and (re-search-forward ticket-re nil t)
+                                       (line-beginning-position)))
+                                (point-max)))
+               (section-text (buffer-substring-no-properties
+                              section-start section-end))
+               (comment (when (string-match
+                               "Your comment below this line:\n"
+                               section-text)
+                          (string-trim (substring section-text
+                                                  (match-end 0))))))
+          (when (and comment (not (string-empty-p comment)))
+            (let ((ok (my/jira-post-comment ticket comment)))
+              (push (cons ticket (if ok 'ok 'fail)) results)))))
+      (if (null results)
+          (message "No comments to publish — write something under each ticket first.")
+        (message "Published: %s"
+                 (mapconcat
+                  (lambda (r)
+                    (format "%s %s" (if (eq (cdr r) 'ok) "✓" "✗") (car r)))
+                  (nreverse results) ", "))))))
+
+;; Repurpose C-c r d for the end-of-day Jira commenting ritual.
+;; The old 20-question daily review stays intact (under :tangle no).
+(bind-key* "C-c r d" #'my/end-of-day-jira-comments)
+
 (bind-key*
  "C-c SPC"
  (defun my/jump-to-clocked-task (&optional prefix)
@@ -6304,6 +6471,174 @@ With prefix arg, offer recently clocked tasks for selection."
    (interactive "P")
    (org-clock-goto prefix)
    (org-narrow-to-subtree)))
+
+# [[file:init.org::*Hierarchical Archive][Hierarchical Archive:1]]
+* A
+Some useful context
+** B
+More Info
+** C
+Bye!
+# Hierarchical Archive:1 ends here
+
+# [[file:init.org::*Hierarchical Archive][Hierarchical Archive:2]]
+* B
+:PROPERTIES:
+:ARCHIVE_OLPATH: A
+:END:
+More Info
+# Hierarchical Archive:2 ends here
+
+# [[file:init.org::*Hierarchical Archive][Hierarchical Archive:3]]
+* B
+:PROPERTIES:
+:ARCHIVE_OLPATH: A
+:END:
+More Info
+
+* A
+Some useful context
+** C
+Bye!
+# Hierarchical Archive:3 ends here
+
+# [[file:init.org::*Hierarchical re-filing][Hierarchical re-filing:1]]
+* A
+** B
+More Info
+# Hierarchical re-filing:1 ends here
+
+# [[file:init.org::*The duplicate-heading problem][The duplicate-heading problem:1]]
+* A
+** B
+More Info
+
+* A
+Some useful context
+** C
+Bye!
+# The duplicate-heading problem:1 ends here
+
+# [[file:init.org::*The fix: post-archive merge][The fix: post-archive merge:1]]
+* A
+Some useful context
+** B
+More Info
+** C
+Bye!
+# The fix: post-archive merge:1 ends here
+
+;; [[file:init.org::*Implementation][Implementation:1]]
+(setq org-archive-default-command #'my/org-archive-subtree-hierarchically)
+
+(defvar my/org-archive--hierarchical-p nil
+  "Non-nil when the current archive should refile hierarchically.
+Bound dynamically by `my/org-archive-subtree-hierarchically’;
+read by the `org-archive-finalize-hook’.")
+
+(defun my/org-archive-subtree-hierarchically (&optional prefix)
+  "Archive subtree, then refile it under the original outline path."
+  (interactive "P")
+  (let ((my/org-archive--hierarchical-p
+         (and (not prefix) (not (use-region-p)))))
+    (org-archive-subtree prefix)))
+
+;; The hook runs with point on the just-archived entry, inside the
+;; archive buffer, BEFORE org-archive-subtree’s own save-buffer ---
+;; so our modifications are persisted automatically.
+(add-hook 'org-archive-finalize-hook #'my/org-archive--refile-hierarchically)
+
+(defun my/org-archive--refile-hierarchically ()
+  "Refile the just-archived entry under its original outline path.
+Runs as an `org-archive-finalize-hook’."
+  (when my/org-archive--hierarchical-p
+    (let* ((olpath (org-entry-get (point) "ARCHIVE_OLPATH"))
+           (path (and olpath (split-string olpath "/")))
+           (level 1)
+           tree-text)
+      (when olpath
+        (org-mark-subtree)
+        (setq tree-text (buffer-substring (region-beginning) (region-end)))
+        (let (this-command (inhibit-message t)) (org-cut-subtree))
+        (goto-char (point-min))
+        (save-restriction
+          (widen)
+          (-each path
+            (lambda (heading)
+              (if (re-search-forward
+                   (rx-to-string
+                    `(: bol (repeat ,level "*") (1+ " ") ,heading)) nil t)
+                  (org-narrow-to-subtree)
+                (goto-char (point-max))
+                (unless (looking-at "^")
+                  (insert "\n"))
+                (insert (make-string level ?*)
+                        " "
+                        heading
+                        "\n"))
+              (cl-incf level)))
+          (widen)
+          (org-end-of-subtree t t)
+          (org-paste-subtree level tree-text)))
+
+      ;; Merge duplicate: if a same-named heading already exists
+      ;; earlier in the archive (e.g., a stub created when a child
+      ;; was archived first), fold the new entry into it.
+      (my/org-archive--merge-duplicate-heading))))
+
+(defun my/org-archive--find-earlier-heading (heading level before-pos)
+  "Find an earlier heading matching HEADING at LEVEL, before BEFORE-POS.
+Returns the position of the heading, or nil."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((stars-re (format "^%s " (regexp-quote (make-string level ?*)))))
+      (catch 'found
+        (while (re-search-forward stars-re before-pos t)
+          (goto-char (line-beginning-position))
+          (when (and (= (org-current-level) level)
+                     (string= (org-get-heading t t t t) heading))
+            (throw 'found (point)))
+          (forward-line 1))
+        nil))))
+
+(defun my/org-archive--merge-duplicate-heading ()
+  "Merge the last top-level heading with any earlier same-named duplicate.
+When we archive a child first, a parent stub is created in the
+archive.  Archiving the parent later produces a duplicate heading.
+This function detects that and merges: body text goes after the
+existing heading’s properties, children are appended at the end."
+  (goto-char (point-max))
+  (while (org-up-heading-safe))
+  (let* ((new-pos (point))
+         (heading (org-get-heading t t t t))
+         (level (org-current-level))
+         (existing-pos (my/org-archive--find-earlier-heading
+                        heading level new-pos)))
+    (when existing-pos
+      (goto-char new-pos)
+      (let* ((subtree-end (save-excursion (org-end-of-subtree t t) (point)))
+             (meta-end (save-excursion (org-end-of-meta-data t) (point)))
+             (first-child-pos (save-excursion
+                                (goto-char new-pos)
+                                (when (org-goto-first-child) (point))))
+             (body (buffer-substring meta-end (or first-child-pos subtree-end)))
+             (children (when first-child-pos
+                         (buffer-substring first-child-pos subtree-end))))
+        ;; Delete the duplicate entry.
+        (delete-region new-pos subtree-end)
+        (when (looking-at "\n") (delete-char 1))
+        ;; Insert body text after existing heading’s meta-data.
+        (when (and body (not (string-empty-p (string-trim body))))
+          (goto-char existing-pos)
+          (org-end-of-meta-data t)
+          (insert body))
+        ;; Append children at end of existing subtree.
+        (when children
+          (goto-char existing-pos)
+          (org-end-of-subtree t t)
+          (unless (bolp) (insert "\n"))
+          (insert children))))))
+;; Implementation:1 ends here
 
 ;; [[file:init.org::*Install][Install:1]]
 ;; M-x agent-shell: Chat with Claude Code inside an Emacs buffer.
