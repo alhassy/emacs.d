@@ -2769,15 +2769,22 @@ changes of a stack is the \"theme\" of that stack — suitable for
 display as a prefix.  A ticket mentioned in only one change is
 likely incidental and would clutter the summary.
 
+When the intersection is empty — e.g. a dependent change
+references a different ticket or none at all — we fall back to
+the tip (last) change's tickets so the caller still gets
+something useful.
+
 Example:
   ;; Change A references BUG-1, BUG-2; change B references BUG-1, BUG-3
   (my/gerrit--stack-jira-tickets (list A B))
   → (\"BUG-1\")"
   (let ((all (-map #'my/gerrit--extract-jira-tickets stack)))
     (when all
-      (-reduce-from
-       (lambda (acc tix) (-intersection acc tix))
-       (car all) (cdr all)))))
+      ;; Fall back to the tip's tickets when the intersection is empty.
+      (or (-reduce-from
+           (lambda (acc tix) (-intersection acc tix))
+           (car all) (cdr all))
+          (car (last all))))))
 
 (cl-defun my/gerrit--format-jira-link (ticket)
   "Format TICKET as an Org-style bracketed link using `my\\jira-base-url'.

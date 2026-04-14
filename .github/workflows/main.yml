@@ -47,7 +47,7 @@ jobs:
           pwd
           ls
 
-      - name: Attempting startup & basic test ...
+      - name: Startup smoke test
         run: time emacs -nw --batch --eval='(let
                                 (
                                  (user-emacs-directory default-directory))
@@ -56,10 +56,14 @@ jobs:
                               (setq url-show-status nil)
                               (package-initialize)
                               (load-file "init.el")
-                              (message "\n 🤤 Startup Successful! 🤩")
-                              (when nil "It seems this results in a non-existent Agenda issue when run by GHA; ignoring for now."
-                                  (message "\nCheck we can do something basic, like getting pretty HTML from an Org file\n")
-                                  (find-file "init.org")
-                                  (org-html-export-to-html)
-                                  (message "\n 🤤 HTML file generated successfully! 🤩\n")))'
+                              (message "\n 🤤 Startup Successful! 🤩"))'
+
+      - name: Run ERT tests
+        run: time emacs -nw --batch --eval='(let
+                                ((user-emacs-directory default-directory))
+                              (setq url-show-status nil)
+                              (package-initialize)
+                              (load-file "init.el")
+                              (load-file "init-test.el")
+                              (ert-run-tests-batch-and-exit))'
 # Github Actions:1 ends here
