@@ -47,6 +47,16 @@ jobs:
           pwd
           ls
 
+      - name: Install Org from GNU ELPA
+        run: emacs -nw --batch --eval='(progn
+                              (require (quote package))
+                              (add-to-list (quote package-archives)
+                                           (quote ("gnu" . "https://elpa.gnu.org/packages/")))
+                              (package-initialize)
+                              (package-refresh-contents)
+                              (package-install (quote org))
+                              (message "Installed Org %s" (org-version)))'
+
       - name: Startup smoke test
         run: time emacs -nw --batch --eval='(let
                                 (
