@@ -348,6 +348,93 @@ so tests run without private.el."
          (rendered (work-item-to-string item)))
     (should (s-contains-p "BUG-101" rendered))
     (should (s-contains-p "Alan Turing" rendered))))
+
+(defworkitemtest "reviews-needed splits multi-author stack into per-author items" [work-item]
+  (let* ((my\gerrit-user "mhopper")
+         (stack (my/as-gerrit-stack
+                 "[core] Base refactor
+
+                  BUG-52 #progress
+
+                  Change-Id: 400
+                  Owner: Ada Lovelace"
+
+                 "[core] Extend refactor
+
+                  BUG-52 #progress
+
+                  Change-Id: 401
+                  Owner: Ada Lovelace"
+
+                 "[core] Add validation
+
+                  BUG-61 #progress
+
+                  Change-Id: 402
+                  Owner: Grace Hopper"
+
+                 "[core] Wire up UI
+
+                  BUG-61 #progress
+
+                  Change-Id: 403
+                  Owner: Grace Hopper"))
+         (items (work-items-from-review-stack stack my\gerrit-user)))
+    ;; Two distinct non-self authors → two work-items.
+    (should (= 2 (length items)))
+    (let ((authors (-map #'work-item-author items)))
+      (should (member "Ada Lovelace" authors))
+      (should (member "Grace Hopper" authors)))
+    ;; Ada's item links to her tip (change 401) with her ticket.
+    (let ((ada (--first (equal "Ada Lovelace" (work-item-author it)) items)))
+      (should (s-contains-p "401" (work-item-tip-url ada)))
+      (should (equal "BUG-52" (work-item-jira ada))))
+    ;; Grace's item links to her tip (change 403) with her ticket.
+    (let ((grace (--first (equal "Grace Hopper" (work-item-author it)) items)))
+      (should (s-contains-p "403" (work-item-tip-url grace)))
+      (should (equal "BUG-61" (work-item-jira grace))))))
+
+(defworkitemtest "reviews-needed splits same-author multi-ticket stack into per-ticket items" [work-item]
+  (let* ((my\gerrit-user "mhopper")
+         (stack (my/as-gerrit-stack
+                 "[lang] Add pattern filtering
+
+                  BUG-48 #resolve
+
+                  Change-Id: 500
+                  Owner: Alan Turing"
+
+                 "[lang] Add family-based schema
+
+                  BUG-51 #progress
+
+                  Change-Id: 501
+                  Owner: Alan Turing"))
+         (items (work-items-from-review-stack stack my\gerrit-user)))
+    ;; Same author, different tickets → two work-items.
+    (should (= 2 (length items)))
+    (let ((tickets (-map #'work-item-jira items)))
+      (should (member "BUG-48" tickets))
+      (should (member "BUG-51" tickets)))
+    ;; Each item links to the correct change.
+    (let ((bug48 (--first (equal "BUG-48" (work-item-jira it)) items)))
+      (should (s-contains-p "500" (work-item-tip-url bug48))))
+    (let ((bug51 (--first (equal "BUG-51" (work-item-jira it)) items)))
+      (should (s-contains-p "501" (work-item-tip-url bug51))))))
+
+(defworkitemtest "reviews-needed produces one item for single-author single-ticket stack" [work-item]
+  (let* ((my\gerrit-user "mhopper")
+         (stack (my/as-gerrit-stack
+                 "[ui] Fix spacing
+
+                  BUG-99 #progress
+
+                  Change-Id: 600
+                  Owner: Alan Turing"))
+         (items (work-items-from-review-stack stack my\gerrit-user)))
+    (should (= 1 (length items)))
+    (should (equal "Alan Turing" (work-item-author (car items))))
+    (should (equal "BUG-99" (work-item-jira (car items))))))
 ;; E2E Test:1 ends here
 
 ;; [[file:init.org::*Implementation][Implementation:2]]

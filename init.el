@@ -2931,6 +2931,31 @@ Example:
      :author (alist-get 'name (alist-get 'owner tip))
      :status status)))
 
+(defun work-items-from-review-stack (stack self-username)
+  "Split STACK by (Jira ticket × author), one work-item per group.
+SELF-USERNAME is the current user's Gerrit username; their changes
+are excluded (we don't review our own work).
+
+Each group's sub-stack is passed to `work-item-from-stack', which
+picks up the correct tip, Jira ticket, reviewers, and author
+automatically.  For a single-author, single-ticket stack this
+returns a one-element list — identical to the old behaviour."
+  (let* ((non-self
+          (-filter
+           (lambda (c)
+             (not (equal self-username
+                         (alist-get 'username (alist-get 'owner c)))))
+           stack))
+         (by-ticket-and-author
+          (-group-by
+           (lambda (c)
+             (cons (car (my/gerrit--extract-jira-tickets c))
+                   (alist-get 'username (alist-get 'owner c))))
+           non-self)))
+    (-map (lambda (group)
+            (work-item-from-stack (cdr group) 'reviews-needed))
+          by-ticket-and-author)))
+
 (defun work-item-from-jira-issue (issue)
   "Convert a Jira REST API ISSUE alist into a `work-item'.
 Status is `todo' (no Gerrit work has started), and `urgent' is t.
@@ -3228,9 +3253,10 @@ Wrapped in `condition-case' so a failure does not leave
              (wip-items   (-map (lambda (s)
                                   (work-item-from-stack s 'wip))
                                 wip-stacks))
-             (rv-items    (-map (lambda (s)
-                                  (work-item-from-stack s 'reviews-needed))
-                                others))
+             (rv-items    (-mapcat (lambda (s)
+                                     (work-items-from-review-stack
+                                      s my\gerrit-user))
+                                   others))
              (my-items    (-map (lambda (s)
                                   (work-item-from-stack s 'my-needing-action))
                                 mine))
