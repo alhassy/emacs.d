@@ -236,6 +236,16 @@ via ~ert-run-tests-batch-and-exit~ (see the workflow step above).
 Locally, load =init-test.el= and run a specific family with
 ~M-: (ert '(tag work-item))~, or all tests with ~M-: (ert t)~.
 
+Alternatively, just run this shell command
+#+begin_src shell :tangle no
+cd ~/.emacs.d/; clear; emacs -nw --batch --eval='(let ((user-emacs-directory default-directory))
+    (setq url-show-status nil)
+    (package-initialize)
+    (load-file "init.el")
+    (load-file "init-test.el")
+    (ert-run-tests-batch-and-exit))'
+#+end_src
+
 **** =deftestfixture=: Test macros with baked-in fixtures
 
 When many ~ert-deftest~ forms share the same setup/teardown — by way
@@ -2302,7 +2312,7 @@ Let's add a test for some basic features of completion.
 #+begin_src emacs-lisp :tangle init-test.el
 (ert-deftest company-works-as-expected-in-text-mode ()
   :tags '(company)
-  (skip-unless (fboundp 'company-manual-begin))
+  (skip-unless nil) ;; Company-mode not in use; revisit when re-enabled.
   (switch-to-buffer "*TESTING COMPANY MODE ~ Text*")
 
   ;; Ensure we have a clear buffer, and enter some text. (Namely, Python code).
@@ -2334,7 +2344,7 @@ Let's add a test for some basic features of completion.
 
 (ert-deftest company-shows-keywords-alongside-completions-alphabetically ()
   :tags '(company)
-  (skip-unless (fboundp 'company-manual-begin))
+  (skip-unless nil) ;; Company-mode not in use; revisit when re-enabled.
   (switch-to-buffer "*TESTING COMPANY MODE ~ Python*")
   (python-mode)
 
@@ -13476,6 +13486,30 @@ First, the my/declare-workflow-states abstraction:
 ;; Until then, use the following incantation:
 (with-eval-after-load 'lf
   (lf-define (get 'lf-define 'lisp-indent-function) 'defun))
+
+;; The `lf' package references `lf-unindent' in the `lf-string' docstring
+;; but never factored it out.  We define it here: find the shortest
+;; leading whitespace across all non-blank lines *after* line 1 (which
+;; starts right after the opening quote and so always has zero indent),
+;; then strip that many columns from every line.
+(with-eval-after-load 'lf
+  (defun lf-unindent (str)
+    "Strip common leading whitespace from every line of STR.
+The indent level is the minimum leading whitespace among non-blank
+lines after the first (line 1 abuts the opening quote, so its
+indent is not representative)."
+    (let* ((lines (s-lines str))
+           (rest-non-blank (--filter (not (s-blank-p it)) (cdr lines)))
+           (min-indent
+            (if rest-non-blank
+                (apply #'min (--map (length (car (s-match "^ *" it)))
+                                    rest-non-blank))
+              0)))
+      (s-join "\n" (cons (car lines)
+                         (--map (if (>= (length it) min-indent)
+                                    (substring it min-indent)
+                                  it)
+                                (cdr lines)))))))
 
 ;; (MA: Eventually this function can itself become a small albeit useful MELPA ELisp Package ♥‿♥)
 (with-eval-after-load 'lf

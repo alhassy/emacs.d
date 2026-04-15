@@ -3866,6 +3866,30 @@ FROM and TO are Org-style date strings like \"today\", \"+4d\", \"2025-04-30\"."
 (with-eval-after-load 'lf
   (lf-define (get 'lf-define 'lisp-indent-function) 'defun))
 
+;; The `lf' package references `lf-unindent' in the `lf-string' docstring
+;; but never factored it out.  We define it here: find the shortest
+;; leading whitespace across all non-blank lines *after* line 1 (which
+;; starts right after the opening quote and so always has zero indent),
+;; then strip that many columns from every line.
+(with-eval-after-load 'lf
+  (defun lf-unindent (str)
+    "Strip common leading whitespace from every line of STR.
+The indent level is the minimum leading whitespace among non-blank
+lines after the first (line 1 abuts the opening quote, so its
+indent is not representative)."
+    (let* ((lines (s-lines str))
+           (rest-non-blank (--filter (not (s-blank-p it)) (cdr lines)))
+           (min-indent
+            (if rest-non-blank
+                (apply #'min (--map (length (car (s-match "^ *" it)))
+                                    rest-non-blank))
+              0)))
+      (s-join "\n" (cons (car lines)
+                         (--map (if (>= (length it) min-indent)
+                                    (substring it min-indent)
+                                  it)
+                                (cdr lines)))))))
+
 ;; (MA: Eventually this function can itself become a small albeit useful MELPA ELisp Package ♥‿♥)
 (with-eval-after-load 'lf
   (lf-define my/declare-workflow-states (states)
