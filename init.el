@@ -4179,11 +4179,11 @@ Usage:
 (setf (cdr (assoc "c" org-speed-commands)) #'my/insert-CREATED-property)
 ;; Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:1 ends here
 
-;; [[file:init.org::*Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content][Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:2]]
+;; [[file:init.org::*Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content][Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:3]]
 (add-hook 'org-mode-hook '(lambda ()
    (local-set-key (kbd "<return>") 'org-return-indent)) ;; Newline with indentation
    (local-set-key (kbd "C-M-<return>") 'electric-indent-just-newline)) ;; Newline without indentation
-;; Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:2 ends here
+;; Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:3 ends here
 
 ;; [[file:init.org::*Hide blank lines /between/ headlines][Hide blank lines /between/ headlines:1]]
 (setq org-cycle-separator-lines 0)
@@ -6547,6 +6547,13 @@ With prefix arg, offer recently clocked tasks for selection."
    (interactive "P")
    (org-clock-goto prefix)
    (org-narrow-to-subtree)))
+
+(url-copy-file "https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/org-eldoc.el" "~/.emacs.d/elpa/org-eldoc.el" :ok-if-already-exists)
+(load-file "~/.emacs.d/elpa/org-eldoc.el")
+;; NB: 'eldoc-mode (no arg) toggles — and global-eldoc-mode already
+;; enables it, so the toggle would turn it OFF.  Use turn-on-* instead.
+(add-hook 'org-mode-hook #'turn-on-eldoc-mode)
+(add-hook 'org-mode-hook 'eldoc-box-hover-mode)
 
 ;; [[file:init.org::*Implementation][Implementation:1]]
 (setq org-archive-default-command #'my/org-archive-subtree-hierarchically)

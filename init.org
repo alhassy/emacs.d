@@ -394,7 +394,30 @@ Then:
   (defworkitemtest \"work-item shows Jira ticket\" [work-item]
     (should ...))
 
-expands to an `ert-deftest' wrapped in the fixture bindings."
+expands to an `ert-deftest' wrapped in the fixture bindings.
+
+Example — define `deforgtest' for config-smoke tests that need an
+org-mode buffer:
+  (deftestfixture deforgtest
+    \"Temp org-mode buffer with auto-cleanup.\"
+    (let ((*original-test-buffer* (generate-new-buffer \"*test-org*\")))
+      (switch-to-buffer *original-test-buffer*)
+      (org-mode)
+      (unwind-protect (progn &body)
+        (ignore-errors (org-clock-out))
+        (when (get-buffer *original-test-buffer*)
+          (kill-buffer *original-test-buffer*)))))
+
+Then:
+  (deforgtest \"C-RET creates heading with CREATED\" [config-smoke]
+    (execute-kbd-macro (kbd \"C-<return>\"))
+    (insert \"My neato notes\")
+    (should (org-entry-get (point) \"CREATED\")))
+
+The body can reference `*original-test-buffer*' after switching
+away (e.g., to verify C-c SPC jumps back).  The cleanup phase
+clocks out any dangling clock, then kills the buffer — no
+switch-to-buffer, unwind-protect, or kill-buffer needed in tests."
   (declare (indent 1))
   ;; Disambiguate: if DOCSTRING-OR-FORM is a string, it's a docstring
   ;; and FIXTURE-FORM is the fixture.  Otherwise DOCSTRING-OR-FORM is
@@ -471,6 +494,39 @@ it has to be wrapped in `(eval (quote ...))'.")
               ,@wrapped-body))))))
 
 (deftestfixture deftest)
+
+;;  Switches to a temp org-mode buffer, runs the body, kills the buffer even on failure.
+(deftestfixture deforgtest
+  "Switch to a temporary org-mode buffer, run BODY, then kill the buffer.
+Most config-smoke tests need an org buffer with mode hooks fired —
+this fixture axes that boilerplate.  The buffer object is bound to
+`*original-test-buffer*' so tests can reference it after switching away."
+  (let ((*original-test-buffer* (generate-new-buffer "*test-org*")))
+    (switch-to-buffer *original-test-buffer*)
+    (org-mode)
+    (unwind-protect
+        (progn &body)
+      ;; Even if some assertion fails, we should clock-out! No dangling clocks!
+      (ignore-errors (org-clock-out))
+      ;; Kill the buffer even when a `should' signals failure —
+      ;; without unwind-protect, a failing assertion would leak it.
+      (when (get-buffer *original-test-buffer*)
+        (kill-buffer *original-test-buffer*)))))
+#+end_src
+
+#+begin_src emacs-lisp :tangle init-test.el
+;; The 😴 macro defers code via `run-with-idle-timer'.  In batch mode
+;; those timers never fire, so hooks, mode setups, etc. are absent.
+;; Force every pending timer to fire now, making the deferred init eager.
+(mapc (lambda (timer) (ignore-errors (timer-event-handler timer))) timer-idle-list)
+
+;; Several use-package declarations register global modes via
+;; :hook (after-init . global-*-mode).  In CI, after-init-hook fires
+;; before load-file "init.el", so these registrations miss the boat.
+;; Re-run the hook so they activate.
+(run-hooks 'after-init-hook)
+
+(advice-add 'org-resolve-clocks :override #'ignore)
 #+end_src
 
 ** Personal instructions for a new machine                           :ignore:
@@ -7060,6 +7116,22 @@ For Emacs, [[https://github.com/ankurdave/color-identifiers-mode][Color Identifi
 
 ;; Sometimes just invoke: M-x color-identifiers:refresh
 #+END_SRC
+
+#+begin_src emacs-lisp :tangle init-test.el
+(deftest "prog-mode activates indentation and completion" [config-smoke]
+  (skip-unless (fboundp 'aggressive-indent-mode))
+  (switch-to-buffer "*test-prog-mode*")
+  (unwind-protect
+      (progn
+        (emacs-lisp-mode)
+        (should aggressive-indent-mode)
+        ;; corfu's globalized mode skips noninteractive sessions (no
+        ;; child frames in batch), so verify the global config instead.
+        (should (bound-and-true-p global-corfu-mode))
+        (should eldoc-mode)
+        (should color-identifiers-mode))
+    (kill-buffer "*test-prog-mode*")))
+#+end_src
 
 When writing a new name, after about ~5 seconds it obtains a colour which is then
 propagated immediately to any new occurrences. This timeout before recolouring
@@ -13732,6 +13804,28 @@ Then, actually declare my workflow states...
 (setq org-treat-S-cursor-todo-selection-as-state-change nil)
 #+end_src
 
+#+begin_src emacs-lisp :tangle init-test.el
+(deftest "org workflow states are configured" [config-smoke]
+  (should (equal org-todo-keywords
+                 '((sequence "TODO(t)" "INVESTIGATED(i)" "STARTED(s)"
+                             "|" "PAUSED(p@/!)" "WAITING(w)" "APPROVED(a)"
+                             "REFERENCE(r)" "DONE(d)" "CANCELLED(c@)"))))
+  (should (equal org-log-done 'time)))
+
+(deforgtest "org speed keys transition TODO state" [config-smoke]
+  (should org-use-speed-commands)
+  (insert "* TODO Test task\n")
+  (goto-char (point-min))
+  (execute-kbd-macro (kbd "t i"))
+  (should (equal (org-entry-get (point) "TODO") "INVESTIGATED")))
+
+(deforgtest "DONE state adds CLOSED timestamp" [config-smoke]
+  (insert "* TODO Wrap it up\n")
+  (goto-char (point-min))
+  (org-todo "DONE")
+  (should (org-entry-get (point) "CLOSED")))
+#+end_src
+
 ** Propagate =STARTED= to parent tasks
 :PROPERTIES:
 :CREATED:  [2024-05-08 Wed 15:38]
@@ -14093,6 +14187,22 @@ press ~C-u~ first).
 (setf (cdr (assoc "c" org-speed-commands)) #'my/insert-CREATED-property)
 #+end_src
 
+#+begin_src emacs-lisp :tangle init-test.el
+(deforgtest "C-RET creates org heading with CREATED property" [config-smoke]
+  (execute-kbd-macro (kbd "C-<return>"))
+  (insert "My neato notes")
+  (should (s-matches? (format-time-string "\\[%Y-%m-%d")
+                      (or (org-entry-get (point) "CREATED") ""))))
+
+(deforgtest "org heading gets SCHEDULED and DEADLINE" [config-smoke]
+  (execute-kbd-macro (kbd "C-<return>"))
+  (insert "Planned task")
+  (execute-kbd-macro (kbd "C-c C-s <return>"))
+  (execute-kbd-macro (kbd "C-c C-d <return>"))
+  (should (org-entry-get (point) "SCHEDULED"))
+  (should (org-entry-get (point) "DEADLINE")))
+#+end_src
+
 Finally, when I'm working in a itemisation, I usually want an /indented/ newline whenever I
 press ~RETURN~.
    #+BEGIN_SRC emacs-lisp
@@ -14249,6 +14359,47 @@ TODO:
 (add-hook 'org-capture-mode-hook #'my/setup-smart-paste)
 #+end_src
 
+In headless CI there is no OS clipboard, so =yank-media= (which reads
+the system clipboard) finds nothing and =my/dwim-paste= falls back to
+plain =yank=.  To test the *real* paste transformations (Gerrit links,
+URLs) without a GUI, we simulate what =yank-media= does: call the
+registered =STRING= handler directly with the clipboard text.  That
+exercises the identical code path --- the only layer we bypass is the OS
+clipboard read, which is not our code.
+
+#+begin_src emacs-lisp :tangle init-test.el
+(deforgtest "smart paste inserts plain text as-is" [config-smoke smart-paste]
+  (kill-new "Plain text is pasted as is")
+  (my/dwim-paste)
+  (should (equal (s-trim (buffer-string))
+                 "Plain text is pasted as is")))
+
+(deforgtest "smart paste transforms Gerrit link to Org link" [config-smoke smart-paste]
+  ;; Simulate what yank-media does: call the STRING handler directly
+  ;; with the clipboard text.  In a GUI, s-v -> my/dwim-paste ->
+  ;; yank-media -> STRING handler.  We bypass the clipboard read.
+  (my/yank-plaintext-media
+   "STRING"
+   "12345: [foo, bar] OCaml Syntax: Fix foo bar baz | https://gerrit.example.com/c/abc/+/12345")
+  (should (equal (s-trim (buffer-string))
+                 "[[https://gerrit.example.com/c/abc/+/12345][OCaml Syntax: Fix foo bar baz]]")))
+
+(deforgtest "C-u prefix does raw paste even for URLs" [config-smoke smart-paste]
+  (kill-new "https://github.com/alphapapa/org-ql/tree/master")
+  (let ((current-prefix-arg '(4)))
+    (my/dwim-paste))
+  (should (equal (s-trim (buffer-string))
+                 "https://github.com/alphapapa/org-ql/tree/master")))
+
+(deforgtest "smart paste converts URL to titled Org link" [config-smoke smart-paste]
+  ;; Fetches the page title over the network --- skip in batch.
+  (skip-unless (not noninteractive))
+  (my/yank-plaintext-media
+   "STRING" "https://github.com/alphapapa/org-ql/tree/master")
+  (should (s-starts-with?
+           "[[https://github.com/alphapapa/org-ql/tree/master]["
+           (s-trim (buffer-string)))))
+#+end_src
 
 Notes:
 - You can use yank-media to do whatever you want with non-text selections in your clipboard. You can find an example of a function that attaches
@@ -19655,6 +19806,20 @@ With prefix arg, offer recently clocked tasks for selection."
    (org-clock-goto prefix)
    (org-narrow-to-subtree)))
 #+end_src
+
+#+begin_src emacs-lisp :tangle init-test.el
+(deforgtest "C-c SPC jumps to clocked task" [config-smoke]
+  (require 'org-capture) ;; my/say-bismillah-on-clock-in checks org-capture-mode
+  (insert "* TODO Clocked task\n")
+  (goto-char (point-min))
+  (org-clock-in)
+  (switch-to-buffer "*scratch*")
+  (should (equal (buffer-name) "*scratch*"))
+  (execute-kbd-macro (kbd "C-c SPC"))
+  (should (equal (current-buffer) *original-test-buffer*))
+  (should (equal (org-get-heading) "TODO Clocked task")))
+#+end_src
+
 ** 🤔 [Planning/Review] When I hover over a task, tell me how long ago it was created! 😼 Also, show me my “WHY” so I remain motivated.
 :PROPERTIES:
 :CREATED:  [2025-01-05 Sun 11:37]
@@ -19749,11 +19914,21 @@ Since I use prettier to hide src block info in org-mode,
 I can have that info be shown to be in the minibuffer
 when I'm on the #+begin_src/#+end_src lines by doing
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle init.el
 (url-copy-file "https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/org-eldoc.el" "~/.emacs.d/elpa/org-eldoc.el" :ok-if-already-exists)
 (load-file "~/.emacs.d/elpa/org-eldoc.el")
-(add-hook 'org-mode-hook 'eldoc-mode)
+;; NB: 'eldoc-mode (no arg) toggles — and global-eldoc-mode already
+;; enables it, so the toggle would turn it OFF.  Use turn-on-* instead.
+(add-hook 'org-mode-hook #'turn-on-eldoc-mode)
 (add-hook 'org-mode-hook 'eldoc-box-hover-mode)
+#+end_src
+
+#+begin_src emacs-lisp :tangle init-test.el
+(deforgtest "org-mode activates completion and eldoc" [config-smoke]
+  (skip-unless (fboundp 'eldoc-box-hover-mode))
+  (should (bound-and-true-p global-corfu-mode))
+  (should eldoc-mode)
+  (should eldoc-box-hover-mode))
 #+end_src
 
 Finally, org-eldoc is super tiny and demos nicely how to add eldoc support
@@ -22596,7 +22771,7 @@ details, [[https://github.com/termitereform/JunkPile/blob/master/HyperboleNotes2
     ;; Only enable this in Emacs Lisp mode, for now.
     (setq orglink-activate-in-modes '(emacs-lisp-mode)))
 #+end_src
-* COMMENT Testing that things are as they should be                        :noexport:
+* COMMENT Testing that things are as they should be                        :noexport:Posterity:
 :PROPERTIES:
 :CREATED:  [2025-04-12 Sat 15:22]
 :WHY:      To gain confidence whenver I make changes
@@ -22606,6 +22781,25 @@ CLOCK: [2025-04-21 Mon 06:20]--[2025-04-21 Mon 06:28] =>  0:08
 CLOCK: [2025-04-10 Thu 14:04]--[2025-04-10 Thu 14:17] =>  0:13
 :END:
 
+[2026-04-16 Thu] This entire block has been converted into smaller
+   self-contained tests:
+   
+   passed   3/22  config-smoke··⇨··C-RET·creates·org·heading·with·CREATED·property (2.171999 sec)
+   passed   4/22  config-smoke··⇨··C-c·SPC·jumps·to·clocked·task (0.113997 sec)
+   passed   5/22  config-smoke··⇨··DONE·state·adds·CLOSED·timestamp (0.036902 sec)
+   passed   6/22  config-smoke··⇨··org-mode·activates·completion·and·eldoc (0.002209 sec)
+   passed   7/22  config-smoke··⇨··org·heading·gets·SCHEDULED·and·DEADLINE (0.027230 sec)
+   passed   8/22  config-smoke··⇨··org·speed·keys·transition·TODO·state (0.006056 sec)
+   passed   9/22  config-smoke··⇨··org·workflow·states·are·configured (0.000043 sec)
+   passed  10/22  config-smoke··⇨··prog-mode·activates·indentation·and·completion (0.067844 sec)
+   passed  11/22  config-smoke︐smart-paste··⇨··C-u·prefix·does·raw·paste·even·for·URLs (0.002249 sec)
+   skipped  12/22  config-smoke︐smart-paste··⇨··smart·paste·converts·URL·to·titled·Org·link (0.002511 sec)
+   passed  13/22  config-smoke︐smart-paste··⇨··smart·paste·inserts·plain·text·as-is (0.002228 sec)
+   passed  14/22  config-smoke︐smart-paste··⇨··smart·paste·transforms·Gerrit·link·to·Org·link (0.002179 sec)
+
+However, this mega-test is still nice to show to others: It's rough but
+accessible and comprehensive.
+   
 #+begin_src emacs-lisp
 (😴 progn
   ;; TODO: Move the next bunch of lines up somewhere

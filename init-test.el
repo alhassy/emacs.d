@@ -85,7 +85,30 @@ Then:
   (defworkitemtest \"work-item shows Jira ticket\" [work-item]
     (should ...))
 
-expands to an `ert-deftest' wrapped in the fixture bindings."
+expands to an `ert-deftest' wrapped in the fixture bindings.
+
+Example — define `deforgtest' for config-smoke tests that need an
+org-mode buffer:
+  (deftestfixture deforgtest
+    \"Temp org-mode buffer with auto-cleanup.\"
+    (let ((*original-test-buffer* (generate-new-buffer \"*test-org*\")))
+      (switch-to-buffer *original-test-buffer*)
+      (org-mode)
+      (unwind-protect (progn &body)
+        (ignore-errors (org-clock-out))
+        (when (get-buffer *original-test-buffer*)
+          (kill-buffer *original-test-buffer*)))))
+
+Then:
+  (deforgtest \"C-RET creates heading with CREATED\" [config-smoke]
+    (execute-kbd-macro (kbd \"C-<return>\"))
+    (insert \"My neato notes\")
+    (should (org-entry-get (point) \"CREATED\")))
+
+The body can reference `*original-test-buffer*' after switching
+away (e.g., to verify C-c SPC jumps back).  The cleanup phase
+clocks out any dangling clock, then kills the buffer — no
+switch-to-buffer, unwind-protect, or kill-buffer needed in tests."
   (declare (indent 1))
   ;; Disambiguate: if DOCSTRING-OR-FORM is a string, it's a docstring
   ;; and FIXTURE-FORM is the fixture.  Otherwise DOCSTRING-OR-FORM is
@@ -162,7 +185,40 @@ it has to be wrapped in `(eval (quote ...))'.")
               ,@wrapped-body))))))
 
 (deftestfixture deftest)
+
+;;  Switches to a temp org-mode buffer, runs the body, kills the buffer even on failure.
+(deftestfixture deforgtest
+  "Switch to a temporary org-mode buffer, run BODY, then kill the buffer.
+Most config-smoke tests need an org buffer with mode hooks fired —
+this fixture axes that boilerplate.  The buffer object is bound to
+`*original-test-buffer*' so tests can reference it after switching away."
+  (let ((*original-test-buffer* (generate-new-buffer "*test-org*")))
+    (switch-to-buffer *original-test-buffer*)
+    (org-mode)
+    (unwind-protect
+        (progn &body)
+      ;; Even if some assertion fails, we should clock-out! No dangling clocks!
+      (ignore-errors (org-clock-out))
+      ;; Kill the buffer even when a `should' signals failure —
+      ;; without unwind-protect, a failing assertion would leak it.
+      (when (get-buffer *original-test-buffer*)
+        (kill-buffer *original-test-buffer*)))))
 ;; Eval-and-run: ~C-x C-e~ on test forms:1 ends here
+
+;; [[file:init.org::*Eval-and-run: ~C-x C-e~ on test forms][Eval-and-run: ~C-x C-e~ on test forms:2]]
+;; The 😴 macro defers code via `run-with-idle-timer'.  In batch mode
+;; those timers never fire, so hooks, mode setups, etc. are absent.
+;; Force every pending timer to fire now, making the deferred init eager.
+(mapc (lambda (timer) (ignore-errors (timer-event-handler timer))) timer-idle-list)
+
+;; Several use-package declarations register global modes via
+;; :hook (after-init . global-*-mode).  In CI, after-init-hook fires
+;; before load-file "init.el", so these registrations miss the boat.
+;; Re-run the hook so they activate.
+(run-hooks 'after-init-hook)
+
+(advice-add 'org-resolve-clocks :override #'ignore)
+;; Eval-and-run: ~C-x C-e~ on test forms:2 ends here
 
 (ert-deftest company-works-as-expected-in-text-mode ()
   :tags '(company)
@@ -217,6 +273,22 @@ it has to be wrapped in `(eval (quote ...))'.")
   (should (looking-back "finally"))
 
   (kill-buffer))
+
+;; [[file:init.org::#Coding-with-a-Fruit-Salad-Semantic-Highlighting][Coding with a Fruit Salad: Semantic Highlighting:2]]
+(deftest "prog-mode activates indentation and completion" [config-smoke]
+  (skip-unless (fboundp 'aggressive-indent-mode))
+  (switch-to-buffer "*test-prog-mode*")
+  (unwind-protect
+      (progn
+        (emacs-lisp-mode)
+        (should aggressive-indent-mode)
+        ;; corfu's globalized mode skips noninteractive sessions (no
+        ;; child frames in batch), so verify the global config instead.
+        (should (bound-and-true-p global-corfu-mode))
+        (should eldoc-mode)
+        (should color-identifiers-mode))
+    (kill-buffer "*test-prog-mode*")))
+;; Coding with a Fruit Salad: Semantic Highlighting:2 ends here
 
 ;; [[file:init.org::*E2E Test][E2E Test:1]]
 (require 'lf) ;; For `lf-unindent'; installed via use-package but deferred.
@@ -436,6 +508,95 @@ so tests run without private.el."
     (should (equal "Alan Turing" (work-item-author (car items))))
     (should (equal "BUG-99" (work-item-jira (car items))))))
 ;; E2E Test:1 ends here
+
+;; [[file:init.org::*Also, logging][Also, logging:2]]
+(deftest "org workflow states are configured" [config-smoke]
+  (should (equal org-todo-keywords
+                 '((sequence "TODO(t)" "INVESTIGATED(i)" "STARTED(s)"
+                             "|" "PAUSED(p@/!)" "WAITING(w)" "APPROVED(a)"
+                             "REFERENCE(r)" "DONE(d)" "CANCELLED(c@)"))))
+  (should (equal org-log-done 'time)))
+
+(deforgtest "org speed keys transition TODO state" [config-smoke]
+  (should org-use-speed-commands)
+  (insert "* TODO Test task\n")
+  (goto-char (point-min))
+  (execute-kbd-macro (kbd "t i"))
+  (should (equal (org-entry-get (point) "TODO") "INVESTIGATED")))
+
+(deforgtest "DONE state adds CLOSED timestamp" [config-smoke]
+  (insert "* TODO Wrap it up\n")
+  (goto-char (point-min))
+  (org-todo "DONE")
+  (should (org-entry-get (point) "CLOSED")))
+;; Also, logging:2 ends here
+
+;; [[file:init.org::*Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content][Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:2]]
+(deforgtest "C-RET creates org heading with CREATED property" [config-smoke]
+  (execute-kbd-macro (kbd "C-<return>"))
+  (insert "My neato notes")
+  (should (s-matches? (format-time-string "\\[%Y-%m-%d")
+                      (or (org-entry-get (point) "CREATED") ""))))
+
+(deforgtest "org heading gets SCHEDULED and DEADLINE" [config-smoke]
+  (execute-kbd-macro (kbd "C-<return>"))
+  (insert "Planned task")
+  (execute-kbd-macro (kbd "C-c C-s <return>"))
+  (execute-kbd-macro (kbd "C-c C-d <return>"))
+  (should (org-entry-get (point) "SCHEDULED"))
+  (should (org-entry-get (point) "DEADLINE")))
+;; Adding New *Tasks/Notes* Quickly Without Disturbing The Current Task Content:2 ends here
+
+;; [[file:init.org::#drag-and-drop-images-into-org-mode][“Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode:2]]
+(deforgtest "smart paste inserts plain text as-is" [config-smoke smart-paste]
+  (kill-new "Plain text is pasted as is")
+  (my/dwim-paste)
+  (should (equal (s-trim (buffer-string))
+                 "Plain text is pasted as is")))
+
+(deforgtest "smart paste transforms Gerrit link to Org link" [config-smoke smart-paste]
+  ;; Simulate what yank-media does: call the STRING handler directly
+  ;; with the clipboard text.  In a GUI, s-v -> my/dwim-paste ->
+  ;; yank-media -> STRING handler.  We bypass the clipboard read.
+  (my/yank-plaintext-media
+   "STRING"
+   "12345: [foo, bar] OCaml Syntax: Fix foo bar baz | https://gerrit.example.com/c/abc/+/12345")
+  (should (equal (s-trim (buffer-string))
+                 "[[https://gerrit.example.com/c/abc/+/12345][OCaml Syntax: Fix foo bar baz]]")))
+
+(deforgtest "C-u prefix does raw paste even for URLs" [config-smoke smart-paste]
+  (kill-new "https://github.com/alphapapa/org-ql/tree/master")
+  (let ((current-prefix-arg '(4)))
+    (my/dwim-paste))
+  (should (equal (s-trim (buffer-string))
+                 "https://github.com/alphapapa/org-ql/tree/master")))
+
+(deforgtest "smart paste converts URL to titled Org link" [config-smoke smart-paste]
+  ;; Fetches the page title over the network --- skip in batch.
+  (skip-unless (not noninteractive))
+  (my/yank-plaintext-media
+   "STRING" "https://github.com/alphapapa/org-ql/tree/master")
+  (should (s-starts-with?
+           "[[https://github.com/alphapapa/org-ql/tree/master]["
+           (s-trim (buffer-string)))))
+;; “Smart Paste”: Drag and Drop Images/(Any File!) into Org-Mode:2 ends here
+
+(deforgtest "C-c SPC jumps to clocked task" [config-smoke]
+  (require 'org-capture) ;; my/say-bismillah-on-clock-in checks org-capture-mode
+  (insert "* TODO Clocked task\n")
+  (goto-char (point-min))
+  (org-clock-in)
+  (switch-to-buffer "*scratch*")
+  (should (equal (buffer-name) "*scratch*"))
+  (execute-kbd-macro (kbd "C-c SPC"))
+  (should (equal (current-buffer) *original-test-buffer*))
+  (should (equal (org-get-heading) "TODO Clocked task")))
+
+(deforgtest "org-mode activates completion and eldoc" [config-smoke]
+  (skip-unless (fboundp 'eldoc-box-hover-mode))
+  (should (bound-and-true-p global-corfu-mode))
+  (should eldoc-mode)
+  (should eldoc-box-hover-mode))
 
 ;; [[file:init.org::*Implementation][Implementation:2]]
 (ert-deftest hierarchical-archive-merges-duplicate-headings ()
