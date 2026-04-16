@@ -6519,7 +6519,9 @@ separators into the NOTE field."
                 (note-list (nreverse (gethash k notes)))
                 (index 0)                
                 (note (when note-list
-                        (mapconcat (lambda (s) (format "<br>﴾%s﴿ %s" (cl-incf index) s))
+                        (mapconcat (lambda (s) (format "<br>﴾%s﴿ %s" (cl-incf index)
+                                                  ;; Don't bother showing me Org markup, I can't use it in hovers!
+                                                  (replace-regexp-in-string "\\[\\[.*?\\]\\[\\(.*?\\)\\]\\]" "\\1" s)))
                                    note-list "<br>"))))
            (push (if note
                      (list day heading mins note)
@@ -6709,7 +6711,7 @@ default \"Source → Target: value\" hover text."
            (notes-json
             (json-encode
              (vconcat (cl-loop for (_src _tgt _w . rest) in matrix
-                               collect (or (car rest) :json-null)))))
+                               collect (or (car rest) "")))))
            (width-str (number-to-string width))
            (height-str (number-to-string height)))
       (concat
