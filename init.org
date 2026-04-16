@@ -19574,7 +19574,721 @@ doc:my/what-did-i-work-on-this-week.
       (replace-match "⇒")
       (org-table-align))))
 
-) ;; End 😴 — deferred clock report functions
+)  ;; End 😴 — deferred clock report functions
+#+end_src
+
+**** Chord diagrams: a relational view of clock data
+
+The flat clocktable (=my/what-did-i-work-on-this-week=) answers "how much time
+did I spend on X?" — a useful but one-dimensional view.  A chord diagram
+answers a different question: "which days share which projects, and how thick
+are the connections?"
+
+| Clocktable tells you                         | Chord diagram tells you                                      |
+|----------------------------------------------+--------------------------------------------------------------|
+| "I spent 4h on Search this week"             | "Search clusters on Mon/Tue — by Thursday it's all Reviews"  |
+| "Wednesday was 6h total"                     | "Wednesday is split across 5 projects (fragmented)"          |
+| Total minutes per category                   | Which days /share/ categories — thick arcs = recurring rhythm |
+| A flat ranked list of tasks                  | Whether your week has structure or is reactive noise          |
+
+Thick arcs are your "rhythm"; thin scattered arcs are your "noise."  Over a
+few weeks you can see whether your schedule has structure or whether you're
+context-switching reactively.
+
+| Invocation                             | Days | Granularity          | View          |
+|----------------------------------------+------+----------------------+---------------|
+| =M-x my/clock-diagram=                |    7 | Top-level categories | Both (toggle) |
+| =C-u M-x my/clock-diagram=            |    7 | Leaf task headings   | Both (toggle) |
+| =C-u 30 M-x my/clock-diagram=         |   30 | Top-level categories | Both (toggle) |
+| =M-x my/clock-chord-diagram=          |    7 | Top-level categories | Chord only    |
+| =M-x my/clock-sankey-diagram=         |    7 | Top-level categories | Sankey only   |
+
+=my/clock-diagram= is the recommended entry point: it renders both views in a
+single page with =[Chord | Sankey]= toggle buttons.  The standalone commands
+remain available for quick single-view access.
+
+Both views consume the same triple data from =my/clock-chord-data=.  The chord
+diagram emphasises mutual relationships (which days /share/ categories); the
+Sankey diagram emphasises directed magnitude — minutes flowing from each day
+into each project, with link width proportional to time spent.
+
+#+begin_src emacs-lisp :tangle init.el
+(😴 progn ;; Defer: chord diagram functions are only needed on demand.
+
+(defun my/clock-chord--clean-heading (s)
+  "Strip Org link markup and timestamps from heading string S.
+\"[[url][Weekly Sprint]]\" → \"Weekly Sprint\";
+\"Jasim 1/1 <2025-05-12 Mon 14:00-15:30 .+1w>\" → \"Jasim 1/1\"."
+  (let ((cleaned s))
+    ;; Replace [[link][description]] with just description.
+    (setq cleaned (replace-regexp-in-string
+                   "\\[\\[.*?\\]\\[\\(.*?\\)\\]\\]" "\\1" cleaned))
+    ;; Axe bare [[link]] with no description.
+    (setq cleaned (replace-regexp-in-string
+                   "\\[\\[.*?\\]\\]" "" cleaned))
+    ;; Axe Org timestamps: <...> and [...]
+    (setq cleaned (replace-regexp-in-string
+                   " *<[0-9].*?>" "" cleaned))
+    (setq cleaned (replace-regexp-in-string
+                   " *\\[[0-9].*?\\]" "" cleaned))
+    (string-trim cleaned)))
+
+
+(defun my/clock-chord-data (&optional days-back leaf)
+  "Collect clock data from `org-default-notes-file' for the past DAYS-BACK days.
+Returns a list of triples (DAY-NAME CATEGORY MINUTES), suitable for
+passing as the :matrix argument to `my/chord-diagram'.
+
+When LEAF is non-nil, CATEGORY is the heading that owns the CLOCK
+entry (the task you actually clocked into).  Otherwise it is the
+top-level (level-1) ancestor heading — the project/category."
+  (let* ((days-back (or days-back 7))
+         (cutoff (time-subtract (current-time) (days-to-time days-back)))
+         (day-names ["Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun"])
+         ;; (day-name . category) → minutes
+         (table (make-hash-table :test 'equal)))
+    (with-current-buffer (find-file-noselect org-default-notes-file)
+      (org-with-wide-buffer
+       (goto-char (point-min))
+       (while (re-search-forward
+               "CLOCK: \\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\) \\([A-Za-z]\\{3\\}\\).*?=>[ \t]+\\([0-9]+\\):\\([0-9]+\\)" nil t)
+         (let* ((date-str (match-string 1))
+                (day-abbr (match-string 2))
+                (hours (string-to-number (match-string 3)))
+                (mins  (string-to-number (match-string 4)))
+                (total-mins (+ (* hours 60) mins))
+                (ts (encode-time (parse-time-string (concat date-str " 00:00:00"))))
+                (day-idx (pcase day-abbr
+                           ("Mon" 0) ("Tue" 1) ("Wed" 2) ("Thu" 3)
+                           ("Fri" 4) ("Sat" 5) ("Sun" 6)))
+                (category (my/clock-chord--clean-heading
+                           (save-excursion
+                             (if leaf
+                                 ;; Leaf: the immediate heading owning this clock.
+                                 (progn (org-back-to-heading t)
+                                        (substring-no-properties
+                                         (org-get-heading t t t t)))
+                               ;; Top-level: walk up to the level-1 ancestor.
+                               (while (and (org-up-heading-safe)
+                                           (> (org-current-level) 1)))
+                               (substring-no-properties
+                                (org-get-heading t t t t)))))))
+           (when (and day-idx
+                      (time-less-p cutoff ts)
+                      (> total-mins 0)
+                      (not (string-empty-p category)))
+             (let ((key (cons (aref day-names day-idx) category)))
+               (puthash key (+ (gethash key table 0) total-mins) table)))))))
+    ;; Emit triples.
+    (let (triples)
+      (maphash (lambda (k v) (push (list (car k) (cdr k) v) triples)) table)
+      triples)))
+
+
+(cl-defun my/chord-diagram (&key title subtitle matrix)
+  "Render a D3 chord diagram in the browser and return the HTML file path.
+TITLE and SUBTITLE label the page.  MATRIX is a list of triples
+\(LEFT RIGHT WEIGHT\) — each triple is one arc in the diagram.
+
+By way of example, a diagram of who reviews whom:
+
+  (my/chord-diagram
+   :title \"Code Reviews\"
+   :subtitle \"Past 30 days\"
+   :matrix \\='((\"Alice\" \"Carol\" 10)   ; Alice reviewed Carol 10×
+             (\"Alice\" \"Dan\"   5)
+             (\"Bob\"   \"Carol\"  3)
+             (\"Bob\"   \"Dan\"   12)))
+
+The function derives the two node groups from the triples (unique
+firsts = left, unique seconds = right), builds the symmetric
+adjacency matrix D3 expects, writes a self-contained HTML file,
+and opens it via `browse-url'."
+  (let* (;; Derive node groups from the triples, preserving insertion order.
+         (left-labels (cl-remove-duplicates (mapcar #'car matrix) :test #'equal))
+         (right-labels (cl-remove-duplicates (mapcar #'cadr matrix) :test #'equal))
+         (left-count (length left-labels))
+         (right-count (length right-labels))
+         ;; Build a lookup hash: (left . right) → weight.
+         (edge-table (let ((ht (make-hash-table :test 'equal)))
+                       (dolist (triple matrix ht)
+                         (puthash (cons (car triple) (cadr triple))
+                                  (+ (gethash (cons (car triple) (cadr triple)) ht 0)
+                                     (nth 2 triple))
+                                  ht))))
+         ;; Symmetric adjacency matrix for D3:
+         ;; Top-left (left×left) = 0, bottom-right (right×right) = 0,
+         ;; top-right = weights, bottom-left = transpose.
+         (full-matrix
+          (append
+           (cl-loop for l in left-labels collect
+                    (append (make-list left-count 0)
+                            (cl-loop for r in right-labels
+                                     collect (gethash (cons l r) edge-table 0))))
+           (cl-loop for r in right-labels collect
+                    (append (cl-loop for l in left-labels
+                                     collect (gethash (cons l r) edge-table 0))
+                            (make-list right-count 0)))))
+         (nodes-json (json-encode (vconcat (append left-labels right-labels))))
+         (matrix-json (json-encode (vconcat (mapcar #'vconcat full-matrix))))
+         (left-count-json (number-to-string left-count))
+         (html-file (expand-file-name
+                     (format "chord-%s.html"
+                             (format-time-string "%Y%m%d-%H%M%S"))
+                     temporary-file-directory))
+         (html (concat
+"<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"UTF-8\">
+<title>" title "</title>
+<script src=\"https://d3js.org/d3.v7.min.js\"></script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+       display:flex; flex-direction:column; align-items:center;
+       margin:2em; background:#fafafa; }
+h2 { color:#333; margin-bottom:0; }
+p.subtitle { color:#888; margin-top:4px; }
+.chord { fill-opacity:0.75; stroke-width:0.5;
+         transition:fill-opacity .15s, opacity .15s; }
+.tooltip { position:absolute; background:rgba(0,0,0,.82); color:#fff;
+           padding:6px 12px; border-radius:4px; font-size:13px;
+           pointer-events:none; opacity:0; transition:opacity .15s; }
+</style>
+</head>
+<body>
+<h2>" title "</h2>
+<p class=\"subtitle\">" subtitle "</p>
+<div id=\"chart\"></div>
+<div class=\"tooltip\" id=\"tooltip\"></div>
+<script>
+const nodes = " nodes-json ";
+const matrix = " matrix-json ";
+const leftCount = " left-count-json ";
+const totalWidth = 720, totalHeight = 720;
+const innerRadius = Math.min(totalWidth,totalHeight)*0.30, outerRadius = innerRadius + 28;
+const leftPalette = d3.scaleOrdinal().domain(nodes.slice(0,leftCount))
+                      .range(['#4e79a7','#f28e2b','#e15759','#76b7b2',
+                              '#59a14f','#edc948','#b07aa1']);
+const rightPalette = d3.scaleOrdinal().domain(nodes.slice(leftCount))
+                       .range(d3.schemeTableau10);
+const color = i => i < leftCount ? leftPalette(nodes[i]) : rightPalette(nodes[i]);
+const svg = d3.select('#chart').append('svg')
+  .attr('width',totalWidth).attr('height',totalHeight)
+  .attr('viewBox',[-totalWidth/2,-totalHeight/2,totalWidth,totalHeight]);
+const chords = d3.chord().padAngle(0.04).sortSubgroups(d3.descending)(matrix);
+const ribbon = d3.ribbon().radius(innerRadius);
+const tooltip = document.getElementById('tooltip');
+function shorten(s,max=40){
+  s=s.replace(/^[A-Z]+-\\d+\\s+/,'');
+  return s.length>max ? s.slice(0,max)+'\\u2026' : s;
+}
+// --- Ribbons (drawn first so arcs sit on top) ---
+const ribbons = svg.append('g').selectAll('path').data(chords).join('path')
+  .attr('d',ribbon).attr('class','chord')
+  .attr('fill',d=>color(d.source.index))
+  .attr('stroke',d=>d3.rgb(color(d.source.index)).darker(0.3))
+  .on('mouseenter',function(_,d){
+    d3.select(this).attr('fill-opacity',0.95);
+    const s=nodes[d.source.index], t=nodes[d.target.index];
+    const m=matrix[d.source.index][d.target.index];
+    tooltip.textContent=s+' \\u2192 '+t+': '+Math.floor(m/60)+'h '+m%60+'m';
+    tooltip.style.opacity='1';})
+  .on('mousemove',e=>{tooltip.style.left=e.pageX+12+'px';tooltip.style.top=e.pageY+12+'px';})
+  .on('mouseleave',function(){
+    d3.select(this).attr('fill-opacity',0.75);
+    tooltip.style.opacity='0';});
+// --- Arcs (outer ring) with hover-to-focus ---
+const arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
+const group = svg.append('g').selectAll('g').data(chords.groups).join('g');
+group.append('path')
+  .attr('d',arc).attr('fill',(_,i)=>color(i))
+  .attr('stroke',(_,i)=>d3.rgb(color(i)).darker(0.4))
+  .on('mouseenter',(_,d)=>{
+    ribbons.transition().duration(150)
+      .style('opacity',c=>
+        c.source.index===d.index||c.target.index===d.index ? 1 : 0.08);
+    tooltip.innerHTML='<strong>'+nodes[d.index]+'</strong><br>Total: '
+      +Math.floor(d.value/60)+'h '+d.value%60+'m';
+    tooltip.style.opacity='1';})
+  .on('mousemove',e=>{tooltip.style.left=e.pageX+12+'px';tooltip.style.top=e.pageY+12+'px';})
+  .on('mouseleave',()=>{
+    ribbons.transition().duration(150).style('opacity',1);
+    tooltip.style.opacity='0';});
+// --- Labels ---
+group.append('text')
+  .each(d=>{d.angle=(d.startAngle+d.endAngle)/2;})
+  .attr('dy','0.35em')
+  .attr('transform',d=>'rotate('+(d.angle*180/Math.PI-90)+')'
+    +' translate('+(outerRadius+14)+')'
+    +(d.angle>Math.PI?' rotate(180)':''))
+  .attr('text-anchor',d=>d.angle>Math.PI?'end':'start')
+  .style('font-size','13px').style('font-weight','600')
+  .style('fill',(_,i)=>color(i))
+  .text((_,i)=>shorten(nodes[i]));
+</script>
+</body>
+</html>")))
+    (with-temp-file html-file (insert html))
+    (browse-url (concat "file://" html-file))
+    (message "Chord diagram: %s" html-file)
+    html-file))
+
+
+(defun my/clock-chord-diagram (&optional days-back leaf)
+  "Open a D3 chord diagram of clock time for the past DAYS-BACK days.
+Without prefix arg, arcs connect days to top-level categories
+\(e.g., Work, Hobbies\).  With \\[universal-argument], arcs connect
+days to the individual tasks you clocked into — the leaf headings."
+  (interactive "P")
+  ;; C-u alone gives '(4); C-u 30 gives 30.  Distinguish them:
+  ;; - plain:    days-back=nil  leaf=nil  → 7 days, top-level
+  ;; - C-u:      days-back='(4) leaf=nil  → 7 days, leaf
+  ;; - C-u 30:   days-back=30   leaf=nil  → 30 days, top-level
+  ;; - C-u C-u:  days-back='(16) leaf=nil → 7 days, top-level (fallback)
+  (let* ((leaf (consp days-back))
+         (days-back (if (or (null days-back) (consp days-back)) 7 days-back))
+         (kind (if leaf "Task" "Category")))
+    (my/chord-diagram
+     :title (format "Clock Time × %s" kind)
+     :subtitle (format "Past %d days — %s"
+                       days-back (format-time-string "%b %d"))
+     :matrix (my/clock-chord-data days-back leaf))))
+
+
+(cl-defun my/sankey-diagram (&key title subtitle matrix config)
+  "Render a D3 Sankey diagram in the browser and return the HTML file path.
+TITLE and SUBTITLE label the page.  MATRIX is a list of triples
+\(LEFT RIGHT WEIGHT\) — identical to `my/chord-diagram', so the
+two are interchangeable.
+
+CONFIG is an optional plist controlling layout:
+
+  :margin-left   Pixels reserved for left labels   (default 80)
+  :margin-right  Pixels reserved for right labels  (default 300)
+  :flow-width    Pixels for the flow area itself    (default 900)
+  :labels        \\='outside or \\='inside              (default \\='outside)
+
+By way of example:
+
+  (my/sankey-diagram
+   :title \"Time Allocation\"
+   :subtitle \"This week\"
+   :config \\='(:margin-left 60 :margin-right 200 :flow-width 700 :labels inside)
+   :matrix \\='((\"Mon\" \"Search\" 120)
+             (\"Mon\" \"Reviews\" 60)
+             (\"Tue\" \"Search\" 90)))
+
+Links flow left → right with width proportional to WEIGHT.
+Hovering a node highlights its connections (like the chord diagram)."
+  (let* ((margin-left (or (plist-get config :margin-left) 80))
+         (margin-right (or (plist-get config :margin-right) 300))
+         (flow-width (or (plist-get config :flow-width) 900))
+         (outside-p (not (eq (plist-get config :labels) 'inside)))
+         (left-labels (cl-remove-duplicates (mapcar #'car matrix) :test #'equal))
+         (right-labels (cl-remove-duplicates (mapcar #'cadr matrix) :test #'equal))
+         (all-labels (append left-labels right-labels))
+         (nodes-json (json-encode
+                      (vconcat
+                       (cl-loop for name in all-labels
+                                collect `((name . ,name))))))
+         (links-json (json-encode
+                      (vconcat
+                       (cl-loop for (src tgt val) in matrix
+                                when (> val 0)
+                                collect `((source . ,(cl-position src all-labels :test #'equal))
+                                          (target . ,(cl-position tgt all-labels :test #'equal))
+                                          (value . ,val))))))
+         (left-count-json (number-to-string (length left-labels)))
+         (margin-left-json (number-to-string margin-left))
+         (margin-right-json (number-to-string margin-right))
+         (flow-width-json (number-to-string flow-width))
+         (labels-outside-json (if outside-p "true" "false"))
+         (html-file (expand-file-name
+                     (format "sankey-%s.html"
+                             (format-time-string "%Y%m%d-%H%M%S"))
+                     temporary-file-directory))
+         (html (my/sankey--html title subtitle nodes-json links-json
+                                left-count-json margin-left-json
+                                margin-right-json flow-width-json
+                                labels-outside-json "'#chart'")))
+    (with-temp-file html-file (insert html))
+    (browse-url (concat "file://" html-file))
+    (message "Sankey diagram: %s" html-file)
+    html-file))
+
+
+(defun my/sankey--html (title subtitle nodes-json links-json
+                        left-count-json margin-left-json
+                        margin-right-json flow-width-json
+                        labels-outside-json container-sel)
+  "Return a self-contained HTML string for a Sankey diagram.
+CONTAINER-SEL is a JS expression for the D3 selection target,
+e.g., \"'#chart'\" or \"'#sankey-view'\".  FLOW-WIDTH-JSON is the flow
+area width in pixels (string)."
+  (concat
+"<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"UTF-8\">
+<title>" title "</title>
+<script src=\"https://d3js.org/d3.v7.min.js\"></script>
+<script src=\"https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js\"></script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+       display:flex; flex-direction:column; align-items:center;
+       margin:2em; background:#fafafa; }
+h2 { color:#333; margin-bottom:0; }
+p.subtitle { color:#888; margin-top:4px; }
+.link { transition:opacity .15s; }
+.tooltip { position:absolute; background:rgba(0,0,0,.82); color:#fff;
+           padding:6px 12px; border-radius:4px; font-size:13px;
+           pointer-events:none; opacity:0; transition:opacity .15s; }
+</style>
+</head>
+<body>
+<h2>" title "</h2>
+<p class=\"subtitle\">" subtitle "</p>
+<div id=\"chart\"></div>
+<div class=\"tooltip\" id=\"tooltip\"></div>
+<script>
+const nodesData = " nodes-json ";
+const linksData = " links-json ";
+const leftCount = " left-count-json ";
+const marginLeft = " margin-left-json ", marginRight = " margin-right-json ", flowWidth = " flow-width-json ";
+const labelsOutside = " labels-outside-json ";
+const totalWidth = flowWidth + marginLeft + marginRight, totalHeight = 500, nodePadding = 24, nodeW = 20;
+const leftPalette = d3.scaleOrdinal()
+  .range(['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1']);
+const rightPalette = d3.scaleOrdinal().range(d3.schemeTableau10);
+const color = i => i < leftCount ? leftPalette(i) : rightPalette(i - leftCount);
+const sankey = d3.sankey()
+  .nodeId(d=>d.index)
+  .nodeWidth(nodeW).nodePadding(nodePadding)
+  .nodeAlign(d3.sankeyLeft)
+  .extent([[marginLeft,1],[marginLeft+flowWidth,totalHeight-5]]);
+const {nodes,links} = sankey({
+  nodes: nodesData.map((d,i)=>Object.assign({},d,{index:i})),
+  links: linksData.map(d=>Object.assign({},d))});
+const svg = d3.select(" container-sel ").append('svg')
+  .attr('width',totalWidth).attr('height',totalHeight)
+  .attr('viewBox',[0,0,totalWidth,totalHeight]);
+const tooltip = document.getElementById('tooltip');
+function shorten(s,max=40){
+  s=s.replace(/^[A-Z]+-\\d+\\s+/,'');
+  return s.length>max ? s.slice(0,max)+'\\u2026' : s;
+}
+const link = svg.append('g').attr('fill','none')
+  .selectAll('g').data(links).join('g')
+  .attr('class','link').style('opacity',0.5);
+link.append('path')
+  .attr('d',d3.sankeyLinkHorizontal())
+  .attr('stroke',d=>color(d.source.index))
+  .attr('stroke-width',d=>Math.max(1,d.width))
+  .on('mouseenter',function(_,d){
+    d3.select(this.parentNode).style('opacity',0.9);
+    const minutes=d.value;
+    tooltip.textContent=d.source.name+' \\u2192 '+d.target.name+': '
+      +Math.floor(minutes/60)+'h '+minutes%60+'m';
+    tooltip.style.opacity='1';})
+  .on('mousemove',e=>{tooltip.style.left=e.pageX+12+'px';tooltip.style.top=e.pageY+12+'px';})
+  .on('mouseleave',function(){
+    d3.select(this.parentNode).style('opacity',0.5);
+    tooltip.style.opacity='0';});
+const node = svg.append('g').selectAll('g').data(nodes).join('g');
+node.append('rect')
+  .attr('x',d=>d.x0).attr('y',d=>d.y0)
+  .attr('height',d=>d.y1-d.y0).attr('width',d=>d.x1-d.x0)
+  .attr('fill',d=>color(d.index))
+  .attr('stroke',d=>d3.rgb(color(d.index)).darker(0.4))
+  .on('mouseenter',(_,d)=>{
+    link.transition().duration(150)
+      .style('opacity',l=>
+        l.source.index===d.index||l.target.index===d.index ? 0.9 : 0.08);
+    const total=d.value;
+    tooltip.innerHTML='<strong>'+d.name+'</strong><br>Total: '
+      +Math.floor(total/60)+'h '+total%60+'m';
+    tooltip.style.opacity='1';})
+  .on('mousemove',e=>{tooltip.style.left=e.pageX+12+'px';tooltip.style.top=e.pageY+12+'px';})
+  .on('mouseleave',()=>{
+    link.transition().duration(150).style('opacity',0.5);
+    tooltip.style.opacity='0';});
+node.append('text')
+  .attr('x',d=>{ const isLeft=d.x0<totalWidth/2;
+    return labelsOutside ? (isLeft ? d.x0-6 : d.x1+6) : (isLeft ? d.x1+6 : d.x0-6);})
+  .attr('y',d=>(d.y0+d.y1)/2)
+  .attr('dy','0.35em')
+  .attr('text-anchor',d=>{ const isLeft=d.x0<totalWidth/2;
+    return labelsOutside ? (isLeft ? 'end' : 'start') : (isLeft ? 'start' : 'end');})
+  .style('font-size','13px').style('font-weight','600')
+  .style('fill',d=>color(d.index))
+  .text(d=>shorten(d.name));
+</script>
+</body>
+</html>"))
+
+
+(defun my/clock-sankey-diagram (&optional days-back leaf)
+  "Open a D3 Sankey diagram of clock time for the past DAYS-BACK days.
+Same prefix-arg dispatch as `my/clock-chord-diagram':
+plain = top-level categories, \\[universal-argument] = leaf tasks."
+  (interactive "P")
+  (let* ((leaf (consp days-back))
+         (days-back (if (or (null days-back) (consp days-back)) 7 days-back))
+         (kind (if leaf "Task" "Category")))
+    (my/sankey-diagram
+     :title (format "Clock Time → %s" kind)
+     :subtitle (format "Past %d days — %s"
+                       days-back (format-time-string "%b %d"))
+     :matrix (my/clock-chord-data days-back leaf))))
+
+
+(defun my/clock-diagram (&optional days-back leaf)
+  "Open a unified clock diagram page with [Chord | Sankey] toggle buttons.
+Same prefix-arg dispatch as `my/clock-chord-diagram':
+plain = top-level categories, \\[universal-argument] = leaf tasks."
+  (interactive "P")
+  (let* ((leaf (consp days-back))
+         (days-back (if (or (null days-back) (consp days-back)) 7 days-back))
+         (kind (if leaf "Task" "Category"))
+         (triples (my/clock-chord-data days-back leaf))
+         ;; --- Chord data prep ---
+         (left-labels (cl-remove-duplicates (mapcar #'car triples) :test #'equal))
+         (right-labels (cl-remove-duplicates (mapcar #'cadr triples) :test #'equal))
+         (left-count (length left-labels))
+         (right-count (length right-labels))
+         (edge-table (let ((ht (make-hash-table :test 'equal)))
+                       (dolist (triple triples ht)
+                         (puthash (cons (car triple) (cadr triple))
+                                  (+ (gethash (cons (car triple) (cadr triple)) ht 0)
+                                     (nth 2 triple))
+                                  ht))))
+         (full-matrix
+          (append
+           (cl-loop for l in left-labels collect
+                    (append (make-list left-count 0)
+                            (cl-loop for r in right-labels
+                                     collect (gethash (cons l r) edge-table 0))))
+           (cl-loop for r in right-labels collect
+                    (append (cl-loop for l in left-labels
+                                     collect (gethash (cons l r) edge-table 0))
+                            (make-list right-count 0)))))
+         (chord-nodes-json (json-encode (vconcat (append left-labels right-labels))))
+         (chord-matrix-json (json-encode (vconcat (mapcar #'vconcat full-matrix))))
+         ;; --- Sankey data prep ---
+         (all-labels (append left-labels right-labels))
+         (sankey-nodes-json (json-encode
+                             (vconcat
+                              (cl-loop for name in all-labels
+                                       collect `((name . ,name))))))
+         (sankey-links-json (json-encode
+                             (vconcat
+                              (cl-loop for (src tgt val) in triples
+                                       when (> val 0)
+                                       collect `((source . ,(cl-position src all-labels :test #'equal))
+                                                 (target . ,(cl-position tgt all-labels :test #'equal))
+                                                 (value . ,val))))))
+         (left-count-json (number-to-string left-count))
+         (margin-left-json "80") (margin-right-json "300") (flow-width-json "900") (labels-outside-json "true")
+         (title (format "Clock Time × %s" kind))
+         (subtitle (format "Past %d days — %s"
+                           days-back (format-time-string "%b %d")))
+         (html-file (expand-file-name
+                     (format "clock-diagram-%s.html"
+                             (format-time-string "%Y%m%d-%H%M%S"))
+                     temporary-file-directory))
+         (html (concat
+"<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"UTF-8\">
+<title>" title "</title>
+<script src=\"https://d3js.org/d3.v7.min.js\"></script>
+<script src=\"https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js\"></script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+       display:flex; flex-direction:column; align-items:center;
+       margin:2em; background:#fafafa; }
+h2 { color:#333; margin-bottom:0; }
+p.subtitle { color:#888; margin-top:4px; }
+.toggle { display:flex; gap:0; margin:16px 0 8px; }
+.toggle button { padding:8px 24px; font-size:14px; font-weight:600;
+  border:2px solid #4e79a7; cursor:pointer; transition:all .15s;
+  background:#fff; color:#4e79a7; }
+.toggle button:first-child { border-radius:6px 0 0 6px; }
+.toggle button:last-child  { border-radius:0 6px 6px 0; border-left:none; }
+.toggle button.active { background:#4e79a7; color:#fff; }
+.view { display:none; }
+.view.active { display:block; }
+.chord-ribbon { fill-opacity:0.75; stroke-width:0.5;
+                transition:fill-opacity .15s, opacity .15s; }
+.sankey-link { transition:opacity .15s; }
+.tooltip { position:absolute; background:rgba(0,0,0,.82); color:#fff;
+           padding:6px 12px; border-radius:4px; font-size:13px;
+           pointer-events:none; opacity:0; transition:opacity .15s; }
+</style>
+</head>
+<body>
+<h2>" title "</h2>
+<p class=\"subtitle\">" subtitle "</p>
+<div class=\"toggle\">
+  <button id=\"btn-chord\" class=\"active\" onclick=\"show('chord')\">Chord</button>
+  <button id=\"btn-sankey\" onclick=\"show('sankey')\">Sankey</button>
+</div>
+<div id=\"chord-view\" class=\"view active\"></div>
+<div id=\"sankey-view\" class=\"view\"></div>
+<div class=\"tooltip\" id=\"tooltip\"></div>
+<script>
+function show(which) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.toggle button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(which+'-view').classList.add('active');
+  document.getElementById('btn-'+which).classList.add('active');
+}
+const tooltip = document.getElementById('tooltip');
+// Shorten labels for readability; full name stays in tooltips.
+function shorten(s,max=40){
+  s=s.replace(/^[A-Z]+-\\d+\\s+/,''); // axe Jira prefix
+  return s.length>max ? s.slice(0,max)+'\\u2026' : s;
+}
+const leftCount = " left-count-json ";
+
+// ===== CHORD =====
+(function(){
+const nodes = " chord-nodes-json ";
+const matrix = " chord-matrix-json ";
+const totalWidth = 720, totalHeight = 720;
+const innerRadius = Math.min(totalWidth,totalHeight)*0.30, outerRadius = innerRadius + 28;
+const leftPalette = d3.scaleOrdinal().domain(nodes.slice(0,leftCount))
+                  .range(['#4e79a7','#f28e2b','#e15759','#76b7b2',
+                          '#59a14f','#edc948','#b07aa1']);
+const rightPalette = d3.scaleOrdinal().domain(nodes.slice(leftCount))
+                   .range(d3.schemeTableau10);
+const color = i => i < leftCount ? leftPalette(nodes[i]) : rightPalette(nodes[i]);
+const svg = d3.select('#chord-view').append('svg')
+  .attr('width',totalWidth).attr('height',totalHeight)
+  .attr('viewBox',[-totalWidth/2,-totalHeight/2,totalWidth,totalHeight]);
+const chords = d3.chord().padAngle(0.04).sortSubgroups(d3.descending)(matrix);
+const ribbon = d3.ribbon().radius(innerRadius);
+const ribbons = svg.append('g').selectAll('path').data(chords).join('path')
+  .attr('d',ribbon).attr('class','chord-ribbon')
+  .attr('fill',d=>color(d.source.index))
+  .attr('stroke',d=>d3.rgb(color(d.source.index)).darker(0.3))
+  .on('mouseenter',function(_,d){
+    d3.select(this).attr('fill-opacity',0.95);
+    const src=nodes[d.source.index], tgt=nodes[d.target.index];
+    const minutes=matrix[d.source.index][d.target.index];
+    tooltip.textContent=src+' \\u2192 '+tgt+': '+Math.floor(minutes/60)+'h '+minutes%60+'m';
+    tooltip.style.opacity='1';})
+  .on('mousemove',e=>{tooltip.style.left=e.pageX+12+'px';tooltip.style.top=e.pageY+12+'px';})
+  .on('mouseleave',function(){
+    d3.select(this).attr('fill-opacity',0.75);
+    tooltip.style.opacity='0';});
+const arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
+const group = svg.append('g').selectAll('g').data(chords.groups).join('g');
+group.append('path')
+  .attr('d',arc).attr('fill',(_,i)=>color(i))
+  .attr('stroke',(_,i)=>d3.rgb(color(i)).darker(0.4))
+  .on('mouseenter',(_,d)=>{
+    ribbons.transition().duration(150)
+      .style('opacity',c=>
+        c.source.index===d.index||c.target.index===d.index ? 1 : 0.08);
+    tooltip.innerHTML='<strong>'+nodes[d.index]+'</strong><br>Total: '
+      +Math.floor(d.value/60)+'h '+d.value%60+'m';
+    tooltip.style.opacity='1';})
+  .on('mousemove',e=>{tooltip.style.left=e.pageX+12+'px';tooltip.style.top=e.pageY+12+'px';})
+  .on('mouseleave',()=>{
+    ribbons.transition().duration(150).style('opacity',1);
+    tooltip.style.opacity='0';});
+group.append('text')
+  .each(d=>{d.angle=(d.startAngle+d.endAngle)/2;})
+  .attr('dy','0.35em')
+  .attr('transform',d=>'rotate('+(d.angle*180/Math.PI-90)+')'
+    +' translate('+(outerRadius+14)+')'
+    +(d.angle>Math.PI?' rotate(180)':''))
+  .attr('text-anchor',d=>d.angle>Math.PI?'end':'start')
+  .style('font-size','13px').style('font-weight','600')
+  .style('fill',(_,i)=>color(i))
+  .text((_,i)=>shorten(nodes[i]));
+})();
+
+// ===== SANKEY =====
+(function(){
+const nodesData = " sankey-nodes-json ";
+const linksData = " sankey-links-json ";
+const marginLeft = " margin-left-json ", marginRight = " margin-right-json ", flowWidth = " flow-width-json ";
+const labelsOutside = " labels-outside-json ";
+const totalWidth = flowWidth + marginLeft + marginRight, totalHeight = 500, nodePadding = 24, nodeW = 20;
+const leftPalette = d3.scaleOrdinal()
+  .range(['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1']);
+const rightPalette = d3.scaleOrdinal().range(d3.schemeTableau10);
+const color = i => i < leftCount ? leftPalette(i) : rightPalette(i - leftCount);
+const sankey = d3.sankey()
+  .nodeId(d=>d.index)
+  .nodeWidth(nodeW).nodePadding(nodePadding)
+  .nodeAlign(d3.sankeyLeft)
+  .extent([[marginLeft,1],[marginLeft+flowWidth,totalHeight-5]]);
+const {nodes,links} = sankey({
+  nodes: nodesData.map((d,i)=>Object.assign({},d,{index:i})),
+  links: linksData.map(d=>Object.assign({},d))});
+const svg = d3.select('#sankey-view').append('svg')
+  .attr('width',totalWidth).attr('height',totalHeight)
+  .attr('viewBox',[0,0,totalWidth,totalHeight]);
+const link = svg.append('g').attr('fill','none')
+  .selectAll('g').data(links).join('g')
+  .attr('class','sankey-link').style('opacity',0.5);
+link.append('path')
+  .attr('d',d3.sankeyLinkHorizontal())
+  .attr('stroke',d=>color(d.source.index))
+  .attr('stroke-width',d=>Math.max(1,d.width))
+  .on('mouseenter',function(_,d){
+    d3.select(this.parentNode).style('opacity',0.9);
+    const minutes=d.value;
+    tooltip.textContent=d.source.name+' \\u2192 '+d.target.name+': '
+      +Math.floor(minutes/60)+'h '+minutes%60+'m';
+    tooltip.style.opacity='1';})
+  .on('mousemove',e=>{tooltip.style.left=e.pageX+12+'px';tooltip.style.top=e.pageY+12+'px';})
+  .on('mouseleave',function(){
+    d3.select(this.parentNode).style('opacity',0.5);
+    tooltip.style.opacity='0';});
+const node = svg.append('g').selectAll('g').data(nodes).join('g');
+node.append('rect')
+  .attr('x',d=>d.x0).attr('y',d=>d.y0)
+  .attr('height',d=>d.y1-d.y0).attr('width',d=>d.x1-d.x0)
+  .attr('fill',d=>color(d.index))
+  .attr('stroke',d=>d3.rgb(color(d.index)).darker(0.4))
+  .on('mouseenter',(_,d)=>{
+    link.transition().duration(150)
+      .style('opacity',l=>
+        l.source.index===d.index||l.target.index===d.index ? 0.9 : 0.08);
+    const total=d.value;
+    tooltip.innerHTML='<strong>'+d.name+'</strong><br>Total: '
+      +Math.floor(total/60)+'h '+total%60+'m';
+    tooltip.style.opacity='1';})
+  .on('mousemove',e=>{tooltip.style.left=e.pageX+12+'px';tooltip.style.top=e.pageY+12+'px';})
+  .on('mouseleave',()=>{
+    link.transition().duration(150).style('opacity',0.5);
+    tooltip.style.opacity='0';});
+node.append('text')
+  .attr('x',d=>{ const isLeft=d.x0<totalWidth/2;
+    return labelsOutside ? (isLeft ? d.x0-6 : d.x1+6) : (isLeft ? d.x1+6 : d.x0-6);})
+  .attr('y',d=>(d.y0+d.y1)/2)
+  .attr('dy','0.35em')
+  .attr('text-anchor',d=>{ const isLeft=d.x0<totalWidth/2;
+    return labelsOutside ? (isLeft ? 'end' : 'start') : (isLeft ? 'start' : 'end');})
+  .style('font-size','13px').style('font-weight','600')
+  .style('fill',d=>color(d.index))
+  .text(d=>shorten(d.name));
+})();
+</script>
+</body>
+</html>")))
+    (with-temp-file html-file (insert html))
+    (browse-url (concat "file://" html-file))
+    (message "Clock diagram: %s" html-file)
+    html-file))
+
+) ;; End 😴 — deferred chord diagram functions
 #+end_src
 
 **** Nicer clocktable layout for nested entries                     :details:
