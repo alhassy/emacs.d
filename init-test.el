@@ -311,56 +311,109 @@ match surrounding code:
 
       BUG-42 #progress
 
-      Change-Id: 101
       Owner: Grace Hopper
       Reviewer: Alan Turing
-      Reviewer: Ada Lovelace\")
+      Added-Reviewer: Ada Lovelace
+      Reviewer-Negative: Skynet\")
 
 The first non-blank line becomes `subject'.  Everything before the
-metadata lines (Change-Id, Owner, Reviewer) forms `commitMessage'.
-`Change-Id' doubles as the Gerrit change `number' and must be a
-numeric string (parsed via `string-to-number').  `Owner' populates the
-`owner' alist.  Each `Reviewer' line produces an approval entry in
-`currentPatchSet' with type \"Code-Review\"."
+metadata lines (Change-Id, Owner, Reviewer, Added-Reviewer,
+Reviewer-Negative) forms `commitMessage'.  `Change-Id' is optional —
+when present it sets `number' (parsed via `string-to-number'); when
+absent, `my/as-gerrit-stack' auto-assigns from the position index.
+`Owner' populates the `owner' alist.
+
+Reviewer keywords:
+  Reviewer:          voted Code-Review (positive) — appears in both
+                     `allReviewers' and `currentPatchSet.approvals'.
+  Added-Reviewer:    added but hasn't voted — appears in
+                     `allReviewers' only (no approval entry).
+  Reviewer-Negative: voted Code-Review -1 — appears in both
+                     `allReviewers' and `approvals' with value \"-1\".
+  Last-Updated:      relative age like \"5 days ago\" or \"3 months ago\".
+                     Converted to a `lastUpdated' epoch for staleness."
   (let* ((lines (s-lines (s-trim (lf-unindent spec))))
          (subject (car lines))
          ;; Partition into commit-message vs. metadata lines.
-         (meta-re "^\\(Change-Id\\|Owner\\|Reviewer\\):")
+         (meta-re (concat "^\\(Change-Id\\|Owner\\|Reviewer"
+                          "\\|Added-Reviewer\\|Reviewer-Negative"
+                          "\\|Last-Updated\\):"))
          (msg-lines (-take-while
                      (lambda (l) (not (s-matches-p meta-re l)))
                      lines))
          (meta-lines (-drop (length msg-lines) lines))
          (commit-msg (s-trim (s-join "\n" msg-lines)))
          ;; Parse metadata.
-         (number nil) (owner-name nil) (reviewers nil))
+         (number nil) (owner-name nil) (last-updated nil)
+         (reviewers nil) (added-reviewers nil) (neg-reviewers nil))
     (dolist (l meta-lines)
       (cond
        ((s-prefix-p "Change-Id:" l)
         (setq number (string-to-number (s-trim (substring l 10)))))
        ((s-prefix-p "Owner:" l)
         (setq owner-name (s-trim (substring l 6))))
+       ((s-prefix-p "Last-Updated:" l)
+        (let ((val (s-trim (substring l 13))))
+          (setq last-updated
+                (if (string-match "\\([0-9]+\\) \\(day\\|week\\|month\\|year\\)s? ago" val)
+                    (let* ((n (string-to-number (match-string 1 val)))
+                           (unit (match-string 2 val))
+                           (secs (* n (pcase unit
+                                        ("day" 86400)
+                                        ("week" 604800)
+                                        ("month" 2592000)
+                                        ("year" 31536000)))))
+                      (truncate (- (float-time) secs)))
+                  (string-to-number val)))))
+       ((s-prefix-p "Reviewer-Negative:" l)
+        (push (s-trim (substring l 18)) neg-reviewers))
+       ((s-prefix-p "Added-Reviewer:" l)
+        (push (s-trim (substring l 15)) added-reviewers))
        ((s-prefix-p "Reviewer:" l)
         (push (s-trim (substring l 9)) reviewers))))
-    (setq reviewers (nreverse reviewers))
-    `((number . ,number)
-      (subject . ,subject)
-      (commitMessage . ,commit-msg)
-      (owner (name . ,owner-name)
-             (username . ,(my/test--name-to-username owner-name)))
-      (currentPatchSet
-       (approvals . ,(-map (lambda (r)
-                             `((type . "Code-Review")
-                               (by (name . ,r)
-                                   (username
-                                    . ,(my/test--name-to-username r)))))
-                           reviewers))))))
+    (setq reviewers (nreverse reviewers)
+          added-reviewers (nreverse added-reviewers)
+          neg-reviewers (nreverse neg-reviewers))
+    (let ((all-rv (-map (lambda (r)
+                          `((name . ,r)
+                            (username . ,(my/test--name-to-username r))))
+                        (append reviewers added-reviewers neg-reviewers)))
+          (pos-approvals
+           (-map (lambda (r)
+                   `((type . "Code-Review")
+                     (by (name . ,r)
+                         (username . ,(my/test--name-to-username r)))))
+                 reviewers))
+          (neg-approvals
+           (-map (lambda (r)
+                   `((type . "Code-Review") (value . "-1")
+                     (by (name . ,r)
+                         (username . ,(my/test--name-to-username r)))))
+                 neg-reviewers)))
+      `((number . ,number)
+        (subject . ,subject)
+        (commitMessage . ,commit-msg)
+        ,@(when last-updated `((lastUpdated . ,last-updated)))
+        (owner (name . ,owner-name)
+               (username . ,(my/test--name-to-username owner-name)))
+        ,@(when all-rv `((allReviewers . ,all-rv)))
+        (currentPatchSet
+         (approvals . ,(append pos-approvals neg-approvals)))))))
 
 (defun my/as-gerrit-stack (&rest specs)
   "Map `my/as-gerrit-patch' over SPECS, returning a list of change alists.
 Each element of SPECS is a human-readable patch string (see
 `my/as-gerrit-patch' for the format).  A single-element list is
-a valid stack — useful for the lone-change happy path."
-  (-map #'my/as-gerrit-patch specs))
+a valid stack — useful for the lone-change happy path.
+
+The change `number' is auto-assigned from the position index
+(0, 1, 2, ...) when the spec omits a `Change-Id:' line —
+removing boilerplate from tests."
+  (--map-indexed (let ((c (my/as-gerrit-patch it)))
+                   (unless (alist-get 'number c)
+                     (setf (alist-get 'number c) it-index))
+                   c)
+                 specs))
 
 (deftestfixture defworkitemtest
   "Bind Gerrit/Jira config vars that work-item functions read,
@@ -374,14 +427,12 @@ so tests run without private.el."
   (let* ((stack (my/as-gerrit-stack
                  "[core] Refactor helper
 
-                  Change-Id: 100
                   Owner: Grace Hopper"
 
                  "[core] Add frobnicate validation
 
                   BUG-42 #progress
 
-                  Change-Id: 101
                   Owner: Grace Hopper"))
          (item (work-item-from-stack stack 'reviews-needed))
          (rendered (work-item-to-string item)))
@@ -394,14 +445,12 @@ so tests run without private.el."
 
                   BUG-7 #progress
 
-                  Change-Id: 200
                   Owner: Ada Lovelace"
 
                  "[lang] Step two
 
                   BUG-7 #progress
 
-                  Change-Id: 201
                   Owner: Ada Lovelace"))
          (item (work-item-from-stack stack 'reviews-needed))
          (rendered (work-item-to-string item)))
@@ -414,7 +463,6 @@ so tests run without private.el."
 
                   BUG-101 #progress
 
-                  Change-Id: 300
                   Owner: Alan Turing"))
          (item (work-item-from-stack stack 'reviews-needed))
          (rendered (work-item-to-string item)))
@@ -428,28 +476,24 @@ so tests run without private.el."
 
                   BUG-52 #progress
 
-                  Change-Id: 400
                   Owner: Ada Lovelace"
 
                  "[core] Extend refactor
 
                   BUG-52 #progress
 
-                  Change-Id: 401
                   Owner: Ada Lovelace"
 
                  "[core] Add validation
 
                   BUG-61 #progress
 
-                  Change-Id: 402
                   Owner: Grace Hopper"
 
                  "[core] Wire up UI
 
                   BUG-61 #progress
 
-                  Change-Id: 403
                   Owner: Grace Hopper"))
          (items (work-items-from-review-stack stack my\gerrit-user)))
     ;; Two distinct non-self authors → two work-items.
@@ -457,13 +501,13 @@ so tests run without private.el."
     (let ((authors (-map #'work-item-author items)))
       (should (member "Ada Lovelace" authors))
       (should (member "Grace Hopper" authors)))
-    ;; Ada's item links to her tip (change 401) with her ticket.
+    ;; Ada's item links to her tip (change 1) with her ticket.
     (let ((ada (--first (equal "Ada Lovelace" (work-item-author it)) items)))
-      (should (s-contains-p "401" (work-item-tip-url ada)))
+      (should (s-contains-p "/1" (work-item-tip-url ada)))
       (should (equal "BUG-52" (work-item-jira ada))))
-    ;; Grace's item links to her tip (change 403) with her ticket.
+    ;; Grace's item links to her tip (change 3) with her ticket.
     (let ((grace (--first (equal "Grace Hopper" (work-item-author it)) items)))
-      (should (s-contains-p "403" (work-item-tip-url grace)))
+      (should (s-contains-p "/3" (work-item-tip-url grace)))
       (should (equal "BUG-61" (work-item-jira grace))))))
 
 (defworkitemtest "reviews-needed splits same-author multi-ticket stack into per-ticket items" [work-item]
@@ -473,14 +517,12 @@ so tests run without private.el."
 
                   BUG-48 #resolve
 
-                  Change-Id: 500
                   Owner: Alan Turing"
 
                  "[lang] Add family-based schema
 
                   BUG-51 #progress
 
-                  Change-Id: 501
                   Owner: Alan Turing"))
          (items (work-items-from-review-stack stack my\gerrit-user)))
     ;; Same author, different tickets → two work-items.
@@ -490,9 +532,9 @@ so tests run without private.el."
       (should (member "BUG-51" tickets)))
     ;; Each item links to the correct change.
     (let ((bug48 (--first (equal "BUG-48" (work-item-jira it)) items)))
-      (should (s-contains-p "500" (work-item-tip-url bug48))))
+      (should (s-contains-p "/0" (work-item-tip-url bug48))))
     (let ((bug51 (--first (equal "BUG-51" (work-item-jira it)) items)))
-      (should (s-contains-p "501" (work-item-tip-url bug51))))))
+      (should (s-contains-p "/1" (work-item-tip-url bug51))))))
 
 (defworkitemtest "reviews-needed produces one item for single-author single-ticket stack" [work-item]
   (let* ((my\gerrit-user "mhopper")
@@ -501,12 +543,229 @@ so tests run without private.el."
 
                   BUG-99 #progress
 
-                  Change-Id: 600
                   Owner: Alan Turing"))
          (items (work-items-from-review-stack stack my\gerrit-user)))
     (should (= 1 (length items)))
     (should (equal "Alan Turing" (work-item-author (car items))))
     (should (equal "BUG-99" (work-item-jira (car items))))))
+
+(defworkitemtest "extract-jira-tickets uses last reference as primary ticket" [work-item]
+  (let* ((change (my/as-gerrit-patch
+                  "[irule] Support matches_regex operator
+
+                   BUG-30 #progress
+                   BUG-49 #progress
+
+                   Owner: Grace Hopper"))
+         (tickets (my/gerrit--extract-jira-tickets change)))
+    ;; Only the last Jira reference is returned — it is the primary ticket.
+    (should (equal '("BUG-49") tickets))))
+
+(defworkitemtest "reviews-needed drops jira-less changes from multi-ticket stack" [work-item]
+  (let* ((my\gerrit-user "ghopper")
+         (stack (my/as-gerrit-stack
+                 "[predict, refactor] Convert widget tests
+
+                  BUG-77 #progress
+
+                  Owner: Alan Turing"
+
+                 "[predict, refactor] Convert gadget tests
+
+                  Owner: Alan Turing"
+
+                 "[predict] Reject delete of nonexistent item
+
+                  BUG-88 #resolve
+
+                  Owner: Alan Turing"))
+         (items (work-items-from-review-stack stack my\gerrit-user)))
+    ;; Two distinct Jira tickets → two work-items.
+    ;; The middle change (no Jira) is silently absorbed, not a third item.
+    (should (= 2 (length items)))
+    (let ((tickets (-map #'work-item-jira items)))
+      (should (member "BUG-77" tickets))
+      (should (member "BUG-88" tickets))
+      (should-not (member nil tickets)))))
+
+(defworkitemtest "reviews-needed still shows item when no change has a jira ticket" [work-item]
+  (let* ((my\gerrit-user "ghopper")
+         (stack (my/as-gerrit-stack
+                 "[predict] Add widget filtering
+
+                  Owner: Alan Turing"
+
+                 "[predict] Reject bogus widget delete
+
+                  Owner: Alan Turing"))
+         (items (work-items-from-review-stack stack my\gerrit-user)))
+    ;; No Jira tickets anywhere, but the review item must still appear.
+    (should (= 1 (length items)))
+    (should (equal "Alan Turing" (work-item-author (car items))))))
+
+(defworkitemtest "please-review shows non-voting reviewer by name" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[core, refactor] Rename FrobExpr.All to Inside
+
+                  BUG-123 #progress
+
+                  Owner: Grace Hopper
+                  Added-Reviewer: Alan Turing"
+
+                 "[core] Restrict FrobValue to current use-case
+
+                  BUG-123 #related
+
+                  Owner: Grace Hopper"))
+         (item (work-item-from-stack stack 'please-review))
+         (rendered (work-item-to-string item)))
+    (should (s-contains-p "Alan Turing" rendered))
+    (should (not (s-contains-p "Reviewers" rendered)))))
+
+(defworkitemtest "please-review surfaces bot with negative Code-Review" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[core] Fix the frobnicate
+
+                  BUG-42 #progress
+
+                  Owner: Grace Hopper
+                  Added-Reviewer: Alan Turing
+                  Reviewer-Negative: Skynet"))
+         (item (work-item-from-stack stack 'please-review))
+         (rendered (work-item-to-string item)))
+    (should (s-contains-p "Alan Turing" rendered))
+    (should (s-contains-p "Skynet" rendered))))
+
+(defworkitemtest "please-review filters out bot with positive Code-Review" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[core] Fix the frobnicate
+
+                  BUG-42 #progress
+
+                  Owner: Grace Hopper
+                  Added-Reviewer: Alan Turing
+                  Reviewer: Skynet"))
+         (item (work-item-from-stack stack 'please-review))
+         (rendered (work-item-to-string item)))
+    (should (s-contains-p "Alan Turing" rendered))
+    (should (not (s-contains-p "Skynet" rendered)))))
+
+(defworkitemtest "multi-ticket stack produces one work-item per ticket" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[irule] Support matches_regex operator
+
+                  BUG-49 #resolve
+
+                  Owner: Grace Hopper"
+
+                 "[irule] Suppress substitution in braced strings
+
+                  BUG-48 #resolve
+
+                  Owner: Grace Hopper"))
+         (items (work-items-from-stack stack 'please-review)))
+    ;; Two distinct tickets → two work-items.
+    (should (= 2 (length items)))
+    (let ((tickets (-map #'work-item-jira items)))
+      (should (member "BUG-49" tickets))
+      (should (member "BUG-48" tickets)))))
+
+(defworkitemtest "jira-less item renders with Sidequest prefix" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[lang] Introduce QuadraticSorter
+
+                  !NO_JIRA
+
+                  Owner: Ada Lovelace
+                  Added-Reviewer: Grace Hopper"))
+         (item (work-item-from-stack stack 'my-needing-action))
+         (str (work-item-to-string item)))
+    ;; No Jira → title appears as Sidequest{ ... } prefix.
+    (should (string-match-p "Sidequest{ Introduce QuadraticSorter }" str))
+    ;; Should NOT contain a Jira link.
+    (should-not (string-match-p "BUG-\\|FWD-\\|BUGX-\\|OUT-" str))))
+
+(defworkitemtest "age prefix appears in rendered work-item" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[base] Simplify helper utility
+
+                  BUG-77 #progress
+
+                  Owner: Grace Hopper
+                  Added-Reviewer: Alan Turing
+                  Last-Updated: 5 months ago"))
+         (item (work-item-from-stack stack 'please-review))
+         (str (work-item-to-string item)))
+    ;; Age prefix appears.
+    (should (string-match-p "\\[5 months\\]" str))
+    ;; Jira is still there too.
+    (should (string-match-p "BUG-77" str))))
+
+(defworkitemtest "age is nil when no lastUpdated on change" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[base] Quick fix
+
+                  BUG-88 #progress
+
+                  Owner: Ada Lovelace"))
+         (item (work-item-from-stack stack 'wip)))
+    ;; No Last-Updated in spec → age slot is nil.
+    (should-not (work-item-age item))
+    ;; Rendered string has no age prefix (e.g. "[5 days]").
+    (should-not (string-match-p "\\[[0-9]+ \\(day\\|week\\|month\\|year\\)" (work-item-to-string item)))))
+
+(defworkitemtest "sort: urgent first, stalest-first everywhere, sidequests last" [work-item]
+  (let* ((stack-old (my/as-gerrit-stack
+                     "[base] Old refactor
+
+                      BUG-10 #progress
+
+                      Owner: Grace Hopper
+                      Last-Updated: 6 months ago"))
+         (stack-new (my/as-gerrit-stack
+                     "[base] Recent tweak
+
+                      BUG-20 #progress
+
+                      Owner: Alan Turing
+                      Last-Updated: 2 days ago"))
+         (stack-urgent (my/as-gerrit-stack
+                        "[base] Urgent fix
+
+                         BUG-30 #progress
+
+                         Owner: Ada Lovelace
+                         Last-Updated: 1 days ago"))
+         (stack-side-old (my/as-gerrit-stack
+                          "[base] Ancient cleanup
+
+                           !NO_JIRA
+
+                           Owner: Grace Hopper
+                           Last-Updated: 1 years ago"))
+         (stack-side-new (my/as-gerrit-stack
+                          "[base] Tidy up helpers
+
+                           !NO_JIRA
+
+                           Owner: Alan Turing
+                           Last-Updated: 3 days ago"))
+         (old-item (work-item-from-stack stack-old 'please-review))
+         (new-item (work-item-from-stack stack-new 'please-review))
+         (urgent-item (work-item-from-stack stack-urgent 'please-review))
+         (side-old (work-item-from-stack stack-side-old 'please-review))
+         (side-new (work-item-from-stack stack-side-new 'please-review)))
+    (setf (work-item-urgent urgent-item) t)
+    (let ((sorted (work-item--sort
+                   (list new-item side-new old-item urgent-item side-old))))
+      ;; Urgent first.
+      (should (eq (nth 0 sorted) urgent-item))
+      ;; Stalest normal item before newer.
+      (should (eq (nth 1 sorted) old-item))
+      (should (eq (nth 2 sorted) new-item))
+      ;; Sidequests last, also stalest-first.
+      (should (eq (nth 3 sorted) side-old))
+      (should (eq (nth 4 sorted) side-new)))))
 ;; E2E Test:1 ends here
 
 ;; [[file:init.org::*Also, logging][Also, logging:2]]

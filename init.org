@@ -3396,7 +3396,11 @@ were regenerated --Emacs should also prompt me if I make any changes!
 :CREATED:  [2025-06-13 Fri 07:55]
 :END:
 #+begin_src emacs-lisp
-(bind-key* "M-i" (lambda () (interactive) (find-file "~/.emacs.d/init.org")))
+(bind-key* "M-i" (lambda ()
+                   (interactive)
+                   (if current-prefix-arg
+                       (load-file "~/.emacs.d/init.el")
+                     (find-file "~/.emacs.d/init.org"))))
 #+end_src
 
 * Staying Sane
@@ -11486,8 +11490,8 @@ flagged urgent).  Created by `work-item-from-stack' or
 
 The `urgent' flag is orthogonal to `status': an item can be both
 `:urgent t' and `:status \\='wip', meaning it is urgent AND work-in-
-progress.  The finalize hook uses this to place urgent items into
-dedicated sections at the top of the agenda.
+progress.  Urgent items are rendered with a \"🔴 \" prefix and
+appear in whichever status section they belong to.
 
 Example:
   (work-item-create :jira \"BUG-1234\"
@@ -11504,7 +11508,7 @@ Example:
   (tip-url nil
            :documentation "Gerrit URL for the topmost change in the stack, or nil for not-yet-started urgent Jira items.")
   (reviewers nil
-             :documentation "List of reviewer name strings (Code-Review voters).")
+             :documentation "List of reviewer name strings (humans from allReviewers + any negative Code-Review voters).")
   (author nil
           :documentation "Display name of the stack owner.")
   ;; Whether this item is urgent, WIP, something for me to review, something I
@@ -11519,7 +11523,11 @@ Example:
             :documentation "Marker to the corresponding Org heading in
 `org-default-notes-file', or nil.  Set by `work-item--resolve-org-trees'
 during cache build.  Enables `org-marker'/`org-hd-marker' text properties
-so standard agenda commands (RET, TAB, I, o) work on work-item lines."))
+so standard agenda commands (RET, TAB, I, o) work on work-item lines.")
+  (age nil
+       :documentation "Unix epoch (number) of the Gerrit tip's `lastUpdated'.
+Nil for `todo' items (Jira-only, no Gerrit change).  Rendered as
+a human-readable staleness string by `work-item-to-string'."))
 
 (defvar my/agenda-work-data nil
   "Cached plist holding structured Gerrit/Jira agenda data.
@@ -11847,16 +11855,19 @@ via the REST API, and query JQL for urgent tickets.
 
 #+begin_src emacs-lisp
 (cl-defun my/gerrit--extract-jira-tickets (change)
-  "Extract Jira ticket IDs from CHANGE's commit message.
+  "Extract the primary Jira ticket from CHANGE's commit message.
 Uses `my\\jira-ticket-regex' (set in private.el) to scan the
-commit message.  The regex must have one capture group (\\\\1)
-yielding the ticket ID.  Returns nil if the regex is not configured.
+commit message.  When multiple tickets are referenced, the last
+one is taken — by convention, the final Jira tag is the primary
+ticket being worked towards, and earlier ones are related context.
 
-Returns a deduplicated list of ticket ID strings."
+Returns a single-element list (for API compatibility with callers
+that expect a list), or nil if no ticket matches."
   (when my\jira-ticket-regex
     (let ((msg (or (alist-get 'commitMessage change) "")))
-      (->> (s-match-strings-all my\jira-ticket-regex msg)
-           (-map #'cadr) -uniq))))
+      (-when-let (matches (->> (s-match-strings-all my\jira-ticket-regex msg)
+                               (-map #'cadr)))
+        (last matches)))))
 
 (cl-defun my/gerrit--stack-jira-tickets (stack)
   "Return Jira tickets shared by every change in STACK.
@@ -12007,6 +12018,24 @@ Example:
       (substring subject (match-end 0))
     subject))
 
+(defun work-item--format-age (epoch)
+  "Format a Gerrit `lastUpdated' EPOCH into a human-readable age string.
+Returns nil when EPOCH is nil.  Uses the coarsest unit that is ≥ 1:
+years → months → weeks → days → \"today\"."
+  (when epoch
+    (let* ((seconds (- (float-time) epoch))
+           (days (floor (/ seconds 86400))))
+      (cond
+       ((>= days 365) (format "%d year%s"
+                              (/ days 365) (if (>= (/ days 365) 2) "s" "")))
+       ((>= days 30)  (format "%d month%s"
+                              (/ days 30) (if (>= (/ days 30) 2) "s" "")))
+       ((>= days 7)   (format "%d week%s"
+                              (/ days 7) (if (>= (/ days 7) 2) "s" "")))
+       ((>= days 1)   (format "%d day%s"
+                              days (if (>= days 2) "s" "")))
+       (t "today")))))
+
 (defun work-item-from-stack (stack status)
   "Convert a Gerrit dependency STACK into a `work-item' with STATUS.
 STACK is a list of change alists (base-first, as produced by
@@ -12033,12 +12062,38 @@ Example:
                       (alist-get 'number tip))
      :reviewers (my/gerrit--extract-reviewer-names stack)
      :author (alist-get 'name (alist-get 'owner tip))
-     :status status)))
+     :status status
+     :age (alist-get 'lastUpdated tip))))
+
+(defun work-items-from-stack (stack status)
+  "Split STACK by primary Jira ticket, one work-item per ticket.
+Each group's sub-stack is passed to `work-item-from-stack'.
+
+Nil-ticket changes are dropped when at least one change has a
+ticket.  When NO change has a ticket, the entire stack is kept
+as a single group so the item still appears in the agenda."
+  (let* ((by-ticket
+          (-group-by
+           (lambda (c)
+             (car (my/gerrit--extract-jira-tickets c)))
+           stack))
+         (non-nil-groups
+          (-filter (lambda (g) (car g)) by-ticket))
+         (groups (or non-nil-groups by-ticket)))
+    (-map (lambda (group)
+            (work-item-from-stack (cdr group) status))
+          groups)))
 
 (defun work-items-from-review-stack (stack self-username)
   "Split STACK by (Jira ticket × author), one work-item per group.
 SELF-USERNAME is the current user's Gerrit username; their changes
 are excluded (we don't review our own work).
+
+Groups keyed by a nil Jira ticket are discarded when at least one
+non-nil group exists — the jira-less changes are noise in a
+multi-ticket stack.  When ALL groups have nil tickets (the regex
+did not match, or the author genuinely omitted references), we
+keep them so the review section still appears.
 
 Each group's sub-stack is passed to `work-item-from-stack', which
 picks up the correct tip, Jira ticket, reviewers, and author
@@ -12055,10 +12110,13 @@ returns a one-element list — identical to the old behaviour."
            (lambda (c)
              (cons (car (my/gerrit--extract-jira-tickets c))
                    (alist-get 'username (alist-get 'owner c))))
-           non-self)))
+           non-self))
+         (non-nil-groups
+          (-filter (lambda (g) (car (car g))) by-ticket-and-author))
+         (groups (or non-nil-groups by-ticket-and-author)))
     (-map (lambda (group)
             (work-item-from-stack (cdr group) 'reviews-needed))
-          by-ticket-and-author)))
+          groups)))
 
 (defun work-item-from-jira-issue (issue)
   "Convert a Jira REST API ISSUE alist into a `work-item'.
@@ -12092,25 +12150,59 @@ now unified into one.
 
 #+begin_src emacs-lisp
 (cl-defun my/gerrit--extract-reviewer-names (stack)
-  "Extract unique human names of Code-Review voters from STACK.
-Walks the `approvals' list in each change's `currentPatchSet',
-keeping only entries where type = \"Code-Review\", and returns
-the `name' field of each reviewer's `by' alist — deduplicated.
+  "Extract reviewer names from STACK, merging two sources.
+
+1. Human names from `allReviewers' — kept when the name contains
+   a space (heuristic: \"Alan Turing\" is human, \"Jenkins\" is a
+   bot).  The change owner is excluded.
+2. ANY name (including bots) from `currentPatchSet.approvals'
+   where type = \"Code-Review\" and value < 0.  A -1 from a bot
+   is actionable feedback that should surface in the agenda.
+
+The union of these two sets is returned, deduplicated.
 
 Example:
   (my/gerrit--extract-reviewer-names stack)
   → (\"Alice Smith\" \"Bob Jones\")"
-  (->> stack
-       (-mapcat
-        (lambda (c)
-          (->> (append (alist-get 'approvals
-                                  (alist-get 'currentPatchSet c))
-                       nil)
-               (-filter (lambda (a)
-                          (equal "Code-Review" (alist-get 'type a))))
-               (-map (lambda (a)
-                       (alist-get 'name (alist-get 'by a)))))))
-       (-filter #'identity) -uniq))
+  (let* ((owners (->> stack
+                      (-map (lambda (c)
+                              (alist-get 'username (alist-get 'owner c))))
+                      (-filter #'identity)
+                      -uniq))
+         (human-reviewers
+          (->> stack
+               (-mapcat
+                (lambda (c)
+                  (let ((owner-u (alist-get 'username
+                                            (alist-get 'owner c))))
+                    (->> (append (alist-get 'allReviewers c) nil)
+                         (-filter
+                          (lambda (rv)
+                            (let ((name (alist-get 'name rv))
+                                  (uname (alist-get 'username rv)))
+                              (and name
+                                   (s-contains-p " " name)
+                                   (not (member uname owners))))))
+                         (-map (lambda (rv)
+                                 (alist-get 'name rv)))))))
+               (-filter #'identity) -uniq))
+         (negative-voters
+          (->> stack
+               (-mapcat
+                (lambda (c)
+                  (->> (append (alist-get 'approvals
+                                          (alist-get 'currentPatchSet c))
+                               nil)
+                       (-filter
+                        (lambda (a)
+                          (and (equal "Code-Review" (alist-get 'type a))
+                               (< (string-to-number
+                                   (or (alist-get 'value a) "0"))
+                                  0))))
+                       (-map (lambda (a)
+                               (alist-get 'name (alist-get 'by a)))))))
+               (-filter #'identity) -uniq)))
+    (-uniq (append human-reviewers negative-voters))))
 
 (cl-defun my/gerrit--format-reviewer-names (names)
   "Format a list of NAMES into natural English with Oxford comma.
@@ -12132,6 +12224,26 @@ Examples:
 (cl-defgeneric work-item-to-string (item)
   "Render ITEM as a single-line string for display in the agenda.")
 
+(defun work-item--sort (items)
+  "Sort ITEMS for agenda display: urgent first, sidequests last.
+All three tiers are individually sorted stalest-first (oldest
+`age' epoch).  Items with no `age' sort after those with one."
+  (let (urgent normal sidequests)
+    (dolist (it items)
+      (cond
+       ((work-item-urgent it)     (push it urgent))
+       ((not (work-item-jira it)) (push it sidequests))
+       (t                         (push it normal))))
+    (cl-flet ((stalest-first (items)
+                (sort items
+                      (lambda (a b)
+                        (let ((ea (or (work-item-age a) most-positive-fixnum))
+                              (eb (or (work-item-age b) most-positive-fixnum)))
+                          (< ea eb))))))
+      (append (stalest-first urgent)
+              (stalest-first normal)
+              (stalest-first sidequests)))))
+
 (cl-defmethod work-item-to-string ((item work-item))
   "Render a `work-item' ITEM as a single-line Org string for the agenda.
 Dispatches on `work-item-status':
@@ -12143,48 +12255,58 @@ Dispatches on `work-item-status':
 Each line is optionally prefixed with a Jira link + title when
 the work-item has a non-nil `jira' slot.
 
-The `urgent' flag is orthogonal — it affects section placement in
-the finalize hook, not rendering."
+The `urgent' flag prepends \"🔴 \" to the rendered string so the
+item stands out in whichever status section it belongs to."
   (let* ((jira        (work-item-jira item))
          (title       (work-item-title item))
          (url         (work-item-tip-url item))
          (reviewers   (work-item-reviewers item))
          (author      (work-item-author item))
          (status      (work-item-status item))
+         (urgent      (work-item-urgent item))
          (jira-link   (when jira (my/gerrit--format-jira-link jira)))
-         (jira-prefix (when jira-link
+         (jira-prefix (cond
+                       (jira-link
                         (if title
-                            (format "%s \"%s\" :: " jira-link title)
-                          (format "%s :: " jira-link))))
+                            (format "%s %s ∷ " jira-link title)
+                          (format "%s ∷ " jira-link)))
+                       (title
+                        (format "Sidequest{ %s } ∷ " title))))
+         (age-str     (work-item--format-age (work-item-age item)))
          (rv-str      (when reviewers
-                        (my/gerrit--format-reviewer-names reviewers))))
+                        (my/gerrit--format-reviewer-names reviewers)))
+         (urgent-prefix (if urgent "🔴 " ""))
+         (age-prefix  (if age-str (format "[%s] " age-str) "")))
     (pcase status
       ('todo
-       (if title (format "%s \"%s\"" (or jira-link "") title)
-         (or jira-link "")))
+       (concat urgent-prefix age-prefix
+               (if title (format "%s \"%s\"" (or jira-link "") title)
+                 (or jira-link ""))))
 
       ('my-needing-action
-       (concat jira-prefix
+       (concat urgent-prefix age-prefix jira-prefix
                (format "Address [[%s][latest feedback]]" url)
                (when rv-str (format " from %s" rv-str))))
 
       ('reviews-needed
-       (concat jira-prefix
+       (concat urgent-prefix age-prefix jira-prefix
                (format "Review %s's [[%s][latest efforts]]"
                        (or author "someone") url)))
 
       ('please-review
        (if jira-prefix
-           (format "%s%s please review this [[%s][work]]"
-                   jira-prefix (or rv-str "Reviewers") url)
-         (format "%s please review [[%s][%s]]"
-                 (or rv-str "Reviewers") url title)))
+           (format "%s%s%s%s please review this [[%s][work]]"
+                   urgent-prefix age-prefix jira-prefix (or rv-str "Reviewers") url)
+         (format "%s%s%s please review [[%s][%s]]"
+                 urgent-prefix age-prefix (or rv-str "Reviewers") url title)))
 
       ('wip
        (if jira-prefix
-           (concat (format "%sResume or abandon this [[%s][work]]"
+           (concat urgent-prefix age-prefix
+                   (format "%sResume or abandon this [[%s][work]]"
                            jira-prefix url) "?")
-         (concat (format "Resume or abandon [[%s][%s]]"
+         (concat urgent-prefix age-prefix
+                 (format "Resume or abandon [[%s][%s]]"
                          url title) "?"))))))
 #+end_src
 
@@ -12216,56 +12338,109 @@ match surrounding code:
 
       BUG-42 #progress
 
-      Change-Id: 101
       Owner: Grace Hopper
       Reviewer: Alan Turing
-      Reviewer: Ada Lovelace\")
+      Added-Reviewer: Ada Lovelace
+      Reviewer-Negative: Skynet\")
 
 The first non-blank line becomes `subject'.  Everything before the
-metadata lines (Change-Id, Owner, Reviewer) forms `commitMessage'.
-`Change-Id' doubles as the Gerrit change `number' and must be a
-numeric string (parsed via `string-to-number').  `Owner' populates the
-`owner' alist.  Each `Reviewer' line produces an approval entry in
-`currentPatchSet' with type \"Code-Review\"."
+metadata lines (Change-Id, Owner, Reviewer, Added-Reviewer,
+Reviewer-Negative) forms `commitMessage'.  `Change-Id' is optional —
+when present it sets `number' (parsed via `string-to-number'); when
+absent, `my/as-gerrit-stack' auto-assigns from the position index.
+`Owner' populates the `owner' alist.
+
+Reviewer keywords:
+  Reviewer:          voted Code-Review (positive) — appears in both
+                     `allReviewers' and `currentPatchSet.approvals'.
+  Added-Reviewer:    added but hasn't voted — appears in
+                     `allReviewers' only (no approval entry).
+  Reviewer-Negative: voted Code-Review -1 — appears in both
+                     `allReviewers' and `approvals' with value \"-1\".
+  Last-Updated:      relative age like \"5 days ago\" or \"3 months ago\".
+                     Converted to a `lastUpdated' epoch for staleness."
   (let* ((lines (s-lines (s-trim (lf-unindent spec))))
          (subject (car lines))
          ;; Partition into commit-message vs. metadata lines.
-         (meta-re "^\\(Change-Id\\|Owner\\|Reviewer\\):")
+         (meta-re (concat "^\\(Change-Id\\|Owner\\|Reviewer"
+                          "\\|Added-Reviewer\\|Reviewer-Negative"
+                          "\\|Last-Updated\\):"))
          (msg-lines (-take-while
                      (lambda (l) (not (s-matches-p meta-re l)))
                      lines))
          (meta-lines (-drop (length msg-lines) lines))
          (commit-msg (s-trim (s-join "\n" msg-lines)))
          ;; Parse metadata.
-         (number nil) (owner-name nil) (reviewers nil))
+         (number nil) (owner-name nil) (last-updated nil)
+         (reviewers nil) (added-reviewers nil) (neg-reviewers nil))
     (dolist (l meta-lines)
       (cond
        ((s-prefix-p "Change-Id:" l)
         (setq number (string-to-number (s-trim (substring l 10)))))
        ((s-prefix-p "Owner:" l)
         (setq owner-name (s-trim (substring l 6))))
+       ((s-prefix-p "Last-Updated:" l)
+        (let ((val (s-trim (substring l 13))))
+          (setq last-updated
+                (if (string-match "\\([0-9]+\\) \\(day\\|week\\|month\\|year\\)s? ago" val)
+                    (let* ((n (string-to-number (match-string 1 val)))
+                           (unit (match-string 2 val))
+                           (secs (* n (pcase unit
+                                        ("day" 86400)
+                                        ("week" 604800)
+                                        ("month" 2592000)
+                                        ("year" 31536000)))))
+                      (truncate (- (float-time) secs)))
+                  (string-to-number val)))))
+       ((s-prefix-p "Reviewer-Negative:" l)
+        (push (s-trim (substring l 18)) neg-reviewers))
+       ((s-prefix-p "Added-Reviewer:" l)
+        (push (s-trim (substring l 15)) added-reviewers))
        ((s-prefix-p "Reviewer:" l)
         (push (s-trim (substring l 9)) reviewers))))
-    (setq reviewers (nreverse reviewers))
-    `((number . ,number)
-      (subject . ,subject)
-      (commitMessage . ,commit-msg)
-      (owner (name . ,owner-name)
-             (username . ,(my/test--name-to-username owner-name)))
-      (currentPatchSet
-       (approvals . ,(-map (lambda (r)
-                             `((type . "Code-Review")
-                               (by (name . ,r)
-                                   (username
-                                    . ,(my/test--name-to-username r)))))
-                           reviewers))))))
+    (setq reviewers (nreverse reviewers)
+          added-reviewers (nreverse added-reviewers)
+          neg-reviewers (nreverse neg-reviewers))
+    (let ((all-rv (-map (lambda (r)
+                          `((name . ,r)
+                            (username . ,(my/test--name-to-username r))))
+                        (append reviewers added-reviewers neg-reviewers)))
+          (pos-approvals
+           (-map (lambda (r)
+                   `((type . "Code-Review")
+                     (by (name . ,r)
+                         (username . ,(my/test--name-to-username r)))))
+                 reviewers))
+          (neg-approvals
+           (-map (lambda (r)
+                   `((type . "Code-Review") (value . "-1")
+                     (by (name . ,r)
+                         (username . ,(my/test--name-to-username r)))))
+                 neg-reviewers)))
+      `((number . ,number)
+        (subject . ,subject)
+        (commitMessage . ,commit-msg)
+        ,@(when last-updated `((lastUpdated . ,last-updated)))
+        (owner (name . ,owner-name)
+               (username . ,(my/test--name-to-username owner-name)))
+        ,@(when all-rv `((allReviewers . ,all-rv)))
+        (currentPatchSet
+         (approvals . ,(append pos-approvals neg-approvals)))))))
 
 (defun my/as-gerrit-stack (&rest specs)
   "Map `my/as-gerrit-patch' over SPECS, returning a list of change alists.
 Each element of SPECS is a human-readable patch string (see
 `my/as-gerrit-patch' for the format).  A single-element list is
-a valid stack — useful for the lone-change happy path."
-  (-map #'my/as-gerrit-patch specs))
+a valid stack — useful for the lone-change happy path.
+
+The change `number' is auto-assigned from the position index
+(0, 1, 2, ...) when the spec omits a `Change-Id:' line —
+removing boilerplate from tests."
+  (--map-indexed (let ((c (my/as-gerrit-patch it)))
+                   (unless (alist-get 'number c)
+                     (setf (alist-get 'number c) it-index))
+                   c)
+                 specs))
 
 (deftestfixture defworkitemtest
   "Bind Gerrit/Jira config vars that work-item functions read,
@@ -12279,14 +12454,12 @@ so tests run without private.el."
   (let* ((stack (my/as-gerrit-stack
                  "[core] Refactor helper
 
-                  Change-Id: 100
                   Owner: Grace Hopper"
 
                  "[core] Add frobnicate validation
 
                   BUG-42 #progress
 
-                  Change-Id: 101
                   Owner: Grace Hopper"))
          (item (work-item-from-stack stack 'reviews-needed))
          (rendered (work-item-to-string item)))
@@ -12299,14 +12472,12 @@ so tests run without private.el."
 
                   BUG-7 #progress
 
-                  Change-Id: 200
                   Owner: Ada Lovelace"
 
                  "[lang] Step two
 
                   BUG-7 #progress
 
-                  Change-Id: 201
                   Owner: Ada Lovelace"))
          (item (work-item-from-stack stack 'reviews-needed))
          (rendered (work-item-to-string item)))
@@ -12319,7 +12490,6 @@ so tests run without private.el."
 
                   BUG-101 #progress
 
-                  Change-Id: 300
                   Owner: Alan Turing"))
          (item (work-item-from-stack stack 'reviews-needed))
          (rendered (work-item-to-string item)))
@@ -12333,28 +12503,24 @@ so tests run without private.el."
 
                   BUG-52 #progress
 
-                  Change-Id: 400
                   Owner: Ada Lovelace"
 
                  "[core] Extend refactor
 
                   BUG-52 #progress
 
-                  Change-Id: 401
                   Owner: Ada Lovelace"
 
                  "[core] Add validation
 
                   BUG-61 #progress
 
-                  Change-Id: 402
                   Owner: Grace Hopper"
 
                  "[core] Wire up UI
 
                   BUG-61 #progress
 
-                  Change-Id: 403
                   Owner: Grace Hopper"))
          (items (work-items-from-review-stack stack my\gerrit-user)))
     ;; Two distinct non-self authors → two work-items.
@@ -12362,13 +12528,13 @@ so tests run without private.el."
     (let ((authors (-map #'work-item-author items)))
       (should (member "Ada Lovelace" authors))
       (should (member "Grace Hopper" authors)))
-    ;; Ada's item links to her tip (change 401) with her ticket.
+    ;; Ada's item links to her tip (change 1) with her ticket.
     (let ((ada (--first (equal "Ada Lovelace" (work-item-author it)) items)))
-      (should (s-contains-p "401" (work-item-tip-url ada)))
+      (should (s-contains-p "/1" (work-item-tip-url ada)))
       (should (equal "BUG-52" (work-item-jira ada))))
-    ;; Grace's item links to her tip (change 403) with her ticket.
+    ;; Grace's item links to her tip (change 3) with her ticket.
     (let ((grace (--first (equal "Grace Hopper" (work-item-author it)) items)))
-      (should (s-contains-p "403" (work-item-tip-url grace)))
+      (should (s-contains-p "/3" (work-item-tip-url grace)))
       (should (equal "BUG-61" (work-item-jira grace))))))
 
 (defworkitemtest "reviews-needed splits same-author multi-ticket stack into per-ticket items" [work-item]
@@ -12378,14 +12544,12 @@ so tests run without private.el."
 
                   BUG-48 #resolve
 
-                  Change-Id: 500
                   Owner: Alan Turing"
 
                  "[lang] Add family-based schema
 
                   BUG-51 #progress
 
-                  Change-Id: 501
                   Owner: Alan Turing"))
          (items (work-items-from-review-stack stack my\gerrit-user)))
     ;; Same author, different tickets → two work-items.
@@ -12395,9 +12559,9 @@ so tests run without private.el."
       (should (member "BUG-51" tickets)))
     ;; Each item links to the correct change.
     (let ((bug48 (--first (equal "BUG-48" (work-item-jira it)) items)))
-      (should (s-contains-p "500" (work-item-tip-url bug48))))
+      (should (s-contains-p "/0" (work-item-tip-url bug48))))
     (let ((bug51 (--first (equal "BUG-51" (work-item-jira it)) items)))
-      (should (s-contains-p "501" (work-item-tip-url bug51))))))
+      (should (s-contains-p "/1" (work-item-tip-url bug51))))))
 
 (defworkitemtest "reviews-needed produces one item for single-author single-ticket stack" [work-item]
   (let* ((my\gerrit-user "mhopper")
@@ -12406,12 +12570,229 @@ so tests run without private.el."
 
                   BUG-99 #progress
 
-                  Change-Id: 600
                   Owner: Alan Turing"))
          (items (work-items-from-review-stack stack my\gerrit-user)))
     (should (= 1 (length items)))
     (should (equal "Alan Turing" (work-item-author (car items))))
     (should (equal "BUG-99" (work-item-jira (car items))))))
+
+(defworkitemtest "extract-jira-tickets uses last reference as primary ticket" [work-item]
+  (let* ((change (my/as-gerrit-patch
+                  "[irule] Support matches_regex operator
+
+                   BUG-30 #progress
+                   BUG-49 #progress
+
+                   Owner: Grace Hopper"))
+         (tickets (my/gerrit--extract-jira-tickets change)))
+    ;; Only the last Jira reference is returned — it is the primary ticket.
+    (should (equal '("BUG-49") tickets))))
+
+(defworkitemtest "reviews-needed drops jira-less changes from multi-ticket stack" [work-item]
+  (let* ((my\gerrit-user "ghopper")
+         (stack (my/as-gerrit-stack
+                 "[predict, refactor] Convert widget tests
+
+                  BUG-77 #progress
+
+                  Owner: Alan Turing"
+
+                 "[predict, refactor] Convert gadget tests
+
+                  Owner: Alan Turing"
+
+                 "[predict] Reject delete of nonexistent item
+
+                  BUG-88 #resolve
+
+                  Owner: Alan Turing"))
+         (items (work-items-from-review-stack stack my\gerrit-user)))
+    ;; Two distinct Jira tickets → two work-items.
+    ;; The middle change (no Jira) is silently absorbed, not a third item.
+    (should (= 2 (length items)))
+    (let ((tickets (-map #'work-item-jira items)))
+      (should (member "BUG-77" tickets))
+      (should (member "BUG-88" tickets))
+      (should-not (member nil tickets)))))
+
+(defworkitemtest "reviews-needed still shows item when no change has a jira ticket" [work-item]
+  (let* ((my\gerrit-user "ghopper")
+         (stack (my/as-gerrit-stack
+                 "[predict] Add widget filtering
+
+                  Owner: Alan Turing"
+
+                 "[predict] Reject bogus widget delete
+
+                  Owner: Alan Turing"))
+         (items (work-items-from-review-stack stack my\gerrit-user)))
+    ;; No Jira tickets anywhere, but the review item must still appear.
+    (should (= 1 (length items)))
+    (should (equal "Alan Turing" (work-item-author (car items))))))
+
+(defworkitemtest "please-review shows non-voting reviewer by name" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[core, refactor] Rename FrobExpr.All to Inside
+
+                  BUG-123 #progress
+
+                  Owner: Grace Hopper
+                  Added-Reviewer: Alan Turing"
+
+                 "[core] Restrict FrobValue to current use-case
+
+                  BUG-123 #related
+
+                  Owner: Grace Hopper"))
+         (item (work-item-from-stack stack 'please-review))
+         (rendered (work-item-to-string item)))
+    (should (s-contains-p "Alan Turing" rendered))
+    (should (not (s-contains-p "Reviewers" rendered)))))
+
+(defworkitemtest "please-review surfaces bot with negative Code-Review" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[core] Fix the frobnicate
+
+                  BUG-42 #progress
+
+                  Owner: Grace Hopper
+                  Added-Reviewer: Alan Turing
+                  Reviewer-Negative: Skynet"))
+         (item (work-item-from-stack stack 'please-review))
+         (rendered (work-item-to-string item)))
+    (should (s-contains-p "Alan Turing" rendered))
+    (should (s-contains-p "Skynet" rendered))))
+
+(defworkitemtest "please-review filters out bot with positive Code-Review" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[core] Fix the frobnicate
+
+                  BUG-42 #progress
+
+                  Owner: Grace Hopper
+                  Added-Reviewer: Alan Turing
+                  Reviewer: Skynet"))
+         (item (work-item-from-stack stack 'please-review))
+         (rendered (work-item-to-string item)))
+    (should (s-contains-p "Alan Turing" rendered))
+    (should (not (s-contains-p "Skynet" rendered)))))
+
+(defworkitemtest "multi-ticket stack produces one work-item per ticket" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[irule] Support matches_regex operator
+
+                  BUG-49 #resolve
+
+                  Owner: Grace Hopper"
+
+                 "[irule] Suppress substitution in braced strings
+
+                  BUG-48 #resolve
+
+                  Owner: Grace Hopper"))
+         (items (work-items-from-stack stack 'please-review)))
+    ;; Two distinct tickets → two work-items.
+    (should (= 2 (length items)))
+    (let ((tickets (-map #'work-item-jira items)))
+      (should (member "BUG-49" tickets))
+      (should (member "BUG-48" tickets)))))
+
+(defworkitemtest "jira-less item renders with Sidequest prefix" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[lang] Introduce QuadraticSorter
+
+                  !NO_JIRA
+
+                  Owner: Ada Lovelace
+                  Added-Reviewer: Grace Hopper"))
+         (item (work-item-from-stack stack 'my-needing-action))
+         (str (work-item-to-string item)))
+    ;; No Jira → title appears as Sidequest{ ... } prefix.
+    (should (string-match-p "Sidequest{ Introduce QuadraticSorter }" str))
+    ;; Should NOT contain a Jira link.
+    (should-not (string-match-p "BUG-\\|FWD-\\|BUGX-\\|OUT-" str))))
+
+(defworkitemtest "age prefix appears in rendered work-item" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[base] Simplify helper utility
+
+                  BUG-77 #progress
+
+                  Owner: Grace Hopper
+                  Added-Reviewer: Alan Turing
+                  Last-Updated: 5 months ago"))
+         (item (work-item-from-stack stack 'please-review))
+         (str (work-item-to-string item)))
+    ;; Age prefix appears.
+    (should (string-match-p "\\[5 months\\]" str))
+    ;; Jira is still there too.
+    (should (string-match-p "BUG-77" str))))
+
+(defworkitemtest "age is nil when no lastUpdated on change" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[base] Quick fix
+
+                  BUG-88 #progress
+
+                  Owner: Ada Lovelace"))
+         (item (work-item-from-stack stack 'wip)))
+    ;; No Last-Updated in spec → age slot is nil.
+    (should-not (work-item-age item))
+    ;; Rendered string has no age prefix (e.g. "[5 days]").
+    (should-not (string-match-p "\\[[0-9]+ \\(day\\|week\\|month\\|year\\)" (work-item-to-string item)))))
+
+(defworkitemtest "sort: urgent first, stalest-first everywhere, sidequests last" [work-item]
+  (let* ((stack-old (my/as-gerrit-stack
+                     "[base] Old refactor
+
+                      BUG-10 #progress
+
+                      Owner: Grace Hopper
+                      Last-Updated: 6 months ago"))
+         (stack-new (my/as-gerrit-stack
+                     "[base] Recent tweak
+
+                      BUG-20 #progress
+
+                      Owner: Alan Turing
+                      Last-Updated: 2 days ago"))
+         (stack-urgent (my/as-gerrit-stack
+                        "[base] Urgent fix
+
+                         BUG-30 #progress
+
+                         Owner: Ada Lovelace
+                         Last-Updated: 1 days ago"))
+         (stack-side-old (my/as-gerrit-stack
+                          "[base] Ancient cleanup
+
+                           !NO_JIRA
+
+                           Owner: Grace Hopper
+                           Last-Updated: 1 years ago"))
+         (stack-side-new (my/as-gerrit-stack
+                          "[base] Tidy up helpers
+
+                           !NO_JIRA
+
+                           Owner: Alan Turing
+                           Last-Updated: 3 days ago"))
+         (old-item (work-item-from-stack stack-old 'please-review))
+         (new-item (work-item-from-stack stack-new 'please-review))
+         (urgent-item (work-item-from-stack stack-urgent 'please-review))
+         (side-old (work-item-from-stack stack-side-old 'please-review))
+         (side-new (work-item-from-stack stack-side-new 'please-review)))
+    (setf (work-item-urgent urgent-item) t)
+    (let ((sorted (work-item--sort
+                   (list new-item side-new old-item urgent-item side-old))))
+      ;; Urgent first.
+      (should (eq (nth 0 sorted) urgent-item))
+      ;; Stalest normal item before newer.
+      (should (eq (nth 1 sorted) old-item))
+      (should (eq (nth 2 sorted) new-item))
+      ;; Sidequests last, also stalest-first.
+      (should (eq (nth 3 sorted) side-old))
+      (should (eq (nth 4 sorted) side-new)))))
 #+end_src
 
 *** Ticket collection helper
@@ -12453,7 +12834,8 @@ Example:
   (let* ((buf (generate-new-buffer " *gerrit-agenda-query*"))
          (args (list my\gerrit-ssh-host "gerrit" "query"
                      "--format=JSON"
-                     "--current-patch-set" "--dependencies"
+                     "--current-patch-set" "--all-reviewers"
+                     "--dependencies"
                      "--commit-message" "--" query-string))
          (proc (apply #'start-process "gerrit-agenda" buf
                       my\gerrit-ssh-command args)))
@@ -12602,19 +12984,19 @@ Wrapped in `condition-case' so a failure does not leave
                              (length tix))
                     (my/gerrit--fetch-jira-titles tix))))
              ;; Convert stacks → work-item instances
-             (stale-items (-map (lambda (s)
-                                  (work-item-from-stack s 'please-review))
-                                stale-stacks))
-             (wip-items   (-map (lambda (s)
-                                  (work-item-from-stack s 'wip))
-                                wip-stacks))
+             (stale-items (-mapcat (lambda (s)
+                                    (work-items-from-stack s 'please-review))
+                                  stale-stacks))
+             (wip-items   (-mapcat (lambda (s)
+                                    (work-items-from-stack s 'wip))
+                                  wip-stacks))
              (rv-items    (-mapcat (lambda (s)
                                      (work-items-from-review-stack
                                       s my\gerrit-user))
                                    others))
-             (my-items    (-map (lambda (s)
-                                  (work-item-from-stack s 'my-needing-action))
-                                mine))
+             (my-items    (-mapcat (lambda (s)
+                                    (work-items-from-stack s 'my-needing-action))
+                                  mine))
              (gerrit-items (append stale-items wip-items rv-items my-items))
              ;; Urgent Jira tickets (separate JQL query)
              (_ (message "Gerrit/Jira: checking for urgent Jira tickets…"))
@@ -12777,11 +13159,10 @@ properties are set on the line so that standard org-agenda commands
 
 (defun my/agenda-insert-work-sections ()
   "Insert cached `work-item' sections at the end of the daily agenda.
-Section ordering:
-  1. Urgent in-progress items (`:urgent t' with a non-`todo' status)
-  2. Urgent not-yet-started items (`:urgent t :status \\='todo')
-  3. Remaining sections by status (reviews-needed, my-needing-action,
-     please-review, wip) — excluding items already shown as urgent.
+Sections by status: reviews-needed, my-needing-action,
+please-review, wip, todo.  Urgent items are rendered with a
+\"🔴 \" prefix (via `work-item-to-string') and appear in
+whichever status section they belong to.
 
 On first agenda open each calendar day, automatically triggers a
 background fetch.  Subsequent opens reuse the cache.  To force a
@@ -12793,42 +13174,21 @@ manual refresh at any time, use the \"Refresh Work\" button or press
       (if my/agenda-work-data
           (let* ((start (point))
                  (items (plist-get my/agenda-work-data :items))
-                 ;; Urgent items split by in-progress vs not-yet-started
-                 (urgent-in-progress
-                  (-filter (lambda (it)
-                             (and (work-item-urgent it)
-                                  (not (eq (work-item-status it) 'todo))))
-                           items))
-                 (urgent-todo
-                  (-filter (lambda (it)
-                             (and (work-item-urgent it)
-                                  (eq (work-item-status it) 'todo)))
-                           items))
-                 ;; Non-urgent items by status
-                 (non-urgent
-                  (-filter (lambda (it) (not (work-item-urgent it)))
-                           items))
                  (status-sections
                   '((reviews-needed    "👀 Reviews Needed (I'm blocking someone)")
                     (my-needing-action "🔧 My Changes Needing Action")
                     (please-review     "⏳ Please Review My Work")
-                    (wip               "🚧 Work In Progress"))))
-            ;; Urgent sections first
-            (work-item-insert-as-agenda-section
-             "🔴 Urgent In-Progress Jira Tickets"
-             urgent-in-progress)
-            (work-item-insert-as-agenda-section
-             "🔴 Urgent Jira Tickets — Not yet started!"
-             urgent-todo)
-            ;; Remaining sections by status
+                    (wip               "🚧 Work In Progress")
+                    (todo              "📋 Urgent Tasks Not Yet Started"))))
             (dolist (sec status-sections)
               (let* ((status (car sec))
                      (heading (cadr sec))
                      (matching (-filter
                                 (lambda (it)
                                   (eq (work-item-status it) status))
-                                non-urgent)))
-                (work-item-insert-as-agenda-section heading matching)))
+                                items))
+                     (sorted (work-item--sort matching)))
+                (work-item-insert-as-agenda-section heading sorted)))
             (my/agenda--activate-org-links start (point))
             ;; If the cache is from yesterday, silently refresh in the background
             (when (and (my/agenda--cache-stale-p)
