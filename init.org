@@ -12853,6 +12853,22 @@ into the "Daily Standup Planning" heading, prepend today's child
 entry, kick off an async work-item refresh, and — only once the
 cache is populated — open the agenda with full Gerrit/Jira data.
 
+=my/copy-as-slack= replaces Gerrit full names with =@=-names
+— e.g., "Ada Lovelace" → "@ada" — per =my\slack-name-map= (in
+=private.el=).  We initially avoided this (early-morning pings
+felt presumptuous), but the alternative is strictly worse:
+writing "Ada please review this work" /without/ the @-mention
+means Ada has to manually scan the channel to find it.  You've
+named her but made it /harder/ for her to act — the worst of
+both worlds.
+
+Subtle: after pasting into Slack, pressing =⌘ Shift F= formats
+the markup (bold, links, code) but does /not/ turn =@ada= blue.
+It looks like plain text — easy to mistake for "not working."
+However, once you actually /send/ the message, Slack resolves
+the =@=-names and delivers real notifications to the named
+colleagues.  The blue highlight only appears after posting.
+
 #+begin_src emacs-lisp
 (defun my/standup ()
   "Begin the workday: clock into standup, refresh work data, open agenda.
@@ -15015,10 +15031,22 @@ with `->>': the text flows in as the last argument."
                 (regexp-quote (car pair)) (cdr pair) s t t))
              links :initial-value text))
 
+(cl-defun my/replace-names-with-slack-mentions (text)
+  "Replace full names in TEXT with Slack @-mentions per `my\\slack-name-map'.
+Falls back to TEXT unchanged when the map is unset (no private.el)."
+  (if (boundp 'my\slack-name-map)
+      (cl-reduce (lambda (s pair)
+                   (replace-regexp-in-string
+                    (regexp-quote (car pair)) (cdr pair) s t t))
+                 my\slack-name-map :initial-value text)
+    text))
+
 (cl-defun my/copy-as-slack ()
   "Convert the region (or buffer) from Org markup to Slack mrkdwn and copy it.
 No external dependency -- handles the subset of Org that appears in
-standup messages: inline markup, links, and lists."
+standup messages: inline markup, links, and lists.
+Full names (from Gerrit) are replaced with @-names per
+`my\\slack-name-map' (set in private.el)."
   (interactive)
   (let* ((beg (if (use-region-p) (region-beginning) (point-min)))
          (end (if (use-region-p) (region-end) (point-max)))
@@ -15043,7 +15071,9 @@ standup messages: inline markup, links, and lists."
             (replace-regexp-in-string
              "^\\( *\\)\\([0-9]+\\)) " "\\1\\2. ")
             ;; Strip Org heading stars
-            (replace-regexp-in-string "^\\*+ " "")))
+            (replace-regexp-in-string "^\\*+ " "")
+            ;; Full names -> Slack @names
+            (my/replace-names-with-slack-mentions)))
       (message "Copied as Slack Markdown! In Slack press “⌘ Shift F” to apply the formatting."))))
 
 
