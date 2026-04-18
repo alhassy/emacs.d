@@ -1,13 +1,13 @@
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:4]]
-    (setq org-image-actual-width nil)
+(setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:5]]
-    ;; Day-to-day, open URLs in the system browser (Arc, Chrome, etc.).
-    ;; When blogging, we can temporarily switch to xwidget-webkit-browse-url.
-    (setq browse-url-browser-function 'browse-url-default-browser)
+;; Day-to-day, open URLs in the system browser (Arc, Chrome, etc.).
+;; When blogging, we can temporarily switch to xwidget-webkit-browse-url.
+(setq browse-url-browser-function 'browse-url-default-browser)
 
-    ;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
+;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
 ;; Personal instructions for a new machine:5 ends here
 
 ;; Disable custom-file - all settings managed in init.el/init.org
@@ -315,23 +315,23 @@ installs of packages that are not in our `my/installed-packages' listing.
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
-  ;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
-  ;; Since the hook fires on C-g but by then Helm's already tears it down so
-  ;; it fails buffer-live-p.
-  (with-eval-after-load 'helm
-  (defun my/helm-kill-session-buffers-safe ()
-    "Kill stray *helm…* buffers after a Helm session ends."
-    ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
-    (run-at-time 5 nil                   ; defer until after Helm cleanup
-                 (lambda ()
-                   (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
-                   (let ((kill-buffer-query-functions nil))
-                     (dolist (b (buffer-list))
-                       (when (and (buffer-live-p b)
-                                  (string-match-p "\\`\\*helm" (buffer-name b)))
-                         (with-demoted-errors "helm-kill: %S"
-                           (kill-buffer b))))))))))
-  (add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
+;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
+;; Since the hook fires on C-g but by then Helm's already tears it down so
+;; it fails buffer-live-p.
+(with-eval-after-load 'helm
+(defun my/helm-kill-session-buffers-safe ()
+  "Kill stray *helm…* buffers after a Helm session ends."
+  ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
+  (run-at-time 5 nil                   ; defer until after Helm cleanup
+               (lambda ()
+                 (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
+                 (let ((kill-buffer-query-functions nil))
+                   (dolist (b (buffer-list))
+                     (when (and (buffer-live-p b)
+                                (string-match-p "\\`\\*helm" (buffer-name b)))
+                       (with-demoted-errors "helm-kill: %S"
+                         (kill-buffer b))))))))))
+(add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
 
 (use-package helm
   :hook ((after-init . helm-mode) ;; Enable Helm completion for common Emacs commands.
@@ -4488,7 +4488,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Pretty Lists Markers:1 ends here
 
 ;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:1]]
-  (defvar-local rasmus/org-at-src-begin -1
+(defvar-local rasmus/org-at-src-begin -1
     "Variable that holds whether last position was a ")
 
   (defvar rasmus/ob-header-symbol ?☰
@@ -6020,7 +6020,7 @@ Includes week number, month tag, and CREATED timestamp property."
   (-let [month-name (ts-month-name (ts-now))]
     ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
     ;; that looks at that day. That is, my review are personal appointments.
-    (format "* Weekly Review ♯%s ---/"go from chaos to clarity"!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
+    (format "* Weekly Review ♯%s ---/go from chaos to clarity!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
             week♯
             month-name))))
 
@@ -6174,58 +6174,39 @@ Shows ticket ID, title, Gerrit status, and time spent."
           # How can I improve to mitigate bad weeks?
 
        3. [ ] 🔀 What will I focus on this week?
-          # What "$10k" tasks do I want done? Why or why not?
+          # What $10k tasks do I want done? Why or why not?
 
 ")))
 
-(defun my/weekly-review--insert-outstanding-reviews ()
-  "Insert the outstanding reviews checklist.
-Surfaces please-review items so stale reviews do not rot across sprints.
-Each item shows reviewer names, age, and Jira link."
-  (when-let* ((items (plist-get my/agenda-work-data :items))
-            (please-review
-             (--filter (eq 'please-review (work-item-status it))
-                       items))
-            (sorted (--sort
-                     (< (or (work-item-age it) most-positive-fixnum)
-                        (or (work-item-age other) most-positive-fixnum))
-                     please-review)))
-  (insert (lf-string "
-         ****** TODO ⟨2⟩ Outstanding reviews — poke people!  [0%]
-         :PROPERTIES:
-         :WHY: Stale reviews rot across sprints and you get blamed. Assign them NOW.
-         :END:
-         "))
-  (when (boundp 'my\sprint-doc-url)
-    (insert (format "[[%s][Open Sprint Doc]] — ensure each item below is listed and assigned via GDoc comments!\n\n"
-                    my\sprint-doc-url)))
-  (let ((n 0))
-    (dolist (item sorted)
-      (let* ((ticket (work-item-jira item))
-             (title (work-item-title item))
-             (age-str (or (work-item--format-age (work-item-age item)) "today"))
-             (reviewers (or (work-item-reviewers item) '("?")))
-             (rv-names (mapconcat #'identity reviewers ", "))
-             (stale (and (work-item-age item)
-                         (> (- (float-time) (work-item-age item))
-                            (* 5 86400))))
-             (stale-tag (if stale " 🔴 STALE" "")))
-        (insert (format "%d. [ ] %s %s — waiting on %s [%s]%s\n"
-                        (cl-incf n)
-                        (if ticket
-                            (my/gerrit--format-jira-link ticket)
-                          "no-ticket")
-                        (or title "")
-                        rv-names
-                        age-str
-                        stale-tag)))))
-  (insert "\n")))
+;; NOTE: `my/weekly-review--insert-outstanding-reviews' was axed —
+;; outstanding reviews now live inside `my/weekly-review--insert-weekly-promise'
+;; under the Impediments subsection, using `work-item-to-string' for rendering.
+
+(defvar my/cowsay-figures
+  '("actually" "alpaca" "beavis.zen" "blowfish" "bong" "bud-frogs"
+    "bunny" "cheese" "cower" "cupcake" "daemon" "default" "dragon"
+    "dragon-and-cow" "elephant" "elephant-in-snake" "eyes"
+    "flaming-sheep" "fox" "ghostbusters" "head-in" "hellokitty"
+    "kiss" "kitty" "koala" "kosh" "llama" "luke-koala"
+    "mech-and-cow" "meow" "milk" "moofasa" "moose" "mutilated"
+    "ren" "sheep" "skeleton" "small" "stegosaurus" "stimpy"
+    "supermilker" "surgery" "sus" "three-eyes" "turkey" "turtle"
+    "tux" "udder" "vader" "vader-koala" "www")
+  "Cowsay figure files to choose from in the weekly review.")
+
+(defun my/cowsay-random-command ()
+  "Return a shell command string for fortune piped to a random cowsay figure.
+When the figure is `www', a random mood modifier (-b, -d, ...) may be appended."
+  (let ((figure (seq-random-elt my/cowsay-figures)))
+    (if (string= figure "www")
+        (let ((modifier (seq-random-elt '("" "-b" "-d" "-g" "-p" "-s" "-t" "-w" "-y"))))
+          (format "fortune | cowsay -f www %s 2>/dev/null" modifier))
+      (format "fortune | cowsay -f %s 2>/dev/null" figure))))
 
 (defun my/weekly-review--insert-social-reminder ()
-  "Insert the #social visibility reminder with a fortune/cowsay quote."
-  ;; ─── All phases: Stay visible as a remote worker ────────────────
-;; Post something to #social so colleagues remember you exist.
-(insert "
+  "Insert the #social visibility reminder with a fortune/cowsay quote.
+Picks a random cowsay figure (and mood modifier for `www')."
+  (insert "
 ****** TODO ⟨3⟩ Post to #social — stay visible!
 :PROPERTIES:
 :WHY: Remote workers vanish from collective memory. A weekly post keeps you in the conversation.
@@ -6235,13 +6216,13 @@ Share something in *#social* this week — a joke, a link, a photo, a
 hot take.  Doesn't have to be profound; it just has to be /you/.
 
 Here's some inspiration:\n\n")
-(let ((cowsay (string-trim
-               (shell-command-to-string "fortune | cowsay 2>/dev/null"))))
-  (if (string-empty-p cowsay)
-      (insert "/(fortune | cowsay not available — improvise!)/\n\n")
-    (insert "#+begin_quote\n"
-            cowsay
-            "\n#+end_quote\n\n"))))
+  (let* ((cmd (my/cowsay-random-command))
+         (cowsay (string-trim (shell-command-to-string cmd))))
+    (if (string-empty-p cowsay)
+        (insert "/(fortune | cowsay not available — improvise!)/\n\n")
+      (insert "#+begin_quote\n"
+              cowsay
+              "\n#+end_quote\n\n"))))
 
 (defun my/weekly-review--insert-weekly-promise ()
   "Insert the Weekly Promise section: Completed, In Progress, Planned, Impediments.
@@ -6338,37 +6319,37 @@ outstanding reviews."
     (insert "- /(none from Jira — edit as needed)/\n")))
 (insert "- /(...design docs, discussion threads, or other non-Jira work?)/\n")
 (insert "\n*Planned* (slotted for next week):\n- \n")
-;; --- Impediments: pre-populate from stale outstanding reviews ---
+;; --- Impediments / Outstanding Reviews ---
+;; Merged: every please-review item belongs here (not just stale ones).
+;; Stale items (>5 days) get a 🔴 prefix; fresh ones get a checkbox.
+;; Uses `work-item-to-string' — the same renderer the agenda uses.
 (insert "\n*Impediments* (who must do what by when?):\n")
-(let ((stale-items
+(when (boundp 'my\sprint-doc-url)
+  (insert (format "[[%s][Open Sprint Doc]] — ensure each item below is listed and assigned!\n\n"
+                  my\sprint-doc-url)))
+(let ((please-review
        (when-let* ((items (plist-get my/agenda-work-data :items)))
-         (--filter (and (eq 'please-review (work-item-status it))
-                        (work-item-age it)
-                        (> (- (float-time) (work-item-age it))
-                           (* 5 86400)))
-                   items))))
-  (if (null stale-items)
-      (insert "- /(none — outstanding reviews are current!)/\n")
+         (--sort (< (or (work-item-age it) most-positive-fixnum)
+                    (or (work-item-age other) most-positive-fixnum))
+                 (--filter (eq 'please-review (work-item-status it))
+                           items)))))
+  (if (null please-review)
+      (insert "- /(none — no outstanding reviews!)/\n")
     (let ((n 0))
-      (dolist (item stale-items)
-        (let ((ticket (work-item-jira item))
-              (rv-names (mapconcat #'identity
-                                   (or (work-item-reviewers item) '("?"))
-                                   ", "))
-              (age-str (or (work-item--format-age (work-item-age item))
-                           "today")))
-          (insert (format "%d. %s — waiting on %s [%s] 🔴\n"
-                          (cl-incf n)
-                          (if ticket
-                              (my/gerrit--format-jira-link ticket)
-                            "?")
-                          rv-names age-str)))))))
+      (dolist (item please-review)
+        (let* ((stale (and (work-item-age item)
+                           (> (- (float-time) (work-item-age item))
+                              (* 5 86400))))
+               (prefix (if stale "🔴 " ""))
+               (line (work-item-to-string item)))
+          (insert (format "%d. %s[ ] %s\n" (cl-incf n) prefix line)))))))
 
 (insert (lf-string "
 
-       1. [ ] Edit the sections above
-       2. [ ] Push to =#standups= via webhook
-       3. [ ] Update the sprint Google Doc
+       1. [ ] Poke reviewers on stale items above
+       2. [ ] Edit the sections above
+       3. [ ] Push to =#standups= via webhook
+       4. [ ] Update the sprint Google Doc
 
 ")))
 
@@ -6564,7 +6545,6 @@ day. You remain focused on your most important tasks./
               (my/weekly-review--insert-git-commits)
               (my/weekly-review--insert-jira-tickets)
               (my/weekly-review--insert-wins-challenges)
-              (my/weekly-review--insert-outstanding-reviews)
               (my/weekly-review--insert-social-reminder)
               (my/weekly-review--insert-weekly-promise)
               (my/weekly-review--insert-l5-check)
@@ -6645,7 +6625,7 @@ day. You remain focused on your most important tasks./
 
 ) ;; End 😴 — deferred weekly review keybinding and helpers
 
-  (setq org-clock-sound "~/.emacs.d/school-bell.wav")
+(setq org-clock-sound "~/.emacs.d/school-bell.wav")
 
 ;; In case my hands slip and I press “C-x C-c”, which saves all buffers and quits Emacs; confirm that's my intention.
 (setq confirm-kill-emacs 'yes-or-no-p)
@@ -8059,13 +8039,13 @@ method."
 ;; Working with massive files: my-life∙org:1 ends here
 
 ;; [[file:init.org::#Show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window:1]]
- (use-package org-sticky-header
-  :hook (org-mode . org-sticky-header-mode)
-  :config
-  (setq-default
-   org-sticky-header-full-path 'full
-   ;; Child and parent headings are seperated by a /.
-   org-sticky-header-outline-path-separator " ▷ "))
+(use-package org-sticky-header
+ :hook (org-mode . org-sticky-header-mode)
+ :config
+ (setq-default
+  org-sticky-header-full-path 'full
+  ;; Child and parent headings are seperated by a /.
+  org-sticky-header-outline-path-separator " ▷ "))
 ;; Show off-screen heading at the top of the window:1 ends here
 
 ;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:1]]
