@@ -18999,23 +18999,23 @@ Also, at phase boundaries, nudge the user to unlock more."
 
 (😴 progn ;; Defer the keybinding and capture template — not needed at startup.
 
-;; =======================================================================
-;; Weekly Review -- extracted helper functions
-;;
-;; Each `my/weekly-review--insert-*' inserts its section at point.
-;; Extracting them from the capture template keeps `def-capture' readable.
-;; =======================================================================
+    ;; =======================================================================
+    ;; Weekly Review -- extracted helper functions
+    ;;
+    ;; Each `my/weekly-review--insert-*' inserts its section at point.
+    ;; Extracting them from the capture template keeps `def-capture' readable.
+    ;; =======================================================================
 
-(defun my/weekly-review--heading ()
-  "Return the Org heading string for this week's review entry.
+    (defun my/weekly-review--heading () ;; From Chaos to Clarity!
+      "Return the Org heading string for this week's review entry.
 Includes week number, month tag, and CREATED timestamp property."
-  (-let [week♯ (ts-week-of-year (ts-now))]
-  (-let [month-name (ts-month-name (ts-now))]
-    ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
-    ;; that looks at that day. That is, my review are personal appointments.
-    (format "* Weekly Review ♯%s ---/go from chaos to clarity!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
-            week♯
-            month-name))))
+      (-let [week♯ (ts-week-of-year (ts-now))]
+        (-let [month-name (ts-month-name (ts-now))]
+          ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
+          ;; that looks at that day. That is, my review are personal appointments.
+          (format "* Weekly Review & Weekly Resolution ♯%s :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
+                  week♯
+                  month-name))))
 
 (defun my/weekly-review--insert-life-scores ()
   "Phase 2+: prompt for Social, Faith, Marriage, Health scores.
@@ -19050,9 +19050,9 @@ Inserts the composite daily score into the heading and aligns properties."
 (defun my/weekly-review--insert-properties ()
   "Set WHY and Phase properties on the review heading, then move to end of buffer."
   ;; ─── All phases: WHY property ──────────────────────────────────
-(org-set-property "WHY" "Ensure everything is on track! Be proactive, not reactive! Be in control of my life! 😌 Have a sense of closure and wrap-up before the weekend! ☺️")
-(org-set-property "Phase" (number-to-string (my/weekly-review-phase)))
-(end-of-buffer))
+  (org-set-property "WHY" "Ensure everything is on track! Be proactive, not reactive! Be in control of my life! 😌 Have a sense of closure for last week, to start this week on a positive note! ☺️")
+  (org-set-property "Phase" (number-to-string (my/weekly-review-phase)))
+  (end-of-buffer))
 
 (defun my/weekly-review--insert-commit-lint ()
   "Phase 3: insert commit and lint checklist for closing out last week."
@@ -19084,7 +19084,7 @@ Inserts the composite daily score into the heading and aligns properties."
 (defun my/weekly-review--insert-ship-header ()
   "Insert the heading for the What did I ship section."
   (insert (lf-string "
-       ,****** TODO ⟨1⟩ What did I ship this week?  [0%] :Standups:
+       ,****** TODO What did I ship this week?
        :PROPERTIES:
        :WHY: Recognise accomplishments, express self-gratitude, and debug!
        :END:
@@ -19232,7 +19232,7 @@ Pre-populates Completed from merged tickets, In Progress from non-merged
 clocked tickets plus unresolved Jira items, and Impediments from stale
 outstanding reviews."
   (insert "
-,****** TODO ⟨4⟩ Weekly Promise — push to #standups  [0%]
+,****** TODO Weekly Promise — push to #standups  [0%]
 :PROPERTIES:
 :WHY: A progress report is a promise report. Your word is on the line.
 :END:
@@ -19415,7 +19415,7 @@ and being successful.")))))
   (insert              "
 ,****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
 
-/Archiving is an act of closure. It says: "this is finished."/
+/Archiving is an act of closure. It says: this is finished./
 /A clean task list is a calm mind./
 
 1. [ ] Look through the ~:LOG:~ for useful information to file away into my
@@ -19434,9 +19434,9 @@ tree for clocking purposes.
     (insert "
 ,***** Looking forward to next week ---/mentally try to see where I should be going/
 
-,****** TODO ⟨3⟩ Prioritize and schedule!    [0%]
+,****** TODO Prioritize and schedule!    [0%]
 
-0. [ ] For the "Waiting" list, have others completed their tasks?
+0. [ ] For the Waiting list, have others completed their tasks?
 
 - Agenda view: The list of to-do or waiting tasks without SCHEDULED or DEADLINE
 
@@ -19444,10 +19444,10 @@ tree for clocking purposes.
 1. [ ] *Check Calendar*. Look at company calendar for the upcoming 2 weeks;
 add items to your todo list if needed.
 
-2. [ ] Find relevant tasks: What are my "sprint goals" and "quarterly goals"?
+2. [ ] Find relevant tasks: What are my sprint goals and quarterly goals?
 - What is assigned to me in Jira /for this sprint/?
 - Any upcoming deadlines?
-- Look at your "Someday/Maybe" list to see if there’s anything worth doing.
+- Look at your Someday/Maybe list to see if there’s anything worth doing.
 - get an overview about what you want to achieve in near future: your time
 and energy are finite, tasks are not
 - /Getting a sight of the forest can be very energizing and inspiring too,
@@ -19479,7 +19479,7 @@ overloaded! I don’t want to keep pushing things since my days are unrealistic!
 ,*Focus on important tasks! Not low priority no-one-cares ‘fun’ efforts!*
 
 ,*Embrace trade-offs.* You can’t do it all. Realize that when you’re
-choosing to do one task, you’re saying "no" to many other tasks. And
+choosing to do one task, you’re saying `no` to many other tasks. And
                 that’s a good thing
 
 Finally, schedule time on your calendar to work on your tasks. This is
@@ -19499,7 +19499,7 @@ day. You remain focused on your most important tasks./
 
 + [ ] ⁉️ [[elisp:(shell-command-to-string \"git add .; git commit -m 'End Weekly Review'\")][Click to commit all the changes /after/ the review]]
 
-,****** TODO ⟨5⟩ Am I getting happier? [0%]
+,****** TODO Am I getting happier? [0%]
 
 ")
     (-let [start (point)]
@@ -19550,8 +19550,8 @@ day. You remain focused on your most important tasks./
               (my/weekly-review--insert-git-commits)
               (my/weekly-review--insert-jira-tickets)
               (my/weekly-review--insert-wins-challenges)
-              (my/weekly-review--insert-weekly-promise)
               (my/weekly-review--insert-l5-check)
+              (my/weekly-review--insert-weekly-promise)
               (my/weekly-review--insert-random-reflection)
               (my/weekly-review--insert-archive)
               (my/weekly-review--insert-forward-planning)
