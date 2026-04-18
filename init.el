@@ -3612,11 +3612,21 @@ without reflecting on the last one."
       (unless (re-search-forward "^\\*\\*\\* " nil t)
         (error "No child headings found under Daily Standup Planning"))
       (goto-char (match-beginning 0))
-      ;; 4. Prepend today's entry
-      (insert (format-time-string "*** <%Y-%m-%d %a>\n\n\n"))
-      ;; 5. Refresh work-item cache; open agenda when done
-      (setq my/agenda-work--on-complete #'my/org-agenda)
-      (my/agenda-work-refresh))))
+      ;; 4. Prepend today's entry; save a marker for async insertion.
+      (insert (format-time-string "*** <%Y-%m-%d %a>\n\n"))
+      (let ((insertion-marker (point-marker))
+            (is-monday (= (nth 6 (decode-time)) 1)))
+        (insert "\n")
+        ;; 5. Refresh work-item cache; open agenda when done.
+        (setq my/agenda-work--on-complete
+              (lambda ()
+                (unwind-protect (my/org-agenda)
+                  ;; On Mondays (after weekly review): insert please-review
+                  ;; items into the standup entry so they're front-of-mind.
+                  (when is-monday
+                    (my/standup--insert-review-items insertion-marker))
+                  (my/progress-pulse--maybe-remind))))
+        (my/agenda-work-refresh)))))
 ;; Standup command:1 ends here
 
 ;; [[file:init.org::*Colleague Meeting Shortcuts][Colleague Meeting Shortcuts:1]]
@@ -5996,30 +6006,30 @@ Also, at phase boundaries, nudge the user to unlock more."
 
 (😴 progn ;; Defer the keybinding and capture template — not needed at startup.
 
-;; “r”eview for the “w”eek
+;; "r"eview for the "w"eek
 ;;
 ;; Reflect on what went well and what could have gone better. Update your
 ;; to-do and projects list. Remove unimportant tasks and update your
 ;; calendar with any new relevant information.
 ;;
-;;  Prepend a new section to “Weekly Log” listing what I've done in the
+;;  Prepend a new section to "Weekly Log" listing what I've done in the
 ;;                        past week; useful for standups, syncs, and performance reviews.
 (bind-key*
  "C-c r w"
  (def-capture "🔄 Weekly Review 😊"
               "🌿 Reviews 🌱"
-              ;; tldr on “ts.el”:
+              ;; tldr on "ts.el":
               ;; Today           = (ts-format) ;; ⇒ "2025-05-26 16:46:52 -0400"
               ;; Today + 10years = (ts-format (ts-adjust 'year 10 (ts-now)))
               ;; Day of the week 2 days ago = (ts-day-name (ts-dec 'day 2 (ts-now))) ;; ⇒ "Saturday"
-              ;; “What day was 2 days ago, Saturday? What day will it be in 10 years and 3 months?”
+              ;; "What day was 2 days ago, Saturday? What day will it be in 10 years and 3 months?"
               ;; See https://github.com/alphapapa/ts.el, which has excellent examples.
               ;; 😲 Nice human formatting functions too!
               (-let [week♯ (ts-week-of-year (ts-now))]
                 (-let [month-name (ts-month-name (ts-now))]
                   ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
                   ;; that looks at that day. That is, my review are personal appointments.
-                  (format "* Weekly Review ♯%s ---/“go from chaos to clarity”!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
+                  (format "* Weekly Review ♯%s ---/"go from chaos to clarity"!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
                           week♯
                           month-name)))
 
@@ -6071,7 +6081,7 @@ Also, at phase boundaries, nudge the user to unlock more."
 
                      + [ ] Commit & push all the changes before the review
 
-                       \t 🤖 Last time ∷ “ ${last-time} ”
+                       \t 🤖 Last time ∷ " ${last-time} "
                        \t 🛋️ my-life.org line count ∷ ${♯lines}
                        \t   # If it’s significantly less, then look at diff to ensure I didn’t lose anything important.
                        \t ⁉️ [[elisp:(shell-command-to-string \"${save-incantation}\")][Click to commit!]]
@@ -6097,6 +6107,10 @@ Also, at phase boundaries, nudge the user to unlock more."
                 (widen)
                 (org-clock-report))
 
+              ;; Pop open the chord/sankey diagram for a visual overview.
+              (when (fboundp 'my/clock-diagram)
+                (my/clock-diagram))
+
               ;; Insert git log of merged commits from ~/fwd.
               ;; Each line: "HASH\tSubject" — we split and build an Org
               ;; link so clicking [Details] shows the full commit.
@@ -6121,6 +6135,34 @@ Also, at phase boundaries, nudge the user to unlock more."
                               (s-lines raw) "\n")
                              "\n#+end_quote\n")))))
 
+              ;; Insert Jira ticket summary for the week — gives ticket-level
+              ;; context alongside the clock report and git log.
+              (let* ((end-date (format-time-string "%Y-%m-%d"))
+                     (start-date (format-time-string
+                                  "%Y-%m-%d"
+                                  (time-subtract (current-time)
+                                                 (days-to-time 7))))
+                     (tickets (my/jira-tickets-clocked-in-range start-date end-date)))
+                (when tickets
+                  (my/gerrit--fetch-jira-titles (mapcar #'car tickets))
+                  (insert "\n\n*Jira tickets worked on this week:*\n#+begin_quote\n")
+                  (let ((total-minutes 0)
+                        (n 0))
+                    (dolist (entry tickets)
+                      (let* ((ticket (car entry))
+                             (title (or (my/gerrit--get-jira-title ticket)
+                                        (alist-get 'heading (cdr entry))))
+                             (minutes (alist-get 'minutes (cdr entry)))
+                             (hours (/ minutes 60))
+                             (mins (% minutes 60))
+                             (status (my/progress-pulse--ticket-status ticket)))
+                        (cl-incf total-minutes minutes)
+                        (insert (format "%d. *%s* %s -- %s (%dh %02dm)\n"
+                                        (cl-incf n) ticket title status hours mins))))
+                    (insert (format "\nTotal: %dh %02dm across %d tickets\n"
+                                    (/ total-minutes 60) (% total-minutes 60) (length tickets))))
+                  (insert "#+end_quote\n")))
+
               (insert (lf-string "
 
                      1. [ ] ➕ Wins: What went well and why? ✅
@@ -6132,11 +6174,75 @@ Also, at phase boundaries, nudge the user to unlock more."
                         # How can I improve to mitigate bad weeks?
 
                      3. [ ] 🔀 What will I focus on this week?
-                        # What “$10k” tasks do I want done? Why or why not?
+                        # What "$10k" tasks do I want done? Why or why not?
 
 "))
+
+              ;; ─── All phases: Outstanding reviews ──────────────────────────
+              ;; Surface please-review items so stale reviews don't rot across
+              ;; sprints.  Each item shows reviewer names and age; the checklist
+              ;; prompts Musa to assign via GDoc comments.
+              (when-let* ((items (plist-get my/agenda-work-data :items))
+                          (please-review
+                           (--filter (eq 'please-review (work-item-status it))
+                                     items))
+                          (sorted (--sort
+                                   (< (or (work-item-age it) most-positive-fixnum)
+                                      (or (work-item-age other) most-positive-fixnum))
+                                   please-review)))
+                (insert (lf-string "
+                       ****** TODO ⟨2⟩ Outstanding reviews — poke people!  [0%]
+                       :PROPERTIES:
+                       :WHY: Stale reviews rot across sprints and you get blamed. Assign them NOW.
+                       :END:
+                       "))
+                (when (boundp 'my\sprint-doc-url)
+                  (insert (format "[[%s][Open Sprint Doc]] — ensure each item below is listed and assigned via GDoc comments!\n\n"
+                                  my\sprint-doc-url)))
+                (let ((n 0))
+                  (dolist (item sorted)
+                    (let* ((ticket (work-item-jira item))
+                           (title (work-item-title item))
+                           (age-str (or (work-item--format-age (work-item-age item)) "today"))
+                           (reviewers (or (work-item-reviewers item) '("?")))
+                           (rv-names (mapconcat #'identity reviewers ", "))
+                           (stale (and (work-item-age item)
+                                       (> (- (float-time) (work-item-age item))
+                                          (* 5 86400))))
+                           (stale-tag (if stale " 🔴 STALE" "")))
+                      (insert (format "%d. [ ] %s %s — waiting on %s [%s]%s\n"
+                                      (cl-incf n)
+                                      (if ticket
+                                          (my/gerrit--format-jira-link ticket)
+                                        "no-ticket")
+                                      (or title "")
+                                      rv-names
+                                      age-str
+                                      stale-tag)))))
+                (insert "\n"))
+
+              ;; ─── All phases: Stay visible as a remote worker ────────────────
+              ;; Post something to #social so colleagues remember you exist.
+              (insert "
+****** TODO ⟨3⟩ Post to #social — stay visible!
+:PROPERTIES:
+:WHY: Remote workers vanish from collective memory. A weekly post keeps you in the conversation.
+:END:
+
+Share something in *#social* this week — a joke, a link, a photo, a
+hot take.  Doesn't have to be profound; it just has to be /you/.
+
+Here's some inspiration:\n\n")
+              (let ((cowsay (string-trim
+                             (shell-command-to-string "fortune | cowsay 2>/dev/null"))))
+                (if (string-empty-p cowsay)
+                    (insert "/(fortune | cowsay not available — improvise!)/\n\n")
+                  (insert "#+begin_quote\n"
+                          cowsay
+                          "\n#+end_quote\n\n")))
+
               ;; ─── All phases: L5 Competency check ───────────────────────────
-              ;; “Am I operating at L5?” — a gentle, structured self-check.
+              ;; "Am I operating at L5?" — a gentle, structured self-check.
               (insert "
 ****** TODO ⟨L5⟩ Am I growing as a senior engineer?  [0%]
 
@@ -6189,7 +6295,7 @@ Also, at phase boundaries, nudge the user to unlock more."
               (insert              "
 ****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
 
-/Archiving is an act of closure. It says: “this is finished.”/
+/Archiving is an act of closure. It says: "this is finished."/
 /A clean task list is a calm mind./
 
 1. [ ] Look through the ~:LOG:~ for useful information to file away into my
@@ -6209,7 +6315,7 @@ Also, at phase boundaries, nudge the user to unlock more."
 
 ****** TODO ⟨3⟩ Prioritize and schedule!    [0%]
 
-0. [ ] For the “Waiting” list, have others completed their tasks?
+0. [ ] For the "Waiting" list, have others completed their tasks?
 
    - Agenda view: The list of to-do or waiting tasks without SCHEDULED or DEADLINE
 
@@ -6217,10 +6323,10 @@ Also, at phase boundaries, nudge the user to unlock more."
 1. [ ] *Check Calendar*. Look at company calendar for the upcoming 2 weeks;
    add items to your todo list if needed.
 
-2. [ ] Find relevant tasks: What are my “sprint goals” and “quarterly goals”?
+2. [ ] Find relevant tasks: What are my "sprint goals" and "quarterly goals"?
    - What is assigned to me in Jira /for this sprint/?
    - Any upcoming deadlines?
-   - Look at your “Someday/Maybe” list to see if there’s anything worth doing.
+   - Look at your "Someday/Maybe" list to see if there’s anything worth doing.
    - get an overview about what you want to achieve in near future: your time
      and energy are finite, tasks are not
      - /Getting a sight of the forest can be very energizing and inspiring too,
@@ -6252,7 +6358,7 @@ Also, at phase boundaries, nudge the user to unlock more."
      *Focus on important tasks! Not low priority no-one-cares ‘fun’ efforts!*
 
      *Embrace trade-offs.* You can’t do it all. Realize that when you’re
-      choosing to do one task, you’re saying “no” to many other tasks. And
+      choosing to do one task, you’re saying "no" to many other tasks. And
                               that’s a good thing
 
      Finally, schedule time on your calendar to work on your tasks. This is
@@ -6632,7 +6738,7 @@ separators into the NOTE field."
          (let* ((day (car k))
                 (heading (cdr k))
                 (note-list (nreverse (gethash k notes)))
-                (index 0)                
+                (index 0)
                 (note (when note-list
                         (mapconcat (lambda (s) (format "<br>﴾%s﴿ %s" (cl-incf index)
                                                   ;; Don't bother showing me Org markup, I can't use it in hovers!
@@ -7039,50 +7145,72 @@ numeric prefix = days back (leaf)."
               str (concat str "──")))
       (concat str "─> ")))))
 
-(defun my/jira-tickets-clocked-today ()
+(defun my/jira-tickets-clocked-in-range (start-date end-date)
   "Return alist of (TICKET . ((heading . STR) (minutes . N) (entries . LINES))).
-Scans `org-default-notes-file' for CLOCK entries dated today, groups
-by Jira ticket ID extracted from ancestor headings using
-`my\\jira-project-prefixes'."
-  (let* ((today (format-time-string "%Y-%m-%d"))
-         (prefix-alt (mapconcat #'identity my\jira-project-prefixes "\\|"))
+Scans `org-default-notes-file' for CLOCK entries whose date falls
+between START-DATE and END-DATE (inclusive, both \"YYYY-MM-DD\"
+strings).  Groups by Jira ticket ID extracted from ancestor
+headings using `my\\jira-project-prefixes'.
+
+ISO date strings compare lexicographically, so a simple
+`string<' / `string=' pair gives correct date ordering."
+  (let* ((prefix-alt (mapconcat #'identity my\jira-project-prefixes "\\|"))
          (jira-re (format "\\(%s\\)-[0-9]+" prefix-alt))
+         ;; Match any CLOCK line and capture its date.
+         (clock-re "CLOCK: \\[\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\)")
          result)
     (with-current-buffer (find-file-noselect org-default-notes-file)
       (org-with-wide-buffer
        (goto-char (point-min))
-       (while (re-search-forward (concat "CLOCK: \\[" today) nil t)
-         ;; Grab the clock line before moving to the heading.
-         (let ((clock-line (string-trim
-                            (buffer-substring-no-properties
-                             (line-beginning-position)
-                             (line-end-position)))))
-           (save-excursion
-             (org-back-to-heading t)
-             (let ((heading (org-get-heading t t t t))
-                   ticket)
-               ;; Walk up ancestor headings until we find a Jira ID.
-               (while (and (not (string-match jira-re heading))
-                           (org-up-heading-safe))
-                 (setq heading (org-get-heading t t t t)))
-               (when (string-match jira-re heading)
-                 (setq ticket (match-string 0 heading))
-                 (let* ((minutes
-                         (if (string-match "=> +\\([0-9]+\\):\\([0-9]+\\)" clock-line)
-                             (+ (* 60 (string-to-number (match-string 1 clock-line)))
-                                (string-to-number (match-string 2 clock-line)))
-                           0))
-                        (existing (assoc ticket result)))
-                   (if existing
-                       (progn
-                         (cl-incf (alist-get 'minutes (cdr existing)) minutes)
-                         (push clock-line (alist-get 'entries (cdr existing))))
-                     (push (cons ticket
-                                 `((heading . ,heading)
-                                   (minutes . ,minutes)
-                                   (entries . (,clock-line))))
-                           result))))))))))
+       (while (re-search-forward clock-re nil t)
+         (let ((date (match-string 1)))
+           (when (and (not (string< date start-date))
+                      (not (string< end-date date)))
+             ;; Grab the clock line before moving to the heading.
+             (let ((clock-line (string-trim
+                                (buffer-substring-no-properties
+                                 (line-beginning-position)
+                                 (line-end-position)))))
+               (save-excursion
+                 (org-back-to-heading t)
+                 (let ((heading (org-get-heading t t t t))
+                       ticket)
+                   ;; Walk up ancestor headings until we find a Jira ID.
+                   (while (and (not (string-match jira-re heading))
+                               (org-up-heading-safe))
+                     (setq heading (org-get-heading t t t t)))
+                   (when (string-match jira-re heading)
+                     (setq ticket (match-string 0 heading))
+                     (let* ((minutes
+                             (if (string-match "=> +\\([0-9]+\\):\\([0-9]+\\)" clock-line)
+                                 (+ (* 60 (string-to-number (match-string 1 clock-line)))
+                                    (string-to-number (match-string 2 clock-line)))
+                               0))
+                            (existing (assoc ticket result)))
+                       (if existing
+                           (progn
+                             (cl-incf (alist-get 'minutes (cdr existing)) minutes)
+                             (push clock-line (alist-get 'entries (cdr existing))))
+                         (push (cons ticket
+                                     `((heading . ,heading)
+                                       (minutes . ,minutes)
+                                       (entries . (,clock-line))))
+                               result))))))))))))
     (nreverse result)))
+
+(defun my/jira-tickets-clocked-today ()
+  "Return today's Jira ticket clock data.  See `my/jira-tickets-clocked-in-range'."
+  (let ((today (format-time-string "%Y-%m-%d")))
+    (my/jira-tickets-clocked-in-range today today)))
+
+(define-minor-mode my/end-of-day-publish-mode
+  "Ephemeral minor mode active only in the *End-of-Day Comments* buffer.
+Binds \\`C-c C-c' to `my/end-of-day--publish' without polluting
+`org-mode-map'."
+  :lighter " EOD"
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "C-c C-c") #'my/end-of-day--publish)
+            map))
 
 (defun my/end-of-day-jira-comments ()
   "Open a buffer to write end-of-day comments for today's Jira tickets.
@@ -7115,8 +7243,10 @@ provides \\[my/end-of-day--publish] to publish all comments to Jira."
             (dolist (cl (reverse entries))
               (insert (format "- =%s=\n" cl)))
             (insert "\nYour comment below this line:\n\n\n")))
-        ;; Buffer-local C-c C-c to publish.
-        (local-set-key (kbd "C-c C-c") #'my/end-of-day--publish)
+        ;; Buffer-local C-c C-c to publish.  We use a minor mode so the
+        ;; binding lives and dies with this buffer — local-set-key would
+        ;; pollute the shared org-mode-map.
+        (my/end-of-day-publish-mode 1)
         ;; Position cursor at the first comment area.
         (goto-char (point-min))
         (re-search-forward "Your comment below this line:" nil t)
@@ -7148,15 +7278,193 @@ provides \\[my/end-of-day--publish] to publish all comments to Jira."
               (push (cons ticket (if ok 'ok 'fail)) results)))))
       (if (null results)
           (message "No comments to publish — write something under each ticket first.")
+        ;; Open each published ticket in the browser for visual confirmation.
+        (dolist (r results)
+          (when (eq (cdr r) 'ok)
+            (browse-url (format "%s/%s" my\jira-base-url (car r)))))
         (message "Published: %s"
                  (mapconcat
                   (lambda (r)
                     (format "%s %s" (if (eq (cdr r) 'ok) "✓" "✗") (car r)))
-                  (nreverse results) ", "))))))
+                  (nreverse results) ", "))
+        ;; Open the sprint doc and remind to update it — manager watches it!
+        (when (boundp 'my\sprint-doc-url)
+          (browse-url my\sprint-doc-url))
+        (when (eq system-type 'darwin)
+          (non-blocking-message-box
+           :title "Sprint Doc"
+           :content "Jira comments posted. Now update the sprint Google Doc!"
+           :buttons '(:OK nil)))))))
 
-;; Repurpose C-c r d for the end-of-day Jira commenting ritual.
-;; The old 20-question daily review stays intact (under :tangle no).
-(bind-key* "C-c r d" #'my/end-of-day-jira-comments)
+;; ——— Persistent state ———————————————————————————————————————————
+
+(defvar my/progress-pulse-last-shared nil
+  "Timestamp (as from `current-time') of the last progress-pulse share.
+Loaded from and saved to `my/progress-pulse--timestamp-file'.")
+
+(defconst my/progress-pulse--timestamp-file
+  (expand-file-name ".progress-pulse-timestamp" user-emacs-directory)
+  "Dot-file storing the epoch of the last progress-pulse share.")
+
+(defun my/progress-pulse--load-timestamp ()
+  "Load the last-shared timestamp from disk, or nil if absent."
+  (when (file-exists-p my/progress-pulse--timestamp-file)
+    (condition-case nil
+        (let ((epoch (string-to-number
+                      (with-temp-buffer
+                        (insert-file-contents my/progress-pulse--timestamp-file)
+                        (string-trim (buffer-string))))))
+          (when (> epoch 0)
+            (setq my/progress-pulse-last-shared
+                  (seconds-to-time epoch))))
+      (error nil))))
+
+(defun my/progress-pulse--save-timestamp ()
+  "Persist the current time as the last-shared timestamp."
+  (setq my/progress-pulse-last-shared (current-time))
+  (with-temp-file my/progress-pulse--timestamp-file
+    (insert (number-to-string (floor (float-time my/progress-pulse-last-shared))))))
+
+;; Load on startup so the standup nudge has data.
+(my/progress-pulse--load-timestamp)
+
+;; ——— Status lookup ——————————————————————————————————————————————
+
+(defun my/progress-pulse--ticket-status (ticket)
+  "Return a display string for TICKET's Gerrit status.
+Cross-references `my/agenda-work-data'; tickets absent from open
+changes are assumed merged/done."
+  (if-let* ((items (plist-get my/agenda-work-data :items))
+            (item (--first (equal ticket (work-item-jira it)) items)))
+      (pcase (work-item-status item)
+        ('wip             "IN PROGRESS")
+        ('please-review   "IN REVIEW")
+        ('reviews-needed  "REVIEWS NEEDED")
+        ('my-needing-action "NEEDS ACTION")
+        ('todo            "TODO")
+        (_                "OPEN"))
+    "MERGED"))
+
+;; ——— Core command ———————————————————————————————————————————————
+
+(defun my/progress-pulse (&optional days)
+  "Generate a progress summary for the past DAYS days (default 7).
+Shows tickets worked on with time, title, and Gerrit status.
+Offers one-click copy-as-slack / copy-as-confluence / mark-shared."
+  (interactive "P")
+  (let* ((n (or days 7))
+         (end-date (format-time-string "%Y-%m-%d"))
+         (start-date (format-time-string
+                      "%Y-%m-%d"
+                      (time-subtract (current-time)
+                                     (days-to-time n))))
+         (tickets (my/jira-tickets-clocked-in-range start-date end-date)))
+    (if (null tickets)
+        (message "No Jira tickets clocked in the past %d days." n)
+      ;; Batch-fetch titles.
+      (my/gerrit--fetch-jira-titles (mapcar #'car tickets))
+      (let ((buf (get-buffer-create "*Progress Pulse*"))
+            (total-minutes 0))
+        (switch-to-buffer buf)
+        (erase-buffer)
+        (org-mode)
+        ;; Header
+        (insert (format "* Progress Pulse -- %s to %s\n\n" start-date end-date))
+        ;; Ticket table
+        (insert "** Tickets worked on\n\n")
+        (dolist (entry tickets)
+          (let* ((ticket (car entry))
+                 (info (cdr entry))
+                 (title (or (my/gerrit--get-jira-title ticket)
+                            (alist-get 'heading info)))
+                 (minutes (alist-get 'minutes info))
+                 (hours (/ minutes 60))
+                 (mins (% minutes 60))
+                 (status (my/progress-pulse--ticket-status ticket)))
+            (cl-incf total-minutes minutes)
+            (insert (format "- *%s* %s -- %s (%dh %02dm)\n"
+                            ticket title status hours mins))))
+        ;; Total
+        (insert (format "\nTotal: %dh %02dm across %d tickets\n"
+                        (/ total-minutes 60)
+                        (% total-minutes 60)
+                        (length tickets)))
+        ;; Review activity (count items where we are reviewer, not author)
+        (when-let* ((items (plist-get my/agenda-work-data :items))
+                    (reviews (--filter
+                              (eq 'reviews-needed (work-item-status it))
+                              items)))
+          (insert (format "\n** Review queue: %d changes awaiting my review\n"
+                          (length reviews))))
+        ;; Action links
+        (insert "\n** Actions\n\n")
+        (insert "[[elisp:(progn (mark-whole-buffer) (my/copy-as-slack) (deactivate-mark))][Copy as Slack]]")
+        (insert "  |  ")
+        (insert "[[elisp:(progn (mark-whole-buffer) (my/copy-as-confluence) (deactivate-mark))][Copy as Confluence]]")
+        (insert "  |  ")
+        (insert "[[elisp:(progn (my/progress-pulse--save-timestamp) (message \"Marked as shared.\"))][Mark as shared]]")
+        (insert "\n")
+        ;; Position at top
+        (goto-char (point-min))))))
+
+;; ——— Monday standup: please-review items ————————————————————————
+
+(defun my/standup--insert-review-items (marker)
+  "Insert please-review work items at MARKER in the standup buffer.
+Highlights stale items (>5 days old) so they're front-of-mind
+during the Monday standup after the weekly review."
+  (when-let* ((items (plist-get my/agenda-work-data :items))
+              (please-review (--filter
+                              (eq 'please-review (work-item-status it))
+                              items)))
+    (let ((sorted (--sort
+                   (< (or (work-item-age it) most-positive-fixnum)
+                      (or (work-item-age other) most-positive-fixnum))
+                   please-review)))
+      (save-excursion
+        (with-current-buffer (marker-buffer marker)
+          (org-with-wide-buffer
+           (goto-char marker)
+           (insert "*Outstanding reviews (poke these people!):*\n")
+           (dolist (item sorted)
+             (let* ((age-str (work-item--format-age (work-item-age item)))
+                    (stale (and (work-item-age item)
+                                (> (- (float-time) (work-item-age item))
+                                   (* 5 86400))))
+                    (prefix (if stale "🔴 " "- "))
+                    (line (work-item-to-string item)))
+               (insert (format "%s%s\n" prefix line))))
+           (insert "\n")))))))
+
+;; ——— Standup nudge ——————————————————————————————————————————————
+
+(defun my/progress-pulse--maybe-remind ()
+  "Show a macOS dialog if progress has not been shared in >4 days.
+Called after the agenda opens during `my/standup'."
+  (when (eq system-type 'darwin)
+    (let* ((last (or my/progress-pulse-last-shared '(0 0 0 0)))
+           (elapsed-days (/ (float-time (time-subtract (current-time) last))
+                            86400.0)))
+      (when (> elapsed-days 4)
+        (non-blocking-message-box
+         :title "Progress Visibility"
+         :content (format "Last sprint-doc update: %d days ago.\nRun C-c r p to generate a progress pulse."
+                          (floor elapsed-days))
+         :buttons '(:OK nil))))))
+
+;; ——— Enhanced end-of-day ————————————————————————————————————————
+
+;; my/end-of-day is now a thin alias — the progress pulse is a
+;; separate command (C-c r p), not mixed into the Jira comment flow.
+(defalias 'my/end-of-day #'my/end-of-day-jira-comments
+  "End-of-day ritual: write and publish Jira comments for today's tickets.")
+
+;; ——— Keybindings ————————————————————————————————————————————————
+
+(bind-key* "C-c r p" #'my/progress-pulse)
+;; Repurpose C-c r d: the enhanced end-of-day wraps the original
+;; Jira commenting ritual with a Slack-ready summary appended.
+(bind-key* "C-c r d" #'my/end-of-day)
 
 (bind-key*
  "C-c SPC"

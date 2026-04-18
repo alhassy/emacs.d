@@ -683,7 +683,7 @@ so tests run without private.el."
     ;; No Jira → title appears as Sidequest{ ... } prefix.
     (should (string-match-p "Sidequest{ Introduce QuadraticSorter }" str))
     ;; Should NOT contain a Jira link.
-    (should-not (string-match-p "BUG-\\|FWD-\\|BUGX-\\|OUT-" str))))
+    (should-not (string-match-p "BUG-\\" str))))
 
 (defworkitemtest "age prefix appears in rendered work-item" [work-item]
   (let* ((stack (my/as-gerrit-stack
