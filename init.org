@@ -19081,25 +19081,13 @@ Inserts the composite daily score into the heading and aligns properties."
          \t royally messed things up.
 ")))))
 
-(defun my/weekly-review--insert-ship-header ()
-  "Insert the heading for the What did I ship section."
-  (insert (lf-string "
-       ,****** TODO What did I ship this week?
-       :PROPERTIES:
-       :WHY: Recognise accomplishments, express self-gratitude, and debug!
-       :END:
-
-")))
 
 (defun my/weekly-review--insert-clock-visuals ()
   "Insert the clock report and pop open the chord/sankey diagram."
-  (save-restriction
-  (widen)
-  (org-clock-report))
-
-;; Pop open the chord/sankey diagram for a visual overview.
-(when (fboundp 'my/clock-diagram)
-  (my/clock-diagram)))
+  ;; (save-restriction (widen)  (org-clock-report))
+  (insert "\n# For additional context, see browser for interactive diagram of where the time went! ⏰")
+  ;; Pop open the chord/sankey diagram for a visual overview.
+  (my/clock-diagram))
 
 (defun my/weekly-review--insert-git-commits ()
   "Insert a numbered list of git commits merged into ~/fwd this week.
@@ -19153,23 +19141,6 @@ Shows ticket ID, title, Gerrit status, and time spent."
       (insert (format "\nTotal: %dh %02dm across %d tickets\n"
                       (/ total-minutes 60) (% total-minutes 60) (length tickets))))
     (insert "#+end_quote\n"))))
-
-(defun my/weekly-review--insert-wins-challenges ()
-  "Insert the Wins / Challenges / Focus checklist."
-  (insert (lf-string "
-
-       1. [ ] ➕ Wins: What went well and why? ✅
-          # What could have caused things to go so well? Maybe I can duplicate this next week!
-          # Re-read [[https://jvns.ca/blog/brag-documents/][Get your work recognized: write a brag document]]
-
-
-       2. [ ] ➖ Challenges: What didn’t go well? ⚠️
-          # How can I improve to mitigate bad weeks?
-
-       3. [ ] 🔀 What will I focus on this week?
-          # What $10k tasks do I want done? Why or why not?
-
-")))
 
 ;; NOTE: `my/weekly-review--insert-outstanding-reviews' was axed —
 ;; outstanding reviews now live inside `my/weekly-review--insert-weekly-promise'
@@ -19226,13 +19197,58 @@ Doesn't have to be profound; it just has to be /you/."
        ;; Open #social in the browser so posting is one paste away.
        :buttons '("Yeah, let's do it!" (browse-url my\social-channel-url))))))
 
+(defun my/weekly-review--promise-cleaned-text ()
+  "Extract and clean the Weekly Promise subtree for Slack posting.
+Strips heading, property drawers, checklist items, elisp links,
+and italic guidance lines.  Returns the cleaned Org text."
+  (save-excursion
+    (goto-char (point-min))
+    (unless (re-search-forward "^\\*+ .*Weekly Promise" nil t)
+      (user-error "No Weekly Promise heading found in this buffer"))
+    (org-narrow-to-subtree)
+    (let ((text (buffer-substring-no-properties (point-min) (point-max))))
+      (widen)
+      (->> text
+           (replace-regexp-in-string "^\\*+.*\n" "")
+           (replace-regexp-in-string
+            ":PROPERTIES:\n\\(?:.*\n\\)*?:END:\n" "")
+           (replace-regexp-in-string "^[0-9]+\\. \\[.\\] .*\n?" "")
+           (replace-regexp-in-string "\\[\\[elisp:[^]]*\\]\\[[^]]*\\]\\]\n?" "")
+           (replace-regexp-in-string "^/[^/\n]+/\n?" "")
+           ;; Axe #+begin_private...#+end_private blocks (eyes only)
+           (replace-regexp-in-string
+            "#\\+begin_private\n\\(?:.*\n\\)*?#\\+end_private\n?" "")
+           ;; Axe Org comments (lines starting with #)
+           (replace-regexp-in-string "^#.*\n?" "")
+           (replace-regexp-in-string "\n\\{3,\\}" "\n\n")
+           string-trim))))
+
+(defun my/weekly-review--publish-promise-to (webhook-url)
+  "Post the cleaned Weekly Promise to WEBHOOK-URL via `my/post-to-slack'."
+  (with-temp-buffer
+    (insert (my/weekly-review--promise-cleaned-text))
+    (let ((my\slack-webhook-url webhook-url))
+      (my/post-to-slack))))
+
+(defun my/weekly-review--test-promise ()
+  "Post the Weekly Promise to #musa-test for previewing."
+  (interactive)
+  (my/weekly-review--publish-promise-to my\slack-test-webhook-url)
+  (message "Test posted to #musa-test!"))
+
+(defun my/weekly-review--publish-promise ()
+  "Post the Weekly Promise to #standups, after confirming a test was done."
+  (interactive)
+  (when (yes-or-no-p "Have you tested in #musa-test first?")
+    (my/weekly-review--publish-promise-to my\slack-webhook-url)))
+
 (defun my/weekly-review--insert-weekly-promise ()
   "Insert the Weekly Promise section: Completed, In Progress, Planned, Impediments.
 Pre-populates Completed from merged tickets, In Progress from non-merged
 clocked tickets plus unresolved Jira items, and Impediments from stale
 outstanding reviews."
   (insert "
-,****** TODO Weekly Promise — push to #standups  [0%]
+,****** TODO Weekly Promise
 :PROPERTIES:
 :WHY: A progress report is a promise report. Your word is on the line.
 :END:
@@ -19243,13 +19259,28 @@ outstanding reviews."
 
 ")
   ;; --- Completed: pre-populate from this week's ticket data ---
-  (insert "*Completed* (what shipped this week):\n")
+  (insert "\n# what shipped this week")
+  (insert "\n*✅ Completed:*\n")
   (let* ((end-date (format-time-string "%Y-%m-%d"))
          (start-date (format-time-string
                       "%Y-%m-%d"
                       (time-subtract (current-time)
                                      (days-to-time 7))))
          (tickets (my/jira-tickets-clocked-in-range start-date end-date))
+         ;; Tickets absent from Gerrit default to "MERGED", but that
+         ;; also catches meetings and syncs (which never had changes).
+         ;; Cross-reference git log: only tickets with actual commits
+         ;; count as shipped.
+         (git-ticket-ids
+          (let* ((ticket-re (concat "\\(" (regexp-opt my\jira-project-prefixes) "-[0-9]+\\)"))
+                 (log (shell-command-to-string
+                       (format "git -C %s log --author=\"Musa\" --since=\"7 days ago\" --format=\"%%s\" --no-merges"
+                               (shell-quote-argument
+                                (expand-file-name my\work-dir)))))
+                 ids)
+            (dolist (line (split-string log "\n" t) (delete-dups ids))
+              (when (string-match ticket-re line)
+                (push (match-string 1 line) ids)))))
          (n 0))
     (if (null tickets)
         (insert "- /(fill in)/\n")
@@ -19258,7 +19289,8 @@ outstanding reviews."
                (title (or (my/gerrit--get-jira-title ticket)
                           (alist-get 'heading (cdr entry))))
                (status (my/progress-pulse--ticket-status ticket)))
-          (when (string= status "MERGED")
+          (when (and (string= status "MERGED")
+                     (member ticket git-ticket-ids))
             (insert (format "%d. %s %s\n"
                             (cl-incf n)
                             (if ticket
@@ -19266,11 +19298,25 @@ outstanding reviews."
                               "")
                             (or title "")))))))
     (when (= n 0)
-      (insert "- /(nothing merged this week — edit as needed)/\n")))
-  ;; --- In Progress: tickets clocked this week that aren't merged,
-  ;; plus unresolved Jira tickets assigned to us (catches items
-  ;; we didn't clock but are still responsible for) ---
-  (insert "\n*In Progress* (actively working on):\n")
+      (insert "- /(nothing merged this week?! Really?! 🫣 Edit as needed)/\n")))
+
+  (insert (lf-string "
+,#+begin_private What did I ship this week?
+:WHY: Recognise accomplishments, express self-gratitude, and debug!
+
+"))
+  (my/weekly-review--insert-clock-visuals)
+  (my/weekly-review--insert-git-commits)
+  (my/weekly-review--insert-jira-tickets)
+  (insert (lf-string "
+,#+end_private
+"))
+  
+  ;; --- In Progress: tickets actively being worked on.
+  ;; Excludes MERGED (those go in Completed) and TODO (those go in Planned).
+  ;; Sources: clocked tickets + unresolved Jira items updated recently. ---
+  (insert "\n# actively working on")
+    (insert "\n*🔨 In Progress:*\n")
   (let* ((end-date (format-time-string "%Y-%m-%d"))
          (start-date (format-time-string
                       "%Y-%m-%d"
@@ -19278,10 +19324,13 @@ outstanding reviews."
                                      (days-to-time 7))))
          (clocked (my/jira-tickets-clocked-in-range start-date end-date))
          (clocked-ids (mapcar #'car clocked))
-         ;; From clocked tickets, keep non-merged ones.
+         ;; Partition clocked tickets by status.
          (in-progress-clocked
-          (--filter (not (string= "MERGED"
-                                  (my/progress-pulse--ticket-status (car it))))
+          (--filter (let ((s (my/progress-pulse--ticket-status (car it))))
+                      (not (or (string= "MERGED" s) (string= "TODO" s))))
+                    clocked))
+         (todo-clocked
+          (--filter (string= "TODO" (my/progress-pulse--ticket-status (car it)))
                     clocked))
          ;; Query Jira for unresolved tickets assigned to us,
          ;; updated in the past 7 days (catches un-clocked work).
@@ -19296,8 +19345,19 @@ outstanding reviews."
          (extra-jira
           (--filter (not (member (alist-get 'key it) clocked-ids))
                     jira-issues))
+         ;; Partition extra Jira items: TODO vs in-progress.
+         (extra-jira-wip
+          (--filter (not (string= "TODO"
+                                  (my/progress-pulse--ticket-status
+                                   (alist-get 'key it))))
+                    extra-jira))
+         (extra-jira-todo
+          (--filter (string= "TODO"
+                              (my/progress-pulse--ticket-status
+                               (alist-get 'key it)))
+                    extra-jira))
          (n 0))
-    ;; Clocked but not merged
+    ;; Clocked and actively in progress
     (dolist (entry in-progress-clocked)
       (let* ((ticket (car entry))
              (title (or (my/gerrit--get-jira-title ticket)
@@ -19309,26 +19369,35 @@ outstanding reviews."
                             (my/gerrit--format-jira-link ticket)
                           "")
                         (or title "") status))))
-    ;; From Jira but not clocked
-    (dolist (issue extra-jira)
+    ;; From Jira, not clocked, but actively in progress
+    (dolist (issue extra-jira-wip)
       (let* ((key (alist-get 'key issue))
              (summary (alist-get 'summary (alist-get 'fields issue))))
         (insert (format "%d. %s %s\n"
                         (cl-incf n)
                         (my/gerrit--format-jira-link key)
-                        (or summary "")))))
+                        (or summary "")))))    
     (when (= n 0)
-      (insert "- /(none from Jira — edit as needed)/\n")))
-  (insert "- /(...design docs, discussion threads, or other non-Jira work?)/\n")
-  (insert "\n*Planned* (slotted for next week):\n- \n")
+      (insert "- /(None?! Really?! — Edit as needed) 🫣/\n"))
+    (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
+
+    (insert (lf-string "
+,#+begin_private
+1. ➕ Wins: What went well and why? ✅
+2. What could have caused things to go so well? Maybe I can duplicate this next week!
+3. Re-read [[https://jvns.ca/blog/brag-documents/][Get your work recognized: write a brag document]]
+
+
+,#+end_private
+"))
+
+  ;;  --------------------------------------------------------------------------------
   ;; --- Impediments / Outstanding Reviews ---
   ;; Merged: every please-review item belongs here (not just stale ones).
   ;; Stale items (>5 days) get a 🔴 prefix; fresh ones get a checkbox.
   ;; Uses `work-item-to-string' — the same renderer the agenda uses.
-  (insert "\n*Impediments* (who must do what by when?):\n")
-  (when (boundp 'my\sprint-doc-url)
-    (insert (format "[[%s][Open Sprint Doc]] — ensure each item below is listed and assigned!\n\n"
-                    my\sprint-doc-url)))
+    (insert "\n# who must do what by when?")
+    (insert "\n*🚧 Impediments:*\n")
   (let ((please-review
          (when-let* ((items (plist-get my/agenda-work-data :items)))
            (--sort (< (or (work-item-age it) most-positive-fixnum)
@@ -19336,40 +19405,89 @@ outstanding reviews."
                    (--filter (eq 'please-review (work-item-status it))
                              items)))))
     (if (null please-review)
-        (insert "- /(none — no outstanding reviews!)/\n")
+        (insert "# - /(none — no outstanding reviews!)/\n")
       (let ((n 0))
         (dolist (item please-review)
-          (let* ((stale (and (work-item-age item)
-                             (> (- (float-time) (work-item-age item))
-                                (* 5 86400))))
-                 (prefix (if stale "🔴 " ""))
-                 (line (work-item-to-string item)))
-            (insert (format "%d. %s[ ] %s\n" (cl-incf n) prefix line)))))))
+          (insert (format "%d. %s\n" (cl-incf n) (work-item-to-string item)))))))
+    (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
+  
+    (insert (lf-string "
+,#+begin_private
+1. ➖ Challenges: What didn’t go well? ⚠️
+2. How can I improve to mitigate bad weeks?
 
+
+"))
+  (when (boundp 'my\sprint-doc-url)
+    (insert (format "[[%s][Open Sprint Doc]] — ensure each item above is listed and assigned!\n\n"
+                    my\sprint-doc-url)))
+    (insert (lf-string "#+end_private"))
+    
+  ;; --------------------------------------------------------------------------------
+    
+    ;; --- Planned: TODO items from clocked + Jira, plus space for manual additions ---
+    (insert "\n # slotted for next week")
+    (insert "\n*📆 Planned:*\n")
+    (let ((pn 0))
+      (dolist (entry todo-clocked)
+        (let* ((ticket (car entry))
+               (title (or (my/gerrit--get-jira-title ticket)
+                          (alist-get 'heading (cdr entry)))))
+          (insert (format "%d. %s %s\n"
+                          (cl-incf pn)
+                          (if ticket
+                              (my/gerrit--format-jira-link ticket)
+                            "")
+                          (or title "")))))
+      (dolist (issue extra-jira-todo)
+        (let* ((key (alist-get 'key issue))
+               (summary (alist-get 'summary (alist-get 'fields issue))))
+          (insert (format "%d. %s %s\n"
+                          (cl-incf pn)
+                          (my/gerrit--format-jira-link key)
+                          (or summary "")))))
+      (when (= pn 0)
+        (insert "- /(edit as needed)/\n")))
+    (insert "- \n")
+
+    (insert (lf-string "
+,#+begin_private
+1. 🔀 What will I focus on this week?
+2. What $10k tasks do I want done? Why or why not?
+
+
+,#+end_private
+"))
+
+    
+  ;; --------------------------------------------------------------------------------
+    
   (insert (lf-string "
 
-       1. [ ] Poke reviewers on stale items above
-       2. [ ] Edit the sections above
-       3. [ ] Push to =#standups= via webhook
-       4. [ ] Update the sprint Google Doc
+       1. [ ] Edit the sections above
+       2. [ ] Update the sprint Google Doc
+       3. [ ] [[elisp:(my/weekly-review--test-promise)][🧪 Test in #musa-test]]  [[elisp:(my/weekly-review--publish-promise)][📤 Publish to #standups]]
 
-")))
+"))))
+
 
 (defun my/weekly-review--insert-l5-check ()
   "Insert the L5 senior-engineer competency self-check."
   ;; ─── All phases: L5 Competency check ───────────────────────────
   ;; "Am I operating at L5?" — a gentle, structured self-check.
   (insert "
-,****** TODO ⟨L5⟩ Am I growing as a senior engineer?  [0%]
+,****** TODO Am I growing as a senior engineer, L5?
 
-1. [ ] 🏗️ *Ownership*: Did I take responsibility for something beyond
+1. 🏗️ *Ownership*: Did I take responsibility for something beyond
 my immediate task? (unowned work, tech debt, test gaps, a
 design doc, a code review for someone outside my team)
 
-2. [ ] 🧑‍🏫 *Collaboration*: Did I help another engineer learn something,
+
+2. 🧑‍🏫 *Collaboration*: Did I help another engineer learn something,
 or unblock them? (pairing, review feedback, a Slack explanation)
 
-3. [ ] 📐 *Scope*: Am I independently driving a project or feature
+
+3. 📐 *Scope*: Am I independently driving a project or feature
 through its full lifecycle? (design → implement → test → ship)
 
 "))
@@ -19544,19 +19662,14 @@ day. You remain focused on your most important tasks./
               ;; Start with something light — post to #social before
               ;; diving into the heavier reflection sections.
               (my/weekly-review--insert-social-reminder)
-              (my/weekly-review--insert-commit-lint)
-              (my/weekly-review--insert-ship-header)
-              (my/weekly-review--insert-clock-visuals)
-              (my/weekly-review--insert-git-commits)
-              (my/weekly-review--insert-jira-tickets)
-              (my/weekly-review--insert-wins-challenges)
+              (my/weekly-review--insert-commit-lint)              
               (my/weekly-review--insert-l5-check)
               (my/weekly-review--insert-weekly-promise)
               (my/weekly-review--insert-random-reflection)
               (my/weekly-review--insert-archive)
               (my/weekly-review--insert-forward-planning)
-              (my/weekly-review--wrap-up)))
-
+              (my/weekly-review--wrap-up)
+              (beginning-of-buffer)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
