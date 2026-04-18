@@ -6006,6 +6006,536 @@ Also, at phase boundaries, nudge the user to unlock more."
 
 (😴 progn ;; Defer the keybinding and capture template — not needed at startup.
 
+;; =======================================================================
+;; Weekly Review -- extracted helper functions
+;;
+;; Each `my/weekly-review--insert-*' inserts its section at point.
+;; Extracting them from the capture template keeps `def-capture' readable.
+;; =======================================================================
+
+(defun my/weekly-review--heading ()
+  "Return the Org heading string for this week's review entry.
+Includes week number, month tag, and CREATED timestamp property."
+  (-let [week♯ (ts-week-of-year (ts-now))]
+  (-let [month-name (ts-month-name (ts-now))]
+    ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
+    ;; that looks at that day. That is, my review are personal appointments.
+    (format "* Weekly Review ♯%s ---/"go from chaos to clarity"!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
+            week♯
+            month-name))))
+
+(defun my/weekly-review--insert-life-scores ()
+  "Phase 2+: prompt for Social, Faith, Marriage, Health scores.
+Inserts the composite daily score into the heading and aligns properties."
+  (when (>= (my/weekly-review-phase) 2)
+  (my/read-daily-review-properties
+   :questionnaire '(("SocialScore: Did I see family *and* did I call or message a friend?"
+                     " 0  --  No             --  What am I doing with my life?"
+                     " 1  --  Yes…           --  Sweet, who was it? What did you do?")
+                    ("FaithScore: Did I go to this Mosque this week? Or read passages from the Quran?"
+                     " 0  --  No             --  What am I doing with my life?"
+                     " 1  --  Yes…           --  Sweet, what did you do?")
+                    ("MarriageScore: How are things with my wife?"
+                     "-1  --  Abysmal Low     --  I hate life."
+                     " 0  --  Low             --  What am I doing with my life?"
+                     " 1  --  Medium          --  Things are OK."
+                     " 2  --  High            --  I love my life ᕦ( ᴼ ڡ ᴼ )ᕤ"
+                     " 3  --  Extremely High  --  I’m king of the world!")
+                    ("HealthScore: Did I go for a run or do a workout this week?"
+                     " 0  --  No             --  What am I doing with my life?"
+                     " 1  --  Yes…           --  Sweet, what did you do?"))
+                          ; 📊 Other metrics to consider keeping track of:
+                          ; ⇒ Hours worked
+                          ; ⇒ Tasks completed
+   :prop-val-action (lambda (property value) (org-set-property property value)))
+  ;; Add Daily Score to the start of the headline
+  (beginning-of-buffer)
+  (org-beginning-of-line)
+  (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
+  (my/org-align-property-values)))
+
+(defun my/weekly-review--insert-properties ()
+  "Set WHY and Phase properties on the review heading, then move to end of buffer."
+  ;; ─── All phases: WHY property ──────────────────────────────────
+(org-set-property "WHY" "Ensure everything is on track! Be proactive, not reactive! Be in control of my life! 😌 Have a sense of closure and wrap-up before the weekend! ☺️")
+(org-set-property "Phase" (number-to-string (my/weekly-review-phase)))
+(end-of-buffer))
+
+(defun my/weekly-review--insert-commit-lint ()
+  "Phase 3: insert commit and lint checklist for closing out last week."
+  (when (>= (my/weekly-review-phase) 3)
+  (insert
+   (let* ((♯lines (save-restriction (widen) (count-lines (point-min) (point-max))))
+          (last-time (s-trim (shell-command-to-string "git log -1 --pretty=%s")))
+          ;; Note that there's no `git push' since this is local ---Github may expose my notes to AI, no thank-you.
+          (save-incantation (format "git add .; git commit -m 'Weekly Review Start, save %s lines on %s'" ♯lines  (ts-format))))
+     (lf-string "
+       ***** Closing up last week
+
+       ****** TODO ⟨0⟩ Commit last week         [0%]
+
+       + [ ] Commit & push all the changes before the review
+
+         \t 🤖 Last time ∷ " ${last-time} "
+         \t 🛋️ my-life.org line count ∷ ${♯lines}
+         \t   # If it’s significantly less, then look at diff to ensure I didn’t lose anything important.
+         \t ⁉️ [[elisp:(shell-command-to-string \"${save-incantation}\")][Click to commit!]]
+
+       + [ ] ⁉️ [[elisp:(progn (widen) (funcall-interactively #'org-lint))][Lint my-life.org]]
+
+         \t Importantly this mitigates [[https://en.wikipedia.org/wiki/Link_rot][link rot]]
+         \t and ensures that when I do bulk find-replace actions that I haven’t
+         \t royally messed things up.
+")))))
+
+(defun my/weekly-review--insert-ship-header ()
+  "Insert the heading for the What did I ship section."
+  (insert (lf-string "
+       ****** TODO ⟨1⟩ What did I ship this week?  [0%] :Standups:
+       :PROPERTIES:
+       :WHY: Recognise accomplishments, express self-gratitude, and debug!
+       :END:
+
+")))
+
+(defun my/weekly-review--insert-clock-visuals ()
+  "Insert the clock report and pop open the chord/sankey diagram."
+  (save-restriction
+  (widen)
+  (org-clock-report))
+
+;; Pop open the chord/sankey diagram for a visual overview.
+(when (fboundp 'my/clock-diagram)
+  (my/clock-diagram)))
+
+(defun my/weekly-review--insert-git-commits ()
+  "Insert a numbered list of git commits merged into ~/fwd this week.
+Each line links to magit-show-commit for the full diff."
+  (-let [raw (string-trim
+            (shell-command-to-string
+             (concat "git -C ~/fwd log"
+                     " --author=\"Musa\""
+                     " --since=\"7 days ago\""
+                     " --format=\"%h\t%s\""
+                     " --no-merges")))]
+  (insert "\n\n*Commits merged into =~/fwd= this week:*\n"
+          (if (string-empty-p raw)
+              "/(None yet — keep shipping!)/\n"
+            (-let [n 0]
+              (concat
+               "#+begin_quote\n"
+               (mapconcat
+                (lambda (line)
+                  (-let [(hash subject) (s-split-up-to "\t" line 1)]
+                    (format "%d. %s 📚 [[elisp:(let ((default-directory \"~/fwd/\")) (magit-show-commit \"%s\"))][Details]]"
+                            (cl-incf n) subject hash)))
+                (s-lines raw) "\n")
+               "\n#+end_quote\n"))))))
+
+(defun my/weekly-review--insert-jira-tickets ()
+  "Insert a summary of Jira tickets worked on this week.
+Shows ticket ID, title, Gerrit status, and time spent."
+  (let* ((end-date (format-time-string "%Y-%m-%d"))
+       (start-date (format-time-string
+                    "%Y-%m-%d"
+                    (time-subtract (current-time)
+                                   (days-to-time 7))))
+       (tickets (my/jira-tickets-clocked-in-range start-date end-date)))
+  (when tickets
+    (my/gerrit--fetch-jira-titles (mapcar #'car tickets))
+    (insert "\n\n*Jira tickets worked on this week:*\n#+begin_quote\n")
+    (let ((total-minutes 0)
+          (n 0))
+      (dolist (entry tickets)
+        (let* ((ticket (car entry))
+               (title (or (my/gerrit--get-jira-title ticket)
+                          (alist-get 'heading (cdr entry))))
+               (minutes (alist-get 'minutes (cdr entry)))
+               (hours (/ minutes 60))
+               (mins (% minutes 60))
+               (status (my/progress-pulse--ticket-status ticket)))
+          (cl-incf total-minutes minutes)
+          (insert (format "%d. *%s* %s -- %s (%dh %02dm)\n"
+                          (cl-incf n) ticket title status hours mins))))
+      (insert (format "\nTotal: %dh %02dm across %d tickets\n"
+                      (/ total-minutes 60) (% total-minutes 60) (length tickets))))
+    (insert "#+end_quote\n"))))
+
+(defun my/weekly-review--insert-wins-challenges ()
+  "Insert the Wins / Challenges / Focus checklist."
+  (insert (lf-string "
+
+       1. [ ] ➕ Wins: What went well and why? ✅
+          # What could have caused things to go so well? Maybe I can duplicate this next week!
+          # Re-read [[https://jvns.ca/blog/brag-documents/][Get your work recognized: write a brag document]]
+
+
+       2. [ ] ➖ Challenges: What didn’t go well? ⚠️
+          # How can I improve to mitigate bad weeks?
+
+       3. [ ] 🔀 What will I focus on this week?
+          # What "$10k" tasks do I want done? Why or why not?
+
+")))
+
+(defun my/weekly-review--insert-outstanding-reviews ()
+  "Insert the outstanding reviews checklist.
+Surfaces please-review items so stale reviews do not rot across sprints.
+Each item shows reviewer names, age, and Jira link."
+  (when-let* ((items (plist-get my/agenda-work-data :items))
+            (please-review
+             (--filter (eq 'please-review (work-item-status it))
+                       items))
+            (sorted (--sort
+                     (< (or (work-item-age it) most-positive-fixnum)
+                        (or (work-item-age other) most-positive-fixnum))
+                     please-review)))
+  (insert (lf-string "
+         ****** TODO ⟨2⟩ Outstanding reviews — poke people!  [0%]
+         :PROPERTIES:
+         :WHY: Stale reviews rot across sprints and you get blamed. Assign them NOW.
+         :END:
+         "))
+  (when (boundp 'my\sprint-doc-url)
+    (insert (format "[[%s][Open Sprint Doc]] — ensure each item below is listed and assigned via GDoc comments!\n\n"
+                    my\sprint-doc-url)))
+  (let ((n 0))
+    (dolist (item sorted)
+      (let* ((ticket (work-item-jira item))
+             (title (work-item-title item))
+             (age-str (or (work-item--format-age (work-item-age item)) "today"))
+             (reviewers (or (work-item-reviewers item) '("?")))
+             (rv-names (mapconcat #'identity reviewers ", "))
+             (stale (and (work-item-age item)
+                         (> (- (float-time) (work-item-age item))
+                            (* 5 86400))))
+             (stale-tag (if stale " 🔴 STALE" "")))
+        (insert (format "%d. [ ] %s %s — waiting on %s [%s]%s\n"
+                        (cl-incf n)
+                        (if ticket
+                            (my/gerrit--format-jira-link ticket)
+                          "no-ticket")
+                        (or title "")
+                        rv-names
+                        age-str
+                        stale-tag)))))
+  (insert "\n")))
+
+(defun my/weekly-review--insert-social-reminder ()
+  "Insert the #social visibility reminder with a fortune/cowsay quote."
+  ;; ─── All phases: Stay visible as a remote worker ────────────────
+;; Post something to #social so colleagues remember you exist.
+(insert "
+****** TODO ⟨3⟩ Post to #social — stay visible!
+:PROPERTIES:
+:WHY: Remote workers vanish from collective memory. A weekly post keeps you in the conversation.
+:END:
+
+Share something in *#social* this week — a joke, a link, a photo, a
+hot take.  Doesn't have to be profound; it just has to be /you/.
+
+Here's some inspiration:\n\n")
+(let ((cowsay (string-trim
+               (shell-command-to-string "fortune | cowsay 2>/dev/null"))))
+  (if (string-empty-p cowsay)
+      (insert "/(fortune | cowsay not available — improvise!)/\n\n")
+    (insert "#+begin_quote\n"
+            cowsay
+            "\n#+end_quote\n\n"))))
+
+(defun my/weekly-review--insert-weekly-promise ()
+  "Insert the Weekly Promise section: Completed, In Progress, Planned, Impediments.
+Pre-populates Completed from merged tickets, In Progress from non-merged
+clocked tickets plus unresolved Jira items, and Impediments from stale
+outstanding reviews."
+  (insert "
+****** TODO ⟨4⟩ Weekly Promise — push to #standups  [0%]
+:PROPERTIES:
+:WHY: A progress report is a promise report. Your word is on the line.
+:END:
+
+/Declare your goals. Confront your results. Adjust to living in reality./
+/Be specific, tangible, and observable. Use numbers, names, and dates./
+/Keep it to one page. Report only essentials — headlines, not a Sunday edition./
+
+")
+;; --- Completed: pre-populate from this week's ticket data ---
+(insert "*Completed* (what shipped this week):\n")
+(let* ((end-date (format-time-string "%Y-%m-%d"))
+       (start-date (format-time-string
+                    "%Y-%m-%d"
+                    (time-subtract (current-time)
+                                   (days-to-time 7))))
+       (tickets (my/jira-tickets-clocked-in-range start-date end-date))
+       (n 0))
+  (if (null tickets)
+      (insert "- /(fill in)/\n")
+    (dolist (entry tickets)
+      (let* ((ticket (car entry))
+             (title (or (my/gerrit--get-jira-title ticket)
+                        (alist-get 'heading (cdr entry))))
+             (status (my/progress-pulse--ticket-status ticket)))
+        (when (string= status "MERGED")
+          (insert (format "%d. %s %s\n"
+                          (cl-incf n)
+                          (if ticket
+                              (my/gerrit--format-jira-link ticket)
+                            "")
+                          (or title "")))))))
+  (when (= n 0)
+    (insert "- /(nothing merged this week — edit as needed)/\n")))
+;; --- In Progress: tickets clocked this week that aren't merged,
+;; plus unresolved Jira tickets assigned to us (catches items
+;; we didn't clock but are still responsible for) ---
+(insert "\n*In Progress* (actively working on):\n")
+(let* ((end-date (format-time-string "%Y-%m-%d"))
+       (start-date (format-time-string
+                    "%Y-%m-%d"
+                    (time-subtract (current-time)
+                                   (days-to-time 7))))
+       (clocked (my/jira-tickets-clocked-in-range start-date end-date))
+       (clocked-ids (mapcar #'car clocked))
+       ;; From clocked tickets, keep non-merged ones.
+       (in-progress-clocked
+        (--filter (not (string= "MERGED"
+                                (my/progress-pulse--ticket-status (car it))))
+                  clocked))
+       ;; Query Jira for unresolved tickets assigned to us,
+       ;; updated in the past 7 days (catches un-clocked work).
+       (jira-issues
+        (condition-case nil
+            (my/gerrit--query-jira
+             (format "assignee = %s AND resolution = Unresolved AND updated >= -7d"
+                     my\gerrit-user)
+             "summary")
+          (error nil)))
+       ;; Filter out tickets we already listed from clock data.
+       (extra-jira
+        (--filter (not (member (alist-get 'key it) clocked-ids))
+                  jira-issues))
+       (n 0))
+  ;; Clocked but not merged
+  (dolist (entry in-progress-clocked)
+    (let* ((ticket (car entry))
+           (title (or (my/gerrit--get-jira-title ticket)
+                      (alist-get 'heading (cdr entry))))
+           (status (my/progress-pulse--ticket-status ticket)))
+      (insert (format "%d. %s %s — %s\n"
+                      (cl-incf n)
+                      (if ticket
+                          (my/gerrit--format-jira-link ticket)
+                        "")
+                      (or title "") status))))
+  ;; From Jira but not clocked
+  (dolist (issue extra-jira)
+    (let* ((key (alist-get 'key issue))
+           (summary (alist-get 'summary (alist-get 'fields issue))))
+      (insert (format "%d. %s %s\n"
+                      (cl-incf n)
+                      (my/gerrit--format-jira-link key)
+                      (or summary "")))))
+  (when (= n 0)
+    (insert "- /(none from Jira — edit as needed)/\n")))
+(insert "- /(...design docs, discussion threads, or other non-Jira work?)/\n")
+(insert "\n*Planned* (slotted for next week):\n- \n")
+;; --- Impediments: pre-populate from stale outstanding reviews ---
+(insert "\n*Impediments* (who must do what by when?):\n")
+(let ((stale-items
+       (when-let* ((items (plist-get my/agenda-work-data :items)))
+         (--filter (and (eq 'please-review (work-item-status it))
+                        (work-item-age it)
+                        (> (- (float-time) (work-item-age it))
+                           (* 5 86400)))
+                   items))))
+  (if (null stale-items)
+      (insert "- /(none — outstanding reviews are current!)/\n")
+    (let ((n 0))
+      (dolist (item stale-items)
+        (let ((ticket (work-item-jira item))
+              (rv-names (mapconcat #'identity
+                                   (or (work-item-reviewers item) '("?"))
+                                   ", "))
+              (age-str (or (work-item--format-age (work-item-age item))
+                           "today")))
+          (insert (format "%d. %s — waiting on %s [%s] 🔴\n"
+                          (cl-incf n)
+                          (if ticket
+                              (my/gerrit--format-jira-link ticket)
+                            "?")
+                          rv-names age-str)))))))
+
+(insert (lf-string "
+
+       1. [ ] Edit the sections above
+       2. [ ] Push to =#standups= via webhook
+       3. [ ] Update the sprint Google Doc
+
+")))
+
+(defun my/weekly-review--insert-l5-check ()
+  "Insert the L5 senior-engineer competency self-check."
+  ;; ─── All phases: L5 Competency check ───────────────────────────
+;; "Am I operating at L5?" — a gentle, structured self-check.
+(insert "
+****** TODO ⟨L5⟩ Am I growing as a senior engineer?  [0%]
+
+1. [ ] 🏗️ *Ownership*: Did I take responsibility for something beyond
+my immediate task? (unowned work, tech debt, test gaps, a
+design doc, a code review for someone outside my team)
+
+2. [ ] 🧑‍🏫 *Collaboration*: Did I help another engineer learn something,
+or unblock them? (pairing, review feedback, a Slack explanation)
+
+3. [ ] 📐 *Scope*: Am I independently driving a project or feature
+through its full lifecycle? (design → implement → test → ship)
+
+"))
+
+(defun my/weekly-review--insert-random-reflection ()
+  "Phase 2+: insert a randomly chosen reflection question."
+  (when (>= (my/weekly-review-phase) 2)
+  (insert "\n + [ ] "
+          (seq-random-elt
+           '(
+             "😄 What was the most enjoyable work activity of the last week?"
+             "🤦‍♂️ What were some frustrating or boring moments you had? How can you avoid that going forward?"
+             "🔧 Adjustments: What to stop? What to start? What to continue?"
+             "🟢 What should I continue doing?"
+             "🔴 What should I stop or change?"
+             "🧪 What’s one small experiment to try next week?"
+             "😁 What are your biggest and most exciting challenges for the week to come?
+              What do you need to get there?"
+             "💭 Thoughts for the week to come: What are you thinking about for next week?"
+             "🖼️ Memories of the Amazing, Interesting and Unique:
+Share a photo, quote, line, or something from the
+previous week."
+             "🎯 Did you accomplish your goals? Which ones and how
+did it go? Share your goal tracking and record you
+progress"
+             "🐾 How did I feel this week overall?"
+             "🕰️ Was my time aligned with my goals?"
+             "👀 What distracted me?"
+             "🎇 What energized me?"
+             "📚 What did I learn?"
+             "🪨 What are my biggest challenges (or "boulders")
+for the week to come? Think about which tasks will
+have the highest value in me reaching my potential
+and being successful.")))))
+
+(defun my/weekly-review--insert-archive ()
+  "Insert the archive-completed-tasks checklist."
+  ;; ─── All phases: Archive as closure ────────────────────────────
+;; Archiving DONE tasks is a small ritual of /completion/. The task
+;; moves from "active" to "history." Your task list gets shorter.
+;; You can /see/ progress because the list shrinks. The problem
+;; isn’t productivity — it’s that you never close the loop.
+(insert              "
+****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
+
+/Archiving is an act of closure. It says: "this is finished."/
+/A clean task list is a calm mind./
+
+1. [ ] Look through the ~:LOG:~ for useful information to file away into my
+References.
+- If there’s useful info, capture it with ~C-c C-c~, then archive the original
+tree for clocking purposes.
+- If clocking purposes do not matter, say for personal or trivial tasks, then just delete the tree.
+
+[[elisp:(org-ql-search org-agenda-files '(and (done) (not (tags "Top")) (closed :to (-
+(calendar-day-of-week (calendar-current-date))))))][📜 Items to review: Mine for useful info then archieve or delete. ☑️]]
+"))
+
+(defun my/weekly-review--insert-forward-planning ()
+  "Phase 3: insert forward planning, commit, and happiness sections."
+  (when (>= (my/weekly-review-phase) 3)
+  (insert "
+***** Looking forward to next week ---/mentally try to see where I should be going/
+
+****** TODO ⟨3⟩ Prioritize and schedule!    [0%]
+
+0. [ ] For the "Waiting" list, have others completed their tasks?
+
+- Agenda view: The list of to-do or waiting tasks without SCHEDULED or DEADLINE
+
+
+1. [ ] *Check Calendar*. Look at company calendar for the upcoming 2 weeks;
+add items to your todo list if needed.
+
+2. [ ] Find relevant tasks: What are my "sprint goals" and "quarterly goals"?
+- What is assigned to me in Jira /for this sprint/?
+- Any upcoming deadlines?
+- Look at your "Someday/Maybe" list to see if there’s anything worth doing.
+- get an overview about what you want to achieve in near future: your time
+and energy are finite, tasks are not
+- /Getting a sight of the forest can be very energizing and inspiring too,
+while the endless trees can feel overwhelming or pointless./
+- Relook some of the more recently processed tasks. Task priorities may change
+as time progresses, and it is possible that with a huge onslaught of new
+tasks, some important, older tasks may be left incubating. It’s also possible
+that some tasks are no longer necessary.
+
+
+3. [ ] Assign a [[https://radreads.co/10k-work/][dollar value]] to your work: $10 (low skill, not important), $100, $1k, and $10k (high skill, prized effort).
+
+The Zen To Done system recommends scheduling your Most Important Tasks ($10k)
+on your calendar each week so that by the end of the week you have completed
+something of significance. It ensures that the more important things get
+done.
+
+
+4. [ ] To ensure the week is doable, add efforts to tasks for the week
+then ensure the effort estimate is actually realistic. Also check each
+day and ensure it’s realistic!
+
+- [ ] Look at daily agenda view for the next week and make sure it’d doable and not
+overloaded! I don’t want to keep pushing things since my days are unrealistic!
+
+
+5. [ ] Decide your tasks for the week and time block your calendar.
+
+*Focus on important tasks! Not low priority no-one-cares ‘fun’ efforts!*
+
+*Embrace trade-offs.* You can’t do it all. Realize that when you’re
+choosing to do one task, you’re saying "no" to many other tasks. And
+                that’s a good thing
+
+Finally, schedule time on your calendar to work on your tasks. This is
+called [[https://dansilvestre.com/time-blocking/][time blocking]]. Set alerts for critical tasks.
+- Look at all items with a deadline in the next month:
+Are they realistically broken down into doable tasks and scheduled?
+
+
+6. [ ] Study the next week’s agenda: look at any important scheduled tasks or
+deadlines, and decide whether any preparatory work will need to be done.
+
+
+/By [[https://dansilvestre.com/weekly-planning/][planning your week]] in advance, you prevent distractions from ruining your
+day. You remain focused on your most important tasks./
+
+****** TODO ⟨4⟩ Commit planning    [0%]
+
++ [ ] ⁉️ [[elisp:(shell-command-to-string \"git add .; git commit -m 'End Weekly Review'\")][Click to commit all the changes /after/ the review]]
+
+****** TODO ⟨5⟩ Am I getting happier? [0%]
+
+")
+  (-let [start (point)]
+    (insert (my/get-table-of-daily-scores-for-last-week))
+    (center-region start (point)))
+  (insert "\n" (my/percentage-of-life-spent) "\n")))
+
+(defun my/weekly-review--wrap-up ()
+  "Finalise the review: update statistics cookies, increment counter, celebrate."
+  (org-update-statistics-cookies 'all)
+  (insert "\nSay, \"Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)\"")
+  (my/weekly-review--increment-counter)
+  (message "Review ♯%d complete! (Phase %d) 🎉 To journal is to live!"
+           my/weekly-review-count (my/weekly-review-phase)))
+
+;; =======================================================================
+;; Weekly Review -- capture template (the readable orchestration)
+;; =======================================================================
+
 ;; "r"eview for the "w"eek
 ;;
 ;; Reflect on what went well and what could have gone better. Update your
@@ -6025,373 +6555,23 @@ Also, at phase boundaries, nudge the user to unlock more."
               ;; "What day was 2 days ago, Saturday? What day will it be in 10 years and 3 months?"
               ;; See https://github.com/alphapapa/ts.el, which has excellent examples.
               ;; 😲 Nice human formatting functions too!
-              (-let [week♯ (ts-week-of-year (ts-now))]
-                (-let [month-name (ts-month-name (ts-now))]
-                  ;; Note: I prefer %T so that I get an active timestamp and so can see my review in an agenda
-                  ;; that looks at that day. That is, my review are personal appointments.
-                  (format "* Weekly Review ♯%s ---/"go from chaos to clarity"!/ [/] :%s:Weekly:Review: \n:PROPERTIES:\n:CREATED: %%T\n:END:\n"
-                          week♯
-                          month-name)))
-
-              ;; ─── Phase 2+: Life score questionnaire ────────────────────────
-              ;; Let's add some properties by prompting the user, me.
-              (when (>= (my/weekly-review-phase) 2)
-                (my/read-daily-review-properties
-                 :questionnaire '(("SocialScore: Did I see family *and* did I call or message a friend?"
-                                   " 0  --  No             --  What am I doing with my life?"
-                                   " 1  --  Yes…           --  Sweet, who was it? What did you do?")
-                                  ("FaithScore: Did I go to this Mosque this week? Or read passages from the Quran?"
-                                   " 0  --  No             --  What am I doing with my life?"
-                                   " 1  --  Yes…           --  Sweet, what did you do?")
-                                  ("MarriageScore: How are things with my wife?"
-                                   "-1  --  Abysmal Low     --  I hate life."
-                                   " 0  --  Low             --  What am I doing with my life?"
-                                   " 1  --  Medium          --  Things are OK."
-                                   " 2  --  High            --  I love my life ᕦ( ᴼ ڡ ᴼ )ᕤ"
-                                   " 3  --  Extremely High  --  I’m king of the world!")
-                                  ("HealthScore: Did I go for a run or do a workout this week?"
-                                   " 0  --  No             --  What am I doing with my life?"
-                                   " 1  --  Yes…           --  Sweet, what did you do?"))
-                                        ; 📊 Other metrics to consider keeping track of:
-                                        ; ⇒ Hours worked
-                                        ; ⇒ Tasks completed
-                 :prop-val-action (lambda (property value) (org-set-property property value)))
-                ;; Add Daily Score to the start of the headline
-                (beginning-of-buffer)
-                (org-beginning-of-line)
-                (insert (format "﴾%s﴿ " (org-entry-get (point) "Daily␣score")))
-                (my/org-align-property-values))
-
-              ;; ─── All phases: WHY property ──────────────────────────────────
-              (org-set-property "WHY" "Ensure everything is on track! Be proactive, not reactive! Be in control of my life! 😌 Have a sense of closure and wrap-up before the weekend! ☺️")
-              (org-set-property "Phase" (number-to-string (my/weekly-review-phase)))
-              (end-of-buffer)
-
-              ;; ─── Phase 3: Commit & lint steps ──────────────────────────────
-              (when (>= (my/weekly-review-phase) 3)
-                (insert
-                 (let* ((♯lines (save-restriction (widen) (count-lines (point-min) (point-max))))
-                        (last-time (s-trim (shell-command-to-string "git log -1 --pretty=%s")))
-                        ;; Note that there's no `git push' since this is local ---Github may expose my notes to AI, no thank-you.
-                        (save-incantation (format "git add .; git commit -m 'Weekly Review Start, save %s lines on %s'" ♯lines  (ts-format))))
-                   (lf-string "
-                     ***** Closing up last week
-
-                     ****** TODO ⟨0⟩ Commit last week         [0%]
-
-                     + [ ] Commit & push all the changes before the review
-
-                       \t 🤖 Last time ∷ " ${last-time} "
-                       \t 🛋️ my-life.org line count ∷ ${♯lines}
-                       \t   # If it’s significantly less, then look at diff to ensure I didn’t lose anything important.
-                       \t ⁉️ [[elisp:(shell-command-to-string \"${save-incantation}\")][Click to commit!]]
-
-                     + [ ] ⁉️ [[elisp:(progn (widen) (funcall-interactively #'org-lint))][Lint my-life.org]]
-
-                       \t Importantly this mitigates [[https://en.wikipedia.org/wiki/Link_rot][link rot]]
-                       \t and ensures that when I do bulk find-replace actions that I haven’t
-                       \t royally messed things up.
-"))))
-
-              ;; ─── All phases: Core reflection ───────────────────────────────
-              ;; This is the heart of the review. Even Phase 1 gets this.
-              (insert (lf-string "
-                     ****** TODO ⟨1⟩ What did I ship this week?  [0%] :Standups:
-                     :PROPERTIES:
-                     :WHY: Recognise accomplishments, express self-gratitude, and debug!
-                     :END:
-
-"))
-              ;; Insert the clock report inline — no link-clicking needed.
-              (save-restriction
-                (widen)
-                (org-clock-report))
-
-              ;; Pop open the chord/sankey diagram for a visual overview.
-              (when (fboundp 'my/clock-diagram)
-                (my/clock-diagram))
-
-              ;; Insert git log of merged commits from ~/fwd.
-              ;; Each line: "HASH\tSubject" — we split and build an Org
-              ;; link so clicking [Details] shows the full commit.
-              (-let [raw (string-trim
-                          (shell-command-to-string
-                           (concat "git -C ~/fwd log"
-                                   " --author=\"Musa\""
-                                   " --since=\"7 days ago\""
-                                   " --format=\"%h\t%s\""
-                                   " --no-merges")))]
-                (insert "\n\n*Commits merged into =~/fwd= this week:*\n"
-                        (if (string-empty-p raw)
-                            "/(None yet — keep shipping!)/\n"
-                          (-let [n 0]
-                            (concat
-                             "#+begin_quote\n"
-                             (mapconcat
-                              (lambda (line)
-                                (-let [(hash subject) (s-split-up-to "\t" line 1)]
-                                  (format "%d. %s 📚 [[elisp:(let ((default-directory \"~/fwd/\")) (magit-show-commit \"%s\"))][Details]]"
-                                          (cl-incf n) subject hash)))
-                              (s-lines raw) "\n")
-                             "\n#+end_quote\n")))))
-
-              ;; Insert Jira ticket summary for the week — gives ticket-level
-              ;; context alongside the clock report and git log.
-              (let* ((end-date (format-time-string "%Y-%m-%d"))
-                     (start-date (format-time-string
-                                  "%Y-%m-%d"
-                                  (time-subtract (current-time)
-                                                 (days-to-time 7))))
-                     (tickets (my/jira-tickets-clocked-in-range start-date end-date)))
-                (when tickets
-                  (my/gerrit--fetch-jira-titles (mapcar #'car tickets))
-                  (insert "\n\n*Jira tickets worked on this week:*\n#+begin_quote\n")
-                  (let ((total-minutes 0)
-                        (n 0))
-                    (dolist (entry tickets)
-                      (let* ((ticket (car entry))
-                             (title (or (my/gerrit--get-jira-title ticket)
-                                        (alist-get 'heading (cdr entry))))
-                             (minutes (alist-get 'minutes (cdr entry)))
-                             (hours (/ minutes 60))
-                             (mins (% minutes 60))
-                             (status (my/progress-pulse--ticket-status ticket)))
-                        (cl-incf total-minutes minutes)
-                        (insert (format "%d. *%s* %s -- %s (%dh %02dm)\n"
-                                        (cl-incf n) ticket title status hours mins))))
-                    (insert (format "\nTotal: %dh %02dm across %d tickets\n"
-                                    (/ total-minutes 60) (% total-minutes 60) (length tickets))))
-                  (insert "#+end_quote\n")))
-
-              (insert (lf-string "
-
-                     1. [ ] ➕ Wins: What went well and why? ✅
-                        # What could have caused things to go so well? Maybe I can duplicate this next week!
-                        # Re-read [[https://jvns.ca/blog/brag-documents/][Get your work recognized: write a brag document]]
-
-
-                     2. [ ] ➖ Challenges: What didn’t go well? ⚠️
-                        # How can I improve to mitigate bad weeks?
-
-                     3. [ ] 🔀 What will I focus on this week?
-                        # What "$10k" tasks do I want done? Why or why not?
-
-"))
-
-              ;; ─── All phases: Outstanding reviews ──────────────────────────
-              ;; Surface please-review items so stale reviews don't rot across
-              ;; sprints.  Each item shows reviewer names and age; the checklist
-              ;; prompts Musa to assign via GDoc comments.
-              (when-let* ((items (plist-get my/agenda-work-data :items))
-                          (please-review
-                           (--filter (eq 'please-review (work-item-status it))
-                                     items))
-                          (sorted (--sort
-                                   (< (or (work-item-age it) most-positive-fixnum)
-                                      (or (work-item-age other) most-positive-fixnum))
-                                   please-review)))
-                (insert (lf-string "
-                       ****** TODO ⟨2⟩ Outstanding reviews — poke people!  [0%]
-                       :PROPERTIES:
-                       :WHY: Stale reviews rot across sprints and you get blamed. Assign them NOW.
-                       :END:
-                       "))
-                (when (boundp 'my\sprint-doc-url)
-                  (insert (format "[[%s][Open Sprint Doc]] — ensure each item below is listed and assigned via GDoc comments!\n\n"
-                                  my\sprint-doc-url)))
-                (let ((n 0))
-                  (dolist (item sorted)
-                    (let* ((ticket (work-item-jira item))
-                           (title (work-item-title item))
-                           (age-str (or (work-item--format-age (work-item-age item)) "today"))
-                           (reviewers (or (work-item-reviewers item) '("?")))
-                           (rv-names (mapconcat #'identity reviewers ", "))
-                           (stale (and (work-item-age item)
-                                       (> (- (float-time) (work-item-age item))
-                                          (* 5 86400))))
-                           (stale-tag (if stale " 🔴 STALE" "")))
-                      (insert (format "%d. [ ] %s %s — waiting on %s [%s]%s\n"
-                                      (cl-incf n)
-                                      (if ticket
-                                          (my/gerrit--format-jira-link ticket)
-                                        "no-ticket")
-                                      (or title "")
-                                      rv-names
-                                      age-str
-                                      stale-tag)))))
-                (insert "\n"))
-
-              ;; ─── All phases: Stay visible as a remote worker ────────────────
-              ;; Post something to #social so colleagues remember you exist.
-              (insert "
-****** TODO ⟨3⟩ Post to #social — stay visible!
-:PROPERTIES:
-:WHY: Remote workers vanish from collective memory. A weekly post keeps you in the conversation.
-:END:
-
-Share something in *#social* this week — a joke, a link, a photo, a
-hot take.  Doesn't have to be profound; it just has to be /you/.
-
-Here's some inspiration:\n\n")
-              (let ((cowsay (string-trim
-                             (shell-command-to-string "fortune | cowsay 2>/dev/null"))))
-                (if (string-empty-p cowsay)
-                    (insert "/(fortune | cowsay not available — improvise!)/\n\n")
-                  (insert "#+begin_quote\n"
-                          cowsay
-                          "\n#+end_quote\n\n")))
-
-              ;; ─── All phases: L5 Competency check ───────────────────────────
-              ;; "Am I operating at L5?" — a gentle, structured self-check.
-              (insert "
-****** TODO ⟨L5⟩ Am I growing as a senior engineer?  [0%]
-
-1. [ ] 🏗️ *Ownership*: Did I take responsibility for something beyond
-       my immediate task? (unowned work, tech debt, test gaps, a
-       design doc, a code review for someone outside my team)
-
-2. [ ] 🧑‍🏫 *Collaboration*: Did I help another engineer learn something,
-       or unblock them? (pairing, review feedback, a Slack explanation)
-
-3. [ ] 📐 *Scope*: Am I independently driving a project or feature
-       through its full lifecycle? (design → implement → test → ship)
-
-")
-              ;; ─── Phase 2+: Random reflection question ──────────────────────
-              (when (>= (my/weekly-review-phase) 2)
-                (insert "\n + [ ] "
-                        (seq-random-elt
-                         '(
-                           "😄 What was the most enjoyable work activity of the last week?"
-                           "🤦‍♂️ What were some frustrating or boring moments you had? How can you avoid that going forward?"
-                           "🔧 Adjustments: What to stop? What to start? What to continue?"
-                           "🟢 What should I continue doing?"
-                           "🔴 What should I stop or change?"
-                           "🧪 What’s one small experiment to try next week?"
-                           "😁 What are your biggest and most exciting challenges for the week to come?
-                            What do you need to get there?"
-                           "💭 Thoughts for the week to come: What are you thinking about for next week?"
-                           "🖼️ Memories of the Amazing, Interesting and Unique:
-              Share a photo, quote, line, or something from the
-              previous week."
-                           "🎯 Did you accomplish your goals? Which ones and how
-              did it go? Share your goal tracking and record you
-              progress"
-                           "🐾 How did I feel this week overall?"
-                           "🕰️ Was my time aligned with my goals?"
-                           "👀 What distracted me?"
-                           "🎇 What energized me?"
-                           "📚 What did I learn?"
-                           "🪨 What are my biggest challenges (or "boulders")
-              for the week to come? Think about which tasks will
-              have the highest value in me reaching my potential
-              and being successful."))))
-
-              ;; ─── All phases: Archive as closure ────────────────────────────
-              ;; Archiving DONE tasks is a small ritual of /completion/. The task
-              ;; moves from "active" to "history." Your task list gets shorter.
-              ;; You can /see/ progress because the list shrinks. The problem
-              ;; isn’t productivity — it’s that you never close the loop.
-              (insert              "
-****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
-
-/Archiving is an act of closure. It says: "this is finished."/
-/A clean task list is a calm mind./
-
-1. [ ] Look through the ~:LOG:~ for useful information to file away into my
-   References.
-   - If there’s useful info, capture it with ~C-c C-c~, then archive the original
-     tree for clocking purposes.
-   - If clocking purposes do not matter, say for personal or trivial tasks, then just delete the tree.
-
-     [[elisp:(org-ql-search org-agenda-files '(and (done) (not (tags "Top")) (closed :to (-
-     (calendar-day-of-week (calendar-current-date))))))][📜 Items to review: Mine for useful info then archieve or delete. ☑️]]
-")
-
-              ;; ─── Phase 3: Forward planning ─────────────────────────────────
-              (when (>= (my/weekly-review-phase) 3)
-                (insert "
-***** Looking forward to next week ---/mentally try to see where I should be going/
-
-****** TODO ⟨3⟩ Prioritize and schedule!    [0%]
-
-0. [ ] For the "Waiting" list, have others completed their tasks?
-
-   - Agenda view: The list of to-do or waiting tasks without SCHEDULED or DEADLINE
-
-
-1. [ ] *Check Calendar*. Look at company calendar for the upcoming 2 weeks;
-   add items to your todo list if needed.
-
-2. [ ] Find relevant tasks: What are my "sprint goals" and "quarterly goals"?
-   - What is assigned to me in Jira /for this sprint/?
-   - Any upcoming deadlines?
-   - Look at your "Someday/Maybe" list to see if there’s anything worth doing.
-   - get an overview about what you want to achieve in near future: your time
-     and energy are finite, tasks are not
-     - /Getting a sight of the forest can be very energizing and inspiring too,
-       while the endless trees can feel overwhelming or pointless./
-     - Relook some of the more recently processed tasks. Task priorities may change
-       as time progresses, and it is possible that with a huge onslaught of new
-       tasks, some important, older tasks may be left incubating. It’s also possible
-       that some tasks are no longer necessary.
-
-
-3. [ ] Assign a [[https://radreads.co/10k-work/][dollar value]] to your work: $10 (low skill, not important), $100, $1k, and $10k (high skill, prized effort).
-
-   The Zen To Done system recommends scheduling your Most Important Tasks ($10k)
-   on your calendar each week so that by the end of the week you have completed
-   something of significance. It ensures that the more important things get
-   done.
-
-
-4. [ ] To ensure the week is doable, add efforts to tasks for the week
-   then ensure the effort estimate is actually realistic. Also check each
-   day and ensure it’s realistic!
-
-   - [ ] Look at daily agenda view for the next week and make sure it’d doable and not
-         overloaded! I don’t want to keep pushing things since my days are unrealistic!
-
-
-5. [ ] Decide your tasks for the week and time block your calendar.
-
-     *Focus on important tasks! Not low priority no-one-cares ‘fun’ efforts!*
-
-     *Embrace trade-offs.* You can’t do it all. Realize that when you’re
-      choosing to do one task, you’re saying "no" to many other tasks. And
-                              that’s a good thing
-
-     Finally, schedule time on your calendar to work on your tasks. This is
-       called [[https://dansilvestre.com/time-blocking/][time blocking]]. Set alerts for critical tasks.
-       - Look at all items with a deadline in the next month:
-         Are they realistically broken down into doable tasks and scheduled?
-
-
-6. [ ] Study the next week’s agenda: look at any important scheduled tasks or
-      deadlines, and decide whether any preparatory work will need to be done.
-
-
- /By [[https://dansilvestre.com/weekly-planning/][planning your week]] in advance, you prevent distractions from ruining your
-             day. You remain focused on your most important tasks./
-
-****** TODO ⟨4⟩ Commit planning    [0%]
-
-+ [ ] ⁉️ [[elisp:(shell-command-to-string \"git add .; git commit -m 'End Weekly Review'\")][Click to commit all the changes /after/ the review]]
-
-****** TODO ⟨5⟩ Am I getting happier? [0%]
-
-")
-                (-let [start (point)]
-                  (insert (my/get-table-of-daily-scores-for-last-week))
-                  (center-region start (point)))
-                (insert "\n" (my/percentage-of-life-spent) "\n"))
-
-              ;; ─── All phases: Wrap up ───────────────────────────────────────
-              (org-update-statistics-cookies 'all)
-              (insert "\nSay, \"Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)\"")
-              (my/weekly-review--increment-counter)
-              (message "Review ♯%d complete! (Phase %d) 🎉 To journal is to live!"
-                       my/weekly-review-count (my/weekly-review-phase))))
+              (my/weekly-review--heading)
+              (my/weekly-review--insert-life-scores)
+              (my/weekly-review--insert-properties)
+              (my/weekly-review--insert-commit-lint)
+              (my/weekly-review--insert-ship-header)
+              (my/weekly-review--insert-clock-visuals)
+              (my/weekly-review--insert-git-commits)
+              (my/weekly-review--insert-jira-tickets)
+              (my/weekly-review--insert-wins-challenges)
+              (my/weekly-review--insert-outstanding-reviews)
+              (my/weekly-review--insert-social-reminder)
+              (my/weekly-review--insert-weekly-promise)
+              (my/weekly-review--insert-l5-check)
+              (my/weekly-review--insert-random-reflection)
+              (my/weekly-review--insert-archive)
+              (my/weekly-review--insert-forward-planning)
+              (my/weekly-review--wrap-up)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
