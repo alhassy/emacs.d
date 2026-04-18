@@ -1,13 +1,13 @@
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:4]]
-(setq org-image-actual-width nil)
+    (setq org-image-actual-width nil)
 ;; Personal instructions for a new machine:4 ends here
 
 ;; [[file:init.org::#Personal-instructions-for-a-new-machine][Personal instructions for a new machine:5]]
-;; Day-to-day, open URLs in the system browser (Arc, Chrome, etc.).
-;; When blogging, we can temporarily switch to xwidget-webkit-browse-url.
-(setq browse-url-browser-function 'browse-url-default-browser)
+    ;; Day-to-day, open URLs in the system browser (Arc, Chrome, etc.).
+    ;; When blogging, we can temporarily switch to xwidget-webkit-browse-url.
+    (setq browse-url-browser-function 'browse-url-default-browser)
 
-;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
+    ;; (use-package xwwp) ;; Enhance the Emacs xwidget-webkit browser
 ;; Personal instructions for a new machine:5 ends here
 
 ;; Disable custom-file - all settings managed in init.el/init.org
@@ -315,23 +315,23 @@ installs of packages that are not in our `my/installed-packages' listing.
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
-;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
-;; Since the hook fires on C-g but by then Helm's already tears it down so
-;; it fails buffer-live-p.
-(with-eval-after-load 'helm
-(defun my/helm-kill-session-buffers-safe ()
-  "Kill stray *helm…* buffers after a Helm session ends."
-  ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
-  (run-at-time 5 nil                   ; defer until after Helm cleanup
-               (lambda ()
-                 (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
-                 (let ((kill-buffer-query-functions nil))
-                   (dolist (b (buffer-list))
-                     (when (and (buffer-live-p b)
-                                (string-match-p "\\`\\*helm" (buffer-name b)))
-                       (with-demoted-errors "helm-kill: %S"
-                         (kill-buffer b))))))))))
-(add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
+  ;; We cannot just do: (add-hook 'helm-cleanup-hook (lambda () (kill-matching-buffers "^\\*helm" nil t)))
+  ;; Since the hook fires on C-g but by then Helm's already tears it down so
+  ;; it fails buffer-live-p.
+  (with-eval-after-load 'helm
+  (defun my/helm-kill-session-buffers-safe ()
+    "Kill stray *helm…* buffers after a Helm session ends."
+    ;; Running the work via run-at-time 0 lets Helm finish its own teardown first, avoiding the “kill a thing that Helm just killed” race.
+    (run-at-time 5 nil                   ; defer until after Helm cleanup
+                 (lambda ()
+                   (unless (minibufferp) ;; If I'm typing at a prompt, delete nothing!
+                   (let ((kill-buffer-query-functions nil))
+                     (dolist (b (buffer-list))
+                       (when (and (buffer-live-p b)
+                                  (string-match-p "\\`\\*helm" (buffer-name b)))
+                         (with-demoted-errors "helm-kill: %S"
+                           (kill-buffer b))))))))))
+  (add-hook 'helm-cleanup-hook #'my/helm-kill-session-buffers-safe)
 
 (use-package helm
   :hook ((after-init . helm-mode) ;; Enable Helm completion for common Emacs commands.
@@ -4488,7 +4488,7 @@ Functin Source: https://xenodium.com/emacs-dwim-do-what-i-mean/"
 ;; Pretty Lists Markers:1 ends here
 
 ;; [[file:init.org::#Making-Block-Delimiters-Less-Intrusive][Making Block Delimiters Less Intrusive:1]]
-(defvar-local rasmus/org-at-src-begin -1
+  (defvar-local rasmus/org-at-src-begin -1
     "Variable that holds whether last position was a ")
 
   (defvar rasmus/ob-header-symbol ?☰
@@ -6200,29 +6200,38 @@ When the figure is `www', a random mood modifier (-b, -d, ...) may be appended."
   (let ((figure (seq-random-elt my/cowsay-figures)))
     (if (string= figure "www")
         (let ((modifier (seq-random-elt '("" "-b" "-d" "-g" "-p" "-s" "-t" "-w" "-y"))))
-          (format "fortune | cowsay -f www %s 2>/dev/null" modifier))
+          (format "fortune | cowsay -W 60 -f www %s 2>/dev/null" modifier))
       (format "fortune | cowsay -f %s 2>/dev/null" figure))))
 
 (defun my/weekly-review--insert-social-reminder ()
   "Insert the #social visibility reminder with a fortune/cowsay quote.
-Picks a random cowsay figure (and mood modifier for `www')."
-  (insert "
-****** TODO ⟨3⟩ Post to #social — stay visible!
-:PROPERTIES:
-:WHY: Remote workers vanish from collective memory. A weekly post keeps you in the conversation.
-:END:
+Picks a random cowsay figure (and mood modifier for `www'),
+copies the result as a Slack code block (wrapped in triple
+backticks), opens the #social channel in the browser, and
+shows a reminder dialog.
 
-Share something in *#social* this week — a joke, a link, a photo, a
-hot take.  Doesn't have to be profound; it just has to be /you/.
-
-Here's some inspiration:\n\n")
+Implementation note: This could be done automatically via
+webhooks, however we don't want this to seem like automation;
+we want it to feel like genuine human connection!"
   (let* ((cmd (my/cowsay-random-command))
          (cowsay (string-trim (shell-command-to-string cmd))))
-    (if (string-empty-p cowsay)
-        (insert "/(fortune | cowsay not available — improvise!)/\n\n")
-      (insert "#+begin_quote\n"
-              cowsay
-              "\n#+end_quote\n\n"))))
+    (cl-assert (not (string-empty-p cowsay)))
+    ;; Copy as a Slack code block (triple-backtick wrapped).
+    (kill-new (concat "```\n" cowsay "\n```"))
+
+    (when (eq system-type 'darwin)
+      ;; /Implementation note: This could be done automatically via webhooks,/
+      ;; /but we don't want automation here — we want genuine human connection!/ 
+      (non-blocking-message-box
+       :title "⟨1⟩ Post to #social — stay visible!"
+       :content "ASCII art copied! Paste it into #social now for a human connection!
+
+:WHY: Remote workers vanish from collective memory. A weekly post keeps you in the conversation.
+
+Share something in *#social* this week — a joke, a link, a photo, a hot take.
+Doesn't have to be profound; it just has to be /you/."
+       ;; Open #social in the browser so posting is one paste away.
+       :buttons '("Yeah, let's do it!" (browse-url my\social-channel-url))))))
 
 (defun my/weekly-review--insert-weekly-promise ()
   "Insert the Weekly Promise section: Completed, In Progress, Planned, Impediments.
@@ -6240,111 +6249,111 @@ outstanding reviews."
 /Keep it to one page. Report only essentials — headlines, not a Sunday edition./
 
 ")
-;; --- Completed: pre-populate from this week's ticket data ---
-(insert "*Completed* (what shipped this week):\n")
-(let* ((end-date (format-time-string "%Y-%m-%d"))
-       (start-date (format-time-string
-                    "%Y-%m-%d"
-                    (time-subtract (current-time)
-                                   (days-to-time 7))))
-       (tickets (my/jira-tickets-clocked-in-range start-date end-date))
-       (n 0))
-  (if (null tickets)
-      (insert "- /(fill in)/\n")
-    (dolist (entry tickets)
+  ;; --- Completed: pre-populate from this week's ticket data ---
+  (insert "*Completed* (what shipped this week):\n")
+  (let* ((end-date (format-time-string "%Y-%m-%d"))
+         (start-date (format-time-string
+                      "%Y-%m-%d"
+                      (time-subtract (current-time)
+                                     (days-to-time 7))))
+         (tickets (my/jira-tickets-clocked-in-range start-date end-date))
+         (n 0))
+    (if (null tickets)
+        (insert "- /(fill in)/\n")
+      (dolist (entry tickets)
+        (let* ((ticket (car entry))
+               (title (or (my/gerrit--get-jira-title ticket)
+                          (alist-get 'heading (cdr entry))))
+               (status (my/progress-pulse--ticket-status ticket)))
+          (when (string= status "MERGED")
+            (insert (format "%d. %s %s\n"
+                            (cl-incf n)
+                            (if ticket
+                                (my/gerrit--format-jira-link ticket)
+                              "")
+                            (or title "")))))))
+    (when (= n 0)
+      (insert "- /(nothing merged this week — edit as needed)/\n")))
+  ;; --- In Progress: tickets clocked this week that aren't merged,
+  ;; plus unresolved Jira tickets assigned to us (catches items
+  ;; we didn't clock but are still responsible for) ---
+  (insert "\n*In Progress* (actively working on):\n")
+  (let* ((end-date (format-time-string "%Y-%m-%d"))
+         (start-date (format-time-string
+                      "%Y-%m-%d"
+                      (time-subtract (current-time)
+                                     (days-to-time 7))))
+         (clocked (my/jira-tickets-clocked-in-range start-date end-date))
+         (clocked-ids (mapcar #'car clocked))
+         ;; From clocked tickets, keep non-merged ones.
+         (in-progress-clocked
+          (--filter (not (string= "MERGED"
+                                  (my/progress-pulse--ticket-status (car it))))
+                    clocked))
+         ;; Query Jira for unresolved tickets assigned to us,
+         ;; updated in the past 7 days (catches un-clocked work).
+         (jira-issues
+          (condition-case nil
+              (my/gerrit--query-jira
+               (format "assignee = %s AND resolution = Unresolved AND updated >= -7d"
+                       my\gerrit-user)
+               "summary")
+            (error nil)))
+         ;; Filter out tickets we already listed from clock data.
+         (extra-jira
+          (--filter (not (member (alist-get 'key it) clocked-ids))
+                    jira-issues))
+         (n 0))
+    ;; Clocked but not merged
+    (dolist (entry in-progress-clocked)
       (let* ((ticket (car entry))
              (title (or (my/gerrit--get-jira-title ticket)
                         (alist-get 'heading (cdr entry))))
              (status (my/progress-pulse--ticket-status ticket)))
-        (when (string= status "MERGED")
-          (insert (format "%d. %s %s\n"
-                          (cl-incf n)
-                          (if ticket
-                              (my/gerrit--format-jira-link ticket)
-                            "")
-                          (or title "")))))))
-  (when (= n 0)
-    (insert "- /(nothing merged this week — edit as needed)/\n")))
-;; --- In Progress: tickets clocked this week that aren't merged,
-;; plus unresolved Jira tickets assigned to us (catches items
-;; we didn't clock but are still responsible for) ---
-(insert "\n*In Progress* (actively working on):\n")
-(let* ((end-date (format-time-string "%Y-%m-%d"))
-       (start-date (format-time-string
-                    "%Y-%m-%d"
-                    (time-subtract (current-time)
-                                   (days-to-time 7))))
-       (clocked (my/jira-tickets-clocked-in-range start-date end-date))
-       (clocked-ids (mapcar #'car clocked))
-       ;; From clocked tickets, keep non-merged ones.
-       (in-progress-clocked
-        (--filter (not (string= "MERGED"
-                                (my/progress-pulse--ticket-status (car it))))
-                  clocked))
-       ;; Query Jira for unresolved tickets assigned to us,
-       ;; updated in the past 7 days (catches un-clocked work).
-       (jira-issues
-        (condition-case nil
-            (my/gerrit--query-jira
-             (format "assignee = %s AND resolution = Unresolved AND updated >= -7d"
-                     my\gerrit-user)
-             "summary")
-          (error nil)))
-       ;; Filter out tickets we already listed from clock data.
-       (extra-jira
-        (--filter (not (member (alist-get 'key it) clocked-ids))
-                  jira-issues))
-       (n 0))
-  ;; Clocked but not merged
-  (dolist (entry in-progress-clocked)
-    (let* ((ticket (car entry))
-           (title (or (my/gerrit--get-jira-title ticket)
-                      (alist-get 'heading (cdr entry))))
-           (status (my/progress-pulse--ticket-status ticket)))
-      (insert (format "%d. %s %s — %s\n"
-                      (cl-incf n)
-                      (if ticket
-                          (my/gerrit--format-jira-link ticket)
-                        "")
-                      (or title "") status))))
-  ;; From Jira but not clocked
-  (dolist (issue extra-jira)
-    (let* ((key (alist-get 'key issue))
-           (summary (alist-get 'summary (alist-get 'fields issue))))
-      (insert (format "%d. %s %s\n"
-                      (cl-incf n)
-                      (my/gerrit--format-jira-link key)
-                      (or summary "")))))
-  (when (= n 0)
-    (insert "- /(none from Jira — edit as needed)/\n")))
-(insert "- /(...design docs, discussion threads, or other non-Jira work?)/\n")
-(insert "\n*Planned* (slotted for next week):\n- \n")
-;; --- Impediments / Outstanding Reviews ---
-;; Merged: every please-review item belongs here (not just stale ones).
-;; Stale items (>5 days) get a 🔴 prefix; fresh ones get a checkbox.
-;; Uses `work-item-to-string' — the same renderer the agenda uses.
-(insert "\n*Impediments* (who must do what by when?):\n")
-(when (boundp 'my\sprint-doc-url)
-  (insert (format "[[%s][Open Sprint Doc]] — ensure each item below is listed and assigned!\n\n"
-                  my\sprint-doc-url)))
-(let ((please-review
-       (when-let* ((items (plist-get my/agenda-work-data :items)))
-         (--sort (< (or (work-item-age it) most-positive-fixnum)
-                    (or (work-item-age other) most-positive-fixnum))
-                 (--filter (eq 'please-review (work-item-status it))
-                           items)))))
-  (if (null please-review)
-      (insert "- /(none — no outstanding reviews!)/\n")
-    (let ((n 0))
-      (dolist (item please-review)
-        (let* ((stale (and (work-item-age item)
-                           (> (- (float-time) (work-item-age item))
-                              (* 5 86400))))
-               (prefix (if stale "🔴 " ""))
-               (line (work-item-to-string item)))
-          (insert (format "%d. %s[ ] %s\n" (cl-incf n) prefix line)))))))
+        (insert (format "%d. %s %s — %s\n"
+                        (cl-incf n)
+                        (if ticket
+                            (my/gerrit--format-jira-link ticket)
+                          "")
+                        (or title "") status))))
+    ;; From Jira but not clocked
+    (dolist (issue extra-jira)
+      (let* ((key (alist-get 'key issue))
+             (summary (alist-get 'summary (alist-get 'fields issue))))
+        (insert (format "%d. %s %s\n"
+                        (cl-incf n)
+                        (my/gerrit--format-jira-link key)
+                        (or summary "")))))
+    (when (= n 0)
+      (insert "- /(none from Jira — edit as needed)/\n")))
+  (insert "- /(...design docs, discussion threads, or other non-Jira work?)/\n")
+  (insert "\n*Planned* (slotted for next week):\n- \n")
+  ;; --- Impediments / Outstanding Reviews ---
+  ;; Merged: every please-review item belongs here (not just stale ones).
+  ;; Stale items (>5 days) get a 🔴 prefix; fresh ones get a checkbox.
+  ;; Uses `work-item-to-string' — the same renderer the agenda uses.
+  (insert "\n*Impediments* (who must do what by when?):\n")
+  (when (boundp 'my\sprint-doc-url)
+    (insert (format "[[%s][Open Sprint Doc]] — ensure each item below is listed and assigned!\n\n"
+                    my\sprint-doc-url)))
+  (let ((please-review
+         (when-let* ((items (plist-get my/agenda-work-data :items)))
+           (--sort (< (or (work-item-age it) most-positive-fixnum)
+                      (or (work-item-age other) most-positive-fixnum))
+                   (--filter (eq 'please-review (work-item-status it))
+                             items)))))
+    (if (null please-review)
+        (insert "- /(none — no outstanding reviews!)/\n")
+      (let ((n 0))
+        (dolist (item please-review)
+          (let* ((stale (and (work-item-age item)
+                             (> (- (float-time) (work-item-age item))
+                                (* 5 86400))))
+                 (prefix (if stale "🔴 " ""))
+                 (line (work-item-to-string item)))
+            (insert (format "%d. %s[ ] %s\n" (cl-incf n) prefix line)))))))
 
-(insert (lf-string "
+  (insert (lf-string "
 
        1. [ ] Poke reviewers on stale items above
        2. [ ] Edit the sections above
@@ -6356,8 +6365,8 @@ outstanding reviews."
 (defun my/weekly-review--insert-l5-check ()
   "Insert the L5 senior-engineer competency self-check."
   ;; ─── All phases: L5 Competency check ───────────────────────────
-;; "Am I operating at L5?" — a gentle, structured self-check.
-(insert "
+  ;; "Am I operating at L5?" — a gentle, structured self-check.
+  (insert "
 ****** TODO ⟨L5⟩ Am I growing as a senior engineer?  [0%]
 
 1. [ ] 🏗️ *Ownership*: Did I take responsibility for something beyond
@@ -6375,30 +6384,30 @@ through its full lifecycle? (design → implement → test → ship)
 (defun my/weekly-review--insert-random-reflection ()
   "Phase 2+: insert a randomly chosen reflection question."
   (when (>= (my/weekly-review-phase) 2)
-  (insert "\n + [ ] "
-          (seq-random-elt
-           '(
-             "😄 What was the most enjoyable work activity of the last week?"
-             "🤦‍♂️ What were some frustrating or boring moments you had? How can you avoid that going forward?"
-             "🔧 Adjustments: What to stop? What to start? What to continue?"
-             "🟢 What should I continue doing?"
-             "🔴 What should I stop or change?"
-             "🧪 What’s one small experiment to try next week?"
-             "😁 What are your biggest and most exciting challenges for the week to come?
+    (insert "\n + [ ] "
+            (seq-random-elt
+             '(
+               "😄 What was the most enjoyable work activity of the last week?"
+               "🤦‍♂️ What were some frustrating or boring moments you had? How can you avoid that going forward?"
+               "🔧 Adjustments: What to stop? What to start? What to continue?"
+               "🟢 What should I continue doing?"
+               "🔴 What should I stop or change?"
+               "🧪 What’s one small experiment to try next week?"
+               "😁 What are your biggest and most exciting challenges for the week to come?
               What do you need to get there?"
-             "💭 Thoughts for the week to come: What are you thinking about for next week?"
-             "🖼️ Memories of the Amazing, Interesting and Unique:
+               "💭 Thoughts for the week to come: What are you thinking about for next week?"
+               "🖼️ Memories of the Amazing, Interesting and Unique:
 Share a photo, quote, line, or something from the
 previous week."
-             "🎯 Did you accomplish your goals? Which ones and how
+               "🎯 Did you accomplish your goals? Which ones and how
 did it go? Share your goal tracking and record you
 progress"
-             "🐾 How did I feel this week overall?"
-             "🕰️ Was my time aligned with my goals?"
-             "👀 What distracted me?"
-             "🎇 What energized me?"
-             "📚 What did I learn?"
-             "🪨 What are my biggest challenges (or "boulders")
+               "🐾 How did I feel this week overall?"
+               "🕰️ Was my time aligned with my goals?"
+               "👀 What distracted me?"
+               "🎇 What energized me?"
+               "📚 What did I learn?"
+               "🪨 What are my biggest challenges (or "boulders")
 for the week to come? Think about which tasks will
 have the highest value in me reaching my potential
 and being successful.")))))
@@ -6406,11 +6415,11 @@ and being successful.")))))
 (defun my/weekly-review--insert-archive ()
   "Insert the archive-completed-tasks checklist."
   ;; ─── All phases: Archive as closure ────────────────────────────
-;; Archiving DONE tasks is a small ritual of /completion/. The task
-;; moves from "active" to "history." Your task list gets shorter.
-;; You can /see/ progress because the list shrinks. The problem
-;; isn’t productivity — it’s that you never close the loop.
-(insert              "
+  ;; Archiving DONE tasks is a small ritual of /completion/. The task
+  ;; moves from "active" to "history." Your task list gets shorter.
+  ;; You can /see/ progress because the list shrinks. The problem
+  ;; isn’t productivity — it’s that you never close the loop.
+  (insert              "
 ****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
 
 /Archiving is an act of closure. It says: "this is finished."/
@@ -6429,7 +6438,7 @@ tree for clocking purposes.
 (defun my/weekly-review--insert-forward-planning ()
   "Phase 3: insert forward planning, commit, and happiness sections."
   (when (>= (my/weekly-review-phase) 3)
-  (insert "
+    (insert "
 ***** Looking forward to next week ---/mentally try to see where I should be going/
 
 ****** TODO ⟨3⟩ Prioritize and schedule!    [0%]
@@ -6500,10 +6509,10 @@ day. You remain focused on your most important tasks./
 ****** TODO ⟨5⟩ Am I getting happier? [0%]
 
 ")
-  (-let [start (point)]
-    (insert (my/get-table-of-daily-scores-for-last-week))
-    (center-region start (point)))
-  (insert "\n" (my/percentage-of-life-spent) "\n")))
+    (-let [start (point)]
+      (insert (my/get-table-of-daily-scores-for-last-week))
+      (center-region start (point)))
+    (insert "\n" (my/percentage-of-life-spent) "\n")))
 
 (defun my/weekly-review--wrap-up ()
   "Finalise the review: update statistics cookies, increment counter, celebrate."
@@ -6539,13 +6548,15 @@ day. You remain focused on your most important tasks./
               (my/weekly-review--heading)
               (my/weekly-review--insert-life-scores)
               (my/weekly-review--insert-properties)
+              ;; Start with something light — post to #social before
+              ;; diving into the heavier reflection sections.
+              (my/weekly-review--insert-social-reminder)
               (my/weekly-review--insert-commit-lint)
               (my/weekly-review--insert-ship-header)
               (my/weekly-review--insert-clock-visuals)
               (my/weekly-review--insert-git-commits)
               (my/weekly-review--insert-jira-tickets)
               (my/weekly-review--insert-wins-challenges)
-              (my/weekly-review--insert-social-reminder)
               (my/weekly-review--insert-weekly-promise)
               (my/weekly-review--insert-l5-check)
               (my/weekly-review--insert-random-reflection)
@@ -6625,7 +6636,7 @@ day. You remain focused on your most important tasks./
 
 ) ;; End 😴 — deferred weekly review keybinding and helpers
 
-(setq org-clock-sound "~/.emacs.d/school-bell.wav")
+  (setq org-clock-sound "~/.emacs.d/school-bell.wav")
 
 ;; In case my hands slip and I press “C-x C-c”, which saves all buffers and quits Emacs; confirm that's my intention.
 (setq confirm-kill-emacs 'yes-or-no-p)
@@ -8039,13 +8050,13 @@ method."
 ;; Working with massive files: my-life∙org:1 ends here
 
 ;; [[file:init.org::#Show-off-screen-heading-at-the-top-of-the-window][Show off-screen heading at the top of the window:1]]
-(use-package org-sticky-header
- :hook (org-mode . org-sticky-header-mode)
- :config
- (setq-default
-  org-sticky-header-full-path 'full
-  ;; Child and parent headings are seperated by a /.
-  org-sticky-header-outline-path-separator " ▷ "))
+ (use-package org-sticky-header
+  :hook (org-mode . org-sticky-header-mode)
+  :config
+  (setq-default
+   org-sticky-header-full-path 'full
+   ;; Child and parent headings are seperated by a /.
+   org-sticky-header-outline-path-separator " ▷ "))
 ;; Show off-screen heading at the top of the window:1 ends here
 
 ;; [[file:init.org::#Never-lose-the-cursor][Never lose the cursor:1]]
