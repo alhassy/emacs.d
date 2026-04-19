@@ -19117,34 +19117,30 @@ Each line links to magit-show-commit for the full diff."
   "Insert a summary of Jira tickets worked on this week.
 Shows ticket ID, title, Gerrit status, and time spent."
   (let* ((end-date (format-time-string "%Y-%m-%d"))
-       (start-date (format-time-string
-                    "%Y-%m-%d"
-                    (time-subtract (current-time)
-                                   (days-to-time 7))))
-       (tickets (my/jira-tickets-clocked-in-range start-date end-date)))
-  (when tickets
-    (my/gerrit--fetch-jira-titles (mapcar #'car tickets))
-    (insert "\n\n*Jira tickets worked on this week:*\n#+begin_quote\n")
-    (let ((total-minutes 0)
-          (n 0))
-      (dolist (entry tickets)
-        (let* ((ticket (car entry))
-               (title (or (my/gerrit--get-jira-title ticket)
-                          (alist-get 'heading (cdr entry))))
-               (minutes (alist-get 'minutes (cdr entry)))
-               (hours (/ minutes 60))
-               (mins (% minutes 60))
-               (status (my/progress-pulse--ticket-status ticket)))
-          (cl-incf total-minutes minutes)
-          (insert (format "%d. *%s* %s -- %s (%dh %02dm)\n"
-                          (cl-incf n) ticket title status hours mins))))
-      (insert (format "\nTotal: %dh %02dm across %d tickets\n"
-                      (/ total-minutes 60) (% total-minutes 60) (length tickets))))
-    (insert "#+end_quote\n"))))
-
-;; NOTE: `my/weekly-review--insert-outstanding-reviews' was axed —
-;; outstanding reviews now live inside `my/weekly-review--insert-weekly-promise'
-;; under the Impediments subsection, using `work-item-to-string' for rendering.
+         (start-date (format-time-string
+                      "%Y-%m-%d"
+                      (time-subtract (current-time)
+                                     (days-to-time 7))))
+         (tickets (my/jira-tickets-clocked-in-range start-date end-date)))
+    (when tickets
+      (my/gerrit--fetch-jira-titles (mapcar #'car tickets))
+      (insert "\n\n*Jira tickets worked on this week:*\n#+begin_quote\n")
+      (let ((total-minutes 0)
+            (n 0))
+        (dolist (entry tickets)
+          (let* ((ticket (car entry))
+                 (title (or (my/gerrit--get-jira-title ticket)
+                            (alist-get 'heading (cdr entry))))
+                 (minutes (alist-get 'minutes (cdr entry)))
+                 (hours (/ minutes 60))
+                 (mins (% minutes 60))
+                 (status (my/progress-pulse--ticket-status ticket)))
+            (cl-incf total-minutes minutes)
+            (insert (format "%d. *%s* %s -- %s (%dh %02dm)\n"
+                            (cl-incf n) ticket title status hours mins))))
+        (insert (format "\nTotal: %dh %02dm across %d tickets\n"
+                        (/ total-minutes 60) (% total-minutes 60) (length tickets))))
+      (insert "#+end_quote\n"))))
 
 (defvar my/cowsay-figures
   '("actually" "alpaca" "beavis.zen" "blowfish" "bong" "bud-frogs"
@@ -19242,11 +19238,56 @@ and italic guidance lines.  Returns the cleaned Org text."
   (when (yes-or-no-p "Have you tested in #musa-test first?")
     (my/weekly-review--publish-promise-to my\slack-webhook-url)))
 
-(defun my/weekly-review--insert-weekly-promise ()
-  "Insert the Weekly Promise section: Completed, In Progress, Planned, Impediments.
-Pre-populates Completed from merged tickets, In Progress from non-merged
-clocked tickets plus unresolved Jira items, and Impediments from stale
-outstanding reviews."
+(defun my/weekly-review--week-ticket-data ()
+  "Gather and partition this week’s clocked and Jira tickets.
+Returns a plist with keys :in-progress-clocked, :todo-clocked,
+:extra-jira-wip, and :extra-jira-todo."
+  (let* ((end-date (format-time-string "%Y-%m-%d"))
+         (start-date (format-time-string
+                      "%Y-%m-%d"
+                      (time-subtract (current-time)
+                                     (days-to-time 7))))
+         (clocked (my/jira-tickets-clocked-in-range start-date end-date))
+         (clocked-ids (mapcar #'car clocked))
+         ;; Partition clocked tickets by status.
+         (in-progress-clocked
+          (--filter (let ((s (my/progress-pulse--ticket-status (car it))))
+                      (not (or (string= "MERGED" s) (string= "TODO" s))))
+                    clocked))
+         (todo-clocked
+          (--filter (string= "TODO" (my/progress-pulse--ticket-status (car it)))
+                    clocked))
+         ;; Query Jira for unresolved tickets assigned to us,
+         ;; updated in the past 7 days (catches un-clocked work).
+         (jira-issues
+          (condition-case nil
+              (my/gerrit--query-jira
+               (format "assignee = %s AND resolution = Unresolved AND updated >= -7d"
+                       my\gerrit-user)
+               "summary")
+            (error nil)))
+         ;; Filter out tickets we already listed from clock data.
+         (extra-jira
+          (--filter (not (member (alist-get ‘key it) clocked-ids))
+                    jira-issues))
+         ;; Partition extra Jira items: TODO vs in-progress.
+         (extra-jira-wip
+          (--filter (not (string= "TODO"
+                                  (my/progress-pulse--ticket-status
+                                   (alist-get ‘key it))))
+                    extra-jira))
+         (extra-jira-todo
+          (--filter (string= "TODO"
+                             (my/progress-pulse--ticket-status
+                              (alist-get ‘key it)))
+                    extra-jira)))
+    (list :in-progress-clocked in-progress-clocked
+          :todo-clocked        todo-clocked
+          :extra-jira-wip      extra-jira-wip
+          :extra-jira-todo     extra-jira-todo)))
+
+(defun my/weekly-review--insert-promise-header ()
+  "Insert the Weekly Promise heading, properties, and instructions."
   (insert "
 ,****** TODO Weekly Promise
 :PROPERTIES:
@@ -19257,8 +19298,10 @@ outstanding reviews."
 /Be specific, tangible, and observable. Use numbers, names, and dates./
 /Keep it to one page. Report only essentials — headlines, not a Sunday edition./
 
-")
-  ;; --- Completed: pre-populate from this week's ticket data ---
+"))
+
+(defun my/weekly-review--insert-completed ()
+  "Insert the Completed section: merged tickets with git-log cross-reference."
   (insert "\n# what shipped this week")
   (insert "\n*✅ Completed:*\n")
   (let* ((end-date (format-time-string "%Y-%m-%d"))
@@ -19287,7 +19330,7 @@ outstanding reviews."
       (dolist (entry tickets)
         (let* ((ticket (car entry))
                (title (or (my/gerrit--get-jira-title ticket)
-                          (alist-get 'heading (cdr entry))))
+                          (alist-get ‘heading (cdr entry))))
                (status (my/progress-pulse--ticket-status ticket)))
           (when (and (string= status "MERGED")
                      (member ticket git-ticket-ids))
@@ -19310,58 +19353,20 @@ outstanding reviews."
   (my/weekly-review--insert-jira-tickets)
   (insert (lf-string "
 ,#+end_private
-"))
-  
-  ;; --- In Progress: tickets actively being worked on.
-  ;; Excludes MERGED (those go in Completed) and TODO (those go in Planned).
-  ;; Sources: clocked tickets + unresolved Jira items updated recently. ---
+")))
+
+(defun my/weekly-review--insert-in-progress (ticket-data)
+  "Insert the In Progress section from TICKET-DATA plist.
+Renders clocked WIP tickets and un-clocked Jira items that are
+neither MERGED nor TODO."
   (insert "\n# actively working on")
-    (insert "\n*🔨 In Progress:*\n")
-  (let* ((end-date (format-time-string "%Y-%m-%d"))
-         (start-date (format-time-string
-                      "%Y-%m-%d"
-                      (time-subtract (current-time)
-                                     (days-to-time 7))))
-         (clocked (my/jira-tickets-clocked-in-range start-date end-date))
-         (clocked-ids (mapcar #'car clocked))
-         ;; Partition clocked tickets by status.
-         (in-progress-clocked
-          (--filter (let ((s (my/progress-pulse--ticket-status (car it))))
-                      (not (or (string= "MERGED" s) (string= "TODO" s))))
-                    clocked))
-         (todo-clocked
-          (--filter (string= "TODO" (my/progress-pulse--ticket-status (car it)))
-                    clocked))
-         ;; Query Jira for unresolved tickets assigned to us,
-         ;; updated in the past 7 days (catches un-clocked work).
-         (jira-issues
-          (condition-case nil
-              (my/gerrit--query-jira
-               (format "assignee = %s AND resolution = Unresolved AND updated >= -7d"
-                       my\gerrit-user)
-               "summary")
-            (error nil)))
-         ;; Filter out tickets we already listed from clock data.
-         (extra-jira
-          (--filter (not (member (alist-get 'key it) clocked-ids))
-                    jira-issues))
-         ;; Partition extra Jira items: TODO vs in-progress.
-         (extra-jira-wip
-          (--filter (not (string= "TODO"
-                                  (my/progress-pulse--ticket-status
-                                   (alist-get 'key it))))
-                    extra-jira))
-         (extra-jira-todo
-          (--filter (string= "TODO"
-                              (my/progress-pulse--ticket-status
-                               (alist-get 'key it)))
-                    extra-jira))
-         (n 0))
+  (insert "\n*🔨 In Progress:*\n")
+  (let ((n 0))
     ;; Clocked and actively in progress
-    (dolist (entry in-progress-clocked)
+    (dolist (entry (plist-get ticket-data :in-progress-clocked))
       (let* ((ticket (car entry))
              (title (or (my/gerrit--get-jira-title ticket)
-                        (alist-get 'heading (cdr entry))))
+                        (alist-get ‘heading (cdr entry))))
              (status (my/progress-pulse--ticket-status ticket)))
         (insert (format "%d. %s %s — %s\n"
                         (cl-incf n)
@@ -19370,18 +19375,18 @@ outstanding reviews."
                           "")
                         (or title "") status))))
     ;; From Jira, not clocked, but actively in progress
-    (dolist (issue extra-jira-wip)
-      (let* ((key (alist-get 'key issue))
-             (summary (alist-get 'summary (alist-get 'fields issue))))
+    (dolist (issue (plist-get ticket-data :extra-jira-wip))
+      (let* ((key (alist-get ‘key issue))
+             (summary (alist-get ‘summary (alist-get ‘fields issue))))
         (insert (format "%d. %s %s\n"
                         (cl-incf n)
                         (my/gerrit--format-jira-link key)
-                        (or summary "")))))    
+                        (or summary "")))))
     (when (= n 0)
-      (insert "- /(None?! Really?! — Edit as needed) 🫣/\n"))
-    (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
+      (insert "- /(None?! Really?! — Edit as needed) 🫣/\n")))
+  (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
 
-    (insert (lf-string "
+  (insert (lf-string "
 ,#+begin_private
 1. ➕ Wins: What went well and why? ✅
 2. What could have caused things to go so well? Maybe I can duplicate this next week!
@@ -19389,86 +19394,95 @@ outstanding reviews."
 
 
 ,#+end_private
-"))
+")))
 
-  ;;  --------------------------------------------------------------------------------
-  ;; --- Impediments / Outstanding Reviews ---
-  ;; Merged: every please-review item belongs here (not just stale ones).
-  ;; Stale items (>5 days) get a 🔴 prefix; fresh ones get a checkbox.
-  ;; Uses `work-item-to-string' — the same renderer the agenda uses.
-    (insert "\n# who must do what by when?")
-    (insert "\n*🚧 Impediments:*\n")
+(defun my/weekly-review--insert-impediments ()
+  "Insert the Impediments section: outstanding reviews sorted by age."
+  (insert "\n# who must do what by when?")
+  (insert "\n*🚧 Impediments:*\n")
   (let ((please-review
          (when-let* ((items (plist-get my/agenda-work-data :items)))
            (--sort (< (or (work-item-age it) most-positive-fixnum)
                       (or (work-item-age other) most-positive-fixnum))
-                   (--filter (eq 'please-review (work-item-status it))
+                   (--filter (eq ‘please-review (work-item-status it))
                              items)))))
     (if (null please-review)
         (insert "# - /(none — no outstanding reviews!)/\n")
       (let ((n 0))
         (dolist (item please-review)
           (insert (format "%d. %s\n" (cl-incf n) (work-item-to-string item)))))))
-    (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
-  
-    (insert (lf-string "
+  (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
+
+  (insert (lf-string "
 ,#+begin_private
 1. ➖ Challenges: What didn’t go well? ⚠️
 2. How can I improve to mitigate bad weeks?
 
 
 "))
-  (when (boundp 'my\sprint-doc-url)
+  (when (boundp ‘my\sprint-doc-url)
     (insert (format "[[%s][Open Sprint Doc]] — ensure each item above is listed and assigned!\n\n"
                     my\sprint-doc-url)))
-    (insert (lf-string "#+end_private"))
-    
-  ;; --------------------------------------------------------------------------------
-    
-    ;; --- Planned: TODO items from clocked + Jira, plus space for manual additions ---
-    (insert "\n # slotted for next week")
-    (insert "\n*📆 Planned:*\n")
-    (let ((pn 0))
-      (dolist (entry todo-clocked)
-        (let* ((ticket (car entry))
-               (title (or (my/gerrit--get-jira-title ticket)
-                          (alist-get 'heading (cdr entry)))))
-          (insert (format "%d. %s %s\n"
-                          (cl-incf pn)
-                          (if ticket
-                              (my/gerrit--format-jira-link ticket)
-                            "")
-                          (or title "")))))
-      (dolist (issue extra-jira-todo)
-        (let* ((key (alist-get 'key issue))
-               (summary (alist-get 'summary (alist-get 'fields issue))))
-          (insert (format "%d. %s %s\n"
-                          (cl-incf pn)
-                          (my/gerrit--format-jira-link key)
-                          (or summary "")))))
-      (when (= pn 0)
-        (insert "- /(edit as needed)/\n")))
-    (insert "- \n")
+  (insert (lf-string "#+end_private")))
 
-    (insert (lf-string "
+(defun my/weekly-review--insert-planned (ticket-data)
+  "Insert the Planned section from TICKET-DATA plist.
+Renders TODO-status tickets from clock data and Jira."
+  (insert "\n # slotted for next week")
+  (insert "\n*📆 Planned:*\n")
+  (let ((pn 0))
+    (dolist (entry (plist-get ticket-data :todo-clocked))
+      (let* ((ticket (car entry))
+             (title (or (my/gerrit--get-jira-title ticket)
+                        (alist-get ‘heading (cdr entry)))))
+        (insert (format "%d. %s %s\n"
+                        (cl-incf pn)
+                        (if ticket
+                            (my/gerrit--format-jira-link ticket)
+                          "")
+                        (or title "")))))
+    (dolist (issue (plist-get ticket-data :extra-jira-todo))
+      (let* ((key (alist-get ‘key issue))
+             (summary (alist-get ‘summary (alist-get ‘fields issue))))
+        (insert (format "%d. %s %s\n"
+                        (cl-incf pn)
+                        (my/gerrit--format-jira-link key)
+                        (or summary "")))))
+    (when (= pn 0)
+      (insert "- /(edit as needed)/\n")))
+  (insert "- \n")
+
+  (insert (lf-string "
 ,#+begin_private
 1. 🔀 What will I focus on this week?
 2. What $10k tasks do I want done? Why or why not?
 
 
 ,#+end_private
-"))
+")))
 
-    
-  ;; --------------------------------------------------------------------------------
-    
+(defun my/weekly-review--insert-promise-checklist ()
+  "Insert the final edit/publish checklist for the Weekly Promise."
   (insert (lf-string "
 
        1. [ ] Edit the sections above
        2. [ ] Update the sprint Google Doc
        3. [ ] [[elisp:(my/weekly-review--test-promise)][🧪 Test in #musa-test]]  [[elisp:(my/weekly-review--publish-promise)][📤 Publish to #standups]]
 
-"))))
+")))
+
+(defun my/weekly-review--insert-weekly-promise ()
+  "Insert the Weekly Promise section: Completed, In Progress, Planned, Impediments.
+Pre-populates Completed from merged tickets, In Progress from non-merged
+clocked tickets plus unresolved Jira items, and Impediments from stale
+outstanding reviews."
+  (my/weekly-review--insert-promise-header)
+  (my/weekly-review--insert-completed)
+  (let ((ticket-data (my/weekly-review--week-ticket-data)))
+    (my/weekly-review--insert-in-progress ticket-data)
+    (my/weekly-review--insert-impediments)
+    (my/weekly-review--insert-planned ticket-data))
+  (my/weekly-review--insert-promise-checklist))
 
 
 (defun my/weekly-review--insert-l5-check ()
