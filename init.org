@@ -19305,119 +19305,109 @@ Returns a plist with keys :in-progress-clocked, :todo-clocked,
 ;; The string immediately after is the heading title.
 ;; Remaining keyword pairs become properties — except :body, whose
 ;; value is inserted as text after the property drawer.
-(defun my/org-insert-heading (relation title &rest plist)
+(defun my/org-insert-heading (relation title &rest props)
   "Insert an Org heading at RELATION (:child, :sibling, :uncle, :aunt).
 TITLE is the heading text. Remaining PLIST keyword pairs become
 properties, except :body whose value is inserted after the drawer."
-  (insert "\n")
   (org-insert-heading)
   (pcase relation
     (:child   (org-demote))
     (:sibling nil)
     ((or :uncle :aunt) (org-promote)))
   (insert title)
-  ;; Separate properties from body.
-  (let (props body)
-    (while plist
-      (let ((key (pop plist))
-            (val (pop plist)))
-        (if (eq key :body)
-            (setq body val)
-          (push (cons key val) props))))
-    ;; Insert properties (reversed to restore original order).
-    (dolist (pair (nreverse props))
-      (org-set-property (substring (symbol-name (car pair)) 1) (cdr pair)))
-    (re-search-forward ":END:")
-    (forward-line)
-    (when body (insert "\n\n") (insert body))))
+  (map-do (lambda (prop val) (unless (equal prop :body) (org-set-property (substring (symbol-name prop) 1) val))) props)
+  (re-search-forward ":END:")
+  (forward-line)
+  (-when-let (body (plist-get props :body)) (insert "\n\n") (insert body) (insert "\n\n")))
 
 
-(defun my/weekly-review--insert-completed ()
-  "Insert the Completed section: merged tickets with git-log cross-reference."
-  (my/org-insert-heading :child "✅ Completed" :DESCRIPTION "what shipped this week")
-  
-  (let* ((end-date (format-time-string "%Y-%m-%d"))
-         (start-date (format-time-string
-                      "%Y-%m-%d"
-                      (time-subtract (current-time)
-                                     (days-to-time 7))))
-         (tickets (my/jira-tickets-clocked-in-range start-date end-date))
-         ;; Tickets absent from Gerrit default to "MERGED", but that
-         ;; also catches meetings and syncs (which never had changes).
-         ;; Cross-reference git log: only tickets with actual commits
-         ;; count as shipped.
-         (git-ticket-ids
-          (let* ((default-directory my\work-dir)
-                 (ticket-re (concat "\\(" (regexp-opt my\jira-project-prefixes) "-[0-9]+\\)"))
-                 (log (shell-command-to-string
-                       "git log --author=\"Musa\" --since=\"7 days ago\" --format=\"%B\" --no-merges"))
-                 ids)
-            (dolist (line (split-string log "\n" t) (delete-dups ids))
-              (when (string-match ticket-re line)
-                (push (match-string 1 line) ids)))))
-         (n 0))
-    (if (null tickets)
-        (insert "- /(fill in)/\n")
-      (dolist (entry tickets)
-        (let* ((ticket (car entry))
-               (title (or (my/gerrit--get-jira-title ticket)
-                          (alist-get 'heading (cdr entry))))
-               (status (my/progress-pulse--ticket-status ticket)))
-          (when (and (string= status "MERGED")
-                     (member ticket git-ticket-ids))
-            (insert (format "%d. %s %s\n"
-                            (cl-incf n)
-                            (if ticket
-                                (my/gerrit--format-jira-link ticket)
-                              "")
-                            (or title "")))))))
-    (when (= n 0)
-      (insert "- /(nothing merged this week?! Really?! 🫣 Edit as needed)/\n")))
 
-  (insert (lf-string "
+  (defun my/weekly-review--insert-completed ()
+    "Insert the Completed section: merged tickets with git-log cross-reference."
+    (my/org-insert-heading :child "✅ Completed" :DESCRIPTION "what shipped this week")
+    
+    (let* ((end-date (format-time-string "%Y-%m-%d"))
+           (start-date (format-time-string
+                        "%Y-%m-%d"
+                        (time-subtract (current-time)
+                                       (days-to-time 7))))
+           (tickets (my/jira-tickets-clocked-in-range start-date end-date))
+           ;; Tickets absent from Gerrit default to "MERGED", but that
+           ;; also catches meetings and syncs (which never had changes).
+           ;; Cross-reference git log: only tickets with actual commits
+           ;; count as shipped.
+           (git-ticket-ids
+            (let* ((default-directory my\work-dir)
+                   (ticket-re (concat "\\(" (regexp-opt my\jira-project-prefixes) "-[0-9]+\\)"))
+                   (log (shell-command-to-string
+                         "git log --author=\"Musa\" --since=\"7 days ago\" --format=\"%B\" --no-merges"))
+                   ids)
+              (dolist (line (split-string log "\n" t) (delete-dups ids))
+                (when (string-match ticket-re line)
+                  (push (match-string 1 line) ids)))))
+           (n 0))
+      (if (null tickets)
+          (insert "- /(fill in)/\n")
+        (dolist (entry tickets)
+          (let* ((ticket (car entry))
+                 (title (or (my/gerrit--get-jira-title ticket)
+                            (alist-get 'heading (cdr entry))))
+                 (status (my/progress-pulse--ticket-status ticket)))
+            (when (and (string= status "MERGED")
+                       (member ticket git-ticket-ids))
+              (insert (format "%d. %s %s\n"
+                              (cl-incf n)
+                              (if ticket
+                                  (my/gerrit--format-jira-link ticket)
+                                "")
+                              (or title "")))))))
+      (when (= n 0)
+        (insert "- /(nothing merged this week?! Really?! 🫣 Edit as needed)/\n")))
+
+    (insert (lf-string "
 ,#+begin_private What did I ship this week?
 :WHY: Recognise accomplishments, express self-gratitude, and debug!
 
 "))
-  (my/weekly-review--insert-clock-visuals)
-  (my/weekly-review--insert-git-commits)
-  (my/weekly-review--insert-jira-tickets)
-  (insert (lf-string "
+    (my/weekly-review--insert-clock-visuals)
+    (my/weekly-review--insert-git-commits)
+    (my/weekly-review--insert-jira-tickets)
+    (insert (lf-string "
 ,#+end_private
 "))
-  (my/weekly-review--insert-archive))
+    (my/weekly-review--insert-archive))
 
-(defun my/weekly-review--insert-in-progress (ticket-data)
-  "Insert the In Progress section from TICKET-DATA plist.
+  (defun my/weekly-review--insert-in-progress (ticket-data)
+    "Insert the In Progress section from TICKET-DATA plist.
 Renders clocked WIP tickets and un-clocked Jira items that are
 neither MERGED nor TODO."
-  (my/org-insert-heading :sibling "🔨 In Progress" :DESCRIPTION "actively working on")
-  (let ((n 0))
-    ;; Clocked and actively in progress
-    (dolist (entry (plist-get ticket-data :in-progress-clocked))
-      (let* ((ticket (car entry))
-             (title (or (my/gerrit--get-jira-title ticket)
-                        (alist-get 'heading (cdr entry))))
-             (status (my/progress-pulse--ticket-status ticket)))
-        (insert (format "%d. %s %s — %s\n"
-                        (cl-incf n)
-                        (if ticket
-                            (my/gerrit--format-jira-link ticket)
-                          "")
-                        (or title "") status))))
-    ;; From Jira, not clocked, but actively in progress
-    (dolist (issue (plist-get ticket-data :extra-jira-wip))
-      (let* ((key (alist-get 'key issue))
-             (summary (alist-get 'summary (alist-get 'fields issue))))
-        (insert (format "%d. %s %s\n"
-                        (cl-incf n)
-                        (my/gerrit--format-jira-link key)
-                        (or summary "")))))
-    (when (= n 0)
-      (insert "- /(None?! Really?! — Edit as needed) 🫣/\n")))
-  (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
+    (my/org-insert-heading :uncle "🔨 In Progress" :DESCRIPTION "actively working on")
+    (let ((n 0))
+      ;; Clocked and actively in progress
+      (dolist (entry (plist-get ticket-data :in-progress-clocked))
+        (let* ((ticket (car entry))
+               (title (or (my/gerrit--get-jira-title ticket)
+                          (alist-get 'heading (cdr entry))))
+               (status (my/progress-pulse--ticket-status ticket)))
+          (insert (format "%d. %s %s — %s\n"
+                          (cl-incf n)
+                          (if ticket
+                              (my/gerrit--format-jira-link ticket)
+                            "")
+                          (or title "") status))))
+      ;; From Jira, not clocked, but actively in progress
+      (dolist (issue (plist-get ticket-data :extra-jira-wip))
+        (let* ((key (alist-get 'key issue))
+               (summary (alist-get 'summary (alist-get 'fields issue))))
+          (insert (format "%d. %s %s\n"
+                          (cl-incf n)
+                          (my/gerrit--format-jira-link key)
+                          (or summary "")))))
+      (when (= n 0)
+        (insert "- /(None?! Really?! — Edit as needed) 🫣/\n")))
+    (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
 
-  (insert (lf-string "
+    (insert (lf-string "
 ,#+begin_private
 1. ➕ Wins: What went well and why? ✅
 2. What could have caused things to go so well? Maybe I can duplicate this next week!
@@ -19427,66 +19417,66 @@ neither MERGED nor TODO."
 ,#+end_private
 ")))
 
-(defun my/weekly-review--insert-impediments ()
-  "Insert the Impediments section: outstanding reviews sorted by age."
-  (my/org-insert-heading :sibling "🚧 Impediments" :DESCRIPTION "who must do what by when?")
-  (let ((please-review
-         (when-let* ((items (plist-get my/agenda-work-data :items)))
-           (--sort (< (or (work-item-age it) most-positive-fixnum)
-                      (or (work-item-age other) most-positive-fixnum))
-                   (--filter (eq 'please-review (work-item-status it))
-                             items)))))
-    (if (null please-review)
-        (insert "# - /(none — no outstanding reviews!)/\n")
-      (let ((n 0))
-        (dolist (item please-review)
-          ;; Omit the 🔴 urgency marker here — every item in
-          ;; Impediments is implicitly urgent, so the prefix is
-          ;; redundant visual noise.
-          (let ((str (string-remove-prefix "🔴 " (work-item-to-string item))))
-            (insert (format "%d. %s\n" (cl-incf n) str)))))))
-  (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
+  (defun my/weekly-review--insert-impediments ()
+    "Insert the Impediments section: outstanding reviews sorted by age."
+    (my/org-insert-heading :sibling "🚧 Impediments" :DESCRIPTION "who must do what by when?")
+    (let ((please-review
+           (when-let* ((items (plist-get my/agenda-work-data :items)))
+             (--sort (< (or (work-item-age it) most-positive-fixnum)
+                        (or (work-item-age other) most-positive-fixnum))
+                     (--filter (eq 'please-review (work-item-status it))
+                               items)))))
+      (if (null please-review)
+          (insert "# - /(none — no outstanding reviews!)/\n")
+        (let ((n 0))
+          (dolist (item please-review)
+            ;; Omit the 🔴 urgency marker here — every item in
+            ;; Impediments is implicitly urgent, so the prefix is
+            ;; redundant visual noise.
+            (let ((str (string-remove-prefix "🔴 " (work-item-to-string item))))
+              (insert (format "%d. %s\n" (cl-incf n) str)))))))
+    (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
 
-  (insert (lf-string "
+    (insert (lf-string "
 ,#+begin_private
 1. ➖ Challenges: What didn’t go well? ⚠️
 2. How can I improve to mitigate bad weeks?
 
 
 "))
-  (when (boundp 'my\sprint-doc-url)
-    (insert (format "[[%s][Open Sprint Doc]] — ensure each item above is listed and assigned!\n\n"
-                    my\sprint-doc-url)))
-  (insert (lf-string "#+end_private")))
+    (when (boundp 'my\sprint-doc-url)
+      (insert (format "[[%s][Open Sprint Doc]] — ensure each item above is listed and assigned!\n\n"
+                      my\sprint-doc-url)))
+    (insert (lf-string "#+end_private")))
 
 
-(defun my/weekly-review--insert-planned (ticket-data)
-  "Insert the Planned section from TICKET-DATA plist.
+  (defun my/weekly-review--insert-planned (ticket-data)
+    "Insert the Planned section from TICKET-DATA plist.
 Renders TODO-status tickets from clock data and Jira."
-  (my/org-insert-heading :sibling "📆 Planned" :DESCRIPTION "slotted for next week")
-  (let ((pn 0))
-    (dolist (entry (plist-get ticket-data :todo-clocked))
-      (let* ((ticket (car entry))
-             (title (or (my/gerrit--get-jira-title ticket)
-                        (alist-get 'heading (cdr entry)))))
-        (insert (format "%d. %s %s\n"
-                        (cl-incf pn)
-                        (if ticket
-                            (my/gerrit--format-jira-link ticket)
-                          "")
-                        (or title "")))))
-    (dolist (issue (plist-get ticket-data :extra-jira-todo))
-      (let* ((key (alist-get 'key issue))
-             (summary (alist-get 'summary (alist-get 'fields issue))))
-        (insert (format "%d. %s %s\n"
-                        (cl-incf pn)
-                        (my/gerrit--format-jira-link key)
-                        (or summary "")))))
-    (when (= pn 0)
-      (insert "- /(edit as needed)/\n")))
-  (insert "- \n")
+    (my/org-insert-heading :sibling "📆 Planned" :DESCRIPTION "slotted for next week")
+    (let ((pn 0))
+      (dolist (entry (plist-get ticket-data :todo-clocked))
+        (let* ((ticket (car entry))
+               (title (or (my/gerrit--get-jira-title ticket)
+                          (alist-get 'heading (cdr entry)))))
+          (insert (format "%d. %s %s\n"
+                          (cl-incf pn)
+                          (if ticket
+                              (my/gerrit--format-jira-link ticket)
+                            "")
+                          (or title "")))))
+      (dolist (issue (plist-get ticket-data :extra-jira-todo))
+        (let* ((key (alist-get 'key issue))
+               (summary (alist-get 'summary (alist-get 'fields issue))))
+          (insert (format "%d. %s %s\n"
+                          (cl-incf pn)
+                          (my/gerrit--format-jira-link key)
+                          (or summary "")))))
+      (when (= pn 0)
+        (insert "- /(edit as needed)/\n")))
+    (insert "- \n")
 
-  (insert (lf-string "
+    (insert (lf-string "
 ,#+begin_private
 1. 🔀 What will I focus on this week?
 2. What $10k tasks do I want done? Why or why not?
@@ -19495,10 +19485,10 @@ Renders TODO-status tickets from clock data and Jira."
 ,#+end_private
 ")))
 
-(defun my/weekly-review--insert-promise-checklist ()
-  "Insert the final edit/publish checklist for the Weekly Promise."
-  (my/org-insert-heading :sibling "Wrap-up"
-    :body (lf-string "
+  (defun my/weekly-review--insert-promise-checklist ()
+    "Insert the final edit/publish checklist for the Weekly Promise."
+    (my/org-insert-heading :sibling "Wrap-up"
+                           :body (lf-string "
 
        1. [ ] Edit the sections above
        2. [ ] Update the sprint Google Doc
@@ -19506,26 +19496,26 @@ Renders TODO-status tickets from clock data and Jira."
 
 ")))
 
-(defun my/weekly-review--insert-weekly-promise ()
-  "Insert the Weekly Promise section: Completed, In Progress, Planned, Impediments.
+  (defun my/weekly-review--insert-weekly-promise ()
+    "Insert the Weekly Promise section: Completed, In Progress, Planned, Impediments.
 Pre-populates Completed from merged tickets, In Progress from non-merged
 clocked tickets plus unresolved Jira items, and Impediments from stale
 outstanding reviews."
-  (my/weekly-review--insert-promise-header)
-  (my/weekly-review--insert-completed)
-  (let ((ticket-data (my/weekly-review--week-ticket-data)))
-    (my/weekly-review--insert-in-progress ticket-data)
-    (my/weekly-review--insert-impediments)
-    (my/weekly-review--insert-planned ticket-data))
-  (my/weekly-review--insert-promise-checklist))
+    (my/weekly-review--insert-promise-header)
+    (my/weekly-review--insert-completed)
+    (let ((ticket-data (my/weekly-review--week-ticket-data)))
+      (my/weekly-review--insert-in-progress ticket-data)
+      (my/weekly-review--insert-impediments)
+      (my/weekly-review--insert-planned ticket-data))
+    (my/weekly-review--insert-promise-checklist))
 
 
-(defun my/weekly-review--insert-l5-check ()
-  "Insert the L5 senior-engineer competency self-check."
-  ;; ─── All phases: L5 Competency check ───────────────────────────
-  ;; "Am I operating at L5?" — a gentle, structured self-check.
-  (my/org-insert-heading :child "TODO Am I growing as a senior engineer, L5?"
-    :body "
+  (defun my/weekly-review--insert-l5-check ()
+    "Insert the L5 senior-engineer competency self-check."
+    ;; ─── All phases: L5 Competency check ───────────────────────────
+    ;; "Am I operating at L5?" — a gentle, structured self-check.
+    (my/org-insert-heading :child "TODO Am I growing as a senior engineer, L5?"
+                           :body "
 1. 🏗️ *Ownership*: Did I take responsibility for something beyond
 my immediate task? (unowned work, tech debt, test gaps, a
 design doc, a code review for someone outside my team)
@@ -19538,50 +19528,50 @@ or unblock them? (pairing, review feedback, a Slack explanation)
 3. 📐 *Scope*: Am I independently driving a project or feature
 through its full lifecycle? (design → implement → test → ship)
 
-"))
+\n\n"))
 
-(defun my/weekly-review--insert-random-reflection ()
-  "Phase 2+: insert a randomly chosen reflection question."
-  (when (>= (my/weekly-review-phase) 2)
-    (insert "\n + [ ] "
-            (seq-random-elt
-             '(
-               "😄 What was the most enjoyable work activity of the last week?"
-               "🤦‍♂️ What were some frustrating or boring moments you had? How can you avoid that going forward?"
-               "🔧 Adjustments: What to stop? What to start? What to continue?"
-               "🟢 What should I continue doing?"
-               "🔴 What should I stop or change?"
-               "🧪 What’s one small experiment to try next week?"
-               "😁 What are your biggest and most exciting challenges for the week to come?
+  (defun my/weekly-review--insert-random-reflection ()
+    "Phase 2+: insert a randomly chosen reflection question."
+    (when (>= (my/weekly-review-phase) 2)
+      (insert "\n + [ ] "
+              (seq-random-elt
+               '(
+                 "😄 What was the most enjoyable work activity of the last week?"
+                 "🤦‍♂️ What were some frustrating or boring moments you had? How can you avoid that going forward?"
+                 "🔧 Adjustments: What to stop? What to start? What to continue?"
+                 "🟢 What should I continue doing?"
+                 "🔴 What should I stop or change?"
+                 "🧪 What’s one small experiment to try next week?"
+                 "😁 What are your biggest and most exciting challenges for the week to come?
               What do you need to get there?"
-               "💭 Thoughts for the week to come: What are you thinking about for next week?"
-               "🖼️ Memories of the Amazing, Interesting and Unique:
+                 "💭 Thoughts for the week to come: What are you thinking about for next week?"
+                 "🖼️ Memories of the Amazing, Interesting and Unique:
 Share a photo, quote, line, or something from the
 previous week."
-               "🎯 Did you accomplish your goals? Which ones and how
+                 "🎯 Did you accomplish your goals? Which ones and how
 did it go? Share your goal tracking and record you
 progress"
-               "🐾 How did I feel this week overall?"
-               "🕰️ Was my time aligned with my goals?"
-               "👀 What distracted me?"
-               "🎇 What energized me?"
-               "📚 What did I learn?"
-               "🪨 What are my biggest challenges (or "boulders")
+                 "🐾 How did I feel this week overall?"
+                 "🕰️ Was my time aligned with my goals?"
+                 "👀 What distracted me?"
+                 "🎇 What energized me?"
+                 "📚 What did I learn?"
+                 "🪨 What are my biggest challenges (or "boulders")
 for the week to come? Think about which tasks will
 have the highest value in me reaching my potential
 and being successful.")))))
 
-(defun my/weekly-review--insert-archive ()
-  "Insert the archive-completed-tasks checklist."
-  ;; ─── All phases: Archive as closure ────────────────────────────
-  ;; Archiving DONE tasks is a small ritual of /completion/. The task
-  ;; moves from "active" to "history." Your task list gets shorter.
-  ;; You can /see/ progress because the list shrinks. The problem
-  ;; isn’t productivity — it’s that you never close the loop.
-  (my/org-insert-heading
-   :child "Archive completed and cancelled tasks"
-   :WHY "/Archiving is an act of closure. It says: this is finished./ /A clean task list is a calm mind./"
-   :body "
+  (defun my/weekly-review--insert-archive ()
+    "Insert the archive-completed-tasks checklist."
+    ;; ─── All phases: Archive as closure ────────────────────────────
+    ;; Archiving DONE tasks is a small ritual of /completion/. The task
+    ;; moves from "active" to "history." Your task list gets shorter.
+    ;; You can /see/ progress because the list shrinks. The problem
+    ;; isn’t productivity — it’s that you never close the loop.
+    (my/org-insert-heading
+     :child "Archive completed and cancelled tasks"
+     :WHY "/Archiving is an act of closure. It says: this is finished./ /A clean task list is a calm mind./"
+     :body "
 1. [ ] Look through the ~:LOG:~ for useful information to file away into my
 References.
 - If there’s useful info, capture it with ~C-c C-c~, then archive the original
@@ -19592,10 +19582,10 @@ tree for clocking purposes.
 (calendar-day-of-week (calendar-current-date))))))][📜 Items to review: Mine for useful info then archieve or delete. ☑️]]
 "))
 
-(defun my/weekly-review--insert-forward-planning ()
-  "Phase 3: insert forward planning, commit, and happiness sections."
-  (when (>= (my/weekly-review-phase) 3)
-    (insert "
+  (defun my/weekly-review--insert-forward-planning ()
+    "Phase 3: insert forward planning, commit, and happiness sections."
+    (when (>= (my/weekly-review-phase) 3)
+      (insert "
 ,***** Looking forward to next week ---/mentally try to see where I should be going/
 
 ,****** TODO Prioritize and schedule!    [0%]
@@ -19666,126 +19656,128 @@ day. You remain focused on your most important tasks./
 ,****** TODO Am I getting happier? [0%]
 
 ")
-    (-let [start (point)]
-      (insert (my/get-table-of-daily-scores-for-last-week))
-      (center-region start (point)))
-    (insert "\n" (my/percentage-of-life-spent) "\n")))
+      (-let [start (point)]
+        (insert (my/get-table-of-daily-scores-for-last-week))
+        (center-region start (point)))
+      (insert "\n" (my/percentage-of-life-spent) "\n")))
 
-(defun my/weekly-review--wrap-up ()
-  "Finalise the review: update statistics cookies, increment counter, celebrate."
-  (org-update-statistics-cookies 'all)
-  (insert "\nSay, \"Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)\"")
-  (my/weekly-review--increment-counter)
-  (message "Review ♯%d complete! (Phase %d) 🎉 To journal is to live!"
-           my/weekly-review-count (my/weekly-review-phase)))
+  (defun my/weekly-review--wrap-up ()
+    "Finalise the review: update statistics cookies, increment counter, celebrate."
+    (org-update-statistics-cookies 'all)
+    (insert "\nSay, \"Today, my purpose was to have fun and do a good job at work! I did it! (｡◕‿◕｡)\"")
+    (my/weekly-review--increment-counter)
+    (message "Review ♯%d complete! (Phase %d) 🎉 To journal is to live!"
+             my/weekly-review-count (my/weekly-review-phase)))
 
-;; =======================================================================
-;; Weekly Review -- capture template (the readable orchestration)
-;; =======================================================================
+  ;; =======================================================================
+  ;; Weekly Review -- capture template (the readable orchestration)
+  ;; =======================================================================
 
-;; "r"eview for the "w"eek
-;;
-;; Reflect on what went well and what could have gone better. Update your
-;; to-do and projects list. Remove unimportant tasks and update your
-;; calendar with any new relevant information.
-;;
-;;  Prepend a new section to "Weekly Log" listing what I've done in the
-;;                        past week; useful for standups, syncs, and performance reviews.
-(bind-key*
- "C-c r w"
- (def-capture "🔄 Weekly Review 😊"
-              "🌿 Reviews 🌱"
-              ;; tldr on "ts.el":
-              ;; Today           = (ts-format) ;; ⇒ "2025-05-26 16:46:52 -0400"
-              ;; Today + 10years = (ts-format (ts-adjust 'year 10 (ts-now)))
-              ;; Day of the week 2 days ago = (ts-day-name (ts-dec 'day 2 (ts-now))) ;; ⇒ "Saturday"
-              ;; "What day was 2 days ago, Saturday? What day will it be in 10 years and 3 months?"
-              ;; See https://github.com/alphapapa/ts.el, which has excellent examples.
-              ;; 😲 Nice human formatting functions too!
-              (my/weekly-review--heading)
-              (my/weekly-review--insert-life-scores)
-              (my/weekly-review--insert-properties)
-              ;; Start with something light — post to #social before
-              ;; diving into the heavier reflection sections.
-              (my/weekly-review--insert-social-reminder)
-              (my/weekly-review--insert-commit-lint)              
-              (my/weekly-review--insert-l5-check)
-              (my/weekly-review--insert-weekly-promise)
-              (my/weekly-review--insert-random-reflection)              
-              (my/weekly-review--insert-forward-planning)
-              (my/weekly-review--wrap-up)
-              (beginning-of-buffer)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Looping through Org headlines; i.e., iterating over my notes
-;;
-;; I got a lot of Org-Mode headings and I want to modify their properties (add,
-;; remove, edit). Is there a function to do the same modifications on each
-;; heading?
-;;
-;; \=>
-;;
-;; Adds an Edited_Date property to org headings matching the given condition.
-;; Alternatively one could use `org-map-entries’, however the filtering syntax is less than ideal.
-(when nil
-
-  ;; Do a modification
-  (org-ql-query
-    ;; Called with point at the start of each note (ie Org headline).
-    ;; SELECT is a function which is called on each matching entry with point at the beginning of its heading.
-    :select (lambda () (org-set-property "Edited_Date" (ts-format)))
-    :from org-agenda-files
-    ;; Daily Reviews Created in Last Week
-    :where   '(and (tags "Daily") (tags "Review") (ts :from -5)))
-
-  ;; See the changes.
-  (org-ql-search org-agenda-files '(and (tags "Daily") (tags "Review") (ts :from -5)))
-
-  ;; The org-ql-query function iterates through all the headings meeting the WHERE criteria in the determined FROM scope, and then calls the specified function SELECT function at each of those headings.
-
-  ;; The SELECT function accepts no arguments and is called at the beginning of each Org heading.
-  ;; If the optional WHERE argument is present, the headings will first be filtered based on it and then the SELECT will be called on only those.
-
-  ;; Get all titles
-  (org-ql-query
-    ;; :select (lambda () (thing-at-point 'line)) ;; Also, OK.
-    :select (lambda () (org-get-heading 'no-tags 'no-todo))
-    :from org-agenda-files)
-
-  )
+  ;; "r"eview for the "w"eek
+  ;;
+  ;; Reflect on what went well and what could have gone better. Update your
+  ;; to-do and projects list. Remove unimportant tasks and update your
+  ;; calendar with any new relevant information.
+  ;;
+  ;;  Prepend a new section to "Weekly Log" listing what I've done in the
+  ;;                        past week; useful for standups, syncs, and performance reviews.
+  (bind-key*
+   "C-c r w"
+   (def-capture "🔄 Weekly Review 😊"
+                "🌿 Reviews 🌱"
+                ;; tldr on "ts.el":
+                ;; Today           = (ts-format) ;; ⇒ "2025-05-26 16:46:52 -0400"
+                ;; Today + 10years = (ts-format (ts-adjust 'year 10 (ts-now)))
+                ;; Day of the week 2 days ago = (ts-day-name (ts-dec 'day 2 (ts-now))) ;; ⇒ "Saturday"
+                ;; "What day was 2 days ago, Saturday? What day will it be in 10 years and 3 months?"
+                ;; See https://github.com/alphapapa/ts.el, which has excellent examples.
+                ;; 😲 Nice human formatting functions too!
+                (my/weekly-review--heading)
+                (my/weekly-review--insert-life-scores)
+                (my/weekly-review--insert-properties)
+                ;; Start with something light — post to #social before
+                ;; diving into the heavier reflection sections.
+                (my/weekly-review--insert-social-reminder)
+                (my/weekly-review--insert-commit-lint)              
+                (my/weekly-review--insert-l5-check)
+                (my/weekly-review--insert-weekly-promise)
+                (my/weekly-review--insert-random-reflection)              
+                (my/weekly-review--insert-forward-planning)
+                (my/weekly-review--wrap-up)
+                (beginning-of-buffer)
+                ;; See only overview
+                (org-cycle 2)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun my/get-table-of-daily-scores-for-last-week ()
-  (thread-last
+  ;; Looping through Org headlines; i.e., iterating over my notes
+  ;;
+  ;; I got a lot of Org-Mode headings and I want to modify their properties (add,
+  ;; remove, edit). Is there a function to do the same modifications on each
+  ;; heading?
+  ;;
+  ;; \=>
+  ;;
+  ;; Adds an Edited_Date property to org headings matching the given condition.
+  ;; Alternatively one could use `org-map-entries’, however the filtering syntax is less than ideal.
+  (when nil
+
+    ;; Do a modification
     (org-ql-query
       ;; Called with point at the start of each note (ie Org headline).
-      :select (lambda ()
-                (list
-                 (ts-format "%A %Y-%m-%d" (ts-parse-org (org-entry-get nil "CREATED")))
-                 (org-entry-get nil "DailyScore")))
+      ;; SELECT is a function which is called on each matching entry with point at the beginning of its heading.
+      :select (lambda () (org-set-property "Edited_Date" (ts-format)))
       :from org-agenda-files
       ;; Daily Reviews Created in Last Week
       :where   '(and (tags "Daily") (tags "Review") (ts :from -5)))
-    (cons '("Date" "Daily Score"))
-    my/pp-list-of-lists-as-table
-    (concat "Daily Scores for last week \n\n")))
+
+    ;; See the changes.
+    (org-ql-search org-agenda-files '(and (tags "Daily") (tags "Review") (ts :from -5)))
+
+    ;; The org-ql-query function iterates through all the headings meeting the WHERE criteria in the determined FROM scope, and then calls the specified function SELECT function at each of those headings.
+
+    ;; The SELECT function accepts no arguments and is called at the beginning of each Org heading.
+    ;; If the optional WHERE argument is present, the headings will first be filtered based on it and then the SELECT will be called on only those.
+
+    ;; Get all titles
+    (org-ql-query
+      ;; :select (lambda () (thing-at-point 'line)) ;; Also, OK.
+      :select (lambda () (org-get-heading 'no-tags 'no-todo))
+      :from org-agenda-files)
+
+    )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (defun my/get-table-of-daily-scores-for-last-week ()
+    (thread-last
+      (org-ql-query
+        ;; Called with point at the start of each note (ie Org headline).
+        :select (lambda ()
+                  (list
+                   (ts-format "%A %Y-%m-%d" (ts-parse-org (org-entry-get nil "CREATED")))
+                   (org-entry-get nil "DailyScore")))
+        :from org-agenda-files
+        ;; Daily Reviews Created in Last Week
+        :where   '(and (tags "Daily") (tags "Review") (ts :from -5)))
+      (cons '("Date" "Daily Score"))
+      my/pp-list-of-lists-as-table
+      (concat "Daily Scores for last week \n\n")))
 
 
-(defun my/pp-list-of-lists-as-table (lol &optional justify min-cell-width columns)
-  "Convert a list of lists to a pretty `table.el’ table, editable with ⌘-e."
-  (let ((buf (get-buffer-create "*org-tb*")))
-    (with-current-buffer buf
-      (erase-buffer)
-      (mapcar (lambda (x)
-                (mapcar (lambda (y) (insert (format "%s&" y))) x)(insert "\n")) lol)
-      (table-capture 1 (point-max) "&" "\n" justify min-cell-width columns)
-      (buffer-substring-no-properties (point-min) (point-max)))))
-;;
-;; (my/pp-list-of-lists-as-table '((Abc Def "xyz") (1 1 X1) (2 4 X2) (3 9 X3) (4 16 X4)))
+  (defun my/pp-list-of-lists-as-table (lol &optional justify min-cell-width columns)
+    "Convert a list of lists to a pretty `table.el’ table, editable with ⌘-e."
+    (let ((buf (get-buffer-create "*org-tb*")))
+      (with-current-buffer buf
+        (erase-buffer)
+        (mapcar (lambda (x)
+                  (mapcar (lambda (y) (insert (format "%s&" y))) x)(insert "\n")) lol)
+        (table-capture 1 (point-max) "&" "\n" justify min-cell-width columns)
+        (buffer-substring-no-properties (point-min) (point-max)))))
+  ;;
+  ;; (my/pp-list-of-lists-as-table '((Abc Def "xyz") (1 1 X1) (2 4 X2) (3 9 X3) (4 16 X4)))
 
-) ;; End 😴 — deferred weekly review keybinding and helpers
+  ) ;; End 😴 — deferred weekly review keybinding and helpers
 #+end_src
 
 *** M-x org-lint
