@@ -19090,16 +19090,13 @@ Inserts the composite daily score into the heading and aligns properties."
   (my/clock-diagram))
 
 (defun my/weekly-review--insert-git-commits ()
-  "Insert a numbered list of git commits merged into ~/fwd this week.
+  "Insert a numbered list of git commits merged this week.
 Each line links to magit-show-commit for the full diff."
-  (-let [raw (string-trim
-            (shell-command-to-string
-             (concat "git -C ~/fwd log"
-                     " --author=\"Musa\""
-                     " --since=\"7 days ago\""
-                     " --format=\"%h\t%s\""
-                     " --no-merges")))]
-  (insert "\n\n*Commits merged into =~/fwd= this week:*\n"
+  (-let [raw (let ((default-directory my\work-dir))
+            (string-trim
+             (shell-command-to-string
+              "git log --author=\"Musa\" --since=\"7 days ago\" --format=\"%h\t%s\" --no-merges")))]
+  (insert "\n\n*Commits merged this week:*\n"
           (if (string-empty-p raw)
               "/(None yet — keep shipping!)/\n"
             (-let [n 0]
@@ -19108,7 +19105,7 @@ Each line links to magit-show-commit for the full diff."
                (mapconcat
                 (lambda (line)
                   (-let [(hash subject) (s-split-up-to "\t" line 1)]
-                    (format "%d. %s 📚 [[elisp:(let ((default-directory \"~/fwd/\")) (magit-show-commit \"%s\"))][Details]]"
+                    (format "%d. %s 📚 [[elisp:(let ((default-directory my\\work-dir)) (magit-show-commit \"%s\"))][Details]]"
                             (cl-incf n) subject hash)))
                 (s-lines raw) "\n")
                "\n#+end_quote\n"))))))
@@ -19268,18 +19265,18 @@ Returns a plist with keys :in-progress-clocked, :todo-clocked,
             (error nil)))
          ;; Filter out tickets we already listed from clock data.
          (extra-jira
-          (--filter (not (member (alist-get ‘key it) clocked-ids))
+          (--filter (not (member (alist-get 'key it) clocked-ids))
                     jira-issues))
          ;; Partition extra Jira items: TODO vs in-progress.
          (extra-jira-wip
           (--filter (not (string= "TODO"
                                   (my/progress-pulse--ticket-status
-                                   (alist-get ‘key it))))
+                                   (alist-get 'key it))))
                     extra-jira))
          (extra-jira-todo
           (--filter (string= "TODO"
                              (my/progress-pulse--ticket-status
-                              (alist-get ‘key it)))
+                              (alist-get 'key it)))
                     extra-jira)))
     (list :in-progress-clocked in-progress-clocked
           :todo-clocked        todo-clocked
@@ -19288,22 +19285,57 @@ Returns a plist with keys :in-progress-clocked, :todo-clocked,
 
 (defun my/weekly-review--insert-promise-header ()
   "Insert the Weekly Promise heading, properties, and instructions."
-  (insert "
-,****** TODO Weekly Promise
-:PROPERTIES:
-:WHY: A progress report is a promise report. Your word is on the line.
-:END:
-
+  (my/org-insert-heading :sibling "TODO Weekly Promise"
+    :WHY "A progress report is a promise report. Your word is on the line."
+    :body "
 /Declare your goals. Confront your results. Adjust to living in reality./
 /Be specific, tangible, and observable. Use numbers, names, and dates./
 /Keep it to one page. Report only essentials — headlines, not a Sunday edition./
 
 "))
 
+
+;; Usage:
+;;   (my/org-insert-heading :child "Title" :WHY "reason" :body "Body text")
+;;   (my/org-insert-heading :sibling "Title")
+;;   (my/org-insert-heading :uncle "Title" :FOO "bar")
+;;   (my/org-insert-heading :aunt "Title")  ;; same as :uncle
+;;
+;; The first keyword is the relation (:child, :sibling, :uncle, :aunt).
+;; The string immediately after is the heading title.
+;; Remaining keyword pairs become properties — except :body, whose
+;; value is inserted as text after the property drawer.
+(defun my/org-insert-heading (relation title &rest plist)
+  "Insert an Org heading at RELATION (:child, :sibling, :uncle, :aunt).
+TITLE is the heading text. Remaining PLIST keyword pairs become
+properties, except :body whose value is inserted after the drawer."
+  (insert "\n")
+  (org-insert-heading)
+  (pcase relation
+    (:child   (org-demote))
+    (:sibling nil)
+    ((or :uncle :aunt) (org-promote)))
+  (insert title)
+  ;; Separate properties from body.
+  (let (props body)
+    (while plist
+      (let ((key (pop plist))
+            (val (pop plist)))
+        (if (eq key :body)
+            (setq body val)
+          (push (cons key val) props))))
+    ;; Insert properties (reversed to restore original order).
+    (dolist (pair (nreverse props))
+      (org-set-property (substring (symbol-name (car pair)) 1) (cdr pair)))
+    (re-search-forward ":END:")
+    (forward-line)
+    (when body (insert "\n\n") (insert body))))
+
+
 (defun my/weekly-review--insert-completed ()
   "Insert the Completed section: merged tickets with git-log cross-reference."
-  (insert "\n# what shipped this week")
-  (insert "\n*✅ Completed:*\n")
+  (my/org-insert-heading :child "✅ Completed" :DESCRIPTION "what shipped this week")
+  
   (let* ((end-date (format-time-string "%Y-%m-%d"))
          (start-date (format-time-string
                       "%Y-%m-%d"
@@ -19315,11 +19347,10 @@ Returns a plist with keys :in-progress-clocked, :todo-clocked,
          ;; Cross-reference git log: only tickets with actual commits
          ;; count as shipped.
          (git-ticket-ids
-          (let* ((ticket-re (concat "\\(" (regexp-opt my\jira-project-prefixes) "-[0-9]+\\)"))
+          (let* ((default-directory my\work-dir)
+                 (ticket-re (concat "\\(" (regexp-opt my\jira-project-prefixes) "-[0-9]+\\)"))
                  (log (shell-command-to-string
-                       (format "git -C %s log --author=\"Musa\" --since=\"7 days ago\" --format=\"%%s\" --no-merges"
-                               (shell-quote-argument
-                                (expand-file-name my\work-dir)))))
+                       "git log --author=\"Musa\" --since=\"7 days ago\" --format=\"%B\" --no-merges"))
                  ids)
             (dolist (line (split-string log "\n" t) (delete-dups ids))
               (when (string-match ticket-re line)
@@ -19330,7 +19361,7 @@ Returns a plist with keys :in-progress-clocked, :todo-clocked,
       (dolist (entry tickets)
         (let* ((ticket (car entry))
                (title (or (my/gerrit--get-jira-title ticket)
-                          (alist-get ‘heading (cdr entry))))
+                          (alist-get 'heading (cdr entry))))
                (status (my/progress-pulse--ticket-status ticket)))
           (when (and (string= status "MERGED")
                      (member ticket git-ticket-ids))
@@ -19353,20 +19384,20 @@ Returns a plist with keys :in-progress-clocked, :todo-clocked,
   (my/weekly-review--insert-jira-tickets)
   (insert (lf-string "
 ,#+end_private
-")))
+"))
+  (my/weekly-review--insert-archive))
 
 (defun my/weekly-review--insert-in-progress (ticket-data)
   "Insert the In Progress section from TICKET-DATA plist.
 Renders clocked WIP tickets and un-clocked Jira items that are
 neither MERGED nor TODO."
-  (insert "\n# actively working on")
-  (insert "\n*🔨 In Progress:*\n")
+  (my/org-insert-heading :sibling "🔨 In Progress" :DESCRIPTION "actively working on")
   (let ((n 0))
     ;; Clocked and actively in progress
     (dolist (entry (plist-get ticket-data :in-progress-clocked))
       (let* ((ticket (car entry))
              (title (or (my/gerrit--get-jira-title ticket)
-                        (alist-get ‘heading (cdr entry))))
+                        (alist-get 'heading (cdr entry))))
              (status (my/progress-pulse--ticket-status ticket)))
         (insert (format "%d. %s %s — %s\n"
                         (cl-incf n)
@@ -19376,8 +19407,8 @@ neither MERGED nor TODO."
                         (or title "") status))))
     ;; From Jira, not clocked, but actively in progress
     (dolist (issue (plist-get ticket-data :extra-jira-wip))
-      (let* ((key (alist-get ‘key issue))
-             (summary (alist-get ‘summary (alist-get ‘fields issue))))
+      (let* ((key (alist-get 'key issue))
+             (summary (alist-get 'summary (alist-get 'fields issue))))
         (insert (format "%d. %s %s\n"
                         (cl-incf n)
                         (my/gerrit--format-jira-link key)
@@ -19398,19 +19429,22 @@ neither MERGED nor TODO."
 
 (defun my/weekly-review--insert-impediments ()
   "Insert the Impediments section: outstanding reviews sorted by age."
-  (insert "\n# who must do what by when?")
-  (insert "\n*🚧 Impediments:*\n")
+  (my/org-insert-heading :sibling "🚧 Impediments" :DESCRIPTION "who must do what by when?")
   (let ((please-review
          (when-let* ((items (plist-get my/agenda-work-data :items)))
            (--sort (< (or (work-item-age it) most-positive-fixnum)
                       (or (work-item-age other) most-positive-fixnum))
-                   (--filter (eq ‘please-review (work-item-status it))
+                   (--filter (eq 'please-review (work-item-status it))
                              items)))))
     (if (null please-review)
         (insert "# - /(none — no outstanding reviews!)/\n")
       (let ((n 0))
         (dolist (item please-review)
-          (insert (format "%d. %s\n" (cl-incf n) (work-item-to-string item)))))))
+          ;; Omit the 🔴 urgency marker here — every item in
+          ;; Impediments is implicitly urgent, so the prefix is
+          ;; redundant visual noise.
+          (let ((str (string-remove-prefix "🔴 " (work-item-to-string item))))
+            (insert (format "%d. %s\n" (cl-incf n) str)))))))
   (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
 
   (insert (lf-string "
@@ -19420,21 +19454,21 @@ neither MERGED nor TODO."
 
 
 "))
-  (when (boundp ‘my\sprint-doc-url)
+  (when (boundp 'my\sprint-doc-url)
     (insert (format "[[%s][Open Sprint Doc]] — ensure each item above is listed and assigned!\n\n"
                     my\sprint-doc-url)))
   (insert (lf-string "#+end_private")))
 
+
 (defun my/weekly-review--insert-planned (ticket-data)
   "Insert the Planned section from TICKET-DATA plist.
 Renders TODO-status tickets from clock data and Jira."
-  (insert "\n # slotted for next week")
-  (insert "\n*📆 Planned:*\n")
+  (my/org-insert-heading :sibling "📆 Planned" :DESCRIPTION "slotted for next week")
   (let ((pn 0))
     (dolist (entry (plist-get ticket-data :todo-clocked))
       (let* ((ticket (car entry))
              (title (or (my/gerrit--get-jira-title ticket)
-                        (alist-get ‘heading (cdr entry)))))
+                        (alist-get 'heading (cdr entry)))))
         (insert (format "%d. %s %s\n"
                         (cl-incf pn)
                         (if ticket
@@ -19442,8 +19476,8 @@ Renders TODO-status tickets from clock data and Jira."
                           "")
                         (or title "")))))
     (dolist (issue (plist-get ticket-data :extra-jira-todo))
-      (let* ((key (alist-get ‘key issue))
-             (summary (alist-get ‘summary (alist-get ‘fields issue))))
+      (let* ((key (alist-get 'key issue))
+             (summary (alist-get 'summary (alist-get 'fields issue))))
         (insert (format "%d. %s %s\n"
                         (cl-incf pn)
                         (my/gerrit--format-jira-link key)
@@ -19463,7 +19497,8 @@ Renders TODO-status tickets from clock data and Jira."
 
 (defun my/weekly-review--insert-promise-checklist ()
   "Insert the final edit/publish checklist for the Weekly Promise."
-  (insert (lf-string "
+  (my/org-insert-heading :sibling "Wrap-up"
+    :body (lf-string "
 
        1. [ ] Edit the sections above
        2. [ ] Update the sprint Google Doc
@@ -19489,9 +19524,8 @@ outstanding reviews."
   "Insert the L5 senior-engineer competency self-check."
   ;; ─── All phases: L5 Competency check ───────────────────────────
   ;; "Am I operating at L5?" — a gentle, structured self-check.
-  (insert "
-,****** TODO Am I growing as a senior engineer, L5?
-
+  (my/org-insert-heading :child "TODO Am I growing as a senior engineer, L5?"
+    :body "
 1. 🏗️ *Ownership*: Did I take responsibility for something beyond
 my immediate task? (unowned work, tech debt, test gaps, a
 design doc, a code review for someone outside my team)
@@ -19544,19 +19578,17 @@ and being successful.")))))
   ;; moves from "active" to "history." Your task list gets shorter.
   ;; You can /see/ progress because the list shrinks. The problem
   ;; isn’t productivity — it’s that you never close the loop.
-  (insert              "
-,****** TODO ⟨2⟩ Archive completed and cancelled tasks      [0%]
-
-/Archiving is an act of closure. It says: this is finished./
-/A clean task list is a calm mind./
-
+  (my/org-insert-heading
+   :child "Archive completed and cancelled tasks"
+   :WHY "/Archiving is an act of closure. It says: this is finished./ /A clean task list is a calm mind./"
+   :body "
 1. [ ] Look through the ~:LOG:~ for useful information to file away into my
 References.
 - If there’s useful info, capture it with ~C-c C-c~, then archive the original
 tree for clocking purposes.
 - If clocking purposes do not matter, say for personal or trivial tasks, then just delete the tree.
 
-[[elisp:(org-ql-search org-agenda-files '(and (done) (not (tags "Top")) (closed :to (-
+[[elisp:(org-ql-search org-agenda-files '(and (done) (not (tags \"Top\")) (closed :to (-
 (calendar-day-of-week (calendar-current-date))))))][📜 Items to review: Mine for useful info then archieve or delete. ☑️]]
 "))
 
@@ -19608,7 +19640,7 @@ overloaded! I don’t want to keep pushing things since my days are unrealistic!
 
 5. [ ] Decide your tasks for the week and time block your calendar.
 
-,*Focus on important tasks! Not low priority no-one-cares ‘fun’ efforts!*
+,*Focus on important tasks! Not low priority no-one-cares 'fun' efforts!*
 
 ,*Embrace trade-offs.* You can’t do it all. Realize that when you’re
 choosing to do one task, you’re saying `no` to many other tasks. And
@@ -19679,8 +19711,7 @@ day. You remain focused on your most important tasks./
               (my/weekly-review--insert-commit-lint)              
               (my/weekly-review--insert-l5-check)
               (my/weekly-review--insert-weekly-promise)
-              (my/weekly-review--insert-random-reflection)
-              (my/weekly-review--insert-archive)
+              (my/weekly-review--insert-random-reflection)              
               (my/weekly-review--insert-forward-planning)
               (my/weekly-review--wrap-up)
               (beginning-of-buffer)))
@@ -19752,7 +19783,7 @@ day. You remain focused on your most important tasks./
       (table-capture 1 (point-max) "&" "\n" justify min-cell-width columns)
       (buffer-substring-no-properties (point-min) (point-max)))))
 ;;
-;; (my/pp-list-of-lists-as-table ‘((Abc Def "xyz") (1 1 X1) (2 4 X2) (3 9 X3) (4 16 X4)))
+;; (my/pp-list-of-lists-as-table '((Abc Def "xyz") (1 1 X1) (2 4 X2) (3 9 X3) (4 16 X4)))
 
 ) ;; End 😴 — deferred weekly review keybinding and helpers
 #+end_src
@@ -21310,8 +21341,10 @@ Loaded from and saved to `my/progress-pulse--timestamp-file'.")
 
 (defun my/progress-pulse--ticket-status (ticket)
   "Return a display string for TICKET's Gerrit status.
-Cross-references `my/agenda-work-data'; tickets absent from open
-changes are assumed merged/done."
+Cross-references `my/agenda-work-data' for open changes, then
+falls back to git log: tickets with commits are MERGED, tickets
+with neither open changes nor commits are CLOCKED (e.g., syncs,
+meetings, umbrella epics)."
   (if-let* ((items (plist-get my/agenda-work-data :items))
             (item (--first (equal ticket (work-item-jira it)) items)))
       (pcase (work-item-status item)
@@ -21321,7 +21354,16 @@ changes are assumed merged/done."
         ('my-needing-action "NEEDS ACTION")
         ('todo            "TODO")
         (_                "OPEN"))
-    "MERGED"))
+    ;; No open Gerrit change — check git log for actual commits.
+    (if (and ticket
+             (not (string-empty-p
+                   (string-trim
+                    (shell-command-to-string
+                     (format "git -C %s log --author=\"Musa\" --since=\"60 days ago\" --format=\"%%h\" --no-merges --grep=%s"
+                             (shell-quote-argument (expand-file-name my\work-dir))
+                             (shell-quote-argument ticket)))))))
+        "MERGED"
+      "CLOCKED")))
 
 ;; ——— Core command ———————————————————————————————————————————————
 
