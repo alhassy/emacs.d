@@ -3177,7 +3177,188 @@ Example:
      :urgent t)))
 ;; Conversion: raw alists → =work-item= instances:1 ends here
 
-;; [[file:init.org::*Rendering =work-item= instances][Rendering =work-item= instances:1]]
+;; [[file:init.org::#org-task-help-echo][Help-echo action hints for regular Org tasks:1]]
+(defun my/org-task-help-echo (marker)
+  "Return a propertized, centred help-echo string for an Org heading at MARKER.
+Inspects the heading's TODO state, priority, timestamps, and clock
+data, then returns a context-sensitive action hint --- or nil when
+no signal applies.
+
+Signals are checked in priority order (highest leverage first):
+  1. 🔥 Overdue deadline
+  2. ⏰ Deadline today
+  3. 🧊 Frozen (STARTED but no recent clock)
+  4. 🫥 Possibly abandoned (scheduled long ago, never clocked)
+  5. ⏳ WAITING too long
+  6. 🏷️ All subtasks done but parent still open
+  7. 📌 High priority but unscheduled
+  8. ✅ Done but not archived
+  9. 🎯 Ready to start"
+  (when (and marker (marker-buffer marker))
+    (with-current-buffer (marker-buffer marker)
+      (org-with-wide-buffer
+       (goto-char marker)
+       (let* ((todo      (org-get-todo-state))
+              (priority  (org-entry-get nil "PRIORITY"))
+              (deadline  (org-get-deadline-time nil))
+              (scheduled (org-get-scheduled-time nil))
+              (closed-ts (org-entry-get nil "CLOSED"))
+              (closed    (when closed-ts
+                           (org-time-string-to-time closed-ts)))
+              (now       (float-time))
+              (days-since (lambda (ts)
+                            (when ts
+                              (floor (/ (- now (float-time ts)) 86400)))))
+              (deadline-days  (funcall days-since deadline))
+              (scheduled-days (funcall days-since scheduled))
+              (closed-days    (funcall days-since closed))
+              ;; Check whether any clock entry exists in the subtree.
+              (has-clock
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t))))
+                   (re-search-forward org-clock-line-re end t))))
+              ;; Last clock-out timestamp in the subtree.
+              (last-clock-days
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t)))
+                       (latest nil))
+                   (while (re-search-forward
+                           "CLOCK:.*--\\(\\[.*?\\]\\)" end t)
+                     (let ((ts (org-time-string-to-time
+                                (match-string 1))))
+                       (when (or (null latest)
+                                 (time-less-p latest ts))
+                         (setq latest ts))))
+                   (funcall days-since latest))))
+              ;; Whether any child heading is still a TODO state.
+              (has-todo-children
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t)))
+                       (found nil))
+                   (while (and (not found)
+                               (outline-next-heading)
+                               (< (point) end))
+                     (when (org-get-todo-state)
+                       (setq found t)))
+                   found)))
+              (has-children
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t))))
+                   (and (outline-next-heading)
+                        (< (point) end)))))
+              ;; Done states (past the | separator).
+              (done-p (member todo '("DONE" "CANCELLED" "PAUSED"
+                                     "WAITING" "APPROVED")))
+              ;; Active non-done states.
+              (started-p (equal todo "STARTED"))
+              (waiting-p (equal todo "WAITING"))
+              (todo-p    (member todo '("TODO" "INVESTIGATED")))
+              ;; ── Signal dispatch (highest priority first) ──
+              (action
+               (cond
+                ;; 1. 🔥 Overdue
+                ((and deadline-days (> deadline-days 0)
+                      (not (member todo '("DONE" "CANCELLED"))))
+                 (propertize
+                  (format "🔥 Overdue by %d day%s --- do it now or reschedule."
+                          deadline-days
+                          (if (= deadline-days 1) "" "s"))
+                  'face '(bold (:foreground "red"))))
+                ;; 2. ⏰ Due today
+                ((and deadline-days (= deadline-days 0)
+                      (not (member todo '("DONE" "CANCELLED"))))
+                 (propertize "⏰ Due today --- block time and finish it."
+                             'face '(bold (:foreground "orange red"))))
+                ;; 3. 🧊 Frozen
+                ((and started-p last-clock-days (> last-clock-days 7))
+                 (propertize
+                  (format "🧊 Started but untouched for %d days --- resume or refile."
+                          last-clock-days)
+                  'face '(bold (:foreground "steel blue"))))
+                ;; 4. 🫥 Possibly abandoned
+                ((and todo-p scheduled-days (> scheduled-days 30)
+                      (not has-clock))
+                 (propertize
+                  "🫥 Scheduled a month ago, never started --- refile or axe."
+                  'face '(bold (:foreground "orange red"))))
+                ;; 5. ⏳ Waiting — graduated by duration.
+                ;; CLOSED timestamp marks when the task entered WAITING
+                ;; (Org sets it for states past the | separator).
+                (waiting-p
+                 (let ((wait-days (or closed-days scheduled-days 0)))
+                   (cond
+                    ((>= wait-days 14)
+                     (propertize
+                      (format "⏳ Waiting %d days --- this is stale. Ping now or unblock."
+                              wait-days)
+                      'face '(bold (:foreground "red"))))
+                    ((>= wait-days 7)
+                     (propertize
+                      (format "⏳ Waiting %d days --- time to check in."
+                              wait-days)
+                      'face '(bold (:foreground "orange red"))))
+                    ((>= wait-days 3)
+                     (propertize
+                      (format "⏳ Waiting %d days --- patience, but keep an eye on it."
+                              wait-days)
+                      'face '(bold (:foreground "steel blue"))))
+                    (t
+                     (propertize
+                      (format "⏳ Waiting %d day%s --- still fresh, no action needed yet."
+                              wait-days (if (= wait-days 1) "" "s"))
+                      'face '(bold (:foreground "sea green")))))))
+                ;; 6. 🏷️ All subtasks done
+                ((and todo-p has-children (not has-todo-children))
+                 (propertize
+                  "🏷️ All subtasks done --- close the parent or add the next step."
+                  'face '(bold (:foreground "steel blue"))))
+                ;; 7. 📌 High priority but unscheduled
+                ((and (equal priority "A") (not scheduled)
+                      (not (member todo '("DONE" "CANCELLED"))))
+                 (propertize
+                  "📌 High priority but unscheduled --- when will you do this?"
+                  'face '(bold (:foreground "orange red"))))
+                ;; 8. ✅ Done, not archived
+                ((and (equal todo "DONE") closed-days (> closed-days 7))
+                 (propertize
+                  (format
+                   "✅ Done %d days ago --- archive it. A clean list is a calm mind."
+                   closed-days)
+                  'face '(bold (:foreground "sea green"))))
+                ;; 9. 🎯 Ready to start
+                ((and todo-p scheduled-days (>= scheduled-days 0))
+                 (propertize
+                  "🎯 Ready to go --- clock in and start."
+                  'face '(bold (:foreground "sea green")))))))
+         (when action
+           (my/center-text action)))))))
+
+(defun my/agenda-attach-task-help-echo ()
+  "Walk every line in the agenda buffer, attaching `help-echo' to
+Org task lines that do not already have one.
+
+We skip lines that already carry a `help-echo' (e.g., our custom
+work-item sections) to avoid overwriting richer hints.  Only lines
+with an `org-marker' text property --- i.e., lines backed by a real
+Org heading --- are candidates."
+  (when (string-prefix-p "*Org Agenda" (buffer-name))
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (goto-char (point-min))
+        (while (not (eobp))
+          (let* ((beg (line-beginning-position))
+                 (end (line-end-position))
+                 (marker (get-text-property beg 'org-marker)))
+            (when (and marker
+                       (not (get-text-property beg 'help-echo)))
+              (when-let ((echo (my/org-task-help-echo marker)))
+                (put-text-property beg end 'help-echo echo))))
+          (forward-line 1))))))
+
+(add-hook 'org-agenda-finalize-hook #'my/agenda-attach-task-help-echo)
+;; Help-echo action hints for regular Org tasks:1 ends here
+
+;; [[file:init.org::#org-task-help-echo][Help-echo action hints for regular Org tasks:2]]
 (cl-defun my/gerrit--extract-reviewer-user-map (stack)
   "Extract an alist of (display-name . username) for reviewers in STACK.
 Merges two sources:
@@ -3560,7 +3741,7 @@ Stat-based nudges (highest priority wins):
                 (t        '(bold (:foreground "steel blue"))))))
           (concat "\n"
                   (propertize nudge 'face nudge-face))))))))
-;; Rendering =work-item= instances:1 ends here
+;; Help-echo action hints for regular Org tasks:2 ends here
 
 ;; [[file:init.org::*Ticket collection helper][Ticket collection helper:1]]
 (cl-defun my/gerrit--collect-all-tickets (stacks)

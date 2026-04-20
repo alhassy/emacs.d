@@ -23,6 +23,19 @@ with a simple textual template but, with Lisp in-hand, I can move to an involved
 data-driven review that aggregates daily review data, compares it, and presents
 me with interactive prompts.
 
+#+begin_quote joy :tangle
+   _________________________________________
+  / The only way to learn is by playing.    \
+  | The only way to win is by learning. And |
+  \ the only way to begin is by beginning.  /
+   -----------------------------------------
+          \   ^__^
+           \  (oo)\_______
+              (__)\       )\/\
+                  ||----w |
+                  ||     ||
+#+end_quote
+  
 * TODO Pomodoro: Staying on track 🤔
 
 I love pomodoro, I've been using it for couple of years and I think it
@@ -12306,10 +12319,46 @@ string.  This replaces the former =format-stack-as-org= and
 =format-stale-stack-as-org= --- two functions with overlapping logic
 now unified into one.
 
-Each rendered line also carries a =help-echo= text property (via
+**** 🧭 Design philosophy: a dashboard that decides for you
+
+The question /what should I do next?/ is where a dashboard goes from
+being informative to actually useful.  Most dashboards fail here:
+they collect metrics but leave /you/ to do the cognitive work of
+turning data into action.  That is, they show the problem but
+suggest the /same kind/ of action (iterate harder) --- or worse,
+they show nothing at all and leave you staring at a wall of
+numbers.
+
+A winning dashboard has three components:
+
+1. *State detection* --- metrics: age, patchsets, comments, CI
+   status, reviewer count.  We have this.
+2. *Action mapping* --- rules that translate state into a suggested
+   /next best action/.  This is the =help-echo= layer.
+3. *Priority scoring* --- ordering items so the highest-leverage
+   action surfaces first.  This is the agenda section order and
+   Org priorities (=#A=, =#B=).
+
+Without components 2 and 3, we have a report --- not a dashboard.
+Reports get glanced at; dashboards get /used/.
+
+The critical insight: *a good dashboard does not say "this change
+has 6 patchsets."*  It says "this change has 6 patchsets and 14
+unresolved comments --- schedule a 15-minute sync."  The difference
+is between /describing state/ and /prescribing action/.
+
+Each rendered line carries a =help-echo= text property (via
 =work-item-help-echo=) so the agenda is not a passive report but an
 *active dashboard*: rest the cursor on any item and the minibuffer
-tells you what to do next --- not just what exists.
+tells you what to do next --- not just what exists.  The suggested
+action is context-sensitive --- it adapts to the item's status,
+age, reviewer activity, CI health, and size.
+
+This is also why a wall of metrics kills a dashboard.  If every
+item screams equally, nothing is urgent.  If the dashboard answers
+"what should I do next?" you will actually use it daily.
+
+**** The three layers of =work-item-help-echo=
 
 The hint has three layers, each on its own line and propertized with
 distinct faces --- bold action, dimmed metadata, colour-coded nudge
@@ -12331,6 +12380,8 @@ one that actually changes what you do next.
 
 | Signal       | Condition                       | Nudge                                                     |
 |--------------+---------------------------------+-----------------------------------------------------------|
+| 🔴 CI red    | CI failed                       | Fix CI before anything else                               |
+| 🔗 Blocked   | parent unmerged                 | Land the dependency first                                 |
 | 🧱 Stuck     | many ps + many comments + stale | Don't just iterate: sync discussion, split, or rethink    |
 | ⚠ Escalate   | many ps + many comments (fresh) | Escalate to synchronous conversation                      |
 | ⚠ Abandon    | very old + large + many ps      | Abandon and re-open as smaller pieces                     |
@@ -12338,7 +12389,15 @@ one that actually changes what you do next.
 | 💡 Spin off  | many comments + few ps          | Spin off unrelated cleanup as follow-up work              |
 | 👥 Widen     | solo reviewer + stale           | Add another reviewer or re-assign to get things moving    |
 | 👥 Narrow    | > 2 reviewers                   | Coordination overhead; narrow to 1–2 primary reviewers    |
+| ✅ Approve   | CI green + no Code-Review       | Request final approval                                    |
 | 🔄 Rebase    | > 7 days old                    | Rebase to stay current with target branch                 |
+
+The priority order is deliberate.  🔴 CI red and 🔗 blocked are
+hard blockers --- nothing else matters until they are resolved.
+🧱 Stuck is next because /you are the bottleneck/: reviewer
+feedback is waiting, and every day of delay compounds.  The
+remaining nudges are advisory --- genuinely helpful, but not
+urgent.
 
 Key design insight: *patchsets ≠ disagreement* --- we only flag
 contention when patchsets AND comments are both high.  Patchsets
@@ -12346,6 +12405,239 @@ alone are just iterative improvement.  This is where most dashboards
 fail: they show the problem but suggest the /same kind/ of action
 (iterate harder).  The nudge layer suggests a /different kind/ of
 action --- escalate, split, abandon, rethink.
+
+**** Help-echo action hints for regular Org tasks
+:PROPERTIES:
+:CUSTOM_ID: org-task-help-echo
+:END:
+
+Org-agenda is a personal dashboard.  Priorities (=#A=, =#B=, =#C=)
+tell us /how important/ something is; the help-echo rules below tell
+us /what to do about it/.  Without both, the agenda is a passive
+report --- a list of things that exist.  With both, it becomes a
+prescriptive tool: rest the cursor on any line and the minibuffer
+tells you the single highest-leverage action you can take right now.
+
+Org tasks are structurally similar to =work-item= instances --- they
+have a status (=TODO=, =STARTED=, =WAITING=, =DONE=), optional
+priority, timestamps (scheduled, deadline, closed), clock data, and
+tags.  We already have =help-at-pt= active in the agenda (see
+=org-agenda-mode-hook= below).  =my/agenda-attach-task-help-echo=
+walks every agenda line on finalize, inspects the source heading via
+its =org-marker=, and attaches a context-sensitive =help-echo= ---
+in similar spirit to how =work-item-help-echo= does it for Gerrit
+work-items.  Lines that already carry a =help-echo= (e.g., the
+custom work-item sections) are left untouched.
+
+Action mapping (highest priority first):
+
+| Signal                        | Condition                                | Suggested action                                       |
+|-------------------------------+------------------------------------------+--------------------------------------------------------|
+| 🔥 Overdue                    | deadline in the past, not DONE           | "Overdue by N days --- do it now or reschedule."       |
+| ⏰ Due today                  | deadline = today                         | "Due today --- block time and finish it."              |
+| 🧊 Frozen                     | STARTED but no clock in > 7 days         | "Started but untouched for N days --- resume or refile." |
+| 🫥 Abandoned?                 | TODO + scheduled > 30 days ago, no clock | "Scheduled a month ago, never started --- refile or axe." |
+| ⏳ Waiting (graduated)         | any WAITING task                         | Colour and tone scale with duration (see below)        |
+| 🏷️ No next action              | TODO with children, none are TODO        | "All subtasks done --- close the parent or add next step." |
+| 📌 High priority + unscheduled | =#A= but no scheduled date               | "High priority but unscheduled --- when will you do this?" |
+| ✅ Done, not archived          | DONE + closed > 7 days ago               | "Archive it. A clean list is a calm mind."             |
+| 🎯 Ready                      | TODO + scheduled ≤ today                 | "Ready to go --- clock in and start."                  |
+
+The WAITING signal is graduated by duration rather than a single
+threshold --- because "waiting 1 day" and "waiting 3 weeks" demand
+very different responses:
+
+| Duration  | Colour     | Tone                                   |
+|-----------+------------+----------------------------------------|
+| 0--2 days | sea green  | Still fresh, no action needed yet.     |
+| 3--6 days | steel blue | Patience, but keep an eye on it.       |
+| 7--13 days | orange red | Time to check in.                     |
+| ≥ 14 days | red        | This is stale. Ping now or unblock.    |
+
+Each hint is propertized (bold + colour) and centred in the frame
+via =my/center-text= so it sits under olivetti/centred content
+rather than hugging the left margin.
+
+#+begin_src emacs-lisp
+(defun my/org-task-help-echo (marker)
+  "Return a propertized, centred help-echo string for an Org heading at MARKER.
+Inspects the heading's TODO state, priority, timestamps, and clock
+data, then returns a context-sensitive action hint --- or nil when
+no signal applies.
+
+Signals are checked in priority order (highest leverage first):
+  1. 🔥 Overdue deadline
+  2. ⏰ Deadline today
+  3. 🧊 Frozen (STARTED but no recent clock)
+  4. 🫥 Possibly abandoned (scheduled long ago, never clocked)
+  5. ⏳ WAITING too long
+  6. 🏷️ All subtasks done but parent still open
+  7. 📌 High priority but unscheduled
+  8. ✅ Done but not archived
+  9. 🎯 Ready to start"
+  (when (and marker (marker-buffer marker))
+    (with-current-buffer (marker-buffer marker)
+      (org-with-wide-buffer
+       (goto-char marker)
+       (let* ((todo      (org-get-todo-state))
+              (priority  (org-entry-get nil "PRIORITY"))
+              (deadline  (org-get-deadline-time nil))
+              (scheduled (org-get-scheduled-time nil))
+              (closed-ts (org-entry-get nil "CLOSED"))
+              (closed    (when closed-ts
+                           (org-time-string-to-time closed-ts)))
+              (now       (float-time))
+              (days-since (lambda (ts)
+                            (when ts
+                              (floor (/ (- now (float-time ts)) 86400)))))
+              (deadline-days  (funcall days-since deadline))
+              (scheduled-days (funcall days-since scheduled))
+              (closed-days    (funcall days-since closed))
+              ;; Check whether any clock entry exists in the subtree.
+              (has-clock
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t))))
+                   (re-search-forward org-clock-line-re end t))))
+              ;; Last clock-out timestamp in the subtree.
+              (last-clock-days
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t)))
+                       (latest nil))
+                   (while (re-search-forward
+                           "CLOCK:.*--\\(\\[.*?\\]\\)" end t)
+                     (let ((ts (org-time-string-to-time
+                                (match-string 1))))
+                       (when (or (null latest)
+                                 (time-less-p latest ts))
+                         (setq latest ts))))
+                   (funcall days-since latest))))
+              ;; Whether any child heading is still a TODO state.
+              (has-todo-children
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t)))
+                       (found nil))
+                   (while (and (not found)
+                               (outline-next-heading)
+                               (< (point) end))
+                     (when (org-get-todo-state)
+                       (setq found t)))
+                   found)))
+              (has-children
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t))))
+                   (and (outline-next-heading)
+                        (< (point) end)))))
+              ;; Done states (past the | separator).
+              (done-p (member todo '("DONE" "CANCELLED" "PAUSED"
+                                     "WAITING" "APPROVED")))
+              ;; Active non-done states.
+              (started-p (equal todo "STARTED"))
+              (waiting-p (equal todo "WAITING"))
+              (todo-p    (member todo '("TODO" "INVESTIGATED")))
+              ;; ── Signal dispatch (highest priority first) ──
+              (action
+               (cond
+                ;; 1. 🔥 Overdue
+                ((and deadline-days (> deadline-days 0)
+                      (not (member todo '("DONE" "CANCELLED"))))
+                 (propertize
+                  (format "🔥 Overdue by %d day%s --- do it now or reschedule."
+                          deadline-days
+                          (if (= deadline-days 1) "" "s"))
+                  'face '(bold (:foreground "red"))))
+                ;; 2. ⏰ Due today
+                ((and deadline-days (= deadline-days 0)
+                      (not (member todo '("DONE" "CANCELLED"))))
+                 (propertize "⏰ Due today --- block time and finish it."
+                             'face '(bold (:foreground "orange red"))))
+                ;; 3. 🧊 Frozen
+                ((and started-p last-clock-days (> last-clock-days 7))
+                 (propertize
+                  (format "🧊 Started but untouched for %d days --- resume or refile."
+                          last-clock-days)
+                  'face '(bold (:foreground "steel blue"))))
+                ;; 4. 🫥 Possibly abandoned
+                ((and todo-p scheduled-days (> scheduled-days 30)
+                      (not has-clock))
+                 (propertize
+                  "🫥 Scheduled a month ago, never started --- refile or axe."
+                  'face '(bold (:foreground "orange red"))))
+                ;; 5. ⏳ Waiting — graduated by duration.
+                ;; CLOSED timestamp marks when the task entered WAITING
+                ;; (Org sets it for states past the | separator).
+                (waiting-p
+                 (let ((wait-days (or closed-days scheduled-days 0)))
+                   (cond
+                    ((>= wait-days 14)
+                     (propertize
+                      (format "⏳ Waiting %d days --- this is stale. Ping now or unblock."
+                              wait-days)
+                      'face '(bold (:foreground "red"))))
+                    ((>= wait-days 7)
+                     (propertize
+                      (format "⏳ Waiting %d days --- time to check in."
+                              wait-days)
+                      'face '(bold (:foreground "orange red"))))
+                    ((>= wait-days 3)
+                     (propertize
+                      (format "⏳ Waiting %d days --- patience, but keep an eye on it."
+                              wait-days)
+                      'face '(bold (:foreground "steel blue"))))
+                    (t
+                     (propertize
+                      (format "⏳ Waiting %d day%s --- still fresh, no action needed yet."
+                              wait-days (if (= wait-days 1) "" "s"))
+                      'face '(bold (:foreground "sea green")))))))
+                ;; 6. 🏷️ All subtasks done
+                ((and todo-p has-children (not has-todo-children))
+                 (propertize
+                  "🏷️ All subtasks done --- close the parent or add the next step."
+                  'face '(bold (:foreground "steel blue"))))
+                ;; 7. 📌 High priority but unscheduled
+                ((and (equal priority "A") (not scheduled)
+                      (not (member todo '("DONE" "CANCELLED"))))
+                 (propertize
+                  "📌 High priority but unscheduled --- when will you do this?"
+                  'face '(bold (:foreground "orange red"))))
+                ;; 8. ✅ Done, not archived
+                ((and (equal todo "DONE") closed-days (> closed-days 7))
+                 (propertize
+                  (format
+                   "✅ Done %d days ago --- archive it. A clean list is a calm mind."
+                   closed-days)
+                  'face '(bold (:foreground "sea green"))))
+                ;; 9. 🎯 Ready to start
+                ((and todo-p scheduled-days (>= scheduled-days 0))
+                 (propertize
+                  "🎯 Ready to go --- clock in and start."
+                  'face '(bold (:foreground "sea green")))))))
+         (when action
+           (my/center-text action)))))))
+
+(defun my/agenda-attach-task-help-echo ()
+  "Walk every line in the agenda buffer, attaching `help-echo' to
+Org task lines that do not already have one.
+
+We skip lines that already carry a `help-echo' (e.g., our custom
+work-item sections) to avoid overwriting richer hints.  Only lines
+with an `org-marker' text property --- i.e., lines backed by a real
+Org heading --- are candidates."
+  (when (string-prefix-p "*Org Agenda" (buffer-name))
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (goto-char (point-min))
+        (while (not (eobp))
+          (let* ((beg (line-beginning-position))
+                 (end (line-end-position))
+                 (marker (get-text-property beg 'org-marker)))
+            (when (and marker
+                       (not (get-text-property beg 'help-echo)))
+              (when-let ((echo (my/org-task-help-echo marker)))
+                (put-text-property beg end 'help-echo echo))))
+          (forward-line 1))))))
+
+(add-hook 'org-agenda-finalize-hook #'my/agenda-attach-task-help-echo)
+#+end_src
 
 #+begin_src emacs-lisp
 (cl-defun my/gerrit--extract-reviewer-user-map (stack)
