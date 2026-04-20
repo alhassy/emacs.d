@@ -3329,7 +3329,9 @@ Stat-based nudges (highest priority wins):
   (c) Abandon & re-open: very old + large + many ps → start fresh.
   (d) Rebase: > 7 days old → rebase to stay current with target branch.
   (e) Spin off follow-ups: many comments but low ps → optional cleanup.
-  (f) Escalate: high ps + growing comments → schedule synchronous talk."
+  (f) Escalate: high ps + growing comments → schedule synchronous talk.
+  (g) Solo reviewer + stale → widen the reviewer pool or re-assign.
+  (h) Many reviewers (> 2) → coordination overhead, narrow the pool."
   (let* ((status       (work-item-status item))
          (urgent       (work-item-urgent item))
          (age-epoch    (work-item-age item))
@@ -3344,9 +3346,12 @@ Stat-based nudges (highest priority wins):
          (max-ps       (or (work-item-max-patchsets item) 1))
          (comments     (or (work-item-comment-count item) 0))
          (shirt-size   (work-item-avg-shirt-size item))
+         (num-reviewers (length (work-item-reviewers item)))
          (large-change (and shirt-size (>= shirt-size 4))) ;; L or XL
          (many-ps      (> max-ps 4))
          (many-comments (> comments (* 5 stack-size))) ;; > 5 comments/change
+         (solo-reviewer (= num-reviewers 1))
+         (many-reviewers (> num-reviewers 2))
          (needs-rebase (and days-old (> days-old 7)))
          ;; ── Layer 1: status-specific primary action ──
          (action
@@ -3405,6 +3410,8 @@ Stat-based nudges (highest priority wins):
              (format " [ps %d]" max-ps))
            (when (> comments 0)
              (format " [%d comment%s]" comments (if (= comments 1) "" "s")))
+           (when (> num-reviewers 1)
+             (format " [%d reviewers]" num-reviewers))
            (when urgent " [URGENT]")))
          ;; ── Layer 3: stat-based strategic nudge (highest priority wins) ──
          (nudge
@@ -3425,6 +3432,13 @@ Stat-based nudges (highest priority wins):
            ;; (e) Spin off follow-ups: many comments but low ps → optional cleanup.
            ((and many-comments (not many-ps))
             " 💡 Lots of comments but few patchsets — spin off unrelated cleanup as follow-up work.")
+           ;; (g) Solo reviewer + stale → widen the reviewer pool.
+           ((and solo-reviewer stale)
+            " 👥 Only one reviewer and going stale — add another reviewer or re-assign to get things moving.")
+           ;; (h) Many reviewers → coordination overhead warning.
+           (many-reviewers
+            (format " 👥 %d reviewers — coordination overhead; consider narrowing to 1–2 primary reviewers."
+                    num-reviewers))
            ;; (d) Rebase: > 7 days old.
            (needs-rebase
             " 🔄 Older than a week — rebase to stay current with the target branch."))))
