@@ -2478,7 +2478,12 @@ author/reviewer misalignment — consider a synchronous conversation.")
   (comment-count nil
                  :documentation "Total number of inline review comments across all changes
 in the stack.  High counts relative to stack size signal a contentious
-or unclear change — worth a synchronous conversation to align."))
+or unclear change — worth a synchronous conversation to align.")
+  (avg-shirt-size nil
+                  :documentation "Average Gerrit shirt size across changes in the stack.
+A float derived from mapping each change's (insertions + deletions) to
+the Gerrit size scale (XS=1, S=2, M=3, L=4, XL=5) and averaging.
+Displayed as the nearest label in `work-item-help-echo'."))
 
 (defvar my/agenda-work-data nil
   "Cached plist holding structured Gerrit/Jira agenda data.
@@ -2930,6 +2935,35 @@ Example:
       (substring subject (match-end 0))
     subject))
 
+(defun work-item--shirt-size-value (change)
+  "Map a Gerrit CHANGE alist to a numeric shirt size (1–5).
+Based on total lines changed (insertions + deletions):
+  XS (≤10) → 1, S (≤50) → 2, M (≤250) → 3, L (≤1000) → 4, XL → 5.
+Returns nil when size data is absent."
+  (let* ((ps  (alist-get 'currentPatchSet change))
+         (ins (alist-get 'sizeInsertions ps))
+         (del (alist-get 'sizeDeletions ps)))
+    (when (and ins del)
+      (let ((total (+ ins del)))
+        (cond ((<= total 10)   1)
+              ((<= total 50)   2)
+              ((<= total 250)  3)
+              ((<= total 1000) 4)
+              (t               5))))))
+
+(defun work-item--shirt-size-label (value)
+  "Convert a numeric shirt size VALUE (1–5) to a label string.
+Rounds to the nearest integer first."
+  (pcase (round value)
+    (1 "XS") (2 "S") (3 "M") (4 "L") (_ "XL")))
+
+(defun work-item--avg-shirt-size (stack)
+  "Compute the average numeric shirt size across changes in STACK.
+Returns nil when no change has size data."
+  (let ((vals (-keep #'work-item--shirt-size-value stack)))
+    (when vals
+      (/ (-sum vals) (float (length vals))))))
+
 (defun work-item--format-age (epoch)
   "Format a Gerrit `lastUpdated' EPOCH into a human-readable age string.
 Returns nil when EPOCH is nil.  Uses the coarsest unit that is ≥ 1:
@@ -2986,7 +3020,8 @@ Example:
                                   stack)))
      :comment-count (-sum (-map (lambda (c)
                                   (length (alist-get 'comments c)))
-                                stack)))))
+                                stack))
+     :avg-shirt-size (work-item--avg-shirt-size stack))))
 
 (defun work-items-from-stack (stack status)
   "Split STACK by primary Jira ticket, one work-item per ticket.
@@ -3295,6 +3330,7 @@ conversation to break the rework cycle."
          (stack-size   (or (work-item-stack-size item) 1))
          (max-ps       (work-item-max-patchsets item))
          (comments     (or (work-item-comment-count item) 0))
+         (shirt-size   (work-item-avg-shirt-size item))
          (high-churn   (and max-ps (> max-ps 4)))
          (comments/change (if (> stack-size 0)
                               (/ (float comments) stack-size)
@@ -3341,11 +3377,13 @@ conversation to break the rework cycle."
             ('jira-active
              "Jira says active but no Gerrit changes — is this a stale #progress?")
             (_ "")))
-         ;; Stack-size / patchset / comment metadata.
+         ;; Stack-size / patchset / shirt-size / comment metadata.
          (meta
           (concat
            (when (> stack-size 1)
              (format " [%d changes]" stack-size))
+           (when shirt-size
+             (format " [size %s]" (work-item--shirt-size-label shirt-size)))
            (when max-ps
              (format " [ps %d]" max-ps))
            (when (> comments 0)

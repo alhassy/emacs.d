@@ -334,6 +334,9 @@ Reviewer keywords:
                      Omit for default (no number in the alist).
   Comments:          integer, generates that many stub `comments' entries.
                      Omit for default (empty comments list).
+  Size:              \"NxM\" where N = insertions, M = deletions.
+                     Sets `sizeInsertions' and `sizeDeletions' on
+                     `currentPatchSet'.  E.g., \"200x50\" → 200 ins, 50 del.
   Last-Updated:      relative age like \"5 days ago\" or \"3 months ago\".
                      Converted to a `lastUpdated' epoch for staleness."
   (let* ((lines (s-lines (s-trim (lf-unindent spec))))
@@ -341,7 +344,8 @@ Reviewer keywords:
          ;; Partition into commit-message vs. metadata lines.
          (meta-re (concat "^\\(Change-Id\\|Owner\\|Reviewer"
                           "\\|Added-Reviewer\\|Reviewer-Negative"
-                          "\\|Last-Updated\\|Patchset\\|Comments\\):"))
+                          "\\|Last-Updated\\|Patchset\\|Comments"
+                          "\\|Size\\):"))
          (msg-lines (-take-while
                      (lambda (l) (not (s-matches-p meta-re l)))
                      lines))
@@ -350,6 +354,7 @@ Reviewer keywords:
          ;; Parse metadata.
          (number nil) (owner-name nil) (last-updated nil)
          (patchset-num nil) (comment-count nil)
+         (size-insertions nil) (size-deletions nil)
          (reviewers nil) (added-reviewers nil) (neg-reviewers nil))
     (dolist (l meta-lines)
       (cond
@@ -379,7 +384,12 @@ Reviewer keywords:
        ((s-prefix-p "Patchset:" l)
         (setq patchset-num (string-to-number (s-trim (substring l 9)))))
        ((s-prefix-p "Comments:" l)
-        (setq comment-count (string-to-number (s-trim (substring l 9)))))))
+        (setq comment-count (string-to-number (s-trim (substring l 9)))))
+       ((s-prefix-p "Size:" l)
+        (let ((val (s-trim (substring l 5))))
+          (when (string-match "\\([0-9]+\\)x\\([0-9]+\\)" val)
+            (setq size-insertions (string-to-number (match-string 1 val))
+                  size-deletions  (string-to-number (match-string 2 val))))))))
     (setq reviewers (nreverse reviewers)
           added-reviewers (nreverse added-reviewers)
           neg-reviewers (nreverse neg-reviewers))
@@ -408,7 +418,9 @@ Reviewer keywords:
         ,@(when all-rv `((allReviewers . ,all-rv)))
         (currentPatchSet
          ,@(when patchset-num `((number . ,patchset-num)))
-         (approvals . ,(append pos-approvals neg-approvals)))
+         (approvals . ,(append pos-approvals neg-approvals))
+         ,@(when size-insertions `((sizeInsertions . ,size-insertions)))
+         ,@(when size-deletions `((sizeDeletions . ,size-deletions))))
         ,@(when comment-count
             `((comments . ,(-map (lambda (i)
                                    `((timestamp . ,(truncate (float-time)))
