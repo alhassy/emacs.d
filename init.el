@@ -2483,7 +2483,17 @@ or unclear change — worth a synchronous conversation to align.")
                   :documentation "Average Gerrit shirt size across changes in the stack.
 A float derived from mapping each change's (insertions + deletions) to
 the Gerrit size scale (XS=1, S=2, M=3, L=4, XL=5) and averaging.
-Displayed as the nearest label in `work-item-help-echo'."))
+Displayed as the nearest label in `work-item-help-echo'.")
+  (ci-status nil
+             :documentation "Symbol: `pass', `fail', or nil (no Verified vote).
+Derived from the most recent Verified approval on the tip change.
+`fail' is the highest-priority nudge: nothing else matters until CI is green.")
+  (has-code-review nil
+                   :documentation "Non-nil if the tip has a Code-Review +1 or +2 from a non-owner.
+When CI passes and this is nil, the nudge is: request final approval.")
+  (blocked-by-parent nil
+                     :documentation "Non-nil if this work-item's tip depends on an unmerged parent.
+The parent must land first; nudge is: unblock the dependency."))
 
 (defvar my/agenda-work-data nil
   "Cached plist holding structured Gerrit/Jira agenda data.
@@ -2964,6 +2974,44 @@ Returns nil when no change has size data."
     (when vals
       (/ (-sum vals) (float (length vals))))))
 
+(defun work-item--ci-status (change)
+  "Derive CI status from the Verified approval on CHANGE.
+Returns `pass' if the latest Verified vote is positive, `fail' if
+negative, or nil if no Verified vote exists."
+  (let* ((approvals (append (alist-get 'approvals
+                                       (alist-get 'currentPatchSet change))
+                            nil))
+         (verified (-first (lambda (a)
+                             (equal "Verified" (alist-get 'type a)))
+                           approvals)))
+    (when verified
+      (let ((val (string-to-number (or (alist-get 'value verified) "0"))))
+        (if (< val 0) 'fail 'pass)))))
+
+(defun work-item--has-code-review (change owner-username)
+  "Return non-nil if CHANGE has a positive Code-Review from a non-owner.
+OWNER-USERNAME is the change owner's Gerrit username, excluded from
+the check (self-approvals don't count)."
+  (let ((approvals (append (alist-get 'approvals
+                                      (alist-get 'currentPatchSet change))
+                           nil)))
+    (-any-p (lambda (a)
+              (and (equal "Code-Review" (alist-get 'type a))
+                   (> (string-to-number (or (alist-get 'value a) "0")) 0)
+                   (not (equal owner-username
+                               (alist-get 'username (alist-get 'by a))))))
+            approvals)))
+
+(defun work-item--blocked-by-parent (change stack)
+  "Return non-nil if CHANGE depends on an unmerged parent in STACK.
+A change is blocked when it has `dependsOn' entries whose change
+numbers also appear in the stack (i.e., they are open, not yet merged)."
+  (let ((deps (append (alist-get 'dependsOn change) nil))
+        (stack-nums (-map (lambda (c) (alist-get 'number c)) stack)))
+    (-any-p (lambda (d)
+              (member (alist-get 'number d) stack-nums))
+            deps)))
+
 (defun work-item--format-age (epoch)
   "Format a Gerrit `lastUpdated' EPOCH into a human-readable age string.
 Returns nil when EPOCH is nil.  Uses the coarsest unit that is ≥ 1:
@@ -3021,7 +3069,11 @@ Example:
      :comment-count (-sum (-map (lambda (c)
                                   (length (alist-get 'comments c)))
                                 stack))
-     :avg-shirt-size (work-item--avg-shirt-size stack))))
+     :avg-shirt-size (work-item--avg-shirt-size stack)
+     :ci-status (work-item--ci-status tip)
+     :has-code-review (work-item--has-code-review
+                       tip (alist-get 'username (alist-get 'owner tip)))
+     :blocked-by-parent (work-item--blocked-by-parent tip stack))))
 
 (defun work-items-from-stack (stack status)
   "Split STACK by primary Jira ticket, one work-item per ticket.
@@ -3324,14 +3376,17 @@ normal.  We only flag contention when patchsets AND comments are both
 high, optionally combined with long duration for the strongest signal.
 
 Stat-based nudges (highest priority wins):
+  (i) 🔴 CI failed → fix CI before anything else.
+  (j) 🔗 Blocked by parent → unblock the dependency first.
   (a) 🧱 Stuck: many ps + many comments + old → escalate / split / rethink.
-  (b) Split: large size (L/XL) → smaller stacks = happier reviewers.
-  (c) Abandon & re-open: very old + large + many ps → start fresh.
-  (d) Rebase: > 7 days old → rebase to stay current with target branch.
-  (e) Spin off follow-ups: many comments but low ps → optional cleanup.
   (f) Escalate: high ps + growing comments → schedule synchronous talk.
+  (c) Abandon & re-open: very old + large + many ps → start fresh.
+  (b) Split: large size (L/XL) → smaller stacks = happier reviewers.
+  (e) Spin off follow-ups: many comments but low ps → optional cleanup.
   (g) Solo reviewer + stale → widen the reviewer pool or re-assign.
-  (h) Many reviewers (> 2) → coordination overhead, narrow the pool."
+  (h) Many reviewers (> 2) → coordination overhead, narrow the pool.
+  (k) ✅ CI green + no Code-Review → request final approval.
+  (d) Rebase: > 7 days old → rebase to stay current with target branch."
   (let* ((status       (work-item-status item))
          (urgent       (work-item-urgent item))
          (age-epoch    (work-item-age item))
@@ -3347,6 +3402,11 @@ Stat-based nudges (highest priority wins):
          (comments     (or (work-item-comment-count item) 0))
          (shirt-size   (work-item-avg-shirt-size item))
          (num-reviewers (length (work-item-reviewers item)))
+         (ci            (work-item-ci-status item))
+         (ci-red        (eq ci 'fail))
+         (ci-green      (eq ci 'pass))
+         (has-cr        (work-item-has-code-review item))
+         (blocked       (work-item-blocked-by-parent item))
          (large-change (and shirt-size (>= shirt-size 4))) ;; L or XL
          (many-ps      (> max-ps 4))
          (many-comments (> comments (* 5 stack-size))) ;; > 5 comments/change
@@ -3412,10 +3472,18 @@ Stat-based nudges (highest priority wins):
              (format " [%d comment%s]" comments (if (= comments 1) "" "s")))
            (when (> num-reviewers 1)
              (format " [%d reviewers]" num-reviewers))
+           (when ci-red " [CI ✗]")
+           (when blocked " [blocked]")
            (when urgent " [URGENT]")))
          ;; ── Layer 3: stat-based strategic nudge (highest priority wins) ──
          (nudge
           (cond
+           ;; (i) 🔴 CI failed → nothing else matters until CI is green.
+           (ci-red
+            " 🔴 CI is red — fix the build before anything else.")
+           ;; (j) 🔗 Blocked by parent → unblock the dependency first.
+           (blocked
+            " 🔗 Blocked by an unmerged parent — land the dependency first.")
            ;; (a) 🧱 Stuck: many ps + many comments + stale → unblock strategically.
            ((and many-ps many-comments stale)
             " 🧱 Stuck — don't just iterate: schedule a sync discussion, split the change, or rethink the approach.")
@@ -3439,6 +3507,10 @@ Stat-based nudges (highest priority wins):
            (many-reviewers
             (format " 👥 %d reviewers — coordination overhead; consider narrowing to 1–2 primary reviewers."
                     num-reviewers))
+           ;; (k) ✅ CI green + no Code-Review → request final approval.
+           ((and ci-green (not has-cr))
+            (format " ✅ CI green but no Code-Review — ask %s for final approval."
+                    (or rv-str "a reviewer")))
            ;; (d) Rebase: > 7 days old.
            (needs-rebase
             " 🔄 Older than a week — rebase to stay current with the target branch."))))

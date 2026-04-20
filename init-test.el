@@ -337,6 +337,7 @@ Reviewer keywords:
   Size:              \"NxM\" where N = insertions, M = deletions.
                      Sets `sizeInsertions' and `sizeDeletions' on
                      `currentPatchSet'.  E.g., \"200x50\" → 200 ins, 50 del.
+  Verified:          \"+1\" or \"-1\".  Adds a Verified approval from Jenkins.
   Last-Updated:      relative age like \"5 days ago\" or \"3 months ago\".
                      Converted to a `lastUpdated' epoch for staleness."
   (let* ((lines (s-lines (s-trim (lf-unindent spec))))
@@ -345,7 +346,7 @@ Reviewer keywords:
          (meta-re (concat "^\\(Change-Id\\|Owner\\|Reviewer"
                           "\\|Added-Reviewer\\|Reviewer-Negative"
                           "\\|Last-Updated\\|Patchset\\|Comments"
-                          "\\|Size\\):"))
+                          "\\|Size\\|Verified\\):"))
          (msg-lines (-take-while
                      (lambda (l) (not (s-matches-p meta-re l)))
                      lines))
@@ -355,6 +356,7 @@ Reviewer keywords:
          (number nil) (owner-name nil) (last-updated nil)
          (patchset-num nil) (comment-count nil)
          (size-insertions nil) (size-deletions nil)
+         (verified-value nil)
          (reviewers nil) (added-reviewers nil) (neg-reviewers nil))
     (dolist (l meta-lines)
       (cond
@@ -389,7 +391,9 @@ Reviewer keywords:
         (let ((val (s-trim (substring l 5))))
           (when (string-match "\\([0-9]+\\)x\\([0-9]+\\)" val)
             (setq size-insertions (string-to-number (match-string 1 val))
-                  size-deletions  (string-to-number (match-string 2 val))))))))
+                  size-deletions  (string-to-number (match-string 2 val))))))
+       ((s-prefix-p "Verified:" l)
+        (setq verified-value (s-trim (substring l 9))))))
     (setq reviewers (nreverse reviewers)
           added-reviewers (nreverse added-reviewers)
           neg-reviewers (nreverse neg-reviewers))
@@ -408,7 +412,12 @@ Reviewer keywords:
                    `((type . "Code-Review") (value . "-1")
                      (by (name . ,r)
                          (username . ,(my/test--name-to-username r)))))
-                 neg-reviewers)))
+                 neg-reviewers))
+          (verified-approvals
+           (when verified-value
+             `(((type . "Verified") (value . ,verified-value)
+                (by (name . "Jenkins")
+                    (username . "jenkins")))))))
       `((number . ,number)
         (subject . ,subject)
         (commitMessage . ,commit-msg)
@@ -418,7 +427,7 @@ Reviewer keywords:
         ,@(when all-rv `((allReviewers . ,all-rv)))
         (currentPatchSet
          ,@(when patchset-num `((number . ,patchset-num)))
-         (approvals . ,(append pos-approvals neg-approvals))
+         (approvals . ,(append pos-approvals neg-approvals verified-approvals))
          ,@(when size-insertions `((sizeInsertions . ,size-insertions)))
          ,@(when size-deletions `((sizeDeletions . ,size-deletions))))
         ,@(when comment-count
@@ -793,6 +802,38 @@ so tests run without private.el."
       ;; Sidequests last, also stalest-first.
       (should (eq (nth 3 sorted) side-old))
       (should (eq (nth 4 sorted) side-new)))))
+
+(defworkitemtest "help-echo surfaces metadata from rich fixture" [work-item]
+  (let* ((stack (my/as-gerrit-stack
+                 "[core] Overhaul frobnication
+
+                  BUG-99 #progress
+
+                  Owner: Ali ibn Abi Talib
+                  Reviewer: Hassan ibn Ali
+                  Reviewer: Hussain ibn Ali
+                  Last-Updated: 3 days ago
+                  Patchset: 7
+                  Comments: 12
+                  Size: 300x150
+                  Verified: -1"))
+         (item (work-item-from-stack stack 'please-review))
+         (echo (work-item-help-echo item)))
+    ;; Struct slots populated from fixture metadata.
+    (should (= (work-item-stack-size item) 1))
+    (should (= (work-item-max-patchsets item) 7))
+    (should (= (work-item-comment-count item) 12))
+    (should (>= (work-item-avg-shirt-size item) 4))  ;; 450 total → L
+    (should (eq (work-item-ci-status item) 'fail))
+    (should-not (work-item-blocked-by-parent item))
+    ;; Metadata brackets in help-echo.
+    (should (s-contains-p "[size L]" echo))
+    (should (s-contains-p "[ps 7]" echo))
+    (should (s-contains-p "[12 comments]" echo))
+    (should (s-contains-p "[2 reviewers]" echo))
+    (should (s-contains-p "[CI ✗]" echo))
+    ;; CI red is highest-priority nudge — it should dominate.
+    (should (s-contains-p "CI is red" echo))))
 ;; E2E Test:1 ends here
 
 ;; [[file:init.org::*Also, logging][Also, logging:2]]
