@@ -487,6 +487,32 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; initially-worrisome “narrow-to-region”, C-x n n.
 (setq-default disabled-command-function nil)
 
+(defun my/center-text (text)
+  "Centre every line of TEXT within the current frame width.
+
+Split TEXT on newlines, pad each line with leading spaces so that
+it appears horizontally centred relative to `frame-width', then
+rejoin.  The padding is computed via `string-width' so propertized
+and multi-byte strings are measured correctly.
+
+The centering is evaluated at call time --- if the frame is resized,
+the next call will adapt automatically.
+
+By way of example, minibuffer hints produced by `help-at-pt' are
+left-justified by default.  When the user runs olivetti-mode (or
+any centering minor mode), a left-hugging wall of echo text clashes
+with the centred buffer content.  Wrapping the hint through this
+function makes it sit under the centred text, matching the visual
+rhythm of the rest of the frame."
+  (let ((width (frame-width)))
+    (mapconcat
+     (lambda (line)
+       (let* ((len (string-width line))
+              (pad (max 0 (/ (- width len) 2))))
+         (concat (make-string pad ?\s) line)))
+     (split-string text "\n")
+     "\n")))
+
 (defvar running-tests noninteractive "Code executed in headless Github CI.")
 
 ;; Shell with a nearly universal compatibility with terminal applications 💝
@@ -3514,7 +3540,26 @@ Stat-based nudges (highest priority wins):
            ;; (d) Rebase: > 7 days old.
            (needs-rebase
             " 🔄 Older than a week — rebase to stay current with the target branch."))))
-    (concat action meta (or nudge ""))))
+    (my/center-text
+     (concat
+      ;; Layer 1 — action: bold, front-and-centre.
+      (propertize action 'face 'bold)
+      ;; Layer 2 — metadata: dimmed bracket stats.
+      (when (length> meta 0)
+        (concat "\n"
+                (propertize meta 'face 'shadow)))
+      ;; Layer 3 — nudge: coloured by severity.
+      (when nudge
+        (let ((nudge-face
+               (cond
+                (ci-red   '(bold (:foreground "red")))
+                (blocked  '(bold (:foreground "red")))
+                ((or (and many-ps many-comments)
+                     (and very-stale large-change many-ps))
+                 '(bold (:foreground "orange red")))
+                (t        '(bold (:foreground "steel blue"))))))
+          (concat "\n"
+                  (propertize nudge 'face nudge-face))))))))
 ;; Rendering =work-item= instances:1 ends here
 
 ;; [[file:init.org::*Ticket collection helper][Ticket collection helper:1]]

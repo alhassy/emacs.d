@@ -3141,6 +3141,34 @@ Let's save a few precious seconds,
 (setq-default disabled-command-function nil)
 #+end_src
 
+#+begin_src emacs-lisp
+(defun my/center-text (text)
+  "Centre every line of TEXT within the current frame width.
+
+Split TEXT on newlines, pad each line with leading spaces so that
+it appears horizontally centred relative to `frame-width', then
+rejoin.  The padding is computed via `string-width' so propertized
+and multi-byte strings are measured correctly.
+
+The centering is evaluated at call time --- if the frame is resized,
+the next call will adapt automatically.
+
+By way of example, minibuffer hints produced by `help-at-pt' are
+left-justified by default.  When the user runs olivetti-mode (or
+any centering minor mode), a left-hugging wall of echo text clashes
+with the centred buffer content.  Wrapping the hint through this
+function makes it sit under the centred text, matching the visual
+rhythm of the rest of the frame."
+  (let ((width (frame-width)))
+    (mapconcat
+     (lambda (line)
+       (let* ((len (string-width line))
+              (pad (max 0 (/ (- width len) 2))))
+         (concat (make-string pad ?\s) line)))
+     (split-string text "\n")
+     "\n")))
+#+end_src
+
 ** Quickly pop-up a terminal, run a command, close it ---and zsh
 :PROPERTIES:
 :CUSTOM_ID: Quickly-pop-up-a-terminal-run-a-command-close-it-and-zsh
@@ -12283,7 +12311,12 @@ Each rendered line also carries a =help-echo= text property (via
 *active dashboard*: rest the cursor on any item and the minibuffer
 tells you what to do next --- not just what exists.
 
-The hint has three layers, concatenated into a single minibuffer line:
+The hint has three layers, each on its own line and propertized with
+distinct faces --- bold action, dimmed metadata, colour-coded nudge
+(red for blockers, orange for contention, steel blue for suggestions).
+A wall of undifferentiated text is a wall you stop reading; visual
+hierarchy makes the difference between a hint that gets glanced at and
+one that actually changes what you do next.
 
 *Layer 1 --- Status action* (what to do right now):
 - =wip= + very old + large + many ps → "Abandon and re-open as
@@ -12677,7 +12710,26 @@ Stat-based nudges (highest priority wins):
            ;; (d) Rebase: > 7 days old.
            (needs-rebase
             " 🔄 Older than a week — rebase to stay current with the target branch."))))
-    (concat action meta (or nudge ""))))
+    (my/center-text
+     (concat
+      ;; Layer 1 — action: bold, front-and-centre.
+      (propertize action 'face 'bold)
+      ;; Layer 2 — metadata: dimmed bracket stats.
+      (when (length> meta 0)
+        (concat "\n"
+                (propertize meta 'face 'shadow)))
+      ;; Layer 3 — nudge: coloured by severity.
+      (when nudge
+        (let ((nudge-face
+               (cond
+                (ci-red   '(bold (:foreground "red")))
+                (blocked  '(bold (:foreground "red")))
+                ((or (and many-ps many-comments)
+                     (and very-stale large-change many-ps))
+                 '(bold (:foreground "orange red")))
+                (t        '(bold (:foreground "steel blue"))))))
+          (concat "\n"
+                  (propertize nudge 'face nudge-face))))))))
 #+end_src
 
 *** E2E Test
