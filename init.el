@@ -7239,25 +7239,29 @@ inserts a sentence like:
   Hassan has 3, and Hussain has 1 Gerrit items vying for their
   attention, respectively.
 
-Each count is an Org link to the reviewer's Gerrit attention
-dashboard (open, non-abandoned items awaiting their action)."
-      (let ((user-counts (make-hash-table :test 'equal))
-            (user-names  (make-hash-table :test 'equal)))
+Each count is an Org link to the reviewer's full Gerrit attention
+dashboard — showing how overloaded they are across ALL of Gerrit,
+not just your changes.  This is the real bottleneck signal: a
+reviewer with 100 items in their attention set is not ignoring you,
+they are drowning."
+      ;; Collect unique reviewers from the impediment items.
+      (let ((user-names (make-hash-table :test 'equal)))
         (dolist (item items)
           (dolist (pair (work-item-reviewer-users item))
-            (let ((name (car pair))
-                  (uname (cdr pair)))
-              (when uname
-                (cl-incf (gethash uname user-counts 0))
-                (puthash uname name user-names)))))
-        (when (> (hash-table-count user-counts) 0)
+            (when (cdr pair)
+              (puthash (cdr pair) (car pair) user-names))))
+        (when (> (hash-table-count user-names) 0)
+          ;; Query Gerrit for each reviewer's FULL attention set size.
+          ;; This is the real overload signal — not just your changes.
           (let ((entries nil))
             (maphash
-             (lambda (uname count)
-               (push (list (gethash uname user-names) uname count)
-                     entries))
-             user-counts)
-            ;; Sort descending by count so the busiest reviewer is first.
+             (lambda (uname full-name)
+               (let* ((query (format "attention:%s status:open -is:abandoned"
+                                     uname))
+                      (results (my/gerrit--query query '("--dependencies")))
+                      (count (length results)))
+                 (push (list full-name uname count) entries)))
+             user-names)
             (setq entries (--sort (> (nth 2 it) (nth 2 other)) entries))
             (let ((parts
                    (-map
