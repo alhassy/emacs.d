@@ -12155,21 +12155,22 @@ string.  This replaces the former =format-stack-as-org= and
 now unified into one.
 
 #+begin_src emacs-lisp
-(cl-defun my/gerrit--extract-reviewer-names (stack)
-  "Extract reviewer names from STACK, merging two sources.
+(cl-defun my/gerrit--extract-reviewer-user-map (stack)
+  "Extract an alist of (display-name . username) for reviewers in STACK.
+Merges two sources:
 
 1. Human names from `allReviewers' — kept when the name contains
    a space (heuristic: \"Alan Turing\" is human, \"Jenkins\" is a
-   bot).  The change owner is excluded.
-2. ANY name (including bots) from `currentPatchSet.approvals'
+   bot) and the username is non-nil.  The change owner is excluded.
+2. ANY reviewer (including bots) from `currentPatchSet.approvals'
    where type = \"Code-Review\" and value < 0.  A -1 from a bot
    is actionable feedback that should surface in the agenda.
 
-The union of these two sets is returned, deduplicated.
+The union is returned, deduplicated by username.
 
 Example:
-  (my/gerrit--extract-reviewer-names stack)
-  → (\"Alice Smith\" \"Bob Jones\")"
+  (my/gerrit--extract-reviewer-user-map stack)
+  → ((\"Ali ibn Abi Talib\" . \"ali\") (\"Hassan ibn Ali\" . \"hassan\"))"
   (let* ((owners (->> stack
                       (-map (lambda (c)
                               (alist-get 'username (alist-get 'owner c))))
@@ -12179,64 +12180,17 @@ Example:
           (->> stack
                (-mapcat
                 (lambda (c)
-                  (let ((owner-u (alist-get 'username
-                                            (alist-get 'owner c))))
-                    (->> (append (alist-get 'allReviewers c) nil)
-                         (-filter
-                          (lambda (rv)
-                            (let ((name (alist-get 'name rv))
-                                  (uname (alist-get 'username rv)))
-                              (and name
-                                   (s-contains-p " " name)
-                                   (not (member uname owners))))))
-                         (-map (lambda (rv)
-                                 (alist-get 'name rv)))))))
-               (-filter #'identity) -uniq))
-         (negative-voters
-          (->> stack
-               (-mapcat
-                (lambda (c)
-                  (->> (append (alist-get 'approvals
-                                          (alist-get 'currentPatchSet c))
-                               nil)
+                  (->> (append (alist-get 'allReviewers c) nil)
                        (-filter
-                        (lambda (a)
-                          (and (equal "Code-Review" (alist-get 'type a))
-                               (< (string-to-number
-                                   (or (alist-get 'value a) "0"))
-                                  0))))
-                       (-map (lambda (a)
-                               (alist-get 'name (alist-get 'by a)))))))
-               (-filter #'identity) -uniq)))
-    (-uniq (append human-reviewers negative-voters))))
-
-(cl-defun my/gerrit--extract-reviewer-user-map (stack)
-  "Extract an alist of (display-name . username) for reviewers in STACK.
-Same filtering logic as `my/gerrit--extract-reviewer-names' but preserves
-the username alongside each display name.  Used to build per-reviewer
-Gerrit attention URLs."
-  (let* ((owners (->> stack
-                      (-map (lambda (c)
-                              (alist-get 'username (alist-get 'owner c))))
-                      (-filter #'identity)
-                      -uniq))
-         (human-reviewers
-          (->> stack
-               (-mapcat
-                (lambda (c)
-                  (let ((owner-u (alist-get 'username
-                                            (alist-get 'owner c))))
-                    (->> (append (alist-get 'allReviewers c) nil)
-                         (-filter
-                          (lambda (rv)
-                            (let ((name (alist-get 'name rv))
-                                  (uname (alist-get 'username rv)))
-                              (and name uname
-                                   (s-contains-p " " name)
-                                   (not (member uname owners))))))
-                         (-map (lambda (rv)
-                                 (cons (alist-get 'name rv)
-                                       (alist-get 'username rv))))))))
+                        (lambda (rv)
+                          (let ((name (alist-get 'name rv))
+                                (uname (alist-get 'username rv)))
+                            (and name uname
+                                 (s-contains-p " " name)
+                                 (not (member uname owners))))))
+                       (-map (lambda (rv)
+                               (cons (alist-get 'name rv)
+                                     (alist-get 'username rv)))))))
                (-filter #'identity)
                (--uniq-by (cdr it))))
          (negative-voters
@@ -12262,6 +12216,40 @@ Gerrit attention URLs."
     (cl-remove-duplicates
      (append human-reviewers negative-voters)
      :key #'cdr :test #'equal)))
+
+(cl-defun my/gerrit--extract-reviewer-names (stack)
+  "Extract reviewer display names from STACK.
+Thin wrapper around `my/gerrit--extract-reviewer-user-map' — returns
+just the car (display name) of each pair, plus any name-only reviewers
+whose username was nil (the user-map variant drops those).
+
+Example:
+  (my/gerrit--extract-reviewer-names stack)
+  → (\"Ali ibn Abi Talib\" \"Hassan ibn Ali\")"
+  (let ((with-usernames (-map #'car (my/gerrit--extract-reviewer-user-map stack)))
+        ;; Catch reviewers that have a name but no username — the user-map
+        ;; variant drops these, but the original names function kept them.
+        (name-only
+         (let ((owners (->> stack
+                            (-map (lambda (c)
+                                    (alist-get 'username (alist-get 'owner c))))
+                            (-filter #'identity)
+                            -uniq)))
+           (->> stack
+                (-mapcat
+                 (lambda (c)
+                   (->> (append (alist-get 'allReviewers c) nil)
+                        (-filter
+                         (lambda (rv)
+                           (let ((name (alist-get 'name rv))
+                                 (uname (alist-get 'username rv)))
+                             (and name (not uname)
+                                  (s-contains-p " " name)
+                                  (not (member uname owners))))))
+                        (-map (lambda (rv) (alist-get 'name rv))))))
+                (-filter #'identity)
+                -uniq))))
+    (-uniq (append with-usernames name-only))))
 
 (cl-defun my/gerrit--format-reviewer-names (names)
   "Format a list of NAMES into natural English with Oxford comma.
