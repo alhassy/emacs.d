@@ -332,6 +332,8 @@ Reviewer keywords:
                      `allReviewers' and `approvals' with value \"-1\".
   Patchset:          integer, sets `currentPatchSet.number'.
                      Omit for default (no number in the alist).
+  Comments:          integer, generates that many stub `comments' entries.
+                     Omit for default (empty comments list).
   Last-Updated:      relative age like \"5 days ago\" or \"3 months ago\".
                      Converted to a `lastUpdated' epoch for staleness."
   (let* ((lines (s-lines (s-trim (lf-unindent spec))))
@@ -339,14 +341,15 @@ Reviewer keywords:
          ;; Partition into commit-message vs. metadata lines.
          (meta-re (concat "^\\(Change-Id\\|Owner\\|Reviewer"
                           "\\|Added-Reviewer\\|Reviewer-Negative"
-                          "\\|Last-Updated\\|Patchset\\):"))
+                          "\\|Last-Updated\\|Patchset\\|Comments\\):"))
          (msg-lines (-take-while
                      (lambda (l) (not (s-matches-p meta-re l)))
                      lines))
          (meta-lines (-drop (length msg-lines) lines))
          (commit-msg (s-trim (s-join "\n" msg-lines)))
          ;; Parse metadata.
-         (number nil) (owner-name nil) (last-updated nil) (patchset-num nil)
+         (number nil) (owner-name nil) (last-updated nil)
+         (patchset-num nil) (comment-count nil)
          (reviewers nil) (added-reviewers nil) (neg-reviewers nil))
     (dolist (l meta-lines)
       (cond
@@ -374,7 +377,9 @@ Reviewer keywords:
        ((s-prefix-p "Reviewer:" l)
         (push (s-trim (substring l 9)) reviewers))
        ((s-prefix-p "Patchset:" l)
-        (setq patchset-num (string-to-number (s-trim (substring l 9)))))))
+        (setq patchset-num (string-to-number (s-trim (substring l 9)))))
+       ((s-prefix-p "Comments:" l)
+        (setq comment-count (string-to-number (s-trim (substring l 9)))))))
     (setq reviewers (nreverse reviewers)
           added-reviewers (nreverse added-reviewers)
           neg-reviewers (nreverse neg-reviewers))
@@ -403,7 +408,12 @@ Reviewer keywords:
         ,@(when all-rv `((allReviewers . ,all-rv)))
         (currentPatchSet
          ,@(when patchset-num `((number . ,patchset-num)))
-         (approvals . ,(append pos-approvals neg-approvals)))))))
+         (approvals . ,(append pos-approvals neg-approvals)))
+        ,@(when comment-count
+            `((comments . ,(-map (lambda (i)
+                                   `((timestamp . ,(truncate (float-time)))
+                                     (message . ,(format "stub comment %d" i))))
+                                 (number-sequence 1 comment-count)))))))))
 
 (defun my/as-gerrit-stack (&rest specs)
   "Map `my/as-gerrit-patch' over SPECS, returning a list of change alists.

@@ -2474,7 +2474,11 @@ A rough proxy for effort size: 1 = atomic fix, 5+ = substantial feature.")
   (max-patchsets nil
                  :documentation "Highest patchset number across all changes in the stack.
 A proxy for churn: > 4 suggests repeated rework cycles and possible
-author/reviewer misalignment — consider a synchronous conversation."))
+author/reviewer misalignment — consider a synchronous conversation.")
+  (comment-count nil
+                 :documentation "Total number of inline review comments across all changes
+in the stack.  High counts relative to stack size signal a contentious
+or unclear change — worth a synchronous conversation to align."))
 
 (defvar my/agenda-work-data nil
   "Cached plist holding structured Gerrit/Jira agenda data.
@@ -2583,14 +2587,14 @@ QUERY-STRING is the Gerrit query, e.g.:
   \"status:open owner:self -is:abandoned\"
 
 EXTRA-FLAGS overrides the default flags (--current-patch-set,
---dependencies, --commit-message).  By way of example, bridge
-resolution passes \\='(\"--dependencies\") since it only needs edges.
+--dependencies, --commit-message, --comments).  By way of example,
+bridge resolution passes \\='(\"--dependencies\") since it only needs edges.
 
 Example:
   (my/gerrit--query \"change:123456\")
   → (((number . 123456) (subject . \"Fix frobnicate\") ...))"
   (let* ((default-flags '("--current-patch-set" "--dependencies"
-                           "--commit-message"))
+                           "--commit-message" "--comments"))
          (flags (or extra-flags default-flags))
          (args `(,my\gerrit-ssh-host "gerrit" "query" "--format=JSON"
                  ,@flags "--" ,query-string))
@@ -2979,7 +2983,10 @@ Example:
                                     (or (alist-get 'number
                                                    (alist-get 'currentPatchSet c))
                                         1))
-                                  stack))))))
+                                  stack)))
+     :comment-count (-sum (-map (lambda (c)
+                                  (length (alist-get 'comments c)))
+                                stack)))))
 
 (defun work-items-from-stack (stack status)
   "Split STACK by primary Jira ticket, one work-item per ticket.
@@ -3094,8 +3101,7 @@ Example:
                        (-map (lambda (rv)
                                (cons (alist-get 'name rv)
                                      (alist-get 'username rv)))))))
-               (-filter #'identity)
-               (--uniq-by (cdr it))))
+               (-filter #'identity)))
          (negative-voters
           (->> stack
                (-mapcat
@@ -3114,8 +3120,7 @@ Example:
                                  (when-let ((name (alist-get 'name by))
                                             (uname (alist-get 'username by)))
                                    (cons name uname))))))))
-               (-filter #'identity)
-               (--uniq-by (cdr it)))))
+               (-filter #'identity))))
     (cl-remove-duplicates
      (append human-reviewers negative-voters)
      :key #'cdr :test #'equal)))
@@ -3273,10 +3278,10 @@ item stands out in whichever status section it belongs to."
 
 (defun work-item-help-echo (item)
   "Return a minibuffer hint suggesting the next action for ITEM.
-Dispatches on status, with urgency, age, stack size, and patchset
-churn nudging the tone.  When `max-patchsets' exceeds 4 the hint
-recommends a synchronous conversation (Zoom/pair) to break the
-rework cycle."
+Dispatches on status, with urgency, age, stack size, patchset churn,
+and comment density nudging the tone.  High patchset counts (> 4) or
+high comment density (> 10 comments per change) suggest a synchronous
+conversation to break the rework cycle."
   (let* ((status       (work-item-status item))
          (urgent       (work-item-urgent item))
          (age-epoch    (work-item-age item))
@@ -3287,9 +3292,14 @@ rework cycle."
          (rv-str       (when (work-item-reviewers item)
                          (my/gerrit--format-reviewer-names
                           (work-item-reviewers item))))
-         (stack-size   (work-item-stack-size item))
+         (stack-size   (or (work-item-stack-size item) 1))
          (max-ps       (work-item-max-patchsets item))
+         (comments     (or (work-item-comment-count item) 0))
          (high-churn   (and max-ps (> max-ps 4)))
+         (comments/change (if (> stack-size 0)
+                              (/ (float comments) stack-size)
+                            0.0))
+         (hot-comments (> comments/change 10.0))
          ;; Build the status-specific action hint.
          (action
           (pcase status
@@ -3331,20 +3341,26 @@ rework cycle."
             ('jira-active
              "Jira says active but no Gerrit changes — is this a stale #progress?")
             (_ "")))
-         ;; Stack-size / patchset metadata line.
+         ;; Stack-size / patchset / comment metadata.
          (meta
           (concat
-           (when (and stack-size (> stack-size 1))
-             (format " [%d changes in stack]" stack-size))
+           (when (> stack-size 1)
+             (format " [%d changes]" stack-size))
            (when max-ps
-             (format " [patchset %d]" max-ps))
+             (format " [ps %d]" max-ps))
+           (when (> comments 0)
+             (format " [%d comment%s]" comments (if (= comments 1) "" "s")))
            (when urgent " [URGENT]")))
-         ;; High-churn warning overrides the tail.
-         (churn-warning
-          (when high-churn
-            (format " ⚠ %d patchsets — jump on a Zoom call to resolve the disagreement!"
-                    max-ps))))
-    (concat action meta churn-warning)))
+         ;; Churn / contention warnings.
+         (warnings
+          (concat
+           (when high-churn
+             (format " ⚠ %d patchsets — jump on a Zoom call to resolve the disagreement!"
+                     max-ps))
+           (when hot-comments
+             (format " ⚠ %.0f comments/change — contentious or unclear; align synchronously!"
+                     comments/change)))))
+    (concat action meta warnings)))
 ;; Rendering =work-item= instances:1 ends here
 
 ;; [[file:init.org::*Ticket collection helper][Ticket collection helper:1]]
