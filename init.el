@@ -2467,7 +2467,14 @@ so standard agenda commands (RET, TAB, I, o) work on work-item lines.")
   (age nil
        :documentation "Unix epoch (number) of the Gerrit tip's `lastUpdated'.
 Nil for `todo' items (Jira-only, no Gerrit change).  Rendered as
-a human-readable staleness string by `work-item-to-string'."))
+a human-readable staleness string by `work-item-to-string'.")
+  (stack-size nil
+              :documentation "Number of Gerrit changes in the dependency stack.
+A rough proxy for effort size: 1 = atomic fix, 5+ = substantial feature.")
+  (max-patchsets nil
+                 :documentation "Highest patchset number across all changes in the stack.
+A proxy for churn: > 4 suggests repeated rework cycles and possible
+author/reviewer misalignment — consider a synchronous conversation."))
 
 (defvar my/agenda-work-data nil
   "Cached plist holding structured Gerrit/Jira agenda data.
@@ -2965,7 +2972,14 @@ Example:
      :reviewer-users (my/gerrit--extract-reviewer-user-map stack)
      :author (alist-get 'name (alist-get 'owner tip))
      :status status
-     :age (alist-get 'lastUpdated tip))))
+     :age (alist-get 'lastUpdated tip)
+     :stack-size (length stack)
+     :max-patchsets (when stack
+                      (-max (-map (lambda (c)
+                                    (or (alist-get 'number
+                                                   (alist-get 'currentPatchSet c))
+                                        1))
+                                  stack))))))
 
 (defun work-items-from-stack (stack status)
   "Split STACK by primary Jira ticket, one work-item per ticket.
@@ -3259,59 +3273,78 @@ item stands out in whichever status section it belongs to."
 
 (defun work-item-help-echo (item)
   "Return a minibuffer hint suggesting the next action for ITEM.
-Dispatches on status, with urgency and age nudging the tone."
-  (let* ((status    (work-item-status item))
-         (urgent    (work-item-urgent item))
-         (age-epoch (work-item-age item))
-         (days-old  (when age-epoch
-                      (floor (/ (- (float-time) age-epoch) 86400))))
-         (stale     (and days-old (>= days-old 14)))
-         (very-stale (and days-old (>= days-old 30)))
-         (jira      (work-item-jira item))
-         (rv-str    (when (work-item-reviewers item)
-                      (my/gerrit--format-reviewer-names
-                       (work-item-reviewers item)))))
-    (concat
-     (pcase status
-       ('reviews-needed
-        (cond
-         (very-stale "This review is rotting — consider a Slack nudge or offer to pair.")
-         (stale      "Stale review — consider prioritising it today.")
-         (t          "Open their change in Gerrit and leave a Code-Review vote.")))
-       ('my-needing-action
-        (cond
-         (very-stale
-          (format "Feedback from %s has been waiting a month — address it or abandon."
-                  (or rv-str "reviewers")))
-         (stale
-          (format "Feedback from %s is going stale — address it soon."
-                  (or rv-str "reviewers")))
-         (t "Open your change, address the feedback, and re-publish.")))
-       ('please-review
-        (cond
-         (very-stale
-          (format "Waiting a month on %s — escalate or re-assign the reviewer."
-                  (or rv-str "reviewers")))
-         (stale
-          (format "Two weeks without review — send %s a Slack nudge."
-                  (or rv-str "reviewers")))
-         (t (format "Awaiting review from %s — patience, or a gentle ping."
-                    (or rv-str "reviewers")))))
-       ('wip
-        (cond
-         (very-stale "Abandoned? If this is dead, mark it WIP or abandon in Gerrit.")
-         (stale      "This has been idle for weeks — resume it or let it go.")
-         (t          "Resume work on this change, or decide to abandon it.")))
-       ('todo
-        (if urgent
-            "Urgent and unstarted — create a Gerrit change today."
-          "Not yet started — consider scoping and creating a first patchset."))
-       ('assigned
-        "Assigned to you — decide: start working on it, or push back.")
-       ('jira-active
-        "Jira says active but no Gerrit changes — is this a stale #progress?")
-       (_ ""))
-     (when urgent " [URGENT]"))))
+Dispatches on status, with urgency, age, stack size, and patchset
+churn nudging the tone.  When `max-patchsets' exceeds 4 the hint
+recommends a synchronous conversation (Zoom/pair) to break the
+rework cycle."
+  (let* ((status       (work-item-status item))
+         (urgent       (work-item-urgent item))
+         (age-epoch    (work-item-age item))
+         (days-old     (when age-epoch
+                         (floor (/ (- (float-time) age-epoch) 86400))))
+         (stale        (and days-old (>= days-old 14)))
+         (very-stale   (and days-old (>= days-old 30)))
+         (rv-str       (when (work-item-reviewers item)
+                         (my/gerrit--format-reviewer-names
+                          (work-item-reviewers item))))
+         (stack-size   (work-item-stack-size item))
+         (max-ps       (work-item-max-patchsets item))
+         (high-churn   (and max-ps (> max-ps 4)))
+         ;; Build the status-specific action hint.
+         (action
+          (pcase status
+            ('reviews-needed
+             (cond
+              (very-stale "This review is rotting — consider a Slack nudge or offer to pair.")
+              (stale      "Stale review — consider prioritising it today.")
+              (t          "Open their change in Gerrit and leave a Code-Review vote.")))
+            ('my-needing-action
+             (cond
+              (very-stale
+               (format "Feedback from %s has been waiting a month — address it or abandon."
+                       (or rv-str "reviewers")))
+              (stale
+               (format "Feedback from %s is going stale — address it soon."
+                       (or rv-str "reviewers")))
+              (t "Open your change, address the feedback, and re-publish.")))
+            ('please-review
+             (cond
+              (very-stale
+               (format "Waiting a month on %s — escalate or re-assign the reviewer."
+                       (or rv-str "reviewers")))
+              (stale
+               (format "Two weeks without review — send %s a Slack nudge."
+                       (or rv-str "reviewers")))
+              (t (format "Awaiting review from %s — patience, or a gentle ping."
+                         (or rv-str "reviewers")))))
+            ('wip
+             (cond
+              (very-stale "Abandoned? If this is dead, mark it WIP or abandon in Gerrit.")
+              (stale      "This has been idle for weeks — resume it or let it go.")
+              (t          "Resume work on this change, or decide to abandon it.")))
+            ('todo
+             (if urgent
+                 "Urgent and unstarted — create a Gerrit change today."
+               "Not yet started — consider scoping and creating a first patchset."))
+            ('assigned
+             "Assigned to you — decide: start working on it, or push back.")
+            ('jira-active
+             "Jira says active but no Gerrit changes — is this a stale #progress?")
+            (_ "")))
+         ;; Stack-size / patchset metadata line.
+         (meta
+          (concat
+           (when (and stack-size (> stack-size 1))
+             (format " [%d changes in stack]" stack-size))
+           (when max-ps
+             (format " [patchset %d]" max-ps))
+           (when urgent " [URGENT]")))
+         ;; High-churn warning overrides the tail.
+         (churn-warning
+          (when high-churn
+            (format " ⚠ %d patchsets — jump on a Zoom call to resolve the disagreement!"
+                    max-ps))))
+    (concat action meta churn-warning)))
 ;; Rendering =work-item= instances:1 ends here
 
 ;; [[file:init.org::*Ticket collection helper][Ticket collection helper:1]]

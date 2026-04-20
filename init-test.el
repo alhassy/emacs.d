@@ -330,6 +330,8 @@ Reviewer keywords:
                      `allReviewers' only (no approval entry).
   Reviewer-Negative: voted Code-Review -1 — appears in both
                      `allReviewers' and `approvals' with value \"-1\".
+  Patchset:          integer, sets `currentPatchSet.number'.
+                     Omit for default (no number in the alist).
   Last-Updated:      relative age like \"5 days ago\" or \"3 months ago\".
                      Converted to a `lastUpdated' epoch for staleness."
   (let* ((lines (s-lines (s-trim (lf-unindent spec))))
@@ -337,14 +339,14 @@ Reviewer keywords:
          ;; Partition into commit-message vs. metadata lines.
          (meta-re (concat "^\\(Change-Id\\|Owner\\|Reviewer"
                           "\\|Added-Reviewer\\|Reviewer-Negative"
-                          "\\|Last-Updated\\):"))
+                          "\\|Last-Updated\\|Patchset\\):"))
          (msg-lines (-take-while
                      (lambda (l) (not (s-matches-p meta-re l)))
                      lines))
          (meta-lines (-drop (length msg-lines) lines))
          (commit-msg (s-trim (s-join "\n" msg-lines)))
          ;; Parse metadata.
-         (number nil) (owner-name nil) (last-updated nil)
+         (number nil) (owner-name nil) (last-updated nil) (patchset-num nil)
          (reviewers nil) (added-reviewers nil) (neg-reviewers nil))
     (dolist (l meta-lines)
       (cond
@@ -370,7 +372,9 @@ Reviewer keywords:
        ((s-prefix-p "Added-Reviewer:" l)
         (push (s-trim (substring l 15)) added-reviewers))
        ((s-prefix-p "Reviewer:" l)
-        (push (s-trim (substring l 9)) reviewers))))
+        (push (s-trim (substring l 9)) reviewers))
+       ((s-prefix-p "Patchset:" l)
+        (setq patchset-num (string-to-number (s-trim (substring l 9)))))))
     (setq reviewers (nreverse reviewers)
           added-reviewers (nreverse added-reviewers)
           neg-reviewers (nreverse neg-reviewers))
@@ -398,6 +402,7 @@ Reviewer keywords:
                (username . ,(my/test--name-to-username owner-name)))
         ,@(when all-rv `((allReviewers . ,all-rv)))
         (currentPatchSet
+         ,@(when patchset-num `((number . ,patchset-num)))
          (approvals . ,(append pos-approvals neg-approvals)))))))
 
 (defun my/as-gerrit-stack (&rest specs)
