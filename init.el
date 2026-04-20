@@ -3049,7 +3049,7 @@ Example:
 Merges two sources:
 
 1. Human names from `allReviewers' — kept when the name contains
-   a space (heuristic: \"Alan Turing\" is human, \"Jenkins\" is a
+   a space (heuristic: \"Ali Hassan\" is human, \"Jenkins\" is a
    bot) and the username is non-nil.  The change owner is excluded.
 2. ANY reviewer (including bots) from `currentPatchSet.approvals'
    where type = \"Code-Review\" and value < 0.  A -1 from a bot
@@ -3059,7 +3059,7 @@ The union is returned, deduplicated by username.
 
 Example:
   (my/gerrit--extract-reviewer-user-map stack)
-  → ((\"Ada Lovelace\" . \"alovelace\") (\"Alan Turing\" . \"aturing\"))"
+  → ((\"Ali ibn Abi Talib\" . \"ali\") (\"Hassan ibn Ali\" . \"hassan\"))"
   (let* ((owners (->> stack
                       (-map (lambda (c)
                               (alist-get 'username (alist-get 'owner c))))
@@ -3114,7 +3114,7 @@ whose username was nil (the user-map variant drops those).
 
 Example:
   (my/gerrit--extract-reviewer-names stack)
-  → (\"Ada Lovelace\" \"Alan Turing\")"
+  → (\"Ali ibn Abi Talib\" \"Hassan ibn Ali\")"
   (let ((with-usernames (-map #'car (my/gerrit--extract-reviewer-user-map stack)))
         ;; Catch reviewers that have a name but no username — the user-map
         ;; variant drops these, but the original names function kept them.
@@ -3256,6 +3256,62 @@ item stands out in whichever status section it belongs to."
                                  (or jira-link "") title)
                  (format "%s — ⚠️ Jira active but no Gerrit changes"
                          (or jira-link ""))))))))
+
+(defun work-item-help-echo (item)
+  "Return a minibuffer hint suggesting the next action for ITEM.
+Dispatches on status, with urgency and age nudging the tone."
+  (let* ((status    (work-item-status item))
+         (urgent    (work-item-urgent item))
+         (age-epoch (work-item-age item))
+         (days-old  (when age-epoch
+                      (floor (/ (- (float-time) age-epoch) 86400))))
+         (stale     (and days-old (>= days-old 14)))
+         (very-stale (and days-old (>= days-old 30)))
+         (jira      (work-item-jira item))
+         (rv-str    (when (work-item-reviewers item)
+                      (my/gerrit--format-reviewer-names
+                       (work-item-reviewers item)))))
+    (concat
+     (pcase status
+       ('reviews-needed
+        (cond
+         (very-stale "This review is rotting — consider a Slack nudge or offer to pair.")
+         (stale      "Stale review — consider prioritising it today.")
+         (t          "Open their change in Gerrit and leave a Code-Review vote.")))
+       ('my-needing-action
+        (cond
+         (very-stale
+          (format "Feedback from %s has been waiting a month — address it or abandon."
+                  (or rv-str "reviewers")))
+         (stale
+          (format "Feedback from %s is going stale — address it soon."
+                  (or rv-str "reviewers")))
+         (t "Open your change, address the feedback, and re-publish.")))
+       ('please-review
+        (cond
+         (very-stale
+          (format "Waiting a month on %s — escalate or re-assign the reviewer."
+                  (or rv-str "reviewers")))
+         (stale
+          (format "Two weeks without review — send %s a Slack nudge."
+                  (or rv-str "reviewers")))
+         (t (format "Awaiting review from %s — patience, or a gentle ping."
+                    (or rv-str "reviewers")))))
+       ('wip
+        (cond
+         (very-stale "Abandoned? If this is dead, mark it WIP or abandon in Gerrit.")
+         (stale      "This has been idle for weeks — resume it or let it go.")
+         (t          "Resume work on this change, or decide to abandon it.")))
+       ('todo
+        (if urgent
+            "Urgent and unstarted — create a Gerrit change today."
+          "Not yet started — consider scoping and creating a first patchset."))
+       ('assigned
+        "Assigned to you — decide: start working on it, or push back.")
+       ('jira-active
+        "Jira says active but no Gerrit changes — is this a stale #progress?")
+       (_ ""))
+     (when urgent " [URGENT]"))))
 ;; Rendering =work-item= instances:1 ends here
 
 ;; [[file:init.org::*Ticket collection helper][Ticket collection helper:1]]
@@ -3630,10 +3686,15 @@ A nil cache (never fetched) is also considered stale."
 
 (defun work-item-insert-as-agenda-section (heading items)
   "Insert HEADING and a numbered list of rendered ITEMS into the agenda buffer.
-Each item is rendered via `work-item-to-string'.  When an item has
-a non-nil `org-tree' marker, `org-marker' and `org-hd-marker' text
-properties are set on the line so that standard org-agenda commands
-\(RET, TAB, I, o, etc.) work."
+Each item is rendered via `work-item-to-string'.  Each line carries a
+`help-echo' text property (via `work-item-help-echo') so that hovering
+or resting the cursor on any item shows a context-sensitive action hint
+in the minibuffer --- turning the dashboard from a passive report into
+an active one that tells you what to do next.
+
+When an item has a non-nil `org-tree' marker, `org-marker' and
+`org-hd-marker' text properties are set on the line so that standard
+org-agenda commands (RET, TAB, I, o, etc.) work."
   (when items
     (insert "\n"
             (propertize heading 'face 'org-agenda-structure)
@@ -3643,14 +3704,17 @@ properties are set on the line so that standard org-agenda commands
         (cl-incf n)
         (let ((line-start (point)))
           (insert (format "%d. %s\n" n (work-item-to-string it)))
-          ;; When the item has an Org tree, make the line behave like
-          ;; a real agenda entry.
-          (when-let ((marker (work-item-org-tree it)))
-            (when (marker-buffer marker)
-              (put-text-property line-start (1- (point))
-                                 'org-marker marker)
-              (put-text-property line-start (1- (point))
-                                 'org-hd-marker marker))))))))
+          (let ((end (1- (point))))
+            ;; Action hint: displayed in minibuffer via help-at-pt.
+            (put-text-property line-start end
+                               'help-echo (work-item-help-echo it))
+            ;; When the item has an Org tree, make the line behave like
+            ;; a real agenda entry.
+            (when-let ((marker (work-item-org-tree it)))
+              (when (marker-buffer marker)
+                (put-text-property line-start end 'org-marker marker)
+                (put-text-property line-start end
+                                   'org-hd-marker marker)))))))))
 
 (defun my/agenda-insert-work-sections ()
   "Insert cached `work-item' sections at the end of the daily agenda.
@@ -3701,6 +3765,14 @@ manual refresh at any time, use the \"Refresh Work\" button or press
           (my/agenda-work-refresh))))))
 
 (add-hook 'org-agenda-finalize-hook #'my/agenda-insert-work-sections)
+
+;; Display help-echo text properties in the minibuffer when the cursor
+;; idles on a work-item line.  This is what makes the agenda an *active*
+;; dashboard — each line tells you what to do, not just what exists.
+(add-hook 'org-agenda-mode-hook
+          (lambda ()
+            (setq-local help-at-pt-display-when-idle t)
+            (help-at-pt-set-timer)))
 ;; Finalize hook + once-daily auto-fetch:1 ends here
 
 ;; [[file:init.org::*Standup command][Standup command:1]]
@@ -6621,8 +6693,8 @@ are excluded — they belong in Impediments, not here."
 Aggregates how many impediment items each reviewer appears on, then
 inserts a sentence like:
 
-  These impediments may be due to reviewer overload: Ada has 5,
-  Grace has 3, and Alan has 1 Gerrit items vying for their
+  These impediments may be due to reviewer overload: Ali has 5,
+  Hassan has 3, and Hussain has 1 Gerrit items vying for their
   attention, respectively.
 
 Each count is an Org link to the reviewer's Gerrit attention
