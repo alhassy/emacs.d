@@ -7059,60 +7059,80 @@ Returns a deduplicated list of uppercase strings."
             (push (upcase (match-string 1)) ids)))
         (delete-dups (nreverse ids))))
 
-    (defun my/weekly-review--previous-planned-jiras ()
-      "Return the Jira ticket IDs from the previous weekly review's Planned section.
-Searches backward from point for the second-most-recent weekly review
-heading (the first is the one currently being written), then finds
-its 📆 Planned child and extracts Jira IDs.  Returns nil if no
-previous review exists."
+    (defun my/weekly-review--previous-section-jiras (heading-re)
+      "Return Jira IDs from HEADING-RE in the previous weekly review.
+HEADING-RE is a regexp matching the section heading (e.g.,
+\"^\\\\*+ 📆 Planned\").  The previous review is identified as the
+second-most-recent match (newest-first); the first is the review
+currently being written.  Returns nil if no previous review exists."
       (save-excursion
         (goto-char (point-min))
-        (let ((reviews nil))
-          ;; Collect all weekly review headings (children of 🌿 Reviews 🌱).
-          ;; Each review starts with a date-stamped heading like
-          ;; "Week of 2026-04-14".
-          (when (search-forward "🌿 Reviews 🌱" nil t)
-            (let ((parent-end (save-excursion (org-end-of-subtree t t))))
-              (while (re-search-forward "^\\*+ 📆 Planned" parent-end t)
-                (push (point) reviews))))
-          ;; reviews is newest-first; we want the second entry
-          ;; (the most recent *previous* review's Planned section).
-          (when (>= (length reviews) 2)
-            (let* ((planned-pos (nth 1 reviews))
-                   (planned-end (save-excursion
-                                  (goto-char planned-pos)
-                                  (org-end-of-subtree t t))))
-              (my/weekly-review--extract-jira-ids
-               planned-pos planned-end))))))
+        (when (search-forward "🌿 Reviews 🌱" nil t)
+          (let ((parent-end (save-excursion (org-end-of-subtree t t)))
+                (positions nil))
+            (save-excursion
+              (while (re-search-forward heading-re parent-end t)
+                (push (point) positions)))
+            (when (>= (length positions) 2)
+              (let* ((pos (nth 1 positions))
+                     (end (save-excursion
+                            (goto-char pos)
+                            (org-end-of-subtree t t))))
+                (my/weekly-review--extract-jira-ids pos end)))))))
 
-    (defun my/weekly-review--insert-promise-check ()
-      "Compare Completed tickets against last week's Planned tickets.
-Inserts a celebratory or accountability message into the current
-Completed → Notes section."
-      (let* ((promised (my/weekly-review--previous-planned-jiras)))
+    (cl-defun my/weekly-review--insert-accountability
+        (&key prev-heading current-headings motto success-msg fail-verb)
+      "Generic accountability check between weekly review sections.
+PREV-HEADING is the regexp for last week's source section.
+CURRENT-HEADINGS is a list of regexps for this week's target sections
+\(items appearing in ANY of them count as progressed).
+MOTTO is the Org comment inserted before the result.
+SUCCESS-MSG is the 😄 message when nothing is missed.
+FAIL-VERB is the action word for the 😦 message (e.g., \"get these
+done\" or \"start these\")."
+      (let ((promised (my/weekly-review--previous-section-jiras prev-heading)))
         (when promised
-          ;; Collect Jira IDs from the Completed section we just built.
-          ;; Walk back to the ✅ Completed heading, then scan its subtree.
-          (let* ((completed-ids
-                  (save-excursion
-                    (when (re-search-backward "^\\*+ ✅ Completed" nil t)
-                      (let ((beg (point))
-                            (end (save-excursion
-                                   (org-end-of-subtree t t))))
-                        (my/weekly-review--extract-jira-ids beg end)))))
-                 (missed (-difference promised completed-ids)))
-            (insert "\n")
+          (let* ((current-ids
+                  (-mapcat
+                   (lambda (re)
+                     (save-excursion
+                       (when (re-search-backward re nil t)
+                         (let ((beg (point))
+                               (end (save-excursion
+                                      (org-end-of-subtree t t))))
+                           (my/weekly-review--extract-jira-ids beg end)))))
+                   current-headings))
+                 (missed (-difference promised current-ids)))
+            (insert (format " # Try to move items upward: %s\n" motto))
             (if (null missed)
-                (insert (propertize
-                         "😄 Everything you promised last week, you actually shipped!"
-                         'face '(bold (:foreground "sea green")))
+                (insert (propertize success-msg
+                                    'face '(bold (:foreground "sea green")))
                         "\n")
               (insert (propertize
-                       (format "😦 Promised but not shipped: %s"
-                               (string-join missed ", "))
+                       (format "😦 You promised to %s, but failed to do so: %s"
+                               fail-verb (string-join missed ", "))
                        'face '(bold (:foreground "orange red")))
-                      "\nWhy? Underestimated effort? Got sidetracked?"
+                      "\nWhy? What happened!? Did you underestimate the effort"
+                      " required or did you get sidetracked helping someone else?"
                       " That's useful info to surface in the report!\n"))))))
+
+    (defun my/weekly-review--insert-completed-accountability ()
+      "Accountability: did we finish last week's In Progress items?"
+      (my/weekly-review--insert-accountability
+       :prev-heading    "^\\*+ 🔨 In Progress"
+       :current-headings '("^\\*+ ✅ Completed")
+       :motto           "from \"In Progress\" to \"Completed.\""
+       :success-msg     "😄 Everything that was In Progress last week, you actually shipped!"
+       :fail-verb       "get these done"))
+
+    (defun my/weekly-review--insert-in-progress-accountability ()
+      "Accountability: did we start last week's Planned items?"
+      (my/weekly-review--insert-accountability
+       :prev-heading    "^\\*+ 📆 Planned"
+       :current-headings '("^\\*+ 🔨 In Progress" "^\\*+ ✅ Completed")
+       :motto           "from \"Planned\" to \"In Progress.\""
+       :success-msg     "😄 Everything you planned last week, you actually started!"
+       :fail-verb       "start these"))
 
     (defun my/weekly-review--insert-completed ()
       "Insert the Completed section: merged tickets with git-log cross-reference.
@@ -7167,7 +7187,7 @@ wip) are excluded — even if git log contains their commits."
 
       (my/org-insert-heading :child "What did I ship this week? :private:"
                              :WHY "Recognise accomplishments, express self-gratitude, and debug!")
-      (my/weekly-review--insert-promise-check)
+      (my/weekly-review--insert-completed-accountability)
       (my/weekly-review--insert-clock-visuals)
       (my/weekly-review--insert-git-commits)
       (my/weekly-review--insert-jira-tickets)
@@ -7207,6 +7227,7 @@ are excluded — they belong in Impediments, not here."
                              :body "1. ➕ Wins: What went well and why? ✅
 2. What could have caused things to go so well? Maybe I can duplicate this next week!
 3. Re-read [[https://jvns.ca/blog/brag-documents/][Get your work recognized: write a brag document]]")
+      (my/weekly-review--insert-in-progress-accountability)
       (insert (format "\n\n[[%s][🤔 Update Sprint Doc]]\n\n" my\sprint-doc-url)))
 
     (defun my/weekly-review--insert-reviewer-overload (items)
@@ -7304,6 +7325,7 @@ Renders TODO-status tickets from clock data and Jira."
         (my/org-insert-heading :child "Notes \t\t\t:private:"
                                :body "1. 🔀 What will I focus on this week?
 2. What $10k tasks do I want done? Why or why not?
+3. 😟 Anything I'm worried about, concerned about, or uneasy with? Surface it now --- this is the time.
 
 ")
         (insert "\n*What's my manager interested in for this sprint?* ")
@@ -7537,6 +7559,13 @@ day. You remain focused on your most important tasks./
     ;; attention this week."  One well-timed ping is worth more than
     ;; five daily nags, and it frames the ask as collaborative
     ;; ("unblock me so we both make progress") rather than nagging.
+    ;;
+    ;; Why not automate posting via a Slack webhook?  Webhooks don't
+    ;; honour Slack markdown — bold, links, and bullet lists render as
+    ;; raw text — and `<@UXXXX>` @-mentions in webhook payloads don't
+    ;; produce real notifications.  The result is ugly and silent.
+    ;; Manual copy-paste into the Slack compose box is the only way to
+    ;; get proper formatting and working @-mentions.
     (bind-key*
      "C-c r w"
      (def-capture "🔄 Weekly Review 😊"
