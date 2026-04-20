@@ -11509,6 +11509,9 @@ Example:
            :documentation "Gerrit URL for the topmost change in the stack, or nil for not-yet-started urgent Jira items.")
   (reviewers nil
              :documentation "List of reviewer name strings (humans from allReviewers + any negative Code-Review voters).")
+  (reviewer-users nil
+                  :documentation "Alist of (display-name . username) for each reviewer.
+Used to construct per-reviewer Gerrit attention URLs.")
   (author nil
           :documentation "Display name of the stack owner.")
   ;; Whether this item is urgent, WIP, something for me to review, something I
@@ -12063,6 +12066,7 @@ Example:
                       my\gerrit-base-url my\gerrit-project-path
                       (alist-get 'number tip))
      :reviewers (my/gerrit--extract-reviewer-names stack)
+     :reviewer-users (my/gerrit--extract-reviewer-user-map stack)
      :author (alist-get 'name (alist-get 'owner tip))
      :status status
      :age (alist-get 'lastUpdated tip))))
@@ -12205,6 +12209,59 @@ Example:
                                (alist-get 'name (alist-get 'by a)))))))
                (-filter #'identity) -uniq)))
     (-uniq (append human-reviewers negative-voters))))
+
+(cl-defun my/gerrit--extract-reviewer-user-map (stack)
+  "Extract an alist of (display-name . username) for reviewers in STACK.
+Same filtering logic as `my/gerrit--extract-reviewer-names' but preserves
+the username alongside each display name.  Used to build per-reviewer
+Gerrit attention URLs."
+  (let* ((owners (->> stack
+                      (-map (lambda (c)
+                              (alist-get 'username (alist-get 'owner c))))
+                      (-filter #'identity)
+                      -uniq))
+         (human-reviewers
+          (->> stack
+               (-mapcat
+                (lambda (c)
+                  (let ((owner-u (alist-get 'username
+                                            (alist-get 'owner c))))
+                    (->> (append (alist-get 'allReviewers c) nil)
+                         (-filter
+                          (lambda (rv)
+                            (let ((name (alist-get 'name rv))
+                                  (uname (alist-get 'username rv)))
+                              (and name uname
+                                   (s-contains-p " " name)
+                                   (not (member uname owners))))))
+                         (-map (lambda (rv)
+                                 (cons (alist-get 'name rv)
+                                       (alist-get 'username rv))))))))
+               (-filter #'identity)
+               (--uniq-by (cdr it))))
+         (negative-voters
+          (->> stack
+               (-mapcat
+                (lambda (c)
+                  (->> (append (alist-get 'approvals
+                                          (alist-get 'currentPatchSet c))
+                               nil)
+                       (-filter
+                        (lambda (a)
+                          (and (equal "Code-Review" (alist-get 'type a))
+                               (< (string-to-number
+                                   (or (alist-get 'value a) "0"))
+                                  0))))
+                       (-map (lambda (a)
+                               (let ((by (alist-get 'by a)))
+                                 (when-let ((name (alist-get 'name by))
+                                            (uname (alist-get 'username by)))
+                                   (cons name uname))))))))
+               (-filter #'identity)
+               (--uniq-by (cdr it)))))
+    (cl-remove-duplicates
+     (append human-reviewers negative-voters)
+     :key #'cdr :test #'equal)))
 
 (cl-defun my/gerrit--format-reviewer-names (names)
   "Format a list of NAMES into natural English with Oxford comma.
@@ -19564,6 +19621,51 @@ are excluded — they belong in Impediments, not here."
 3. Re-read [[https://jvns.ca/blog/brag-documents/][Get your work recognized: write a brag document]]")
       (insert (format "\n\n[[%s][🤔 Update Sprint Doc]]\n\n" my\sprint-doc-url)))
 
+    (defun my/weekly-review--insert-reviewer-overload (items)
+      "Insert a reviewer-overload hint after the impediment ITEMS.
+Aggregates how many impediment items each reviewer appears on, then
+inserts a sentence like:
+
+  These impediments may be due to reviewer overload: Ada has 5,
+  Grace has 3, and Alan has 1 Gerrit items vying for their
+  attention, respectively.
+
+Each count is an Org link to the reviewer's Gerrit attention
+dashboard (open, non-abandoned items awaiting their action)."
+      (let ((user-counts (make-hash-table :test 'equal))
+            (user-names  (make-hash-table :test 'equal)))
+        (dolist (item items)
+          (dolist (pair (work-item-reviewer-users item))
+            (let ((name (car pair))
+                  (uname (cdr pair)))
+              (when uname
+                (cl-incf (gethash uname user-counts 0))
+                (puthash uname name user-names)))))
+        (when (> (hash-table-count user-counts) 0)
+          (let ((entries nil))
+            (maphash
+             (lambda (uname count)
+               (push (list (gethash uname user-names) uname count)
+                     entries))
+             user-counts)
+            ;; Sort descending by count so the busiest reviewer is first.
+            (setq entries (--sort (> (nth 2 it) (nth 2 other)) entries))
+            (let ((parts
+                   (-map
+                    (lambda (e)
+                      (let* ((name  (car (s-split " " (nth 0 e))))
+                             (uname (nth 1 e))
+                             (count (nth 2 e))
+                             (url (format
+                                   "%s/q/attention:%s+status:open+-is:abandoned"
+                                   my\gerrit-base-url uname)))
+                        (format "%s has [[%s][%d]]" name url count)))
+                    entries)))
+              (insert (format
+                       "\nThese impediments may be due to reviewer overload: %s Gerrit %s vying for their attention, respectively.\n"
+                       (my/gerrit--format-reviewer-names parts)
+                       (if (= (length entries) 1) "item" "items"))))))))
+
     (defun my/weekly-review--insert-impediments ()
       "Insert the Impediments section: outstanding reviews sorted by age."
       (my/org-insert-heading :uncle "🚧 Impediments" :DESCRIPTION "who must do what by when?")
@@ -19575,7 +19677,8 @@ are excluded — they belong in Impediments, not here."
                                  items)))))
         (if (null please-review)
             (insert "# - /(none — no outstanding reviews!)/\n")
-          (my/weekly-review--insert-numbered-items please-review)))
+          (my/weekly-review--insert-numbered-items please-review)
+          (my/weekly-review--insert-reviewer-overload please-review)))
       (insert "# - /(...design docs, discussion threads, or other non-Jira work?)/\n")
 
       (my/org-insert-heading :child "Notes \t\t\t:private:"
