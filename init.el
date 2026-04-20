@@ -3313,10 +3313,23 @@ item stands out in whichever status section it belongs to."
 
 (defun work-item-help-echo (item)
   "Return a minibuffer hint suggesting the next action for ITEM.
-Dispatches on status, with urgency, age, stack size, patchset churn,
-and comment density nudging the tone.  High patchset counts (> 4) or
-high comment density (> 10 comments per change) suggest a synchronous
-conversation to break the rework cycle."
+The hint has three layers, concatenated:
+
+  ACTION — status-specific primary suggestion.
+  META   — bracketed stats: changes, size, patchset, comments, urgency.
+  NUDGE  — stat-based strategic advice (split, rebase, escalate, etc.).
+
+Patchsets alone are not a contention signal — iterative improvement is
+normal.  We only flag contention when patchsets AND comments are both
+high, optionally combined with long duration for the strongest signal.
+
+Stat-based nudges (highest priority wins):
+  (a) 🧱 Stuck: many ps + many comments + old → escalate / split / rethink.
+  (b) Split: large size (L/XL) → smaller stacks = happier reviewers.
+  (c) Abandon & re-open: very old + large + many ps → start fresh.
+  (d) Rebase: > 7 days old → rebase to stay current with target branch.
+  (e) Spin off follow-ups: many comments but low ps → optional cleanup.
+  (f) Escalate: high ps + growing comments → schedule synchronous talk."
   (let* ((status       (work-item-status item))
          (urgent       (work-item-urgent item))
          (age-epoch    (work-item-age item))
@@ -3328,77 +3341,94 @@ conversation to break the rework cycle."
                          (my/gerrit--format-reviewer-names
                           (work-item-reviewers item))))
          (stack-size   (or (work-item-stack-size item) 1))
-         (max-ps       (work-item-max-patchsets item))
+         (max-ps       (or (work-item-max-patchsets item) 1))
          (comments     (or (work-item-comment-count item) 0))
          (shirt-size   (work-item-avg-shirt-size item))
-         (high-churn   (and max-ps (> max-ps 4)))
-         (comments/change (if (> stack-size 0)
-                              (/ (float comments) stack-size)
-                            0.0))
-         (hot-comments (> comments/change 10.0))
-         ;; Build the status-specific action hint.
+         (large-change (and shirt-size (>= shirt-size 4))) ;; L or XL
+         (many-ps      (> max-ps 4))
+         (many-comments (> comments (* 5 stack-size))) ;; > 5 comments/change
+         (needs-rebase (and days-old (> days-old 7)))
+         ;; ── Layer 1: status-specific primary action ──
          (action
           (pcase status
             ('reviews-needed
              (cond
-              (very-stale "This review is rotting — consider a Slack nudge or offer to pair.")
-              (stale      "Stale review — consider prioritising it today.")
-              (t          "Open their change in Gerrit and leave a Code-Review vote.")))
+              (very-stale "This review is rotting — Slack nudge or offer to pair.")
+              (stale      "Stale review — prioritise it today.")
+              (t          "Open their change and leave a Code-Review vote.")))
             ('my-needing-action
              (cond
               (very-stale
-               (format "Feedback from %s has been waiting a month — address it or abandon."
+               (format "Feedback from %s has waited a month — address or abandon."
                        (or rv-str "reviewers")))
               (stale
                (format "Feedback from %s is going stale — address it soon."
                        (or rv-str "reviewers")))
-              (t "Open your change, address the feedback, and re-publish.")))
+              (t "Address the feedback and re-publish.")))
             ('please-review
              (cond
               (very-stale
-               (format "Waiting a month on %s — escalate or re-assign the reviewer."
-                       (or rv-str "reviewers")))
+               (format "A month without review — escalate or re-assign %s."
+                       (or rv-str "the reviewer")))
               (stale
                (format "Two weeks without review — send %s a Slack nudge."
                        (or rv-str "reviewers")))
-              (t (format "Awaiting review from %s — patience, or a gentle ping."
+              (t (format "Awaiting %s — patience, or a gentle ping."
                          (or rv-str "reviewers")))))
             ('wip
              (cond
-              (very-stale "Abandoned? If this is dead, mark it WIP or abandon in Gerrit.")
-              (stale      "This has been idle for weeks — resume it or let it go.")
-              (t          "Resume work on this change, or decide to abandon it.")))
+              ;; (d) Very old + large + many ps → abandon and start fresh.
+              ((and very-stale large-change many-ps)
+               "Ancient, large, and churning — abandon and re-open as smaller pieces.")
+              (very-stale "Dead weight? Abandon in Gerrit or commit to finishing it.")
+              (stale
+               "Idle for weeks — set it up for success: self-review, add context, then resume.")
+              (t (concat "🌱 Is this actually ready? Do a self-review, "
+                         "ensure the right reviewers, and keep stacks small."))))
             ('todo
              (if urgent
                  "Urgent and unstarted — create a Gerrit change today."
-               "Not yet started — consider scoping and creating a first patchset."))
+               "Not yet started — scope it, create a first patchset, small stacks = happy reviewers."))
             ('assigned
-             "Assigned to you — decide: start working on it, or push back.")
+             "Assigned to you — decide: start working, or push back on scope.")
             ('jira-active
-             "Jira says active but no Gerrit changes — is this a stale #progress?")
+             "Jira says active but no Gerrit changes — stale #progress? Fix the status.")
             (_ "")))
-         ;; Stack-size / patchset / shirt-size / comment metadata.
+         ;; ── Layer 2: bracketed metadata ──
          (meta
           (concat
            (when (> stack-size 1)
              (format " [%d changes]" stack-size))
            (when shirt-size
              (format " [size %s]" (work-item--shirt-size-label shirt-size)))
-           (when max-ps
+           (when (> max-ps 1)
              (format " [ps %d]" max-ps))
            (when (> comments 0)
              (format " [%d comment%s]" comments (if (= comments 1) "" "s")))
            (when urgent " [URGENT]")))
-         ;; Churn / contention warnings.
-         (warnings
-          (concat
-           (when high-churn
-             (format " ⚠ %d patchsets — jump on a Zoom call to resolve the disagreement!"
-                     max-ps))
-           (when hot-comments
-             (format " ⚠ %.0f comments/change — contentious or unclear; align synchronously!"
-                     comments/change)))))
-    (concat action meta warnings)))
+         ;; ── Layer 3: stat-based strategic nudge (highest priority wins) ──
+         (nudge
+          (cond
+           ;; (a) 🧱 Stuck: many ps + many comments + stale → unblock strategically.
+           ((and many-ps many-comments stale)
+            " 🧱 Stuck — don't just iterate: schedule a sync discussion, split the change, or rethink the approach.")
+           ;; (f) Escalate: high ps + growing comments (but not yet stale).
+           ((and many-ps many-comments)
+            " ⚠ High churn + heavy comments — escalate to a synchronous conversation before the next patchset.")
+           ;; (c) Abandon & re-open: very old + large + many ps.
+           ((and very-stale large-change many-ps)
+            " ⚠ Old, large, and churning — consider abandoning and re-opening as smaller, focused pieces.")
+           ;; (b) Split: large size (L/XL).
+           (large-change
+            (format " 💡 Size %s — split into a smaller stack; small changes = faster reviews."
+                    (work-item--shirt-size-label shirt-size)))
+           ;; (e) Spin off follow-ups: many comments but low ps → optional cleanup.
+           ((and many-comments (not many-ps))
+            " 💡 Lots of comments but few patchsets — spin off unrelated cleanup as follow-up work.")
+           ;; (d) Rebase: > 7 days old.
+           (needs-rebase
+            " 🔄 Older than a week — rebase to stay current with the target branch."))))
+    (concat action meta (or nudge ""))))
 ;; Rendering =work-item= instances:1 ends here
 
 ;; [[file:init.org::*Ticket collection helper][Ticket collection helper:1]]
