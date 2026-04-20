@@ -3200,6 +3200,7 @@ Signals are checked in priority order (highest leverage first):
        (goto-char marker)
        (let* ((todo      (org-get-todo-state))
               (priority  (org-entry-get nil "PRIORITY"))
+              (effort    (org-entry-get nil "Effort"))
               (deadline  (org-get-deadline-time nil))
               (scheduled (org-get-scheduled-time nil))
               (closed-ts (org-entry-get nil "CLOSED"))
@@ -3329,9 +3330,28 @@ Signals are checked in priority order (highest leverage first):
                 ((and todo-p scheduled-days (>= scheduled-days 0))
                  (propertize
                   "🎯 Ready to go --- clock in and start."
-                  'face '(bold (:foreground "sea green")))))))
-         (when action
-           (my/center-text action)))))))
+                  'face '(bold (:foreground "sea green"))))))
+              ;; ── Secondary nudge: missing effort / schedule ──
+              ;; These are gentle reminders appended below the primary
+              ;; signal.  Only shown for active (non-done) tasks.
+              (active-p (and todo
+                             (not (member todo '("DONE" "CANCELLED")))))
+              (nudges
+               (when active-p
+                 (concat
+                  (unless effort
+                    (concat "\n"
+                            (propertize
+                             "⏱ No effort estimate --- C-c C-x e to set one."
+                             'face 'shadow)))
+                  (unless (or scheduled deadline)
+                    (concat "\n"
+                            (propertize
+                             "📅 Not scheduled --- C-c C-s to pick a date."
+                             'face 'shadow)))))))
+         (when (or action nudges)
+           (my/center-text
+            (concat (or action "") nudges))))))))
 
 (defun my/agenda-attach-task-help-echo ()
   "Walk every line in the agenda buffer, attaching `help-echo' to
@@ -6656,6 +6676,10 @@ into an active timestamp."
                       ":WHY_REVIEW: Ensure everything is on track! Be proactive, not reactive!"
                       " Be in control of my life! 😌 Have a sense of closure for last week,"
                       " to start this week on a positive note! ☺️\n"
+                      ":WHY_TERSE: Be specific, tangible, and observable. Use numbers, names, and dates."
+                      " Report only essentials. Reference other documents if necessary"
+                      " but leave out definitions, descriptions, and B.S."
+                      " A progress report is just the headlines, not a Sunday edition.\n"
                       ":PHASE: %s\n"
                       ":END:\n\n"
                       "/Declare your goals. Confront your results. Adjust to living in reality./\n"
@@ -7023,6 +7047,73 @@ to avoid firing `my/insert-CREATED-property' in non-Org buffers)."
 
 
 
+    (defun my/weekly-review--extract-jira-ids (beg end)
+      "Extract all Jira ticket IDs (e.g., PROJ-123) between BEG and END.
+Returns a deduplicated list of uppercase strings."
+      (let (ids)
+        (save-excursion
+          (goto-char beg)
+          (while (re-search-forward
+                  (concat "\\b\\(" (regexp-opt my\jira-project-prefixes)
+                          "-[0-9]+\\)") end t)
+            (push (upcase (match-string 1)) ids)))
+        (delete-dups (nreverse ids))))
+
+    (defun my/weekly-review--previous-planned-jiras ()
+      "Return the Jira ticket IDs from the previous weekly review's Planned section.
+Searches backward from point for the second-most-recent weekly review
+heading (the first is the one currently being written), then finds
+its 📆 Planned child and extracts Jira IDs.  Returns nil if no
+previous review exists."
+      (save-excursion
+        (goto-char (point-min))
+        (let ((reviews nil))
+          ;; Collect all weekly review headings (children of 🌿 Reviews 🌱).
+          ;; Each review starts with a date-stamped heading like
+          ;; "Week of 2026-04-14".
+          (when (search-forward "🌿 Reviews 🌱" nil t)
+            (let ((parent-end (save-excursion (org-end-of-subtree t t))))
+              (while (re-search-forward "^\\*+ 📆 Planned" parent-end t)
+                (push (point) reviews))))
+          ;; reviews is newest-first; we want the second entry
+          ;; (the most recent *previous* review's Planned section).
+          (when (>= (length reviews) 2)
+            (let* ((planned-pos (nth 1 reviews))
+                   (planned-end (save-excursion
+                                  (goto-char planned-pos)
+                                  (org-end-of-subtree t t))))
+              (my/weekly-review--extract-jira-ids
+               planned-pos planned-end))))))
+
+    (defun my/weekly-review--insert-promise-check ()
+      "Compare Completed tickets against last week's Planned tickets.
+Inserts a celebratory or accountability message into the current
+Completed → Notes section."
+      (let* ((promised (my/weekly-review--previous-planned-jiras)))
+        (when promised
+          ;; Collect Jira IDs from the Completed section we just built.
+          ;; Walk back to the ✅ Completed heading, then scan its subtree.
+          (let* ((completed-ids
+                  (save-excursion
+                    (when (re-search-backward "^\\*+ ✅ Completed" nil t)
+                      (let ((beg (point))
+                            (end (save-excursion
+                                   (org-end-of-subtree t t))))
+                        (my/weekly-review--extract-jira-ids beg end)))))
+                 (missed (-difference promised completed-ids)))
+            (insert "\n")
+            (if (null missed)
+                (insert (propertize
+                         "😄 Everything you promised last week, you actually shipped!"
+                         'face '(bold (:foreground "sea green")))
+                        "\n")
+              (insert (propertize
+                       (format "😦 Promised but not shipped: %s"
+                               (string-join missed ", "))
+                       'face '(bold (:foreground "orange red")))
+                      "\nWhy? Underestimated effort? Got sidetracked?"
+                      " That's useful info to surface in the report!\n"))))))
+
     (defun my/weekly-review--insert-completed ()
       "Insert the Completed section: merged tickets with git-log cross-reference.
 Tickets still active in the work-item cache (e.g., please-review,
@@ -7076,6 +7167,7 @@ wip) are excluded — even if git log contains their commits."
 
       (my/org-insert-heading :child "What did I ship this week? :private:"
                              :WHY "Recognise accomplishments, express self-gratitude, and debug!")
+      (my/weekly-review--insert-promise-check)
       (my/weekly-review--insert-clock-visuals)
       (my/weekly-review--insert-git-commits)
       (my/weekly-review--insert-jira-tickets)
@@ -7435,8 +7527,16 @@ day. You remain focused on your most important tasks./
     ;; to-do and projects list. Remove unimportant tasks and update your
     ;; calendar with any new relevant information.
     ;;
-    ;;  Prepend a new section to "Weekly Log" listing what I've done in the
-    ;;                        past week; useful for standups, syncs, and performance reviews.
+    ;;
+    ;; Outstanding reviews belong here — not in daily standups.
+    ;; Including them in the standup pings reviewers every day, which
+    ;; trains them to tune it out, and clutters the standup with items
+    ;; that aren't "what I did / what I'll do / what's blocking me."
+    ;; Surfacing them once a week — at the start of the week — gives
+    ;; reviewers a clean planning signal: "these changes need your
+    ;; attention this week."  One well-timed ping is worth more than
+    ;; five daily nags, and it frames the ask as collaborative
+    ;; ("unblock me so we both make progress") rather than nagging.
     (bind-key*
      "C-c r w"
      (def-capture "🔄 Weekly Review 😊"
