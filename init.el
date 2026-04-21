@@ -1966,8 +1966,14 @@ fonts (•̀ᴗ•́)و"
           ;; What “I've done so far” is all tasks closed this week.                 ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; Note the definition of “done” includes all terminal states in my workflow.
+          ;; :Task:-tagged headings are per-day timeboxing scaffolds under a Jira
+          ;; parent — they're hours-containers, not accomplishments, so they do
+          ;; not belong in the "what I shipped" view.  See "Pressing RET on an
+          ;; agenda work-item: the :<Weekday>:Task: scaffold" for the convention.
           (org-ql-block
-           `(and (not (tags "Recurring")) (done) (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)) ;; “start-of-week” /from today/
+           `(and (not (tags "Recurring")) (not (tags "Task"))
+                 (done)
+                 (closed :from ,(- (calendar-day-of-week (calendar-current-date))) :to today)) ;; “start-of-week” /from today/
            ((org-ql-block-header (propertize "✅ What I've done so far this week 💯" 'help-echo "Press E to toggle seeing ~5 lines of each entry. \n If DONE, mine for useful info then archive or delete.")))
 )
 
@@ -4177,7 +4183,7 @@ START and END, adding text properties to each [[url][desc]] so that:
           (put-text-property beg fin 'keymap map))))))
 ;; Link activation:1 ends here
 
-;; [[file:init.org::*Finalize hook + once-daily auto-fetch][Finalize hook + once-daily auto-fetch:1]]
+;; [[file:init.org::*Pressing ~RET~ on an agenda work-item: the =:<Weekday>:Task:= scaffold][Pressing ~RET~ on an agenda work-item: the =:<Weekday>:Task:= scaffold:1]]
 (defun my/agenda--cache-stale-p ()
   "Return non-nil if the cached work data is from a previous calendar day.
 A nil cache (never fetched) is also considered stale."
@@ -4224,8 +4230,13 @@ org-agenda commands (RET, TAB, I, o, etc.) work."
 
 (defun my/agenda--ensure-review-todo (item)
   "Under the Org heading for ITEM, create a TODO child for the review if absent.
-The child is scheduled for today.  Idempotent: if a child whose heading
-matches the Jira ticket (or tip URL when no Jira) already exists, skip."
+The child is scheduled for today and tagged :<Weekday>:Task: — the
+weekday tag makes each day's commitment its own first-class heading
+(so Tuesday's RET creates a fresh scaffold instead of latching onto
+Monday's), and the :Task: tag marks the heading as daily scaffolding
+rather than a shipped deliverable.  Idempotent: if a child whose
+heading matches the Jira ticket (or tip URL when no Jira) AND carries
+today's weekday tag already exists, skip."
   (when-let* ((marker (work-item-org-tree item))
               (buf (marker-buffer marker)))
     (let* ((rendered (work-item-to-string item))
@@ -4234,18 +4245,27 @@ matches the Jira ticket (or tip URL when no Jira) already exists, skip."
            (dedup-key (or jira
                           (substring-no-properties
                            (or (work-item-title item) "")
-                           0 (min 40 (length (or (work-item-title item) "")))))))
+                           0 (min 40 (length (or (work-item-title item) ""))))))
+           (weekday (format-time-string "%A")))
       (with-current-buffer buf
         (org-with-wide-buffer
          (goto-char marker)
          (let ((subtree-end (save-excursion (org-end-of-subtree t t) (point))))
-           ;; Check if a child with this dedup key already exists.
+           ;; Dedup requires BOTH the Jira/title match AND today's weekday
+           ;; tag on the same heading line — so a Tuesday RET on a
+           ;; Monday-RET'd ticket correctly creates a new Tuesday scaffold.
            (unless (save-excursion
                      (re-search-forward
-                      (concat "^\\*+ .*" (regexp-quote dedup-key))
+                      (concat "^\\*+ .*" (regexp-quote dedup-key)
+                              ".*:" weekday ":")
                       subtree-end t))
              (forward-line 1)
              (my/org-insert-heading :child (concat "TODO " rendered))
+             ;; my/org-insert-heading leaves point past :END:\n\n — walk
+             ;; back to the heading line to set tags.
+             (save-excursion
+               (org-back-to-heading t)
+               (org-set-tags (list weekday "Task")))
              (org-schedule nil (format-time-string "<%Y-%m-%d %a>"))
              (org-set-property "Effort" "1:00"))))))))
 
@@ -4331,7 +4351,7 @@ manual refresh at any time, use the \"Refresh Work\" button or press
           (lambda ()
             (setq-local help-at-pt-display-when-idle t)
             (help-at-pt-set-timer)))
-;; Finalize hook + once-daily auto-fetch:1 ends here
+;; Pressing ~RET~ on an agenda work-item: the =:<Weekday>:Task:= scaffold:1 ends here
 
 ;; [[file:init.org::*Standup command][Standup command:1]]
 (defun my/standup ()
@@ -7126,9 +7146,38 @@ Each line links to magit-show-commit for the full diff."
                       (s-lines raw) "\n")
                      "\n#+end_quote\n"))))))
 
+    (defun my/weekly-review--format-effort-suffix (clocked-mins effort-mins)
+      "Return a ` (Xh YYm clocked / Xh YYm est., ±Xh YYm SIGN)' suffix string.
+When EFFORT-MINS is zero (no estimate on the ticket heading),
+fall back to the bare ` (Xh YYm)' clocked-only form — we omit
+the estimate noise rather than pretend zero was the plan.
+A delta within ±5 minutes is reported as `on target'; wider
+gaps are `over' or `under'."
+      (let* ((ch (/ clocked-mins 60))
+             (cm (% clocked-mins 60)))
+        (if (zerop effort-mins)
+            (format " (%dh %02dm)" ch cm)
+          (let* ((eh (/ effort-mins 60))
+                 (em (% effort-mins 60))
+                 (delta (- clocked-mins effort-mins))
+                 (adelta (abs delta))
+                 (dh (/ adelta 60))
+                 (dm (% adelta 60))
+                 (sign (cond ((<= adelta 5) "±")
+                             ((> delta 0)  "+")
+                             (t            "-")))
+                 (word (cond ((<= adelta 5) "on target")
+                             ((> delta 0)  "over")
+                             (t            "under"))))
+            (format " (%dh %02dm clocked / %dh %02dm est., %s%dh %02dm %s)"
+                    ch cm eh em sign dh dm word)))))
+
     (defun my/weekly-review--insert-jira-tickets ()
       "Insert a summary of Jira tickets worked on this week.
-Shows ticket ID, title, Gerrit status, and time spent."
+Shows ticket ID, title, Gerrit status, time spent, and — when the
+Jira heading carries an `Effort' property — the estimate and the
+clocked-vs-estimated delta.  The delta is the whole point: it
+demonstrates where the week's planning assumptions drifted."
       (let* ((end-date (format-time-string "%Y-%m-%d"))
              (start-date (format-time-string
                           "%Y-%m-%d"
@@ -7141,20 +7190,47 @@ Shows ticket ID, title, Gerrit status, and time spent."
           ;; additional Jira API calls needed.
           (insert "\n\n*Jira tickets worked on this week:*\n#+begin_quote\n")
           (let ((total-minutes 0)
+                (total-effort-minutes 0)
+                (tickets-with-effort 0)
                 (n 0))
             (dolist (entry tickets)
               (let* ((ticket (car entry))
                      (title (or (my/gerrit--get-jira-title ticket)
                                 (alist-get 'heading (cdr entry))))
                      (minutes (alist-get 'minutes (cdr entry)))
-                     (hours (/ minutes 60))
-                     (mins (% minutes 60))
+                     (effort-minutes (or (alist-get 'effort-minutes (cdr entry)) 0))
                      (status (my/progress-pulse--ticket-status ticket)))
                 (cl-incf total-minutes minutes)
-                (insert (format "%d. *%s* %s -- %s (%dh %02dm)\n"
-                                (cl-incf n) ticket title status hours mins))))
-            (insert (format "\nTotal: %dh %02dm across %d tickets\n"
-                            (/ total-minutes 60) (% total-minutes 60) (length tickets))))
+                (unless (zerop effort-minutes)
+                  (cl-incf total-effort-minutes effort-minutes)
+                  (cl-incf tickets-with-effort))
+                (insert (format "%d. *%s* %s -- %s%s\n"
+                                (cl-incf n) ticket title status
+                                (my/weekly-review--format-effort-suffix
+                                 minutes effort-minutes)))))
+            ;; Aggregate: only show the est./delta fold-in when at least
+            ;; one ticket carried an estimate; otherwise the line stays
+            ;; the same as before.
+            (if (zerop tickets-with-effort)
+                (insert (format "\nTotal: %dh %02dm across %d tickets\n"
+                                (/ total-minutes 60) (% total-minutes 60)
+                                (length tickets)))
+              (let* ((delta (- total-minutes total-effort-minutes))
+                     (adelta (abs delta))
+                     (sign (cond ((<= adelta 5) "±")
+                                 ((> delta 0)  "+")
+                                 (t            "-")))
+                     (word (cond ((<= adelta 5) "on target")
+                                 ((> delta 0)  "over")
+                                 (t            "under"))))
+                (insert (format (concat "\nTotal: %dh %02dm clocked / %dh %02dm est."
+                                        " across %d tickets (%s%dh %02dm %s,"
+                                        " %d estimated)\n")
+                                (/ total-minutes 60) (% total-minutes 60)
+                                (/ total-effort-minutes 60) (% total-effort-minutes 60)
+                                (length tickets)
+                                sign (/ adelta 60) (% adelta 60) word
+                                tickets-with-effort)))))
           (insert "#+end_quote\n"))))
 
     (defvar my/cowsay-figures
@@ -7372,16 +7448,25 @@ for it to complete."
               :extra-todo          extra-todo)))
 
 
+    (defun my/weekly-review--decentre (text)
+      "Strip the leading centering padding from each line of TEXT.
+`work-item-help-echo' centres its output via `my/center-text' for
+the minibuffer (matching olivetti's visual rhythm).  In the weekly
+review we insert hints into an Org buffer where that padding is
+just wasted horizontal space.  Uses `replace-regexp-in-string' so
+text properties (faces) are preserved."
+      (replace-regexp-in-string "^ +" "" text))
+
     (defun my/weekly-review--insert-action-hint (ticket)
       "Insert an indented, face-preserving action hint for TICKET.
 Looks up TICKET in the work-item cache and, if found, inserts
 the `work-item-help-echo' hint below the current line — the same
 context-sensitive advice that appears in the agenda minibuffer,
 with its three-layer face hierarchy (bold action, dimmed metadata,
-colour-coded nudge) intact."
+colour-coded nudge) intact.  Centering padding is stripped."
       (when-let* ((items (plist-get my/agenda-work-data :items))
                   (item (--first (equal ticket (work-item-jira it)) items))
-                  (hint (work-item-help-echo item)))
+                  (hint (my/weekly-review--decentre (work-item-help-echo item))))
         (insert "   -> " hint "\n")))
 
     (defun my/weekly-review--insert-numbered-items (items &optional counter)
@@ -7400,7 +7485,8 @@ numbering across multiple calls.  Returns the final count."
           (insert (format "%d. %s\n"
                           (cl-incf n)
                           (string-remove-prefix "🔴 " (work-item-to-string item))))
-          (when-let* ((hint (work-item-help-echo item)))
+          (when-let* ((hint (my/weekly-review--decentre
+                            (work-item-help-echo item))))
             (insert "   -> " hint "\n")))
         (when counter (setcar counter n))
         n))
@@ -7532,7 +7618,13 @@ done\" or \"start these\")."
     (defun my/weekly-review--insert-completed ()
       "Insert the Completed section: merged tickets with git-log cross-reference.
 Tickets still active in the work-item cache (e.g., please-review,
-wip) are excluded — even if git log contains their commits."
+wip) are excluded — even if git log contains their commits.
+
+:Task:-tagged scaffold headings (daily timeboxing under a Jira
+parent) are excluded implicitly — they generate no git commits,
+so the `git-ticket-ids' filter below already filters them out.
+Intentional: Completed should showcase what shipped, not that we
+reviewed a CL three Tuesdays in a row."
       (my/org-insert-heading :sibling "✅ Completed" :DESCRIPTION "what shipped this week")
 
       (let* ((end-date (format-time-string "%Y-%m-%d"))
@@ -8770,11 +8862,20 @@ numeric prefix = days back (leaf)."
       (concat str "─> ")))))
 
 (defun my/jira-tickets-clocked-in-range (start-date end-date)
-  "Return alist of (TICKET . ((heading . STR) (minutes . N) (entries . LINES))).
+  "Return alist of (TICKET . ((heading . STR) (minutes . N)
+ (effort-minutes . M) (entries . LINES))).
 Scans `org-default-notes-file' for CLOCK entries whose date falls
 between START-DATE and END-DATE (inclusive, both \"YYYY-MM-DD\"
 strings).  Groups by Jira ticket ID extracted from ancestor
 headings using `my\\jira-project-prefixes'.
+
+`effort-minutes' is the `Effort' property on the Jira ancestor
+heading itself — the ticket-level estimate — parsed as minutes
+via `my/standup-from-schedule--effort-total-mins'.  Effort on
+`:Task:'-tagged descendants is deliberately ignored here: those
+per-day scaffolds exist for daily timeboxing, not for the
+weekly estimate-vs-actual comparison.  Zero when no Effort
+property is set.
 
 ISO date strings compare lexicographically, so a simple
 `string<' / `string=' pair gives correct date ordering."
@@ -8815,11 +8916,21 @@ ISO date strings compare lexicographically, so a simple
                            (progn
                              (cl-incf (alist-get 'minutes (cdr existing)) minutes)
                              (push clock-line (alist-get 'entries (cdr existing))))
-                         (push (cons ticket
-                                     `((heading . ,heading)
-                                       (minutes . ,minutes)
-                                       (entries . (,clock-line))))
-                               result))))))))))))
+                         ;; First encounter: read ticket-level Effort
+                         ;; from the Jira ancestor heading (point is
+                         ;; already there after the ancestor-walk above).
+                         (let* ((effort-str (org-entry-get nil "Effort"))
+                                (effort-minutes
+                                 (or (and effort-str
+                                          (my/standup-from-schedule--effort-total-mins
+                                           (list (list heading effort-str))))
+                                     0)))
+                           (push (cons ticket
+                                       `((heading . ,heading)
+                                         (minutes . ,minutes)
+                                         (effort-minutes . ,effort-minutes)
+                                         (entries . (,clock-line))))
+                                 result)))))))))))))
     (nreverse result)))
 
 (defun my/jira-tickets-clocked-today ()
