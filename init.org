@@ -10905,7 +10905,7 @@ Further Reading:
                                               (s-matches? "<[^ ]* [^ ]* [^ ]*\\(d\\|m\\)>"
                                                           scheduled)))))
                           (skip)))))
-                   (org-agenda-current-time-string (s-join "\n\t\t\t\t" (-repeat 3 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
+                   (org-agenda-current-time-string (s-join "\n\t\t\t\t" (-repeat 1 "⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⏰⟵⟨ 𝒩ℴ𝓌 ⟩⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰⟶⏰")))
                    ;; :org-agenda-remove-tags t
                    ;; :org-agenda-time-grid nil
                    ;; :org-use-tag-inheritance nil
@@ -10913,6 +10913,8 @@ Further Reading:
                    ;; I want work items to automatically have a briefcase next to them.
                    (org-agenda-prefix-format " ○ %t % i%s") ;; The “%i” is the icon on the next line.
                    (org-agenda-category-icon-alist '(("\\`work\\'" ("💼") nil nil :ascent center)))
+                   ;; By default habits are after everything, but I'd rather keep them in their scheduled timeslots!
+                   (org-agenda-sorting-strategy '(time-up urgency-down category-keep)) ;; No “habit-down”!
                    (org-agenda-time-grid
                     '((daily today require-timed) (800 1000 1200 1400 1600 1800 2000) "" ""))))
 
@@ -11164,6 +11166,25 @@ to refresh the agenda.
 ;;
 ;; Example usage:
 ;; (my/string-fill-column-and-center 27 ""We don't think about sinning as you don't think about eating rotten food." ---Imam As-Sadiq")
+
+(add-to-list
+ 'org-agenda-finalize-hook
+ (defun my/agenda--focus-header-button ()
+   "Append a [Copy to Standup] button to the focus header."
+   (let ((inhibit-read-only t))
+     (save-excursion
+       (goto-char (point-min))
+       (when (search-forward "Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!" nil t)
+         (end-of-line)
+         (insert "  ")
+         (my/insert-button
+          "Copy to Standup"
+          (lambda (_pos)
+            (my/standup-from-schedule)
+            (browse-url my\standups-channel-url))
+          :foreground "orange"
+          :background nil
+          :echo "Generate standup from today's schedule, copy to clipboard, and open #standups"))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -13872,6 +13893,9 @@ org-agenda commands (RET, TAB, I, o, etc.) work."
             ;; Action hint: displayed in minibuffer via help-at-pt.
             (put-text-property line-start end
                                'help-echo (work-item-help-echo it))
+            ;; Stash the work-item struct itself for downstream use
+            ;; (e.g., creating TODO children on RET).
+            (put-text-property line-start end 'my/work-item it)
             ;; When the item has an Org tree, make the line behave like
             ;; a real agenda entry.
             (when-let ((marker (work-item-org-tree it)))
@@ -13879,6 +13903,55 @@ org-agenda commands (RET, TAB, I, o, etc.) work."
                 (put-text-property line-start end 'org-marker marker)
                 (put-text-property line-start end
                                    'org-hd-marker marker)))))))))
+
+(defun my/agenda--ensure-review-todo (item)
+  "Under the Org heading for ITEM, create a TODO child for the review if absent.
+The child is scheduled for today.  Idempotent: if a child whose heading
+matches the Jira ticket (or tip URL when no Jira) already exists, skip."
+  (when-let* ((marker (work-item-org-tree item))
+              (buf (marker-buffer marker)))
+    (let* ((rendered (work-item-to-string item))
+           ;; Dedup key: Jira ID if present, otherwise first 40 chars of title.
+           (jira (work-item-jira item))
+           (dedup-key (or jira
+                          (substring-no-properties
+                           (or (work-item-title item) "")
+                           0 (min 40 (length (or (work-item-title item) "")))))))
+      (with-current-buffer buf
+        (org-with-wide-buffer
+         (goto-char marker)
+         (let ((subtree-end (save-excursion (org-end-of-subtree t t) (point))))
+           ;; Check if a child with this dedup key already exists.
+           (unless (save-excursion
+                     (re-search-forward
+                      (concat "^\\*+ .*" (regexp-quote dedup-key))
+                      subtree-end t))
+             (forward-line 1)
+             (my/org-insert-heading :child (concat "TODO " rendered))
+             (org-schedule nil (format-time-string "<%Y-%m-%d %a>"))
+             (org-set-property "Effort" "1:00"))))))))
+
+(defvar my/agenda--pending-review-item nil
+  "Work-item captured by :before advice for review-TODO creation.")
+
+(advice-add
+ 'org-agenda-switch-to :before
+ (defun my/agenda--capture-work-item (&rest _)
+   "Capture the work-item at point before org-agenda-switch-to changes buffers."
+   (setq my/agenda--pending-review-item
+         (and (derived-mode-p 'org-agenda-mode)
+              (get-text-property (point) 'my/work-item)))))
+
+(advice-add
+ 'org-agenda-switch-to :after
+ (defun my/agenda--create-review-todo (&rest _)
+   "After RET in the agenda, create a TODO child for actionable items.
+Fires for reviews-needed and my-needing-action statuses."
+   (when-let* ((item my/agenda--pending-review-item)
+               (_ (memq (work-item-status item)
+                        '(reviews-needed my-needing-action))))
+     (my/agenda--ensure-review-todo item))
+   (setq my/agenda--pending-review-item nil)))
 
 (defun my/agenda-insert-work-sections ()
   "Insert cached `work-item' sections at the end of the daily agenda.
@@ -14017,6 +14090,311 @@ without reflecting on the last one."
         (my/agenda-work-refresh)))))
 #+end_src
 
+*** Standup from schedule
+
+Rather than manually declaring today's intentions, we can harvest
+them from Org's own scheduling system: items scheduled for today
+(via =C-c C-s=) with effort estimates already encode what we plan
+to do and how long each task should take.
+
+=my/standup-from-schedule= collects those items and formats them
+as a numbered standup entry under "Daily Standup Planning" —
+idempotent, so re-running replaces (rather than duplicates)
+today's entry.
+
+*Why is this worth automating?* Because scheduling is the easy part —
+being /realistic/ about what you scheduled is hard.  We naturally
+over-commit: too many items, too many hours, too little focused work.
+By the time you notice, you've already told people what you'd do and
+now you look unreliable.  =my/standup-from-schedule= acts as an
+external sanity check /before/ you publish: it demands effort estimates
+on every item, caps the day at 8 hours, insists on at least 4 hours
+of deep work, and refuses to let you promise more than 5 things.
+The workflow is: schedule freely throughout the week, then let the
+machine tell you when your eyes are bigger than your calendar.
+Items tagged =:private:= (appointments, personal errands) are counted
+toward total effort but excluded from the published standup — your
+team sees only the work commitments.
+
+#+begin_src emacs-lisp
+(defun my/strip-org-links (s)
+  "Replace [[url][desc]] with desc, and [[url]] with url in S."
+  (replace-regexp-in-string
+   "\\[\\[\\([^]]+\\)\\]\\[\\([^]]+\\)\\]\\]" "\\2"
+   (replace-regexp-in-string
+    "\\[\\[\\([^]]+\\)\\]\\]" "\\1" s)))
+
+(defun my/standup-from-schedule--collect-items ()
+  "Collect org items scheduled for today with their effort estimates.
+Returns a list of (HEADING EFFORT PRIVATE-P MARKER) lists, where
+EFFORT may be nil, PRIVATE-P is non-nil for :private: tagged
+headings, and MARKER points to the source heading."
+  (let ((today (format-time-string "%Y-%m-%d"))
+        results)
+    (dolist (file (org-agenda-files))
+      (with-current-buffer (find-file-noselect file)
+        (save-restriction
+          (widen)
+          (org-map-entries
+           (lambda ()
+             (let* ((sched (org-get-scheduled-time nil))
+                    (todo  (org-get-todo-state))
+                    (style (org-entry-get nil "STYLE"))
+                    (heading (org-get-heading t t t t)))
+               (when (and sched
+                          (equal today (format-time-string "%Y-%m-%d" sched))
+                          (not (member todo org-done-keywords))
+                          (not (string-match-p "Daily Standup Planning" heading))
+                          (not (and style (string-equal-ignore-case "habit" style))))
+                 (push (list (substring-no-properties heading)
+                             (org-entry-get nil "Effort")
+                             (member "private" (org-get-tags))
+                             (point-marker))
+                       results))))))))
+    (nreverse results)))
+
+(defun my/standup-from-schedule--insert-items (items)
+  "Insert ITEMS as a numbered org list at point.
+ITEMS is a list of (HEADING EFFORT) pairs.  Org-link markup is
+preserved so org-mode renders them as clickable links and
+`my/copy-as-slack' converts them for Slack."
+  (let ((n 0))
+    (dolist (item items)
+      (cl-incf n)
+      (insert (format "%d. %s\n" n (car item))))))
+
+(defun my/standup-from-schedule--effort-total-mins (items)
+  "Return total effort in minutes for ITEMS, or nil if none have effort.
+ITEMS is a list of (HEADING EFFORT) pairs."
+  (let ((efforts (cl-remove-if-not #'identity (mapcar #'cadr items))))
+    (when efforts
+      (cl-reduce #'+
+                 (mapcar (lambda (e)
+                           (pcase-let ((`(,h ,m)
+                                        (mapcar #'string-to-number
+                                                (split-string e ":"))))
+                             (+ (* h 60) m)))
+                         efforts)))))
+
+(defun my/standup-from-schedule--effort-total (items)
+  "Return a \"H:MM\" total-effort string for ITEMS, or nil.
+ITEMS is a list of (HEADING EFFORT) pairs."
+  (when-let* ((total-mins (my/standup-from-schedule--effort-total-mins items)))
+    (format "%d:%02d" (/ total-mins 60) (% total-mins 60))))
+
+(defun my/standup-from-schedule--all-today-headings ()
+  "Collect ALL headings scheduled for today (no filtering).
+Returns a list of plain heading strings — used for sanity checks
+that need to see habits, standup planning, etc."
+  (let ((today (format-time-string "%Y-%m-%d"))
+        results)
+    (dolist (file (org-agenda-files))
+      (with-current-buffer (find-file-noselect file)
+        (save-restriction
+          (widen)
+          (org-map-entries
+           (lambda ()
+             (when-let* ((sched (org-get-scheduled-time nil))
+                         (_ (equal today (format-time-string "%Y-%m-%d" sched))))
+               (push (substring-no-properties (org-get-heading t t t t))
+                     results)))))))
+    (nreverse results)))
+
+(defun my/standup-from-schedule--sanity-checks (all-headings all-items public-items)
+  "Run sanity checks against the day's schedule.
+ALL-HEADINGS is the unfiltered list from `--all-today-headings'.
+ALL-ITEMS is the full (HEADING EFFORT PRIVATE-P MARKER) list.
+PUBLIC-ITEMS is the non-private subset (what the team sees).
+
+Every failed check fires `user-error' immediately.  If all
+checks pass, returns a plist with:
+  :missing-reviews-p — non-nil when no reviews are scheduled
+  :deep-str          — effort H:MM string for public items
+  :total-str         — effort H:MM string for all items"
+  ;; 1. Every item must have an effort estimate.
+  (when-let* ((offender (cl-find-if (lambda (it) (not (cadr it))) all-items)))
+    (let ((marker (nth 3 offender)))
+      (when marker
+        (switch-to-buffer (marker-buffer marker))
+        (goto-char marker)
+        (org-reveal)))
+    (user-error "Add an effort estimate to \"%s\" then try again" (car offender)))
+  ;; 2. No more than 5 public items.
+  (when (> (length public-items) 5)
+    (user-error "%d standup items -- trim to 5 or fewer so you can actually honour your commitments"
+                (length public-items)))
+  ;; Effort totals (safe now — every item has effort).
+  (let* ((deep-mins (my/standup-from-schedule--effort-total-mins public-items))
+         (total-mins (my/standup-from-schedule--effort-total-mins all-items))
+         (deep-str (my/standup-from-schedule--effort-total public-items))
+         (total-str (my/standup-from-schedule--effort-total all-items)))
+    ;; 3. Total effort must not exceed 8 hours.
+    (when (and total-mins (> total-mins 480))
+      (user-error "You have %s total effort scheduled today -- reconsider your life!" total-str))
+    ;; 4. Deep work must be at least 4 hours.
+    (when (and deep-mins (< deep-mins 240))
+      (user-error
+       (concat "Only %s of deep work today? Are you burned out? Sick?\n"
+               "If so, surface that in the standup so the team knows.\n"
+               "Otherwise, maybe you underestimated effort or have too many appointments")
+       deep-str))
+    ;; 5. Is standup planning scheduled?
+    (unless (cl-some (lambda (h) (string-match-p "Daily Standup Planning" h))
+                     all-headings)
+      (user-error (concat "No standup planning scheduled today!\n\n"
+                          "Actually take into account planning time — e.g. 1 hour. "
+                          "Respond to emails, update status, reply to Slack, "
+                          "check on waiting tasks. Admin is part of the job, "
+                          "a critical part! Otherwise you could go fast, "
+                          "but go fast in the wrong direction.")))
+    ;; 6. Is lunch & prayer scheduled?
+    (unless (cl-some (lambda (h) (string-match-p "Lunch.*Prayer\\|Prayer.*Lunch" h))
+                     all-headings)
+      (user-error "No Lunch & Prayer scheduled today! You are a human, not a machine."))
+    ;; 7. Any code reviews scheduled?
+    (let ((missing-reviews-p
+           (not (cl-some (lambda (item)
+                           (string-match-p "review.*latest" (downcase (car item))))
+                         public-items))))
+      (when missing-reviews-p
+        (unless (y-or-n-p "No reviews scheduled. Append \"@everyone I can do reviews\" to standup? ")
+          (when-let* ((buf (cl-find-if
+                            (lambda (b) (string-match-p "\\*Org Agenda" (buffer-name b)))
+                            (buffer-list))))
+            (switch-to-buffer buf)
+            (goto-char (point-max)))
+          (user-error "Schedule reviews for today (check the bottom of the agenda) then try again")))
+      (list :missing-reviews-p missing-reviews-p
+            :deep-str deep-str
+            :total-str total-str))))
+
+(defun my/standup-from-schedule--gcal-events ()
+  "Fetch today's Google Calendar events via gcalcli.
+Returns a list of (TITLE START-TIME END-TIME) triples.
+Requires `my\\gcalcli-calendar' (set in private.el).
+All-day events have nil for START-TIME and END-TIME."
+  (when (and (boundp 'my\gcalcli-calendar)
+             (executable-find "gcalcli"))
+    (let ((lines (split-string
+                  (shell-command-to-string
+                   (format "gcalcli --calendar %s agenda today tomorrow --tsv"
+                           (shell-quote-argument my\gcalcli-calendar)))
+                  "\n" t))
+          results)
+      ;; Skip the TSV header line.
+      (dolist (line (cdr lines))
+        (let ((fields (split-string line "\t")))
+          (when (>= (length fields) 5)
+            (let ((start-time (nth 1 fields))
+                  (end-time   (nth 3 fields))
+                  (title      (nth 4 fields)))
+              ;; Exclude tomorrow's all-day events that bleed into the output.
+              (when (equal (nth 0 fields) (format-time-string "%Y-%m-%d"))
+                (push (list title
+                            (if (string-empty-p start-time) nil start-time)
+                            (if (string-empty-p end-time)   nil end-time))
+                      results))))))
+      (nreverse results))))
+
+(defun my/standup-from-schedule--gcal-crosscheck (org-items)
+  "Cross-check Google Calendar events against ORG-ITEMS.
+Returns a list of gcal event titles not matched by any org heading
+\(case-insensitive substring match).  These are public commitments
+that Org doesn't know about."
+  (let* ((gcal-events (my/standup-from-schedule--gcal-events))
+         (org-headings (mapcar (lambda (item)
+                                 (downcase (car item)))
+                               org-items))
+         missing)
+    (dolist (event gcal-events)
+      (let ((title (car event)))
+        ;; Skip generic/noisy calendar entries.
+        (unless (or (string-match-p "\\`\\(?:Busy\\|Home\\)\\'" title)
+                    (cl-some (lambda (h)
+                               (or (string-match-p (regexp-quote (downcase title)) h)
+                                   (string-match-p (regexp-quote h) (downcase title))))
+                             org-headings))
+          (push event missing))))
+    (nreverse missing)))
+
+(defun my/standup-from-schedule ()
+  "Generate today's standup from org-agenda scheduled items.
+Collects items scheduled for today (with effort estimates) and
+inserts them as a numbered list under a dated heading in the
+Daily Standup Planning tree.  Idempotent: re-running replaces
+today's entry.  Items tagged :private: are excluded from the
+published standup but counted toward total effort.
+
+All sanity checks live in `--sanity-checks': hard halts
+(missing effort, too many items, overcommitted, too little
+deep work) and soft warnings (missing standup planning, lunch,
+reviews).  Cross-checks Google Calendar for public events not
+reflected in org-agenda."
+  (interactive)
+  (let* ((all-items (my/standup-from-schedule--collect-items))
+         (public-items (cl-remove-if #'caddr all-items))
+         (all-headings (my/standup-from-schedule--all-today-headings))
+         ;; Hard halts fire user-error inside --sanity-checks;
+         ;; if we reach the next line, the schedule is sane.
+         (checks (my/standup-from-schedule--sanity-checks all-headings all-items public-items)))
+    (let* ((deep-str (plist-get checks :deep-str))
+           (total-str (plist-get checks :total-str))
+           (today-title (format-time-string "<%Y-%m-%d %a>"))
+           (standup-body
+            (with-temp-buffer
+              (if public-items
+                  (my/standup-from-schedule--insert-items public-items)
+                (insert "(No items scheduled for today.)\n"))
+              ;; When no reviews are scheduled, append a review offer.
+              (when (plist-get checks :missing-reviews-p)
+                (insert (format "%d. @everyone, I'm happy to do reviews today, send to me\n"
+                                (1+ (length public-items)))))
+              (buffer-string))))
+      (save-excursion
+        (find-file org-default-notes-file)
+        (widen)
+        (goto-char (point-min))
+        (unless (re-search-forward
+                 "^\\*\\* .*Daily Standup Planning" nil t)
+          (error "Could not find '** ... Daily Standup Planning' heading"))
+        (org-back-to-heading t)
+        ;; Axe existing entry for today, if present.
+        (let ((subtree-end (save-excursion (org-end-of-subtree t t) (point))))
+          (save-excursion
+            (when (re-search-forward
+                   (concat "^\\*\\*\\* .*" (regexp-quote today-title))
+                   subtree-end t)
+              (org-back-to-heading t)
+              (delete-region (point)
+                             (save-excursion (org-end-of-subtree t t) (point))))))
+        (my/org-insert-heading :child today-title :body standup-body)
+        (save-buffer))
+      ;; Copy the standup body to clipboard as Slack mrkdwn.
+      (my/copy-as-slack standup-body)
+      ;; Summary.
+      (let ((count (length public-items)))
+        (message "Standup: %s scheduled for today. [%s deep work; %s total]"
+                 (propertize (format "%d item%s" count (if (= count 1) "" "s"))
+                             'face 'bold)
+                 (propertize (or deep-str "0:00") 'face '(:foreground "green"))
+                 (propertize (or total-str "0:00") 'face 'bold)))
+      ;; Cross-check: warn about gcal events missing from org-agenda.
+      (let ((missing (my/standup-from-schedule--gcal-crosscheck public-items)))
+        (when missing
+          (non-blocking-message-box
+           :title "Unrecognized Calendar Events"
+           :content (format "These public events have no matching org task:\n\n%s\n\nSchedule them with C-c C-s!"
+                            (mapconcat
+                             (lambda (ev)
+                               (let ((title (car ev))
+                                     (time  (cadr ev)))
+                                 (if time
+                                     (format "- %s (%s)" title time)
+                                   (format "- %s" title))))
+                             missing "\n"))
+           :buttons '(:OK nil)))))))
+#+end_src
+
 ** COMMENT Pretty Agenda Section Headers       :This_is_the_default_behavior:
 :PROPERTIES:
 :CREATED:  [2025-04-13 Sun 09:58]
@@ -14071,6 +14449,7 @@ command ~meet-with-𝒞~ and bind it to ~C-c m 𝒾~ where 𝒾 is the first let
 #+end_src
 
 ** Google Calendar Sync (org-gcal)                                :Disabled:
+SCHEDULED: <2026-04-29 Wed 09:00>
 :PROPERTIES:
 :CREATED:  [2026-04-04 Sat]
 :END:
@@ -18241,7 +18620,7 @@ Also,
 ;; Make invisible parts of Org elements appear visible.
 ;; org-appear is already configured via use-package :hook org-mode above.
 #+end_src
-*** Colourise clocking tasks with a block                     :TryingThisOut:
+*** Colourise clocking tasks with a block                     :TryingThisOut:Disabled:
 :PROPERTIES:
 :CREATED:  [2025-05-05 Mon 06:29]
 :END:
@@ -18266,7 +18645,7 @@ Context: =org-agenda-log-mode= It will display the entries that record the time,
    or other time recording software.
 
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 ;; work with org-agenda dispatcher [c] "Today Clocked Tasks" to view today's clocked tasks.
 (add-hook 'org-agenda-finalize-hook
           (defun org-agenda-log-mode-colorize-block ()
@@ -20123,14 +20502,17 @@ numbering across multiple calls.  Returns the final count."
     ;; value is inserted as text after the property drawer.
     (defun my/org-insert-heading (relation title &rest props)
       "Insert an Org heading at RELATION (:child, :sibling, :uncle, :aunt).
-TITLE is the heading text. Remaining PLIST keyword pairs become
+TITLE is the heading text.  Remaining PLIST keyword pairs become
 properties, except :body whose value is inserted after the drawer.
 CREATED is set automatically (suppressing `org-insert-heading-hook'
-to avoid firing `my/insert-CREATED-property' in non-Org buffers)."
+to avoid firing `my/insert-CREATED-property' in non-Org buffers).
+
+For :child, the heading is appended after the parent's subtree
+content (i.e., after existing children), not before them."
       (let ((org-insert-heading-hook nil)
             ;; Should org-insert-heading leave a blank line before new heading? Yes!
             (org-blank-before-new-entry '((heading . t))))
-        (org-insert-heading))
+        (org-insert-heading-respect-content))
       (pcase relation
         (:child   (org-demote))
         (:sibling nil)
@@ -21074,7 +21456,7 @@ for personal accountability and transparency!/
    minutes, for example. Now the modeline will mention the time elapsed
    alongside the task name. *Woah!*
 
-   #+begin_src emacs-lisp :tangle no
+   #+begin_src emacs-lisp :tangle yes
     (push '("Effort_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
           org-global-properties)
    #+end_src
