@@ -2557,6 +2557,12 @@ no-op when this is non-nil.  Reset to nil by the coordinator
   "One-shot callback invoked after the work-item cache is populated.
 Set before calling `my/agenda-work-refresh'; cleared after invocation.")
 
+(defvar my/agenda-work--fetch-all-p nil
+  "When non-nil, `my/agenda--format-and-cache' ignores section gating.
+All Jira queries (assigned, jira-active) run regardless of
+`my/agenda-work-sections'.  Set by the weekly review before
+triggering a full refresh; cleared by the coordinator on completion.")
+
 (defvar my/agenda--pending-queries 0
   "Number of async Gerrit SSH queries still in flight.
 
@@ -2576,6 +2582,18 @@ I need to review, or my own changes that need my response.")
 All my open, non-abandoned changes.  Combined with the attention
 set to derive the \"please review\" and WIP sections (changes I
 own that are NOT in my attention set).")
+
+(defvar my/agenda-work-sections
+  '(reviews-needed my-needing-action)
+  "Work-item statuses to display in the daily agenda.
+The full set is: reviews-needed, my-needing-action, please-review,
+wip, todo, assigned, jira-active.  Sections not listed here are
+still fetched and cached (so the weekly review can access them) —
+they are simply not rendered in the agenda.
+Daily default is just reviews-needed and my-needing-action — the
+two statuses that require immediate action.  WIP, please-review,
+todo, assigned, and jira-active are weekly-planning concerns and
+surface in the weekly review instead.")
 ;; Cache variables:1 ends here
 
 ;; [[file:init.org::*Resolving work-items to Org headings][Resolving work-items to Org headings:1]]
@@ -4014,20 +4032,33 @@ Wrapped in `condition-case' so a failure does not leave
              ;; with no Gerrit work and no urgency flag (e.g., recently
              ;; assigned, or tickets with discussion activity).
              ;; Request "status" so we can detect Jira-active anomalies.
-             (_ (message "Gerrit/Jira: checking for assigned tickets…"))
+             ;;
+             ;; Gated on `my/agenda-work-sections': the assigned JQL
+             ;; query (and its follow-up title fetch) is skipped when
+             ;; neither `assigned' nor `jira-active' is configured for
+             ;; display.  This avoids a daily Jira round-trip that only
+             ;; the weekly review needs.
+             (need-assigned-p (or my/agenda-work--fetch-all-p
+                                  (memq 'assigned my/agenda-work-sections)
+                                  (memq 'jira-active my/agenda-work-sections)))
+             (_ (when need-assigned-p
+                  (message "Gerrit/Jira: checking for assigned tickets…")))
              (assigned-jql
-              (format (concat "assignee = %s"
-                              " AND resolution = Unresolved"
-                              " AND updated >= -14d")
-                      my\gerrit-user))
+              (when need-assigned-p
+                (format (concat "assignee = %s"
+                                " AND resolution = Unresolved"
+                                " AND updated >= -14d")
+                        my\gerrit-user)))
              (assigned-issues
-              (condition-case nil
-                  (my/gerrit--query-jira assigned-jql "summary,status")
-                (error nil)))
+              (when need-assigned-p
+                (condition-case nil
+                    (my/gerrit--query-jira assigned-jql "summary,status")
+                  (error nil))))
              ;; Also fetch titles for these tickets.
-             (_ (let ((tix (mapcar (lambda (i) (alist-get 'key i))
-                                   assigned-issues)))
-                  (when tix (my/gerrit--fetch-jira-titles tix))))
+             (_ (when assigned-issues
+                  (let ((tix (mapcar (lambda (i) (alist-get 'key i))
+                                     assigned-issues)))
+                    (when tix (my/gerrit--fetch-jira-titles tix)))))
              ;; IDs already covered by Gerrit items or urgent TODO items
              (all-covered-ids
               (let ((ht (copy-hash-table covered-ids)))
@@ -4042,7 +4073,7 @@ Wrapped in `condition-case' so a failure does not leave
               (-filter (lambda (issue)
                          (not (gethash (alist-get 'key issue)
                                        all-covered-ids)))
-                       assigned-issues))
+                       (or assigned-issues '())))
              (jira-active-statuses '("In Progress" "In Review"
                                      "Code Review" "Pending Review"))
              (jira-active-items
@@ -4085,7 +4116,8 @@ Wrapped in `condition-case' so a failure does not leave
         (setq my/agenda-work-data
               (list :items all-items
                     :timestamp (current-time))
-              my/agenda-work-fetching nil)
+              my/agenda-work-fetching nil
+              my/agenda-work--fetch-all-p nil)
         (message "Gerrit/Jira: cached %d attn, %d mine, %d work-items"
                  (length attention) (length all-mine)
                  (length all-items))
@@ -4104,7 +4136,8 @@ Wrapped in `condition-case' so a failure does not leave
             (funcall cb))))
     (error
      (setq my/agenda-work-fetching nil
-           my/agenda-work--on-complete nil)
+           my/agenda-work--on-complete nil
+           my/agenda-work--fetch-all-p nil)
      (message "Gerrit/Jira agenda update failed: %s"
               (error-message-string err)))))
 ;; Coordinator:1 ends here
@@ -4249,7 +4282,8 @@ On first agenda open each calendar day, automatically triggers a
 background fetch.  Subsequent opens reuse the cache.  To force a
 manual refresh at any time, use the \"Refresh Work\" button or press
 \\='g' in the agenda buffer."
-  (when (string-prefix-p "*Org Agenda" (buffer-name))
+  (when (and my/agenda-work-sections
+             (string-prefix-p "*Org Agenda" (buffer-name)))
     (let ((inhibit-read-only t))
       (goto-char (point-max))
       (if my/agenda-work-data
@@ -4263,7 +4297,9 @@ manual refresh at any time, use the \"Refresh Work\" button or press
                     (todo              "📋 Urgent Tasks Not Yet Started")
                     (assigned          "📌 Assigned To Me")
                     (jira-active       "⚠️ Jira Active But No Gerrit Changes"))))
-            (dolist (sec status-sections)
+            (dolist (sec (cl-remove-if-not
+                          (lambda (s) (memq (car s) my/agenda-work-sections))
+                          status-sections))
               (let* ((status (car sec))
                      (heading (cadr sec))
                      (matching (-filter
@@ -7265,6 +7301,20 @@ exists, it is replaced with the (potentially updated) content."
         (my/weekly-review--archive-standup-to-org)
         (message "Weekly promise copied to clipboard & archived! Paste it into #standups.")))
 
+    (defun my/weekly-review--ensure-full-fetch ()
+      "Kick off a full Gerrit/Jira re-fetch (all statuses).
+Called early in the weekly review capture template so the async
+SSH queries run in parallel with the interactive life-score and
+social-reminder steps.  By the time `week-ticket-data’ needs
+the cache, the fetch is usually done.
+
+Sets `my/agenda-work--fetch-all-p’ so the coordinator includes
+`assigned’ and `jira-active’ queries that the daily fetch skips."
+      (unless my/agenda-work-fetching
+        (setq my/agenda-work--fetch-all-p t
+              my/agenda-work-data nil)
+        (my/agenda-work-refresh)))
+
     (defun my/weekly-review--week-ticket-data ()
       "Gather and partition this week’s clocked and cached work items.
 Returns a plist with keys :in-progress-clocked, :todo-clocked,
@@ -7272,7 +7322,18 @@ Returns a plist with keys :in-progress-clocked, :todo-clocked,
 
 All data comes from local sources: clock entries in Org and the
 work-item cache (`my/agenda-work-data’) populated by
-`my/agenda-work-refresh’.  No Jira API calls are made here."
+`my/agenda-work-refresh’.  The full fetch is kicked off early
+by `my/weekly-review--ensure-full-fetch’; here we just wait
+for it to complete."
+      ;; Wait for the async fetch (kicked off by ensure-full-fetch)
+      ;; to populate the cache.  The life scores + social reminder
+      ;; steps typically buy enough wall-clock time, but if not,
+      ;; spin-wait with `sit-for’ so Emacs can process sentinels.
+      (let ((deadline (+ (float-time) 60))) ;; 60s timeout
+        (while (and (not my/agenda-work-data)
+                    my/agenda-work-fetching
+                    (< (float-time) deadline))
+          (sit-for 0.2)))
       (let* ((end-date (format-time-string "%Y-%m-%d"))
              (start-date (format-time-string
                           "%Y-%m-%d"
@@ -7311,10 +7372,26 @@ work-item cache (`my/agenda-work-data’) populated by
               :extra-todo          extra-todo)))
 
 
+    (defun my/weekly-review--insert-action-hint (ticket)
+      "Insert an indented, face-preserving action hint for TICKET.
+Looks up TICKET in the work-item cache and, if found, inserts
+the `work-item-help-echo' hint below the current line — the same
+context-sensitive advice that appears in the agenda minibuffer,
+with its three-layer face hierarchy (bold action, dimmed metadata,
+colour-coded nudge) intact."
+      (when-let* ((items (plist-get my/agenda-work-data :items))
+                  (item (--first (equal ticket (work-item-jira it)) items))
+                  (hint (work-item-help-echo item)))
+        (insert "   -> " hint "\n")))
+
     (defun my/weekly-review--insert-numbered-items (items &optional counter)
-      "Insert ITEMS as a numbered Org list, stripping the urgency prefix.
+      "Insert ITEMS as a numbered Org list with action hints.
 Each work-item is rendered via `work-item-to-string' with the \"🔴 \"
 prefix removed (weekly review sections convey urgency structurally).
+Below each item, an indented line shows the `work-item-help-echo'
+hint — the same context-sensitive action advice that appears in the
+agenda minibuffer, with its propertized faces (bold action, dimmed
+metadata, colour-coded nudge) preserved.
 COUNTER, when non-nil, should be a cons cell whose `car' is the
 current count — it is mutated in place so callers can continue
 numbering across multiple calls.  Returns the final count."
@@ -7322,7 +7399,9 @@ numbering across multiple calls.  Returns the final count."
         (dolist (item items)
           (insert (format "%d. %s\n"
                           (cl-incf n)
-                          (string-remove-prefix "🔴 " (work-item-to-string item)))))
+                          (string-remove-prefix "🔴 " (work-item-to-string item))))
+          (when-let* ((hint (work-item-help-echo item)))
+            (insert "   -> " hint "\n")))
         (when counter (setcar counter n))
         n))
 
@@ -7529,7 +7608,9 @@ are excluded — they belong in Impediments, not here."
                               (if ticket
                                   (my/gerrit--format-jira-link ticket)
                                 "")
-                              (or title "") status)))))
+                              (or title "") status))
+              (when ticket
+                (my/weekly-review--insert-action-hint ticket)))))
         ;; From work-item cache, not clocked, but actively in progress.
         (let ((counter (cons n nil))
               (extra (--filter (not (member (work-item-jira it) blocked-ids))
@@ -7636,7 +7717,9 @@ Renders TODO-status tickets from clock data and Jira."
                             (if ticket
                                 (my/gerrit--format-jira-link ticket)
                               "")
-                            (or title "")))))
+                            (or title "")))
+            (when ticket
+              (my/weekly-review--insert-action-hint ticket))))
         (let ((counter (cons pn nil)))
           (my/weekly-review--insert-numbered-items
            (plist-get ticket-data :extra-todo) counter)
@@ -7869,6 +7952,18 @@ day. You remain focused on your most important tasks./
     ;; to-do and projects list. Remove unimportant tasks and update your
     ;; calendar with any new relevant information.
     ;;
+    ;; The weekly review is the planning counterpart to the daily
+    ;; agenda's action orientation.  The daily view shows only
+    ;; reviews-needed and my-needing-action — "what must I do today?"
+    ;; Everything else surfaces here: WIP, please-review, todo,
+    ;; assigned, jira-active.  This is where we assess priorities,
+    ;; identify impediments, and plan the week ahead.
+    ;;
+    ;; `my/weekly-review--ensure-full-fetch' runs at the very start of
+    ;; the capture, setting `my/agenda-work--fetch-all-p' so the async
+    ;; coordinator includes the Jira queries that the daily fetch
+    ;; skips.  By the time we reach the Weekly Promise section, the
+    ;; full cache is ready.
     ;;
     ;; Outstanding reviews belong here — not in daily standups.
     ;; Including them in the standup pings reviewers every day, which
@@ -7898,6 +7993,12 @@ day. You remain focused on your most important tasks./
                   ;; See https://github.com/alphapapa/ts.el, which has excellent examples.
                   ;; 😲 Nice human formatting functions too!
                   (my/weekly-review--heading) ;; ⟵ This first argument is a template STRING!
+                  ;; Kick off a full Gerrit/Jira re-fetch early — the
+                  ;; weekly review needs `assigned' and `jira-active'
+                  ;; which the daily fetch skips.  By the time we reach
+                  ;; `insert-weekly-promise', the async fetch is usually
+                  ;; done (life scores + social reminder buy us time).
+                  (my/weekly-review--ensure-full-fetch)
                   (my/weekly-review--insert-life-scores)
                   (end-of-buffer)
                   ;; Start with something light — post to #social before
