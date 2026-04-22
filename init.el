@@ -2012,7 +2012,7 @@ fonts (•̀ᴗ•́)و"
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
            '(and (scheduled :on today) (ts :with-time nil))
-           ((org-ql-block-header "😵‍💫 ﴾ Any time ≈ No time﴿ Scheduled today, but not time-blocked")))
+           ((org-ql-block-header "😵‍💫 ﴾ Any time ≈ No time﴿ Scheduled today, but not time-blocked  ⟨press S to time-block into the next free hour⟩")))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           ;; What am I doing today, and when?                                              ;;
@@ -2180,6 +2180,20 @@ fonts (•̀ᴗ•́)و"
 ;;
 ;; Alternatives: my/auto-set-selective-display-mode or (set-selective-display 1)
 ;; My default ~org-agenda-custom-commands~:3 ends here
+
+;; [[file:init.org::*My default ~org-agenda-custom-commands~][My default ~org-agenda-custom-commands~:4]]
+(defun my/agenda-schedule-first-free-hour ()
+  "Schedule the agenda item at point into the next free 1-hour slot.
+Uses `my/agenda--first-free-hour-today', which searches today first
+then rolls forward up to 14 days.  Spillover beyond today pops a
+non-blocking dialog so you can reshuffle if you'd rather keep the
+task on today's plate."
+  (interactive)
+  (org-agenda-schedule nil (my/agenda--first-free-hour-today 60)))
+
+(with-eval-after-load 'org-agenda
+  (define-key org-agenda-mode-map (kbd "S") #'my/agenda-schedule-first-free-hour))
+;; My default ~org-agenda-custom-commands~:4 ends here
 
 ;; [[file:init.org::*Getting Started with org-agenda][Getting Started with org-agenda:1]]
 ;; Jump straight to my 𝓪genda dashboard ---no dispatch menu please!
@@ -4228,15 +4242,169 @@ org-agenda commands (RET, TAB, I, o, etc.) work."
                 (put-text-property line-start end
                                    'org-hd-marker marker)))))))))
 
+(defun my/agenda--effort-minutes (effort)
+  "Parse EFFORT (a \"H:MM\" string) to minutes.  Nil input → 60."
+  (if (and effort (string-match "\\`\\([0-9]+\\):\\([0-9]+\\)\\'" effort))
+      (+ (* 60 (string-to-number (match-string 1 effort)))
+         (string-to-number (match-string 2 effort)))
+    60))
+
+(defun my/agenda--busy-intervals-on (date)
+  "Return DATE's busy time intervals as ((START . END) ...) in minutes-from-midnight.
+DATE is a \"YYYY-MM-DD\" string.  Busy = scheduled org items that
+carry an HH:MM component, using their Effort (defaulting to 1h)
+to compute END.  When DATE is today, also includes the currently-
+clocked task's (clock-start, now) interval so we don't schedule
+over ourselves.  Items scheduled without a time are ignored — they
+float.  Sorted by START and overlap-merged."
+  (let* ((is-today (equal date (format-time-string "%Y-%m-%d")))
+         intervals)
+    ;; 1. Timed scheduled items on DATE.
+    (dolist (file (org-agenda-files))
+      (with-current-buffer (find-file-noselect file)
+        (save-restriction
+          (widen)
+          (org-map-entries
+           (lambda ()
+             (let ((raw (org-entry-get (point) "SCHEDULED")))
+               (when (and raw
+                          (string-match-p (regexp-quote date) raw)
+                          (string-match-p "[0-9]+:[0-9]+" raw))
+                 (let* ((time  (org-time-string-to-time raw))
+                        (decoded (decode-time time))
+                        (h (nth 2 decoded))
+                        (m (nth 1 decoded))
+                        (start (+ (* 60 h) m))
+                        (dur   (my/agenda--effort-minutes
+                                (org-entry-get (point) "Effort"))))
+                   (push (cons start (+ start dur)) intervals)))))))))
+    ;; 2. Active clock — only when DATE is today.
+    (when (and is-today (org-clocking-p))
+      (let* ((t0 (decode-time org-clock-start-time))
+             (t1 (decode-time (current-time)))
+             (same-day (and (= (nth 3 t0) (nth 3 t1))
+                            (= (nth 4 t0) (nth 4 t1))
+                            (= (nth 5 t0) (nth 5 t1))))
+             (start-mins (if same-day
+                             (+ (* 60 (nth 2 t0)) (nth 1 t0))
+                           0))
+             (now-mins   (+ (* 60 (nth 2 t1)) (nth 1 t1))))
+        (push (cons start-mins now-mins) intervals)))
+    ;; Sort & merge overlapping intervals so gap-walking is simpler.
+    (let ((sorted (sort intervals (lambda (a b) (< (car a) (car b)))))
+          merged)
+      (dolist (iv sorted)
+        (if (and merged (<= (car iv) (cdr (car merged))))
+            (setcdr (car merged) (max (cdr (car merged)) (cdr iv)))
+          (push (cons (car iv) (cdr iv)) merged)))
+      (nreverse merged))))
+
+(defun my/agenda--round-up-15 (mins)
+  "Round MINS (minutes-from-midnight) up to the next 15-minute boundary."
+  (* 15 (ceiling mins 15)))
+
+(defun my/agenda--first-free-slot-on (date duration-mins)
+  "Return the first free DURATION-MINS slot on DATE as minutes-from-midnight, or nil.
+DATE is a \"YYYY-MM-DD\" string.  Workday is 08:00–16:00 (an
+8-hour shift).  When DATE is today AND `now' is outside that
+window, the window is shifted to [now, now + 8h].  For future
+dates, the full 08:00–16:00 window is always used.  Candidate
+starts are rounded up to the next 15-minute boundary."
+  (let* ((is-today (equal date (format-time-string "%Y-%m-%d")))
+         (now-m (when is-today
+                  (let ((now (decode-time (current-time))))
+                    (+ (* 60 (nth 2 now)) (nth 1 now)))))
+         (day-start 480)   ; 08:00
+         (day-end   960)   ; 16:00
+         (window-start
+          (cond
+           ((not is-today)                                  day-start)
+           ((and (>= now-m day-start) (< now-m day-end))    (max now-m day-start))
+           (t                                               now-m)))
+         (window-end
+          (cond
+           ((not is-today)                                  day-end)
+           ((and (>= now-m day-start) (< now-m day-end))    day-end)
+           (t                                               (+ now-m (* 8 60)))))
+         (cursor (my/agenda--round-up-15 window-start))
+         (busy (my/agenda--busy-intervals-on date))
+         found)
+    (while (and (not found)
+                (<= (+ cursor duration-mins) window-end))
+      (let ((collision (cl-find-if
+                        (lambda (iv)
+                          (and (< cursor (cdr iv))
+                               (< (car iv) (+ cursor duration-mins))))
+                        busy)))
+        (if collision
+            (setq cursor (my/agenda--round-up-15 (cdr collision)))
+          (setq found cursor))))
+    found))
+
+(defun my/agenda--first-free-hour-today (&optional duration-mins)
+  "Return an Org timestamp string for the first free DURATION-MINS slot.
+DURATION-MINS defaults to 60.  Searches today first; if nothing
+fits, rolls forward one day at a time up to a 14-day horizon.
+When the chosen slot is not today, pops a non-blocking dialog
+informing the user of the spillover and nudging them to either
+reschedule something already on today's calendar or, if they
+really want to work overtime, reschedule this task back to today
+themselves.  Signals `user-error' if no slot fits within the
+14-day horizon — that would indicate a genuinely overfull
+calendar and deserves human attention."
+  (let* ((duration (or duration-mins 60))
+         (one-day  (* 24 60 60))
+         (horizon 14)
+         (now      (current-time))
+         chosen)
+    (cl-loop for offset from 0 below horizon
+             for date-time = (time-add now (* offset one-day))
+             for date      = (format-time-string "%Y-%m-%d" date-time)
+             for day-name  = (format-time-string "%a" date-time)
+             for slot      = (my/agenda--first-free-slot-on date duration)
+             when slot
+             do (progn
+                  (setq chosen (list :offset offset
+                                     :date date
+                                     :day-name day-name
+                                     :date-time date-time
+                                     :slot slot))
+                  (cl-return)))
+    (unless chosen
+      (user-error
+       "No free %d-min slot in the next %d days — your calendar is full, please triage"
+       duration horizon))
+    (let* ((offset   (plist-get chosen :offset))
+           (date     (plist-get chosen :date))
+           (day-name (plist-get chosen :day-name))
+           (slot     (plist-get chosen :slot))
+           (hh       (/ slot 60))
+           (mm       (% slot 60))
+           (stamp    (format "<%s %s %02d:%02d>" date day-name hh mm)))
+      (when (> offset 0)
+        (non-blocking-message-box
+         :title "Scheduled for a later day"
+         :content
+         (format (concat "No room left today, so I've scheduled this task for:\n\n"
+                         "    %s %s at %02d:%02d\n\n"
+                         "If you really want to work overtime and not see your kids,\n"
+                         "reschedule it back to today manually.  Better: change\n"
+                         "something already on today's calendar to land later in\n"
+                         "the week, and RET this item again.")
+                 day-name date hh mm)
+         :buttons '(:OK nil)))
+      stamp)))
+
 (defun my/agenda--ensure-review-todo (item)
   "Under the Org heading for ITEM, create a TODO child for the review if absent.
-The child is scheduled for today and tagged :<Weekday>:Task: — the
-weekday tag makes each day's commitment its own first-class heading
-(so Tuesday's RET creates a fresh scaffold instead of latching onto
-Monday's), and the :Task: tag marks the heading as daily scaffolding
-rather than a shipped deliverable.  Idempotent: if a child whose
-heading matches the Jira ticket (or tip URL when no Jira) AND carries
-today's weekday tag already exists, skip."
+The child is scheduled into today's first free 1-hour slot (see
+`my/agenda--first-free-hour-today') and tagged :<Weekday>:Task: —
+the weekday tag makes each day's commitment its own first-class
+heading (so Tuesday's RET creates a fresh scaffold instead of
+latching onto Monday's), and the :Task: tag marks the heading as
+daily scaffolding rather than a shipped deliverable.  Idempotent:
+if a child whose heading matches the Jira ticket (or tip URL when
+no Jira) AND carries today's weekday tag already exists, skip."
   (when-let* ((marker (work-item-org-tree item))
               (buf (marker-buffer marker)))
     (let* ((rendered (work-item-to-string item))
@@ -4266,7 +4434,7 @@ today's weekday tag already exists, skip."
              (save-excursion
                (org-back-to-heading t)
                (org-set-tags (list weekday "Task")))
-             (org-schedule nil (format-time-string "<%Y-%m-%d %a>"))
+             (org-schedule nil (my/agenda--first-free-hour-today 60))
              (org-set-property "Effort" "1:00"))))))))
 
 (defvar my/agenda--pending-review-item nil
@@ -4416,13 +4584,15 @@ without reflecting on the last one."
    (replace-regexp-in-string
     "\\[\\[\\([^]]+\\)\\]\\]" "\\1" s)))
 
-(defun my/standup-from-schedule--collect-items ()
-  "Collect org items scheduled for today with their effort estimates.
-Returns a list of (HEADING EFFORT PRIVATE-P MARKER) lists, where
-EFFORT may be nil, PRIVATE-P is non-nil for :private: tagged
-headings, and MARKER points to the source heading."
-  (let ((today (format-time-string "%Y-%m-%d"))
-        results)
+(defun my/standup-from-schedule--collect-items-on (date)
+  "Collect org items scheduled for DATE with their effort estimates.
+DATE is a \"YYYY-MM-DD\" string.  Returns a list of (HEADING EFFORT
+PRIVATE-P MARKER) lists, where EFFORT may be nil, PRIVATE-P is
+non-nil for :private: tagged headings, and MARKER points to the
+source heading.  The same filters as today's collector apply:
+DONE items, \"Daily Standup Planning\" itself, and habit-styled
+entries are dropped."
+  (let (results)
     (dolist (file (org-agenda-files))
       (with-current-buffer (find-file-noselect file)
         (save-restriction
@@ -4434,7 +4604,7 @@ headings, and MARKER points to the source heading."
                     (style (org-entry-get nil "STYLE"))
                     (heading (org-get-heading t t t t)))
                (when (and sched
-                          (equal today (format-time-string "%Y-%m-%d" sched))
+                          (equal date (format-time-string "%Y-%m-%d" sched))
                           (not (member todo org-done-keywords))
                           (not (string-match-p "Daily Standup Planning" heading))
                           (not (and style (string-equal-ignore-case "habit" style))))
@@ -4444,6 +4614,12 @@ headings, and MARKER points to the source heading."
                              (point-marker))
                        results))))))))
     (nreverse results)))
+
+(defun my/standup-from-schedule--collect-items ()
+  "Collect org items scheduled for today with their effort estimates.
+Thin wrapper around `my/standup-from-schedule--collect-items-on'
+bound to today's date.  See that function for return shape."
+  (my/standup-from-schedule--collect-items-on (format-time-string "%Y-%m-%d")))
 
 (defun my/standup-from-schedule--insert-items (items)
   "Insert ITEMS as a numbered org list at point.
@@ -4474,12 +4650,12 @@ ITEMS is a list of (HEADING EFFORT) pairs."
   (when-let* ((total-mins (my/standup-from-schedule--effort-total-mins items)))
     (format "%d:%02d" (/ total-mins 60) (% total-mins 60))))
 
-(defun my/standup-from-schedule--all-today-headings ()
-  "Collect ALL headings scheduled for today (no filtering).
-Returns a list of plain heading strings — used for sanity checks
-that need to see habits, standup planning, etc."
-  (let ((today (format-time-string "%Y-%m-%d"))
-        results)
+(defun my/standup-from-schedule--all-headings-on (date)
+  "Collect ALL headings scheduled for DATE (no filtering).
+DATE is a \"YYYY-MM-DD\" string.  Returns a list of plain heading
+strings — used for sanity checks that need to see habits, standup
+planning, etc."
+  (let (results)
     (dolist (file (org-agenda-files))
       (with-current-buffer (find-file-noselect file)
         (save-restriction
@@ -4487,10 +4663,15 @@ that need to see habits, standup planning, etc."
           (org-map-entries
            (lambda ()
              (when-let* ((sched (org-get-scheduled-time nil))
-                         (_ (equal today (format-time-string "%Y-%m-%d" sched))))
+                         (_ (equal date (format-time-string "%Y-%m-%d" sched))))
                (push (substring-no-properties (org-get-heading t t t t))
                      results)))))))
     (nreverse results)))
+
+(defun my/standup-from-schedule--all-today-headings ()
+  "Collect ALL headings scheduled for today (no filtering).
+Thin wrapper around `my/standup-from-schedule--all-headings-on'."
+  (my/standup-from-schedule--all-headings-on (format-time-string "%Y-%m-%d")))
 
 (defun my/standup-from-schedule--sanity-checks (all-headings all-items public-items)
   "Run sanity checks against the day's schedule.
@@ -4560,33 +4741,53 @@ checks pass, returns a plist with:
             :deep-str deep-str
             :total-str total-str))))
 
-(defun my/standup-from-schedule--gcal-events ()
-  "Fetch today's Google Calendar events via gcalcli.
-Returns a list of (TITLE START-TIME END-TIME) triples.
-Requires `my\\gcalcli-calendar' (set in private.el).
-All-day events have nil for START-TIME and END-TIME."
+(defun my/standup-from-schedule--gcal-events-range (start-date end-date)
+  "Fetch Google Calendar events between START-DATE and END-DATE via gcalcli.
+START-DATE and END-DATE are \"YYYY-MM-DD\" strings.  END-DATE is
+exclusive, mirroring gcalcli's `agenda' convention.  Returns a
+list of (DATE TITLE START-TIME END-TIME) quadruples in calendar
+order, where START-TIME and END-TIME may be nil for all-day
+events.  Requires `my\\gcalcli-calendar' (set in private.el)
+and the `gcalcli' executable; returns nil if either is missing."
   (when (and (boundp 'my\gcalcli-calendar)
              (executable-find "gcalcli"))
     (let ((lines (split-string
                   (shell-command-to-string
-                   (format "gcalcli --calendar %s agenda today tomorrow --tsv"
-                           (shell-quote-argument my\gcalcli-calendar)))
+                   (format "gcalcli --calendar %s agenda %s %s --tsv"
+                           (shell-quote-argument my\gcalcli-calendar)
+                           (shell-quote-argument start-date)
+                           (shell-quote-argument end-date)))
                   "\n" t))
           results)
       ;; Skip the TSV header line.
       (dolist (line (cdr lines))
         (let ((fields (split-string line "\t")))
           (when (>= (length fields) 5)
-            (let ((start-time (nth 1 fields))
+            (let ((date       (nth 0 fields))
+                  (start-time (nth 1 fields))
                   (end-time   (nth 3 fields))
                   (title      (nth 4 fields)))
-              ;; Exclude tomorrow's all-day events that bleed into the output.
-              (when (equal (nth 0 fields) (format-time-string "%Y-%m-%d"))
-                (push (list title
-                            (if (string-empty-p start-time) nil start-time)
-                            (if (string-empty-p end-time)   nil end-time))
-                      results))))))
+              (push (list date
+                          title
+                          (if (string-empty-p start-time) nil start-time)
+                          (if (string-empty-p end-time)   nil end-time))
+                    results)))))
       (nreverse results))))
+
+(defun my/standup-from-schedule--gcal-events ()
+  "Fetch today's Google Calendar events via gcalcli.
+Returns a list of (TITLE START-TIME END-TIME) triples.  All-day
+events have nil for START-TIME and END-TIME.  Thin wrapper around
+`my/standup-from-schedule--gcal-events-range' that filters down
+to today and drops the DATE field."
+  (let* ((today    (format-time-string "%Y-%m-%d"))
+         (tomorrow (format-time-string
+                    "%Y-%m-%d"
+                    (time-add (current-time) (* 24 60 60)))))
+    (cl-loop for (date title start end) in
+             (my/standup-from-schedule--gcal-events-range today tomorrow)
+             when (equal date today)
+             collect (list title start end))))
 
 (defun my/standup-from-schedule--gcal-crosscheck (org-items)
   "Cross-check Google Calendar events against ORG-ITEMS.
@@ -4608,6 +4809,310 @@ that Org doesn't know about."
                              org-headings))
           (push event missing))))
     (nreverse missing)))
+
+;; ═══════════════════════════════════════════════════════════════════════
+;; Weekly Promise Validator — `my/validate-week'
+;; ═══════════════════════════════════════════════════════════════════════
+;;
+;; Context.  The Weekly Review (C-c r w) culminates in a Weekly Promise
+;; that we publish to #standups via `my/weekly-review--publish-promise'.
+;; Today nothing stops that publish from firing when the coming week is
+;; un-schedulable — In-Progress tickets with no home on any weekday,
+;; Planned items floating in limbo, or calendar events that Org has
+;; never heard of.  The promise gets made; the week silently falls
+;; apart.
+;;
+;; `my/validate-week' extends the daily sanity-check infrastructure
+;; (`my/standup-from-schedule--sanity-checks') across the remaining
+;; weekdays of the current week, slots in before publish, and ensures
+;; every In-Progress / Planned ticket from the Weekly Promise is
+;; actually scheduled and every public-calendar event has a
+;; corresponding Org task.  Missing events land in a dedicated buffer
+;; grouped by day so we can capture them as we see fit — the rest is
+;; noise.
+
+(defun my/validate-week--remaining-weekdays ()
+  "Return (DATE DAY-NAME) pairs for today through Friday.
+DATE is a \"YYYY-MM-DD\" string; DAY-NAME is \"Mon\", \"Tue\", etc.
+Saturday and Sunday are skipped.  Returns nil on Sat/Sun — the
+weekend has nothing left to validate.
+
+Today is *included* — a Monday weekly-review eats ~2h, plus a
+team meeting and a 1:1 typically consume another ~2.5h, leaving
+Monday itself the day most likely to quietly overcommit.  The
+day-sanity checks run against whatever hours remain on the
+clock, not a fresh 8-hour budget, so an already-clocked Monday
+is held to the same standard as any other weekday."
+  (let ((results '())
+        (one-day (* 24 60 60)))
+    (dotimes (i 5)
+      (let* ((time (time-add (current-time) (* i one-day)))
+             (dow  (string-to-number (format-time-string "%u" time))))
+        ;; %u: Monday=1 … Sunday=7.  Skip Sat (6) and Sun (7).
+        (when (<= dow 5)
+          (push (list (format-time-string "%Y-%m-%d" time)
+                      (format-time-string "%a" time))
+                results))))
+    (nreverse results)))
+
+(defun my/validate-week--promise-ticket-ids ()
+  "Return Jira IDs from the in-flight Weekly Review's promise subtrees.
+Parses the *current buffer's* In Progress and Planned sections —
+the tightest possible feedback loop: what the user literally just
+typed into the promise.  Reuses `my/weekly-review--extract-jira-ids'
+for extraction so the accepted project prefixes stay in sync with
+the accountability machinery."
+  (let ((section-res '("^\\*+ .*🔨 In Progress"
+                       "^\\*+ .*📆 Planned"))
+        (ids '()))
+    (save-excursion
+      (dolist (re section-res)
+        (goto-char (point-min))
+        (when (re-search-forward re nil t)
+          (let ((beg (point))
+                (end (save-excursion (org-end-of-subtree t t))))
+            (setq ids (append ids
+                              (my/weekly-review--extract-jira-ids beg end)))))))
+    (delete-dups ids)))
+
+(defun my/validate-week--ticket-is-scheduled-p (ticket day-data)
+  "Return non-nil when TICKET appears in any day's headings.
+DAY-DATA is an alist of (DATE . (:all-headings (...) ...)) as
+built by `my/validate-week'.  Matching is case-insensitive and
+word-bounded, so BUG-4 does not match BUG-42."
+  (let ((re (concat "\\b" (regexp-quote (upcase ticket)) "\\b")))
+    (cl-some (lambda (entry)
+               (cl-some (lambda (h) (string-match-p re (upcase h)))
+                        (plist-get (cdr entry) :all-headings)))
+             day-data)))
+
+(defun my/validate-week--day-sanity-checks (day-label all-headings all-items public-items)
+  "Per-day sanity checks for a remaining weekday.
+DAY-LABEL is a \"Tue 2026-04-22\"-style string used to prefix
+`user-error' messages.  Mirrors
+`my/standup-from-schedule--sanity-checks' except:
+  • deep-work floor is 3h (not 4h), because reviews & rework will
+    eat time we cannot predict in advance;
+  • the review-allocation check is axed — future-day reviews can't
+    be known until someone actually requests one.
+Every failed check fires `user-error' immediately.  On success,
+returns a plist with :deep-str and :total-str."
+  (let ((tag (format "[%s] " day-label)))
+    ;; 1. Every item must have an effort estimate.
+    (when-let* ((offender (cl-find-if (lambda (it) (not (cadr it))) all-items)))
+      (let ((marker (nth 3 offender)))
+        (when marker
+          (switch-to-buffer (marker-buffer marker))
+          (goto-char marker)
+          (org-reveal)))
+      (user-error "%sAdd an effort estimate to \"%s\" then try again"
+                  tag (car offender)))
+    ;; 2. No more than 5 public items.
+    (when (> (length public-items) 5)
+      (user-error "%s%d standup items -- trim to 5 or fewer so you can actually honour your commitments"
+                  tag (length public-items)))
+    (let* ((deep-mins  (my/standup-from-schedule--effort-total-mins public-items))
+           (total-mins (my/standup-from-schedule--effort-total-mins all-items))
+           (deep-str   (my/standup-from-schedule--effort-total public-items))
+           (total-str  (my/standup-from-schedule--effort-total all-items)))
+      ;; 3. Total effort must not exceed 8 hours.
+      (when (and total-mins (> total-mins 480))
+        (user-error "%sYou have %s total effort scheduled -- reconsider your life!"
+                    tag total-str))
+      ;; 4. Deep work must be at least 3 hours (vs 4h for today).
+      (when (and deep-mins (< deep-mins 180))
+        (user-error
+         (concat "%sOnly %s of deep work? Reviews and rework will eat time; "
+                 "this day needs at least 3h of deep work scheduled to be doable.")
+         tag deep-str))
+      ;; 5. Is standup planning scheduled?
+      (unless (cl-some (lambda (h) (string-match-p "Daily Standup Planning" h))
+                       all-headings)
+        (user-error
+         (concat "%sNo standup planning scheduled!\n\n"
+                 "Actually take into account planning time — e.g. 1 hour. "
+                 "Respond to emails, update status, reply to Slack, "
+                 "check on waiting tasks. Admin is part of the job, "
+                 "a critical part! Otherwise you could go fast, "
+                 "but go fast in the wrong direction.")
+         tag))
+      ;; 6. Is lunch & prayer scheduled?
+      (unless (cl-some (lambda (h) (string-match-p "Lunch.*Prayer\\|Prayer.*Lunch" h))
+                       all-headings)
+        (user-error "%sNo Lunch & Prayer scheduled! You are a human, not a machine."
+                    tag))
+      (list :deep-str deep-str :total-str total-str))))
+
+(defun my/validate-week--gcal-missing-by-day (day-data)
+  "Return ((DATE DAY-NAME) . ((TITLE START END) ...)) for missing events.
+DAY-DATA is an alist of (DATE . (:day-name D :public-items P ...))
+as built by `my/validate-week'.  For each day, fetch calendar
+events via `my/standup-from-schedule--gcal-events-range' and
+diff against that day's public org headings using the same
+substring-match logic as `--gcal-crosscheck'.  Days with no
+missing events are omitted from the returned alist."
+  (when day-data
+    (let* ((dates (mapcar #'car day-data))
+           (start (car dates))
+           ;; gcalcli's `agenda END' is exclusive — ask for one day past Friday.
+           (end   (format-time-string
+                   "%Y-%m-%d"
+                   (time-add
+                    (date-to-time (concat (car (last dates)) "T00:00:00"))
+                    (* 24 60 60))))
+           (events (my/standup-from-schedule--gcal-events-range start end))
+           results)
+      (dolist (entry day-data)
+        (let* ((date         (car entry))
+               (plist        (cdr entry))
+               (day-name     (plist-get plist :day-name))
+               (public-items (plist-get plist :public-items))
+               (headings     (mapcar (lambda (it) (downcase (car it)))
+                                     public-items))
+               (day-events   (cl-remove-if-not
+                              (lambda (ev) (equal (car ev) date))
+                              events))
+               missing)
+          (dolist (ev day-events)
+            (let ((title (cadr ev)))
+              (unless (or (string-match-p "\\`\\(?:Busy\\|Home\\)\\'" title)
+                          (cl-some
+                           (lambda (h)
+                             (or (string-match-p (regexp-quote (downcase title)) h)
+                                 (string-match-p (regexp-quote h) (downcase title))))
+                           headings))
+                (push (list title (nth 2 ev) (nth 3 ev)) missing))))
+          (when missing
+            (push (cons (list date day-name) (nreverse missing)) results))))
+      (nreverse results))))
+
+(defun my/validate-week--open-missing-events-buffer (missing-by-day)
+  "Render MISSING-BY-DAY in *Unscheduled Calendar Events*.
+MISSING-BY-DAY has the shape produced by
+`my/validate-week--gcal-missing-by-day'.  Idempotent: re-running
+erases and regenerates the buffer.  Does nothing when
+MISSING-BY-DAY is nil."
+  (when missing-by-day
+    (let ((buf (get-buffer-create "*Unscheduled Calendar Events*")))
+      (with-current-buffer buf
+        (setq buffer-read-only nil)
+        (erase-buffer)
+        (insert "#+title: Unscheduled Calendar Events\n"
+                "Events on your public calendar with no matching org task.\n"
+                "Capture what matters; the rest is noise.\n\n")
+        (dolist (entry missing-by-day)
+          (let* ((date     (nth 0 (car entry)))
+                 (day-name (nth 1 (car entry)))
+                 (events   (cdr entry)))
+            (insert (format "* %s %s\n" day-name date))
+            (dolist (ev events)
+              (let ((title (nth 0 ev))
+                    (start (nth 1 ev)))
+                (insert (if start
+                            (format "  - %s %s\n" start title)
+                          (format "  - (all-day) %s\n" title)))
+                (insert "    [[elisp:(org-capture nil \"t\")][📝 Capture as TODO]]\n")))
+            (insert "\n")))
+        (goto-char (point-min))
+        (org-mode)
+        (setq buffer-read-only t))
+      (display-buffer buf))))
+
+(defun my/validate-week--in-flight-p ()
+  "Return non-nil iff the current buffer is an in-flight Weekly Review.
+Checks for an org-mode buffer containing both a Weekly Review root
+heading and the 🔨 In Progress section that only that template
+generates.  Without both markers we'd silently parse an empty
+promise list and green-light anything."
+  (and (derived-mode-p 'org-mode)
+       (save-excursion
+         (goto-char (point-min))
+         (and (re-search-forward "^\\* Weekly Review & Weekly Resolution"
+                                 nil t)
+              (re-search-forward "^\\*+ .*🔨 In Progress" nil t)))))
+
+(defun my/validate-week ()
+  "Validate that the rest of this week is actually doable.
+Checked for each remaining weekday (today → Friday):
+  • daily sanity checks — effort estimates, ≤ 5 items, ≤ 8h total,
+    ≥ 3h deep work, standup planning, Lunch & Prayer
+    (see `my/validate-week--day-sanity-checks');
+  • every In-Progress / Planned ticket from the in-flight Weekly
+    Promise is scheduled on some remaining weekday;
+  • every public-calendar event has a matching org task.
+Missing calendar events pop up in `*Unscheduled Calendar Events*';
+everything else fires `user-error' on the first violation.
+
+Must be invoked from an in-flight Weekly Review buffer —
+`--promise-ticket-ids' parses the current buffer and would
+silently return nil elsewhere, green-lighting un-scheduled work.
+
+Called automatically at the top of
+`my/weekly-review--publish-promise' as a fail-closed guard, and
+exposed as an advisory command (M-x my/validate-week) via the
+Weekly Review's wrap-up checklist."
+  (interactive)
+  (unless (my/validate-week--in-flight-p)
+    (user-error
+     "my/validate-week must be run from the in-flight Weekly Review buffer"))
+  (let ((remaining (my/validate-week--remaining-weekdays)))
+    (if (null remaining)
+        (message "Nothing left of the week to validate — enjoy your weekend!")
+      ;; 1. Collect per-day data in one pass.
+      (let (day-data summaries)
+        (dolist (pair remaining)
+          (let* ((date      (nth 0 pair))
+                 (day-name  (nth 1 pair))
+                 (all       (my/standup-from-schedule--collect-items-on date))
+                 (public    (cl-remove-if #'caddr all))
+                 (headings  (my/standup-from-schedule--all-headings-on date)))
+            (push (cons date
+                        (list :day-name     day-name
+                              :all-items    all
+                              :public-items public
+                              :all-headings headings))
+                  day-data)))
+        (setq day-data (nreverse day-data))
+        ;; 2. Per-day sanity checks — hard halts.
+        (dolist (entry day-data)
+          (let* ((date  (car entry))
+                 (pl    (cdr entry))
+                 (label (format "%s %s" (plist-get pl :day-name) date))
+                 (checks (my/validate-week--day-sanity-checks
+                          label
+                          (plist-get pl :all-headings)
+                          (plist-get pl :all-items)
+                          (plist-get pl :public-items))))
+            (push (format "%s %s deep / %s total"
+                          label
+                          (or (plist-get checks :deep-str)  "0:00")
+                          (or (plist-get checks :total-str) "0:00"))
+                  summaries)))
+        ;; 3. Promise-scheduling check — gather ALL missing, then error once.
+        (let* ((promised (my/validate-week--promise-ticket-ids))
+               (missing  (cl-remove-if
+                          (lambda (t-id)
+                            (my/validate-week--ticket-is-scheduled-p t-id day-data))
+                          promised)))
+          (when missing
+            (user-error
+             "Promised tickets not scheduled this week: %s — how will you honour the promise?"
+             (string-join missing ", "))))
+        ;; 4. Calendar crosscheck — hard halt.  A public calendar event
+        ;; is a commitment colleagues already see; a promise that
+        ;; silently conflicts with one is a promise to break.  Either
+        ;; the meeting is real (schedule it) or it isn't (axe it from
+        ;; the calendar).  Remote work rewards visibility — show up.
+        (let ((missing-events (my/validate-week--gcal-missing-by-day day-data)))
+          (when missing-events
+            (my/validate-week--open-missing-events-buffer missing-events)
+            (user-error
+             (concat "Calendar events with no matching org task — see "
+                     "*Unscheduled Calendar Events*.  Schedule each as "
+                     "a task, or axe it from the calendar, then re-run."))))
+        ;; 5. Success.
+        (message "Week validated ✅ — %s"
+                 (string-join (nreverse summaries) " | "))))))
 
 (defun my/standup-from-schedule ()
   "Generate today's standup from org-agenda scheduled items.
@@ -7037,10 +7542,18 @@ Also, at phase boundaries, nudge the user to unlock more."
       "Return the Org capture template string for this week's review entry.
 This is used as the TEMPLATE argument to `def-capture', so it must
 return a string — not insert anything.  `org-capture' expands %T
-into an active timestamp."
+into an active timestamp.
+
+The heading is SCHEDULED for the moment the review begins, with a
+2h Effort estimate, so that `my/validate-week' sees the review
+itself as a first-class block on today's calendar.  A Monday
+weekly review that quietly eats 2h is the single most common way
+Monday ends up overcommitted."
       (format (concat "* Weekly Review & Weekly Resolution ♯%s :%s:Weekly:Review:\n"
+                      "SCHEDULED: <%s>\n"
                       ":PROPERTIES:\n"
                       ":CREATED: %%T\n"
+                      ":Effort: 2:00\n"
                       ":WHY_PROMISE: A progress report is a promise report. Your word is on the line.\n"
                       ":WHY_REVIEW: Ensure everything is on track! Be proactive, not reactive!"
                       " Be in control of my life! 😌 Have a sense of closure for last week,"
@@ -7056,6 +7569,7 @@ into an active timestamp."
                       "/Keep it to one page. Report only essentials — headlines, not a Sunday edition./\n")
               (ts-week-of-year (ts-now))
               (ts-month-name (ts-now))
+              (format-time-string "%Y-%m-%d %a %H:%M")
               (my/weekly-review-phase)))
 
 
@@ -7366,8 +7880,13 @@ exists, it is replaced with the (potentially updated) content."
           (save-buffer))))
 
     (defun my/weekly-review--publish-promise ()
-      "Publish the Weekly Promise: copy to clipboard, open #standups, archive to Org."
+      "Publish the Weekly Promise: copy to clipboard, open #standups, archive to Org.
+Fail-closed: `my/validate-week' runs first and aborts (via
+`user-error') if the coming week is un-schedulable — no clipboard
+mutation, no browser navigation, no archive write.  A promise
+you cannot deliver on is worse than no promise at all."
       (interactive)
+      (my/validate-week)
       (let ((text (my/weekly-review--promise-cleaned-text)))
         ;; 1. Convert Org → Slack mrkdwn and copy to clipboard.
         (my/copy-as-slack text)
@@ -7843,14 +8362,18 @@ Renders TODO-status tickets from clock data and Jira."
 
 
     (defun my/weekly-review--insert-promise-checklist ()
-      "Insert the final edit/publish checklist for the Weekly Promise."
+      "Insert the final edit/publish checklist for the Weekly Promise.
+Step 2 offers an advisory dry-run of `my/validate-week' — pressing
+Publish re-runs it as a hard guard, so the dry-run is purely a
+convenience for catching un-schedulable weeks while still editing."
       (my/org-insert-heading :aunt "Wrap-up \t\t\t :private: "
                              :body (lf-string "
 
        1. Edit the sections above
-       2. [[elisp:(my/weekly-review--publish-promise)][📤 Publish to #standups]]
-       3. Press “C-x C-s” then “C-x g” and if that looks good, commit!
-       4. Press “C-c C-c” to conclude this capture!
+       2. [[elisp:(my/validate-week)][🧪 Validate the week — dry-run]]
+       3. [[elisp:(my/weekly-review--publish-promise)][📤 Publish to #standups]]
+       4. Press “C-x C-s” then “C-x g” and if that looks good, commit!
+       5. Press “C-c C-c” to conclude this capture!
 ")))
 
     (defun my/weekly-review--insert-weekly-promise ()
