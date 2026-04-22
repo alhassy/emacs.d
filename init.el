@@ -4584,14 +4584,34 @@ without reflecting on the last one."
    (replace-regexp-in-string
     "\\[\\[\\([^]]+\\)\\]\\]" "\\1" s)))
 
+(defun my/standup-from-schedule--date-to-absolute (date)
+  "Convert \"YYYY-MM-DD\" DATE string to an absolute calendar day number."
+  (pcase-let ((`(,y ,m ,d) (mapcar #'string-to-number (split-string date "-"))))
+    (calendar-absolute-from-gregorian (list m d y))))
+
+(defun my/standup-from-schedule--scheduled-on-p (date)
+  "Non-nil iff heading at point is scheduled ON DATE (\"YYYY-MM-DD\").
+Repeater-aware: a stamp like `<2026-04-21 Tue .+1d>' correctly
+matches subsequent days, which `org-get-scheduled-time' alone does
+not — it returns the /base/ timestamp and never advances past a
+repeater.  We instead ask `org-time-string-to-absolute' for the
+next occurrence on-or-after DATE and check equality."
+  (when-let* ((raw (org-entry-get nil "SCHEDULED"))
+              (daynr (my/standup-from-schedule--date-to-absolute date))
+              (occ (ignore-errors
+                     (org-time-string-to-absolute raw daynr 'future))))
+    (equal occ daynr)))
+
 (defun my/standup-from-schedule--collect-items-on (date)
   "Collect org items scheduled for DATE with their effort estimates.
 DATE is a \"YYYY-MM-DD\" string.  Returns a list of (HEADING EFFORT
-PRIVATE-P MARKER) lists, where EFFORT may be nil, PRIVATE-P is
-non-nil for :private: tagged headings, and MARKER points to the
-source heading.  The same filters as today's collector apply:
-DONE items, \"Daily Standup Planning\" itself, and habit-styled
-entries are dropped."
+PRIVATE-P MARKER TAGS) lists, where EFFORT may be nil, PRIVATE-P is
+non-nil for :private: tagged headings, MARKER points to the source
+heading, and TAGS is the heading's tag list (as from `org-get-tags').
+The same filters as today's collector apply: DONE items, \"Daily
+Standup Planning\" itself, and habit-styled entries are dropped.
+Repeaters (e.g. `.+1d') are honoured via
+`my/standup-from-schedule--scheduled-on-p'."
   (let (results)
     (dolist (file (org-agenda-files))
       (with-current-buffer (find-file-noselect file)
@@ -4599,19 +4619,19 @@ entries are dropped."
           (widen)
           (org-map-entries
            (lambda ()
-             (let* ((sched (org-get-scheduled-time nil))
-                    (todo  (org-get-todo-state))
+             (let* ((todo  (org-get-todo-state))
                     (style (org-entry-get nil "STYLE"))
-                    (heading (org-get-heading t t t t)))
-               (when (and sched
-                          (equal date (format-time-string "%Y-%m-%d" sched))
+                    (heading (org-get-heading t t t t))
+                    (tags (org-get-tags)))
+               (when (and (my/standup-from-schedule--scheduled-on-p date)
                           (not (member todo org-done-keywords))
                           (not (string-match-p "Daily Standup Planning" heading))
                           (not (and style (string-equal-ignore-case "habit" style))))
                  (push (list (substring-no-properties heading)
                              (org-entry-get nil "Effort")
-                             (member "private" (org-get-tags))
-                             (point-marker))
+                             (member "private" tags)
+                             (point-marker)
+                             tags)
                        results))))))))
     (nreverse results)))
 
@@ -4654,7 +4674,8 @@ ITEMS is a list of (HEADING EFFORT) pairs."
   "Collect ALL headings scheduled for DATE (no filtering).
 DATE is a \"YYYY-MM-DD\" string.  Returns a list of plain heading
 strings — used for sanity checks that need to see habits, standup
-planning, etc."
+planning, etc.  Repeaters are honoured via
+`my/standup-from-schedule--scheduled-on-p'."
   (let (results)
     (dolist (file (org-agenda-files))
       (with-current-buffer (find-file-noselect file)
@@ -4662,8 +4683,7 @@ planning, etc."
           (widen)
           (org-map-entries
            (lambda ()
-             (when-let* ((sched (org-get-scheduled-time nil))
-                         (_ (equal date (format-time-string "%Y-%m-%d" sched))))
+             (when (my/standup-from-schedule--scheduled-on-p date)
                (push (substring-no-properties (org-get-heading t t t t))
                      results)))))))
     (nreverse results)))
@@ -4673,44 +4693,91 @@ planning, etc."
 Thin wrapper around `my/standup-from-schedule--all-headings-on'."
   (my/standup-from-schedule--all-headings-on (format-time-string "%Y-%m-%d")))
 
-(defun my/standup-from-schedule--sanity-checks (all-headings all-items public-items)
+(defun my/standup-from-schedule--show-scoped-agenda (scope-tags title)
+  "Drop the user in an `org-ql-search' buffer of today's SCOPE-TAGS items.
+TITLE becomes the buffer's header — a terse diagnostic of /why/
+we bounced them here.  From that buffer the usual agenda bindings
+work: `C-c C-s' reschedules, `C-c C-x e' edits effort, `q' kills
+the buffer.  Fix your schedule in place, then rerun
+`my/standup-from-schedule'."
+  (require 'org-ql-search)
+  (org-ql-search (org-agenda-files)
+    `(and (scheduled :on today)
+          (tags ,@scope-tags)
+          (not (done)))
+    :title title
+    :sort '(scheduled priority)))
+
+(defun my/standup-from-schedule--sanity-checks
+    (all-headings all-items public-items &optional scope-tags)
   "Run sanity checks against the day's schedule.
 ALL-HEADINGS is the unfiltered list from `--all-today-headings'.
-ALL-ITEMS is the full (HEADING EFFORT PRIVATE-P MARKER) list.
+ALL-ITEMS is the full (HEADING EFFORT PRIVATE-P MARKER TAGS) list.
 PUBLIC-ITEMS is the non-private subset (what the team sees).
+
+SCOPE-TAGS narrows the count-based reprimands — effort-estimate
+required, max items, total-effort cap, deep-work floor — to items
+whose tag list intersects SCOPE-TAGS.  Defaults to '(\"Work\"), so
+personal rituals (prayer, breakfast with the kids, family dinner)
+no longer inflate the counts against which we gauge work
+commitment.  Day-wide checks (standup planning, lunch & prayer,
+reviews) still scan ALL-HEADINGS unchanged.
 
 Every failed check fires `user-error' immediately.  If all
 checks pass, returns a plist with:
   :missing-reviews-p — non-nil when no reviews are scheduled
-  :deep-str          — effort H:MM string for public items
-  :total-str         — effort H:MM string for all items"
-  ;; 1. Every item must have an effort estimate.
-  (when-let* ((offender (cl-find-if (lambda (it) (not (cadr it))) all-items)))
-    (let ((marker (nth 3 offender)))
-      (when marker
-        (switch-to-buffer (marker-buffer marker))
-        (goto-char marker)
-        (org-reveal)))
-    (user-error "Add an effort estimate to \"%s\" then try again" (car offender)))
-  ;; 2. No more than 5 public items.
-  (when (> (length public-items) 5)
-    (user-error "%d standup items -- trim to 5 or fewer so you can actually honour your commitments"
-                (length public-items)))
-  ;; Effort totals (safe now — every item has effort).
-  (let* ((deep-mins (my/standup-from-schedule--effort-total-mins public-items))
-         (total-mins (my/standup-from-schedule--effort-total-mins all-items))
-         (deep-str (my/standup-from-schedule--effort-total public-items))
-         (total-str (my/standup-from-schedule--effort-total all-items)))
-    ;; 3. Total effort must not exceed 8 hours.
-    (when (and total-mins (> total-mins 480))
-      (user-error "You have %s total effort scheduled today -- reconsider your life!" total-str))
-    ;; 4. Deep work must be at least 4 hours.
-    (when (and deep-mins (< deep-mins 240))
-      (user-error
-       (concat "Only %s of deep work today? Are you burned out? Sick?\n"
-               "If so, surface that in the standup so the team knows.\n"
-               "Otherwise, maybe you underestimated effort or have too many appointments")
-       deep-str))
+  :deep-str          — effort H:MM string for scoped items
+  :total-str         — effort H:MM string for scoped items
+  :scoped-items      — the public items matching SCOPE-TAGS.
+                       The caller should render these (and only
+                       these) as the published standup — items
+                       off-scope, e.g. :Personal: rituals, are
+                       Musa's concern, not his team's."
+  (let* ((scope-tags (or scope-tags '("Work")))
+         (in-scope-p (lambda (it)
+                       (cl-intersection (nth 4 it) scope-tags :test #'string=)))
+         (scoped-items (cl-remove-if-not in-scope-p public-items)))
+    ;; 1. Every scoped item must have an effort estimate.
+    (when-let* ((offender (cl-find-if (lambda (it) (not (cadr it))) scoped-items)))
+      (let ((marker (nth 3 offender)))
+        (when marker
+          (switch-to-buffer (marker-buffer marker))
+          (goto-char marker)
+          (org-reveal)))
+      (user-error "Add an effort estimate to \"%s\" then try again" (car offender)))
+    ;; 2. No more than 5 scoped items.
+    (when (> (length scoped-items) 5)
+      (let ((n (length scoped-items))
+            (scope-str (string-join scope-tags "/")))
+        (my/standup-from-schedule--show-scoped-agenda
+         scope-tags
+         (format "%d %s items — trim to 5 or fewer (C-c C-s to reschedule)" n scope-str))
+        (user-error "%d %s items — trim to 5 or fewer, then rerun" n scope-str)))
+    ;; Effort totals over scoped items (safe now — every scoped item has effort).
+    (let* ((deep-mins (my/standup-from-schedule--effort-total-mins scoped-items))
+           (total-mins deep-mins)
+           (deep-str (my/standup-from-schedule--effort-total scoped-items))
+           (total-str deep-str)
+           (scope-str (string-join scope-tags "/")))
+      ;; 3. Total effort must not exceed 8 hours.
+      (when (and total-mins (> total-mins 480))
+        (my/standup-from-schedule--show-scoped-agenda
+         scope-tags
+         (format "%s of %s effort — cap is 8:00 (C-c C-s to reschedule, C-c C-x e to trim effort)"
+                 total-str scope-str))
+        (user-error "%s of %s effort scheduled today — reconsider your life, then rerun"
+                    total-str scope-str))
+      ;; 4. Deep work must be at least 4 hours.
+      (when (and deep-mins (< deep-mins 240))
+        (my/standup-from-schedule--show-scoped-agenda
+         scope-tags
+         (format "Only %s of %s deep work — floor is 4:00 (add tasks or raise effort)"
+                 deep-str scope-str))
+        (user-error
+         (concat "Only %s of deep work today — burned out? Sick?\n"
+                 "If so, surface that in the standup so the team knows.\n"
+                 "Otherwise, maybe you underestimated effort or have too many appointments")
+         deep-str))
     ;; 5. Is standup planning scheduled?
     (unless (cl-some (lambda (h) (string-match-p "Daily Standup Planning" h))
                      all-headings)
@@ -4724,70 +4791,104 @@ checks pass, returns a plist with:
     (unless (cl-some (lambda (h) (string-match-p "Lunch.*Prayer\\|Prayer.*Lunch" h))
                      all-headings)
       (user-error "No Lunch & Prayer scheduled today! You are a human, not a machine."))
-    ;; 7. Any code reviews scheduled?
+    ;; 7. Any code reviews scheduled?  No dialog, no halt — just
+    ;;    surface the flag; the render site appends an @everyone offer
+    ;;    to the standup body automatically (see the `:missing-reviews-p'
+    ;;    branch in `my/standup-from-schedule').
     (let ((missing-reviews-p
            (not (cl-some (lambda (item)
                            (string-match-p "review.*latest" (downcase (car item))))
                          public-items))))
-      (when missing-reviews-p
-        (unless (y-or-n-p "No reviews scheduled. Append \"@everyone I can do reviews\" to standup? ")
-          (when-let* ((buf (cl-find-if
-                            (lambda (b) (string-match-p "\\*Org Agenda" (buffer-name b)))
-                            (buffer-list))))
-            (switch-to-buffer buf)
-            (goto-char (point-max)))
-          (user-error "Schedule reviews for today (check the bottom of the agenda) then try again")))
       (list :missing-reviews-p missing-reviews-p
             :deep-str deep-str
-            :total-str total-str))))
+            :total-str total-str
+            :scoped-items scoped-items)))))
 
 (defun my/standup-from-schedule--gcal-events-range (start-date end-date)
   "Fetch Google Calendar events between START-DATE and END-DATE via gcalcli.
 START-DATE and END-DATE are \"YYYY-MM-DD\" strings.  END-DATE is
 exclusive, mirroring gcalcli's `agenda' convention.  Returns a
-list of (DATE TITLE START-TIME END-TIME) quadruples in calendar
-order, where START-TIME and END-TIME may be nil for all-day
-events.  Requires `my\\gcalcli-calendar' (set in private.el)
-and the `gcalcli' executable; returns nil if either is missing."
-  (when (and (boundp 'my\gcalcli-calendar)
-             (executable-find "gcalcli"))
-    (let ((lines (split-string
-                  (shell-command-to-string
-                   (format "gcalcli --calendar %s agenda %s %s --tsv"
-                           (shell-quote-argument my\gcalcli-calendar)
-                           (shell-quote-argument start-date)
-                           (shell-quote-argument end-date)))
-                  "\n" t))
+list of event plists in calendar order, each with:
+
+  :date  :title  :start  :end  :location  :description
+  :conference  :url  :attendees
+
+Time strings (`:start', `:end') may be nil for all-day events.
+We ask gcalcli for `--details all', since an actionable dialog
+downstream wants the conference/zoom link, location, and the
+description — not just a title.
+
+Requires `my\\gcalcli-calendar' (set in private.el) and the
+`gcalcli' executable — signals `user-error' if either is missing,
+or if gcalcli exits non-zero (e.g. expired OAuth token).  A silent
+nil would defeat the whole point of the cross-check: a broken
+gcalcli is otherwise indistinguishable from an empty calendar,
+and the checker would cheerfully skip events the user hasn't
+scheduled in Org."
+  (unless (boundp 'my\gcalcli-calendar)
+    (user-error (concat "`my\\gcalcli-calendar' is unbound — "
+                        "set it in private.el so the gcal crosscheck can run.  "
+                        "Silent nil would hide real calendar events from the sanity checker.")))
+  (unless (executable-find "gcalcli")
+    (user-error "`gcalcli' executable not found on PATH — install it (brew install gcalcli)"))
+  (let* ((stdout-buf (generate-new-buffer " *gcalcli-stdout*"))
+         (stderr-file (make-temp-file "gcalcli-stderr-"))
+         (exit (unwind-protect
+                   (call-process "gcalcli" nil
+                                 (list stdout-buf stderr-file) nil
+                                 "--calendar" my\gcalcli-calendar
+                                 "agenda" start-date end-date
+                                 "--tsv" "--details" "all")
+                 nil))
+         (stdout (with-current-buffer stdout-buf (buffer-string)))
+         (stderr (with-temp-buffer (insert-file-contents stderr-file) (buffer-string))))
+    (kill-buffer stdout-buf)
+    (delete-file stderr-file)
+    (unless (and (integerp exit) (zerop exit))
+      (user-error
+       "gcalcli failed (exit %S) — re-auth with `gcalcli init' then try again.\nstderr: %s"
+       exit
+       (let ((trimmed (string-trim stderr)))
+         (if (> (length trimmed) 240)
+             (concat (substring trimmed (- (length trimmed) 240)))
+           trimmed))))
+    ;; With `--details all' the TSV columns are:
+    ;;   0 id   1 start_date   2 start_time   3 end_date   4 end_time
+    ;;   5 html_link   6 hangout_link   7 conference_entry_point_type
+    ;;   8 conference_uri   9 title   10 location   11 description
+    ;;   12 calendar   13 email   14 action
+    ;; Column layout is documented as a header row, which we skip.
+    (let ((lines (split-string stdout "\n" t))
+          (nilify (lambda (s) (if (or (null s) (string-empty-p s)) nil s)))
           results)
-      ;; Skip the TSV header line.
       (dolist (line (cdr lines))
         (let ((fields (split-string line "\t")))
-          (when (>= (length fields) 5)
-            (let ((date       (nth 0 fields))
-                  (start-time (nth 1 fields))
-                  (end-time   (nth 3 fields))
-                  (title      (nth 4 fields)))
-              (push (list date
-                          title
-                          (if (string-empty-p start-time) nil start-time)
-                          (if (string-empty-p end-time)   nil end-time))
-                    results)))))
+          (when (>= (length fields) 10)
+            (push (list :date        (nth 1 fields)
+                        :start       (funcall nilify (nth 2 fields))
+                        :end         (funcall nilify (nth 4 fields))
+                        :url         (funcall nilify (nth 5 fields))
+                        :conference  (funcall nilify (or (nth 8 fields) (nth 6 fields)))
+                        :title       (nth 9 fields)
+                        :location    (funcall nilify (nth 10 fields))
+                        :description (funcall nilify (nth 11 fields))
+                        ;; gcalcli's TSV doesn't expose an attendee list field
+                        ;; directly; attendees usually land inside :description
+                        ;; as a free-form line, so we leave this nil for now.
+                        :attendees   nil)
+                  results))))
       (nreverse results))))
 
 (defun my/standup-from-schedule--gcal-events ()
   "Fetch today's Google Calendar events via gcalcli.
-Returns a list of (TITLE START-TIME END-TIME) triples.  All-day
-events have nil for START-TIME and END-TIME.  Thin wrapper around
-`my/standup-from-schedule--gcal-events-range' that filters down
-to today and drops the DATE field."
+Returns a list of event plists (see `--gcal-events-range' for
+shape), filtered to today."
   (let* ((today    (format-time-string "%Y-%m-%d"))
          (tomorrow (format-time-string
                     "%Y-%m-%d"
                     (time-add (current-time) (* 24 60 60)))))
-    (cl-loop for (date title start end) in
-             (my/standup-from-schedule--gcal-events-range today tomorrow)
-             when (equal date today)
-             collect (list title start end))))
+    (cl-remove-if-not (lambda (ev) (equal (plist-get ev :date) today))
+                      (my/standup-from-schedule--gcal-events-range today tomorrow))))
 
 (defun my/standup-from-schedule--gcal-crosscheck (org-items)
   "Cross-check Google Calendar events against ORG-ITEMS.
@@ -4800,15 +4901,121 @@ that Org doesn't know about."
                                org-items))
          missing)
     (dolist (event gcal-events)
-      (let ((title (car event)))
+      (let ((title (plist-get event :title)))
         ;; Skip generic/noisy calendar entries.
-        (unless (or (string-match-p "\\`\\(?:Busy\\|Home\\)\\'" title)
+        (unless (or (null title)
+                    (string-match-p "\\`\\(?:Busy\\|Home\\|Office\\|OOO\\|OOO.*\\|.* OOO.*\\)\\'" title)
                     (cl-some (lambda (h)
                                (or (string-match-p (regexp-quote (downcase title)) h)
                                    (string-match-p (regexp-quote h) (downcase title))))
                              org-headings))
           (push event missing))))
     (nreverse missing)))
+
+(defun my/standup-from-schedule--effort-from-times (start end)
+  "Return an \"H:MM\" effort string spanning START to END (\"HH:MM\" each).
+nil on bad input — all-day events have no duration, and we prefer
+a nil default to a fabricated 0:00 that'd silently pass the
+effort-required check."
+  (when (and start end)
+    (ignore-errors
+      (pcase-let* ((`(,h1 ,m1) (mapcar #'string-to-number (split-string start ":")))
+                   (`(,h2 ,m2) (mapcar #'string-to-number (split-string end   ":")))
+                   (mins (- (+ (* h2 60) m2) (+ (* h1 60) m1))))
+        (when (> mins 0)
+          (format "%d:%02d" (/ mins 60) (% mins 60)))))))
+
+(defun my/standup-from-schedule--capture-event (event)
+  "File one gcal EVENT plist into Musa's Org Inbox as a scheduled TODO.
+The point of `my/standup-from-schedule's cross-check is to surface
+events Org doesn't know about; the follow-through is capturing them
+with /enough context to act/: today's schedule, a duration-derived
+Effort, conference link and location, and the full description.
+
+Uses the same Inbox target as the `C-c c' capture template so
+captured items land where the rest of Musa's inbox lives.
+Idempotent per-call (the same event captured twice just becomes
+two inbox entries — the user triages; we don't dedupe)."
+  (let* ((title       (plist-get event :title))
+         (date        (plist-get event :date))
+         (start       (plist-get event :start))
+         (end         (plist-get event :end))
+         (location    (plist-get event :location))
+         (description (plist-get event :description))
+         (conference  (plist-get event :conference))
+         (url         (plist-get event :url))
+         (effort      (my/standup-from-schedule--effort-from-times start end))
+         ;; Org scheduled timestamp: "<YYYY-MM-DD Day HH:MM>" with time if known.
+         (day-name    (when date
+                        (format-time-string
+                         "%a"
+                         (date-to-time (concat date "T00:00:00")))))
+         (sched-stamp (cond
+                       ((and date start) (format "<%s %s %s>" date day-name start))
+                       (date             (format "<%s %s>" date day-name))
+                       (t                nil)))
+         (body (with-temp-buffer
+                 (insert (format "* TODO %s :inbox:\n" (or title "(untitled calendar event)")))
+                 (when sched-stamp
+                   (insert (format "SCHEDULED: %s\n" sched-stamp)))
+                 (insert ":PROPERTIES:\n")
+                 (insert (format ":CREATED: %s\n"
+                                 (format-time-string "[%Y-%m-%d %a %H:%M]")))
+                 (when effort
+                   (insert (format ":Effort: %s\n" effort)))
+                 (when location
+                   (insert (format ":LOCATION: %s\n" location)))
+                 (when (or conference url)
+                   (insert (format ":LINK: %s\n" (or conference url))))
+                 (insert ":END:\n")
+                 (when description
+                   (insert "\n" description "\n"))
+                 (buffer-string))))
+    ;; `org-capture-string' with an inline template handles the refile plumbing
+    ;; for us without disturbing the live org-capture-templates config.
+    (let ((org-capture-templates
+           `(("X" "Gcal missing event" entry
+              (file+headline ,org-default-notes-file ,(concat "Inbox 📩 \t\t\t:inbox:"))
+              ,body
+              :immediate-finish t))))
+      (org-capture-string body "X"))))
+
+(defun my/standup-from-schedule--capture-events (events)
+  "Capture every EVENT plist in EVENTS into the Org Inbox.
+Saves the notes file once at the end so we're not paying fsync
+cost per event.  Returns the number captured."
+  (let ((n 0))
+    (dolist (event events)
+      (my/standup-from-schedule--capture-event event)
+      (cl-incf n))
+    (with-current-buffer (find-file-noselect org-default-notes-file)
+      (save-buffer))
+    n))
+
+(defun my/standup-from-schedule--goto-inbox ()
+  "Drop the point on the Inbox 📩 heading in `org-default-notes-file'.
+Called after auto-capturing gcal events so the freshly inboxed
+TODOs are directly in view — no dialog, no hunting."
+  (let ((buf (find-file-noselect org-default-notes-file)))
+    (pop-to-buffer buf)
+    (with-current-buffer buf
+      (widen)
+      (goto-char (point-min))
+      (when (re-search-forward "^\\* Inbox 📩" nil t)
+        (beginning-of-line)
+        (org-show-entry)
+        (org-show-children)
+        (recenter 0)))))
+
+(defun my/standup-from-schedule--gcal-summary-line (ev)
+  "One-line textual summary of gcal event plist EV for `message'."
+  (let ((title (plist-get ev :title))
+        (start (plist-get ev :start))
+        (end   (plist-get ev :end)))
+    (cond
+     ((and start end) (format "• %s  (%s–%s)" title start end))
+     (start           (format "• %s  (%s)" title start))
+     (t               (format "• %s  (all-day)" title)))))
 
 ;; ═══════════════════════════════════════════════════════════════════════
 ;; Weekly Promise Validator — `my/validate-week'
@@ -4970,18 +5177,19 @@ missing events are omitted from the returned alist."
                (headings     (mapcar (lambda (it) (downcase (car it)))
                                      public-items))
                (day-events   (cl-remove-if-not
-                              (lambda (ev) (equal (car ev) date))
+                              (lambda (ev) (equal (plist-get ev :date) date))
                               events))
                missing)
           (dolist (ev day-events)
-            (let ((title (cadr ev)))
-              (unless (or (string-match-p "\\`\\(?:Busy\\|Home\\)\\'" title)
+            (let ((title (plist-get ev :title)))
+              (unless (or (null title)
+                          (string-match-p "\\`\\(?:Busy\\|Home\\|Office\\|OOO\\|OOO.*\\|.* OOO.*\\)\\'" title)
                           (cl-some
                            (lambda (h)
                              (or (string-match-p (regexp-quote (downcase title)) h)
                                  (string-match-p (regexp-quote h) (downcase title))))
                            headings))
-                (push (list title (nth 2 ev) (nth 3 ev)) missing))))
+                (push ev missing))))
           (when missing
             (push (cons (list date day-name) (nreverse missing)) results))))
       (nreverse results))))
@@ -5006,8 +5214,8 @@ MISSING-BY-DAY is nil."
                  (events   (cdr entry)))
             (insert (format "* %s %s\n" day-name date))
             (dolist (ev events)
-              (let ((title (nth 0 ev))
-                    (start (nth 1 ev)))
+              (let ((title (plist-get ev :title))
+                    (start (plist-get ev :start)))
                 (insert (if start
                             (format "  - %s %s\n" start title)
                           (format "  - (all-day) %s\n" title)))
@@ -5125,27 +5333,34 @@ published standup but counted toward total effort.
 All sanity checks live in `--sanity-checks': hard halts
 (missing effort, too many items, overcommitted, too little
 deep work) and soft warnings (missing standup planning, lunch,
-reviews).  Cross-checks Google Calendar for public events not
-reflected in org-agenda."
+reviews).  The count-based caps are scoped to :Work: by default
+— personal rituals (prayer, breakfast with the kids, family
+dinner) no longer inflate the totals against which we gauge
+work commitment, and only :Work:-scoped items reach the
+published standup.  Cross-checks Google Calendar for public
+events not reflected in org-agenda."
   (interactive)
   (let* ((all-items (my/standup-from-schedule--collect-items))
          (public-items (cl-remove-if #'caddr all-items))
          (all-headings (my/standup-from-schedule--all-today-headings))
          ;; Hard halts fire user-error inside --sanity-checks;
          ;; if we reach the next line, the schedule is sane.
-         (checks (my/standup-from-schedule--sanity-checks all-headings all-items public-items)))
+         (checks (my/standup-from-schedule--sanity-checks all-headings all-items public-items))
+         ;; Only :Work:-tagged items (the checker's scope) are shared
+         ;; with the team — :Personal: rituals are Musa's concern.
+         (scoped-items (plist-get checks :scoped-items)))
     (let* ((deep-str (plist-get checks :deep-str))
            (total-str (plist-get checks :total-str))
            (today-title (format-time-string "<%Y-%m-%d %a>"))
            (standup-body
             (with-temp-buffer
-              (if public-items
-                  (my/standup-from-schedule--insert-items public-items)
+              (if scoped-items
+                  (my/standup-from-schedule--insert-items scoped-items)
                 (insert "(No items scheduled for today.)\n"))
               ;; When no reviews are scheduled, append a review offer.
               (when (plist-get checks :missing-reviews-p)
                 (insert (format "%d. @everyone, I'm happy to do reviews today, send to me\n"
-                                (1+ (length public-items)))))
+                                (1+ (length scoped-items)))))
               (buffer-string))))
       (save-excursion
         (find-file org-default-notes-file)
@@ -5169,27 +5384,47 @@ reflected in org-agenda."
       ;; Copy the standup body to clipboard as Slack mrkdwn.
       (my/copy-as-slack standup-body)
       ;; Summary.
-      (let ((count (length public-items)))
+      (let ((count (length scoped-items)))
         (message "Standup: %s scheduled for today. [%s deep work; %s total]"
                  (propertize (format "%d item%s" count (if (= count 1) "" "s"))
                              'face 'bold)
                  (propertize (or deep-str "0:00") 'face '(:foreground "green"))
                  (propertize (or total-str "0:00") 'face 'bold)))
-      ;; Cross-check: warn about gcal events missing from org-agenda.
-      (let ((missing (my/standup-from-schedule--gcal-crosscheck public-items)))
+      ;; Cross-check: reconcile today's gcal events against org-agenda.
+      ;; We pass ALL public items (not just Work-scoped) because a
+      ;; gcal event might legitimately map to a :Personal: task —
+      ;; e.g. a dentist appointment — and we don't want the checker
+      ;; screaming about it.
+      ;;
+      ;; Sanity checks must be *actionable* — and where the fix is
+      ;; mechanical, we skip the dialog entirely.  Missing events get
+      ;; auto-captured into the Inbox 📩 as scheduled TODOs (effort
+      ;; from duration, description and conference link preserved),
+      ;; then we jump the view to the Inbox so the freshly captured
+      ;; items are directly visible.  For situational awareness we
+      ;; also `message' the full calendar listing — so the user can
+      ;; see at a glance which events were already in Org and which
+      ;; just got inboxed.
+      (let* ((all-gcal  (my/standup-from-schedule--gcal-events))
+             (missing   (my/standup-from-schedule--gcal-crosscheck public-items))
+             (missing-titles (mapcar (lambda (ev) (plist-get ev :title)) missing)))
+        (when all-gcal
+          (message
+           "Today's calendar:\n%s%s"
+           (mapconcat
+            (lambda (ev)
+              (let* ((title (plist-get ev :title))
+                     (missing-p (member title missing-titles))
+                     (line (my/standup-from-schedule--gcal-summary-line ev)))
+                (if missing-p (concat line "  ← inboxed") line)))
+            all-gcal "\n")
+           (if missing
+               (format "\n\nCaptured %d missing event%s into Inbox 📩."
+                       (length missing) (if (= (length missing) 1) "" "s"))
+             "")))
         (when missing
-          (non-blocking-message-box
-           :title "Unrecognized Calendar Events"
-           :content (format "These public events have no matching org task:\n\n%s\n\nSchedule them with C-c C-s!"
-                            (mapconcat
-                             (lambda (ev)
-                               (let ((title (car ev))
-                                     (time  (cadr ev)))
-                                 (if time
-                                     (format "- %s (%s)" title time)
-                                   (format "- %s" title))))
-                             missing "\n"))
-           :buttons '(:OK nil)))))))
+          (my/standup-from-schedule--capture-events missing)
+          (my/standup-from-schedule--goto-inbox))))))
 ;; Standup from schedule:1 ends here
 
 ;; [[file:init.org::*Colleague Meeting Shortcuts][Colleague Meeting Shortcuts:1]]
