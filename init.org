@@ -2876,7 +2876,7 @@ Is replaced by:
     (let* ((name (intern (concat "my/hydra/"
                                  (if (stringp title)
                                      title
-                                   (plist-get title :title)))))
+                                   (:title title)))))
            (icon-face `(:foreground ,(face-background 'highlight)))
            (iconised-title
             (concat
@@ -6192,7 +6192,7 @@ If a prefix is provided, i.e., “C-u C-h o” then the built-in
                         (format "Describe symbol (default %s): " default)
                       "Describe symbol: "))
          (pred      (lambda (sym)  ; SYM is a symbol when COLLECTION is an obarray
-                      (cl-some (lambda (x) (funcall (cadr x) sym))
+                      (cl-some (lambda (x) (funcall (1 x) sym))
                                describe-symbol-backends)))
          (name      (completing-read prompt
                                      obarray         ; ← use obarray directly
@@ -7482,10 +7482,10 @@ In particular:  (my/defaliases OLD NEW) ≈ (defalias 'NEW 'OLD)."
                            "r         ∷  Restart service           \t\t\t w  ∷  See the repo in the web"
                            "f         ∷  Find file in project      \t\t\t t  ∷ Terminal"
                            "g         ∷  Refresh this view         \t\t\t q  ∷  Quit, and kill, this buffer"))]
-       (insert-text-button (s-replace "\"" "″" (s-replace "run" "✅" (nth 1 it)))
+       (insert-text-button (s-replace "\"" "″" (s-replace "run" "✅" (1 it)))
                            'face nil
                            ;; 'mouse-face '(:box t) ;; I use the cursor more than the mouse, so don't want two distinct views.
-                           'keymap (nth 0 it)
+                           'keymap (0 it)
                            ;; NOTE: The functions are called only when the minor mode cursor-sensor-mode is turned on.
                            ;; When cursor enters the button, we temporarily make it a box and show shortcuts in message area.
                            'cursor-sensor-functions `((lambda (_ old-pos entered?)
@@ -8726,7 +8726,7 @@ MULTIPLE-LOGGER-P - should guess list of available loggers?"
            ;; HACK this is my change: Does the TurboLog prefix have a %c console styling marker? If so, use it.
            (if (s-contains? "%c" meta-info) "'color: green; font-weight: bold;', " "")
            normalized-code ")"
-           (if (plist-get turbo-log--ecmascript-configs :include-semicolon) ";"))))
+           (if (:include-semicolon turbo-log--ecmascript-configs) ";"))))
 
     (if is-empty-body
         (progn
@@ -11596,22 +11596,22 @@ Pass 2: match colleague names for reviews-needed items without Jira."
            (dolist (it jira-items)
              (goto-char (point-min))
              (let ((re (concat "^\\*+ .*"
-                               (regexp-quote (work-item-jira it)))))
+                               (regexp-quote (:jira it)))))
                (if (re-search-forward re nil t)
                    (progn
                      (org-back-to-heading t)
-                     (setf (work-item-org-tree it) (point-marker))
+                     (setf (:org-tree it) (point-marker))
                      (cl-incf resolved))
                  (message "work-item--resolve: no heading found for %s"
-                          (work-item-jira it)))))))))
+                          (:jira it)))))))))
     ;; Pass 2: colleague Org-ID lookup for reviews-needed sans Jira
     (when (boundp 'my\colleagues)
       (dolist (it items)
-        (when (and (eq (work-item-status it) 'reviews-needed)
-                   (not (work-item-org-tree it))
-                   (work-item-author it))
+        (when (and (eq (:status it) 'reviews-needed)
+                   (not (:org-tree it))
+                   (:author it))
           (let* ((first-name (downcase (car (split-string
-                                             (work-item-author it)))))
+                                             (:author it)))))
                  (match (cl-find-if
                          (lambda (c)
                            (string-prefix-p first-name
@@ -11619,7 +11619,7 @@ Pass 2: match colleague names for reviews-needed items without Jira."
                          my\colleagues)))
             (when match
               (when-let ((loc (org-id-find (symbol-name match) 'marker)))
-                (setf (work-item-org-tree it) loc)
+                (setf (:org-tree it) loc)
                 (cl-incf resolved)))))))
     (message "work-item--resolve: %d/%d items linked to Org headings"
              resolved (length items))))
@@ -11729,10 +11729,10 @@ Example (given a change that depends on 111 and is needed by 222):
      (neededBy  . [((number . 222))])))
   → (222 111)"
   (let (nums)
-    (dolist (dep (append (alist-get 'dependsOn change) nil))
-      (push (alist-get 'number dep) nums))
-    (dolist (nb (append (alist-get 'neededBy change) nil))
-      (push (alist-get 'number nb) nums))
+    (dolist (dep (append ('dependsOn change) nil))
+      (push ('number dep) nums))
+    (dolist (nb (append ('neededBy change) nil))
+      (push ('number nb) nums))
     (-uniq nums)))
 
 (cl-defun my/gerrit--build-full-edge-map (changes)
@@ -11753,7 +11753,7 @@ changes appear in EDGES but not in PRESENT."
          (edges   (make-hash-table :test 'eql))
          (visited (make-hash-table :test 'eql)))
     (dolist (c changes)
-      (let ((n (alist-get 'number c)))
+      (let ((n ('number c)))
         (puthash n t present)
         (puthash n t visited)
         (puthash n (my/gerrit--collect-neighbor-numbers c) edges)))
@@ -11775,7 +11775,7 @@ changes appear in EDGES but not in PRESENT."
                                 frontier))
                   '("--dependencies"))))
             (dolist (c intermediates)
-              (let ((n (alist-get 'number c)))
+              (let ((n ('number c)))
                 (puthash n t visited)
                 (puthash n (my/gerrit--collect-neighbor-numbers c)
                          edges))))))
@@ -11801,8 +11801,8 @@ Example (conceptual):
              (my/gerrit--build-full-edge-map changes))
             (parent (make-hash-table :test 'eql)))
       (dolist (c changes)
-        (puthash (alist-get 'number c)
-                 (alist-get 'number c) parent))
+        (puthash ('number c)
+                 ('number c) parent))
       (cl-labels
           ((find (x)
              (let ((p (gethash x parent x)))
@@ -11813,7 +11813,7 @@ Example (conceptual):
              (let ((ra (find a)) (rb (find b)))
                (unless (eql ra rb) (puthash ra rb parent)))))
         (dolist (c changes)
-          (let* ((start (alist-get 'number c))
+          (let* ((start ('number c))
                  (queue (list start))
                  (seen (make-hash-table :test 'eql)))
             (puthash start t seen)
@@ -11829,7 +11829,7 @@ Example (conceptual):
                       (push nb queue))))))))
         (let ((groups (make-hash-table :test 'eql)))
           (dolist (c changes)
-            (let* ((n (alist-get 'number c))
+            (let* ((n ('number c))
                    (root (find n)))
               (puthash root
                        (cons c (gethash root groups))
@@ -11842,9 +11842,8 @@ Example (conceptual):
              groups)
             (sort stacks
                   (lambda (a b)
-                    (> (alist-get 'number (-last-item a))
-                       (alist-get 'number
-                                  (-last-item b)))))))))))
+                    (> (-1 'number a)
+                       (-1 'number b))))))))))
 
 (cl-defun my/gerrit--topo-sort-stack (changes &rest _ignored)
   "Sort CHANGES base-first by ascending change number.
@@ -11854,7 +11853,7 @@ the agenda renders the chain from bottom to top — matching the
 order you would cherry-pick or submit them."
   (sort (copy-sequence changes)
         (lambda (a b)
-          (< (alist-get 'number a) (alist-get 'number b)))))
+          (< ('number a) ('number b)))))
 #+end_src
 
 *** Jira helpers
@@ -11873,7 +11872,7 @@ ticket being worked towards, and earlier ones are related context.
 Returns a single-element list (for API compatibility with callers
 that expect a list), or nil if no ticket matches."
   (when my\jira-ticket-regex
-    (let ((msg (or (alist-get 'commitMessage change) "")))
+    (let ((msg (or ('commitMessage change) "")))
       (-when-let (matches (->> (s-match-strings-all my\jira-ticket-regex msg)
                                (-map #'cadr)))
         (last matches)))))
@@ -11900,7 +11899,7 @@ Example:
       (or (-reduce-from
            (lambda (acc tix) (-intersection acc tix))
            (car all) (cdr all))
-          (car (last all))))))
+          (-1 all)))))
 
 (cl-defun my/gerrit--format-jira-link (ticket)
   "Format TICKET as an Org-style bracketed link using `my\\jira-base-url'.
@@ -11947,10 +11946,9 @@ for each successfully fetched ticket."
                       (call-process "curl" nil t nil "-sn" url))))
              (json-obj (ignore-errors (json-read-from-string raw))))
         (when json-obj
-          (dolist (issue (append (alist-get 'issues json-obj) nil))
-            (let ((key (alist-get 'key issue))
-                  (summary (alist-get 'summary
-                                      (alist-get 'fields issue))))
+          (dolist (issue (append ('issues json-obj) nil))
+            (let ((key ('key issue))
+                  (summary ('fields 'summary issue)))
               (when (and key summary)
                 (puthash key summary
                          my/gerrit--jira-title-cache)))))))))
@@ -11986,7 +11984,7 @@ Example:
                   (call-process "curl" nil t nil "-sn" url))))
          (json-obj (ignore-errors (json-read-from-string raw))))
     (when json-obj
-      (append (alist-get 'issues json-obj) nil))))
+      (append ('issues json-obj) nil))))
 
 (cl-defun my/jira-post-comment (ticket comment)
   "Post COMMENT string as a comment on Jira TICKET via REST API.
@@ -12003,7 +12001,7 @@ comment ID string on success, nil on failure."
                                 "-H" "Content-Type: application/json"
                                 "-d" payload url))))
          (json-obj (ignore-errors (json-read-from-string raw))))
-    (and json-obj (alist-get 'id json-obj))))
+    (and json-obj ('id json-obj))))
 #+end_src
 
 *** Conversion: raw alists → =work-item= instances
@@ -12048,9 +12046,9 @@ Example:
 Based on total lines changed (insertions + deletions):
   XS (≤10) → 1, S (≤50) → 2, M (≤250) → 3, L (≤1000) → 4, XL → 5.
 Returns nil when size data is absent."
-  (let* ((ps  (alist-get 'currentPatchSet change))
-         (ins (alist-get 'sizeInsertions ps))
-         (del (alist-get 'sizeDeletions ps)))
+  (let* ((ps  ('currentPatchSet change))
+         (ins ('sizeInsertions ps))
+         (del ('sizeDeletions ps)))
     (when (and ins del)
       (let ((total (+ ins del)))
         (cond ((<= total 10)   1)
@@ -12076,38 +12074,36 @@ Returns nil when no change has size data."
   "Derive CI status from the Verified approval on CHANGE.
 Returns `pass' if the latest Verified vote is positive, `fail' if
 negative, or nil if no Verified vote exists."
-  (let* ((approvals (append (alist-get 'approvals
-                                       (alist-get 'currentPatchSet change))
+  (let* ((approvals (append ('currentPatchSet 'approvals change)
                             nil))
          (verified (-first (lambda (a)
-                             (equal "Verified" (alist-get 'type a)))
+                             (equal "Verified" ('type a)))
                            approvals)))
     (when verified
-      (let ((val (string-to-number (or (alist-get 'value verified) "0"))))
+      (let ((val (string-to-number (or ('value verified) "0"))))
         (if (< val 0) 'fail 'pass)))))
 
 (defun work-item--has-code-review (change owner-username)
   "Return non-nil if CHANGE has a positive Code-Review from a non-owner.
 OWNER-USERNAME is the change owner's Gerrit username, excluded from
 the check (self-approvals don't count)."
-  (let ((approvals (append (alist-get 'approvals
-                                      (alist-get 'currentPatchSet change))
+  (let ((approvals (append ('currentPatchSet 'approvals change)
                            nil)))
     (-any-p (lambda (a)
-              (and (equal "Code-Review" (alist-get 'type a))
-                   (> (string-to-number (or (alist-get 'value a) "0")) 0)
+              (and (equal "Code-Review" ('type a))
+                   (> (string-to-number (or ('value a) "0")) 0)
                    (not (equal owner-username
-                               (alist-get 'username (alist-get 'by a))))))
+                               ('by 'username a)))))
             approvals)))
 
 (defun work-item--blocked-by-parent (change stack)
   "Return non-nil if CHANGE depends on an unmerged parent in STACK.
 A change is blocked when it has `dependsOn' entries whose change
 numbers also appear in the stack (i.e., they are open, not yet merged)."
-  (let ((deps (append (alist-get 'dependsOn change) nil))
-        (stack-nums (-map (lambda (c) (alist-get 'number c)) stack)))
+  (let ((deps (append ('dependsOn change) nil))
+        (stack-nums (-map (lambda (c) ('number c)) stack)))
     (-any-p (lambda (d)
-              (member (alist-get 'number d) stack-nums))
+              (member ('number d) stack-nums))
             deps)))
 
 (defun work-item--format-age (epoch)
@@ -12140,37 +12136,36 @@ The Jira title cache must already be populated (via
 Example:
   (work-item-from-stack some-stack \\='my-needing-action)
   → #s(work-item :jira \"BUG-1234\" :title \"Fix it\" ...)"
-  (let* ((tip (car (last stack)))
-         (jira (car (my/gerrit--stack-jira-tickets stack)))
+  (let* ((tip (-1 stack))
+         (jira (0 (my/gerrit--stack-jira-tickets stack)))
          (jira-title (when jira (my/gerrit--get-jira-title jira))))
     (work-item-create
      :jira jira
      :title (or jira-title
-                (when-let ((subj (alist-get 'subject tip)))
+                (when-let ((subj ('subject tip)))
                   (work-item--strip-commit-tags subj))
                 "untitled")
      :tip-url (format "%s%s%s"
                       my\gerrit-base-url my\gerrit-project-path
-                      (alist-get 'number tip))
+                      ('number tip))
      :reviewers (my/gerrit--extract-reviewer-names stack)
      :reviewer-users (my/gerrit--extract-reviewer-user-map stack)
-     :author (alist-get 'name (alist-get 'owner tip))
+     :author ('owner 'name tip)
      :status status
-     :age (alist-get 'lastUpdated tip)
+     :age ('lastUpdated tip)
      :stack-size (length stack)
      :max-patchsets (when stack
                       (-max (-map (lambda (c)
-                                    (or (alist-get 'number
-                                                   (alist-get 'currentPatchSet c))
+                                    (or ('currentPatchSet 'number c)
                                         1))
                                   stack)))
      :comment-count (-sum (-map (lambda (c)
-                                  (length (alist-get 'comments c)))
+                                  (length ('comments c)))
                                 stack))
      :avg-shirt-size (work-item--avg-shirt-size stack)
      :ci-status (work-item--ci-status tip)
      :has-code-review (work-item--has-code-review
-                       tip (alist-get 'username (alist-get 'owner tip)))
+                       tip ('owner 'username tip))
      :blocked-by-parent (work-item--blocked-by-parent tip stack))))
 
 (defun work-items-from-stack (stack status)
@@ -12183,7 +12178,7 @@ as a single group so the item still appears in the agenda."
   (let* ((by-ticket
           (-group-by
            (lambda (c)
-             (car (my/gerrit--extract-jira-tickets c)))
+             (0 (my/gerrit--extract-jira-tickets c)))
            stack))
          (non-nil-groups
           (-filter (lambda (g) (car g)) by-ticket))
@@ -12211,13 +12206,13 @@ returns a one-element list — identical to the old behaviour."
           (-filter
            (lambda (c)
              (not (equal self-username
-                         (alist-get 'username (alist-get 'owner c)))))
+                         ('owner 'username c))))
            stack))
          (by-ticket-and-author
           (-group-by
            (lambda (c)
-             (cons (car (my/gerrit--extract-jira-tickets c))
-                   (alist-get 'username (alist-get 'owner c))))
+             (cons (0 (my/gerrit--extract-jira-tickets c))
+                   ('owner 'username c)))
            non-self))
          (non-nil-groups
           (-filter (lambda (g) (car (car g))) by-ticket-and-author))
@@ -12237,8 +12232,8 @@ Example:
    \\='((key . \"BUG-99\") (fields . ((summary . \"Urgent thing\")))))
   → #s(work-item :jira \"BUG-99\" :title \"Urgent thing\"
                  :status todo :urgent t)"
-  (let ((key (alist-get 'key issue))
-        (summary (alist-get 'summary (alist-get 'fields issue))))
+  (let ((key ('key issue))
+        (summary ('fields 'summary issue)))
     (work-item-create
      :jira key
      :title (or summary "untitled")
@@ -12656,42 +12651,41 @@ Example:
   → ((\"Ali ibn Abi Talib\" . \"ali\") (\"Hassan ibn Ali\" . \"hassan\"))"
   (let* ((owners (->> stack
                       (-map (lambda (c)
-                              (alist-get 'username (alist-get 'owner c))))
+                              ('owner 'username c)))
                       (-filter #'identity)
                       -uniq))
          (human-reviewers
           (->> stack
                (-mapcat
                 (lambda (c)
-                  (->> (append (alist-get 'allReviewers c) nil)
+                  (->> (append ('allReviewers c) nil)
                        (-filter
                         (lambda (rv)
-                          (let ((name (alist-get 'name rv))
-                                (uname (alist-get 'username rv)))
+                          (let ((name ('name rv))
+                                (uname ('username rv)))
                             (and name uname
                                  (s-contains-p " " name)
                                  (not (member uname owners))))))
                        (-map (lambda (rv)
-                               (cons (alist-get 'name rv)
-                                     (alist-get 'username rv)))))))
+                               (cons ('name rv)
+                                     ('username rv)))))))
                (-filter #'identity)))
          (negative-voters
           (->> stack
                (-mapcat
                 (lambda (c)
-                  (->> (append (alist-get 'approvals
-                                          (alist-get 'currentPatchSet c))
+                  (->> (append ('currentPatchSet 'approvals c)
                                nil)
                        (-filter
                         (lambda (a)
-                          (and (equal "Code-Review" (alist-get 'type a))
+                          (and (equal "Code-Review" ('type a))
                                (< (string-to-number
-                                   (or (alist-get 'value a) "0"))
+                                   (or ('value a) "0"))
                                   0))))
                        (-map (lambda (a)
-                               (let ((by (alist-get 'by a)))
-                                 (when-let ((name (alist-get 'name by))
-                                            (uname (alist-get 'username by)))
+                               (let ((by ('by a)))
+                                 (when-let ((name ('name by))
+                                            (uname ('username by)))
                                    (cons name uname))))))))
                (-filter #'identity))))
     (cl-remove-duplicates
@@ -12713,21 +12707,21 @@ Example:
         (name-only
          (let ((owners (->> stack
                             (-map (lambda (c)
-                                    (alist-get 'username (alist-get 'owner c))))
+                                    ('owner 'username c)))
                             (-filter #'identity)
                             -uniq)))
            (->> stack
                 (-mapcat
                  (lambda (c)
-                   (->> (append (alist-get 'allReviewers c) nil)
+                   (->> (append ('allReviewers c) nil)
                         (-filter
                          (lambda (rv)
-                           (let ((name (alist-get 'name rv))
-                                 (uname (alist-get 'username rv)))
+                           (let ((name ('name rv))
+                                 (uname ('username rv)))
                              (and name (not uname)
                                   (s-contains-p " " name)
                                   (not (member uname owners))))))
-                        (-map (lambda (rv) (alist-get 'name rv))))))
+                        (-map (lambda (rv) ('name rv))))))
                 (-filter #'identity)
                 -uniq))))
     (-uniq (append with-usernames name-only))))
@@ -12743,11 +12737,11 @@ Examples:
   (my/gerrit--format-reviewer-names \\='(\"Alice\" \"Bob\" \"Carol\"))
   → \"Alice, Bob, and Carol\""
   (pcase (length names)
-    (1 (car names))
-    (2 (format "%s and %s" (car names) (cadr names)))
+    (1 (0 names))
+    (2 (format "%s and %s" (0 names) (1 names)))
     (_ (format "%s, and %s"
                (s-join ", " (butlast names))
-               (car (last names))))))
+               (-1 names)))))
 
 (cl-defgeneric work-item-to-string (item)
   "Render ITEM as a single-line string for display in the agenda.")
@@ -12759,14 +12753,14 @@ All three tiers are individually sorted stalest-first (oldest
   (let (urgent normal sidequests)
     (dolist (it items)
       (cond
-       ((work-item-urgent it)     (push it urgent))
-       ((not (work-item-jira it)) (push it sidequests))
+       ((:urgent it)     (push it urgent))
+       ((not (:jira it)) (push it sidequests))
        (t                         (push it normal))))
     (cl-flet ((stalest-first (items)
                 (sort items
                       (lambda (a b)
-                        (let ((ea (or (work-item-age a) most-positive-fixnum))
-                              (eb (or (work-item-age b) most-positive-fixnum)))
+                        (let ((ea (or (:age a) most-positive-fixnum))
+                              (eb (or (:age b) most-positive-fixnum)))
                           (< ea eb))))))
       (append (stalest-first urgent)
               (stalest-first normal)
@@ -12785,13 +12779,13 @@ the work-item has a non-nil `jira' slot.
 
 The `urgent' flag prepends \"🔴 \" to the rendered string so the
 item stands out in whichever status section it belongs to."
-  (let* ((jira        (work-item-jira item))
-         (title       (work-item-title item))
-         (url         (work-item-tip-url item))
-         (reviewers   (work-item-reviewers item))
-         (author      (work-item-author item))
-         (status      (work-item-status item))
-         (urgent      (work-item-urgent item))
+  (let* ((jira        (:jira item))
+         (title       (:title item))
+         (url         (:tip-url item))
+         (reviewers   (:reviewers item))
+         (author      (:author item))
+         (status      (:status item))
+         (urgent      (:urgent item))
          (jira-link   (when jira (my/gerrit--format-jira-link jira)))
          (jira-prefix (cond
                        (jira-link
@@ -12800,7 +12794,7 @@ item stands out in whichever status section it belongs to."
                           (format "%s ∷ " jira-link)))
                        (title
                         (format "Sidequest{ %s } ∷ " title))))
-         (age-str     (work-item--format-age (work-item-age item)))
+         (age-str     (work-item--format-age (:age item)))
          (rv-str      (when reviewers
                         (my/gerrit--format-reviewer-names reviewers)))
          (urgent-prefix (if urgent "🔴 " ""))
@@ -12873,26 +12867,26 @@ Stat-based nudges (highest priority wins):
   (h) Many reviewers (> 2) → coordination overhead, narrow the pool.
   (k) ✅ CI green + no Code-Review → request final approval.
   (d) Rebase: > 7 days old → rebase to stay current with target branch."
-  (let* ((status       (work-item-status item))
-         (urgent       (work-item-urgent item))
-         (age-epoch    (work-item-age item))
+  (let* ((status       (:status item))
+         (urgent       (:urgent item))
+         (age-epoch    (:age item))
          (days-old     (when age-epoch
                          (floor (/ (- (float-time) age-epoch) 86400))))
          (stale        (and days-old (>= days-old 14)))
          (very-stale   (and days-old (>= days-old 30)))
-         (rv-str       (when (work-item-reviewers item)
+         (rv-str       (when (:reviewers item)
                          (my/gerrit--format-reviewer-names
-                          (work-item-reviewers item))))
-         (stack-size   (or (work-item-stack-size item) 1))
-         (max-ps       (or (work-item-max-patchsets item) 1))
-         (comments     (or (work-item-comment-count item) 0))
-         (shirt-size   (work-item-avg-shirt-size item))
-         (num-reviewers (length (work-item-reviewers item)))
-         (ci            (work-item-ci-status item))
+                          (:reviewers item))))
+         (stack-size   (or (:stack-size item) 1))
+         (max-ps       (or (:max-patchsets item) 1))
+         (comments     (or (:comment-count item) 0))
+         (shirt-size   (:avg-shirt-size item))
+         (num-reviewers (length (:reviewers item)))
+         (ci            (:ci-status item))
          (ci-red        (eq ci 'fail))
          (ci-green      (eq ci 'pass))
-         (has-cr        (work-item-has-code-review item))
-         (blocked       (work-item-blocked-by-parent item))
+         (has-cr        (:has-code-review item))
+         (blocked       (:blocked-by-parent item))
          (large-change (and shirt-size (>= shirt-size 4))) ;; L or XL
          (many-ps      (> max-ps 4))
          (many-comments (> comments (* 5 stack-size))) ;; > 5 comments/change
@@ -13037,7 +13031,7 @@ neither =private.el= nor a live Gerrit/Jira instance.
 Lowercases the first initial and surname: \"Grace Hopper\" → \"ghopper\"."
   (let ((parts (s-split " " (s-trim full-name))))
     (downcase (concat (substring (car parts) 0 1)
-                      (car (last parts))))))
+                      (-1 parts)))))
 
 (defun my/as-gerrit-patch (spec)
   "Parse a human-readable SPEC string into a Gerrit change alist.
@@ -13202,8 +13196,8 @@ The change `number' is auto-assigned from the position index
 (0, 1, 2, ...) when the spec omits a `Change-Id:' line —
 removing boilerplate from tests."
   (--map-indexed (let ((c (my/as-gerrit-patch it)))
-                   (unless (alist-get 'number c)
-                     (setf (alist-get 'number c) it-index))
+                   (unless ('number c)
+                     (setf ('number c) it-index))
                    c)
                  specs))
 
@@ -13239,16 +13233,16 @@ Changes carrying `(urgent . t)' propagate the flag to their work-item."
               (work-items-from-stack stack kind-override)
             (let* ((me-username (my/test--name-to-username "Me"))
                    (mine (-filter (lambda (c)
-                                    (equal "Me" (alist-get 'name (alist-get 'owner c))))
+                                    (equal "Me" ('owner 'name c)))
                                   stack))
                    (others (-remove (lambda (c)
-                                      (equal "Me" (alist-get 'name (alist-get 'owner c))))
+                                      (equal "Me" ('owner 'name c)))
                                     stack))
                    (my-kind (when mine
-                              (let ((tip (car (last mine))))
+                              (let ((tip (-1 mine)))
                                 (cond
-                                 ((alist-get 'wip tip)       'wip)
-                                 ((alist-get 'attention tip)  'my-needing-action)
+                                 (('wip tip)       'wip)
+                                 (('attention tip)  'my-needing-action)
                                  (t                           'please-review))))))
               (append
                (when mine (work-items-from-stack mine my-kind))
@@ -13257,14 +13251,14 @@ Changes carrying `(urgent . t)' propagate the flag to their work-item."
          (urgent-tickets
           (let ((ht (make-hash-table :test 'equal)))
             (dolist (c stack)
-              (when (alist-get 'urgent c)
+              (when ('urgent c)
                 (dolist (tid (my/gerrit--extract-jira-tickets c))
                   (puthash tid t ht))))
             ht)))
     (dolist (it items)
-      (when (and (work-item-jira it)
-                 (gethash (work-item-jira it) urgent-tickets))
-        (setf (work-item-urgent it) t)))
+      (when (and (:jira it)
+                 (gethash (:jira it) urgent-tickets))
+        (setf (:urgent it) t)))
     items))
 
 ;; ──────────────────────────────────────────────────────────────────
@@ -13721,18 +13715,18 @@ Wrapped in `condition-case' so a failure does not leave
              (attn-nums
               (let ((ht (make-hash-table :test 'eql)))
                 (dolist (c attention)
-                  (puthash (alist-get 'number c) t ht))
+                  (puthash ('number c) t ht))
                 ht))
              ;; Stale = my open changes NOT in the attention set
              (stale (-filter
                      (lambda (c)
-                       (not (gethash (alist-get 'number c) attn-nums)))
+                       (not (gethash ('number c) attn-nums)))
                      all-mine))
              (wip     (-filter (lambda (c)
-                                 (eq (alist-get 'wip c) t))
+                                 (eq ('wip c) t))
                                stale))
              (non-wip (-filter (lambda (c)
-                                 (not (eq (alist-get 'wip c) t)))
+                                 (not (eq ('wip c) t)))
                                stale))
              ;; Group into stacks (sync bridge resolution is safe
              ;; here --- we are in a run-at-time callback, not a
@@ -13749,8 +13743,7 @@ Wrapped in `condition-case' so a failure does not leave
                  (-every-p
                   (lambda (c)
                     (equal my\gerrit-user
-                           (alist-get 'username
-                                      (alist-get 'owner c))))
+                           ('owner 'username c)))
                   s))
                attn-stacks))
              (others
@@ -13760,8 +13753,7 @@ Wrapped in `condition-case' so a failure does not leave
                   (-every-p
                    (lambda (c)
                      (equal my\gerrit-user
-                            (alist-get 'username
-                                       (alist-get 'owner c))))
+                            ('owner 'username c)))
                    s)))
                attn-stacks))
              ;; Batch-fetch Jira titles for every ticket
@@ -13790,8 +13782,8 @@ Wrapped in `condition-case' so a failure does not leave
              (_ (message "Gerrit/Jira: checking for urgent Jira tickets…"))
              (urgent-jql
               (let* ((now (decode-time))
-                     (mon (nth 4 now))
-                     (yr  (mod (nth 5 now) 100))
+                     (mon (4 now))
+                     (yr  (mod (5 now) 100))
                      (next-mon (1+ mon))
                      (next-yr  (if (> next-mon 12) (1+ yr) yr))
                      (next-mon (if (> next-mon 12) 1 next-mon))
@@ -13806,25 +13798,25 @@ Wrapped in `condition-case' so a failure does not leave
              (urgent-ids
               (let ((ht (make-hash-table :test 'equal)))
                 (dolist (issue urgent-issues)
-                  (puthash (alist-get 'key issue) t ht))
+                  (puthash ('key issue) t ht))
                 ht))
              ;; Mark Gerrit work-items as urgent if their Jira ticket
              ;; appears in the urgent query results
              (_ (dolist (it gerrit-items)
-                  (when (and (work-item-jira it)
-                             (gethash (work-item-jira it) urgent-ids))
-                    (setf (work-item-urgent it) t))))
+                  (when (and (:jira it)
+                             (gethash (:jira it) urgent-ids))
+                    (setf (:urgent it) t))))
              ;; Tickets that are urgent but have no Gerrit work yet
              (covered-ids
               (let ((ht (make-hash-table :test 'equal)))
                 (dolist (it gerrit-items)
-                  (when (work-item-jira it)
-                    (puthash (work-item-jira it) t ht)))
+                  (when (:jira it)
+                    (puthash (:jira it) t ht)))
                 ht))
              (todo-items
               (-map #'work-item-from-jira-issue
                     (-filter (lambda (issue)
-                               (not (gethash (alist-get 'key issue)
+                               (not (gethash ('key issue)
                                              covered-ids)))
                              urgent-issues)))
              ;; All unresolved tickets assigned to me — catches items
@@ -13855,22 +13847,22 @@ Wrapped in `condition-case' so a failure does not leave
                   (error nil))))
              ;; Also fetch titles for these tickets.
              (_ (when assigned-issues
-                  (let ((tix (mapcar (lambda (i) (alist-get 'key i))
+                  (let ((tix (mapcar (lambda (i) ('key i))
                                      assigned-issues)))
                     (when tix (my/gerrit--fetch-jira-titles tix)))))
              ;; IDs already covered by Gerrit items or urgent TODO items
              (all-covered-ids
               (let ((ht (copy-hash-table covered-ids)))
                 (dolist (it todo-items)
-                  (when (work-item-jira it)
-                    (puthash (work-item-jira it) t ht)))
+                  (when (:jira it)
+                    (puthash (:jira it) t ht)))
                 ht))
              ;; Split uncovered issues: Jira says "In Progress" or
              ;; "In Review" but no Gerrit changes exist → suspicious
              ;; (e.g., accidentally used #progress instead of #resolve).
              (uncovered-issues
               (-filter (lambda (issue)
-                         (not (gethash (alist-get 'key issue)
+                         (not (gethash ('key issue)
                                        all-covered-ids)))
                        (or assigned-issues '())))
              (jira-active-statuses '("In Progress" "In Review"
@@ -13878,33 +13870,29 @@ Wrapped in `condition-case' so a failure does not leave
              (jira-active-items
               (-map (lambda (issue)
                       (work-item-create
-                       :jira (alist-get 'key issue)
-                       :title (or (alist-get 'summary
-                                             (alist-get 'fields issue))
+                       :jira ('key issue)
+                       :title (or ('fields 'summary issue)
                                   "untitled")
                        :status 'jira-active))
                     (-filter
                      (lambda (issue)
-                       (member (alist-get 'name
-                                          (alist-get 'status
-                                                     (alist-get 'fields issue)))
+                       (member ('fields 'status 'name issue)
                                jira-active-statuses))
                      uncovered-issues)))
              (jira-active-ids
               (let ((ht (make-hash-table :test 'equal)))
                 (dolist (it jira-active-items)
-                  (puthash (work-item-jira it) t ht))
+                  (puthash (:jira it) t ht))
                 ht))
              (assigned-items
               (-map (lambda (issue)
                       (work-item-create
-                       :jira (alist-get 'key issue)
-                       :title (or (alist-get 'summary
-                                             (alist-get 'fields issue))
+                       :jira ('key issue)
+                       :title (or ('fields 'summary issue)
                                   "untitled")
                        :status 'assigned))
                     (-filter (lambda (issue)
-                               (not (gethash (alist-get 'key issue)
+                               (not (gethash ('key issue)
                                              jira-active-ids)))
                              uncovered-issues)))
              ;; Combine all items
@@ -14047,7 +14035,7 @@ is enforced by folding the weekday into the dedup regex in
   "Return non-nil if the cached work data is from a previous calendar day.
 A nil cache (never fetched) is also considered stale."
   (if (null my/agenda-work-data) t
-    (let* ((cached-time (plist-get my/agenda-work-data :timestamp))
+    (let* ((cached-time (:timestamp my/agenda-work-data))
            (cached-day  (format-time-string "%Y-%m-%d" cached-time))
            (today       (format-time-string "%Y-%m-%d")))
       (not (string= cached-day today)))))
@@ -14081,7 +14069,7 @@ org-agenda commands (RET, TAB, I, o, etc.) work."
             (put-text-property line-start end 'my/work-item it)
             ;; When the item has an Org tree, make the line behave like
             ;; a real agenda entry.
-            (when-let ((marker (work-item-org-tree it)))
+            (when-let ((marker (:org-tree it)))
               (when (marker-buffer marker)
                 (put-text-property line-start end 'org-marker marker)
                 (put-text-property line-start end
@@ -14117,8 +14105,8 @@ float.  Sorted by START and overlap-merged."
                           (string-match-p "[0-9]+:[0-9]+" raw))
                  (let* ((time  (org-time-string-to-time raw))
                         (decoded (decode-time time))
-                        (h (nth 2 decoded))
-                        (m (nth 1 decoded))
+                        (h (2 decoded))
+                        (m (1 decoded))
                         (start (+ (* 60 h) m))
                         (dur   (my/agenda--effort-minutes
                                 (org-entry-get (point) "Effort"))))
@@ -14127,13 +14115,13 @@ float.  Sorted by START and overlap-merged."
     (when (and is-today (org-clocking-p))
       (let* ((t0 (decode-time org-clock-start-time))
              (t1 (decode-time (current-time)))
-             (same-day (and (= (nth 3 t0) (nth 3 t1))
-                            (= (nth 4 t0) (nth 4 t1))
-                            (= (nth 5 t0) (nth 5 t1))))
+             (same-day (and (= (3 t0) (3 t1))
+                            (= (4 t0) (4 t1))
+                            (= (5 t0) (5 t1))))
              (start-mins (if same-day
-                             (+ (* 60 (nth 2 t0)) (nth 1 t0))
+                             (+ (* 60 (2 t0)) (1 t0))
                            0))
-             (now-mins   (+ (* 60 (nth 2 t1)) (nth 1 t1))))
+             (now-mins   (+ (* 60 (2 t1)) (1 t1))))
         (push (cons start-mins now-mins) intervals)))
     ;; Sort & merge overlapping intervals so gap-walking is simpler.
     (let ((sorted (sort intervals (lambda (a b) (< (car a) (car b)))))
@@ -14158,7 +14146,7 @@ starts are rounded up to the next 15-minute boundary."
   (let* ((is-today (equal date (format-time-string "%Y-%m-%d")))
          (now-m (when is-today
                   (let ((now (decode-time (current-time))))
-                    (+ (* 60 (nth 2 now)) (nth 1 now)))))
+                    (+ (* 60 (2 now)) (1 now)))))
          (day-start 480)   ; 08:00
          (day-end   960)   ; 16:00
          (window-start
@@ -14219,10 +14207,10 @@ calendar and deserves human attention."
       (user-error
        "No free %d-min slot in the next %d days — your calendar is full, please triage"
        duration horizon))
-    (let* ((offset   (plist-get chosen :offset))
-           (date     (plist-get chosen :date))
-           (day-name (plist-get chosen :day-name))
-           (slot     (plist-get chosen :slot))
+    (let* ((offset   (:offset chosen))
+           (date     (:date chosen))
+           (day-name (:day-name chosen))
+           (slot     (:slot chosen))
            (hh       (/ slot 60))
            (mm       (% slot 60))
            (stamp    (format "<%s %s %02d:%02d>" date day-name hh mm)))
@@ -14250,15 +14238,15 @@ latching onto Monday's), and the :Task: tag marks the heading as
 daily scaffolding rather than a shipped deliverable.  Idempotent:
 if a child whose heading matches the Jira ticket (or tip URL when
 no Jira) AND carries today's weekday tag already exists, skip."
-  (when-let* ((marker (work-item-org-tree item))
+  (when-let* ((marker (:org-tree item))
               (buf (marker-buffer marker)))
     (let* ((rendered (work-item-to-string item))
            ;; Dedup key: Jira ID if present, otherwise first 40 chars of title.
-           (jira (work-item-jira item))
+           (jira (:jira item))
            (dedup-key (or jira
                           (substring-no-properties
-                           (or (work-item-title item) "")
-                           0 (min 40 (length (or (work-item-title item) ""))))))
+                           (or (:title item) "")
+                           0 (min 40 (length (or (:title item) ""))))))
            (weekday (format-time-string "%A")))
       (with-current-buffer buf
         (org-with-wide-buffer
@@ -14290,8 +14278,8 @@ no Jira) AND carries today's weekday tag already exists, skip."
 The heading title is the Jira ID + title (or just the title when
 no Jira ticket exists).  Sets `work-item-org-tree' on ITEM to
 the new heading's marker and returns that marker."
-  (let* ((jira (work-item-jira item))
-         (title (or (work-item-title item) "untitled"))
+  (let* ((jira (:jira item))
+         (title (or (:title item) "untitled"))
          (heading-text (if jira (concat jira " " title) title))
          (buf (find-file-noselect org-default-notes-file)))
     (with-current-buffer buf
@@ -14314,7 +14302,7 @@ the new heading's marker and returns that marker."
          ;; Move back to the heading we just inserted and grab a marker.
          (re-search-backward (concat "^\\*\\* " (regexp-quote heading-text)))
          (let ((marker (point-marker)))
-           (setf (work-item-org-tree item) marker)
+           (setf (:org-tree item) marker)
            marker))))))
 
 (defun my/agenda--create-gcal-org-tree (event)
@@ -14322,14 +14310,14 @@ the new heading's marker and returns that marker."
 Mirrors `my/agenda--create-work-org-tree' but populates Effort,
 SCHEDULED, LOCATION and LINK from the event plist.  Returns a
 marker to the new heading."
-  (let* ((title (or (plist-get event :title) "(untitled calendar event)"))
-         (date  (plist-get event :date))
-         (start (plist-get event :start))
-         (end   (plist-get event :end))
+  (let* ((title (or (:title event) "(untitled calendar event)"))
+         (date  (:date event))
+         (start (:start event))
+         (end   (:end event))
          (effort (my/standup-from-schedule--effort-from-times start end))
-         (location (plist-get event :location))
-         (conference (plist-get event :conference))
-         (url (plist-get event :url))
+         (location (:location event))
+         (conference (:conference event))
+         (url (:url event))
          (day-name (when date
                      (format-time-string
                       "%a" (date-to-time (concat date "T00:00:00")))))
@@ -14376,7 +14364,7 @@ so that `org-agenda-switch-to' can jump to it."
          (and (derived-mode-p 'org-agenda-mode)
               (get-text-property (point) 'my/work-item)))
    (when-let* ((item my/agenda--pending-review-item)
-               (_ (null (work-item-org-tree item))))
+               (_ (null (:org-tree item))))
      (let ((marker (my/agenda--create-work-org-tree item))
            (line-start (line-beginning-position))
            (line-end (line-end-position)))
@@ -14399,7 +14387,7 @@ so that `org-agenda-switch-to' can jump to it."
    "After RET in the agenda, create a TODO child for actionable items.
 Fires for reviews-needed and my-needing-action statuses."
    (when-let* ((item my/agenda--pending-review-item)
-               (_ (memq (work-item-status item)
+               (_ (memq (:status item)
                         '(reviews-needed my-needing-action))))
      (my/agenda--ensure-review-todo item))
    (setq my/agenda--pending-review-item nil)))
@@ -14421,7 +14409,7 @@ manual refresh at any time, use the \"Refresh Work\" button or press
       (goto-char (point-max))
       (if my/agenda-work-data
           (let* ((start (point))
-                 (items (plist-get my/agenda-work-data :items))
+                 (items (:items my/agenda-work-data))
                  (status-sections
                   '((reviews-needed    "👀 Reviews Needed (I'm blocking someone)")
                     (my-needing-action "🔧 My Changes Needing Action")
@@ -14433,11 +14421,11 @@ manual refresh at any time, use the \"Refresh Work\" button or press
             (dolist (sec (cl-remove-if-not
                           (lambda (s) (memq (car s) my/agenda-work-sections))
                           status-sections))
-              (let* ((status (car sec))
-                     (heading (cadr sec))
+              (let* ((status (0 sec))
+                     (heading (1 sec))
                      (matching (-filter
                                 (lambda (it)
-                                  (eq (work-item-status it) status))
+                                  (eq (:status it) status))
                                 items))
                      (sorted (work-item--sort matching)))
                 (work-item-insert-as-agenda-section heading sorted)))
@@ -14471,9 +14459,9 @@ agenda rebuild.")
 
 (defun my/agenda--gcal-event-line (ev)
   "Render one gcal event plist EV as a single agenda line string."
-  (let ((title (plist-get ev :title))
-        (start (plist-get ev :start))
-        (end   (plist-get ev :end)))
+  (let ((title (:title ev))
+        (start (:start ev))
+        (end   (:end ev)))
     (cond
      ((and start end) (format "%s–%s  %s" start end title))
      (start           (format "%s       %s" start title))
@@ -14498,7 +14486,7 @@ into the Org Inbox via the :before advice on `org-agenda-switch-to'."
           (let* ((events (my/standup-from-schedule--gcal-events))
                  (filtered (cl-remove-if
                             (lambda (ev)
-                              (my/agenda--gcal-noisy-p (plist-get ev :title)))
+                              (my/agenda--gcal-noisy-p (:title ev)))
                             events)))
             (setq my/agenda-gcal-events filtered)
             (when filtered
@@ -14662,16 +14650,16 @@ Each overlapping line gets a `help-echo' explaining the conflict."
            (dotimes (j n)
              (when (and (/= i j)
                         (my/agenda--intervals-overlap-p
-                         (cons (plist-get (nth i entries) :start)
-                               (plist-get (nth i entries) :end))
-                         (cons (plist-get (nth j entries) :start)
-                               (plist-get (nth j entries) :end))))
+                         (cons (:start (nth i entries))
+                               (:end (nth i entries)))
+                         (cons (:start (nth j entries))
+                               (:end (nth j entries)))))
                (cl-pushnew i overlap-set))))
          ;; 3. Apply face + help-echo to overlapping lines.
          (dolist (idx overlap-set)
            (let* ((entry (nth idx entries))
-                  (beg (plist-get entry :lbeg))
-                  (end (plist-get entry :lend)))
+                  (beg (:lbeg entry))
+                  (end (:lend entry)))
              (add-face-text-property beg end '(:foreground "red"))
              (put-text-property
               beg end 'help-echo
@@ -14719,7 +14707,7 @@ without reflecting on the last one."
   ;; 0. Monday gate: force weekly review before the week begins.
   ;;    The review is a capture buffer; when the user presses C-c C-c to
   ;;    finalise, they call my/standup again to proceed normally.
-  (if (and (= (nth 6 (decode-time)) 1) ;; Monday
+  (if (and (= (6 (decode-time)) 1) ;; Monday
            (fboundp 'my/weekly-review-done-this-week-p)
            (not (my/weekly-review-done-this-week-p)))
       (progn
@@ -14751,7 +14739,7 @@ without reflecting on the last one."
       ;; 4. Prepend today's entry; save a marker for async insertion.
       (insert (format-time-string "*** <%Y-%m-%d %a>\n\n"))
       (let ((insertion-marker (point-marker))
-            (is-monday (= (nth 6 (decode-time)) 1)))
+            (is-monday (= (6 (decode-time)) 1)))
         (insert "\n")
         ;; 5. Refresh work-item cache; open agenda when done.
         ;; Suppress fold-and-focus so the agenda opens fully expanded
@@ -14988,16 +14976,16 @@ checks pass, returns a plist with:
                        Musa's concern, not his team's."
   (let* ((scope-tags (or scope-tags '("Work")))
          (in-scope-p (lambda (it)
-                       (cl-intersection (nth 4 it) scope-tags :test #'string=)))
+                       (cl-intersection (4 it) scope-tags :test #'string=)))
          (scoped-items (cl-remove-if-not in-scope-p public-items)))
     ;; 1. Every scoped item must have an effort estimate.
-    (when-let* ((offender (cl-find-if (lambda (it) (not (cadr it))) scoped-items)))
-      (let ((marker (nth 3 offender)))
+    (when-let* ((offender (cl-find-if (lambda (it) (not (1 it))) scoped-items)))
+      (let ((marker (3 offender)))
         (when marker
           (switch-to-buffer (marker-buffer marker))
           (goto-char marker)
           (org-reveal)))
-      (user-error "Add an effort estimate to \"%s\" then try again" (car offender)))
+      (user-error "Add an effort estimate to \"%s\" then try again" (0 offender)))
     ;; 2. No more than 5 scoped items.
     (when (> (length scoped-items) 5)
       (let ((n (length scoped-items))
@@ -15052,15 +15040,15 @@ checks pass, returns a plist with:
       (let* ((today (format-time-string "%Y-%m-%d"))
              (timed nil))
         (dolist (item all-items)
-          (let* ((marker (nth 3 item))
+          (let* ((marker (3 item))
                  (raw (and marker (org-entry-get marker "SCHEDULED"))))
             (when (and raw
                        (string-match-p (regexp-quote today) raw)
                        (string-match-p "[0-9]+:[0-9]+" raw))
               (let* ((time  (org-time-string-to-time raw))
                      (decoded (decode-time time))
-                     (h (nth 2 decoded))
-                     (m (nth 1 decoded))
+                     (h (2 decoded))
+                     (m (1 decoded))
                      (start (+ (* 60 h) m))
                      (end
                       (if (string-match
@@ -15069,7 +15057,7 @@ checks pass, returns a plist with:
                           (let* ((end-str (match-string 2 raw))
                                  (parts (mapcar #'string-to-number
                                                 (split-string end-str ":"))))
-                            (+ (* 60 (car parts)) (cadr parts)))
+                            (+ (* 60 (0 parts)) (1 parts)))
                         ;; No range — fall back to start + Effort.
                         (+ start (my/agenda--effort-minutes
                                   (org-entry-get marker "Effort"))))))
@@ -15077,14 +15065,14 @@ checks pass, returns a plist with:
                             :start start :end end)
                       timed)))))
         (setq timed (sort timed (lambda (a b)
-                                  (< (plist-get a :start)
-                                     (plist-get b :start)))))
+                                  (< (:start a)
+                                     (:start b)))))
         (let (conflicts)
           (cl-loop for (a . rest) on timed do
                    (dolist (b rest)
-                     (when (< (plist-get b :start) (plist-get a :end))
-                       (cl-pushnew (plist-get a :heading) conflicts :test #'equal)
-                       (cl-pushnew (plist-get b :heading) conflicts :test #'equal))))
+                     (when (< (:start b) (:end a))
+                       (cl-pushnew (:heading a) conflicts :test #'equal)
+                       (cl-pushnew (:heading b) conflicts :test #'equal))))
           (when conflicts
             (user-error "Schedule has overlapping items! Reschedule with C-c C-s:\n  %s"
                         (string-join (nreverse conflicts) "\n  ")))))
@@ -15161,14 +15149,14 @@ scheduled in Org."
       (dolist (line (cdr lines))
         (let ((fields (split-string line "\t")))
           (when (>= (length fields) 10)
-            (push (list :date        (nth 1 fields)
-                        :start       (funcall nilify (nth 2 fields))
-                        :end         (funcall nilify (nth 4 fields))
-                        :url         (funcall nilify (nth 5 fields))
-                        :conference  (funcall nilify (or (nth 8 fields) (nth 6 fields)))
-                        :title       (nth 9 fields)
-                        :location    (funcall nilify (nth 10 fields))
-                        :description (funcall nilify (nth 11 fields))
+            (push (list :date        (1 fields)
+                        :start       (funcall nilify (2 fields))
+                        :end         (funcall nilify (4 fields))
+                        :url         (funcall nilify (5 fields))
+                        :conference  (funcall nilify (or (8 fields) (6 fields)))
+                        :title       (9 fields)
+                        :location    (funcall nilify (10 fields))
+                        :description (funcall nilify (11 fields))
                         ;; gcalcli's TSV doesn't expose an attendee list field
                         ;; directly; attendees usually land inside :description
                         ;; as a free-form line, so we leave this nil for now.
@@ -15184,7 +15172,7 @@ shape), filtered to today."
          (tomorrow (format-time-string
                     "%Y-%m-%d"
                     (time-add (current-time) (* 24 60 60)))))
-    (cl-remove-if-not (lambda (ev) (equal (plist-get ev :date) today))
+    (cl-remove-if-not (lambda (ev) (equal (:date ev) today))
                       (my/standup-from-schedule--gcal-events-range today tomorrow))))
 
 (defun my/standup-from-schedule--gcal-crosscheck (org-items)
@@ -15198,7 +15186,7 @@ that Org doesn't know about."
                                org-items))
          missing)
     (dolist (event gcal-events)
-      (let ((title (plist-get event :title)))
+      (let ((title (:title event)))
         ;; Skip generic/noisy calendar entries.
         (unless (or (null title)
                     (string-match-p "\\`\\(?:Busy\\|Home\\|Office\\|OOO\\|OOO.*\\|.* OOO.*\\)\\'" title)
@@ -15233,14 +15221,14 @@ Uses the same Inbox target as the `C-c c' capture template so
 captured items land where the rest of Musa's inbox lives.
 Idempotent per-call (the same event captured twice just becomes
 two inbox entries — the user triages; we don't dedupe)."
-  (let* ((title       (plist-get event :title))
-         (date        (plist-get event :date))
-         (start       (plist-get event :start))
-         (end         (plist-get event :end))
-         (location    (plist-get event :location))
-         (description (plist-get event :description))
-         (conference  (plist-get event :conference))
-         (url         (plist-get event :url))
+  (let* ((title       (:title event))
+         (date        (:date event))
+         (start       (:start event))
+         (end         (:end event))
+         (location    (:location event))
+         (description (:description event))
+         (conference  (:conference event))
+         (url         (:url event))
          (effort      (my/standup-from-schedule--effort-from-times start end))
          ;; Org scheduled timestamp: "<YYYY-MM-DD Day HH:MM>" with time if known.
          (day-name    (when date
@@ -15306,9 +15294,9 @@ TODOs are directly in view — no dialog, no hunting."
 
 (defun my/standup-from-schedule--gcal-summary-line (ev)
   "One-line textual summary of gcal event plist EV for `message'."
-  (let ((title (plist-get ev :title))
-        (start (plist-get ev :start))
-        (end   (plist-get ev :end)))
+  (let ((title (:title ev))
+        (start (:start ev))
+        (end   (:end ev)))
     (cond
      ((and start end) (format "• %s  (%s–%s)" title start end))
      (start           (format "• %s  (%s)" title start))
@@ -15387,7 +15375,7 @@ word-bounded, so BUG-4 does not match BUG-42."
   (let ((re (concat "\\b" (regexp-quote (upcase ticket)) "\\b")))
     (cl-some (lambda (entry)
                (cl-some (lambda (h) (string-match-p re (upcase h)))
-                        (plist-get (cdr entry) :all-headings)))
+                        (:all-headings (cdr entry))))
              day-data)))
 
 (defun my/validate-week--day-sanity-checks (day-label all-headings all-items public-items)
@@ -15403,8 +15391,8 @@ Every failed check fires `user-error' immediately.  On success,
 returns a plist with :deep-str and :total-str."
   (let ((tag (format "[%s] " day-label)))
     ;; 1. Every item must have an effort estimate.
-    (when-let* ((offender (cl-find-if (lambda (it) (not (cadr it))) all-items)))
-      (let ((marker (nth 3 offender)))
+    (when-let* ((offender (cl-find-if (lambda (it) (not (1 it))) all-items)))
+      (let ((marker (3 offender)))
         (when marker
           (switch-to-buffer (marker-buffer marker))
           (goto-char marker)
@@ -15463,23 +15451,23 @@ missing events are omitted from the returned alist."
            (end   (format-time-string
                    "%Y-%m-%d"
                    (time-add
-                    (date-to-time (concat (car (last dates)) "T00:00:00"))
+                    (date-to-time (concat (-1 dates) "T00:00:00"))
                     (* 24 60 60))))
            (events (my/standup-from-schedule--gcal-events-range start end))
            results)
       (dolist (entry day-data)
         (let* ((date         (car entry))
                (plist        (cdr entry))
-               (day-name     (plist-get plist :day-name))
-               (public-items (plist-get plist :public-items))
+               (day-name     (:day-name plist))
+               (public-items (:public-items plist))
                (headings     (mapcar (lambda (it) (downcase (car it)))
                                      public-items))
                (day-events   (cl-remove-if-not
-                              (lambda (ev) (equal (plist-get ev :date) date))
+                              (lambda (ev) (equal (:date ev) date))
                               events))
                missing)
           (dolist (ev day-events)
-            (let ((title (plist-get ev :title)))
+            (let ((title (:title ev)))
               (unless (or (null title)
                           (string-match-p "\\`\\(?:Busy\\|Home\\|Office\\|OOO\\|OOO.*\\|.* OOO.*\\)\\'" title)
                           (cl-some
@@ -15507,13 +15495,13 @@ MISSING-BY-DAY is nil."
                 "Events on your public calendar with no matching org task.\n"
                 "Capture what matters; the rest is noise.\n\n")
         (dolist (entry missing-by-day)
-          (let* ((date     (nth 0 (car entry)))
-                 (day-name (nth 1 (car entry)))
+          (let* ((date     (0 (car entry)))
+                 (day-name (1 (car entry)))
                  (events   (cdr entry)))
             (insert (format "* %s %s\n" day-name date))
             (dolist (ev events)
-              (let ((title (plist-get ev :title))
-                    (start (plist-get ev :start)))
+              (let ((title (:title ev))
+                    (start (:start ev)))
                 (insert (if start
                             (format "  - %s %s\n" start title)
                           (format "  - (all-day) %s\n" title)))
@@ -15567,8 +15555,8 @@ Weekly Review's wrap-up checklist."
       ;; 1. Collect per-day data in one pass.
       (let (day-data summaries)
         (dolist (pair remaining)
-          (let* ((date      (nth 0 pair))
-                 (day-name  (nth 1 pair))
+          (let* ((date      (0 pair))
+                 (day-name  (1 pair))
                  (all       (my/standup-from-schedule--collect-items-on date))
                  (public    (cl-remove-if #'caddr all))
                  (headings  (my/standup-from-schedule--all-headings-on date)))
@@ -15583,16 +15571,16 @@ Weekly Review's wrap-up checklist."
         (dolist (entry day-data)
           (let* ((date  (car entry))
                  (pl    (cdr entry))
-                 (label (format "%s %s" (plist-get pl :day-name) date))
+                 (label (format "%s %s" (:day-name pl) date))
                  (checks (my/validate-week--day-sanity-checks
                           label
-                          (plist-get pl :all-headings)
-                          (plist-get pl :all-items)
-                          (plist-get pl :public-items))))
+                          (:all-headings pl)
+                          (:all-items pl)
+                          (:public-items pl))))
             (push (format "%s %s deep / %s total"
                           label
-                          (or (plist-get checks :deep-str)  "0:00")
-                          (or (plist-get checks :total-str) "0:00"))
+                          (or (:deep-str checks)  "0:00")
+                          (or (:total-str checks) "0:00"))
                   summaries)))
         ;; 3. Promise-scheduling check — gather ALL missing, then error once.
         (let* ((promised (my/validate-week--promise-ticket-ids))
@@ -15646,9 +15634,9 @@ events not reflected in org-agenda."
          (checks (my/standup-from-schedule--sanity-checks all-headings all-items public-items))
          ;; Only :Work:-tagged items (the checker's scope) are shared
          ;; with the team — :Personal: rituals are Musa's concern.
-         (scoped-items (plist-get checks :scoped-items)))
-    (let* ((deep-str (plist-get checks :deep-str))
-           (total-str (plist-get checks :total-str))
+         (scoped-items (:scoped-items checks)))
+    (let* ((deep-str (:deep-str checks))
+           (total-str (:total-str checks))
            (today-title (format-time-string "<%Y-%m-%d %a>"))
            (standup-body
             (with-temp-buffer
@@ -15656,7 +15644,7 @@ events not reflected in org-agenda."
                   (my/standup-from-schedule--insert-items scoped-items)
                 (insert "(No items scheduled for today.)\n"))
               ;; When no reviews are scheduled, append a review offer.
-              (when (plist-get checks :missing-reviews-p)
+              (when (:missing-reviews-p checks)
                 (insert (format "%d. @everyone, I'm happy to do reviews today, send to me\n"
                                 (1+ (length scoped-items)))))
               (buffer-string))))
@@ -15693,13 +15681,13 @@ events not reflected in org-agenda."
       ;; where RET captures them into the Inbox on demand.
       ;; (let* ((all-gcal  (my/standup-from-schedule--gcal-events))
       ;;        (missing   (my/standup-from-schedule--gcal-crosscheck public-items))
-      ;;        (missing-titles (mapcar (lambda (ev) (plist-get ev :title)) missing)))
+      ;;        (missing-titles (mapcar (lambda (ev) (:title ev)) missing)))
       ;;   (when all-gcal
       ;;     (message
       ;;      "Today's calendar:\n%s%s"
       ;;      (mapconcat
       ;;       (lambda (ev)
-      ;;         (let* ((title (plist-get ev :title))
+      ;;         (let* ((title (:title ev))
       ;;                (missing-p (member title missing-titles))
       ;;                (line (my/standup-from-schedule--gcal-summary-line ev)))
       ;;           (if missing-p (concat line "  ← inboxed") line)))
@@ -15902,14 +15890,14 @@ When org-gcal updates an entry, automatically set the ~Effort~ property
 (add-hook 'org-gcal-after-update-entry-functions
           (defun my/gmail⇒org/set-effort-and-attendees (_calendar-id event _update-mode)
             "Set Effort property based on EVENT if not already set. Also set ATTENDEES."
-            (when-let (attendees (--map (plist-get it :email)
-                                        (--reject (plist-get it :self)
-                                                  (seq--into-list (plist-get _event :attendees)))))
+            (when-let (attendees (--map (:email it)
+                                        (--reject (:self it)
+                                                  (seq--into-list (:attendees _event)))))
               (org-entry-put (point)
                              "Attendees"
                              (s-join " " attendees)))
-            (when-let* ((stime (plist-get (plist-get event :start) :dateTime))
-                        (etime (plist-get (plist-get event :end) :dateTime))
+            (when-let* ((stime (:start :dateTime event))
+                        (etime (:end :dateTime event))
                         (diff (float-time
                                (time-subtract (org-gcal--parse-calendar-time-string etime)
                                               (org-gcal--parse-calendar-time-string stime))))
@@ -16415,8 +16403,8 @@ indent is not representative)."
   (setq org-todo-keywords  (list (cons 'sequence
                                        (cl-loop for (state . props) in states
                                                 for first-letter = (downcase (substring state 0 1))
-                                                for on-entry = (--when-let (plist-get props :on-entry) (if (listp it) it (list it)))
-                                                for on-exit = (--when-let (plist-get props :on-exit) (if (listp it) it (list it)))
+                                                for on-entry = (--when-let (:on-entry props) (if (listp it) it (list it)))
+                                                for on-exit = (--when-let (:on-exit props) (if (listp it) it (list it)))
                                                 ;; Assert: on-entry is a list, on-exit is a list
                                                 for entry = (cond ((member 'note on-entry) "@") ((member 'timestamp on-entry) "!") (t ""))
                                                 for exit = (cond ((member 'note on-exit) "/@") ((member 'timestamp on-exit) "/!") (t ""))
@@ -16424,14 +16412,14 @@ indent is not representative)."
   ;; Colour the keywords
   (setq org-todo-keyword-faces
         (cl-loop for (state . props) in states
-                 collect (list state :foreground (plist-get props :foreground) :weight 'bold)))
+                 collect (list state :foreground (:foreground props) :weight 'bold)))
   ;; Account for ‘unschedule’ action
   ;; When a task goes into the state STATE, please remove its schedule
   ;; so that it does not appear in my agenda. (However, it's still not “done” and so appears when I do “C-c a t” for example.)
   ;; Source: https://emacs.stackexchange.com/a/2760
  (cl-loop for (state . props) in states
   do
-  (when (member 'unschedule (plist-get props :on-entry))
+  (when (member 'unschedule (:on-entry props))
        ;; TODO: Need to remove-hook “my/remove-schedule--⟨STATE⟩” to account for running this my/declare-workflow multiple times and expecting these hooks to not be present, say the second time around!
     (add-hook 'org-after-todo-state-change-hook
               (eval `(defun ,(intern (concat "my/remove-schedule--" state)) ()
@@ -16821,17 +16809,17 @@ https://liveuml.com/, for the most part.
        ;; yet another property support
        (when (equal (org-get-todo-state) "TODO")
          ;; Instead of ignore-errors, it should only evaluate the string /if/ it is present.
-         (ignore-errors  (eval (car (read-from-string (eval (org-entry-get (point) "ON_TODO")))))))
+         (ignore-errors  (eval (0 (read-from-string (eval (org-entry-get (point) "ON_TODO")))))))
 
        ;; yet another property support
        (when (equal (org-get-todo-state) "STARTED")
          ;; Instead of ignore-errors, it should only evaluate the string /if/ it is present.
-         (ignore-errors (eval (car (read-from-string (eval (org-entry-get (point) "ON_STARTED")))))))
+         (ignore-errors (eval (0 (read-from-string (eval (org-entry-get (point) "ON_STARTED")))))))
 
        ;; yet another property support
        (when (equal (org-get-todo-state) "DONE")
          ;; Instead of ignore-errors, it should only evaluate the string /if/ it is present.
-         (ignore-errors (eval (car (read-from-string (eval (org-entry-get (point) "ON_DONE")))))))
+         (ignore-errors (eval (0 (read-from-string (eval (org-entry-get (point) "ON_DONE")))))))
 
        ;; yet another property support -- AXE?
        (when (equal "t" (org-entry-get (point) "TEMPORARILY_TREAT_SUBTREES_AS_CHECKBOXES"))
@@ -17001,7 +16989,7 @@ press ~C-u~ first).
 ;;
 ;; I use TAB and S-TAB for cycling - I don't need c and C as well.
 ;; Instead use “c” to add the ‘C’reated property.
-(setf (cdr (assoc "c" org-speed-commands)) #'my/insert-CREATED-property)
+(setf ("c" org-speed-commands) #'my/insert-CREATED-property)
 #+end_src
 
 #+begin_src emacs-lisp :tangle init-test.el
@@ -19978,7 +19966,7 @@ Context: =org-agenda-log-mode= It will display the entries that record the time,
 "
             (save-excursion
               ;; automatic color selection based on whether the theme background is black or white.
-              (let* ((colors (cl-case (alist-get 'background-mode (frame-parameters))
+              (let* ((colors (cl-case ('background-mode (frame-parameters))
                                (light
                                 (list "#F6B1C3" "#FFFF9D" "#BEEB9F" "#ADD5F7"))
                                (dark
@@ -20901,10 +20889,10 @@ Write a short story for the day.
   (let* ((json-object-type 'alist)
          (json (json-read-from-string
                 (shell-command-to-string "curl -s https://ipinfo.io/json")))
-         (loc (alist-get 'loc json)) ; loc is "LAT,LON"
+         (loc ('loc json)) ; loc is "LAT,LON"
          (parts (split-string loc ","))
-         (lat (car parts))
-         (lon (cadr parts))
+         (lat (0 parts))
+         (lon (1 parts))
          (url (format "http://api.aladhan.com/v1/timings?latitude=%s&longitude=%s&method=0"
                       lat lon)))
     (with-current-buffer (url-retrieve-synchronously url t t 5)
@@ -20913,11 +20901,11 @@ Write a short story for the day.
              (json-array-type 'list)
              (json-key-type 'symbol)
              (data (json-read))
-             (timings (alist-get 'timings (alist-get 'data data))))
+             (timings ('data 'timings data)))
         (kill-buffer) ;; clean up the temp buffer
-        (setq my/dawn-prayer-time (alist-get 'Fajr timings)
-              my/noon-prayer-time (alist-get 'Dhuhr timings)
-              my/sunset-prayer-time (alist-get 'Maghrib timings))))))
+        (setq my/dawn-prayer-time ('Fajr timings)
+              my/noon-prayer-time ('Dhuhr timings)
+              my/sunset-prayer-time ('Maghrib timings))))))
 ;;
 (defun my/update-prayer-times-task ()
   (my/get-prayer-times)
@@ -21099,10 +21087,10 @@ Returns a float between 0 and 100."
   "Calculate percentage of current (waking) day that has elapsed.
 Returns a float between 0 and 100."
   (let* ((now (decode-time))
-         ;; (current-hour (nth 2 now))
-         (current-awake-hour (- (nth 2 now) 8))
-         (current-minute (nth 1 now))
-         (current-second (nth 0 now))
+         ;; (current-hour (2 now))
+         (current-awake-hour (- (2 now) 8))
+         (current-minute (1 now))
+         (current-second (0 now))
          ;; (total-day-seconds (* 24 3600))
          (total-day-awake-seconds (* 16 3600))
          (elapsed-seconds (+ (* current-awake-hour 3600)
@@ -21678,9 +21666,9 @@ demonstrates where the week's planning assumptions drifted."
             (dolist (entry tickets)
               (let* ((ticket (car entry))
                      (title (or (my/gerrit--get-jira-title ticket)
-                                (alist-get 'heading (cdr entry))))
-                     (minutes (alist-get 'minutes (cdr entry)))
-                     (effort-minutes (or (alist-get 'effort-minutes (cdr entry)) 0))
+                                ('heading (cdr entry))))
+                     (minutes ('minutes (cdr entry)))
+                     (effort-minutes (or ('effort-minutes (cdr entry)) 0))
                      (status (my/progress-pulse--ticket-status ticket)))
                 (cl-incf total-minutes minutes)
                 (unless (zerop effort-minutes)
@@ -21915,18 +21903,18 @@ for it to complete."
              ;; Work items from the cache that weren’t clocked this week.
              ;; These are already fetched by my/agenda-work-refresh — no
              ;; additional Jira/Gerrit calls needed.
-             (all-items (or (plist-get my/agenda-work-data :items) nil))
+             (all-items (or (:items my/agenda-work-data) nil))
              (extra-items
-              (--filter (and (work-item-jira it)
-                             (not (member (work-item-jira it) clocked-ids)))
+              (--filter (and (:jira it)
+                             (not (member (:jira it) clocked-ids)))
                         all-items))
              ;; Partition by work-item status.
              (extra-wip
-              (--filter (memq (work-item-status it)
+              (--filter (memq (:status it)
                               '(wip my-needing-action reviews-needed jira-active))
                         extra-items))
              (extra-todo
-              (--filter (memq (work-item-status it)
+              (--filter (memq (:status it)
                               '(todo assigned))
                         extra-items)))
         (list :in-progress-clocked in-progress-clocked
@@ -21951,8 +21939,8 @@ the `work-item-help-echo' hint below the current line — the same
 context-sensitive advice that appears in the agenda minibuffer,
 with its three-layer face hierarchy (bold action, dimmed metadata,
 colour-coded nudge) intact.  Centering padding is stripped."
-      (when-let* ((items (plist-get my/agenda-work-data :items))
-                  (item (--first (equal ticket (work-item-jira it)) items))
+      (when-let* ((items (:items my/agenda-work-data))
+                  (item (--first (equal ticket (:jira it)) items))
                   (hint (my/weekly-review--decentre (work-item-help-echo item))))
         (insert "   -> " hint "\n")))
 
@@ -22011,7 +21999,7 @@ content (i.e., after existing children), not before them."
       (map-do (lambda (prop val) (unless (equal prop :body) (org-set-property (substring (symbol-name prop) 1) val))) props)
       (re-search-forward ":END:")
       (insert "\n\n")
-      (-when-let (body (plist-get props :body))(insert body) (insert "\n\n")))
+      (-when-let (body (:body props))(insert body) (insert "\n\n")))
 
 
 
@@ -22042,7 +22030,7 @@ currently being written.  Returns nil if no previous review exists."
               (while (re-search-forward heading-re parent-end t)
                 (push (point) positions)))
             (when (>= (length positions) 2)
-              (let* ((pos (nth 1 positions))
+              (let* ((pos (1 positions))
                      (end (save-excursion
                             (goto-char pos)
                             (org-end-of-subtree t t))))
@@ -22137,7 +22125,7 @@ reviewed a CL three Tuesdays in a row."
              ;; they may have some merged commits but are still in flight
              ;; (e.g., waiting on review, needs action).
              (active-ids
-              (when-let* ((items (plist-get my/agenda-work-data :items)))
+              (when-let* ((items (:items my/agenda-work-data)))
                 (mapcar #'work-item-jira items)))
              (n 0))
         (if (null tickets)
@@ -22145,7 +22133,7 @@ reviewed a CL three Tuesdays in a row."
           (dolist (entry tickets)
             (let* ((ticket (car entry))
                    (title (or (my/gerrit--get-jira-title ticket)
-                              (alist-get 'heading (cdr entry))))
+                              ('heading (cdr entry))))
                    (status (my/progress-pulse--ticket-status ticket)))
               (when (and (string= status "MERGED")
                          (member ticket git-ticket-ids)
@@ -22176,10 +22164,10 @@ are excluded — they belong in Impediments, not here."
       (my/org-insert-heading :uncle "🔨 In Progress" :DESCRIPTION "actively working on")
       (let ((n 0))
         ;; Clocked and actively in progress
-        (dolist (entry (plist-get ticket-data :in-progress-clocked))
+        (dolist (entry (:in-progress-clocked ticket-data))
           (let* ((ticket (car entry))
                  (title (or (my/gerrit--get-jira-title ticket)
-                            (alist-get 'heading (cdr entry))))
+                            ('heading (cdr entry))))
                  (status (my/progress-pulse--ticket-status ticket)))
             (unless (member ticket blocked-ids)
               (insert (format "%d. %s %s — %s\n"
@@ -22192,8 +22180,8 @@ are excluded — they belong in Impediments, not here."
                 (my/weekly-review--insert-action-hint ticket)))))
         ;; From work-item cache, not clocked, but actively in progress.
         (let ((counter (cons n nil))
-              (extra (--filter (not (member (work-item-jira it) blocked-ids))
-                               (plist-get ticket-data :extra-wip))))
+              (extra (--filter (not (member (:jira it) blocked-ids))
+                               (:extra-wip ticket-data))))
           (my/weekly-review--insert-numbered-items extra counter)
           (setq n (car counter)))
         (when (= n 0)
@@ -22223,7 +22211,7 @@ they are drowning."
       ;; Collect unique reviewers from the impediment items.
       (let ((user-names (make-hash-table :test 'equal)))
         (dolist (item items)
-          (dolist (pair (work-item-reviewer-users item))
+          (dolist (pair (:reviewer-users item))
             (when (cdr pair)
               (puthash (cdr pair) (car pair) user-names))))
         (when (> (hash-table-count user-names) 0)
@@ -22238,13 +22226,13 @@ they are drowning."
                       (count (length results)))
                  (push (list full-name uname count) entries)))
              user-names)
-            (setq entries (--sort (> (nth 2 it) (nth 2 other)) entries))
+            (setq entries (--sort (> (2 it) (2 other)) entries))
             (let ((parts
                    (-map
                     (lambda (e)
-                      (let* ((name  (car (s-split " " (nth 0 e))))
-                             (uname (nth 1 e))
-                             (count (nth 2 e))
+                      (let* ((name  (car (s-split " " (0 e))))
+                             (uname (1 e))
+                             (count (2 e))
                              (url (format
                                    "%s/q/attention:%s+status:open+-is:abandoned"
                                    my\gerrit-base-url uname)))
@@ -22259,10 +22247,10 @@ they are drowning."
       "Insert the Impediments section: outstanding reviews sorted by age."
       (my/org-insert-heading :uncle "🚧 Impediments" :DESCRIPTION "who must do what by when?")
       (let ((please-review
-             (when-let* ((items (plist-get my/agenda-work-data :items)))
-               (--sort (< (or (work-item-age it) most-positive-fixnum)
-                          (or (work-item-age other) most-positive-fixnum))
-                       (--filter (eq 'please-review (work-item-status it))
+             (when-let* ((items (:items my/agenda-work-data)))
+               (--sort (< (or (:age it) most-positive-fixnum)
+                          (or (:age other) most-positive-fixnum))
+                       (--filter (eq 'please-review (:status it))
                                  items)))))
         (if (null please-review)
             (insert "# - /(none — no outstanding reviews!)/\n")
@@ -22287,10 +22275,10 @@ Renders TODO-status tickets from clock data and Jira."
       (my/org-insert-heading :uncle "📆 Planned" :DESCRIPTION "Aim for ~3 Jiras, since rework requires time!")
       (insert "\n # *Tasks marked Urgent from Jira.*\n")
       (let ((pn 0))
-        (dolist (entry (plist-get ticket-data :todo-clocked))
+        (dolist (entry (:todo-clocked ticket-data))
           (let* ((ticket (car entry))
                  (title (or (my/gerrit--get-jira-title ticket)
-                            (alist-get 'heading (cdr entry)))))
+                            ('heading (cdr entry)))))
             (insert (format "%d. %s %s\n"
                             (cl-incf pn)
                             (if ticket
@@ -22301,7 +22289,7 @@ Renders TODO-status tickets from clock data and Jira."
               (my/weekly-review--insert-action-hint ticket))))
         (let ((counter (cons pn nil)))
           (my/weekly-review--insert-numbered-items
-           (plist-get ticket-data :extra-todo) counter)
+           (:extra-todo ticket-data) counter)
           (setq pn (car counter)))
 
         (my/org-insert-heading :child "Notes \t\t\t:private:"
@@ -22319,8 +22307,8 @@ Renders TODO-status tickets from clock data and Jira."
         (insert "\n*WIP agenda items — open Gerrit changes I should resume.*\n")
         (let ((counter (cons pn nil)))
           (my/weekly-review--insert-numbered-items
-           (when-let* ((items (plist-get my/agenda-work-data :items)))
-             (--filter (eq 'wip (work-item-status it)) items))
+           (when-let* ((items (:items my/agenda-work-data)))
+             (--filter (eq 'wip (:status it)) items))
            counter)
           (setq pn (car counter)))
         (when (= pn 0)
@@ -22360,9 +22348,9 @@ outstanding reviews."
              ;; Collect ticket IDs that will appear in Impediments,
              ;; so In Progress can exclude them (blocked ≠ active).
              (blocked-ids
-              (when-let* ((items (plist-get my/agenda-work-data :items)))
+              (when-let* ((items (:items my/agenda-work-data)))
                 (mapcar #'work-item-jira
-                        (--filter (eq 'please-review (work-item-status it))
+                        (--filter (eq 'please-review (:status it))
                                   items)))))
         (my/weekly-review--insert-in-progress ticket-data blocked-ids)
         (my/weekly-review--insert-impediments)
@@ -23928,8 +23916,8 @@ ISO date strings compare lexicographically, so a simple
                             (existing (assoc ticket result)))
                        (if existing
                            (progn
-                             (cl-incf (alist-get 'minutes (cdr existing)) minutes)
-                             (push clock-line (alist-get 'entries (cdr existing))))
+                             (cl-incf ('minutes (cdr existing)) minutes)
+                             (push clock-line ('entries (cdr existing))))
                          ;; First encounter: read ticket-level Effort
                          ;; from the Jira ancestor heading (point is
                          ;; already there after the ancestor-walk above).
@@ -23981,9 +23969,9 @@ provides \\[my/end-of-day--publish] to publish all comments to Jira."
         (dolist (entry tickets)
           (let* ((ticket (car entry))
                  (info (cdr entry))
-                 (heading (alist-get 'heading info))
-                 (minutes (alist-get 'minutes info))
-                 (entries (alist-get 'entries info))
+                 (heading ('heading info))
+                 (minutes ('minutes info))
+                 (entries ('entries info))
                  (title (or (my/gerrit--get-jira-title ticket) heading))
                  (hours (/ minutes 60))
                  (mins (% minutes 60)))
@@ -24254,9 +24242,9 @@ Cross-references `my/agenda-work-data' for open changes, then
 falls back to git log: tickets with commits are MERGED, tickets
 with neither open changes nor commits are CLOCKED (e.g., syncs,
 meetings, umbrella epics)."
-  (if-let* ((items (plist-get my/agenda-work-data :items))
-            (item (--first (equal ticket (work-item-jira it)) items)))
-      (pcase (work-item-status item)
+  (if-let* ((items (:items my/agenda-work-data))
+            (item (--first (equal ticket (:jira it)) items)))
+      (pcase (:status item)
         ('wip             "IN PROGRESS")
         ('please-review   "IN REVIEW")
         ('reviews-needed  "REVIEWS NEEDED")
@@ -24307,8 +24295,8 @@ Offers one-click copy-as-slack / copy-as-confluence / mark-shared."
           (let* ((ticket (car entry))
                  (info (cdr entry))
                  (title (or (my/gerrit--get-jira-title ticket)
-                            (alist-get 'heading info)))
-                 (minutes (alist-get 'minutes info))
+                            ('heading info)))
+                 (minutes ('minutes info))
                  (hours (/ minutes 60))
                  (mins (% minutes 60))
                  (status (my/progress-pulse--ticket-status ticket)))
@@ -24321,9 +24309,9 @@ Offers one-click copy-as-slack / copy-as-confluence / mark-shared."
                         (% total-minutes 60)
                         (length tickets)))
         ;; Review activity (count items where we are reviewer, not author)
-        (when-let* ((items (plist-get my/agenda-work-data :items))
+        (when-let* ((items (:items my/agenda-work-data))
                     (reviews (--filter
-                              (eq 'reviews-needed (work-item-status it))
+                              (eq 'reviews-needed (:status it))
                               items)))
           (insert (format "\n** Review queue: %d changes awaiting my review\n"
                           (length reviews))))
@@ -24344,13 +24332,13 @@ Offers one-click copy-as-slack / copy-as-confluence / mark-shared."
   "Insert please-review work items at MARKER in the standup buffer.
 Highlights stale items (>5 days old) so they're front-of-mind
 during the Monday standup after the weekly review."
-  (when-let* ((items (plist-get my/agenda-work-data :items))
+  (when-let* ((items (:items my/agenda-work-data))
               (please-review (--filter
-                              (eq 'please-review (work-item-status it))
+                              (eq 'please-review (:status it))
                               items)))
     (let ((sorted (--sort
-                   (< (or (work-item-age it) most-positive-fixnum)
-                      (or (work-item-age other) most-positive-fixnum))
+                   (< (or (:age it) most-positive-fixnum)
+                      (or (:age other) most-positive-fixnum))
                    please-review)))
       (save-excursion
         (with-current-buffer (marker-buffer marker)
@@ -24358,9 +24346,9 @@ during the Monday standup after the weekly review."
            (goto-char marker)
            (insert "*Outstanding reviews (poke these people!):*\n")
            (dolist (item sorted)
-             (let* ((age-str (work-item--format-age (work-item-age item)))
-                    (stale (and (work-item-age item)
-                                (> (- (float-time) (work-item-age item))
+             (let* ((age-str (work-item--format-age (:age item)))
+                    (stale (and (:age item)
+                                (> (- (float-time) (:age item))
                                    (* 5 86400))))
                     (prefix (if stale "🔴 " "- "))
                     (line (work-item-to-string item)))
@@ -24997,8 +24985,8 @@ org-agenda-custom-commands
             "\\([0-9]+:[0-9]+\\)\\(-[0-9]+:[0-9]+\\)" nil t)
       (let* ((t1 (parse-time-string (match-string 1)))
              (t2 (parse-time-string (substring (match-string 2) 1)))
-             (t1 (+ (* (nth 2 t1) 60) (nth 1 t1)))
-             (t2 (+ (* (nth 2 t2) 60) (nth 1 t2)))
+             (t1 (+ (* (2 t1) 60) (1 t1)))
+             (t2 (+ (* (2 t2) 60) (1 t2)))
              (d  (- t2 t1)))
 
         (set-text-properties (match-beginning 1) (match-end 1)
@@ -25160,21 +25148,21 @@ org-agenda-custom-commands
      (t
       (agent-shell))))))
 
-;; I dislike the “Claude Code>” prompt, it's kinda ugly, so my above command calls on this config:
+;; I dislike the "Claude Code>" prompt, it's kinda ugly, so my above command calls on this config:
 ;; Wrapped in with-eval-after-load to avoid triggering agent-shell autoload at startup.
 (with-eval-after-load 'agent-shell
-  (-let [my/custom-claude-prompt “λ🤖λ “]
+  (-let [my/custom-claude-prompt "λ🤖λ "]
     (setq my/custom-claude-config
           (agent-shell-make-agent-config
            :identifier 'claude-code
-           :mode-line-name “Claude Code”
-           :buffer-name “Claude Code”
+           :mode-line-name "Claude Code"
+           :buffer-name "Claude Code"
            :shell-prompt my/custom-claude-prompt
            :shell-prompt-regexp my/custom-claude-prompt
-           :icon-name “anthropic.png”
+           :icon-name "anthropic.png"
            :client-maker (lambda (buffer)
                            (agent-shell-anthropic-make-claude-client :buffer buffer))
-           :install-instructions “See https://github.com/zed-industries/claude-agent-acp for installation.”))))
+           :install-instructions "See https://github.com/zed-industries/claude-agent-acp for installation."))))
 
 ;; The names of the AI buffers seem to be tied to the AI processes, so we can't just rename buffers.
 ;; However, after any interaction, AI buffer headers are updated, so we hook into that mechanism to
@@ -25193,7 +25181,7 @@ The label is shown in the header and the session switch menu."
 (with-eval-after-load 'agent-shell
   (advice-add 'agent-shell--make-header-model :filter-return
               (lambda (model) (when my/claude-session-label
-                                (setf (alist-get :buffer-name model)
+                                (setf (:buffer-name model)
                                       (format "Claude Code: %s" my/claude-session-label))) model)))
 #+end_src
 *** Copy AI Text As Org
@@ -25473,7 +25461,7 @@ Authorization: ⟨user⟩:⟨password⟩
    (oset request headers
      (cons
        (cons "Authorization"
-         (concat "Basic " (base64-encode-string (cdr (assoc "Authorization" (oref request headers))))))
+         (concat "Basic " (base64-encode-string ("Authorization" (oref request headers))))))
        ;; Note: I keep all existing raw non-base-64 text so that when I export to curl (and add “-k”)
        ;; the user:password pair stays there readably not encoded.
      (oref request headers)))

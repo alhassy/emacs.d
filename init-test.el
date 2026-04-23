@@ -121,7 +121,7 @@ this fixture axes that boilerplate.  The buffer object is bound to
 Lowercases the first initial and surname: \"Grace Hopper\" → \"ghopper\"."
   (let ((parts (s-split " " (s-trim full-name))))
     (downcase (concat (substring (car parts) 0 1)
-                      (car (last parts))))))
+                      (-1 parts)))))
 
 (defun my/as-gerrit-patch (spec)
   "Parse a human-readable SPEC string into a Gerrit change alist.
@@ -286,8 +286,8 @@ The change `number' is auto-assigned from the position index
 (0, 1, 2, ...) when the spec omits a `Change-Id:' line —
 removing boilerplate from tests."
   (--map-indexed (let ((c (my/as-gerrit-patch it)))
-                   (unless (alist-get 'number c)
-                     (setf (alist-get 'number c) it-index))
+                   (unless ('number c)
+                     (setf ('number c) it-index))
                    c)
                  specs))
 
@@ -323,16 +323,16 @@ Changes carrying `(urgent . t)' propagate the flag to their work-item."
               (work-items-from-stack stack kind-override)
             (let* ((me-username (my/test--name-to-username "Me"))
                    (mine (-filter (lambda (c)
-                                    (equal "Me" (alist-get 'name (alist-get 'owner c))))
+                                    (equal "Me" ('owner 'name c)))
                                   stack))
                    (others (-remove (lambda (c)
-                                      (equal "Me" (alist-get 'name (alist-get 'owner c))))
+                                      (equal "Me" ('owner 'name c)))
                                     stack))
                    (my-kind (when mine
-                              (let ((tip (car (last mine))))
+                              (let ((tip (-1 mine)))
                                 (cond
-                                 ((alist-get 'wip tip)       'wip)
-                                 ((alist-get 'attention tip)  'my-needing-action)
+                                 (('wip tip)       'wip)
+                                 (('attention tip)  'my-needing-action)
                                  (t                           'please-review))))))
               (append
                (when mine (work-items-from-stack mine my-kind))
@@ -341,14 +341,14 @@ Changes carrying `(urgent . t)' propagate the flag to their work-item."
          (urgent-tickets
           (let ((ht (make-hash-table :test 'equal)))
             (dolist (c stack)
-              (when (alist-get 'urgent c)
+              (when ('urgent c)
                 (dolist (tid (my/gerrit--extract-jira-tickets c))
                   (puthash tid t ht))))
             ht)))
     (dolist (it items)
-      (when (and (work-item-jira it)
-                 (gethash (work-item-jira it) urgent-tickets))
-        (setf (work-item-urgent it) t)))
+      (when (and (:jira it)
+                 (gethash (:jira it) urgent-tickets))
+        (setf (:urgent it) t)))
     items))
 
 ;; ──────────────────────────────────────────────────────────────────
