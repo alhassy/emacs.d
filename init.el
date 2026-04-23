@@ -2355,7 +2355,7 @@ task on today's plate."
 (add-to-list
  'org-agenda-finalize-hook
  (defun my/agenda--focus-header-button ()
-   "Append a [Copy to Standup] button to the focus header."
+   "Append a [Copy to Standup] button and a keybinding hint to the focus header."
    (let ((inhibit-read-only t))
      (save-excursion
        (goto-char (point-min))
@@ -2369,7 +2369,10 @@ task on today's plate."
             (browse-url my\standups-channel-url))
           :foreground "orange"
           :background nil
-          :echo "Generate standup from today's schedule, copy to clipboard, and open #standups"))))))
+          :echo "Generate standup from today's schedule, copy to clipboard, and open #standups")
+         (insert "\n"
+                 (propertize "Move items: M-up/M-down    Reschedule: C-c C-s"
+                             'face '(:height 0.8 :foreground "gray50"))))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
