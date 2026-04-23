@@ -2012,7 +2012,8 @@ fonts (•̀ᴗ•́)و"
           ;; Stuff I'd like to do today; but do I actually have the time to do so?  ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
-           '(and (scheduled :on today) (ts :with-time nil))
+           '(and (scheduled :on today)
+                 (not (scheduled :on today :with-time t)))
            ((org-ql-block-header "😵‍💫 ﴾ Any time ≈ No time﴿ Scheduled today, but not time-blocked  ⟨press S to time-block into the next free hour⟩")))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2370,9 +2371,10 @@ task on today's plate."
           :foreground "orange"
           :background nil
           :echo "Generate standup from today's schedule, copy to clipboard, and open #standups")
-         (insert "\n"
-                 (propertize "Move items: M-up/M-down    Reschedule: C-c C-s"
-                             'face '(:height 0.8 :foreground "gray50"))))))))
+         (when my/agenda--skip-fold-and-focus
+           (insert "\n"
+                   (propertize "Move items: M-up/M-down    Reschedule: C-c C-s"
+                               'face '(:height 0.8 :foreground "gray50")))))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4711,6 +4713,162 @@ into the Org Inbox via the :before advice on `org-agenda-switch-to'."
 
 (add-hook 'org-agenda-finalize-hook #'my/agenda-insert-gcal-section)
 
+;; ── Effort → end-time in agenda lines ────────────────────────────────
+;;
+;; When a scheduled entry has a single start time (no range) and an
+;; Effort property, rewrite the displayed time to "start-end" so the
+;; agenda reads like a real calendar.  E.g., "9:30 AM" with Effort
+;; 2:00 becomes "9:30 AM-11:30 AM".
+
+(defun my/agenda--effort-end-time (time-str effort-str)
+  "Given TIME-STR (\"H:MM AM/PM\") and EFFORT-STR (\"H:MM\"), return end time string.
+Returns nil on parse failure."
+  (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\) \\(AM\\|PM\\)\\'" time-str)
+    (let ((h (string-to-number (match-string 1 time-str)))
+          (m (string-to-number (match-string 2 time-str)))
+          (ampm (match-string 3 time-str)))
+      (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\)\\'" effort-str)
+        (let* ((eh (string-to-number (match-string 1 effort-str)))
+               (em (string-to-number (match-string 2 effort-str)))
+               (h24 (cond ((and (string= ampm "AM") (= h 12)) 0)
+                          ((string= ampm "AM") h)
+                          ((= h 12) 12)
+                          (t (+ h 12))))
+               (end-mins (+ (* h24 60) m (* eh 60) em))
+               (end-h24 (% (/ end-mins 60) 24))
+               (end-m (% end-mins 60))
+               (end-ampm (if (< end-h24 12) "AM" "PM"))
+               (end-h12 (let ((h (% end-h24 12))) (if (= h 0) 12 h))))
+          (format "%d:%02d %s" end-h12 end-m end-ampm))))))
+
+(add-hook
+ 'org-agenda-finalize-hook
+ (defun my/agenda--inject-effort-end-times ()
+   "Rewrite single-time agenda entries to show start-end using Effort."
+   (when (string-prefix-p "*Org Agenda" (buffer-name))
+     (let ((inhibit-read-only t))
+       (save-excursion
+         (goto-char (point-min))
+         (while (re-search-forward
+                 "\\( ○ +\\)\\([0-9]+:[0-9]+ [AP]M\\)\\( +\\)"
+                 nil t)
+           ;; Skip lines that already have a range (next char after
+           ;; our match would be "-" if it were "9:30 AM-10:30 AM").
+           ;; The third group captured trailing spaces — if the
+           ;; original text had a "-" it would not be spaces.
+           (let* ((prefix-end (match-end 1))
+                  (time-str (match-string 2))
+                  (after-time (match-end 2)))
+             ;; Only proceed if the char right after the time is a space
+             ;; (not "-", which would mean it's already a range).
+             (when (and (< after-time (point-max))
+                        (not (eq (char-after after-time) ?-)))
+               ;; Read the Effort from the source heading.
+               (when-let* ((marker (get-text-property (line-beginning-position)
+                                                      'org-hd-marker))
+                           (effort (org-entry-get marker "Effort"))
+                           (end-time (my/agenda--effort-end-time time-str effort)))
+                 (goto-char after-time)
+                 (insert "-" end-time)))))))))
+ 10)  ;; depth 10 → after content insertion, before fold-and-focus (90)
+
+;; ── Overlap detection in agenda ────────────────────────────────────────
+;;
+;; After effort end-times are injected, walk the buffer and collect
+;; every line that carries a time range.  Detect pairwise overlaps
+;; and paint the offending lines red with a help-echo nudge.
+
+(defun my/agenda--parse-12h-time (str)
+  "Parse \"H:MM AM\" or \"H:MM PM\" into minutes-from-midnight, or nil."
+  (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\) \\(AM\\|PM\\)\\'" str)
+    (let ((h (string-to-number (match-string 1 str)))
+          (m (string-to-number (match-string 2 str)))
+          (pm (string= "PM" (match-string 3 str))))
+      (+ (* 60 (cond ((and (not pm) (= h 12)) 0)
+                      ((not pm) h)
+                      ((= h 12) 12)
+                      (t (+ h 12))))
+         m))))
+
+(defun my/agenda--parse-24h-time (str)
+  "Parse \"HH:MM\" (24-hour) into minutes-from-midnight, or nil."
+  (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\)\\'" str)
+    (+ (* 60 (string-to-number (match-string 1 str)))
+       (string-to-number (match-string 2 str)))))
+
+(defun my/agenda--line-time-interval ()
+  "Extract (START-MINS . END-MINS) from the current agenda line, or nil.
+Handles two formats:
+  - Org lines after effort injection: \"9:30 AM-11:30 AM\" (ASCII hyphen)
+  - Gcal lines: \"09:30\342\200\22311:30\" (en-dash)"
+  (let ((text (buffer-substring-no-properties
+               (line-beginning-position) (line-end-position))))
+    (cond
+     ;; 12-hour range: "H:MM AM-H:MM PM"
+     ((string-match
+       "\\([0-9]+:[0-9]+ [AP]M\\)-\\([0-9]+:[0-9]+ [AP]M\\)" text)
+      (let ((s (my/agenda--parse-12h-time (match-string 1 text)))
+            (e (my/agenda--parse-12h-time (match-string 2 text))))
+        (when (and s e) (cons s e))))
+     ;; 24-hour range with en-dash: "HH:MM\342\200\223HH:MM"
+     ((string-match
+       "\\([0-9]+:[0-9]+\\)\342\200\223\\([0-9]+:[0-9]+\\)" text)
+      (let ((s (my/agenda--parse-24h-time (match-string 1 text)))
+            (e (my/agenda--parse-24h-time (match-string 2 text))))
+        (when (and s e) (cons s e)))))))
+
+(defun my/agenda--intervals-overlap-p (a b)
+  "Non-nil when intervals A and B overlap (both are (START . END) in minutes)."
+  (and (< (car a) (cdr b))
+       (< (car b) (cdr a))))
+
+(add-hook
+ 'org-agenda-finalize-hook
+ (defun my/agenda--highlight-overlaps ()
+   "Highlight overlapping time-blocked agenda entries in red.
+Each overlapping line gets a `help-echo' explaining the conflict."
+   (when (string-prefix-p "*Org Agenda" (buffer-name))
+     (let ((inhibit-read-only t)
+           entries)
+       ;; 1. Collect all lines with time intervals.
+       (save-excursion
+         (goto-char (point-min))
+         (while (not (eobp))
+           (when-let* ((iv (my/agenda--line-time-interval)))
+             (push (list :start (car iv)
+                         :end   (cdr iv)
+                         :lbeg  (line-beginning-position)
+                         :lend  (line-end-position)
+                         :text  (string-trim
+                                 (buffer-substring-no-properties
+                                  (line-beginning-position)
+                                  (line-end-position))))
+                   entries))
+           (forward-line 1)))
+       (setq entries (nreverse entries))
+       ;; 2. Mark which entries overlap with at least one other.
+       (let ((n (length entries))
+             overlap-set)
+         (dotimes (i n)
+           (dotimes (j n)
+             (when (and (/= i j)
+                        (my/agenda--intervals-overlap-p
+                         (cons (plist-get (nth i entries) :start)
+                               (plist-get (nth i entries) :end))
+                         (cons (plist-get (nth j entries) :start)
+                               (plist-get (nth j entries) :end))))
+               (cl-pushnew i overlap-set))))
+         ;; 3. Apply face + help-echo to overlapping lines.
+         (dolist (idx overlap-set)
+           (let* ((entry (nth idx entries))
+                  (beg (plist-get entry :lbeg))
+                  (end (plist-get entry :lend)))
+             (add-face-text-property beg end '(:foreground "red"))
+             (put-text-property
+              beg end 'help-echo
+              "Overlap detected! Reschedule with C-c C-s to resolve the conflict.")))))))
+ 20)  ;; depth 20 → after effort injection (10), before fold-and-focus (90)
+
 ;; Display help-echo text properties in the minibuffer when the cursor
 ;; idles on a work-item line.  This is what makes the agenda an *active*
 ;; dashboard — each line tells you what to do, not just what exists.
@@ -4747,7 +4905,7 @@ without reflecting on the last one."
       (widen)
       (goto-char (point-min))
       (unless (re-search-forward
-               "^\\*\\* .*Daily Standup Planning" nil t)
+               "^\\*+ .*Daily Standup Planning" nil t)
         (error "Could not find '** ... Daily Standup Planning' heading"))
       ;; 2. Clock in at the ** Daily Standup Planning heading
       (beginning-of-line)
@@ -4981,31 +5139,75 @@ checks pass, returns a plist with:
                  "If so, surface that in the standup so the team knows.\n"
                  "Otherwise, maybe you underestimated effort or have too many appointments")
          deep-str))
-    ;; 5. Is standup planning scheduled?
-    (unless (cl-some (lambda (h) (string-match-p "Daily Standup Planning" h))
-                     all-headings)
-      (user-error (concat "No standup planning scheduled today!\n\n"
-                          "Actually take into account planning time — e.g. 1 hour. "
-                          "Respond to emails, update status, reply to Slack, "
-                          "check on waiting tasks. Admin is part of the job, "
-                          "a critical part! Otherwise you could go fast, "
-                          "but go fast in the wrong direction.")))
-    ;; 6. Is lunch & prayer scheduled?
-    (unless (cl-some (lambda (h) (string-match-p "Lunch.*Prayer\\|Prayer.*Lunch" h))
-                     all-headings)
-      (user-error "No Lunch & Prayer scheduled today! You are a human, not a machine."))
-    ;; 7. Any code reviews scheduled?  No dialog, no halt — just
-    ;;    surface the flag; the render site appends an @everyone offer
-    ;;    to the standup body automatically (see the `:missing-reviews-p'
-    ;;    branch in `my/standup-from-schedule').
-    (let ((missing-reviews-p
-           (not (cl-some (lambda (item)
-                           (string-match-p "review.*latest" (downcase (car item))))
-                         public-items))))
-      (list :missing-reviews-p missing-reviews-p
-            :deep-str deep-str
-            :total-str total-str
-            :scoped-items scoped-items)))))
+      ;; COMMENTED OUT: I just scheduled this as a daily recurring event
+      ;; 5. Is standup planning scheduled?
+      ;; (unless (cl-some (lambda (h) (string-match-p "Daily Standup Planning" h))
+      ;;                  all-headings)
+      ;;   (user-error (concat "No standup planning scheduled today!\n\n"
+      ;;                       "Actually take into account planning time — e.g. 1 hour. "
+      ;;                       "Respond to emails, update status, reply to Slack, "
+      ;;                       "check on waiting tasks. Admin is part of the job, "
+      ;;                       "a critical part! Otherwise you could go fast, "
+      ;;                       "but go fast in the wrong direction.")))
+      ;; 
+      ;; 6. Is lunch & prayer scheduled?
+      (unless (cl-some (lambda (h) (string-match-p "Lunch.*Prayer\\|Prayer.*Lunch" h))
+                       all-headings)
+        (user-error "No Lunch & Prayer scheduled today! You are a human, not a machine."))
+      ;; 7. No overlapping timed items.
+      ;; When SCHEDULED carries an explicit range (e.g. 13:00-14:30),
+      ;; honour the range end; otherwise fall back to start + Effort.
+      (let* ((today (format-time-string "%Y-%m-%d"))
+             (timed nil))
+        (dolist (item all-items)
+          (let* ((marker (nth 3 item))
+                 (raw (and marker (org-entry-get marker "SCHEDULED"))))
+            (when (and raw
+                       (string-match-p (regexp-quote today) raw)
+                       (string-match-p "[0-9]+:[0-9]+" raw))
+              (let* ((time  (org-time-string-to-time raw))
+                     (decoded (decode-time time))
+                     (h (nth 2 decoded))
+                     (m (nth 1 decoded))
+                     (start (+ (* 60 h) m))
+                     (end
+                      (if (string-match
+                           "\\([0-9]+:[0-9]+\\)-\\([0-9]+:[0-9]+\\)" raw)
+                          ;; Explicit range — parse the end time.
+                          (let* ((end-str (match-string 2 raw))
+                                 (parts (mapcar #'string-to-number
+                                                (split-string end-str ":"))))
+                            (+ (* 60 (car parts)) (cadr parts)))
+                        ;; No range — fall back to start + Effort.
+                        (+ start (my/agenda--effort-minutes
+                                  (org-entry-get marker "Effort"))))))
+                (push (list :heading (car item)
+                            :start start :end end)
+                      timed)))))
+        (setq timed (sort timed (lambda (a b)
+                                  (< (plist-get a :start)
+                                     (plist-get b :start)))))
+        (let (conflicts)
+          (cl-loop for (a . rest) on timed do
+                   (dolist (b rest)
+                     (when (< (plist-get b :start) (plist-get a :end))
+                       (cl-pushnew (plist-get a :heading) conflicts :test #'equal)
+                       (cl-pushnew (plist-get b :heading) conflicts :test #'equal))))
+          (when conflicts
+            (user-error "Schedule has overlapping items! Reschedule with C-c C-s:\n  %s"
+                        (string-join (nreverse conflicts) "\n  ")))))
+      ;; 8. Any code reviews scheduled?  No dialog, no halt — just
+      ;;    surface the flag; the render site appends an @everyone offer
+      ;;    to the standup body automatically (see the `:missing-reviews-p'
+      ;;    branch in `my/standup-from-schedule').
+      (let ((missing-reviews-p
+             (not (cl-some (lambda (item)
+                             (string-match-p "review.*latest" (downcase (car item))))
+                           public-items))))
+        (list :missing-reviews-p missing-reviews-p
+              :deep-str deep-str
+              :total-str total-str
+              :scoped-items scoped-items)))))
 
 (defun my/standup-from-schedule--gcal-events-range (start-date end-date)
   "Fetch Google Calendar events between START-DATE and END-DATE via gcalcli.
@@ -5335,17 +5537,18 @@ returns a plist with :deep-str and :total-str."
          (concat "%sOnly %s of deep work? Reviews and rework will eat time; "
                  "this day needs at least 3h of deep work scheduled to be doable.")
          tag deep-str))
+      ;; COMMENTED OUT: I just have this scheduled as a recurring event
       ;; 5. Is standup planning scheduled?
-      (unless (cl-some (lambda (h) (string-match-p "Daily Standup Planning" h))
-                       all-headings)
-        (user-error
-         (concat "%sNo standup planning scheduled!\n\n"
-                 "Actually take into account planning time — e.g. 1 hour. "
-                 "Respond to emails, update status, reply to Slack, "
-                 "check on waiting tasks. Admin is part of the job, "
-                 "a critical part! Otherwise you could go fast, "
-                 "but go fast in the wrong direction.")
-         tag))
+      ;; (unless (cl-some (lambda (h) (string-match-p "Daily Standup Planning" h))
+      ;;                  all-headings)
+      ;;   (user-error
+      ;;    (concat "%sNo standup planning scheduled!\n\n"
+      ;;            "Actually take into account planning time — e.g. 1 hour. "
+      ;;            "Respond to emails, update status, reply to Slack, "
+      ;;            "check on waiting tasks. Admin is part of the job, "
+      ;;            "a critical part! Otherwise you could go fast, "
+      ;;            "but go fast in the wrong direction.")
+      ;;    tag))
       ;; 6. Is lunch & prayer scheduled?
       (unless (cl-some (lambda (h) (string-match-p "Lunch.*Prayer\\|Prayer.*Lunch" h))
                        all-headings)
@@ -5570,7 +5773,7 @@ events not reflected in org-agenda."
         (widen)
         (goto-char (point-min))
         (unless (re-search-forward
-                 "^\\*\\* .*Daily Standup Planning" nil t)
+                 "^\\*+ .*Daily Standup Planning" nil t)
           (error "Could not find '** ... Daily Standup Planning' heading"))
         (org-back-to-heading t)
         ;; Axe existing entry for today, if present.
@@ -8287,7 +8490,7 @@ exists, it is replaced with the (potentially updated) content."
           (widen)
           (goto-char (point-min))
           (unless (re-search-forward
-                   "^\\*\\* .*Daily Standup Planning" nil t)
+                   "^\\*+ .*Daily Standup Planning" nil t)
             (error "Could not find '** ... Daily Standup Planning' heading"))
           (org-narrow-to-subtree)
           (org-end-of-meta-data t)
