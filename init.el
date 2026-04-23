@@ -2004,7 +2004,8 @@ fonts (•̀ᴗ•́)و"
              (todo "STARTED")
              (level '> 1)
              (not (tags-local "Someday" "Top" "SocialCredit"))
-             (not (scheduled :from today)))
+             (not (scheduled :from today))
+             (not (and (tags "Work") (not (tags "Personal")))))
            ((org-ql-block-header "🤡 Please 𝒓𝒆𝒅𝒖𝒄𝒆 the number of (unscheduled) open loops")))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2113,7 +2114,8 @@ fonts (•̀ᴗ•́)و"
           ;; and see if it's been over a week.						   ;;
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (org-ql-block
-           '(todo "WAITING")
+           '(and (todo "WAITING")
+                 (not (and (tags "Work") (not (tags "Personal")))))
            ((org-ql-block-header "💢 I've been waiting on these [for over a week?], send reminder!")))
 
           ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
