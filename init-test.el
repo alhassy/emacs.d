@@ -5,7 +5,7 @@
 ;; Provides: `deftestfixture', `deftest', `define-relation',
 ;; `define-relation--show-diff', the `deftestfixture--registry',
 ;; and the `eval-last-sexp' advice for eval-and-run / C-u update.
-(load-file "~/snap/snap.el")
+(require 'snap)
 
 ;; ── Domain-specific fixtures (not in snap.el) ──────────────────────
 

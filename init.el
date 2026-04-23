@@ -107,6 +107,17 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 ;; Avoid garbage collection during Emacs Startup phase
 (use-package gcmh :config (gcmh-mode 1)) ;; “the Garbage Collector Magic Hack”
 
+;; ── Shared test infrastructure ────────────────────────────────────
+(use-package snap
+  :vc (:url "https://github.com/alhassy/snap"))
+
+;; ── Clojure-style accessor syntax ────────────────────────────────
+;; (:key plist), (N seq), ('sym alist), (“str” alist), (:field struct).
+;; Must load before any code that uses the new syntax.
+(use-package easy-access
+  :vc (:url "https://github.com/alhassy/easy-access")
+  :config (easy-access-mode 1))
+
 (use-package auto-package-update
   :custom ((auto-package-update-delete-old-versions t) ;; Delete residual old versions
            (auto-package-update-hide-results t)) ;; Do not bother me when updates have taken place.
