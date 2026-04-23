@@ -4472,10 +4472,53 @@ the new heading's marker and returns that marker."
            (setf (work-item-org-tree item) marker)
            marker))))))
 
+(defun my/agenda--create-gcal-org-tree (event)
+  "Create a TODO heading for gcal EVENT as the first child of `* Work'.
+Mirrors `my/agenda--create-work-org-tree' but populates Effort,
+SCHEDULED, LOCATION and LINK from the event plist.  Returns a
+marker to the new heading."
+  (let* ((title (or (plist-get event :title) "(untitled calendar event)"))
+         (date  (plist-get event :date))
+         (start (plist-get event :start))
+         (end   (plist-get event :end))
+         (effort (my/standup-from-schedule--effort-from-times start end))
+         (location (plist-get event :location))
+         (conference (plist-get event :conference))
+         (url (plist-get event :url))
+         (day-name (when date
+                     (format-time-string
+                      "%a" (date-to-time (concat date "T00:00:00")))))
+         (sched-stamp (cond
+                       ((and date start) (format "<%s %s %s>" date day-name start))
+                       (date             (format "<%s %s>" date day-name))
+                       (t                nil)))
+         (buf (find-file-noselect org-default-notes-file)))
+    (with-current-buffer buf
+      (org-with-wide-buffer
+       (goto-char (point-min))
+       (unless (re-search-forward "^\\* Work\\b" nil t)
+         (error "No `* Work' heading in %s" org-default-notes-file))
+       (org-back-to-heading t)
+       (outline-next-heading)
+       (insert "** TODO " title "\n")
+       (when sched-stamp
+         (insert "   SCHEDULED: " sched-stamp "\n"))
+       (insert "   :PROPERTIES:\n"
+               "   :CREATED:  "
+               (format-time-string "[%Y-%m-%d %a %H:%M]") "\n")
+       (when effort
+         (insert "   :Effort:   " effort "\n"))
+       (when location
+         (insert "   :LOCATION: " location "\n"))
+       (when (or conference url)
+         (insert "   :LINK:     " (or conference url) "\n"))
+       (insert "   :END:\n\n")
+       (re-search-backward (concat "^\\*\\* TODO " (regexp-quote title)))
+       (point-marker)))))
 
 ;;  Pressing RET on an agenda item calls org-agenda-switch-to which requires
 ;;  org-marker/org-hd-marker text properties, to decide what to do. We decide to
-;;  create new Org tasks for `work-item's.
+;;  create new Org tasks for `work-item's and capture gcal events into the Inbox.
 
 (advice-add
  'org-agenda-switch-to :before
@@ -4490,6 +4533,16 @@ so that `org-agenda-switch-to' can jump to it."
    (when-let* ((item my/agenda--pending-review-item)
                (_ (null (work-item-org-tree item))))
      (let ((marker (my/agenda--create-work-org-tree item))
+           (line-start (line-beginning-position))
+           (line-end (line-end-position)))
+       (put-text-property line-start line-end 'org-marker marker)
+       (put-text-property line-start line-end 'org-hd-marker marker)))
+   ;; Gcal events: create a TODO under * Work, then patch markers so
+   ;; org-agenda-switch-to can jump to the freshly created heading.
+   (when-let* ((ev (and (derived-mode-p 'org-agenda-mode)
+                        (get-text-property (point) 'my/gcal-event)))
+               (_ (not (get-text-property (point) 'org-marker))))
+     (let ((marker (my/agenda--create-gcal-org-tree ev))
            (line-start (line-beginning-position))
            (line-end (line-end-position)))
        (put-text-property line-start line-end 'org-marker marker)
@@ -4558,6 +4611,71 @@ manual refresh at any time, use the \"Refresh Work\" button or press
           (my/agenda-work-refresh))))))
 
 (add-hook 'org-agenda-finalize-hook #'my/agenda-insert-work-sections)
+
+;; ── Google Calendar section ──────────────────────────────────────────
+;;
+;; Surface today's gcal events at the bottom of the daily agenda so we
+;; see them without needing to run my/standup-from-schedule first.
+;; RET on an event line creates a TODO under * Work (with schedule,
+;; effort, location, and conference link) and jumps there.
+
+(defvar my/agenda-gcal-events nil
+  "Cached list of today's gcal event plists for the agenda section.
+Populated by `my/agenda-insert-gcal-section'; cleared on each
+agenda rebuild.")
+
+(defun my/agenda--gcal-event-line (ev)
+  "Render one gcal event plist EV as a single agenda line string."
+  (let ((title (plist-get ev :title))
+        (start (plist-get ev :start))
+        (end   (plist-get ev :end)))
+    (cond
+     ((and start end) (format "%s–%s  %s" start end title))
+     (start           (format "%s       %s" start title))
+     (t               (format "all-day  %s" title)))))
+
+(defun my/agenda--gcal-noisy-p (title)
+  "Non-nil when TITLE is a generic/noisy calendar entry we should skip."
+  (or (null title)
+      (string-match-p
+       "\\`\\(?:Busy\\|Home\\|Office\\|OOO\\|OOO.*\\|.* OOO.*\\)\\'"
+       title)))
+
+(defun my/agenda-insert-gcal-section ()
+  "Append today's Google Calendar events at the end of the daily agenda.
+Each event line carries a `my/gcal-event' text property (the event
+plist) and a `help-echo' hint.  RET on a line captures the event
+into the Org Inbox via the :before advice on `org-agenda-switch-to'."
+  (when (string-prefix-p "*Org Agenda" (buffer-name))
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (condition-case err
+          (let* ((events (my/standup-from-schedule--gcal-events))
+                 (filtered (cl-remove-if
+                            (lambda (ev)
+                              (my/agenda--gcal-noisy-p (plist-get ev :title)))
+                            events)))
+            (setq my/agenda-gcal-events filtered)
+            (when filtered
+              (insert "\n"
+                      (propertize "📅 Today's Work Calendar" 'face 'org-agenda-structure)
+                      "\n")
+              (dolist (ev filtered)
+                (let ((line-start (point)))
+                  (insert (concat "  " (my/agenda--gcal-event-line ev) "\n"))
+                  (let ((end (1- (point))))
+                    (put-text-property line-start end 'my/gcal-event ev)
+                    (put-text-property
+                     line-start end
+                     'help-echo "RET → create TODO under * Work"))))))
+        (error
+         (insert "\n"
+                 (propertize
+                  (format "📅 Work calendar unavailable: %s" (error-message-string err))
+                  'face 'org-agenda-structure)
+                 "\n"))))))
+
+(add-hook 'org-agenda-finalize-hook #'my/agenda-insert-gcal-section)
 
 ;; Display help-echo text properties in the minibuffer when the cursor
 ;; idles on a work-item line.  This is what makes the agenda an *active*
@@ -5437,41 +5555,30 @@ events not reflected in org-agenda."
                              'face 'bold)
                  (propertize (or deep-str "0:00") 'face '(:foreground "green"))
                  (propertize (or total-str "0:00") 'face 'bold)))
-      ;; Cross-check: reconcile today's gcal events against org-agenda.
-      ;; We pass ALL public items (not just Work-scoped) because a
-      ;; gcal event might legitimately map to a :Personal: task —
-      ;; e.g. a dentist appointment — and we don't want the checker
-      ;; screaming about it.
-      ;;
-      ;; Sanity checks must be *actionable* — and where the fix is
-      ;; mechanical, we skip the dialog entirely.  Missing events get
-      ;; auto-captured into the Inbox 📩 as scheduled TODOs (effort
-      ;; from duration, description and conference link preserved),
-      ;; then we jump the view to the Inbox so the freshly captured
-      ;; items are directly visible.  For situational awareness we
-      ;; also `message' the full calendar listing — so the user can
-      ;; see at a glance which events were already in Org and which
-      ;; just got inboxed.
-      (let* ((all-gcal  (my/standup-from-schedule--gcal-events))
-             (missing   (my/standup-from-schedule--gcal-crosscheck public-items))
-             (missing-titles (mapcar (lambda (ev) (plist-get ev :title)) missing)))
-        (when all-gcal
-          (message
-           "Today's calendar:\n%s%s"
-           (mapconcat
-            (lambda (ev)
-              (let* ((title (plist-get ev :title))
-                     (missing-p (member title missing-titles))
-                     (line (my/standup-from-schedule--gcal-summary-line ev)))
-                (if missing-p (concat line "  ← inboxed") line)))
-            all-gcal "\n")
-           (if missing
-               (format "\n\nCaptured %d missing event%s into Inbox 📩."
-                       (length missing) (if (= (length missing) 1) "" "s"))
-             "")))
-        (when missing
-          (my/standup-from-schedule--capture-events missing)
-          (my/standup-from-schedule--goto-inbox))))))
+      ;; Gcal cross-check disabled — today's calendar events are now
+      ;; surfaced in the org-agenda's "📅 Today's Calendar" section,
+      ;; where RET captures them into the Inbox on demand.
+      ;; (let* ((all-gcal  (my/standup-from-schedule--gcal-events))
+      ;;        (missing   (my/standup-from-schedule--gcal-crosscheck public-items))
+      ;;        (missing-titles (mapcar (lambda (ev) (plist-get ev :title)) missing)))
+      ;;   (when all-gcal
+      ;;     (message
+      ;;      "Today's calendar:\n%s%s"
+      ;;      (mapconcat
+      ;;       (lambda (ev)
+      ;;         (let* ((title (plist-get ev :title))
+      ;;                (missing-p (member title missing-titles))
+      ;;                (line (my/standup-from-schedule--gcal-summary-line ev)))
+      ;;           (if missing-p (concat line "  ← inboxed") line)))
+      ;;       all-gcal "\n")
+      ;;      (if missing
+      ;;          (format "\n\nCaptured %d missing event%s into Inbox 📩."
+      ;;                  (length missing) (if (= (length missing) 1) "" "s"))
+      ;;        "")))
+      ;;   (when missing
+      ;;     (my/standup-from-schedule--capture-events missing)
+      ;;     (my/standup-from-schedule--goto-inbox)))
+      )))
 ;; Standup from schedule:1 ends here
 
 ;; [[file:init.org::*Colleague Meeting Shortcuts][Colleague Meeting Shortcuts:1]]
