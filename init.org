@@ -11027,6 +11027,36 @@ visible so I can TAB to unfold.
 (use-package origami
   :bind (:map org-agenda-mode-map ("<tab>" . origami-toggle-node))
   :hook org-agenda-mode)
+
+;; Fold every section closed, then open only the focus heading and
+;; center the view on it.  Runs last in the finalize chain (depth 90)
+;; so that all content — work sections, gcal section, buttons — is
+;; already present when origami parses the buffer.
+;;
+;; Suppressed when `my/agenda--skip-fold-and-focus' is non-nil — the
+;; standup flow needs every section visible for day-planning.
+
+(defvar my/agenda--skip-fold-and-focus nil
+  "When non-nil, `my/agenda--fold-and-focus' is a no-op.
+Bound dynamically by `my/standup' so the agenda opens fully
+expanded for day-planning.")
+
+(add-hook
+ 'org-agenda-finalize-hook
+ (defun my/agenda--fold-and-focus ()
+   "Fold all agenda sections, open the focus heading, and center."
+   (when (and (not my/agenda--skip-fold-and-focus)
+              (bound-and-true-p origami-mode)
+              (string-prefix-p "*Org Agenda" (buffer-name)))
+     (origami-close-all-nodes (current-buffer))
+     (goto-char (point-min))
+     (when (search-forward
+            "🔎 Please focus on 𝒪𝓃𝓁𝓎 these tasks for the day!" nil t)
+       (beginning-of-line)
+       (origami-open-node-recursively (current-buffer) (point))
+       (recenter 0))))
+ 90)  ;; depth 90 → runs after default-depth (0) hooks
+
 ;;
 ;; Alternatives: my/auto-set-selective-display-mode or (set-selective-display 1)
 #+end_src
@@ -11070,8 +11100,7 @@ to refresh the agenda.
    (org-agenda nil "a")
    (when org-super-agenda-mode
      (org-super-agenda-mode -1)
-     (org-agenda-redo))
-   (beginning-of-buffer)))
+     (org-agenda-redo))))
 
 ;; I want the following to happen whenever I do “g” or “/” in the agenda.
 (add-hook 'org-agenda-finalize-hook
@@ -14551,9 +14580,13 @@ without reflecting on the last one."
             (is-monday (= (nth 6 (decode-time)) 1)))
         (insert "\n")
         ;; 5. Refresh work-item cache; open agenda when done.
+        ;; Suppress fold-and-focus so the agenda opens fully expanded
+        ;; for day-planning — we want to see everything during standup.
         (setq my/agenda-work--on-complete
               (lambda ()
-                (unwind-protect (my/org-agenda)
+                (unwind-protect
+                    (let ((my/agenda--skip-fold-and-focus t))
+                      (my/org-agenda))
                   ;; On Mondays (after weekly review): insert please-review
                   ;; items into the standup entry so they're front-of-mind.
                   (when is-monday
