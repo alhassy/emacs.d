@@ -14238,13 +14238,60 @@ no Jira) AND carries today's weekday tag already exists, skip."
 (defvar my/agenda--pending-review-item nil
   "Work-item captured by :before advice for review-TODO creation.")
 
+(defun my/agenda--create-work-org-tree (item)
+  "Create an Org heading for ITEM as the first child of `* Work'.
+The heading title is the Jira ID + title (or just the title when
+no Jira ticket exists).  Sets `work-item-org-tree' on ITEM to
+the new heading's marker and returns that marker."
+  (let* ((jira (work-item-jira item))
+         (title (or (work-item-title item) "untitled"))
+         (heading-text (if jira (concat jira " " title) title))
+         (buf (find-file-noselect org-default-notes-file)))
+    (with-current-buffer buf
+      (org-with-wide-buffer
+       (goto-char (point-min))
+       (unless (re-search-forward "^\\* Work\\b" nil t)
+         (error "No `* Work' heading in %s" org-default-notes-file))
+       (org-back-to-heading t)
+       ;; Skip past the heading's property drawer, logbook, and body
+       ;; text — land on the first child heading (or subtree end).
+       (let ((parent-end (save-excursion (org-end-of-subtree t t) (point))))
+         (outline-next-heading)
+         ;; Point is now either at the first child or past the subtree.
+         ;; Insert a new level-2 heading just before this position.
+         (insert "** " heading-text "\n"
+                 "  :PROPERTIES:\n"
+                 "  :CREATED:  "
+                 (format-time-string "[%Y-%m-%d %a %H:%M]")
+                 "\n  :END:\n\n")
+         ;; Move back to the heading we just inserted and grab a marker.
+         (re-search-backward (concat "^\\*\\* " (regexp-quote heading-text)))
+         (let ((marker (point-marker)))
+           (setf (work-item-org-tree item) marker)
+           marker))))))
+
+
+;;  Pressing RET on an agenda item calls org-agenda-switch-to which requires
+;;  org-marker/org-hd-marker text properties, to decide what to do. We decide to
+;;  create new Org tasks for `work-item's.
+
 (advice-add
  'org-agenda-switch-to :before
  (defun my/agenda--capture-work-item (&rest _)
-   "Capture the work-item at point before org-agenda-switch-to changes buffers."
+   "Capture the work-item at point before org-agenda-switch-to changes buffers.
+When the item has no Org heading yet, create one under `* Work'
+and set the agenda line's `org-marker'/`org-hd-marker' properties
+so that `org-agenda-switch-to' can jump to it."
    (setq my/agenda--pending-review-item
          (and (derived-mode-p 'org-agenda-mode)
-              (get-text-property (point) 'my/work-item)))))
+              (get-text-property (point) 'my/work-item)))
+   (when-let* ((item my/agenda--pending-review-item)
+               (_ (null (work-item-org-tree item))))
+     (let ((marker (my/agenda--create-work-org-tree item))
+           (line-start (line-beginning-position))
+           (line-end (line-end-position)))
+       (put-text-property line-start line-end 'org-marker marker)
+       (put-text-property line-start line-end 'org-hd-marker marker)))))
 
 (advice-add
  'org-agenda-switch-to :after
