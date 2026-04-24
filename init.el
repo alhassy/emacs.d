@@ -10378,10 +10378,16 @@ With prefix arg, offer recently clocked tasks for selection."
 
 (url-copy-file "https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/org-eldoc.el" "~/.emacs.d/elpa/org-eldoc.el" :ok-if-already-exists)
 (load-file "~/.emacs.d/elpa/org-eldoc.el")
+(use-package eldoc-box)
 ;; NB: 'eldoc-mode (no arg) toggles — and global-eldoc-mode already
 ;; enables it, so the toggle would turn it OFF.  Use turn-on-* instead.
 (add-hook 'org-mode-hook #'turn-on-eldoc-mode)
-(add-hook 'org-mode-hook 'eldoc-box-hover-mode)
+;; Belt-and-braces guard: in the (unlikely) event that `eldoc-box' isn't
+;; available, do nothing instead of erroring out every time org-mode starts.
+(add-hook 'org-mode-hook
+          (lambda ()
+            (when (fboundp 'eldoc-box-hover-mode)
+              (eldoc-box-hover-mode))))
 
 ;; [[file:init.org::*Implementation][Implementation:1]]
 (setq org-archive-default-command #'my/org-archive-subtree-hierarchically)

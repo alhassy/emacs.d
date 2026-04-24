@@ -40,6 +40,13 @@ this fixture axes that boilerplate.  The buffer object is bound to
 ;; Re-run the hook so they activate.
 (run-hooks 'after-init-hook)
 
+;; Workflow states are declared lazily via `:before' advice on `org-todo'
+;; — the advice fires on the first state transition and then self-removes.
+;; Tests that assert on `org-todo-keywords' directly, or that reference
+;; custom keywords like `INVESTIGATED', would otherwise observe the stock
+;; Emacs defaults.  Force eager declaration so tests see the real config.
+(my/ensure-workflow-states)
+
 (advice-add 'org-resolve-clocks :override #'ignore)
 ;; Eval-and-run: ~C-x C-e~ on test forms:2 ends here
 

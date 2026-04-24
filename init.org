@@ -365,6 +365,13 @@ this fixture axes that boilerplate.  The buffer object is bound to
 ;; Re-run the hook so they activate.
 (run-hooks 'after-init-hook)
 
+;; Workflow states are declared lazily via `:before' advice on `org-todo'
+;; — the advice fires on the first state transition and then self-removes.
+;; Tests that assert on `org-todo-keywords' directly, or that reference
+;; custom keywords like `INVESTIGATED', would otherwise observe the stock
+;; Emacs defaults.  Force eager declaration so tests see the real config.
+(my/ensure-workflow-states)
+
 (advice-add 'org-resolve-clocks :override #'ignore)
 #+end_src
 
@@ -24582,10 +24589,16 @@ when I'm on the #+begin_src/#+end_src lines by doing
 #+begin_src emacs-lisp :tangle init.el
 (url-copy-file "https://git.sr.ht/~bzg/org-contrib/blob/master/lisp/org-eldoc.el" "~/.emacs.d/elpa/org-eldoc.el" :ok-if-already-exists)
 (load-file "~/.emacs.d/elpa/org-eldoc.el")
+(use-package eldoc-box)
 ;; NB: 'eldoc-mode (no arg) toggles — and global-eldoc-mode already
 ;; enables it, so the toggle would turn it OFF.  Use turn-on-* instead.
 (add-hook 'org-mode-hook #'turn-on-eldoc-mode)
-(add-hook 'org-mode-hook 'eldoc-box-hover-mode)
+;; Belt-and-braces guard: in the (unlikely) event that `eldoc-box' isn't
+;; available, do nothing instead of erroring out every time org-mode starts.
+(add-hook 'org-mode-hook
+          (lambda ()
+            (when (fboundp 'eldoc-box-hover-mode)
+              (eldoc-box-hover-mode))))
 #+end_src
 
 #+begin_src emacs-lisp :tangle init-test.el
