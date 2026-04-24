@@ -2829,7 +2829,7 @@ changes appear in EDGES but not in PRESENT."
                           edges)
                  (->> nums -uniq
                       (-filter (lambda (n)
-                                 (not (gethash n visited))))))))
+                                 (not (easy-access n visited))))))))
           (when (null frontier) (cl-return))
           (let ((intermediates
                  (my/gerrit--query
@@ -2882,20 +2882,20 @@ Example (conceptual):
             (puthash start t seen)
             (while queue
               (let* ((cur (pop queue))
-                     (neighbors (gethash cur edges)))
+                     (neighbors (easy-access cur edges)))
                 (dolist (nb neighbors)
-                  (unless (gethash nb seen)
+                  (unless (easy-access nb seen)
                     (puthash nb t seen)
-                    (when (gethash nb present)
+                    (when (easy-access nb present)
                       (union start nb))
-                    (unless (gethash nb present)
+                    (unless (easy-access nb present)
                       (push nb queue))))))))
         (let ((groups (make-hash-table :test 'eql)))
           (dolist (c changes)
             (let* ((n ('number c))
                    (root (find n)))
               (puthash root
-                       (cons c (gethash root groups))
+                       (cons c (easy-access root groups))
                        groups)))
           (let (stacks)
             (maphash
@@ -2990,7 +2990,7 @@ After this call, `my/gerrit--get-jira-title' returns the summary
 for each successfully fetched ticket."
   (let ((uncached (-filter
                    (lambda (tk)
-                     (not (gethash tk my/gerrit--jira-title-cache)))
+                     (not (easy-access tk my/gerrit--jira-title-cache)))
                    tickets)))
     (when uncached
       (let* ((jql (format "key in (%s)" (s-join "," uncached)))
@@ -3018,7 +3018,7 @@ The cache is populated by `my/gerrit--fetch-jira-titles'.
 Example:
   (my/gerrit--get-jira-title \"BUG-101\")
   → \"Optimize OSPF route computation\"  ; or nil if not yet fetched"
-  (gethash ticket my/gerrit--jira-title-cache))
+  (easy-access ticket my/gerrit--jira-title-cache))
 
 (cl-defun my/gerrit--query-jira (jql &optional fields)
   "Run a JQL query against Jira and return a list of issue alists.
@@ -3988,7 +3988,7 @@ Wrapped in `condition-case' so a failure does not leave
              ;; Stale = my open changes NOT in the attention set
              (stale (-filter
                      (lambda (c)
-                       (not (gethash ('number c) attn-nums)))
+                       (not (easy-access ('number c) attn-nums)))
                      all-mine))
              (wip     (-filter (lambda (c)
                                  (eq ('wip c) t))
@@ -4072,7 +4072,7 @@ Wrapped in `condition-case' so a failure does not leave
              ;; appears in the urgent query results
              (_ (dolist (it gerrit-items)
                   (when (and (:jira it)
-                             (gethash (:jira it) urgent-ids))
+                             (easy-access (:jira it) urgent-ids))
                     (setf (:urgent it) t))))
              ;; Tickets that are urgent but have no Gerrit work yet
              (covered-ids
@@ -4084,8 +4084,8 @@ Wrapped in `condition-case' so a failure does not leave
              (todo-items
               (-map #'work-item-from-jira-issue
                     (-filter (lambda (issue)
-                               (not (gethash ('key issue)
-                                             covered-ids)))
+                               (not (easy-access ('key issue)
+                                                 covered-ids)))
                              urgent-issues)))
              ;; All unresolved tickets assigned to me — catches items
              ;; with no Gerrit work and no urgency flag (e.g., recently
@@ -4130,8 +4130,8 @@ Wrapped in `condition-case' so a failure does not leave
              ;; (e.g., accidentally used #progress instead of #resolve).
              (uncovered-issues
               (-filter (lambda (issue)
-                         (not (gethash ('key issue)
-                                       all-covered-ids)))
+                         (not (easy-access ('key issue)
+                                           all-covered-ids)))
                        (or assigned-issues '())))
              (jira-active-statuses '("In Progress" "In Review"
                                      "Code Review" "Pending Review"))
@@ -4160,8 +4160,8 @@ Wrapped in `condition-case' so a failure does not leave
                                   "untitled")
                        :status 'assigned))
                     (-filter (lambda (issue)
-                               (not (gethash ('key issue)
-                                             jira-active-ids)))
+                               (not (easy-access ('key issue)
+                                                 jira-active-ids)))
                              uncovered-issues)))
              ;; Combine all items
              (all-items (append todo-items jira-active-items
@@ -7154,8 +7154,8 @@ the character 𝓍 before and after the selected text."
   (message "⟨Bold b,*⟩ ⟨Italics i,/⟩ ⟨Underline u,_⟩ ⟨Monotype c,~⟩")
   (let ((kind (read-char)))
     ;; Map letters to Org formatting symbols
-    (setq kind (or (plist-get '(b ?\*   i ?\/   u ?\_   c ?\~)
-                              (intern (string kind)))
+    (setq kind (or (easy-access (intern (string kind))
+                                '(b ?\*   i ?\/   u ?\_   c ?\~))
                    kind))
     (insert-pair text kind kind)))
 ;; Formatting Text:1 ends here
@@ -9605,7 +9605,7 @@ separators into the NOTE field."
        (lambda (k mins)
          (let* ((day (car k))
                 (heading (cdr k))
-                (note-list (nreverse (gethash k notes)))
+                (note-list (nreverse (easy-access k notes)))
                 (index 0)
                 (note (when note-list
                         (mapconcat (lambda (s) (format "<br>﴾%s﴿ %s" (cl-incf index)
@@ -9655,8 +9655,8 @@ default \"Source → Target: Xh Ym\" tooltip text."
                                   do (let ((key (cons src tgt))
                                            (note (car rest)))
                                        (puthash key
-                                                (if (gethash key ht)
-                                                    (concat (gethash key ht) "; " note)
+                                                (if (easy-access key ht)
+                                                    (concat (easy-access key ht) "; " note)
                                                   note)
                                                 ht)))
                          ht))
@@ -9773,7 +9773,7 @@ default \"Source → Target: value\" hover text."
     (let* ((all-labels (let (result (seen (make-hash-table :test 'equal)))
                          (cl-loop for (src tgt . _rest) in matrix
                                   do (dolist (name (list src tgt))
-                                       (unless (gethash name seen)
+                                       (unless (easy-access name seen)
                                          (puthash name t seen)
                                          (push name result))))
                          (nreverse result)))
@@ -10713,8 +10713,8 @@ we stared at the dialog before clicking OK."
       (lambda (proc _event)
         (let ((out (process-get proc :output)))
           (when (string-match "button returned:\\(.+\\)" out)
-            (let ((handler (alist-get (string-trim (match-string 1 out))
-                                      (process-get proc :handlers) nil nil #'string=)))
+            (let ((handler (easy-access (string-trim (match-string 1 out))
+                                        (process-get proc :handlers))))
               (when handler (eval handler t)))))))))
 
 (when (eq system-type 'darwin) ;; osascript is macOS-only; skip on Linux CI runners

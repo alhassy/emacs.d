@@ -354,7 +354,7 @@ Changes carrying `(urgent . t)' propagate the flag to their work-item."
             ht)))
     (dolist (it items)
       (when (and (:jira it)
-                 (gethash (:jira it) urgent-tickets))
+                 (easy-access (:jira it) urgent-tickets))
         (setf (:urgent it) t)))
     items))
 
