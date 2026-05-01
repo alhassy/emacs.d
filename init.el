@@ -115,7 +115,11 @@ This should be used as a last resort. Instead prefer `use-pacakge' lazy loading 
 ;; (:key plist), (N seq), ('sym alist), (“str” alist), (:field struct).
 ;; Must load before any code that uses the new syntax.
 (use-package easy-access
-  :vc (:url "https://github.com/alhassy/easy-access")
+  ;; Load from the local checkout at ~/easy-access/ — that's where we
+  ;; iterate on the package.  Pointing `:vc' at GitHub pins us to the
+  ;; last tagged release, which silently lags whatever's in our working
+  ;; tree (e.g., the `easy-access' macro added post-0.5.0).
+  :load-path "~/easy-access"
   :config (easy-access-mode 1))
 
 (use-package auto-package-update
@@ -497,32 +501,6 @@ installs of packages that are not in our `my/installed-packages' listing.
 ;; Enable all ‘possibly confusing commands’ such as helpful but
 ;; initially-worrisome “narrow-to-region”, C-x n n.
 (setq-default disabled-command-function nil)
-
-(defun my/center-text (text)
-  "Centre every line of TEXT within the current frame width.
-
-Split TEXT on newlines, pad each line with leading spaces so that
-it appears horizontally centred relative to `frame-width', then
-rejoin.  The padding is computed via `string-width' so propertized
-and multi-byte strings are measured correctly.
-
-The centering is evaluated at call time --- if the frame is resized,
-the next call will adapt automatically.
-
-By way of example, minibuffer hints produced by `help-at-pt' are
-left-justified by default.  When the user runs olivetti-mode (or
-any centering minor mode), a left-hugging wall of echo text clashes
-with the centred buffer content.  Wrapping the hint through this
-function makes it sit under the centred text, matching the visual
-rhythm of the rest of the frame."
-  (let ((width (frame-width)))
-    (mapconcat
-     (lambda (line)
-       (let* ((len (string-width line))
-              (pad (max 0 (/ (- width len) 2))))
-         (concat (make-string pad ?\s) line)))
-     (split-string text "\n")
-     "\n")))
 
 (defvar running-tests noninteractive "Code executed in headless Github CI.")
 
@@ -2228,16 +2206,109 @@ expanded for day-planning.")
 ;; [[file:init.org::*My default ~org-agenda-custom-commands~][My default ~org-agenda-custom-commands~:4]]
 (defun my/agenda-schedule-first-free-hour ()
   "Schedule the agenda item at point into the next free 1-hour slot.
-Uses `my/agenda--first-free-hour-today', which searches today first
-then rolls forward up to 14 days.  Spillover beyond today pops a
+Delegates to `org-agenda-gerrit-next-free-slot', which searches today
+first then rolls forward up to 14 days.  Spillover beyond today pops a
 non-blocking dialog so you can reshuffle if you'd rather keep the
 task on today's plate."
   (interactive)
-  (org-agenda-schedule nil (my/agenda--first-free-hour-today 60)))
+  (org-agenda-schedule nil (org-agenda-gerrit-next-free-slot 60)))
 
 (with-eval-after-load 'org-agenda
   (define-key org-agenda-mode-map (kbd "S") #'my/agenda-schedule-first-free-hour))
 ;; My default ~org-agenda-custom-commands~:4 ends here
+
+;; [[file:init.org::*Highlight overlapping time-blocks in the agenda][Highlight overlapping time-blocks in the agenda:1]]
+(defun my/agenda--parse-12h-time (str)
+  "Parse \"H:MM AM\" or \"H:MM PM\" into minutes-from-midnight, or nil."
+  (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\) \\(AM\\|PM\\)\\'" str)
+    (let ((h (string-to-number (match-string 1 str)))
+          (m (string-to-number (match-string 2 str)))
+          (pm (string= "PM" (match-string 3 str))))
+      (+ (* 60 (cond ((and (not pm) (= h 12)) 0)
+                      ((not pm) h)
+                      ((= h 12) 12)
+                      (t (+ h 12))))
+         m))))
+
+(defun my/agenda--parse-24h-time (str)
+  "Parse \"HH:MM\" (24-hour) into minutes-from-midnight, or nil."
+  (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\)\\'" str)
+    (+ (* 60 (string-to-number (match-string 1 str)))
+       (string-to-number (match-string 2 str)))))
+
+(defun my/agenda--line-time-interval ()
+  "Extract (START-MINS . END-MINS) from the current agenda line, or nil.
+Handles two formats:
+  - Org lines after effort injection: \"9:30 AM-11:30 AM\" (ASCII hyphen)
+  - Gcal lines: \"09:30\342\200\22311:30\" (en-dash)"
+  (let ((text (buffer-substring-no-properties
+               (line-beginning-position) (line-end-position))))
+    (cond
+     ;; 12-hour range: "H:MM AM-H:MM PM"
+     ((string-match
+       "\\([0-9]+:[0-9]+ [AP]M\\)-\\([0-9]+:[0-9]+ [AP]M\\)" text)
+      (let ((s (my/agenda--parse-12h-time (match-string 1 text)))
+            (e (my/agenda--parse-12h-time (match-string 2 text))))
+        (when (and s e) (cons s e))))
+     ;; 24-hour range with en-dash: "HH:MM\342\200\223HH:MM"
+     ((string-match
+       "\\([0-9]+:[0-9]+\\)\342\200\223\\([0-9]+:[0-9]+\\)" text)
+      (let ((s (my/agenda--parse-24h-time (match-string 1 text)))
+            (e (my/agenda--parse-24h-time (match-string 2 text))))
+        (when (and s e) (cons s e)))))))
+
+(defun my/agenda--intervals-overlap-p (a b)
+  "Non-nil when intervals A and B overlap (both are (START . END) in minutes)."
+  (and (< (car a) (cdr b))
+       (< (car b) (cdr a))))
+
+(add-hook
+ 'org-agenda-finalize-hook
+ (defun my/agenda--highlight-overlaps ()
+   "Highlight overlapping time-blocked agenda entries in red.
+Each overlapping line gets a `help-echo' explaining the conflict."
+   (when (string-prefix-p "*Org Agenda" (buffer-name))
+     (let ((inhibit-read-only t)
+           entries)
+       ;; 1. Collect all lines with time intervals.
+       (save-excursion
+         (goto-char (point-min))
+         (while (not (eobp))
+           (when-let* ((iv (my/agenda--line-time-interval)))
+             (push (list :start (car iv)
+                         :end   (cdr iv)
+                         :lbeg  (line-beginning-position)
+                         :lend  (line-end-position)
+                         :text  (string-trim
+                                 (buffer-substring-no-properties
+                                  (line-beginning-position)
+                                  (line-end-position))))
+                   entries))
+           (forward-line 1)))
+       (setq entries (nreverse entries))
+       ;; 2. Mark which entries overlap with at least one other.
+       (let ((n (length entries))
+             overlap-set)
+         (dotimes (i n)
+           (dotimes (j n)
+             (when (and (/= i j)
+                        (my/agenda--intervals-overlap-p
+                         (cons (:start (nth i entries))
+                               (:end (nth i entries)))
+                         (cons (:start (nth j entries))
+                               (:end (nth j entries)))))
+               (cl-pushnew i overlap-set))))
+         ;; 3. Apply face + help-echo to overlapping lines.
+         (dolist (idx overlap-set)
+           (let* ((entry (nth idx entries))
+                  (beg (:lbeg entry))
+                  (end (:lend entry)))
+             (add-face-text-property beg end '(:foreground "red"))
+             (put-text-property
+              beg end 'help-echo
+              "Overlap detected! Reschedule with C-c C-s to resolve the conflict.")))))))
+ 20)  ;; depth 20 → after effort injection (10), before fold-and-focus (90)
+;; Highlight overlapping time-blocks in the agenda:1 ends here
 
 ;; [[file:init.org::*Getting Started with org-agenda][Getting Started with org-agenda:1]]
 ;; Jump straight to my 𝓪genda dashboard ---no dispatch menu please!
@@ -2271,25 +2342,29 @@ task on today's plate."
 ;; (aql "hola" :query [(= TODO "I don't care, just show me the dashboard please")] :interactive t)
 ;;
 (cl-defun my/insert-button (label action &key (foreground "white") (background "blue") (echo "This is a custom button"))
-  "Insert a styled button at point"
+  "Insert a styled button at point.
+
+Pass =:background nil= to inherit the surrounding frame's background
+instead of painting over it --- Emacs rejects =:background nil= as an
+invalid face attribute, so we omit the key entirely in that case."
   ;; Example Use:
   ;; (my/insert-button "Hello" (lambda (pos) (message (format "Hello at %s" pos))) :foreground "cyan" :background nil :echo "Press me!!")
   (interactive)
   ;; TODO: Use lf-define instead
   (cl-assert (stringp label) t "my/agenda-button: First arg should be a string")
   (cl-assert (functionp action) t "my/agenda-button: Second arg should be a lambda")
-  (let ((start (point)))
+  (let* ((face-plist (append (list :foreground foreground)
+                             (and background (list :background background))
+                             (list :slant 'italic
+                                   :weight 'bold
+                                   :box '(:line-width 2 :style released-button)))))
     (insert-text-button
      label
      'action action
      'follow-link t
      :type (define-button-type 'custom-button
              ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
-             'face (list :foreground foreground
-                         :background background
-                         :slant 'italic
-                         :weight 'bold
-                         :box '(:line-width 2 :style released-button))
+             'face face-plist
              'help-echo echo))))
 
 (add-to-list
@@ -2329,7 +2404,7 @@ task on today's plate."
                        :echo "All TODOs I'd like to actually work on, so as to have a meaningful life")
      (insert "\t")
      (my/insert-button "Refresh Work"
-                       (lambda (pos) (my/agenda-work-refresh))
+                       (lambda (pos) (org-agenda-gerrit-refresh))
                        :foreground "orange"
                        :background nil
                        :echo "Re-fetch Gerrit/Jira data for the work sections below")
@@ -2498,2384 +2573,18 @@ or press “v l 30 RET r” to view 30 entries."
         "Overdue%2dx "))  ;; If something's overdue, say “Overdue 𝓃× ⟨Task⟩”.
 ;; How tasks look in org agenda:1 ends here
 
-;; [[file:init.org::*Configuration][Configuration:1]]
-;; These defvars provide safe empty defaults.  The real values are
-;; set by private.el (loaded eagerly at startup; see §Separating Secrets).
-
-(defvar my\gerrit-ssh-command "/usr/bin/ssh"
-  "Path to the SSH binary used for Gerrit queries.")
-
-(defvar my\gerrit-ssh-host "gerrit"
-  "SSH host alias for Gerrit, as defined in ~/.ssh/config.")
-
-(defvar my\gerrit-base-url ""
-  "Base URL for Gerrit web UI links.")
-
-(defvar my\jira-base-url ""
-  "Base URL for Jira ticket links (the /browse endpoint).")
-
-(defvar my\gerrit-user user-login-name
-  "Gerrit/Jira username for ownership queries.")
-
-(defvar my\gerrit-project-path "/c/+/"
-  "Gerrit URL path template between the base URL and the change number.
-Used to construct clickable change
-links, e.g. BASE-URL + PROJECT-PATH + CHANGE-NUMBER.")
-
-(defvar my\jira-ticket-regex nil
-  "Regex to extract Jira ticket IDs from Gerrit commit messages.
-Must have one capture group (\\\\1) yielding the ticket ID string.
-When nil, ticket extraction is disabled.")
-;; Configuration:1 ends here
-
-;; [[file:init.org::*Cache variables][Cache variables:1]]
-(cl-defstruct (work-item (:constructor work-item-create))
-  "A single unit of work displayed in the agenda.
-Each instance represents either a Gerrit dependency stack or a
-Jira ticket (possibly both — a Gerrit stack whose Jira ticket is
-flagged urgent).  Created by `work-item-from-stack' or
-`work-item-from-jira-issue'; rendered by
-`work-item-to-string'.
-
-The `urgent' flag is orthogonal to `status': an item can be both
-`:urgent t' and `:status \\='wip', meaning it is urgent AND work-in-
-progress.  Urgent items are rendered with a \"🔴 \" prefix and
-appear in whichever status section they belong to.
-
-Example:
-  (work-item-create :jira \"BUG-1234\"
-                    :title \"Fix frobnicate\"
-                    :tip-url \"https://…/+/101\"
-                    :reviewers \\='(\"Alice\" \"Bob\")
-                    :author \"Musa\"
-                    :status \\='my-needing-action
-                    :urgent t)"
-  (jira nil
-        :documentation "Jira ticket ID string, eg `Bug-1234', or nil for one-off commits.")
-  (title nil
-         :documentation "Jira summary, or commit subject when no Jira ticket.")
-  (tip-url nil
-           :documentation "Gerrit URL for the topmost change in the stack, or nil for not-yet-started urgent Jira items.")
-  (reviewers nil
-             :documentation "List of reviewer name strings (humans from allReviewers + any negative Code-Review voters).")
-  (reviewer-users nil
-                  :documentation "Alist of (display-name . username) for each reviewer.
-Used to construct per-reviewer Gerrit attention URLs.")
-  (author nil
-          :documentation "Display name of the stack owner.")
-  ;; Whether this item is urgent, WIP, something for me to review, something I
-  ;; should ping others to review, or if it's feedback I need to address on my
-  ;; own work.
-  (status nil
-          :documentation "Symbol: todo | assigned | jira-active | wip | please-review | reviews-needed | my-needing-action.
-`todo' means an urgent Jira ticket with no Gerrit work yet.
-`assigned' means an unresolved ticket assigned to me (not urgent, no Gerrit work).
-`jira-active' means Jira considers the ticket In Progress/In Review but no Gerrit changes exist — likely a #progress vs #resolve mistake.")
-  (urgent nil
-          :documentation "Non-nil if this item is flagged urgent by Jira (Urgency = 1 month or upcoming fixVersion).")
-  (org-tree nil
-            :documentation "Marker to the corresponding Org heading in
-`org-default-notes-file', or nil.  Set by `work-item--resolve-org-trees'
-during cache build.  Enables `org-marker'/`org-hd-marker' text properties
-so standard agenda commands (RET, TAB, I, o) work on work-item lines.")
-  (age nil
-       :documentation "Unix epoch (number) of the Gerrit tip's `lastUpdated'.
-Nil for `todo' items (Jira-only, no Gerrit change).  Rendered as
-a human-readable staleness string by `work-item-to-string'.")
-  (stack-size nil
-              :documentation "Number of Gerrit changes in the dependency stack.
-A rough proxy for effort size: 1 = atomic fix, 5+ = substantial feature.")
-  (max-patchsets nil
-                 :documentation "Highest patchset number across all changes in the stack.
-A proxy for churn: > 4 suggests repeated rework cycles and possible
-author/reviewer misalignment — consider a synchronous conversation.")
-  (comment-count nil
-                 :documentation "Total number of inline review comments across all changes
-in the stack.  High counts relative to stack size signal a contentious
-or unclear change — worth a synchronous conversation to align.")
-  (avg-shirt-size nil
-                  :documentation "Average Gerrit shirt size across changes in the stack.
-A float derived from mapping each change's (insertions + deletions) to
-the Gerrit size scale (XS=1, S=2, M=3, L=4, XL=5) and averaging.
-Displayed as the nearest label in `work-item-help-echo'.")
-  (ci-status nil
-             :documentation "Symbol: `pass', `fail', or nil (no Verified vote).
-Derived from the most recent Verified approval on the tip change.
-`fail' is the highest-priority nudge: nothing else matters until CI is green.")
-  (has-code-review nil
-                   :documentation "Non-nil if the tip has a Code-Review +1 or +2 from a non-owner.
-When CI passes and this is nil, the nudge is: request final approval.")
-  (blocked-by-parent nil
-                     :documentation "Non-nil if this work-item's tip depends on an unmerged parent.
-The parent must land first; nudge is: unblock the dependency."))
-
-(defvar my/agenda-work-data nil
-  "Cached plist holding structured Gerrit/Jira agenda data.
-Keys: `:items' (list of `work-item' instances), `:timestamp'.")
-
-(defvar my/agenda-work-fetching nil
-  "Non-nil while an async Gerrit/Jira fetch cycle is in progress.
-
-Guards against double-fetching: `my/agenda-work-refresh' is a
-no-op when this is non-nil.  Reset to nil by the coordinator
-`my/agenda--format-and-cache' (or on error).")
-
-(defvar my/agenda-work--on-complete nil
-  "One-shot callback invoked after the work-item cache is populated.
-Set before calling `my/agenda-work-refresh'; cleared after invocation.")
-
-(defvar my/agenda-work--fetch-all-p nil
-  "When non-nil, `my/agenda--format-and-cache' ignores section gating.
-All Jira queries (assigned, jira-active) run regardless of
-`my/agenda-work-sections'.  Set by the weekly review before
-triggering a full refresh; cleared by the coordinator on completion.")
-
-(defvar my/agenda--pending-queries 0
-  "Number of async Gerrit SSH queries still in flight.
-
-Set to 2 at the start of a refresh (attention + all-mine).
-Each sentinel decrements it; when it hits zero, the coordinator
-fires.")
-
-(defvar my/agenda--attention-changes nil
-  "Parsed change alists from the \"attention:self\" Gerrit query.
-
-These are changes in my attention set — either others' changes
-I need to review, or my own changes that need my response.")
-
-(defvar my/agenda--all-mine-changes nil
-  "Parsed change alists from the \"owner:self\" Gerrit query.
-
-All my open, non-abandoned changes.  Combined with the attention
-set to derive the \"please review\" and WIP sections (changes I
-own that are NOT in my attention set).")
-
-(defvar my/agenda-work-sections
-  '(reviews-needed my-needing-action)
-  "Work-item statuses to display in the daily agenda.
-The full set is: reviews-needed, my-needing-action, please-review,
-wip, todo, assigned, jira-active.  Sections not listed here are
-still fetched and cached (so the weekly review can access them) —
-they are simply not rendered in the agenda.
-Daily default is just reviews-needed and my-needing-action — the
-two statuses that require immediate action.  WIP, please-review,
-todo, assigned, and jira-active are weekly-planning concerns and
-surface in the weekly review instead.")
-;; Cache variables:1 ends here
-
-;; [[file:init.org::*Resolving work-items to Org headings][Resolving work-items to Org headings:1]]
-(defun work-item--resolve-org-trees (items)
-  "Populate the `org-tree' slot for each item in ITEMS.
-Pass 1: match Jira IDs against headings in `org-default-notes-file'.
-Pass 2: match colleague names for reviews-needed items without Jira."
-  (let ((resolved 0))
-    ;; Pass 1: Jira-ID heading search
-    (let ((jira-items (-filter #'work-item-jira items))
-          (buf (find-file-noselect org-default-notes-file)))
-      (when (and jira-items (buffer-live-p buf))
-        (with-current-buffer buf
-          (org-with-wide-buffer
-           (dolist (it jira-items)
-             (goto-char (point-min))
-             (let ((re (concat "^\\*+ .*"
-                               (regexp-quote (:jira it)))))
-               (if (re-search-forward re nil t)
-                   (progn
-                     (org-back-to-heading t)
-                     (setf (:org-tree it) (point-marker))
-                     (cl-incf resolved))
-                 (message "work-item--resolve: no heading found for %s"
-                          (:jira it)))))))))
-    ;; Pass 2: colleague Org-ID lookup for reviews-needed sans Jira
-    (when (boundp 'my\colleagues)
-      (dolist (it items)
-        (when (and (eq (:status it) 'reviews-needed)
-                   (not (:org-tree it))
-                   (:author it))
-          (let* ((first-name (downcase (car (split-string
-                                             (:author it)))))
-                 (match (cl-find-if
-                         (lambda (c)
-                           (string-prefix-p first-name
-                                            (downcase (symbol-name c))))
-                         my\colleagues)))
-            (when match
-              (when-let ((loc (org-id-find (symbol-name match) 'marker)))
-                (setf (:org-tree it) loc)
-                (cl-incf resolved)))))))
-    (message "work-item--resolve: %d/%d items linked to Org headings"
-             resolved (length items))))
-;; Resolving work-items to Org headings:1 ends here
-
-;; [[file:init.org::*Gerrit SSH query (synchronous)][Gerrit SSH query (synchronous):1]]
-(defvar my/gerrit--bridge-max-depth 5
-  "Maximum BFS depth when discovering intermediate bridge changes.
-During stack grouping, BFS walks outward from known changes along
-dependsOn/neededBy edges.  Each depth level fires a synchronous
-SSH query to Gerrit for any unseen neighbors.  Setting this too
-high can be slow; 5 covers the deepest stacks we encounter in
-practice.")
-(defvar my/gerrit--jira-title-cache (make-hash-table :test 'equal)
-  "Hash-table mapping Jira ticket ID (string) → summary title (string).
-Populated lazily by `my/gerrit--fetch-jira-titles' and read by
-`my/gerrit--get-jira-title'.  Survives across agenda refreshes
-so we do not re-fetch titles for tickets we have already seen.")
-
-(cl-defun my/gerrit--query (query-string &optional extra-flags)
-  "Run a synchronous Gerrit SSH query and return a list of change alists.
-Calls `my\\gerrit-ssh-command' via `call-process', parsing each
-line of the output as JSON.  The final stats line (with key `type')
-is filtered out.  Temporarily binds `timer-idle-list' and
-`timer-list' to nil to suppress idle timers — this prevents
-recursive `call-process' errors when called from a `run-at-time'
-callback.
-
-QUERY-STRING is the Gerrit query, e.g.:
-  \"status:open owner:self -is:abandoned\"
-
-EXTRA-FLAGS overrides the default flags (--current-patch-set,
---dependencies, --commit-message, --comments).  By way of example,
-bridge resolution passes \\='(\"--dependencies\") since it only needs edges.
-
-Example:
-  (my/gerrit--query \"change:123456\")
-  → (((number . 123456) (subject . \"Fix frobnicate\") ...))"
-  (let* ((default-flags '("--current-patch-set" "--dependencies"
-                           "--commit-message" "--comments"))
-         (flags (or extra-flags default-flags))
-         (args `(,my\gerrit-ssh-host "gerrit" "query" "--format=JSON"
-                 ,@flags "--" ,query-string))
-         (timer-idle-list nil) (timer-list nil)
-         (raw (with-output-to-string
-                (with-current-buffer standard-output
-                  (apply #'call-process
-                         my\gerrit-ssh-command nil t nil args)))))
-    (->> (s-lines raw)
-         (-filter #'s-present?)
-         (-map (lambda (line)
-                 (ignore-errors (json-read-from-string line))))
-         (-filter #'identity)
-         (-filter (lambda (obj) (not (assoc 'type obj)))))))
-
-(defun my/agenda--parse-gerrit-json (raw)
-  "Parse RAW (a string of newline-delimited JSON) into change alists.
-Each line from Gerrit SSH is a standalone JSON object.  The final
-line is a stats summary (containing key `type') which we discard.
-Lines that fail `json-read-from-string' are silently skipped.
-
-This is the async counterpart to `my/gerrit--query': the latter
-calls `call-process' directly, whereas this function operates on
-a pre-collected output string from a process sentinel.
-
-Example:
-  (my/agenda--parse-gerrit-json
-   \"{\\\"number\\\":42,\\\"subject\\\":\\\"Fix it\\\"}\\n{\\\"type\\\":\\\"stats\\\"}\\n\")
-  → (((number . 42) (subject . \"Fix it\")))"
-  (->> (s-lines raw)
-       (-filter #'s-present?)
-       (-map (lambda (line)
-               (ignore-errors (json-read-from-string line))))
-       (-filter #'identity)
-       (-filter (lambda (obj) (not (assoc 'type obj))))))
-;; Gerrit SSH query (synchronous):1 ends here
-
-;; [[file:init.org::*Stack grouping (Union-Find + BFS)][Stack grouping (Union-Find + BFS):1]]
-(cl-defun my/gerrit--collect-neighbor-numbers (change)
-  "Return a deduplicated list of change numbers adjacent to CHANGE.
-Walks both the `dependsOn' and `neededBy' fields of the Gerrit
-change alist, extracting the `number' from each entry.
-
-Example (given a change that depends on 111 and is needed by 222):
-  (my/gerrit--collect-neighbor-numbers
-   \\='((number . 100)
-     (dependsOn . [((number . 111))])
-     (neededBy  . [((number . 222))])))
-  → (222 111)"
-  (let (nums)
-    (dolist (dep (append ('dependsOn change) nil))
-      (push ('number dep) nums))
-    (dolist (nb (append ('neededBy change) nil))
-      (push ('number nb) nums))
-    (-uniq nums)))
-
-(cl-defun my/gerrit--build-full-edge-map (changes)
-  "Build a complete edge map via BFS, discovering bridge changes.
-Starting from CHANGES (the known result set), walk outward along
-dependsOn/neededBy edges up to `my/gerrit--bridge-max-depth' hops.
-At each depth, fire a synchronous Gerrit SSH query to fetch any
-unseen neighbors — these are the \"bridges\" that connect two known
-changes through an intermediate that was not in the original query.
-
-Returns a two-element list (EDGES PRESENT) where:
-  EDGES   — hash-table: change-number → list of neighbor numbers
-  PRESENT — hash-table: change-number → t, for numbers in CHANGES
-
-Only PRESENT numbers participate in Union-Find merging later; bridge
-changes appear in EDGES but not in PRESENT."
-  (let* ((present (make-hash-table :test 'eql))
-         (edges   (make-hash-table :test 'eql))
-         (visited (make-hash-table :test 'eql)))
-    (dolist (c changes)
-      (let ((n ('number c)))
-        (puthash n t present)
-        (puthash n t visited)
-        (puthash n (my/gerrit--collect-neighbor-numbers c) edges)))
-    (cl-loop
-     repeat my/gerrit--bridge-max-depth
-     do (let ((frontier
-               (let (nums)
-                 (maphash (lambda (_n nbrs)
-                            (dolist (nb nbrs) (push nb nums)))
-                          edges)
-                 (->> nums -uniq
-                      (-filter (lambda (n)
-                                 (not (easy-access n visited))))))))
-          (when (null frontier) (cl-return))
-          (let ((intermediates
-                 (my/gerrit--query
-                  (s-join " OR "
-                          (-map (lambda (n) (format "change:%d" n))
-                                frontier))
-                  '("--dependencies"))))
-            (dolist (c intermediates)
-              (let ((n ('number c)))
-                (puthash n t visited)
-                (puthash n (my/gerrit--collect-neighbor-numbers c)
-                         edges))))))
-    (list edges present)))
-
-(cl-defun my/gerrit--group-into-stacks (changes)
-  "Group CHANGES into dependency stacks using Union-Find over BFS edges.
-Two changes land in the same stack if they are transitively connected
-via dependsOn/neededBy edges — even through intermediate \"bridge\"
-changes not in CHANGES themselves.
-
-Returns a list of stacks, each stack being a list of change alists
-sorted base-first (ascending change number).  Stacks are ordered
-by the tip's change number (most recent first), so the agenda
-shows the freshest work at the top.
-
-Example (conceptual):
-  Given changes A→B→C (a linear chain) and D (standalone):
-  (my/gerrit--group-into-stacks (list A B C D))
-  → ((A B C) (D))"
-  (if (null changes) nil
-    (-let* (((edges present)
-             (my/gerrit--build-full-edge-map changes))
-            (parent (make-hash-table :test 'eql)))
-      (dolist (c changes)
-        (puthash ('number c)
-                 ('number c) parent))
-      (cl-labels
-          ((find (x)
-             (let ((p (gethash x parent x)))
-               (if (eql p x) x
-                 (let ((root (find p)))
-                   (puthash x root parent) root))))
-           (union (a b)
-             (let ((ra (find a)) (rb (find b)))
-               (unless (eql ra rb) (puthash ra rb parent)))))
-        (dolist (c changes)
-          (let* ((start ('number c))
-                 (queue (list start))
-                 (seen (make-hash-table :test 'eql)))
-            (puthash start t seen)
-            (while queue
-              (let* ((cur (pop queue))
-                     (neighbors (easy-access cur edges)))
-                (dolist (nb neighbors)
-                  (unless (easy-access nb seen)
-                    (puthash nb t seen)
-                    (when (easy-access nb present)
-                      (union start nb))
-                    (unless (easy-access nb present)
-                      (push nb queue))))))))
-        (let ((groups (make-hash-table :test 'eql)))
-          (dolist (c changes)
-            (let* ((n ('number c))
-                   (root (find n)))
-              (puthash root
-                       (cons c (easy-access root groups))
-                       groups)))
-          (let (stacks)
-            (maphash
-             (lambda (_root members)
-               (push (my/gerrit--topo-sort-stack members)
-                     stacks))
-             groups)
-            (sort stacks
-                  (lambda (a b)
-                    (> (-1 'number a)
-                       (-1 'number b))))))))))
-
-(cl-defun my/gerrit--topo-sort-stack (changes &rest _ignored)
-  "Sort CHANGES base-first by ascending change number.
-In a Gerrit dependency chain, lower change numbers are created
-first and sit at the base of the stack.  This ordering ensures
-the agenda renders the chain from bottom to top — matching the
-order you would cherry-pick or submit them."
-  (sort (copy-sequence changes)
-        (lambda (a b)
-          (< ('number a) ('number b)))))
-;; Stack grouping (Union-Find + BFS):1 ends here
-
-;; [[file:init.org::*Jira helpers][Jira helpers:1]]
-(cl-defun my/gerrit--extract-jira-tickets (change)
-  "Extract the primary Jira ticket from CHANGE's commit message.
-Uses `my\\jira-ticket-regex' (set in private.el) to scan the
-commit message.  When multiple tickets are referenced, the last
-one is taken — by convention, the final Jira tag is the primary
-ticket being worked towards, and earlier ones are related context.
-
-Returns a single-element list (for API compatibility with callers
-that expect a list), or nil if no ticket matches."
-  (when my\jira-ticket-regex
-    (let ((msg (or ('commitMessage change) "")))
-      (-when-let (matches (->> (s-match-strings-all my\jira-ticket-regex msg)
-                               (-map #'cadr)))
-        (last matches)))))
-
-(cl-defun my/gerrit--stack-jira-tickets (stack)
-  "Return Jira tickets shared by every change in STACK.
-We intersect (not union) because a ticket that appears in all
-changes of a stack is the \"theme\" of that stack — suitable for
-display as a prefix.  A ticket mentioned in only one change is
-likely incidental and would clutter the summary.
-
-When the intersection is empty — e.g. a dependent change
-references a different ticket or none at all — we fall back to
-the tip (last) change's tickets so the caller still gets
-something useful.
-
-Example:
-  ;; Change A references BUG-1, BUG-2; change B references BUG-1, BUG-3
-  (my/gerrit--stack-jira-tickets (list A B))
-  → (\"BUG-1\")"
-  (let ((all (-map #'my/gerrit--extract-jira-tickets stack)))
-    (when all
-      ;; Fall back to the tip's tickets when the intersection is empty.
-      (or (-reduce-from
-           (lambda (acc tix) (-intersection acc tix))
-           (car all) (cdr all))
-          (-1 all)))))
-
-(cl-defun my/gerrit--format-jira-link (ticket)
-  "Format TICKET as an Org-style bracketed link using `my\\jira-base-url'.
-
-Example:
-  (let ((my\\jira-base-url \"https://bugs.example.com/browse\"))
-    (my/gerrit--format-jira-link \"BUG-101\"))
-  → \"[[https://bugs.example.com/browse/BUG-101][BUG-101]]\""
-  (format "[[%s/%s][%s]]" my\jira-base-url ticket ticket))
-
-(cl-defun my/gerrit--jira-rest-base ()
-  "Derive the Jira REST API base URL from `my\\jira-base-url'.
-Strips the trailing \"/browse\" path component, since the REST API
-lives at /rest/api/2/... on the same host.
-
-Example:
-  (let ((my\\jira-base-url \"https://bugs.example.com/browse\"))
-    (my/gerrit--jira-rest-base))
-  → \"https://bugs.example.com\""
-  (replace-regexp-in-string "/browse\\'" "" my\jira-base-url))
-
-(cl-defun my/gerrit--fetch-jira-titles (tickets)
-  "Batch-fetch Jira summaries for TICKETS into `my/gerrit--jira-title-cache'.
-Only fetches tickets not already cached, so repeated calls are cheap.
-Uses `curl -sn' (silent, read ~/.netrc for auth) to hit the Jira
-REST API with a JQL `key in (...)' query.
-
-TICKETS is a list of ticket ID strings, e.g. (\"BUG-101\" \"BUG-202\").
-After this call, `my/gerrit--get-jira-title' returns the summary
-for each successfully fetched ticket."
-  (let ((uncached (-filter
-                   (lambda (tk)
-                     (not (easy-access tk my/gerrit--jira-title-cache)))
-                   tickets)))
-    (when uncached
-      (let* ((jql (format "key in (%s)" (s-join "," uncached)))
-             (url (format "%s/rest/api/2/search?jql=%s&fields=summary&maxResults=%d"
-                          (my/gerrit--jira-rest-base)
-                          (url-hexify-string jql)
-                          (length uncached)))
-             (timer-idle-list nil) (timer-list nil)
-             (raw (with-output-to-string
-                    (with-current-buffer standard-output
-                      (call-process "curl" nil t nil "-sn" url))))
-             (json-obj (ignore-errors (json-read-from-string raw))))
-        (when json-obj
-          (dolist (issue (append ('issues json-obj) nil))
-            (let ((key ('key issue))
-                  (summary ('fields 'summary issue)))
-              (when (and key summary)
-                (puthash key summary
-                         my/gerrit--jira-title-cache)))))))))
-
-(cl-defun my/gerrit--get-jira-title (ticket)
-  "Return the cached Jira summary string for TICKET, or nil if unknown.
-The cache is populated by `my/gerrit--fetch-jira-titles'.
-
-Example:
-  (my/gerrit--get-jira-title \"BUG-101\")
-  → \"Optimize OSPF route computation\"  ; or nil if not yet fetched"
-  (easy-access ticket my/gerrit--jira-title-cache))
-
-(cl-defun my/gerrit--query-jira (jql &optional fields)
-  "Run a JQL query against Jira and return a list of issue alists.
-Uses `curl -sn' (reading ~/.netrc for auth) to call the REST API.
-FIELDS defaults to \"summary\"; pass a comma-separated string for
-additional fields (e.g. \"summary,status,assignee\").  Returns up
-to 50 results.
-
-Example:
-  (my/gerrit--query-jira
-   \"assignee = musa AND resolution = Unresolved\"
-   \"summary,priority\")
-  → (((key . \"BUG-101\") (fields . ((summary . \"Fix it\") ...))) ...)"
-  (let* ((url (format "%s/rest/api/2/search?jql=%s&fields=%s&maxResults=50"
-                      (my/gerrit--jira-rest-base)
-                      (url-hexify-string jql)
-                      (or fields "summary")))
-         (timer-idle-list nil) (timer-list nil)
-         (raw (with-output-to-string
-                (with-current-buffer standard-output
-                  (call-process "curl" nil t nil "-sn" url))))
-         (json-obj (ignore-errors (json-read-from-string raw))))
-    (when json-obj
-      (append ('issues json-obj) nil))))
-
-(cl-defun my/jira-post-comment (ticket comment)
-  "Post COMMENT string as a comment on Jira TICKET via REST API.
-Uses `curl -sn' (silent, read ~/.netrc for auth).  Returns the
-comment ID string on success, nil on failure."
-  (let* ((url (format "%s/rest/api/2/issue/%s/comment"
-                      (my/gerrit--jira-rest-base) ticket))
-         (payload (json-encode `((body . ,comment))))
-         (timer-idle-list nil) (timer-list nil)
-         (raw (with-output-to-string
-                (with-current-buffer standard-output
-                  (call-process "curl" nil t nil
-                                "-sn" "-X" "POST"
-                                "-H" "Content-Type: application/json"
-                                "-d" payload url))))
-         (json-obj (ignore-errors (json-read-from-string raw))))
-    (and json-obj ('id json-obj))))
-;; Jira helpers:1 ends here
-
-;; [[file:init.org::*Conversion: raw alists → =work-item= instances][Conversion: raw alists → =work-item= instances:1]]
-(defun work-item--strip-commit-tags (subject)
-  "Strip leading bracketed module tags from SUBJECT.
-Commit subjects often begin with \"[module]\" or \"[a, b]\" prefixes
-that are noise in the agenda context.
-
-Example:
-  (work-item--strip-commit-tags \"[gui, css] Align button spacing\")
-  → \"Align button spacing\""
-  (if (string-match "\\`\\[.*?\\] *" subject)
-      (substring subject (match-end 0))
-    subject))
-
-(defun work-item--shirt-size-value (change)
-  "Map a Gerrit CHANGE alist to a numeric shirt size (1–5).
-Based on total lines changed (insertions + deletions):
-  XS (≤10) → 1, S (≤50) → 2, M (≤250) → 3, L (≤1000) → 4, XL → 5.
-Returns nil when size data is absent."
-  (let* ((ps  ('currentPatchSet change))
-         (ins ('sizeInsertions ps))
-         (del ('sizeDeletions ps)))
-    (when (and ins del)
-      (let ((total (+ ins del)))
-        (cond ((<= total 10)   1)
-              ((<= total 50)   2)
-              ((<= total 250)  3)
-              ((<= total 1000) 4)
-              (t               5))))))
-
-(defun work-item--shirt-size-label (value)
-  "Convert a numeric shirt size VALUE (1–5) to a label string.
-Rounds to the nearest integer first."
-  (pcase (round value)
-    (1 "XS") (2 "S") (3 "M") (4 "L") (_ "XL")))
-
-(defun work-item--avg-shirt-size (stack)
-  "Compute the average numeric shirt size across changes in STACK.
-Returns nil when no change has size data."
-  (let ((vals (-keep #'work-item--shirt-size-value stack)))
-    (when vals
-      (/ (-sum vals) (float (length vals))))))
-
-(defun work-item--ci-status (change)
-  "Derive CI status from the Verified approval on CHANGE.
-Returns `pass' if the latest Verified vote is positive, `fail' if
-negative, or nil if no Verified vote exists."
-  (let* ((approvals (append ('currentPatchSet 'approvals change)
-                            nil))
-         (verified (-first (lambda (a)
-                             (equal "Verified" ('type a)))
-                           approvals)))
-    (when verified
-      (let ((val (string-to-number (or ('value verified) "0"))))
-        (if (< val 0) 'fail 'pass)))))
-
-(defun work-item--has-code-review (change owner-username)
-  "Return non-nil if CHANGE has a positive Code-Review from a non-owner.
-OWNER-USERNAME is the change owner's Gerrit username, excluded from
-the check (self-approvals don't count)."
-  (let ((approvals (append ('currentPatchSet 'approvals change)
-                           nil)))
-    (-any-p (lambda (a)
-              (and (equal "Code-Review" ('type a))
-                   (> (string-to-number (or ('value a) "0")) 0)
-                   (not (equal owner-username
-                               ('by 'username a)))))
-            approvals)))
-
-(defun work-item--blocked-by-parent (change stack)
-  "Return non-nil if CHANGE depends on an unmerged parent in STACK.
-A change is blocked when it has `dependsOn' entries whose change
-numbers also appear in the stack (i.e., they are open, not yet merged)."
-  (let ((deps (append ('dependsOn change) nil))
-        (stack-nums (-map (lambda (c) ('number c)) stack)))
-    (-any-p (lambda (d)
-              (member ('number d) stack-nums))
-            deps)))
-
-(defun work-item--format-age (epoch)
-  "Format a Gerrit `lastUpdated' EPOCH into a human-readable age string.
-Returns nil when EPOCH is nil.  Uses the coarsest unit that is ≥ 1:
-years → months → weeks → days → \"today\"."
-  (when epoch
-    (let* ((seconds (- (float-time) epoch))
-           (days (floor (/ seconds 86400))))
-      (cond
-       ((>= days 365) (format "%d year%s"
-                              (/ days 365) (if (>= (/ days 365) 2) "s" "")))
-       ((>= days 30)  (format "%d month%s"
-                              (/ days 30) (if (>= (/ days 30) 2) "s" "")))
-       ((>= days 7)   (format "%d week%s"
-                              (/ days 7) (if (>= (/ days 7) 2) "s" "")))
-       ((>= days 1)   (format "%d day%s"
-                              days (if (>= days 2) "s" "")))
-       (t "today")))))
-
-(defun work-item-from-stack (stack status)
-  "Convert a Gerrit dependency STACK into a `work-item' with STATUS.
-STACK is a list of change alists (base-first, as produced by
-`my/gerrit--group-into-stacks').  STATUS is one of the symbols:
-  wip, please-review, reviews-needed, my-needing-action.
-
-The Jira title cache must already be populated (via
-`my/gerrit--fetch-jira-titles') before calling this function.
-
-Example:
-  (work-item-from-stack some-stack \\='my-needing-action)
-  → #s(work-item :jira \"BUG-1234\" :title \"Fix it\" ...)"
-  (let* ((tip (-1 stack))
-         (jira (0 (my/gerrit--stack-jira-tickets stack)))
-         (jira-title (when jira (my/gerrit--get-jira-title jira))))
-    (work-item-create
-     :jira jira
-     :title (or jira-title
-                (when-let ((subj ('subject tip)))
-                  (work-item--strip-commit-tags subj))
-                "untitled")
-     :tip-url (format "%s%s%s"
-                      my\gerrit-base-url my\gerrit-project-path
-                      ('number tip))
-     :reviewers (my/gerrit--extract-reviewer-names stack)
-     :reviewer-users (my/gerrit--extract-reviewer-user-map stack)
-     :author ('owner 'name tip)
-     :status status
-     :age ('lastUpdated tip)
-     :stack-size (length stack)
-     :max-patchsets (when stack
-                      (-max (-map (lambda (c)
-                                    (or ('currentPatchSet 'number c)
-                                        1))
-                                  stack)))
-     :comment-count (-sum (-map (lambda (c)
-                                  (length ('comments c)))
-                                stack))
-     :avg-shirt-size (work-item--avg-shirt-size stack)
-     :ci-status (work-item--ci-status tip)
-     :has-code-review (work-item--has-code-review
-                       tip ('owner 'username tip))
-     :blocked-by-parent (work-item--blocked-by-parent tip stack))))
-
-(defun work-items-from-stack (stack status)
-  "Split STACK by primary Jira ticket, one work-item per ticket.
-Each group's sub-stack is passed to `work-item-from-stack'.
-
-Nil-ticket changes are dropped when at least one change has a
-ticket.  When NO change has a ticket, the entire stack is kept
-as a single group so the item still appears in the agenda."
-  (let* ((by-ticket
-          (-group-by
-           (lambda (c)
-             (0 (my/gerrit--extract-jira-tickets c)))
-           stack))
-         (non-nil-groups
-          (-filter (lambda (g) (car g)) by-ticket))
-         (groups (or non-nil-groups by-ticket)))
-    (-map (lambda (group)
-            (work-item-from-stack (cdr group) status))
-          groups)))
-
-(defun work-items-from-review-stack (stack self-username)
-  "Split STACK by (Jira ticket × author), one work-item per group.
-SELF-USERNAME is the current user's Gerrit username; their changes
-are excluded (we don't review our own work).
-
-Groups keyed by a nil Jira ticket are discarded when at least one
-non-nil group exists — the jira-less changes are noise in a
-multi-ticket stack.  When ALL groups have nil tickets (the regex
-did not match, or the author genuinely omitted references), we
-keep them so the review section still appears.
-
-Each group's sub-stack is passed to `work-item-from-stack', which
-picks up the correct tip, Jira ticket, reviewers, and author
-automatically.  For a single-author, single-ticket stack this
-returns a one-element list — identical to the old behaviour."
-  (let* ((non-self
-          (-filter
-           (lambda (c)
-             (not (equal self-username
-                         ('owner 'username c))))
-           stack))
-         (by-ticket-and-author
-          (-group-by
-           (lambda (c)
-             (cons (0 (my/gerrit--extract-jira-tickets c))
-                   ('owner 'username c)))
-           non-self))
-         (non-nil-groups
-          (-filter (lambda (g) (car (car g))) by-ticket-and-author))
-         (groups (or non-nil-groups by-ticket-and-author)))
-    (-map (lambda (group)
-            (work-item-from-stack (cdr group) 'reviews-needed))
-          groups)))
-
-(defun work-item-from-jira-issue (issue)
-  "Convert a Jira REST API ISSUE alist into a `work-item'.
-Status is `todo' (no Gerrit work has started), and `urgent' is t.
-ISSUE has the shape returned by `my/gerrit--query-jira':
-  ((key . \"BUG-1234\") (fields . ((summary . \"Fix frobnicate\") ...)))
-
-Example:
-  (work-item-from-jira-issue
-   \\='((key . \"BUG-99\") (fields . ((summary . \"Urgent thing\")))))
-  → #s(work-item :jira \"BUG-99\" :title \"Urgent thing\"
-                 :status todo :urgent t)"
-  (let ((key ('key issue))
-        (summary ('fields 'summary issue)))
-    (work-item-create
-     :jira key
-     :title (or summary "untitled")
-     :tip-url nil
-     :reviewers nil
-     :author nil
-     :status 'todo
-     :urgent t)))
-;; Conversion: raw alists → =work-item= instances:1 ends here
-
-;; [[file:init.org::#org-task-help-echo][Help-echo action hints for regular Org tasks:1]]
-(defun my/org-task-help-echo (marker)
-  "Return a propertized, centred help-echo string for an Org heading at MARKER.
-Inspects the heading's TODO state, priority, timestamps, and clock
-data, then returns a context-sensitive action hint --- or nil when
-no signal applies.
-
-Signals are checked in priority order (highest leverage first):
-  1. 🔥 Overdue deadline
-  2. ⏰ Deadline today
-  3. 🧊 Frozen (STARTED but no recent clock)
-  4. 🫥 Possibly abandoned (scheduled long ago, never clocked)
-  5. ⏳ WAITING too long
-  6. 🏷️ All subtasks done but parent still open
-  7. 📌 High priority but unscheduled
-  8. ✅ Done but not archived
-  9. 🎯 Ready to start"
-  (when (and marker (marker-buffer marker))
-    (with-current-buffer (marker-buffer marker)
-      (org-with-wide-buffer
-       (goto-char marker)
-       (let* ((todo      (org-get-todo-state))
-              (priority  (org-entry-get nil "PRIORITY"))
-              (effort    (org-entry-get nil "Effort"))
-              (deadline  (org-get-deadline-time nil))
-              (scheduled (org-get-scheduled-time nil))
-              (closed-ts (org-entry-get nil "CLOSED"))
-              (closed    (when closed-ts
-                           (org-time-string-to-time closed-ts)))
-              (now       (float-time))
-              (days-since (lambda (ts)
-                            (when ts
-                              (floor (/ (- now (float-time ts)) 86400)))))
-              (deadline-days  (funcall days-since deadline))
-              (scheduled-days (funcall days-since scheduled))
-              (closed-days    (funcall days-since closed))
-              ;; Check whether any clock entry exists in the subtree.
-              (has-clock
-               (save-excursion
-                 (let ((end (save-excursion (org-end-of-subtree t t))))
-                   (re-search-forward org-clock-line-re end t))))
-              ;; Last clock-out timestamp in the subtree.
-              (last-clock-days
-               (save-excursion
-                 (let ((end (save-excursion (org-end-of-subtree t t)))
-                       (latest nil))
-                   (while (re-search-forward
-                           "CLOCK:.*--\\(\\[.*?\\]\\)" end t)
-                     (let ((ts (org-time-string-to-time
-                                (match-string 1))))
-                       (when (or (null latest)
-                                 (time-less-p latest ts))
-                         (setq latest ts))))
-                   (funcall days-since latest))))
-              ;; Whether any child heading is still a TODO state.
-              (has-todo-children
-               (save-excursion
-                 (let ((end (save-excursion (org-end-of-subtree t t)))
-                       (found nil))
-                   (while (and (not found)
-                               (outline-next-heading)
-                               (< (point) end))
-                     (when (org-get-todo-state)
-                       (setq found t)))
-                   found)))
-              (has-children
-               (save-excursion
-                 (let ((end (save-excursion (org-end-of-subtree t t))))
-                   (and (outline-next-heading)
-                        (< (point) end)))))
-              ;; Done states (past the | separator).
-              (done-p (member todo '("DONE" "CANCELLED" "PAUSED"
-                                     "WAITING" "APPROVED")))
-              ;; Active non-done states.
-              (started-p (equal todo "STARTED"))
-              (waiting-p (equal todo "WAITING"))
-              (todo-p    (member todo '("TODO" "INVESTIGATED")))
-              ;; ── Signal dispatch (highest priority first) ──
-              (action
-               (cond
-                ;; 1. 🔥 Overdue
-                ((and deadline-days (> deadline-days 0)
-                      (not (member todo '("DONE" "CANCELLED"))))
-                 (propertize
-                  (format "🔥 Overdue by %d day%s --- do it now or reschedule."
-                          deadline-days
-                          (if (= deadline-days 1) "" "s"))
-                  'face '(bold (:foreground "red"))))
-                ;; 2. ⏰ Due today
-                ((and deadline-days (= deadline-days 0)
-                      (not (member todo '("DONE" "CANCELLED"))))
-                 (propertize "⏰ Due today --- block time and finish it."
-                             'face '(bold (:foreground "orange red"))))
-                ;; 3. 🧊 Frozen
-                ((and started-p last-clock-days (> last-clock-days 7))
-                 (propertize
-                  (format "🧊 Started but untouched for %d days --- resume or refile."
-                          last-clock-days)
-                  'face '(bold (:foreground "steel blue"))))
-                ;; 4. 🫥 Possibly abandoned
-                ((and todo-p scheduled-days (> scheduled-days 30)
-                      (not has-clock))
-                 (propertize
-                  "🫥 Scheduled a month ago, never started --- refile or axe."
-                  'face '(bold (:foreground "orange red"))))
-                ;; 5. ⏳ Waiting — graduated by duration.
-                ;; CLOSED timestamp marks when the task entered WAITING
-                ;; (Org sets it for states past the | separator).
-                (waiting-p
-                 (let ((wait-days (or closed-days scheduled-days 0)))
-                   (cond
-                    ((>= wait-days 14)
-                     (propertize
-                      (format "⏳ Waiting %d days --- this is stale. Ping now or unblock."
-                              wait-days)
-                      'face '(bold (:foreground "red"))))
-                    ((>= wait-days 7)
-                     (propertize
-                      (format "⏳ Waiting %d days --- time to check in."
-                              wait-days)
-                      'face '(bold (:foreground "orange red"))))
-                    ((>= wait-days 3)
-                     (propertize
-                      (format "⏳ Waiting %d days --- patience, but keep an eye on it."
-                              wait-days)
-                      'face '(bold (:foreground "steel blue"))))
-                    (t
-                     (propertize
-                      (format "⏳ Waiting %d day%s --- still fresh, no action needed yet."
-                              wait-days (if (= wait-days 1) "" "s"))
-                      'face '(bold (:foreground "sea green")))))))
-                ;; 6. 🏷️ All subtasks done
-                ((and todo-p has-children (not has-todo-children))
-                 (propertize
-                  "🏷️ All subtasks done --- close the parent or add the next step."
-                  'face '(bold (:foreground "steel blue"))))
-                ;; 7. 📌 High priority but unscheduled
-                ((and (equal priority "A") (not scheduled)
-                      (not (member todo '("DONE" "CANCELLED"))))
-                 (propertize
-                  "📌 High priority but unscheduled --- when will you do this?"
-                  'face '(bold (:foreground "orange red"))))
-                ;; 8. ✅ Done, not archived
-                ((and (equal todo "DONE") closed-days (> closed-days 7))
-                 (propertize
-                  (format
-                   "✅ Done %d days ago --- archive it. A clean list is a calm mind."
-                   closed-days)
-                  'face '(bold (:foreground "sea green"))))
-                ;; 9. 🎯 Ready to start
-                ((and todo-p scheduled-days (>= scheduled-days 0))
-                 (propertize
-                  "🎯 Ready to go --- clock in and start."
-                  'face '(bold (:foreground "sea green"))))))
-              ;; ── Secondary nudge: missing effort / schedule ──
-              ;; These are gentle reminders appended below the primary
-              ;; signal.  Only shown for active (non-done) tasks.
-              (active-p (and todo
-                             (not (member todo '("DONE" "CANCELLED")))))
-              (nudges
-               (when active-p
-                 (concat
-                  (unless effort
-                    (concat "\n"
-                            (propertize
-                             "⏱ No effort estimate --- C-c C-x e to set one."
-                             'face 'shadow)))
-                  (unless (or scheduled deadline)
-                    (concat "\n"
-                            (propertize
-                             "📅 Not scheduled --- C-c C-s to pick a date."
-                             'face 'shadow)))))))
-         (when (or action nudges)
-           (my/center-text
-            (concat (or action "") nudges))))))))
-
-(defun my/agenda-attach-task-help-echo ()
-  "Walk every line in the agenda buffer, attaching `help-echo' to
-Org task lines that do not already have one.
-
-We skip lines that already carry a `help-echo' (e.g., our custom
-work-item sections) to avoid overwriting richer hints.  Only lines
-with an `org-marker' text property --- i.e., lines backed by a real
-Org heading --- are candidates."
-  (when (string-prefix-p "*Org Agenda" (buffer-name))
-    (let ((inhibit-read-only t))
-      (save-excursion
-        (goto-char (point-min))
-        (while (not (eobp))
-          (let* ((beg (line-beginning-position))
-                 (end (line-end-position))
-                 (marker (get-text-property beg 'org-marker)))
-            (when (and marker
-                       (not (get-text-property beg 'help-echo)))
-              (when-let ((echo (my/org-task-help-echo marker)))
-                (put-text-property beg end 'help-echo echo))))
-          (forward-line 1))))))
-
-(add-hook 'org-agenda-finalize-hook #'my/agenda-attach-task-help-echo)
-;; Help-echo action hints for regular Org tasks:1 ends here
-
-;; [[file:init.org::#org-task-help-echo][Help-echo action hints for regular Org tasks:2]]
-(cl-defun my/gerrit--extract-reviewer-user-map (stack)
-  "Extract an alist of (display-name . username) for reviewers in STACK.
-Merges two sources:
-
-1. Human names from `allReviewers' — kept when the name contains
-   a space (heuristic: \"Ali Hassan\" is human, \"Jenkins\" is a
-   bot) and the username is non-nil.  The change owner is excluded.
-2. ANY reviewer (including bots) from `currentPatchSet.approvals'
-   where type = \"Code-Review\" and value < 0.  A -1 from a bot
-   is actionable feedback that should surface in the agenda.
-
-The union is returned, deduplicated by username.
-
-Example:
-  (my/gerrit--extract-reviewer-user-map stack)
-  → ((\"Ali ibn Abi Talib\" . \"ali\") (\"Hassan ibn Ali\" . \"hassan\"))"
-  (let* ((owners (->> stack
-                      (-map (lambda (c)
-                              ('owner 'username c)))
-                      (-filter #'identity)
-                      -uniq))
-         (human-reviewers
-          (->> stack
-               (-mapcat
-                (lambda (c)
-                  (->> (append ('allReviewers c) nil)
-                       (-filter
-                        (lambda (rv)
-                          (let ((name ('name rv))
-                                (uname ('username rv)))
-                            (and name uname
-                                 (s-contains-p " " name)
-                                 (not (member uname owners))))))
-                       (-map (lambda (rv)
-                               (cons ('name rv)
-                                     ('username rv)))))))
-               (-filter #'identity)))
-         (negative-voters
-          (->> stack
-               (-mapcat
-                (lambda (c)
-                  (->> (append ('currentPatchSet 'approvals c)
-                               nil)
-                       (-filter
-                        (lambda (a)
-                          (and (equal "Code-Review" ('type a))
-                               (< (string-to-number
-                                   (or ('value a) "0"))
-                                  0))))
-                       (-map (lambda (a)
-                               (let ((by ('by a)))
-                                 (when-let ((name ('name by))
-                                            (uname ('username by)))
-                                   (cons name uname))))))))
-               (-filter #'identity))))
-    (cl-remove-duplicates
-     (append human-reviewers negative-voters)
-     :key #'cdr :test #'equal)))
-
-(cl-defun my/gerrit--extract-reviewer-names (stack)
-  "Extract reviewer display names from STACK.
-Thin wrapper around `my/gerrit--extract-reviewer-user-map' — returns
-just the car (display name) of each pair, plus any name-only reviewers
-whose username was nil (the user-map variant drops those).
-
-Example:
-  (my/gerrit--extract-reviewer-names stack)
-  → (\"Ali ibn Abi Talib\" \"Hassan ibn Ali\")"
-  (let ((with-usernames (-map #'car (my/gerrit--extract-reviewer-user-map stack)))
-        ;; Catch reviewers that have a name but no username — the user-map
-        ;; variant drops these, but the original names function kept them.
-        (name-only
-         (let ((owners (->> stack
-                            (-map (lambda (c)
-                                    ('owner 'username c)))
-                            (-filter #'identity)
-                            -uniq)))
-           (->> stack
-                (-mapcat
-                 (lambda (c)
-                   (->> (append ('allReviewers c) nil)
-                        (-filter
-                         (lambda (rv)
-                           (let ((name ('name rv))
-                                 (uname ('username rv)))
-                             (and name (not uname)
-                                  (s-contains-p " " name)
-                                  (not (member uname owners))))))
-                        (-map (lambda (rv) ('name rv))))))
-                (-filter #'identity)
-                -uniq))))
-    (-uniq (append with-usernames name-only))))
-
-(cl-defun my/gerrit--format-reviewer-names (names)
-  "Format a list of NAMES into natural English with Oxford comma.
-
-Examples:
-  (my/gerrit--format-reviewer-names \\='(\"Alice\"))
-  → \"Alice\"
-  (my/gerrit--format-reviewer-names \\='(\"Alice\" \"Bob\"))
-  → \"Alice and Bob\"
-  (my/gerrit--format-reviewer-names \\='(\"Alice\" \"Bob\" \"Carol\"))
-  → \"Alice, Bob, and Carol\""
-  (pcase (length names)
-    (1 (0 names))
-    (2 (format "%s and %s" (0 names) (1 names)))
-    (_ (format "%s, and %s"
-               (s-join ", " (butlast names))
-               (-1 names)))))
-
-(cl-defgeneric work-item-to-string (item)
-  "Render ITEM as a single-line string for display in the agenda.")
-
-(defun work-item--sort (items)
-  "Sort ITEMS for agenda display: urgent first, sidequests last.
-All three tiers are individually sorted stalest-first (oldest
-`age' epoch).  Items with no `age' sort after those with one."
-  (let (urgent normal sidequests)
-    (dolist (it items)
-      (cond
-       ((:urgent it)     (push it urgent))
-       ((not (:jira it)) (push it sidequests))
-       (t                         (push it normal))))
-    (cl-flet ((stalest-first (items)
-                (sort items
-                      (lambda (a b)
-                        (let ((ea (or (:age a) most-positive-fixnum))
-                              (eb (or (:age b) most-positive-fixnum)))
-                          (< ea eb))))))
-      (append (stalest-first urgent)
-              (stalest-first normal)
-              (stalest-first sidequests)))))
-
-(cl-defmethod work-item-to-string ((item work-item))
-  "Render a `work-item' ITEM as a single-line Org string for the agenda.
-Dispatches on `work-item-status':
-  todo              → JIRA-LINK + title (no Gerrit work yet)
-  my-needing-action → Address latest feedback from REVIEWERS
-  reviews-needed    → Review AUTHOR's latest efforts
-  please-review     → REVIEWERS please review this work
-  wip               → Resume or abandon this work
-Each line is optionally prefixed with a Jira link + title when
-the work-item has a non-nil `jira' slot.
-
-The `urgent' flag prepends \"🔴 \" to the rendered string so the
-item stands out in whichever status section it belongs to."
-  (let* ((jira        (:jira item))
-         (title       (:title item))
-         (url         (:tip-url item))
-         (reviewers   (:reviewers item))
-         (author      (:author item))
-         (status      (:status item))
-         (urgent      (:urgent item))
-         (jira-link   (when jira (my/gerrit--format-jira-link jira)))
-         (jira-prefix (cond
-                       (jira-link
-                        (if title
-                            (format "%s %s ∷ " jira-link title)
-                          (format "%s ∷ " jira-link)))
-                       (title
-                        (format "Sidequest{ %s } ∷ " title))))
-         (age-str     (work-item--format-age (:age item)))
-         (rv-str      (when reviewers
-                        (my/gerrit--format-reviewer-names reviewers)))
-         (urgent-prefix (if urgent "🔴 " ""))
-         (age-prefix  (if age-str (format "[%s] " age-str) "")))
-    (pcase status
-      ('todo
-       (concat urgent-prefix age-prefix
-               (if title (format "%s \"%s\"" (or jira-link "") title)
-                 (or jira-link ""))))
-
-      ('my-needing-action
-       (concat urgent-prefix age-prefix jira-prefix
-               (format "Address [[%s][latest feedback]]" url)
-               (when rv-str (format " from %s" rv-str))))
-
-      ('reviews-needed
-       (concat urgent-prefix age-prefix jira-prefix
-               (format "Review %s's [[%s][latest efforts]]"
-                       (or author "someone") url)))
-
-      ('please-review
-       (if jira-prefix
-           (format "%s%s%s%s please review this [[%s][work]]"
-                   urgent-prefix age-prefix jira-prefix (or rv-str "Reviewers") url)
-         (format "%s%s%s please review [[%s][%s]]"
-                 urgent-prefix age-prefix (or rv-str "Reviewers") url title)))
-
-      ('wip
-       (if jira-prefix
-           (concat urgent-prefix age-prefix
-                   (format "%sResume or abandon this [[%s][work]]"
-                           jira-prefix url) "?")
-         (concat urgent-prefix age-prefix
-                 (format "Resume or abandon [[%s][%s]]"
-                         url title) "?")))
-
-      ('assigned
-       (concat age-prefix
-               (if title (format "%s \"%s\"" (or jira-link "") title)
-                 (or jira-link ""))))
-
-      ('jira-active
-       (concat urgent-prefix age-prefix
-               (if title (format "%s \"%s\" — ⚠️ Jira active but no Gerrit changes"
-                                 (or jira-link "") title)
-                 (format "%s — ⚠️ Jira active but no Gerrit changes"
-                         (or jira-link ""))))))))
-
-(defun work-item-help-echo (item)
-  "Return a minibuffer hint suggesting the next action for ITEM.
-The hint has three layers, concatenated:
-
-  ACTION — status-specific primary suggestion.
-  META   — bracketed stats: changes, size, patchset, comments, urgency.
-  NUDGE  — stat-based strategic advice (split, rebase, escalate, etc.).
-
-Patchsets alone are not a contention signal — iterative improvement is
-normal.  We only flag contention when patchsets AND comments are both
-high, optionally combined with long duration for the strongest signal.
-
-Stat-based nudges (highest priority wins):
-  (i) 🔴 CI failed → fix CI before anything else.
-  (j) 🔗 Blocked by parent → unblock the dependency first.
-  (a) 🧱 Stuck: many ps + many comments + old → escalate / split / rethink.
-  (f) Escalate: high ps + growing comments → schedule synchronous talk.
-  (c) Abandon & re-open: very old + large + many ps → start fresh.
-  (b) Split: large size (L/XL) → smaller stacks = happier reviewers.
-  (e) Spin off follow-ups: many comments but low ps → optional cleanup.
-  (g) Solo reviewer + stale → widen the reviewer pool or re-assign.
-  (h) Many reviewers (> 2) → coordination overhead, narrow the pool.
-  (k) ✅ CI green + no Code-Review → request final approval.
-  (d) Rebase: > 7 days old → rebase to stay current with target branch."
-  (let* ((status       (:status item))
-         (urgent       (:urgent item))
-         (age-epoch    (:age item))
-         (days-old     (when age-epoch
-                         (floor (/ (- (float-time) age-epoch) 86400))))
-         (stale        (and days-old (>= days-old 14)))
-         (very-stale   (and days-old (>= days-old 30)))
-         (rv-str       (when (:reviewers item)
-                         (my/gerrit--format-reviewer-names
-                          (:reviewers item))))
-         (stack-size   (or (:stack-size item) 1))
-         (max-ps       (or (:max-patchsets item) 1))
-         (comments     (or (:comment-count item) 0))
-         (shirt-size   (:avg-shirt-size item))
-         (num-reviewers (length (:reviewers item)))
-         (ci            (:ci-status item))
-         (ci-red        (eq ci 'fail))
-         (ci-green      (eq ci 'pass))
-         (has-cr        (:has-code-review item))
-         (blocked       (:blocked-by-parent item))
-         (large-change (and shirt-size (>= shirt-size 4))) ;; L or XL
-         (many-ps      (> max-ps 4))
-         (many-comments (> comments (* 5 stack-size))) ;; > 5 comments/change
-         (solo-reviewer (= num-reviewers 1))
-         (many-reviewers (> num-reviewers 2))
-         (needs-rebase (and days-old (> days-old 7)))
-         ;; ── Layer 1: status-specific primary action ──
-         (action
-          (pcase status
-            ('reviews-needed
-             (cond
-              (very-stale "This review is rotting — Slack nudge or offer to pair.")
-              (stale      "Stale review — prioritise it today.")
-              (t          "Open their change and leave a Code-Review vote.")))
-            ('my-needing-action
-             (cond
-              (very-stale
-               (format "Feedback from %s has waited a month — address or abandon."
-                       (or rv-str "reviewers")))
-              (stale
-               (format "Feedback from %s is going stale — address it soon."
-                       (or rv-str "reviewers")))
-              (t "Address the feedback and re-publish.")))
-            ('please-review
-             (cond
-              (very-stale
-               (format "A month without review — escalate or re-assign %s."
-                       (or rv-str "the reviewer")))
-              (stale
-               (format "Two weeks without review — send %s a Slack nudge."
-                       (or rv-str "reviewers")))
-              (t (format "Awaiting %s — patience, or a gentle ping."
-                         (or rv-str "reviewers")))))
-            ('wip
-             (cond
-              ;; (d) Very old + large + many ps → abandon and start fresh.
-              ((and very-stale large-change many-ps)
-               "Ancient, large, and churning — abandon and re-open as smaller pieces.")
-              (very-stale "Dead weight? Abandon in Gerrit or commit to finishing it.")
-              (stale
-               "Idle for weeks — set it up for success: self-review, add context, then resume.")
-              (t (concat "🌱 Is this actually ready? Do a self-review, "
-                         "ensure the right reviewers, and keep stacks small."))))
-            ('todo
-             (if urgent
-                 "Urgent and unstarted — create a Gerrit change today."
-               "Not yet started — scope it, create a first patchset, small stacks = happy reviewers."))
-            ('assigned
-             "Assigned to you — decide: start working, or push back on scope.")
-            ('jira-active
-             "Jira says active but no Gerrit changes — stale #progress? Fix the status.")
-            (_ "")))
-         ;; ── Layer 2: bracketed metadata ──
-         (meta
-          (concat
-           (when (> stack-size 1)
-             (format " [%d changes]" stack-size))
-           (when shirt-size
-             (format " [size %s]" (work-item--shirt-size-label shirt-size)))
-           (when (> max-ps 1)
-             (format " [ps %d]" max-ps))
-           (when (> comments 0)
-             (format " [%d comment%s]" comments (if (= comments 1) "" "s")))
-           (when (> num-reviewers 1)
-             (format " [%d reviewers]" num-reviewers))
-           (when ci-red " [CI ✗]")
-           (when blocked " [blocked]")
-           (when urgent " [URGENT]")))
-         ;; ── Layer 3: stat-based strategic nudge (highest priority wins) ──
-         (nudge
-          (cond
-           ;; (i) 🔴 CI failed → nothing else matters until CI is green.
-           (ci-red
-            " 🔴 CI is red — fix the build before anything else.")
-           ;; (j) 🔗 Blocked by parent → unblock the dependency first.
-           (blocked
-            " 🔗 Blocked by an unmerged parent — land the dependency first.")
-           ;; (a) 🧱 Stuck: many ps + many comments + stale → unblock strategically.
-           ((and many-ps many-comments stale)
-            " 🧱 Stuck — don't just iterate: schedule a sync discussion, split the change, or rethink the approach.")
-           ;; (f) Escalate: high ps + growing comments (but not yet stale).
-           ((and many-ps many-comments)
-            " ⚠ High churn + heavy comments — escalate to a synchronous conversation before the next patchset.")
-           ;; (c) Abandon & re-open: very old + large + many ps.
-           ((and very-stale large-change many-ps)
-            " ⚠ Old, large, and churning — consider abandoning and re-opening as smaller, focused pieces.")
-           ;; (b) Split: large size (L/XL).
-           (large-change
-            (format " 💡 Size %s — split into a smaller stack; small changes = faster reviews."
-                    (work-item--shirt-size-label shirt-size)))
-           ;; (e) Spin off follow-ups: many comments but low ps → optional cleanup.
-           ((and many-comments (not many-ps))
-            " 💡 Lots of comments but few patchsets — spin off unrelated cleanup as follow-up work.")
-           ;; (g) Solo reviewer + stale → widen the reviewer pool.
-           ((and solo-reviewer stale)
-            " 👥 Only one reviewer and going stale — add another reviewer or re-assign to get things moving.")
-           ;; (h) Many reviewers → coordination overhead warning.
-           (many-reviewers
-            (format " 👥 %d reviewers — coordination overhead; consider narrowing to 1–2 primary reviewers."
-                    num-reviewers))
-           ;; (k) ✅ CI green + no Code-Review → request final approval.
-           ((and ci-green (not has-cr))
-            (format " ✅ CI green but no Code-Review — ask %s for final approval."
-                    (or rv-str "a reviewer")))
-           ;; (d) Rebase: > 7 days old.
-           (needs-rebase
-            " 🔄 Older than a week — rebase to stay current with the target branch."))))
-    (my/center-text
-     (concat
-      ;; Layer 1 — action: bold, front-and-centre.
-      (propertize action 'face 'bold)
-      ;; Layer 2 — metadata: dimmed bracket stats.
-      (when (length> meta 0)
-        (concat "\n"
-                (propertize meta 'face 'shadow)))
-      ;; Layer 3 — nudge: coloured by severity.
-      (when nudge
-        (let ((nudge-face
-               (cond
-                (ci-red   '(bold (:foreground "red")))
-                (blocked  '(bold (:foreground "red")))
-                ((or (and many-ps many-comments)
-                     (and very-stale large-change many-ps))
-                 '(bold (:foreground "orange red")))
-                (t        '(bold (:foreground "steel blue"))))))
-          (concat "\n"
-                  (propertize nudge 'face nudge-face))))))))
-;; Help-echo action hints for regular Org tasks:2 ends here
-
-;; [[file:init.org::*Ticket collection helper][Ticket collection helper:1]]
-(cl-defun my/gerrit--collect-all-tickets (stacks)
-  "Collect all unique Jira ticket IDs across all STACKS.
-Used before `my/gerrit--fetch-jira-titles' to batch-fetch every
-ticket referenced by any change, regardless of which section it
-will appear in.  Returns a flat deduplicated list of ID strings."
-  (->> stacks
-       (-mapcat (lambda (s)
-                  (-mapcat #'my/gerrit--extract-jira-tickets s)))
-       -uniq))
-;; Ticket collection helper:1 ends here
-
-;; [[file:init.org::*Async fetch machinery][Async fetch machinery:1]]
-(defun my/agenda--async-gerrit-query (query-string store-var)
-  "Run Gerrit QUERY-STRING asynchronously via `start-process'.
-When the SSH process exits, the sentinel parses the JSON output
-and stores the resulting list of change alists into STORE-VAR
-(a symbol, e.g. \\='my/agenda--attention-changes).  The symbol is
-attached to the process via `process-put' so the sentinel can
-retrieve it — we cannot use closures since init.el has no
-lexical binding.
-
-Example:
-  (my/agenda--async-gerrit-query
-   \"attention:self status:open -is:abandoned\"
-   \\='my/agenda--attention-changes)"
-  (let* ((buf (generate-new-buffer " *gerrit-agenda-query*"))
-         (args (list my\gerrit-ssh-host "gerrit" "query"
-                     "--format=JSON"
-                     "--current-patch-set" "--all-reviewers"
-                     "--dependencies"
-                     "--commit-message" "--" query-string))
-         (proc (apply #'start-process "gerrit-agenda" buf
-                      my\gerrit-ssh-command args)))
-    (process-put proc :store-var store-var)
-    (set-process-sentinel proc #'my/agenda--gerrit-sentinel)))
-
-(defun my/agenda--gerrit-sentinel (proc _event)
-  "Process sentinel for async Gerrit SSH queries.
-Fires when PROC exits or is signalled.  Parses the accumulated
-buffer output via `my/agenda--parse-gerrit-json', stores the
-result into the symbol stashed in PROC's :store-var property,
-and decrements `my/agenda--pending-queries'.  When the counter
-hits zero (both queries done), schedules the coordinator
-`my/agenda--format-and-cache' via `run-at-time 0' — escaping
-sentinel context so that the coordinator's synchronous
-`call-process' calls (bridge resolution, Jira fetching) are safe."
-  (when (memq (process-status proc) '(exit signal))
-    (let* ((buf (process-buffer proc))
-           (raw (when (buffer-live-p buf)
-                  (with-current-buffer buf (buffer-string))))
-           (changes (when raw
-                      (my/agenda--parse-gerrit-json raw)))
-           (store-var (process-get proc :store-var))
-           (exit-code (process-exit-status proc)))
-      (when (buffer-live-p buf) (kill-buffer buf))
-      (set store-var changes)
-      (message "Gerrit/Jira: query for %s done (exit=%d, %d changes, pending=%d)"
-               store-var exit-code (length changes)
-               (1- my/agenda--pending-queries))
-      (cl-decf my/agenda--pending-queries)
-      (when (zerop my/agenda--pending-queries)
-        ;; Escape sentinel context before heavy sync processing
-        (run-at-time 0 nil #'my/agenda--format-and-cache)))))
-
-(cl-defun my/agenda-work-refresh ()
-  "Kick off a full Gerrit/Jira refresh cycle (async).
-Fires two parallel SSH queries to Gerrit (attention set + all my
-open changes).  When both complete, the coordinator groups them
-into stacks, fetches Jira titles, checks for urgent tickets, and
-caches the rendered output.  If the agenda buffer is live, it
-auto-refreshes to show the new data.
-
-Guards against double-fetching: if a fetch is already in progress,
-this is a no-op.
-
-Can be called interactively via M-x or from the \"Refresh Work\"
-agenda button."
-  (interactive)
-  (when my/agenda-work-fetching
-    (message "Gerrit/Jira: fetch already in progress (fetching=%s)"
-             my/agenda-work-fetching)
-    (cl-return-from my/agenda-work-refresh))
-  (when (s-blank? my\gerrit-base-url)
-    (message "Gerrit/Jira: my\\gerrit-base-url is empty — check private.el")
-    (cl-return-from my/agenda-work-refresh))
-  (message "Fetching Gerrit/Jira data — you'll see a dialog box when this time-consuming task is done…")
-  (setq my/agenda-work-fetching t
-        my/agenda--pending-queries 2
-        my/agenda--attention-changes nil
-        my/agenda--all-mine-changes nil)
-  (my/agenda--async-gerrit-query
-   "attention:self status:open -is:abandoned"
-   'my/agenda--attention-changes)
-  (my/agenda--async-gerrit-query
-   "status:open owner:self -is:abandoned"
-   'my/agenda--all-mine-changes))
-;; Async fetch machinery:1 ends here
-
-;; [[file:init.org::*Coordinator][Coordinator:1]]
-(defun my/agenda--format-and-cache ()
-  "Coordinator: process fetched Gerrit/Jira data and update the cache.
-Runs after both async SSH queries have completed.  Performs all
-heavy synchronous work:
-  1. Group changes into dependency stacks (may fire additional
-     synchronous SSH queries for bridge resolution).
-  2. Split attention-set stacks into mine vs. others.
-  3. Batch-fetch Jira titles for all referenced tickets.
-  4. Query for urgent Jira tickets (Urgency = 1 month / next release).
-  5. Convert each stack to a `work-item' and store in `my/agenda-work-data'.
-  6. Trigger `org-agenda-redo-all' if the agenda buffer is live.
-Wrapped in `condition-case' so a failure does not leave
-`my/agenda-work-fetching' stuck at t."
-  (condition-case err
-      (let* ((attention my/agenda--attention-changes)
-             (all-mine  my/agenda--all-mine-changes)
-             ;; Attention-set number lookup
-             (attn-nums
-              (let ((ht (make-hash-table :test 'eql)))
-                (dolist (c attention)
-                  (puthash ('number c) t ht))
-                ht))
-             ;; Stale = my open changes NOT in the attention set
-             (stale (-filter
-                     (lambda (c)
-                       (not (easy-access ('number c) attn-nums)))
-                     all-mine))
-             (wip     (-filter (lambda (c)
-                                 (eq ('wip c) t))
-                               stale))
-             (non-wip (-filter (lambda (c)
-                                 (not (eq ('wip c) t)))
-                               stale))
-             ;; Group into stacks (sync bridge resolution is safe
-             ;; here --- we are in a run-at-time callback, not a
-             ;; sentinel or idle timer)
-             (_ (message "Gerrit/Jira: grouping %d + %d changes into stacks…"
-                         (length attention) (length all-mine)))
-             (stale-stacks (my/gerrit--group-into-stacks non-wip))
-             (wip-stacks   (my/gerrit--group-into-stacks wip))
-             (attn-stacks  (my/gerrit--group-into-stacks attention))
-             ;; Split attention stacks by ownership
-             (mine
-              (-filter
-               (lambda (s)
-                 (-every-p
-                  (lambda (c)
-                    (equal my\gerrit-user
-                           ('owner 'username c)))
-                  s))
-               attn-stacks))
-             (others
-              (-filter
-               (lambda (s)
-                 (not
-                  (-every-p
-                   (lambda (c)
-                     (equal my\gerrit-user
-                            ('owner 'username c)))
-                   s)))
-               attn-stacks))
-             ;; Batch-fetch Jira titles for every ticket
-             (all-stacks (append stale-stacks wip-stacks attn-stacks))
-             (_ (let ((tix (my/gerrit--collect-all-tickets all-stacks)))
-                  (when tix
-                    (message "Gerrit/Jira: fetching titles for %d Jira tickets…"
-                             (length tix))
-                    (my/gerrit--fetch-jira-titles tix))))
-             ;; Convert stacks → work-item instances
-             (stale-items (-mapcat (lambda (s)
-                                    (work-items-from-stack s 'please-review))
-                                  stale-stacks))
-             (wip-items   (-mapcat (lambda (s)
-                                    (work-items-from-stack s 'wip))
-                                  wip-stacks))
-             (rv-items    (-mapcat (lambda (s)
-                                     (work-items-from-review-stack
-                                      s my\gerrit-user))
-                                   others))
-             (my-items    (-mapcat (lambda (s)
-                                    (work-items-from-stack s 'my-needing-action))
-                                  mine))
-             (gerrit-items (append stale-items wip-items rv-items my-items))
-             ;; Urgent Jira tickets (separate JQL query)
-             (_ (message "Gerrit/Jira: checking for urgent Jira tickets…"))
-             (urgent-jql
-              (let* ((now (decode-time))
-                     (mon (4 now))
-                     (yr  (mod (5 now) 100))
-                     (next-mon (1+ mon))
-                     (next-yr  (if (> next-mon 12) (1+ yr) yr))
-                     (next-mon (if (> next-mon 12) 1 next-mon))
-                     (fix-ver  (format "%d.%d" next-yr next-mon)))
-                (format (concat "(Urgency = \"1 month\""
-                                " OR fixVersion = \"%s\")"
-                                " AND resolution = Unresolved"
-                                " AND assignee = %s")
-                        fix-ver my\gerrit-user)))
-             (urgent-issues (my/gerrit--query-jira urgent-jql))
-             ;; Build set of urgent Jira ticket IDs
-             (urgent-ids
-              (let ((ht (make-hash-table :test 'equal)))
-                (dolist (issue urgent-issues)
-                  (puthash ('key issue) t ht))
-                ht))
-             ;; Mark Gerrit work-items as urgent if their Jira ticket
-             ;; appears in the urgent query results
-             (_ (dolist (it gerrit-items)
-                  (when (and (:jira it)
-                             (easy-access (:jira it) urgent-ids))
-                    (setf (:urgent it) t))))
-             ;; Tickets that are urgent but have no Gerrit work yet
-             (covered-ids
-              (let ((ht (make-hash-table :test 'equal)))
-                (dolist (it gerrit-items)
-                  (when (:jira it)
-                    (puthash (:jira it) t ht)))
-                ht))
-             (todo-items
-              (-map #'work-item-from-jira-issue
-                    (-filter (lambda (issue)
-                               (not (easy-access ('key issue)
-                                                 covered-ids)))
-                             urgent-issues)))
-             ;; All unresolved tickets assigned to me — catches items
-             ;; with no Gerrit work and no urgency flag (e.g., recently
-             ;; assigned, or tickets with discussion activity).
-             ;; Request "status" so we can detect Jira-active anomalies.
-             ;;
-             ;; Gated on `my/agenda-work-sections': the assigned JQL
-             ;; query (and its follow-up title fetch) is skipped when
-             ;; neither `assigned' nor `jira-active' is configured for
-             ;; display.  This avoids a daily Jira round-trip that only
-             ;; the weekly review needs.
-             (need-assigned-p (or my/agenda-work--fetch-all-p
-                                  (memq 'assigned my/agenda-work-sections)
-                                  (memq 'jira-active my/agenda-work-sections)))
-             (_ (when need-assigned-p
-                  (message "Gerrit/Jira: checking for assigned tickets…")))
-             (assigned-jql
-              (when need-assigned-p
-                (format (concat "assignee = %s"
-                                " AND resolution = Unresolved"
-                                " AND updated >= -14d")
-                        my\gerrit-user)))
-             (assigned-issues
-              (when need-assigned-p
-                (condition-case nil
-                    (my/gerrit--query-jira assigned-jql "summary,status")
-                  (error nil))))
-             ;; Also fetch titles for these tickets.
-             (_ (when assigned-issues
-                  (let ((tix (mapcar (lambda (i) ('key i))
-                                     assigned-issues)))
-                    (when tix (my/gerrit--fetch-jira-titles tix)))))
-             ;; IDs already covered by Gerrit items or urgent TODO items
-             (all-covered-ids
-              (let ((ht (copy-hash-table covered-ids)))
-                (dolist (it todo-items)
-                  (when (:jira it)
-                    (puthash (:jira it) t ht)))
-                ht))
-             ;; Split uncovered issues: Jira says "In Progress" or
-             ;; "In Review" but no Gerrit changes exist → suspicious
-             ;; (e.g., accidentally used #progress instead of #resolve).
-             (uncovered-issues
-              (-filter (lambda (issue)
-                         (not (easy-access ('key issue)
-                                           all-covered-ids)))
-                       (or assigned-issues '())))
-             (jira-active-statuses '("In Progress" "In Review"
-                                     "Code Review" "Pending Review"))
-             (jira-active-items
-              (-map (lambda (issue)
-                      (work-item-create
-                       :jira ('key issue)
-                       :title (or ('fields 'summary issue)
-                                  "untitled")
-                       :status 'jira-active))
-                    (-filter
-                     (lambda (issue)
-                       (member ('fields 'status 'name issue)
-                               jira-active-statuses))
-                     uncovered-issues)))
-             (jira-active-ids
-              (let ((ht (make-hash-table :test 'equal)))
-                (dolist (it jira-active-items)
-                  (puthash (:jira it) t ht))
-                ht))
-             (assigned-items
-              (-map (lambda (issue)
-                      (work-item-create
-                       :jira ('key issue)
-                       :title (or ('fields 'summary issue)
-                                  "untitled")
-                       :status 'assigned))
-                    (-filter (lambda (issue)
-                               (not (easy-access ('key issue)
-                                                 jira-active-ids)))
-                             uncovered-issues)))
-             ;; Combine all items
-             (all-items (append todo-items jira-active-items
-                                assigned-items gerrit-items))
-             ;; Resolve Org-tree markers for agenda navigation
-             (_ (work-item--resolve-org-trees all-items)))
-        (setq my/agenda-work-data
-              (list :items all-items
-                    :timestamp (current-time))
-              my/agenda-work-fetching nil
-              my/agenda-work--fetch-all-p nil)
-        (message "Gerrit/Jira: cached %d attn, %d mine, %d work-items"
-                 (length attention) (length all-mine)
-                 (length all-items))
-        (non-blocking-message-box
-         :title "Standup"
-         :content "Gerrit/Jira ready for your consumption!")
-        ;; Refresh agenda if the buffer exists
-        (when-let ((buf (get-buffer "*Org Agenda*")))
-          (when (buffer-live-p buf)
-            (with-current-buffer buf
-              (org-agenda-redo-all))))
-        ;; Fire one-shot callback (e.g. my/standup opening the agenda)
-        (when my/agenda-work--on-complete
-          (let ((cb my/agenda-work--on-complete))
-            (setq my/agenda-work--on-complete nil)
-            (funcall cb))))
-    (error
-     (setq my/agenda-work-fetching nil
-           my/agenda-work--on-complete nil
-           my/agenda-work--fetch-all-p nil)
-     (message "Gerrit/Jira agenda update failed: %s"
-              (error-message-string err)))))
-;; Coordinator:1 ends here
-
-;; [[file:init.org::*Link activation][Link activation:1]]
-(defun my/agenda--activate-org-links (start end)
-  "Make [[url][desc]] links clickable while preserving raw markup.
-The agenda buffer is not in `org-mode', so raw bracket links would
-display as literal text.  This post-processes the region between
-START and END, adding text properties to each [[url][desc]] so that:
-
-- Visually, only DESC is shown (via the `display' property).
-- Clicking or pressing RET opens URL via `browse-url'.
-- Hovering shows the full URL as a tooltip.
-- Copy/paste preserves the raw [[url][desc]] Org link syntax,
-  so pasting into an Org buffer yields a working link."
-  (save-excursion
-    (goto-char start)
-    (let ((map (make-sparse-keymap)))
-      (define-key map [mouse-1]
-        (lambda (e) (interactive "e")
-          (browse-url (get-text-property (posn-point (event-start e)) 'my-url))))
-      (define-key map (kbd "RET")
-        (lambda () (interactive)
-          (browse-url (get-text-property (point) 'my-url))))
-      (while (re-search-forward
-              "\\[\\[\\(.+?\\)\\]\\[\\(.+?\\)\\]\\]" end t)
-        (let ((url  (match-string 1))
-              (desc (match-string 2))
-              (beg  (match-beginning 0))
-              (fin  (match-end 0)))
-          (put-text-property beg fin 'display desc)
-          (put-text-property beg fin 'face 'link)
-          (put-text-property beg fin 'mouse-face 'highlight)
-          (put-text-property beg fin 'help-echo url)
-          (put-text-property beg fin 'my-url url)
-          (put-text-property beg fin 'keymap map))))))
-;; Link activation:1 ends here
-
-;; [[file:init.org::*Pressing ~RET~ on an agenda work-item: the =:<Weekday>:Task:= scaffold][Pressing ~RET~ on an agenda work-item: the =:<Weekday>:Task:= scaffold:1]]
-(defun my/agenda--cache-stale-p ()
-  "Return non-nil if the cached work data is from a previous calendar day.
-A nil cache (never fetched) is also considered stale."
-  (if (null my/agenda-work-data) t
-    (let* ((cached-time (:timestamp my/agenda-work-data))
-           (cached-day  (format-time-string "%Y-%m-%d" cached-time))
-           (today       (format-time-string "%Y-%m-%d")))
-      (not (string= cached-day today)))))
-
-(defun work-item-insert-as-agenda-section (heading items)
-  "Insert HEADING and a numbered list of rendered ITEMS into the agenda buffer.
-Each item is rendered via `work-item-to-string'.  Each line carries a
-`help-echo' text property (via `work-item-help-echo') so that hovering
-or resting the cursor on any item shows a context-sensitive action hint
-in the minibuffer --- turning the dashboard from a passive report into
-an active one that tells you what to do next.
-
-When an item has a non-nil `org-tree' marker, `org-marker' and
-`org-hd-marker' text properties are set on the line so that standard
-org-agenda commands (RET, TAB, I, o, etc.) work."
-  (when items
-    (insert "\n"
-            (propertize heading 'face 'org-agenda-structure)
-            "\n")
-    (let ((n 0))
-      (dolist (it items)
-        (cl-incf n)
-        (let ((line-start (point)))
-          (insert (format "%d. %s\n" n (work-item-to-string it)))
-          (let ((end (1- (point))))
-            ;; Action hint: displayed in minibuffer via help-at-pt.
-            (put-text-property line-start end
-                               'help-echo (work-item-help-echo it))
-            ;; Stash the work-item struct itself for downstream use
-            ;; (e.g., creating TODO children on RET).
-            (put-text-property line-start end 'my/work-item it)
-            ;; When the item has an Org tree, make the line behave like
-            ;; a real agenda entry.
-            (when-let ((marker (:org-tree it)))
-              (when (marker-buffer marker)
-                (put-text-property line-start end 'org-marker marker)
-                (put-text-property line-start end
-                                   'org-hd-marker marker)))))))))
-
-(defun my/agenda--effort-minutes (effort)
-  "Parse EFFORT (a \"H:MM\" string) to minutes.  Nil input → 60."
-  (if (and effort (string-match "\\`\\([0-9]+\\):\\([0-9]+\\)\\'" effort))
-      (+ (* 60 (string-to-number (match-string 1 effort)))
-         (string-to-number (match-string 2 effort)))
-    60))
-
-(defun my/agenda--busy-intervals-on (date)
-  "Return DATE's busy time intervals as ((START . END) ...) in minutes-from-midnight.
-DATE is a \"YYYY-MM-DD\" string.  Busy = scheduled org items that
-carry an HH:MM component, using their Effort (defaulting to 1h)
-to compute END.  When DATE is today, also includes the currently-
-clocked task's (clock-start, now) interval so we don't schedule
-over ourselves.  Items scheduled without a time are ignored — they
-float.  Sorted by START and overlap-merged."
-  (let* ((is-today (equal date (format-time-string "%Y-%m-%d")))
-         intervals)
-    ;; 1. Timed scheduled items on DATE.
-    (dolist (file (org-agenda-files))
-      (with-current-buffer (find-file-noselect file)
-        (save-restriction
-          (widen)
-          (org-map-entries
-           (lambda ()
-             (let ((raw (org-entry-get (point) "SCHEDULED")))
-               (when (and raw
-                          (string-match-p (regexp-quote date) raw)
-                          (string-match-p "[0-9]+:[0-9]+" raw))
-                 (let* ((time  (org-time-string-to-time raw))
-                        (decoded (decode-time time))
-                        (h (2 decoded))
-                        (m (1 decoded))
-                        (start (+ (* 60 h) m))
-                        (dur   (my/agenda--effort-minutes
-                                (org-entry-get (point) "Effort"))))
-                   (push (cons start (+ start dur)) intervals)))))))))
-    ;; 2. Active clock — only when DATE is today.
-    (when (and is-today (org-clocking-p))
-      (let* ((t0 (decode-time org-clock-start-time))
-             (t1 (decode-time (current-time)))
-             (same-day (and (= (3 t0) (3 t1))
-                            (= (4 t0) (4 t1))
-                            (= (5 t0) (5 t1))))
-             (start-mins (if same-day
-                             (+ (* 60 (2 t0)) (1 t0))
-                           0))
-             (now-mins   (+ (* 60 (2 t1)) (1 t1))))
-        (push (cons start-mins now-mins) intervals)))
-    ;; Sort & merge overlapping intervals so gap-walking is simpler.
-    (let ((sorted (sort intervals (lambda (a b) (< (car a) (car b)))))
-          merged)
-      (dolist (iv sorted)
-        (if (and merged (<= (car iv) (cdr (car merged))))
-            (setcdr (car merged) (max (cdr (car merged)) (cdr iv)))
-          (push (cons (car iv) (cdr iv)) merged)))
-      (nreverse merged))))
-
-(defun my/agenda--round-up-15 (mins)
-  "Round MINS (minutes-from-midnight) up to the next 15-minute boundary."
-  (* 15 (ceiling mins 15)))
-
-(defun my/agenda--first-free-slot-on (date duration-mins)
-  "Return the first free DURATION-MINS slot on DATE as minutes-from-midnight, or nil.
-DATE is a \"YYYY-MM-DD\" string.  Workday is 08:00–16:00 (an
-8-hour shift).  When DATE is today AND `now' is outside that
-window, the window is shifted to [now, now + 8h].  For future
-dates, the full 08:00–16:00 window is always used.  Candidate
-starts are rounded up to the next 15-minute boundary."
-  (let* ((is-today (equal date (format-time-string "%Y-%m-%d")))
-         (now-m (when is-today
-                  (let ((now (decode-time (current-time))))
-                    (+ (* 60 (2 now)) (1 now)))))
-         (day-start 480)   ; 08:00
-         (day-end   960)   ; 16:00
-         (window-start
-          (cond
-           ((not is-today)                                  day-start)
-           ((and (>= now-m day-start) (< now-m day-end))    (max now-m day-start))
-           (t                                               now-m)))
-         (window-end
-          (cond
-           ((not is-today)                                  day-end)
-           ((and (>= now-m day-start) (< now-m day-end))    day-end)
-           (t                                               (+ now-m (* 8 60)))))
-         (cursor (my/agenda--round-up-15 window-start))
-         (busy (my/agenda--busy-intervals-on date))
-         found)
-    (while (and (not found)
-                (<= (+ cursor duration-mins) window-end))
-      (let ((collision (cl-find-if
-                        (lambda (iv)
-                          (and (< cursor (cdr iv))
-                               (< (car iv) (+ cursor duration-mins))))
-                        busy)))
-        (if collision
-            (setq cursor (my/agenda--round-up-15 (cdr collision)))
-          (setq found cursor))))
-    found))
-
-(defun my/agenda--first-free-hour-today (&optional duration-mins)
-  "Return an Org timestamp string for the first free DURATION-MINS slot.
-DURATION-MINS defaults to 60.  Searches today first; if nothing
-fits, rolls forward one day at a time up to a 14-day horizon.
-When the chosen slot is not today, pops a non-blocking dialog
-informing the user of the spillover and nudging them to either
-reschedule something already on today's calendar or, if they
-really want to work overtime, reschedule this task back to today
-themselves.  Signals `user-error' if no slot fits within the
-14-day horizon — that would indicate a genuinely overfull
-calendar and deserves human attention."
-  (let* ((duration (or duration-mins 60))
-         (one-day  (* 24 60 60))
-         (horizon 14)
-         (now      (current-time))
-         chosen)
-    (cl-loop for offset from 0 below horizon
-             for date-time = (time-add now (* offset one-day))
-             for date      = (format-time-string "%Y-%m-%d" date-time)
-             for day-name  = (format-time-string "%a" date-time)
-             for slot      = (my/agenda--first-free-slot-on date duration)
-             when slot
-             do (progn
-                  (setq chosen (list :offset offset
-                                     :date date
-                                     :day-name day-name
-                                     :date-time date-time
-                                     :slot slot))
-                  (cl-return)))
-    (unless chosen
-      (user-error
-       "No free %d-min slot in the next %d days — your calendar is full, please triage"
-       duration horizon))
-    (let* ((offset   (:offset chosen))
-           (date     (:date chosen))
-           (day-name (:day-name chosen))
-           (slot     (:slot chosen))
-           (hh       (/ slot 60))
-           (mm       (% slot 60))
-           (stamp    (format "<%s %s %02d:%02d>" date day-name hh mm)))
-      (when (> offset 0)
-        (non-blocking-message-box
-         :title "Scheduled for a later day"
-         :content
-         (format (concat "No room left today, so I've scheduled this task for:\n\n"
-                         "    %s %s at %02d:%02d\n\n"
-                         "If you really want to work overtime and not see your kids,\n"
-                         "reschedule it back to today manually.  Better: change\n"
-                         "something already on today's calendar to land later in\n"
-                         "the week, and RET this item again.")
-                 day-name date hh mm)
-         :buttons '(:OK nil)))
-      stamp)))
-
-(defun my/agenda--ensure-review-todo (item)
-  "Under the Org heading for ITEM, create a TODO child for the review if absent.
-The child is scheduled into today's first free 1-hour slot (see
-`my/agenda--first-free-hour-today') and tagged :<Weekday>:Task: —
-the weekday tag makes each day's commitment its own first-class
-heading (so Tuesday's RET creates a fresh scaffold instead of
-latching onto Monday's), and the :Task: tag marks the heading as
-daily scaffolding rather than a shipped deliverable.  Idempotent:
-if a child whose heading matches the Jira ticket (or tip URL when
-no Jira) AND carries today's weekday tag already exists, skip."
-  (when-let* ((marker (:org-tree item))
-              (buf (marker-buffer marker)))
-    (let* ((rendered (work-item-to-string item))
-           ;; Dedup key: Jira ID if present, otherwise first 40 chars of title.
-           (jira (:jira item))
-           (dedup-key (or jira
-                          (substring-no-properties
-                           (or (:title item) "")
-                           0 (min 40 (length (or (:title item) ""))))))
-           (weekday (format-time-string "%A")))
-      (with-current-buffer buf
-        (org-with-wide-buffer
-         (goto-char marker)
-         (let ((subtree-end (save-excursion (org-end-of-subtree t t) (point))))
-           ;; Dedup requires BOTH the Jira/title match AND today's weekday
-           ;; tag on the same heading line — so a Tuesday RET on a
-           ;; Monday-RET'd ticket correctly creates a new Tuesday scaffold.
-           (unless (save-excursion
-                     (re-search-forward
-                      (concat "^\\*+ .*" (regexp-quote dedup-key)
-                              ".*:" weekday ":")
-                      subtree-end t))
-             (forward-line 1)
-             (my/org-insert-heading :child (concat "TODO " rendered))
-             ;; my/org-insert-heading leaves point past :END:\n\n — walk
-             ;; back to the heading line to set tags.
-             (save-excursion
-               (org-back-to-heading t)
-               (org-set-tags (list weekday "Task")))
-             (org-schedule nil (my/agenda--first-free-hour-today 60))
-             (org-set-property "Effort" "1:00"))))))))
-
-(defvar my/agenda--pending-review-item nil
-  "Work-item captured by :before advice for review-TODO creation.")
-
-(defun my/agenda--create-work-org-tree (item)
-  "Create an Org heading for ITEM as the first child of `* Work'.
-The heading title is the Jira ID + title (or just the title when
-no Jira ticket exists).  Sets `work-item-org-tree' on ITEM to
-the new heading's marker and returns that marker."
-  (let* ((jira (:jira item))
-         (title (or (:title item) "untitled"))
-         (heading-text (if jira (concat jira " " title) title))
-         (buf (find-file-noselect org-default-notes-file)))
-    (with-current-buffer buf
-      (org-with-wide-buffer
-       (goto-char (point-min))
-       (unless (re-search-forward "^\\* Work\\b" nil t)
-         (error "No `* Work' heading in %s" org-default-notes-file))
-       (org-back-to-heading t)
-       ;; Skip past the heading's property drawer, logbook, and body
-       ;; text — land on the first child heading (or subtree end).
-       (let ((parent-end (save-excursion (org-end-of-subtree t t) (point))))
-         (outline-next-heading)
-         ;; Point is now either at the first child or past the subtree.
-         ;; Insert a new level-2 heading just before this position.
-         (insert "** " heading-text "\n"
-                 "  :PROPERTIES:\n"
-                 "  :CREATED:  "
-                 (format-time-string "[%Y-%m-%d %a %H:%M]")
-                 "\n  :END:\n\n")
-         ;; Move back to the heading we just inserted and grab a marker.
-         (re-search-backward (concat "^\\*\\* " (regexp-quote heading-text)))
-         (let ((marker (point-marker)))
-           (setf (:org-tree item) marker)
-           marker))))))
-
-(defun my/agenda--create-gcal-org-tree (event)
-  "Create a TODO heading for gcal EVENT as the first child of `* Work'.
-Mirrors `my/agenda--create-work-org-tree' but populates Effort,
-SCHEDULED, LOCATION and LINK from the event plist.  Returns a
-marker to the new heading."
-  (let* ((title (or (:title event) "(untitled calendar event)"))
-         (date  (:date event))
-         (start (:start event))
-         (end   (:end event))
-         (effort (my/standup-from-schedule--effort-from-times start end))
-         (location (:location event))
-         (conference (:conference event))
-         (url (:url event))
-         (day-name (when date
-                     (format-time-string
-                      "%a" (date-to-time (concat date "T00:00:00")))))
-         (sched-stamp (cond
-                       ((and date start) (format "<%s %s %s>" date day-name start))
-                       (date             (format "<%s %s>" date day-name))
-                       (t                nil)))
-         (buf (find-file-noselect org-default-notes-file)))
-    (with-current-buffer buf
-      (org-with-wide-buffer
-       (goto-char (point-min))
-       (unless (re-search-forward "^\\* Work\\b" nil t)
-         (error "No `* Work' heading in %s" org-default-notes-file))
-       (org-back-to-heading t)
-       (outline-next-heading)
-       (insert "** TODO " title "\n")
-       (when sched-stamp
-         (insert "   SCHEDULED: " sched-stamp "\n"))
-       (insert "   :PROPERTIES:\n"
-               "   :CREATED:  "
-               (format-time-string "[%Y-%m-%d %a %H:%M]") "\n")
-       (when effort
-         (insert "   :Effort:   " effort "\n"))
-       (when location
-         (insert "   :LOCATION: " location "\n"))
-       (when (or conference url)
-         (insert "   :LINK:     " (or conference url) "\n"))
-       (insert "   :END:\n\n")
-       (re-search-backward (concat "^\\*\\* TODO " (regexp-quote title)))
-       (point-marker)))))
-
-;;  Pressing RET on an agenda item calls org-agenda-switch-to which requires
-;;  org-marker/org-hd-marker text properties, to decide what to do. We decide to
-;;  create new Org tasks for `work-item's and capture gcal events into the Inbox.
-
-(advice-add
- 'org-agenda-switch-to :before
- (defun my/agenda--capture-work-item (&rest _)
-   "Capture the work-item at point before org-agenda-switch-to changes buffers.
-When the item has no Org heading yet, create one under `* Work'
-and set the agenda line's `org-marker'/`org-hd-marker' properties
-so that `org-agenda-switch-to' can jump to it."
-   (setq my/agenda--pending-review-item
-         (and (derived-mode-p 'org-agenda-mode)
-              (get-text-property (point) 'my/work-item)))
-   (when-let* ((item my/agenda--pending-review-item)
-               (_ (null (:org-tree item))))
-     (let ((marker (my/agenda--create-work-org-tree item))
-           (line-start (line-beginning-position))
-           (line-end (line-end-position)))
-       (put-text-property line-start line-end 'org-marker marker)
-       (put-text-property line-start line-end 'org-hd-marker marker)))
-   ;; Gcal events: create a TODO under * Work, then patch markers so
-   ;; org-agenda-switch-to can jump to the freshly created heading.
-   (when-let* ((ev (and (derived-mode-p 'org-agenda-mode)
-                        (get-text-property (point) 'my/gcal-event)))
-               (_ (not (get-text-property (point) 'org-marker))))
-     (let ((marker (my/agenda--create-gcal-org-tree ev))
-           (line-start (line-beginning-position))
-           (line-end (line-end-position)))
-       (put-text-property line-start line-end 'org-marker marker)
-       (put-text-property line-start line-end 'org-hd-marker marker)))))
-
-(advice-add
- 'org-agenda-switch-to :after
- (defun my/agenda--create-review-todo (&rest _)
-   "After RET in the agenda, create a TODO child for actionable items.
-Fires for reviews-needed and my-needing-action statuses."
-   (when-let* ((item my/agenda--pending-review-item)
-               (_ (memq (:status item)
-                        '(reviews-needed my-needing-action))))
-     (my/agenda--ensure-review-todo item))
-   (setq my/agenda--pending-review-item nil)))
-
-(defun my/agenda-insert-work-sections ()
-  "Insert cached `work-item' sections at the end of the daily agenda.
-Sections by status: reviews-needed, my-needing-action,
-please-review, wip, todo.  Urgent items are rendered with a
-\"🔴 \" prefix (via `work-item-to-string') and appear in
-whichever status section they belong to.
-
-On first agenda open each calendar day, automatically triggers a
-background fetch.  Subsequent opens reuse the cache.  To force a
-manual refresh at any time, use the \"Refresh Work\" button or press
-\\='g' in the agenda buffer."
-  (when (and my/agenda-work-sections
-             (string-prefix-p "*Org Agenda" (buffer-name)))
-    (let ((inhibit-read-only t))
-      (goto-char (point-max))
-      (if my/agenda-work-data
-          (let* ((start (point))
-                 (items (:items my/agenda-work-data))
-                 (status-sections
-                  '((reviews-needed    "👀 Reviews Needed (I'm blocking someone)")
-                    (my-needing-action "🔧 My Changes Needing Action")
-                    (please-review     "⏳ Please Review My Work")
-                    (wip               "🚧 Work In Progress")
-                    (todo              "📋 Urgent Tasks Not Yet Started")
-                    (assigned          "📌 Assigned To Me")
-                    (jira-active       "⚠️ Jira Active But No Gerrit Changes"))))
-            (dolist (sec (cl-remove-if-not
-                          (lambda (s) (memq (car s) my/agenda-work-sections))
-                          status-sections))
-              (let* ((status (0 sec))
-                     (heading (1 sec))
-                     (matching (-filter
-                                (lambda (it)
-                                  (eq (:status it) status))
-                                items))
-                     (sorted (work-item--sort matching)))
-                (work-item-insert-as-agenda-section heading sorted)))
-            (my/agenda--activate-org-links start (point))
-            ;; If the cache is from yesterday, silently refresh in the background
-            (when (and (my/agenda--cache-stale-p)
-                       (not my/agenda-work-fetching))
-              (my/agenda-work-refresh)))
-        ;; No cache yet — placeholder + trigger fetch
-        (insert "\n"
-                (propertize
-                 "⏳ Loading Gerrit/Jira data… press 'g' to refresh"
-                 'face 'org-agenda-structure)
-                "\n")
-        (unless my/agenda-work-fetching
-          (my/agenda-work-refresh))))))
-
-(add-hook 'org-agenda-finalize-hook #'my/agenda-insert-work-sections)
-
-;; ── Google Calendar section ──────────────────────────────────────────
-;;
-;; Surface today's gcal events at the bottom of the daily agenda so we
-;; see them without needing to run my/standup-from-schedule first.
-;; RET on an event line creates a TODO under * Work (with schedule,
-;; effort, location, and conference link) and jumps there.
-
-(defvar my/agenda-gcal-events nil
-  "Cached list of today's gcal event plists for the agenda section.
-Populated by `my/agenda-insert-gcal-section'; cleared on each
-agenda rebuild.")
-
-(defun my/agenda--gcal-event-line (ev)
-  "Render one gcal event plist EV as a single agenda line string."
-  (let ((title (:title ev))
-        (start (:start ev))
-        (end   (:end ev)))
-    (cond
-     ((and start end) (format "%s–%s  %s" start end title))
-     (start           (format "%s       %s" start title))
-     (t               (format "all-day  %s" title)))))
-
-(defun my/agenda--gcal-noisy-p (title)
-  "Non-nil when TITLE is a generic/noisy calendar entry we should skip."
-  (or (null title)
-      (string-match-p
-       "\\`\\(?:Busy\\|Home\\|Office\\|OOO\\|OOO.*\\|.* OOO.*\\)\\'"
-       title)))
-
-(defun my/agenda-insert-gcal-section ()
-  "Append today's Google Calendar events at the end of the daily agenda.
-Each event line carries a `my/gcal-event' text property (the event
-plist) and a `help-echo' hint.  RET on a line captures the event
-into the Org Inbox via the :before advice on `org-agenda-switch-to'."
-  (when (string-prefix-p "*Org Agenda" (buffer-name))
-    (let ((inhibit-read-only t))
-      (goto-char (point-max))
-      (condition-case err
-          (let* ((events (my/standup-from-schedule--gcal-events))
-                 (filtered (cl-remove-if
-                            (lambda (ev)
-                              (my/agenda--gcal-noisy-p (:title ev)))
-                            events)))
-            (setq my/agenda-gcal-events filtered)
-            (when filtered
-              (insert "\n"
-                      (propertize "📅 Today's Work Calendar" 'face 'org-agenda-structure)
-                      "\n")
-              (dolist (ev filtered)
-                (let ((line-start (point)))
-                  (insert (concat "  " (my/agenda--gcal-event-line ev) "\n"))
-                  (let ((end (1- (point))))
-                    (put-text-property line-start end 'my/gcal-event ev)
-                    (put-text-property
-                     line-start end
-                     'help-echo "RET → create TODO under * Work"))))))
-        (error
-         (insert "\n"
-                 (propertize
-                  (format "📅 Work calendar unavailable: %s" (error-message-string err))
-                  'face 'org-agenda-structure)
-                 "\n"))))))
-
-(add-hook 'org-agenda-finalize-hook #'my/agenda-insert-gcal-section)
-
-;; ── Effort → end-time in agenda lines ────────────────────────────────
-;;
-;; When a scheduled entry has a single start time (no range) and an
-;; Effort property, rewrite the displayed time to "start-end" so the
-;; agenda reads like a real calendar.  E.g., "9:30 AM" with Effort
-;; 2:00 becomes "9:30 AM-11:30 AM".
-
-(defun my/agenda--effort-end-time (time-str effort-str)
-  "Given TIME-STR (\"H:MM AM/PM\") and EFFORT-STR (\"H:MM\"), return end time string.
-Returns nil on parse failure."
-  (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\) \\(AM\\|PM\\)\\'" time-str)
-    (let ((h (string-to-number (match-string 1 time-str)))
-          (m (string-to-number (match-string 2 time-str)))
-          (ampm (match-string 3 time-str)))
-      (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\)\\'" effort-str)
-        (let* ((eh (string-to-number (match-string 1 effort-str)))
-               (em (string-to-number (match-string 2 effort-str)))
-               (h24 (cond ((and (string= ampm "AM") (= h 12)) 0)
-                          ((string= ampm "AM") h)
-                          ((= h 12) 12)
-                          (t (+ h 12))))
-               (end-mins (+ (* h24 60) m (* eh 60) em))
-               (end-h24 (% (/ end-mins 60) 24))
-               (end-m (% end-mins 60))
-               (end-ampm (if (< end-h24 12) "AM" "PM"))
-               (end-h12 (let ((h (% end-h24 12))) (if (= h 0) 12 h))))
-          (format "%d:%02d %s" end-h12 end-m end-ampm))))))
-
-(add-hook
- 'org-agenda-finalize-hook
- (defun my/agenda--inject-effort-end-times ()
-   "Rewrite single-time agenda entries to show start-end using Effort."
-   (when (string-prefix-p "*Org Agenda" (buffer-name))
-     (let ((inhibit-read-only t))
-       (save-excursion
-         (goto-char (point-min))
-         (while (re-search-forward
-                 "\\( ○ +\\)\\([0-9]+:[0-9]+ [AP]M\\)\\( +\\)"
-                 nil t)
-           ;; Skip lines that already have a range (next char after
-           ;; our match would be "-" if it were "9:30 AM-10:30 AM").
-           ;; The third group captured trailing spaces — if the
-           ;; original text had a "-" it would not be spaces.
-           (let* ((prefix-end (match-end 1))
-                  (time-str (match-string 2))
-                  (after-time (match-end 2)))
-             ;; Only proceed if the char right after the time is a space
-             ;; (not "-", which would mean it's already a range).
-             (when (and (< after-time (point-max))
-                        (not (eq (char-after after-time) ?-)))
-               ;; Read the Effort from the source heading.
-               (when-let* ((marker (get-text-property (line-beginning-position)
-                                                      'org-hd-marker))
-                           (effort (org-entry-get marker "Effort"))
-                           (end-time (my/agenda--effort-end-time time-str effort)))
-                 (goto-char after-time)
-                 (insert "-" end-time)))))))))
- 10)  ;; depth 10 → after content insertion, before fold-and-focus (90)
-
-;; ── Overlap detection in agenda ────────────────────────────────────────
-;;
-;; After effort end-times are injected, walk the buffer and collect
-;; every line that carries a time range.  Detect pairwise overlaps
-;; and paint the offending lines red with a help-echo nudge.
-
-(defun my/agenda--parse-12h-time (str)
-  "Parse \"H:MM AM\" or \"H:MM PM\" into minutes-from-midnight, or nil."
-  (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\) \\(AM\\|PM\\)\\'" str)
-    (let ((h (string-to-number (match-string 1 str)))
-          (m (string-to-number (match-string 2 str)))
-          (pm (string= "PM" (match-string 3 str))))
-      (+ (* 60 (cond ((and (not pm) (= h 12)) 0)
-                      ((not pm) h)
-                      ((= h 12) 12)
-                      (t (+ h 12))))
-         m))))
-
-(defun my/agenda--parse-24h-time (str)
-  "Parse \"HH:MM\" (24-hour) into minutes-from-midnight, or nil."
-  (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\)\\'" str)
-    (+ (* 60 (string-to-number (match-string 1 str)))
-       (string-to-number (match-string 2 str)))))
-
-(defun my/agenda--line-time-interval ()
-  "Extract (START-MINS . END-MINS) from the current agenda line, or nil.
-Handles two formats:
-  - Org lines after effort injection: \"9:30 AM-11:30 AM\" (ASCII hyphen)
-  - Gcal lines: \"09:30\342\200\22311:30\" (en-dash)"
-  (let ((text (buffer-substring-no-properties
-               (line-beginning-position) (line-end-position))))
-    (cond
-     ;; 12-hour range: "H:MM AM-H:MM PM"
-     ((string-match
-       "\\([0-9]+:[0-9]+ [AP]M\\)-\\([0-9]+:[0-9]+ [AP]M\\)" text)
-      (let ((s (my/agenda--parse-12h-time (match-string 1 text)))
-            (e (my/agenda--parse-12h-time (match-string 2 text))))
-        (when (and s e) (cons s e))))
-     ;; 24-hour range with en-dash: "HH:MM\342\200\223HH:MM"
-     ((string-match
-       "\\([0-9]+:[0-9]+\\)\342\200\223\\([0-9]+:[0-9]+\\)" text)
-      (let ((s (my/agenda--parse-24h-time (match-string 1 text)))
-            (e (my/agenda--parse-24h-time (match-string 2 text))))
-        (when (and s e) (cons s e)))))))
-
-(defun my/agenda--intervals-overlap-p (a b)
-  "Non-nil when intervals A and B overlap (both are (START . END) in minutes)."
-  (and (< (car a) (cdr b))
-       (< (car b) (cdr a))))
-
-(add-hook
- 'org-agenda-finalize-hook
- (defun my/agenda--highlight-overlaps ()
-   "Highlight overlapping time-blocked agenda entries in red.
-Each overlapping line gets a `help-echo' explaining the conflict."
-   (when (string-prefix-p "*Org Agenda" (buffer-name))
-     (let ((inhibit-read-only t)
-           entries)
-       ;; 1. Collect all lines with time intervals.
-       (save-excursion
-         (goto-char (point-min))
-         (while (not (eobp))
-           (when-let* ((iv (my/agenda--line-time-interval)))
-             (push (list :start (car iv)
-                         :end   (cdr iv)
-                         :lbeg  (line-beginning-position)
-                         :lend  (line-end-position)
-                         :text  (string-trim
-                                 (buffer-substring-no-properties
-                                  (line-beginning-position)
-                                  (line-end-position))))
-                   entries))
-           (forward-line 1)))
-       (setq entries (nreverse entries))
-       ;; 2. Mark which entries overlap with at least one other.
-       (let ((n (length entries))
-             overlap-set)
-         (dotimes (i n)
-           (dotimes (j n)
-             (when (and (/= i j)
-                        (my/agenda--intervals-overlap-p
-                         (cons (:start (nth i entries))
-                               (:end (nth i entries)))
-                         (cons (:start (nth j entries))
-                               (:end (nth j entries)))))
-               (cl-pushnew i overlap-set))))
-         ;; 3. Apply face + help-echo to overlapping lines.
-         (dolist (idx overlap-set)
-           (let* ((entry (nth idx entries))
-                  (beg (:lbeg entry))
-                  (end (:lend entry)))
-             (add-face-text-property beg end '(:foreground "red"))
-             (put-text-property
-              beg end 'help-echo
-              "Overlap detected! Reschedule with C-c C-s to resolve the conflict.")))))))
- 20)  ;; depth 20 → after effort injection (10), before fold-and-focus (90)
-
-;; Display help-echo text properties in the minibuffer when the cursor
-;; idles on a work-item line.  This is what makes the agenda an *active*
-;; dashboard — each line tells you what to do, not just what exists.
-(add-hook 'org-agenda-mode-hook
-          (lambda ()
-            (setq-local help-at-pt-display-when-idle t)
-            (help-at-pt-set-timer)))
-;; Pressing ~RET~ on an agenda work-item: the =:<Weekday>:Task:= scaffold:1 ends here
+;; [[file:init.org::*Work Tools in Agenda (Gerrit / Jira)][Work Tools in Agenda (Gerrit / Jira):1]]
+(add-to-list 'load-path (expand-file-name "~/org-agenda-gerrit"))
+(require 'org-agenda-gerrit)
+;; Work Tools in Agenda (Gerrit / Jira):1 ends here
+
+;; [[file:init.org::*Work Tools in Agenda (Gerrit / Jira)][Work Tools in Agenda (Gerrit / Jira):2]]
+(with-eval-after-load 'org-agenda-gerrit
+  (setq org-agenda-gerrit-colleagues
+        (and (boundp 'my\colleagues) my\colleagues))
+  (setq org-agenda-gerrit-insert-heading-fn
+        (lambda (text) (my/org-insert-heading :child text))))
+;; Work Tools in Agenda (Gerrit / Jira):2 ends here
 
 ;; [[file:init.org::*Standup command][Standup command:1]]
 (defun my/standup ()
@@ -4923,7 +2632,7 @@ without reflecting on the last one."
         ;; 5. Refresh work-item cache; open agenda when done.
         ;; Suppress fold-and-focus so the agenda opens fully expanded
         ;; for day-planning — we want to see everything during standup.
-        (setq my/agenda-work--on-complete
+        (setq org-agenda-gerrit--on-complete
               (lambda ()
                 (unwind-protect
                     (let ((my/agenda--skip-fold-and-focus t))
@@ -4933,7 +2642,7 @@ without reflecting on the last one."
                   (when is-monday
                     (my/standup--insert-review-items insertion-marker))
                   (my/progress-pulse--maybe-remind))))
-        (my/agenda-work-refresh)))))
+        (org-agenda-gerrit-refresh)))))
 ;; Standup command:1 ends here
 
 ;; [[file:init.org::*Standup from schedule][Standup from schedule:1]]
@@ -5316,19 +3025,6 @@ that Org doesn't know about."
           (push event missing))))
     (nreverse missing)))
 
-(defun my/standup-from-schedule--effort-from-times (start end)
-  "Return an \"H:MM\" effort string spanning START to END (\"HH:MM\" each).
-nil on bad input — all-day events have no duration, and we prefer
-a nil default to a fabricated 0:00 that'd silently pass the
-effort-required check."
-  (when (and start end)
-    (ignore-errors
-      (pcase-let* ((`(,h1 ,m1) (mapcar #'string-to-number (split-string start ":")))
-                   (`(,h2 ,m2) (mapcar #'string-to-number (split-string end   ":")))
-                   (mins (- (+ (* h2 60) m2) (+ (* h1 60) m1))))
-        (when (> mins 0)
-          (format "%d:%02d" (/ mins 60) (% mins 60)))))))
-
 (defun my/standup-from-schedule--capture-event (event)
   "File one gcal EVENT plist into Musa's Org Inbox as a scheduled TODO.
 The point of `my/standup-from-schedule's cross-check is to surface
@@ -5348,7 +3044,7 @@ two inbox entries — the user triages; we don't dedupe)."
          (description (:description event))
          (conference  (:conference event))
          (url         (:url event))
-         (effort      (my/standup-from-schedule--effort-from-times start end))
+         (effort      (org-agenda-gerrit-effort-from-times start end))
          ;; Org scheduled timestamp: "<YYYY-MM-DD Day HH:MM>" with time if known.
          (day-name    (when date
                         (format-time-string
@@ -5821,8 +3517,337 @@ events not reflected in org-agenda."
       )))
 ;; Standup from schedule:1 ends here
 
+;; [[file:init.org::#org-task-help-echo][Help-echo action hints for regular Org tasks:1]]
+(defun my/org-task-help-echo (marker)
+  "Return a propertized, centred help-echo string for an Org heading at MARKER.
+Inspects the heading's TODO state, priority, timestamps, and clock
+data, then returns a context-sensitive action hint --- or nil when
+no signal applies.
+
+Signals are checked in priority order (highest leverage first):
+  1. 🔥 Overdue deadline
+  2. ⏰ Deadline today
+  3. 🧊 Frozen (STARTED but no recent clock)
+  4. 🫥 Possibly abandoned (scheduled long ago, never clocked)
+  5. ⏳ WAITING too long
+  6. 🏷️ All subtasks done but parent still open
+  7. 📌 High priority but unscheduled
+  8. ✅ Done but not archived
+  9. 🎯 Ready to start"
+  (when (and marker (marker-buffer marker))
+    (with-current-buffer (marker-buffer marker)
+      (org-with-wide-buffer
+       (goto-char marker)
+       (let* ((todo      (org-get-todo-state))
+              (priority  (org-entry-get nil "PRIORITY"))
+              (effort    (org-entry-get nil "Effort"))
+              (deadline  (org-get-deadline-time nil))
+              (scheduled (org-get-scheduled-time nil))
+              (closed-ts (org-entry-get nil "CLOSED"))
+              (closed    (when closed-ts
+                           (org-time-string-to-time closed-ts)))
+              (now       (float-time))
+              (days-since (lambda (ts)
+                            (when ts
+                              (floor (/ (- now (float-time ts)) 86400)))))
+              (deadline-days  (funcall days-since deadline))
+              (scheduled-days (funcall days-since scheduled))
+              (closed-days    (funcall days-since closed))
+              ;; Check whether any clock entry exists in the subtree.
+              (has-clock
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t))))
+                   (re-search-forward org-clock-line-re end t))))
+              ;; Last clock-out timestamp in the subtree.
+              (last-clock-days
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t)))
+                       (latest nil))
+                   (while (re-search-forward
+                           "CLOCK:.*--\\(\\[.*?\\]\\)" end t)
+                     (let ((ts (org-time-string-to-time
+                                (match-string 1))))
+                       (when (or (null latest)
+                                 (time-less-p latest ts))
+                         (setq latest ts))))
+                   (funcall days-since latest))))
+              ;; Whether any child heading is still a TODO state.
+              (has-todo-children
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t)))
+                       (found nil))
+                   (while (and (not found)
+                               (outline-next-heading)
+                               (< (point) end))
+                     (when (org-get-todo-state)
+                       (setq found t)))
+                   found)))
+              (has-children
+               (save-excursion
+                 (let ((end (save-excursion (org-end-of-subtree t t))))
+                   (and (outline-next-heading)
+                        (< (point) end)))))
+              ;; Done states (past the | separator).
+              (done-p (member todo '("DONE" "CANCELLED" "PAUSED"
+                                     "WAITING" "APPROVED")))
+              ;; Active non-done states.
+              (started-p (equal todo "STARTED"))
+              (waiting-p (equal todo "WAITING"))
+              (todo-p    (member todo '("TODO" "INVESTIGATED")))
+              ;; ── Signal dispatch (highest priority first) ──
+              (action
+               (cond
+                ;; 1. 🔥 Overdue
+                ((and deadline-days (> deadline-days 0)
+                      (not (member todo '("DONE" "CANCELLED"))))
+                 (propertize
+                  (format "🔥 Overdue by %d day%s --- do it now or reschedule."
+                          deadline-days
+                          (if (= deadline-days 1) "" "s"))
+                  'face '(bold (:foreground "red"))))
+                ;; 2. ⏰ Due today
+                ((and deadline-days (= deadline-days 0)
+                      (not (member todo '("DONE" "CANCELLED"))))
+                 (propertize "⏰ Due today --- block time and finish it."
+                             'face '(bold (:foreground "orange red"))))
+                ;; 3. 🧊 Frozen
+                ((and started-p last-clock-days (> last-clock-days 7))
+                 (propertize
+                  (format "🧊 Started but untouched for %d days --- resume or refile."
+                          last-clock-days)
+                  'face '(bold (:foreground "steel blue"))))
+                ;; 4. 🫥 Possibly abandoned
+                ((and todo-p scheduled-days (> scheduled-days 30)
+                      (not has-clock))
+                 (propertize
+                  "🫥 Scheduled a month ago, never started --- refile or axe."
+                  'face '(bold (:foreground "orange red"))))
+                ;; 5. ⏳ Waiting — graduated by duration.
+                ;; CLOSED timestamp marks when the task entered WAITING
+                ;; (Org sets it for states past the | separator).
+                (waiting-p
+                 (let ((wait-days (or closed-days scheduled-days 0)))
+                   (cond
+                    ((>= wait-days 14)
+                     (propertize
+                      (format "⏳ Waiting %d days --- this is stale. Ping now or unblock."
+                              wait-days)
+                      'face '(bold (:foreground "red"))))
+                    ((>= wait-days 7)
+                     (propertize
+                      (format "⏳ Waiting %d days --- time to check in."
+                              wait-days)
+                      'face '(bold (:foreground "orange red"))))
+                    ((>= wait-days 3)
+                     (propertize
+                      (format "⏳ Waiting %d days --- patience, but keep an eye on it."
+                              wait-days)
+                      'face '(bold (:foreground "steel blue"))))
+                    (t
+                     (propertize
+                      (format "⏳ Waiting %d day%s --- still fresh, no action needed yet."
+                              wait-days (if (= wait-days 1) "" "s"))
+                      'face '(bold (:foreground "sea green")))))))
+                ;; 6. 🏷️ All subtasks done
+                ((and todo-p has-children (not has-todo-children))
+                 (propertize
+                  "🏷️ All subtasks done --- close the parent or add the next step."
+                  'face '(bold (:foreground "steel blue"))))
+                ;; 7. 📌 High priority but unscheduled
+                ((and (equal priority "A") (not scheduled)
+                      (not (member todo '("DONE" "CANCELLED"))))
+                 (propertize
+                  "📌 High priority but unscheduled --- when will you do this?"
+                  'face '(bold (:foreground "orange red"))))
+                ;; 8. ✅ Done, not archived
+                ((and (equal todo "DONE") closed-days (> closed-days 7))
+                 (propertize
+                  (format
+                   "✅ Done %d days ago --- archive it. A clean list is a calm mind."
+                   closed-days)
+                  'face '(bold (:foreground "sea green"))))
+                ;; 9. 🎯 Ready to start
+                ((and todo-p scheduled-days (>= scheduled-days 0))
+                 (propertize
+                  "🎯 Ready to go --- clock in and start."
+                  'face '(bold (:foreground "sea green"))))))
+              ;; ── Secondary nudge: missing effort / schedule ──
+              ;; These are gentle reminders appended below the primary
+              ;; signal.  Only shown for active (non-done) tasks.
+              (active-p (and todo
+                             (not (member todo '("DONE" "CANCELLED")))))
+              (nudges
+               (when active-p
+                 (concat
+                  (unless effort
+                    (concat "\n"
+                            (propertize
+                             "⏱ No effort estimate --- C-c C-x e to set one."
+                             'face 'shadow)))
+                  (unless (or scheduled deadline)
+                    (concat "\n"
+                            (propertize
+                             "📅 Not scheduled --- C-c C-s to pick a date."
+                             'face 'shadow)))))))
+         (when (or action nudges)
+           (org-agenda-gerrit-help-echo-wrap
+            (concat (or action "") nudges))))))))
+
+(defun my/agenda-attach-task-help-echo ()
+  "Walk every line in the agenda buffer, attaching `help-echo' to
+Org task lines that do not already have one.
+
+We skip lines that already carry a `help-echo' (e.g., our custom
+work-item sections) to avoid overwriting richer hints.  Only lines
+with an `org-marker' text property --- i.e., lines backed by a real
+Org heading --- are candidates."
+  (when (string-prefix-p "*Org Agenda" (buffer-name))
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (goto-char (point-min))
+        (while (not (eobp))
+          (let* ((beg (line-beginning-position))
+                 (end (line-end-position))
+                 (marker (get-text-property beg 'org-marker)))
+            (when (and marker
+                       (not (get-text-property beg 'help-echo)))
+              (when-let ((echo (my/org-task-help-echo marker)))
+                (put-text-property beg end 'help-echo echo))))
+          (forward-line 1))))))
+
+(add-hook 'org-agenda-finalize-hook #'my/agenda-attach-task-help-echo)
+;; Help-echo action hints for regular Org tasks:1 ends here
+
+;; [[file:init.org::*Google Calendar section in the agenda][Google Calendar section in the agenda:1]]
+;; ── Google Calendar section ──────────────────────────────────────────
+;;
+;; Surface today's gcal events at the bottom of the daily agenda so we
+;; see them without needing to run my/standup-from-schedule first.
+;; RET on an event line creates a TODO under * Work (with schedule,
+;; effort, location, and conference link) and jumps there.
+
+(defvar my/agenda-gcal-events nil
+  "Cached list of today's gcal event plists for the agenda section.
+Populated by `my/agenda-insert-gcal-section'; cleared on each
+agenda rebuild.")
+
+(defun my/agenda--gcal-event-line (ev)
+  "Render one gcal event plist EV as a single agenda line string."
+  (let ((title (:title ev))
+        (start (:start ev))
+        (end   (:end ev)))
+    (cond
+     ((and start end) (format "%s–%s  %s" start end title))
+     (start           (format "%s       %s" start title))
+     (t               (format "all-day  %s" title)))))
+
+(defun my/agenda--gcal-noisy-p (title)
+  "Non-nil when TITLE is a generic/noisy calendar entry we should skip."
+  (or (null title)
+      (string-match-p
+       "\\`\\(?:Busy\\|Home\\|Office\\|OOO\\|OOO.*\\|.* OOO.*\\)\\'"
+       title)))
+
+(defun my/agenda-insert-gcal-section ()
+  "Append today's Google Calendar events at the end of the daily agenda.
+Each event line carries a `my/gcal-event' text property (the event
+plist) and a `help-echo' hint.  RET on a line captures the event
+into the Org Inbox via the :before advice on `org-agenda-switch-to'."
+  (when (string-prefix-p "*Org Agenda" (buffer-name))
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (condition-case err
+          (let* ((events (my/standup-from-schedule--gcal-events))
+                 (filtered (cl-remove-if
+                            (lambda (ev)
+                              (my/agenda--gcal-noisy-p (:title ev)))
+                            events)))
+            (setq my/agenda-gcal-events filtered)
+            (when filtered
+              (insert "\n"
+                      (propertize "📅 Today's Work Calendar" 'face 'org-agenda-structure)
+                      "\n")
+              (dolist (ev filtered)
+                (let ((line-start (point)))
+                  (insert (concat "  " (my/agenda--gcal-event-line ev) "\n"))
+                  (let ((end (1- (point))))
+                    (put-text-property line-start end 'my/gcal-event ev)
+                    (put-text-property
+                     line-start end
+                     'help-echo "RET → create TODO under * Work"))))))
+        (error
+         (insert "\n"
+                 (propertize
+                  (format "📅 Work calendar unavailable: %s" (error-message-string err))
+                  'face 'org-agenda-structure)
+                 "\n"))))))
+
+(add-hook 'org-agenda-finalize-hook #'my/agenda-insert-gcal-section)
+;; Google Calendar section in the agenda:1 ends here
+
+;; [[file:init.org::*Effort → end-time in agenda lines][Effort → end-time in agenda lines:1]]
+;; ── Effort → end-time in agenda lines ────────────────────────────────
+;;
+;; When a scheduled entry has a single start time (no range) and an
+;; Effort property, rewrite the displayed time to "start-end" so the
+;; agenda reads like a real calendar.  E.g., "9:30 AM" with Effort
+;; 2:00 becomes "9:30 AM-11:30 AM".
+
+(defun my/agenda--effort-end-time (time-str effort-str)
+  "Given TIME-STR (\"H:MM AM/PM\") and EFFORT-STR (\"H:MM\"), return end time string.
+Returns nil on parse failure."
+  (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\) \\(AM\\|PM\\)\\'" time-str)
+    (let ((h (string-to-number (match-string 1 time-str)))
+          (m (string-to-number (match-string 2 time-str)))
+          (ampm (match-string 3 time-str)))
+      (when (string-match "\\`\\([0-9]+\\):\\([0-9]+\\)\\'" effort-str)
+        (let* ((eh (string-to-number (match-string 1 effort-str)))
+               (em (string-to-number (match-string 2 effort-str)))
+               (h24 (cond ((and (string= ampm "AM") (= h 12)) 0)
+                          ((string= ampm "AM") h)
+                          ((= h 12) 12)
+                          (t (+ h 12))))
+               (end-mins (+ (* h24 60) m (* eh 60) em))
+               (end-h24 (% (/ end-mins 60) 24))
+               (end-m (% end-mins 60))
+               (end-ampm (if (< end-h24 12) "AM" "PM"))
+               (end-h12 (let ((h (% end-h24 12))) (if (= h 0) 12 h))))
+          (format "%d:%02d %s" end-h12 end-m end-ampm))))))
+
+(add-hook
+ 'org-agenda-finalize-hook
+ (defun my/agenda--inject-effort-end-times ()
+   "Rewrite single-time agenda entries to show start-end using Effort."
+   (when (string-prefix-p "*Org Agenda" (buffer-name))
+     (let ((inhibit-read-only t))
+       (save-excursion
+         (goto-char (point-min))
+         (while (re-search-forward
+                 "\\( ○ +\\)\\([0-9]+:[0-9]+ [AP]M\\)\\( +\\)"
+                 nil t)
+           ;; Skip lines that already have a range (next char after
+           ;; our match would be "-" if it were "9:30 AM-10:30 AM").
+           ;; The third group captured trailing spaces — if the
+           ;; original text had a "-" it would not be spaces.
+           (let* ((prefix-end (match-end 1))
+                  (time-str (match-string 2))
+                  (after-time (match-end 2)))
+             ;; Only proceed if the char right after the time is a space
+             ;; (not "-", which would mean it's already a range).
+             (when (and (< after-time (point-max))
+                        (not (eq (char-after after-time) ?-)))
+               ;; Read the Effort from the source heading.
+               (when-let* ((marker (get-text-property (line-beginning-position)
+                                                      'org-hd-marker))
+                           (effort (org-entry-get marker "Effort"))
+                           (end-time (my/agenda--effort-end-time time-str effort)))
+                 (goto-char after-time)
+                 (insert "-" end-time)))))))))
+ 10)  ;; depth 10 → after content insertion, before fold-and-focus (90)
+;; Effort → end-time in agenda lines:1 ends here
+
 ;; [[file:init.org::*Colleague Meeting Shortcuts][Colleague Meeting Shortcuts:1]]
-(cl-loop for colleague in (and (boundp 'my\colleagues) my\colleagues)
+(cl-loop for colleague in (and (boundp 'org-agenda-gerrit-colleagues) org-agenda-gerrit-colleagues)
          for function-name = (intern (format "meet-with-%s" colleague))
          for colleague-str = (symbol-name colleague)
          for first-letter = (substring colleague-str 0 1)
@@ -8329,7 +6354,7 @@ demonstrates where the week's planning assumptions drifted."
              (tickets (my/jira-tickets-clocked-in-range start-date end-date)))
         (when tickets
           ;; Titles come from the work-item cache (populated by
-          ;; my/agenda-work-refresh) or from clock headings — no
+          ;; org-agenda-gerrit-refresh) or from clock headings — no
           ;; additional Jira API calls needed.
           (insert "\n\n*Jira tickets worked on this week:*\n#+begin_quote\n")
           (let ((total-minutes 0)
@@ -8338,7 +6363,7 @@ demonstrates where the week's planning assumptions drifted."
                 (n 0))
             (dolist (entry tickets)
               (let* ((ticket (car entry))
-                     (title (or (my/gerrit--get-jira-title ticket)
+                     (title (or (org-agenda-gerrit--get-jira-title ticket)
                                 ('heading (cdr entry))))
                      (minutes ('minutes (cdr entry)))
                      (effort-minutes (or ('effort-minutes (cdr entry)) 0))
@@ -8532,12 +6557,12 @@ SSH queries run in parallel with the interactive life-score and
 social-reminder steps.  By the time `week-ticket-data’ needs
 the cache, the fetch is usually done.
 
-Sets `my/agenda-work--fetch-all-p’ so the coordinator includes
+Sets `org-agenda-gerrit--fetch-all-p’ so the coordinator includes
 `assigned’ and `jira-active’ queries that the daily fetch skips."
-      (unless my/agenda-work-fetching
-        (setq my/agenda-work--fetch-all-p t
-              my/agenda-work-data nil)
-        (my/agenda-work-refresh)))
+      (unless org-agenda-gerrit-fetching
+        (setq org-agenda-gerrit--fetch-all-p t
+              org-agenda-gerrit-data nil)
+        (org-agenda-gerrit-refresh)))
 
     (defun my/weekly-review--week-ticket-data ()
       "Gather and partition this week’s clocked and cached work items.
@@ -8545,8 +6570,8 @@ Returns a plist with keys :in-progress-clocked, :todo-clocked,
 :extra-wip, and :extra-todo.
 
 All data comes from local sources: clock entries in Org and the
-work-item cache (`my/agenda-work-data’) populated by
-`my/agenda-work-refresh’.  The full fetch is kicked off early
+work-item cache (`org-agenda-gerrit-data’) populated by
+`org-agenda-gerrit-refresh’.  The full fetch is kicked off early
 by `my/weekly-review--ensure-full-fetch’; here we just wait
 for it to complete."
       ;; Wait for the async fetch (kicked off by ensure-full-fetch)
@@ -8554,8 +6579,8 @@ for it to complete."
       ;; steps typically buy enough wall-clock time, but if not,
       ;; spin-wait with `sit-for’ so Emacs can process sentinels.
       (let ((deadline (+ (float-time) 60))) ;; 60s timeout
-        (while (and (not my/agenda-work-data)
-                    my/agenda-work-fetching
+        (while (and (not org-agenda-gerrit-data)
+                    org-agenda-gerrit-fetching
                     (< (float-time) deadline))
           (sit-for 0.2)))
       (let* ((end-date (format-time-string "%Y-%m-%d"))
@@ -8574,9 +6599,9 @@ for it to complete."
               (--filter (string= "TODO" (my/progress-pulse--ticket-status (car it)))
                         clocked))
              ;; Work items from the cache that weren’t clocked this week.
-             ;; These are already fetched by my/agenda-work-refresh — no
+             ;; These are already fetched by org-agenda-gerrit-refresh — no
              ;; additional Jira/Gerrit calls needed.
-             (all-items (or (:items my/agenda-work-data) nil))
+             (all-items (or (:items org-agenda-gerrit-data) nil))
              (extra-items
               (--filter (and (:jira it)
                              (not (member (:jira it) clocked-ids)))
@@ -8598,8 +6623,9 @@ for it to complete."
 
     (defun my/weekly-review--decentre (text)
       "Strip the leading centering padding from each line of TEXT.
-`work-item-help-echo' centres its output via `my/center-text' for
-the minibuffer (matching olivetti's visual rhythm).  In the weekly
+`work-item-help-echo' centres its output via
+`org-agenda-gerrit-help-echo-wrap' for the minibuffer (matching
+olivetti's visual rhythm).  In the weekly
 review we insert hints into an Org buffer where that padding is
 just wasted horizontal space.  Uses `replace-regexp-in-string' so
 text properties (faces) are preserved."
@@ -8612,7 +6638,7 @@ the `work-item-help-echo' hint below the current line — the same
 context-sensitive advice that appears in the agenda minibuffer,
 with its three-layer face hierarchy (bold action, dimmed metadata,
 colour-coded nudge) intact.  Centering padding is stripped."
-      (when-let* ((items (:items my/agenda-work-data))
+      (when-let* ((items (:items org-agenda-gerrit-data))
                   (item (--first (equal ticket (:jira it)) items))
                   (hint (my/weekly-review--decentre (work-item-help-echo item))))
         (insert "   -> " hint "\n")))
@@ -8763,62 +6789,74 @@ done\" or \"start these\")."
        :success-msg     "😄 Everything you planned last week, you actually started!"
        :fail-verb       "start these"))
 
-    (defun my/weekly-review--insert-completed ()
-      "Insert the Completed section: merged tickets with git-log cross-reference.
-Tickets still active in the work-item cache (e.g., please-review,
-wip) are excluded — even if git log contains their commits.
+    (defun my/weekly-review--status-display (sym)
+      "Return a human-readable string for a work-item cache status SYM.
+Mirrors the pcase in `my/progress-pulse--ticket-status' but takes a
+raw status symbol instead of a ticket ID — reused for the ⚠️
+conflict prefix in `insert-completed' (where we already have the
+sibling work-item's status in hand and need not re-query the cache)."
+      (pcase sym
+        ('please-review     "IN REVIEW")
+        ('wip               "IN PROGRESS")
+        ('my-needing-action "NEEDS ACTION")
+        ('reviews-needed    "REVIEWS NEEDED")
+        ('todo              "TODO")
+        ('assigned          "ASSIGNED")
+        ('jira-active       "JIRA ACTIVE")
+        (_                  (upcase (symbol-name sym)))))
 
-:Task:-tagged scaffold headings (daily timeboxing under a Jira
-parent) are excluded implicitly — they generate no git commits,
-so the `git-ticket-ids' filter below already filters them out.
-Intentional: Completed should showcase what shipped, not that we
-reviewed a CL three Tuesdays in a row."
+    (defun my/weekly-review--done-jira-ids ()
+      "Return the set of Jira IDs that Jira considers Done this week.
+Drawn from the `done' section of the work-item cache — populated by
+the JQL `assignee = me AND statusCategory = Done AND resolved >= -7d'.
+This set is the ground truth for the ✅ Completed section, and is
+also subtracted from 🔨 In Progress / 🚧 Impediments / 📆 Planned
+so a resolved ticket doesn't linger in the follow-on sections with
+a stale Gerrit cache entry."
+      (when-let* ((items (:items org-agenda-gerrit-data)))
+        (-distinct
+         (--map (:jira it) (--filter (eq 'done (:status it)) items)))))
+
+    (defun my/weekly-review--insert-completed ()
+      "Insert the Completed section: Jira tickets resolved in the past 7 days.
+Ground truth is Jira — the JQL
+`assignee = currentUser() AND statusCategory = Done AND resolved >= -7d'
+feeds the `done' section of the work-item cache, and every hit there
+lands here.  Local clock entries and git-log commits no longer gate
+inclusion — we missed genuinely-Done tickets that weren't clocked
+locally, and leaked please-review / my-needing-action tickets whose
+only qualification was a commit by Musa in the last fortnight.
+
+When a Done ticket's Jira ID *also* appears in the cache under a
+non-terminal status (please-review, wip, …) we don't suppress the
+mismatch — the title is prefixed with a ⚠️ diagnostic.  Usually
+that means the Gerrit change footer referenced a different Jira,
+or a follow-up CL is still open.  Either way, the right place to
+learn about it is right here, during the weekly review."
       (my/org-insert-heading :sibling "✅ Completed" :DESCRIPTION "what shipped this week")
 
-      (let* ((end-date (format-time-string "%Y-%m-%d"))
-             (start-date (format-time-string
-                          "%Y-%m-%d"
-                          (time-subtract (current-time)
-                                         (days-to-time 7))))
-             (tickets (my/jira-tickets-clocked-in-range start-date end-date))
-             ;; Tickets absent from Gerrit default to "MERGED", but that
-             ;; also catches meetings and syncs (which never had changes).
-             ;; Cross-reference git log: only tickets with actual commits
-             ;; count as shipped.
-             (git-ticket-ids
-              (let* ((default-directory my\work-dir)
-                     (ticket-re (concat "\\(" (regexp-opt my\jira-project-prefixes) "-[0-9]+\\)"))
-                     (log (shell-command-to-string
-                           "git log --author=\"Musa\" --since=\"7 days ago\" --format=\"%B\" --no-merges"))
-                     ids)
-                (dolist (line (split-string log "\n" t) (delete-dups ids))
-                  (when (string-match ticket-re line)
-                    (push (match-string 1 line) ids)))))
-             ;; Tickets still active in the cache are NOT completed —
-             ;; they may have some merged commits but are still in flight
-             ;; (e.g., waiting on review, needs action).
-             (active-ids
-              (when-let* ((items (:items my/agenda-work-data)))
-                (mapcar #'work-item-jira items)))
+      (let* ((items (:items org-agenda-gerrit-data))
+             (done (--filter (eq 'done (:status it)) items))
+             (by-jira (--group-by (:jira it) items))
              (n 0))
-        (if (null tickets)
-            (insert "- /(fill in)/\n")
-          (dolist (entry tickets)
-            (let* ((ticket (car entry))
-                   (title (or (my/gerrit--get-jira-title ticket)
-                              ('heading (cdr entry))))
-                   (status (my/progress-pulse--ticket-status ticket)))
-              (when (and (string= status "MERGED")
-                         (member ticket git-ticket-ids)
-                         (not (member ticket active-ids)))
-                (insert (format "%d. %s %s\n"
-                                (cl-incf n)
-                                (if ticket
-                                    (my/gerrit--format-jira-link ticket)
-                                  "")
-                                (or title "")))))))
-        (when (= n 0)
-          (insert "- /(nothing merged this week?! Really?! 🫣 Edit as needed)/\n")))
+        (if (null done)
+            (insert "- /(nothing resolved this week?! Really?! 🫣 Edit as needed)/\n")
+          (dolist (it done)
+            (let* ((ticket (:jira it))
+                   (title (:title it))
+                   (conflict-statuses
+                    (->> (cdr (assoc ticket by-jira))
+                         (--remove (eq 'done (:status it)))
+                         (--map (my/weekly-review--status-display (:status it)))
+                         (-distinct))))
+              (insert (format "%d. %s %s\n"
+                              (cl-incf n)
+                              (org-agenda-gerrit--format-jira-link ticket)
+                              (if conflict-statuses
+                                  (format "⚠️ {Jira Done but Gerrit still %s} — %s"
+                                          (string-join conflict-statuses ", ")
+                                          (or title ""))
+                                (or title ""))))))))
 
       (my/org-insert-heading :child "What did I ship this week? :private:"
                              :WHY "Recognise accomplishments, express self-gratitude, and debug!")
@@ -8832,21 +6870,22 @@ reviewed a CL three Tuesdays in a row."
     (defun my/weekly-review--insert-in-progress (ticket-data &optional blocked-ids)
       "Insert the In Progress section from TICKET-DATA plist.
 Renders clocked WIP tickets and un-clocked Jira items that are
-neither MERGED nor TODO.  Tickets in BLOCKED-IDS (from Impediments)
-are excluded — they belong in Impediments, not here."
+neither MERGED nor TODO.  BLOCKED-IDS excludes tickets that belong
+elsewhere: either 🚧 Impediments (please-review) or ✅ Completed
+(Jira marked them Done this week, even if Gerrit hasn't caught up)."
       (my/org-insert-heading :uncle "🔨 In Progress" :DESCRIPTION "actively working on")
       (let ((n 0))
         ;; Clocked and actively in progress
         (dolist (entry (:in-progress-clocked ticket-data))
           (let* ((ticket (car entry))
-                 (title (or (my/gerrit--get-jira-title ticket)
+                 (title (or (org-agenda-gerrit--get-jira-title ticket)
                             ('heading (cdr entry))))
                  (status (my/progress-pulse--ticket-status ticket)))
             (unless (member ticket blocked-ids)
               (insert (format "%d. %s %s — %s\n"
                               (cl-incf n)
                               (if ticket
-                                  (my/gerrit--format-jira-link ticket)
+                                  (org-agenda-gerrit--format-jira-link ticket)
                                 "")
                               (or title "") status))
               (when ticket
@@ -8895,7 +6934,7 @@ they are drowning."
              (lambda (uname full-name)
                (let* ((query (format "attention:%s status:open -is:abandoned"
                                      uname))
-                      (results (my/gerrit--query query '("--dependencies")))
+                      (results (org-agenda-gerrit--query query '("--dependencies")))
                       (count (length results)))
                  (push (list full-name uname count) entries)))
              user-names)
@@ -8908,22 +6947,26 @@ they are drowning."
                              (count (2 e))
                              (url (format
                                    "%s/q/attention:%s+status:open+-is:abandoned"
-                                   my\gerrit-base-url uname)))
+                                   org-agenda-gerrit-base-url uname)))
                         (format "%s has [[%s][%d]]" name url count)))
                     entries)))
               (insert (format
                        "\nThese impediments may be due to reviewer overload: %s Gerrit %s vying for their attention, respectively.\n"
-                       (my/gerrit--format-reviewer-names parts)
+                       (org-agenda-gerrit--format-reviewer-names parts)
                        (if (= (length entries) 1) "item" "items"))))))))
 
-    (defun my/weekly-review--insert-impediments ()
-      "Insert the Impediments section: outstanding reviews sorted by age."
+    (defun my/weekly-review--insert-impediments (&optional done-ids)
+      "Insert the Impediments section: outstanding reviews sorted by age.
+DONE-IDS is a list of Jira IDs already resolved this week — those
+tickets appear in ✅ Completed (possibly flagged with a ⚠️ Gerrit
+mismatch) and are suppressed here to avoid the double-listing."
       (my/org-insert-heading :uncle "🚧 Impediments" :DESCRIPTION "who must do what by when?")
       (let ((please-review
-             (when-let* ((items (:items my/agenda-work-data)))
+             (when-let* ((items (:items org-agenda-gerrit-data)))
                (--sort (< (or (:age it) most-positive-fixnum)
                           (or (:age other) most-positive-fixnum))
-                       (--filter (eq 'please-review (:status it))
+                       (--filter (and (eq 'please-review (:status it))
+                                      (not (member (:jira it) done-ids)))
                                  items)))))
         (if (null please-review)
             (insert "# - /(none — no outstanding reviews!)/\n")
@@ -8942,27 +6985,31 @@ they are drowning."
                                                    my\sprint-doc-url))))
 
 
-    (defun my/weekly-review--insert-planned (ticket-data)
+    (defun my/weekly-review--insert-planned (ticket-data &optional done-ids)
       "Insert the Planned section from TICKET-DATA plist.
-Renders TODO-status tickets from clock data and Jira."
+Renders TODO-status tickets from clock data and Jira.  DONE-IDS is
+the list of Jira IDs already resolved this week — those are shown
+in ✅ Completed and suppressed here to avoid double-listing."
       (my/org-insert-heading :uncle "📆 Planned" :DESCRIPTION "Aim for ~3 Jiras, since rework requires time!")
       (insert "\n # *Tasks marked Urgent from Jira.*\n")
       (let ((pn 0))
         (dolist (entry (:todo-clocked ticket-data))
           (let* ((ticket (car entry))
-                 (title (or (my/gerrit--get-jira-title ticket)
+                 (title (or (org-agenda-gerrit--get-jira-title ticket)
                             ('heading (cdr entry)))))
-            (insert (format "%d. %s %s\n"
-                            (cl-incf pn)
-                            (if ticket
-                                (my/gerrit--format-jira-link ticket)
-                              "")
-                            (or title "")))
-            (when ticket
-              (my/weekly-review--insert-action-hint ticket))))
-        (let ((counter (cons pn nil)))
-          (my/weekly-review--insert-numbered-items
-           (:extra-todo ticket-data) counter)
+            (unless (member ticket done-ids)
+              (insert (format "%d. %s %s\n"
+                              (cl-incf pn)
+                              (if ticket
+                                  (org-agenda-gerrit--format-jira-link ticket)
+                                "")
+                              (or title "")))
+              (when ticket
+                (my/weekly-review--insert-action-hint ticket)))))
+        (let ((counter (cons pn nil))
+              (extra (--filter (not (member (:jira it) done-ids))
+                               (:extra-todo ticket-data))))
+          (my/weekly-review--insert-numbered-items extra counter)
           (setq pn (car counter)))
 
         (my/org-insert-heading :child "Notes \t\t\t:private:"
@@ -8980,8 +7027,10 @@ Renders TODO-status tickets from clock data and Jira."
         (insert "\n*WIP agenda items — open Gerrit changes I should resume.*\n")
         (let ((counter (cons pn nil)))
           (my/weekly-review--insert-numbered-items
-           (when-let* ((items (:items my/agenda-work-data)))
-             (--filter (eq 'wip (:status it)) items))
+           (when-let* ((items (:items org-agenda-gerrit-data)))
+             (--filter (and (eq 'wip (:status it))
+                            (not (member (:jira it) done-ids)))
+                       items))
            counter)
           (setq pn (car counter)))
         (when (= pn 0)
@@ -9007,27 +7056,37 @@ convenience for catching un-schedulable weeks while still editing."
 
     (defun my/weekly-review--insert-weekly-promise ()
       "Insert the Weekly Promise section: Completed, In Progress, Planned, Impediments.
-Pre-populates Completed from merged tickets, In Progress from non-merged
-clocked tickets plus unresolved Jira items, and Impediments from stale
-outstanding reviews."
+Sections draw from two overlapping sources, both rooted in the
+`org-agenda-gerrit-data' cache which `ensure-full-fetch' populates
+asynchronously at capture start.  We spin-wait on the fetch HERE,
+before any section runs — previously `insert-completed' ran first
+with a possibly-empty cache, silently falling back to git-log and
+leaking please-review / my-needing-action tickets into Completed
+(see https://… 2026-04-27 post-mortem)."
 
       (my/org-insert-heading :sibling "Monday Standup"
                              :DESCRIPTION "This will be automatically copy-pasted to '* Standups' upon publish."
                              :body "1. ? \n2. ? \n3. ?
 
 \n/Below is a progress report since last week and what I intend to do this week./")
-      (my/weekly-review--insert-completed)
+      ;; Spin-wait for the async Gerrit/Jira fetch BEFORE any section
+      ;; runs.  `week-ticket-data' owns the wait; we call it first so
+      ;; `insert-completed' sees a populated cache and the git-log
+      ;; fallback in `my/progress-pulse--ticket-status' is never hit.
       (let* ((ticket-data (my/weekly-review--week-ticket-data))
-             ;; Collect ticket IDs that will appear in Impediments,
-             ;; so In Progress can exclude them (blocked ≠ active).
+             (done-ids (my/weekly-review--done-jira-ids))
+             ;; In Progress excludes Impediments (please-review) AND
+             ;; anything Jira already marked Done.
              (blocked-ids
-              (when-let* ((items (:items my/agenda-work-data)))
-                (mapcar #'work-item-jira
-                        (--filter (eq 'please-review (:status it))
-                                  items)))))
+              (append done-ids
+                      (when-let* ((items (:items org-agenda-gerrit-data)))
+                        (mapcar #'work-item-jira
+                                (--filter (eq 'please-review (:status it))
+                                          items))))))
+        (my/weekly-review--insert-completed)
         (my/weekly-review--insert-in-progress ticket-data blocked-ids)
-        (my/weekly-review--insert-impediments)
-        (my/weekly-review--insert-planned ticket-data))
+        (my/weekly-review--insert-impediments done-ids)
+        (my/weekly-review--insert-planned ticket-data done-ids))
       (my/weekly-review--insert-promise-checklist))
 
 
@@ -9204,7 +7263,7 @@ day. You remain focused on your most important tasks./
     ;; identify impediments, and plan the week ahead.
     ;;
     ;; `my/weekly-review--ensure-full-fetch' runs at the very start of
-    ;; the capture, setting `my/agenda-work--fetch-all-p' so the async
+    ;; the capture, setting `org-agenda-gerrit--fetch-all-p' so the async
     ;; coordinator includes the Jira queries that the daily fetch
     ;; skips.  By the time we reach the Weekly Promise section, the
     ;; full cache is ready.
@@ -9605,7 +7664,7 @@ separators into the NOTE field."
        (lambda (k mins)
          (let* ((day (car k))
                 (heading (cdr k))
-                (note-list (nreverse (easy-access k notes)))
+                (note-list (nreverse (gethash k notes)))
                 (index 0)
                 (note (when note-list
                         (mapconcat (lambda (s) (format "<br>﴾%s﴿ %s" (cl-incf index)
@@ -9655,8 +7714,8 @@ default \"Source → Target: Xh Ym\" tooltip text."
                                   do (let ((key (cons src tgt))
                                            (note (car rest)))
                                        (puthash key
-                                                (if (easy-access key ht)
-                                                    (concat (easy-access key ht) "; " note)
+                                                (if-let ((existing (gethash key ht)))
+                                                    (concat existing "; " note)
                                                   note)
                                                 ht)))
                          ht))
@@ -10108,7 +8167,7 @@ provides \\[my/end-of-day--publish] to publish all comments to Jira."
     (if (null tickets)
         (message "No Jira tickets clocked today.")
       ;; Batch-fetch titles for display.
-      (my/gerrit--fetch-jira-titles (mapcar #'car tickets))
+      (org-agenda-gerrit--fetch-jira-titles (mapcar #'car tickets))
       (let ((buf (get-buffer-create "*End-of-Day Comments*")))
         (switch-to-buffer buf)
         (erase-buffer)
@@ -10122,7 +8181,7 @@ provides \\[my/end-of-day--publish] to publish all comments to Jira."
                  (heading ('heading info))
                  (minutes ('minutes info))
                  (entries ('entries info))
-                 (title (or (my/gerrit--get-jira-title ticket) heading))
+                 (title (or (org-agenda-gerrit--get-jira-title ticket) heading))
                  (hours (/ minutes 60))
                  (mins (% minutes 60)))
             (insert (format "** %s: %s\n" ticket title))
@@ -10161,14 +8220,14 @@ provides \\[my/end-of-day--publish] to publish all comments to Jira."
                           (string-trim (substring section-text
                                                   (match-end 0))))))
           (when (and comment (not (string-empty-p comment)))
-            (let ((ok (my/jira-post-comment ticket comment)))
+            (let ((ok (org-agenda-gerrit-jira-post-comment ticket comment)))
               (push (cons ticket (if ok 'ok 'fail)) results)))))
       (if (null results)
           (message "No comments to publish — write something under each ticket first.")
         ;; Open each published ticket in the browser for visual confirmation.
         (dolist (r results)
           (when (eq (cdr r) 'ok)
-            (browse-url (format "%s/%s" my\jira-base-url (car r)))))
+            (browse-url (format "%s/%s" org-agenda-gerrit-jira-base-url (car r)))))
         (message "Published: %s"
                  (mapconcat
                   (lambda (r)
@@ -10219,11 +8278,11 @@ Loaded from and saved to `my/progress-pulse--timestamp-file'.")
 
 (defun my/progress-pulse--ticket-status (ticket)
   "Return a display string for TICKET's Gerrit status.
-Cross-references `my/agenda-work-data' for open changes, then
+Cross-references `org-agenda-gerrit-data' for open changes, then
 falls back to git log: tickets with commits are MERGED, tickets
 with neither open changes nor commits are CLOCKED (e.g., syncs,
 meetings, umbrella epics)."
-  (if-let* ((items (:items my/agenda-work-data))
+  (if-let* ((items (:items org-agenda-gerrit-data))
             (item (--first (equal ticket (:jira it)) items)))
       (pcase (:status item)
         ('wip             "IN PROGRESS")
@@ -10262,7 +8321,7 @@ Offers one-click copy-as-slack / copy-as-confluence / mark-shared."
     (if (null tickets)
         (message "No Jira tickets clocked in the past %d days." n)
       ;; Batch-fetch titles.
-      (my/gerrit--fetch-jira-titles (mapcar #'car tickets))
+      (org-agenda-gerrit--fetch-jira-titles (mapcar #'car tickets))
       (let ((buf (get-buffer-create "*Progress Pulse*"))
             (total-minutes 0))
         (switch-to-buffer buf)
@@ -10275,7 +8334,7 @@ Offers one-click copy-as-slack / copy-as-confluence / mark-shared."
         (dolist (entry tickets)
           (let* ((ticket (car entry))
                  (info (cdr entry))
-                 (title (or (my/gerrit--get-jira-title ticket)
+                 (title (or (org-agenda-gerrit--get-jira-title ticket)
                             ('heading info)))
                  (minutes ('minutes info))
                  (hours (/ minutes 60))
@@ -10290,7 +8349,7 @@ Offers one-click copy-as-slack / copy-as-confluence / mark-shared."
                         (% total-minutes 60)
                         (length tickets)))
         ;; Review activity (count items where we are reviewer, not author)
-        (when-let* ((items (:items my/agenda-work-data))
+        (when-let* ((items (:items org-agenda-gerrit-data))
                     (reviews (--filter
                               (eq 'reviews-needed (:status it))
                               items)))
@@ -10313,7 +8372,7 @@ Offers one-click copy-as-slack / copy-as-confluence / mark-shared."
   "Insert please-review work items at MARKER in the standup buffer.
 Highlights stale items (>5 days old) so they're front-of-mind
 during the Monday standup after the weekly review."
-  (when-let* ((items (:items my/agenda-work-data))
+  (when-let* ((items (:items org-agenda-gerrit-data))
               (please-review (--filter
                               (eq 'please-review (:status it))
                               items)))
@@ -10656,7 +8715,7 @@ overlays-in END..(+END 3) to skip pandoc for code blocks."
   (setq agent-shell-header-style 'text)
 
   ;; Don't confirm when I interrupt, just stop.
-  (define-key agent-shell-mode-map (kbd "C-c C-c")
+  (define-key agent-shell-mode-map (kbd "C-c C-k")
     (lambda () (interactive) (agent-shell-interrupt t)))
 
   ;; Expand tool use / thought process by default (instead of collapsed)
